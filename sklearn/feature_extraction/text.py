@@ -14,7 +14,7 @@ build feature vectors from text documents.
 from __future__ import unicode_literals, division
 
 import array
-from collections import Mapping, defaultdict
+from collections import defaultdict
 import numbers
 from operator import itemgetter
 import re
@@ -32,6 +32,8 @@ from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils.fixes import sp_version
+from ..utils.fixes import _Mapping as Mapping  # noqa
+
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
@@ -266,6 +268,23 @@ class VectorizerMixin(object):
         """Build or fetch the effective stop words list"""
         return _check_stop_list(self.stop_words)
 
+    def _check_stop_words_consistency(self, stop_words, preprocess, tokenize):
+        # NB: stop_words is validated, unlike self.stop_words
+        if id(self.stop_words) != getattr(self, '_stop_words_id', None):
+            inconsistent = set()
+            for w in stop_words or ():
+                tokens = list(tokenize(preprocess(w)))
+                for token in tokens:
+                    if token not in stop_words:
+                        inconsistent.add(token)
+            self._stop_words_id = id(self.stop_words)
+
+            if inconsistent:
+                warnings.warn('Your stop_words may be inconsistent with your '
+                              'preprocessing. Tokenizing the stop words '
+                              'generated tokens %r not in stop_words.' %
+                              sorted(inconsistent))
+
     def build_analyzer(self):
         """Return a callable that handles preprocessing and tokenization"""
         if callable(self.analyzer):
@@ -283,7 +302,8 @@ class VectorizerMixin(object):
         elif self.analyzer == 'word':
             stop_words = self.get_stop_words()
             tokenize = self.build_tokenizer()
-
+            self._check_stop_words_consistency(stop_words, preprocess,
+                                               tokenize)
             return lambda doc: self._word_ngrams(
                 tokenize(preprocess(self.decode(doc))), stop_words)
 
@@ -425,6 +445,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
     stop_words : string {'english'}, list, or None (default)
         If 'english', a built-in stop word list for English is used.
+        There are several known issues with 'english' and you should
+        consider an alternative (see :ref:`stop_words`).
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -479,6 +501,19 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
+    Examples
+    --------
+    >>> from sklearn.feature_extraction.text import HashingVectorizer
+    >>> corpus = [
+    ...     'This is the first document.',
+    ...     'This document is the second document.',
+    ...     'And this is the third one.',
+    ...     'Is this the first document?',
+    ... ]
+    >>> vectorizer = HashingVectorizer(n_features=2**4)
+    >>> X = vectorizer.fit_transform(corpus)
+    >>> print(X.shape)
+    (4, 16)
 
     See also
     --------
@@ -667,6 +702,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     stop_words : string {'english'}, list, or None (default)
         If 'english', a built-in stop word list for English is used.
+        There are several known issues with 'english' and you should
+        consider an alternative (see :ref:`stop_words`).
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -745,6 +782,25 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
           - were cut off by feature selection (`max_features`).
 
         This is only available if no vocabulary was given.
+
+    Examples
+    --------
+    >>> from sklearn.feature_extraction.text import CountVectorizer
+    >>> corpus = [
+    ...     'This is the first document.',
+    ...     'This document is the second document.',
+    ...     'And this is the third one.',
+    ...     'Is this the first document?',
+    ... ]
+    >>> vectorizer = CountVectorizer()
+    >>> X = vectorizer.fit_transform(corpus)
+    >>> print(vectorizer.get_feature_names())
+    ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
+    >>> print(X.toarray())  # doctest: +NORMALIZE_WHITESPACE
+    [[0 1 1 1 0 0 1 0 1]
+     [0 2 0 1 0 1 1 0 1]
+     [1 0 0 1 1 0 1 1 1]
+     [0 1 1 1 0 0 1 0 1]]
 
     See also
     --------
@@ -1290,6 +1346,8 @@ class TfidfVectorizer(CountVectorizer):
         If a string, it is passed to _check_stop_list and the appropriate stop
         list is returned. 'english' is currently the only supported string
         value.
+        There are several known issues with 'english' and you should
+        consider an alternative (see :ref:`stop_words`).
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -1376,6 +1434,22 @@ class TfidfVectorizer(CountVectorizer):
           - were cut off by feature selection (`max_features`).
 
         This is only available if no vocabulary was given.
+
+    Examples
+    --------
+    >>> from sklearn.feature_extraction.text import TfidfVectorizer
+    >>> corpus = [
+    ...     'This is the first document.',
+    ...     'This document is the second document.',
+    ...     'And this is the third one.',
+    ...     'Is this the first document?',
+    ... ]
+    >>> vectorizer = TfidfVectorizer()
+    >>> X = vectorizer.fit_transform(corpus)
+    >>> print(vectorizer.get_feature_names())
+    ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
+    >>> print(X.shape)
+    (4, 9)
 
     See also
     --------

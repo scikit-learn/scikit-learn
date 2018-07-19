@@ -49,7 +49,7 @@ __version__ = '0.20.dev0'
 
 try:
     # This variable is injected in the __builtins__ by the build
-    # process. It used to enable importing subpackages of sklearn when
+    # process. It is used to enable importing subpackages of sklearn when
     # the binaries are not built
     __SKLEARN_SETUP__
 except NameError:

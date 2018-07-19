@@ -25,9 +25,6 @@ PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
 # TODO Uncomment all modules and fix doc inconsistencies everywhere
 # The list of modules that are not tested for now
 IGNORED_MODULES = (
-    'gaussian_process',
-    'linear_model',
-    'ensemble',
     'feature_selection',
     'kernel_approximation',
     'utils',
@@ -54,6 +51,9 @@ _METHODS_IGNORE_NONE_Y = [
 ]
 
 
+# numpydoc 0.8.0's docscrape tool raises because of collections.abc under
+# Python 3.7
+@ignore_warnings(category=DeprecationWarning)
 def test_docstring_parameters():
     # Test module docstring formatting
 

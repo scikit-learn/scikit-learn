@@ -14,7 +14,7 @@ from scipy import sparse
 from scipy.stats import rankdata
 
 from sklearn.externals.six.moves import zip
-from sklearn.externals.joblib import hash, Memory
+from sklearn.utils._joblib import hash, Memory
 from sklearn.utils.testing import assert_raises, _get_args
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
@@ -51,7 +51,6 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
 from sklearn.linear_model.stochastic_gradient import BaseSGD
 from sklearn.pipeline import make_pipeline
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
 from sklearn.model_selection import train_test_split
@@ -78,8 +77,8 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
 
-ALLOW_NAN = ['Imputer', 'SimpleImputer', 'ChainedImputer',
-             'MaxAbsScaler', 'MinMaxScaler', 'StandardScaler',
+ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MissingIndicator',
+             'MaxAbsScaler', 'MinMaxScaler', 'RobustScaler', 'StandardScaler',
              'PowerTransformer', 'QuantileTransformer']
 
 
@@ -89,6 +88,7 @@ def _yield_non_meta_checks(name, estimator):
     yield check_dtype_object
     yield check_sample_weights_pandas_series
     yield check_sample_weights_list
+    yield check_sample_weights_invariance
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
     yield check_complex_data
@@ -262,6 +262,7 @@ def _yield_all_checks(name, estimator):
     yield check_fit2d_1feature
     yield check_fit1d
     yield check_get_params_invariance
+    yield check_set_params
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
 
@@ -341,7 +342,13 @@ def set_checking_parameters(estimator):
         estimator.set_params(n_resampling=5)
     if "n_estimators" in params:
         # especially gradient boosting with default 100
-        estimator.set_params(n_estimators=min(5, estimator.n_estimators))
+        # FIXME: The default number of trees was changed and is set to 'warn'
+        # for some of the ensemble methods. We need to catch this case to avoid
+        # an error during the comparison. To be reverted in 0.22.
+        if estimator.n_estimators == 'warn':
+            estimator.set_params(n_estimators=5)
+        else:
+            estimator.set_params(n_estimators=min(5, estimator.n_estimators))
     if "max_trials" in params:
         # RANSAC
         estimator.set_params(max_trials=10)
@@ -552,6 +559,40 @@ def check_sample_weights_list(name, estimator_orig):
         sample_weight = [3] * 10
         # Test that estimators don't raise any exception
         estimator.fit(X, y, sample_weight=sample_weight)
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_sample_weights_invariance(name, estimator_orig):
+    # check that the estimators yield same results for
+    # unit weights and no weights
+    if (has_fit_parameter(estimator_orig, "sample_weight") and
+            not (hasattr(estimator_orig, "_pairwise")
+                 and estimator_orig._pairwise)):
+        # We skip pairwise because the data is not pairwise
+
+        estimator1 = clone(estimator_orig)
+        estimator2 = clone(estimator_orig)
+        set_random_state(estimator1, random_state=0)
+        set_random_state(estimator2, random_state=0)
+
+        X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
+                      [2, 1], [2, 1], [2, 1], [2, 1],
+                      [3, 3], [3, 3], [3, 3], [3, 3],
+                      [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.dtype('float'))
+        y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
+                      1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('int'))
+
+        estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)))
+        estimator2.fit(X, y=y, sample_weight=None)
+
+        for method in ["predict", "transform"]:
+            if hasattr(estimator_orig, method):
+                X_pred1 = getattr(estimator1, method)(X)
+                X_pred2 = getattr(estimator2, method)(X)
+                assert_allclose(X_pred1, X_pred2,
+                                err_msg="For %s sample_weight=None is not"
+                                        " equivalent to sample_weight=ones"
+                                        % name)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning, UserWarning))
@@ -1167,6 +1208,13 @@ def check_estimators_pickle(name, estimator_orig):
         X += 1
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
 
+    # include NaN values when the estimator should deal with them
+    if name in ALLOW_NAN:
+        # set randomly 10 elements to np.nan
+        rng = np.random.RandomState(42)
+        mask = rng.choice(X.size, 10, replace=False)
+        X.reshape(-1)[mask] = np.nan
+
     estimator = clone(estimator_orig)
 
     # some estimators only take multioutputs
@@ -1175,16 +1223,16 @@ def check_estimators_pickle(name, estimator_orig):
     set_random_state(estimator)
     estimator.fit(X, y)
 
-    result = dict()
-    for method in check_methods:
-        if hasattr(estimator, method):
-            result[method] = getattr(estimator, method)(X)
-
     # pickle and unpickle!
     pickled_estimator = pickle.dumps(estimator)
     if estimator.__module__.startswith('sklearn.'):
         assert_true(b"version" in pickled_estimator)
     unpickled_estimator = pickle.loads(pickled_estimator)
+
+    result = dict()
+    for method in check_methods:
+        if hasattr(estimator, method):
+            result[method] = getattr(estimator, method)(X)
 
     for method in result:
         unpickled_result = getattr(unpickled_estimator, method)(X)
@@ -2172,6 +2220,59 @@ def check_get_params_invariance(name, estimator_orig):
 
     assert_true(all(item in deep_params.items() for item in
                     shallow_params.items()))
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_set_params(name, estimator_orig):
+    # Check that get_params() returns the same thing
+    # before and after set_params() with some fuzz
+    estimator = clone(estimator_orig)
+
+    orig_params = estimator.get_params(deep=False)
+    msg = ("get_params result does not match what was passed to set_params")
+
+    estimator.set_params(**orig_params)
+    curr_params = estimator.get_params(deep=False)
+    assert_equal(set(orig_params.keys()), set(curr_params.keys()), msg)
+    for k, v in curr_params.items():
+        assert orig_params[k] is v, msg
+
+    # some fuzz values
+    test_values = [-np.inf, np.inf, None]
+
+    test_params = deepcopy(orig_params)
+    for param_name in orig_params.keys():
+        default_value = orig_params[param_name]
+        for value in test_values:
+            test_params[param_name] = value
+            try:
+                estimator.set_params(**test_params)
+            except (TypeError, ValueError) as e:
+                e_type = e.__class__.__name__
+                # Exception occurred, possibly parameter validation
+                warnings.warn("{} occurred during set_params. "
+                              "It is recommended to delay parameter "
+                              "validation until fit.".format(e_type))
+
+                change_warning_msg = "Estimator's parameters changed after " \
+                                     "set_params raised {}".format(e_type)
+                params_before_exception = curr_params
+                curr_params = estimator.get_params(deep=False)
+                try:
+                    assert_equal(set(params_before_exception.keys()),
+                                 set(curr_params.keys()))
+                    for k, v in curr_params.items():
+                        assert params_before_exception[k] is v
+                except AssertionError:
+                    warnings.warn(change_warning_msg)
+            else:
+                curr_params = estimator.get_params(deep=False)
+                assert_equal(set(test_params.keys()),
+                             set(curr_params.keys()),
+                             msg)
+                for k, v in curr_params.items():
+                    assert test_params[k] is v, msg
+        test_params[param_name] = default_value
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

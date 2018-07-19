@@ -202,7 +202,7 @@ General Concepts
         We use deprecation to slowly violate our :term:`backwards
         compatibility` assurances, usually to to:
 
-        * change the the default value of a parameter; or
+        * change the default value of a parameter; or
         * remove a parameter, attribute, method, class, etc.
 
         We will ordinarily issue a warning when a deprecated element is used,
@@ -288,6 +288,13 @@ General Concepts
         * For determining some aspects of an estimator's expectations or
           support for some feature, we use :term:`estimator tags` instead of
           duck typing.
+
+    early stopping
+        This consists in stopping an iterative optimization method before the
+        convergence of the training loss, to avoid over-fitting. This is
+        generally done by monitoring the generalization score on a validation
+        set. When available, it is activated through the parameter
+        ``early_stopping`` or by setting a postive :term:`n_iter_no_change`.
 
     estimator instance
         We sometimes use this terminology to distinguish an :term:`estimator`
@@ -1454,6 +1461,12 @@ functions or non-estimator constructors.
         input into. See :term:`components_` for the special case of affine
         projection.
 
+    ``n_iter_no_change``
+        Number of iterations with no improvement to wait before stopping the
+        iterative procedure. This is also known as a *patience* parameter. It
+        is typically used with :term:`early stopping` to avoid stopping too
+        early.
+
     ``n_jobs``
         This is used to specify how many concurrent processes/threads should be
         used for parallelized routines.  Scikit-learn uses one processor for
@@ -1472,7 +1485,7 @@ functions or non-estimator constructors.
           sometimes parallelism happens in prediction (e.g. in random forests).
         * Some parallelism uses a multi-threading backend by default, some
           a multi-processing backend.  It is possible to override the default
-          backend by using :func:`sklearn.externals.joblib.parallel.parallel_backend`.
+          backend by using :func:`sklearn.utils.parallel_backend`.
         * Whether parallel processing is helpful at improving runtime depends
           on many factors, and it's usually a good idea to experiment rather
           than assuming that increasing the number of jobs is always a good

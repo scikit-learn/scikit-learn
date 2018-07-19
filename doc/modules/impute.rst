@@ -16,22 +16,6 @@ values. However, this comes at the price of losing data which may be valuable
 i.e., to infer them from the known part of the data. See the :ref:`glossary`
 entry on imputation.
 
-
-Univariate vs. Multivariate Imputation
-======================================
-
-One type of imputation algorithm is univariate, which imputes values in the i-th
-feature dimension using only non-missing values in that feature dimension
-(e.g. :class:`impute.SimpleImputer`). By contrast, multivariate imputation
-algorithms use the entire set of available feature dimensions to estimate the
-missing values (e.g. :class:`impute.ChainedImputer`).
-
-
-.. _single_imputer:
-
-Univariate feature imputation
-=============================
-
 The :class:`SimpleImputer` class provides basic strategies for imputing missing
 values. Missing values can be imputed with a provided constant value, or using
 the statistics (mean, median or most frequent) of each column in which the
@@ -56,19 +40,19 @@ that contain the missing values::
 The :class:`SimpleImputer` class also supports sparse matrices::
 
     >>> import scipy.sparse as sp
-    >>> X = sp.csc_matrix([[1, 2], [0, 3], [7, 6]])
-    >>> imp = SimpleImputer(missing_values=0, strategy='mean')
+    >>> X = sp.csc_matrix([[1, 2], [0, -1], [8, 4]])
+    >>> imp = SimpleImputer(missing_values=-1, strategy='mean')
     >>> imp.fit(X)                  # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(copy=True, fill_value=None, missing_values=0, strategy='mean', verbose=0)
-    >>> X_test = sp.csc_matrix([[0, 2], [6, 0], [7, 6]])
-    >>> print(imp.transform(X_test))      # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
-    [[4.          2.        ]
-     [6.          3.666...]
-     [7.          6.        ]]
+    SimpleImputer(copy=True, fill_value=None, missing_values=-1, strategy='mean', verbose=0)
+    >>> X_test = sp.csc_matrix([[-1, 2], [6, -1], [7, 6]])
+    >>> print(imp.transform(X_test).toarray())      # doctest: +NORMALIZE_WHITESPACE
+    [[3. 2.]
+     [6. 3.]
+     [7. 6.]]
 
-Note that, here, missing values are encoded by 0 and are thus implicitly stored
-in the matrix. This format is thus suitable when there are many more missing
-values than observed values.
+Note that this format is not meant to be used to implicitly store missing values
+in the matrix because it would densify it at transform time. Missing values encoded
+by 0 must be used with dense input.
 
 The :class:`SimpleImputer` class also supports categorical data represented as
 string values or pandas categoricals when using the ``'most_frequent'`` or
@@ -87,58 +71,52 @@ string values or pandas categoricals when using the ``'most_frequent'`` or
      ['a' 'y']
      ['b' 'y']]
 
-.. _chained_imputer:
 
+:class:`SimpleImputer` can be used in a Pipeline as a way to build a composite
+estimator that supports imputation. See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
 
-Multivariate feature imputation
-===============================
+.. _missing_indicator:
 
-A more sophisticated approach is to use the :class:`ChainedImputer` class, which
-implements the imputation technique from MICE (Multivariate Imputation by
-Chained Equations). MICE models each feature with missing values as a function of
-other features, and uses that estimate for imputation. It does so in a round-robin
-fashion: at each step, a feature column is designated as output `y` and the other
-feature columns are treated as inputs `X`. A regressor is fit on `(X, y)` for known `y`.
-Then, the regressor is used to predict the unknown values of `y`. This is repeated
-for each feature in a chained fashion, and then is done for a number of imputation
-rounds. Here is an example snippet::
+Marking imputed values
+======================
 
-    >>> import numpy as np
-    >>> from sklearn.impute import ChainedImputer
-    >>> imp = ChainedImputer(n_imputations=10, random_state=0)
-    >>> imp.fit([[1, 2], [np.nan, 3], [7, np.nan]])
-    ChainedImputer(imputation_order='ascending', initial_strategy='mean',
-            max_value=None, min_value=None, missing_values=nan, n_burn_in=10,
-            n_imputations=10, n_nearest_features=None, predictor=None,
-            random_state=0, verbose=False)
-    >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
-    >>> print(np.round(imp.transform(X_test)))
-    [[ 1.  2.]
-     [ 6.  4.]
-     [13.  6.]]
+The :class:`MissingIndicator` transformer is useful to transform a dataset into
+corresponding binary matrix indicating the presence of missing values in the
+dataset. This transformation is useful in conjunction with imputation. When
+using imputation, preserving the information about which values had been
+missing can be informative.
 
-Both :class:`SimpleImputer` and :class:`ChainedImputer` can be used in a Pipeline
-as a way to build a composite estimator that supports imputation.
-See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
+``NaN`` is usually used as the placeholder for missing values. However, it
+enforces the data type to be float. The parameter ``missing_values`` allows to
+specify other placeholder such as integer. In the following example, we will
+use ``-1`` as missing values::
 
+  >>> from sklearn.impute import MissingIndicator
+  >>> X = np.array([[-1, -1, 1, 3],
+  ...               [4, -1, 0, -1],
+  ...               [8, -1, 1, 0]])
+  >>> indicator = MissingIndicator(missing_values=-1)
+  >>> mask_missing_values_only = indicator.fit_transform(X)
+  >>> mask_missing_values_only
+  array([[ True,  True, False],
+         [False,  True,  True],
+         [False,  True, False]])
 
-.. _multiple_imputation:
+The ``features`` parameter is used to choose the features for which the mask is
+constructed. By default, it is ``'missing-only'`` which returns the imputer
+mask of the features containing missing values at ``fit`` time::
 
-Multiple vs. Single Imputation
-==============================
+  >>> indicator.features_
+  array([0, 1, 3])
 
-In the statistics community, it is common practice to perform multiple imputations,
-generating, for example, 10 separate imputations for a single feature matrix.
-Each of these 10 imputations is then put through the subsequent analysis pipeline
-(e.g. feature engineering, clustering, regression, classification). The 10 final
-analysis results (e.g. held-out validation error) allow the data scientist to
-obtain understanding of the uncertainty inherent in the missing values. The above
-practice is called multiple imputation. As implemented, the :class:`ChainedImputer`
-class generates a single (averaged) imputation for each missing value because this
-is the most common use case for machine learning applications. However, it can also be used
-for multiple imputations by applying it repeatedly to the same dataset with different
-random seeds with the ``n_imputations`` parameter set to 1.
-
-Note that a call to the ``transform`` method of :class:`ChainedImputer` is not
-allowed to change the number of samples. Therefore multiple imputations cannot be
-achieved by a single call to ``transform``.
+The ``features`` parameter can be set to ``'all'`` to returned all features
+whether or not they contain missing values::
+    
+  >>> indicator = MissingIndicator(missing_values=-1, features="all")
+  >>> mask_all = indicator.fit_transform(X)
+  >>> mask_all
+  array([[ True,  True, False, False],
+         [False,  True, False,  True],
+         [False,  True, False, False]])
+  >>> indicator.features_
+  array([0, 1, 2, 3])

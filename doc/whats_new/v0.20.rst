@@ -11,13 +11,17 @@ This release packs in a mountain of bug fixes, features and enhancements for
 the Scikit-learn library, and improvements to the documentation and examples.
 Thanks to our many contributors!
 
+.. warning::
+
+    Version 0.20 is the last version of scikit-learn to support Python 2.7 and Python 3.4.
+    Scikit-learn 0.21 will require Python 3.5 or higher.
+
 Highlights
 ----------
 
 We have tried to improve our support for common data-science use-cases
 including missing values, categorical variables, heterogeneous data, and
 features/targets with unusual distributions.
-
 Missing values in features, represented by NaNs, are now accepted in
 column-wise preprocessing such as scalers.  Each feature is fitted disregarding
 NaNs, and data containing NaNs can be transformed. The new :mod:`impute`
@@ -31,8 +35,8 @@ String or pandas Categorical columns can now be encoded with
 
 :class:`~compose.TransformedTargetRegressor` helps when the regression target
 needs to be transformed to be modeled. :class:`~preprocessing.PowerTransformer`
-joins :class:`~preprocessing.QuantileTransformer` as a non-linear
-transformation.
+and :class:`~preprocessing.KBinsDiscretizer` join
+:class:`~preprocessing.QuantileTransformer` as non-linear transformations.
 
 Beyond this, we have added :term:`sample_weight` support to several estimators
 (including :class:`~cluster.KMeans`, :class:`~linear_model.BayesianRidge` and
@@ -40,8 +44,6 @@ Beyond this, we have added :term:`sample_weight` support to several estimators
 (including :class:`~neural_network.MLPRegressor`,
 :class:`~ensemble.GradientBoostingRegressor` and
 :class:`~linear_model.SGDRegressor`).
-
-.. FIXME: remove SGDRegressor if #9043 is not merged for release
 
 This release is also the first to be accompanied by a :ref:`glossary` developed
 by `Joel Nothman`_. The glossary is a reference resource to help users and
@@ -62,10 +64,16 @@ random sampling procedures.
 - :class:`linear_model.OrthogonalMatchingPursuit` (bug fix)
 - :class:`metrics.roc_auc_score` (bug fix)
 - :class:`metrics.roc_curve` (bug fix)
+- :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
 - :class:`neural_network.MLPRegressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
-- :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
+- :class:`linear_model.SGDClassifier` (bug fix)
+- :class:`linear_model.SGDRegressor` (bug fix)
+- :class:`linear_model.PassiveAggressiveClassifier` (bug fix)
+- :class:`linear_model.PassiveAggressiveRegressor` (bug fix)
+- :class:`linear_model.Perceptron` (bug fix)
 - :class:`ensemble.gradient_boosting.GradientBoostingClassifier` (bug fix affecting feature importances)
+- :class:`linear_model.LogisticRegressionCV` (bug fix)
 - The v0.19.0 release notes failed to mention a backwards incompatibility with
   :class:`model_selection.StratifiedKFold` when ``shuffle=True`` due to
   :issue:`7823`.
@@ -74,12 +82,6 @@ Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
 cannot assure that this list is complete.)
-
-**Other backward incompatible change** The vendored version of the joblib
-module is now found at `sklearn.externals._joblib` (:issue:`11166`). The
-main API of joblib is still exposed in `sklearn.externals.joblib`, but
-code doing imports of subpackages of `sklearn.externals.joblib` will
-break.
 
 Changelog
 ---------
@@ -122,10 +124,17 @@ Preprocessing
   the maximum value in the features. :issue:`9151` and :issue:`10521` by
   :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
 
+- Added :class:`preprocessing.KBinsDiscretizer` for turning
+  continuous features into categorical or one-hot encoded
+  features. :issue:`7668`, :issue:`9647`, :issue:`10195`,
+  :issue:`10192`, :issue:`11272` and :issue:`11467`.
+  by :user:`Henry Lin <hlin117>`, `Hanmin Qin`_
+  and `Tom Dupre la Tour`_.
+
 - Added :class:`compose.ColumnTransformer`, which allows to apply
   different transformers to different columns of arrays or pandas
   DataFrames. :issue:`9012` by `Andreas Müller`_ and `Joris Van den Bossche`_,
-  and :issue:`11315` by :user:`Thomas Fan <thomasjpfan>`_.
+  and :issue:`11315` by :user:`Thomas Fan <thomasjpfan>`.
 
 - Added :class:`preprocessing.PowerTransformer`, which implements the Box-Cox
   power transformation, allowing users to map data from any distribution to a
@@ -139,10 +148,19 @@ Preprocessing
   back to the original space via an inverse transform. :issue:`9041` by
   `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
 
-- Added :class:`impute.ChainedImputer`, which is a strategy for imputing missing
-  values by modeling each feature with missing values as a function of
-  other features in a round-robin fashion. :issue:`8478` by
-  :user:`Sergey Feldman <sergeyf>`.
+- Added :class:`MissingIndicator` which generates a binary indicator for
+  missing values. :issue:`8075` by :user:`Maniteja Nandana <maniteja123>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
+- :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
+  :class:`linear_model.PassiveAggressiveClassifier`,
+  :class:`linear_model.PassiveAggressiveRegressor` and
+  :class:`linear_model.Perceptron` now expose ``early_stopping``,
+  ``validation_fraction`` and ``n_iter_no_change`` parameters, to stop
+  optimization monitoring the score on a validation set. A new learning rate
+  ``"adaptive"`` strategy divides the learning rate by 5 each time
+  ``n_iter_no_change`` consecutive epochs fail to improve the model.
+  :issue:`9043` by `Tom Dupre la Tour`_.
 
 Model evaluation
 
@@ -154,6 +172,10 @@ Model evaluation
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
 
 Decomposition, manifold learning and clustering
+
+- A new clustering algorithm: :class:`cluster.OPTICS`: an algoritm
+  related to :class:`cluster.DBSCAN`, that has hyperparameters easier to
+  set and tat scales better, by :user:`Shane <espg>`.
 
 - :class:`cluster.AgglomerativeClustering` now supports Single Linkage
   clustering via ``linkage='single'``. :issue:`9372` by
@@ -173,6 +195,12 @@ Metrics
   :func:`metrics.roc_auc_score`. :issue:`3273` by
   :user:`Alexander Niederbühl <Alexander-N>`.
 
+- Added control over the normalization in 
+  :func:`metrics.normalized_mutual_information_score` and
+  :func:`metrics.adjusted_mutual_information_score` via the ``average_method``
+  parameter. In version 0.22, the default normalizer for each will become
+  the *arithmetic* mean of the entropies of each clustering. :issue:`11124` by
+  :user:`Arya McCarthy <aryamccarthy>`.
 - Added ``output_dict`` parameter in :func:`metrics.classification_report`
   to return classification statistics as dictionary.
   :issue:`11160` by :user:`Dan Barkhorn <danielbarkhorn>`.
@@ -185,7 +213,8 @@ Misc
   :issue:`10280` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
 - An environment variable to use the site joblib instead of the vendored
-  one was added (:ref:`environment_variable`).
+  one was added (:ref:`environment_variable`). The main API of joblib is now
+  exposed in :mod:`sklearn.utils`.
   :issue:`11166`by `Gael Varoquaux`_
 
 Enhancements
@@ -274,32 +303,38 @@ Preprocessing
   :class:`feature_extraction.text.CountVectorizer` initialized with a
   vocabulary. :issue:`10908` by :user:`Mohamed Maskani <maskani-moh>`.
 
+- :class:`preprocessing.OneHotEncoder` now supports the
+  :meth:`get_feature_names` method to obtain the transformed feature names.
+  :issue:`10181` by  :user:`Nirvan Anjirbag <Nirvan101>` and
+  `Joris Van den Bossche`_.
+
 - The ``transform`` method of :class:`sklearn.preprocessing.MultiLabelBinarizer`
   now ignores any unknown classes. A warning is raised stating the unknown classes
   classes found which are ignored.
   :issue:`10913` by :user:`Rodrigo Agundez <rragundez>`.
 
-- :class:`preprocessing.QuantileTransformer` handles and ignores NaN values.
-  :issue:`10404` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-- Updated :class:`preprocessing.MinMaxScaler` and
-  :func:`preprocessing.minmax_scale` to pass through NaN values.
-  :issue:`10404` and :issue:`11243` by :user:`Lucija Gregov <LucijaGregov>` and
+- NaN values are ignored and handled in the following preprocessing methods:
+  :class:`preprocessing.MaxAbsScaler`,
+  :class:`preprocessing.MinMaxScaler`,
+  :class:`preprocessing.RobustScaler`,
+  :class:`preprocessing.StandardScaler`,
+  :class:`preprocessing.PowerTransformer`,
+  :class:`preprocessing.QuantileTransformer` classes and
+  :func:`preprocessing.maxabs_scale`,
+  :func:`preprocessing.minmax_scale`,
+  :func:`preprocessing.robust_scale`,
+  :func:`preprocessing.scale`,
+  :func:`preprocessing.power_transform`,
+  :func:`preprocessing.quantile_transform` functions respectively addressed in
+  issues :issue:`11011`, :issue:`11005`, :issue:`11308`, :issue:`11206`,
+  :issue:`11306`, and :issue:`10437`.
+  By :user:`Lucija Gregov <LucijaGregov>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
-- :class:`preprocessing.StandardScaler` and :func:`preprocessing.scale`
-  ignore and pass-through NaN values.
-  :issue:`11206` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-- :class:`preprocessing.MaxAbsScaler` and :func:`preprocessing.maxabs_scale`
-  handles and ignores NaN values.
-  :issue:`11011` by `Lucija Gregov <LucihaGregov>` and
-  :user:`Guillaume Lemaitre <glemaitre>`
-
-- :class:`preprocessing.PowerTransformer` and
-  :func:`preprocessing.power_transform` ignore and pass-through NaN values.
-  :issue:`11306` by :user:`Guillaume Lemaitre <glemaitre>`.
-
+- :class:`preprocessing.RobustScaler` and :func:`preprocessing.robust_scale`
+  can be fitted using sparse matrices.
+  :issue:`11308` by :user:`Guillaume Lemaitre <glemaitre>`.
+  
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -358,11 +393,22 @@ Metrics
   faster. This avoids some reported freezes and MemoryErrors.
   :issue:`11135` by `Joel Nothman`_.
 
+- :func:`metrics.average_precision_score` now supports binary ``y_true``
+  other than ``{0, 1}`` or ``{-1, 1}`` through ``pos_label`` parameter.
+  :issue:`9980` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 Linear, kernelized and related models
 
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
+
+Preprocessing and feature selection
+
+- Added select K best features functionality to
+  :class:`feature_selection.SelectFromModel`.
+  :issue:`6689` by :user:`Nihar Sheth <nsheth12>` and
+  :user:`Quazi Rahman <qmaruf>`.
 
 Decomposition, manifold learning and clustering
 
@@ -419,6 +465,11 @@ Classifiers and regressors
   the ``scoring`` parameter.
   :issue:`10998` by :user:`Thomas Fan <thomasjpfan>`.
 
+- Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the 'ovr'
+  strategy was always used to compute cross-validation scores in the
+  multiclass setting, even if 'multinomial' was set.
+  :issue:`8720` by :user:`William de Vazelhes <wdevazelhes>`.
+
 - Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
   broken when setting ``normalize=False``.
   :issue:`10071` by `Alexandre Gramfort`_.
@@ -465,8 +516,8 @@ Classifiers and regressors
 - Fixed a bug in :class:`sklearn.linear_model.Lasso`
   where the coefficient had wrong shape when ``fit_intercept=False``.
   :issue:`10687` by :user:`Martin Hahn <martin-hahn>`.
-  
-- Fixed a bug in :func:`sklearn.linear_model.LogisticRegression` where the 
+
+- Fixed a bug in :func:`sklearn.linear_model.LogisticRegression` where the
   multi_class='multinomial' with binary output with warm_start = True
   :issue:`10836` by :user:`Aishwarya Srinivasan <aishgrt1>`.
 
@@ -476,6 +527,15 @@ Classifiers and regressors
 - Fixed condition triggering gap computation in :class:`linear_model.Lasso`
   and :class:`linear_model.ElasticNet` when working with sparse matrices.
   :issue:`10992` by `Alexandre Gramfort`_.
+
+- Fixed a bug in :class:`linear_model.SGDClassifier`,
+  :class:`linear_model.SGDRegressor`,
+  :class:`linear_model.PassiveAggressiveClassifier`,
+  :class:`linear_model.PassiveAggressiveRegressor` and
+  :class:`linear_model.Perceptron`, where the stopping criterion was stopping
+  the algorithm before convergence. A parameter `n_iter_no_change` was added
+  and set by default to 5. Previous behavior is equivalent to setting the
+  parameter to 1. :issue:`9043` by `Tom Dupre la Tour`_.
 
 - Fixed a bug where liblinear and libsvm-based estimators would segfault if
   passed a scipy.sparse matrix with 64-bit indices. They now raise a
@@ -488,6 +548,12 @@ Classifiers and regressors
   per-tree basis. The previous behavior over-weighted the Gini importance of
   features that appear in later stages. This issue only affected feature
   importances. :issue:`11176` by :user:`Gil Forsyth <gforsyth>`.
+  
+- Fixed a bug in :class:`tree.MAE` to ensure sample weights are being used 
+  during the calculation of tree MAE impurity. Previous behaviour could 
+  cause suboptimal splits to be chosen since the impurity calculation 
+  considered all samples to be of equal weight importance.
+  :issue:`11464` by :user:`John Stott <JohnStott>`.  
 
 Decomposition, manifold learning and clustering
 
@@ -543,6 +609,12 @@ Decomposition, manifold learning and clustering
   :class:`mixture.BayesianGaussianMixture`. :issue:`10740` by :user:`Erich
   Schubert <kno10>` and :user:`Guillaume Lemaitre <glemaitre>`.
 
+- Fixed a bug in :class:`mixture.BaseMixture` and its subclasses
+  :class:`mixture.GaussianMixture` and :class:`mixture.BayesianGaussianMixture`
+  where the ``lower_bound_`` was not the max lower bound across all
+  initializations (when ``n_init > 1``), but just the lower bound of the last
+  initialization. :issue:`10869` by :user:`Aurélien Géron <ageron>`.
+
 - Fixed a bug in :class:`decomposition.SparseCoder` when running OMP sparse
   coding in parallel using readonly memory mapped datastructures. :issue:`5956`
   by :user:`Vighnesh Birodkar <vighneshbirodkar>` and
@@ -572,6 +644,10 @@ Metrics
   :func:`metrics.mutual_info_score`.
   :issue:`9772` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
+- Fixed a bug where :func:`metrics.average_precision_score` will sometimes return
+  ``nan`` when ``sample_weight`` contains 0.
+  :issue:`9980` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 - Fixed a bug in :func:`metrics.fowlkes_mallows_score` to avoid integer
   overflow. Casted return value of `contingency_matrix` to `int64` and computed
   product of square roots rather than square root of product.
@@ -584,6 +660,9 @@ Neighbors
   handle empty neighbor set when using non uniform weights. Also raises a new
   warning when no neighbors are found for samples.  :issue:`9655` by
   :user:`Andreas Bjerre-Nielsen <abjer>`.
+
+- Fixed a bug in ``KDTree`` construction that results in faster construction
+  and querying times. :issue:`11556` by :user:`Jake VanderPlas <jakevdp>`
 
 Feature Extraction
 
@@ -599,13 +678,13 @@ Feature Extraction
   (words or n-grams). :issue:`9147` by :user:`Claes-Fredrik Mannby <mannby>`
   and `Roman Yurchak`_.
 
-- Fixed bug in :class:`feature_extraction.text.TFIDFVectorizer` which 
+- Fixed bug in :class:`feature_extraction.text.TFIDFVectorizer` which
   was ignoring the parameter ``dtype``. In addition,
   :class:`feature_extraction.text.TFIDFTransformer` will preserve ``dtype``
   for floating and raise a warning if ``dtype`` requested is integer.
   :issue:`10441` by :user:`Mayur Kulkarni <maykulkarni>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
-  
+
 Utils
 
 - :func:`utils.check_array` yield a ``FutureWarning`` indicating
@@ -657,6 +736,15 @@ Datasets
 
 API changes summary
 -------------------
+
+Classifiers and regressors
+
+- The default value of the ``n_estimators`` parameter of 
+  :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`, 
+  :class:`ensemble.ExtraTreesClassifier`, :class:`ensemble.ExtraTreesRegressor`, 
+  and :class:`ensemble.RandomTreesEmbedding` will change from 10 in version 0.20 
+  to 100 in 0.22. A FutureWarning is raised when the default value is used.
+  :issue:`11542` by :user:`Anna Ayzenshtat <annaayzenshtat>`.
 
 Linear, kernelized and related models
 
@@ -716,6 +804,17 @@ Metrics
   for :func:`metrics.roc_auc_score`. Moreover using ``reorder=True`` can hide bugs
   due to floating point error in the input.
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+- In :func:`metrics.normalized_mutual_information_score` and
+  :func:`metrics.adjusted_mutual_information_score`, 
+  warn that ``average_method``
+  will have a new default value. In version 0.22, the default normalizer for each 
+  will become the *arithmetic* mean of the entropies of each clustering. Currently,
+  :func:`metrics.normalized_mutual_information_score` uses the default of
+  ``average_method='geometric'``, and :func:`metrics.adjusted_mutual_information_score`
+  uses the default of ``average_method='max'`` to match their behaviors in
+  version 0.19.
+  :issue:`11124` by :user:`Arya McCarthy <aryamccarthy>`.
 
 - The ``batch_size`` parameter to :func:`metrics.pairwise_distances_argmin_min`
   and :func:`metrics.pairwise_distances_argmin` is deprecated to be removed in
@@ -805,6 +904,12 @@ Misc
   indices should be rejected.
   :issue:`11327` by :user:`Karan Dhingra <kdhingra307>` and `Joel Nothman`_.
 
+Preprocessing
+
+- In :class:`preprocessing.FunctionTransformer`, the default of ``validate``
+  will be from ``True`` to ``False`` in 0.22.
+  :issue:`10655` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changes to estimator checks
 ---------------------------
 
@@ -814,9 +919,17 @@ These changes mostly affect library developers.
   that accept pairwise data.
   :issue:`9701` by :user:`Kyle Johnson <gkjohns>`
 
-- Allow :func:`~utils.estimator_checks.check_estimator` to check that there is no
+- Allow :func:`utils.estimator_checks.check_estimator` to check that there is no
   private settings apart from parameters during estimator initialization.
   :issue:`9378` by :user:`Herilalaina Rakotoarison <herilalaina>`
+
+- The set of checks in :func:`utils.estimator_checks.check_estimator` now includes a
+  ``check_set_params`` test which checks that ``set_params`` is equivalent to
+  passing parameters in ``__init__`` and warns if it encounters parameter
+  validation. :issue:`7738` by :user:`Alvin Chiang <absolutelyNoWarranty>`
+  
+- Add invariance tests for clustering metrics. :issue:`8102` by :user:`Ankita
+  Sinha <anki08>` and :user:`Guillaume Lemaitre <glemaitre>`.
 
 - Add ``check_methods_subset_invariance`` to
   :func:`~utils.estimator_checks.check_estimator`, which checks that

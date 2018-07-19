@@ -32,7 +32,7 @@ import numpy as np
 from .base import get_data_home, _fetch_remote, RemoteFileMetadata
 from ..utils import deprecated
 from ..utils import Bunch
-from ..externals.joblib import Memory
+from ..utils import Memory
 from ..externals.six import b
 
 logger = logging.getLogger(__name__)
