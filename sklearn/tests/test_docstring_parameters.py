@@ -27,13 +27,10 @@ PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
 IGNORED_MODULES = (
     'cluster',
     'datasets',
-    'feature_selection',
-    'kernel_approximation',
     'model_selection',
     'multioutput',
     'setup',
     'utils',
-    'neighbors',
     # Deprecated modules
     'cross_validation',
     'grid_search',
