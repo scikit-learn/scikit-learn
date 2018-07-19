@@ -237,6 +237,6 @@ def test_pca_vs_spca():
 def test_spca_deprecation_warning(spca):
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
-    warn_message ="normalize_components"
+    warn_message = "normalize_components"
     assert_warns_message(DeprecationWarning, warn_message,
                          spca(normalize_components=False).fit, Y)
