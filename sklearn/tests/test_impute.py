@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_false
 
 from sklearn.impute import SimpleImputer, SamplingImputer
 from sklearn.impute import MissingIndicator
+from sklearn.impute import _get_mask
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
@@ -684,3 +685,78 @@ def test_inconsistent_dtype_X_missing_values(imputer_constructor,
 
     with pytest.raises(ValueError, match=err_msg):
         imputer.fit_transform(X)
+
+
+@pytest.mark.parametrize("X_value, dtype, missing_value",
+                         [(1, int, -1),
+                          (1, None, -1),
+                          ("a", object, "NaN"),
+                          ("a", object, np.nan),
+                          ("a", object, None),
+                          (1.0, float, 0),
+                          (1.0, None, np.nan)])
+def test_sampling_deterministic(X_value, dtype, missing_value):
+    # test SamplingImputer on know output
+    X = np.full((10, 10), X_value, dtype=dtype)
+    X[:, 0] = missing_value
+    X[::2, ::2] = missing_value
+
+    X_true = np.full((10, 9), X_value, dtype=dtype)
+
+    imputer = SamplingImputer(missing_values=missing_value)
+
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_true, X_trans)
+
+
+@pytest.mark.parametrize("dtype", [str, np.dtype('U'), np.dtype('S')])
+def test_sampling_error_invalid_type(dtype):
+    # Assert error are raised on invalid types
+    X = np.array([
+        [np.nan, np.nan, "a", "f"],
+        [np.nan, "c", np.nan, "d"],
+        [np.nan, "b", "d", np.nan],
+        [np.nan, "c", "d", "h"],
+    ], dtype=object)
+
+    imputer = SamplingImputer()
+
+    err_msg = "SamplingImputer does not support data"
+    with pytest.raises(ValueError, match=err_msg):
+        imputer.fit(X.astype(dtype=dtype))
+
+    imputer.fit(X)
+
+    err_msg = "SamplingImputer does not support data"
+    with pytest.raises(ValueError, match=err_msg):
+        imputer.transform(X.astype(dtype=dtype))
+
+
+def test_sampling_preserved_statistics():
+    # check that: - filled values are drawn only within non-missing values
+    #             - different random_states give different imputations
+    #             - values are drawn uniformly at random
+    X = np.random.rand(20).reshape(-1, 1)
+    X[::2] = np.nan
+
+    uniques = np.unique(X)
+    uniques = uniques[~_get_mask(uniques, np.nan)]
+
+    imputer = SamplingImputer()
+    Xts = []
+    for i in range(100):
+        Xt = imputer.set_params(random_state=i).fit_transform(X)
+        assert_array_equal(uniques, np.unique(Xt))
+        Xts.append(Xt)
+
+    tests = np.full(100, True)
+    for i in range(100):
+        tests[i] = np.allclose(Xts[i], Xts[i-1])
+    assert not np.all(tests)
+
+    assert np.mean(np.concatenate(Xts)) == pytest.approx(np.nanmean(X),
+                                                         rel=1e-2)
+
+    assert np.std(np.concatenate(Xts)) == pytest.approx(np.nanstd(X),
+                                                        rel=1e-2)
