@@ -88,20 +88,20 @@ def _monkey_patch_webbased_functions(context, data_id):
 
         path = os.path.join(testdir_path,
                             'mock_openml/%d/data_description.json' % data_id)
-        return gzip.open(path + ".gz", 'r')
+        return gzip.open(path + ".gz", 'rb')
 
     def _mock_urlopen_data_features(url):
         assert (url.startswith(url_prefix_data_features))
 
         path = os.path.join(testdir_path,
                             'mock_openml/%d/data_features.json' % data_id)
-        return gzip.open(path + ".gz", 'r')
+        return gzip.open(path + ".gz", 'rb')
 
     def _mock_urlopen_download_data(url):
         assert (url.startswith(url_prefix_download_data))
 
         path = os.path.join(testdir_path, 'mock_openml/%d/data.arff' % data_id)
-        return gzip.open(path + ".gz", 'r')
+        return gzip.open(path + ".gz", 'rb')
 
     def _mock_urlopen_data_list(url):
         # url contains key value pairs of attributes, e.g.,
@@ -127,7 +127,7 @@ def _monkey_patch_webbased_functions(context, data_id):
             raise HTTPError(url=None, code=412,
                             msg='Simulated mock error',
                             hdrs=None, fp=None)
-        return gzip.open(json_file_path, 'r')
+        return gzip.open(json_file_path, 'rb')
 
     def _mock_urlopen(url):
         if url.startswith(url_prefix_data_list):

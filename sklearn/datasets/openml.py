@@ -380,7 +380,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         y = None
     else:
         # unexpected behaviour, this should never happen
-        raise ValueError('Could not determine how to handle'
+        raise ValueError('Could not determine how to handle '
                          'target_column_name of type {}'.
                          format(type(target_column_name)))
 
