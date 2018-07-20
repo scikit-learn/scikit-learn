@@ -590,8 +590,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             n_features is the number of features.
 
         y : array-like, shape = [n_samples] or [n_samples, n_output], optional
-        Target relative to X for classification or regression; None for
-        unsupervised learning. y can also be a sparse matrix.
+            Target relative to X for classification or regression; None for
+            unsupervised learning. y can also be a sparse matrix.
 
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into

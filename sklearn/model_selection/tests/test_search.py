@@ -185,7 +185,6 @@ def test_parameter_grid():
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
-
 def test_grid_search():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
@@ -593,7 +592,7 @@ def test_grid_search_sparsetarget():
                                             random_state=0)
     y_sparse = sp.csr_matrix(y_)
     clf = MockClassifier(foo_param=0)
-    gs = GridSearchCV(clf, {'foo_param': [0.1, 1.]})
+    gs = GridSearchCV(clf, {'foo_param': [0.1, 1.]}, cv=5)
     gs.fit(X_, y_sparse)
     assert_equal(hasattr(gs, 'cv_results_'), True)
 

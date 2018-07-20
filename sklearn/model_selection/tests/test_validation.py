@@ -288,7 +288,7 @@ def test_cross_val_score_sparsetarget():
                                             random_state=0)
     y_sparse = csr_matrix(y_)
     clf = MockClassifier(a=0)
-    scores = cross_val_score(clf, X_, y_sparse)
+    scores = cross_val_score(clf, X_, y_sparse, cv=5)
     assert_array_equal(scores, clf.score(X_, y_sparse))
 
 
