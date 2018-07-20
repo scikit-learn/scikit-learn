@@ -359,7 +359,7 @@ def _gradient_descent(objective, p0, it, n_iter,
 
     tic = time()
     for i in range(it, n_iter):
-        if i % 10 == 0:
+        if i % 1 == 0:
             print("checking credentials")
             if gauth.credentials is None:
               # Authenticate if they're not there
