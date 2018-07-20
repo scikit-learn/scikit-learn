@@ -78,7 +78,7 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
 
 
 def _monkey_patch_webbased_functions(context, data_id, gziped_files=True):
-    testdir_path = os.path.dirname(os.path.realpath(__file__))
+    testdir_path = os.path.dirname(os.path.abspath(__file__))
     url_prefix_data_description = "https://openml.org/api/v1/json/data/"
     url_prefix_data_features = "https://openml.org/api/v1/json/data/features/"
     url_prefix_download_data = "https://openml.org/data/v1/"
