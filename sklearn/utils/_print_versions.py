@@ -46,7 +46,7 @@ def _get_deps_info():
         ("pip", lambda mod: mod.__version__),
         ("setuptools", lambda mod: mod.__version__),
         ("sklearn", lambda mod: mod.__version__),
-        ("numpy", lambda mod: mod.version.version),
+        ("numpy", lambda mod: mod.__version__),
         ("scipy", lambda mod: mod.version.version),
         ("Cython", lambda mod: mod.__version__),
         ("pandas", lambda mod: mod.__version__),
