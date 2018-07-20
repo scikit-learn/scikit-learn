@@ -735,6 +735,7 @@ def test_sampling_error_invalid_type(dtype):
         imputer.transform(X.astype(dtype=dtype))
 
 
+@pytest.mark.filterwarnings('ignore: in the future, full')
 def test_sampling_preserved_statistics():
     # check that: - filled values are drawn only within non-missing values
     #             - different random_states give different imputations
