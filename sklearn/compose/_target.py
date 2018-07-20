@@ -113,6 +113,12 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         self.check_inverse = check_inverse
 
     def _fit_transformer(self, y):
+        """Check transformer and fit transformer.
+
+        Create the default transformer, fit it and make additional inverse
+        check on a subset (optional).
+
+        """
         if (self.transformer is not None and
                 (self.func is not None or self.inverse_func is not None)):
             raise ValueError("'transformer' and functions 'func'/"
@@ -130,8 +136,8 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         # transformer. However, if transformer starts using sample_weight, the
         # code should be modified accordingly. At the time to consider the
         # sample_prop feature, it is also a good use case to be considered.
+        self.transformer_.fit(y)
         if self.check_inverse:
-            self.transformer_.fit(y)
             idx_selected = slice(None, None, max(1, y.shape[0] // 10))
             y_sel = safe_indexing(y, idx_selected)
             y_sel_t = self.transformer_.transform(y_sel)
@@ -184,7 +190,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             self.regressor_ = clone(self.regressor)
 
         # transform y and convert back to 1d array if needed
-        y_trans = self.transformer_.fit_transform(y_2d)
+        y_trans = self.transformer_.transform(y_2d)
         # FIXME: a FunctionTransformer can return a 1D array even when validate
         # is set to True. Therefore, we need to check the number of dimension
         # first.
