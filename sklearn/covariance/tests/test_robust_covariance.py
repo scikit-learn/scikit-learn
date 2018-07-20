@@ -63,7 +63,7 @@ def launch_mcd_on_dataset(n_samples, n_features, n_outliers, tol_loc, tol_cov,
     outliers_offset = 10. * \
         (rand_gen.randint(2, size=(n_outliers, n_features)) - 0.5)
     data[outliers_index] += outliers_offset
-    inliers_mask = np.ones(n_samples, dtype=bool)
+    inliers_mask = np.ones(n_samples).astype(bool)
     inliers_mask[outliers_index] = False
 
     pure_data = data[inliers_mask]

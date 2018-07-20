@@ -176,7 +176,7 @@ def test_invalid_params():
 
 def test_lda_negative_input():
     # test pass dense matrix with sparse negative input.
-    X = np.full((5, 10), -1)
+    X = np.full((5, 10), -1.)
     lda = LatentDirichletAllocation()
     regex = r"^Negative values in data passed"
     assert_raises_regexp(ValueError, regex, lda.fit, X)
