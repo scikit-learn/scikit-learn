@@ -1393,7 +1393,7 @@ def check_cross_val_predict_multilabel(est, X, y, method):
             assert_array_equal(cv_predict_output[i], expected_preds[i])
 
 
-def test_cross_val_predict_with_method_binary(est):
+def check_cross_val_predict_with_method_binary(est):
     # This test includes the decision_function with two classes.
     # This is a special case: it has only one column of output.
     X, y = make_classification(n_classes=2, random_state=0)
@@ -1401,12 +1401,13 @@ def test_cross_val_predict_with_method_binary(est):
         check_cross_val_predict_binary(est, X, y, method)
 
 
-def test_cross_val_predict_with_method_multiclass(est):
+def check_cross_val_predict_with_method_multiclass(est):
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
     for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         check_cross_val_predict_multiclass(est, X, y, method)
+
 
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_cross_val_predict_with_method():
