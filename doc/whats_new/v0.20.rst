@@ -77,6 +77,7 @@ random sampling procedures.
 - The v0.19.0 release notes failed to mention a backwards incompatibility with
   :class:`model_selection.StratifiedKFold` when ``shuffle=True`` due to
   :issue:`7823`.
+- :class:`decomposition.SparsePCA` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -191,6 +192,14 @@ Decomposition, manifold learning and clustering
 - :mod:`dict_learning` functions and models now support positivity constraints.
   This applies to the dictionary and sparse code.
   :issue:`6374` by :user:`John Kirkham <jakirkham>`.
+
+- :class:`decomposition.SparsePCA` now exposes ``normalize_components``. When
+  set to True, the train and test data are centered with the train mean 
+  repsectively during the fit phase and the transform phase. This fixes the
+  behavior of SparsePCA. When set to False, which is the default, the previous
+  abnormal behaviour still holds. The False value is for backward
+  compatibility and should not be used.
+  :issue:`11585` by :user:`Ivan Panico <FollowKenny>`.
 
 Metrics
 
