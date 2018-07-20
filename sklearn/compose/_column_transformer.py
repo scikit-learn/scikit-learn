@@ -386,7 +386,7 @@ boolean mask array or callable
             input_indices.append(remainder_indices)
 
         self._input_indices = input_indices
-        self._X_shape = X.shape
+        self._X_cols = X.shape[1]
         self._X_is_sparse = sparse.issparse(X)
         self._invertible = (True, "")
         self._output_indices = []
@@ -532,7 +532,7 @@ boolean mask array or callable
                 trans, X_sel, weight)
             for _, trans, X_sel, weight in inv_transformers)
 
-        inverse_Xs = np.zeros(self._X_shape)
+        inverse_Xs = np.zeros((Xs[0].shape[0], self._X_cols))
         for indices, inverse_X in zip(self._input_indices, Xs):
             if sparse.issparse(inverse_X):
                 inverse_Xs[:, indices] = inverse_X.toarray()
