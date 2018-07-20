@@ -15,6 +15,9 @@ from sklearn.externals.six import string_types
 from sklearn.externals.six.moves.urllib.error import HTTPError
 
 
+currdir = os.path.dirname(os.path.abspath(__file__))
+
+
 def fetch_dataset_from_openml(data_id, data_name, data_version,
                               target_column_name,
                               expected_observations, expected_features,
@@ -78,7 +81,6 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
 
 
 def _monkey_patch_webbased_functions(context, data_id, gziped_files=True):
-    testdir_path = os.path.dirname(os.path.abspath(__file__))
     url_prefix_data_description = "https://openml.org/api/v1/json/data/"
     url_prefix_data_features = "https://openml.org/api/v1/json/data/features/"
     url_prefix_download_data = "https://openml.org/data/v1/"
@@ -93,21 +95,21 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files=True):
     def _mock_urlopen_data_description(url):
         assert (url.startswith(url_prefix_data_description))
 
-        path = os.path.join(testdir_path, 'mock_openml', str(data_id),
+        path = os.path.join(currdir, 'mock_openml', str(data_id),
                             'data_description.json%s' % path_suffix)
         return read_fn(path, 'rb')
 
     def _mock_urlopen_data_features(url):
         assert (url.startswith(url_prefix_data_features))
 
-        path = os.path.join(testdir_path, 'mock_openml', str(data_id),
+        path = os.path.join(currdir, 'mock_openml', str(data_id),
                             'data_features.json%s' % path_suffix)
         return read_fn(path, 'rb')
 
     def _mock_urlopen_download_data(url):
         assert (url.startswith(url_prefix_download_data))
 
-        path = os.path.join(testdir_path, 'mock_openml', str(data_id),
+        path = os.path.join(currdir, 'mock_openml', str(data_id),
                             'data.arff%s' % path_suffix)
         return read_fn(path, 'rb')
 
@@ -127,7 +129,7 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files=True):
                                          key_val_dict['data_version'],
                                          key_val_dict['status'],
                                          path_suffix)
-        json_file_path = os.path.join(testdir_path, 'mock_openml',
+        json_file_path = os.path.join(currdir, 'mock_openml',
                                       str(data_id), mock_file)
         # load the file itself, to simulate a http error
         json_data = json.loads(read_fn(json_file_path, 'rb').
@@ -194,7 +196,7 @@ def test_fetch_openml_anneal(monkeypatch):
     # Not all original instances included for space reasons
     expected_observations = 11
     expected_features = 38
-    _monkey_patch_webbased_functions(monkeypatch, data_id, False)
+    _monkey_patch_webbased_functions(monkeypatch, data_id)
     fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                               expected_observations, expected_features,
                               object, object, expect_sparse=False,
@@ -210,7 +212,7 @@ def test_fetch_openml_anneal_multitarget(monkeypatch):
     # Not all original instances included for space reasons
     expected_observations = 11
     expected_features = 36
-    _monkey_patch_webbased_functions(monkeypatch, data_id, False)
+    _monkey_patch_webbased_functions(monkeypatch, data_id)
     fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                               expected_observations, expected_features,
                               object, object, expect_sparse=False,
@@ -325,6 +327,20 @@ def test_raises_illegal_multitarget(monkeypatch):
                          "Can only handle homogeneous multi-target datasets,",
                          fetch_openml, data_id=data_id,
                          target_column_name=targets, cache=False)
+
+
+def test_mocked_testfiles_exist():
+    data_ids = [2, 61, 292, 561, 40675]
+    expected_files = ['data.arff.gz', 'data_description.json.gz',
+                      'data_features.json.gz']
+    assert os.path.isdir(currdir)
+    assert os.path.isdir(os.path.join(currdir, 'mock_openml'))
+    for data_id in data_ids:
+        test_dir = os.path.join(currdir, 'mock_openml', str(data_id))
+        assert os.path.isdir(test_dir)
+        assert len(os.listdir(test_dir)) >= 5
+        for expected_file in expected_files:
+            assert os.path.isfile(os.path.join(test_dir, expected_file))
 
 
 def test_warn_ignore_attribute(monkeypatch):
