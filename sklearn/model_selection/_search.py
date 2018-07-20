@@ -731,7 +731,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         if self.iid == 'warn':
             warn = False
             for scorer_name in scorers.keys():
-                scores = test_scores[scorer_name].reshape(n_candidates, n_splits)
+                scores = test_scores[scorer_name].reshape(n_candidates,
+                                                          n_splits)
                 means_weighted = np.average(scores, axis=1,
                                             weights=test_sample_counts)
                 means_unweighted = np.average(scores, axis=1)
