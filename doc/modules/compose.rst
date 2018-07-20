@@ -462,7 +462,7 @@ transformation::
   ...      ('title_bow', CountVectorizer(), 'title')],
   ...      remainder='passthrough')
 
-  >>> column_trans.fit_transform(X).toarray()
+  >>> column_trans.fit_transform(X)
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   array([[1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 5, 4],
          [1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 3, 5],
@@ -479,7 +479,7 @@ the transformation::
   ...      ('title_bow', CountVectorizer(), 'title')],
   ...      remainder=MinMaxScaler())
 
-  >>> column_trans.fit_transform(X)[:, -2:].toarray()
+  >>> column_trans.fit_transform(X)[:, -2:]
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   array([[1. , 0.5],
          [0. , 1. ],
