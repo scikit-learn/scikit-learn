@@ -86,22 +86,23 @@ def _monkey_patch_webbased_functions(context, data_id):
     def _mock_urlopen_data_description(url):
         assert (url.startswith(url_prefix_data_description))
 
-        path = os.path.join(testdir_path,
-                            'mock_openml/%d/data_description.json' % data_id)
-        return gzip.open(path + ".gz", 'rb')
+        path = os.path.join(testdir_path, 'mock_openml', str(data_id),
+                            'data_description.json.gz')
+        return gzip.open(path, 'rb')
 
     def _mock_urlopen_data_features(url):
         assert (url.startswith(url_prefix_data_features))
 
-        path = os.path.join(testdir_path,
-                            'mock_openml/%d/data_features.json' % data_id)
-        return gzip.open(path + ".gz", 'rb')
+        path = os.path.join(testdir_path, 'mock_openml', str(data_id),
+                            'data_features.json.gz')
+        return gzip.open(path, 'rb')
 
     def _mock_urlopen_download_data(url):
         assert (url.startswith(url_prefix_download_data))
 
-        path = os.path.join(testdir_path, 'mock_openml/%d/data.arff' % data_id)
-        return gzip.open(path + ".gz", 'rb')
+        path = os.path.join(testdir_path, 'mock_openml', str(data_id),
+                            'data.arff.gz')
+        return gzip.open(path, 'rb')
 
     def _mock_urlopen_data_list(url):
         # url contains key value pairs of attributes, e.g.,
