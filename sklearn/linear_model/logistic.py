@@ -447,6 +447,10 @@ def _check_solver_option(solver, multi_class, penalty, dual):
             raise ValueError("Solver %s supports only "
                              "dual=False, got dual=%s" % (solver, dual))
 
+    if penalty == 'elastic-net' and solver != 'saga':
+        raise ValueError("Only 'saga' solver supports elastic-net penalty,"
+                         " got solver={}.".format(solver))
+
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
@@ -454,7 +458,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              class_weight=None, dual=False, penalty='l2',
                              intercept_scaling=1., multi_class='ovr',
                              random_state=None, check_input=True,
-                             max_squared_sum=None, sample_weight=None):
+                             max_squared_sum=None, sample_weight=None,
+                             l1_ratio=.5):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
@@ -523,9 +528,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
-    penalty : str, 'l1' or 'l2'
+    penalty : str, 'l1', 'l2', or 'elastic-net'
         Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties.
+        'sag' and 'lbfgs' solvers support only l2 penalties. 'elastic-net' is
+        only supported by the 'saga' solver.
 
     intercept_scaling : float, default 1.
         Useful only when the solver 'liblinear' is used
@@ -566,6 +572,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     sample_weight : array-like, shape(n_samples,) optional
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
+
+    l1_ratio : float, default: 0.5
+        The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
+        used if ``penalty='elastic-net'``. Setting ``l1_ratio=0`` is
+        equivalent to using ``penalty='l2'``, while setting ``l1_ratio=1`` is
+        equivalent to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the
+        penalty is a combination of L1 and L2.
 
     Returns
     -------
@@ -745,9 +758,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             if penalty == 'l1':
                 alpha = 0.
                 beta = 1. / C
-            else:
+            elif penalty == 'l2':
                 alpha = 1. / C
                 beta = 0.
+            else:  #  elastic-net penalty (alpha is 2-norm, beta is 1-norm)
+                alpha = (1. / C) * (1 - l1_ratio)
+                beta = (1. / C) * l1_ratio
+
             w0, n_iter_i, warm_start_sag = sag_solver(
                 X, target, sample_weight, loss, alpha,
                 beta, max_iter, tol,
@@ -778,7 +795,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           verbose=0, solver='lbfgs', penalty='l2',
                           dual=False, intercept_scaling=1.,
                           multi_class='ovr', random_state=None,
-                          max_squared_sum=None, sample_weight=None):
+                          max_squared_sum=None, sample_weight=None,
+                          l1_ratio=.5):
     """Computes scores across logistic_regression_path
 
     Parameters
@@ -840,9 +858,10 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     solver : {'lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'}
         Decides which solver to use.
 
-    penalty : str, 'l1' or 'l2'
+    penalty : str, 'l1', 'l2', or 'elastic-net'
         Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties.
+        'sag' and 'lbfgs' solvers support only l2 penalties. 'elastic-net' is
+        only supported by the 'saga' solver.
 
     dual : bool
         Dual or primal formulation. Dual formulation is only implemented for
@@ -885,6 +904,13 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
 
+    l1_ratio : float, default: 0.5
+        The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
+        used if ``penalty='elastic-net'``. Setting ``l1_ratio=0`` is
+        equivalent to using ``penalty='l2'``, while setting ``l1_ratio=1`` is
+        equivalent to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the
+        penalty is a combination of L1 and L2.
+
     Returns
     -------
     coefs : ndarray, shape (n_cs, n_features) or (n_cs, n_features + 1)
@@ -915,13 +941,13 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         sample_weight = sample_weight[train]
 
     coefs, Cs, n_iter = logistic_regression_path(
-        X_train, y_train, Cs=Cs, fit_intercept=fit_intercept,
-        solver=solver, max_iter=max_iter, class_weight=class_weight,
-        pos_class=pos_class, multi_class=multi_class,
-        tol=tol, verbose=verbose, dual=dual, penalty=penalty,
-        intercept_scaling=intercept_scaling, random_state=random_state,
-        check_input=False, max_squared_sum=max_squared_sum,
-        sample_weight=sample_weight)
+        X_train, y_train, Cs=Cs, l1_ratio=l1_ratio,
+        fit_intercept=fit_intercept, solver=solver, max_iter=max_iter,
+        class_weight=class_weight, pos_class=pos_class,
+        multi_class=multi_class, tol=tol, verbose=verbose, dual=dual,
+        penalty=penalty, intercept_scaling=intercept_scaling,
+        random_state=random_state, check_input=False,
+        max_squared_sum=max_squared_sum, sample_weight=sample_weight)
 
     log_reg = LogisticRegression(multi_class=multi_class)
 
@@ -984,9 +1010,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     Parameters
     ----------
-    penalty : str, 'l1' or 'l2', default: 'l2'
+    penalty : str, 'l1', 'l2', or 'elastic-net', default: 'l2'
         Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties.
+        'sag' and 'lbfgs' solvers support only l2 penalties. 'elastic-net' is
+        only supported by the 'saga' solver.
 
         .. versionadded:: 0.19
            l1 penalty with SAGA solver (allowing 'multinomial' + L1)
@@ -1096,6 +1123,13 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         set to 'liblinear' regardless of whether 'multi_class' is specified or
         not. If given a value of -1, all cores are used.
 
+    l1_ratio : float, default: 0.5
+        The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
+        used if ``penalty='elastic-net'``. Setting ``l1_ratio=0`` is
+        equivalent to using ``penalty='l2'``, while setting ``l1_ratio=1`` is
+        equivalent to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the
+        penalty is a combination of L1 and L2.
+
     Attributes
     ----------
 
@@ -1167,7 +1201,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='liblinear', max_iter=100,
-                 multi_class='ovr', verbose=0, warm_start=False, n_jobs=1):
+                 multi_class='ovr', verbose=0, warm_start=False, n_jobs=1,
+                 l1_ratio=.5):
 
         self.penalty = penalty
         self.dual = dual
@@ -1183,6 +1218,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.verbose = verbose
         self.warm_start = warm_start
         self.n_jobs = n_jobs
+        self.l1_ratio = l1_ratio
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -1290,13 +1326,12 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                                backend=backend)(
             path_func(X, y, pos_class=class_, Cs=[self.C],
-                      fit_intercept=self.fit_intercept, tol=self.tol,
-                      verbose=self.verbose, solver=self.solver,
+                      l1_ratio=self.l1_ratio, fit_intercept=self.fit_intercept,
+                      tol=self.tol, verbose=self.verbose, solver=self.solver,
                       multi_class=self.multi_class, max_iter=self.max_iter,
                       class_weight=self.class_weight, check_input=False,
                       random_state=self.random_state, coef=warm_start_coef_,
-                      penalty=self.penalty,
-                      max_squared_sum=max_squared_sum,
+                      penalty=self.penalty, max_squared_sum=max_squared_sum,
                       sample_weight=sample_weight)
             for class_, warm_start_coef_ in zip(classes_, warm_start_coef))
 
