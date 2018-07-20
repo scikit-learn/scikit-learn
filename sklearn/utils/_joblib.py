@@ -8,6 +8,8 @@ import warnings as _warnings
 if _os.environ.get('SKLEARN_SITE_JOBLIB', False):
     with _warnings.catch_warnings():
         _warnings.simplefilter("ignore")
+        # joblib imports may raise DeprecationWarning on certain Python
+        # versions
         from joblib import __all__
         from joblib import *  # noqa
         from joblib import __version__
