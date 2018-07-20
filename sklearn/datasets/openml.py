@@ -376,8 +376,13 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         indices = [int(name_feature[col_name]['index'])
                    for col_name in target_column_name]
         y = np.array(data[:, indices], dtype=dtype)
-    else:
+    elif target_column_name is None:
         y = None
+    else:
+        # unexpected behaviour, this should never happen
+        raise ValueError('Could not determine how to handle'
+                         'target_column_name of type {}'.
+                         format(type(target_column_name)))
 
     if all([feature['data_type'] == "numeric" for feature in features
             if feature['name'] in data_columns]):
