@@ -66,7 +66,7 @@ def test_iforest():
 
 @pytest.mark.filterwarnings('ignore:default contamination')
 @pytest.mark.filterwarnings('ignore:threshold_ attribute')
-@pytest.mark.filterwarnings('ignore:Default "behaviour"')
+@pytest.mark.filterwarnings('ignore:behaviour="old"')
 def test_iforest_sparse():
     """Check IForest for various parameter settings on sparse input."""
     rng = check_random_state(0)
@@ -96,7 +96,7 @@ def test_iforest_sparse():
 
 @pytest.mark.filterwarnings('ignore:default contamination')
 @pytest.mark.filterwarnings('ignore:threshold_ attribute')
-@pytest.mark.filterwarnings('ignore:Default "behaviour"')
+@pytest.mark.filterwarnings('ignore:behaviour="old"')
 def test_iforest_error():
     """Test that it gives proper exception on deficient input."""
     X = iris.data
@@ -141,7 +141,7 @@ def test_iforest_error():
 
 
 @pytest.mark.filterwarnings('ignore:default contamination')
-@pytest.mark.filterwarnings('ignore:Default "behaviour"')
+@pytest.mark.filterwarnings('ignore:behaviour="old"')
 def test_recalculate_max_depth():
     """Check max_depth recalculation when max_samples is reset to n_samples"""
     X = iris.data
@@ -151,7 +151,7 @@ def test_recalculate_max_depth():
 
 
 @pytest.mark.filterwarnings('ignore:default contamination')
-@pytest.mark.filterwarnings('ignore:Default "behaviour"')
+@pytest.mark.filterwarnings('ignore:behaviour="old"')
 def test_max_samples_attribute():
     X = iris.data
     clf = IsolationForest().fit(X)
@@ -169,7 +169,7 @@ def test_max_samples_attribute():
 
 @pytest.mark.filterwarnings('ignore:default contamination')
 @pytest.mark.filterwarnings('ignore:threshold_ attribute')
-@pytest.mark.filterwarnings('ignore:Default "behaviour"')
+@pytest.mark.filterwarnings('ignore:behaviour="old"')
 def test_iforest_parallel_regression():
     """Check parallel regression."""
     rng = check_random_state(0)
@@ -195,7 +195,7 @@ def test_iforest_parallel_regression():
 
 
 @pytest.mark.filterwarnings('ignore:default contamination')
-@pytest.mark.filterwarnings('ignore:Default "behaviour"')
+@pytest.mark.filterwarnings('ignore:behaviour="old"')
 def test_iforest_performance():
     """Test Isolation Forest performs well"""
 
@@ -238,7 +238,7 @@ def test_iforest_works():
 
 
 @pytest.mark.filterwarnings('ignore:default contamination')
-@pytest.mark.filterwarnings('ignore:Default "behaviour"')
+@pytest.mark.filterwarnings('ignore:behaviour="old"')
 def test_max_samples_consistency():
     # Make sure validated max_samples in iforest and BaseBagging are identical
     X = iris.data
@@ -248,7 +248,7 @@ def test_max_samples_consistency():
 
 @pytest.mark.filterwarnings('ignore:default contamination')
 @pytest.mark.filterwarnings('ignore:threshold_ attribute')
-@pytest.mark.filterwarnings('ignore:Default "behaviour"')
+@pytest.mark.filterwarnings('ignore:behaviour="old"')
 def test_iforest_subsampled_features():
     # It tests non-regression for #5732 which failed at predict.
     rng = check_random_state(0)
@@ -274,7 +274,7 @@ def test_iforest_average_path_length():
 
 
 @pytest.mark.filterwarnings('ignore:default contamination')
-@pytest.mark.filterwarnings('ignore:Default "behaviour"')
+@pytest.mark.filterwarnings('ignore:behaviour="old"')
 def test_score_samples():
     X_train = [[1, 1], [1, 2], [2, 1]]
     clf1 = IsolationForest(contamination=0.1).fit(X_train)
@@ -288,7 +288,7 @@ def test_score_samples():
 
 
 @pytest.mark.filterwarnings('ignore:default contamination')
-@pytest.mark.filterwarnings('ignore:Default "behaviour"')
+@pytest.mark.filterwarnings('ignore:behaviour="old"')
 def test_deprecation():
     X = [[0.0], [1.0]]
     clf = IsolationForest()
@@ -299,7 +299,7 @@ def test_deprecation():
                          clf.fit, X)
 
     assert_warns_message(FutureWarning,
-                         'Default "behaviour" parameter will change to "new" '
+                         'behaviour="old" is deprecated and will be removed '
                          'in version 0.22',
                          clf.fit, X)
 
@@ -311,7 +311,7 @@ def test_deprecation():
 
 
 @pytest.mark.filterwarnings('ignore:default contamination')
-@pytest.mark.filterwarnings('ignore:Default "behaviour"')
+@pytest.mark.filterwarnings('ignore:behaviour="old"')
 def test_behaviour_param():
     X_train = [[1, 1], [1, 2], [2, 1]]
     clf1 = IsolationForest(behaviour='old').fit(X_train)

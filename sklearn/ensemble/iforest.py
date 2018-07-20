@@ -91,7 +91,9 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
     behaviour : str, optional (default='old')
         Accepted values are 'old' or 'new'. Behaviour of the decision_function.
-        Default "behaviour" parameter will change to "new" in version 0.22.
+        Setting behaviour to "old" is deprecated and will not be possible
+        in version 0.22.
+        Beside, the behaviour parameter will be removed in 0.24.
         Passing behaviour="new" makes the decision_function change to match
         other anomaly detection algorithm API, as explained in details in the
         offset_ attribute documentation. Basically, the decision_function
@@ -202,9 +204,9 @@ class IsolationForest(BaseBagging, OutlierMixin):
             self._contamination = self.contamination
 
         if self.behaviour == 'old':
-            warnings.warn('Default "behaviour" parameter will change to "new" '
-                          'in version 0.22. Passing behaviour="new" makes '
-                          'IsolationForest decision_function change to match '
+            warnings.warn('behaviour="old" is deprecated and will be removed '
+                          'in version 0.22. Please use behaviour="new", which '
+                          'makes the decision_function change to match '
                           'other anomaly detection algorithm API.',
                           FutureWarning)
 

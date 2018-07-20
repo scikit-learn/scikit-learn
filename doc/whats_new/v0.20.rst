@@ -908,6 +908,8 @@ Outlier Detection models
   used.
   In the new behaviour the ``decision_function`` is dependent on the ``contamination``
   parameter, in such a way that 0 becomes its natural threshold to detect outliers.
+  Setting behaviour to "old" is deprecated and will not be possible in version 0.22.
+  Beside, the behaviour parameter will be removed in 0.24.
   :issue:`11553` by `Nicolas Goix`_.
 
 Covariance
