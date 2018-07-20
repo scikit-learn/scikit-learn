@@ -11,6 +11,7 @@ from sklearn.datasets import fetch_openml
 from sklearn.datasets.openml import _get_data_features
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
+from sklearn.externals.six import string_types
 from sklearn.externals.six.moves.urllib.error import HTTPError
 
 
@@ -281,7 +282,7 @@ def test_target_attribute(monkeypatch):
         data_id)
     target_column_name = data_description.get('default_target_attribute', None)
     assert target_column_name == 'class'
-    assert type(target_column_name) == str
+    assert isinstance(target_column_name, string_types)
 
 
 def test_fetch_openml_inactive(monkeypatch):
