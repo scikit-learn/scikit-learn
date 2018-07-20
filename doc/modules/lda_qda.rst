@@ -42,7 +42,7 @@ perform supervised dimensionality reduction, by projecting the input data to a
 linear subspace consisting of the directions which maximize the separation
 between classes (in a precise sense discussed in the mathematics section
 below). The dimension of the output is necessarily less than the number of
-classes, so this is a in general a rather strong dimensionality reduction, and
+classes, so this is, in general, a rather strong dimensionality reduction, and
 only makes senses in a multiclass setting.
 
 This is implemented in
@@ -73,7 +73,9 @@ More specifically, for linear and quadratic discriminant analysis,
 :math:`P(X|y)` is modelled as a multivariate Gaussian distribution with
 density:
 
-.. math:: p(X | y=k) = \frac{1}{(2\pi)^n |\Sigma_k|^{1/2}}\exp\left(-\frac{1}{2} (X-\mu_k)^t \Sigma_k^{-1} (X-\mu_k)\right)
+.. math:: P(X | y=k) = \frac{1}{(2\pi)^{d/2} |\Sigma_k|^{1/2}}\exp\left(-\frac{1}{2} (X-\mu_k)^t \Sigma_k^{-1} (X-\mu_k)\right) 
+
+where :math:`d` is the number of features.
 
 To use this model as a classifier, we just need to estimate from the training
 data the class priors :math:`P(y=k)` (by the proportion of instances of class

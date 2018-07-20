@@ -154,7 +154,7 @@ def plot_species_distribution(species=("bradypus_variegatus_0",
         else:
             print(" - plot coastlines from coverage")
             plt.contour(X, Y, land_reference,
-                        levels=[-9999], colors="k",
+                        levels=[-9998], colors="k",
                         linestyles="solid")
             plt.xticks([])
             plt.yticks([])
@@ -168,7 +168,7 @@ def plot_species_distribution(species=("bradypus_variegatus_0",
         idx = np.where(land_reference > -9999)
         coverages_land = data.coverages[:, idx[0], idx[1]].T
 
-        pred = clf.decision_function((coverages_land - mean) / std)[:, 0]
+        pred = clf.decision_function((coverages_land - mean) / std)
         Z *= pred.min()
         Z[idx[0], idx[1]] = pred
 
@@ -192,8 +192,7 @@ def plot_species_distribution(species=("bradypus_variegatus_0",
 
         # Compute AUC with regards to background points
         pred_background = Z[background_points[0], background_points[1]]
-        pred_test = clf.decision_function((species.cov_test - mean)
-                                          / std)[:, 0]
+        pred_test = clf.decision_function((species.cov_test - mean) / std)
         scores = np.r_[pred_test, pred_background]
         y = np.r_[np.ones(pred_test.shape), np.zeros(pred_background.shape)]
         fpr, tpr, thresholds = metrics.roc_curve(y, scores)

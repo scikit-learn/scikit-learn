@@ -81,15 +81,16 @@ The function :func:`validation_curve` can help in this case::
   >>> X, y = X[indices], y[indices]
 
   >>> train_scores, valid_scores = validation_curve(Ridge(), X, y, "alpha",
-  ...                                               np.logspace(-7, 3, 3))
-  >>> train_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-  array([[ 0.94...,  0.92...,  0.92...],
-         [ 0.94...,  0.92...,  0.92...],
-         [ 0.47...,  0.45...,  0.42...]])
+  ...                                               np.logspace(-7, 3, 3),
+  ...                                               cv=5)
+  >>> train_scores            # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+  array([[0.93..., 0.94..., 0.92..., 0.91..., 0.92...],
+         [0.93..., 0.94..., 0.92..., 0.91..., 0.92...],
+         [0.51..., 0.52..., 0.49..., 0.47..., 0.49...]])
   >>> valid_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-  array([[ 0.90...,  0.92...,  0.94...],
-         [ 0.90...,  0.92...,  0.94...],
-         [ 0.44...,  0.39...,  0.45...]])
+  array([[0.90..., 0.84..., 0.94..., 0.96..., 0.93...],
+         [0.90..., 0.84..., 0.94..., 0.96..., 0.93...],
+         [0.46..., 0.25..., 0.50..., 0.49..., 0.52...]])
 
 If the training score and the validation score are both low, the estimator will
 be underfitting. If the training score is high and the validation score is low,
@@ -148,11 +149,11 @@ average scores on the validation sets)::
   >>> train_sizes            # doctest: +NORMALIZE_WHITESPACE
   array([ 50, 80, 110])
   >>> train_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-  array([[ 0.98...,  0.98 ,  0.98...,  0.98...,  0.98...],
-         [ 0.98...,  1.   ,  0.98...,  0.98...,  0.98...],
-         [ 0.98...,  1.   ,  0.98...,  0.98...,  0.99...]])
+  array([[0.98..., 0.98 , 0.98..., 0.98..., 0.98...],
+         [0.98..., 1.   , 0.98..., 0.98..., 0.98...],
+         [0.98..., 1.   , 0.98..., 0.98..., 0.99...]])
   >>> valid_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-  array([[ 1. ,  0.93...,  1. ,  1. ,  0.96...],
-         [ 1. ,  0.96...,  1. ,  1. ,  0.96...],
-         [ 1. ,  0.96...,  1. ,  1. ,  0.96...]])
+  array([[1. ,  0.93...,  1. ,  1. ,  0.96...],
+         [1. ,  0.96...,  1. ,  1. ,  0.96...],
+         [1. ,  0.96...,  1. ,  1. ,  0.96...]])
 

@@ -18,7 +18,7 @@ from .base import _preprocess_data
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
@@ -140,7 +140,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -235,8 +235,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> # Use lasso_path to compute a coefficient path
     >>> _, coef_path, _ = lasso_path(X, y, alphas=[5., 1., .5])
     >>> print(coef_path)
-    [[ 0.          0.          0.46874778]
-     [ 0.2159048   0.4425765   0.23689075]]
+    [[0.         0.         0.46874778]
+     [0.2159048  0.4425765  0.23689075]]
 
     >>> # Now use lars_path and 1D linear interpolation to compute the
     >>> # same path
@@ -246,8 +246,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> coef_path_continuous = interpolate.interp1d(alphas[::-1],
     ...                                             coef_path_lars[:, ::-1])
     >>> print(coef_path_continuous([5., 1., .5]))
-    [[ 0.          0.          0.46915237]
-     [ 0.2159048   0.4425765   0.23668876]]
+    [[0.         0.         0.46915237]
+     [0.2159048  0.4425765  0.23668876]]
 
 
     See also
@@ -287,7 +287,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -580,6 +580,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     warm_start : bool, optional
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
@@ -626,11 +627,11 @@ class ElasticNet(LinearModel, RegressorMixin):
           max_iter=1000, normalize=False, positive=False, precompute=False,
           random_state=0, selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(regr.coef_) # doctest: +ELLIPSIS
-    [ 18.83816048  64.55968825]
+    [18.83816048 64.55968825]
     >>> print(regr.intercept_) # doctest: +ELLIPSIS
-    1.45126075617
+    1.451...
     >>> print(regr.predict([[0, 0]])) # doctest: +ELLIPSIS
-    [ 1.45126076]
+    [1.451...]
 
 
     Notes
@@ -700,19 +701,23 @@ class ElasticNet(LinearModel, RegressorMixin):
             raise ValueError('precompute should be one of True, False or'
                              ' array-like. Got %r' % self.precompute)
 
+        # Remember if X is copied
+        X_copied = False
         # We expect X and y to be float64 or float32 Fortran ordered arrays
         # when bypassing checks
         if check_input:
+            X_copied = self.copy_X and self.fit_intercept
             X, y = check_X_y(X, y, accept_sparse='csc',
                              order='F', dtype=[np.float64, np.float32],
-                             copy=self.copy_X and self.fit_intercept,
-                             multi_output=True, y_numeric=True)
+                             copy=X_copied, multi_output=True, y_numeric=True)
             y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
                             ensure_2d=False)
 
+        # Ensure copying happens only once, don't do it again if done above
+        should_copy = self.copy_X and not X_copied
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
-                     self.fit_intercept, copy=False)
+                     self.fit_intercept, copy=should_copy)
         if y.ndim == 1:
             y = y[:, np.newaxis]
         if Xy is not None and Xy.ndim == 1:
@@ -758,8 +763,12 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if n_targets == 1:
             self.n_iter_ = self.n_iter_[0]
+            self.coef_ = coef_[0]
+            self.dual_gap_ = dual_gaps_[0]
+        else:
+            self.coef_ = coef_
+            self.dual_gap_ = dual_gaps_
 
-        self.coef_, self.dual_gap_ = map(np.squeeze, [coef_, dual_gaps_])
         self._set_intercept(X_offset, y_offset, X_scale)
 
         # workaround since _set_intercept will cast self.coef_ into X.dtype
@@ -851,6 +860,7 @@ class Lasso(ElasticNet):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
@@ -894,9 +904,9 @@ class Lasso(ElasticNet):
        normalize=False, positive=False, precompute=False, random_state=None,
        selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
-    [ 0.85  0.  ]
-    >>> print(clf.intercept_)
-    0.15
+    [0.85 0.  ]
+    >>> print(clf.intercept_)  # doctest: +ELLIPSIS
+    0.15...
 
     See also
     --------
@@ -1042,7 +1052,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
     @abstractmethod
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv=None, verbose=False, n_jobs=1,
+                 copy_X=True, cv='warn', verbose=False, n_jobs=1,
                  positive=False, random_state=None, selection='cyclic'):
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1301,6 +1311,10 @@ class LassoCV(LinearModelCV, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     verbose : bool or integer
         Amount of verbosity.
 
@@ -1371,7 +1385,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv=None, verbose=False, n_jobs=1,
+                 copy_X=True, cv='warn', verbose=False, n_jobs=1,
                  positive=False, random_state=None, selection='cyclic'):
         super(LassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
@@ -1454,6 +1468,10 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
@@ -1520,11 +1538,11 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
            normalize=False, positive=False, precompute='auto', random_state=0,
            selection='cyclic', tol=0.0001, verbose=0)
     >>> print(regr.alpha_) # doctest: +ELLIPSIS
-    0.19947279427
+    0.1994727942696716
     >>> print(regr.intercept_) # doctest: +ELLIPSIS
-    0.398882965428
+    0.398...
     >>> print(regr.predict([[0, 0]])) # doctest: +ELLIPSIS
-    [ 0.39888297]
+    [0.398...]
 
 
     Notes
@@ -1563,7 +1581,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
-                 max_iter=1000, tol=1e-4, cv=None, copy_X=True,
+                 max_iter=1000, tol=1e-4, cv='warn', copy_X=True,
                  verbose=0, n_jobs=1, positive=False, random_state=None,
                  selection='cyclic'):
         self.l1_ratio = l1_ratio
@@ -1599,7 +1617,7 @@ class MultiTaskElasticNet(Lasso):
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -1644,6 +1662,7 @@ class MultiTaskElasticNet(Lasso):
     warm_start : bool, optional
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
@@ -1665,7 +1684,7 @@ class MultiTaskElasticNet(Lasso):
         Independent term in decision function.
 
     coef_ : array, shape (n_tasks, n_features)
-        Parameter vector (W in the cost function formula). If a 1D y is \
+        Parameter vector (W in the cost function formula). If a 1D y is
         passed in at fit (non multi-task usage), ``coef_`` is then a 1D array.
         Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
@@ -1683,10 +1702,10 @@ class MultiTaskElasticNet(Lasso):
             l1_ratio=0.5, max_iter=1000, normalize=False, random_state=None,
             selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
-    [[ 0.45663524  0.45612256]
-     [ 0.45663524  0.45612256]]
+    [[0.45663524 0.45612256]
+     [0.45663524 0.45612256]]
     >>> print(clf.intercept_)
-    [ 0.0872422  0.0872422]
+    [0.0872422 0.0872422]
 
     See also
     --------
@@ -1795,7 +1814,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -1834,6 +1853,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
     warm_start : bool, optional
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
@@ -1871,10 +1891,10 @@ class MultiTaskLasso(MultiTaskElasticNet):
             normalize=False, random_state=None, selection='cyclic', tol=0.0001,
             warm_start=False)
     >>> print(clf.coef_)
-    [[ 0.89393398  0.        ]
-     [ 0.89393398  0.        ]]
+    [[0.89393398 0.        ]
+     [0.89393398 0.        ]]
     >>> print(clf.intercept_)
-    [ 0.10606602  0.10606602]
+    [0.10606602 0.10606602]
 
     See also
     --------
@@ -1915,7 +1935,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -1982,6 +2002,10 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
@@ -2036,19 +2060,19 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> clf = linear_model.MultiTaskElasticNetCV()
+    >>> clf = linear_model.MultiTaskElasticNetCV(cv=3)
     >>> clf.fit([[0,0], [1, 1], [2, 2]],
     ...         [[0, 0], [1, 1], [2, 2]])
     ... #doctest: +NORMALIZE_WHITESPACE
-    MultiTaskElasticNetCV(alphas=None, copy_X=True, cv=None, eps=0.001,
+    MultiTaskElasticNetCV(alphas=None, copy_X=True, cv=3, eps=0.001,
            fit_intercept=True, l1_ratio=0.5, max_iter=1000, n_alphas=100,
            n_jobs=1, normalize=False, random_state=None, selection='cyclic',
            tol=0.0001, verbose=0)
     >>> print(clf.coef_)
-    [[ 0.52875032  0.46958558]
-     [ 0.52875032  0.46958558]]
+    [[0.52875032 0.46958558]
+     [0.52875032 0.46958558]]
     >>> print(clf.intercept_)
-    [ 0.00166409  0.00166409]
+    [0.00166409 0.00166409]
 
     See also
     --------
@@ -2067,7 +2091,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False,
-                 max_iter=1000, tol=1e-4, cv=None, copy_X=True,
+                 max_iter=1000, tol=1e-4, cv='warn', copy_X=True,
                  verbose=0, n_jobs=1, random_state=None, selection='cyclic'):
         self.l1_ratio = l1_ratio
         self.eps = eps
@@ -2094,7 +2118,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -2151,6 +2175,10 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     verbose : bool or integer
         Amount of verbosity.
@@ -2213,7 +2241,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
-                 cv=None, verbose=False, n_jobs=1, random_state=None,
+                 cv='warn', verbose=False, n_jobs=1, random_state=None,
                  selection='cyclic'):
         super(MultiTaskLassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,

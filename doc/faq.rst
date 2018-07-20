@@ -4,6 +4,8 @@
 Frequently Asked Questions
 ===========================
 
+.. currentmodule:: sklearn
+
 Here we try to give some answers to questions that regularly pop up on the mailing list.
 
 What is the project name (a lot of people get it wrong)?
@@ -177,12 +179,10 @@ careful choice of algorithms.
 Do you support PyPy?
 --------------------
 
-In case you didn't know, `PyPy <http://pypy.org/>`_ is the new, fast,
-just-in-time compiling Python implementation. We don't support it.
-When the `NumPy support <http://buildbot.pypy.org/numpy-status/latest.html>`_
-in PyPy is complete or near-complete, and SciPy is ported over as well,
-we can start thinking of a port.
-We use too much of NumPy to work with a partial implementation.
+In case you didn't know, `PyPy <http://pypy.org/>`_ is an alternative
+Python implementation with a built-in just-in-time compiler. Experimental
+support for PyPy3-v5.10+ has been added, which requires Numpy 1.14.0+,
+and scipy 1.1.0+.
 
 How do I deal with string data (or trees, graphs...)?
 -----------------------------------------------------
@@ -259,7 +259,7 @@ consider the lack of fork-safety in Accelerate / vecLib as a bug.
 In Python 3.4+ it is now possible to configure ``multiprocessing`` to
 use the 'forkserver' or 'spawn' start methods (instead of the default
 'fork') to manage the process pools. To work around this issue when
-using scikit-learn, you can set the JOBLIB_START_METHOD environment
+using scikit-learn, you can set the ``JOBLIB_START_METHOD`` environment
 variable to 'forkserver'. However the user should be aware that using
 the 'forkserver' method prevents joblib.Parallel to call function
 interactively defined in a shell session.
@@ -351,3 +351,22 @@ However, a global random state is prone to modification by other code during
 execution. Thus, the only way to ensure replicability is to pass ``RandomState``
 instances everywhere and ensure that both estimators and cross-validation
 splitters have their ``random_state`` parameter set.
+
+Why do categorical variables need preprocessing in scikit-learn, compared to other tools?
+-----------------------------------------------------------------------------------------
+
+Most of scikit-learn assumes data is in NumPy arrays or SciPy sparse matrices
+of a single numeric dtype. These do not explicitly represent categorical
+variables at present. Thus, unlike R's data.frames or pandas.DataFrame, we
+require explicit conversion of categorical features to numeric values, as
+discussed in :ref:`preprocessing_categorical_features`.
+See also :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py` for an
+example of working with heterogeneous (e.g. categorical and numeric) data.
+
+Why does Scikit-learn not directly work with, for example, pandas.DataFrame?
+
+The homogeneous NumPy and SciPy data objects currently expected are most
+efficient to process for most operations. Extensive work would also be needed
+to support Pandas categorical types. Restricting input to homogeneous
+types therefore reduces maintenance cost and encourages usage of efficient
+data structures.

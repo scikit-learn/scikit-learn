@@ -55,8 +55,21 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL pyamg=$PYAMG_VERSION"
     fi
 
+    if [[ -n "$PILLOW_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL pillow=$PILLOW_VERSION"
+    fi
+
+    if [[ -n "$JOBLIB_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL joblib=$JOBLIB_VERSION"
+    fi
+
     conda create -n testenv --yes $TO_INSTALL
     source activate testenv
+
+    # for python 3.4, conda does not have recent pytest packages
+    if [[ "$PYTHON_VERSION" == "3.4" ]]; then
+        pip install pytest==3.5
+    fi
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
@@ -69,7 +82,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     source testvenv/bin/activate
     pip install pytest pytest-cov cython==$CYTHON_VERSION
 
-elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
+elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     # Set up our own virtualenv environment to avoid travis' numpy.
     # This venv points to the python interpreter of the travis build
     # matrix.
@@ -80,6 +93,9 @@ elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
     echo "Installing numpy and scipy master wheels"
     dev_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
     pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy pandas cython
+    echo "Installing joblib master"
+    pip install https://github.com/joblib/joblib/archive/master.zip
+    export SKLEARN_SITE_JOBLIB=1
     pip install pytest pytest-cov
 fi
 

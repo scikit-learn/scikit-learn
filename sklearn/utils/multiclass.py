@@ -7,7 +7,6 @@ Multi-class / multi-label utility function
 
 """
 from __future__ import division
-from collections import Sequence
 from itertools import chain
 
 from scipy.sparse import issparse
@@ -18,8 +17,8 @@ from scipy.sparse import lil_matrix
 import numpy as np
 
 from ..externals.six import string_types
+from ..utils.fixes import _Sequence as Sequence
 from .validation import check_array
-
 
 
 def _unique_multiclass(y):
@@ -54,7 +53,7 @@ def unique_labels(*ys):
 
     Parameters
     ----------
-    *ys : array-likes,
+    *ys : array-likes
 
     Returns
     -------
@@ -401,7 +400,7 @@ def class_distribution(y, sample_weight=None):
 
 
 def _ovr_decision_function(predictions, confidences, n_classes):
-    """Compute a continuous, tie-breaking ovr decision function.
+    """Compute a continuous, tie-breaking OvR decision function from OvO.
 
     It is important to include a continuous value, not only votes,
     to make computing AUC or calibration meaningful.

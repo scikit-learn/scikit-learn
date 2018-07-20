@@ -133,12 +133,14 @@ def test_affinity_propagation_predict_non_convergence():
     X = np.array([[0, 0], [1, 1], [-2, -2]])
 
     # Force non-convergence by allowing only a single iteration
-    af = AffinityPropagation(preference=-10, max_iter=1).fit(X)
+    af = assert_warns(ConvergenceWarning,
+                      AffinityPropagation(preference=-10, max_iter=1).fit, X)
 
     # At prediction time, consider new samples as noise since there are no
     # clusters
-    assert_array_equal(np.array([-1, -1, -1]),
-                       af.predict(np.array([[2, 2], [3, 3], [4, 4]])))
+    to_predict = np.array([[2, 2], [3, 3], [4, 4]])
+    y = assert_warns(ConvergenceWarning, af.predict, to_predict)
+    assert_array_equal(np.array([-1, -1, -1]), y)
 
 
 def test_equal_similarities_and_preferences():

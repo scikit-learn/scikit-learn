@@ -1,3 +1,5 @@
+import pytest
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -80,7 +82,7 @@ def test_ovr_fit_predict():
 
 
 def test_ovr_partial_fit():
-    # Test if partial_fit is working as intented
+    # Test if partial_fit is working as intended
     X, y = shuffle(iris.data, iris.target, random_state=0)
     ovr = OneVsRestClassifier(MultinomialNB())
     ovr.partial_fit(X[:100], y[:100], np.unique(y))
@@ -121,8 +123,8 @@ def test_ovr_partial_fit_exceptions():
     # A new class value which was not in the first call of partial_fit
     # It should raise ValueError
     y1 = [5] + y[7:-1]
-    assert_raises_regexp(ValueError, "Mini-batch contains \[.+\] while classes"
-                                     " must be subset of \[.+\]",
+    assert_raises_regexp(ValueError, r"Mini-batch contains \[.+\] while "
+                                     r"classes must be subset of \[.+\]",
                          ovr.partial_fit, X=X[7:], y=y1)
 
 
@@ -179,7 +181,8 @@ def test_ovr_fit_predict_sparse():
         assert_array_equal(pred, Y_pred_sprs.toarray())
 
         # Test decision_function
-        clf_sprs = OneVsRestClassifier(svm.SVC()).fit(X_train, sparse(Y_train))
+        clf = svm.SVC(gamma="scale")
+        clf_sprs = OneVsRestClassifier(clf).fit(X_train, sparse(Y_train))
         dec_pred = (clf_sprs.decision_function(X_test) > 0).astype(int)
         assert_array_equal(dec_pred, clf_sprs.predict(X_test).toarray())
 
@@ -274,7 +277,7 @@ def test_ovr_binary():
                      Ridge(), ElasticNet()):
         conduct_test(base_clf)
 
-    for base_clf in (MultinomialNB(), SVC(probability=True),
+    for base_clf in (MultinomialNB(), SVC(gamma='scale', probability=True),
                      LogisticRegression()):
         conduct_test(base_clf, test_predict_proba=True)
 
@@ -298,7 +301,7 @@ def test_ovr_multilabel():
 
 
 def test_ovr_fit_predict_svc():
-    ovr = OneVsRestClassifier(svm.SVC())
+    ovr = OneVsRestClassifier(svm.SVC(gamma="scale"))
     ovr.fit(iris.data, iris.target)
     assert_equal(len(ovr.estimators_), 3)
     assert_greater(ovr.score(iris.data, iris.target), .9)
@@ -328,6 +331,8 @@ def test_ovr_multilabel_dataset():
                             decimal=2)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_ovr_multilabel_predict_proba():
     base_clf = MultinomialNB(alpha=1)
     for au in (False, True):
@@ -343,18 +348,20 @@ def test_ovr_multilabel_predict_proba():
         clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
 
         # Decision function only estimator.
-        decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
+        decision_only = OneVsRestClassifier(svm.SVR(gamma='scale')
+                                            ).fit(X_train, Y_train)
         assert_false(hasattr(decision_only, 'predict_proba'))
 
         # Estimator with predict_proba disabled, depending on parameters.
-        decision_only = OneVsRestClassifier(svm.SVC(probability=False))
+        decision_only = OneVsRestClassifier(svm.SVC(gamma='scale',
+                                                    probability=False))
         assert_false(hasattr(decision_only, 'predict_proba'))
         decision_only.fit(X_train, Y_train)
         assert_false(hasattr(decision_only, 'predict_proba'))
         assert_true(hasattr(decision_only, 'decision_function'))
 
         # Estimator which can get predict_proba enabled after fitting
-        gs = GridSearchCV(svm.SVC(probability=False),
+        gs = GridSearchCV(svm.SVC(gamma='scale', probability=False),
                           param_grid={'probability': [True]})
         proba_after_fit = OneVsRestClassifier(gs)
         assert_false(hasattr(proba_after_fit, 'predict_proba'))
@@ -378,7 +385,8 @@ def test_ovr_single_label_predict_proba():
     clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
 
     # Decision function only estimator.
-    decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
+    decision_only = OneVsRestClassifier(svm.SVR(gamma='scale')
+                                        ).fit(X_train, Y_train)
     assert_false(hasattr(decision_only, 'predict_proba'))
 
     Y_pred = clf.predict(X_test)
@@ -401,7 +409,7 @@ def test_ovr_multilabel_decision_function():
                                                    random_state=0)
     X_train, Y_train = X[:80], Y[:80]
     X_test = X[80:]
-    clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
+    clf = OneVsRestClassifier(svm.SVC(gamma="scale")).fit(X_train, Y_train)
     assert_array_equal((clf.decision_function(X_test) > 0).astype(int),
                        clf.predict(X_test))
 
@@ -412,11 +420,13 @@ def test_ovr_single_label_decision_function():
                                         random_state=0)
     X_train, Y_train = X[:80], Y[:80]
     X_test = X[80:]
-    clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
+    clf = OneVsRestClassifier(svm.SVC(gamma="scale")).fit(X_train, Y_train)
     assert_array_equal(clf.decision_function(X_test).ravel() > 0,
                        clf.predict(X_test))
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_ovr_gridsearch():
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     Cs = [0.1, 0.5, 0.8]
@@ -593,6 +603,8 @@ def test_ovo_decision_function():
         assert_greater(len(np.unique(decisions[:, class_idx])), 146)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_ovo_gridsearch():
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     Cs = [0.1, 0.5, 0.8]
@@ -687,6 +699,8 @@ def test_ecoc_fit_predict():
     assert_equal(len(ecoc.estimators_), n_classes * 2)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_ecoc_gridsearch():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
                                 random_state=0)
@@ -737,6 +751,7 @@ def test_pairwise_attribute():
         assert_true(ovr_true._pairwise)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_pairwise_cross_val_score():
     clf_precomputed = svm.SVC(kernel='precomputed')
     clf_notprecomputed = svm.SVC(kernel='linear')

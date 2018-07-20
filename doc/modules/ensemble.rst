@@ -167,19 +167,19 @@ in bias::
 
     >>> clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,
     ...     random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
-    >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.97...
+    >>> scores = cross_val_score(clf, X, y, cv=5)
+    >>> scores.mean()                               # doctest: +ELLIPSIS
+    0.98...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
-    >>> scores.mean()                             # doctest: +ELLIPSIS
+    >>> scores = cross_val_score(clf, X, y, cv=5)
+    >>> scores.mean()                               # doctest: +ELLIPSIS
     0.999...
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
+    >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean() > 0.999
     True
 
@@ -257,8 +257,8 @@ Feature importance evaluation
 The relative rank (i.e. depth) of a feature used as a decision node in a
 tree can be used to assess the relative importance of that feature with
 respect to the predictability of the target variable. Features used at
-the top of the tree contribute to the final prediction decision of a 
-larger fraction of the input samples. The **expected fraction of the 
+the top of the tree contribute to the final prediction decision of a
+larger fraction of the input samples. The **expected fraction of the
 samples** they contribute to can thus be used as an estimate of the
 **relative importance of the features**.
 
@@ -373,7 +373,7 @@ learners::
 
     >>> iris = load_iris()
     >>> clf = AdaBoostClassifier(n_estimators=100)
-    >>> scores = cross_val_score(clf, iris.data, iris.target)
+    >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
     >>> scores.mean()                             # doctest: +ELLIPSIS
     0.9...
 
@@ -782,7 +782,7 @@ accessed via the ``feature_importances_`` property::
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X, y)
     >>> clf.feature_importances_  # doctest: +ELLIPSIS
-    array([ 0.11,  0.1 ,  0.11,  ...
+    array([0.10..., 0.10..., 0.11..., ...
 
 .. topic:: Examples:
 
@@ -965,7 +965,7 @@ The following example shows how to fit the majority rule classifier::
    >>> X, y = iris.data[:, 1:3], iris.target
 
    >>> clf1 = LogisticRegression(random_state=1)
-   >>> clf2 = RandomForestClassifier(random_state=1)
+   >>> clf2 = RandomForestClassifier(n_estimators=50, random_state=1)
    >>> clf3 = GaussianNB()
 
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='hard')
@@ -974,7 +974,7 @@ The following example shows how to fit the majority rule classifier::
    ...     scores = cross_val_score(clf, X, y, cv=5, scoring='accuracy')
    ...     print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (scores.mean(), scores.std(), label))
    Accuracy: 0.90 (+/- 0.05) [Logistic Regression]
-   Accuracy: 0.93 (+/- 0.05) [Random Forest]
+   Accuracy: 0.94 (+/- 0.04) [Random Forest]
    Accuracy: 0.91 (+/- 0.04) [naive Bayes]
    Accuracy: 0.95 (+/- 0.05) [Ensemble]
 
@@ -1029,7 +1029,7 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
    >>> # Training classifiers
    >>> clf1 = DecisionTreeClassifier(max_depth=4)
    >>> clf2 = KNeighborsClassifier(n_neighbors=7)
-   >>> clf3 = SVC(kernel='rbf', probability=True)
+   >>> clf3 = SVC(gamma='scale', kernel='rbf', probability=True)
    >>> eclf = VotingClassifier(estimators=[('dt', clf1), ('knn', clf2), ('svc', clf3)], voting='soft', weights=[2,1,2])
 
    >>> clf1 = clf1.fit(X,y)

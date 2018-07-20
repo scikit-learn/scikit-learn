@@ -89,6 +89,13 @@ General Concepts
         :term:`feature_importances_`.
         Common attributes are listed :ref:`below <glossary_attributes>`.
 
+        A public attribute may have the same name as a constructor
+        :term:`parameter`, with a ``_`` appended.  This is used to store a
+        validated or estimated version of the user's input. For example,
+        :class:`decomposition.PCA` is constructed with an ``n_components``
+        parameter. From this, together with other parameters and the data,
+        PCA estimates the attribute ``n_components_``.
+
         Further private attributes used in prediction/transformation/etc. may
         also be set when fitting.  These begin with a single underscore and are
         not assured to be stable for public access.
@@ -142,20 +149,30 @@ General Concepts
         introduces changes that are not backwards compatible, these are known
         as software regressions.
 
+    callable
+        A function, class or an object which implements the ``__call__``
+        method; anything that returns True when the argument of `callable()
+        <https://docs.python.org/3/library/functions.html#callable>`_.
+
     categorical feature
-        A categorical or nominal :term:`feature` is one that has a finite set
-        of discrete values across the population of data.  These are commonly
-        represented as columns of integers or strings. Strings will be rejected
-        by most scikit-learn estimators, and integers will be treated as
-        ordinal or count-valued. For the use with most estimators, categorical
-        variables should be one-hot encoded.
-        :class:`~sklearn.preprocessing.CategoricalEncoder` helps encoding
-        string-valued categorical features.  Some estimators may handle
-        categorical features better when one-hot encoded.  See also
-        :ref:`preprocessing_categorical_features` and the
+        A categorical or nominal :term:`feature` is one that has a
+        finite set of discrete values across the population of data.
+        These are commonly represented as columns of integers or
+        strings. Strings will be rejected by most scikit-learn
+        estimators, and integers will be treated as ordinal or
+        count-valued. For the use with most estimators, categorical
+        variables should be one-hot encoded. Notable exceptions include
+        tree-based models such as random forests and gradient boosting
+        models that often work better and faster with integer-coded
+        categorical variables.
+        :class:`~sklearn.preprocessing.OrdinalEncoder` helps encoding
+        string-valued categorical features as ordinal integers, and
+        :class:`~sklearn.preprocessing.OneHotEncoder` can be used to
+        one-hot encode categorical features.
+        See also :ref:`preprocessing_categorical_features` and the
         `http://contrib.scikit-learn.org/categorical-encoding
-        <category_encoders>`_ package for tools related to encoding categorical
-        features.
+        <category_encoders>`_ package for tools related to encoding
+        categorical features.
 
     clone
     cloned
@@ -173,7 +190,8 @@ General Concepts
         This refers to the tests run on almost every estimator class in
         Scikit-learn to check they comply with basic API conventions.  They are
         available for external use through
-        :func:`utils.estimator_checks.check_estimator`.
+        :func:`utils.estimator_checks.check_estimator`, with most of the
+        implementation in ``sklearn/utils/estimator_checks.py``.
 
         Note: Some exceptions to the common testing regime are currently
         hard-coded into the library, but we hope to replace this by marking
@@ -184,7 +202,7 @@ General Concepts
         We use deprecation to slowly violate our :term:`backwards
         compatibility` assurances, usually to to:
 
-        * change the the default value of a parameter; or
+        * change the default value of a parameter; or
         * remove a parameter, attribute, method, class, etc.
 
         We will ordinarily issue a warning when a deprecated element is used,
@@ -270,6 +288,13 @@ General Concepts
         * For determining some aspects of an estimator's expectations or
           support for some feature, we use :term:`estimator tags` instead of
           duck typing.
+
+    early stopping
+        This consists in stopping an iterative optimization method before the
+        convergence of the training loss, to avoid over-fitting. This is
+        generally done by monitoring the generalization score on a validation
+        set. When available, it is activated through the parameter
+        ``early_stopping`` or by setting a postive :term:`n_iter_no_change`.
 
     estimator instance
         We sometimes use this terminology to distinguish an :term:`estimator`
@@ -417,6 +442,17 @@ General Concepts
     hyper-parameter
         See :term:`parameter`.
 
+    impute
+    imputation
+        Most machine learning algorithms require that their inputs have no
+        :term:`missing values`, and will not work if this requirement is
+        violated. Algorithms that attempt to fill in (or impute) missing values
+        are referred to as imputation algorithms.
+
+    indexable
+        An :term:`array-like`, :term:`sparse matrix`, pandas DataFrame or
+        sequence (usually a list).
+
     induction
     inductive
         Inductive (contrasted with :term:`transductive`) machine learning
@@ -428,7 +464,16 @@ General Concepts
         A Python library (http://joblib.readthedocs.io) used in Scikit-learn to
         facilite simple parallelism and caching.  Joblib is oriented towards
         efficiently working with numpy arrays, such as through use of
-        :term:`memory mapping`.
+        :term:`memory mapping`. See :ref:`parallelism` for more
+        information.
+
+    label indicator matrix
+    multilabel indicator matrix
+    multilabel indicator matrices
+        The format used to represent multilabel data, where each row of a 2d
+        array or sparse matrix corresponds to a sample, each column
+        corresponds to a class, and each element is 1 if the sample is labeled
+        with the class and 0 if not.
 
     leakage
     data leakage
@@ -453,10 +498,10 @@ General Concepts
 
     missing values
         Most Scikit-learn estimators do not work with missing values. When they
-        do (e.g. in :class:`preprocessing.Imputer`), NaN is the preferred
+        do (e.g. in :class:`impute.SimpleImputer`), NaN is the preferred
         representation of missing values in float arrays.  If the array has
         integer dtype, NaN cannot be represented. For this reason, we support
-        specifying another ``missing_values`` value when imputation or
+        specifying another ``missing_values`` value when :term:`imputation` or
         learning can be performed in integer space.  :term:`Unlabeled data`
         is a special case of missing values in the :term:`target`.
 
@@ -508,6 +553,9 @@ General Concepts
         possible label corresponds to a binary output. Also called *responses*,
         *tasks* or *targets*.
         See :term:`multiclass multioutput` and :term:`continuous multioutput`.
+
+    pair
+        A tuple of length two.
 
     parameter
     parameters
@@ -656,7 +704,8 @@ General Concepts
             The sparse matrix is interpreted as an array with implicit and
             explicit zeros being interpreted as the number 0.  This is the
             interpretation most often adopted, e.g. when sparse matrices
-            are used for feature matrices or multilabel indicator matrices.
+            are used for feature matrices or :term:`multilabel indicator
+            matrices`.
         graph semantics
             As with :mod:`scipy.sparse.csgraph`, explicit zeros are
             interpreted as the number 0, but implicit zeros indicate a masked
@@ -796,7 +845,7 @@ Class APIs and Estimator Types
         (and thus a 2-dimensional array-like for a set of samples).  In other
         words, it (lossily) maps a non-rectangular data representation into
         :term:`rectangular` data.
-        
+
         Feature extractors must implement at least:
 
         * :term:`fit`
@@ -894,10 +943,11 @@ Class APIs and Estimator Types
 There are further APIs specifically related to a small family of estimators,
 such as:
 
-.. glossary:
+.. glossary::
 
-    cross validation splitter
+    cross-validation splitter
     CV splitter
+    cross-validation generator
         A non-estimator family of classes used to split a dataset into a
         sequence of train and test portions (see :ref:`cross_validation`),
         by providing :term:`split` and :term:`get_n_splits` methods.
@@ -907,8 +957,9 @@ such as:
 
     scorer
         A non-estimator callable object which evaluates an estimator on given
-        test data, returning a number. See :ref:`scoring_parameter`; see also
-        :term:`evaluation metric`.
+        test data, returning a number. Unlike :term:`evaluation metrics`,
+        a greater returned number must correspond with a *better* score.
+        See :ref:`scoring_parameter`.
 
 Further examples:
 
@@ -958,7 +1009,7 @@ Target Types
         :term:`outputs`, each one a finite floating point number, for a
         fixed int ``n_outputs > 1`` in a particular dataset.
 
-        Continous multioutput targets are represented as multiple
+        Continuous multioutput targets are represented as multiple
         :term:`continuous` targets, horizontally stacked into an array
         of shape ``(n_samples, n_outputs)``.
 
@@ -1034,6 +1085,13 @@ Target Types
 
         :func:`~utils.multiclass.type_of_target` will return
         'multilabel-indicator' for multilabel input, whether sparse or dense.
+
+    multioutput
+    multi-output
+        A target where each sample has multiple classification/regression
+        labels. See :term:`multiclass multioutput` and :term:`continuous
+        multioutput`. We do not currently support modelling mixed
+        classification and regression targets.
 
 .. _glossary_methods:
 
@@ -1150,7 +1208,7 @@ Methods
         :term:`set_params`.  A parameter ``deep`` can be used, when set to
         False to only return those parameters not including ``__``, i.e.  not
         due to indirection via contained estimators.
-        
+
         Most estimators adopt the definition from :class:`base.BaseEstimator`,
         which simply adopts the parameters defined for ``__init__``.
         :class:`pipeline.Pipeline`, among others, reimplements ``get_params``
@@ -1207,7 +1265,7 @@ Methods
             of the values in the classifier's :term:`classes_` attribute.
 
         clusterer
-            An array of shape ``(n_samples,) where each value is from 0 to
+            An array of shape ``(n_samples,)`` where each value is from 0 to
             ``n_clusters - 1`` if the corresponding sample is clustered,
             and -1 if the sample is not clustered, as in
             :func:`cluster.dbscan`.
@@ -1350,13 +1408,14 @@ functions or non-estimator constructors.
           :term:`targets` may represent a binary or multiclass (but not
           multioutput) classification problem (determined by
           :func:`utils.multiclass.type_of_target`).
-        - A :term:`cross validation splitter` instance. Refer to the
+        - A :term:`cross-validation splitter` instance. Refer to the
           :ref:`User Guide <cross_validation>` for splitters available
           within Scikit-learn.
         - An iterable yielding train/test splits.
 
         With some exceptions (especially where not using cross validation at
-        all is an option), the default is 3-fold.
+        all is an option), the default is 3-fold and will change to 5-fold
+        in version 0.22.
 
         ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
 
@@ -1403,6 +1462,12 @@ functions or non-estimator constructors.
         input into. See :term:`components_` for the special case of affine
         projection.
 
+    ``n_iter_no_change``
+        Number of iterations with no improvement to wait before stopping the
+        iterative procedure. This is also known as a *patience* parameter. It
+        is typically used with :term:`early stopping` to avoid stopping too
+        early.
+
     ``n_jobs``
         This is used to specify how many concurrent processes/threads should be
         used for parallelized routines.  Scikit-learn uses one processor for
@@ -1421,7 +1486,7 @@ functions or non-estimator constructors.
           sometimes parallelism happens in prediction (e.g. in random forests).
         * Some parallelism uses a multi-threading backend by default, some
           a multi-processing backend.  It is possible to override the default
-          backend by using :func:`sklearn.externals.joblib.parallel.parallel_backend`.
+          backend by using :func:`sklearn.utils.parallel_backend`.
         * Whether parallel processing is helpful at improving runtime depends
           on many factors, and it's usually a good idea to experiment rather
           than assuming that increasing the number of jobs is always a good
@@ -1515,9 +1580,15 @@ functions or non-estimator constructors.
         their number.
 
         :term:`partial_fit` also retains the model between calls, but differs:
-        with ``warm_start`` the parameters change and the data is constant
-        across calls to ``fit``; with ``partial_fit``, the mini-batch of data
-        changes and model parameters stay fixed.
+        with ``warm_start`` the parameters change and the data is
+        (more-or-less) constant across calls to ``fit``; with ``partial_fit``,
+        the mini-batch of data changes and model parameters stay fixed.
+
+        There are cases where you want to use ``warm_start`` to fit on
+        different, but closely related data. For example, one may initially fit
+        to a subset of the data, then fine-tune the parameter search on the
+        full dataset. For classification, all data in a sequence of
+        ``warm_start`` calls to ``fit`` must include samples from each class.
 
 .. _glossary_attributes:
 

@@ -2,12 +2,15 @@
 """
 import sys
 
+import pytest
+
 import numpy as np
 from scipy import linalg
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.covariance import (graph_lasso, GraphLasso, GraphLassoCV,
                                 empirical_covariance)
@@ -19,6 +22,7 @@ from sklearn import datasets
 from numpy.testing import assert_equal
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_graph_lasso(random_state=0):
     # Sample data from a sparse multivariate normal
     dim = 20
@@ -62,21 +66,21 @@ def test_graph_lasso(random_state=0):
     assert_array_almost_equal(precs[0], precs[1])
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_graph_lasso_iris():
     # Hard-coded solution from R glasso package for alpha=1.0
-    # The iris datasets in R and scikit-learn do not match in a few places,
-    # these values are for the scikit-learn version.
+    # (need to set penalize.diagonal to FALSE)
     cov_R = np.array([
-        [0.68112222, 0.0, 0.2651911, 0.02467558],
-        [0.00, 0.1867507, 0.0, 0.00],
-        [0.26519111, 0.0, 3.0924249, 0.28774489],
-        [0.02467558, 0.0, 0.2877449, 0.57853156]
+        [0.68112222, 0.0000000, 0.265820, 0.02464314],
+        [0.00000000, 0.1887129, 0.000000, 0.00000000],
+        [0.26582000, 0.0000000, 3.095503, 0.28697200],
+        [0.02464314, 0.0000000, 0.286972, 0.57713289]
         ])
     icov_R = np.array([
-        [1.5188780, 0.0, -0.1302515, 0.0],
-        [0.0, 5.354733, 0.0, 0.0],
-        [-0.1302515, 0.0, 0.3502322, -0.1686399],
-        [0.0, 0.0, -0.1686399, 1.8123908]
+        [1.5190747, 0.000000, -0.1304475, 0.0000000],
+        [0.0000000, 5.299055, 0.0000000, 0.0000000],
+        [-0.1304475, 0.000000, 0.3498624, -0.1683946],
+        [0.0000000, 0.000000, -0.1683946, 1.8164353]
         ])
     X = datasets.load_iris().data
     emp_cov = empirical_covariance(X)
@@ -87,6 +91,7 @@ def test_graph_lasso_iris():
         assert_array_almost_equal(icov, icov_R)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_graph_lasso_iris_singular():
     # Small subset of rows to test the rank-deficient case
     # Need to choose samples such that none of the variances are zero
@@ -114,6 +119,8 @@ def test_graph_lasso_iris_singular():
         assert_array_almost_equal(icov, icov_R, decimal=5)
 
 
+@ignore_warnings(category=DeprecationWarning)
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_graph_lasso_cv(random_state=1):
     # Sample data from a sparse multivariate normal
     dim = 5
@@ -136,6 +143,8 @@ def test_graph_lasso_cv(random_state=1):
     GraphLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1).fit(X)
 
 
+@ignore_warnings(category=DeprecationWarning)
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_deprecated_grid_scores(random_state=1):
     dim = 5
     n_samples = 6

@@ -30,7 +30,7 @@ from scipy.spatial.distance import pdist, cdist, squareform
 from ..metrics.pairwise import pairwise_kernels
 from ..externals import six
 from ..base import clone
-from sklearn.externals.funcsigs import signature
+from ..utils.fixes import signature
 
 
 def _check_length_scale(X, length_scale):
@@ -199,7 +199,13 @@ class Kernel(six.with_metaclass(ABCMeta)):
         return self
 
     def clone_with_theta(self, theta):
-        """Returns a clone of self with given hyperparameters theta. """
+        """Returns a clone of self with given hyperparameters theta.
+
+        Parameters
+        ----------
+        theta : array, shape (n_dims,)
+            The hyperparameters
+        """
         cloned = clone(self)
         cloned.theta = theta
         return cloned
@@ -395,6 +401,11 @@ class CompoundKernel(Kernel):
     """Kernel which is composed of a set of other kernels.
 
     .. versionadded:: 0.18
+
+    Parameters
+    ----------
+    kernels : list of Kernel objects
+        The other kernels
     """
 
     def __init__(self, kernels):
@@ -1268,7 +1279,7 @@ class Matern(RBF):
     length_scale_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on length_scale
 
-    nu: float, default: 1.5
+    nu : float, default: 1.5
         The parameter nu controlling the smoothness of the learned function.
         The smaller nu, the less smooth the approximated function is.
         For nu=inf, the kernel becomes equivalent to the RBF kernel and for
@@ -1505,7 +1516,7 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
 
 class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
-    """Exp-Sine-Squared kernel.
+    r"""Exp-Sine-Squared kernel.
 
     The ExpSineSquared kernel allows modeling periodic functions. It is
     parameterized by a length-scale parameter length_scale>0 and a periodicity
@@ -1618,7 +1629,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
 
 class DotProduct(Kernel):
-    """Dot-Product kernel.
+    r"""Dot-Product kernel.
 
     The DotProduct kernel is non-stationary and can be obtained from linear
     regression by putting N(0, 1) priors on the coefficients of x_d (d = 1, . .
@@ -1755,7 +1766,7 @@ class PairwiseKernel(Kernel):
 
     Parameters
     ----------
-    gamma: float >= 0, default: 1.0
+    gamma : float >= 0, default: 1.0
         Parameter gamma of the pairwise kernel specified by metric
 
     gamma_bounds : pair of floats >= 0, default: (1e-5, 1e5)

@@ -25,7 +25,7 @@ from .utils.fixes import parallel_helper
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import check_is_fitted, has_fit_parameter
 from .utils.multiclass import check_classification_targets
-from .externals.joblib import Parallel, delayed
+from .utils import Parallel, delayed
 from .externals import six
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
@@ -97,7 +97,6 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(X, y,
                          multi_output=True,
@@ -143,7 +142,6 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
         Returns
         -------
         self : object
-            Returns self.
         """
 
         if not hasattr(self.estimator, "fit"):
@@ -243,7 +241,6 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         super(MultiOutputRegressor, self).partial_fit(
             X, y, sample_weight=sample_weight)
@@ -390,7 +387,6 @@ class _BaseChain(six.with_metaclass(ABCMeta, BaseEstimator)):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, Y = check_X_y(X, Y, multi_output=True, accept_sparse=True)
 
@@ -512,9 +508,10 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         labels for the results of previous estimators in the chain.
         If cv is None the true labels are used when fitting. Otherwise
         possible inputs for cv are:
-            * integer, to specify the number of folds in a (Stratified)KFold,
-            * An object to be used as a cross-validation generator.
-            * An iterable yielding train, test splits.
+
+        * integer, to specify the number of folds in a (Stratified)KFold,
+        * An object to be used as a cross-validation generator.
+        * An iterable yielding train, test splits.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -551,6 +548,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
 
     def fit(self, X, Y):
         """Fit the model to data matrix X and targets Y.
+
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
@@ -561,7 +559,6 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         super(ClassifierChain, self).fit(X, Y)
         self.classes_ = []
@@ -667,9 +664,10 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         labels for the results of previous estimators in the chain.
         If cv is None the true labels are used when fitting. Otherwise
         possible inputs for cv are:
-            * integer, to specify the number of folds in a (Stratified)KFold,
-            * An object to be used as a cross-validation generator.
-            * An iterable yielding train, test splits.
+
+        * integer, to specify the number of folds in a (Stratified)KFold,
+        * An object to be used as a cross-validation generator.
+        * An iterable yielding train, test splits.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -707,7 +705,6 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         super(RegressorChain, self).fit(X, Y)
         return self
