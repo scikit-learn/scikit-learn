@@ -91,9 +91,9 @@ sparse and categorical data. It is used the same way as the :class:`SimpleImpute
     >>> print(imp.fit_transform(X))           # doctest: +NORMALIZE_WHITESPACE
     [[ 1. -1.]
      [ 2. -2.]
-     [ 1. -1.]
-     [ 2. -2.]
-     [ 2. -2.]]
+     [ 1. -2.]
+     [ 2. -1.]
+     [ 2. -1.]]
 
 
 :class:`SimpleImputer` and :class:`SamplingImputer` can be used in a Pipeline as 

@@ -687,6 +687,7 @@ def test_inconsistent_dtype_X_missing_values(imputer_constructor,
         imputer.fit_transform(X)
 
 
+@pytest.mark.filterwarnings('ignore: in the future, full')
 @pytest.mark.parametrize("X_value, dtype, missing_value",
                          [(1, int, -1),
                           (1, None, -1),
@@ -710,6 +711,7 @@ def test_sampling_deterministic(X_value, dtype, missing_value):
     assert_array_equal(X_true, X_trans)
 
 
+@pytest.mark.filterwarnings('ignore: in the future, full')
 @pytest.mark.parametrize("dtype", [str, np.dtype('U'), np.dtype('S')])
 def test_sampling_error_invalid_type(dtype):
     # Assert error are raised on invalid types
