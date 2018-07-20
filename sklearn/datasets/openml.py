@@ -38,7 +38,7 @@ def _get_json_content_from_openml_api(url, error_message, raise_if_error):
     url : str
         The URL to load from. Should be an official OpenML endpoint
 
-    error_message : str
+    error_message : str or None
         The error message to raise if an acceptable OpenML error is thrown
         (acceptable error is, e.g., data id not found. Other errors, like 404's
         will throw the native error message)
