@@ -193,8 +193,8 @@ def _convert_numericals(data, name_feature):
 
 
 def _determine_single_target_data_type(name_feature, target_column_name):
-    if not isinstance(target_column_name, str):
-        raise ValueError('target_column_name should be str, '
+    if not isinstance(target_column_name, string_types):
+        raise ValueError('target_column_name should be of string type, '
                          'got: %s' % type(target_column_name))
     if target_column_name not in name_feature:
         raise KeyError('Could not find target_column_name={}')
