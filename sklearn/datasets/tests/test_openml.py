@@ -270,6 +270,17 @@ def test_fetch_openml_miceprotein(monkeypatch):
                               compare_default_target=True)
 
 
+def test_target_attribute(monkeypatch):
+    # simple sanity check. If this one fails, something is wrong with setting
+    # up the mock files. 
+    data_id = 61
+    _monkey_patch_webbased_functions(monkeypatch, data_id)
+    data_description = sklearn.datasets.openml._get_data_description_by_id(
+        data_id)
+    target_column_name = data_description.get('default_target_attribute', None)
+    assert target_column_name == 'class'
+
+
 def test_fetch_openml_inactive(monkeypatch):
     # fetch inactive dataset by id
     data_id = 40675
