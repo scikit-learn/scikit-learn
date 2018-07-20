@@ -27,11 +27,14 @@ from os import listdir, makedirs, remove
 from os.path import join, exists, isdir
 
 import logging
+from distutils.version import LooseVersion
+
 import numpy as np
 
 from .base import get_data_home, _fetch_remote, RemoteFileMetadata
 from ..utils import Bunch
-from ..externals.joblib import Memory
+from ..utils import Memory
+from ..utils._joblib import __version__ as joblib_version
 from ..externals.six import b
 
 logger = logging.getLogger(__name__)
@@ -287,9 +290,10 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    return_X_y : boolean, default=False. If True, returns ``(dataset.data,
-    dataset.target)`` instead of a Bunch object. See below for more
-    information about the `dataset.data` and `dataset.target` object.
+    return_X_y : boolean, default=False.
+        If True, returns ``(dataset.data, dataset.target)`` instead of a Bunch
+        object. See below for more information about the `dataset.data` and
+        `dataset.target` object.
 
         .. versionadded:: 0.20
 
@@ -326,7 +330,11 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    m = Memory(cachedir=lfw_home, compress=6, verbose=0)
+    if LooseVersion(joblib_version) < LooseVersion('0.12'):
+        # Deal with change of API in joblib
+        m = Memory(cachedir=lfw_home, compress=6, verbose=0)
+    else:
+        m = Memory(location=lfw_home, compress=6, verbose=0)
     load_func = m.cache(_fetch_lfw_people)
 
     # load and memoize the pairs as np arrays
@@ -472,8 +480,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
         pixels. Changing the ``slice_``, ``resize`` or ``subset`` parameters
         will change the shape of the output.
 
-    pairs : numpy array of shape (2200, 2, 62, 47). Shape depends on
-            ``subset``.
+    pairs : numpy array of shape (2200, 2, 62, 47). Shape depends on ``subset``
         Each row has 2 face images corresponding to same or different person
         from the dataset containing 5749 people. Changing the ``slice_``,
         ``resize`` or ``subset`` parameters will change the shape of the
@@ -494,7 +501,11 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    m = Memory(cachedir=lfw_home, compress=6, verbose=0)
+    if LooseVersion(joblib_version) < LooseVersion('0.12'):
+        # Deal with change of API in joblib
+        m = Memory(cachedir=lfw_home, compress=6, verbose=0)
+    else:
+        m = Memory(location=lfw_home, compress=6, verbose=0)
     load_func = m.cache(_fetch_lfw_pairs)
 
     # select the right metadata file according to the requested subset

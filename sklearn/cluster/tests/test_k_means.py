@@ -917,7 +917,8 @@ def _sort_centers(centers):
 def test_weighted_vs_repeated():
     # a sample weight of N should yield the same result as an N-fold
     # repetition of the sample
-    sample_weight = np.random.randint(1, 5, size=n_samples)
+    rng = np.random.RandomState(0)
+    sample_weight = rng.randint(1, 5, size=n_samples)
     X_repeat = np.repeat(X, sample_weight, axis=0)
     estimators = [KMeans(init="k-means++", n_clusters=n_clusters,
                          random_state=42),
@@ -979,3 +980,11 @@ def test_check_sample_weight():
     assert_equal(_num_samples(X), _num_samples(checked_sample_weight))
     assert_almost_equal(checked_sample_weight.sum(), _num_samples(X))
     assert_equal(X.dtype, checked_sample_weight.dtype)
+
+
+def test_iter_attribute():
+    # Regression test on bad n_iter_ value. Previous bug n_iter_ was one off
+    # it's right value (#11340).
+    estimator = KMeans(algorithm="elkan", max_iter=1)
+    estimator.fit(np.random.rand(10, 10))
+    assert estimator.n_iter_ == 1

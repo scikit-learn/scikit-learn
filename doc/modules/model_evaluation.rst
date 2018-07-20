@@ -98,11 +98,12 @@ Usage examples:
     >>> from sklearn.model_selection import cross_val_score
     >>> iris = datasets.load_iris()
     >>> X, y = iris.data, iris.target
-    >>> clf = svm.SVC(gamma='scale', probability=True, random_state=0)
-    >>> cross_val_score(clf, X, y, scoring='neg_log_loss') # doctest: +ELLIPSIS
-    array([-0.10..., -0.16..., -0.07...])
+    >>> clf = svm.SVC(gamma='scale', random_state=0)
+    >>> cross_val_score(clf, X, y, scoring='recall_macro',
+    ...                 cv=5)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
     >>> model = svm.SVC()
-    >>> cross_val_score(model, X, y, scoring='wrong_choice')
+    >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
     Traceback (most recent call last):
     ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score', 'average_precision', 'balanced_accuracy', 'brier_score_loss', 'completeness_score', 'explained_variance', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'fowlkes_mallows_score', 'homogeneity_score', 'mutual_info_score', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_mean_squared_log_error', 'neg_median_absolute_error', 'normalized_mutual_info_score', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc', 'v_measure_score']
 
@@ -150,7 +151,8 @@ the :func:`fbeta_score` function::
     >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
     >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.svm import LinearSVC
-    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
+    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
+    ...                     scoring=ftwo_scorer, cv=5)
 
 The second use case is to build a completely custom scorer object
 from a simple python function using :func:`make_scorer`, which can
@@ -176,7 +178,7 @@ Here is an example of building custom scorers, and of using the
     >>> import numpy as np
     >>> def my_custom_loss_func(y_true, y_pred):
     ...     diff = np.abs(y_true - y_pred).max()
-    ...     return np.log(1 + diff)
+    ...     return np.log1p(diff)
     ...
     >>> # score will negate the return value of my_custom_loss_func,
     >>> # which will be np.log(2), 0.693, given the values for X
@@ -250,13 +252,14 @@ permitted and will require a wrapper to return a single metric::
     >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 1]
     >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
     ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
-    >>> cv_results = cross_validate(svm.fit(X, y), X, y, scoring=scoring)
+    >>> cv_results = cross_validate(svm.fit(X, y), X, y,
+    ...                             scoring=scoring, cv=5)
     >>> # Getting the test set true positive scores
-    >>> print(cv_results['test_tp'])          # doctest: +NORMALIZE_WHITESPACE
-    [16 14  9]
+    >>> print(cv_results['test_tp'])  # doctest: +NORMALIZE_WHITESPACE
+    [10  9  8  7  8]
     >>> # Getting the test set false negative scores
-    >>> print(cv_results['test_fn'])          # doctest: +NORMALIZE_WHITESPACE
-    [1 3 7]
+    >>> print(cv_results['test_fn'])  # doctest: +NORMALIZE_WHITESPACE
+    [0 1 2 3 2]
 
 .. _classification_metrics:
 
@@ -523,8 +526,11 @@ Confusion matrix
 ----------------
 
 The :func:`confusion_matrix` function evaluates
-classification accuracy by computing the `confusion matrix
+classification accuracy by computing the confusion matrix
+with each row corresponding to the true class
 <https://en.wikipedia.org/wiki/Confusion_matrix>`_.
+(Wikipedia and other references may use different convention for axes.)
+
 
 By definition, entry :math:`i, j` in a confusion matrix is
 the number of observations actually in group :math:`i`, but
@@ -565,7 +571,7 @@ false negatives and true positives as follows::
     for an example of using a confusion matrix to classify
     hand-written digits.
 
-  * See :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
     for an example of using a confusion matrix to classify text
     documents.
 
@@ -598,7 +604,7 @@ and inferred labels::
     for an example of classification report usage for
     hand-written digits.
 
-  * See :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
     for an example of classification report usage for text
     documents.
 
@@ -749,7 +755,7 @@ binary classification and multilabel indicator format.
 
 .. topic:: Examples:
 
-  * See :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
     for an example of :func:`f1_score` usage to classify  text
     documents.
 
