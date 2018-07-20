@@ -728,7 +728,7 @@ or the log-linear classifier. In this model, the probabilities describing the po
 
 The implementation of logistic regression in scikit-learn can be accessed from
 class :class:`LogisticRegression`. This implementation can fit binary, One-vs-
-Rest, or multinomial logistic regression with optional L2 or L1
+Rest, or multinomial logistic regression with optional L2, L1 or elastic net
 regularization.
 
 As an optimization problem, binary class L2 penalized logistic regression
@@ -737,12 +737,22 @@ minimizes the following cost function:
 .. math:: \min_{w, c} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
 
 Similarly, L1 regularized logistic regression solves the following
-optimization problem
+optimization problem:
 
 .. math:: \min_{w, c} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1).
 
+Elastic net regularization is a combination of L1 and L2, and minimizes the
+following cost function:
+
+.. math:: \min_{w, c} \frac{1 - \rho}{2}w^T w + \rho \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1),
+
+where :math:`\rho` controls the strengh of L1 regularization vs L2
+regularization (it corresponds the the `l1_ratio` parameter).
+
 Note that, in this notation, it's assumed that the observation :math:`y_i` takes values in the set
-:math:`{-1, 1}` at trial :math:`i`.
+:math:`{-1, 1}` at trial :math:`i`. We can also see that elastic net is
+equivalent to L1 when :math:`\rho = 1` and equivalent to L2 when
+:math:`\rho=0`.
 
 The solvers implemented in the class :class:`LogisticRegression`
 are "liblinear", "newton-cg", "lbfgs", "sag" and "saga":
@@ -770,8 +780,9 @@ than other solvers for large datasets, when both the number of samples and the
 number of features are large.
 
 The "saga" solver [7]_ is a variant of "sag" that also supports the
-non-smooth `penalty="l1"` option. This is therefore the solver of choice
-for sparse multinomial logistic regression.
+non-smooth `penalty="l1"`. This is therefore the solver of choice for sparse
+multinomial logistic regression. It is also the only solver that supports
+`penalty="elastic-net"`.
 
 In a nutshell, one may choose the solver with the following rules:
 
@@ -781,6 +792,7 @@ Case                               Solver
 L1 penalty                         "liblinear" or "saga"
 Multinomial loss                   "lbfgs", "sag", "saga" or "newton-cg"
 Very Large dataset (`n_samples`)   "sag" or "saga"
+Elastic net penalty                "saga"
 =================================  =====================================
 
 The "saga" solver is often the best choice. The "liblinear" solver is
