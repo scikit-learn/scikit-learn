@@ -47,7 +47,7 @@ import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
 from sklearn.utils.fixes import signature
-from sklearn.utils import deprecated
+from sklearn.utils import deprecated, IS_PYPY
 
 
 additional_names_in_all = []
@@ -625,7 +625,10 @@ def all_estimators(include_meta_estimators=False,
     path = sklearn.__path__
     for importer, modname, ispkg in pkgutil.walk_packages(
             path=path, prefix='sklearn.', onerror=lambda x: None):
-        if (".tests." in modname):
+        if ".tests." in modname:
+            continue
+        if IS_PYPY and ('_svmlight_format' in modname or
+                        'feature_extraction._hashing' in modname):
             continue
         module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
@@ -706,6 +709,8 @@ try:
                                        reason='skipped on 32bit platforms')
     skip_travis = pytest.mark.skipif(os.environ.get('TRAVIS') == 'true',
                                      reason='skip on travis')
+    fails_if_pypy = pytest.mark.xfail(IS_PYPY, raises=NotImplementedError,
+                                      reason='not compatible with PyPy')
 
     #  Decorator for tests involving both BLAS calls and multiprocessing.
     #

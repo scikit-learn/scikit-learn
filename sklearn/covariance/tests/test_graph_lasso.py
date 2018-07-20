@@ -2,6 +2,8 @@
 """
 import sys
 
+import pytest
+
 import numpy as np
 from scipy import linalg
 
@@ -118,6 +120,7 @@ def test_graph_lasso_iris_singular():
 
 
 @ignore_warnings(category=DeprecationWarning)
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_graph_lasso_cv(random_state=1):
     # Sample data from a sparse multivariate normal
     dim = 5
@@ -141,6 +144,7 @@ def test_graph_lasso_cv(random_state=1):
 
 
 @ignore_warnings(category=DeprecationWarning)
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_deprecated_grid_scores(random_state=1):
     dim = 5
     n_samples = 6

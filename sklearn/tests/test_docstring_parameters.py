@@ -12,6 +12,7 @@ from inspect import getsource, isabstract
 
 import sklearn
 from sklearn.base import signature
+from sklearn.utils import IS_PYPY
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_docstring_parameters
 from sklearn.utils.testing import _get_func_name
@@ -27,13 +28,10 @@ PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
 IGNORED_MODULES = (
     'cluster',
     'datasets',
-    'feature_selection',
-    'kernel_approximation',
     'model_selection',
     'multioutput',
     'setup',
     'utils',
-    'neighbors',
     # Deprecated modules
     'cross_validation',
     'grid_search',
@@ -60,6 +58,9 @@ _METHODS_IGNORE_NONE_Y = [
 ]
 
 
+# numpydoc 0.8.0's docscrape tool raises because of collections.abc under
+# Python 3.7
+@ignore_warnings(category=DeprecationWarning)
 def test_docstring_parameters():
     # Test module docstring formatting
 
@@ -143,6 +144,11 @@ def test_tabs():
     # Test that there are no tabs in our source files
     for importer, modname, ispkg in walk_packages(sklearn.__path__,
                                                   prefix='sklearn.'):
+
+        if IS_PYPY and ('_svmlight_format' in modname or
+                        'feature_extraction._hashing' in modname):
+            continue
+
         # because we don't import
         mod = importlib.import_module(modname)
         try:
