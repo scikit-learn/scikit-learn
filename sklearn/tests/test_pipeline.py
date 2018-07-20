@@ -826,7 +826,7 @@ def test_set_feature_union_steps():
     assert_equal(['mock__x5'], ft.get_feature_names())
 
 
-def test_set_feature_union_step_none():
+def test_set_feature_union_step_drop():
     mult2 = Mult(2)
     mult2.get_feature_names = lambda: ['x2']
     mult3 = Mult(3)
@@ -838,12 +838,12 @@ def test_set_feature_union_step_none():
     assert_array_equal([[2, 3]], ft.fit_transform(X))
     assert_equal(['m2__x2', 'm3__x3'], ft.get_feature_names())
 
-    ft.set_params(m2=None)
+    ft.set_params(m2='drop')
     assert_array_equal([[3]], ft.fit(X).transform(X))
     assert_array_equal([[3]], ft.fit_transform(X))
     assert_equal(['m3__x3'], ft.get_feature_names())
 
-    ft.set_params(m3=None)
+    ft.set_params(m3='drop')
     assert_array_equal([[]], ft.fit(X).transform(X))
     assert_array_equal([[]], ft.fit_transform(X))
     assert_equal([], ft.get_feature_names())
