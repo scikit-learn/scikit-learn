@@ -431,6 +431,12 @@ Miscellaneous
   :issue:`9101` by :user:`alex-33 <alex-33>`
   and :user:`Maskani Filali Mohamed <maskani-moh>`.
 
+- Add almost complete PyPy 3 support. Known unsupported functionalities are
+  :func:`datasets.load_svmlight_file`, :class:`feature_extraction.FeatureHasher` and
+  :class:`feature_extraction.text.HashingVectorizer`.  For running on PyPy, PyPy3-v5.10+,
+  Numpy 1.14.0+, and scipy 1.1.0+ are required.
+  :issue:`11010` by :user:`Ronan Lamy <rlamy>` and `Roman Yurchak`_.
+
 Bug fixes
 .........
 

@@ -14,6 +14,7 @@ from scipy import sparse
 from scipy.stats import rankdata
 
 from sklearn.externals.six.moves import zip
+from sklearn.utils import IS_PYPY
 from sklearn.utils._joblib import hash, Memory
 from sklearn.utils.testing import assert_raises, _get_args
 from sklearn.utils.testing import assert_raises_regex
@@ -1979,6 +1980,11 @@ def check_no_attributes_set_in_init(name, estimator):
         return
 
     init_params = _get_args(type(estimator).__init__)
+    if IS_PYPY:
+        # __init__ signature has additional objects in PyPy
+        for key in ['obj']:
+            if key in init_params:
+                init_params.remove(key)
     parents_init_params = [param for params_parent in
                            (_get_args(parent) for parent in
                             type(estimator).__mro__)
