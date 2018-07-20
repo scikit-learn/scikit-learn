@@ -212,7 +212,7 @@ def test_check_solver_option(LR):
     lr = LR(solver='liblinear', multi_class='multinomial')
     assert_raise_message(ValueError, msg, lr.fit, X, y)
 
-    # all solvers except 'liblinear'
+    # all solvers except 'liblinear' and 'saga'
     for solver in ['newton-cg', 'lbfgs', 'sag']:
         msg = ("Solver %s supports only l2 penalties, got l1 penalty." %
                solver)
@@ -222,6 +222,15 @@ def test_check_solver_option(LR):
         msg = ("Solver %s supports only dual=False, got dual=True" %
                solver)
         lr = LR(solver=solver, dual=True)
+        assert_raise_message(ValueError, msg, lr.fit, X, y)
+
+    # only saga supports elastic-net. We only test for linlinear because the
+    # error is raised before for the other solvers (solver %s supports only l2
+    # penalties)
+    for solver in ['liblinear']:
+        msg = ("Only 'saga' solver supports elastic-net penalty, got "
+               "solver={}.".format(solver))
+        lr = LR(solver=solver, penalty='elastic-net')
         assert_raise_message(ValueError, msg, lr.fit, X, y)
 
 
@@ -1304,3 +1313,53 @@ def test_warm_start_converge_LR():
         lr_ws.fit(X, y)
     lr_ws_loss = log_loss(y, lr_ws.predict_proba(X))
     assert_allclose(lr_no_ws_loss, lr_ws_loss, rtol=1e-5)
+
+
+def test_elastic_net_coeffs():
+    # make sure elastic-net penalty gives different coefficients from l1 and l2
+    # with saga solver (l1_ratio different from 0 or 1)
+    X, y = make_classification(random_state=0)
+
+    C = 1 / .5
+    coeffs = list()
+    for penalty in ('elastic_net', 'l1', 'l2'):
+        lr = LogisticRegression(penalty=penalty, C=C, solver='saga',
+                                random_state=0)
+        lr.fit(X, y)
+        coeffs.append(lr.coef_)
+
+    elastic_net_coeffs, l1_coeffs, l2_coeffs = coeffs
+    # make sure coeffs differ by at least .1
+    assert not np.allclose(elastic_net_coeffs, l1_coeffs, rtol=0, atol=.1)
+    assert not np.allclose(elastic_net_coeffs, l2_coeffs, rtol=0, atol=.1)
+    assert not np.allclose(l2_coeffs, l1_coeffs, rtol=0, atol=.1)
+
+
+def test_elastic_net_l1_ratio():
+    # Make sure elastic-net is equivalent to l1 when l1_ratio=1 and l2 when
+    # l1_ratio=0.
+    X, y = make_classification(random_state=0)
+
+    C = 1 / .5
+
+    lr = LogisticRegression(penalty='elastic-net', C=C, l1_ratio=0,
+                            solver='saga', random_state=0)
+    lr.fit(X, y)
+    elastic_net_l1_zero_coeffs = lr.coef_
+
+    lr = LogisticRegression(penalty='l2', C=C, solver='saga', random_state=0)
+    lr.fit(X, y)
+    l2_coeffs = lr.coef_
+
+    assert_array_almost_equal(elastic_net_l1_zero_coeffs, l2_coeffs)
+
+    lr = LogisticRegression(penalty='elastic-net', C=C, l1_ratio=1,
+                            solver='saga', random_state=0)
+    lr.fit(X, y)
+    elastic_net_l1_one_coeffs = lr.coef_
+
+    lr = LogisticRegression(penalty='l1', C=C, solver='saga', random_state=0)
+    lr.fit(X, y)
+    l1_coeffs = lr.coef_
+
+    assert_array_almost_equal(elastic_net_l1_one_coeffs, l1_coeffs)
