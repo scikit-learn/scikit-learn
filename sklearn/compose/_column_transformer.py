@@ -386,7 +386,10 @@ boolean mask array or callable
             input_indices.append(remainder_indices)
 
         self._input_indices = input_indices
-        self._X_cols = X.shape[1]
+        self._X_features = X.shape[1]
+        self._X_columns = None
+        if hasattr(X, 'columns'):
+            self._X_columns = X.columns
         self._X_is_sparse = sparse.issparse(X)
         self._invertible = (True, "")
         self._output_indices = []
@@ -532,7 +535,11 @@ boolean mask array or callable
                 trans, X_sel, weight)
             for _, trans, X_sel, weight in inv_transformers)
 
-        inverse_Xs = np.zeros((Xs[0].shape[0], self._X_cols))
+        if not Xs:
+            # All transformers are None
+            return np.zeros((X.shape[0], 0))
+
+        inverse_Xs = np.zeros((Xs[0].shape[0], self._X_features))
         for indices, inverse_X in zip(self._input_indices, Xs):
             if sparse.issparse(inverse_X):
                 inverse_Xs[:, indices] = inverse_X.toarray()
@@ -544,6 +551,12 @@ boolean mask array or callable
 
         if self._X_is_sparse:
             return sparse.csr_matrix(inverse_Xs)
+        if self._X_columns is not None:
+            try:
+                import pandas as pd
+                return pd.DataFrame(inverse_Xs, columns=self._X_columns)
+            except ImportError:
+                pass
         return inverse_Xs
 
 

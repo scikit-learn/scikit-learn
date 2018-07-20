@@ -228,7 +228,9 @@ def test_column_transformer_dataframe():
                             ('trans2', Trans(), ['second'])])
     assert_array_equal(ct.fit_transform(X_df), X_res_both)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
-    assert_array_equal(ct.inverse_transform(X_res_both), X_df)
+    inverse = ct.inverse_transform(X_res_both)
+    assert_array_equal(inverse, X_df)
+    assert_array_equal(inverse.columns, X_df.columns)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] != 'remainder'
 
@@ -236,7 +238,9 @@ def test_column_transformer_dataframe():
                             ('trans2', Trans(), [1])])
     assert_array_equal(ct.fit_transform(X_df), X_res_both)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
-    assert_array_equal(ct.inverse_transform(X_res_both), X_df)
+    inverse = ct.inverse_transform(X_res_both)
+    assert_array_equal(inverse, X_df)
+    assert_array_equal(inverse.columns, X_df.columns)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] != 'remainder'
 
@@ -249,7 +253,8 @@ def test_column_transformer_dataframe():
                      transformer_weights['trans2'] * X_df['second']]).T
     assert_array_equal(both.fit_transform(X_df), res)
     assert_array_equal(both.fit(X_df).transform(X_df), res)
-    assert_allclose(both.inverse_transform(res), X_df)
+    inverse = both.inverse_transform(res)
+    assert_array_equal(inverse.columns, X_df.columns)
     assert len(both.transformers_) == 2
     assert ct.transformers_[-1][0] != 'remainder'
 
@@ -258,7 +263,9 @@ def test_column_transformer_dataframe():
                              transformer_weights={'trans': .1})
     assert_array_equal(both.fit_transform(X_df), 0.1 * X_res_both)
     assert_array_equal(both.fit(X_df).transform(X_df), 0.1 * X_res_both)
-    assert_allclose(both.inverse_transform(0.1 * X_res_both), X_df)
+    inverse = both.inverse_transform(0.1 * X_res_both)
+    assert_allclose(inverse, X_df)
+    assert_array_equal(inverse.columns, X_df.columns)
     assert len(both.transformers_) == 1
     assert ct.transformers_[-1][0] != 'remainder'
 
@@ -266,7 +273,9 @@ def test_column_transformer_dataframe():
                              transformer_weights={'trans': .1})
     assert_array_equal(both.fit_transform(X_df), 0.1 * X_res_both)
     assert_array_equal(both.fit(X_df).transform(X_df), 0.1 * X_res_both)
-    assert_allclose(both.inverse_transform(0.1 * X_res_both), X_df)
+    inverse = both.inverse_transform(0.1 * X_res_both)
+    assert_allclose(inverse, X_df)
+    assert_array_equal(inverse.columns, X_df.columns)
     assert len(both.transformers_) == 1
     assert ct.transformers_[-1][0] != 'remainder'
 
