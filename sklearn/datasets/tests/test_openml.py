@@ -329,6 +329,7 @@ def test_warn_ignore_attribute(monkeypatch):
                          target_column_name=['Genotype', 'class'],
                          cache=False)
 
+
 def test_illegal_column(monkeypatch):
     data_id = 61
     _monkey_patch_webbased_functions(monkeypatch, data_id)
@@ -338,7 +339,8 @@ def test_illegal_column(monkeypatch):
 
     assert_raise_message(KeyError, "Could not find target_column_name=",
                          fetch_openml, data_id=data_id,
-                         target_column_name=['undefined', 'class'], cache=False)
+                         target_column_name=['undefined', 'class'],
+                         cache=False)
 
 
 def test_fetch_openml_raises_illegal_argument():
