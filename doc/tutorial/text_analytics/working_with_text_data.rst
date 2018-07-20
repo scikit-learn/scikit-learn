@@ -374,21 +374,21 @@ utilities for more detailed performance analysis of the results::
   ...                                         # doctest: +NORMALIZE_WHITESPACE
                           precision    recall  f1-score   support
   <BLANKLINE>
-             alt.atheism       0.97      0.60      0.74       319
-           comp.graphics       0.96      0.89      0.92       389
-                 sci.med       0.97      0.81      0.88       396
-  soc.religion.christian       0.65      0.99      0.78       398
+             alt.atheism       0.95      0.81      0.87       319
+           comp.graphics       0.88      0.97      0.92       389
+                 sci.med       0.94      0.90      0.92       396
+  soc.religion.christian       0.90      0.95      0.93       398
   <BLANKLINE>
-               micro avg       0.83      0.83      0.83      1502
-               macro avg       0.89      0.82      0.83      1502
-            weighted avg       0.88      0.83      0.84      1502
+               micro avg       0.91      0.91      0.91      1502
+               macro avg       0.92      0.91      0.91      1502
+            weighted avg       0.92      0.91      0.91      1502
   <BLANKLINE>
 
   >>> metrics.confusion_matrix(twenty_test.target, predicted)
-  array([[192   2   6 119]
-         [  2 347   4  36]
-         [  2  11 322  61]
-         [  2   2   1 393]])
+  array([[258,  11,  15,  35],
+         [  4, 379,   3,   3],
+         [  5,  33, 355,   3],
+         [  5,  10,   4, 379]])
 
 
 As expected the confusion matrix shows that posts from the newsgroups
@@ -441,7 +441,7 @@ parameter combinations in parallel with the ``n_jobs`` parameter. If we give
 this parameter a value of ``-1``, grid search will detect how many cores
 are installed and use them all::
 
-  >>> gs_clf = GridSearchCV(text_clf, parameters, n_jobs=-1)
+  >>> gs_clf = GridSearchCV(text_clf, parameters, cv=5, n_jobs=-1, iid=False)
 
 The grid search instance behaves like a normal ``scikit-learn``
 model. Let's perform the search on a smaller subset of the training data
@@ -465,7 +465,7 @@ mean score and the parameters setting corresponding to that score::
   ...
   clf__alpha: 0.001
   tfidf__use_idf: True
-  vect__ngram_range: (1, 1)
+  vect__ngram_range: (1, 2)
 
 A more detailed summary of the search is available at ``gs_clf.cv_results_``.
 
