@@ -323,3 +323,16 @@ except ImportError:  # python <3.3
     from collections import Iterable as _Iterable  # noqa
     from collections import Mapping as _Mapping  # noqa
     from collections import Sized as _Sized  # noqa
+
+
+# backport for missing return_counts parameter in numpy.unique for numpy
+# versions < 1.9
+
+if np_version < (1, 9):
+    def _uniques_counts(array):
+        unique, idx = np.unique(array, return_inverse=True)
+        counts = np.bincount(idx).astype(float)
+        return unique, counts
+else:
+    def _uniques_counts(array):
+        return np.unique(array, return_counts=True)

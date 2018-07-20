@@ -10,7 +10,6 @@ import numpy as np
 import numpy.ma as ma
 from scipy import sparse
 from scipy import stats
-from collections import Counter
 
 from .base import BaseEstimator, TransformerMixin
 from .utils import check_array
@@ -19,6 +18,7 @@ from .utils.validation import check_is_fitted
 from .utils.validation import check_random_state
 from .utils.validation import FLOAT_DTYPES
 from .utils.fixes import _object_dtype_isnan
+from .utils.fixes import _uniques_counts
 from .utils import is_scalar_nan
 
 from .externals import six
@@ -729,17 +729,6 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
 
         return X
 
-    def _get_values_counts(self, array):
-        if array.size > 0:
-            counter = Counter(array)
-            values, counts = zip(*counter.items())
-            values = np.array(values)
-            counts = np.array(counts, dtype=float)
-        else:
-            values = np.empty(0)
-            counts = np.empty(0)
-        return values, counts
-
     def fit(self, X, y=None):
         """Fit the imputer on X.
 
@@ -787,7 +776,7 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
             mask_column = mask_data[X.indptr[i]:X.indptr[i+1]]
             column = column[~mask_column]
 
-            values, counts = self._get_values_counts(column)
+            values, counts = _uniques_counts(column)
 
             # count implicit zeros
             if n_implicit_zeros[i] > 0:
@@ -821,7 +810,7 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
         for i in range(X.shape[1]):
             column = X[~mask[:, i], i]
             if column.size > 0:
-                uniques[i], counts = self._get_values_counts(column)
+                uniques[i], counts = _uniques_counts(column)
                 if uniques[i].size == column.size:
                     # Avoids doubling the memory usage when dealing with
                     # continuous-valued feature which rarely contain duplicates
