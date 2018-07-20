@@ -729,12 +729,6 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
 
         return X
 
-    def _vect_is_not_none(self, a):
-        def is_not_none(x):
-            return x is not None
-
-        return np.vectorize(is_not_none)(a)
-
     def _get_values_counts(self, array):
         if array.size > 0:
             counter = Counter(array)
@@ -806,6 +800,8 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
             if values.size > 0:
                 uniques[i] = values
                 if values.size == X.shape[0]:
+                    # Avoids doubling the memory usage when dealing with
+                    # continuous-valued feature which rarely contain duplicates
                     probas[i] = None
                 else:
                     probas[i] = counts / counts.sum()
@@ -827,6 +823,8 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
             if column.size > 0:
                 uniques[i], counts = self._get_values_counts(column)
                 if uniques[i].size == column.size:
+                    # Avoids doubling the memory usage when dealing with
+                    # continuous-valued feature which rarely contain duplicates
                     probas[i] = None
                 else:
                     probas[i] = counts / counts.sum()
@@ -856,17 +854,20 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
                              % (X.shape[1], self.uniques_.shape[0]))
 
         # Delete the invalid columns
-        valid_mask = self._vect_is_not_none(uniques)
-        valid_uniques = uniques[valid_mask]
-        valid_probas = probas[valid_mask]
+        valid_mask = np.asarray([x is not None for x in uniques])
         valid_indexes = np.flatnonzero(valid_mask)
 
-        if not valid_mask.all():
+        if valid_mask.all():
+            valid_mask = Ellipsis
+        else:
             missing = np.arange(X.shape[1])[~valid_mask]
             if self.verbose:
                 warnings.warn("Deleting features without "
                               "observed values: %s" % missing)
             X = X[:, valid_indexes]
+
+        valid_uniques = uniques[valid_mask]
+        valid_probas = probas[valid_mask]
 
         # Do actual imputation
         if sparse.issparse(X):
