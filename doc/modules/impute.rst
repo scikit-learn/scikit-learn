@@ -75,8 +75,10 @@ string values or pandas categoricals when using the ``'most_frequent'`` or
 Unlike the strategies of the :class:`SimpleImputer`, which are all deterministic,
 the :class:`SamplingImputer` class provides a non deterministic strategy to perform
 univariate feature imputation. Imputation is performed by sampling uniformly at
-random from the non missing values. The :class:`SamplingImputer` class supports
-sparse and categorical data. It works the same way as the :class:`SimpleImputer`::
+random from the non missing values. Therefore the imputed feature distribution
+is asymptotically identical to the original distribution, preserving mean and
+variance for example. The :class:`SamplingImputer` class supports
+sparse and categorical data. It is used the same way as the :class:`SimpleImputer`::
 
     >>> import numpy as np
     >>> from sklearn.impute import SamplingImputer

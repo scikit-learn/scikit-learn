@@ -637,6 +637,9 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 class SamplingImputer(BaseEstimator, TransformerMixin):
     """Imputation transformer for completing missing values.
 
+    Impute each feature's missing values by sampling from the empirical
+    distribution.
+
     Read more in the :ref:`User Guide <impute>`.
 
     Parameters
@@ -650,27 +653,30 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
 
     copy : boolean, optional (default=True)
         If True, a copy of X will be created. If False, imputation will
-        be done in-place whenever possible. Note that, in the following cases,
-        a new copy will always be made, even if `copy=False`:
-
-        - If X is not an array of floating values;
-        - If X is encoded as a CSR matrix.
+        be done in-place whenever possible. Note that if X is sparse and not
+        encoded as a CSC matrix, a new copy will always be made, even
+        if ``copy=False``.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by ``np.random``.
+        The seed of the pseudo random number generator to use when sampling
+        fill values.
+
+        - If int, random_state is the seed used by the random number generator;
+        - If RandomState instance, random_state is the random number generator;
+        - If None, the random number generator is the RandomState instance used
+          by ``np.random``.
 
     Attributes
     ----------
     uniques_ : array of shape (n_features,)
-        For each feature i, uniques_[i] contains all the non-missing values
-        in that feature without repetitions.
+        For each feature i, ``uniques_[i]`` contains all the non-missing values
+        in that feature without repetitions. Set to None if the feature
+        contains only missing values.
 
     probas_ : array of shape (n_features,)
-        The probabilities associated with all the values in uniques_.
+        The probabilities associated with all the values in uniques_. For each
+        feature i, ``probas_[i]`` is set to None if the feature contains only
+        missing values or if there are no duplicates in the non-missing values.
 
     Examples
     --------
