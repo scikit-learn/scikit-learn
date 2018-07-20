@@ -72,7 +72,7 @@ def _get_json_content_from_openml_api(url, error_message, raise_if_error):
             raise ValueError(error_message)
         else:
             return None
-    json_data = json.loads(response.read().decode("utf-8"))
+    json_data = json.loads(str(response.read().decode("utf-8")))
     response.close()
     return json_data
 
