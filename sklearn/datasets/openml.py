@@ -348,7 +348,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     data_columns = []
     for feature in features:
         # determine whether `feature` is a target
-        if (isinstance(target_column_name, str) and
+        if (isinstance(target_column_name, string_types) and
                 feature['name'] == target_column_name):
             is_target = True
         elif (isinstance(target_column_name, list) and
