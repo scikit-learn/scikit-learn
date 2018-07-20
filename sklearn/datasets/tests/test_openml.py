@@ -77,33 +77,39 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
     return data_by_id
 
 
-def _monkey_patch_webbased_functions(context, data_id):
+def _monkey_patch_webbased_functions(context, data_id, gziped_files=True):
     testdir_path = os.path.dirname(os.path.realpath(__file__))
     url_prefix_data_description = "https://openml.org/api/v1/json/data/"
     url_prefix_data_features = "https://openml.org/api/v1/json/data/features/"
     url_prefix_download_data = "https://openml.org/data/v1/"
     url_prefix_data_list = "https://openml.org/api/v1/json/data/list/"
 
+    path_suffix = ''
+    read_fn = open
+    if gziped_files:
+        path_suffix = '.gz'
+        read_fn = gzip.open
+
     def _mock_urlopen_data_description(url):
         assert (url.startswith(url_prefix_data_description))
 
         path = os.path.join(testdir_path, 'mock_openml', str(data_id),
-                            'data_description.json.gz')
-        return gzip.open(path, 'rb')
+                            'data_description.json%s' % path_suffix)
+        return read_fn(path, 'rb')
 
     def _mock_urlopen_data_features(url):
         assert (url.startswith(url_prefix_data_features))
 
         path = os.path.join(testdir_path, 'mock_openml', str(data_id),
-                            'data_features.json.gz')
-        return gzip.open(path, 'rb')
+                            'data_features.json%s' % path_suffix)
+        return read_fn(path, 'rb')
 
     def _mock_urlopen_download_data(url):
         assert (url.startswith(url_prefix_download_data))
 
         path = os.path.join(testdir_path, 'mock_openml', str(data_id),
-                            'data.arff.gz')
-        return gzip.open(path, 'rb')
+                            'data.arff%s' % path_suffix)
+        return read_fn(path, 'rb')
 
     def _mock_urlopen_data_list(url):
         # url contains key value pairs of attributes, e.g.,
@@ -117,19 +123,20 @@ def _monkey_patch_webbased_functions(context, data_id):
             key_val_dict['data_version'] = None
         if 'status' not in key_val_dict:
             key_val_dict['status'] = "active"
-        mock_file = "%s_%s_%s.json.gz" % (key_val_dict['data_name'],
-                                          key_val_dict['data_version'],
-                                          key_val_dict['status'])
+        mock_file = "%s_%s_%s.json%s" % (key_val_dict['data_name'],
+                                         key_val_dict['data_version'],
+                                         key_val_dict['status'],
+                                         path_suffix)
         json_file_path = os.path.join(testdir_path, 'mock_openml',
                                       str(data_id), mock_file)
         # load the file itself, to simulate a http error
-        json_data = json.loads(gzip.open(json_file_path, 'rb').read().
-                               decode('utf-8'))
+        json_data = json.loads(read_fn(json_file_path, 'rb').
+                               read().decode('utf-8'))
         if 'error' in json_data:
             raise HTTPError(url=None, code=412,
                             msg='Simulated mock error',
                             hdrs=None, fp=None)
-        return gzip.open(json_file_path, 'rb')
+        return read_fn(json_file_path, 'rb')
 
     def _mock_urlopen(url):
         if url.startswith(url_prefix_data_list):
@@ -187,7 +194,7 @@ def test_fetch_openml_anneal(monkeypatch):
     # Not all original instances included for space reasons
     expected_observations = 11
     expected_features = 38
-    _monkey_patch_webbased_functions(monkeypatch, data_id)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, False)
     fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                               expected_observations, expected_features,
                               object, object, expect_sparse=False,
@@ -203,7 +210,7 @@ def test_fetch_openml_anneal_multitarget(monkeypatch):
     # Not all original instances included for space reasons
     expected_observations = 11
     expected_features = 36
-    _monkey_patch_webbased_functions(monkeypatch, data_id)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, False)
     fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                               expected_observations, expected_features,
                               object, object, expect_sparse=False,

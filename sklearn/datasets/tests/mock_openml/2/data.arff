@@ -1,0 +1,172 @@
+% 1. Title of Database: Annealing Data
+% 
+% 2. Source Information: donated by David Sterling and Wray Buntine.
+% 
+% 3. Past Usage: unknown
+% 
+% 4. Relevant Information:
+%    -- Explanation: I suspect this was left by Ross Quinlan in 1987 at the
+%       4th Machine Learning Workshop.  I'd have to check with Jeff Schlimmer
+%       to double check this.
+% 
+% 5. Number of Instances: 798
+% 
+% 6. Number of Attributes: 38
+%    -- 6 continuously-valued
+%    -- 3 integer-valued
+%    -- 29 nominal-valued
+% 
+% 7. Attribute Information:
+%     1. family:          --,GB,GK,GS,TN,ZA,ZF,ZH,ZM,ZS
+%     2. product-type:    C, H, G
+%     3. steel:           -,R,A,U,K,M,S,W,V
+%     4. carbon:          continuous
+%     5. hardness:        continuous
+%     6. temper_rolling:  -,T
+%     7. condition:       -,S,A,X
+%     8. formability:     -,1,2,3,4,5
+%     9. strength:        continuous
+%    10. non-ageing:      -,N
+%    11. surface-finish:  P,M,-
+%    12. surface-quality: -,D,E,F,G
+%    13. enamelability:   -,1,2,3,4,5
+%    14. bc:              Y,-
+%    15. bf:              Y,-
+%    16. bt:              Y,-
+%    17. bw/me:           B,M,-
+%    18. bl:              Y,-
+%    19. m:               Y,-
+%    20. chrom:           C,-
+%    21. phos:            P,-
+%    22. cbond:           Y,-
+%    23. marvi:           Y,-
+%    24. exptl:           Y,-
+%    25. ferro:           Y,-
+%    26. corr:            Y,-
+%    27. blue/bright/varn/clean:          B,R,V,C,-
+%    28. lustre:          Y,-
+%    29. jurofm:          Y,-
+%    30. s:               Y,-
+%    31. p:               Y,-
+%    32. shape:           COIL, SHEET
+%    33. thick:           continuous
+%    34. width:           continuous
+%    35. len:             continuous
+%    36. oil:             -,Y,N
+%    37. bore:            0000,0500,0600,0760
+%    38. packing: -,1,2,3
+%    classes:        1,2,3,4,5,U
+%  
+%    -- The '-' values are actually 'not_applicable' values rather than
+%       'missing_values' (and so can be treated as legal discrete
+%       values rather than as showing the absence of a discrete value).
+% 
+% 8. Missing Attribute Values: Signified with "?"
+%    Attribute:  Number of instances missing its value:
+%    1           0
+%    2           0
+%    3           70
+%    4           0
+%    5           0
+%    6           675
+%    7           271
+%    8           283
+%    9           0
+%   10           703
+%   11           790
+%   12           217
+%   13           785
+%   14           797
+%   15           680
+%   16           736
+%   17           609
+%   18           662
+%   19           798
+%   20           775
+%   21           791
+%   22           730
+%   23           798
+%   24           796
+%   25           772
+%   26           798
+%   27           793
+%   28           753
+%   29           798
+%   30           798
+%   31           798
+%   32           0
+%   33           0
+%   34           0
+%   35           0
+%   36           740
+%   37           0
+%   38           789
+%   39           0
+% 
+% 9. Distribution of Classes
+%      Class Name:   Number of Instances:
+%      1               8
+%      2              88
+%      3             608
+%      4               0
+%      5              60
+%      U              34
+%                    ---
+%                    798
+% 
+@relation anneal.ORIG
+@attribute 'family' {  GB , GK , GS , TN , ZA , ZF , ZH , ZM , ZS }
+@attribute 'product-type' {  C , H , G }
+@attribute 'steel' {  R , A , U , K , M , S , W , V }
+@attribute 'carbon' real
+@attribute 'hardness' real
+@attribute 'temper_rolling' {  T }
+@attribute 'condition' {  S , A , X }
+@attribute 'formability' {  1 , 2 , 3 , 4 , 5 }
+@attribute 'strength' real
+@attribute 'non-ageing' {  N }
+@attribute 'surface-finish' {  P , M }
+@attribute 'surface-quality' {  D , E , F , G }
+@attribute 'enamelability' {  1 , 2 , 3 , 4 , 5 }
+@attribute 'bc' {  Y }
+@attribute 'bf' {  Y }
+@attribute 'bt' {  Y }
+@attribute 'bw%2Fme' {  B , M }
+@attribute 'bl' {  Y }
+@attribute 'm' {  Y }
+@attribute 'chrom' {  C }
+@attribute 'phos' {  P }
+@attribute 'cbond' {  Y }
+@attribute 'marvi' {  Y }
+@attribute 'exptl' {  Y }
+@attribute 'ferro' {  Y }
+@attribute 'corr' {  Y }
+@attribute 'blue%2Fbright%2Fvarn%2Fclean' {  B , R , V , C }
+@attribute 'lustre' {  Y }
+@attribute 'jurofm' {  Y }
+@attribute 's' {  Y }
+@attribute 'p' {  Y }
+@attribute 'shape' {  COIL , SHEET }
+@attribute 'thick' real
+@attribute 'width' real
+@attribute 'len' real
+@attribute 'oil' {  Y , N }
+@attribute 'bore' {  0 , 500 , 600 , 760 }
+@attribute 'packing' {  1 , 2 , 3 }
+@attribute 'class' {  1 , 2 , 3 , 4 , 5 , U }
+@data
+%
+%  instances from file: anneal-train.arff
+%
+?,C,A,8,0,?,S,?,0,?,?,G,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,COIL,0.7,610,0,?,0,?,3
+?,C,R,0,0,?,S,2,0,?,?,E,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,Y,?,?,?,COIL,3.2,610,0,?,0,?,3
+?,C,R,0,0,?,S,2,0,?,?,E,?,?,Y,?,B,?,?,?,?,?,?,?,?,?,?,?,?,?,?,SHEET,0.7,1300,762,?,0,?,3
+?,C,A,0,60,T,?,?,0,?,?,G,?,?,?,?,M,?,?,?,?,?,?,?,?,?,?,?,?,?,?,COIL,2.801,385.1,0,?,0,?,3
+?,C,A,0,60,T,?,?,0,?,?,G,?,?,?,?,B,Y,?,?,?,Y,?,?,?,?,?,?,?,?,?,SHEET,0.801,255,269,?,0,?,3
+?,C,A,0,45,?,S,?,0,?,?,D,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,COIL,1.6,610,0,?,0,?,3
+?,C,R,0,0,?,S,2,0,?,?,E,?,?,?,?,?,Y,?,?,?,?,?,?,?,?,?,?,?,?,?,SHEET,0.699,610,4880,Y,0,?,3
+?,C,A,0,0,?,S,2,0,?,?,E,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,Y,?,?,?,COIL,3.3,152,0,?,0,?,3
+?,C,R,0,0,?,S,2,0,?,?,E,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,Y,?,?,?,COIL,0.699,1320,0,?,0,?,3
+?,C,A,0,0,?,S,3,0,N,?,E,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,SHEET,1,1320,762,?,0,?,3
+?,C,R,0,0,?,S,2,0,?,?,E,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,COIL,1.2,610,0,?,0,?,3
+% JvR: Rest of dataset truncated for space reasons.
