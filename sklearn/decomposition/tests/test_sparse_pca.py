@@ -2,12 +2,12 @@
 # License: BSD 3 clause
 
 import sys
+import pytest
 
 import numpy as np
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_true
@@ -17,8 +17,6 @@ from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 
 from sklearn.decomposition import SparsePCA, MiniBatchSparsePCA, PCA
 from sklearn.utils import check_random_state
-
-import pytest
 
 
 def generate_toy_data(n_components, n_samples, image_size, random_state=None):
@@ -143,10 +141,10 @@ def test_initialization(norm_comp):
                       random_state=rng, normalize_components=norm_comp)
     model.fit(rng.randn(5, 4))
     if norm_comp:
-        assert_array_equal(model.components_,
-                           V_init / np.linalg.norm(V_init, axis=1)[:, None])
+        assert_allclose(model.components_,
+                        V_init / np.linalg.norm(V_init, axis=1)[:, None])
     else:
-        assert_array_equal(model.components_, V_init)
+        assert_allclose(model.components_, V_init)
 
 
 @pytest.mark.filterwarnings("ignore:normalize_components")
@@ -184,17 +182,17 @@ def test_mini_batch_fit_transform(norm_comp):
         _mp = joblib_par.multiprocessing
         joblib_par.multiprocessing = None
         try:
-            U2 = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
-                                    random_state=0,
-                                    normalize_components=norm_comp)\
-                .fit(Y).transform(Y)
+            spca = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
+                                      random_state=0,
+                                      normalize_components=norm_comp)
+            U2 = spca.fit(Y).transform(Y)
         finally:
             joblib_par.multiprocessing = _mp
     else:  # we can efficiently use parallelism
-        U2 = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
-                                random_state=0,
-                                normalize_components=norm_comp)\
-            .fit(Y).transform(Y)
+        spca = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
+                                  random_state=0,
+                                  normalize_components=norm_comp)
+        U2 = spca.fit(Y).transform(Y)
     assert_true(not np.all(spca_lars.components_ == 0))
     assert_array_almost_equal(U1, U2)
     # Test that CD gives similar results

@@ -67,18 +67,19 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         by `np.random`.
 
     normalize_components : boolean, optional (default=False)
-        - if False, Use a version of Sparse PCA without components
+        - if False, use a version of Sparse PCA without components
           normalization and without data centering. This is likely a bug and
           even though it's the default for backward compatibility,
           this should not be used.
-        - if True, Use a version of Sparse PCA with components normalization
+        - if True, use a version of Sparse PCA with components normalization
           and data centering.
 
         .. versionadded:: 0.20
+
         .. deprecated:: 0.22
-                ``normalize_components`` was added and set to ``False`` for
-                backward compatibility. It would be set to ``True`` from 0.22
-                onwards.
+           ``normalize_components`` was added and set to ``False`` for
+           backward compatibility. It would be set to ``True`` from 0.22
+           onwards.
 
     Attributes
     ----------
@@ -138,7 +139,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         X = check_array(X)
 
         if self.normalize_components:
-            self.mean_ = np.mean(X, axis=0)
+            self.mean_ = X.mean(axis=0)
             X = X - self.mean_
         else:
             warnings.warn("normalize_components=False is a "
@@ -284,19 +285,20 @@ class MiniBatchSparsePCA(SparsePCA):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    normalize_components : boolean
-        - if False, Use a version of Sparse PCA without components
-          normalization and without data centering. This is likely a bug
-          and even though it's the default for backward compatibility,
+    normalize_components : boolean, optional (default=False)
+        - if False, use a version of Sparse PCA without components
+          normalization and without data centering. This is likely a bug and
+          even though it's the default for backward compatibility,
           this should not be used.
-        - if True, Use a version of Sparse PCA with components normalization
+        - if True, use a version of Sparse PCA with components normalization
           and data centering.
 
         .. versionadded:: 0.20
+
         .. deprecated:: 0.22
-                ``normalize_components`` was added and set to ``False`` for
-                backward compatibility. It would be set to ``True`` from 0.22
-                onwards.
+           ``normalize_components`` was added and set to ``False`` for
+           backward compatibility. It would be set to ``True`` from 0.22
+           onwards.
 
     Attributes
     ----------
@@ -350,7 +352,7 @@ class MiniBatchSparsePCA(SparsePCA):
         X = check_array(X)
 
         if self.normalize_components:
-            self.mean_ = np.mean(X, axis=0)
+            self.mean_ = X.mean(axis=0)
             X = X - self.mean_
         else:
             warnings.warn("normalize_components=False is a "
