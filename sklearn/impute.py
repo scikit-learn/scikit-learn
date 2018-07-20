@@ -130,16 +130,16 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     copy : boolean, optional (default=True)
         If True, a copy of X will be created. If False, imputation will
-        be done in-place whenever possible. Note that, in the following cases,
-        a new copy will always be made, even if `copy=False`:
-
-        - If X is not an array of floating values;
-        - If X is encoded as a CSR matrix.
+        be done in-place whenever possible. Note that if X is sparse and not
+        encoded as a CSC matrix, a new copy will always be made, even
+        if ``copy=False``.
 
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
-        The imputation fill value for each feature.
+        The imputation fill value for each feature. For each feature i,
+        ``statistics_[i]`` is set to ``np.nan`` if the feature contains only
+        missing values.
 
     Examples
     --------
