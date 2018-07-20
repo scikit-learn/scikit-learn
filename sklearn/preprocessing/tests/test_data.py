@@ -237,7 +237,7 @@ def test_standard_scaler_numerical_stability():
     # np.log(1e-5) is taken because of its floating point representation
     # was empirically found to cause numerical problems with np.mean & np.std.
 
-    x = np.zeros(8, np.log(1e-5), dtype=np.float64)
+    x = np.full(8, np.log(1e-5), dtype=np.float64)
     if LooseVersion(np.__version__) >= LooseVersion('1.9'):
         # This does not raise a warning as the number of samples is too low
         # to trigger the problem in recent numpy
@@ -249,7 +249,7 @@ def test_standard_scaler_numerical_stability():
         assert_array_almost_equal(x_scaled, np.zeros(8))
 
     # with 2 more samples, the std computation run into numerical issues:
-    x = np.zeros(10, np.log(1e-5), dtype=np.float64)
+    x = np.full(10, np.log(1e-5), dtype=np.float64)
     w = "standard deviation of the data is probably very close to 0"
     x_scaled = assert_warns_message(UserWarning, w, scale, x)
     assert_array_almost_equal(x_scaled, np.zeros(10))

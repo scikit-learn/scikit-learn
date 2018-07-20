@@ -275,7 +275,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                 out = np.zeros((n_samples, n_classes_[k]), dtype=np.float64)
                 out[:, ind] = 1.0
             elif self.strategy == "prior":
-                out = np.full((n_samples, 1), class_prior_[k])
+                out = np.ones((n_samples, 1)) * class_prior_[k]
 
             elif self.strategy == "stratified":
                 out = rs.multinomial(1, class_prior_[k], size=n_samples)
