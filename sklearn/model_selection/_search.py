@@ -413,7 +413,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     @abstractmethod
     def __init__(self, estimator, scoring=None,
                  fit_params=None, n_jobs=1, iid='warn',
-                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
+                 refit=True, cv='warn', verbose=0, pre_dispatch='2*n_jobs',
                  error_score='raise-deprecating', return_train_score=True):
 
         self.scoring = scoring
@@ -887,6 +887,10 @@ class GridSearchCV(BaseSearchCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     refit : boolean, or string, default=True
         Refit an estimator using the best found parameters on the whole
         dataset.
@@ -938,10 +942,10 @@ class GridSearchCV(BaseSearchCV):
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     >>> svc = svm.SVC(gamma="scale")
-    >>> clf = GridSearchCV(svc, parameters) # doctest: +SKIP
-    >>> clf.fit(iris.data, iris.target) # doctest: +SKIP
+    >>> clf = GridSearchCV(svc, parameters, cv=5)
+    >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(cv=None, error_score=...,
+    GridSearchCV(cv=5, error_score=...,
            estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
                          decision_function_shape='ovr', degree=..., gamma=...,
                          kernel='rbf', max_iter=-1, probability=False,
@@ -950,7 +954,7 @@ class GridSearchCV(BaseSearchCV):
            fit_params=None, iid=..., n_jobs=1,
            param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
            scoring=..., verbose=...)
-    >>> sorted(clf.cv_results_.keys()) # doctest: +SKIP
+    >>> sorted(clf.cv_results_.keys())
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ['mean_fit_time', 'mean_score_time', 'mean_test_score',...
      'mean_train_score', 'param_C', 'param_kernel', 'params',...
@@ -1091,7 +1095,7 @@ class GridSearchCV(BaseSearchCV):
     """
 
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
-                 n_jobs=1, iid='warn', refit=True, cv=None, verbose=0,
+                 n_jobs=1, iid='warn', refit=True, cv='warn', verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise-deprecating',
                  return_train_score="warn"):
         super(GridSearchCV, self).__init__(
@@ -1226,6 +1230,10 @@ class RandomizedSearchCV(BaseSearchCV):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     refit : boolean, or string default=True
         Refit an estimator using the best found parameters on the whole
@@ -1404,7 +1412,7 @@ class RandomizedSearchCV(BaseSearchCV):
     """
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
-                 fit_params=None, n_jobs=1, iid='warn', refit=True, cv=None,
+                 fit_params=None, n_jobs=1, iid='warn', refit=True, cv='warn',
                  verbose=0, pre_dispatch='2*n_jobs', random_state=None,
                  error_score='raise-deprecating', return_train_score="warn"):
         self.param_distributions = param_distributions
