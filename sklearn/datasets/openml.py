@@ -17,6 +17,7 @@ import sklearn.externals.arff as arff
 
 from .base import get_data_home
 from ..externals.joblib import Memory
+from ..externals.six import string_types
 from ..externals.six.moves.urllib.error import HTTPError
 from ..utils import Bunch
 
@@ -72,7 +73,7 @@ def _get_json_content_from_openml_api(url, error_message, raise_if_error):
             raise ValueError(error_message)
         else:
             return None
-    json_data = json.loads(str(response.read().decode("utf-8")))
+    json_data = json.loads(response.read().decode("utf-8"))
     response.close()
     return json_data
 
@@ -364,7 +365,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     data = _convert_arff_data(arff_data)
     data = _convert_numericals(data, name_feature)
 
-    if isinstance(target_column_name, str):
+    if isinstance(target_column_name, string_types):
         # determine vector type
         dtype = _determine_single_target_data_type(name_feature,
                                                    target_column_name)
