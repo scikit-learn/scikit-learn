@@ -121,7 +121,8 @@ def _monkey_patch_webbased_functions(context, data_id):
         json_file_path = os.path.join(testdir_path, 'mock_openml',
                                       str(data_id), mock_file)
         # load the file itself, to simulate a http error
-        json_data = json.loads(gzip.open(json_file_path, 'rb').read())
+        json_data = json.loads(gzip.open(json_file_path, 'rb').read().
+                               decode('utf-8'))
         if 'error' in json_data:
             raise HTTPError(url=None, code=412,
                             msg='Simulated mock error',
