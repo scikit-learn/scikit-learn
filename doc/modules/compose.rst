@@ -413,7 +413,7 @@ variable, but apply a :class:`feature_extraction.text.CountVectorizer
 <sklearn.feature_extraction.text.CountVectorizer>` to the ``'title'`` column.
 As we might use multiple feature extraction methods on the same column, we give
 each transformer a unique name, say ``'city_category'`` and ``'title_bow'``.
-We can ignore the remaining rating columns by setting ``remainder='drop'``::
+By default, the remaining rating columns are ignored (``remainder='drop'``)::
 
   >>> from sklearn.compose import ColumnTransformer
   >>> from sklearn.feature_extraction.text import CountVectorizer
@@ -496,7 +496,7 @@ above example would be::
   ...     ('city', CountVectorizer(analyzer=lambda x: [x])),
   ...     ('title', CountVectorizer()))
   >>> column_trans # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=1, remainder='passthrough', sparse_threshold=0.3,
+  ColumnTransformer(n_jobs=1, remainder='drop', sparse_threshold=0.3,
            transformer_weights=None,
            transformers=[('countvectorizer-1', ...)
 

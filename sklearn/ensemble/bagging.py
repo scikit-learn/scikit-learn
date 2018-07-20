@@ -110,7 +110,6 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
 
             estimator.fit(X[:, features], y, sample_weight=curr_sample_weight)
 
-        # Draw samples, using a mask, and then fit
         else:
             estimator.fit((X[indices])[:, features], y[indices])
 
@@ -412,7 +411,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
     def estimators_samples_(self):
         """The subset of drawn samples for each base estimator.
 
-        Returns a dynamically generated list of boolean masks identifying
+        Returns a dynamically generated list of indices identifying
         the samples used for fitting each member of the ensemble, i.e.,
         the in-bag samples.
 
@@ -420,12 +419,8 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         to reduce the object memory footprint by not storing the sampling
         data. Thus fetching the property may be slower than expected.
         """
-        sample_masks = []
-        for _, sample_indices in self._get_estimators_indices():
-            mask = indices_to_mask(sample_indices, self._n_samples)
-            sample_masks.append(mask)
-
-        return sample_masks
+        return [sample_indices
+                for _, sample_indices in self._get_estimators_indices()]
 
 
 class BaggingClassifier(BaseBagging, ClassifierMixin):
@@ -512,7 +507,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
-        estimator. Each subset is defined by a boolean mask.
+        estimator. Each subset is defined by an array of the indices selected.
 
     estimators_features_ : list of arrays
         The subset of drawn features for each base estimator.
@@ -590,7 +585,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                                                 self.estimators_samples_,
                                                 self.estimators_features_):
             # Create mask for OOB samples
-            mask = ~samples
+            mask = ~indices_to_mask(samples, n_samples)
 
             if hasattr(estimator, "predict_proba"):
                 predictions[mask, :] += estimator.predict_proba(
@@ -885,7 +880,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
-        estimator. Each subset is defined by a boolean mask.
+        estimator. Each subset is defined by an array of the indices selected.
 
     estimators_features_ : list of arrays
         The subset of drawn features for each base estimator.
@@ -996,7 +991,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
                                                 self.estimators_samples_,
                                                 self.estimators_features_):
             # Create mask for OOB samples
-            mask = ~samples
+            mask = ~indices_to_mask(samples, n_samples)
 
             predictions[mask] += estimator.predict((X[mask, :])[:, features])
             n_predictions[mask] += 1

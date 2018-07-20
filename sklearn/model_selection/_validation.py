@@ -38,7 +38,7 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
            'permutation_test_score', 'learning_curve', 'validation_curve']
 
 
-def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
+def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
                    n_jobs=1, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score="warn",
                    return_estimator=False):
@@ -92,6 +92,10 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -175,7 +179,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     Single metric evaluation using ``cross_validate``
 
-    >>> cv_results = cross_validate(lasso, X, y, return_train_score=False)
+    >>> cv_results = cross_validate(lasso, X, y, cv=3,
+    ...                             return_train_score=False)
     >>> sorted(cv_results.keys())                         # doctest: +ELLIPSIS
     ['fit_time', 'score_time', 'test_score']
     >>> cv_results['test_score']    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -184,7 +189,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     Multiple metric evaluation using ``cross_validate``
     (please refer the ``scoring`` parameter doc for more information)
 
-    >>> scores = cross_validate(lasso, X, y,
+    >>> scores = cross_validate(lasso, X, y, cv=3,
     ...                         scoring=('r2', 'neg_mean_squared_error'),
     ...                         return_train_score=True)
     >>> print(scores['test_neg_mean_squared_error'])      # doctest: +ELLIPSIS
@@ -255,7 +260,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     return ret
 
 
-def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
+def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
                     n_jobs=1, verbose=0, fit_params=None,
                     pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
@@ -299,6 +304,10 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
@@ -339,7 +348,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
-    >>> print(cross_val_score(lasso, X, y))  # doctest: +ELLIPSIS
+    >>> print(cross_val_score(lasso, X, y, cv=3))  # doctest: +ELLIPSIS
     [0.33150734 0.08022311 0.03531764]
 
     See Also
@@ -612,7 +621,7 @@ def _multimetric_score(estimator, X_test, y_test, scorers):
     return scores
 
 
-def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
+def cross_val_predict(estimator, X, y=None, groups=None, cv='warn', n_jobs=1,
                       verbose=0, fit_params=None, pre_dispatch='2*n_jobs',
                       method='predict'):
     """Generate cross-validated estimates for each input data point
@@ -653,6 +662,10 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -714,7 +727,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
-    >>> y_pred = cross_val_predict(lasso, X, y)
+    >>> y_pred = cross_val_predict(lasso, X, y, cv=3)
     """
     X, y, groups = indexable(X, y, groups)
 
@@ -888,7 +901,7 @@ def _index_param_value(X, v, indices):
     return safe_indexing(v, indices)
 
 
-def permutation_test_score(estimator, X, y, groups=None, cv=None,
+def permutation_test_score(estimator, X, y, groups=None, cv='warn',
                            n_permutations=100, n_jobs=1, random_state=0,
                            verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
@@ -938,6 +951,10 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     n_permutations : integer, optional
         Number of times to permute ``y``.
@@ -1025,8 +1042,8 @@ def _shuffle(y, groups, random_state):
 
 
 def learning_curve(estimator, X, y, groups=None,
-                   train_sizes=np.linspace(0.1, 1.0, 5), cv=None, scoring=None,
-                   exploit_incremental_learning=False, n_jobs=1,
+                   train_sizes=np.linspace(0.1, 1.0, 5), cv='warn',
+                   scoring=None, exploit_incremental_learning=False, n_jobs=1,
                    pre_dispatch="all", verbose=0, shuffle=False,
                    random_state=None):
     """Learning curve.
@@ -1084,6 +1101,10 @@ def learning_curve(estimator, X, y, groups=None,
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -1266,7 +1287,7 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
 
 
 def validation_curve(estimator, X, y, param_name, param_range, groups=None,
-                     cv=None, scoring=None, n_jobs=1, pre_dispatch="all",
+                     cv='warn', scoring=None, n_jobs=1, pre_dispatch="all",
                      verbose=0):
     """Validation curve.
 
@@ -1317,6 +1338,10 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
