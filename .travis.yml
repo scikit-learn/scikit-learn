@@ -44,7 +44,7 @@ matrix:
     - env: DISTRIB="conda" PYTHON_VERSION="3.6.2" INSTALL_MKL="true"
            NUMPY_VERSION="1.14.2" SCIPY_VERSION="1.0.0" PANDAS_VERSION="0.20.3"
            CYTHON_VERSION="0.26.1" PYAMG_VERSION="3.3.2" PILLOW_VERSION="4.3.0"
-           JOBLIB_VERSION="0.11" COVERAGE=true
+           JOBLIB_VERSION="0.12" COVERAGE=true
            CHECK_PYTEST_SOFT_DEPENDENCY="true" TEST_DOCSTRINGS="true"
            SKLEARN_SITE_JOBLIB=1
       if: type != cron

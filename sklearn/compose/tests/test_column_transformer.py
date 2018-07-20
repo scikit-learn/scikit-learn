@@ -794,6 +794,11 @@ def test_column_transformer_no_estimators():
     assert ct.transformers_[-1][2] == [0, 1, 2]
 
 
+def test_column_transformer_no_estimators_set_params():
+    ct = ColumnTransformer([]).set_params(n_jobs=2)
+    assert ct.n_jobs == 2
+
+
 def test_column_transformer_callable_specifier():
     # assert that function gets the full array / dataframe
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T

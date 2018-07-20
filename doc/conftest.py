@@ -1,9 +1,11 @@
+import os
 from os.path import exists
 from os.path import join
 import warnings
 
 import numpy as np
 
+from sklearn.utils import IS_PYPY
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_skip_network
 from sklearn.datasets import get_data_home
@@ -56,6 +58,8 @@ def setup_twenty_newsgroups():
 
 
 def setup_working_with_text_data():
+    if IS_PYPY and os.environ.get('CI', None):
+        raise SkipTest('Skipping too slow test with PyPy on CI')
     check_skip_network()
     cache_path = _pkl_filepath(get_data_home(), CACHE_NAME)
     if not exists(cache_path):
@@ -98,6 +102,8 @@ def pytest_runtest_setup(item):
         setup_working_with_text_data()
     elif fname.endswith('modules/compose.rst') or is_index:
         setup_compose()
+    elif IS_PYPY and fname.endswith('modules/feature_extraction.rst'):
+        raise SkipTest('FeatureHasher is not compatible with PyPy')
     elif fname.endswith('modules/impute.rst'):
         setup_impute()
     elif fname.endswith('statistical_inference/unsupervised_learning.rst'):

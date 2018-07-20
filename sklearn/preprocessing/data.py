@@ -1772,6 +1772,9 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
 
     Read more in the :ref:`User Guide <kernel_centering>`.
     """
+    def __init__(self):
+        # Needed for backported inspect.signature compatibility with PyPy
+        pass
 
     def fit(self, K, y=None):
         """Fit KernelCenterer

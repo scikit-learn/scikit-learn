@@ -1,8 +1,8 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
-
 import numbers
+import platform
 
 import numpy as np
 from scipy.sparse import issparse
@@ -31,6 +31,8 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
            "hash"]
+
+IS_PYPY = platform.python_implementation() == 'PyPy'
 
 
 class Bunch(dict):
