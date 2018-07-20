@@ -222,7 +222,7 @@ def test_node_heap(n_nodes=50):
 
 def test_simultaneous_sort(n_rows=10, n_pts=201):
     dist = rng.random_sample((n_rows, n_pts)).astype(DTYPE)
-    ind = (np.arange(n_pts) + np.zeros((n_rows, 1))).astype(ITYPE)
+    ind = np.full((n_rows, 1), np.arange(n_pts)).astype(ITYPE)
 
     dist2 = dist.copy()
     ind2 = ind.copy()
