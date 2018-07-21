@@ -540,8 +540,6 @@ cdef class WeightedMedianCalculator:
         """Update the parameters used in the median calculation,
         namely `k` and `sum_w_0_k` after an insertion"""
 
-        cdef int debug = 0
-
         # trivial case of one element.
         if self.size() == 1:
             self.k = 1
@@ -559,7 +557,7 @@ cdef class WeightedMedianCalculator:
                                        
             while(self.k > 1 and ((self.sum_w_0_k -
                                    self.samples.get_weight_from_index(self.k-1))
-                                  >= self.total_weight / 2.0)):     
+                                  >= self.total_weight / 2.0)):
                 self.k -= 1
                 self.sum_w_0_k -= self.samples.get_weight_from_index(self.k)
 
