@@ -1,0 +1,40 @@
+{
+	"data": {
+		"dataset": [{
+			"did": 40589,
+			"name": "emotions",
+			"version": 3,
+			"status": "active",
+			"format": "ARFF",
+			"file_id": 4644182,
+			"quality": [{
+				"name": "MajorityClassSize",
+				"value": "420.0"
+			}, {
+				"name": "MinorityClassSize",
+				"value": "173.0"
+			}, {
+				"name": "NumberOfClasses",
+				"value": "2.0"
+			}, {
+				"name": "NumberOfFeatures",
+				"value": "78.0"
+			}, {
+				"name": "NumberOfInstances",
+				"value": "593.0"
+			}, {
+				"name": "NumberOfInstancesWithMissingValues",
+				"value": "0.0"
+			}, {
+				"name": "NumberOfMissingValues",
+				"value": "0.0"
+			}, {
+				"name": "NumberOfNumericFeatures",
+				"value": "72.0"
+			}, {
+				"name": "NumberOfSymbolicFeatures",
+				"value": "6.0"
+			}]
+		}]
+	}
+}

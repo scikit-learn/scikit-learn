@@ -184,7 +184,7 @@ def _download_data_arff(file_id):
 
 
 def _convert_numericals(data, name_feature):
-    # converts all numerical columns into floats
+    # converts all numerical columns in the numpy array into floats
     for feature in name_feature.values():
         if feature['data_type'] == "numeric":
             idx = int(feature['index'])
@@ -192,7 +192,26 @@ def _convert_numericals(data, name_feature):
     return data
 
 
+def _determine_default_target(name_feature):
+    # determines the default target based on the data feature results
+    # (which is currently more reliable than the data description;
+    # see issue: https://github.com/openml/OpenML/issues/768)
+    results = []
+    for name, feature in name_feature.items():
+        # note: string comparison (not boolean)
+        if feature['is_target'] == "true":
+            results.append(name)
+
+    if len(results) == 0:
+        return None
+    elif len(results) == 1:
+        return results[0]
+    else:
+        return results
+
+
 def _determine_single_target_data_type(name_feature, target_column_name):
+    # determine the data type of the y array in case there is a single target
     if not isinstance(target_column_name, string_types):
         raise ValueError('target_column_name should be of string type, '
                          'got: %s' % type(target_column_name))
@@ -213,6 +232,8 @@ def _determine_single_target_data_type(name_feature, target_column_name):
 
 
 def _determine_multi_target_data_type(name_feature, target_column_names):
+    # determine the data type of the y array in case there are multiple targets
+    # (throws an error if these targets do not comply with sklearn support)
     if not isinstance(target_column_names, list):
         raise ValueError('target_column_name should be list, '
                          'got: %s' % type(target_column_names))
@@ -334,13 +355,13 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         warn("Version {} of dataset {} is inactive, meaning that issues have"
              " been found in the dataset. Try using a newer version.".format(
                  data_description['version'], data_description['name']))
-    if target_column_name == "default-target":
-        target_column_name = data_description.get('default_target_attribute',
-                                                  None)
 
-    # download actual data
+    # download data features, meta-info about column types
     features = cached_get_data_features(data_id)
     name_feature = {feature['name']: feature for feature in features}
+
+    if target_column_name == "default-target":
+        target_column_name = _determine_default_target(name_feature)
 
     # TODO: stacking the content of the structured array
     # this results in a copy. If the data was homogeneous
