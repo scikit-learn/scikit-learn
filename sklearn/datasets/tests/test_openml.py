@@ -19,11 +19,15 @@ from sklearn.externals.six.moves.urllib.error import HTTPError
 currdir = os.path.dirname(os.path.abspath(__file__))
 
 
-def fetch_dataset_from_openml(data_id, data_name, data_version,
-                              target_column_name,
-                              expected_observations, expected_features,
-                              exptected_data_dtype, exptected_target_dtype,
-                              expect_sparse, compare_default_target):
+def _fetch_dataset_from_openml(data_id, data_name, data_version,
+                               target_column_name,
+                               expected_observations, expected_features,
+                               exptected_data_dtype, exptected_target_dtype,
+                               expect_sparse, compare_default_target):
+    # fetches a dataset in three various ways from OpenML, using the
+    # fetch_openml function, and does various checks on the validity of the
+    # result. Note that this function can be mocked (by invoking
+    # _monkey_patch_webbased_functions before invoking this function)
     data_by_name_id = fetch_openml(name=data_name, version=data_version,
                                    cache=False)
     assert int(data_by_name_id.details['id']) == data_id
@@ -175,10 +179,10 @@ def test_fetch_openml_iris(monkeypatch):
     expected_features = 4
 
     _monkey_patch_webbased_functions(monkeypatch, data_id)
-    fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
-                              expected_observations, expected_features,
-                              np.float64, object, expect_sparse=False,
-                              compare_default_target=True)
+    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+                               expected_observations, expected_features,
+                               np.float64, object, expect_sparse=False,
+                               compare_default_target=True)
     _determine_default_features(data_id, target_column)
 
 
@@ -192,10 +196,10 @@ def test_fetch_openml_iris_multitarget(monkeypatch):
     expected_features = 3
 
     _monkey_patch_webbased_functions(monkeypatch, data_id)
-    fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
-                              expected_observations, expected_features,
-                              object, np.float64, expect_sparse=False,
-                              compare_default_target=False)
+    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+                               expected_observations, expected_features,
+                               object, np.float64, expect_sparse=False,
+                               compare_default_target=False)
 
 
 def test_fetch_openml_anneal(monkeypatch):
@@ -208,10 +212,10 @@ def test_fetch_openml_anneal(monkeypatch):
     expected_observations = 11
     expected_features = 38
     _monkey_patch_webbased_functions(monkeypatch, data_id)
-    fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
-                              expected_observations, expected_features,
-                              object, object, expect_sparse=False,
-                              compare_default_target=True)
+    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+                               expected_observations, expected_features,
+                               object, object, expect_sparse=False,
+                               compare_default_target=True)
     _determine_default_features(data_id, target_column)
 
 
@@ -225,10 +229,10 @@ def test_fetch_openml_anneal_multitarget(monkeypatch):
     expected_observations = 11
     expected_features = 36
     _monkey_patch_webbased_functions(monkeypatch, data_id)
-    fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
-                              expected_observations, expected_features,
-                              object, object, expect_sparse=False,
-                              compare_default_target=False)
+    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+                               expected_observations, expected_features,
+                               object, object, expect_sparse=False,
+                               compare_default_target=False)
 
 
 def test_fetch_openml_cpu(monkeypatch):
@@ -240,10 +244,10 @@ def test_fetch_openml_cpu(monkeypatch):
     expected_observations = 209
     expected_features = 7
     _monkey_patch_webbased_functions(monkeypatch, data_id)
-    fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
-                              expected_observations, expected_features,
-                              object, np.float64, expect_sparse=False,
-                              compare_default_target=True)
+    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+                               expected_observations, expected_features,
+                               object, np.float64, expect_sparse=False,
+                               compare_default_target=True)
     _determine_default_features(data_id, target_column)
 
 
@@ -263,7 +267,7 @@ def test_fetch_openml_australian(monkeypatch):
     assert_warns_message(
         UserWarning,
         "Version 1 of dataset Australian is inactive,",
-        fetch_dataset_from_openml,
+        _fetch_dataset_from_openml,
         **{'data_id': data_id, 'data_name': data_name,
            'data_version': data_version,
            'target_column_name': target_column,
@@ -290,10 +294,10 @@ def test_fetch_openml_miceprotein(monkeypatch):
     expected_observations = 7
     expected_features = 77
     _monkey_patch_webbased_functions(monkeypatch, data_id)
-    fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
-                              expected_observations, expected_features,
-                              np.float64, object, expect_sparse=False,
-                              compare_default_target=True)
+    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+                               expected_observations, expected_features,
+                               np.float64, object, expect_sparse=False,
+                               compare_default_target=True)
     _determine_default_features(data_id, target_column)
 
 
@@ -309,10 +313,10 @@ def test_fetch_openml_emotions(monkeypatch):
     _monkey_patch_webbased_functions(monkeypatch, data_id)
 
     _determine_default_features(data_id, target_column)
-    fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
-                              expected_observations, expected_features,
-                              np.float64, object, expect_sparse=False,
-                              compare_default_target=True)
+    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+                               expected_observations, expected_features,
+                               np.float64, object, expect_sparse=False,
+                               compare_default_target=True)
 
 
 def test_fetch_openml_inactive(monkeypatch):
