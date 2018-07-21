@@ -8,7 +8,8 @@ import scipy.sparse
 import sklearn
 
 from sklearn.datasets import fetch_openml
-from sklearn.datasets.openml import _get_data_features
+from sklearn.datasets.openml import _get_data_features, \
+    _determine_default_target
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 from sklearn.externals.six import string_types
@@ -77,6 +78,14 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
                                  np.number)
 
     return data_by_id
+
+
+def _determine_default_features(data_id, expected_default_target):
+    # fetch features
+    features = _get_data_features(data_id)
+    name_feature = {feature['name']: feature for feature in features}
+    default_target = _determine_default_target(name_feature)
+    assert expected_default_target == default_target
 
 
 def _monkey_patch_webbased_functions(context, data_id, gziped_files=True):
@@ -168,6 +177,7 @@ def test_fetch_openml_iris(monkeypatch):
                               expected_observations, expected_features,
                               np.float64, object, expect_sparse=False,
                               compare_default_target=True)
+    _determine_default_features(data_id, target_column)
 
 
 def test_fetch_openml_iris_multitarget(monkeypatch):
@@ -200,6 +210,7 @@ def test_fetch_openml_anneal(monkeypatch):
                               expected_observations, expected_features,
                               object, object, expect_sparse=False,
                               compare_default_target=True)
+    _determine_default_features(data_id, target_column)
 
 
 def test_fetch_openml_anneal_multitarget(monkeypatch):
@@ -231,6 +242,7 @@ def test_fetch_openml_cpu(monkeypatch):
                               expected_observations, expected_features,
                               object, np.float64, expect_sparse=False,
                               compare_default_target=True)
+    _determine_default_features(data_id, target_column)
 
 
 def test_fetch_openml_australian(monkeypatch):
@@ -260,6 +272,7 @@ def test_fetch_openml_australian(monkeypatch):
            'exptected_target_dtype': object,
            'compare_default_target': True}
     )
+    _determine_default_features(data_id, target_column)
 
 
 def test_fetch_openml_miceprotein(monkeypatch):
@@ -279,6 +292,7 @@ def test_fetch_openml_miceprotein(monkeypatch):
                               expected_observations, expected_features,
                               np.float64, object, expect_sparse=False,
                               compare_default_target=True)
+    _determine_default_features(data_id, target_column)
 
 
 def test_fetch_openml_emotions(monkeypatch):
@@ -291,22 +305,12 @@ def test_fetch_openml_emotions(monkeypatch):
     expected_observations = 13
     expected_features = 72
     _monkey_patch_webbased_functions(monkeypatch, data_id)
+
+    _determine_default_features(data_id, target_column)
     fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                               expected_observations, expected_features,
                               np.float64, object, expect_sparse=False,
                               compare_default_target=True)
-
-
-def test_target_attribute(monkeypatch):
-    # simple sanity check. If this one fails, something is wrong with setting
-    # up the mock files.
-    data_id = 61
-    _monkey_patch_webbased_functions(monkeypatch, data_id)
-    data_description = sklearn.datasets.openml._get_data_description_by_id(
-        data_id)
-    target_column_name = data_description.get('default_target_attribute', None)
-    assert target_column_name == 'class'
-    assert isinstance(target_column_name, string_types)
 
 
 def test_fetch_openml_inactive(monkeypatch):
