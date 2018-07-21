@@ -95,21 +95,21 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files=True):
     def _mock_urlopen_data_description(url):
         assert (url.startswith(url_prefix_data_description))
 
-        path = os.path.join(currdir, 'mock_openml', str(data_id),
+        path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             'data_description.json%s' % path_suffix)
         return read_fn(path, 'rb')
 
     def _mock_urlopen_data_features(url):
         assert (url.startswith(url_prefix_data_features))
 
-        path = os.path.join(currdir, 'mock_openml', str(data_id),
+        path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             'data_features.json%s' % path_suffix)
         return read_fn(path, 'rb')
 
     def _mock_urlopen_download_data(url):
         assert (url.startswith(url_prefix_download_data))
 
-        path = os.path.join(currdir, 'mock_openml', str(data_id),
+        path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             'data.arff%s' % path_suffix)
         return read_fn(path, 'rb')
 
@@ -129,7 +129,7 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files=True):
                                          key_val_dict['data_version'],
                                          key_val_dict['status'],
                                          path_suffix)
-        json_file_path = os.path.join(currdir, 'mock_openml',
+        json_file_path = os.path.join(currdir, 'data', 'openml',
                                       str(data_id), mock_file)
         # load the file itself, to simulate a http error
         json_data = json.loads(read_fn(json_file_path, 'rb').
@@ -334,9 +334,9 @@ def test_mocked_testfiles_exist():
     expected_files = ['data.arff.gz', 'data_description.json.gz',
                       'data_features.json.gz']
     assert os.path.isdir(currdir)
-    assert os.path.isdir(os.path.join(currdir, 'mock_openml'))
+    assert os.path.isdir(os.path.join(currdir, 'data', 'openml'))
     for data_id in data_ids:
-        test_dir = os.path.join(currdir, 'mock_openml', str(data_id))
+        test_dir = os.path.join(currdir, 'data', 'openml', str(data_id))
         assert os.path.isdir(test_dir)
         assert len(os.listdir(test_dir)) >= 5
         for expected_file in expected_files:
