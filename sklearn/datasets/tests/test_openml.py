@@ -46,6 +46,9 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
                                            len(target_column_name))
     assert data_by_id.data.dtype == exptected_data_dtype
     assert data_by_id.target.dtype == exptected_target_dtype
+    assert len(data_by_id.feature_names) == expected_features
+    for feature in data_by_id.feature_names:
+        assert isinstance(feature, string_types)
 
     if compare_default_target:
         # check whether the data by id and data by id target are equal

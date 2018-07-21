@@ -182,21 +182,21 @@ def _download_data_arff(file_id):
     return arff_file
 
 
-def _convert_numericals(data, name_feature):
+def _convert_numericals(data, features):
     # converts all numerical columns in the numpy array into floats
-    for feature in name_feature.values():
+    for feature in features:
         if feature['data_type'] == "numeric":
             idx = int(feature['index'])
             data[:, idx] = data[:, idx].astype(np.float)
     return data
 
 
-def _determine_default_target(name_feature):
+def _determine_default_target(features_dict):
     # determines the default target based on the data feature results
     # (which is currently more reliable than the data description;
     # see issue: https://github.com/openml/OpenML/issues/768)
     results = []
-    for name, feature in name_feature.items():
+    for name, feature in features_dict.items():
         # note: string comparison (not boolean)
         if feature['is_target'] == "true":
             results.append(name)
@@ -209,14 +209,14 @@ def _determine_default_target(name_feature):
         return results
 
 
-def _determine_single_target_data_type(name_feature, target_column_name):
+def _determine_single_target_data_type(features_dict, target_column_name):
     # determine the data type of the y array in case there is a single target
     if not isinstance(target_column_name, string_types):
         raise ValueError('target_column_name should be of string type, '
                          'got: %s' % type(target_column_name))
-    if target_column_name not in name_feature:
+    if target_column_name not in features_dict:
         raise KeyError('Could not find target_column_name={}')
-    feature = name_feature[target_column_name]
+    feature = features_dict[target_column_name]
     # note: we compare to a string, not boolean
     if feature['is_ignore'] == 'true':
         warn('target_column_name={} has flag is_ignore.'.format(
@@ -231,7 +231,7 @@ def _determine_single_target_data_type(name_feature, target_column_name):
         return object
 
 
-def _determine_multi_target_data_type(name_feature, target_column_names):
+def _determine_multi_target_data_type(features_dict, target_column_names):
     # determine the data type of the y array in case there are multiple targets
     # (throws an error if these targets do not comply with sklearn support)
     if not isinstance(target_column_names, list):
@@ -239,18 +239,18 @@ def _determine_multi_target_data_type(name_feature, target_column_names):
                          'got: %s' % type(target_column_names))
     found_types = set()
     for target_column_name in target_column_names:
-        if target_column_name not in name_feature:
+        if target_column_name not in features_dict:
             raise KeyError('Could not find target_column_name={}')
-        if name_feature[target_column_name]['data_type'] == "numeric":
+        if features_dict[target_column_name]['data_type'] == "numeric":
             found_types.add(np.float64)
         else:
             found_types.add(object)
 
         # note: we compare to a string, not boolean
-        if name_feature[target_column_name]['is_ignore'] == 'true':
+        if features_dict[target_column_name]['is_ignore'] == 'true':
             warn('target_column_name={} has flag is_ignore.'.format(
                 target_column_name))
-        if name_feature[target_column_name]['is_row_identifier'] == 'true':
+        if features_dict[target_column_name]['is_row_identifier'] == 'true':
             warn('target_column_name={} has flag is_row_identifier.'.format(
                 target_column_name))
     if len(found_types) != 1:
@@ -357,17 +357,18 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                  data_description['version'], data_description['name']))
 
     # download data features, meta-info about column types
-    features = cached_get_data_features(data_id)
-    name_feature = {feature['name']: feature for feature in features}
+    features_list = cached_get_data_features(data_id)
+    features_dict = {feature['name']: feature for feature in features_list}
+    features_names = {feature['name'] for feature in features_list}
 
     if target_column_name == "default-target":
-        target_column_name = _determine_default_target(name_feature)
+        target_column_name = _determine_default_target(features_dict)
 
     # TODO: stacking the content of the structured array
     # this results in a copy. If the data was homogeneous
     # and target at start or end, we could use a view instead.
     data_columns = []
-    for feature in features:
+    for feature in features_list:
         # determine whether `feature` is a target
         if (isinstance(target_column_name, string_types) and
                 feature['name'] == target_column_name):
@@ -384,18 +385,18 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     arff_data = cached_download_data_arff(data_description['file_id'])['data']
     data = _convert_arff_data(arff_data)
-    data = _convert_numericals(data, name_feature)
+    data = _convert_numericals(data, features_list)
 
     if isinstance(target_column_name, string_types):
         # determine vector type
-        dtype = _determine_single_target_data_type(name_feature,
+        dtype = _determine_single_target_data_type(features_dict,
                                                    target_column_name)
-        y = np.array(data[:, int(name_feature[target_column_name]['index'])],
+        y = np.array(data[:, int(features_dict[target_column_name]['index'])],
                      dtype=dtype)
     elif isinstance(target_column_name, list):
-        dtype = _determine_multi_target_data_type(name_feature,
+        dtype = _determine_multi_target_data_type(features_dict,
                                                   target_column_name)
-        indices = [int(name_feature[col_name]['index'])
+        indices = [int(features_dict[col_name]['index'])
                    for col_name in target_column_name]
         y = np.array(data[:, indices], dtype=dtype)
     elif target_column_name is None:
@@ -406,12 +407,12 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                          'target_column_name of type {}'.
                          format(type(target_column_name)))
 
-    if all([feature['data_type'] == "numeric" for feature in features
+    if all([feature['data_type'] == "numeric" for feature in features_list
             if feature['name'] in data_columns]):
         dtype = None
     else:
         dtype = object
-    col_slice = [int(name_feature[col_name]['index'])
+    col_slice = [int(features_dict[col_name]['index'])
                  for col_name in data_columns]
     X = data[:, col_slice].astype(dtype)
 
