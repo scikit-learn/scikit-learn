@@ -49,11 +49,11 @@ from sklearn.model_selection import LeaveOneGroupOut
 from sklearn.model_selection import LeavePGroupsOut
 from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import GroupShuffleSplit
-from sklearn.model_selection import AdaptiveSearchCV
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
+from sklearn.model_selection._search import BaseSearchCV
 
 from sklearn.model_selection._validation import FitFailedWarning
 
@@ -1540,7 +1540,7 @@ def test_transform_inverse_transform_round_trip():
     assert_array_equal(X, X_round_trip)
 
 
-def test_adaptive_search_cv():
+def test_custom_run_search():
     def check_results(results, gscv):
         exp_results = gscv.cv_results_
         assert_equal(sorted(results.keys()), sorted(exp_results))
@@ -1558,19 +1558,23 @@ def test_adaptive_search_cv():
     def fit_grid(param_grid):
         return GridSearchCV(clf, param_grid).fit(X, y)
 
-    def search(evaluate):
-        results = evaluate([{'max_depth': 1}, {'max_depth': 2}])
-        check_results(results, fit_grid({'max_depth': [1, 2]}))
-        results = evaluate([{'min_samples_split': 5},
-                            {'min_samples_split': 10}])
-        check_results(results, fit_grid([{'max_depth': [1, 2]},
-                                         {'min_samples_split': [5, 10]}]))
+    class CustomSearchCV(BaseSearchCV):
+        def __init__(self, estimator, **kwargs):
+            super(CustomSearchCV, self).__init__(estimator, **kwargs)
+
+        def _run_search(self, evaluate):
+            results = evaluate([{'max_depth': 1}, {'max_depth': 2}])
+            check_results(results, fit_grid({'max_depth': [1, 2]}))
+            results = evaluate([{'min_samples_split': 5},
+                                {'min_samples_split': 10}])
+            check_results(results, fit_grid([{'max_depth': [1, 2]},
+                                             {'min_samples_split': [5, 10]}]))
 
     # Using regressor to make sure each score differs
     clf = DecisionTreeRegressor(random_state=0)
     X, y = make_classification(n_samples=100, n_informative=4,
                                random_state=0)
-    mycv = AdaptiveSearchCV(clf, search).fit(X, y)
+    mycv = CustomSearchCV(clf).fit(X, y)
     gscv = fit_grid([{'max_depth': [1, 2]},
                      {'min_samples_split': [5, 10]}])
 

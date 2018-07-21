@@ -542,7 +542,7 @@ META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
                    "RegressorChain"]
 # estimators that there is no way to default-construct sensibly
 OTHER = ["Pipeline", "FeatureUnion",
-         "AdaptiveSearchCV", "GridSearchCV", "RandomizedSearchCV",
+         "GridSearchCV", "RandomizedSearchCV",
          "SelectFromModel", "ColumnTransformer"]
 
 # some strange ones
