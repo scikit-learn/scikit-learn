@@ -1409,15 +1409,48 @@ class MiniBatchKMeans(KMeans):
     >>> from sklearn.cluster import MiniBatchKMeans
     >>> import numpy as np
     >>> X = np.array([[1, 2], [1, 4], [1, 0],
-    ...               [4, 2], [4, 4], [4, 0]])
-    >>> kmeans = MiniBatchKMeans(n_clusters=2, random_state=0).fit(X)
+    ...               [4, 2], [4, 0], [4, 4],
+    ...               [4, 5], [0, 1], [2, 2],
+    ...               [3, 2], [5, 5], [1, -1]])
+    >>> # manually fit on batches
+    >>> kmeans = MiniBatchKMeans(n_clusters=2, random_state=0)
+    >>> kmeans.partial_fit(X[0:6,:]) # doctest: +ELLIPSIS
+    MiniBatchKMeans(batch_size=100, compute_labels=True, init='k-means++',
+            init_size=None, max_iter=100, max_no_improvement=10, n_clusters=2,
+            n_init=3, random_state=0, reassignment_ratio=0.01, tol=0.0,
+            verbose=0)
     >>> kmeans.labels_
-    array([0, 0, 0, 1, 1, 1], dtype=int32)
+    array([0, 1, 0, 0, 0, 1], dtype=int32)
+    >>> kmeans.cluster_centers_
+    array([[2, 1],
+           [2, 4]])
+    >>> kmeans.partial_fit(X[6:12,:]) # doctest: +ELLIPSIS
+    MiniBatchKMeans(batch_size=100, compute_labels=True, init='k-means++',
+            init_size=None, max_iter=100, max_no_improvement=10, n_clusters=2,
+            n_init=3, random_state=0, reassignment_ratio=0.01, tol=0.0,
+            verbose=0)
+    >>> kmeans.labels_
+    array([1, 0, 0, 1, 1, 0], dtype=int32)
+    >>> kmeans.cluster_centers_
+    array([[1, 1],
+           [3, 4]])
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([0, 1], dtype=int32)
+    >>> 
+    >>> # fit on the whole data
+    >>> kmeans = MiniBatchKMeans(n_clusters=2, random_state=0)
+    >>> kmeans.fit(X) # doctest: +ELLIPSIS
+    MiniBatchKMeans(batch_size=100, compute_labels=True, init='k-means++',
+            init_size=None, max_iter=100, max_no_improvement=10, n_clusters=2,
+            n_init=3, random_state=0, reassignment_ratio=0.01, tol=0.0,
+            verbose=0)
+    >>> kmeans.labels_
+    array([1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1], dtype=int32)
     >>> kmeans.cluster_centers_
-    array([[1.        , 2.01023891],
-           [4.        , 1.96451613]])
+    array([[3.52195122, 3.58699187],
+           [1.5041876 , 0.65661642]])
+    >>> kmeans.predict([[0, 0], [4, 4]])
+    array([1, 0], dtype=int32)
 
     See also
     --------
