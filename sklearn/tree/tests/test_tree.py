@@ -1793,7 +1793,7 @@ def test_mae():
     # we have duplicate y values and non-uniform sample weights.
     # Bug fixed in version 0.20 (see issue #10725):
     dt_mae.fit(X=[[1.42055744], [0.958369], [0.38367319], [0.83952129]],
-               y=[1, 2, 1, 1], sample_weight=[1, 2, 2, 1]
+               y=[1, 2, 1, 1], sample_weight=[1, 2, 2, 1])
     assert_array_equal(dt_mae.tree_.impurity, [1.0 / 3.0, 0.0, 1.0 / 3.0])
     assert_array_equal(dt_mae.tree_.value.flat, [1.0, 1.0, 2.0])
 
