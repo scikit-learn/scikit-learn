@@ -114,6 +114,11 @@ Classifiers and regressors
   wrapping pipelines that perform their own imputation.
   :issue:`9707` by :user:`Jimmy Wan <jimmywan>`.
 
+- Added :class:`ensemble.StackingTransformer` and helper function
+  :func:`ensemble.make_stack_layer` which implements an approach to Stacked
+  Generalization using cross validation predictions.
+  :issue:`8960` by :user:`Caio Oliveira <caioaao>`.
+
 Preprocessing
 
 - Expanded :class:`preprocessing.OneHotEncoder` to allow to encode

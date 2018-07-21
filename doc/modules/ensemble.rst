@@ -1071,3 +1071,207 @@ must support ``predict_proba`` method)::
 Optionally, weights can be provided for the individual classifiers::
 
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft', weights=[2,5,1])
+
+
+.. _stacking:
+
+Stacked generalization
+======================
+
+.. currentmodule:: sklearn.ensemble
+
+Stacked generalization is another method of combining estimators to reduce
+their biases [W1992]_ by combining several estimators (possibly non-linearly)
+stacked together in layers. Each layer will contain estimators and their
+predictions are used as features to the next layer.
+
+Considering one of the layers in a stacked generalization, the method is as
+follows [MLW2015]_:
+
+1. Split the training set in 2 parts;
+2. Train each estimator on the layer using the first part of the training set
+   and create predictions for the second part;
+3. Train each estimator on the layer using the second part of the training set
+   and create predictions for the first part;
+4. Use these predictions to train the estimators on the next layer;
+5. Fit each estimator on the whole training set.
+
+As stacked generalization is a generic framework for combining supervised
+estimators, it works with regression and classification problems. The API
+reflects that, so it's the same for both categories.
+
+Usage
+------
+
+The most basic stacked ensemble consists of two layers: a layer of base
+generalizers and a single estimator for combining the output of the base
+estimators. We implement it with the :func:`make_stack_layer` function.
+
+Stacked generalization applied to regression
+............................................
+
+For this problem, assume some regressors were tested and have a good performance
+on the train or validation dataset. Here we used a ``LassoCV``, ``RidgeCV`` and
+``SVR``::
+
+    >>> from sklearn.linear_model import LassoCV, RidgeCV
+    >>> from sklearn.svm import SVR
+
+    >>> lasso = LassoCV()
+    >>> ridge = RidgeCV()
+    >>> svr = SVR(C=1e2, gamma=1e-3)
+
+    >>> base_regressors = [("lasso", lasso),
+    ...                    ("ridge", ridge),
+    ...                    ("svr", svr)]
+
+Now here is where :func:`make_stack_layer` comes into play: it will take the
+base regressors and turn them into a transformer::
+
+    >>> from sklearn.ensemble import make_stack_layer
+    >>> layer0 = make_stack_layer(base_regressors)
+
+This transformer already implements the proper algorithm to train the base
+regressors without leaking data to the next layer, so if the class is used
+properly, no need to worry. See the note about ``fit_transform()`` vs
+``fit().transform()`` under :ref:`stacking_transformer` for more info.
+
+The output for ``layer0`` is a matrix where each column is the prediction from
+one of the base regressors. We can now combine them in any way, including
+training another regressor with it. For this example, we use a linear
+regression and build the final model using :class:`sklearn.pipeline.Pipeline`::
+
+    >>> from sklearn.ensemble import make_stack_layer
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.linear_model import LinearRegression
+
+    >>> final_regressor = make_pipeline(layer0, LinearRegression())
+
+If we apply this model to the Boston house price dataset
+(:func:`sklearn.datasets.load_boston`) and use mean squared error metric, the
+stack result is 18.93744. The best model (the RidgeCV) scored 21.69905 when used
+alone.
+
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_stacked_generalization_regression_001.png
+    :target: ../auto_examples/ensemble/plot_stacked_generalization_classification.html
+    :align: center
+    :scale: 75%
+
+Stacked generalization applied to classification
+................................................
+
+As stated before, stacked generalization can be applied both to regression and
+classification algorithms. The procedure is the same: combine base classifiers
+into one transformer with :func:`make_stack_layer` and use it as a step in the
+final classifier::
+
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.svm import SVC
+    >>> from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
+
+    >>> svc = SVC(C=1e3, gamma=1e-2, probability=True)
+    >>> et = ExtraTreesClassifier(max_depth=None, n_estimators=30,
+    ...                           min_samples_split=2)
+    >>> rf = RandomForestClassifier(max_depth=None, n_estimators=30)
+
+    >>> base_classifiers = [("SVC", svc),
+    ...                     ("ExtraTrees", et),
+    ...                     ("RandomForest", rf)]
+
+    >>> layer0 = make_stack_layer(base_classifiers)
+    >>> layer1 = LogisticRegression()
+    >>> final_classifier = make_pipeline(layer0, layer1)
+
+We can then apply ``final_classifier`` in our classification problem.
+
+.. _stacking_transformer:
+
+The :class:`StackingTransformer`
+--------------------------------
+
+Under the hood, this is the class that implements what's needed to turn an
+estimator into a transformer that can be used for stacked
+generalization. :func:`make_stack_layer` is actually just a wrapper that takes
+the estimators, wraps them with :class:`StackingTransformer` and joins
+everything with :class:`sklearn.pipeline.FeatureUnion`.
+
+On the simpler use cases, :func:`make_stack_layer` should be enough but for
+some special cases, it can be useful to use :class:`StackingTransformer`
+directly.
+
+.. note:: ``fit_transform()`` versus ``fit().transform()``
+
+   Although :class:`StackingTransformer` presents both ways, ``fit_transform``
+   should be used in almost every case. Calling ``fit_transform`` will output
+   the cross validation transform, while ``fit().transform()`` won't. The
+   latter should only be used when the cross validation prediction is not
+   wanted, for example when working with non i.i.d data. See the next section
+   for more examples.
+
+Advanced usage
+--------------
+
+Stacked generalization without cross validation
+...............................................
+
+The default implementation uses cross validation to avoid leaking data from one
+layer to the other, but there's another way of avoiding it [MLW2015]_. Instead
+of using cross validation, train a layer with only part of the data and provide
+estimates to the other part. The combiner should be trained using only this
+transformed data.
+
+The simpler way is to train the layers separately. First, build the first
+layer::
+
+    >>> l0 = make_stack_layer(
+    ...     [('rf1', RandomForestClassifier(criterion='gini')),
+    ...      ('rf2', RandomForestClassifier(criterion='entropy'))],
+    ...     cv=None)
+
+Then split the data and train the first layer only on part of it. Use the
+fitted model to transform the second part::
+
+    >>> from sklearn.model_selection import train_test_split
+    >>> X0, X1, y0, y1 = train_test_split(X, y, test_size=.1)
+
+    >>> l0 = l0.fit(X0, y0)
+    >>> X1_transformed = l0.transform(X1)
+
+Now train another estimator using the transformed data, so it will combine the
+information from the other estimators into a single one.
+
+    >>> final_estimator = LogisticRegression().fit(X1_transformed, y1)
+
+That's it. The advantage of doing this method is that it can be faster than
+doing a full cross validation split on the first layer. The obvious
+disadvantage is that less data is used to train the model.
+
+Stacking multiple layers together
+.................................
+
+It's already been said that the estimators on the first layer are combined with
+another estimator. The interesting point is that the combiner can also be a
+stacked model. This means there are no limits to how many layers we can stack
+together [W1992]_.
+
+Stacking several layers is equally simple. Just build the layer as usual and use
+the `Pipeline` API to stack everything together::
+
+    >>> layer0 = [('rf', RandomForestClassifier()),
+    ...           ('svc', SVC())]
+    >>> layer1 = [('rf', RandomForestClassifier()),
+    ...           ('svc', SVC())]
+    >>> layer2 = [('rf', RandomForestClassifier()),
+    ...           ('svc', SVC())]
+    >>> layer3 = LogisticRegression()
+    >>> clf = make_pipeline(make_stack_layer(layer0),
+    ...                     make_stack_layer(layer1),
+    ...                     make_stack_layer(layer2),
+    ...                     layer3)
+
+.. topic:: References
+
+ .. [W1992] D. H. Wolpert, "Stacked Generalization",
+        Neural Networks, Vol. 5, No. 5, 1992.
+
+ .. [MLW2015] https://mlwave.com/kaggle-ensembling-guide/
