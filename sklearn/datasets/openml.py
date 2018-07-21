@@ -358,7 +358,6 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     # download data features, meta-info about column types
     features_list = cached_get_data_features(data_id)
     features_dict = {feature['name']: feature for feature in features_list}
-    features_names = {feature['name'] for feature in features_list}
 
     if target_column_name == "default-target":
         target_column_name = _determine_default_target(features_list)
