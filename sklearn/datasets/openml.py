@@ -421,7 +421,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     bunch = Bunch(
         data=X, target=y, feature_names=data_columns,
-        DESCR=description, details=data_description, features=features,
+        DESCR=description, details=data_description, features=features_list,
         url="https://www.openml.org/d/{}".format(data_id))
 
     return bunch
