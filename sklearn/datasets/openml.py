@@ -190,15 +190,15 @@ def _convert_numericals(data, features):
     return data
 
 
-def _determine_default_target(features_dict):
+def _determine_default_target(features_list):
     # determines the default target based on the data feature results
     # (which is currently more reliable than the data description;
     # see issue: https://github.com/openml/OpenML/issues/768)
     results = []
-    for name, feature in features_dict.items():
+    for feature in features_list:
         # note: string comparison (not boolean)
         if feature['is_target'] == "true":
-            results.append(name)
+            results.append(feature['name'])
 
     if len(results) == 0:
         return None
@@ -361,7 +361,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     features_names = {feature['name'] for feature in features_list}
 
     if target_column_name == "default-target":
-        target_column_name = _determine_default_target(features_dict)
+        target_column_name = _determine_default_target(features_list)
 
     # TODO: stacking the content of the structured array
     # this results in a copy. If the data was homogeneous

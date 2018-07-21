@@ -86,8 +86,7 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
 def _determine_default_features(data_id, expected_default_target):
     # fetch features
     features = _get_data_features(data_id)
-    name_feature = {feature['name']: feature for feature in features}
-    default_target = _determine_default_target(name_feature)
+    default_target = _determine_default_target(features)
     assert expected_default_target == default_target
 
 
