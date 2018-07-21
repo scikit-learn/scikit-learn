@@ -189,7 +189,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         self.n_bins_ = n_bins
 
         if 'onehot' in self.encode:
-            self._ohe_encoder = OneHotEncoder(
+            self._encoder = OneHotEncoder(
                 categories=[np.arange(i) for i in self.n_bins_],
                 sparse=self.encode == 'onehot')
 
@@ -267,7 +267,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         if self.encode == 'ordinal':
             return Xt
 
-        return self._ohe_encoder.fit_transform(Xt)
+        return self._encoder.fit_transform(Xt)
 
     def inverse_transform(self, Xt):
         """Transforms discretized data back to original feature space.
@@ -288,7 +288,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         check_is_fitted(self, ["bin_edges_"])
 
         if 'onehot' in self.encode:
-            Xt = self._ohe_encoder.inverse_transform(Xt)
+            Xt = self._encoder.inverse_transform(Xt)
 
         Xinv = check_array(Xt, copy=True, dtype=FLOAT_DTYPES)
         n_features = self.n_bins_.shape[0]

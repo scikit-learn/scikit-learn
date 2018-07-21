@@ -218,8 +218,8 @@ def test_inverse_transform(strategy, encode):
     else:
         assert_array_equal(Xt, X2t)
     if 'onehot' in encode:
-        Xt = kbd._ohe_encoder.inverse_transform(Xt)
-        X2t = kbd._ohe_encoder.inverse_transform(X2t)
+        Xt = kbd._encoder.inverse_transform(Xt)
+        X2t = kbd._encoder.inverse_transform(X2t)
 
     assert_array_equal(Xt.max(axis=0) + 1, kbd.n_bins_)
     assert_array_equal(X2t.max(axis=0) + 1, kbd.n_bins_)
