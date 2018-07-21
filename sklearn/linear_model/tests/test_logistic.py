@@ -1268,18 +1268,21 @@ def test_dtype_match():
         for multi_class in ['ovr', 'multinomial']:
 
             # Check type consistency
-            lr_32 = LogisticRegression(solver=solver, multi_class=multi_class)
+            lr_32 = LogisticRegression(solver=solver, multi_class=multi_class,
+                                       random_state=42)
             lr_32.fit(X_32, y_32)
             assert_equal(lr_32.coef_.dtype, X_32.dtype)
 
             # check consistency with sparsity
             lr_32_sparse = LogisticRegression(solver=solver,
-                                              multi_class=multi_class)
+                                              multi_class=multi_class,
+                                              random_state=42)
             lr_32_sparse.fit(X_sparse_32, y_32)
             assert_equal(lr_32_sparse.coef_.dtype, X_sparse_32.dtype)
 
             # Check accuracy consistency
-            lr_64 = LogisticRegression(solver=solver, multi_class=multi_class)
+            lr_64 = LogisticRegression(solver=solver, multi_class=multi_class,
+                                       random_state=42)
             lr_64.fit(X_64, y_64)
             assert_equal(lr_64.coef_.dtype, X_64.dtype)
             assert_almost_equal(lr_32.coef_, lr_64.coef_.astype(np.float32))
