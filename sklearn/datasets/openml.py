@@ -16,10 +16,9 @@ import numpy as np
 import sklearn.externals.arff as arff
 
 from .base import get_data_home
-from ..externals.joblib import Memory
 from ..externals.six import string_types
 from ..externals.six.moves.urllib.error import HTTPError
-from ..utils import Bunch
+from ..utils import Bunch, Memory
 
 __all__ = ['fetch_openml']
 
