@@ -1,5 +1,4 @@
 import json
-import sys
 import os
 from os.path import join, exists
 from warnings import warn
