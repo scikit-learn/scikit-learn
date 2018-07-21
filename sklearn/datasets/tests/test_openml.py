@@ -291,7 +291,7 @@ def test_fetch_openml_emotions(monkeypatch):
                      'quiet.still', 'sad.lonely', 'angry.aggresive']
     expected_observations = 13
     expected_features = 72
-    _monkey_patch_webbased_functions(monkeypatch, data_id, False)
+    _monkey_patch_webbased_functions(monkeypatch, data_id)
     fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                               expected_observations, expected_features,
                               np.float64, object, expect_sparse=False,
