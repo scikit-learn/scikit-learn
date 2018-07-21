@@ -261,8 +261,9 @@ the top of the tree contribute to the final prediction decision of a
 larger fraction of the input samples. The **expected fraction of the
 samples** they contribute to can thus be used as an estimate of the
 **relative importance of the features**. In scikit-learn, this fraction
-is combined with the decrease in gini impurity to create a normalized
-estimate of improvement in the classification ability of the tree.
+is combined with the decrease in criterion (e.g. gini impurity, entropy)
+to create a normalized estimate of improvement in the predictive ability
+of the tree.
 
 By **averaging** those expected activity rates over several randomized
 trees one can **reduce the variance** of such an estimate and use it
