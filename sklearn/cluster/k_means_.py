@@ -1436,7 +1436,6 @@ class MiniBatchKMeans(KMeans):
            [3, 4]])
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([0, 1], dtype=int32)
-    >>> 
     >>> # fit on the whole data
     >>> kmeans = MiniBatchKMeans(n_clusters=2, random_state=0)
     >>> kmeans.fit(X) # doctest: +ELLIPSIS
