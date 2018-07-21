@@ -923,7 +923,6 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     >>> import numpy as np
     >>> from sklearn import datasets, cluster
     >>> from sklearn.linear_model import SGDClassifier
-    >>> #from sklearn.feature_extraction.image import grid_to_graph
     >>> digits = datasets.load_digits()
     >>> images = digits.images
     >>> X = np.reshape(images, (len(images), -1))
