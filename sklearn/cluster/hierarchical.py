@@ -927,10 +927,10 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     >>> images = digits.images
     >>> X = np.reshape(images, (len(images), -1))
     >>> agglo = cluster.FeatureAgglomeration(n_clusters=32)
-    >>> agglo.fit(X)
+    >>> agglo.fit(X) # doctest: +ELLIPSIS
     FeatureAgglomeration(affinity='euclidean', compute_full_tree='auto',
                connectivity=None, linkage='ward', memory=None, n_clusters=32,
-               pooling_func=<function mean at 0x7f5aa2e6e158>)
+               pooling_func=...)
     >>> X_reduced = agglo.transform(X)
     >>> clf = SGDClassifier(max_iter=5, random_state=0)
     >>> clf.fit(X_reduced, digits.target) # doctest: +NORMALIZE_WHITESPACE
