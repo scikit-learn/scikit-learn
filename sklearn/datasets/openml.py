@@ -13,10 +13,10 @@ except ImportError:
 
 
 import numpy as np
-import sklearn.externals.arff as arff
 
+from sklearn.externals import arff
 from .base import get_data_home
-from ..externals.six import string_types
+from ..externals.six import string_types, PY2
 from ..externals.six.moves.urllib.error import HTTPError
 from ..utils import Bunch, Memory
 
@@ -90,7 +90,7 @@ def _convert_arff_data(arff_data):
 
     Returns
     -------
-    X : np.ndarray
+    X : np.array
         (or later also: scipy.sparse.csr_matrix)
     """
     if isinstance(arff_data, list):
@@ -172,8 +172,8 @@ def _download_data_arff(file_id):
     # https://www.openml.org/api_data_docs#!/data/get_download_id
     url = _DATA_FILE.format(file_id)
     response = urlopen(url)
-    if sys.version_info[0] == 2:
-        # Python2.7 numpy can't handle unicode?
+    if PY2:
+        # Because Python2.7 numpy can't handle unicode
         arff_file = arff.loads(response.read())
     else:
         arff_file = arff.loads(response.read().decode('utf-8'))
@@ -216,15 +216,16 @@ def _determine_single_target_data_type(name_feature, target_column_name):
                          'got: %s' % type(target_column_name))
     if target_column_name not in name_feature:
         raise KeyError('Could not find target_column_name={}')
+    feature = name_feature[target_column_name]
     # note: we compare to a string, not boolean
-    if name_feature[target_column_name]['is_ignore'] == 'true':
+    if feature['is_ignore'] == 'true':
         warn('target_column_name={} has flag is_ignore.'.format(
             target_column_name))
-    if name_feature[target_column_name]['is_row_identifier'] == 'true':
+    if feature['is_row_identifier'] == 'true':
         warn('target_column_name={} has flag is_row_identifier.'.format(
             target_column_name))
 
-    if name_feature[target_column_name]['data_type'] == "numeric":
+    if feature['data_type'] == "numeric":
         return np.float64
     else:
         return object

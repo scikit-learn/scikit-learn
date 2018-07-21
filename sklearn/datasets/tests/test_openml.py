@@ -50,13 +50,13 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
         # check whether the data by id and data by id target are equal
         data_by_id_default = fetch_openml(data_id=data_id, cache=False)
         if data_by_id.data.dtype == np.float64:
-            np.testing.assert_almost_equal(data_by_id.data,
-                                           data_by_id_default.data)
+            np.testing.assert_allclose(data_by_id.data,
+                                       data_by_id_default.data)
         else:
             assert np.array_equal(data_by_id.data, data_by_id_default.data)
         if data_by_id.target.dtype == np.float64:
-            np.testing.assert_almost_equal(data_by_id.target,
-                                           data_by_id_default.target)
+            np.testing.assert_allclose(data_by_id.target,
+                                       data_by_id_default.target)
         else:
             assert np.array_equal(data_by_id.target, data_by_id_default.target)
 
@@ -71,9 +71,8 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
                          for feature in _get_data_features(data_id)}
     for idx, feature_name in enumerate(data_by_id.feature_names):
         if feature_name_type[feature_name] == 'numeric':
-            # casting trick according to Jaime at
-            # stackoverflow.com/questions/19486283/
-            # how-do-i-quickly-check-if-all-elements-of-numpy-array-are-floats
+            # check that all elements in an object array are numeric
+            # cf. https://stackoverflow.com/a/19486803/1791279
             assert np.issubdtype(np.array(list(data_by_id.data[:, idx])).dtype,
                                  np.number)
 
@@ -343,20 +342,6 @@ def test_raises_illegal_multitarget(monkeypatch):
                          "Can only handle homogeneous multi-target datasets,",
                          fetch_openml, data_id=data_id,
                          target_column_name=targets, cache=False)
-
-
-def test_mocked_testfiles_exist():
-    data_ids = [2, 61, 292, 561, 40675]
-    expected_files = ['data.arff.gz', 'data_description.json.gz',
-                      'data_features.json.gz']
-    assert os.path.isdir(currdir)
-    assert os.path.isdir(os.path.join(currdir, 'data', 'openml'))
-    for data_id in data_ids:
-        test_dir = os.path.join(currdir, 'data', 'openml', str(data_id))
-        assert os.path.isdir(test_dir)
-        assert len(os.listdir(test_dir)) >= 5
-        for expected_file in expected_files:
-            assert os.path.isfile(os.path.join(test_dir, expected_file))
 
 
 def test_warn_ignore_attribute(monkeypatch):
