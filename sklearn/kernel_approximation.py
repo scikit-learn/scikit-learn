@@ -282,13 +282,13 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     >>> y = [0, 0, 1, 1]
     >>> chi2_feature = AdditiveChi2Sampler(sample_steps=1)
     >>> X_features = chi2_feature.fit_transform(X, y)
-    >>> clf = SGDClassifier(max_iter=5)
+    >>> clf = SGDClassifier(max_iter=5, random_state=0)
     >>> clf.fit(X_features, y) # doctest: +NORMALIZE_WHITESPACE
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
            l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
            n_iter=None, n_iter_no_change=5, n_jobs=1, penalty='l2',
-           power_t=0.5, random_state=None, shuffle=True, tol=None,
+           power_t=0.5, random_state=0, shuffle=True, tol=None,
            validation_fraction=0.1, verbose=0, warm_start=False)
     >>> clf.score(X_features, y)
     1.0
