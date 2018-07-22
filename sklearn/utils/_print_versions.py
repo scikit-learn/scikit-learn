@@ -9,8 +9,6 @@ import platform
 import sys
 import importlib
 
-from .._build_utils import get_blas_info
-
 
 def _get_sys_info():
     """System information
@@ -81,6 +79,8 @@ def _get_blas_info():
         system BLAS information
 
     """
+    from .._build_utils import get_blas_info
+
     cblas_libs, blas_dict = get_blas_info()
 
     macros = ['{key}={val}'.format(key=a, val=b)
