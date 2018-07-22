@@ -7,6 +7,7 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 from functools import partial
+from distutils.version import LooseVersion
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -24,6 +25,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..externals import six
 from ..utils import Parallel, delayed
+from ..utils._joblib import __version__ as joblib_version
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 
@@ -422,8 +424,14 @@ class KNeighborsMixin(object):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
+            if LooseVersion(joblib_version) < LooseVersion('0.12'):
+                # Deal with change of API in joblib
+                delayed_query = delayed(self._tree.query,
+                                        check_pickle=False)
+            else:
+                delayed_query = delayed(self._tree.query)
             result = Parallel(n_jobs, backend='threading')(
-                delayed(self._tree.query, check_pickle=False)(
+                delayed_query(
                     X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
@@ -698,9 +706,15 @@ class RadiusNeighborsMixin(object):
                     "or set algorithm='brute'" % self._fit_method)
 
             n_jobs = _get_n_jobs(self.n_jobs)
+
+            if LooseVersion(joblib_version) < LooseVersion('0.12'):
+                # Deal with change of API in joblib
+                delayed_query = delayed(self._tree.query_radius,
+                                        check_pickle=False)
+            else:
+                delayed_query = delayed(self._tree.query_radius)
             results = Parallel(n_jobs, backend='threading')(
-                delayed(self._tree.query_radius, check_pickle=False)(
-                    X[s], radius, return_distance)
+                delayed_query(X[s], radius, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
             if return_distance:
