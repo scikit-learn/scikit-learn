@@ -96,7 +96,8 @@ class RandomData(object):
         self.X = dict(zip(COVARIANCE_TYPE, [generate_data(
             n_samples, n_features, self.weights, self.means, self.covariances,
             covar_type) for covar_type in COVARIANCE_TYPE]))
-        self.Y = np.hstack([np.full(int(np.round(w * n_samples)), k)
+        self.Y = np.hstack([np.full(int(np.round(w * n_samples)), k,
+                                    dtype=np.int)
                             for k, w in enumerate(self.weights)])
 
 
