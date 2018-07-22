@@ -47,7 +47,7 @@ import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
 from sklearn.utils.fixes import signature
-#from sklearn.utils import deprecated, IS_PYPY
+from sklearn.utils import deprecated, IS_PYPY
 
 
 additional_names_in_all = []
