@@ -28,6 +28,15 @@ from . import _barnes_hut_tsne
 from ..externals.six import string_types
 from ..utils import deprecated
 
+from google.colab import files
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
+from google.colab import auth
+from oauth2client.client import GoogleCredentials
+auth.authenticate_user()
+gauth = GoogleAuth()
+gauth.credentials = GoogleCredentials.get_application_default()
+
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 
@@ -350,6 +359,22 @@ def _gradient_descent(objective, p0, it, n_iter,
 
     tic = time()
     for i in range(it, n_iter):
+        
+        
+        if i % 1 == 0:
+            print("checking credentials")
+            if gauth.credentials is None:
+              # Authenticate if they're not there
+              gauth.LocalWebserverAuth()
+            elif gauth.access_token_expired:
+              # Refresh them if expired
+              print( "Google Drive Token Expired, Refreshing")
+              gauth.Refresh()
+            else:
+              # Initialize the saved creds
+              gauth.Authorize()
+        
+        
         check_convergence = (i + 1) % n_iter_check == 0
         # only compute the error when needed
         kwargs['compute_error'] = check_convergence or i == n_iter - 1
@@ -374,7 +399,7 @@ def _gradient_descent(objective, p0, it, n_iter,
             if verbose >= 2:
                 print("[t-SNE] Iteration %d: error = %.7f,"
                       " gradient norm = %.7f"
-                      " (%s iterations in %0.3fs)"
+                      " (%s iterations in %0.3fs) Yay!"
                       % (i + 1, error, grad_norm, n_iter_check, duration))
 
             if error < best_error:
