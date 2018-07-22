@@ -48,7 +48,6 @@ def _get_deps_info():
         ("scipy", lambda mod: mod.version.version),
         ("Cython", lambda mod: mod.__version__),
         ("pandas", lambda mod: mod.__version__),
-        ("matplotlib", lambda mod: mod.__version__),
     ]
 
     deps_blob = []
