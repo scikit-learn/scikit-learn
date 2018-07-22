@@ -142,6 +142,15 @@ feedback:
 
      import sklearn; sklearn.show_versions()
 
+  .. note::
+
+    This utility function is only available in scikit-learn v0.20+. For all
+    previous versions, one has to manually dig such information e.g. snippet::
+
+      import numpy; print('numpy:', numpy.__version__)
+      import scipy; print('scipy:', scipy.__version__)
+      import sklearn; print('scikit-learn:', sklearn.__version__)
+
 - Please ensure all **code snippets and error messages are formatted in
   appropriate code blocks**.  See `Creating and highlighting code blocks
   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_
