@@ -31,7 +31,6 @@ IGNORED_MODULES = (
     'model_selection',
     'multioutput',
     'setup',
-    'utils',
     # Deprecated modules
     'cross_validation',
     'grid_search',

@@ -233,6 +233,12 @@ def assert_warns_div0(func, *args, **kw):
     """Assume that numpy's warning for divide by zero is raised
 
     Handles the case of platforms that do not support warning on divide by zero
+
+    Parameters
+    ----------
+    func
+    *args
+    **kw
     """
 
     with np.errstate(divide='warn', invalid='warn'):
@@ -248,6 +254,13 @@ def assert_warns_div0(func, *args, **kw):
 
 # To remove when we support numpy 1.7
 def assert_no_warnings(func, *args, **kw):
+    """
+    Parameters
+    ----------
+    func
+    *args
+    **kw
+    """
     # very important to avoid uncontrolled state propagation
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
@@ -515,6 +528,12 @@ class mock_mldata_urlopen(object):
         self.mock_datasets = mock_datasets
 
     def __call__(self, urlname):
+        """
+        Parameters
+        ----------
+        urlname : string
+            The url
+        """
         dataset_name = urlname.split('/')[-1]
         if dataset_name in self.mock_datasets:
             resource_name = '_' + dataset_name
@@ -535,6 +554,16 @@ class mock_mldata_urlopen(object):
 
 
 def install_mldata_mock(mock_datasets):
+    """
+    Parameters
+    ----------
+    mock_datasets : dict
+        A dictionary of {dataset_name: data_dict}, or
+        {dataset_name: (data_dict, ordering). `data_dict` itself is a
+        dictionary of {column_name: data_array}, and `ordering` is a list of
+        column_names to determine the ordering in the data set (see
+        :func:`fake_mldata` for details).
+    """
     # Lazy import to avoid mutually recursive imports
     from sklearn import datasets
     datasets.mldata.urlopen = mock_mldata_urlopen(mock_datasets)
@@ -597,15 +626,15 @@ def all_estimators(include_meta_estimators=False,
         not be default-constructed sensibly. These are currently
         Pipeline, FeatureUnion and GridSearchCV
 
-    include_dont_test : boolean, default=False
-        Whether to include "special" label estimator or test processors.
-
     type_filter : string, list of string,  or None, default=None
         Which kind of estimators should be returned. If None, no filter is
         applied and all estimators are returned.  Possible values are
         'classifier', 'regressor', 'cluster' and 'transformer' to get
         estimators only of these specific types, or a list of these to
         get the estimators that fit at least one of the types.
+
+    include_dont_test : boolean, default=False
+        Whether to include "special" label estimator or test processors.
 
     Returns
     -------
@@ -680,13 +709,28 @@ def all_estimators(include_meta_estimators=False,
 
 def set_random_state(estimator, random_state=0):
     """Set random state of an estimator if it has the `random_state` param.
+
+    Parameters
+    ----------
+    estimator : object
+        The estimator
+    random_state : int, RandomState instance or None, optional, default=0
+        Pseudo random number generator state.  If int, random_state is the seed
+        used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
     """
     if "random_state" in estimator.get_params():
         estimator.set_params(random_state=random_state)
 
 
 def if_matplotlib(func):
-    """Test decorator that skips test if matplotlib not installed."""
+    """Test decorator that skips test if matplotlib not installed.
+
+    Parameters
+    ----------
+    func
+    """
     @wraps(func)
     def run_test(*args, **kwargs):
         try:
@@ -775,6 +819,12 @@ def _delete_folder(folder_path, warn=False):
 
 
 class TempMemmap(object):
+    """
+    Parameters
+    ----------
+    data
+    mmap_mode
+    """
     def __init__(self, data, mmap_mode='r'):
         self.mmap_mode = mmap_mode
         self.data = data
@@ -789,6 +839,13 @@ class TempMemmap(object):
 
 
 def create_memmap_backed_data(data, mmap_mode='r', return_folder=False):
+    """
+    Parameters
+    ----------
+    data
+    mmap_mode
+    return_folder
+    """
     temp_folder = tempfile.mkdtemp(prefix='sklearn_testing_')
     atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
     filename = op.join(temp_folder, 'data.pkl')
@@ -881,6 +938,9 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
         return incorrect
     # Don't check docstring for property-functions
     if inspect.isdatadescriptor(func):
+        return incorrect
+    # Dont check estimator_checks module
+    if func_name.split('.')[2] == 'estimator_checks':
         return incorrect
     args = list(filter(lambda x: x not in ignore, _get_args(func)))
     # drop self

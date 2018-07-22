@@ -382,7 +382,13 @@ def set_checking_parameters(estimator):
 
 
 class NotAnArray(object):
-    " An object that is convertable to an array"
+    """An object that is convertible to an array
+
+    Parameters
+    ----------
+    data : array_like
+        The data.
+    """
 
     def __init__(self, data):
         self.data = data

@@ -120,6 +120,21 @@ def axis0_safe_slice(X, mask, len_mask):
     is not going to be the bottleneck, since the number of outliers
     and non_outliers are typically non-zero and it makes the code
     tougher to follow.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}
+        Data on which to apply mask.
+
+    mask : array
+        Mask to be used on X.
+
+    len_mask : int
+        The length of the mask.
+
+    Returns
+    -------
+        mask
     """
     if len_mask != 0:
         return X[safe_mask(X, mask), :]
@@ -183,6 +198,8 @@ def resample(*arrays, **options):
         Indexable data-structures can be arrays, lists, dataframes or scipy
         sparse matrices with consistent first dimension.
 
+    Other Parameters
+    ----------------
     replace : boolean, True by default
         Implements resampling with replacement. If False, this will implement
         (sliced) random permutations.
@@ -293,6 +310,8 @@ def shuffle(*arrays, **options):
         Indexable data-structures can be arrays, lists, dataframes or scipy
         sparse matrices with consistent first dimension.
 
+    Other Parameters
+    ----------------
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
@@ -384,6 +403,16 @@ def gen_batches(n, batch_size):
     The last slice may contain less than batch_size elements, when batch_size
     does not divide n.
 
+    Parameters
+    ----------
+    n : int
+    batch_size : int
+        Number of element in each batch
+
+    Yields
+    ------
+    slice of batch_size elements
+
     Examples
     --------
     >>> from sklearn.utils import gen_batches
@@ -406,8 +435,19 @@ def gen_batches(n, batch_size):
 def gen_even_slices(n, n_packs, n_samples=None):
     """Generator to create n_packs slices going up to n.
 
-    Pass n_samples when the slices are to be used for sparse matrix indexing;
-    slicing off-the-end raises an exception, while it works for NumPy arrays.
+    Parameters
+    ----------
+    n : int
+    n_packs : int
+        Number of slices to generate.
+    n_samples : int or None (default = None)
+        Number of samples. Pass n_samples when the slices are to be used for
+        sparse matrix indexing; slicing off-the-end raises an exception, while
+        it works for NumPy arrays.
+
+    Yields
+    ------
+    slice
 
     Examples
     --------
