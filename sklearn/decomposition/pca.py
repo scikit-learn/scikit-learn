@@ -129,7 +129,7 @@ class PCA(_BasePCA):
 
             n_components == min(n_samples, n_features)
 
-        If ``n_components == 'mle'`` and ``svd_solver == 'full'``, Minka\'s
+        If ``n_components == 'mle'`` and ``svd_solver == 'full'``, Minka's
         MLE is used to guess the dimension. Use of ``n_components == 'mle'``
         will interpret ``svd_solver == 'auto'`` as ``svd_solver == 'full'``.
 

@@ -15,7 +15,7 @@ import numpy as np
 from scipy import sparse
 
 from .base import clone, TransformerMixin
-from .externals.joblib import Parallel, delayed
+from .utils import Parallel, delayed
 from .externals import six
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch

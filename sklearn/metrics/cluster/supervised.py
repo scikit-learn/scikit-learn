@@ -11,11 +11,13 @@ better.
 #          Thierry Guillemot <thierry.guillemot.work@gmail.com>
 #          Gregory Stupp <stuppie@gmail.com>
 #          Joel Nothman <joel.nothman@gmail.com>
+#          Arya McCarthy <arya@jhu.edu>
 # License: BSD 3 clause
 
 from __future__ import division
 
 from math import log
+import warnings
 
 import numpy as np
 from scipy import sparse as sp
@@ -57,6 +59,21 @@ def check_clusterings(labels_true, labels_pred):
             "labels_true and labels_pred must have same size, got %d and %d"
             % (labels_true.shape[0], labels_pred.shape[0]))
     return labels_true, labels_pred
+
+
+def _generalized_average(U, V, average_method):
+    """Return a particular mean of two numbers."""
+    if average_method == "min":
+        return min(U, V)
+    elif average_method == "geometric":
+        return np.sqrt(U * V)
+    elif average_method == "arithmetic":
+        return np.mean([U, V])
+    elif average_method == "max":
+        return max(U, V)
+    else:
+        raise ValueError("'average_method' must be 'min', 'geometric', "
+                         "'arithmetic', or 'max'")
 
 
 def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
@@ -245,7 +262,9 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
 
     V-Measure is furthermore symmetric: swapping ``labels_true`` and
     ``label_pred`` will give the same score. This does not hold for
-    homogeneity and completeness.
+    homogeneity and completeness. V-Measure is identical to
+    :func:`normalized_mutual_info_score` with the arithmetic averaging
+    method.
 
     Read more in the :ref:`User Guide <homogeneity_completeness>`.
 
@@ -444,7 +463,8 @@ def completeness_score(labels_true, labels_pred):
 def v_measure_score(labels_true, labels_pred):
     """V-measure cluster labeling given a ground truth.
 
-    This score is identical to :func:`normalized_mutual_info_score`.
+    This score is identical to :func:`normalized_mutual_info_score` with
+    the ``'arithmetic'`` option for averaging.
 
     The V-measure is the harmonic mean between homogeneity and completeness::
 
@@ -458,6 +478,7 @@ def v_measure_score(labels_true, labels_pred):
     ``label_pred`` will return the same score value. This can be useful to
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
+
 
     Read more in the :ref:`User Guide <homogeneity_completeness>`.
 
@@ -485,6 +506,7 @@ def v_measure_score(labels_true, labels_pred):
     --------
     homogeneity_score
     completeness_score
+    normalized_mutual_info_score
 
     Examples
     --------
@@ -617,7 +639,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     return mi.sum()
 
 
-def adjusted_mutual_info_score(labels_true, labels_pred):
+def adjusted_mutual_info_score(labels_true, labels_pred,
+                               average_method='warn'):
     """Adjusted Mutual Information between two clusterings.
 
     Adjusted Mutual Information (AMI) is an adjustment of the Mutual
@@ -626,7 +649,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     clusters, regardless of whether there is actually more information shared.
     For two clusterings :math:`U` and :math:`V`, the AMI is given as::
 
-        AMI(U, V) = [MI(U, V) - E(MI(U, V))] / [max(H(U), H(V)) - E(MI(U, V))]
+        AMI(U, V) = [MI(U, V) - E(MI(U, V))] / [avg(H(U), H(V)) - E(MI(U, V))]
 
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the
@@ -650,9 +673,17 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
+    average_method : string, optional (default: 'warn')
+        How to compute the normalizer in the denominator. Possible options
+        are 'min', 'geometric', 'arithmetic', and 'max'.
+        If 'warn', 'max' will be used. The default will change to
+        'arithmetic' in version 0.22.
+
+        .. versionadded:: 0.20
+
     Returns
     -------
-    ami: float(upperlimited by 1.0)
+    ami: float (upperlimited by 1.0)
        The AMI returns a value of 1 when the two partitions are identical
        (ie perfectly matched). Random partitions (independent labellings) have
        an expected AMI around 0 on average hence can be negative.
@@ -670,14 +701,17 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
 
       >>> from sklearn.metrics.cluster import adjusted_mutual_info_score
       >>> adjusted_mutual_info_score([0, 0, 1, 1], [0, 0, 1, 1])
+      ... # doctest: +SKIP
       1.0
       >>> adjusted_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
+      ... # doctest: +SKIP
       1.0
 
     If classes members are completely split across different clusters,
     the assignment is totally in-complete, hence the AMI is null::
 
       >>> adjusted_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
+      ... # doctest: +SKIP
       0.0
 
     References
@@ -691,6 +725,12 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
        <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
 
     """
+    if average_method == 'warn':
+        warnings.warn("The behavior of AMI will change in version 0.22. "
+                      "To match the behavior of 'v_measure_score', AMI will "
+                      "use average_method='arithmetic' by default.",
+                      FutureWarning)
+        average_method = 'max'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = labels_true.shape[0]
     classes = np.unique(labels_true)
@@ -709,17 +749,29 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     emi = expected_mutual_information(contingency, n_samples)
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
-    ami = (mi - emi) / (max(h_true, h_pred) - emi)
+    normalizer = _generalized_average(h_true, h_pred, average_method)
+    denominator = normalizer - emi
+    # Avoid 0.0 / 0.0 when expectation equals maximum, i.e a perfect match.
+    # normalizer should always be >= emi, but because of floating-point
+    # representation, sometimes emi is slightly larger. Correct this
+    # by preserving the sign.
+    if denominator < 0:
+        denominator = min(denominator, -np.finfo('float64').eps)
+    else:
+        denominator = max(denominator, np.finfo('float64').eps)
+    ami = (mi - emi) / denominator
     return ami
 
 
-def normalized_mutual_info_score(labels_true, labels_pred):
+def normalized_mutual_info_score(labels_true, labels_pred,
+                                 average_method='warn'):
     """Normalized Mutual Information between two clusterings.
 
     Normalized Mutual Information (NMI) is an normalization of the Mutual
     Information (MI) score to scale the results between 0 (no mutual
     information) and 1 (perfect correlation). In this function, mutual
-    information is normalized by ``sqrt(H(labels_true) * H(labels_pred))``.
+    information is normalized by some generalized mean of ``H(labels_true)``
+    and ``H(labels_pred))``, defined by the `average_method`.
 
     This measure is not adjusted for chance. Therefore
     :func:`adjusted_mustual_info_score` might be preferred.
@@ -743,6 +795,14 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
+    average_method : string, optional (default: 'warn')
+        How to compute the normalizer in the denominator. Possible options
+        are 'min', 'geometric', 'arithmetic', and 'max'.
+        If 'warn', 'geometric' will be used. The default will change to
+        'arithmetic' in version 0.22.
+
+        .. versionadded:: 0.20
+
     Returns
     -------
     nmi : float
@@ -750,6 +810,7 @@ def normalized_mutual_info_score(labels_true, labels_pred):
 
     See also
     --------
+    v_measure_score: V-Measure (NMI with arithmetic mean option.)
     adjusted_rand_score: Adjusted Rand Index
     adjusted_mutual_info_score: Adjusted Mutual Information (adjusted
         against chance)
@@ -762,17 +823,26 @@ def normalized_mutual_info_score(labels_true, labels_pred):
 
       >>> from sklearn.metrics.cluster import normalized_mutual_info_score
       >>> normalized_mutual_info_score([0, 0, 1, 1], [0, 0, 1, 1])
+      ... # doctest: +SKIP
       1.0
       >>> normalized_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
+      ... # doctest: +SKIP
       1.0
 
     If classes members are completely split across different clusters,
     the assignment is totally in-complete, hence the NMI is null::
 
-      >>> normalized_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
+      >>> normalized_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])i
+      ... # doctest: +SKIP
       0.0
 
     """
+    if average_method == 'warn':
+        warnings.warn("The behavior of NMI will change in version 0.22. "
+                      "To match the behavior of 'v_measure_score', NMI will "
+                      "use average_method='arithmetic' by default.",
+                      FutureWarning)
+        average_method = 'geometric'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)
@@ -789,7 +859,10 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     # Calculate the expected value for the mutual information
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
-    nmi = mi / max(np.sqrt(h_true * h_pred), 1e-10)
+    normalizer = _generalized_average(h_true, h_pred, average_method)
+    # Avoid 0.0 / 0.0 when either entropy is zero.
+    normalizer = max(normalizer, np.finfo('float64').eps)
+    nmi = mi / normalizer
     return nmi
 
 

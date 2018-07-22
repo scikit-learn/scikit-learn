@@ -362,7 +362,7 @@ of a single numeric dtype. These do not explicitly represent categorical
 variables at present. Thus, unlike R's data.frames or pandas.DataFrame, we
 require explicit conversion of categorical features to numeric values, as
 discussed in :ref:`preprocessing_categorical_features`.
-See also :ref:`sphx_glr_auto_examples_compose_column_transformer_mixed_types.py` for an
+See also :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py` for an
 example of working with heterogeneous (e.g. categorical and numeric) data.
 
 Why does Scikit-learn not directly work with, for example, pandas.DataFrame?
