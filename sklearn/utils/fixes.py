@@ -331,7 +331,7 @@ except ImportError:  # python <3.3
 if np_version < (1, 9):
     def _uniques_counts(array):
         unique, idx = np.unique(array, return_inverse=True)
-        counts = np.bincount(idx).astype(float)
+        counts = np.bincount(idx)
         return unique, counts
 else:
     def _uniques_counts(array):
