@@ -907,8 +907,8 @@ class GridSearchCV(BaseSearchCV):
         at the end.
 
         Where there are considerations other than maximum score in
-        choosing a best estimator, ``refit`` can be set to a function which returns
-        the selected ``best_index_`` given ``cv_results_``.
+        choosing a best estimator, ``refit`` can be set to a function which
+        returns the selected ``best_index_`` given ``cv_results_``.
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
@@ -1255,7 +1255,7 @@ class RandomizedSearchCV(BaseSearchCV):
         the estimator at the end.
 
         Where there are considerations other than maximum score in
-        choosing a best estimator, ``refit`` can be set to a function which 
+        choosing a best estimator, ``refit`` can be set to a function which
         returns the selected ``best_index_`` given the ``cv_results``.
 
         The refitted estimator is made available at the ``best_estimator_``
