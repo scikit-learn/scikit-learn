@@ -34,6 +34,8 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
     clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
     neighborhood radius. Optimized for usage on large point datasets.
 
+    Read more in the :ref:`User Guide <optics>`.
+
     Parameters
     ----------
     X : array, shape (n_samples, n_features)
@@ -100,6 +102,7 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
+
         - 'ball_tree' will use :class:`BallTree`
         - 'kd_tree' will use :class:`KDTree`
         - 'brute' will use a brute-force search.
@@ -158,6 +161,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
     Equivalent to DBSCAN, finds core sample of high density and expands
     clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
     neighborhood radius. Optimized for usage on large point datasets.
+
+    Read more in the :ref:`User Guide <optics>`.
 
     Parameters
     ----------
@@ -222,6 +227,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
+
         - 'ball_tree' will use :class:`BallTree`
         - 'kd_tree' will use :class:`KDTree`
         - 'brute' will use a brute-force search.
