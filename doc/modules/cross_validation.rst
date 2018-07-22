@@ -323,6 +323,14 @@ Example of 2-fold cross-validation on a dataset with 4 samples::
   [2 3] [0 1]
   [0 1] [2 3]
 
+Visualization of cross-validation with both grouped data and
+multiple classes:
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_004.png
+    :target: ../auto_examples/model_selection/plot_cv_indices.html
+    :align: center
+    :scale: 75%
+
 Each fold is constituted by two arrays: the first one is related to the
 *training set*, and the second one to the *test set*.
 Thus, one can create the training/test sets using numpy indexing::
