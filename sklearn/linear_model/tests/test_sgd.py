@@ -319,7 +319,7 @@ class CommonTest(object):
 
         assert_array_equal(clf1.coef_, clf2.coef_)
 
-    @ignore_warnings(ConvergenceWarning)
+    @ignore_warnings(category=ConvergenceWarning)
     def test_n_iter_no_change(self):
         # test that n_iter_ increases monotonically with n_iter_no_change
         for early_stopping in [True, False]:

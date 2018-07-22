@@ -249,9 +249,9 @@ def benchmark(clf):
 
 results = []
 for clf, name in (
-        (RidgeClassifier(tol=1e-2, solver="lsqr"), "Ridge Classifier"),
-        (Perceptron(n_iter=50, tol=1e-3), "Perceptron"),
-        (PassiveAggressiveClassifier(n_iter=50, tol=1e-3),
+        (RidgeClassifier(tol=1e-2, solver="sag"), "Ridge Classifier"),
+        (Perceptron(max_iter=50, tol=1e-3), "Perceptron"),
+        (PassiveAggressiveClassifier(max_iter=50, tol=1e-3),
          "Passive-Aggressive"),
         (KNeighborsClassifier(n_neighbors=10), "kNN"),
         (RandomForestClassifier(n_estimators=100), "Random forest")):
@@ -267,16 +267,14 @@ for penalty in ["l2", "l1"]:
                                        tol=1e-3)))
 
     # Train SGD model
-    results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                           penalty=penalty,
-                                           max_iter=5)))
+    results.append(benchmark(SGDClassifier(alpha=.0001, max_iter=50,
+                                           penalty=penalty)))
 
 # Train SGD with Elastic Net penalty
 print('=' * 80)
 print("Elastic-Net penalty")
-results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                       penalty="elasticnet",
-                                       max_iter=5)))
+results.append(benchmark(SGDClassifier(alpha=.0001, max_iter=50,
+                                       penalty="elasticnet")))
 
 # Train NearestCentroid without threshold
 print('=' * 80)

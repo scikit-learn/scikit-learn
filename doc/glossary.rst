@@ -294,7 +294,7 @@ General Concepts
         convergence of the training loss, to avoid over-fitting. This is
         generally done by monitoring the generalization score on a validation
         set. When available, it is activated through the parameter
-        ``early_stopping`` or by setting a postive :term:`n_iter_no_change`.
+        ``early_stopping`` or by setting a positive :term:`n_iter_no_change`.
 
     estimator instance
         We sometimes use this terminology to distinguish an :term:`estimator`
@@ -1414,7 +1414,8 @@ functions or non-estimator constructors.
         - An iterable yielding train/test splits.
 
         With some exceptions (especially where not using cross validation at
-        all is an option), the default is 3-fold.
+        all is an option), the default is 3-fold and will change to 5-fold
+        in version 0.22.
 
         ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
 
@@ -1485,7 +1486,7 @@ functions or non-estimator constructors.
           sometimes parallelism happens in prediction (e.g. in random forests).
         * Some parallelism uses a multi-threading backend by default, some
           a multi-processing backend.  It is possible to override the default
-          backend by using :func:`sklearn.externals.joblib.parallel.parallel_backend`.
+          backend by using :func:`sklearn.utils.parallel_backend`.
         * Whether parallel processing is helpful at improving runtime depends
           on many factors, and it's usually a good idea to experiment rather
           than assuming that increasing the number of jobs is always a good

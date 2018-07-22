@@ -25,7 +25,7 @@ from .utils.fixes import parallel_helper
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import check_is_fitted, has_fit_parameter
 from .utils.multiclass import check_classification_targets
-from .externals.joblib import Parallel, delayed
+from .utils import Parallel, delayed
 from .externals import six
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
