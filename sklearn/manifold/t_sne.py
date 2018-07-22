@@ -359,6 +359,8 @@ def _gradient_descent(objective, p0, it, n_iter,
 
     tic = time()
     for i in range(it, n_iter):
+        
+        
         if i % 1 == 0:
             print("checking credentials")
             if gauth.credentials is None:
@@ -397,7 +399,7 @@ def _gradient_descent(objective, p0, it, n_iter,
             if verbose >= 2:
                 print("[t-SNE] Iteration %d: error = %.7f,"
                       " gradient norm = %.7f"
-                      " (%s iterations in %0.3fs)"
+                      " (%s iterations in %0.3fs) Yay!"
                       % (i + 1, error, grad_norm, n_iter_check, duration))
 
             if error < best_error:
