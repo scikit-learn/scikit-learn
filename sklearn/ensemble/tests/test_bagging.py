@@ -29,11 +29,12 @@ from sklearn.linear_model import Perceptron, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import SVC, SVR
+from sklearn.random_projection import SparseRandomProjection
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SelectKBest
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
-from sklearn.utils import check_random_state
+from sklearn.utils import check_random_state, hash
 from sklearn.preprocessing import FunctionTransformer
 
 from scipy.sparse import csc_matrix, csr_matrix
@@ -222,6 +223,13 @@ def test_sparse_regression():
             assert_array_almost_equal(sparse_results, dense_results)
 
 
+class DummySizeEstimator(BaseEstimator):
+
+    def fit(self, X, y):
+        self.training_size_ = X.shape[0]
+        self.training_hash_ = hash(X)
+
+
 def test_bootstrap_samples():
     # Test that bootstrapping samples generate non-perfect base estimators.
     rng = check_random_state(0)
@@ -248,6 +256,17 @@ def test_bootstrap_samples():
 
     assert_greater(base_estimator.score(X_train, y_train),
                    ensemble.score(X_train, y_train))
+
+    # check that each sampling correspond to a complete bootstrap resample.
+    # the size of each bootstrap should be the same as the input data but
+    # the data should be different (checked using the hash of the data).
+    ensemble = BaggingRegressor(base_estimator=DummySizeEstimator(),
+                                bootstrap=True).fit(X_train, y_train)
+    training_hash = []
+    for estimator in ensemble.estimators_:
+        assert estimator.training_size_ == X_train.shape[0]
+        training_hash.append(estimator.training_hash_)
+    assert len(set(training_hash)) == len(training_hash)
 
 
 def test_bootstrap_features():
@@ -498,6 +517,7 @@ def test_parallel_regression():
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_gridsearch():
     # Check that bagging ensembles can be grid-searched.
     # Transform iris into a binary classification task
@@ -709,8 +729,8 @@ def test_estimators_samples():
 
     # Test for correct formatting
     assert_equal(len(estimators_samples), len(estimators))
-    assert_equal(len(estimators_samples[0]), len(X))
-    assert_equal(estimators_samples[0].dtype.kind, 'b')
+    assert_equal(len(estimators_samples[0]), len(X) // 2)
+    assert_equal(estimators_samples[0].dtype.kind, 'i')
 
     # Re-fit single estimator to test for consistent sampling
     estimator_index = 0
@@ -726,6 +746,34 @@ def test_estimators_samples():
     new_coefs = estimator.coef_
 
     assert_array_almost_equal(orig_coefs, new_coefs)
+
+
+def test_estimators_samples_deterministic():
+    # This test is a regression test to check that with a random step
+    # (e.g. SparseRandomProjection) and a given random state, the results
+    # generated at fit time can be identically reproduced at a later time using
+    # data saved in object attributes. Check issue #9524 for full discussion.
+
+    iris = load_iris()
+    X, y = iris.data, iris.target
+
+    base_pipeline = make_pipeline(SparseRandomProjection(n_components=2),
+                                  LogisticRegression())
+    clf = BaggingClassifier(base_estimator=base_pipeline,
+                            max_samples=0.5,
+                            random_state=0)
+    clf.fit(X, y)
+    pipeline_estimator_coef = clf.estimators_[0].steps[-1][1].coef_.copy()
+
+    estimator = clf.estimators_[0]
+    estimator_sample = clf.estimators_samples_[0]
+    estimator_feature = clf.estimators_features_[0]
+
+    X_train = (X[estimator_sample])[:, estimator_feature]
+    y_train = y[estimator_sample]
+
+    estimator.fit(X_train, y_train)
+    assert_array_equal(estimator.steps[-1][1].coef_, pipeline_estimator_coef)
 
 
 def test_max_samples_consistency():

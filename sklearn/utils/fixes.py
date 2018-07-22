@@ -199,7 +199,16 @@ else:
 
 
 def parallel_helper(obj, methodname, *args, **kwargs):
-    """Workaround for Python 2 limitations of pickling instance methods"""
+    """Workaround for Python 2 limitations of pickling instance methods
+
+    Parameters
+    ----------
+    obj
+    methodname
+    *args
+    **kwargs
+
+    """
     return getattr(obj, methodname)(*args, **kwargs)
 
 

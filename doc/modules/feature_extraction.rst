@@ -509,7 +509,7 @@ v{_2}^2 + \dots + v{_n}^2}}`
 For example, we can compute the tf-idf of the first term in the first
 document in the `counts` array as follows:
 
-:math:`n_{d, {\text{term1}}} = 6`
+:math:`n_{d} = 6`
 
 :math:`\text{df}(d, t)_{\text{term1}} = 6`
 

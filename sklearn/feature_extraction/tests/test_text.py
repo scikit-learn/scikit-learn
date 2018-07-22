@@ -27,13 +27,14 @@ from sklearn.base import clone
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
+from sklearn.utils import IS_PYPY
 from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
                                    assert_not_equal, assert_almost_equal,
                                    assert_in, assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry, ignore_warnings,
                                    SkipTest, assert_raises, assert_no_warnings,
-                                   assert_allclose_dense_sparse)
+                                   fails_if_pypy, assert_allclose_dense_sparse)
 from sklearn.utils.fixes import _Mapping as Mapping
 from collections import defaultdict
 from functools import partial
@@ -503,6 +504,7 @@ def test_tfidf_vectorizer_setters():
     assert_true(tv._tfidf.sublinear_tf)
 
 
+@fails_if_pypy
 @ignore_warnings(category=DeprecationWarning)
 def test_hashing_vectorizer():
     v = HashingVectorizer()
@@ -685,6 +687,7 @@ def test_count_binary_occurrences():
     assert_equal(X_sparse.dtype, np.float32)
 
 
+@fails_if_pypy
 @ignore_warnings(category=DeprecationWarning)
 def test_hashed_binary_occurrences():
     # by default multiple occurrences are counted as longs
@@ -732,6 +735,7 @@ def test_vectorizer_inverse_transform(Vectorizer):
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_count_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -769,6 +773,7 @@ def test_count_vectorizer_pipeline_grid_selection():
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -822,6 +827,7 @@ def test_vectorizer_pipeline_cross_validation():
     assert_array_equal(cv_scores, [1., 1., 1.])
 
 
+@fails_if_pypy
 @ignore_warnings(category=DeprecationWarning)
 def test_vectorizer_unicode():
     # tests that the count vectorizer works with cyrillic.
@@ -889,9 +895,12 @@ def test_pickling_vectorizer():
         copy = pickle.loads(s)
         assert_equal(type(copy), orig.__class__)
         assert_equal(copy.get_params(), orig.get_params())
-        assert_array_equal(
-            copy.fit_transform(JUNK_FOOD_DOCS).toarray(),
-            orig.fit_transform(JUNK_FOOD_DOCS).toarray())
+        if IS_PYPY and isinstance(orig, HashingVectorizer):
+            continue
+        else:
+            assert_array_equal(
+                copy.fit_transform(JUNK_FOOD_DOCS).toarray(),
+                orig.fit_transform(JUNK_FOOD_DOCS).toarray())
 
 
 def test_countvectorizer_vocab_sets_when_pickling():
@@ -993,6 +1002,7 @@ def test_non_unique_vocab():
     assert_raises(ValueError, vect.fit, [])
 
 
+@fails_if_pypy
 def test_hashingvectorizer_nan_in_docs():
     # np.nan can appear when using pandas to load text fields from a csv file
     # with missing values.

@@ -167,19 +167,19 @@ in bias::
 
     >>> clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,
     ...     random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
-    >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.97...
+    >>> scores = cross_val_score(clf, X, y, cv=5)
+    >>> scores.mean()                               # doctest: +ELLIPSIS
+    0.98...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
-    >>> scores.mean()                             # doctest: +ELLIPSIS
+    >>> scores = cross_val_score(clf, X, y, cv=5)
+    >>> scores.mean()                               # doctest: +ELLIPSIS
     0.999...
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
+    >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean() > 0.999
     True
 
@@ -257,8 +257,8 @@ Feature importance evaluation
 The relative rank (i.e. depth) of a feature used as a decision node in a
 tree can be used to assess the relative importance of that feature with
 respect to the predictability of the target variable. Features used at
-the top of the tree contribute to the final prediction decision of a 
-larger fraction of the input samples. The **expected fraction of the 
+the top of the tree contribute to the final prediction decision of a
+larger fraction of the input samples. The **expected fraction of the
 samples** they contribute to can thus be used as an estimate of the
 **relative importance of the features**.
 
@@ -373,7 +373,7 @@ learners::
 
     >>> iris = load_iris()
     >>> clf = AdaBoostClassifier(n_estimators=100)
-    >>> scores = cross_val_score(clf, iris.data, iris.target)
+    >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
     >>> scores.mean()                             # doctest: +ELLIPSIS
     0.9...
 
