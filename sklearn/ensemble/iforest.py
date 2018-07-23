@@ -89,6 +89,26 @@ class IsolationForest(BaseBagging, OutlierMixin):
         The number of jobs to run in parallel for both `fit` and `predict`.
         If -1, then the number of jobs is set to the number of cores.
 
+    behaviour : str, default='old'
+        Behaviour of the ``decision_function`` which can be either 'old' or
+        'new'. Passing ``behaviour='new'`` makes the ``decision_function``
+        change to match other anomaly detection algorithm API which will be
+        the default behaviour in the future. As explained in details in the
+        ``offset_`` attribute documentation, the ``decision_function`` becomes
+        dependent on the contamination parameter, in such a way that 0 becomes
+        its natural threshold to detect outliers.
+
+        .. versionadded:: 0.20
+           ``behaviour`` is added in 0.20 for back-compatibility purpose.
+
+        .. deprecated:: 0.20
+           ``behaviour='old'`` is deprecated in 0.20 and will not be possible
+           in 0.22.
+
+        .. deprecated:: 0.22
+           ``behaviour`` parameter will be deprecated in 0.22 and removed in
+           0.24.
+
     behaviour : str, optional (default='old')
         Accepted values are 'old' or 'new'. Behaviour of the decision_function.
         Setting behaviour to "old" is deprecated and will not be possible
