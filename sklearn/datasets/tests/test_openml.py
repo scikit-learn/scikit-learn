@@ -114,7 +114,7 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files=True):
         return read_fn(path, 'rb')
 
     def _mock_urlopen_data_features(url):
-        assert (url.startswith(url_prefix_data_features))
+        assert url.startswith(url_prefix_data_features)
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             'data_features.json%s' % path_suffix)
@@ -131,7 +131,7 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files=True):
         # url contains key value pairs of attributes, e.g.,
         # openml.org/api/v1/json/data_name/iris/data_version/1 should
         # ideally become {data_name: 'iris', data_version: '1'}
-        assert(url.startswith(url_prefix_data_list))
+        assert url.startswith(url_prefix_data_list)
         att_list = url[len(url_prefix_data_list):].split('/')
         key_val_dict = dict(zip(att_list[::2], att_list[1::2]))
         # add defaults, so we can make assumptions about the content

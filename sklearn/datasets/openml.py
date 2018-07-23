@@ -181,15 +181,6 @@ def _download_data_arff(file_id):
     return arff_file
 
 
-def _convert_numericals(data, features):
-    # converts all numerical columns in the numpy array into floats
-    for feature in features:
-        if feature['data_type'] == "numeric":
-            idx = int(feature['index'])
-            data[:, idx] = data[:, idx].astype(np.float)
-    return data
-
-
 def _determine_default_target(features_list):
     # determines the default target based on the data feature results
     # (which is currently more reliable than the data description;
@@ -383,7 +374,6 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     arff_data = cached_download_data_arff(data_description['file_id'])['data']
     data = _convert_arff_data(arff_data)
-    data = _convert_numericals(data, features_list)
 
     if isinstance(target_column_name, string_types):
         # determine vector type
