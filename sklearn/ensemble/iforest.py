@@ -109,17 +109,6 @@ class IsolationForest(BaseBagging, OutlierMixin):
            ``behaviour`` parameter will be deprecated in 0.22 and removed in
            0.24.
 
-    behaviour : str, optional (default='old')
-        Accepted values are 'old' or 'new'. Behaviour of the decision_function.
-        Setting behaviour to "old" is deprecated and will not be possible
-        in version 0.22.
-        Beside, the behaviour parameter will be removed in 0.24.
-        Passing behaviour="new" makes the decision_function change to match
-        other anomaly detection algorithm API, as explained in details in the
-        offset_ attribute documentation. Basically, the decision_function
-        becomes dependent on the contamination parameter, in such a way that
-        0 becomes its natural threshold to detect outliers.
-
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
