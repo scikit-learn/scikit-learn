@@ -5,7 +5,7 @@
 import os
 import numbers
 
-from ..datasets.base import load_files
+from .base import load_files
 from ..utils import deprecated
 
 
