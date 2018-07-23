@@ -13,57 +13,57 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 
-from sklearn.externals.six.moves import zip
-from sklearn.utils import IS_PYPY
-from sklearn.utils._joblib import hash, Memory
-from sklearn.utils.testing import assert_raises, _get_args
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_in
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_allclose_dense_sparse
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import META_ESTIMATORS
-from sklearn.utils.testing import set_random_state
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_greater_equal
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_dict_equal
-from sklearn.utils.testing import create_memmap_backed_data
-from sklearn.utils import is_scalar_nan
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from ..externals.six.moves import zip
+from . import IS_PYPY
+from ._joblib import hash, Memory
+from .testing import assert_raises, _get_args
+from .testing import assert_raises_regex
+from .testing import assert_raise_message
+from .testing import assert_equal
+from .testing import assert_not_equal
+from .testing import assert_almost_equal
+from .testing import assert_true
+from .testing import assert_false
+from .testing import assert_in
+from .testing import assert_array_equal
+from .testing import assert_allclose
+from .testing import assert_allclose_dense_sparse
+from .testing import assert_warns_message
+from .testing import META_ESTIMATORS
+from .testing import set_random_state
+from .testing import assert_greater
+from .testing import assert_greater_equal
+from .testing import SkipTest
+from .testing import ignore_warnings
+from .testing import assert_dict_equal
+from .testing import create_memmap_backed_data
+from . import is_scalar_nan
+from ..discriminant_analysis import LinearDiscriminantAnalysis
 
 
-from sklearn.base import (clone, ClusterMixin,
-                          BaseEstimator, is_classifier, is_regressor,
-                          is_outlier_detector)
+from ..base import (clone, ClusterMixin,
+                    BaseEstimator, is_classifier, is_regressor,
+                    is_outlier_detector)
 
-from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
+from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 
-from sklearn.random_projection import BaseRandomProjection
-from sklearn.feature_selection import SelectKBest
-from sklearn.svm.base import BaseLibSVM
-from sklearn.linear_model.stochastic_gradient import BaseSGD
-from sklearn.pipeline import make_pipeline
-from sklearn.exceptions import DataConversionWarning
-from sklearn.exceptions import SkipTestWarning
-from sklearn.model_selection import train_test_split
-from sklearn.metrics.pairwise import (rbf_kernel, linear_kernel,
-                                      pairwise_distances)
+from ..random_projection import BaseRandomProjection
+from ..feature_selection import SelectKBest
+from ..svm.base import BaseLibSVM
+from ..linear_model.stochastic_gradient import BaseSGD
+from ..pipeline import make_pipeline
+from ..exceptions import DataConversionWarning
+from ..exceptions import SkipTestWarning
+from ..model_selection import train_test_split
+from ..metrics.pairwise import (rbf_kernel, linear_kernel,
+                                pairwise_distances)
 
-from sklearn.utils import shuffle
-from sklearn.utils.fixes import signature
-from sklearn.utils.validation import (has_fit_parameter, _num_samples,
-                                      LARGE_SPARSE_SUPPORTED)
-from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import load_iris, load_boston, make_blobs
+from . import shuffle
+from .fixes import signature
+from .validation import (has_fit_parameter, _num_samples,
+                         LARGE_SPARSE_SUPPORTED)
+from ..preprocessing import StandardScaler
+from ..datasets import load_iris, load_boston, make_blobs
 
 
 BOSTON = None

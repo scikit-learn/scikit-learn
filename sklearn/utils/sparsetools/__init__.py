@@ -3,7 +3,7 @@
 from scipy.sparse.csgraph import connected_components as \
      scipy_connected_components
 
-from sklearn.utils.deprecation import deprecated
+from ..deprecation import deprecated
 
 
 @deprecated("sklearn.utils.sparsetools.connected_components was deprecated in "

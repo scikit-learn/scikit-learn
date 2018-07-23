@@ -8,7 +8,7 @@
 import numpy as np
 import warnings
 
-from sklearn.exceptions import ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array, check_array
 from ..utils.validation import check_is_fitted

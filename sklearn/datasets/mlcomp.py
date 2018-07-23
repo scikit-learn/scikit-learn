@@ -4,8 +4,9 @@
 
 import os
 import numbers
-from sklearn.datasets.base import load_files
-from sklearn.utils import deprecated
+
+from ..datasets.base import load_files
+from ..utils import deprecated
 
 
 def _load_document_classification(dataset_path, metadata, set_=None, **kwargs):

@@ -8,7 +8,6 @@ import numpy as np
 import scipy as sp
 import warnings
 from warnings import warn
-from sklearn.utils.fixes import euler_gamma
 
 from scipy.sparse import issparse
 
@@ -16,6 +15,7 @@ import numbers
 from ..externals import six
 from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
+from ..utils.fixes import euler_gamma
 from ..utils.validation import check_is_fitted
 from ..base import OutlierMixin
 

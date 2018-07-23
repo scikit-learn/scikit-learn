@@ -14,7 +14,7 @@ from math import log
 import numpy as np
 
 from scipy.optimize import fmin_bfgs
-from sklearn.preprocessing import LabelEncoder
+from .preprocessing import LabelEncoder
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
 from .preprocessing import label_binarize, LabelBinarizer

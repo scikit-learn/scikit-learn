@@ -1,8 +1,8 @@
 import numpy as np
 from scipy.stats import rankdata as scipy_rankdata
 
-from sklearn.utils.extmath import stable_cumsum
-from sklearn.utils.deprecation import deprecated
+from .extmath import stable_cumsum
+from .deprecation import deprecated
 
 
 # Remove in sklearn 0.21

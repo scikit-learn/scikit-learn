@@ -39,7 +39,7 @@ from ..tree._tree import DTYPE
 from ..utils import check_array, check_X_y, check_random_state
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
-from sklearn.utils.validation import has_fit_parameter, check_is_fitted
+from ..utils.validation import has_fit_parameter, check_is_fitted
 
 __all__ = [
     'AdaBoostClassifier',
