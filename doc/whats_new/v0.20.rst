@@ -913,6 +913,17 @@ Outlier Detection models
   the ``fit_predict`` method is avaiable.
   By :user:`Albert Thomas <albertcthomas>`.
 
+ - A ``behaviour`` parameter has been introduced in :class:`ensemble.IsolationForest`
+  to ensure backward compatibility.
+  In the old behaviour, the ``decision_function`` is independent of the ``contamination``
+  parameter. A threshold attribute depending on the ``contamination`` parameter is thus
+  used.
+  In the new behaviour the ``decision_function`` is dependent on the ``contamination``
+  parameter, in such a way that 0 becomes its natural threshold to detect outliers.
+  Setting behaviour to "old" is deprecated and will not be possible in version 0.22.
+  Beside, the behaviour parameter will be removed in 0.24.
+  :issue:`11553` by `Nicolas Goix`_.
+
 Covariance
 
 - The :func:`covariance.graph_lasso`, :class:`covariance.GraphLasso` and
