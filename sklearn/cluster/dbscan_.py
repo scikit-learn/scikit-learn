@@ -169,7 +169,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
                                 for neighbors in neighborhoods])
 
     # Initially, all samples are noise.
-    labels = -np.ones(X.shape[0], dtype=np.intp)
+    labels = np.full(X.shape[0], -1, dtype=np.intp)
 
     # A list of all core samples found.
     core_samples = np.asarray(n_neighbors >= min_samples, dtype=np.uint8)

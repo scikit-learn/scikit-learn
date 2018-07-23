@@ -591,8 +591,8 @@ cdef class NeighborsHeap:
         self.indices = get_memview_ITYPE_2D(self.indices_arr)
 
     def __init__(self, n_pts, n_nbrs):
-        self.distances_arr = np.inf + np.zeros((n_pts, n_nbrs), dtype=DTYPE,
-                                               order='C')
+        self.distances_arr = np.full((n_pts, n_nbrs), np.inf, dtype=DTYPE,
+                                     order='C')
         self.indices_arr = np.zeros((n_pts, n_nbrs), dtype=ITYPE, order='C')
         self.distances = get_memview_DTYPE_2D(self.distances_arr)
         self.indices = get_memview_ITYPE_2D(self.indices_arr)
@@ -1336,7 +1336,7 @@ cdef class BinaryTree:
                 self._query_dual_breadthfirst(other, heap, nodeheap)
             else:
                 reduced_dist_LB = min_rdist_dual(self, 0, other, 0)
-                bounds = np.inf + np.zeros(other.node_data.shape[0])
+                bounds = np.full(other.node_data.shape[0], np.inf)
                 self._query_dual_depthfirst(0, other, 0, bounds,
                                             heap, reduced_dist_LB)
 
@@ -1446,7 +1446,7 @@ cdef class BinaryTree:
         r = np.asarray(r, dtype=DTYPE, order='C')
         r = np.atleast_1d(r)
         if r.shape == (1,):
-            r = r[0] + np.zeros(X.shape[:X.ndim - 1], dtype=DTYPE)
+            r = np.full(X.shape[:X.ndim - 1], r[0], dtype=DTYPE)
         else:
             if r.shape != X.shape[:X.ndim - 1]:
                 raise ValueError("r must be broadcastable to X.shape")
@@ -1654,7 +1654,7 @@ cdef class BinaryTree:
         #       this is difficult because of the need to cache values
         #       computed between node pairs.
         if breadth_first:
-            node_log_min_bounds_arr = -np.inf + np.zeros(self.n_nodes)
+            node_log_min_bounds_arr = np.full(self.n_nodes, -np.inf)
             node_log_min_bounds = get_memview_DTYPE_1D(node_log_min_bounds_arr)
             node_bound_widths_arr = np.zeros(self.n_nodes)
             node_bound_widths = get_memview_DTYPE_1D(node_bound_widths_arr)
@@ -1970,7 +1970,7 @@ cdef class BinaryTree:
         """Non-recursive dual-tree k-neighbors query, breadth-first"""
         cdef ITYPE_t i, i1, i2, i_node1, i_node2, i_pt
         cdef DTYPE_t dist_pt, reduced_dist_LB
-        cdef DTYPE_t[::1] bounds = np.inf + np.zeros(other.node_data.shape[0])
+        cdef DTYPE_t[::1] bounds = np.full(other.node_data.shape[0], np.inf)
         cdef NodeData_t* node_data1 = &self.node_data[0]
         cdef NodeData_t* node_data2 = &other.node_data[0]
         cdef NodeData_t node_info1, node_info2

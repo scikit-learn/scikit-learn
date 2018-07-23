@@ -276,8 +276,7 @@ def test_roc_curve_one_label():
     w = UndefinedMetricWarning
     fpr, tpr, thresholds = assert_warns(w, roc_curve, y_true, y_pred)
     # all true labels, all fpr should be nan
-    assert_array_equal(fpr,
-                       np.nan * np.ones(len(thresholds)))
+    assert_array_equal(fpr, np.full(len(thresholds), np.nan))
     assert_equal(fpr.shape, tpr.shape)
     assert_equal(fpr.shape, thresholds.shape)
 
@@ -286,8 +285,7 @@ def test_roc_curve_one_label():
                                         [1 - x for x in y_true],
                                         y_pred)
     # all negative labels, all tpr should be nan
-    assert_array_equal(tpr,
-                       np.nan * np.ones(len(thresholds)))
+    assert_array_equal(tpr, np.full(len(thresholds), np.nan))
     assert_equal(fpr.shape, tpr.shape)
     assert_equal(fpr.shape, thresholds.shape)
 
@@ -485,7 +483,7 @@ def test_auc_score_non_binary_class():
     y_true = np.ones(10, dtype="int")
     assert_raise_message(ValueError, "ROC AUC score is not defined",
                          roc_auc_score, y_true, y_pred)
-    y_true = -np.ones(10, dtype="int")
+    y_true = np.full(10, -1, dtype="int")
     assert_raise_message(ValueError, "ROC AUC score is not defined",
                          roc_auc_score, y_true, y_pred)
     # y_true contains three different class values
@@ -504,7 +502,7 @@ def test_auc_score_non_binary_class():
         y_true = np.ones(10, dtype="int")
         assert_raise_message(ValueError, "ROC AUC score is not defined",
                              roc_auc_score, y_true, y_pred)
-        y_true = -np.ones(10, dtype="int")
+        y_true = np.full(10, -1, dtype="int")
         assert_raise_message(ValueError, "ROC AUC score is not defined",
                              roc_auc_score, y_true, y_pred)
 

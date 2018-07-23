@@ -1874,7 +1874,7 @@ def add_dummy_feature(X, value=1.0):
             # Row indices of dummy feature are 0, ..., n_samples-1.
             row = np.concatenate((np.arange(n_samples), X.row))
             # Prepend the dummy feature n_samples times.
-            data = np.concatenate((np.ones(n_samples) * value, X.data))
+            data = np.concatenate((np.full(n_samples, value), X.data))
             return sparse.coo_matrix((data, (row, col)), shape)
         elif sparse.isspmatrix_csc(X):
             # Shift index pointers since we need to add n_samples elements.
@@ -1884,13 +1884,13 @@ def add_dummy_feature(X, value=1.0):
             # Row indices of dummy feature are 0, ..., n_samples-1.
             indices = np.concatenate((np.arange(n_samples), X.indices))
             # Prepend the dummy feature n_samples times.
-            data = np.concatenate((np.ones(n_samples) * value, X.data))
+            data = np.concatenate((np.full(n_samples, value), X.data))
             return sparse.csc_matrix((data, indices, indptr), shape)
         else:
             klass = X.__class__
             return klass(add_dummy_feature(X.tocoo(), value))
     else:
-        return np.hstack((np.ones((n_samples, 1)) * value, X))
+        return np.hstack((np.full((n_samples, 1), value), X))
 
 
 class QuantileTransformer(BaseEstimator, TransformerMixin):
