@@ -922,7 +922,6 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     --------
     >>> import numpy as np
     >>> from sklearn import datasets, cluster
-    >>> from sklearn.linear_model import SGDClassifier
     >>> digits = datasets.load_digits()
     >>> images = digits.images
     >>> X = np.reshape(images, (len(images), -1))
@@ -932,16 +931,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
                connectivity=None, linkage='ward', memory=None, n_clusters=32,
                pooling_func=...)
     >>> X_reduced = agglo.transform(X)
-    >>> clf = SGDClassifier(max_iter=5, random_state=0)
-    >>> clf.fit(X_reduced, digits.target) # doctest: +NORMALIZE_WHITESPACE
-    SGDClassifier(alpha=0.0001, average=False, class_weight=None,
-           early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
-           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
-           n_iter=None, n_iter_no_change=5, n_jobs=1, penalty='l2',
-           power_t=0.5, random_state=0, shuffle=True, tol=None,
-           validation_fraction=0.1, verbose=0, warm_start=False)
-    >>> clf.score(X_reduced, digits.target) # doctest: +ELLIPSIS
-    0.9226...
+    >>> X_reduced.shape
+    (1797, 32)
     """
 
     def __init__(self, n_clusters=2, affinity="euclidean",
