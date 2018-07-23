@@ -107,7 +107,7 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files=True):
         read_fn = gzip.open
 
     def _mock_urlopen_data_description(url):
-        assert (url.startswith(url_prefix_data_description))
+        assert url.startswith(url_prefix_data_description)
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             'data_description.json%s' % path_suffix)
