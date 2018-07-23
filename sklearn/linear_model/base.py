@@ -24,7 +24,7 @@ from scipy import linalg
 from scipy import sparse
 
 from ..externals import six
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import check_array, check_X_y
 from ..utils.validation import FLOAT_DTYPES
@@ -166,7 +166,8 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 def _rescale_data(X, y, sample_weight):
     """Rescale data so as to support sample_weight"""
     n_samples = X.shape[0]
-    sample_weight = sample_weight * np.ones(n_samples)
+    sample_weight = np.full(n_samples, sample_weight,
+                            dtype=np.array(sample_weight).dtype)
     sample_weight = np.sqrt(sample_weight)
     sw_matrix = sparse.dia_matrix((sample_weight, 0),
                                   shape=(n_samples, n_samples))

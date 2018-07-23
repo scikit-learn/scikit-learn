@@ -29,8 +29,8 @@ from ..utils import check_random_state
 from ..utils import gen_batches
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..externals.joblib import Parallel
-from ..externals.joblib import delayed
+from ..utils import Parallel
+from ..utils import delayed
 from ..externals.six import string_types
 from ..exceptions import ConvergenceWarning
 from . import _k_means
@@ -669,7 +669,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers,
     sample_weight = _check_sample_weight(X, sample_weight)
     # set the default value of centers to -1 to be able to detect any anomaly
     # easily
-    labels = -np.ones(n_samples, np.int32)
+    labels = np.full(n_samples, -1, np.int32)
     if distances is None:
         distances = np.zeros(shape=(0,), dtype=X.dtype)
     # distances will be changed in-place

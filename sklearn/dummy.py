@@ -469,7 +469,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         check_is_fitted(self, "constant_")
         n_samples = _num_samples(X)
 
-        y = np.ones((n_samples, self.n_outputs_)) * self.constant_
+        y = np.full((n_samples, self.n_outputs_), self.constant_,
+                    dtype=np.array(self.constant_).dtype)
         y_std = np.zeros((n_samples, self.n_outputs_))
 
         if self.n_outputs_ == 1 and not self.output_2d_:

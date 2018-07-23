@@ -49,6 +49,17 @@ __all__ = ['BaseCrossValidator',
            'check_cv']
 
 
+NSPLIT_WARNING = (
+    "You should specify a value for 'n_splits' instead of relying on the "
+    "default value. The default value will change from 3 to 5 "
+    "in version 0.22.")
+
+CV_WARNING = (
+    "You should specify a value for 'cv' instead of relying on the "
+    "default value. The default value will change from 3 to 5 "
+    "in version 0.22.")
+
+
 class BaseCrossValidator(with_metaclass(ABCMeta)):
     """Base class for all cross-validators
 
@@ -358,6 +369,9 @@ class KFold(_BaseKFold):
     n_splits : int, default=3
         Number of folds. Must be at least 2.
 
+        .. versionchanged:: 0.20
+            ``n_splits`` default value will change from 3 to 5 in v0.22.
+
     shuffle : boolean, optional
         Whether to shuffle the data before splitting into batches.
 
@@ -406,8 +420,11 @@ class KFold(_BaseKFold):
     RepeatedKFold: Repeats K-Fold n times.
     """
 
-    def __init__(self, n_splits=3, shuffle=False,
+    def __init__(self, n_splits='warn', shuffle=False,
                  random_state=None):
+        if n_splits is 'warn':
+            warnings.warn(NSPLIT_WARNING, FutureWarning)
+            n_splits = 3
         super(KFold, self).__init__(n_splits, shuffle, random_state)
 
     def _iter_test_indices(self, X, y=None, groups=None):
@@ -417,7 +434,7 @@ class KFold(_BaseKFold):
             check_random_state(self.random_state).shuffle(indices)
 
         n_splits = self.n_splits
-        fold_sizes = (n_samples // n_splits) * np.ones(n_splits, dtype=np.int)
+        fold_sizes = np.full(n_splits, n_samples // n_splits, dtype=np.int)
         fold_sizes[:n_samples % n_splits] += 1
         current = 0
         for fold_size in fold_sizes:
@@ -439,6 +456,9 @@ class GroupKFold(_BaseKFold):
     ----------
     n_splits : int, default=3
         Number of folds. Must be at least 2.
+
+        .. versionchanged:: 0.20
+            ``n_splits`` default value will change from 3 to 5 in v0.22.
 
     Examples
     --------
@@ -472,7 +492,10 @@ class GroupKFold(_BaseKFold):
         For splitting the data according to explicit domain-specific
         stratification of the dataset.
     """
-    def __init__(self, n_splits=3):
+    def __init__(self, n_splits='warn'):
+        if n_splits is 'warn':
+            warnings.warn(NSPLIT_WARNING, FutureWarning)
+            n_splits = 3
         super(GroupKFold, self).__init__(n_splits, shuffle=False,
                                          random_state=None)
 
@@ -530,6 +553,9 @@ class StratifiedKFold(_BaseKFold):
     n_splits : int, default=3
         Number of folds. Must be at least 2.
 
+        .. versionchanged:: 0.20
+            ``n_splits`` default value will change from 3 to 5 in v0.22.
+
     shuffle : boolean, optional
         Whether to shuffle each stratification of the data before splitting
         into batches.
@@ -567,7 +593,10 @@ class StratifiedKFold(_BaseKFold):
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
 
-    def __init__(self, n_splits=3, shuffle=False, random_state=None):
+    def __init__(self, n_splits='warn', shuffle=False, random_state=None):
+        if n_splits is 'warn':
+            warnings.warn(NSPLIT_WARNING, FutureWarning)
+            n_splits = 3
         super(StratifiedKFold, self).__init__(n_splits, shuffle, random_state)
 
     def _make_test_folds(self, X, y=None):
@@ -687,17 +716,20 @@ class TimeSeriesSplit(_BaseKFold):
     n_splits : int, default=3
         Number of splits. Must be at least 1.
 
+        .. versionchanged:: 0.20
+            ``n_splits`` default value will change from 3 to 5 in v0.22.
+
     max_train_size : int, optional
         Maximum size for a single training set.
 
     Examples
     --------
     >>> from sklearn.model_selection import TimeSeriesSplit
-    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
-    >>> y = np.array([1, 2, 3, 4])
-    >>> tscv = TimeSeriesSplit(n_splits=3)
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([1, 2, 3, 4, 5, 6])
+    >>> tscv = TimeSeriesSplit(n_splits=5)
     >>> print(tscv)  # doctest: +NORMALIZE_WHITESPACE
-    TimeSeriesSplit(max_train_size=None, n_splits=3)
+    TimeSeriesSplit(max_train_size=None, n_splits=5)
     >>> for train_index, test_index in tscv.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -705,6 +737,8 @@ class TimeSeriesSplit(_BaseKFold):
     TRAIN: [0] TEST: [1]
     TRAIN: [0 1] TEST: [2]
     TRAIN: [0 1 2] TEST: [3]
+    TRAIN: [0 1 2 3] TEST: [4]
+    TRAIN: [0 1 2 3 4] TEST: [5]
 
     Notes
     -----
@@ -713,7 +747,10 @@ class TimeSeriesSplit(_BaseKFold):
     with a test set of size ``n_samples//(n_splits + 1)``,
     where ``n_samples`` is the number of samples.
     """
-    def __init__(self, n_splits=3, max_train_size=None):
+    def __init__(self, n_splits='warn', max_train_size=None):
+        if n_splits is 'warn':
+            warnings.warn(NSPLIT_WARNING, FutureWarning)
+            n_splits = 3
         super(TimeSeriesSplit, self).__init__(n_splits,
                                               shuffle=False,
                                               random_state=None)
@@ -1270,27 +1307,31 @@ class ShuffleSplit(BaseShuffleSplit):
     Examples
     --------
     >>> from sklearn.model_selection import ShuffleSplit
-    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
-    >>> y = np.array([1, 2, 1, 2])
-    >>> rs = ShuffleSplit(n_splits=3, test_size=.25, random_state=0)
+    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [3, 4], [5, 6]])
+    >>> y = np.array([1, 2, 1, 2, 1, 2])
+    >>> rs = ShuffleSplit(n_splits=5, test_size=.25, random_state=0)
     >>> rs.get_n_splits(X)
-    3
+    5
     >>> print(rs)
-    ShuffleSplit(n_splits=3, random_state=0, test_size=0.25, train_size=None)
+    ShuffleSplit(n_splits=5, random_state=0, test_size=0.25, train_size=None)
     >>> for train_index, test_index in rs.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...  # doctest: +ELLIPSIS
-    TRAIN: [3 1 0] TEST: [2]
-    TRAIN: [2 1 3] TEST: [0]
-    TRAIN: [0 2 1] TEST: [3]
-    >>> rs = ShuffleSplit(n_splits=3, train_size=0.5, test_size=.25,
+    TRAIN: [1 3 0 4] TEST: [5 2]
+    TRAIN: [4 0 2 5] TEST: [1 3]
+    TRAIN: [1 2 4 0] TEST: [3 5]
+    TRAIN: [3 4 1 0] TEST: [5 2]
+    TRAIN: [3 5 1 0] TEST: [2 4]
+    >>> rs = ShuffleSplit(n_splits=5, train_size=0.5, test_size=.25,
     ...                   random_state=0)
     >>> for train_index, test_index in rs.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...  # doctest: +ELLIPSIS
-    TRAIN: [3 1] TEST: [2]
-    TRAIN: [2 1] TEST: [0]
-    TRAIN: [0 2] TEST: [3]
+    TRAIN: [1 3 0] TEST: [5 2]
+    TRAIN: [4 0 2] TEST: [1 3]
+    TRAIN: [1 2 4] TEST: [3 5]
+    TRAIN: [3 4 1] TEST: [5 2]
+    TRAIN: [3 5 1] TEST: [2 4]
     """
 
     def _iter_indices(self, X, y=None, groups=None):
@@ -1502,20 +1543,22 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     Examples
     --------
     >>> from sklearn.model_selection import StratifiedShuffleSplit
-    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
-    >>> y = np.array([0, 0, 1, 1])
-    >>> sss = StratifiedShuffleSplit(n_splits=3, test_size=0.5, random_state=0)
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([0, 0, 0, 1, 1, 1])
+    >>> sss = StratifiedShuffleSplit(n_splits=5, test_size=0.5, random_state=0)
     >>> sss.get_n_splits(X, y)
-    3
+    5
     >>> print(sss)       # doctest: +ELLIPSIS
-    StratifiedShuffleSplit(n_splits=3, random_state=0, ...)
+    StratifiedShuffleSplit(n_splits=5, random_state=0, ...)
     >>> for train_index, test_index in sss.split(X, y):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [1 2] TEST: [3 0]
-    TRAIN: [0 2] TEST: [1 3]
-    TRAIN: [0 2] TEST: [3 1]
+    TRAIN: [5 2 3] TEST: [4 1 0]
+    TRAIN: [5 1 4] TEST: [0 2 3]
+    TRAIN: [5 0 2] TEST: [4 3 1]
+    TRAIN: [4 1 0] TEST: [2 3 5]
+    TRAIN: [0 5 1] TEST: [3 4 2]
     """
 
     def __init__(self, n_splits=10, test_size="default", train_size=None,
@@ -1859,7 +1902,7 @@ class _CVIterableWrapper(BaseCrossValidator):
             yield train, test
 
 
-def check_cv(cv=3, y=None, classifier=False):
+def check_cv(cv='warn', y=None, classifier=False):
     """Input checker utility for building a cross-validator
 
     Parameters
@@ -1880,6 +1923,9 @@ def check_cv(cv=3, y=None, classifier=False):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value will change from 3-fold to 5-fold in v0.22.
+
     y : array-like, optional
         The target variable for supervised learning problems.
 
@@ -1893,7 +1939,8 @@ def check_cv(cv=3, y=None, classifier=False):
         The return value is a cross-validator which generates the train/test
         splits via the ``split`` method.
     """
-    if cv is None:
+    if cv is 'warn':
+        warnings.warn(CV_WARNING, FutureWarning)
         cv = 3
 
     if isinstance(cv, numbers.Integral):

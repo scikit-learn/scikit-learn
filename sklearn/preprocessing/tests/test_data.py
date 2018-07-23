@@ -62,6 +62,7 @@ from sklearn.base import clone
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_predict
 from sklearn.svm import SVR
+from sklearn.utils import shuffle
 
 from sklearn import datasets
 
@@ -209,7 +210,7 @@ def test_standard_scaler_1d():
         assert_array_almost_equal(X_scaled_back, X)
 
     # Constant feature
-    X = np.ones(5).reshape(5, 1)
+    X = np.ones((5, 1))
     scaler = StandardScaler()
     X_scaled = scaler.fit(X).transform(X, copy=True)
     assert_almost_equal(scaler.mean_, 1.)
@@ -237,7 +238,7 @@ def test_standard_scaler_numerical_stability():
     # np.log(1e-5) is taken because of its floating point representation
     # was empirically found to cause numerical problems with np.mean & np.std.
 
-    x = np.zeros(8, dtype=np.float64) + np.log(1e-5, dtype=np.float64)
+    x = np.full(8, np.log(1e-5), dtype=np.float64)
     if LooseVersion(np.__version__) >= LooseVersion('1.9'):
         # This does not raise a warning as the number of samples is too low
         # to trigger the problem in recent numpy
@@ -249,17 +250,17 @@ def test_standard_scaler_numerical_stability():
         assert_array_almost_equal(x_scaled, np.zeros(8))
 
     # with 2 more samples, the std computation run into numerical issues:
-    x = np.zeros(10, dtype=np.float64) + np.log(1e-5, dtype=np.float64)
+    x = np.full(10, np.log(1e-5), dtype=np.float64)
     w = "standard deviation of the data is probably very close to 0"
     x_scaled = assert_warns_message(UserWarning, w, scale, x)
     assert_array_almost_equal(x_scaled, np.zeros(10))
 
-    x = np.ones(10, dtype=np.float64) * 1e-100
+    x = np.full(10, 1e-100, dtype=np.float64)
     x_small_scaled = assert_no_warnings(scale, x)
     assert_array_almost_equal(x_small_scaled, np.zeros(10))
 
     # Large values can cause (often recoverable) numerical stability issues:
-    x_big = np.ones(10, dtype=np.float64) * 1e100
+    x_big = np.full(10, 1e100, dtype=np.float64)
     w = "Dataset may contain too large values"
     x_big_scaled = assert_warns_message(UserWarning, w, scale, x_big)
     assert_array_almost_equal(x_big_scaled, np.zeros(10))
@@ -621,7 +622,7 @@ def test_min_max_scaler_1d():
         assert_array_almost_equal(X_scaled_back, X)
 
     # Constant feature
-    X = np.ones(5).reshape(5, 1)
+    X = np.ones((5, 1))
     scaler = MinMaxScaler()
     X_scaled = scaler.fit(X).transform(X)
     assert_greater_equal(X_scaled.min(), 0.)
@@ -1577,7 +1578,7 @@ def test_maxabs_scaler_1d():
         assert_array_almost_equal(X_scaled_back, X)
 
     # Constant feature
-    X = np.ones(5).reshape(5, 1)
+    X = np.ones((5, 1))
     scaler = MaxAbsScaler()
     X_scaled = scaler.fit(X).transform(X)
     assert_array_almost_equal(np.abs(X_scaled.max(axis=0)), 1.)
@@ -2003,11 +2004,24 @@ def test_quantile_transform_valid_axis():
                         ". Got axis=2", quantile_transform, X.T, axis=2)
 
 
-def test_power_transformer_notfitted():
-    pt = PowerTransformer(method='box-cox')
+@pytest.mark.parametrize("method", ['box-cox', 'yeo-johnson'])
+def test_power_transformer_notfitted(method):
+    pt = PowerTransformer(method=method)
     X = np.abs(X_1col)
     assert_raises(NotFittedError, pt.transform, X)
     assert_raises(NotFittedError, pt.inverse_transform, X)
+
+
+@pytest.mark.parametrize('method', ['box-cox', 'yeo-johnson'])
+@pytest.mark.parametrize('standardize', [True, False])
+@pytest.mark.parametrize('X', [X_1col, X_2d])
+def test_power_transformer_inverse(method, standardize, X):
+    # Make sure we get the original input when applying transform and then
+    # inverse transform
+    X = np.abs(X) if method == 'box-cox' else X
+    pt = PowerTransformer(method=method, standardize=standardize)
+    X_trans = pt.fit_transform(X)
+    assert_almost_equal(X, pt.inverse_transform(X_trans))
 
 
 def test_power_transformer_1d():
@@ -2061,11 +2075,12 @@ def test_power_transformer_2d():
         assert isinstance(pt.lambdas_, np.ndarray)
 
 
-def test_power_transformer_strictly_positive_exception():
+def test_power_transformer_boxcox_strictly_positive_exception():
+    # Exceptions should be raised for negative arrays and zero arrays when
+    # method is boxcox
+
     pt = PowerTransformer(method='box-cox')
     pt.fit(np.abs(X_2d))
-
-    # Exceptions should be raised for negative arrays and zero arrays
     X_with_negatives = X_2d
     not_positive_message = 'strictly positive'
 
@@ -2076,7 +2091,7 @@ def test_power_transformer_strictly_positive_exception():
                          pt.fit, X_with_negatives)
 
     assert_raise_message(ValueError, not_positive_message,
-                         power_transform, X_with_negatives)
+                         power_transform, X_with_negatives, 'box-cox')
 
     assert_raise_message(ValueError, not_positive_message,
                          pt.transform, np.zeros(X_2d.shape))
@@ -2085,11 +2100,19 @@ def test_power_transformer_strictly_positive_exception():
                          pt.fit, np.zeros(X_2d.shape))
 
     assert_raise_message(ValueError, not_positive_message,
-                         power_transform, np.zeros(X_2d.shape))
+                         power_transform, np.zeros(X_2d.shape), 'box-cox')
 
 
-def test_power_transformer_shape_exception():
-    pt = PowerTransformer(method='box-cox')
+@pytest.mark.parametrize('X', [X_2d, np.abs(X_2d), -np.abs(X_2d),
+                               np.zeros(X_2d.shape)])
+def test_power_transformer_yeojohnson_any_input(X):
+    # Yeo-Johnson method should support any kind of input
+    power_transform(X, method='yeo-johnson')
+
+
+@pytest.mark.parametrize("method", ['box-cox', 'yeo-johnson'])
+def test_power_transformer_shape_exception(method):
+    pt = PowerTransformer(method=method)
     X = np.abs(X_2d)
     pt.fit(X)
 
@@ -2122,3 +2145,136 @@ def test_power_transformer_lambda_zero():
     pt.lambdas_ = np.array([0])
     X_trans = pt.transform(X)
     assert_array_almost_equal(pt.inverse_transform(X_trans), X)
+
+
+def test_power_transformer_lambda_one():
+    # Make sure lambda = 1 corresponds to the identity for yeo-johnson
+    pt = PowerTransformer(method='yeo-johnson', standardize=False)
+    X = np.abs(X_2d)[:, 0:1]
+
+    pt.lambdas_ = np.array([1])
+    X_trans = pt.transform(X)
+    assert_array_almost_equal(X_trans, X)
+
+
+@pytest.mark.parametrize("method, lmbda", [('box-cox', .1),
+                                           ('box-cox', .5),
+                                           ('yeo-johnson', .1),
+                                           ('yeo-johnson', .5),
+                                           ('yeo-johnson', 1.),
+                                           ])
+def test_optimization_power_transformer(method, lmbda):
+    # Test the optimization procedure:
+    # - set a predefined value for lambda
+    # - apply inverse_transform to a normal dist (we get X_inv)
+    # - apply fit_transform to X_inv (we get X_inv_trans)
+    # - check that X_inv_trans is roughly equal to X
+
+    rng = np.random.RandomState(0)
+    n_samples = 20000
+    X = rng.normal(loc=0, scale=1, size=(n_samples, 1))
+
+    pt = PowerTransformer(method=method, standardize=False)
+    pt.lambdas_ = [lmbda]
+    X_inv = pt.inverse_transform(X)
+
+    pt = PowerTransformer(method=method, standardize=False)
+    X_inv_trans = pt.fit_transform(X_inv)
+
+    assert_almost_equal(0, np.linalg.norm(X - X_inv_trans) / n_samples,
+                        decimal=2)
+    assert_almost_equal(0, X_inv_trans.mean(), decimal=1)
+    assert_almost_equal(1, X_inv_trans.std(), decimal=1)
+
+
+@pytest.mark.parametrize('method', ['box-cox', 'yeo-johnson'])
+def test_power_transformer_nans(method):
+    # Make sure lambda estimation is not influenced by NaN values
+    # and that transform() supports NaN silently
+
+    X = np.abs(X_1col)
+    pt = PowerTransformer(method=method)
+    pt.fit(X)
+    lmbda_no_nans = pt.lambdas_[0]
+
+    # concat nans at the end and check lambda stays the same
+    X = np.concatenate([X, np.full_like(X, np.nan)])
+    X = shuffle(X, random_state=0)
+
+    pt.fit(X)
+    lmbda_nans = pt.lambdas_[0]
+
+    assert_almost_equal(lmbda_no_nans, lmbda_nans, decimal=5)
+
+    X_trans = pt.transform(X)
+    assert_array_equal(np.isnan(X_trans), np.isnan(X))
+
+
+@pytest.mark.parametrize('method', ['box-cox', 'yeo-johnson'])
+@pytest.mark.parametrize('standardize', [True, False])
+def test_power_transformer_fit_transform(method, standardize):
+    # check that fit_transform() and fit().transform() return the same values
+    X = X_1col
+    if method == 'box-cox':
+        X = np.abs(X)
+
+    pt = PowerTransformer(method, standardize)
+    assert_array_almost_equal(pt.fit(X).transform(X), pt.fit_transform(X))
+
+
+@pytest.mark.parametrize('method', ['box-cox', 'yeo-johnson'])
+@pytest.mark.parametrize('standardize', [True, False])
+def test_power_transformer_copy_True(method, standardize):
+    # Check that neither fit, transform, fit_transform nor inverse_transform
+    # modify X inplace when copy=True
+    X = X_1col
+    if method == 'box-cox':
+        X = np.abs(X)
+
+    X_original = X.copy()
+    assert X is not X_original  # sanity checks
+    assert_array_almost_equal(X, X_original)
+
+    pt = PowerTransformer(method, standardize, copy=True)
+
+    pt.fit(X)
+    assert_array_almost_equal(X, X_original)
+    X_trans = pt.transform(X)
+    assert X_trans is not X
+
+    X_trans = pt.fit_transform(X)
+    assert_array_almost_equal(X, X_original)
+    assert X_trans is not X
+
+    X_inv_trans = pt.inverse_transform(X_trans)
+    assert X_trans is not X_inv_trans
+
+
+@pytest.mark.parametrize('method', ['box-cox', 'yeo-johnson'])
+@pytest.mark.parametrize('standardize', [True, False])
+def test_power_transformer_copy_False(method, standardize):
+    # check that when copy=False fit doesn't change X inplace but transform,
+    # fit_transform and inverse_transform do.
+    X = X_1col
+    if method == 'box-cox':
+        X = np.abs(X)
+
+    X_original = X.copy()
+    assert X is not X_original  # sanity checks
+    assert_array_almost_equal(X, X_original)
+
+    pt = PowerTransformer(method, standardize, copy=False)
+
+    pt.fit(X)
+    assert_array_almost_equal(X, X_original)  # fit didn't change X
+
+    X_trans = pt.transform(X)
+    assert X_trans is X
+
+    if method == 'box-cox':
+        X = np.abs(X)
+    X_trans = pt.fit_transform(X)
+    assert X_trans is X
+
+    X_inv_trans = pt.inverse_transform(X_trans)
+    assert X_trans is X_inv_trans

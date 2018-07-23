@@ -74,7 +74,7 @@ def heldout_score(clf, X_test, y_test):
     return score
 
 
-def cv_estimate(n_splits=3):
+def cv_estimate(n_splits=None):
     cv = KFold(n_splits=n_splits)
     cv_clf = ensemble.GradientBoostingClassifier(**params)
     val_scores = np.zeros((n_estimators,), dtype=np.float64)

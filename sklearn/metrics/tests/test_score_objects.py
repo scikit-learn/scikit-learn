@@ -250,6 +250,7 @@ def test_check_scoring_and_check_multimetric_scoring():
                              scoring=scoring)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_check_scoring_gridsearchcv():
     # test that check_scoring works on GridSearchCV and pipeline.
     # slightly redundant non-regression test.
@@ -413,6 +414,8 @@ def test_thresholded_scorers_multilabel_indicator_data():
     assert_almost_equal(score1, score2)
 
 
+@pytest.mark.filterwarnings("ignore:the behavior of ")
+# AMI and NMI changes for 0.22
 def test_supervised_cluster_scorers():
     # Test clustering scorers against gold standard labeling.
     X, y = make_blobs(random_state=0, centers=2)
