@@ -743,7 +743,8 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
 
 
 class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
-    """Cross-validated Orthogonal Matching Pursuit model (OMP)
+    """:term:`Cross-validated<cross-validation estimator>` Orthogonal Matching
+    Pursuit model (OMP).
 
     Read more in the :ref:`User Guide <omp>`.
 

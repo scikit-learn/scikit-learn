@@ -467,7 +467,8 @@ def graphical_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 
 
 class GraphicalLassoCV(GraphicalLasso):
-    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
+    """Sparse inverse covariance with :term:`cross-validated choice
+    <cross-validation estimator>` of the l1 penalty.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
@@ -872,7 +873,8 @@ class GraphLasso(GraphicalLasso):
 @deprecated("The 'GraphLassoCV' was renamed to 'GraphicalLassoCV' "
             "in version 0.20 and will be removed in 0.22.")
 class GraphLassoCV(GraphicalLassoCV):
-    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
+    """Sparse inverse covariance with :term:`cross-validated choice
+    <cross-validation estimator>` of the l1 penalty.
 
     This class implements the Graphical Lasso algorithm.
 

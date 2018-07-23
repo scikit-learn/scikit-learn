@@ -28,7 +28,8 @@ from .metrics.classification import _check_binary_probabilistic_predictions
 
 
 class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
-    """Probability calibration with isotonic regression or sigmoid.
+    """:term:`Cross-validated <cross-validation estimator>` Probability
+    calibration with isotonic regression or sigmoid.
 
     With this class, the base_estimator is fit on the train set of the
     cross-validation generator and the test set is used for calibration.

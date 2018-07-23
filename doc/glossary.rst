@@ -955,6 +955,20 @@ such as:
         and do not provide :term:`set_params` or :term:`get_params`.
         Parameter validation may be performed in ``__init__``.
 
+    cross-validation estimator
+        An estimator that has built-in cross-validation capabilities to
+        automatically select the best hyper-parameters, e.g.
+        :class:`ElasticNetCV <linear_model.ElasticNetCV>`, or
+        :class:`LogisticRegressionCV <linear_model.LogisticRegressionCV>`.
+        Cross-validation estimators are named *EstimatorCV*. The advantage of
+        using a cross-validation estimator over the canonical `Estimator` class
+        along with :ref:`grid search <grid_search>` is that they can take
+        advantage of warm-starting by reusing precomputed results in the
+        previous steps of the cross-validation process. This generally leads to
+        speed improvements. An exception is the :class:`RidgeCV
+        <linear_model.RidgeCV>` class, which can instead perform efficient
+        Leave-One-Out CV.
+
     scorer
         A non-estimator callable object which evaluates an estimator on given
         test data, returning a number. Unlike :term:`evaluation metrics`,

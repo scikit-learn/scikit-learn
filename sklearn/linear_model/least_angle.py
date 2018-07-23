@@ -969,7 +969,8 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
 
 class LarsCV(Lars):
-    """Cross-validated Least Angle Regression model
+    """:term:`Cross-validated <cross-validation estimator>` Least Angle
+    Regression model.
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -1178,7 +1179,8 @@ class LarsCV(Lars):
 
 
 class LassoLarsCV(LarsCV):
-    """Cross-validated Lasso, using the LARS algorithm
+    """:term:`Cross-validated Lasso <cross-validation estimator>`, using the
+    LARS algorithm.
 
     The optimization objective for Lasso is::
 
