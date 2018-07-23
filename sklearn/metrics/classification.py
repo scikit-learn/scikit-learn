@@ -1549,9 +1549,11 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         report_dict = {label[0]: label[1:] for label in rows}
 
         for label, scores in report_dict.items():
-            report_dict[label] = dict(zip(headers, scores))
+            report_dict[label] = dict(zip(headers,
+                                          [i.item() for i in scores]))
 
-        report_dict['avg / total'] = dict(zip(headers, avg_total))
+        report_dict['avg / total'] = dict(zip(headers,
+                                              [i.item() for i in avg_total]))
 
         return report_dict
 
