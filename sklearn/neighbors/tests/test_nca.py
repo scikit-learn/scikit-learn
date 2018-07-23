@@ -1,11 +1,9 @@
 import pytest
-import sys
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from scipy.optimize import check_grad
 from sklearn import clone
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.externals.six import StringIO
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import (assert_raises, assert_equal,
                                    assert_raise_message, assert_warns_message,
@@ -307,7 +305,7 @@ def test_warm_start_effectiveness():
 
 @pytest.mark.parametrize('init_name', ['pca', 'lda', 'identity', 'random',
                                        'precomputed'])
-def test_verbose(init_name):
+def test_verbose(init_name, capsys):
     # assert there is proper output when verbose = 1, for every initialization
     # except auto because auto will call one of the others
     msgs = {'pca': "Finding principal components",
@@ -317,34 +315,21 @@ def test_verbose(init_name):
         init = rng.randn(iris_data.shape[1], iris_data.shape[1])
     else:
         init = init_name
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-
     nca = NeighborhoodComponentsAnalysis(verbose=1, init=init)
-    try:
-        nca.fit(iris_data, iris_target)
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
+    nca.fit(iris_data, iris_target)
+    out, _ = capsys.readouterr()
 
     # check output
     assert("[NeighborhoodComponentsAnalysis]" in out)
     assert(msgs[init_name] in out)
     assert ("Training took" in out)
 
+
+def test_no_verbose(capsys):
     # assert by default there is no output (verbose=0)
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-
     nca = NeighborhoodComponentsAnalysis()
-    try:
-        nca.fit(iris_data, iris_target)
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
-
+    nca.fit(iris_data, iris_target)
+    out, _ = capsys.readouterr()
     # check output
     assert(out == '')
 
@@ -396,7 +381,7 @@ def test_one_class():
     assert_array_equal(X, nca.transform(X))
 
 
-def test_callback():
+def test_callback(capsys):
     X = iris_data
     y = iris_target
 
@@ -410,20 +395,13 @@ def test_callback():
         print('{} iterations remaining...'.format(rem_iter))
 
     # assert that my_cb is called
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-
     nca = NeighborhoodComponentsAnalysis(max_iter=max_iter,
                                          callback=my_cb, verbose=1)
-    try:
-        nca.fit(iris_data, iris_target)
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
+    nca.fit(iris_data, iris_target)
+    out, _ = capsys.readouterr()
 
     # check output
-    assert('{} iterations remaining...'.format(max_iter-1) in out)
+    assert('{} iterations remaining...'.format(max_iter - 1) in out)
 
 
 def test_store_opt_result():
