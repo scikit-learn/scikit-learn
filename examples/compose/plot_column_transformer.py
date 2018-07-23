@@ -40,7 +40,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
-from sklearn.svm import SVC
+from sklearn.svm import LinearSVC
 
 
 class TextStats(BaseEstimator, TransformerMixin):
@@ -117,7 +117,7 @@ pipeline = Pipeline([
     )),
 
     # Use a SVC classifier on the combined features
-    ('svc', SVC(kernel='linear')),
+    ('svc', LinearSVC()),
 ])
 
 # limit the list of categories to make running this example faster.

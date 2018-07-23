@@ -87,6 +87,14 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     labels : array [n_samples]
         Cluster labels for each point.  Noisy samples are given the label -1.
 
+    See also
+    --------
+    DBSCAN
+        An estimator interface for this clustering algorithm.
+    optics
+        A similar clustering at multiple values of eps. Our implementation
+        is optimized for memory usage.
+
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_dbscan.py
@@ -106,6 +114,9 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
     Another way to reduce memory and computation time is to remove
     (near-)duplicate points and use ``sample_weight`` instead.
+
+    :func:`cluster.optics` provides a similar clustering with lower memory
+    usage.
 
     References
     ----------
@@ -158,7 +169,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
                                 for neighbors in neighborhoods])
 
     # Initially, all samples are noise.
-    labels = -np.ones(X.shape[0], dtype=np.intp)
+    labels = np.full(X.shape[0], -1, dtype=np.intp)
 
     # A list of all core samples found.
     core_samples = np.asarray(n_neighbors >= min_samples, dtype=np.uint8)
@@ -233,6 +244,12 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
 
+    See also
+    --------
+    OPTICS
+        A similar clustering at multiple values of eps. Our implementation
+        is optimized for memory usage.
+
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_dbscan.py
@@ -252,6 +269,9 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     Another way to reduce memory and computation time is to remove
     (near-)duplicate points and use ``sample_weight`` instead.
+
+    :class:`cluster.OPTICS` provides a similar clustering with lower memory
+    usage.
 
     References
     ----------

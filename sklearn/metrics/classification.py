@@ -223,6 +223,8 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     ----------
     .. [1] `Wikipedia entry for the Confusion matrix
            <https://en.wikipedia.org/wiki/Confusion_matrix>`_
+           (Wikipedia and other references may use a different
+           convention for axes)
 
     Examples
     --------
@@ -1450,9 +1452,11 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         Sample weights.
 
     digits : int
-        Number of digits for formatting output floating point values
+        Number of digits for formatting output floating point values.
+        When ``output_dict`` is ``True``, this will be ignored and the
+        returned values will not be rounded.
 
-    output_dict: bool (default = False)
+    output_dict : bool (default = False)
         If True, return output as dict
 
     Returns
@@ -1908,7 +1912,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
 
     losses = 1 - margin
     # The hinge_loss doesn't penalize good enough predictions.
-    losses[losses <= 0] = 0
+    np.clip(losses, 0, None, out=losses)
     return np.average(losses, weights=sample_weight)
 
 

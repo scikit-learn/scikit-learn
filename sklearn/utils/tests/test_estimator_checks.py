@@ -2,7 +2,6 @@ import unittest
 import sys
 
 import numpy as np
-
 import scipy.sparse as sp
 
 from sklearn.externals.six.moves import cStringIO as StringIO
@@ -11,7 +10,8 @@ from sklearn.externals import joblib
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
 from sklearn.utils.testing import (assert_raises_regex, assert_true,
-                                   assert_equal, ignore_warnings)
+                                   assert_equal, ignore_warnings,
+                                   assert_warns)
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.estimator_checks import set_checking_parameters
@@ -26,7 +26,8 @@ from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.utils.validation import check_X_y, check_array
+from sklearn.utils.validation import (check_X_y, check_array,
+                                      LARGE_SPARSE_SUPPORTED)
 
 
 class CorrectNotFittedError(ValueError):
@@ -82,6 +83,61 @@ class ChangesWrongAttribute(BaseEstimator):
 class ChangesUnderscoreAttribute(BaseEstimator):
     def fit(self, X, y=None):
         self._good_attribute = 1
+        X, y = check_X_y(X, y)
+        return self
+
+
+class RaisesErrorInSetParams(BaseEstimator):
+    def __init__(self, p=0):
+        self.p = p
+
+    def set_params(self, **kwargs):
+        if 'p' in kwargs:
+            p = kwargs.pop('p')
+            if p < 0:
+                raise ValueError("p can't be less than 0")
+            self.p = p
+        return super(RaisesErrorInSetParams, self).set_params(**kwargs)
+
+    def fit(self, X, y=None):
+        X, y = check_X_y(X, y)
+        return self
+
+
+class ModifiesValueInsteadOfRaisingError(BaseEstimator):
+    def __init__(self, p=0):
+        self.p = p
+
+    def set_params(self, **kwargs):
+        if 'p' in kwargs:
+            p = kwargs.pop('p')
+            if p < 0:
+                p = 0
+            self.p = p
+        return super(ModifiesValueInsteadOfRaisingError,
+                     self).set_params(**kwargs)
+
+    def fit(self, X, y=None):
+        X, y = check_X_y(X, y)
+        return self
+
+
+class ModifiesAnotherValue(BaseEstimator):
+    def __init__(self, a=0, b='method1'):
+        self.a = a
+        self.b = b
+
+    def set_params(self, **kwargs):
+        if 'a' in kwargs:
+            a = kwargs.pop('a')
+            self.a = a
+            if a is None:
+                kwargs.pop('b')
+                self.b = 'method2'
+        return super(ModifiesAnotherValue,
+                     self).set_params(**kwargs)
+
+    def fit(self, X, y=None):
         X, y = check_X_y(X, y)
         return self
 
@@ -163,6 +219,26 @@ class NotInvariantPredict(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
+class LargeSparseNotSupportedClassifier(BaseEstimator):
+    def fit(self, X, y):
+        X, y = check_X_y(X, y,
+                         accept_sparse=("csr", "csc", "coo"),
+                         accept_large_sparse=True,
+                         multi_output=True,
+                         y_numeric=True)
+        if sp.issparse(X):
+            if X.getformat() == "coo":
+                if X.row.dtype == "int64" or X.col.dtype == "int64":
+                    raise ValueError(
+                        "Estimator doesn't support 64-bit indices")
+            elif X.getformat() in ["csc", "csr"]:
+                if X.indices.dtype == "int64" or X.indptr.dtype == "int64":
+                    raise ValueError(
+                        "Estimator doesn't support 64-bit indices")
+
+        return self
+
+
 class SparseTransformer(BaseEstimator):
     def fit(self, X, y=None):
         self.X_shape_ = check_array(X).shape
@@ -199,6 +275,13 @@ def test_check_estimator():
     msg = "it does not implement a 'get_params' methods"
     assert_raises_regex(TypeError, msg, check_estimator, object)
     assert_raises_regex(TypeError, msg, check_estimator, object())
+    # check that values returned by get_params match set_params
+    msg = "get_params result does not match what was passed to set_params"
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        ModifiesValueInsteadOfRaisingError())
+    assert_warns(UserWarning, check_estimator, RaisesErrorInSetParams())
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        ModifiesAnotherValue())
     # check that we have a fit method
     msg = "object has no attribute 'fit'"
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator)
@@ -265,6 +348,14 @@ def test_check_estimator():
         sys.stdout = old_stdout
     assert_true(msg in string_buffer.getvalue())
 
+    # Large indices test on bad estimator
+    msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
+           r'support \S{3}_64 matrix, and is not failing gracefully.*')
+    # only supported by scipy version more than 0.14.0
+    if LARGE_SPARSE_SUPPORTED:
+        assert_raises_regex(AssertionError, msg, check_estimator,
+                            LargeSparseNotSupportedClassifier)
+
     # non-regression test for estimators transforming to sparse data
     check_estimator(SparseTransformer())
 
@@ -289,25 +380,25 @@ def test_check_estimator_clones():
     for Estimator in [GaussianMixture, LinearRegression,
                       RandomForestClassifier, NMF, SGDClassifier,
                       MiniBatchKMeans]:
-        with ignore_warnings(category=FutureWarning):
+        with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
             # when 'est = SGDClassifier()'
             est = Estimator()
-        set_checking_parameters(est)
-        set_random_state(est)
-        # without fitting
-        old_hash = joblib.hash(est)
-        check_estimator(est)
+            set_checking_parameters(est)
+            set_random_state(est)
+            # without fitting
+            old_hash = joblib.hash(est)
+            check_estimator(est)
         assert_equal(old_hash, joblib.hash(est))
 
-        with ignore_warnings(category=FutureWarning):
+        with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
             # when 'est = SGDClassifier()'
             est = Estimator()
-        set_checking_parameters(est)
-        set_random_state(est)
-        # with fitting
-        est.fit(iris.data + 10, iris.target)
-        old_hash = joblib.hash(est)
-        check_estimator(est)
+            set_checking_parameters(est)
+            set_random_state(est)
+            # with fitting
+            est.fit(iris.data + 10, iris.target)
+            old_hash = joblib.hash(est)
+            check_estimator(est)
         assert_equal(old_hash, joblib.hash(est))
 
 

@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 import numpy as np
 
@@ -13,12 +15,14 @@ from sklearn.preprocessing import minmax_scale
 from sklearn.preprocessing import scale
 from sklearn.preprocessing import power_transform
 from sklearn.preprocessing import quantile_transform
+from sklearn.preprocessing import robust_scale
 
 from sklearn.preprocessing import MaxAbsScaler
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import PowerTransformer
 from sklearn.preprocessing import QuantileTransformer
+from sklearn.preprocessing import RobustScaler
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
@@ -37,8 +41,11 @@ def _get_valid_samples_by_column(X, col):
      (MinMaxScaler(), minmax_scale, False, False),
      (StandardScaler(), scale, False, False),
      (StandardScaler(with_mean=False), scale, True, False),
-     (PowerTransformer(), power_transform, False, True),
-     (QuantileTransformer(n_quantiles=10), quantile_transform, True, False)]
+     (PowerTransformer('yeo-johnson'), power_transform, False, False),
+     (PowerTransformer('box-cox'), power_transform, False, True),
+     (QuantileTransformer(n_quantiles=10), quantile_transform, True, False),
+     (RobustScaler(), robust_scale, False, False),
+     (RobustScaler(with_centering=False), robust_scale, True, False)]
 )
 def test_missing_value_handling(est, func, support_sparse, strictly_positive):
     # check that the preprocessing method let pass nan
@@ -110,10 +117,12 @@ def test_missing_value_handling(est, func, support_sparse, strictly_positive):
             X_train_sp = sparse_constructor(X_train)
             X_test_sp = sparse_constructor(X_test)
             with pytest.warns(None) as records:
+                warnings.simplefilter('ignore', PendingDeprecationWarning)
                 Xt_sp = est_sparse.fit(X_train_sp).transform(X_test_sp)
             assert len(records) == 0
             assert_allclose(Xt_sp.A, Xt_dense)
             with pytest.warns(None) as records:
+                warnings.simplefilter('ignore', PendingDeprecationWarning)
                 Xt_inv_sp = est_sparse.inverse_transform(Xt_sp)
             assert len(records) == 0
             assert_allclose(Xt_inv_sp.A, Xt_inv_dense)
