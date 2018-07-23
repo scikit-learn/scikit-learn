@@ -703,7 +703,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             if trans is None:
                 warnings.warn(
                     "Transformer '%s' is set to None. Please use 'drop' "
-                    "for the same behavior. None will be removed "
+                    "for the same behavior. None has been deprecated "
                     "in version 0.20 and will be removed in 0.22." % name,
                     DeprecationWarning)
 

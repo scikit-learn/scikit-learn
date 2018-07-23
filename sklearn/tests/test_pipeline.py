@@ -839,7 +839,7 @@ def test_set_feature_union_test_none():
     ft.set_params(m2=None)
 
     depr_message = ("Transformer 'm2' is set to None. Please use 'drop' "
-                    "for the same behavior. None will be removed "
+                    "for the same behavior. None has been deprecated "
                     "in version 0.20 and will be removed in 0.22.")
 
     with pytest.warns(DeprecationWarning, match=depr_message):
