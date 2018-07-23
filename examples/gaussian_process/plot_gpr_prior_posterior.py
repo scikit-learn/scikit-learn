@@ -34,12 +34,9 @@ kernels = [1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-1, 10.0)),
                         nu=1.5)]
 
 for fig_index, kernel in enumerate(kernels):
-    print(fig_index)
-    print(kernel)
     # Specify Gaussian Process
     gp = GaussianProcessRegressor(kernel=kernel)
 
-    print('_1')
     # Plot prior
     plt.figure(fig_index, figsize=(8, 8))
     plt.subplot(2, 1, 1)
@@ -54,24 +51,20 @@ for fig_index, kernel in enumerate(kernels):
     plt.ylim(-3, 3)
     plt.title("Prior (kernel:  %s)" % kernel, fontsize=12)
 
-    print('_2')
     # Generate data and fit GP
     rng = np.random.RandomState(4)
     X = rng.uniform(0, 5, 10)[:, np.newaxis]
     y = np.sin((X[:, 0] - 2.5) ** 2)
     gp.fit(X, y)
 
-    print('_3')
     # Plot posterior
     plt.subplot(2, 1, 2)
     X_ = np.linspace(0, 5, 100)
-    print('__1')
     y_mean, y_std = gp.predict(X_[:, np.newaxis], return_std=True)
     plt.plot(X_, y_mean, 'k', lw=3, zorder=9)
     plt.fill_between(X_, y_mean - y_std, y_mean + y_std,
                      alpha=0.2, color='k')
 
-    print('_4')
     y_samples = gp.sample_y(X_[:, np.newaxis], 10)
     plt.plot(X_, y_samples, lw=1)
     plt.scatter(X[:, 0], y, c='r', s=50, zorder=10, edgecolors=(0, 0, 0))
