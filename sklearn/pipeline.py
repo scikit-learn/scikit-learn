@@ -699,17 +699,13 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         return self
 
     def _check_params(self):
-        show_warning = False
         for idx, (name, trans) in enumerate(self.transformer_list):
             if trans is None:
-                self.transformer_list[idx] = (name, 'drop')
-                show_warning = True
-
-        if show_warning:
-            warnings.warn(
-                "Transformers set to None is now set with 'drop' "
-                "in version 0.20 and will be removed in 0.22.",
-                DeprecationWarning)
+                warnings.warn(
+                    "Transformer '%s' is set to None. Please use 'drop' "
+                    "for the same behavior. None will be removed "
+                    "in version 0.20 and will be removed in 0.22." % name,
+                    DeprecationWarning)
 
     def _validate_transformers(self):
         names, transformers = zip(*self.transformer_list)
@@ -719,7 +715,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
         # validate estimators
         for t in transformers:
-            if t == 'drop':
+            if t is None or t == 'drop':
                 continue
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
                     hasattr(t, "transform")):
@@ -734,7 +730,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         get_weight = (self.transformer_weights or {}).get
         return ((name, trans, get_weight(name))
                 for name, trans in self.transformer_list
-                if trans != 'drop')
+                if trans is not None and trans != 'drop')
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -843,10 +839,9 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
-        self.transformer_list[:] = [
-            (name, 'drop' if old == 'drop' else next(transformers))
-            for name, old in self.transformer_list
-        ]
+        self.transformer_list[:] = [(name, old if old is None or old == 'drop'
+                                     else next(transformers))
+                                    for name, old in self.transformer_list]
 
 
 def make_union(*transformers, **kwargs):

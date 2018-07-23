@@ -489,7 +489,7 @@ def test_make_union_kwargs():
     assert_equal(3, fu.n_jobs)
     # invalid keyword parameters should raise an error message
     assert_raise_message(
-       TypeError,
+        TypeError,
         'Unknown keyword arguments: "transformer_weights"',
         make_union, pca, mock, transformer_weights={'pca': 10, 'Transf': 1}
     )
@@ -838,15 +838,13 @@ def test_set_feature_union_test_none():
     ft = FeatureUnion([('m2', mult2), ('m3', mult3)])
     ft.set_params(m2=None)
 
-    depr_message = ("Transformers set to None is now set with 'drop' "
+    depr_message = ("Transformer 'm2' is set to None. Please use 'drop' "
+                    "for the same behavior. None will be removed "
                     "in version 0.20 and will be removed in 0.22.")
 
     with pytest.warns(DeprecationWarning, match=depr_message):
         assert_array_equal([[3]], ft.fit_transform(X))
 
-    # The previous `fit_transform` calls replaces None with 'drop'
-    # `m2` to set back to None to test `fit` and `transform`.
-    ft.set_params(m2=None)
     with pytest.warns(DeprecationWarning, match=depr_message):
         assert_array_equal([[3]], ft.fit(X).transform(X))
 
