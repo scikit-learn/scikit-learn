@@ -12,6 +12,7 @@ except ImportError:
 
 
 import numpy as np
+import scipy.sparse
 
 from sklearn.externals import arff
 from .base import get_data_home
@@ -76,10 +77,57 @@ def _get_json_content_from_openml_api(url, error_message, raise_if_error):
     return json_data
 
 
-def _convert_arff_data(arff_data):
+def _split_sparse_columns(arff_data, include_columns):
     """
-    converts the arff object into the appropriate matrix type (now: np.ndarray,
-    later also: scipy.sparse.csr_matrix) based on the 'data part' (i.e., in the
+    obtains several columns from sparse arff representation. Additionally, the
+    column indices are re-labelled, given the columns that are not included.
+    (e.g., when including [1, 2, 3], the columns will be relabelled to
+    [0, 1, 2])
+
+    Parameters
+    ----------
+    arff_data : tuple
+        A tuple of three lists of equal size; first list indicating the value,
+        second the x coordinate and the third the y coordinate.
+
+    include_columns : list
+        A list of columns to include.
+
+    Returns
+    -------
+    arff_data_new : tuple
+        Subset of arff data with only the include columns indicated by the
+        include_columns argument.
+    """
+    arff_data_new = (list(), list(), list())
+    reindexed_columns = {column_idx: array_idx for array_idx, column_idx
+                         in enumerate(include_columns)}
+    for val, row_idx, col_idx in zip(arff_data[0], arff_data[1], arff_data[2]):
+        if col_idx in include_columns:
+            arff_data_new[0].append(val)
+            arff_data_new[1].append(row_idx)
+            arff_data_new[2].append(reindexed_columns[col_idx])
+    return arff_data_new
+
+
+def _sparse_data_to_array(arff_data, dtype, include_columns):
+    # turns the sparse data back into an array (can't use toarray() function,
+    # as this does only work on numeric data)
+    num_obs = max(arff_data[1]) + 1
+    y_shape = (num_obs, len(include_columns))
+    reindexed_columns = {column_idx: array_idx for array_idx, column_idx
+                         in enumerate(include_columns)}
+    y = np.empty(y_shape, dtype=dtype)
+    for val, row_idx, col_idx in zip(arff_data[0], arff_data[1], arff_data[2]):
+        if col_idx in include_columns:
+            y[row_idx, reindexed_columns[col_idx]] = val
+    return y
+
+
+def _convert_arff_data(arff_data, dtype_x, col_slice_x, dtype_y, col_slice_y):
+    """
+    converts the arff object into the appropriate matrix type (np.array or
+    scipy.sparse.csr_matrix) based on the 'data part' (i.e., in the
     liac-arff dict, the object from the 'data' key)
 
     Parameters
@@ -87,18 +135,57 @@ def _convert_arff_data(arff_data):
     arff_data : list or dict
         as obtained from liac-arff object
 
+    dtype_x : type
+        The data type in which the X data should be returned. Preferred:
+        np.float64 or object
+
+    col_slice_x : list
+        The column indices that are sliced from the original array to return
+        as X data
+
+    type_y : type
+        The data type in which the y data should be returned. Preferred:
+        np.float64 or object
+
+    col_slice_y : int or list
+        The column indices that are sliced from the original array to return
+        as y data
+
     Returns
     -------
-    X : np.array
-        (or later also: scipy.sparse.csr_matrix)
+    X : np.array or scipy.sparse.csr_matrix
+    y : np.array
     """
     if isinstance(arff_data, list):
-        X = np.array(arff_data, dtype=object)
-    # elif: extendable for sparse arff in future ()
+        data = np.array(arff_data, dtype=object)
+        X = np.array(data[:, col_slice_x], dtype=dtype_x)
+        if dtype_y is not None:
+            y = np.array(data[:, col_slice_y], dtype=dtype_y)
+        else:
+            y = None
+        return X, y
+    elif isinstance(arff_data, tuple):
+        if dtype_x is not np.float64:
+            raise ValueError('sparse array only allowed for numeric columns')
+        arff_data_X = _split_sparse_columns(arff_data, col_slice_x)
+        num_obs = max(arff_data[1]) + 1
+        X_shape = (num_obs, len(col_slice_x))
+        X = scipy.sparse.coo_matrix(
+            (arff_data_X[0], (arff_data_X[1], arff_data_X[2])),
+            shape=X_shape, dtype=dtype_x)
+        X = X.tocsr()
+        if dtype_y is not None:
+            if isinstance(col_slice_y, list):
+                y = _sparse_data_to_array(arff_data, dtype_y, col_slice_y)
+            else:
+                y = _sparse_data_to_array(arff_data, dtype_y,
+                                          [col_slice_y])[:, 0]
+        else:
+            y = None
+        return X, y
     else:
         # This should never happen
         raise ValueError('Unexpected Data Type obtained from arff.')
-    return X
 
 
 def _get_data_info_by_name(name, version):
@@ -166,16 +253,22 @@ def _get_data_features(data_id):
     return json_data['data_features']['feature']
 
 
-def _download_data_arff(file_id):
+def _download_data_arff(file_id, sparse):
     # Accesses an ARFF file on the OpenML server. Documentation:
     # https://www.openml.org/api_data_docs#!/data/get_download_id
     url = _DATA_FILE.format(file_id)
     response = urlopen(url)
+    kwargs = {}
+    if sparse is True:
+        kwargs['return_type'] = arff.COO
+    else:
+        kwargs['return_type'] = arff.DENSE
+
     if PY2:
         # Because Python2.7 numpy can't handle unicode
-        arff_file = arff.loads(response.read())
+        arff_file = arff.loads(response.read(), **kwargs)
     else:
-        arff_file = arff.loads(response.read().decode('utf-8'))
+        arff_file = arff.loads(response.read().decode('utf-8'), **kwargs)
 
     response.close()
     return arff_file
@@ -372,23 +465,20 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                 feature['is_row_identifier'] == 'false'):
             data_columns.append(feature['name'])
 
-    arff_data = cached_download_data_arff(data_description['file_id'])['data']
-    data = _convert_arff_data(arff_data)
-
+    # prepare which columns and data types should be returned for the X and y
     if isinstance(target_column_name, string_types):
         # determine vector type
-        dtype = _determine_single_target_data_type(features_dict,
-                                                   target_column_name)
-        y = np.array(data[:, int(features_dict[target_column_name]['index'])],
-                     dtype=dtype)
+        dtype_y = _determine_single_target_data_type(features_dict,
+                                                     target_column_name)
+        col_slice_y = int(features_dict[target_column_name]['index'])
     elif isinstance(target_column_name, list):
-        dtype = _determine_multi_target_data_type(features_dict,
-                                                  target_column_name)
-        indices = [int(features_dict[col_name]['index'])
-                   for col_name in target_column_name]
-        y = np.array(data[:, indices], dtype=dtype)
+        dtype_y = _determine_multi_target_data_type(features_dict,
+                                                    target_column_name)
+        col_slice_y = [int(features_dict[col_name]['index'])
+                       for col_name in target_column_name]
     elif target_column_name is None:
-        y = None
+        dtype_y = None
+        col_slice_y = None
     else:
         # unexpected behaviour, this should never happen
         raise ValueError('Could not determine how to handle '
@@ -397,12 +487,23 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     if all([feature['data_type'] == "numeric" for feature in features_list
             if feature['name'] in data_columns]):
-        dtype = None
+        dtype_x = np.float64
     else:
-        dtype = object
-    col_slice = [int(features_dict[col_name]['index'])
-                 for col_name in data_columns]
-    X = data[:, col_slice].astype(dtype)
+        dtype_x = object
+
+    col_slice_x = [int(features_dict[col_name]['index'])
+                   for col_name in data_columns]
+
+    # determine arff encoding to return
+    return_sparse = False
+    if data_description['format'].lower() == 'sparse_arff':
+        return_sparse = True
+
+    # obtain the data
+    arff_data = cached_download_data_arff(data_description['file_id'],
+                                          return_sparse)['data']
+    X, y = _convert_arff_data(arff_data, dtype_x, col_slice_x,
+                              dtype_y, col_slice_y)
 
     description = u"{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
