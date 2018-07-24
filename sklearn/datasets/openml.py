@@ -147,7 +147,7 @@ def _convert_arff_data(arff_data, dtype_x, col_slice_x, dtype_y, col_slice_y):
         The data type in which the y data should be returned. Preferred:
         np.float64 or object
 
-    col_slice_y : int or list
+    col_slice_y : list
         The column indices that are sliced from the original array to return
         as y data
 
@@ -159,10 +159,7 @@ def _convert_arff_data(arff_data, dtype_x, col_slice_x, dtype_y, col_slice_y):
     if isinstance(arff_data, list):
         data = np.array(arff_data, dtype=object)
         X = np.array(data[:, col_slice_x], dtype=dtype_x)
-        if dtype_y is not None:
-            y = np.array(data[:, col_slice_y], dtype=dtype_y)
-        else:
-            y = None
+        y = np.array(data[:, col_slice_y], dtype=dtype_y)
         return X, y
     elif isinstance(arff_data, tuple):
         if dtype_x is not np.float64:
@@ -174,14 +171,7 @@ def _convert_arff_data(arff_data, dtype_x, col_slice_x, dtype_y, col_slice_y):
             (arff_data_X[0], (arff_data_X[1], arff_data_X[2])),
             shape=X_shape, dtype=dtype_x)
         X = X.tocsr()
-        if dtype_y is not None:
-            if isinstance(col_slice_y, list):
-                y = _sparse_data_to_array(arff_data, dtype_y, col_slice_y)
-            else:
-                y = _sparse_data_to_array(arff_data, dtype_y,
-                                          [col_slice_y])[:, 0]
-        else:
-            y = None
+        y = _sparse_data_to_array(arff_data, dtype_y, col_slice_y)
         return X, y
     else:
         # This should never happen
@@ -332,11 +322,11 @@ def _determine_multi_target_data_type(features_dict, target_column_names):
         if features_dict[target_column_name]['is_row_identifier'] == 'true':
             warn('target_column_name={} has flag is_row_identifier.'.format(
                 target_column_name))
-    if len(found_types) != 1:
+    if len(found_types) > 1:
         raise ValueError('Can only handle homogeneous multi-target datasets, '
                          'i.e., all targets are either numeric or '
                          'categorical.')
-    return list(found_types)[0]
+    return list(found_types)[0] if len(found_types) > 0 else None
 
 
 def fetch_openml(name=None, version='active', data_id=None, data_home=None,
@@ -450,8 +440,9 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     # for code-simplicity, make target_column_name by default a list
     if isinstance(target_column_name, string_types):
         target_column_name = [target_column_name]
-    elif not isinstance(target_column_name, list) \
-            and target_column_name is not None:
+    elif target_column_name is None:
+        target_column_name = []
+    elif not isinstance(target_column_name, list):
         raise TypeError("Did not recognize type of target_column_name"
                         "Should be six.string_type, list or None. Got: "
                         "{}".format(type(target_column_name)))
@@ -461,19 +452,10 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                         feature['is_row_identifier'] != 'true')]
     
     # prepare which columns and data types should be returned for the X and y
-    if isinstance(target_column_name, list):
-        dtype_y = _determine_multi_target_data_type(features_dict,
-                                                    target_column_name)
-        col_slice_y = [int(features_dict[col_name]['index'])
-                       for col_name in target_column_name]
-    elif target_column_name is None:
-        dtype_y = None
-        col_slice_y = None
-    else:
-        # unexpected behaviour, this should never happen
-        raise ValueError('Could not determine how to handle '
-                         'target_column_name of type {}'.
-                         format(type(target_column_name)))
+    dtype_y = _determine_multi_target_data_type(features_dict,
+                                                target_column_name)
+    col_slice_y = [int(features_dict[col_name]['index'])
+                   for col_name in target_column_name]
 
     if all([feature['data_type'] == "numeric" for feature in features_list
             if feature['name'] in data_columns]):
@@ -498,9 +480,12 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     description = u"{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
 
-    # reshape y back to 1-D array, if there is only 1 target column
+    # reshape y back to 1-D array, if there is only 1 target column; back
+    # to None if there are not target columns
     if y.shape[1] == 1:
         y = y.reshape((-1,))
+    elif y.shape[1] == 0:
+        y = None
 
     bunch = Bunch(
         data=X, target=y, feature_names=data_columns,
