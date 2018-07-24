@@ -40,30 +40,32 @@ def _get_deps_info():
 
     """
     deps = [
-        # (MODULE_NAME, f(mod) -> mod version)
-        ("pip", lambda mod: mod.__version__),
-        ("setuptools", lambda mod: mod.__version__),
-        ("sklearn", lambda mod: mod.__version__),
-        ("numpy", lambda mod: mod.__version__),
-        ("scipy", lambda mod: mod.version.version),
-        ("Cython", lambda mod: mod.__version__),
-        ("pandas", lambda mod: mod.__version__),
+        "pip",
+        "setuptools",
+        "sklearn",
+        "numpy",
+        "scipy",
+        "Cython",
+        "pandas",
     ]
 
-    deps_blob = []
+    def get_version(module):
+        return module.__version__
 
-    for modname, ver_func in deps:
+    deps_info = {}
+
+    for modname in deps:
         try:
             if modname in sys.modules:
                 mod = sys.modules[modname]
             else:
                 mod = importlib.import_module(modname)
-            ver = ver_func(mod)
-            deps_blob.append((modname, ver))
+            ver = get_version(mod)
+            deps_info[modname] = ver
         except ImportError:
-            deps_blob.append((modname, None))
+            deps_info[modname] = None
 
-    return dict(deps_blob)
+    return deps_info
 
 
 def _get_blas_info():
