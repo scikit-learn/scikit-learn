@@ -81,8 +81,11 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
         if feature_name_type[feature_name] == 'numeric':
             # check that all elements in an object array are numeric
             # cf. https://stackoverflow.com/a/19486803/1791279
-            assert np.issubdtype(np.array(list(data_by_id.data[:, idx])).dtype,
-                                 np.number)
+            if isinstance(data_by_id.data, scipy.sparse.csr_matrix):
+                dtype = np.array(list(data_by_id.data[:, idx].toarray())).dtype
+            else:
+                dtype = np.array(list(data_by_id.data[:, idx])).dtype
+            assert np.issubdtype(dtype, np.number)
 
     return data_by_id
 
@@ -273,10 +276,10 @@ def test_fetch_openml_australian(monkeypatch):
            'target_column_name': target_column,
            'expected_observations': expected_observations,
            'expected_features': expected_features,
-           'expect_sparse': False,
+           'expect_sparse': True,
            'exptected_data_dtype': np.float64,
            'exptected_target_dtype': object,
-           'compare_default_target': True}
+           'compare_default_target': False}  # numpy specific check
     )
     _verify_default_features(data_id, target_column)
 
@@ -317,6 +320,19 @@ def test_fetch_openml_emotions(monkeypatch):
                                expected_observations, expected_features,
                                np.float64, object, expect_sparse=False,
                                compare_default_target=True)
+
+
+def test_fetch_openml_notarget(monkeypatch):
+    data_id = 61
+    target_column = None
+    expected_observations = 150
+    expected_features = 5
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id)
+    data = fetch_openml(data_id=data_id, target_column_name=target_column,
+                        cache=False)
+    assert data.data.shape == (expected_observations, expected_features)
+    assert data.target is None
 
 
 def test_fetch_openml_inactive(monkeypatch):
