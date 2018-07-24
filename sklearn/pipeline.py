@@ -725,7 +725,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     def _iter(self):
         """
-        Generate (name, trans, weight) tuples excluding None transformers
+        Generate (name, trans, weight) tuples excluding None and
+        'drop' transformers.
         """
         get_weight = (self.transformer_weights or {}).get
         return ((name, trans, get_weight(name))
