@@ -875,6 +875,12 @@ def test_set_feature_union_step_drop():
     ft.set_params(m3=mult3)
     assert_array_equal([[3]], ft.fit(X).transform(X))
 
+    # Check 'drop' step at construction time
+    ft = FeatureUnion([('m2', 'drop'), ('m3', mult3)])
+    assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert_array_equal([[3]], ft.fit_transform(X))
+    assert_equal(['m3__x3'], ft.get_feature_names())
+
 
 def test_step_name_validation():
     bad_steps1 = [('a__q', Mult(2)), ('b', Mult(3))]
