@@ -32,6 +32,7 @@ from distutils.version import LooseVersion
 import numpy as np
 
 from .base import get_data_home, _fetch_remote, RemoteFileMetadata
+from ..utils import deprecated
 from ..utils import Bunch
 from ..utils import Memory
 from ..utils._joblib import __version__ as joblib_version
@@ -80,12 +81,28 @@ TARGETS = (
 )
 
 
+@deprecated('This function was deprecated in version 0.20 and will be removed '
+            'in 0.22.')
 def scale_face(face):
-    """Scale back to 0-1 range in case of normalization for plotting"""
+    """Scale back to 0-1 range in case of normalization for plotting.
+
+    .. deprecated:: 0.20
+    This function was deprecated in version 0.20 and will be removed in 0.22.
+
+
+    Parameters
+    ----------
+    face : array_like
+        The array to scale
+
+    Returns
+    -------
+    array_like
+        The scaled array
+    """
     scaled = face - face.min()
     scaled /= scaled.max()
     return scaled
-
 
 #
 # Common private utilities for data fetching from the original LFW website
@@ -93,7 +110,7 @@ def scale_face(face):
 #
 
 
-def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
+def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
     """Helper function to download any missing LFW data"""
 
     data_home = get_data_home(data_home=data_home)
@@ -323,7 +340,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
         .. versionadded:: 0.20
 
     """
-    lfw_home, data_folder_path = check_fetch_lfw(
+    lfw_home, data_folder_path = _check_fetch_lfw(
         data_home=data_home, funneled=funneled,
         download_if_missing=download_if_missing)
     logger.debug('Loading LFW people faces from %s', lfw_home)
@@ -494,7 +511,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
         Description of the Labeled Faces in the Wild (LFW) dataset.
 
     """
-    lfw_home, data_folder_path = check_fetch_lfw(
+    lfw_home, data_folder_path = _check_fetch_lfw(
         data_home=data_home, funneled=funneled,
         download_if_missing=download_if_missing)
     logger.debug('Loading %s LFW pairs from %s', subset, lfw_home)
