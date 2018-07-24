@@ -1,7 +1,7 @@
 
-from sklearn.utils._print_versions import _get_sys_info
-from sklearn.utils._print_versions import _get_deps_info
-from sklearn.utils._print_versions import show_versions
+from sklearn.utils._show_versions import _get_sys_info
+from sklearn.utils._show_versions import _get_deps_info
+from sklearn.utils._show_versions import show_versions
 
 
 def test_get_sys_info():

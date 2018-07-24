@@ -62,7 +62,7 @@ if __SKLEARN_SETUP__:
 else:
     from . import __check_build
     from .base import clone
-    from .utils._print_versions import show_versions
+    from .utils._show_versions import show_versions
 
     __check_build  # avoid flakes unused variable error
 
