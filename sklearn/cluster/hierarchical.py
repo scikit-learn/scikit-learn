@@ -93,7 +93,7 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
     connectivity = connectivity.astype('float64')
 
     # Ensure zero distances aren't ignored by setting them to "epsilon"
-    epsilon_value = np.nextafter(0, 1, dtype=connectivity.data.dtype)
+    epsilon_value = np.finfo(dtype=connectivity.data.dtype).eps
     connectivity.data[connectivity.data == 0] = epsilon_value
 
     # Use scipy.sparse.csgraph to generate a minimum spanning tree
