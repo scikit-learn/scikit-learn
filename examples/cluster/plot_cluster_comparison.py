@@ -107,7 +107,8 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
     # ============
     # Create cluster objects
     # ============
-    ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
+    ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True,
+                           cluster_assignment='attractor')
     two_means = cluster.MiniBatchKMeans(n_clusters=params['n_clusters'])
     ward = cluster.AgglomerativeClustering(
         n_clusters=params['n_clusters'], linkage='ward',
