@@ -175,10 +175,6 @@ Model evaluation
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
 
-- Using ``None`` as a transformer in :class:`pipeline.FeatureUnion` is
-  deprecated and will be removed in v0.22. Use ``'drop'`` instead.
-  :issue:`11144` by :user:`thomasjpfan`.
-
 Decomposition, manifold learning and clustering
 
 - A new clustering algorithm: :class:`cluster.OPTICS`: an algoritm
@@ -380,6 +376,10 @@ Model evaluation and meta-estimators
   This will allow measuring the complete time it takes to perform
   hyperparameter optimization and refitting the best model on the whole
   dataset. :issue:`11310` by :user:`Matthias Feurer <mfeurer>`.
+
+- Using ``None`` as a transformer in :class:`pipeline.FeatureUnion` is
+  deprecated and will be removed in v0.22. Use ``'drop'`` instead.
+  :issue:`11144` by :user:`thomasjpfan`.
 
 Decomposition and manifold learning
 
