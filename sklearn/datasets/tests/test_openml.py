@@ -87,7 +87,7 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     return data_by_id
 
 
-def _determine_default_features(data_id, expected_default_target):
+def _verify_default_features(data_id, expected_default_target):
     # fetch features
     features = _get_data_features(data_id)
     default_target = _determine_default_target(features)
@@ -183,7 +183,7 @@ def test_fetch_openml_iris(monkeypatch):
                                expected_observations, expected_features,
                                np.float64, object, expect_sparse=False,
                                compare_default_target=True)
-    _determine_default_features(data_id, target_column)
+    _verify_default_features(data_id, target_column)
 
 
 def test_fetch_openml_iris_multitarget(monkeypatch):
@@ -216,7 +216,7 @@ def test_fetch_openml_anneal(monkeypatch):
                                expected_observations, expected_features,
                                object, object, expect_sparse=False,
                                compare_default_target=True)
-    _determine_default_features(data_id, target_column)
+    _verify_default_features(data_id, target_column)
 
 
 def test_fetch_openml_anneal_multitarget(monkeypatch):
@@ -248,7 +248,7 @@ def test_fetch_openml_cpu(monkeypatch):
                                expected_observations, expected_features,
                                object, np.float64, expect_sparse=False,
                                compare_default_target=True)
-    _determine_default_features(data_id, target_column)
+    _verify_default_features(data_id, target_column)
 
 
 def test_fetch_openml_australian(monkeypatch):
@@ -278,7 +278,7 @@ def test_fetch_openml_australian(monkeypatch):
            'exptected_target_dtype': object,
            'compare_default_target': True}
     )
-    _determine_default_features(data_id, target_column)
+    _verify_default_features(data_id, target_column)
 
 
 def test_fetch_openml_miceprotein(monkeypatch):
@@ -298,7 +298,7 @@ def test_fetch_openml_miceprotein(monkeypatch):
                                expected_observations, expected_features,
                                np.float64, object, expect_sparse=False,
                                compare_default_target=True)
-    _determine_default_features(data_id, target_column)
+    _verify_default_features(data_id, target_column)
 
 
 def test_fetch_openml_emotions(monkeypatch):
@@ -312,7 +312,7 @@ def test_fetch_openml_emotions(monkeypatch):
     expected_features = 72
     _monkey_patch_webbased_functions(monkeypatch, data_id)
 
-    _determine_default_features(data_id, target_column)
+    _verify_default_features(data_id, target_column)
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                np.float64, object, expect_sparse=False,

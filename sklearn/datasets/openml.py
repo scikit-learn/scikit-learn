@@ -121,7 +121,7 @@ def _get_data_info_by_name(name, version):
 
     Returns
     -------
-    json_data['data']['dataset'][0]: json
+    first_dataset : json
         json representation of the first dataset object that adhired to the
         search criteria
 
@@ -152,7 +152,7 @@ def _get_data_info_by_name(name, version):
 def _get_data_description_by_id(data_id):
     # OpenML API function: https://www.openml.org/api_docs#!/data/get_data_id
     url = _DATA_INFO.format(data_id)
-    error_message = "Dataset with id {} not found.".format(data_id)
+    error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(url, error_message, True)
     return json_data['data_set_description']
 
@@ -161,7 +161,7 @@ def _get_data_features(data_id):
     # OpenML function:
     # https://www.openml.org/api_docs#!/data/get_data_features_id
     url = _DATA_FEATURES.format(data_id)
-    error_message = "Dataset with id {} not found.".format(data_id)
+    error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(url, error_message, True)
     return json_data['data_features']['feature']
 
@@ -185,11 +185,8 @@ def _determine_default_target(features_list):
     # determines the default target based on the data feature results
     # (which is currently more reliable than the data description;
     # see issue: https://github.com/openml/OpenML/issues/768)
-    results = []
-    for feature in features_list:
-        # note: string comparison (not boolean)
-        if feature['is_target'] == "true":
-            results.append(feature['name'])
+    results = [feature['name']
+               for feature in features_list if feature['is_target'] == 'true']
 
     if len(results) == 0:
         return None
@@ -208,12 +205,11 @@ def _determine_single_target_data_type(features_dict, target_column_name):
         raise KeyError('Could not find target_column_name={}')
     feature = features_dict[target_column_name]
     # note: we compare to a string, not boolean
-    if feature['is_ignore'] == 'true':
-        warn('target_column_name={} has flag is_ignore.'.format(
-            target_column_name))
-    if feature['is_row_identifier'] == 'true':
-        warn('target_column_name={} has flag is_row_identifier.'.format(
-            target_column_name))
+
+    for dict_key in ['is_ignore', 'is_row_identifier']:
+        if feature[dict_key] == 'true':
+            warn('target_column_name={} has flag {}.'.format(
+                target_column_name, dict_key))
 
     if feature['data_type'] == "numeric":
         return np.float64
@@ -256,7 +252,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     Datasets are uniquely identified by either an integer ID or by a
     combination of name and version (i.e. there might be multiple
-    versions of the 'iris' dataset). Please give either name or id
+    versions of the 'iris' dataset). Please give either name or data_id
     (not both). In case a name is given, a version can also be
     provided.
 
@@ -295,10 +291,12 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     data : Bunch
         Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the regression target or
-        classification labels, 'DESCR', the full description of the dataset,
-        'feature_names', the original names of the dataset columns, and
-        'details' which provide more information on the openml meta-data.
+        'data' (np.array), the data to learn, 'target' (np.array), the
+        regression target or classification labels, 'DESCR' (str), the full
+        description of the dataset, 'feature_names' (list), the original names
+        of the dataset columns, and 'details' (json) which provide more
+        information on the openml meta-data. Missing values in the 'data' and
+        'target' field are represented as NaN's.
     """
     data_home = get_data_home(data_home=data_home)
     data_home = join(data_home, 'openml')
@@ -342,9 +340,12 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     data_description = cached_get_data_description_by_id(data_id)
     if data_description['status'] != "active":
-        warn("Version {} of dataset {} is inactive, meaning that issues have"
-             " been found in the dataset. Try using a newer version.".format(
-                 data_description['version'], data_description['name']))
+        warn("Version {} of dataset {} is inactive, meaning that issues have "
+             "been found in the dataset. Try using a newer version from "
+             "this URL: {}".format(
+                data_description['version'],
+                data_description['name'],
+                data_description['url']))
 
     # download data features, meta-info about column types
     features_list = cached_get_data_features(data_id)
@@ -353,35 +354,23 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     if target_column_name == "default-target":
         target_column_name = _determine_default_target(features_list)
 
-    # TODO: stacking the content of the structured array
-    # this results in a copy. If the data was homogeneous
-    # and target at start or end, we could use a view instead.
-    data_columns = []
-    for feature in features_list:
-        # determine whether `feature` is a target
-        if (isinstance(target_column_name, string_types) and
-                feature['name'] == target_column_name):
-            is_target = True
-        elif (isinstance(target_column_name, list) and
-                feature['name'] in target_column_name):
-            is_target = True
-        else:
-            is_target = False
-
-        if ((not is_target) and feature['is_ignore'] == 'false' and
-                feature['is_row_identifier'] == 'false'):
-            data_columns.append(feature['name'])
+    # for code-simplicity, make target_column_name by default a list
+    if isinstance(target_column_name, string_types):
+        target_column_name = [target_column_name]
+    elif not isinstance(target_column_name, list) \
+            and target_column_name is not None:
+        raise TypeError("Did not recognize type of target_column_name"
+                        "Should be six.string_type, list or None. Got: "
+                        "{}".format(type(target_column_name)))
+    data_columns = [feature['name'] for feature in features_list
+                    if (feature['name'] not in target_column_name and
+                        feature['is_ignore'] != 'true' and
+                        feature['is_row_identifier'] != 'true')]
 
     arff_data = cached_download_data_arff(data_description['file_id'])['data']
     data = _convert_arff_data(arff_data)
 
-    if isinstance(target_column_name, string_types):
-        # determine vector type
-        dtype = _determine_single_target_data_type(features_dict,
-                                                   target_column_name)
-        y = np.array(data[:, int(features_dict[target_column_name]['index'])],
-                     dtype=dtype)
-    elif isinstance(target_column_name, list):
+    if isinstance(target_column_name, list):
         dtype = _determine_multi_target_data_type(features_dict,
                                                   target_column_name)
         indices = [int(features_dict[col_name]['index'])
@@ -406,6 +395,10 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     description = u"{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
+
+    # reshape y back to 1-D array, if there is only 1 target column
+    if y.shape[1] == 1:
+        y = y.reshape((-1,))
 
     bunch = Bunch(
         data=X, target=y, feature_names=data_columns,
