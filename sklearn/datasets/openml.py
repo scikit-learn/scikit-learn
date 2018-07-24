@@ -450,7 +450,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                     if (feature['name'] not in target_column_name and
                         feature['is_ignore'] != 'true' and
                         feature['is_row_identifier'] != 'true')]
-    
+
     # prepare which columns and data types should be returned for the X and y
     dtype_y = _determine_multi_target_data_type(features_dict,
                                                 target_column_name)
