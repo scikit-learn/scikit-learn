@@ -1556,7 +1556,8 @@ def test_custom_run_search():
                                         err_msg='Checking ' + k)
 
     def fit_grid(param_grid):
-        return GridSearchCV(clf, param_grid, cv=5).fit(X, y)
+        return GridSearchCV(clf, param_grid, cv=5,
+                            return_train_score=True).fit(X, y)
 
     class CustomSearchCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
@@ -1574,7 +1575,7 @@ def test_custom_run_search():
     clf = DecisionTreeRegressor(random_state=0)
     X, y = make_classification(n_samples=100, n_informative=4,
                                random_state=0)
-    mycv = CustomSearchCV(clf, cv=5).fit(X, y)
+    mycv = CustomSearchCV(clf, cv=5, return_train_score=True).fit(X, y)
     gscv = fit_grid([{'max_depth': [1, 2]},
                      {'min_samples_split': [5, 10]}])
 
