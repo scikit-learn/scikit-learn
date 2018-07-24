@@ -116,6 +116,11 @@ boolean mask array or callable
         Keys are transformer names and values are the fitted transformer
         objects.
 
+    sparse_output_ : boolean
+        Boolean flag indicating wether the output of ``transform`` is a
+        sparse matrix or a dense numpy array, which depends on the output
+        of the individual transformers and the `sparse_threshold` keyword.
+
     Notes
     -----
     The order of the columns in the transformed feature matrix follows the
@@ -383,8 +388,8 @@ boolean mask array or callable
             This estimator
 
         """
-        # we use fit_transform to make sure to set _sparse (for which we need
-        # the transformed data) to have consistent output type in predict
+        # we use fit_transform to make sure to set sparse_output_ (for which we
+        # need the transformed data) to have consistent output type in predict
         self.fit_transform(X, y=y)
         return self
 
@@ -423,22 +428,20 @@ boolean mask array or callable
 
         # determine if concatenated output will be sparse or not
         if all(sparse.issparse(X) for X in Xs):
-            self._sparse = True
+            self.sparse_output_ = True
         elif any(sparse.issparse(X) for X in Xs):
             nnz = sum(X.nnz if sparse.issparse(X) else X.size for X in Xs)
             total = sum(X.shape[0] * X.shape[1] if sparse.issparse(X)
                         else X.size for X in Xs)
-            if (nnz / total) < self.sparse_threshold:
-                self._sparse = True
-            else:
-                self._sparse = False
+            density = nnz / total
+            self.sparse_output_ = density < self.sparse_threshold
         else:
-            self._sparse = False
+            self.sparse_output_ = False
 
         self._update_fitted_transformers(transformers)
         self._validate_output(Xs)
 
-        return _hstack(list(Xs), self._sparse)
+        return _hstack(list(Xs), self.sparse_output_)
 
     def transform(self, X):
         """Transform X separately by each transformer, concatenate results.
@@ -466,7 +469,7 @@ boolean mask array or callable
             # All transformers are None
             return np.zeros((X.shape[0], 0))
 
-        return _hstack(list(Xs), self._sparse)
+        return _hstack(list(Xs), self.sparse_output_)
 
 
 def _check_key_type(key, superclass):

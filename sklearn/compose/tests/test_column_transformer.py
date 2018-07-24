@@ -311,6 +311,7 @@ def test_column_transformer_sparse_threshold():
                                   sparse_threshold=0.2)
     res = col_trans.fit_transform(X_array)
     assert sparse.issparse(res)
+    assert col_trans.sparse_output_
 
     # mixed -> sparsity of (3 + 9) / 18 = 0.666
     col_trans = ColumnTransformer(
@@ -319,6 +320,7 @@ def test_column_transformer_sparse_threshold():
         sparse_threshold=0.67)
     res = col_trans.fit_transform(X_array)
     assert sparse.issparse(res)
+    assert col_trans.sparse_output_
 
     col_trans = ColumnTransformer(
         [('trans1', OneHotEncoder(sparse=True), [0]),
@@ -326,6 +328,7 @@ def test_column_transformer_sparse_threshold():
         sparse_threshold=0.66)
     res = col_trans.fit_transform(X_array)
     assert not sparse.issparse(res)
+    assert not col_trans.sparse_output_
 
     # if nothing is sparse -> no sparse
     col_trans = ColumnTransformer(
@@ -334,6 +337,7 @@ def test_column_transformer_sparse_threshold():
         sparse_threshold=0.33)
     res = col_trans.fit_transform(X_array)
     assert not sparse.issparse(res)
+    assert not col_trans.sparse_output_
 
 
 def test_column_transformer_error_msg_1D():
