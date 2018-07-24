@@ -211,6 +211,9 @@ def load_data(module_path, data_file_name):
 
     Parameters
     ----------
+    module_path : string
+        The module path.
+
     data_file_name : string
         Name of csv file to be loaded from
         module_path/data/data_file_name. For example 'wine_data.csv'.
@@ -359,6 +362,13 @@ def load_iris(return_X_y=False):
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
+
+    Notes
+    -----
+        .. versionchanged:: 0.20
+            Fixed two wrong data points according to Fisher's paper.
+            The new version is the same as in R, but not as in the UCI
+            Machine Learning Repository.
 
     Examples
     --------
@@ -701,6 +711,8 @@ def load_boston(return_X_y=False):
 
         .. versionadded:: 0.18
 
+    Notes
+    -----
         .. versionchanged:: 0.20
             Fixed a wrong data point at [445, 0].
 

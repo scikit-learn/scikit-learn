@@ -223,6 +223,8 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     ----------
     .. [1] `Wikipedia entry for the Confusion matrix
            <https://en.wikipedia.org/wiki/Confusion_matrix>`_
+           (Wikipedia and other references may use a different
+           convention for axes)
 
     Examples
     --------
@@ -1009,6 +1011,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     It is possible to compute per-label precisions, recalls, F1-scores and
     supports instead of averaging:
+
     >>> precision_recall_fscore_support(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
     ... # doctest: +ELLIPSIS,+NORMALIZE_WHITESPACE
@@ -1426,7 +1429,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
 
 
 def classification_report(y_true, y_pred, labels=None, target_names=None,
-                          sample_weight=None, digits=2):
+                          sample_weight=None, digits=2, output_dict=False):
     """Build a text report showing the main classification metrics
 
     Read more in the :ref:`User Guide <classification_report>`.
@@ -1449,12 +1452,27 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         Sample weights.
 
     digits : int
-        Number of digits for formatting output floating point values
+        Number of digits for formatting output floating point values.
+        When ``output_dict`` is ``True``, this will be ignored and the
+        returned values will not be rounded.
+
+    output_dict : bool (default = False)
+        If True, return output as dict
 
     Returns
     -------
-    report : string
+    report : string / dict
         Text summary of the precision, recall, F1 score for each class.
+        Dictionary returned if output_dict is True. Dictionary has the
+        following structure::
+
+            {'label 1': {'precision':0.5,
+                         'recall':1.0,
+                         'f1-score':0.67,
+                         'support':1},
+             'label 2': { ... },
+              ...
+            }
 
         The reported averages are a prevalence-weighted macro-average across
         classes (equivalent to :func:`precision_recall_fscore_support` with
@@ -1521,24 +1539,36 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     row_fmt = u'{:>{width}s} ' + u' {:>9.{digits}f}' * 3 + u' {:>9}\n'
     rows = zip(target_names, p, r, f1, s)
+
+    avg_total = [np.average(p, weights=s),
+                 np.average(r, weights=s),
+                 np.average(f1, weights=s),
+                 np.sum(s)]
+
+    if output_dict:
+        report_dict = {label[0]: label[1:] for label in rows}
+
+        for label, scores in report_dict.items():
+            report_dict[label] = dict(zip(headers, scores))
+
+        report_dict['avg / total'] = dict(zip(headers, avg_total))
+
+        return report_dict
+
     for row in rows:
         report += row_fmt.format(*row, width=width, digits=digits)
 
     report += u'\n'
 
-    # compute averages
+    # append averages
     report += row_fmt.format(last_line_heading,
-                             np.average(p, weights=s),
-                             np.average(r, weights=s),
-                             np.average(f1, weights=s),
-                             np.sum(s),
+                             *avg_total,
                              width=width, digits=digits)
 
     return report
 
 
-def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
-                 classes=None):
+def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -1563,13 +1593,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
         Sample weights.
 
         .. versionadded:: 0.18
-
-    classes : array, shape = [n_labels], optional
-        Integer array of labels.
-
-        .. deprecated:: 0.18
-           This parameter has been deprecated in favor of ``labels`` in
-           version 0.18 and will be removed in 0.20. Use ``labels`` instead.
 
     Returns
     -------
@@ -1618,10 +1641,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
     """
-    if classes is not None:
-        warnings.warn("'classes' was renamed to 'labels' in version 0.18 and "
-                      "will be removed in 0.20.", DeprecationWarning)
-        labels = classes
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
@@ -1893,7 +1912,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
 
     losses = 1 - margin
     # The hinge_loss doesn't penalize good enough predictions.
-    losses[losses <= 0] = 0
+    np.clip(losses, 0, None, out=losses)
     return np.average(losses, weights=sample_weight)
 
 
@@ -1918,9 +1937,7 @@ def _check_binary_probabilistic_predictions(y_true, y_prob):
 
 def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     """Compute the Brier score.
-
     The smaller the Brier score, the better, hence the naming with "loss".
-
     Across all items in a set N predictions, the Brier score measures the
     mean squared difference between (1) the predicted probability assigned
     to the possible outcomes for item i, and (2) the actual outcome.
@@ -1929,15 +1946,14 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     takes on a value between zero and one, since this is the largest
     possible difference between a predicted probability (which must be
     between zero and one) and the actual outcome (which can take on values
-    of only 0 and 1).
-
+    of only 0 and 1). The Brier loss is composed of refinement loss and
+    calibration loss.
     The Brier score is appropriate for binary and categorical outcomes that
     can be structured as true or false, but is inappropriate for ordinal
     variables which can take on three or more values (this is because the
     Brier score assumes that all possible outcomes are equivalently
     "distant" from one another). Which label is considered to be the positive
     label is controlled via the parameter pos_label, which defaults to 1.
-
     Read more in the :ref:`User Guide <calibration>`.
 
     Parameters
