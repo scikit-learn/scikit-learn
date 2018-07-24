@@ -6,6 +6,7 @@ from tempfile import mkdtemp
 import shutil
 import time
 
+import pytest
 import numpy as np
 from scipy import sparse
 
@@ -229,7 +230,7 @@ def test_pipeline_init_tuple():
     pipe.fit(X, y=None)
     pipe.score(X)
 
-    pipe.set_params(transf=None)
+    pipe.set_params(transf='passthrough')
     pipe.fit(X, y=None)
     pipe.score(X)
 
@@ -579,6 +580,51 @@ def test_set_pipeline_step_none():
     mult3 = Mult(mult=3)
     mult5 = Mult(mult=5)
 
+    pipeline = Pipeline([('m2', mult2), ('m3', mult3), ('last', mult5)])
+    pipeline.set_params(m3=None)
+    exp = 2 * 5
+
+    depr_message = ("Transformer 'm3' is set to None. Please use "
+                    "'passthrough' for the same behavior. "
+                    "None has been deprecated "
+                    "in version 0.20 and will be removed in 0.22.")
+
+    with pytest.warns(DeprecationWarning, match=depr_message):
+        assert_array_equal([[exp]], pipeline.fit_transform(X, y))
+
+    with pytest.warns(DeprecationWarning, match=depr_message):
+        assert_array_equal([exp], pipeline.fit(X).predict(X))
+
+    # last transformer is None
+    depr_message = ("Estimator 'last' is set to None. Please use "
+                    "'passthrough' for the same behavior. "
+                    "None has been deprecated "
+                    "in version 0.20 and will be removed in 0.22.")
+    exp = 2 * 3
+
+    with pytest.warns(DeprecationWarning, match=depr_message):
+        pipeline = Pipeline([('m2', mult2), ('m3', mult3), ('last', None)])
+
+    with pytest.warns(DeprecationWarning, match=depr_message):
+        assert_array_equal([[exp]], pipeline.fit_transform(X, y))
+
+    # make pipeline with Non
+    depr_message = ("Estimator 'nonetype' is set to None. Please use "
+                    "'passthrough' for the same behavior. "
+                    "None has been deprecated "
+                    "in version 0.20 and will be removed in 0.22.")
+    with pytest.warns(DeprecationWarning, match=depr_message):
+        pipeline = make_pipeline(None)
+
+
+def test_set_pipeline_step_passthrough():
+    # Test setting Pipeline steps to None
+    X = np.array([[1]])
+    y = np.array([1])
+    mult2 = Mult(mult=2)
+    mult3 = Mult(mult=3)
+    mult5 = Mult(mult=5)
+
     def make():
         return Pipeline([('m2', mult2), ('m3', mult3), ('last', mult5)])
 
@@ -589,7 +635,7 @@ def test_set_pipeline_step_none():
     assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
-    pipeline.set_params(m3=None)
+    pipeline.set_params(m3='passthrough')
     exp = 2 * 5
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal([exp], pipeline.fit(X).predict(X))
@@ -597,14 +643,14 @@ def test_set_pipeline_step_none():
     assert_dict_equal(pipeline.get_params(deep=True),
                       {'steps': pipeline.steps,
                        'm2': mult2,
-                       'm3': None,
+                       'm3': 'passthrough',
                        'last': mult5,
                        'memory': None,
                        'm2__mult': 2,
                        'last__mult': 5,
                        })
 
-    pipeline.set_params(m2=None)
+    pipeline.set_params(m2='passthrough')
     exp = 5
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal([exp], pipeline.fit(X).predict(X))
@@ -623,19 +669,20 @@ def test_set_pipeline_step_none():
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
     pipeline = make()
-    pipeline.set_params(last=None)
+    pipeline.set_params(last='passthrough')
     # mult2 and mult3 are active
     exp = 6
     assert_array_equal([[exp]], pipeline.fit(X, y).transform(X))
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
     assert_raise_message(AttributeError,
-                         "'NoneType' object has no attribute 'predict'",
+                         "'str' object has no attribute 'predict'",
                          getattr, pipeline, 'predict')
 
-    # Check None step at construction time
+    # Check 'passthrough' step at construction time
     exp = 2 * 5
-    pipeline = Pipeline([('m2', mult2), ('m3', None), ('last', mult5)])
+    pipeline = Pipeline(
+        [('m2', mult2), ('m3', 'passthrough'), ('last', mult5)])
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
@@ -652,7 +699,7 @@ def test_pipeline_ducktyping():
     pipeline.transform
     pipeline.inverse_transform
 
-    pipeline = make_pipeline(None)
+    pipeline = make_pipeline('passthrough')
     assert_false(hasattr(pipeline, 'predict'))
     pipeline.transform
     pipeline.inverse_transform
