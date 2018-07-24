@@ -261,7 +261,8 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
 
     init :  None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar'
         Method used to initialize the procedure.
-        Default: 'nndsvd' if n_components < n_features, otherwise 'random'.
+        Default: 'nndsvd' if n_components <= min(n_samples, n_features),
+            otherwise 'random'.
         Valid options:
 
         - 'random': non-negative random matrices, scaled with:
@@ -305,8 +306,13 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     check_non_negative(X, "NMF initialization")
     n_samples, n_features = X.shape
 
+    if init == 'nndsvd' and n_components > min(n_samples, n_features):
+        raise ValueError(
+            "init = 'nndsv' can only be used when "
+            "n_components <= min(n_samples, n_features)")
+
     if init is None:
-        if n_components < n_features:
+        if n_components <= min(n_samples, n_features):
             init = 'nndsvd'
         else:
             init = 'random'
@@ -831,7 +837,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
 
 def non_negative_factorization(X, W=None, H=None, n_components=None,
-                               init='random', update_H=True, solver='cd',
+                               init=None, update_H=True, solver='cd',
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
@@ -880,7 +886,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     init :  None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
-        Default: 'nndsvd' if n_components < n_features, otherwise random.
+        Default: 'nndsvd' if n_components <= min(n_samples, n_features),
+            otherwise random.
         Valid options:
 
         - 'random': non-negative random matrices, scaled with:
@@ -1089,7 +1096,8 @@ class NMF(BaseEstimator, TransformerMixin):
 
     init :  'random' | 'nndsvd' |  'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
-        Default: 'nndsvd' if n_components < n_features, otherwise random.
+        Default: 'nndsvd' if n_components <= min(n_samples, n_features),
+            otherwise random.
         Valid options:
 
         - 'random': non-negative random matrices, scaled with:
@@ -1185,9 +1193,12 @@ class NMF(BaseEstimator, TransformerMixin):
     >>> import numpy as np
     >>> X = np.array([[1, 1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from sklearn.decomposition import NMF
-    >>> model = NMF(n_components=2, init='random', random_state=0)
+    >>> X = np.random.random((1, 3))
+    >>> model = NMF(n_components=2, init=None, random_state=0)
+    >>> #NMF(2, init='random').fit_transform(np.random.random((1, 3)))
     >>> W = model.fit_transform(X)
     >>> H = model.components_
+    >>> print(X, '\n', np.dot(W, H))
 
     References
     ----------
