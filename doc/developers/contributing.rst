@@ -144,12 +144,14 @@ feedback:
 
   .. note::
 
-    This utility function is only available in scikit-learn v0.20+. For all
-    previous versions, one has to manually dig such information e.g. snippet::
+    This utility function is only available in scikit-learn v0.20+.
+    For previous versions, one has to explicitly run::
 
-      import numpy; print('numpy:', numpy.__version__)
-      import scipy; print('scipy:', scipy.__version__)
-      import sklearn; print('scikit-learn:', sklearn.__version__)
+     import platform; print(platform.platform())
+     import sys; print("Python", sys.version)
+     import numpy; print("NumPy", numpy.__version__)
+     import scipy; print("SciPy", scipy.__version__)
+     import sklearn; print("Scikit-Learn", sklearn.__version__)
 
 - Please ensure all **code snippets and error messages are formatted in
   appropriate code blocks**.  See `Creating and highlighting code blocks
