@@ -297,8 +297,9 @@ def test_enet_selective_penalty():
     n_informative_features = 20
     # A dataset with small number of samples and large number of features
     # with the last n_informative_features as the informative ones
-    X, y, X_test, y_test = build_dataset(n_samples=50, n_features=n_features,
-                            n_informative_features=n_informative_features)
+    X, y, X_test, y_test = build_dataset(
+        n_samples=50, n_features=n_features,
+        n_informative_features=n_informative_features)
 
     # Default weight is 1 for all features, keep l1 penalty
     l1_weights = np.ones(n_features)

@@ -350,8 +350,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     l1_weights : array, shape (n_features, ), optional
         Apply separate weight to penalties of each coefficient in the L1 term.
         If not provided, no weighting is used (the default).
-        For example, if the weight of a feature is Zero, it means it's not penalized
-        at all, and that feature will always be there in the model.
+        For example, if the weight of a feature is Zero, it means it's not
+        penalized at all, and that feature will always be there in the model.
 
     **params : kwargs
         keyword arguments passed to the coordinate descent solver.
@@ -479,12 +479,12 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 precompute = check_array(precompute, dtype=X.dtype.type,
                                          order='C')
             model = cd_fast.enet_coordinate_descent_gram(
-                coef_, l1_reg, l2_reg, l1_weights_, precompute, Xy, y, max_iter,
-                tol, rng, random, positive)
+                coef_, l1_reg, l2_reg, l1_weights_, precompute, Xy, y,
+                max_iter, tol, rng, random, positive)
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, l1_weights_, X, y, max_iter, tol, rng, random,
-                positive)
+                coef_, l1_reg, l2_reg, l1_weights_, X, y, max_iter, tol, rng,
+                random, positive)
         else:
             raise ValueError("Precompute should be one of True, False, "
                              "'auto' or array-like. Got %r" % precompute)
@@ -608,6 +608,12 @@ class ElasticNet(LinearModel, RegressorMixin):
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
+
+    l1_weights : array, shape (n_features, ), optional
+        Apply separate weight to penalties of each coefficient in the L1 term.
+        If not provided, no weighting is used (the default).
+        For example, if the weight of a feature is Zero, it means it's not
+        penalized at all, and that feature will always be there in the model.
 
     Attributes
     ----------
@@ -1510,6 +1516,12 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
+
+    l1_weights : array, shape (n_features, ), optional
+        Apply separate weight to penalties of each coefficient in the L1 term.
+        If not provided, no weighting is used (the default).
+        For example, if the weight of a feature is Zero, it means it's not
+        penalized at all, and that feature will always be there in the model.
 
     Attributes
     ----------
