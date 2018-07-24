@@ -100,6 +100,10 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         threshold on the decision function. If "auto", the decision function
         threshold is determined as in the original paper.
 
+        .. versionchanged:: 0.20
+           The default value of ``contamination`` will change from 0.1 in 0.20
+           to ``'auto'`` in 0.22.
+
     novelty : boolean, default False
         By default, LocalOutlierFactor is only meant to be used for outlier
         detection (novelty=False). Set novelty to True if you want to use
@@ -150,12 +154,6 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             algorithm=algorithm,
             leaf_size=leaf_size, metric=metric, p=p,
             metric_params=metric_params, n_jobs=n_jobs)
-
-        if contamination == "legacy":
-            warnings.warn('default contamination parameter 0.1 will change '
-                          'in version 0.22 to "auto". This will change the '
-                          'predict method behavior.',
-                          DeprecationWarning)
         self.contamination = contamination
         self.novelty = novelty
 
@@ -224,10 +222,19 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         -------
         self : object
         """
-        if self.contamination not in ["auto", "legacy"]:  # rm legacy in 0.22
-            if not(0. < self.contamination <= .5):
+        if self.contamination == "legacy":
+            warnings.warn('default contamination parameter 0.1 will change '
+                          'in version 0.22 to "auto". This will change the '
+                          'predict method behavior.',
+                          FutureWarning)
+            self._contamination = 0.1
+        else:
+            self._contamination = self.contamination
+
+        if self._contamination != 'auto':
+            if not(0. < self._contamination <= .5):
                 raise ValueError("contamination must be in (0, 0.5], "
-                                 "got: %f" % self.contamination)
+                                 "got: %f" % self._contamination)
 
         super(LocalOutlierFactor, self).fit(X)
 
@@ -251,15 +258,12 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         self.negative_outlier_factor_ = -np.mean(lrd_ratios_array, axis=1)
 
-        if self.contamination == "auto":
+        if self._contamination == "auto":
             # inliers score around -1 (the higher, the less abnormal).
             self.offset_ = -1.5
-        elif self.contamination == "legacy":  # to rm in 0.22
-            self.offset_ = scoreatpercentile(
-                self.negative_outlier_factor_, 100. * 0.1)
         else:
             self.offset_ = scoreatpercentile(
-                self.negative_outlier_factor_, 100. * self.contamination)
+                self.negative_outlier_factor_, 100. * self._contamination)
 
         return self
 

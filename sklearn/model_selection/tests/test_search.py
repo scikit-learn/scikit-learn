@@ -553,7 +553,7 @@ def test_grid_search_bad_param_grid():
         "(but not a string) or np.ndarray.",
         GridSearchCV, clf, param_dict)
 
-    param_dict = {"C": np.ones(6).reshape(3, 2)}
+    param_dict = {"C": np.ones((3, 2))}
     clf = SVC(gamma="scale")
     assert_raises(ValueError, GridSearchCV, clf, param_dict)
 

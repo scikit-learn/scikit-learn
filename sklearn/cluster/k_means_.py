@@ -669,7 +669,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers,
     sample_weight = _check_sample_weight(X, sample_weight)
     # set the default value of centers to -1 to be able to detect any anomaly
     # easily
-    labels = -np.ones(n_samples, np.int32)
+    labels = np.full(n_samples, -1, np.int32)
     if distances is None:
         distances = np.zeros(shape=(0,), dtype=X.dtype)
     # distances will be changed in-place

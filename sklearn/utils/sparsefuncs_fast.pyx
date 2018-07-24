@@ -308,7 +308,7 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
         np.ndarray[np.int64_t, ndim=1] counts_nan
 
     # Obtain new stats first
-    new_n = np.ones(n_features, dtype=np.int64) * n_samples
+    new_n = np.full(n_features, n_samples, dtype=np.int64)
     updated_n = np.zeros_like(new_n, dtype=np.int64)
     last_over_new_n = np.zeros_like(new_n, dtype=dtype)
 

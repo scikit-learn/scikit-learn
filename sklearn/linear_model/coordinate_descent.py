@@ -826,9 +826,9 @@ class Lasso(ElasticNet):
         reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
         Given this, you should use the :class:`LinearRegression` object.
 
-    fit_intercept : boolean
-        whether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
+    fit_intercept : boolean, optional, default True
+        Whether to calculate the intercept for this model. If set
+        to False, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False

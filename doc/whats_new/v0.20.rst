@@ -77,6 +77,7 @@ random sampling procedures.
 - The v0.19.0 release notes failed to mention a backwards incompatibility with
   :class:`model_selection.StratifiedKFold` when ``shuffle=True`` due to
   :issue:`7823`.
+- :class:`decomposition.SparsePCA` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -127,21 +128,24 @@ Preprocessing
 - Added :class:`preprocessing.KBinsDiscretizer` for turning
   continuous features into categorical or one-hot encoded
   features. :issue:`7668`, :issue:`9647`, :issue:`10195`,
-  :issue:`10192`, :issue:`11272` and :issue:`11467`.
-  by :user:`Henry Lin <hlin117>`, `Hanmin Qin`_
-  and `Tom Dupre la Tour`_.
+  :issue:`10192`, :issue:`11272`, :issue:`11467` and :issue:`11505`.
+  by :user:`Henry Lin <hlin117>`, `Hanmin Qin`_,
+  `Tom Dupre la Tour`_ and :user:`Giovanni Giuseppe Costa <ggc87>`.
 
 - Added :class:`compose.ColumnTransformer`, which allows to apply
   different transformers to different columns of arrays or pandas
   DataFrames. :issue:`9012` by `Andreas Müller`_ and `Joris Van den Bossche`_,
   and :issue:`11315` by :user:`Thomas Fan <thomasjpfan>`.
 
-- Added :class:`preprocessing.PowerTransformer`, which implements the Box-Cox
-  power transformation, allowing users to map data from any distribution to a
-  Gaussian distribution. This is useful as a variance-stabilizing transformation
-  in situations where normality and homoscedasticity are desirable.
+- Added :class:`preprocessing.PowerTransformer`, which implements the
+  Yeo-Johnson and Box-Cox power transformations. Power transformations try to
+  find a set of feature-wise parametric transformations to approximately map
+  data to a Gaussian distribution centered at zero and with unit variance.
+  This is useful as a variance-stabilizing transformation in situations where
+  normality and homoscedasticity are desirable.
   :issue:`10210` by :user:`Eric Chang <ericchang00>` and
-  :user:`Maniteja Nandana <maniteja123>`.
+  :user:`Maniteja Nandana <maniteja123>`, and :issue:`11520` by :user:`Nicolas
+  Hug <nicolashug>`.
 
 - Added the :class:`compose.TransformedTargetRegressor` which transforms
   the target y before fitting a regression model. The predictions are mapped
@@ -188,6 +192,14 @@ Decomposition, manifold learning and clustering
 - :mod:`dict_learning` functions and models now support positivity constraints.
   This applies to the dictionary and sparse code.
   :issue:`6374` by :user:`John Kirkham <jakirkham>`.
+
+- :class:`decomposition.SparsePCA` now exposes ``normalize_components``. When
+  set to True, the train and test data are centered with the train mean 
+  repsectively during the fit phase and the transform phase. This fixes the
+  behavior of SparsePCA. When set to False, which is the default, the previous
+  abnormal behaviour still holds. The False value is for backward
+  compatibility and should not be used.
+  :issue:`11585` by :user:`Ivan Panico <FollowKenny>`.
 
 Metrics
 
@@ -900,6 +912,17 @@ Outlier Detection models
   ``score_samples``. By default, ``novelty`` is set to ``False``, and only
   the ``fit_predict`` method is avaiable.
   By :user:`Albert Thomas <albertcthomas>`.
+
+ - A ``behaviour`` parameter has been introduced in :class:`ensemble.IsolationForest`
+  to ensure backward compatibility.
+  In the old behaviour, the ``decision_function`` is independent of the ``contamination``
+  parameter. A threshold attribute depending on the ``contamination`` parameter is thus
+  used.
+  In the new behaviour the ``decision_function`` is dependent on the ``contamination``
+  parameter, in such a way that 0 becomes its natural threshold to detect outliers.
+  Setting behaviour to "old" is deprecated and will not be possible in version 0.22.
+  Beside, the behaviour parameter will be removed in 0.24.
+  :issue:`11553` by `Nicolas Goix`_.
 
 Covariance
 
