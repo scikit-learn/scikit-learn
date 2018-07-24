@@ -97,7 +97,7 @@ def _get_blas_info():
 
 
 def show_versions():
-    "Print useful debugging information to the terminal"
+    "Print useful debugging information"
 
     sys_info = _get_sys_info()
     deps_info = _get_deps_info()
