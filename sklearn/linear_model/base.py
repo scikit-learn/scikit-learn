@@ -503,11 +503,11 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         if self.positive:
             if y.ndim < 2:
-                self.coef_, self._residues = optimize.nnls(X, y)
+                self.coef_ = optimize.nnls(X, y)[0]
             else:
                 # scipy.optimize.nnls cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
-                        delayed(optimize.nnls)(X, y[:, j].ravel())
+                        delayed(optimize.nnls)(X, y[:, j])
                         for j in range(y.shape[1]))
                 self.coef_, self._residues = map(np.vstack, zip(*outs))
         elif sp.issparse(X):
