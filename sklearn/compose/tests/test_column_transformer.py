@@ -143,6 +143,16 @@ def test_column_transformer():
     assert len(both.transformers_) == 1
 
 
+def test_column_transformer_inverse_transform_all_transformers_drop():
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+
+    # TransNo2D does not define inverse_transform
+    ct = ColumnTransformer([('trans1', 'drop', [0]),
+                            ('trans2', 'drop', [1])])
+    res = ct.fit_transform(X_array)
+    assert_array_equal(np.zeros((X_array.shape[0], 0)), res)
+
+
 def test_column_transformer_inverse_transform_with_drop():
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     ct = ColumnTransformer([('trans1', Trans(), [0]),
@@ -336,6 +346,8 @@ def test_column_transformer_sparse_array():
         assert_allclose_dense_sparse(ct.fit_transform(X_sparse), X_res_both)
         assert_allclose_dense_sparse(ct.fit(X_sparse).transform(X_sparse),
                                      X_res_both)
+        assert_allclose_dense_sparse(
+            ct.inverse_transform(X_res_both), X_sparse)
 
 
 def test_column_transformer_sparse_stacking():
