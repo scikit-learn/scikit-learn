@@ -301,12 +301,17 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
 def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
                                   download_if_missing=True, return_X_y=False):
-    """Load the 20 newsgroups dataset and transform it into tf-idf vectors.
+    """Load the 20 newsgroups dataset and vectorize it into token counts.
 
-    This is a convenience function; the tf-idf transformation is done using the
-    default settings for `sklearn.feature_extraction.text.Vectorizer`. For more
+    This is a convenience function; the transformation is done using the 
+    default settings for
+    :class:`sklearn.feature_extraction.text.CountVectorizer`. For more
     advanced usage (stopword filtering, n-gram extraction, etc.), combine
-    fetch_20newsgroups with a custom `Vectorizer` or `CountVectorizer`.
+    fetch_20newsgroups with a custom
+    :class:`sklearn.feature_extraction.text.CountVectorizer`,
+    :class:`sklearn.feature_extraction.text.HashingVectorizer`,
+    :class:`sklearn.feature_extraction.text.TfidfTransformer` or a
+    :class:`sklearn.feature_extraction.text.TfidfVectorizer`.
 
     Read more in the :ref:`User Guide <20newsgroups>`.
 
