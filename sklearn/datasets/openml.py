@@ -16,7 +16,7 @@ import scipy.sparse
 
 from sklearn.externals import arff
 from .base import get_data_home
-from ..externals.six import string_types
+from ..externals.six import string_types, PY2
 from ..externals.six.moves.urllib.error import HTTPError
 from ..utils import Bunch, Memory
 
@@ -253,7 +253,11 @@ def _download_data_arff(file_id, sparse):
     else:
         return_type = arff.DENSE
 
-    arff_file = arff.load(response, return_type=return_type)
+    if PY2:
+        arff_file = arff.load(response, return_type=return_type)
+    else:
+        arff_file = arff.loads(response.read().decode('utf-8'),
+                               return_type=return_type)
     response.close()
     return arff_file
 
