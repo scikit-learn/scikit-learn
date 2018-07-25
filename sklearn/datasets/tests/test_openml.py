@@ -8,7 +8,7 @@ import scipy.sparse
 import sklearn
 
 from sklearn.datasets import fetch_openml
-from sklearn.datasets.openml import _get_data_features
+from sklearn.datasets.openml import _get_data_features, _open_openml_url
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 from sklearn.externals.six import string_types
@@ -16,6 +16,8 @@ from sklearn.externals.six.moves.urllib.error import HTTPError
 
 
 currdir = os.path.dirname(os.path.abspath(__file__))
+# if True, urlopen will be monkey patched to only use local files
+test_offline = True
 
 
 def _fetch_dataset_from_openml(data_id, data_name, data_version,
@@ -75,7 +77,7 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     # check numeric features. Note that the response of _get_data_features is
     # mocked too.
     feature_name_type = {feature['name']: feature['data_type'] for feature
-                         in _get_data_features(data_id, None, False)}
+                         in _get_data_features(data_id, None)}
     for idx, feature_name in enumerate(data_by_id.feature_names):
         if feature_name_type[feature_name] == 'numeric':
             # check that all elements in an object array are numeric
@@ -161,7 +163,9 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files=True):
         else:
             raise ValueError('Unknown mocking URL pattern: %s' % url)
 
-    context.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
+    # XXX: Global variable
+    if test_offline:
+        context.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
 
 
 def test_fetch_openml_iris(monkeypatch):
@@ -306,6 +310,23 @@ def test_fetch_openml_emotions(monkeypatch):
                                expected_observations, expected_features,
                                np.float64, object, expect_sparse=False,
                                compare_default_target=True)
+
+
+def test_open_openml_url_cache(monkeypatch):
+    data_id = 61
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id)
+    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    test_directory = os.path.join(os.path.expanduser('~'), 'scikit_learn_data')
+    # first fill the cache
+    response1 = _open_openml_url(openml_path, test_directory)
+    # assert file exists
+    location = os.path.join(test_directory, 'openml.org',
+                            str(hash(openml_path)))
+    assert os.path.isfile(location)
+    # redownload, to utilize cache
+    response2 = _open_openml_url(openml_path, test_directory)
+    assert response1.read() == response2.read()
 
 
 def test_fetch_openml_notarget(monkeypatch):

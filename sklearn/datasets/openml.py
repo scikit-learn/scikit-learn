@@ -1,5 +1,7 @@
+import gzip
 import json
 import os
+import shutil
 from os.path import join, exists
 from warnings import warn
 
@@ -29,17 +31,41 @@ _DATA_FEATURES = "api/v1/json/data/features/{}"
 _DATA_FILE = "data/v1/download/{}"
 
 
-def _open_openml_url(path, data_home, cache):
-    if not cache:
-        return urlopen(_OPENML_PREFIX + path)
-    local_path = os.path.join(data_home, 'openml.org', path)
+def _open_openml_url(openml_path, data_home):
+    """
+    Returns a resource from OpenML.org. Caches it to data_home if required.
+
+    Parameters
+    ----------
+    openml_path : str
+        OpenML URL that will be accessed. This will be prefixes with
+        _OPENML_PREFIX
+
+    data_home : str
+        Directory to which the files will be cached. If None, no caching will
+        be applied.
+
+    Returns
+    -------
+    result : stream
+        A stream to the OpenML resource
+    """
+    if data_home is None:
+        return urlopen(_OPENML_PREFIX + openml_path)
+    local_path = os.path.join(data_home, 'openml.org', str(hash(openml_path)))
     if not os.path.exists(local_path):
-        os.path.mkdir(os.path.dirname(local_path), parents=True, exist_ok=True)
+        try:
+            os.mkdir(os.path.dirname(local_path))
+        except OSError:
+            # potentially, the directory has been created in the meantime by
+            # a different process
+            pass
+
         try:
             with gzip.GzipFile(local_path, 'wb') as fdst:
-                with urlopen(_OPENML_PREFIX + path) as fsrc:
+                with urlopen(_OPENML_PREFIX + openml_path) as fsrc:
                     shutil.copyfileobj(fsrc, fdst)
-        except Exception:
+        except Exception as e:
             os.unlink(local_path)
             raise
     # XXX: unnecessary decompression on first access
@@ -47,7 +73,7 @@ def _open_openml_url(path, data_home, cache):
 
 
 def _get_json_content_from_openml_api(url, error_message, raise_if_error,
-                                      data_home, cache):
+                                      data_home):
     """
     Loads json data from the openml api
 
@@ -67,6 +93,9 @@ def _get_json_content_from_openml_api(url, error_message, raise_if_error,
         in case of acceptable errors. Note that all other errors (e.g., 404)
         will still be raised as normal.
 
+    data_home : str or None
+        Location to cache the response. None if no cache is required.
+
     Returns
     -------
     json_data : json or None
@@ -76,7 +105,7 @@ def _get_json_content_from_openml_api(url, error_message, raise_if_error,
     """
     data_found = True
     try:
-        response = _open_openml_url(url, data_home, cache)
+        response = _open_openml_url(url, data_home)
     except HTTPError as error:
         # 412 is an OpenML specific error code, indicating a generic error
         # (e.g., data not found)
@@ -196,7 +225,7 @@ def _convert_arff_data(arff_data, dtype_x, col_slice_x, dtype_y, col_slice_y):
         raise ValueError('Unexpected Data Type obtained from arff.')
 
 
-def _get_data_info_by_name(name, version, data_home, cache):
+def _get_data_info_by_name(name, version, data_home):
     """
     Utilizes the openml dataset listing api to find a dataset by
     name/version
@@ -214,6 +243,9 @@ def _get_data_info_by_name(name, version, data_home, cache):
         version from OpenML that is annotated as active. Any other string
         values except "active" are treated as integer.
 
+    data_home : str or None
+        Location to cache the response. None if no cache is required. 
+
     Returns
     -------
     first_dataset : json
@@ -226,13 +258,13 @@ def _get_data_info_by_name(name, version, data_home, cache):
         url = _SEARCH_NAME.format(name) + "/status/active/"
         error_msg = "No active dataset {} found.".format(name)
         json_data = _get_json_content_from_openml_api(url, error_msg, True,
-                                                      data_home, cache)
+                                                      data_home)
         return json_data['data']['dataset'][0]
 
     # an integer version has been provided
     url = (_SEARCH_NAME + "/data_version/{}").format(name, version)
     json_data = _get_json_content_from_openml_api(url, None, False,
-                                                  data_home, cache)
+                                                  data_home)
     if json_data is None:
         # we can do this in 1 function call if OpenML does not require the
         # specification of the dataset status (i.e., return datasets with a
@@ -242,35 +274,35 @@ def _get_data_info_by_name(name, version, data_home, cache):
         error_msg = "Dataset {} with version {} not found.".format(name,
                                                                    version)
         json_data = _get_json_content_from_openml_api(url, error_msg, True,
-                                                      data_home, cache)
+                                                      data_home)
 
     return json_data['data']['dataset'][0]
 
 
-def _get_data_description_by_id(data_id, data_home, cache):
+def _get_data_description_by_id(data_id, data_home):
     # OpenML API function: https://www.openml.org/api_docs#!/data/get_data_id
     url = _DATA_INFO.format(data_id)
     error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(url, error_message, True,
-                                                  data_home, cache)
+                                                  data_home)
     return json_data['data_set_description']
 
 
-def _get_data_features(data_id, data_home, cache):
+def _get_data_features(data_id, data_home):
     # OpenML function:
     # https://www.openml.org/api_docs#!/data/get_data_features_id
     url = _DATA_FEATURES.format(data_id)
     error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(url, error_message, True,
-                                                  data_home, cache)
+                                                  data_home)
     return json_data['data_features']['feature']
 
 
-def _download_data_arff(file_id, sparse, data_home, cache):
+def _download_data_arff(file_id, sparse, data_home):
     # Accesses an ARFF file on the OpenML server. Documentation:
     # https://www.openml.org/api_data_docs#!/data/get_download_id
     url = _DATA_FILE.format(file_id)
-    response = _open_openml_url(url, data_home, cache)
+    response = _open_openml_url(url, data_home)
     if sparse is True:
         return_type = arff.COO
     else:
@@ -375,9 +407,12 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     """
     data_home = get_data_home(data_home=data_home)
     data_home = join(data_home, 'openml')
-
-    if not exists(data_home):
-        os.makedirs(data_home)
+    if cache is False:
+        # no caching will be applied
+        data_home = None
+    else:
+        if not exists(data_home):
+            os.makedirs(data_home)
 
     # check valid function arguments. data_id XOR (name, version) should be
     # provided
@@ -390,7 +425,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                 "Dataset data_id={} and name={} passed, but you can only "
                 "specify a numeric data_id or a name, not "
                 "both.".format(data_id, name))
-        data_info = _get_data_info_by_name(name, version, data_home, cache)
+        data_info = _get_data_info_by_name(name, version, data_home)
         data_id = data_info['did']
     elif data_id is not None:
         # from the previous if statement, it is given that name is None
@@ -404,7 +439,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
             "Neither name nor data_id are provided. Please provide name or "
             "data_id.")
 
-    data_description = _get_data_description_by_id(data_id, data_home, cache)
+    data_description = _get_data_description_by_id(data_id, data_home)
     if data_description['status'] != "active":
         warn("Version {} of dataset {} is inactive, meaning that issues have "
              "been found in the dataset. Try using a newer version from "
@@ -414,7 +449,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                 data_description['url']))
 
     # download data features, meta-info about column types
-    features_list = _get_data_features(data_id, data_home, cache)
+    features_list = _get_data_features(data_id, data_home)
 
     if target_column_name == "default-target":
         # determines the default target based on the data feature results
@@ -460,7 +495,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     # obtain the data
     arff_data = _download_data_arff(data_description['file_id'], return_sparse,
-                                    data_home, cache)['data']
+                                    data_home)['data']
     X, y = _convert_arff_data(arff_data, dtype_x, col_slice_x,
                               dtype_y, col_slice_y)
 
