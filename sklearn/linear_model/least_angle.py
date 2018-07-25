@@ -216,7 +216,7 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
     if verbose:
         if verbose > 1:
-            print("Step\t\tAdded\t\tDropped\t\tActive set size\t\tC")
+            print('Step\t\tAdded\t\tDropped\t\tActive set size\t\tC')
         else:
             sys.stdout.write('.')
             sys.stdout.flush()
@@ -342,7 +342,7 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
             n_active += 1
 
             if verbose > 1:
-                print("%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
+                print('%s\t\t%s\t\t%s\t\t%s\t\t%s' % (n_iter, active[-1], '',
                                                       n_active, C))
 
         if method == 'lasso' and n_iter > 0 and prev_alpha[0] < alpha[0]:
@@ -491,7 +491,7 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
             sign_active = np.delete(sign_active, idx)
             sign_active = np.append(sign_active, 0.)  # just to maintain size
             if verbose > 1:
-                print("%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
+                print('%s\t\t%s\t\t%s\t\t%s\t\t%s' % (n_iter, '', drop_idx,
                                                       n_active, abs(temp)))
 
     if return_path:
@@ -1133,8 +1133,8 @@ class LarsCV(Lars):
         # As we use cross-validation, the Gram matrix is not precomputed here
         Gram = self.precompute
         if hasattr(Gram, '__array__'):
-            warnings.warn("Parameter 'precompute' cannot be an array in "
-                          "%s. Automatically switch to 'auto' instead."
+            warnings.warn('Parameter "precompute" cannot be an array in '
+                          '%s. Automatically switch to "auto" instead.'
                           % self.__class__.__name__)
             Gram = 'auto'
 
@@ -1188,15 +1188,15 @@ class LarsCV(Lars):
         return self
 
     @property
-    @deprecated("Attribute alpha is deprecated in 0.19 and "
-                "will be removed in 0.21. See ``alpha_`` instead")
+    @deprecated('Attribute alpha is deprecated in 0.19 and '
+                'will be removed in 0.21. See ``alpha_`` instead')
     def alpha(self):
         # impedance matching for the above Lars.fit (should not be documented)
         return self.alpha_
 
     @property
-    @deprecated("Attribute ``cv_mse_path_`` is deprecated in 0.18 and "
-                "will be removed in 0.20. Use ``mse_path_`` instead")
+    @deprecated('Attribute ``cv_mse_path_`` is deprecated in 0.18 and '
+                'will be removed in 0.20. Use ``mse_path_`` instead')
     def cv_mse_path_(self):
         return self.mse_path_
 

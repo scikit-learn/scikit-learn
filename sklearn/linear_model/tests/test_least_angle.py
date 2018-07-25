@@ -220,10 +220,10 @@ def test_no_path_all_precomputed():
     Xy = np.dot(X.T, y)
 
     alphas_, active_, coef_path_ = linear_model.lars_path(
-        X, y, method="lasso", Gram=G, Xy=Xy, alpha_min=0.9)
-    print("---")
+        X, y, method='lasso', Xy=Xy, Gram=G, alpha_min=0.9)
+    print('---')
     alpha_, active, coef = linear_model.lars_path(
-        X, y, method="lasso", Gram=G, Xy=Xy, alpha_min=0.9, return_path=False)
+        X, y, method='lasso', Gram=G, Xy=Xy, alpha_min=0.9, return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
     assert_true(alpha_ == alphas_[-1])
@@ -552,7 +552,7 @@ def test_lars_path_positive_constraint():
         linear_model.lars_path(X, y, return_path=True, method='lar',
                                positive=True)
     assert_true(len(w) == 1)
-    assert "broken" in str(w[0].message)
+    assert 'broken' in str(w[0].message)
 
     method = 'lasso'
     alpha, active, coefs = \
