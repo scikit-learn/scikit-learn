@@ -65,21 +65,6 @@ jobs:
           path: ~/log.txt
           destination: log.txt
 
-  pypy3:
-    docker:
-      - image: pypy:3-6.0.0
-    steps:
-      - restore_cache:
-          keys:
-            - pypy3-ccache-{{ .Branch }}
-            - pypy3-ccache
-      - checkout
-      - run: ./build_tools/circle/build_test_pypy.sh
-      - save_cache:
-          key: pypy3-ccache-{{ .Branch }}-{{ .BuildNum }}
-          paths:
-            - ~/.ccache
-            - ~/.cache/pip
 
   deploy:
     docker:
@@ -104,7 +89,6 @@ workflows:
     jobs:
       - python3
       - python2
-      - pypy3
       - deploy:
           requires:
             - python3

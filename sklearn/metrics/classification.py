@@ -1452,7 +1452,9 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         Sample weights.
 
     digits : int
-        Number of digits for formatting output floating point values
+        Number of digits for formatting output floating point values.
+        When ``output_dict`` is ``True``, this will be ignored and the
+        returned values will not be rounded.
 
     output_dict : bool (default = False)
         If True, return output as dict

@@ -71,7 +71,7 @@ boolean mask array or callable
             A callable is passed the input data `X` and can return any of the
             above.
 
-    remainder : {'passthrough', 'drop'} or estimator, default 'drop'
+    remainder : {'drop', 'passthrough'} or estimator, default 'drop'
         By default, only the specified columns in `transformers` are
         transformed and combined in the output, and the non-specified
         columns are dropped. (default of ``'drop'``).
@@ -625,14 +625,14 @@ def make_column_transformer(*transformers, **kwargs):
     ----------
     *transformers : tuples of column selections and transformers
 
-    remainder : {'passthrough', 'drop'} or estimator, default 'passthrough'
-        By default, all remaining columns that were not specified in
-        `transformers` will be automatically passed through (default of
-        ``'passthrough'``). This subset of columns is concatenated with the
-        output of the transformers.
-        By using ``remainder='drop'``, only the specified columns in
-        `transformers` are transformed and combined in the output, and the
-        non-specified columns are dropped.
+    remainder : {'drop', 'passthrough'} or estimator, default 'drop'
+        By default, only the specified columns in `transformers` are
+        transformed and combined in the output, and the non-specified
+        columns are dropped. (default of ``'drop'``).
+        By specifying ``remainder='passthrough'``, all remaining columns that
+        were not specified in `transformers` will be automatically passed
+        through. This subset of columns is concatenated with the output of
+        the transformers.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support `fit` and `transform`.

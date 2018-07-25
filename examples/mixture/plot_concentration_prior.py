@@ -116,7 +116,7 @@ rng = np.random.RandomState(random_state)
 X = np.vstack([
     rng.multivariate_normal(means[j], covars[j], samples[j])
     for j in range(n_components)])
-y = np.concatenate([j * np.ones(samples[j], dtype=int)
+y = np.concatenate([np.full(samples[j], j, dtype=int)
                     for j in range(n_components)])
 
 # Plot results in two different figures

@@ -448,7 +448,7 @@ def locally_linear_embedding(
             # compute Householder matrix which satisfies
             #  Hi*Vi.T*ones(n_neighbors) = alpha_i*ones(s)
             # using prescription from paper
-            h = alpha_i * np.ones(s_i) - np.dot(Vi.T, np.ones(n_neighbors))
+            h = np.full(s_i, alpha_i) - np.dot(Vi.T, np.ones(n_neighbors))
 
             norm_h = np.linalg.norm(h)
             if norm_h < modified_tol:

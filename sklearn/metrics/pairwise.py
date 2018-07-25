@@ -491,7 +491,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
            [4., 4.]])
     >>> import numpy as np
     >>> X = np.ones((1, 2))
-    >>> y = 2 * np.ones((2, 2))
+    >>> y = np.full((2, 2), 2.)
     >>> manhattan_distances(X, y, sum_over_features=False)#doctest:+ELLIPSIS
     array([[1., 1.],
            [1., 1.]])

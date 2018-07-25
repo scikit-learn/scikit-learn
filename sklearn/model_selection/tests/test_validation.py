@@ -620,7 +620,7 @@ def test_cross_val_score_fit_params():
         assert_equal(clf.dummy_obj, DUMMY_OBJ)
 
     fit_params = {'sample_weight': np.ones(n_samples),
-                  'class_prior': np.ones(n_classes) / n_classes,
+                  'class_prior': np.full(n_classes, 1. / n_classes),
                   'sparse_sample_weight': W_sparse,
                   'sparse_param': P_sparse,
                   'dummy_int': DUMMY_INT,

@@ -207,7 +207,7 @@ def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
     dangle = np.asarray(np.where(np.isclose(X.sum(axis=1), 0),
                                  1.0 / n, 0)).ravel()
 
-    scores = np.ones(n, dtype=np.float32) / n  # initial guess
+    scores = np.full(n, 1. / n, dtype=np.float32)  # initial guess
     for i in range(max_iter):
         print("power iteration #%d" % i)
         prev_scores = scores

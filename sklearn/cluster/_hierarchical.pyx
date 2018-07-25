@@ -343,7 +343,7 @@ cdef class UnionFind(object):
     cdef ITYPE_t[:] size
 
     def __init__(self, N):
-        self.parent = -1 * np.ones(2 * N - 1, dtype=ITYPE, order='C')
+        self.parent = np.full(2 * N - 1, -1., dtype=ITYPE, order='C')
         self.next_label = N
         self.size = np.hstack((np.ones(N, dtype=ITYPE),
                                np.zeros(N - 1, dtype=ITYPE)))

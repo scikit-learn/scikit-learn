@@ -52,6 +52,7 @@ from .base import _pkl_filepath
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils import check_random_state, Bunch
+from ..utils import deprecated
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
 from ..externals import joblib
@@ -71,7 +72,14 @@ TRAIN_FOLDER = "20news-bydate-train"
 TEST_FOLDER = "20news-bydate-test"
 
 
+@deprecated("Function 'download_20newsgroups' was renamed to "
+            "'_download_20newsgroups' in version 0.20 and will be removed in "
+            "release 0.22.")
 def download_20newsgroups(target_dir, cache_path):
+    return _download_20newsgroups(target_dir, cache_path)
+
+
+def _download_20newsgroups(target_dir, cache_path):
     """Download the 20 newsgroups data and stored it as a zipped pickle."""
     train_path = os.path.join(target_dir, TRAIN_FOLDER)
     test_path = os.path.join(target_dir, TEST_FOLDER)
@@ -101,6 +109,11 @@ def strip_newsgroup_header(text):
     """
     Given text in "news" format, strip the headers, by removing everything
     before the first blank line.
+
+    Parameters
+    ----------
+    text : string
+        The text from which to remove the signature block.
     """
     _before, _blankline, after = text.partition('\n\n')
     return after
@@ -115,6 +128,11 @@ def strip_newsgroup_quoting(text):
     Given text in "news" format, strip lines beginning with the quote
     characters > or |, plus lines that often introduce a quoted section
     (for example, because they contain the string 'writes:'.)
+
+    Parameters
+    ----------
+    text : string
+        The text from which to remove the signature block.
     """
     good_lines = [line for line in text.split('\n')
                   if not _QUOTE_RE.search(line)]
@@ -128,6 +146,11 @@ def strip_newsgroup_footer(text):
     As a rough heuristic, we assume that signatures are set apart by either
     a blank line or a line made of hyphens, and that it is the last such line
     in the file (disregarding blank lines at the end).
+
+    Parameters
+    ----------
+    text : string
+        The text from which to remove the signature block.
     """
     lines = text.strip().split('\n')
     for line_num in range(len(lines) - 1, -1, -1):
@@ -213,8 +236,8 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         if download_if_missing:
             logger.info("Downloading 20news dataset. "
                         "This may take a few minutes.")
-            cache = download_20newsgroups(target_dir=twenty_home,
-                                          cache_path=cache_path)
+            cache = _download_20newsgroups(target_dir=twenty_home,
+                                           cache_path=cache_path)
         else:
             raise IOError('20Newsgroups dataset not found')
 
