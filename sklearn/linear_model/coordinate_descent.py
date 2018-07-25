@@ -772,7 +772,8 @@ class ElasticNet(LinearModel, RegressorMixin):
                           verbose=False, tol=self.tol, positive=self.positive,
                           X_offset=X_offset, X_scale=X_scale, return_n_iter=True,
                           coef_init=coef_[k], max_iter=self.max_iter,
-                          random_state=self.random_state, l1_weights=self.l1_weights,
+                          random_state=self.random_state,
+                          l1_weights=self.l1_weights,
                           selection=self.selection,
                           check_input=False)
             coef_[k] = this_coef[:, 0]
