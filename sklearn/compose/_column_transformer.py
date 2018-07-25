@@ -87,9 +87,11 @@ boolean mask array or callable
 
     sparse_threshold : float, default = 0.3
         If the transformed output consists of a mix of sparse and dense data,
-        it will be stacked as a sparse matrix if the density is at most this
-        value.
-        Use sparse_threshold=0 to always return dense.
+        it will be stacked as a sparse matrix if the density is lower than this
+        value. Use ``sparse_threshold=0`` to always return dense.
+        When the transformed output consists of all sparse or all dense data,
+        the stacked result will be sparse or dense, respectively, and this
+        keyword will be ignored.
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).

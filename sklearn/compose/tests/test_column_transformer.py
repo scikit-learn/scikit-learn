@@ -302,8 +302,8 @@ def test_column_transformer_sparse_stacking():
 
 
 def test_column_transformer_sparse_threshold():
-    X_array = np.array([['a', 'b', 'c'], ['A', 'B', 'C']], dtype=object).T
-    # above data has sparsity of 6 / 18 = 0.333
+    X_array = np.array([['a', 'b'], ['A', 'B']], dtype=object).T
+    # above data has sparsity of 4 / 8 = 0.5
 
     # if all sparse, keep sparse (even if above threshold)
     col_trans = ColumnTransformer([('trans1', OneHotEncoder(), [0]),
@@ -313,8 +313,8 @@ def test_column_transformer_sparse_threshold():
     assert sparse.issparse(res)
     assert col_trans.sparse_output_
 
-    # mixed -> sparsity of (3 + 9) / 18 = 0.666
-    for thres in [0.67, 1]:
+    # mixed -> sparsity of (4 + 2) / 8 = 0.75
+    for thres in [0.75001, 1]:
         col_trans = ColumnTransformer(
             [('trans1', OneHotEncoder(sparse=True), [0]),
              ('trans2', OneHotEncoder(sparse=False), [1])],
@@ -323,7 +323,7 @@ def test_column_transformer_sparse_threshold():
         assert sparse.issparse(res)
         assert col_trans.sparse_output_
 
-    for thres in [0.66, 0]:
+    for thres in [0.75, 0]:
         col_trans = ColumnTransformer(
             [('trans1', OneHotEncoder(sparse=True), [0]),
              ('trans2', OneHotEncoder(sparse=False), [1])],
