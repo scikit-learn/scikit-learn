@@ -1475,6 +1475,7 @@ def test_fit_and_score():
     failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
     # dummy X data
     X = np.arange(1, 10)
+    y = np.ones(9)
     fit_and_score_args = [failing_clf, X, None, dict(), None, None, 0,
                           None, None]
     # passing error score to trigger the warning message
@@ -1508,3 +1509,22 @@ def test_fit_and_score():
     assert_raise_message(ValueError, "Failing classifier failed as required",
                          _fit_and_score, *fit_and_score_args,
                          **fit_and_score_kwargs)
+
+    # check that functions upstream pass error_score param to _fit_and_score
+    error_message = ("error_score must be the string 'raise' or a"
+                     " numeric value. (Hint: if using 'raise', please"
+                     " make sure that it has been spelled correctly.)")
+
+    assert_raise_message(ValueError, error_message, cross_validate,
+                         failing_clf, X, cv=3, error_score='unvalid-string')
+
+    assert_raise_message(ValueError, error_message, cross_val_score,
+                         failing_clf, X, cv=3, error_score='unvalid-string')
+
+    assert_raise_message(ValueError, error_message, learning_curve,
+                         failing_clf, X, y, cv=3, error_score='unvalid-string')
+
+    assert_raise_message(ValueError, error_message, validation_curve,
+                         failing_clf, X, y, 'parameter',
+                         [FailingClassifier.FAILING_PARAMETER], cv=3,
+                         error_score='unvalid-string')
