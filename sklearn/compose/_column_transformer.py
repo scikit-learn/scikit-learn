@@ -371,8 +371,8 @@ boolean mask array or callable
                                     "Transformers have overlaping columns")
                 return
             if trans == 'drop':
-                self._invertible = (False,
-                                    "{} drops columns".format(name))
+                self._invertible = (
+                    False, "Transformer '{}' drops columns".format(name))
                 return
             input_indices.append(col_indices)
 
@@ -510,7 +510,7 @@ boolean mask array or callable
 
         Returns
         -------
-        Xt : array-like, shape = [n_samples, n_features]
+        Xt : array-like or DataFrame of shape [n_samples, n_features]
 
         """
         check_is_fitted(self, 'transformers_')
