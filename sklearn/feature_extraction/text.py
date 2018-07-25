@@ -176,7 +176,7 @@ class VectorizerMixin(object):
 
         return tokens
 
-    def _char_ngrams(self, text_document):
+    def _char_ngrams(self, text_document, stop_words=None):
         """Tokenize text_document into a sequence of character n-grams"""
         # normalize white spaces
         text_document = self._white_spaces.sub(" ", text_document)
@@ -197,6 +197,8 @@ class VectorizerMixin(object):
         for n in xrange(min_n, min(max_n + 1, text_len + 1)):
             for i in xrange(text_len - n + 1):
                 ngrams_append(text_document[i: i + n])
+        if stop_words:
+           ngrams = [w for w in ngrams if w not in stop_words]
         return ngrams
 
     def _char_wb_ngrams(self, text_document):
@@ -293,7 +295,8 @@ class VectorizerMixin(object):
         preprocess = self.build_preprocessor()
 
         if self.analyzer == 'char':
-            return lambda doc: self._char_ngrams(preprocess(self.decode(doc)))
+            stop_words = self.get_stop_words()
+            return lambda doc: self._char_ngrams(preprocess(self.decode(doc)), stop_words)
 
         elif self.analyzer == 'char_wb':
             return lambda doc: self._char_wb_ngrams(
