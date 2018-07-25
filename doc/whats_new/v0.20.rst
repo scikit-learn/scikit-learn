@@ -77,6 +77,7 @@ random sampling procedures.
 - The v0.19.0 release notes failed to mention a backwards incompatibility with
   :class:`model_selection.StratifiedKFold` when ``shuffle=True`` due to
   :issue:`7823`.
+- :class:`decomposition.SparsePCA` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -127,21 +128,24 @@ Preprocessing
 - Added :class:`preprocessing.KBinsDiscretizer` for turning
   continuous features into categorical or one-hot encoded
   features. :issue:`7668`, :issue:`9647`, :issue:`10195`,
-  :issue:`10192`, :issue:`11272` and :issue:`11467`.
-  by :user:`Henry Lin <hlin117>`, `Hanmin Qin`_
-  and `Tom Dupre la Tour`_.
+  :issue:`10192`, :issue:`11272`, :issue:`11467` and :issue:`11505`.
+  by :user:`Henry Lin <hlin117>`, `Hanmin Qin`_,
+  `Tom Dupre la Tour`_ and :user:`Giovanni Giuseppe Costa <ggc87>`.
 
 - Added :class:`compose.ColumnTransformer`, which allows to apply
   different transformers to different columns of arrays or pandas
   DataFrames. :issue:`9012` by `Andreas Müller`_ and `Joris Van den Bossche`_,
   and :issue:`11315` by :user:`Thomas Fan <thomasjpfan>`.
 
-- Added :class:`preprocessing.PowerTransformer`, which implements the Box-Cox
-  power transformation, allowing users to map data from any distribution to a
-  Gaussian distribution. This is useful as a variance-stabilizing transformation
-  in situations where normality and homoscedasticity are desirable.
+- Added :class:`preprocessing.PowerTransformer`, which implements the
+  Yeo-Johnson and Box-Cox power transformations. Power transformations try to
+  find a set of feature-wise parametric transformations to approximately map
+  data to a Gaussian distribution centered at zero and with unit variance.
+  This is useful as a variance-stabilizing transformation in situations where
+  normality and homoscedasticity are desirable.
   :issue:`10210` by :user:`Eric Chang <ericchang00>` and
-  :user:`Maniteja Nandana <maniteja123>`.
+  :user:`Maniteja Nandana <maniteja123>`, and :issue:`11520` by :user:`Nicolas
+  Hug <nicolashug>`.
 
 - Added the :class:`compose.TransformedTargetRegressor` which transforms
   the target y before fitting a regression model. The predictions are mapped
@@ -189,13 +193,21 @@ Decomposition, manifold learning and clustering
   This applies to the dictionary and sparse code.
   :issue:`6374` by :user:`John Kirkham <jakirkham>`.
 
+- :class:`decomposition.SparsePCA` now exposes ``normalize_components``. When
+  set to True, the train and test data are centered with the train mean 
+  repsectively during the fit phase and the transform phase. This fixes the
+  behavior of SparsePCA. When set to False, which is the default, the previous
+  abnormal behaviour still holds. The False value is for backward
+  compatibility and should not be used.
+  :issue:`11585` by :user:`Ivan Panico <FollowKenny>`.
+
 Metrics
 
 - Partial AUC is available via ``max_fpr`` parameter in
   :func:`metrics.roc_auc_score`. :issue:`3273` by
   :user:`Alexander Niederbühl <Alexander-N>`.
 
-- Added control over the normalization in 
+- Added control over the normalization in
   :func:`metrics.normalized_mutual_information_score` and
   :func:`metrics.adjusted_mutual_information_score` via the ``average_method``
   parameter. In version 0.22, the default normalizer for each will become
@@ -334,7 +346,7 @@ Preprocessing
 - :class:`preprocessing.RobustScaler` and :func:`preprocessing.robust_scale`
   can be fitted using sparse matrices.
   :issue:`11308` by :user:`Guillaume Lemaitre <glemaitre>`.
-  
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -430,6 +442,12 @@ Miscellaneous
 - Add ``filename`` attribute to datasets that have a CSV file.
   :issue:`9101` by :user:`alex-33 <alex-33>`
   and :user:`Maskani Filali Mohamed <maskani-moh>`.
+
+- Add almost complete PyPy 3 support. Known unsupported functionalities are
+  :func:`datasets.load_svmlight_file`, :class:`feature_extraction.FeatureHasher` and
+  :class:`feature_extraction.text.HashingVectorizer`.  For running on PyPy, PyPy3-v5.10+,
+  Numpy 1.14.0+, and scipy 1.1.0+ are required.
+  :issue:`11010` by :user:`Ronan Lamy <rlamy>` and `Roman Yurchak`_.
 
 Bug fixes
 .........
@@ -548,12 +566,12 @@ Classifiers and regressors
   per-tree basis. The previous behavior over-weighted the Gini importance of
   features that appear in later stages. This issue only affected feature
   importances. :issue:`11176` by :user:`Gil Forsyth <gforsyth>`.
-  
-- Fixed a bug in :class:`tree.MAE` to ensure sample weights are being used 
-  during the calculation of tree MAE impurity. Previous behaviour could 
-  cause suboptimal splits to be chosen since the impurity calculation 
+
+- Fixed a bug in :class:`tree.MAE` to ensure sample weights are being used
+  during the calculation of tree MAE impurity. Previous behaviour could
+  cause suboptimal splits to be chosen since the impurity calculation
   considered all samples to be of equal weight importance.
-  :issue:`11464` by :user:`John Stott <JohnStott>`.  
+  :issue:`11464` by :user:`John Stott <JohnStott>`.
 
 Decomposition, manifold learning and clustering
 
@@ -654,6 +672,13 @@ Metrics
   :issue:`9515` by :user:`Alan Liddell <aliddell>` and
   :user:`Manh Dao <manhdao>`.
 
+Ensemble
+
+- Fix allowing to obtain deterministic with :class:`BaseBagging` estimator,
+  when comparing results generated at fit time with the one using the object
+  attributes when ``random_state`` is set. :issue:`9723` by :user:`Guillaume
+  Lemaitre <glemaitre>`.
+
 Neighbors
 
 - Fixed a bug so ``predict`` in :class:`neighbors.RadiusNeighborsRegressor` can
@@ -739,10 +764,10 @@ API changes summary
 
 Classifiers and regressors
 
-- The default value of the ``n_estimators`` parameter of 
-  :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`, 
-  :class:`ensemble.ExtraTreesClassifier`, :class:`ensemble.ExtraTreesRegressor`, 
-  and :class:`ensemble.RandomTreesEmbedding` will change from 10 in version 0.20 
+- The default value of the ``n_estimators`` parameter of
+  :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`, :class:`ensemble.ExtraTreesRegressor`,
+  and :class:`ensemble.RandomTreesEmbedding` will change from 10 in version 0.20
   to 100 in 0.22. A FutureWarning is raised when the default value is used.
   :issue:`11542` by :user:`Anna Ayzenshtat <annaayzenshtat>`.
 
@@ -806,9 +831,9 @@ Metrics
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 - In :func:`metrics.normalized_mutual_information_score` and
-  :func:`metrics.adjusted_mutual_information_score`, 
+  :func:`metrics.adjusted_mutual_information_score`,
   warn that ``average_method``
-  will have a new default value. In version 0.22, the default normalizer for each 
+  will have a new default value. In version 0.22, the default normalizer for each
   will become the *arithmetic* mean of the entropies of each clustering. Currently,
   :func:`metrics.normalized_mutual_information_score` uses the default of
   ``average_method='geometric'``, and :func:`metrics.adjusted_mutual_information_score`
@@ -827,6 +852,15 @@ Cluster
 - Deprecate ``pooling_func`` unused parameter in
   :class:`cluster.AgglomerativeClustering`. :issue:`9875` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
+
+Ensemble
+
+- Classes derived from :class:`ensemble.BaseBagging`. The attribute
+  ``estimators_samples_`` will return a list of arrays containing the indices
+  selected for each bootstrap instead of a list of arrays containing the mask
+  of the samples selected for each bootstrap. Indices allows to repeat samples
+  while mask does not allow this functionality. :issue:`9524` by
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 Imputer
 
@@ -870,6 +904,26 @@ Outlier Detection models
   ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
   will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.
 
+- Novelty detection with :class:`neighbors.LocalOutlierFactor`:
+  Add a ``novelty`` parameter to :class:`neighbors.LocalOutlierFactor`. When
+  ``novelty`` is set to True, :class:`neighbors.LocalOutlierFactor` can then 
+  be used for novelty detection, i.e. predict on new unseen data. Available
+  prediction methods are ``predict``, ``decision_function`` and
+  ``score_samples``. By default, ``novelty`` is set to ``False``, and only
+  the ``fit_predict`` method is avaiable.
+  By :user:`Albert Thomas <albertcthomas>`.
+
+ - A ``behaviour`` parameter has been introduced in :class:`ensemble.IsolationForest`
+  to ensure backward compatibility.
+  In the old behaviour, the ``decision_function`` is independent of the ``contamination``
+  parameter. A threshold attribute depending on the ``contamination`` parameter is thus
+  used.
+  In the new behaviour the ``decision_function`` is dependent on the ``contamination``
+  parameter, in such a way that 0 becomes its natural threshold to detect outliers.
+  Setting behaviour to "old" is deprecated and will not be possible in version 0.22.
+  Beside, the behaviour parameter will be removed in 0.24.
+  :issue:`11553` by `Nicolas Goix`_.
+
 Covariance
 
 - The :func:`covariance.graph_lasso`, :class:`covariance.GraphLasso` and
@@ -910,6 +964,13 @@ Preprocessing
   will be from ``True`` to ``False`` in 0.22.
   :issue:`10655` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+Model selection
+
+- The default number of cross-validation folds ``cv`` and the default number of
+  splits ``n_splits`` in the :class:`model_selection.KFold`-like splitters will change
+  from 3 to 5 in 0.22 as 3-fold has a lot of variance.
+  :issue:`11557` by :user:`Alexandre Boucaud <aboucaud>`.
+
 Changes to estimator checks
 ---------------------------
 
@@ -927,7 +988,7 @@ These changes mostly affect library developers.
   ``check_set_params`` test which checks that ``set_params`` is equivalent to
   passing parameters in ``__init__`` and warns if it encounters parameter
   validation. :issue:`7738` by :user:`Alvin Chiang <absolutelyNoWarranty>`
-  
+
 - Add invariance tests for clustering metrics. :issue:`8102` by :user:`Ankita
   Sinha <anki08>` and :user:`Guillaume Lemaitre <glemaitre>`.
 

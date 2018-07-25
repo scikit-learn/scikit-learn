@@ -339,7 +339,7 @@ def test_dbscan_core_samples_toy(algorithm):
     core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
                                   min_samples=4)
     assert_array_equal(core_samples, [])
-    assert_array_equal(labels, -np.ones(n_samples))
+    assert_array_equal(labels, np.full(n_samples, -1.))
 
 
 def test_dbscan_precomputed_metric_with_degenerate_input_arrays():

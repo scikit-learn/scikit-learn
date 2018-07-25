@@ -302,7 +302,19 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         self.sample_interval = sample_interval
 
     def fit(self, X, y=None):
-        """Set parameters."""
+        """Set the parameters
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the transformer.
+        """
         X = check_array(X, accept_sparse='csr')
         if self.sample_interval is None:
             # See reference, figure 2 c)
@@ -420,26 +432,26 @@ class Nystroem(BaseEstimator, TransformerMixin):
         and the keyword arguments passed to this object as kernel_params, and
         should return a floating point number.
 
-    n_components : int
-        Number of features to construct.
-        How many data points will be used to construct the mapping.
-
     gamma : float, default=None
         Gamma parameter for the RBF, laplacian, polynomial, exponential chi2
         and sigmoid kernels. Interpretation of the default value is left to
         the kernel; see the documentation for sklearn.metrics.pairwise.
         Ignored by other kernels.
 
-    degree : float, default=None
-        Degree of the polynomial kernel. Ignored by other kernels.
-
     coef0 : float, default=None
         Zero coefficient for polynomial and sigmoid kernels.
         Ignored by other kernels.
 
+    degree : float, default=None
+        Degree of the polynomial kernel. Ignored by other kernels.
+
     kernel_params : mapping of string to any, optional
         Additional parameters (keyword arguments) for kernel function passed
         as callable object.
+
+    n_components : int
+        Number of features to construct.
+        How many data points will be used to construct the mapping.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;

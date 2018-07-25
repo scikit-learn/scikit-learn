@@ -708,13 +708,13 @@ def test_confusion_matrix_dtype():
         assert_equal(cm.dtype, np.float64)
 
     # np.iinfo(np.uint32).max should be accumulated correctly
-    weight = np.ones(len(y), dtype=np.uint32) * 4294967295
+    weight = np.full(len(y), 4294967295, dtype=np.uint32)
     cm = confusion_matrix(y, y, sample_weight=weight)
     assert_equal(cm[0, 0], 4294967295)
     assert_equal(cm[1, 1], 8589934590)
 
     # np.iinfo(np.int64).max should cause an overflow
-    weight = np.ones(len(y), dtype=np.int64) * 9223372036854775807
+    weight = np.full(len(y), 9223372036854775807, dtype=np.int64)
     cm = confusion_matrix(y, y, sample_weight=weight)
     assert_equal(cm[0, 0], 9223372036854775807)
     assert_equal(cm[1, 1], -2)

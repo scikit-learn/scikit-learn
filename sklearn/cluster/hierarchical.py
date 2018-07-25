@@ -93,7 +93,7 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
     connectivity = connectivity.astype('float64')
 
     # Ensure zero distances aren't ignored by setting them to "epsilon"
-    epsilon_value = np.nextafter(0, 1, dtype=connectivity.data.dtype)
+    epsilon_value = np.finfo(dtype=connectivity.data.dtype).eps
     connectivity.data[connectivity.data == 0] = epsilon_value
 
     # Use scipy.sparse.csgraph to generate a minimum spanning tree
@@ -917,6 +917,22 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         node and has children `children_[i - n_features]`. Alternatively
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_features + i`
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn import datasets, cluster
+    >>> digits = datasets.load_digits()
+    >>> images = digits.images
+    >>> X = np.reshape(images, (len(images), -1))
+    >>> agglo = cluster.FeatureAgglomeration(n_clusters=32)
+    >>> agglo.fit(X) # doctest: +ELLIPSIS
+    FeatureAgglomeration(affinity='euclidean', compute_full_tree='auto',
+               connectivity=None, linkage='ward', memory=None, n_clusters=32,
+               pooling_func=...)
+    >>> X_reduced = agglo.transform(X)
+    >>> X_reduced.shape
+    (1797, 32)
     """
 
     def __init__(self, n_clusters=2, affinity="euclidean",

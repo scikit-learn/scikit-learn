@@ -1336,12 +1336,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             raise ValueError('resize with smaller n_estimators %d < %d' %
                              (total_n_estimators, self.estimators_[0]))
 
-        self.estimators_.resize((total_n_estimators, self.loss_.K))
-        self.train_score_.resize(total_n_estimators)
+        self.estimators_ = np.resize(self.estimators_,
+                                     (total_n_estimators, self.loss_.K))
+        self.train_score_ = np.resize(self.train_score_, total_n_estimators)
         if (self.subsample < 1 or hasattr(self, 'oob_improvement_')):
             # if do oob resize arrays or create new if not available
             if hasattr(self, 'oob_improvement_'):
-                self.oob_improvement_.resize(total_n_estimators)
+                self.oob_improvement_ = np.resize(self.oob_improvement_,
+                                                  total_n_estimators)
             else:
                 self.oob_improvement_ = np.zeros((total_n_estimators,),
                                                  dtype=np.float64)
@@ -1511,7 +1513,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         X_csr = csr_matrix(X) if issparse(X) else None
 
         if self.n_iter_no_change is not None:
-            loss_history = np.ones(self.n_iter_no_change) * np.inf
+            loss_history = np.full(self.n_iter_no_change, np.inf)
             # We create a generator to get the predictions for X_val after
             # the addition of each successive stage
             y_val_pred_iter = self._staged_decision_function(X_val)
