@@ -20,7 +20,7 @@ from sklearn.externals import arff
 from .base import get_data_home
 from ..externals.six import string_types, PY2
 from ..externals.six.moves.urllib.error import HTTPError
-from ..utils import Bunch, Memory
+from ..utils import Bunch
 
 __all__ = ['fetch_openml']
 
@@ -52,20 +52,19 @@ def _open_openml_url(openml_path, data_home):
     """
     if data_home is None:
         return urlopen(_OPENML_PREFIX + openml_path)
-    local_path = os.path.join(data_home, 'openml.org', str(hash(openml_path)))
+    local_path = os.path.join(data_home, 'openml.org', openml_path + ".gz")
     if not os.path.exists(local_path):
         try:
-            os.mkdir(os.path.dirname(local_path))
+            os.makedirs(os.path.dirname(local_path))
         except OSError:
-            # potentially, the directory has been created in the meantime by
-            # a different process
+            # potentially, the directory has been created already
             pass
 
         try:
             with gzip.GzipFile(local_path, 'wb') as fdst:
                 with urlopen(_OPENML_PREFIX + openml_path) as fsrc:
                     shutil.copyfileobj(fsrc, fdst)
-        except Exception as e:
+        except Exception:
             os.unlink(local_path)
             raise
     # XXX: unnecessary decompression on first access
@@ -244,7 +243,7 @@ def _get_data_info_by_name(name, version, data_home):
         values except "active" are treated as integer.
 
     data_home : str or None
-        Location to cache the response. None if no cache is required. 
+        Location to cache the response. None if no cache is required.
 
     Returns
     -------

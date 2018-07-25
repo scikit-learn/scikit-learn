@@ -321,8 +321,7 @@ def test_open_openml_url_cache(monkeypatch):
     # first fill the cache
     response1 = _open_openml_url(openml_path, test_directory)
     # assert file exists
-    location = os.path.join(test_directory, 'openml.org',
-                            str(hash(openml_path)))
+    location = os.path.join(test_directory, 'openml.org', openml_path + '.gz')
     assert os.path.isfile(location)
     # redownload, to utilize cache
     response2 = _open_openml_url(openml_path, test_directory)
