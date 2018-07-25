@@ -8,6 +8,8 @@ from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
 from sklearn.metrics.scorer import get_scorer
 from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import compute_class_weight
 from sklearn.utils.testing import assert_almost_equal
@@ -1363,3 +1365,106 @@ def test_elastic_net_l1_ratio():
     l1_coeffs = lr.coef_
 
     assert_array_almost_equal(elastic_net_l1_one_coeffs, l1_coeffs)
+
+
+def test_elastic_net_CV_grid_search():
+    # make sure ElasticNetCV gives same best params as GridSearchCV
+
+    X, y = make_classification(random_state=0)
+    cv = StratifiedKFold(5, random_state=0)
+
+    Cs = np.logspace(-4, 4, 5)
+    l1_ratios = np.linspace(0, 1, 5)
+
+    lrcv = LogisticRegressionCV(penalty='elastic-net', Cs=Cs, solver='saga',
+                                cv=cv, l1_ratios=l1_ratios, random_state=0)
+    lrcv.fit(X, y)
+
+    param_grid = {'C': Cs, 'l1_ratio': l1_ratios}
+    lr = LogisticRegression(penalty='elastic-net', solver='saga',
+                            random_state=0)
+    gs = GridSearchCV(lr, param_grid, cv=cv)
+    gs.fit(X, y)
+
+
+    assert gs.best_params_['l1_ratio'] == lrcv.l1_ratio_[0]
+    assert gs.best_params_['C'] == lrcv.C_[0]
+
+
+def test_elastic_net_CV_multiclass_multinomial():
+    # make sure ElasticNetCV gives same best params as GridSearchCV with
+    # multinomial=True.
+
+    X, y = make_classification(n_samples=200, n_classes=3, n_informative=3,
+                               random_state=0)
+    cv = StratifiedKFold(5, random_state=0)
+
+    Cs = np.logspace(-4, 4, 5)
+    l1_ratios = np.linspace(0, 1, 5)
+    #l1_ratios = [1, 1]
+
+    lrcv = LogisticRegressionCV(penalty='elastic-net', Cs=Cs, solver='saga',
+                                cv=cv, l1_ratios=l1_ratios, random_state=0,
+                                multi_class='multinomial')
+    lrcv.fit(X, y)
+
+    param_grid = {'C': Cs, 'l1_ratio': l1_ratios}
+    lr = LogisticRegression(penalty='elastic-net', solver='saga',
+                            random_state=0, multi_class='multinomial')
+    gs = GridSearchCV(lr, param_grid, cv=cv, iid=False)
+    gs.fit(X, y)
+
+    assert gs.best_params_['l1_ratio'] == lrcv.l1_ratio_[0]
+    assert gs.best_params_['C'] == lrcv.C_[0]
+
+
+def test_elastic_net_CV_multiclass_ovr():
+    # make sure ElasticNetCV gives similar predictions as GridSearchCV in a
+    # multiclass setting with ovr. We can't compare best_params like in the
+    # previous test because LogisticRegressionCV with multi_class='ovr' will
+    # have one C and one l1_param for each class, while LogisticRegression will
+    # share the parameters over the *n_classes* classifiers.
+
+    X, y = make_classification(n_samples=200, n_classes=3, n_informative=3,
+                               random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    cv = StratifiedKFold(5, random_state=0)
+
+    Cs = np.logspace(-4, 4, 5)
+    l1_ratios = np.linspace(0, 1, 5)
+
+    lrcv = LogisticRegressionCV(penalty='elastic-net', Cs=Cs, solver='saga',
+                                cv=cv, l1_ratios=l1_ratios, random_state=0,
+                                multi_class='ovr')
+    lrcv.fit(X_train, y_train)
+
+    param_grid = {'C': Cs, 'l1_ratio': l1_ratios}
+    lr = LogisticRegression(penalty='elastic-net', solver='saga',
+                            random_state=0, multi_class='ovr')
+    gs = GridSearchCV(lr, param_grid, cv=cv, iid=False)
+    gs.fit(X_train, y_train)
+
+    # Check that predictions are 80% the same
+    assert (lrcv.predict(X_train) == gs.predict(X_train)).mean() >= .8
+    assert (lrcv.predict(X_test) == gs.predict(X_test)).mean() >= .8
+
+
+def test_elastic_net_CV_no_refit():
+
+    n_classes = 5
+    n_features = 20
+    X, y = make_classification(n_samples=200, n_classes=n_classes,
+                               n_informative=n_classes, n_features=n_features,
+                               random_state=0)
+    cv = StratifiedKFold(5, random_state=0)
+
+    Cs = np.logspace(-4, 4, 3)
+    l1_ratios = np.linspace(0, 1, 2)
+
+    lrcv = LogisticRegressionCV(penalty='elastic-net', Cs=Cs, solver='saga',
+                                cv=cv, l1_ratios=l1_ratios, random_state=0,
+                                refit=False)
+    lrcv.fit(X, y)
+    assert lrcv.C_.shape == (n_classes,)
+    assert lrcv.l1_ratio_.shape == (n_classes,)
+    assert lrcv.coef_.shape == (n_classes, n_features)

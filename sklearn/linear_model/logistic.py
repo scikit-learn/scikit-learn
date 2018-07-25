@@ -761,7 +761,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             elif penalty == 'l2':
                 alpha = 1. / C
                 beta = 0.
-            else:  #  elastic-net penalty (alpha is 2-norm, beta is 1-norm)
+            else:  # elastic-net penalty (alpha is 2-norm, beta is 1-norm)
                 alpha = (1. / C) * (1 - l1_ratio)
                 beta = (1. / C) * l1_ratio
 
@@ -994,17 +994,18 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     scheme if the 'multi_class' option is set to 'ovr', and uses the cross-
     entropy loss if the 'multi_class' option is set to 'multinomial'.
     (Currently the 'multinomial' option is supported only by the 'lbfgs',
-    'sag' and 'newton-cg' solvers.)
+    'sag', 'saga' and 'newton-cg' solvers.)
 
     This class implements regularized logistic regression using the
-    'liblinear' library, 'newton-cg', 'sag' and 'lbfgs' solvers. It can handle
-    both dense and sparse input. Use C-ordered arrays or CSR matrices
+    'liblinear' library, 'newton-cg', 'sag', 'saga' and 'lbfgs' solvers. It can
+    handle both dense and sparse input. Use C-ordered arrays or CSR matrices
     containing 64-bit floats for optimal performance; any other input format
     will be converted (and copied).
 
     The 'newton-cg', 'sag', and 'lbfgs' solvers support only L2 regularization
     with primal formulation. The 'liblinear' solver supports both L1 and L2
-    regularization, with a dual formulation only for the L2 penalty.
+    regularization, with a dual formulation only for the L2 penalty. The
+    elastic net regularization is only supported by the 'saga' solver.
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
@@ -1613,7 +1614,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=1, verbose=0,
                  refit=True, intercept_scaling=1., multi_class='ovr',
-                 random_state=None):
+                 random_state=None, l1_ratios=None):
         self.Cs = Cs
         self.fit_intercept = fit_intercept
         self.cv = cv
@@ -1630,6 +1631,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
         self.random_state = random_state
+        self.l1_ratios = l1_ratios if l1_ratios is not None else [None]
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -1737,10 +1739,12 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                       intercept_scaling=self.intercept_scaling,
                       random_state=self.random_state,
                       max_squared_sum=max_squared_sum,
-                      sample_weight=sample_weight
+                      sample_weight=sample_weight,
+                      l1_ratio=l1_ratio
                       )
             for label in iter_encoded_labels
-            for train, test in folds)
+            for train, test in folds
+            for l1_ratio in self.l1_ratios)
 
         if self.multi_class == 'multinomial':
             multi_coefs_paths, Cs, multi_scores, n_iter_ = zip(*fold_coefs_)
@@ -1760,21 +1764,28 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             scores = np.tile(multi_scores, (n_classes, 1, 1))
             self.Cs_ = Cs[0]
             self.n_iter_ = np.reshape(n_iter_, (1, len(folds),
-                                                len(self.Cs_)))
+                                                len(self.Cs_) *
+                                                len(self.l1_ratios)))
 
         else:
             coefs_paths, Cs, scores, n_iter_ = zip(*fold_coefs_)
             self.Cs_ = Cs[0]
-            coefs_paths = np.reshape(coefs_paths, (n_classes, len(folds),
-                                                   len(self.Cs_), -1))
-            self.n_iter_ = np.reshape(n_iter_, (n_classes, len(folds),
-                                                len(self.Cs_)))
+            coefs_paths = np.reshape(
+                coefs_paths,
+                (n_classes, len(folds), len(self.Cs_) * len(self.l1_ratios),
+                 -1)
+            )
+            self.n_iter_ = np.reshape(
+                n_iter_,
+                (n_classes, len(folds), len(self.Cs_) * len(self.l1_ratios))
+            )
 
         self.coefs_paths_ = dict(zip(classes, coefs_paths))
         scores = np.reshape(scores, (n_classes, len(folds), -1))
         self.scores_ = dict(zip(classes, scores))
 
         self.C_ = list()
+        self.l1_ratio_ = list()
         self.coef_ = np.empty((n_classes, X.shape[1]))
         self.intercept_ = np.zeros(n_classes)
 
@@ -1795,8 +1806,14 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             if self.refit:
                 best_index = scores.sum(axis=0).argmax()
 
-                C_ = self.Cs_[best_index]
+                best_index_C =  best_index % len(self.Cs_)
+                C_ = self.Cs_[best_index_C]
                 self.C_.append(C_)
+
+                best_index_l1 = best_index // len(self.Cs_)
+                l1_ratio_ = self.l1_ratios[best_index_l1]
+                self.l1_ratio_.append(l1_ratio_)
+
                 if self.multi_class == 'multinomial':
                     coef_init = np.mean(coefs_paths[:, best_index, :, :],
                                         axis=0)
@@ -1815,7 +1832,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                     verbose=max(0, self.verbose - 1),
                     random_state=self.random_state,
                     check_input=False, max_squared_sum=max_squared_sum,
-                    sample_weight=sample_weight)
+                    sample_weight=sample_weight,
+                    l1_ratio=l1_ratio_)
                 w = w[0]
 
             else:
@@ -1824,7 +1842,12 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 best_indices = np.argmax(scores, axis=1)
                 w = np.mean([coefs_paths[i][best_indices[i]]
                              for i in range(len(folds))], axis=0)
-                self.C_.append(np.mean(self.Cs_[best_indices]))
+
+                best_indices_C =  best_indices % len(self.Cs_)
+                self.C_.append(np.mean(self.Cs_[best_indices_C]))
+
+                best_indices_l1 = best_indices // len(self.Cs_)
+                self.l1_ratio_.append(np.mean(self.l1_ratios[best_indices_l1]))
 
             if self.multi_class == 'multinomial':
                 self.C_ = np.tile(self.C_, n_classes)
@@ -1837,6 +1860,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                     self.intercept_[index] = w[-1]
 
         self.C_ = np.asarray(self.C_)
+        self.l1_ratio_ = np.asarray(self.l1_ratio_)
         return self
 
     def score(self, X, y, sample_weight=None):
