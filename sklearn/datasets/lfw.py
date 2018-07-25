@@ -1,30 +1,15 @@
-"""Loader for the Labeled Faces in the Wild (LFW) dataset
+"""Labeled Faces in the Wild (LFW) dataset
 
 This dataset is a collection of JPEG pictures of famous people collected
 over the internet, all details are available on the official website:
 
     http://vis-www.cs.umass.edu/lfw/
-
-Each picture is centered on a single face. The typical task is called
-Face Verification: given a pair of two pictures, a binary classifier
-must predict whether the two images are from the same person.
-
-An alternative task, Face Recognition or Face Identification is:
-given the picture of the face of an unknown person, identify the name
-of the person by referring to a gallery of previously seen pictures of
-identified persons.
-
-Both Face Verification and Face Recognition are tasks that are typically
-performed on the output of a model trained to perform Face Detection. The
-most popular model for Face Detection is called Viola-Johns and is
-implemented in the OpenCV library. The LFW faces were extracted by this face
-detector from various online websites.
 """
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
 from os import listdir, makedirs, remove
-from os.path import join, exists, isdir
+from os.path import dirname, join, exists, isdir
 
 import logging
 from distutils.version import LooseVersion
@@ -259,23 +244,19 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
                      min_faces_per_person=0, color=False,
                      slice_=(slice(70, 195), slice(78, 172)),
                      download_if_missing=True, return_X_y=False):
-    """Loader for the Labeled Faces in the Wild (LFW) people dataset
+    """Load the Labeled Faces in the Wild (LFW) people dataset \
+(classification).
 
-    This dataset is a collection of JPEG pictures of famous people
-    collected on the internet, all details are available on the
-    official website:
+    Download it if necessary.
 
-        http://vis-www.cs.umass.edu/lfw/
+    =================   =======================
+    Classes                                5749
+    Samples total                         13233
+    Dimensionality                         5828
+    Features            real, between 0 and 255
+    =================   =======================
 
-    Each picture is centered on a single face. Each pixel of each channel
-    (color in RGB) is encoded by a float in range 0.0 - 1.0.
-
-    The task is called Face Recognition (or Identification): given the
-    picture of a face, find the name of the person given a training set
-    (gallery).
-
-    The original images are 250 x 250 pixels, but the default slice and resize
-    arguments reduce them to 62 x 47.
+    Read more in the :ref:`User Guide <labeled_faces_in_the_wild_dataset>`.
 
     Parameters
     ----------
@@ -361,13 +342,17 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     X = faces.reshape(len(faces), -1)
 
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'lfw.rst')) as rst_file:
+        fdescr = rst_file.read()
+
     if return_X_y:
         return X, target
 
     # pack the results as a Bunch instance
     return Bunch(data=X, images=faces,
                  target=target, target_names=target_names,
-                 DESCR="LFW faces dataset")
+                 DESCR=fdescr)
 
 
 #
@@ -429,20 +414,16 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
 def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
                     color=False, slice_=(slice(70, 195), slice(78, 172)),
                     download_if_missing=True):
-    """Loader for the Labeled Faces in the Wild (LFW) pairs dataset
+    """Load the Labeled Faces in the Wild (LFW) pairs dataset (classification).
 
-    This dataset is a collection of JPEG pictures of famous people
-    collected on the internet, all details are available on the
-    official website:
+    Download it if necessary.
 
-        http://vis-www.cs.umass.edu/lfw/
-
-    Each picture is centered on a single face. Each pixel of each channel
-    (color in RGB) is encoded by a float in range 0.0 - 1.0.
-
-    The task is called Face Verification: given a pair of two pictures,
-    a binary classifier must predict whether the two images are from
-    the same person.
+    =================   =======================
+    Classes                                5749
+    Samples total                         13233
+    Dimensionality                         5828
+    Features            real, between 0 and 255
+    =================   =======================
 
     In the official `README.txt`_ this task is described as the
     "Restricted" task.  As I am not sure as to implement the
@@ -453,7 +434,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     The original images are 250 x 250 pixels, but the default slice and resize
     arguments reduce them to 62 x 47.
 
-    Read more in the :ref:`User Guide <labeled_faces_in_the_wild>`.
+    Read more in the :ref:`User Guide <labeled_faces_in_the_wild_dataset>`.
 
     Parameters
     ----------
@@ -541,7 +522,11 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
         index_file_path, data_folder_path, resize=resize, color=color,
         slice_=slice_)
 
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'lfw.rst')) as rst_file:
+        fdescr = rst_file.read()
+
     # pack the results as a Bunch instance
     return Bunch(data=pairs.reshape(len(pairs), -1), pairs=pairs,
                  target=target, target_names=target_names,
-                 DESCR="'%s' segment of the LFW pairs dataset" % subset)
+                 DESCR=fdescr)
