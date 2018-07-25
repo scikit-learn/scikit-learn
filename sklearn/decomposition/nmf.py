@@ -307,9 +307,8 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     n_samples, n_features = X.shape
 
     if init == 'nndsvd' and n_components > min(n_samples, n_features):
-        raise ValueError(
-            "init = 'nndsv' can only be used when "
-            "n_components <= min(n_samples, n_features)")
+        raise ValueError("init = 'nndsvd' can only be used when "
+                         "n_components <= min(n_samples, n_features)")
 
     if init is None:
         if n_components <= min(n_samples, n_features):

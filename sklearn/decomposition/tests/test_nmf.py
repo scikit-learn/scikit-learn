@@ -54,6 +54,12 @@ def test_parameter_checking():
     clf = NMF(2, tol=0.1).fit(A)
     assert_raise_message(ValueError, msg, clf.transform, -A)
 
+    msg = ("init = 'nndsvd' can only be used when "
+           "n_components <= min(n_samples, n_features)")
+    assert_raise_message(ValueError, msg, NMF(3, 'nndsvd').fit, A)
+    assert_raise_message(ValueError, msg, nmf._initialize_nmf, A,
+                         3, 'nndsvd')
+
 
 def test_initialize_close():
     # Test NNDSVD error
