@@ -132,6 +132,10 @@ def test_classification_report_dictionary_output():
         target_names=iris.target_names, output_dict=True)
 
     assert_dict_equal(report, expected_report)
+    assert type(expected_report['setosa']['precision']) == float
+    assert type(expected_report['avg / total']['precision']) == float
+    assert type(expected_report['setosa']['support']) == int
+    assert type(expected_report['avg / total']['support']) == int
 
 
 def test_multilabel_accuracy_score_subset_accuracy():
