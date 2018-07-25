@@ -741,3 +741,15 @@ def test_sampling_preserved_statistics():
 
     assert np.std(np.concatenate(Xts)) == pytest.approx(np.nanstd(X),
                                                         rel=1e-2)
+
+
+def test_sampling_transform_vs_fir_transform():
+    X = np.random.random_sample((10, 10))
+    X[::2, 1::2] = np.nan
+
+    imputer = SamplingImputer(random_state=0)
+
+    Xt1 = imputer.fit(X).transform(X)
+    Xt2 = imputer.fit_transform(X)
+
+    assert_array_almost_equal(Xt1, Xt2)
