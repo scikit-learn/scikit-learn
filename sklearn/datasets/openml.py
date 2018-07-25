@@ -264,43 +264,7 @@ def _download_data_arff(file_id, sparse):
     return arff_file
 
 
-def _determine_default_target(features_list):
-    # determines the default target based on the data feature results
-    # (which is currently more reliable than the data description;
-    # see issue: https://github.com/openml/OpenML/issues/768)
-    results = [feature['name']
-               for feature in features_list if feature['is_target'] == 'true']
-
-    if len(results) == 0:
-        return None
-    elif len(results) == 1:
-        return results[0]
-    else:
-        return results
-
-
-def _determine_single_target_data_type(features_dict, target_column_name):
-    # determine the data type of the y array in case there is a single target
-    if not isinstance(target_column_name, string_types):
-        raise ValueError('target_column_name should be of string type, '
-                         'got: %s' % type(target_column_name))
-    if target_column_name not in features_dict:
-        raise KeyError('Could not find target_column_name={}')
-    feature = features_dict[target_column_name]
-    # note: we compare to a string, not boolean
-
-    for dict_key in ['is_ignore', 'is_row_identifier']:
-        if feature[dict_key] == 'true':
-            warn('target_column_name={} has flag {}.'.format(
-                target_column_name, dict_key))
-
-    if feature['data_type'] == "numeric":
-        return np.float64
-    else:
-        return object
-
-
-def _determine_multi_target_data_type(features_dict, target_column_names):
+def _determine_target_data_type(features_dict, target_column_names):
     # determine the data type of the y array in case there are multiple targets
     # (throws an error if these targets do not comply with sklearn support)
     if not isinstance(target_column_names, list):
@@ -374,12 +338,19 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     data : Bunch
         Dictionary-like object, the interesting attributes are:
-        'data' (np.array), the data to learn, 'target' (np.array), the
-        regression target or classification labels, 'DESCR' (str), the full
-        description of the dataset, 'feature_names' (list), the original names
-        of the dataset columns, and 'details' (json) which provide more
-        information on the openml meta-data. Missing values in the 'data' and
-        'target' field are represented as NaN's.
+        data : np.array
+            the data to learn
+        target : np.array
+            the regression target or classification labels
+        DESCR : str
+            the full description of the dataset
+        feature_names : list
+            the original names of the dataset columns
+        details : json
+            more information on the openml meta-data.
+
+        Missing values in the 'data' and 'target' field are represented as
+        NaN's.
     """
     data_home = get_data_home(data_home=data_home)
     data_home = join(data_home, 'openml')
@@ -432,10 +403,13 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     # download data features, meta-info about column types
     features_list = cached_get_data_features(data_id)
-    features_dict = {feature['name']: feature for feature in features_list}
 
     if target_column_name == "default-target":
-        target_column_name = _determine_default_target(features_list)
+        # determines the default target based on the data feature results
+        # (which is currently more reliable than the data description;
+        # see issue: https://github.com/openml/OpenML/issues/768)
+        target_column_name = [feature['name'] for feature in features_list
+                              if feature['is_target'] == 'true']
 
     # for code-simplicity, make target_column_name by default a list
     if isinstance(target_column_name, string_types):
@@ -452,8 +426,9 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                         feature['is_row_identifier'] != 'true')]
 
     # prepare which columns and data types should be returned for the X and y
-    dtype_y = _determine_multi_target_data_type(features_dict,
-                                                target_column_name)
+    features_dict = {feature['name']: feature for feature in features_list}
+    dtype_y = _determine_target_data_type(features_dict,
+                                          target_column_name)
     col_slice_y = [int(features_dict[col_name]['index'])
                    for col_name in target_column_name]
 
