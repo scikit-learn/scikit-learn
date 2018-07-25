@@ -2,7 +2,7 @@
 ================================================
 Segmenting the picture of greek coins in regions
 ================================================
-p
+
 This example uses :ref:`spectral_clustering` on a graph created from
 voxel-to-voxel difference on an image to break this image into multiple
 partly-homogeneous regions.
@@ -41,7 +41,8 @@ orig_coins = coins()
 # Applying a Gaussian filter for smoothing prior to down-scaling
 # reduces aliasing artifacts.
 smoothened_coins = gaussian_filter(orig_coins, sigma=2)
-rescaled_coins = rescale(smoothened_coins, 0.2, mode="reflect",multichannel=False,anti_aliasing=False)
+rescaled_coins = rescale(smoothened_coins, 0.2, mode="reflect", 
+                         multichannel=False, anti_aliasing=False)
 
 # Convert the image into a graph with the value of the gradient on the
 # edges.
