@@ -74,8 +74,8 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
 
     # check numeric features. Note that the response of _get_data_features is
     # mocked too.
-    feature_name_type = {feature['name']: feature['data_type']
-                         for feature in _get_data_features(data_id)}
+    feature_name_type = {feature['name']: feature['data_type'] for feature
+                         in _get_data_features(data_id, None, False)}
     for idx, feature_name in enumerate(data_by_id.feature_names):
         if feature_name_type[feature_name] == 'numeric':
             # check that all elements in an object array are numeric
