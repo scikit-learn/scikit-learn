@@ -1323,10 +1323,11 @@ def test_elastic_net_coeffs():
     X, y = make_classification(random_state=0)
 
     C = 1 / .5
+    l1_ratio = .5
     coeffs = list()
-    for penalty in ('elastic_net', 'l1', 'l2'):
+    for penalty in ('elastic-net', 'l1', 'l2'):
         lr = LogisticRegression(penalty=penalty, C=C, solver='saga',
-                                random_state=0)
+                                random_state=0, l1_ratio=l1_ratio)
         lr.fit(X, y)
         coeffs.append(lr.coef_)
 
@@ -1337,7 +1338,7 @@ def test_elastic_net_coeffs():
     assert not np.allclose(l2_coeffs, l1_coeffs, rtol=0, atol=.1)
 
 
-def test_elastic_net_l1_ratio():
+def test_elastic_net_l1_l2_equivalence():
     # Make sure elastic-net is equivalent to l1 when l1_ratio=1 and l2 when
     # l1_ratio=0.
     X, y = make_classification(random_state=0)
@@ -1386,11 +1387,11 @@ def test_elastic_net_CV_grid_search():
     gs = GridSearchCV(lr, param_grid, cv=cv)
     gs.fit(X, y)
 
-
     assert gs.best_params_['l1_ratio'] == lrcv.l1_ratio_[0]
     assert gs.best_params_['C'] == lrcv.C_[0]
 
 
+@pytest.mark.skip
 def test_elastic_net_CV_multiclass_multinomial():
     # make sure ElasticNetCV gives same best params as GridSearchCV with
     # multinomial=True.
@@ -1401,7 +1402,6 @@ def test_elastic_net_CV_multiclass_multinomial():
 
     Cs = np.logspace(-4, 4, 5)
     l1_ratios = np.linspace(0, 1, 5)
-    #l1_ratios = [1, 1]
 
     lrcv = LogisticRegressionCV(penalty='elastic-net', Cs=Cs, solver='saga',
                                 cv=cv, l1_ratios=l1_ratios, random_state=0,
@@ -1468,3 +1468,36 @@ def test_elastic_net_CV_no_refit():
     assert lrcv.C_.shape == (n_classes,)
     assert lrcv.l1_ratio_.shape == (n_classes,)
     assert lrcv.coef_.shape == (n_classes, n_features)
+
+
+@pytest.mark.parametrize('l1_ratio', (-1, 2, None, 'something_wrong'))
+def test_l1_ratio_param(l1_ratio):
+
+    msg = "l1_ratio must be between 0 and 1; got (l1_ratio=%r)" % l1_ratio
+    assert_raise_message(ValueError, msg,
+                         LogisticRegression(penalty='elastic-net',
+                                            solver='saga',
+                                            l1_ratio=l1_ratio).fit, X, Y1)
+    if l1_ratio is not None:
+        msg = ("l1_ratio parameter is only used when penalty is 'elastic-net'."
+               " Got (penalty=l1)")
+        assert_warns_message(UserWarning, msg,
+                             LogisticRegression(penalty='l1', solver='saga',
+                                                l1_ratio=l1_ratio).fit, X, Y1)
+
+@pytest.mark.parametrize('l1_ratios', ([], [.5, 2], None, 'something_wrong'))
+def test_l1_ratios_param(l1_ratios):
+
+    msg = ("l1_ratios must be a list of numbers between 0 and 1; got "
+           "(l1_ratios=%r)" % l1_ratios)
+    assert_raise_message(ValueError, msg,
+                         LogisticRegressionCV(penalty='elastic-net',
+                                              solver='saga',
+                                              l1_ratios=l1_ratios, cv=2).fit,
+                         X, Y1)
+    if l1_ratios is not None:
+        msg = ("l1_ratios parameter is only used when penalty is 'elastic-net'."
+               " Got (penalty=l1)")
+        function = LogisticRegressionCV(penalty='l1', solver='saga',
+                                        l1_ratios=l1_ratios, cv=2).fit
+        assert_warns_message(UserWarning, msg, function, X, Y1)

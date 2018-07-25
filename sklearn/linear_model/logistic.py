@@ -459,7 +459,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              intercept_scaling=1., multi_class='ovr',
                              random_state=None, check_input=True,
                              max_squared_sum=None, sample_weight=None,
-                             l1_ratio=.5):
+                             l1_ratio=None):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
@@ -573,12 +573,12 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
 
-    l1_ratio : float, default: 0.5
+    l1_ratio : float or None, optional (default=None)
         The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
-        used if ``penalty='elastic-net'``. Setting ``l1_ratio=0`` is
-        equivalent to using ``penalty='l2'``, while setting ``l1_ratio=1`` is
-        equivalent to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the
-        penalty is a combination of L1 and L2.
+        used if ``penalty='elastic-net'`` and if not None. Setting
+        ``l1_ratio=0`` is equivalent to using ``penalty='l2'``, while setting
+        ``l1_ratio=1`` is equivalent to using ``penalty='l1'``. For ``0 <
+        l1_ratio <1``, the penalty is a combination of L1 and L2.
 
     Returns
     -------
@@ -796,7 +796,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           dual=False, intercept_scaling=1.,
                           multi_class='ovr', random_state=None,
                           max_squared_sum=None, sample_weight=None,
-                          l1_ratio=.5):
+                          l1_ratio=None):
     """Computes scores across logistic_regression_path
 
     Parameters
@@ -904,12 +904,12 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
 
-    l1_ratio : float, default: 0.5
+    l1_ratio : float or None, optional (default=None)
         The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
-        used if ``penalty='elastic-net'``. Setting ``l1_ratio=0`` is
-        equivalent to using ``penalty='l2'``, while setting ``l1_ratio=1`` is
-        equivalent to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the
-        penalty is a combination of L1 and L2.
+        used if ``penalty='elastic-net'`` and if not None. Setting
+        ``l1_ratio=0`` is equivalent to using ``penalty='l2'``, while setting
+        ``l1_ratio=1`` is equivalent to using ``penalty='l1'``. For ``0 <
+        l1_ratio <1``, the penalty is a combination of L1 and L2.
 
     Returns
     -------
@@ -1124,12 +1124,12 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         set to 'liblinear' regardless of whether 'multi_class' is specified or
         not. If given a value of -1, all cores are used.
 
-    l1_ratio : float, default: 0.5
+    l1_ratio : float or None, optional (default=None)
         The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
-        used if ``penalty='elastic-net'``. Setting ``l1_ratio=0`` is
-        equivalent to using ``penalty='l2'``, while setting ``l1_ratio=1`` is
-        equivalent to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the
-        penalty is a combination of L1 and L2.
+        used if ``penalty='elastic-net'`` and if not None. Setting
+        ``l1_ratio=0`` is equivalent to using ``penalty='l2'``, while setting
+        ``l1_ratio=1`` is equivalent to using ``penalty='l1'``. For ``0 <
+        l1_ratio <1``, the penalty is a combination of L1 and L2.
 
     Attributes
     ----------
@@ -1203,7 +1203,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='liblinear', max_iter=100,
                  multi_class='ovr', verbose=0, warm_start=False, n_jobs=1,
-                 l1_ratio=.5):
+                 l1_ratio=None):
 
         self.penalty = penalty
         self.dual = dual
@@ -1244,9 +1244,22 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         -------
         self : object
         """
+        _check_solver_option(self.solver, self.multi_class, self.penalty,
+                             self.dual)
+
         if not isinstance(self.C, numbers.Number) or self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
+        if self.penalty == 'elastic-net':
+            if (not isinstance(self.l1_ratio, numbers.Number) or
+                self.l1_ratio < 0 or self.l1_ratio > 1):
+                raise ValueError("l1_ratio must be between 0 and 1; got "
+                                 "(l1_ratio=%r)" % self.l1_ratio)
+        elif self.l1_ratio is not None:
+            warnings.warn("l1_ratio parameter is only used when penalty is "
+                          "'elastic-net'. Got "
+                          "(penalty={})".format(self.penalty))
+            self.l1_ratio = None
         if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
             raise ValueError("Maximum number of iteration must be positive;"
                              " got (max_iter=%r)" % self.max_iter)
@@ -1264,9 +1277,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         check_classification_targets(y)
         self.classes_ = np.unique(y)
         n_samples, n_features = X.shape
-
-        _check_solver_option(self.solver, self.multi_class, self.penalty,
-                             self.dual)
 
         if self.solver == 'liblinear':
             if self.n_jobs != 1:
@@ -1631,7 +1641,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
         self.random_state = random_state
-        self.l1_ratios = l1_ratios if l1_ratios is not None else [None]
+        self.l1_ratios = l1_ratios
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -1662,6 +1672,21 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
+        if self.penalty == 'elastic-net':
+            print(self.l1_ratios)
+            if self.l1_ratios is None or len(self.l1_ratios) == 0 or any(
+                    (not isinstance(l1_ratio, numbers.Number) or l1_ratio < 0
+                     or l1_ratio > 1) for l1_ratio in self.l1_ratios):
+                raise ValueError("l1_ratios must be a list of numbers between "
+                                 "0 and 1; got (l1_ratios=%r)" %
+                                 self.l1_ratios)
+        else:
+            if self.l1_ratios is not None:
+                warnings.warn("l1_ratios parameter is only used when penalty "
+                              "is 'elastic-net'. Got (penalty={})".format(
+                                  self.penalty))
+
+            self.l1_ratios = [None]
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
                          order="C",
