@@ -244,6 +244,19 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
 
+    Examples
+    --------
+    >>> from sklearn.cluster import DBSCAN
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [2, 2], [2, 3],
+    ...               [8, 7], [8, 8], [25, 80]])
+    >>> clustering = DBSCAN(eps=3, min_samples=2).fit(X)
+    >>> clustering.labels_
+    array([ 0,  0,  0,  1,  1, -1])
+    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    DBSCAN(algorithm='auto', eps=3, leaf_size=30, metric='euclidean',
+        metric_params=None, min_samples=2, n_jobs=1, p=None)
+
     See also
     --------
     OPTICS
