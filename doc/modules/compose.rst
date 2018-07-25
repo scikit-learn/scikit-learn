@@ -359,7 +359,7 @@ and ignored by setting to ``'passthrough'``::
     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     FeatureUnion(n_jobs=1,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
-                                   ('kernel_pca', None)],
+                                   ('kernel_pca', 'passthrough')],
                  transformer_weights=None)
 
 .. topic:: Examples:
