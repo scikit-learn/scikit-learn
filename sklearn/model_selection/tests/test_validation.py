@@ -1528,3 +1528,5 @@ def test_fit_and_score():
                          failing_clf, X, y, 'parameter',
                          [FailingClassifier.FAILING_PARAMETER], cv=3,
                          error_score='unvalid-string')
+
+    assert_equal(failing_clf.score(), 0.)  # FailingClassifier coverage
