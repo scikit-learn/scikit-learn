@@ -147,7 +147,7 @@ which is fast to train and achieves a decent F-score::
   >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')  # doctest: +ELLIPSIS
   0.88213...
 
-(The example :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py` shuffles
+(The example :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py` shuffles
 the training and test data, instead of segmenting by time, and in that case
 multinomial Naive Bayes gets a much higher F-score of 0.88. Are you suspicious
 yet of what's going on inside this classifier?)
@@ -230,4 +230,4 @@ the ``--filter`` option to compare the results.
 
    * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
 
-   * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+   * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
