@@ -20,10 +20,12 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn import linear_model, datasets
 from sklearn.linear_model.least_angle import _lars_path_residues
 
+# TODO: use another dataset that has multiple drops
 diabetes = datasets.load_diabetes()
 X, y = diabetes.data, diabetes.target
-
-# TODO: use another dataset that has multiple drops
+G = np.dot(X.T, X)
+Xy = np.dot(X.T, y)
+n_samples = y.size
 
 
 def test_simple():
@@ -37,11 +39,11 @@ def test_simple():
         sys.stdout = StringIO()
 
         alphas_, active, coef_path_ = linear_model.lars_path(
-            diabetes.data, diabetes.target, method="lar", verbose=10)
+            X, y, method='lar', verbose=10)
 
         sys.stdout = old_stdout
 
-        for (i, coef_) in enumerate(coef_path_.T):
+        for i, coef_ in enumerate(coef_path_.T):
             res = y - np.dot(X, coef_)
             cov = np.dot(X.T, res)
             C = np.max(abs(cov))
@@ -59,9 +61,27 @@ def test_simple():
 def test_simple_precomputed():
     # The same, with precomputed Gram matrix
 
-    G = np.dot(diabetes.data.T, diabetes.data)
     alphas_, active, coef_path_ = linear_model.lars_path(
-        diabetes.data, diabetes.target, Gram=G, method="lar")
+        X, y, Gram=G, method='lar')
+
+    for i, coef_ in enumerate(coef_path_.T):
+        res = y - np.dot(X, coef_)
+        cov = np.dot(X.T, res)
+        C = np.max(abs(cov))
+        eps = 1e-3
+        ocur = len(cov[C - eps < abs(cov)])
+        if i < X.shape[1]:
+            assert_true(ocur == i + 1)
+        else:
+            # no more than max_pred variables can go into the active set
+            assert_true(ocur == X.shape[1])
+
+
+def test_simple_precomputed_sufficient_stats():
+    # The same, with precomputed Gram matrix
+    alphas_, active, coef_path_ = linear_model.lars_path(
+        None, None, Xy=Xy, Gram=G, n_samples=n_samples,
+        method='lar')
 
     for i, coef_ in enumerate(coef_path_.T):
         res = y - np.dot(X, coef_)
@@ -78,20 +98,27 @@ def test_simple_precomputed():
 
 def test_all_precomputed():
     # Test that lars_path with precomputed Gram and Xy gives the right answer
-    X, y = diabetes.data, diabetes.target
-    G = np.dot(X.T, X)
-    Xy = np.dot(X.T, y)
-    for method in 'lar', 'lasso':
+    for method in ('lar', 'lasso'):
         output = linear_model.lars_path(X, y, method=method)
         output_pre = linear_model.lars_path(X, y, Gram=G, Xy=Xy, method=method)
         for expected, got in zip(output, output_pre):
             assert_array_almost_equal(expected, got)
 
 
+def test_all_precomputed_sufficient_stats():
+    # Test that lars_path with precomputed Gram and Xy gives the right answer
+    for method in ('lar', 'lasso'):
+        output = linear_model.lars_path(X, y, method=method)
+        output_suff = linear_model.lars_path(
+            None, None, Gram=G, Xy=Xy, n_samples=n_samples, method=method)
+        for expected, got in zip(output, output_suff):
+            assert_array_almost_equal(expected, got)
+
+
 def test_lars_lstsq():
     # Test that Lars gives least square solution at the end
     # of the path
-    X1 = 3 * diabetes.data  # use un-normalized dataset
+    X1 = 3 * X  # use un-normalized dataset
     clf = linear_model.LassoLars(alpha=0.)
     clf.fit(X1, y)
     coef_lstsq = np.linalg.lstsq(X1, y)[0]
@@ -101,7 +128,16 @@ def test_lars_lstsq():
 def test_lasso_gives_lstsq_solution():
     # Test that Lars Lasso gives least square solution at the end
     # of the path
-    alphas_, active, coef_path_ = linear_model.lars_path(X, y, method="lasso")
+    alphas_, active, coef_path_ = linear_model.lars_path(X, y, method='lasso')
+    coef_lstsq = np.linalg.lstsq(X, y)[0]
+    assert_array_almost_equal(coef_lstsq, coef_path_[:, -1])
+
+
+def test_lasso_gives_lstsq_solution_sufficient_stats():
+    # Test that Lars Lasso gives least square solution at the end
+    # of the path
+    alphas_, active, coef_path_ = linear_model.lars_path(
+        None, None, Gram=G, Xy=Xy, n_samples=n_samples, method='lasso')
     coef_lstsq = np.linalg.lstsq(X, y)[0]
     assert_array_almost_equal(coef_lstsq, coef_path_[:, -1])
 
@@ -132,11 +168,22 @@ def test_collinearity():
 
 def test_no_path():
     # Test that the ``return_path=False`` option returns the correct output
-
     alphas_, active_, coef_path_ = linear_model.lars_path(
-        diabetes.data, diabetes.target, method="lar")
+        X, y, method='lar')
     alpha_, active, coef = linear_model.lars_path(
-        diabetes.data, diabetes.target, method="lar", return_path=False)
+        X, y, method='lar', return_path=False)
+
+    assert_array_almost_equal(coef, coef_path_[:, -1])
+    assert_true(alpha_ == alphas_[-1])
+
+
+def test_no_path_sufficient_stats():
+    # Test that the ``return_path=False`` option returns the correct output
+    alphas_, active_, coef_path_ = linear_model.lars_path(
+        X, y, method='lar')
+    alpha_, active, coef = linear_model.lars_path(
+        None, None, Gram=G, Xy=Xy, n_samples=n_samples, method='lar',
+        return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
     assert_true(alpha_ == alphas_[-1])
@@ -144,13 +191,21 @@ def test_no_path():
 
 def test_no_path_precomputed():
     # Test that the ``return_path=False`` option with Gram remains correct
-
-    G = np.dot(diabetes.data.T, diabetes.data)
-
     alphas_, active_, coef_path_ = linear_model.lars_path(
-        diabetes.data, diabetes.target, method="lar", Gram=G)
+        X, y, method='lar', Gram=G)
     alpha_, active, coef = linear_model.lars_path(
-        diabetes.data, diabetes.target, method="lar", Gram=G,
+        X, y, method='lar', Gram=G, return_path=False)
+
+    assert_array_almost_equal(coef, coef_path_[:, -1])
+    assert_true(alpha_ == alphas_[-1])
+
+
+def test_no_path_precomputed_sufficient_stats():
+    # Test that the ``return_path=False`` option with Gram remains correct
+    alphas_, active_, coef_path_ = linear_model.lars_path(
+        X, y, method='lar', Gram=G)
+    alpha_, active, coef = linear_model.lars_path(
+        None, None, method='lar', Gram=G, Xy=Xy, n_samples=n_samples,
         return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
@@ -179,9 +234,6 @@ def test_no_path_all_precomputed():
         [linear_model.Lars, linear_model.LarsCV, linear_model.LassoLarsIC])
 def test_lars_precompute(classifier):
     # Check for different values of precompute
-    X, y = diabetes.data, diabetes.target
-    G = np.dot(X.T, X)
-
     clf = classifier(precompute=G)
     output_1 = ignore_warnings(clf.fit)(X, y).coef_
     for precompute in [True, False, 'auto', None]:
@@ -195,6 +247,18 @@ def test_singular_matrix():
     X1 = np.array([[1, 1.], [1., 1.]])
     y1 = np.array([1, 1])
     alphas, active, coef_path = linear_model.lars_path(X1, y1)
+    assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
+
+
+def test_singular_matrix_sufficient_stats():
+    # Test when input is a singular matrix
+    X1 = np.array([[1, 1.], [1., 1.]])
+    y1 = np.array([1, 1])
+    G1 = np.dot(X1.T, X1)
+    Xy1 = np.dot(X1.T, y1)
+    n_samples1 = y1.size
+    alphas, active, coef_path = linear_model.lars_path(
+        None, None, Xy=Xy1, Gram=G1, n_samples=n_samples1)
     assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
 
 
@@ -384,8 +448,7 @@ def test_lars_n_nonzero_coefs(verbose=False):
 @ignore_warnings
 def test_multitarget():
     # Assure that estimators receiving multidimensional y do the right thing
-    X = diabetes.data
-    Y = np.vstack([diabetes.target, diabetes.target ** 2]).T
+    Y = np.vstack([y, y ** 2]).T
     n_targets = Y.shape[1]
     estimators = [
         linear_model.LassoLars(),
@@ -428,10 +491,9 @@ def test_lars_cv():
 
 def test_lars_cv_max_iter():
     with warnings.catch_warnings(record=True) as w:
-        X = diabetes.data
-        y = diabetes.target
         rng = np.random.RandomState(42)
         x = rng.randn(len(y))
+        X = diabetes.data
         X = np.c_[X, x, x]  # add correlated features
         lars_cv = linear_model.LassoLarsCV(max_iter=5)
         lars_cv.fit(X, y)
@@ -447,7 +509,6 @@ def test_lasso_lars_ic():
     lars_aic = linear_model.LassoLarsIC('aic')
     rng = np.random.RandomState(42)
     X = diabetes.data
-    y = diabetes.target
     X = np.c_[X, rng.randn(X.shape[0], 5)]  # add 5 bad features
     lars_bic.fit(X, y)
     lars_aic.fit(X, y)
@@ -488,47 +549,40 @@ def test_lars_path_positive_constraint():
     #               diabetes['target'], method='lar', positive=True)
 
     with warnings.catch_warnings(record=True) as w:
-        linear_model.lars_path(diabetes['data'], diabetes['target'],
-                               return_path=True, method='lar',
+        linear_model.lars_path(X, y, return_path=True, method='lar',
                                positive=True)
     assert_true(len(w) == 1)
     assert "broken" in str(w[0].message)
 
     method = 'lasso'
     alpha, active, coefs = \
-        linear_model.lars_path(diabetes['data'], diabetes['target'],
-                               return_path=True, method=method,
+        linear_model.lars_path(X, y, return_path=True, method=method,
                                positive=False)
     assert_true(coefs.min() < 0)
 
     alpha, active, coefs = \
-        linear_model.lars_path(diabetes['data'], diabetes['target'],
-                               return_path=True, method=method,
+        linear_model.lars_path(X, y, return_path=True, method=method,
                                positive=True)
     assert_true(coefs.min() >= 0)
 
 
 # now we gonna test the positive option for all estimator classes
-
-default_parameter = {'fit_intercept': False}
-
-estimator_parameter_map = {'LassoLars': {'alpha': 0.1},
-                           'LassoLarsCV': {},
-                           'LassoLarsIC': {}}
-
-
 def test_estimatorclasses_positive_constraint():
     # testing the transmissibility for the positive option of all estimator
     # classes in this same function here
+    default_parameter = {'fit_intercept': False}
 
+    estimator_parameter_map = {'LassoLars': {'alpha': 0.1},
+                               'LassoLarsCV': {},
+                               'LassoLarsIC': {}}
     for estname in estimator_parameter_map:
         params = default_parameter.copy()
         params.update(estimator_parameter_map[estname])
         estimator = getattr(linear_model, estname)(positive=False, **params)
-        estimator.fit(diabetes['data'], diabetes['target'])
+        estimator.fit(X, y)
         assert_true(estimator.coef_.min() < 0)
         estimator = getattr(linear_model, estname)(positive=True, **params)
-        estimator.fit(diabetes['data'], diabetes['target'])
+        estimator.fit(X, y)
         assert_true(min(estimator.coef_) >= 0)
 
 

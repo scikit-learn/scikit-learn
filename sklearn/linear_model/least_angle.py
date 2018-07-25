@@ -10,6 +10,7 @@ from __future__ import print_function
 #
 # License: BSD 3 clause
 
+from copy import deepcopy
 from math import log
 import sys
 import warnings
@@ -223,6 +224,8 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
     tiny32 = np.finfo(np.float32).tiny  # to avoid division by 0 warning
     equality_tolerance = np.finfo(np.float32).eps
 
+    Gram_copy = deepcopy(Gram)
+    Cov_copy = deepcopy(Cov)
     while True:
         if Cov.size:
             if positive:
@@ -263,7 +266,6 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
         if n_iter >= max_iter or n_active >= n_features:
             break
-
         if not drop:
 
             ##########################################################
@@ -483,8 +485,7 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
                 # wrong as Xy is not swapped with the rest of variables
 
                 # TODO: this could be updated
-                residual = y - np.dot(X, coef)
-                temp = np.dot(X.T[drop_idx], residual)
+                temp = Cov_copy[drop_idx] - np.dot(Gram_copy[drop_idx], coef)
                 Cov = np.r_[temp, Cov]
 
             sign_active = np.delete(sign_active, idx)
