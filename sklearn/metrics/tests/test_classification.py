@@ -122,16 +122,28 @@ def test_classification_report_dictionary_output():
                                      'recall': 0.90000000000000002,
                                      'f1-score': 0.57142857142857151,
                                      'support': 20},
-                       'avg / total': {'precision': 0.51375351084147847,
-                                       'recall': 0.53333333333333333,
-                                       'f1-score': 0.47310435663627154,
-                                       'support': 75}}
+                       'macro avg': {'f1-score': 0.5099797365754813,
+                                     'precision': 0.5260083136726211,
+                                     'recall': 0.596146953405018,
+                                     'support': 75},
+                       'micro avg': {'f1-score': 0.5333333333333333,
+                                     'precision': 0.5333333333333333,
+                                     'recall': 0.5333333333333333,
+                                     'support': 75},
+                       'weighted avg': {'f1-score': 0.47310435663627154,
+                                        'precision': 0.5137535108414785,
+                                        'recall': 0.5333333333333333,
+                                        'support': 75}}
 
     report = classification_report(
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names, output_dict=True)
 
     assert_dict_equal(report, expected_report)
+    assert type(expected_report['setosa']['precision']) == float
+    assert type(expected_report['macro avg']['precision']) == float
+    assert type(expected_report['setosa']['support']) == int
+    assert type(expected_report['macro avg']['support']) == int
 
 
 def test_multilabel_accuracy_score_subset_accuracy():
