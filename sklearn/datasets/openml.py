@@ -16,7 +16,7 @@ import scipy.sparse
 
 from sklearn.externals import arff
 from .base import get_data_home
-from ..externals.six import string_types, PY2
+from ..externals.six import string_types
 from ..externals.six.moves.urllib.error import HTTPError
 from ..utils import Bunch, Memory
 
@@ -248,18 +248,12 @@ def _download_data_arff(file_id, sparse):
     # https://www.openml.org/api_data_docs#!/data/get_download_id
     url = _DATA_FILE.format(file_id)
     response = urlopen(url)
-    kwargs = {}
     if sparse is True:
-        kwargs['return_type'] = arff.COO
+        return_type = arff.COO
     else:
-        kwargs['return_type'] = arff.DENSE
+        return_type = arff.DENSE
 
-    if PY2:
-        # Because Python2.7 numpy can't handle unicode
-        arff_file = arff.loads(response.read(), **kwargs)
-    else:
-        arff_file = arff.loads(response.read().decode('utf-8'), **kwargs)
-
+    arff_file = arff.load(response, return_type=return_type)
     response.close()
     return arff_file
 
