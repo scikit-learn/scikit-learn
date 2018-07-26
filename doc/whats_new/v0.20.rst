@@ -377,7 +377,7 @@ Model evaluation and meta-estimators
   hyperparameter optimization and refitting the best model on the whole
   dataset. :issue:`11310` by :user:`Matthias Feurer <mfeurer>`.
 
-- Expose `errors_score` parameter in :func:`model_selection.cross_validate`,
+- Expose `error_score` parameter in :func:`model_selection.cross_validate`,
   :func:`model_selection.cross_val_score`,
   :func:`model_selection.learning_curve` and
   :func:`model_selection.validation_curve` to control the behavior triggered
