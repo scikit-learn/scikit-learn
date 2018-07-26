@@ -443,7 +443,7 @@ boolean mask array or callable
         self._update_fitted_transformers(transformers)
         self._validate_output(Xs)
 
-        return _hstack(list(Xs), self.sparse_output_)
+        return self._hstack(list(Xs), self.sparse_output_)
 
     def transform(self, X):
         """Transform X separately by each transformer, concatenate results.
@@ -471,7 +471,25 @@ boolean mask array or callable
             # All transformers are None
             return np.zeros((X.shape[0], 0))
 
-        return _hstack(list(Xs), self.sparse_output_)
+        return self._hstack(list(Xs), self.sparse_output_)
+
+    @staticmethod
+    def _hstack(X, sparse_):
+        """
+        Stacks X horizontally.
+
+        Supports input types (X): list of
+            numpy arrays, sparse arrays and DataFrames
+
+        This is implemented as a staticmethod to enable subclasses to control
+        the stacking behavior, while reusing everything else from
+        ColumnTransformer.
+        """
+        if sparse_:
+            return sparse.hstack(X).tocsr()
+        else:
+            X = [f.toarray() if sparse.issparse(f) else f for f in X]
+            return np.hstack(X)
 
 
 def _check_key_type(key, superclass):
@@ -503,20 +521,6 @@ def _check_key_type(key, superclass):
             # superclass = six.string_types
             return key.dtype.kind in ('O', 'U', 'S')
     return False
-
-
-def _hstack(X, sparse_):
-    """
-    Stacks X horizontally.
-
-    Supports input types (X): list of
-        numpy arrays, sparse arrays and DataFrames
-    """
-    if sparse_:
-        return sparse.hstack(X).tocsr()
-    else:
-        X = [f.toarray() if sparse.issparse(f) else f for f in X]
-        return np.hstack(X)
 
 
 def _get_column(X, key):
