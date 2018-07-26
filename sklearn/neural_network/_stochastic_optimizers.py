@@ -144,7 +144,7 @@ class SGDOptimizer(BaseOptimizer):
             if verbose:
                 print(msg + " Stopping.")
             return True
-        
+
         if self.learning_rate <= 1e-6:
             if verbose:
                 print(msg + " Learning rate too small. Stopping.")
