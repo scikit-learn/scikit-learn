@@ -473,8 +473,7 @@ boolean mask array or callable
 
         return self._hstack(list(Xs), self.sparse_output_)
 
-    @staticmethod
-    def _hstack(X, sparse_):
+    def _hstack(self, X, sparse_):
         """
         Stacks X horizontally.
 
