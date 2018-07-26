@@ -32,6 +32,7 @@ __all__ = ['ColumnTransformer', 'make_column_transformer']
 _ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
                      "Try to specify the column selection as a list of one "
                      "item instead of a scalar.")
+_Remainder = namedtuple('_Remainder', ['name', 'transformer', 'indices'])
 
 
 class ColumnTransformer(_BaseComposition, TransformerMixin):
@@ -277,7 +278,8 @@ boolean mask array or callable
             cols.extend(_get_column_indices(X, columns))
         remaining_idx = sorted(list(set(range(n_columns)) - set(cols))) or None
 
-        self._remainder = ('remainder', self.remainder, remaining_idx)
+        self._remainder = _Remainder('remainder', self.remainder,
+                                     remaining_idx)
 
     @property
     def named_transformers_(self):
@@ -395,8 +397,9 @@ boolean mask array or callable
             all_indexes.update(col_indices_set)
 
         # check remainder
-        remainder_indices = self._remainder[2]
-        if remainder_indices is not None and self._remainder[1] == 'drop':
+        remainder_indices = self._remainder.indices
+        if (remainder_indices is not None
+                and self._remainder.transformer == 'drop'):
             self._invert_error = "remainder drops columns"
             return
 
