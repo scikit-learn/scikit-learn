@@ -580,7 +580,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
     @abstractmethod
     def _run_search(self, evaluate_candidates):
-        """Repeatedly calls evaluate_candidates to conduct a search
+        """Repeatedly calls `evaluate_candidates` to conduct a search.
 
         Parameters
         ----------

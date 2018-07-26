@@ -25,6 +25,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import ignore_warnings
@@ -1543,7 +1544,7 @@ def test_transform_inverse_transform_round_trip():
 def test_custom_run_search():
     def check_results(results, gscv):
         exp_results = gscv.cv_results_
-        assert_equal(sorted(results.keys()), sorted(exp_results))
+        assert sorted(results.keys()) == sorted(exp_results)
         for k in results:
             if not k.endswith('_time'):
                 # XXX: results['params'] is a list :|
@@ -1552,8 +1553,8 @@ def test_custom_run_search():
                     assert_array_equal(exp_results[k], results[k],
                                        err_msg='Checking ' + k)
                 else:
-                    assert_almost_equal(exp_results[k], results[k],
-                                        err_msg='Checking ' + k)
+                    assert_allclose(exp_results[k], results[k],
+                                    err_msg='Checking ' + k)
 
     def fit_grid(param_grid):
         return GridSearchCV(clf, param_grid, cv=5,
@@ -1585,8 +1586,8 @@ def test_custom_run_search():
         if attr[0].islower() and attr[-1:] == '_' and \
            attr not in {'cv_results_', 'best_estimator_',
                         'refit_time_'}:
-            assert_equal(getattr(gscv, attr), getattr(mycv, attr),
-                         msg='Attribute %s not equal' % attr)
+            assert getattr(gscv, attr) == getattr(mycv, attr), \
+                   "Attribute %s not equal" % attr
 
 
 def test_deprecated_grid_search_iid():
