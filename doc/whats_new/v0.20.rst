@@ -619,6 +619,12 @@ Decomposition, manifold learning and clustering
   in the docstring of :class:`cluster.KMeans`. :issue:`11353` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
+- Fixed a bug in :class:`decomposition.NMF` where `init = 'nndsvd'`,
+  `init = 'nndsvda'`, and `init = 'nndsvdar'` are allowed when
+  `n_components < n_features` instead of
+  `n_components <= min(n_samples, n_features)`. :issue:`11650` by
+  :user:`Hossein Pourbozorg <hossein-pourbozorg>`.
+
 Metrics
 
 - Fixed a bug in :func:`metrics.precision_recall_fscore_support`

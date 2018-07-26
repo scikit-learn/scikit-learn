@@ -306,9 +306,11 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     check_non_negative(X, "NMF initialization")
     n_samples, n_features = X.shape
 
-    if init == 'nndsvd' and n_components > min(n_samples, n_features):
-        raise ValueError("init = 'nndsvd' can only be used when "
-                         "n_components <= min(n_samples, n_features)")
+    if (init and init != 'random'
+            and n_components > min(n_samples, n_features)):
+        raise ValueError("init = '{}' can only be used when "
+                         "n_components <= min(n_samples, n_features)"
+                         .format(init))
 
     if init is None:
         if n_components <= min(n_samples, n_features):
