@@ -9,6 +9,7 @@ different columns.
 from __future__ import division
 
 from itertools import chain
+from collections import namedtuple
 
 import numpy as np
 from scipy import sparse
@@ -17,7 +18,7 @@ from ..base import clone, TransformerMixin
 from ..utils import Parallel, delayed
 from ..externals import six
 from ..pipeline import (
-    _fit_one_transformer, _fit_transform_one, _transform_one, _name_estimators,
+    _fit_transform_one, _transform_one, _name_estimators,
     _inverse_transform_one)
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
