@@ -117,7 +117,7 @@ components by sample in a more than 30000-dimensional space
   159.01327...
 
 :func:`sklearn.datasets.fetch_20newsgroups_vectorized` is a function which 
-returns ready-to-use tfidf features instead of file names.
+returns ready-to-use token counts features instead of file names.
 
 .. _`20 newsgroups website`: http://people.csail.mit.edu/jrennie/20Newsgroups/
 .. _`TF-IDF`: https://en.wikipedia.org/wiki/Tf-idf
