@@ -228,7 +228,24 @@ class Pipeline(_BaseComposition):
                 # backward compatibility
                 cloned_transformer = transformer
             else:
-                cloned_transformer = clone(transformer)
+                if hasattr(memory, 'location'):
+                    # joblib >= 0.12
+                    if memory.location is None:
+                        # we do not clone when caching is disabled to
+                        # preserve backward compatibility
+                        cloned_transformer = transformer
+                    else:
+                        cloned_transformer = clone(transformer)
+                elif hasattr(memory, 'cachedir'):
+                    # joblib < 0.11
+                    if memory.cachedir is None:
+                        # we do not clone when caching is disabled to
+                        # preserve backward compatibility
+                        cloned_transformer = transformer
+                    else:
+                        cloned_transformer = clone(transformer)
+                else:
+                    cloned_transformer = clone(transformer)
             # Fit or load from cache the current transfomer
             Xt, fitted_transformer = fit_transform_one_cached(
                 True, 'Pipeline', self._log_message(step_idx),
@@ -238,7 +255,6 @@ class Pipeline(_BaseComposition):
             # transformer. This is necessary when loading the transformer
             # from the cache.
             self.steps[step_idx] = (name, fitted_transformer)
-
         if self._final_estimator is None:
             return Xt, {}
         return Xt, fit_params_steps[self.steps[-1][0]]

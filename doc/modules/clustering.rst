@@ -802,9 +802,10 @@ by black points below.
     be used (e.g. with sparse matrices). This matrix will consume n^2 floats.
     A couple of mechanisms for getting around this are:
 
-    - Use OPTICS clustering in conjunction with the `extract_dbscan` method. OPTICS
-      clustering also calculates the full pairwise matrix, but only keeps one row in
-      memory at a time (memory complexity n).
+    - Use :ref:`OPTICS <optics>` clustering in conjunction with the
+      `extract_dbscan` method. OPTICS clustering also calculates the full
+      pairwise matrix, but only keeps one row in memory at a time (memory
+      complexity n).
 
     - A sparse radius neighborhood graph (where missing entries are presumed to
       be out of eps) can be precomputed in a memory-efficient way and dbscan

@@ -40,8 +40,17 @@ def norm(x):
 def squared_norm(x):
     """Squared Euclidean or Frobenius norm of x.
 
-    Returns the Euclidean norm when x is a vector, the Frobenius norm when x
-    is a matrix (2-d array). Faster than norm(x) ** 2.
+    Faster than norm(x) ** 2.
+
+    Parameters
+    ----------
+    x : array_like
+
+    Returns
+    -------
+    float
+        The Euclidean norm when x is a vector, the Frobenius norm when x
+        is a matrix (2-d array).
     """
     x = np.ravel(x, order='K')
     if np.issubdtype(x.dtype, np.integer):
@@ -58,6 +67,18 @@ def row_norms(X, squared=False):
     matrices and does not create an X.shape-sized temporary.
 
     Performs no input validation.
+
+    Parameters
+    ----------
+    X : array_like
+        The input array
+    squared : bool, optional (default = False)
+        If True, return squared norms.
+
+    Returns
+    -------
+    array_like
+        The row-wise (squared) Euclidean norm of X.
     """
     if sparse.issparse(X):
         if not isinstance(X, sparse.csr_matrix):
@@ -76,6 +97,11 @@ def fast_logdet(A):
 
     Equivalent to : np.log(nl.det(A)) but more robust.
     It returns -Inf if det(A) is non positive or is not defined.
+
+    Parameters
+    ----------
+    A : array_like
+        The matrix
     """
     sign, ld = np.linalg.slogdet(A)
     if not sign > 0:
@@ -102,7 +128,15 @@ def fast_dot(a, b, out=None):
 def density(w, **kwargs):
     """Compute density of a sparse vector
 
-    Return a value between 0 and 1
+    Parameters
+    ----------
+    w : array_like
+        The sparse vector
+
+    Returns
+    -------
+    float
+        The density of w, between 0 and 1
     """
     if hasattr(w, "toarray"):
         d = float(w.nnz) / (w.shape[0] * w.shape[1])
@@ -428,7 +462,7 @@ def weighted_mode(a, w, axis=0):
         w = np.asarray(w)
 
     if a.shape != w.shape:
-        w = np.zeros(a.shape, dtype=w.dtype) + w
+        w = np.full(a.shape, w, dtype=w.dtype)
 
     scores = np.unique(np.ravel(a))       # get ALL unique values
     testshape = list(a.shape)
@@ -509,7 +543,12 @@ def svd_flip(u, v, u_based_decision=True):
 
     Parameters
     ----------
-    u, v : ndarray
+    u : ndarray
+        u and v are the output of `linalg.svd` or
+        `sklearn.utils.extmath.randomized_svd`, with matching inner dimensions
+        so one can compute `np.dot(u * s, v)`.
+
+    v : ndarray
         u and v are the output of `linalg.svd` or
         `sklearn.utils.extmath.randomized_svd`, with matching inner dimensions
         so one can compute `np.dot(u * s, v)`.
@@ -624,6 +663,15 @@ def safe_min(X):
 
     Adapated from http://stackoverflow.com/q/13426580
 
+    Parameters
+    ----------
+    X : array_like
+        The input array or sparse matrix
+
+    Returns
+    -------
+    Float
+        The min value of X
     """
     if sparse.issparse(X):
         if len(X.data) == 0:
@@ -635,7 +683,25 @@ def safe_min(X):
 
 
 def make_nonnegative(X, min_value=0):
-    """Ensure `X.min()` >= `min_value`."""
+    """Ensure `X.min()` >= `min_value`.
+
+    Parameters
+    ----------
+    X : array_like
+        The matrix to make non-negative
+    min_value : float
+        The threshold value
+
+    Returns
+    -------
+    array_like
+        The thresholded array
+
+    Raises
+    ------
+    ValueError
+        When X is sparse
+    """
     min_ = safe_min(X)
     if min_ < min_value:
         if sparse.issparse(X):

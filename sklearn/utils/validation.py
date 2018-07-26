@@ -25,7 +25,7 @@ from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 from ..utils._joblib import Memory
-
+from ..utils._joblib import __version__ as joblib_version
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -201,7 +201,10 @@ def check_memory(memory):
     """
 
     if memory is None or isinstance(memory, six.string_types):
-        memory = Memory(cachedir=memory, verbose=0)
+        if LooseVersion(joblib_version) < '0.12':
+            memory = Memory(cachedir=memory, verbose=0)
+        else:
+            memory = Memory(location=memory, verbose=0)
     elif not hasattr(memory, 'cache'):
         raise ValueError("'memory' should be None, a string or have the same"
                          " interface as sklearn.utils.Memory."
@@ -814,7 +817,7 @@ def has_fit_parameter(estimator, parameter):
     estimator : object
         An estimator to inspect.
 
-    parameter: str
+    parameter : str
         The searched parameter.
 
     Returns

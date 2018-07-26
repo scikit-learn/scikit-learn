@@ -20,9 +20,8 @@ from sklearn.base import BaseEstimator
 from sklearn.externals import six
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.exceptions import NotFittedError
-from sklearn.preprocessing import StandardScaler, Normalizer
+from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
 from sklearn.feature_extraction import DictVectorizer
-from sklearn.compose._column_transformer import _ERR_MSG_1DCOLUMN
 
 
 class Trans(BaseEstimator):
@@ -264,14 +263,16 @@ def test_column_transformer_sparse_array():
         for remainder, res in [('drop', X_res_first),
                                ('passthrough', X_res_both)]:
             ct = ColumnTransformer([('trans', Trans(), col)],
-                                   remainder=remainder)
+                                   remainder=remainder,
+                                   sparse_threshold=0.8)
             assert_true(sparse.issparse(ct.fit_transform(X_sparse)))
             assert_allclose_dense_sparse(ct.fit_transform(X_sparse), res)
             assert_allclose_dense_sparse(ct.fit(X_sparse).transform(X_sparse),
                                          res)
 
     for col in [[0, 1], slice(0, 2)]:
-        ct = ColumnTransformer([('trans', Trans(), col)])
+        ct = ColumnTransformer([('trans', Trans(), col)],
+                               sparse_threshold=0.8)
         assert_true(sparse.issparse(ct.fit_transform(X_sparse)))
         assert_allclose_dense_sparse(ct.fit_transform(X_sparse), X_res_both)
         assert_allclose_dense_sparse(ct.fit(X_sparse).transform(X_sparse),
@@ -281,7 +282,8 @@ def test_column_transformer_sparse_array():
 def test_column_transformer_sparse_stacking():
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     col_trans = ColumnTransformer([('trans1', Trans(), [0]),
-                                   ('trans2', SparseMatrixTrans(), 1)])
+                                   ('trans2', SparseMatrixTrans(), 1)],
+                                  sparse_threshold=0.8)
     col_trans.fit(X_array)
     X_trans = col_trans.transform(X_array)
     assert_true(sparse.issparse(X_trans))
@@ -289,6 +291,57 @@ def test_column_transformer_sparse_stacking():
     assert_array_equal(X_trans.toarray()[:, 1:], np.eye(X_trans.shape[0]))
     assert len(col_trans.transformers_) == 2
     assert col_trans.transformers_[-1][0] != 'remainder'
+
+    col_trans = ColumnTransformer([('trans1', Trans(), [0]),
+                                   ('trans2', SparseMatrixTrans(), 1)],
+                                  sparse_threshold=0.1)
+    col_trans.fit(X_array)
+    X_trans = col_trans.transform(X_array)
+    assert not sparse.issparse(X_trans)
+    assert X_trans.shape == (X_trans.shape[0], X_trans.shape[0] + 1)
+    assert_array_equal(X_trans[:, 1:], np.eye(X_trans.shape[0]))
+
+
+def test_column_transformer_sparse_threshold():
+    X_array = np.array([['a', 'b'], ['A', 'B']], dtype=object).T
+    # above data has sparsity of 4 / 8 = 0.5
+
+    # if all sparse, keep sparse (even if above threshold)
+    col_trans = ColumnTransformer([('trans1', OneHotEncoder(), [0]),
+                                   ('trans2', OneHotEncoder(), [1])],
+                                  sparse_threshold=0.2)
+    res = col_trans.fit_transform(X_array)
+    assert sparse.issparse(res)
+    assert col_trans.sparse_output_
+
+    # mixed -> sparsity of (4 + 2) / 8 = 0.75
+    for thres in [0.75001, 1]:
+        col_trans = ColumnTransformer(
+            [('trans1', OneHotEncoder(sparse=True), [0]),
+             ('trans2', OneHotEncoder(sparse=False), [1])],
+            sparse_threshold=thres)
+        res = col_trans.fit_transform(X_array)
+        assert sparse.issparse(res)
+        assert col_trans.sparse_output_
+
+    for thres in [0.75, 0]:
+        col_trans = ColumnTransformer(
+            [('trans1', OneHotEncoder(sparse=True), [0]),
+             ('trans2', OneHotEncoder(sparse=False), [1])],
+            sparse_threshold=thres)
+        res = col_trans.fit_transform(X_array)
+        assert not sparse.issparse(res)
+        assert not col_trans.sparse_output_
+
+    # if nothing is sparse -> no sparse
+    for thres in [0.33, 0, 1]:
+        col_trans = ColumnTransformer(
+            [('trans1', OneHotEncoder(sparse=False), [0]),
+             ('trans2', OneHotEncoder(sparse=False), [1])],
+            sparse_threshold=thres)
+        res = col_trans.fit_transform(X_array)
+        assert not sparse.issparse(res)
+        assert not col_trans.sparse_output_
 
 
 def test_column_transformer_error_msg_1D():
@@ -313,9 +366,9 @@ def test_2D_transformer_output():
                             ('trans2', TransNo2D(), 1)])
     assert_raise_message(ValueError, "the 'trans2' transformer should be 2D",
                          ct.fit_transform, X_array)
-    ct.fit(X_array)
+    # because fit is also doing transform, this raises already on fit
     assert_raise_message(ValueError, "the 'trans2' transformer should be 2D",
-                         ct.transform, X_array)
+                         ct.fit, X_array)
 
 
 def test_2D_transformer_output_pandas():
@@ -328,9 +381,9 @@ def test_2D_transformer_output_pandas():
     ct = ColumnTransformer([('trans1', TransNo2D(), 'col1')])
     assert_raise_message(ValueError, "the 'trans1' transformer should be 2D",
                          ct.fit_transform, X_df)
-    ct.fit(X_df)
+    # because fit is also doing transform, this raises already on fit
     assert_raise_message(ValueError, "the 'trans1' transformer should be 2D",
-                         ct.transform, X_df)
+                         ct.fit, X_df)
 
 
 @pytest.mark.parametrize("remainder", ['drop', 'passthrough'])
@@ -408,6 +461,7 @@ def test_column_transformer_get_set_params():
 
     exp = {'n_jobs': 1,
            'remainder': 'drop',
+           'sparse_threshold': 0.3,
            'trans1': ct.transformers[0][1],
            'trans1__copy': True,
            'trans1__with_mean': True,
@@ -428,6 +482,7 @@ def test_column_transformer_get_set_params():
     ct.set_params(trans1='passthrough')
     exp = {'n_jobs': 1,
            'remainder': 'drop',
+           'sparse_threshold': 0.3,
            'trans1': 'passthrough',
            'trans2': ct.transformers[1][1],
            'trans2__copy': True,
@@ -712,7 +767,8 @@ def test_column_transformer_sparse_remainder_transformer():
                         [8, 6, 4]]).T
 
     ct = ColumnTransformer([('trans1', Trans(), [0])],
-                           remainder=SparseMatrixTrans())
+                           remainder=SparseMatrixTrans(),
+                           sparse_threshold=0.8)
 
     X_trans = ct.fit_transform(X_array)
     assert sparse.issparse(X_trans)
@@ -734,7 +790,8 @@ def test_column_transformer_drop_all_sparse_remainder_transformer():
                         [2, 4, 6],
                         [8, 6, 4]]).T
     ct = ColumnTransformer([('trans1', 'drop', [0])],
-                           remainder=SparseMatrixTrans())
+                           remainder=SparseMatrixTrans(),
+                           sparse_threshold=0.8)
 
     X_trans = ct.fit_transform(X_array)
     assert sparse.issparse(X_trans)
@@ -757,6 +814,7 @@ def test_column_transformer_get_set_params_with_remainder():
            'remainder__copy': True,
            'remainder__with_mean': True,
            'remainder__with_std': True,
+           'sparse_threshold': 0.3,
            'trans1': ct.transformers[0][1],
            'trans1__copy': True,
            'trans1__with_mean': True,
@@ -776,6 +834,7 @@ def test_column_transformer_get_set_params_with_remainder():
            'remainder__copy': True,
            'remainder__with_mean': True,
            'remainder__with_std': False,
+           'sparse_threshold': 0.3,
            'trans1': 'passthrough',
            'transformers': ct.transformers,
            'transformer_weights': None,
@@ -856,6 +915,11 @@ def test_column_transformer_verbose(est, pattern, method, capsys):
     est.set_params(verbose=True)
     func(X_array)
     assert re.match(pattern, capsys.readouterr()[0])
+    
+
+def test_column_transformer_no_estimators_set_params():
+    ct = ColumnTransformer([]).set_params(n_jobs=2)
+    assert ct.n_jobs == 2
 
 
 def test_column_transformer_callable_specifier():

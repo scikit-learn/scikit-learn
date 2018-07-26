@@ -6,6 +6,8 @@ different columns.
 # Author: Andreas Mueller
 #         Joris Van den Bossche
 # License: BSD
+from __future__ import division
+
 from itertools import chain
 from functools import partial
 
@@ -72,7 +74,7 @@ boolean mask array or callable
             A callable is passed the input data `X` and can return any of the
             above.
 
-    remainder : {'passthrough', 'drop'} or estimator, default 'drop'
+    remainder : {'drop', 'passthrough'} or estimator, default 'drop'
         By default, only the specified columns in `transformers` are
         transformed and combined in the output, and the non-specified
         columns are dropped. (default of ``'drop'``).
@@ -83,6 +85,14 @@ boolean mask array or callable
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support `fit` and `transform`.
+
+    sparse_threshold : float, default = 0.3
+        If the transformed output consists of a mix of sparse and dense data,
+        it will be stacked as a sparse matrix if the density is lower than this
+        value. Use ``sparse_threshold=0`` to always return dense.
+        When the transformed output consists of all sparse or all dense data,
+        the stacked result will be sparse or dense, respectively, and this
+        keyword will be ignored.
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
@@ -111,6 +121,11 @@ boolean mask array or callable
         Read-only attribute to access any transformer by given name.
         Keys are transformer names and values are the fitted transformer
         objects.
+
+    sparse_output_ : boolean
+        Boolean flag indicating wether the output of ``transform`` is a
+        sparse matrix or a dense numpy array, which depends on the output
+        of the individual transformers and the `sparse_threshold` keyword.
 
     Notes
     -----
@@ -145,10 +160,11 @@ boolean mask array or callable
 
     """
 
-    def __init__(self, transformers, remainder='drop', n_jobs=1,
-                 transformer_weights=None, verbose=False):
+    def __init__(self, transformers, remainder='drop', sparse_threshold=0.3,
+                 n_jobs=1, transformer_weights=None, verbose=False):
         self.transformers = transformers
         self.remainder = remainder
+        self.sparse_threshold = sparse_threshold
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self.verbose = verbose
@@ -391,20 +407,9 @@ boolean mask array or callable
             This estimator
 
         """
-        self._validate_remainder(X)
-        self._validate_transformers()
-
-        fit_one_transformer = partial(
-            _fit_transform_one,
-            is_transform=False,
-            clsname='ColumnTransformer'
-        )
-
-        # fit_one_transformer returns (None, transformer) tuples
-        transformer_tuples = self._fit_transform(X, y, fit_one_transformer)
-        transformers = [t[1] for t in transformer_tuples]
-        self._update_fitted_transformers(transformers)
-
+        # we use fit_transform to make sure to set sparse_output_ (for which we
+        # need the transformed data) to have consistent output type in predict
+        self.fit_transform(X, y=y)
         return self
 
     def fit_transform(self, X, y=None):
@@ -439,15 +444,28 @@ boolean mask array or callable
         result = self._fit_transform(X, y, fit_transform_one)
 
         if not result:
+            self._update_fitted_transformers([])
             # All transformers are None
             return np.zeros((X.shape[0], 0))
 
         Xs, transformers = zip(*result)
 
+        # determine if concatenated output will be sparse or not
+        if all(sparse.issparse(X) for X in Xs):
+            self.sparse_output_ = True
+        elif any(sparse.issparse(X) for X in Xs):
+            nnz = sum(X.nnz if sparse.issparse(X) else X.size for X in Xs)
+            total = sum(X.shape[0] * X.shape[1] if sparse.issparse(X)
+                        else X.size for X in Xs)
+            density = nnz / total
+            self.sparse_output_ = density < self.sparse_threshold
+        else:
+            self.sparse_output_ = False
+
         self._update_fitted_transformers(transformers)
         self._validate_output(Xs)
 
-        return _hstack(list(Xs))
+        return _hstack(list(Xs), self.sparse_output_)
 
     def transform(self, X):
         """Transform X separately by each transformer, concatenate results.
@@ -474,7 +492,7 @@ boolean mask array or callable
             # All transformers are None
             return np.zeros((X.shape[0], 0))
 
-        return _hstack(list(Xs))
+        return _hstack(list(Xs), self.sparse_output_)
 
 
 def _check_key_type(key, superclass):
@@ -508,16 +526,17 @@ def _check_key_type(key, superclass):
     return False
 
 
-def _hstack(X):
+def _hstack(X, sparse_):
     """
     Stacks X horizontally.
 
     Supports input types (X): list of
         numpy arrays, sparse arrays and DataFrames
     """
-    if any(sparse.issparse(f) for f in X):
+    if sparse_:
         return sparse.hstack(X).tocsr()
     else:
+        X = [f.toarray() if sparse.issparse(f) else f for f in X]
         return np.hstack(X)
 
 
@@ -654,14 +673,14 @@ def make_column_transformer(*transformers, **kwargs):
     ----------
     *transformers : tuples of column selections and transformers
 
-    remainder : {'passthrough', 'drop'} or estimator, default 'passthrough'
-        By default, all remaining columns that were not specified in
-        `transformers` will be automatically passed through (default of
-        ``'passthrough'``). This subset of columns is concatenated with the
-        output of the transformers.
-        By using ``remainder='drop'``, only the specified columns in
-        `transformers` are transformed and combined in the output, and the
-        non-specified columns are dropped.
+    remainder : {'drop', 'passthrough'} or estimator, default 'drop'
+        By default, only the specified columns in `transformers` are
+        transformed and combined in the output, and the non-specified
+        columns are dropped. (default of ``'drop'``).
+        By specifying ``remainder='passthrough'``, all remaining columns that
+        were not specified in `transformers` will be automatically passed
+        through. This subset of columns is concatenated with the output of
+        the transformers.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support `fit` and `transform`.
@@ -687,7 +706,8 @@ def make_column_transformer(*transformers, **kwargs):
     ...     (['numerical_column'], StandardScaler()),
     ...     (['categorical_column'], OneHotEncoder()))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ColumnTransformer(n_jobs=1, remainder='drop', transformer_weights=None,
+    ColumnTransformer(n_jobs=1, remainder='drop', sparse_threshold=0.3,
+             transformer_weights=None,
              transformers=[('standardscaler',
                             StandardScaler(...),
                             ['numerical_column']),

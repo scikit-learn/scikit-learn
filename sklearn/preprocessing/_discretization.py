@@ -188,6 +188,11 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         self.bin_edges_ = bin_edges
         self.n_bins_ = n_bins
 
+        if 'onehot' in self.encode:
+            self._encoder = OneHotEncoder(
+                categories=[np.arange(i) for i in self.n_bins_],
+                sparse=self.encode == 'onehot')
+
         return self
 
     def _validate_n_bins(self, n_features):
@@ -206,7 +211,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                 raise ValueError("{} received an invalid number "
                                  "of bins. Received {}, expected at least 2."
                                  .format(KBinsDiscretizer.__name__, orig_bins))
-            return np.ones(n_features, dtype=np.int) * orig_bins
+            return np.full(n_features, orig_bins, dtype=np.int)
 
         n_bins = check_array(orig_bins, dtype=np.int, copy=True,
                              ensure_2d=False)
@@ -262,9 +267,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         if self.encode == 'ordinal':
             return Xt
 
-        encode_sparse = self.encode == 'onehot'
-        return OneHotEncoder(categories=[np.arange(i) for i in self.n_bins_],
-                             sparse=encode_sparse).fit_transform(Xt)
+        return self._encoder.fit_transform(Xt)
 
     def inverse_transform(self, Xt):
         """Transforms discretized data back to original feature space.
@@ -284,10 +287,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, ["bin_edges_"])
 
-        if self.encode != 'ordinal':
-            raise ValueError("inverse_transform only supports "
-                             "'encode = ordinal'. Got encode={!r} instead."
-                             .format(self.encode))
+        if 'onehot' in self.encode:
+            Xt = self._encoder.inverse_transform(Xt)
 
         Xinv = check_array(Xt, copy=True, dtype=FLOAT_DTYPES)
         n_features = self.n_bins_.shape[0]
