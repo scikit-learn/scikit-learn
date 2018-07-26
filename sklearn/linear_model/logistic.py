@@ -575,10 +575,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     l1_ratio : float or None, optional (default=None)
         The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
-        used if ``penalty='elastic-net'`` and if not None. Setting
-        ``l1_ratio=0`` is equivalent to using ``penalty='l2'``, while setting
-        ``l1_ratio=1`` is equivalent to using ``penalty='l1'``. For ``0 <
-        l1_ratio <1``, the penalty is a combination of L1 and L2.
+        used if ``penalty='elastic-net'``. Setting ``l1_ratio=0`` is equivalent
+        to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
+        to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
+        combination of L1 and L2.
 
     Returns
     -------
@@ -906,10 +906,10 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
     l1_ratio : float or None, optional (default=None)
         The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
-        used if ``penalty='elastic-net'`` and if not None. Setting
-        ``l1_ratio=0`` is equivalent to using ``penalty='l2'``, while setting
-        ``l1_ratio=1`` is equivalent to using ``penalty='l1'``. For ``0 <
-        l1_ratio <1``, the penalty is a combination of L1 and L2.
+        used if ``penalty='elastic-net'``. Setting ``l1_ratio=0`` is equivalent
+        to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
+        to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
+        combination of L1 and L2.
 
     Returns
     -------
@@ -1126,10 +1126,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     l1_ratio : float or None, optional (default=None)
         The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
-        used if ``penalty='elastic-net'`` and if not None. Setting
-        ``l1_ratio=0`` is equivalent to using ``penalty='l2'``, while setting
-        ``l1_ratio=1`` is equivalent to using ``penalty='l1'``. For ``0 <
-        l1_ratio <1``, the penalty is a combination of L1 and L2.
+        used if ``penalty='elastic-net'`. Setting ``l1_ratio=0`` is equivalent
+        to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
+        to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
+        combination of L1 and L2.
 
     Attributes
     ----------
@@ -1567,6 +1567,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    l1_ratios : list of float or None, optional (default=None)
+        The list of elastic net mixing parameter, with ``0 <= l1_ratio <= 1``.
+        Only used if ``penalty='elastic-net'``. A value of 0 is equivalent to
+        using ``penalty='l2'``, while 1 is equivalent to using
+        ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a combination
+        of L1 and L2.
+
     Attributes
     ----------
     coef_ : array, shape (1, n_features) or (n_classes, n_features)
@@ -1584,6 +1591,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     Cs_ : array
         Array of C i.e. inverse of regularization parameter values used
         for cross-validation.
+
+    l1_ratios_ : array
+        Array of l1_ratios used for cross-validation.
 
     coefs_paths_ : array, shape ``(n_folds, len(Cs_), n_features)`` or \
                    ``(n_folds, len(Cs_), n_features + 1)``
@@ -1609,6 +1619,12 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         set to False, then for each class, the best C is the average of the
         C's that correspond to the best scores for each fold.
         `C_` is of shape(n_classes,) when the problem is binary.
+
+    l1_ratio_ : array, shape (n_classes,) or (n_classes - 1,)
+        Array of l1_ratio that maps to the best scores across every class. If
+        refit is set to False, then for each class, the best l1_ratio is the
+        average of the l1_ratio's that correspond to the best scores for each
+        fold.  `l1_ratio_` is of shape(n_classes,) when the problem is binary.
 
     n_iter_ : array, shape (n_classes, n_folds, n_cs) or (1, n_folds, n_cs)
         Actual number of iterations for all classes, folds and Cs.
@@ -1886,6 +1902,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         self.C_ = np.asarray(self.C_)
         self.l1_ratio_ = np.asarray(self.l1_ratio_)
+        self.l1_ratios_ = np.asarray(self.l1_ratios)
+
         return self
 
     def score(self, X, y, sample_weight=None):

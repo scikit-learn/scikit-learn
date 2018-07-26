@@ -1485,6 +1485,7 @@ def test_l1_ratio_param(l1_ratio):
                              LogisticRegression(penalty='l1', solver='saga',
                                                 l1_ratio=l1_ratio).fit, X, Y1)
 
+
 @pytest.mark.parametrize('l1_ratios', ([], [.5, 2], None, 'something_wrong'))
 def test_l1_ratios_param(l1_ratios):
 
