@@ -480,9 +480,8 @@ boolean mask array or callable
         Supports input types (X): list of
             numpy arrays, sparse arrays and DataFrames
 
-        This is implemented as a staticmethod to enable subclasses to control
-        the stacking behavior, while reusing everything else from
-        ColumnTransformer.
+        This allows subclasses to control the stacking behavior, while reusing
+        everything else from ColumnTransformer.
         """
         if sparse_:
             return sparse.hstack(X).tocsr()
