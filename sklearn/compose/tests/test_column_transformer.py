@@ -915,7 +915,7 @@ def test_column_transformer_verbose(est, pattern, method, capsys):
     est.set_params(verbose=True)
     func(X_array)
     assert re.match(pattern, capsys.readouterr()[0])
-    
+
 
 def test_column_transformer_no_estimators_set_params():
     ct = ColumnTransformer([]).set_params(n_jobs=2)
