@@ -16,7 +16,7 @@ except ImportError:
 import numpy as np
 import scipy.sparse
 
-from sklearn.externals import arff
+from sklearn.externals import _arff
 from .base import get_data_home
 from ..externals.six import string_types, PY2
 from ..externals.six.moves.urllib.error import HTTPError
@@ -303,15 +303,15 @@ def _download_data_arff(file_id, sparse, data_home):
     url = _DATA_FILE.format(file_id)
     response = _open_openml_url(url, data_home)
     if sparse is True:
-        return_type = arff.COO
+        return_type = _arff.COO
     else:
-        return_type = arff.DENSE
+        return_type = _arff.DENSE
 
     if PY2:
-        arff_file = arff.load(response, return_type=return_type)
+        arff_file = _arff.load(response, return_type=return_type)
     else:
-        arff_file = arff.loads(response.read().decode('utf-8'),
-                               return_type=return_type)
+        arff_file = _arff.loads(response.read().decode('utf-8'),
+                                return_type=return_type)
     response.close()
     return arff_file
 

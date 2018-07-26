@@ -22,9 +22,10 @@ For example, to download a dataset of gene expressions in mice brains::
   >>> from sklearn.datasets import fetch_openml
   >>> mice = fetch_openml(name='miceprotein', version=4)
 
-To fully specify a dataset, you need to provide a name and a version, though the
-version is optional, see :ref:`openml_versions`_ below.
-The dataset contains a total of 1080 examples belonging to 8 different classes::
+To fully specify a dataset, you need to provide a name and a version, though
+the version is optional, see :ref:`openml_versions`_ below.
+The dataset contains a total of 1080 examples belonging to 8 different
+classes::
 
   >>> mice.data.shape
   (1080, 77)
@@ -57,15 +58,15 @@ and ``details`` attributes::
 
 The ``DESCR`` contains a free-text description of the data, while ``details``
 contains a dictionary of meta-data stored by openml, like the dataset id.
-For more details, see the `OpenML documentation <https://docs.openml.org/#data>`_
-The ``data_id`` of the mice protein dataset is 40966, and you can use this (or
-the name) to get more information on the dataset on the openml website::
+For more details, see the `OpenML documentation
+<https://docs.openml.org/#data>`_ The ``data_id`` of the mice protein dataset
+is 40966, and you can use this (or the name) to get more information on the
+dataset on the openml website::
 
   >>> mice.url
   'https://www.openml.org/d/40966'
 
-The ``data_id`` is also the most specific way to specify how to fetch a dataset from
-OpenML::
+The ``data_id`` also uniquely identifies a dataset from OpenML::
 
   >>> mice = fetch_openml(data_id=40966)
   >>> mice.details # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +SKIP
@@ -85,16 +86,16 @@ OpenML::
 Dataset Versions
 ----------------
 
-A dataset is uniquely specified by its ``data_id``, but not necessarily by its name.
-Several different "versions" of a dataset with the same name can exist which can contain
-entirely different datasets.
+A dataset is uniquely specified by its ``data_id``, but not necessarily by its
+name. Several different "versions" of a dataset with the same name can exist
+which can contain entirely different datasets.
 If a particular version of a dataset has been found to contain significant
-issues, it might be inactivated. Using a name to specify a dataset will yield
+issues, it might be deactivated. Using a name to specify a dataset will yield
 the earliest version of a dataset that is still active. That means that
 ``fetch_openml(name="miceprotein")`` can yield different results at different
 times if earlier versions become inactive.
-You can see that the dataset with ``data_id`` 40966 that we fetched above is the version 1
-of the "miceprotein" dataset::
+You can see that the dataset with ``data_id`` 40966 that we fetched above is
+the version 1 of the "miceprotein" dataset::
 
   >>> mice.details['version']  #doctest: +SKIP
   '1'
@@ -120,15 +121,17 @@ has multiple versions::
   >>> iris_969.details['id']
   '969'
 
-Specifying the dataset by the name "iris" yields the lowest version, version 1, with the ``data_id`` 61.
-To make sure you always get this exact dataset, it is safest to specify it by the dataset ``data_id``.
-The other dataset, with ``data_id`` 969, is version 3 (version 2 has become inactive), and contains
-a binarized version of the data::
+Specifying the dataset by the name "iris" yields the lowest version, version 1,
+with the ``data_id`` 61. To make sure you always get this exact dataset, it is
+safest to specify it by the dataset ``data_id``. The other dataset, with
+``data_id`` 969, is version 3 (version 2 has become inactive), and contains a
+binarized version of the data::
 
   >>> np.unique(iris_969.target)
   array(['N', 'P'], dtype=object)
 
-You can also specify both the name and the version, which also uniquely identifies the dataset::
+You can also specify both the name and the version, which also uniquely
+identifies the dataset::
 
   >>> iris_version_3 = fetch_openml(name="iris", version=3)
   >>> iris_version_3.details['version']
