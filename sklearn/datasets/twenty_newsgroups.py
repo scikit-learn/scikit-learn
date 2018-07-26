@@ -317,8 +317,8 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
 (classification).
 
     Download it if necessary.
- 
-    This is a convenience function; the transformation is done using the 
+
+    This is a convenience function; the transformation is done using the
     default settings for
     :class:`sklearn.feature_extraction.text.CountVectorizer`. For more
     advanced usage (stopword filtering, n-gram extraction, etc.), combine
