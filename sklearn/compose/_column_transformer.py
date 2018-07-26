@@ -382,32 +382,31 @@ boolean mask array or callable
         input_indices = []
         for name, trans, cols in self.transformers:
             col_indices = _get_column_indices(X, cols)
-            if not all_indexes.isdisjoint(set(col_indices)):
-                self._invertible = (False,
-                                    "Transformers have overlaping columns")
+            col_indices_set = set(col_indices)
+            if not all_indexes.isdisjoint(col_indices_set):
+                self._invert_error = ("Unable to invert: transformers "
+                                      "contain overlaping columns")
                 return
             if trans == 'drop':
-                self._invertible = (
-                    False, "Transformer '{}' drops columns".format(name))
+                self._invert_error = "'{}' drops columns".format(name)
                 return
             input_indices.append(col_indices)
+            all_indexes.update(col_indices_set)
 
         # check remainder
         remainder_indices = self._remainder[2]
         if remainder_indices is not None and self._remainder[1] == 'drop':
-            self._invertible = (False, "remainder drops columns")
+            self._invert_error = "remainder drops columns"
             return
 
         if remainder_indices is not None:
             input_indices.append(remainder_indices)
 
         self._input_indices = input_indices
-        self._X_features = X.shape[1]
-        self._X_columns = None
-        if hasattr(X, 'columns'):
-            self._X_columns = X.columns
+        self._n_features_in = X.shape[1]
+        self._X_columns = X.columns if hasattr(X, 'columns') else None
         self._X_is_sparse = sparse.issparse(X)
-        self._invertible = (True, "")
+        self._invert_error = ""
         self._output_indices = []
         cur_index = 0
 
@@ -540,9 +539,8 @@ boolean mask array or callable
         """
         check_is_fitted(self, 'transformers_')
 
-        if not self._invertible[0]:
-            raise ValueError("Unable to invert: ".format(
-                self._invertible[1]))
+        if self._invert_error:
+            raise ValueError("Unable to invert: {}".format(self._invert_error))
 
         X_subs = (_get_column(X, key) for key in self._output_indices)
         inv_transformers = []
@@ -564,7 +562,7 @@ boolean mask array or callable
             # All transformers are None
             return np.zeros((X.shape[0], 0))
 
-        inverse_Xs = np.zeros((Xs[0].shape[0], self._X_features))
+        inverse_Xs = np.zeros((Xs[0].shape[0], self._n_features_in))
         for indices, inverse_X in zip(self._input_indices, Xs):
             if sparse.issparse(inverse_X):
                 inverse_Xs[:, indices] = inverse_X.toarray()
@@ -577,11 +575,8 @@ boolean mask array or callable
         if self._X_is_sparse:
             return sparse.csr_matrix(inverse_Xs)
         if self._X_columns is not None:
-            try:
-                import pandas as pd
-                return pd.DataFrame(inverse_Xs, columns=self._X_columns)
-            except ImportError:
-                pass
+            import pandas as pd
+            return pd.DataFrame(inverse_Xs, columns=self._X_columns)
         return inverse_Xs
 
 
