@@ -221,12 +221,7 @@ class Pipeline(_BaseComposition):
         Xt = X
         for step_idx, (name, transformer) in enumerate(self.steps[:-1]):
             if transformer is None:
-                continue
-
-            if hasattr(memory, 'cachedir') and memory.cachedir is None:
-                # we do not clone when caching is disabled to preserve
-                # backward compatibility
-                cloned_transformer = transformer
+                pass
             else:
                 if hasattr(memory, 'location'):
                     # joblib >= 0.12
@@ -246,15 +241,15 @@ class Pipeline(_BaseComposition):
                         cloned_transformer = clone(transformer)
                 else:
                     cloned_transformer = clone(transformer)
-            # Fit or load from cache the current transfomer
-            Xt, fitted_transformer = fit_transform_one_cached(
-                True, 'Pipeline', self._log_message(step_idx),
-                cloned_transformer, None, Xt, y,
-                **fit_params_steps[name])
-            # Replace the transformer of the step with the fitted
-            # transformer. This is necessary when loading the transformer
-            # from the cache.
-            self.steps[step_idx] = (name, fitted_transformer)
+                # Fit or load from cache the current transfomer
+                Xt, fitted_transformer = fit_transform_one_cached(
+                    True, 'Pipeline', self._log_message(step_idx),
+                    cloned_transformer, None, Xt, y,
+                    **fit_params_steps[name])
+                # Replace the transformer of the step with the fitted
+                # transformer. This is necessary when loading the transformer
+                # from the cache.
+                self.steps[step_idx] = (name, fitted_transformer)
         if self._final_estimator is None:
             return Xt, {}
         return Xt, fit_params_steps[self.steps[-1][0]]
