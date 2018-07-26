@@ -361,6 +361,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
             if not self._processed[point]:
                 self._expand_cluster_order(point, X, nbrs)
 
+        print("ordering\n%s" % self.ordering_)
+        print("reachability_\n%s" % self.reachability_) 
         indices_, self.labels_ = _extract_optics(self.ordering_,
                                                  self.reachability_,
                                                  self.maxima_ratio,
@@ -550,7 +552,9 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
                                    maxima_ratio, rejection_ratio,
                                    similarity_threshold, significant_min,
                                    min_cluster_size_ratio, min_maxima_ratio)
+    print("root_node\n%s" % root_node.__dict__)
     leaves = _get_leaves(root_node, [])
+    print("leaves\n%s" % [l.__dict__ for l in leaves])
     # Start cluster id's at 0
     clustid = 0
     n_samples = len(reachability)
