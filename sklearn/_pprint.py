@@ -6,6 +6,9 @@ import re
 
 
 def changed_params(estimator):
+    """Return dict (name: value) of parameters that were given to estimator
+    with non-default values."""
+
     params = estimator.get_params(deep=False)
     filtered_params = {}
     init = getattr(estimator.__init__, 'deprecated_original',
@@ -18,13 +21,29 @@ def changed_params(estimator):
 
 
 def _strip_color(string):
+    """Remove terminal color characters from a string"""
     return re.sub('\033\[[0-9;]+m', "", string)
 
 
 class _Formatter(object):
+    """Formatter class for pretty printing scikit-learn objects.
+
+    Parameters
+    ----------
+    indent_est : str, optional (default='step')
+        Indentation strategy for long strings describing estimators. If 'step',
+        the indentation is constant. If 'name', the next line is aligned after
+        the estimator name.
+    changed_only : bool, optional (default=False)
+        If True, only show parameters that have non-default values.
+    color_changed : bool, optional (default=False)
+        If True, color the parameters with non-default values.
+    default_color : str, optional
+        Color for the parameters with non-default values. Default is light grey
+        (r=100,g=100,b=100).
+    """
     def __init__(self, indent_est='step', changed_only=False,
                  color_changed=False, default_color='\033[38;2;100;100;100m'):
-        # light grey, r=100,g=100,b=100
         self.indent_est = indent_est
         self.changed_only = changed_only
         self.color_changed = color_changed
@@ -36,53 +55,57 @@ class _Formatter(object):
         self.indent = 0
         self.step = 4
         self.width = 79
-        self.set_formater(object, self.__class__.format_object)
-        self.set_formater(dict, self.__class__.format_dict)
-        self.set_formater(list, self.__class__.format_list)
-        self.set_formater(tuple, self.__class__.format_tuple)
-        self.set_formater(BaseEstimator, self.__class__.format_estimator)
-        self.set_formater(np.ndarray, self.__class__.format_ndarray)
-        self.set_formater(Pipeline, self.__class__.format_pipeline)
 
-    def set_formater(self, obj, callback):
-        self.types[obj] = callback
+        self.set_formatter(object, self.__class__._format_object)
+        self.set_formatter(dict, self.__class__._format_dict)
+        self.set_formatter(list, self.__class__._format_list)
+        self.set_formatter(tuple, self.__class__._format_tuple)
+        self.set_formatter(BaseEstimator, self.__class__._format_estimator)
+        self.set_formatter(np.ndarray, self.__class__._format_ndarray)
 
-    def __call__(self, value, **args):
-        for key in args:
-            setattr(self, key, args[key])
+    def set_formatter(self, cls, callback):
+        """Associate given callback with the formatting of objects with class
+        cls"""
+        self.types[cls] = callback
 
-        return self.format_all(value, self.indent)
+    def __call__(self, value):
+        return self._format_all(value, self.indent)
 
-    def format_all(self, value, indent):
-        formater = self.types[type(value) if type(value) in self.types else
-                              object]
+    def _format_all(self, value, indent):
+        """Return formated string for object value"""
+
         if type(value) in self.types:
-            formater = self.types[type(value)]
+            type_ = type(value)
         elif isinstance(value, BaseEstimator):
-            formater = self.types[BaseEstimator]
-        return formater(self, value, indent)
+            type_ = BaseEstimator
+        else:
+            type_ = object
 
-    def format_object(self, value, indent):
+        formatter = self.types[type_]
+
+        return formatter(self, value, indent)
+
+    def _format_object(self, value, indent):
         return repr(value)
 
-    def format_dict(self, value, indent):
-        items = [repr(key) + ': ' + self.format_all(value[key],
-                                                    indent + self.step)
+    def _format_dict(self, value, indent):
+        items = [repr(key) + ': ' + self._format_all(value[key], indent +
+                                                     self.step)
                  for key in value]
-        return "{%s}" % self.join_items(items, indent + self.step)
+        return "{%s}" % self._join_items(items, indent + self.step)
 
-    def format_list(self, value, indent):
-        items = [self.format_all(item, indent + self.step) for item in value]
-        return "[%s]" % self.join_items(items, indent + self.step)
+    def _format_list(self, value, indent):
+        items = [self._format_all(item, indent + self.step) for item in value]
+        return "[%s]" % self._join_items(items, indent + self.step)
 
-    def format_tuple(self, value, indent):
-        items = [self.format_all(item, indent + self.step) for item in value]
-        return "(%s)" % self.join_items(items, indent + self.step)
+    def _format_tuple(self, value, indent):
+        items = [self._format_all(item, indent + self.step) for item in value]
+        return "(%s)" % self._join_items(items, indent + self.step)
 
-    def format_ndarray(self, value, indent):
-        return self.format_all(value.tolist(), indent + self.step)
+    def _format_ndarray(self, value, indent):
+        return self._format_all(value.tolist(), indent + self.step)
 
-    def format_estimator(self, value, indent):
+    def _format_estimator(self, value, indent):
         if self.changed_only:
             params = changed_params(value)
         else:
@@ -95,64 +118,61 @@ class _Formatter(object):
         else:
             raise ValueError("Invalid indent_est parameter")
 
+        # steps representation, (only for Pipeline object)
+        steps = params.pop("steps", None)
+        if steps is not None:
+            steps_str = (self.lfchar + self.htchar * (indent + offset) +
+                         "steps=[")
+            for i, step in enumerate(steps):
+                if i > 0:
+                    steps_str += (self.lfchar + self.htchar *
+                                  (indent + len("steps=[") + offset))
+                items = [
+                    self._format_all(item, indent + offset + len("steps=[") + 1)
+                    for item in step
+                ]
+                steps_str += "(%s)" % self._join_items(
+                    items, indent + offset + len("steps=[") + 1)
+            steps_str += "]," + self.lfchar + self.htchar * (indent + offset)
+        else:
+            steps_str = ""
+
+        # Param representation
+        items = [str(key) + '=' + self._format_all(params[key], indent +
+                                                   offset)
+                 for key in params]
+        # add colors
         if self.color_changed:
             changed = changed_params(value)
 
             def color(string, key):
-                if key not in changed:
+                if key in changed:
                     return self.default_color + string + '\033[0m'
                 else:
                     return string
 
-            items = [color(str(key) + '='
-                     + self.format_all(params[key], indent + offset), key)
-                     for key in params]
-        else:
-            items = [str(key) + '='
-                     + self.format_all(params[key], indent + offset)
-                     for key in params]
-        param_repr = self.join_items(items, indent + offset)
-        return '%s(%s)' % (value.__class__.__name__, param_repr)
+            items = [color(item, key) for (item, key) in zip(items, params)]
 
-    def format_pipeline(self, value, indent):
-        if self.changed_only:
-            params = changed_params(value)
-        else:
-            params = value.get_params(deep=False)
-        if self.indent_est == 'step':
-            offset = self.step
-        elif self.indent_est == "name":
-            offset = len(value.__class__.__name__) + 1
-        else:
-            raise ValueError("Invalid indent_est parameter")
-        steps = params.pop("steps")
-        steps_str = self.lfchar + self.htchar * (indent + offset) + "steps=["
-        for i, step in enumerate(steps):
-            if i > 0:
-                steps_str += (
-                    self.lfchar
-                    + self.htchar * (indent + len("steps=[") + offset))
-            items = [self.format_all(item, indent + len("steps=[") + offset)
-                     for item in step]
-            steps_str += "(%s)" % self.join_items(
-                items, indent + len("steps=[") + 1 + offset)
-        steps_str += "]" + self.lfchar + self.htchar * (indent + offset)
-        items = [str(key) + '=' + self.format_all(params[key], indent + offset)
-                 for key in params]
-        param_repr = self.join_items(items, indent + offset)
+        param_repr = self._join_items(items, indent + offset)
         return '%s(%s)' % (value.__class__.__name__, steps_str + param_repr)
 
-    def join_items(self, items, indent):
+    def _join_items(self, items, indent):
+        # This method is used to separate items (typically parameter
+        # lists) with commas and to break long lines appropriately
         this_string = ""
-        pos = len(self.htchar * (indent + 1)) + 2
+        init_pos = len(self.htchar * (indent + 1))
+        pos = init_pos
         for i, item in enumerate(items):
             if i > 0:
                 this_string += ','
+                pos += 1
             if pos + len(_strip_color(item)) + 1 > self.width:
+                # + 1 because we'll need the ',' at the end
                 this_string += self.lfchar + self.htchar * indent
-                pos = len(self.htchar * (indent + 1)) + 1
+                pos = init_pos
             elif i > 0:
                 this_string += " "
+                pos += 1
             this_string += item
             pos += len(_strip_color(item)) + 1
         return this_string
