@@ -28,6 +28,7 @@ def test_import_skl():
 def test_import_sklearn_no_warnings():
     # Test that importing scikit-learn main modules doesn't raise any warnings.
 
+    message = "No message yet"
     try:
         pkgs = pkgutil.iter_modules(path=sklearn.__path__, prefix='sklearn.')
         import_modules = '; '.join(['import ' + modname
