@@ -276,22 +276,23 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
     Examples
     --------
-    >>> from sklearn.kernel_approximation import AdditiveChi2Sampler
+    >>> from sklearn import datasets
     >>> from sklearn.linear_model import SGDClassifier
-    >>> X = [[0, 0], [1, 1], [2, 0], [0, 4]]
-    >>> y = [0, 0, 1, 1]
-    >>> chi2_feature = AdditiveChi2Sampler(sample_steps=1)
-    >>> X_features = chi2_feature.fit_transform(X, y)
+    >>> from sklearn.kernel_approximation import AdditiveChi2Sampler
+    >>> digits = datasets.load_digits(n_class=9)
+    >>> data = digits.data
+    >>> chi2sampler = AdditiveChi2Sampler(sample_steps=2)
+    >>> data_transformed = chi2sampler.fit_transform(data, digits.target)
     >>> clf = SGDClassifier(max_iter=5, random_state=0)
-    >>> clf.fit(X_features, y) # doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit(data_transformed, digits.target)
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
            l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
            n_iter=None, n_iter_no_change=5, n_jobs=1, penalty='l2',
            power_t=0.5, random_state=0, shuffle=True, tol=None,
            validation_fraction=0.1, verbose=0, warm_start=False)
-    >>> clf.score(X_features, y)
-    1.0
+    >>> clf.score(data_transformed, digits.target) # doctest: +ELLIPSIS
+    0.9845...
 
     Notes
     -----
