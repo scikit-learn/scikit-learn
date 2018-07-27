@@ -566,10 +566,17 @@ boolean mask array or callable
             # All transformers are None
             return np.zeros((X.shape[0], 0))
 
-        inverse_Xs = np.zeros((Xs[0].shape[0], self._n_features_in))
+        if self._X_is_sparse:
+            inverse_Xs = sparse.lil_matrix((Xs[0].shape[0],
+                                            self._n_features_in))
+        else:
+            inverse_Xs = np.zeros((Xs[0].shape[0], self._n_features_in))
         for indices, inverse_X in zip(self._input_indices, Xs):
             if sparse.issparse(inverse_X):
-                inverse_Xs[:, indices] = inverse_X.toarray()
+                if self._X_is_sparse:
+                    inverse_Xs[:, indices] = inverse_X
+                else:
+                    inverse_Xs[:, indices] = inverse_X.toarray()
             else:
                 if inverse_X.ndim == 1:
                     inverse_Xs[:, indices] = inverse_X[:, np.newaxis]
@@ -577,7 +584,8 @@ boolean mask array or callable
                     inverse_Xs[:, indices] = inverse_X
 
         if self._X_is_sparse:
-            return sparse.csr_matrix(inverse_Xs)
+            return inverse_Xs.tocsr()
+
         if self._X_columns is not None:
             import pandas as pd
             return pd.DataFrame(inverse_Xs, columns=self._X_columns)
