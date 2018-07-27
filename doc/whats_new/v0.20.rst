@@ -172,8 +172,9 @@ Model evaluation
   evaluation of clustering models. :issue:`10827` by :user:`Luis Osa <logc>`.
 
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
-  ``'balanced_accuracy'`` scorer for binary classification.
-  :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
+  ``'balanced_accuracy'`` scorer for binary and multiclass classification.
+  :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`, and
+  :issue:`10587` by `Joel Nothman`_.
 
 Decomposition, manifold learning and clustering
 
