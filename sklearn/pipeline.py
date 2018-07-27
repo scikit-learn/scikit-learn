@@ -191,12 +191,12 @@ class Pipeline(_BaseComposition):
                 "Last step of Pipeline should implement fit. "
                 "'%s' (type %s) doesn't" % (estimator, type(estimator)))
 
-    def _iter(self, include_final_estimator=True):
+    def _iter(self, with_final=True):
         """
         Generate (name, trans) tuples excluding 'passthrough' transformers
         """
         stop = len(self.steps)
-        if not include_final_estimator:
+        if not with_final:
             stop -= 1
 
         for name, trans in islice(self.steps, 0, stop):
@@ -235,7 +235,7 @@ class Pipeline(_BaseComposition):
             fit_params_steps[step][param] = pval
         Xt = X
         for step_idx, (name, transformer) in enumerate(
-                self._iter(include_final_estimator=False)):
+                self._iter(with_final=False)):
             if hasattr(memory, 'location'):
                 # joblib >= 0.12
                 if memory.location is None:
@@ -356,7 +356,7 @@ class Pipeline(_BaseComposition):
         y_pred : array-like
         """
         Xt = X
-        for name, transform in self._iter(include_final_estimator=False):
+        for name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict(Xt, **predict_params)
 
@@ -405,7 +405,7 @@ class Pipeline(_BaseComposition):
         y_proba : array-like, shape = [n_samples, n_classes]
         """
         Xt = X
-        for name, transform in self._iter(include_final_estimator=False):
+        for name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict_proba(Xt)
 
@@ -424,7 +424,7 @@ class Pipeline(_BaseComposition):
         y_score : array-like, shape = [n_samples, n_classes]
         """
         Xt = X
-        for name, transform in self._iter(include_final_estimator=False):
+        for name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].decision_function(Xt)
 
@@ -443,7 +443,7 @@ class Pipeline(_BaseComposition):
         y_score : array-like, shape = [n_samples, n_classes]
         """
         Xt = X
-        for name, transform in self._iter(include_final_estimator=False):
+        for name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict_log_proba(Xt)
 
@@ -530,7 +530,7 @@ class Pipeline(_BaseComposition):
         score : float
         """
         Xt = X
-        for name, transform in self._iter(include_final_estimator=False):
+        for name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt)
         score_params = {}
         if sample_weight is not None:
