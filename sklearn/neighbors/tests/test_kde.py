@@ -159,7 +159,7 @@ def test_kde_pipeline_gridsearch():
 def test_kde_sample_weights():
     n_samples = 400
     size_test = 20
-    weights_neutral = 3 * np.ones(n_samples)
+    weights_neutral = np.full(n_samples, 3.)
     for d in [1, 2, 10]:
         rng = np.random.RandomState(0)
         X = rng.rand(n_samples, d)

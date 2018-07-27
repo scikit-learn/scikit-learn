@@ -138,9 +138,9 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 (GCV), an efficient form of leave-one-out cross-validation::
 
     >>> from sklearn import linear_model
-    >>> reg = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
+    >>> reg = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0], cv=3)
     >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
-    RidgeCV(alphas=[0.1, 1.0, 10.0], cv=None, fit_intercept=True, scoring=None,
+    RidgeCV(alphas=[0.1, 1.0, 10.0], cv=3, fit_intercept=True, scoring=None,
         normalize=False)
     >>> reg.alpha_                                      # doctest: +SKIP
     0.1

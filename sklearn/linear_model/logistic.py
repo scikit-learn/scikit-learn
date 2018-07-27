@@ -28,11 +28,11 @@ from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
 from ..utils.extmath import row_norms
 from ..utils.fixes import logsumexp
 from ..utils.optimize import newton_cg
-from ..utils.validation import check_X_y, _num_samples
+from ..utils.validation import check_X_y
 from ..exceptions import (NotFittedError, ConvergenceWarning,
                           ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..model_selection import check_cv
 from ..externals import six
 from ..metrics import get_scorer
@@ -424,11 +424,11 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
     return grad, hessp
 
 
-def _check_solver_option(solver, multi_class, penalty, dual, fit_intercept,
-                         n_samples, previous_default_solver='liblinear'):
+def _check_solver_option(solver, multi_class, penalty, dual,
+                         previous_default_solver='liblinear'):
 
     # default values raises a future warning
-    if solver == 'default':
+    if solver == 'warn':
         # solver will eventually change back to previous_default_solver, but we
         # warn only if the 'auto' solver would have selected a different solver
         solver = 'auto'
@@ -436,7 +436,7 @@ def _check_solver_option(solver, multi_class, penalty, dual, fit_intercept,
     else:
         warn_solver = False
 
-    if multi_class == 'default':
+    if multi_class == 'warn':
         multi_class = 'ovr'
         warnings.warn("Default multi_class will be changed to 'multinomial' in"
                       " 0.22. Use a specific option to silence this warning.",
@@ -492,9 +492,9 @@ def _check_solver_option(solver, multi_class, penalty, dual, fit_intercept,
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
-                             solver='default', coef=None,
+                             solver='warn', coef=None,
                              class_weight=None, dual=False, penalty='l2',
-                             intercept_scaling=1., multi_class='default',
+                             intercept_scaling=1., multi_class='warn',
                              random_state=None, check_input=True,
                              max_squared_sum=None, sample_weight=None):
     """Compute a Logistic Regression model for a list of regularization
@@ -642,7 +642,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     n_samples, n_features = X.shape
     solver, multi_class = _check_solver_option(
-        solver, multi_class, penalty, dual, fit_intercept, n_samples, 'lbfgs')
+        solver, multi_class, penalty, dual, 'lbfgs')
 
     classes = np.unique(y)
     random_state = check_random_state(random_state)
@@ -754,10 +754,12 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     n_iter = np.zeros(len(Cs), dtype=np.int32)
     for i, C in enumerate(Cs):
         if solver == 'lbfgs':
+            iprint = [-1, 50, 1, 100, 101][
+                np.searchsorted(np.array([0, 1, 2, 3]), verbose)]
             w0, loss, info = optimize.fmin_l_bfgs_b(
                 func, w0, fprime=None,
                 args=(X, target, 1. / C, sample_weight),
-                iprint=(verbose > 0) - 1, pgtol=tol, maxiter=max_iter)
+                iprint=iprint, pgtol=tol, maxiter=max_iter)
             if info["warnflag"] == 1:
                 warnings.warn("lbfgs failed to converge. Increase the number "
                               "of iterations.", ConvergenceWarning)
@@ -817,9 +819,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           scoring=None, fit_intercept=False,
                           max_iter=100, tol=1e-4, class_weight=None,
-                          verbose=0, solver='default', penalty='l2',
+                          verbose=0, solver='warn', penalty='l2',
                           dual=False, intercept_scaling=1.,
-                          multi_class='default', random_state=None,
+                          multi_class='warn', random_state=None,
                           max_squared_sum=None, sample_weight=None):
     """Computes scores across logistic_regression_path
 
@@ -945,7 +947,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     """
     n_samples, n_features = X.shape
     solver, multi_class = _check_solver_option(
-        solver, multi_class, penalty, dual, fit_intercept, n_samples, 'lbfgs')
+        solver, multi_class, penalty, dual, 'lbfgs')
 
     X_train = X[train]
     X_test = X[test]
@@ -967,7 +969,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         check_input=False, max_squared_sum=max_squared_sum,
         sample_weight=sample_weight)
 
-    log_reg = LogisticRegression(fit_intercept=fit_intercept)
+    log_reg = LogisticRegression(multi_class=multi_class)
 
     # The score method of Logistic Regression has a classes_ attribute.
     if multi_class == 'ovr':
@@ -1214,8 +1216,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
-                 random_state=None, solver='default', max_iter=100,
-                 multi_class='default', verbose=0, warm_start=False, n_jobs=1):
+                 random_state=None, solver='warn', max_iter=100,
+                 multi_class='warn', verbose=0, warm_start=False, n_jobs=1):
 
         self.penalty = penalty
         self.dual = dual
@@ -1267,7 +1269,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         solver, multi_class = _check_solver_option(
             self.solver, self.multi_class, self.penalty, self.dual,
-            self.fit_intercept, _num_samples(X), 'liblinear')
+            'liblinear')
 
         if solver in ['newton-cg']:
             _dtype = [np.float64, np.float32]
@@ -1393,8 +1395,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         # This check can be removed in 0.22, changing back to self.multi_class
         _, multi_class = _check_solver_option(
-            self.solver, self.multi_class, self.penalty, self.dual,
-            self.fit_intercept, _num_samples(X))
+            self.solver, self.multi_class, self.penalty, self.dual)
 
         if multi_class == "ovr":
             return super(LogisticRegression, self)._predict_proba_lr(X)
@@ -1463,11 +1464,15 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the decision function.
 
-    cv : integer or cross-validation generator
+    cv : integer or cross-validation generator, default: None
         The default cross-validation generator used is Stratified K-Folds.
         If an integer is provided, then it is the number of folds used.
         See the module :mod:`sklearn.model_selection` module for the
         list of possible cross-validation objects.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     dual : bool
         Dual or primal formulation. Dual formulation is only implemented for
@@ -1629,11 +1634,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     LogisticRegression
 
     """
-
-    def __init__(self, Cs=10, fit_intercept=True, cv=None, dual=False,
-                 penalty='l2', scoring=None, solver='default', tol=1e-4,
+    def __init__(self, Cs=10, fit_intercept=True, cv='warn', dual=False,
+                 penalty='l2', scoring=None, solver='warn', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=1, verbose=0,
-                 refit=True, intercept_scaling=1., multi_class='default',
+                 refit=True, intercept_scaling=1., multi_class='warn',
                  random_state=None):
         self.Cs = Cs
         self.fit_intercept = fit_intercept
@@ -1673,8 +1677,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self : object
         """
         solver, multi_class = _check_solver_option(
-            self.solver, self.multi_class, self.penalty, self.dual,
-            self.fit_intercept, _num_samples(X), 'lbfgs')
+            self.solver, self.multi_class, self.penalty, self.dual, 'lbfgs')
 
         if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
             raise ValueError("Maximum number of iteration must be positive;"
