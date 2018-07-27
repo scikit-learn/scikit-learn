@@ -163,6 +163,7 @@ def _sparse_data_to_array(arff_data, dtype, include_columns):
     y_shape = (num_obs, len(include_columns))
     reindexed_columns = {column_idx: array_idx for array_idx, column_idx
                          in enumerate(include_columns)}
+    # TODO: improve for efficiency
     y = np.empty(y_shape, dtype=dtype)
     for val, row_idx, col_idx in zip(arff_data[0], arff_data[1], arff_data[2]):
         if col_idx in include_columns:
@@ -203,12 +204,17 @@ def _convert_arff_data(arff_data, dtype_x, col_slice_x, dtype_y, col_slice_y):
     y : np.array
     """
     if isinstance(arff_data, list):
+        # FIXME: It would be better to use structured arrays, to circumvent
+        # using an dtype=object array
         data = np.array(arff_data, dtype=object)
         X = np.array(data[:, col_slice_x], dtype=dtype_x)
         y = np.array(data[:, col_slice_y], dtype=dtype_y)
         return X, y
     elif isinstance(arff_data, tuple):
         if dtype_x is not np.float64:
+            # note that dtype_x is in {np.float64, object}. In case the data
+            # consists of integers, dtype will be np.float64 cf. the arff
+            # specifications
             raise ValueError('sparse array only allowed for numeric columns')
         arff_data_X = _split_sparse_columns(arff_data, col_slice_x)
         num_obs = max(arff_data[1]) + 1
@@ -390,16 +396,16 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     data : Bunch
         Dictionary-like object, the interesting attributes are:
-        data : np.array
-            the data to learn
+        data : np.array or scipy.sparse.csr_matrix
+            the feature matrix
         target : np.array
-            the regression target or classification labels
+            the regression target or classification labels, if applicable
         DESCR : str
             the full description of the dataset
         feature_names : list
             the original names of the dataset columns
         details : json
-            more information on the openml meta-data.
+            more metadata from OpenML
 
         Missing values in the 'data' and 'target' field are represented as
         NaN's.
@@ -409,9 +415,6 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     if cache is False:
         # no caching will be applied
         data_home = None
-    else:
-        if not exists(data_home):
-            os.makedirs(data_home)
 
     # check valid function arguments. data_id XOR (name, version) should be
     # provided
