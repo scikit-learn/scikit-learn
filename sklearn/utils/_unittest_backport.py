@@ -149,7 +149,7 @@ class _AssertRaisesContext(_AssertRaisesBaseContext):
 
 
 class TestCase(unittest.TestCase):
-    longMessage = False
+    longMessage = True
     failureException = AssertionError
 
     def _formatMessage(self, msg, standardMsg):

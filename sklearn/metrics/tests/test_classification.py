@@ -1,11 +1,11 @@
 from __future__ import division, print_function
 
-import numpy as np
-from scipy import linalg
 from functools import partial
 from itertools import product
 import warnings
 
+import numpy as np
+from scipy import linalg
 import pytest
 
 from sklearn import datasets
@@ -31,6 +31,7 @@ from sklearn.utils.mocking import MockDataFrame
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
+from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import classification_report
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
@@ -667,50 +668,6 @@ def test_zero_precision_recall():
         np.seterr(**old_error_settings)
 
 
-def test_confusion_matrix_multiclass():
-    # Test confusion matrix - multi-class case
-    y_true, y_pred, _ = make_prediction(binary=False)
-
-    def test(y_true, y_pred, string_type=False):
-        # compute confusion matrix with default labels introspection
-        cm = confusion_matrix(y_true, y_pred)
-        assert_array_equal(cm, [[19, 4, 1],
-                                [4, 3, 24],
-                                [0, 2, 18]])
-
-        # compute confusion matrix with explicit label ordering
-        labels = ['0', '2', '1'] if string_type else [0, 2, 1]
-        cm = confusion_matrix(y_true,
-                              y_pred,
-                              labels=labels)
-        assert_array_equal(cm, [[19, 1, 4],
-                                [0, 18, 2],
-                                [4, 24, 3]])
-
-    test(y_true, y_pred)
-    test(list(str(y) for y in y_true),
-         list(str(y) for y in y_pred),
-         string_type=True)
-
-
-def test_confusion_matrix_sample_weight():
-    """Test confusion matrix - case with sample_weight"""
-    y_true, y_pred, _ = make_prediction(binary=False)
-
-    weights = [.1] * 25 + [.2] * 25 + [.3] * 25
-
-    cm = confusion_matrix(y_true, y_pred, sample_weight=weights)
-
-    true_cm = (.1 * confusion_matrix(y_true[:25], y_pred[:25]) +
-               .2 * confusion_matrix(y_true[25:50], y_pred[25:50]) +
-               .3 * confusion_matrix(y_true[50:], y_pred[50:]))
-
-    assert_array_almost_equal(cm, true_cm)
-    assert_raises(
-        ValueError, confusion_matrix, y_true, y_pred,
-        sample_weight=weights[:-1])
-
-
 def test_confusion_matrix_multiclass_subset_labels():
     # Test confusion matrix - multi-class case with subset of labels
     y_true, y_pred, _ = make_prediction(binary=False)
@@ -752,13 +709,13 @@ def test_confusion_matrix_dtype():
         assert_equal(cm.dtype, np.float64)
 
     # np.iinfo(np.uint32).max should be accumulated correctly
-    weight = np.ones(len(y), dtype=np.uint32) * 4294967295
+    weight = np.full(len(y), 4294967295, dtype=np.uint32)
     cm = confusion_matrix(y, y, sample_weight=weight)
     assert_equal(cm[0, 0], 4294967295)
     assert_equal(cm[1, 1], 8589934590)
 
     # np.iinfo(np.int64).max should cause an overflow
-    weight = np.ones(len(y), dtype=np.int64) * 9223372036854775807
+    weight = np.full(len(y), 9223372036854775807, dtype=np.int64)
     cm = confusion_matrix(y, y, sample_weight=weight)
     assert_equal(cm[0, 0], 9223372036854775807)
     assert_equal(cm[1, 1], -2)
@@ -990,7 +947,6 @@ def test_multilabel_hamming_loss():
     assert_equal(hamming_loss(y1, np.zeros_like(y1), sample_weight=w), 2. / 3)
     # sp_hamming only works with 1-D arrays
     assert_equal(hamming_loss(y1[0], y2[0]), sp_hamming(y1[0], y2[0]))
-    assert_warns(DeprecationWarning, hamming_loss, y1, y2, classes=[0, 1])
 
 
 def test_multilabel_jaccard_similarity_score():
@@ -1505,7 +1461,7 @@ def test_hinge_loss_multiclass():
         1 - pred_decision[4][3] + pred_decision[4][2],
         1 - pred_decision[5][2] + pred_decision[5][3]
     ])
-    dummy_losses[dummy_losses <= 0] = 0
+    np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert_equal(hinge_loss(y_true, pred_decision),
                  dummy_hinge_loss)
@@ -1543,7 +1499,7 @@ def test_hinge_loss_multiclass_with_missing_labels():
         1 - pred_decision[3][1] + pred_decision[3][2],
         1 - pred_decision[4][2] + pred_decision[4][3]
     ])
-    dummy_losses[dummy_losses <= 0] = 0
+    np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert_equal(hinge_loss(y_true, pred_decision, labels=labels),
                  dummy_hinge_loss)
@@ -1570,7 +1526,7 @@ def test_hinge_loss_multiclass_invariance_lists():
         1 - pred_decision[4][3] + pred_decision[4][2],
         1 - pred_decision[5][2] + pred_decision[5][3]
     ])
-    dummy_losses[dummy_losses <= 0] = 0
+    np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert_equal(hinge_loss(y_true, pred_decision),
                  dummy_hinge_loss)
@@ -1675,3 +1631,26 @@ def test_brier_score_loss():
     # calculate even if only single class in y_true (#6980)
     assert_almost_equal(brier_score_loss([0], [0.5]), 0.25)
     assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)
+
+
+def test_balanced_accuracy_score_unseen():
+    assert_warns_message(UserWarning, 'y_pred contains classes not in y_true',
+                         balanced_accuracy_score, [0, 0, 0], [0, 0, 1])
+
+
+@pytest.mark.parametrize('y_true,y_pred',
+                         [
+                             (['a', 'b', 'a', 'b'], ['a', 'a', 'a', 'b']),
+                             (['a', 'b', 'c', 'b'], ['a', 'a', 'a', 'b']),
+                             (['a', 'a', 'a', 'b'], ['a', 'b', 'c', 'b']),
+                         ])
+def test_balanced_accuracy_score(y_true, y_pred):
+    macro_recall = recall_score(y_true, y_pred, average='macro',
+                                labels=np.unique(y_true))
+    with ignore_warnings():
+        # Warnings are tested in test_balanced_accuracy_score_unseen
+        balanced = balanced_accuracy_score(y_true, y_pred)
+    assert balanced == pytest.approx(macro_recall)
+    adjusted = balanced_accuracy_score(y_true, y_pred, adjusted=True)
+    chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
+    assert adjusted == (balanced - chance) / (1 - chance)

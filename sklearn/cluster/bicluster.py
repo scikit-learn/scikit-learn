@@ -258,6 +258,22 @@ class SpectralCoclustering(BaseSpectral):
     column_labels_ : array-like, shape (n_cols,)
         The bicluster label of each column.
 
+    Examples
+    --------
+    >>> from sklearn.cluster import SpectralCoclustering
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> clustering = SpectralCoclustering(n_clusters=2, random_state=0).fit(X)
+    >>> clustering.row_labels_
+    array([0, 1, 1, 0, 0, 0], dtype=int32)
+    >>> clustering.column_labels_
+    array([0, 0], dtype=int32)
+    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    SpectralCoclustering(init='k-means++', mini_batch=False, n_clusters=2,
+               n_init=10, n_jobs=1, n_svd_vecs=None, random_state=0,
+               svd_method='randomized')
+
     References
     ----------
 
@@ -388,6 +404,23 @@ class SpectralBiclustering(BaseSpectral):
 
     column_labels_ : array-like, shape (n_cols,)
         Column partition labels.
+
+    Examples
+    --------
+    >>> from sklearn.cluster import SpectralBiclustering
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> clustering = SpectralBiclustering(n_clusters=2, random_state=0).fit(X)
+    >>> clustering.row_labels_
+    array([1, 1, 1, 0, 0, 0], dtype=int32)
+    >>> clustering.column_labels_
+    array([0, 1], dtype=int32)
+    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    SpectralBiclustering(init='k-means++', method='bistochastic',
+               mini_batch=False, n_best=3, n_clusters=2, n_components=6,
+               n_init=10, n_jobs=1, n_svd_vecs=None, random_state=0,
+               svd_method='randomized')
 
     References
     ----------

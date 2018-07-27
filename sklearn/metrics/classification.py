@@ -223,6 +223,8 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     ----------
     .. [1] `Wikipedia entry for the Confusion matrix
            <https://en.wikipedia.org/wiki/Confusion_matrix>`_
+           (Wikipedia and other references may use a different
+           convention for axes)
 
     Examples
     --------
@@ -1365,16 +1367,15 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     return r
 
 
-def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
+def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
+                            adjusted=False):
     """Compute the balanced accuracy
 
-    The balanced accuracy is used in binary classification problems to deal
-    with imbalanced datasets. It is defined as the arithmetic mean of
-    sensitivity (true positive rate) and specificity (true negative rate),
-    or the average recall obtained on either class. It is also equal to the
-    ROC AUC score given binary inputs.
+    The balanced accuracy in binary and multiclass classification problems to
+    deal with imbalanced datasets. It is defined as the average of recall
+    obtained on each class.
 
-    The best value is 1 and the worst value is 0.
+    The best value is 1 and the worst value is 0 when ``adjusted=False``.
 
     Read more in the :ref:`User Guide <balanced_accuracy_score>`.
 
@@ -1389,10 +1390,13 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+    adjusted : bool, default=False
+        When true, the result is adjusted for chance, so that random
+        performance would score 0, and perfect performance scores 1.
+
     Returns
     -------
-    balanced_accuracy : float.
-        The average of sensitivity and specificity
+    balanced_accuracy : float
 
     See also
     --------
@@ -1404,6 +1408,10 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
            The balanced accuracy and its posterior distribution.
            Proceedings of the 20th International Conference on Pattern
            Recognition, 3121-24.
+    .. [2] John. D. Kelleher, Brian Mac Namee, Aoife D'Arcy, (2015).
+           `Fundamentals of Machine Learning for Predictive Data Analytics:
+           Algorithms, Worked Examples, and Case Studies
+           <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_.
 
     Examples
     --------
@@ -1414,16 +1422,19 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
     0.625
 
     """
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-
-    if y_type != 'binary':
-        raise ValueError('Balanced accuracy is only meaningful '
-                         'for binary classification problems.')
-    # simply wrap the ``recall_score`` function
-    return recall_score(y_true, y_pred,
-                        pos_label=None,
-                        average='macro',
-                        sample_weight=sample_weight)
+    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        per_class = np.diag(C) / C.sum(axis=1)
+    if np.any(np.isnan(per_class)):
+        warnings.warn('y_pred contains classes not in y_true')
+        per_class = per_class[~np.isnan(per_class)]
+    score = np.mean(per_class)
+    if adjusted:
+        n_classes = len(per_class)
+        chance = 1 / n_classes
+        score -= chance
+        score /= 1 - chance
+    return score
 
 
 def classification_report(y_true, y_pred, labels=None, target_names=None,
@@ -1450,9 +1461,11 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         Sample weights.
 
     digits : int
-        Number of digits for formatting output floating point values
+        Number of digits for formatting output floating point values.
+        When ``output_dict`` is ``True``, this will be ignored and the
+        returned values will not be rounded.
 
-    output_dict: bool (default = False)
+    output_dict : bool (default = False)
         If True, return output as dict
 
     Returns
@@ -1460,7 +1473,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     report : string / dict
         Text summary of the precision, recall, F1 score for each class.
         Dictionary returned if output_dict is True. Dictionary has the
-        following structure:
+        following structure::
+
             {'label 1': {'precision':0.5,
                          'recall':1.0,
                          'f1-score':0.67,
@@ -1563,8 +1577,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     return report
 
 
-def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
-                 classes=None):
+def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -1589,13 +1602,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
         Sample weights.
 
         .. versionadded:: 0.18
-
-    classes : array, shape = [n_labels], optional
-        Integer array of labels.
-
-        .. deprecated:: 0.18
-           This parameter has been deprecated in favor of ``labels`` in
-           version 0.18 and will be removed in 0.20. Use ``labels`` instead.
 
     Returns
     -------
@@ -1644,10 +1650,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
     """
-    if classes is not None:
-        warnings.warn("'classes' was renamed to 'labels' in version 0.18 and "
-                      "will be removed in 0.20.", DeprecationWarning)
-        labels = classes
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
@@ -1919,7 +1921,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
 
     losses = 1 - margin
     # The hinge_loss doesn't penalize good enough predictions.
-    losses[losses <= 0] = 0
+    np.clip(losses, 0, None, out=losses)
     return np.average(losses, weights=sample_weight)
 
 
