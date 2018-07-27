@@ -608,7 +608,7 @@ def test_set_pipeline_step_none():
     with pytest.warns(DeprecationWarning, match=depr_message):
         assert_array_equal([[exp]], pipeline.fit_transform(X, y))
 
-    # make pipeline with Non
+    # make pipeline with None
     depr_message = ("Estimator 'nonetype' is set to None. Please use "
                     "'passthrough' for the same behavior. "
                     "None has been deprecated "
