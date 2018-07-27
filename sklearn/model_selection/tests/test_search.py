@@ -1385,6 +1385,9 @@ class FailingClassifier(BaseEstimator):
     def predict(self, X):
         return np.zeros(X.shape[0])
 
+    def score(self, X=None, Y=None):
+        return 0.
+
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_failing_classifier():

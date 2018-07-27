@@ -41,7 +41,7 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
                    n_jobs=1, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score="warn",
-                   return_estimator=False):
+                   return_estimator=False, error_score='raise-deprecating'):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
     Read more in the :ref:`User Guide <multimetric_cross_validation>`.
@@ -139,6 +139,16 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
     return_estimator : boolean, default False
         Whether to return the estimators fitted on each split.
 
+    error_score : 'raise' | 'raise-deprecating' or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised.
+        If set to 'raise-deprecating', a FutureWarning is printed before the
+        error is raised.
+        If a numeric value is given, FitFailedWarning is raised. This parameter
+        does not affect the refit step, which will always raise the error.
+        Default is 'raise-deprecating' but from version 0.22 it will change
+        to np.nan.
+
     Returns
     -------
     scores : dict of float arrays of shape=(n_splits,)
@@ -223,7 +233,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
         delayed(_fit_and_score)(
             clone(estimator), X, y, scorers, train, test, verbose, None,
             fit_params, return_train_score=return_train_score,
-            return_times=True, return_estimator=return_estimator)
+            return_times=True, return_estimator=return_estimator,
+            error_score=error_score)
         for train, test in cv.split(X, y, groups))
 
     zipped_scores = list(zip(*scores))
@@ -262,7 +273,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
 
 def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
                     n_jobs=1, verbose=0, fit_params=None,
-                    pre_dispatch='2*n_jobs'):
+                    pre_dispatch='2*n_jobs', error_score='raise-deprecating'):
     """Evaluate a score by cross-validation
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -335,6 +346,16 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
+    error_score : 'raise' | 'raise-deprecating' or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised.
+        If set to 'raise-deprecating', a FutureWarning is printed before the
+        error is raised.
+        If a numeric value is given, FitFailedWarning is raised. This parameter
+        does not affect the refit step, which will always raise the error.
+        Default is 'raise-deprecating' but from version 0.22 it will change
+        to np.nan.
+
     Returns
     -------
     scores : array of float, shape=(len(list(cv)),)
@@ -373,7 +394,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
                                 return_train_score=False,
                                 n_jobs=n_jobs, verbose=verbose,
                                 fit_params=fit_params,
-                                pre_dispatch=pre_dispatch)
+                                pre_dispatch=pre_dispatch,
+                                error_score=error_score)
     return cv_results['test_score']
 
 
@@ -415,12 +437,15 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     verbose : integer
         The verbosity level.
 
-    error_score : 'raise' or numeric
+    error_score : 'raise' | 'raise-deprecating' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
-        If set to 'raise', the error is raised. If a numeric value is given,
-        FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is 'raise' but from
-        version 0.22 it will change to np.nan.
+        If set to 'raise', the error is raised.
+        If set to 'raise-deprecating', a FutureWarning is printed before the
+        error is raised.
+        If a numeric value is given, FitFailedWarning is raised. This parameter
+        does not affect the refit step, which will always raise the error.
+        Default is 'raise-deprecating' but from version 0.22 it will change
+        to np.nan.
 
     parameters : dict or None
         Parameters to be set on the estimator.
@@ -1045,7 +1070,7 @@ def learning_curve(estimator, X, y, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv='warn',
                    scoring=None, exploit_incremental_learning=False, n_jobs=1,
                    pre_dispatch="all", verbose=0, shuffle=False,
-                   random_state=None):
+                   random_state=None,  error_score='raise-deprecating'):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training
@@ -1136,6 +1161,16 @@ def learning_curve(estimator, X, y, groups=None,
         If None, the random number generator is the RandomState instance used
         by `np.random`. Used when ``shuffle`` is True.
 
+    error_score : 'raise' | 'raise-deprecating' or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised.
+        If set to 'raise-deprecating', a FutureWarning is printed before the
+        error is raised.
+        If a numeric value is given, FitFailedWarning is raised. This parameter
+        does not affect the refit step, which will always raise the error.
+        Default is 'raise-deprecating' but from version 0.22 it will change
+        to np.nan.
+
     Returns
     -------
     train_sizes_abs : array, shape (n_unique_ticks,), dtype int
@@ -1194,8 +1229,9 @@ def learning_curve(estimator, X, y, groups=None,
                 train_test_proportions.append((train[:n_train_samples], test))
 
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, train, test,
-            verbose, parameters=None, fit_params=None, return_train_score=True)
+            clone(estimator), X, y, scorer, train, test, verbose,
+            parameters=None, fit_params=None, return_train_score=True,
+            error_score=error_score)
             for train, test in train_test_proportions)
         out = np.array(out)
         n_cv_folds = out.shape[0] // n_unique_ticks
@@ -1288,7 +1324,7 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
 
 def validation_curve(estimator, X, y, param_name, param_range, groups=None,
                      cv='warn', scoring=None, n_jobs=1, pre_dispatch="all",
-                     verbose=0):
+                     verbose=0, error_score='raise-deprecating'):
     """Validation curve.
 
     Determine training and test scores for varying parameter values.
@@ -1359,6 +1395,16 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     verbose : integer, optional
         Controls the verbosity: the higher, the more messages.
 
+    error_score : 'raise' | 'raise-deprecating' or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised.
+        If set to 'raise-deprecating', a FutureWarning is printed before the
+        error is raised.
+        If a numeric value is given, FitFailedWarning is raised. This parameter
+        does not affect the refit step, which will always raise the error.
+        Default is 'raise-deprecating' but from version 0.22 it will change
+        to np.nan.
+
     Returns
     -------
     train_scores : array, shape (n_ticks, n_cv_folds)
@@ -1381,7 +1427,8 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
         clone(estimator), X, y, scorer, train, test, verbose,
-        parameters={param_name: v}, fit_params=None, return_train_score=True)
+        parameters={param_name: v}, fit_params=None, return_train_score=True,
+        error_score=error_score)
         # NOTE do not change order of iteration to allow one time cv splitters
         for train, test in cv.split(X, y, groups) for v in param_range)
     out = np.asarray(out)
