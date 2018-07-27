@@ -215,7 +215,7 @@ def test_weighted_classification_toy():
         assert_array_equal(clf.predict(T), true_result,
                            "Failed with {0}".format(name))
 
-        clf.fit(X, y, sample_weight=np.ones(len(X)) * 0.5)
+        clf.fit(X, y, sample_weight=np.full(len(X), 0.5))
         assert_array_equal(clf.predict(T), true_result,
                            "Failed with {0}".format(name))
 
@@ -1281,13 +1281,13 @@ def test_with_only_one_non_constant_features():
         est = TreeEstimator(random_state=0, max_features=1)
         est.fit(X, y)
         assert_equal(est.tree_.max_depth, 1)
-        assert_array_equal(est.predict_proba(X), 0.5 * np.ones((4, 2)))
+        assert_array_equal(est.predict_proba(X), np.full((4, 2), 0.5))
 
     for name, TreeEstimator in REG_TREES.items():
         est = TreeEstimator(random_state=0, max_features=1)
         est.fit(X, y)
         assert_equal(est.tree_.max_depth, 1)
-        assert_array_equal(est.predict(X), 0.5 * np.ones((4, )))
+        assert_array_equal(est.predict(X), np.full((4, ), 0.5))
 
 
 def test_big_input():

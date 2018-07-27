@@ -86,8 +86,8 @@ def test_initialize_variants():
 @ignore_warnings(category=UserWarning)
 def test_nmf_fit_nn_output():
     # Test that the decomposition does not contain negative values
-    A = np.c_[5 * np.ones(5) - np.arange(1, 6),
-              5 * np.ones(5) + np.arange(1, 6)]
+    A = np.c_[5. - np.arange(1, 6),
+              5. + np.arange(1, 6)]
     for solver in ('cd', 'mu'):
         for init in (None, 'nndsvd', 'nndsvda', 'nndsvdar', 'random'):
             model = NMF(n_components=2, solver=solver, init=init,

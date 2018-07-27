@@ -434,7 +434,7 @@ class KFold(_BaseKFold):
             check_random_state(self.random_state).shuffle(indices)
 
         n_splits = self.n_splits
-        fold_sizes = (n_samples // n_splits) * np.ones(n_splits, dtype=np.int)
+        fold_sizes = np.full(n_splits, n_samples // n_splits, dtype=np.int)
         fold_sizes[:n_samples % n_splits] += 1
         current = 0
         for fold_size in fold_sizes:

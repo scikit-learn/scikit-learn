@@ -429,7 +429,7 @@ def test_logistic_grad_hess():
     X_sp[X_sp < .1] = 0
     X_sp = sp.csr_matrix(X_sp)
     for X in (X_ref, X_sp):
-        w = .1 * np.ones(n_features)
+        w = np.full(n_features, .1)
 
         # First check that _logistic_grad_hess is consistent
         # with _logistic_loss_and_grad
