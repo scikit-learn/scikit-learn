@@ -2,7 +2,7 @@ import gzip
 import json
 import os
 import shutil
-from os.path import join, exists
+from os.path import join
 from warnings import warn
 
 try:
