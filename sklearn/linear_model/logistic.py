@@ -696,7 +696,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             le = LabelEncoder()
             Y_multi = le.fit_transform(y).astype(X.dtype, copy=False)
 
-        w0 = np.zeros((classes.size, n_features + int(fit_intercept)),
+        w0 = np.zeros((max(2, classes.size), n_features + int(fit_intercept)),
                       order='F', dtype=X.dtype)
 
     if coef is not None:
@@ -803,8 +803,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              "'newton-cg', 'sag'}, got '%s' instead" % solver)
 
         if multi_class == 'multinomial':
-            multi_w0 = np.reshape(w0, (classes.size, -1))
-            if classes.size == 2:
+            n_classes = max(2, classes.size)
+            multi_w0 = np.reshape(w0, (n_classes, -1))
+            if n_classes == 2:
                 multi_w0 = multi_w0[1][np.newaxis, :]
             coefs.append(multi_w0)
         else:
@@ -969,7 +970,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         check_input=False, max_squared_sum=max_squared_sum,
         sample_weight=sample_weight)
 
-    log_reg = LogisticRegression(multi_class=multi_class)
+    log_reg = LogisticRegression(solver=solver, multi_class=multi_class)
 
     # The score method of Logistic Regression has a classes_ attribute.
     if multi_class == 'ovr':
