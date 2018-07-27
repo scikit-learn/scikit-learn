@@ -47,6 +47,7 @@ The following people have been core contributors to scikit-learn's development a
   * `Kyle Kastner <http://kastnerkyle.github.io>`_
   * `Manoj Kumar <https://manojbits.wordpress.com>`_
   * Robert Layton
+  * `Guillaume Lemaitre <https://github.com/glemaitre>`_
   * `Wei Li <http://kuantkid.github.io/>`_
   * Paolo Losi
   * `Gilles Louppe <http://glouppe.github.io/>`_
@@ -59,11 +60,14 @@ The following people have been core contributors to scikit-learn's development a
   * `Alexandre Passos <http://atpassos.posterous.com>`_
   * `Fabian Pedregosa <http://fa.bianp.net/blog/>`_
   * `Peter Prettenhofer <https://sites.google.com/site/peterprettenhofer/>`_
+  * `Hanmin Qin <https://github.com/qinhanmin2014>`_
   * Bertrand Thirion
+  * `Joris Van den Bossche <https://github.com/jorisvandenbossche>`_
   * `Jake VanderPlas <http://staff.washington.edu/jakevdp/>`_
   * Nelle Varoquaux
   * `Gael Varoquaux <http://gael-varoquaux.info/>`_
   * Ron Weiss
+  * `Roman Yurchak <https://github.com/rth>`_
 
 Please do not email the authors directly to ask for assistance or report issues.
 Instead, please see `What's the best way to ask questions about scikit-learn

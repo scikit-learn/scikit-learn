@@ -384,7 +384,7 @@ class Parallel(Logger):
         A simple example:
 
         >>> from math import sqrt
-        >>> from sklearn.externals.joblib import Parallel, delayed
+        >>> from sklearn.utils import Parallel, delayed
         >>> Parallel(n_jobs=1)(delayed(sqrt)(i**2) for i in range(10))
         [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
 
@@ -392,7 +392,7 @@ class Parallel(Logger):
         values:
 
         >>> from math import modf
-        >>> from sklearn.externals.joblib import Parallel, delayed
+        >>> from sklearn.utils import Parallel, delayed
         >>> r = Parallel(n_jobs=1)(delayed(modf)(i/2.) for i in range(10))
         >>> res, i = zip(*r)
         >>> res
@@ -404,7 +404,7 @@ class Parallel(Logger):
         messages:
 
         >>> from time import sleep
-        >>> from sklearn.externals.joblib import Parallel, delayed
+        >>> from sklearn.utils import Parallel, delayed
         >>> r = Parallel(n_jobs=2, verbose=5)(delayed(sleep)(.1) for _ in range(10)) #doctest: +SKIP
         [Parallel(n_jobs=2)]: Done   1 out of  10 | elapsed:    0.1s remaining:    0.9s
         [Parallel(n_jobs=2)]: Done   3 out of  10 | elapsed:    0.2s remaining:    0.5s
@@ -418,7 +418,7 @@ class Parallel(Logger):
         child process:
 
         >>> from heapq import nlargest
-        >>> from sklearn.externals.joblib import Parallel, delayed
+        >>> from sklearn.utils import Parallel, delayed
         >>> Parallel(n_jobs=2)(delayed(nlargest)(2, n) for n in (range(4), 'abcde', 3)) #doctest: +SKIP
         #...
         ---------------------------------------------------------------------------
@@ -449,7 +449,7 @@ class Parallel(Logger):
         number of iterations cannot be reported in the progress messages:
 
         >>> from math import sqrt
-        >>> from sklearn.externals.joblib import Parallel, delayed
+        >>> from sklearn.utils import Parallel, delayed
         >>> def producer():
         ...     for i in range(6):
         ...         print('Produced %s' % i)

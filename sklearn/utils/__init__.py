@@ -1,7 +1,8 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
-from collections import Sequence
+import numbers
+import platform
 
 import numpy as np
 from scipy.sparse import issparse
@@ -14,8 +15,10 @@ from .validation import (as_float_array,
                          check_consistent_length, check_X_y, indexable,
                          check_symmetric)
 from .class_weight import compute_class_weight, compute_sample_weight
-from ..externals.joblib import cpu_count
+from ._joblib import cpu_count, Parallel, Memory, delayed, hash
+from ._joblib import parallel_backend
 from ..exceptions import DataConversionWarning
+from ..utils.fixes import _Sequence as Sequence
 from .deprecation import deprecated
 from .. import get_config
 
@@ -25,7 +28,11 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "compute_class_weight", "compute_sample_weight",
            "column_or_1d", "safe_indexing",
            "check_consistent_length", "check_X_y", 'indexable',
-           "check_symmetric", "indices_to_mask", "deprecated"]
+           "check_symmetric", "indices_to_mask", "deprecated",
+           "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
+           "hash"]
+
+IS_PYPY = platform.python_implementation() == 'PyPy'
 
 
 class Bunch(dict):
@@ -113,6 +120,21 @@ def axis0_safe_slice(X, mask, len_mask):
     is not going to be the bottleneck, since the number of outliers
     and non_outliers are typically non-zero and it makes the code
     tougher to follow.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}
+        Data on which to apply mask.
+
+    mask : array
+        Mask to be used on X.
+
+    len_mask : int
+        The length of the mask.
+
+    Returns
+    -------
+        mask
     """
     if len_mask != 0:
         return X[safe_mask(X, mask), :]
@@ -176,6 +198,8 @@ def resample(*arrays, **options):
         Indexable data-structures can be arrays, lists, dataframes or scipy
         sparse matrices with consistent first dimension.
 
+    Other Parameters
+    ----------------
     replace : boolean, True by default
         Implements resampling with replacement. If False, this will implement
         (sliced) random permutations.
@@ -286,6 +310,8 @@ def shuffle(*arrays, **options):
         Indexable data-structures can be arrays, lists, dataframes or scipy
         sparse matrices with consistent first dimension.
 
+    Other Parameters
+    ----------------
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
@@ -377,6 +403,16 @@ def gen_batches(n, batch_size):
     The last slice may contain less than batch_size elements, when batch_size
     does not divide n.
 
+    Parameters
+    ----------
+    n : int
+    batch_size : int
+        Number of element in each batch
+
+    Yields
+    ------
+    slice of batch_size elements
+
     Examples
     --------
     >>> from sklearn.utils import gen_batches
@@ -399,8 +435,19 @@ def gen_batches(n, batch_size):
 def gen_even_slices(n, n_packs, n_samples=None):
     """Generator to create n_packs slices going up to n.
 
-    Pass n_samples when the slices are to be used for sparse matrix indexing;
-    slicing off-the-end raises an exception, while it works for NumPy arrays.
+    Parameters
+    ----------
+    n : int
+    n_packs : int
+        Number of slices to generate.
+    n_samples : int or None (default = None)
+        Number of samples. Pass n_samples when the slices are to be used for
+        sparse matrix indexing; slicing off-the-end raises an exception, while
+        it works for NumPy arrays.
+
+    Yields
+    ------
+    slice
 
     Examples
     --------
@@ -553,3 +600,38 @@ def get_chunk_n_rows(row_bytes, max_n_rows=None,
                       (working_memory, np.ceil(row_bytes * 2 ** -20)))
         chunk_n_rows = 1
     return chunk_n_rows
+
+
+def is_scalar_nan(x):
+    """Tests if x is NaN
+
+    This function is meant to overcome the issue that np.isnan does not allow
+    non-numerical types as input, and that np.nan is not np.float('nan').
+
+    Parameters
+    ----------
+    x : any type
+
+    Returns
+    -------
+    boolean
+
+    Examples
+    --------
+    >>> is_scalar_nan(np.nan)
+    True
+    >>> is_scalar_nan(float("nan"))
+    True
+    >>> is_scalar_nan(None)
+    False
+    >>> is_scalar_nan("")
+    False
+    >>> is_scalar_nan([np.nan])
+    False
+    """
+
+    # convert from numpy.bool_ to python bool to ensure that testing
+    # is_scalar_nan(x) is True does not fail.
+    # Redondant np.floating is needed because numbers can't match np.float32
+    # in python 2.
+    return bool(isinstance(x, (numbers.Real, np.floating)) and np.isnan(x))

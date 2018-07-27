@@ -29,8 +29,8 @@ from ..utils import check_random_state
 from ..utils import gen_batches
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..externals.joblib import Parallel
-from ..externals.joblib import delayed
+from ..utils import Parallel
+from ..utils import delayed
 from ..externals.six import string_types
 from ..exceptions import ConvergenceWarning
 from . import _k_means
@@ -669,7 +669,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers,
     sample_weight = _check_sample_weight(X, sample_weight)
     # set the default value of centers to -1 to be able to detect any anomaly
     # easily
-    labels = -np.ones(n_samples, np.int32)
+    labels = np.full(n_samples, -1, np.int32)
     if distances is None:
         distances = np.zeros(shape=(0,), dtype=X.dtype)
     # distances will be changed in-place
@@ -859,6 +859,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     inertia_ : float
         Sum of squared distances of samples to their closest cluster center.
 
+    n_iter_ : int
+        Number of iterations run.
+
     Examples
     --------
 
@@ -886,7 +889,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     Notes
     ------
-    The k-means problem is solved using Lloyd's algorithm.
+    The k-means problem is solved using either Lloyd's or Elkan's algorithm.
 
     The average complexity is given by O(k n T), were n is the number of
     samples and T is the number of iteration.
@@ -898,6 +901,12 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     In practice, the k-means algorithm is very fast (one of the fastest
     clustering algorithms available), but it falls in local minima. That's why
     it can be useful to restart it several times.
+
+    If the algorithm stops before fully converging (because of ``tol`` of
+    ``max_iter``), ``labels_`` and ``means_`` will not be consistent, i.e. the
+    ``means_`` will not be the means of the points in each cluster.
+    Also, the estimator will reassign ``labels_`` after the last iteration to
+    make ``labels_`` consistent with ``predict`` on the training set.
 
     """
 
@@ -1394,6 +1403,36 @@ class MiniBatchKMeans(KMeans):
         partition (if compute_labels is set to True). The inertia is
         defined as the sum of square distances of samples to their nearest
         neighbor.
+
+    Examples
+    --------
+    >>> from sklearn.cluster import MiniBatchKMeans
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [4, 2], [4, 0], [4, 4],
+    ...               [4, 5], [0, 1], [2, 2],
+    ...               [3, 2], [5, 5], [1, -1]])
+    >>> # manually fit on batches
+    >>> kmeans = MiniBatchKMeans(n_clusters=2,
+    ...         random_state=0,
+    ...         batch_size=6)
+    >>> kmeans = kmeans.partial_fit(X[0:6,:])
+    >>> kmeans = kmeans.partial_fit(X[6:12,:])
+    >>> kmeans.cluster_centers_
+    array([[1, 1],
+           [3, 4]])
+    >>> kmeans.predict([[0, 0], [4, 4]])
+    array([0, 1], dtype=int32)
+    >>> # fit on the whole data
+    >>> kmeans = MiniBatchKMeans(n_clusters=2,
+    ...         random_state=0,
+    ...         batch_size=6,
+    ...         max_iter=10).fit(X)
+    >>> kmeans.cluster_centers_
+    array([[3.95918367, 2.40816327],
+           [1.12195122, 1.3902439 ]])
+    >>> kmeans.predict([[0, 0], [4, 4]])
+    array([1, 0], dtype=int32)
 
     See also
     --------
