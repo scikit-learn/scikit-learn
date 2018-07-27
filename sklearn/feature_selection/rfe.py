@@ -369,7 +369,7 @@ class RFECV(RFE, MetaEstimatorMixin):
             ``cv`` default value of None will change from 3-fold to 5-fold
             in v0.22.
 
-    scoring : string, callable or None, optional, default: None
+    scoring : string, callable or None, optional, (default=None)
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
