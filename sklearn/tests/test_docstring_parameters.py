@@ -23,20 +23,6 @@ PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
                                                         path=sklearn.__path__)
                       if not ("._" in pckg[1] or ".tests." in pckg[1])])
 
-# TODO Uncomment all modules and fix doc inconsistencies everywhere
-# The list of modules that are not tested for now
-IGNORED_MODULES = (
-    'cluster',
-    'datasets',
-    'model_selection',
-    'multioutput',
-    'setup',
-    # Deprecated modules
-    'cross_validation',
-    'grid_search',
-    'learning_curve',
-)
-
 
 # functions to ignore args / docstring of
 _DOCSTRING_IGNORES = [
@@ -75,8 +61,6 @@ def test_docstring_parameters():
 
     incorrect = []
     for name in PUBLIC_MODULES:
-        if name.startswith('_') or name.split(".")[1] in IGNORED_MODULES:
-            continue
         with warnings.catch_warnings(record=True):
             module = importlib.import_module(name)
         classes = inspect.getmembers(module, inspect.isclass)

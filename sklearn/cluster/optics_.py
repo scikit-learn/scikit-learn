@@ -331,7 +331,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.core_distances_ = np.empty(n_samples)
         self.core_distances_.fill(np.nan)
         # Start all points as noise ##
-        self.labels_ = -np.ones(n_samples, dtype=int)
+        self.labels_ = np.full(n_samples, -1, dtype=int)
         self.ordering_ = []
 
         # Check for valid n_samples relative to min_samples
@@ -551,7 +551,7 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     clustid = 0
     n_samples = len(reachability)
     is_core = np.zeros(n_samples, dtype=bool)
-    labels = -np.ones(n_samples, dtype=int)
+    labels = np.full(n_samples, -1, dtype=int)
     # Start all points as non-core noise
     for leaf in leaves:
         index = ordering[leaf.start:leaf.end]

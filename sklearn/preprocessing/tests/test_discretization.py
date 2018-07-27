@@ -52,7 +52,7 @@ def test_invalid_n_bins():
 
 def test_invalid_n_bins_array():
     # Bad shape
-    n_bins = np.ones((2, 4)) * 2
+    n_bins = np.full((2, 4), 2.)
     est = KBinsDiscretizer(n_bins=n_bins)
     assert_raise_message(ValueError,
                          "n_bins must be a scalar or array of shape "

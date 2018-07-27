@@ -172,8 +172,9 @@ Model evaluation
   evaluation of clustering models. :issue:`10827` by :user:`Luis Osa <logc>`.
 
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
-  ``'balanced_accuracy'`` scorer for binary classification.
-  :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
+  ``'balanced_accuracy'`` scorer for binary and multiclass classification.
+  :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`, and
+  :issue:`10587` by `Joel Nothman`_.
 
 Decomposition, manifold learning and clustering
 
@@ -376,6 +377,13 @@ Model evaluation and meta-estimators
   This will allow measuring the complete time it takes to perform
   hyperparameter optimization and refitting the best model on the whole
   dataset. :issue:`11310` by :user:`Matthias Feurer <mfeurer>`.
+
+- Expose `error_score` parameter in :func:`model_selection.cross_validate`,
+  :func:`model_selection.cross_val_score`,
+  :func:`model_selection.learning_curve` and
+  :func:`model_selection.validation_curve` to control the behavior triggered
+  when an error occurs in :func:`model_selection._fit_and_score`.
+  :issue:`11576` by :user:`Samuel O. Ronsin <samronsin>`.
 
 - Using ``None`` as a transformer in :class:`pipeline.FeatureUnion` is
   deprecated and will be removed in v0.22. Use ``'drop'`` instead.
@@ -916,6 +924,17 @@ Outlier Detection models
   ``score_samples``. By default, ``novelty`` is set to ``False``, and only
   the ``fit_predict`` method is avaiable.
   By :user:`Albert Thomas <albertcthomas>`.
+
+ - A ``behaviour`` parameter has been introduced in :class:`ensemble.IsolationForest`
+  to ensure backward compatibility.
+  In the old behaviour, the ``decision_function`` is independent of the ``contamination``
+  parameter. A threshold attribute depending on the ``contamination`` parameter is thus
+  used.
+  In the new behaviour the ``decision_function`` is dependent on the ``contamination``
+  parameter, in such a way that 0 becomes its natural threshold to detect outliers.
+  Setting behaviour to "old" is deprecated and will not be possible in version 0.22.
+  Beside, the behaviour parameter will be removed in 0.24.
+  :issue:`11553` by `Nicolas Goix`_.
 
 Covariance
 

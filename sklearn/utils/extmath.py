@@ -462,7 +462,7 @@ def weighted_mode(a, w, axis=0):
         w = np.asarray(w)
 
     if a.shape != w.shape:
-        w = np.zeros(a.shape, dtype=w.dtype) + w
+        w = np.full(a.shape, w, dtype=w.dtype)
 
     scores = np.unique(np.ravel(a))       # get ALL unique values
     testshape = list(a.shape)

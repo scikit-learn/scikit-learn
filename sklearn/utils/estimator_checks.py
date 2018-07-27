@@ -155,7 +155,7 @@ def check_supervised_y_no_nan(name, estimator_orig):
     estimator = clone(estimator_orig)
     rng = np.random.RandomState(888)
     X = rng.randn(10, 5)
-    y = np.ones(10) * np.inf
+    y = np.full(10, np.inf)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
     errmsg = "Input contains NaN, infinity or a value too large for " \
@@ -367,6 +367,13 @@ def set_checking_parameters(estimator):
 
     if estimator.__class__.__name__ == "TheilSenRegressor":
         estimator.max_subpopulation = 100
+
+    if estimator.__class__.__name__ == "IsolationForest":
+        # XXX to be removed in 0.22.
+        # this is used because the old IsolationForest does not
+        # respect the outlier detection API and thus and does not
+        # pass the outlier detection common tests.
+        estimator.set_params(behaviour='new')
 
     if isinstance(estimator, BaseRandomProjection):
         # Due to the jl lemma and often very few samples, the number
