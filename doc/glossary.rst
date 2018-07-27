@@ -165,8 +165,10 @@ General Concepts
         tree-based models such as random forests and gradient boosting
         models that often work better and faster with integer-coded
         categorical variables.
-        :class:`~sklearn.preprocessing.CategoricalEncoder` helps
-        encoding string-valued categorical features.
+        :class:`~sklearn.preprocessing.OrdinalEncoder` helps encoding
+        string-valued categorical features as ordinal integers, and
+        :class:`~sklearn.preprocessing.OneHotEncoder` can be used to
+        one-hot encode categorical features.
         See also :ref:`preprocessing_categorical_features` and the
         `http://contrib.scikit-learn.org/categorical-encoding
         <category_encoders>`_ package for tools related to encoding
@@ -200,7 +202,7 @@ General Concepts
         We use deprecation to slowly violate our :term:`backwards
         compatibility` assurances, usually to to:
 
-        * change the the default value of a parameter; or
+        * change the default value of a parameter; or
         * remove a parameter, attribute, method, class, etc.
 
         We will ordinarily issue a warning when a deprecated element is used,
@@ -286,6 +288,13 @@ General Concepts
         * For determining some aspects of an estimator's expectations or
           support for some feature, we use :term:`estimator tags` instead of
           duck typing.
+
+    early stopping
+        This consists in stopping an iterative optimization method before the
+        convergence of the training loss, to avoid over-fitting. This is
+        generally done by monitoring the generalization score on a validation
+        set. When available, it is activated through the parameter
+        ``early_stopping`` or by setting a positive :term:`n_iter_no_change`.
 
     estimator instance
         We sometimes use this terminology to distinguish an :term:`estimator`
@@ -433,6 +442,13 @@ General Concepts
     hyper-parameter
         See :term:`parameter`.
 
+    impute
+    imputation
+        Most machine learning algorithms require that their inputs have no
+        :term:`missing values`, and will not work if this requirement is
+        violated. Algorithms that attempt to fill in (or impute) missing values
+        are referred to as imputation algorithms.
+
     indexable
         An :term:`array-like`, :term:`sparse matrix`, pandas DataFrame or
         sequence (usually a list).
@@ -448,10 +464,12 @@ General Concepts
         A Python library (http://joblib.readthedocs.io) used in Scikit-learn to
         facilite simple parallelism and caching.  Joblib is oriented towards
         efficiently working with numpy arrays, such as through use of
-        :term:`memory mapping`.
+        :term:`memory mapping`. See :ref:`parallelism` for more
+        information.
 
     label indicator matrix
     multilabel indicator matrix
+    multilabel indicator matrices
         The format used to represent multilabel data, where each row of a 2d
         array or sparse matrix corresponds to a sample, each column
         corresponds to a class, and each element is 1 if the sample is labeled
@@ -483,7 +501,7 @@ General Concepts
         do (e.g. in :class:`impute.SimpleImputer`), NaN is the preferred
         representation of missing values in float arrays.  If the array has
         integer dtype, NaN cannot be represented. For this reason, we support
-        specifying another ``missing_values`` value when imputation or
+        specifying another ``missing_values`` value when :term:`imputation` or
         learning can be performed in integer space.  :term:`Unlabeled data`
         is a special case of missing values in the :term:`target`.
 
@@ -1068,6 +1086,13 @@ Target Types
         :func:`~utils.multiclass.type_of_target` will return
         'multilabel-indicator' for multilabel input, whether sparse or dense.
 
+    multioutput
+    multi-output
+        A target where each sample has multiple classification/regression
+        labels. See :term:`multiclass multioutput` and :term:`continuous
+        multioutput`. We do not currently support modelling mixed
+        classification and regression targets.
+
 .. _glossary_methods:
 
 Methods
@@ -1389,7 +1414,8 @@ functions or non-estimator constructors.
         - An iterable yielding train/test splits.
 
         With some exceptions (especially where not using cross validation at
-        all is an option), the default is 3-fold.
+        all is an option), the default is 3-fold and will change to 5-fold
+        in version 0.22.
 
         ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
 
@@ -1436,6 +1462,12 @@ functions or non-estimator constructors.
         input into. See :term:`components_` for the special case of affine
         projection.
 
+    ``n_iter_no_change``
+        Number of iterations with no improvement to wait before stopping the
+        iterative procedure. This is also known as a *patience* parameter. It
+        is typically used with :term:`early stopping` to avoid stopping too
+        early.
+
     ``n_jobs``
         This is used to specify how many concurrent processes/threads should be
         used for parallelized routines.  Scikit-learn uses one processor for
@@ -1454,7 +1486,7 @@ functions or non-estimator constructors.
           sometimes parallelism happens in prediction (e.g. in random forests).
         * Some parallelism uses a multi-threading backend by default, some
           a multi-processing backend.  It is possible to override the default
-          backend by using :func:`sklearn.externals.joblib.parallel.parallel_backend`.
+          backend by using :func:`sklearn.utils.parallel_backend`.
         * Whether parallel processing is helpful at improving runtime depends
           on many factors, and it's usually a good idea to experiment rather
           than assuming that increasing the number of jobs is always a good

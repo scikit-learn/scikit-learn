@@ -20,6 +20,16 @@ from ...preprocessing import LabelEncoder
 
 
 def check_number_of_labels(n_labels, n_samples):
+    """Check that number of labels are valid.
+
+    Parameters
+    ----------
+    n_labels : int
+        Number of labels
+
+    n_samples : int
+        Number of samples
+    """
     if not 1 < n_labels < n_samples:
         raise ValueError("Number of labels is %d. Valid values are 2 "
                          "to n_samples - 1 (inclusive)" % n_labels)
@@ -302,9 +312,11 @@ def davies_bouldin_score(X, labels):
 
     References
     ----------
-    .. [1] `Davies, David L.; Bouldin, Donald W. (1979).
-       "A Cluster Separation Measure". IEEE Transactions on
-       Pattern Analysis and Machine Intelligence. PAMI-1 (2): 224-227`_
+    .. [1] Davies, David L.; Bouldin, Donald W. (1979).
+       `"A Cluster Separation Measure"
+       <http://ieeexplore.ieee.org/document/4766909>`__.
+       IEEE Transactions on Pattern Analysis and Machine Intelligence.
+       PAMI-1 (2): 224-227
     """
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()

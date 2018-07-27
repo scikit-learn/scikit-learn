@@ -60,12 +60,13 @@ for the training samples::
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
     >>> clf = SGDClassifier(loss="hinge", penalty="l2", max_iter=5)
-    >>> clf.fit(X, y)
-    SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
-           eta0=0.0, fit_intercept=True, l1_ratio=0.15,
-           learning_rate='optimal', loss='hinge', max_iter=5, n_iter=None,
-           n_jobs=1, penalty='l2', power_t=0.5, random_state=None,
-           shuffle=True, tol=None, verbose=0, warm_start=False)
+    >>> clf.fit(X, y)   # doctest: +NORMALIZE_WHITESPACE
+    SGDClassifier(alpha=0.0001, average=False, class_weight=None,
+               early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
+               l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
+               n_iter=None, n_iter_no_change=5, n_jobs=1, penalty='l2',
+               power_t=0.5, random_state=None, shuffle=True, tol=None,
+               validation_fraction=0.1, verbose=0, warm_start=False)
 
 
 After being fitted, the model can then be used to predict new values::
@@ -232,6 +233,27 @@ non-zero attributes per sample.
 Recent theoretical results, however, show that the runtime to get some
 desired optimization accuracy does not increase as the training set size increases.
 
+Stopping criterion
+==================
+
+The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide two
+criteria to stop the algorithm when a given level of convergence is reached:
+
+  * With ``early_stopping=True``, the input data is split into a training set
+    and a validation set. The model is then fitted on the training set, and the
+    stopping criterion is based on the prediction score computed on the
+    validation set. The size of the validation set can be changed with the
+    parameter ``validation_fraction``.
+  * With ``early_stopping=False``, the model is fitted on the entire input data
+    and the stopping criterion is based on the objective function computed on
+    the input data.
+
+In both cases, the criterion is evaluated once by epoch, and the algorithm stops
+when the criterion does not improve ``n_iter_no_change`` times in a row. The
+improvement is evaluated with a tolerance ``tol``, and the algorithm stops in
+any case after a maximum number of iteration ``max_iter``.
+
+
 Tips on Practical Use
 =====================
 
@@ -257,7 +279,7 @@ Tips on Practical Use
 
   * Empirically, we found that SGD converges after observing
     approx. 10^6 training samples. Thus, a reasonable first guess
-    for the number of iterations is ``n_iter = np.ceil(10**6 / n)``,
+    for the number of iterations is ``max_iter = np.ceil(10**6 / n)``,
     where ``n`` is the size of the training set.
 
   * If you apply SGD to features extracted using PCA we found that
@@ -372,6 +394,11 @@ user via ``eta0`` and ``power_t``, resp.
 
 For a constant learning rate use ``learning_rate='constant'`` and use ``eta0``
 to specify the learning rate.
+
+For an adaptively decreasing learning rate, use ``learning_rate='adaptive'``
+and use ``eta0`` to specify the starting learning rate. When the stopping
+criterion is reached, the learning rate is divided by 5, and the algorithm
+does not stop. The algorithm stops when the learning rate goes below 1e-6.
 
 The model parameters can be accessed through the members ``coef_`` and
 ``intercept_``:
