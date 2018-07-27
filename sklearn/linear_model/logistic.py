@@ -464,11 +464,6 @@ def _check_solver_option(solver, multi_class, penalty, dual, fit_intercept,
         else:
             solver = 'lbfgs'
 
-        if not fit_intercept and multi_class == 'ovr':
-            solver = 'liblinear'
-        if n_samples > 1e3:
-            solver = 'saga'
-
     if warn_solver and solver != previous_default_solver:
         # Do not warn if the 'auto' solver selects the previous default solver
 
@@ -1103,10 +1098,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
           schemes.
         - 'newton-cg', 'lbfgs' and 'sag' only handle L2 penalty, whereas
           'liblinear' and 'saga' handle L1 penalty.
-        - 'auto' automatically chooses a solver based on the penalty and
-          multi_class parameters, and on the size of the input data. Note that
-          the 'auto' behavior may change without notice in the future, leading
-          to similar but not necessarily exact same solutions.
+        - 'auto' automatically chooses a solver based on the penalty
+          parameter.
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can
@@ -1505,10 +1498,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
           'liblinear' and 'saga' handle L1 penalty.
         - 'liblinear' might be slower in LogisticRegressionCV because it does
           not handle warm-starting.
-        - 'auto' automatically chooses a solver based on the penalty and
-          multi_class parameters, and on the size of the input data. Note that
-          the 'auto' behavior may change without notice in the future, leading
-          to similar but not necessarily exact same solutions.
+        - 'auto' automatically chooses a solver based on the penalty
+          parameter.
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can preprocess the data

@@ -792,10 +792,7 @@ The "saga" solver is often the best choice. The "liblinear" solver is
 used by default for historical reasons.
 
 The default solver will change to "auto" in version 0.22. This option
-automatically selects a good solver based on both `penalty` and `multi_class`
-parameters, and on the size of the training set. Note that the "auto" behavior
-may change without notice in the future, leading to similar but not necessarily
-exact same solutions.
+automatically selects a solver based on the `penalty` parameter.
 
 For large dataset, you may also consider using :class:`SGDClassifier`
 with 'log' loss.
