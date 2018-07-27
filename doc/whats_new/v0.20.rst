@@ -138,9 +138,6 @@ Model evaluation
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`, and
   :issue:`10587` by `Joel Nothman`_.
 
-- Added :class:`multioutput.RegressorChain` for multi-target
-  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
-
 Decomposition, manifold learning and clustering
 
 - :class:`cluster.AgglomerativeClustering` now supports Single Linkage

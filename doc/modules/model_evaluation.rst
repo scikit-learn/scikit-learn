@@ -437,10 +437,10 @@ the total number of predictions).
 
 In contrast, if the conventional accuracy is above chance only because the
 classifier takes advantage of an imbalanced test set, then the balanced
-accuracy, as appropriate, will drop to :math:`\frac{1}{\text{n\_classes}}`.
+accuracy, as appropriate, will drop to :math:`\frac{1}{\text{n_classes}}`.
 
 The score ranges from 0 to 1, or when ``adjusted=True`` is used, it rescaled to
-the range :math:`\frac{1}{1 - \text{n\_classes}}` to 1, inclusive, with
+the range :math:`\frac{1}{1 - \text{n_classes}}` to 1, inclusive, with
 performance at random scoring 0.
 
 If :math:`y_i` is the true value of the :math:`i`-th sample, and :math:`w_i`
@@ -456,11 +456,11 @@ defined as:
 
 .. math::
 
-   \texttt{balanced-accuracy}(y, \hat{y}, w) = \frac{1}{\sum{\hat{w}_i}} \sum_i 1(\hat{y}_i == y_i) \hat{w}_i
+   \texttt{balanced-accuracy}(y, \hat{y}, w) = \frac{1}{\sum{\hat{w}_i}} \sum_i 1(\hat{y}_i = y_i) \hat{w}_i
 
 With ``adjusted=True``, balanced accuracy reports the relative increase from
 :math:`\texttt{balanced-accuracy}(y, \mathbf{0}, w) =
-\frac{1}{\text{n\_classes}}`.  In the binary case, this is also known as
+\frac{1}{\text{n_classes}}`.  In the binary case, this is also known as
 `*Youden's J statistic* <https://en.wikipedia.org/wiki/Youden%27s_J_statistic>`_, or *informedness*.
 
 .. note::
@@ -470,7 +470,8 @@ With ``adjusted=True``, balanced accuracy reports the relative increase from
     in the literature:
 
     * Our definition: [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_, where
-      [Guyon2015]_ adopt the adjusted version to score chance as 0.
+      [Guyon2015]_ adopt the adjusted version to ensure that random predictions
+      have a score of :math:`0` and perfect predictions have a score of :math:`1`..
     * Class balanced accuracy as described in [Mosley2013]_: the minimum between the precision
       and the recall for each class is computed. Those values are then averaged over the total
       number of classes to get the balanced accuracy.
