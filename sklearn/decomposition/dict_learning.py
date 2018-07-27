@@ -15,7 +15,7 @@ from scipy import linalg
 from numpy.lib.stride_tricks import as_strided
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals.joblib import Parallel, delayed, cpu_count
+from ..utils import Parallel, delayed, cpu_count
 from ..externals.six.moves import zip
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches, _get_n_jobs)
@@ -373,11 +373,13 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     n_components = len(code)
     n_features = Y.shape[0]
     random_state = check_random_state(random_state)
-    # Residuals, computed 'in-place' for efficiency
-    R = -np.dot(dictionary, code)
-    R += Y
-    R = np.asfortranarray(R)
+    # Get BLAS functions
+    gemm, = linalg.get_blas_funcs(('gemm',), (dictionary, code, Y))
     ger, = linalg.get_blas_funcs(('ger',), (dictionary, code))
+    # Residuals, computed with BLAS for speed and efficiency
+    # R <- -1.0 * U * V^T + 1.0 * Y
+    # Outputs R as Fortran array for efficiency
+    R = gemm(-1.0, dictionary, code, 1.0, Y)
     for k in range(n_components):
         # R <- 1.0 * U_k * V_k^T + R
         R = ger(1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)

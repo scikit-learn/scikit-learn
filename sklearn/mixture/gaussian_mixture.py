@@ -512,6 +512,8 @@ class GaussianMixture(BaseMixture):
         If 'warm_start' is True, the solution of the last fitting is used as
         initialization for the next call of fit(). This can speed up
         convergence when fit is called several times on similar problems.
+        In that case, 'n_init' is ignored and only a single initialization
+        occurs upon the first call.
         See :term:`the Glossary <warm_start>`.
 
     verbose : int, default to 0.
@@ -575,7 +577,8 @@ class GaussianMixture(BaseMixture):
         Number of step used by the best fit of EM to reach the convergence.
 
     lower_bound_ : float
-        Log-likelihood of the best fit of EM.
+        Lower bound value on the log-likelihood (of the training data with
+        respect to the model) of the best fit of EM.
 
     See Also
     --------
