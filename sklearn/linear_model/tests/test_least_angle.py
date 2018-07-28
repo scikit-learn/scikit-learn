@@ -141,6 +141,7 @@ def test_lasso_gives_lstsq_solution():
     assert_array_almost_equal(coef_lstsq, coef_path_[:, -1])
 
 
+@pytest.mark.filterwarnings('ignore:`rcond` parameter will change')
 def test_lasso_gives_lstsq_solution_sufficient_stats():
     # Test that Lars Lasso gives least square solution at the end
     # of the path
