@@ -116,9 +116,9 @@ class _Formatter(object):
         elif self.indent_est == "name":
             offset = len(value.__class__.__name__) + 1
         else:
-            raise ValueError("Invalid indent_est parameter")
+            raise ValueError("Invalid indent_est parameter.")
 
-        # steps representation, (only for Pipeline object)
+        # steps representation (only for Pipeline object)
         steps = params.pop("steps", None)
         if steps is not None:
             steps_str = (self.lfchar + self.htchar * (indent + offset) +
@@ -141,7 +141,7 @@ class _Formatter(object):
         items = [str(key) + '=' + self._format_all(params[key], indent +
                                                    offset)
                  for key in params]
-        # add colors
+        # add colors if needed
         if self.color_changed:
             changed = changed_params(value)
 
@@ -152,8 +152,8 @@ class _Formatter(object):
                     return string
 
             items = [color(item, key) for (item, key) in zip(items, params)]
-
         param_repr = self._join_items(items, indent + offset)
+
         return '%s(%s)' % (value.__class__.__name__, steps_str + param_repr)
 
     def _join_items(self, items, indent):
@@ -161,7 +161,7 @@ class _Formatter(object):
         # lists) with commas and to break long lines appropriately
         this_string = ""
         init_pos = len(self.htchar * (indent + 1))
-        pos = init_pos
+        pos = init_pos  # Current printing position on the line
         for i, item in enumerate(items):
             if i > 0:
                 this_string += ','
