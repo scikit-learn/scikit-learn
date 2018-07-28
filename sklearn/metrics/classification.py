@@ -1483,9 +1483,12 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
               ...
             }
 
-        The reported averages are a prevalence-weighted macro-average across
-        classes (equivalent to :func:`precision_recall_fscore_support` with
-        ``average='weighted'``).
+        The reported averages include micro average (averaging the
+        total true positives, false negatives and false positives), macro
+        average (averaging the unweighted mean per label), weighted average
+        (averaging the support-weighted mean per label) and sample average
+        (only for multilabel classification). See also
+        :func:`precision_recall_fscore_support` for more details on averages.
 
         Note that in binary classification, recall of the positive class
         is also known as "sensitivity"; recall of the negative class is
@@ -1498,16 +1501,19 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     >>> y_pred = [0, 0, 2, 2, 1]
     >>> target_names = ['class 0', 'class 1', 'class 2']
     >>> print(classification_report(y_true, y_pred, target_names=target_names))
-                 precision    recall  f1-score   support
+                  precision    recall  f1-score   support
     <BLANKLINE>
-        class 0       0.50      1.00      0.67         1
-        class 1       0.00      0.00      0.00         1
-        class 2       1.00      0.67      0.80         3
+         class 0       0.50      1.00      0.67         1
+         class 1       0.00      0.00      0.00         1
+         class 2       1.00      0.67      0.80         3
     <BLANKLINE>
-    avg / total       0.70      0.60      0.61         5
+       micro avg       0.60      0.60      0.60         5
+       macro avg       0.50      0.56      0.49         5
+    weighted avg       0.70      0.60      0.61         5
     <BLANKLINE>
-
     """
+
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
     labels_given = True
     if labels is None:
@@ -1529,18 +1535,19 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
                 "parameter".format(len(labels), len(target_names))
             )
 
-    last_line_heading = 'avg / total'
+    longest_last_line_heading = 'weighted avg'
 
     if target_names is None:
         target_names = [u'%s' % l for l in labels]
     name_width = max(len(cn) for cn in target_names)
-    width = max(name_width, len(last_line_heading), digits)
+    width = max(name_width, len(longest_last_line_heading), digits)
 
     headers = ["precision", "recall", "f1-score", "support"]
     head_fmt = u'{:>{width}s} ' + u' {:>9}' * len(headers)
     report = head_fmt.format(u'', *headers, width=width)
     report += u'\n\n'
 
+    # compute per-class results without averaging
     p, r, f1, s = precision_recall_fscore_support(y_true, y_pred,
                                                   labels=labels,
                                                   average=None,
@@ -1569,10 +1576,27 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     report += u'\n'
 
-    # append averages
-    report += row_fmt.format(last_line_heading,
-                             *avg_total,
-                             width=width, digits=digits)
+    if y_type.startswith('multilabel'):
+        average_options = ('micro', 'macro', 'weighted', 'samples')
+    else:
+        average_options = ('micro', 'macro', 'weighted')
+
+    # compute all applicable averages
+    for average in average_options:
+        last_line_heading = average + ' avg'
+
+        # compute averages with specified averaging method
+        avg_p, avg_r, avg_f1, unused_s = \
+            precision_recall_fscore_support(y_true, y_pred, labels=labels,
+                                            average=average,
+                                            sample_weight=sample_weight)
+
+        report += row_fmt.format(last_line_heading,
+                                 avg_p,
+                                 avg_r,
+                                 avg_f1,
+                                 np.sum(s),
+                                 width=width, digits=digits)
 
     return report
 
