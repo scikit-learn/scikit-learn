@@ -4,6 +4,7 @@
 from tempfile import mkdtemp
 import shutil
 
+import pytest
 import numpy as np
 from scipy import sparse
 
@@ -132,6 +133,8 @@ def test_randomized_lasso_precompute():
         assert_array_equal(feature_scores_1, feature_scores_2)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @ignore_warnings(category=DeprecationWarning)
 def test_randomized_logistic():
     # Check randomized sparse logistic regression
@@ -162,6 +165,8 @@ def test_randomized_logistic():
     assert_raises(ValueError, clf.fit, X, y)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @ignore_warnings(category=DeprecationWarning)
 def test_randomized_logistic_sparse():
     # Check randomized sparse logistic regression on sparse data
