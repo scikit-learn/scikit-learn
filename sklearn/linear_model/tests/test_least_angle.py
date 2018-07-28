@@ -708,7 +708,6 @@ def test_lars_path_positive_constraint():
         linear_model.lars_path(diabetes['data'], diabetes['target'],
                                return_path=True, method='lar',
                                positive=True)
-
     method = 'lasso'
     alpha, active, coefs = \
         linear_model.lars_path(X, y, return_path=True, method=method,
