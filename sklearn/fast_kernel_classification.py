@@ -1,14 +1,15 @@
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.utils.validation import check_is_fitted
 from sklearn.utils import check_X_y
 from sklearn.utils.multiclass import check_classification_targets
-from fast_kernel_regression import FastKernelRegression
+from sklearn.fast_kernel_regression import FastKernelRegression
 
 
 class FastKernelClassification(ClassifierMixin, BaseEstimator):
-    """Fast kernel regression.
+    """Fast kernel classification.
 
-       Train least squared kernel regression model with mini-batch EigenPro
+       Train least squared kernel classification model with mini-batch EigenPro
        iteration.
 
        Parameters
@@ -98,19 +99,26 @@ class FastKernelClassification(ClassifierMixin, BaseEstimator):
                  subsample_size="auto", mem_gb=12, kernel="gaussian",
                  bandwidth=5, gamma=None, degree=3, coef0=1,
                  kernel_params=None, random_state=None, dtype=np.float32):
-        self.regressor = FastKernelRegression(
-            bs=bs, n_epoch=n_epoch, n_components=n_components,
-            subsample_size=subsample_size, mem_gb=mem_gb, kernel=kernel,
-            bandwidth=bandwidth, gamma=gamma, degree=degree, coef0=coef0,
-            kernel_params=kernel_params, random_state=random_state,
-            dtype=dtype)
+        self.bs = bs
+        self.n_epoch = n_epoch
+        self.n_components = n_components
+        self.subsample_size = subsample_size
+        self.mem_gb = mem_gb
+        self.kernel = kernel
+        self.bandwidth = bandwidth
+        self.gamma = gamma
+        self.degree = degree
+        self.coef0 = coef0
+        self.kernel_params = kernel_params
+        self.random_state = random_state
+        self.dtype = dtype
 
-    def get_params(self, deep=True):
-        return self.regressor.get_params(deep=deep)
+    # def get_params(self, deep=True):
+    # return self.regressor.get_params(deep=deep)
 
-    def set_params(self, **parameters):
-        self.regressor.set_params(**parameters)
-        return self
+    # def set_params(self, **parameters):
+    #   self.regressor.set_params(**parameters)
+    #  return self
 
     def fit(self, X, y):
         """ Train fast kernel classification model
@@ -127,7 +135,12 @@ class FastKernelClassification(ClassifierMixin, BaseEstimator):
         -------
             self : returns an instance of self.
        """
-
+        self.regressor_ = FastKernelRegression(
+            bs=self.bs, n_epoch=self.n_epoch, n_components=self.n_components,
+            subsample_size=self.subsample_size, mem_gb=self.mem_gb, kernel=self.kernel,
+            bandwidth=self.bandwidth, gamma=self.gamma, degree=self.degree, coef0=self.coef0,
+            kernel_params=self.kernel_params, random_state=self.random_state,
+            dtype=self.dtype)
         X, y = check_X_y(X, y, multi_output=False, ensure_min_samples=3)
         check_classification_targets(y)
         self.classes_, ind = np.unique(y, return_inverse=True)
@@ -141,7 +154,7 @@ class FastKernelClassification(ClassifierMixin, BaseEstimator):
         for ind, label in enumerate(y):
             class_matrix[ind][loc[label]] = 1
 
-        self.regressor.fit(X, class_matrix)
+        self.regressor_.fit(X, class_matrix)
 
         return self
 
@@ -158,5 +171,6 @@ class FastKernelClassification(ClassifierMixin, BaseEstimator):
             y : {float, array}, shape = [n_samples]
                 Predicted labels.
         """
-        Y = self.regressor.predict(X)
+        check_is_fitted(self, ["regressor_"])
+        Y = self.regressor_.predict(X)
         return self.classes_[np.argmax(Y, axis=1)]

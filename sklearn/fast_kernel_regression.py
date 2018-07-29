@@ -23,12 +23,12 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
         n_components : int, default = 1000
             the maximum number of eigendirections used in modifying the kernel
             operator. Convergence rate speedup over normal gradient descent is
-            approximately the largest eigenvalue over the n_componenth
+            approximately the largest eigenvalue over the n_componentth
             eigenvalue, however, it may take time to compute eigenvalues for
             large n_components
 
         subsample_size : int, default = 'auto'
-            The size of subsamples used for estimating the largest n_component
+            The number of subsamples used for estimating the largest n_component
             eigenvalues and eigenvectors. When it is set to 'auto', it will be
             4000 if there are less than 100,000 samples (for training),
             and otherwise 10000.
@@ -69,7 +69,7 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
             generation.
 
         dtype : (float32 or float64), default = np.float32
-            The data type to be used for computations
+            The data type to be used for computations.
 
     References
     ----------
@@ -248,7 +248,7 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
         """Validate parameters passed to the model, choose parameters
         that have not been passed in, and run setup for EigenPro iteration.
         """
-        self.rnd_ = check_random_state(self.random_state)
+        self.random_state_ = check_random_state(self.random_state)
         n, d = X.shape
         n_label = 1 if len(Y.shape) == 1 else Y.shape[1]
         self.centers_ = X
@@ -270,8 +270,8 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
         mG = np.sum(mem_usages < mem_bytes)
 
         # Calculate largest eigenvalue and max{k(x,x)} using subsamples.
-        self.pinx_ = self.rnd_.choice(n, sample_size,
-                                      replace=False).astype('int32')
+        self.pinx_ = self.random_state_.choice(n, sample_size,
+                                               replace=False).astype('int32')
         max_S, beta = self._setup(X[self.pinx_], n_components, n, mG, .9)
 
         # Calculate best batch size.
@@ -318,7 +318,6 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
         X, Y = check_X_y(X, Y, dtype=self.dtype, multi_output=True,
                          ensure_min_samples=3, y_numeric=True)
         Y = Y.astype(self.dtype)  # check_X_y does not seem to do this
-
         """Parameter Initialization"""
         Y = self._initialize_params(X, Y)
 
@@ -331,8 +330,8 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
         step = self.dtype(self.eta_ / self.bs_)
         for epoch in range(0, self.n_epoch):
             epoch_inds = \
-                self.rnd_.choice(n, n // self.bs_ * self.bs_,
-                                 replace=False).astype('int32')
+                self.random_state_.choice(n, n // self.bs_ * self.bs_,
+                                          replace=False).astype('int32')
 
             for batch_inds in np.array_split(epoch_inds, n // self.bs_):
                 batch_x = self.centers_[batch_inds]
@@ -368,12 +367,11 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
             Predicted targets.
         """
         check_is_fitted(self, ["bs_", "centers_", "centers_squared_", "coef_",
-                               "eta_", "rnd_", "pinx_", "Q_", "V_", "was_1D_"])
+                               "eta_", "random_state_", "pinx_", "Q_", "V_", "was_1D_"])
         X = np.asarray(X, dtype=self.dtype)
         if len(X.shape) == 1:
             raise ValueError("Reshape your data. X should be a matrix of shape"
                              " (n_samples, n_features).")
-
         n = X.shape[0]
 
         Ys = []
