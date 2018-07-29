@@ -348,8 +348,8 @@ def test_sparse_svdd():
     kernels = ["linear", "poly", "rbf", "sigmoid"]
     for dataset in datasets:
         for kernel in kernels:
-            clf = svm.SVDD(kernel=kernel)
-            sp_clf = svm.SVDD(kernel=kernel)
+            clf = svm.SVDD(gamma='scale', kernel=kernel)
+            sp_clf = svm.SVDD(gamma='scale', kernel=kernel)
             check_svm_model_equal(clf, sp_clf, *dataset)
 
 

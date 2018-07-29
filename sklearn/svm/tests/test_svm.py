@@ -364,15 +364,15 @@ def test_oneclass_fit_params_is_deprecated():
 
 def test_svdd():
     # Test the output of libsvm for the SVDD problem with default parameters
-    clf = svm.SVDD()
+    clf = svm.SVDD(gamma='scale')
     clf.fit(X)
     pred = clf.predict(T)
 
     assert_array_equal(pred, [-1, -1, -1])
     assert_equal(pred.dtype, np.dtype('intp'))
-    assert_array_almost_equal(clf.intercept_, [0.491], decimal=3)
+    assert_array_almost_equal(clf.intercept_, [0.383], decimal=3)
     assert_array_almost_equal(clf.dual_coef_,
-                              [[0.632, 0.233, 0.633, 0.234, 0.632, 0.633]],
+                              [[0.681, 0.139, 0.680, 0.140, 0.680, 0.680]],
                               decimal=3)
     assert_false(hasattr(clf, "coef_"))
 
@@ -397,7 +397,8 @@ def test_svdd_decision_function():
     X_outliers = rnd.uniform(low=-4, high=4, size=(20, 2))
 
     # fit the model
-    clf = svm.SVDD(nu=0.1, kernel="poly", degree=2, coef0=1.0).fit(X_train)
+    clf = svm.SVDD(gamma='scale', nu=0.1,
+                   kernel="poly", degree=2, coef0=1.0).fit(X_train)
 
     # predict and validate things
     y_pred_test = clf.predict(X_test)
@@ -440,17 +441,22 @@ def test_svdd_score_samples():
     X_test = np.c_[xx.ravel(), yy.ravel()]
 
     # Fit the model for at least 10% support vectors
-    clf = svm.SVDD(nu=0.1, kernel="poly", degree=2, coef0=1.0)
+    clf = svm.SVDD(nu=0.1, kernel="poly", gamma='scale', degree=2, coef0=1.0)
     clf.fit(X_train)
 
     # Check score_samples() implementation
     assert_array_almost_equal(clf.score_samples(X_test),
                               clf.decision_function(X_test) + clf.offset_)
 
+    # Test the gamma="scale"
+    gamma = 1.0 / (X.shape[1] * X_train.std())
+
+    assert_almost_equal(clf._gamma, gamma)
+
     # Compute the kernel matrices
     k_zx = polynomial_kernel(X_train[clf.support_], X_test,
-                             degree=clf.degree, coef0=clf.coef0)
-    k_xx = polynomial_kernel(X_test,
+                             gamma=gamma, degree=clf.degree, coef0=clf.coef0)
+    k_xx = polynomial_kernel(X_test, gamma=gamma,
                              degree=clf.degree, coef0=clf.coef0).diagonal()
 
     # Compute the sample scores = decision scores without `-\rho`
@@ -472,10 +478,10 @@ def test_oneclass_and_svdd():
     # Test the output of libsvm for the SVDD and the One-Class SVM
     nu = 0.15
 
-    svdd = svm.SVDD(nu=nu, kernel="rbf")
+    svdd = svm.SVDD(nu=nu, kernel="rbf", gamma="scale")
     svdd.fit(X_train)
 
-    ocsvm = svm.OneClassSVM(nu=nu, kernel="rbf")
+    ocsvm = svm.OneClassSVM(nu=nu, kernel="rbf", gamma="scale")
     ocsvm.fit(X_train)
 
     # The intercept of the SVDD differs from that of the One-Class SVM:

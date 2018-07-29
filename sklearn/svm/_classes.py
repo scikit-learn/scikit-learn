@@ -1842,18 +1842,19 @@ class SVDD(BaseLibSVM, OutlierMixin):
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
-    nu : float, optional
-        An upper bound on the fraction of training errors and a lower bound
-        on the fraction of support vectors. Should be in the interval (0, 1].
-        By default 0.5 will be taken.
-
     degree : int, optional (default=3)
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
     gamma : float, optional (default='auto')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
-        If gamma is 'auto' then 1/n_features will be used instead.
+
+        Current default is 'auto' which uses 1 / n_features,
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        as value of gamma. The current default of gamma, 'auto', will change
+        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
+        'auto' is used as a default indicating that no explicit value of gamma
+        was passed.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -1861,6 +1862,11 @@ class SVDD(BaseLibSVM, OutlierMixin):
 
     tol : float, optional
         Tolerance for stopping criterion.
+
+    nu : float, optional
+        An upper bound on the fraction of training errors and a lower bound
+        on the fraction of support vectors. Should be in the interval (0, 1].
+        By default 0.5 will be taken.
 
     shrinking : boolean, optional
         Whether to use the shrinking heuristic.
@@ -1917,8 +1923,8 @@ class SVDD(BaseLibSVM, OutlierMixin):
 
     _impl = 'svdd_l1'
 
-    def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
-                 tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
+    def __init__(self, kernel='rbf', degree=3, gamma='auto_deprecated',
+                 coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1):
 
         super(SVDD, self).__init__(
