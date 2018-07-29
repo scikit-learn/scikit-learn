@@ -31,8 +31,8 @@ class _Formatter(object):
     ----------
     indent_est : str, optional (default='step')
         Indentation strategy for long strings describing estimators. If 'step',
-        the indentation is constant. If 'name', the next line is aligned after
-        the estimator name.
+        the indentation is constant and the next line is endented with 4 blank
+        spaces. If 'name', the next line is aligned after the estimator name.
     changed_only : bool, optional (default=False)
         If True, only show parameters that have non-default values.
     color_changed : bool, optional (default=False)

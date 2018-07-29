@@ -93,8 +93,7 @@ Pipeline(
     expected_repr = expected_repr[1:]  # Remove first \n
     assert expected_repr == f(pipeline)
 
-
-    estimator = RFE(RFE(RFE(RFE(RFE(RFE(RFE(LogisticRegression)))))))
+    estimator = RFE(RFE(RFE(RFE(RFE(RFE(RFE(LogisticRegression())))))))
     expected_repr = """
 RFE(
     estimator=RFE(
@@ -103,7 +102,12 @@ RFE(
                 estimator=RFE(
                     estimator=RFE(
                         estimator=RFE(
-                            estimator=<class 'sklearn.linear_model.logistic.LogisticRegression'>,
+                            estimator=LogisticRegression(C=1.0, class_weight=None,  # noqa
+                                dual=False, fit_intercept=True,
+                                intercept_scaling=1, max_iter=100,
+                                multi_class='ovr', n_jobs=1, penalty='l2',
+                                random_state=None, solver='liblinear',
+                                tol=0.0001, verbose=0, warm_start=False),
                             n_features_to_select=None, step=1, verbose=0),
                         n_features_to_select=None, step=1, verbose=0),
                     n_features_to_select=None, step=1, verbose=0),
@@ -111,5 +115,6 @@ RFE(
             n_features_to_select=None, step=1, verbose=0),
         n_features_to_select=None, step=1, verbose=0),
     n_features_to_select=None, step=1, verbose=0)"""
+
     expected_repr = expected_repr[1:]  # Remove first \n
     assert expected_repr == f(estimator)
