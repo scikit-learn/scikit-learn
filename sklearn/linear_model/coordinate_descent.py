@@ -447,7 +447,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                          dtype=X.dtype)
 
     if coef_init is None:
-        coef_ = np.asfortranarray(np.zeros(coefs.shape[:-1], dtype=X.dtype))
+        coef_ = np.zeros(coefs.shape[:-1], dtype=X.dtype, order='F')
     else:
         coef_ = np.asfortranarray(coef_init, dtype=X.dtype)
 
