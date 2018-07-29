@@ -52,7 +52,6 @@ class _Formatter(object):
         self.types = {}
         self.htchar = ' '
         self.lfchar = '\n'
-        self.indent = 0
         self.step = 4
         self.width = 79
 
@@ -69,7 +68,7 @@ class _Formatter(object):
         self.types[cls] = callback
 
     def __call__(self, value):
-        return self._format_all(value, self.indent)
+        return self._format_all(value, indent=0)
 
     def _format_all(self, value, indent):
         """Return formated string for object value"""
@@ -134,8 +133,11 @@ class _Formatter(object):
                 steps_str += "(%s)" % self._join_items(
                     items, indent + offset + len("steps=[") + 1)
             steps_str += "]," + self.lfchar + self.htchar * (indent + offset)
+            init_indent = indent + offset
         else:
             steps_str = ""
+            init_indent = indent + len(value.__class__.__name__) + 1
+            # + 1 because of opening '('
 
         # Param representation
         items = [str(key) + '=' + self._format_all(params[key], indent +
@@ -152,16 +154,16 @@ class _Formatter(object):
                     return string
 
             items = [color(item, key) for (item, key) in zip(items, params)]
-        param_repr = self._join_items(items, indent + offset)
+        param_repr = self._join_items(items, indent + offset, init_indent)
 
         return '%s(%s)' % (value.__class__.__name__, steps_str + param_repr)
 
-    def _join_items(self, items, indent):
+    def _join_items(self, items, indent, init_indent=None):
         # This method is used to separate items (typically parameter
         # lists) with commas and to break long lines appropriately
         this_string = ""
-        init_pos = len(self.htchar * (indent + 1))
-        pos = init_pos  # Current printing position on the line
+        init_indent = init_indent or indent
+        pos = len(self.htchar) * (init_indent + 1)
         for i, item in enumerate(items):
             if i > 0:
                 this_string += ','
@@ -169,10 +171,10 @@ class _Formatter(object):
             if pos + len(_strip_color(item)) + 1 > self.width:
                 # + 1 because we'll need the ',' at the end
                 this_string += self.lfchar + self.htchar * indent
-                pos = init_pos
+                pos = len(self.htchar) * (indent + 1)
             elif i > 0:
                 this_string += " "
                 pos += 1
             this_string += item
-            pos += len(_strip_color(item)) + 1
+            pos += len(_strip_color(item))
         return this_string
