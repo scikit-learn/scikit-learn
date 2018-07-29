@@ -4,6 +4,7 @@
 #         Giorgio Patrini
 # License: BSD 3 clause
 
+from __future__ import division
 import numpy as np
 from scipy import linalg
 
@@ -40,16 +41,6 @@ class IncrementalPCA(_BasePCA):
         Number of components to keep. If ``n_components `` is ``None``,
         then ``n_components`` is set to ``min(n_samples, n_features)``.
 
-    batch_size : int or None, (default=None)
-        The number of samples to use for each batch. Only used when calling
-        ``fit``. If ``batch_size`` is ``None``, then ``batch_size``
-        is inferred from the data and set to ``5 * n_features``, to provide a
-        balance between approximation accuracy and memory consumption.
-
-    copy : bool, (default=True)
-        If False, X will be overwritten. ``copy=False`` can be used to
-        save memory but is unsafe for general use.
-
     whiten : bool, optional
         When True (False by default) the ``components_`` vectors are divided
         by ``n_samples`` times ``components_`` to ensure uncorrelated outputs
@@ -59,6 +50,16 @@ class IncrementalPCA(_BasePCA):
         (the relative variance scales of the components) but can sometimes
         improve the predictive accuracy of the downstream estimators by
         making data respect some hard-wired assumptions.
+
+    copy : bool, (default=True)
+        If False, X will be overwritten. ``copy=False`` can be used to
+        save memory but is unsafe for general use.
+
+    batch_size : int or None, (default=None)
+        The number of samples to use for each batch. Only used when calling
+        ``fit``. If ``batch_size`` is ``None``, then ``batch_size``
+        is inferred from the data and set to ``5 * n_features``, to provide a
+        balance between approximation accuracy and memory consumption.
 
     Attributes
     ----------
@@ -135,7 +136,6 @@ class IncrementalPCA(_BasePCA):
     See also
     --------
     PCA
-    RandomizedPCA
     KernelPCA
     SparsePCA
     TruncatedSVD
@@ -157,7 +157,7 @@ class IncrementalPCA(_BasePCA):
             Training data, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : Passthrough for ``Pipeline`` compatibility.
+        y : Ignored
 
         Returns
         -------
@@ -195,6 +195,10 @@ class IncrementalPCA(_BasePCA):
         X : array-like, shape (n_samples, n_features)
             Training data, where n_samples is the number of samples and
             n_features is the number of features.
+        check_input : bool
+            Run check_array on X.
+
+        y : Ignored
 
         Returns
         -------
@@ -208,11 +212,18 @@ class IncrementalPCA(_BasePCA):
             self.components_ = None
 
         if self.n_components is None:
-            self.n_components_ = n_features
+            if self.components_ is None:
+                self.n_components_ = min(n_samples, n_features)
+            else:
+                self.n_components_ = self.components_.shape[0]
         elif not 1 <= self.n_components <= n_features:
             raise ValueError("n_components=%r invalid for n_features=%d, need "
                              "more rows than columns for IncrementalPCA "
                              "processing" % (self.n_components, n_features))
+        elif not self.n_components <= n_samples:
+            raise ValueError("n_components=%r must be less or equal to "
+                             "the batch number of samples "
+                             "%d." % (self.n_components, n_samples))
         else:
             self.n_components_ = self.n_components
 
@@ -231,9 +242,10 @@ class IncrementalPCA(_BasePCA):
 
         # Update stats - they are 0 if this is the fisrt step
         col_mean, col_var, n_total_samples = \
-            _incremental_mean_and_var(X, last_mean=self.mean_,
-                                      last_variance=self.var_,
-                                      last_sample_count=self.n_samples_seen_)
+            _incremental_mean_and_var(
+                X, last_mean=self.mean_, last_variance=self.var_,
+                last_sample_count=np.repeat(self.n_samples_seen_, X.shape[1]))
+        n_total_samples = n_total_samples[0]
 
         # Whitening
         if self.n_samples_seen_ == 0:
@@ -251,7 +263,7 @@ class IncrementalPCA(_BasePCA):
 
         U, S, V = linalg.svd(X, full_matrices=False)
         U, V = svd_flip(U, V, u_based_decision=False)
-        explained_variance = S ** 2 / n_total_samples
+        explained_variance = S ** 2 / (n_total_samples - 1)
         explained_variance_ratio = S ** 2 / np.sum(col_var * n_total_samples)
 
         self.n_samples_seen_ = n_total_samples

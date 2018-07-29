@@ -158,7 +158,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
         else:
             class_prob_j = np.asarray(class_probability[j])
 
-        if np.sum(class_prob_j) != 1.0:
+        if not np.isclose(np.sum(class_prob_j), 1.0):
             raise ValueError("Probability array at index {0} does not sum to "
                              "one".format(j))
 
@@ -184,7 +184,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
                                                     random_state=random_state)
             indices.extend(ind_sample)
 
-            # Normalize probabilites for the nonzero elements
+            # Normalize probabilities for the nonzero elements
             classes_j_nonzero = classes[j] != 0
             class_probability_nz = class_prob_j[classes_j_nonzero]
             class_probability_nz_norm = (class_probability_nz /

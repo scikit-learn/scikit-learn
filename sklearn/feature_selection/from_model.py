@@ -2,6 +2,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+import numbers
 
 from .base import SelectorMixin
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
@@ -87,7 +88,8 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
     estimator : object
         The base estimator from which the transformer is built.
         This can be both a fitted (if ``prefit`` is set to True)
-        or a non-fitted estimator.
+        or a non-fitted estimator. The estimator must have either a
+        ``feature_importances_`` or ``coef_`` attribute after fitting.
 
     threshold : string, float, optional default None
         The threshold value to use for feature selection. Features whose
@@ -112,6 +114,13 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         ``threshold`` in the case where the ``coef_`` attribute of the
         estimator is of dimension 2.
 
+    max_features : int or None, optional
+        The maximum number of features selected scoring above ``threshold``.
+        To disable ``threshold`` and only select based on ``max_features``,
+        set ``threshold=-np.inf``.
+
+        .. versionadded:: 0.20
+
     Attributes
     ----------
     estimator_ : an estimator
@@ -122,11 +131,13 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
     threshold_ : float
         The threshold value used for feature selection.
     """
-    def __init__(self, estimator, threshold=None, prefit=False, norm_order=1):
+    def __init__(self, estimator, threshold=None, prefit=False,
+                 norm_order=1, max_features=None):
         self.estimator = estimator
         self.threshold = threshold
         self.prefit = prefit
         self.norm_order = norm_order
+        self.max_features = max_features
 
     def _get_support_mask(self):
         # SelectFromModel can directly call on transform.
@@ -135,12 +146,20 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         elif hasattr(self, 'estimator_'):
             estimator = self.estimator_
         else:
-            raise ValueError(
-                'Either fit SelectFromModel before transform or set "prefit='
-                'True" and pass a fitted estimator to the constructor.')
+            raise ValueError('Either fit the model before transform or set'
+                             ' "prefit=True" while passing the fitted'
+                             ' estimator to the constructor.')
         scores = _get_feature_importances(estimator, self.norm_order)
         threshold = _calculate_threshold(estimator, scores, self.threshold)
-        return scores >= threshold
+        if self.max_features is not None:
+            mask = np.zeros_like(scores, dtype=bool)
+            candidate_indices = \
+                np.argsort(-scores, kind='mergesort')[:self.max_features]
+            mask[candidate_indices] = True
+        else:
+            mask = np.ones_like(scores, dtype=bool)
+        mask[scores < threshold] = False
+        return mask
 
     def fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer.
@@ -159,8 +178,17 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
+        if self.max_features is not None:
+            if not isinstance(self.max_features, numbers.Integral):
+                raise TypeError("'max_features' should be an integer between"
+                                " 0 and {} features. Got {!r} instead."
+                                .format(X.shape[1], self.max_features))
+            elif self.max_features < 0 or self.max_features > X.shape[1]:
+                raise ValueError("'max_features' should be 0 and {} features."
+                                 "Got {} instead."
+                                 .format(X.shape[1], self.max_features))
+
         if self.prefit:
             raise NotFittedError(
                 "Since 'prefit=True', call transform directly")
@@ -191,7 +219,6 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         if self.prefit:
             raise NotFittedError(

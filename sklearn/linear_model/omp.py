@@ -6,6 +6,7 @@
 # License: BSD 3 clause
 
 import warnings
+from math import sqrt
 
 import numpy as np
 from scipy import linalg
@@ -15,9 +16,7 @@ from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from ..utils import as_float_array, check_array, check_X_y
 from ..model_selection import check_cv
-from ..externals.joblib import Parallel, delayed
-
-solve_triangular_args = {'check_finite': False}
+from ..utils import Parallel, delayed
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
 dependence in the dictionary. The requested precision might not have been met.
@@ -84,14 +83,9 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
     indices = np.arange(X.shape[1])  # keeping track of swapping
 
     max_features = X.shape[1] if tol is not None else n_nonzero_coefs
-    if solve_triangular_args:
-        # new scipy, don't need to initialize because check_finite=False
-        L = np.empty((max_features, max_features), dtype=X.dtype)
-    else:
-        # old scipy, we need the garbage upper triangle to be non-Inf
-        L = np.zeros((max_features, max_features), dtype=X.dtype)
 
-    L[0, 0] = 1.
+    L = np.empty((max_features, max_features), dtype=X.dtype)
+
     if return_path:
         coefs = np.empty_like(L)
 
@@ -101,6 +95,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
             # atom already selected or inner product too small
             warnings.warn(premature, RuntimeWarning, stacklevel=2)
             break
+
         if n_active > 0:
             # Updates the Cholesky decomposition of X' X
             L[n_active, :n_active] = np.dot(X[:, :n_active].T, X[:, lam])
@@ -108,19 +103,25 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
                                     L[n_active, :n_active],
                                     trans=0, lower=1,
                                     overwrite_b=True,
-                                    **solve_triangular_args)
+                                    check_finite=False)
             v = nrm2(L[n_active, :n_active]) ** 2
-            if 1 - v <= min_float:  # selected atoms are dependent
+            Lkk = linalg.norm(X[:, lam]) ** 2 - v
+            if Lkk <= min_float:  # selected atoms are dependent
                 warnings.warn(premature, RuntimeWarning, stacklevel=2)
                 break
-            L[n_active, n_active] = np.sqrt(1 - v)
+            L[n_active, n_active] = sqrt(Lkk)
+        else:
+            L[0, 0] = linalg.norm(X[:, lam])
+
         X.T[n_active], X.T[lam] = swap(X.T[n_active], X.T[lam])
         alpha[n_active], alpha[lam] = alpha[lam], alpha[n_active]
         indices[n_active], indices[lam] = indices[lam], indices[n_active]
         n_active += 1
-        # solves LL'x = y as a composition of two triangular systems
+
+        # solves LL'x = X'y as a composition of two triangular systems
         gamma, _ = potrs(L[:n_active, :n_active], alpha[:n_active], lower=True,
                          overwrite_b=False)
+
         if return_path:
             coefs[:n_active, n_active - 1] = gamma
         residual = y - np.dot(X[:, :n_active], gamma)
@@ -190,7 +191,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     """
     Gram = Gram.copy('F') if copy_Gram else np.asfortranarray(Gram)
 
-    if copy_Xy:
+    if copy_Xy or not Xy.flags.writeable:
         Xy = Xy.copy()
 
     min_float = np.finfo(Gram.dtype).eps
@@ -205,12 +206,9 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     n_active = 0
 
     max_features = len(Gram) if tol is not None else n_nonzero_coefs
-    if solve_triangular_args:
-        # new scipy, don't need to initialize because check_finite=False
-        L = np.empty((max_features, max_features), dtype=Gram.dtype)
-    else:
-        # old scipy, we need the garbage upper triangle to be non-Inf
-        L = np.zeros((max_features, max_features), dtype=Gram.dtype)
+
+    L = np.empty((max_features, max_features), dtype=Gram.dtype)
+
     L[0, 0] = 1.
     if return_path:
         coefs = np.empty_like(L)
@@ -227,18 +225,22 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
                                     L[n_active, :n_active],
                                     trans=0, lower=1,
                                     overwrite_b=True,
-                                    **solve_triangular_args)
+                                    check_finite=False)
             v = nrm2(L[n_active, :n_active]) ** 2
-            if 1 - v <= min_float:  # selected atoms are dependent
+            Lkk = Gram[lam, lam] - v
+            if Lkk <= min_float:  # selected atoms are dependent
                 warnings.warn(premature, RuntimeWarning, stacklevel=3)
                 break
-            L[n_active, n_active] = np.sqrt(1 - v)
+            L[n_active, n_active] = sqrt(Lkk)
+        else:
+            L[0, 0] = sqrt(Gram[lam, lam])
+
         Gram[n_active], Gram[lam] = swap(Gram[n_active], Gram[lam])
         Gram.T[n_active], Gram.T[lam] = swap(Gram.T[n_active], Gram.T[lam])
         indices[n_active], indices[lam] = indices[lam], indices[n_active]
         Xy[n_active], Xy[lam] = Xy[lam], Xy[n_active]
         n_active += 1
-        # solves LL'x = y as a composition of two triangular systems
+        # solves LL'x = X'y as a composition of two triangular systems
         gamma, _ = potrs(L[:n_active, :n_active], Xy[:n_active], lower=True,
                          overwrite_b=False)
         if return_path:
@@ -263,7 +265,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
 def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
                   copy_X=True, return_path=False,
                   return_n_iter=False):
-    """Orthogonal Matching Pursuit (OMP)
+    r"""Orthogonal Matching Pursuit (OMP)
 
     Solves n_targets Orthogonal Matching Pursuit problems.
     An instance of the problem has the form:
@@ -489,6 +491,9 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         Xy = Xy[:, np.newaxis]
         if tol is not None:
             norms_squared = [norms_squared]
+    if copy_Xy or not Xy.flags.writeable:
+        # Make the copy once instead of many times in _gram_omp itself.
+        Xy = Xy.copy()
 
     if n_nonzero_coefs is None and tol is None:
         n_nonzero_coefs = int(0.1 * len(Gram))
@@ -513,7 +518,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         out = _gram_omp(
             Gram, Xy[:, k], n_nonzero_coefs,
             norms_squared[k] if tol is not None else None, tol,
-            copy_Gram=copy_Gram, copy_Xy=copy_Xy,
+            copy_Gram=copy_Gram, copy_Xy=False,
             return_path=return_path)
         if return_path:
             _, idx, coefs, n_iter = out
@@ -536,6 +541,8 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
 
 class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     """Orthogonal Matching Pursuit model (OMP)
+
+    Read more in the :ref:`User Guide <omp>`.
 
     Parameters
     ----------
@@ -564,8 +571,6 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         calculations. Improves performance when `n_targets` or `n_samples` is
         very large. Note that if you already have such matrices, you can pass
         them directly to the fit method.
-
-    Read more in the :ref:`User Guide <omp>`.
 
     Attributes
     ----------
@@ -598,7 +603,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     Lars
     LassoLars
     decomposition.sparse_encode
-
+    OrthogonalMatchingPursuitCV
     """
     def __init__(self, n_nonzero_coefs=None, tol=None, fit_intercept=True,
                  normalize=True, precompute='auto'):
@@ -617,7 +622,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
             Training data.
 
         y : array-like, shape (n_samples,) or (n_samples, n_targets)
-            Target values.
+            Target values. Will be cast to X's dtype if necessary
 
 
         Returns
@@ -740,6 +745,8 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
 class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
     """Cross-validated Orthogonal Matching Pursuit model (OMP)
 
+    Read more in the :ref:`User Guide <omp>`.
+
     Parameters
     ----------
     copy : bool, optional
@@ -778,14 +785,16 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If ``-1``, use
         all the CPUs
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
-
-    Read more in the :ref:`User Guide <omp>`.
 
     Attributes
     ----------
@@ -817,7 +826,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
     """
     def __init__(self, copy=True, fit_intercept=True, normalize=True,
-                 max_iter=None, cv=None, n_jobs=1, verbose=False):
+                 max_iter=None, cv='warn', n_jobs=1, verbose=False):
         self.copy = copy
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -835,7 +844,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
             Training data.
 
         y : array-like, shape [n_samples]
-            Target values.
+            Target values. Will be cast to X's dtype if necessary
 
         Returns
         -------

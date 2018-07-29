@@ -167,19 +167,19 @@ in bias::
 
     >>> clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,
     ...     random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
-    >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.97...
+    >>> scores = cross_val_score(clf, X, y, cv=5)
+    >>> scores.mean()                               # doctest: +ELLIPSIS
+    0.98...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
-    >>> scores.mean()                             # doctest: +ELLIPSIS
+    >>> scores = cross_val_score(clf, X, y, cv=5)
+    >>> scores.mean()                               # doctest: +ELLIPSIS
     0.999...
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
+    >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean() > 0.999
     True
 
@@ -202,7 +202,7 @@ bias. Empirical good default values are ``max_features=n_features``
 for regression problems, and ``max_features=sqrt(n_features)`` for
 classification tasks (where ``n_features`` is the number of features
 in the data). Good results are often achieved when setting ``max_depth=None``
-in combination with ``min_samples_split=1`` (i.e., when fully developing the
+in combination with ``min_samples_split=2`` (i.e., when fully developing the
 trees). Bear in mind though that these values are usually not optimal, and
 might result in models that consume a lot of RAM. The best parameter values
 should always be cross-validated. In addition, note that in random forests,
@@ -246,7 +246,7 @@ amount of time (e.g., on large datasets).
 
  .. [B1998] L. Breiman, "Arcing Classifiers", Annals of Statistics 1998.
 
- .. [GEW2006] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
+ * P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
    trees", Machine Learning, 63(1), 3-42, 2006.
 
 .. _random_forest_feature_importance:
@@ -257,8 +257,8 @@ Feature importance evaluation
 The relative rank (i.e. depth) of a feature used as a decision node in a
 tree can be used to assess the relative importance of that feature with
 respect to the predictability of the target variable. Features used at
-the top of the tree contribute to the final prediction decision of a 
-larger fraction of the input samples. The **expected fraction of the 
+the top of the tree contribute to the final prediction decision of a
+larger fraction of the input samples. The **expected fraction of the
 samples** they contribute to can thus be used as an estimate of the
 **relative importance of the features**.
 
@@ -373,7 +373,7 @@ learners::
 
     >>> iris = load_iris()
     >>> clf = AdaBoostClassifier(n_estimators=100)
-    >>> scores = cross_val_score(clf, iris.data, iris.target)
+    >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
     >>> scores.mean()                             # doctest: +ELLIPSIS
     0.9...
 
@@ -598,7 +598,7 @@ minimize the loss function :math:`L` given the current model
   .. math::
 
     F_m(x) = F_{m-1}(x) + \arg\min_{h} \sum_{i=1}^{n} L(y_i,
-    F_{m-1}(x_i) - h(x))
+    F_{m-1}(x_i) + h(x))
 
 The initial model :math:`F_{0}` is problem specific, for least-squares
 regression one usually chooses the mean of the target values.
@@ -614,7 +614,7 @@ loss function:
 
   .. math::
 
-    F_m(x) = F_{m-1}(x) + \gamma_m \sum_{i=1}^{n} \nabla_F L(y_i,
+    F_m(x) = F_{m-1}(x) - \gamma_m \sum_{i=1}^{n} \nabla_F L(y_i,
     F_{m-1}(x_i))
 
 Where the step length :math:`\gamma_m` is chosen using line search:
@@ -782,7 +782,7 @@ accessed via the ``feature_importances_`` property::
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X, y)
     >>> clf.feature_importances_  # doctest: +ELLIPSIS
-    array([ 0.11,  0.1 ,  0.11,  ...
+    array([0.10..., 0.10..., 0.11..., ...
 
 .. topic:: Examples:
 
@@ -915,10 +915,10 @@ averaged.
 
  .. _voting_classifier:
 
-VotingClassifier
+Voting Classifier
 ========================
 
-The idea behind the voting classifier implementation is to combine
+The idea behind the :class:`VotingClassifier` is to combine
 conceptually different machine learning classifiers and use a majority vote
 or the average predicted probabilities (soft vote) to predict the class labels.
 Such a classifier can be useful for a set of equally well performing model
@@ -965,7 +965,7 @@ The following example shows how to fit the majority rule classifier::
    >>> X, y = iris.data[:, 1:3], iris.target
 
    >>> clf1 = LogisticRegression(random_state=1)
-   >>> clf2 = RandomForestClassifier(random_state=1)
+   >>> clf2 = RandomForestClassifier(n_estimators=50, random_state=1)
    >>> clf3 = GaussianNB()
 
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='hard')
@@ -974,7 +974,7 @@ The following example shows how to fit the majority rule classifier::
    ...     scores = cross_val_score(clf, X, y, cv=5, scoring='accuracy')
    ...     print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (scores.mean(), scores.std(), label))
    Accuracy: 0.90 (+/- 0.05) [Logistic Regression]
-   Accuracy: 0.93 (+/- 0.05) [Random Forest]
+   Accuracy: 0.94 (+/- 0.04) [Random Forest]
    Accuracy: 0.91 (+/- 0.04) [naive Bayes]
    Accuracy: 0.95 (+/- 0.05) [Ensemble]
 
@@ -1029,7 +1029,7 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
    >>> # Training classifiers
    >>> clf1 = DecisionTreeClassifier(max_depth=4)
    >>> clf2 = KNeighborsClassifier(n_neighbors=7)
-   >>> clf3 = SVC(kernel='rbf', probability=True)
+   >>> clf3 = SVC(gamma='scale', kernel='rbf', probability=True)
    >>> eclf = VotingClassifier(estimators=[('dt', clf1), ('knn', clf2), ('svc', clf3)], voting='soft', weights=[2,1,2])
 
    >>> clf1 = clf1.fit(X,y)

@@ -15,7 +15,6 @@ import warnings
 
 import numpy as np
 from scipy import optimize, sparse
-from scipy.misc import logsumexp
 from scipy.special import expit
 
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
@@ -27,14 +26,16 @@ from ..utils import check_random_state
 from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
                              squared_norm)
 from ..utils.extmath import row_norms
+from ..utils.fixes import logsumexp
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_X_y
-from ..exceptions import NotFittedError
+from ..exceptions import (NotFittedError, ConvergenceWarning,
+                          ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..model_selection import check_cv
 from ..externals import six
-from ..metrics import SCORERS
+from ..metrics import get_scorer
 
 
 # .. some helper functions for logistic_regression_path ..
@@ -425,8 +426,9 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
 
 def _check_solver_option(solver, multi_class, penalty, dual):
     if solver not in ['liblinear', 'newton-cg', 'lbfgs', 'sag', 'saga']:
-        raise ValueError("Logistic Regression supports only liblinear,"
-                         " newton-cg, lbfgs and sag solvers, got %s" % solver)
+        raise ValueError("Logistic Regression supports only liblinear, "
+                         "newton-cg, lbfgs, sag and saga solvers, got %s"
+                         % solver)
 
     if multi_class not in ['multinomial', 'ovr']:
         raise ValueError("multi_class should be either multinomial or "
@@ -472,15 +474,15 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     y : array-like, shape (n_samples,)
         Input data, target values.
 
+    pos_class : int, None
+        The class with respect to which we perform a one-vs-all fit.
+        If None, then it is assumed that the given problem is binary.
+
     Cs : int | array-like, shape (n_cs,)
         List of values for the regularization parameter or integer specifying
         the number of regularization parameters that should be used. In this
         case, the parameters will be chosen in a logarithmic scale between
         1e-4 and 1e4.
-
-    pos_class : int, None
-        The class with respect to which we perform a one-vs-all fit.
-        If None, then it is assumed that the given problem is binary.
 
     fit_intercept : bool
         Whether to fit an intercept for the model. In this case the shape of
@@ -542,8 +544,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
-        the entire probability distribution. Works only for the 'lbfgs' and
-        'newton-cg' solvers.
+        the entire probability distribution. Does not work for 'liblinear'
+        solver.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator to use when shuffling
@@ -593,7 +595,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     # Preprocessing.
     if check_input:
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        X = check_array(X, accept_sparse='csr', dtype=np.float64,
+                        accept_large_sparse=solver != 'liblinear')
         y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
     _, n_features = X.shape
@@ -674,7 +677,12 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                     'shape (%d, %d) or (%d, %d)' % (
                         coef.shape[0], coef.shape[1], classes.size,
                         n_features, classes.size, n_features + 1))
-            w0[:, :coef.shape[1]] = coef
+
+            if n_classes == 1:
+                w0[0, :coef.shape[1]] = -coef
+                w0[1, :coef.shape[1]] = coef
+            else:
+                w0[:, :coef.shape[1]] = coef
 
     if multi_class == 'multinomial':
         # fmin_l_bfgs_b and newton-cg accepts only ravelled parameters.
@@ -702,24 +710,18 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     n_iter = np.zeros(len(Cs), dtype=np.int32)
     for i, C in enumerate(Cs):
         if solver == 'lbfgs':
-            try:
-                w0, loss, info = optimize.fmin_l_bfgs_b(
-                    func, w0, fprime=None,
-                    args=(X, target, 1. / C, sample_weight),
-                    iprint=(verbose > 0) - 1, pgtol=tol, maxiter=max_iter)
-            except TypeError:
-                # old scipy doesn't have maxiter
-                w0, loss, info = optimize.fmin_l_bfgs_b(
-                    func, w0, fprime=None,
-                    args=(X, target, 1. / C, sample_weight),
-                    iprint=(verbose > 0) - 1, pgtol=tol)
-            if info["warnflag"] == 1 and verbose > 0:
+            iprint = [-1, 50, 1, 100, 101][
+                np.searchsorted(np.array([0, 1, 2, 3]), verbose)]
+            w0, loss, info = optimize.fmin_l_bfgs_b(
+                func, w0, fprime=None,
+                args=(X, target, 1. / C, sample_weight),
+                iprint=iprint, pgtol=tol, maxiter=max_iter)
+            if info["warnflag"] == 1:
                 warnings.warn("lbfgs failed to converge. Increase the number "
-                              "of iterations.")
-            try:
-                n_iter_i = info['nit'] - 1
-            except:
-                n_iter_i = info['funcalls'] - 1
+                              "of iterations.", ConvergenceWarning)
+            # In scipy <= 1.0.0, nit may exceed maxiter.
+            # See https://github.com/scipy/scipy/issues/7854.
+            n_iter_i = min(info['nit'], max_iter)
         elif solver == 'newton-cg':
             args = (X, target, 1. / C, sample_weight)
             w0, n_iter_i = newton_cg(hess, func, grad, w0, args=args,
@@ -863,8 +865,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
-        the entire probability distribution. Does not work for
-        liblinear solver.
+        the entire probability distribution. Does not work for 'liblinear'
+        solver.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator to use when shuffling
@@ -921,7 +923,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         check_input=False, max_squared_sum=max_squared_sum,
         sample_weight=sample_weight)
 
-    log_reg = LogisticRegression(fit_intercept=fit_intercept)
+    log_reg = LogisticRegression(multi_class=multi_class)
 
     # The score method of Logistic Regression has a classes_ attribute.
     if multi_class == 'ovr':
@@ -940,7 +942,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     scores = list()
 
     if isinstance(scoring, six.string_types):
-        scoring = SCORERS[scoring]
+        scoring = get_scorer(scoring)
     for w in coefs:
         if multi_class == 'ovr':
             w = w[np.newaxis, :]
@@ -994,6 +996,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
+    tol : float, default: 1e-4
+        Tolerance for stopping criteria.
+
     C : float, default: 1.0
         Inverse of regularization strength; must be a positive float.
         Like in support vector machines, smaller values specify stronger
@@ -1030,10 +1035,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionadded:: 0.17
            *class_weight='balanced'*
 
-    max_iter : int, default: 100
-        Useful only for the newton-cg, sag and lbfgs solvers.
-        Maximum number of iterations taken for the solvers to converge.
-
     random_state : int, RandomState instance or None, optional, default: None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
@@ -1042,17 +1043,17 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         instance used by `np.random`. Used when ``solver`` == 'sag' or
         'liblinear'.
 
-    solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
+    solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
         default: 'liblinear'
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
-            'saga' are faster for large ones.
+          'saga' are faster for large ones.
         - For multiclass problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
-            handle multinomial loss; 'liblinear' is limited to one-versus-rest
-            schemes.
+          handle multinomial loss; 'liblinear' is limited to one-versus-rest
+          schemes.
         - 'newton-cg', 'lbfgs' and 'sag' only handle L2 penalty, whereas
-            'liblinear' and 'saga' handle L1 penalty.
+          'liblinear' and 'saga' handle L1 penalty.
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can
@@ -1063,14 +1064,15 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionadded:: 0.19
            SAGA solver.
 
-    tol : float, default: 1e-4
-        Tolerance for stopping criteria.
+    max_iter : int, default: 100
+        Useful only for the newton-cg, sag and lbfgs solvers.
+        Maximum number of iterations taken for the solvers to converge.
 
     multi_class : str, {'ovr', 'multinomial'}, default: 'ovr'
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
-        the entire probability distribution. Does not work for liblinear
+        the entire probability distribution. Does not work for 'liblinear'
         solver.
 
         .. versionadded:: 0.18
@@ -1083,15 +1085,16 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     warm_start : bool, default: False
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
-        Useless for liblinear solver.
+        Useless for liblinear solver. See :term:`the Glossary <warm_start>`.
 
         .. versionadded:: 0.17
            *warm_start* to support *lbfgs*, *newton-cg*, *sag*, *saga* solvers.
 
     n_jobs : int, default: 1
-        Number of CPU cores used when parallelizing over classes
-        if multi_class='ovr'".
-        If given a value of -1, all cores are used.
+        Number of CPU cores used when parallelizing over classes if
+        multi_class='ovr'". This parameter is ignored when the ``solver`` is
+        set to 'liblinear' regardless of whether 'multi_class' is specified or
+        not. If given a value of -1, all cores are used.
 
     Attributes
     ----------
@@ -1099,25 +1102,35 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     coef_ : array, shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
-        `coef_` is of shape (1, n_features) when the given problem
-        is binary.
+        `coef_` is of shape (1, n_features) when the given problem is binary.
+        In particular, when `multi_class='multinomial'`, `coef_` corresponds
+        to outcome 1 (True) and `-coef_` corresponds to outcome 0 (False).
 
     intercept_ : array, shape (1,) or (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
 
         If `fit_intercept` is set to False, the intercept is set to zero.
-        `intercept_` is of shape(1,) when the problem is binary.
+        `intercept_` is of shape (1,) when the given problem is binary.
+        In particular, when `multi_class='multinomial'`, `intercept_`
+        corresponds to outcome 1 (True) and `-intercept_` corresponds to
+        outcome 0 (False).
 
     n_iter_ : array, shape (n_classes,) or (1, )
         Actual number of iterations for all classes. If binary or multinomial,
         it returns only 1 element. For liblinear solver, only the maximum
         number of iteration across all classes is given.
 
+        .. versionchanged:: 0.20
+
+            In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
+            ``max_iter``. ``n_iter_`` will now report at most ``max_iter``.
+
     See also
     --------
     SGDClassifier : incrementally trained logistic regression (when given
         the parameter ``loss="log"``).
     sklearn.svm.LinearSVC : learns SVM models using the same algorithm.
+    LogisticRegressionCV : Logistic regression with built-in cross validation
 
     Notes
     -----
@@ -1193,7 +1206,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Returns
         -------
         self : object
-            Returns self.
         """
         if not isinstance(self.C, numbers.Number) or self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
@@ -1210,8 +1222,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         else:
             _dtype = np.float64
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
-                         order="C")
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype, order="C",
+                         accept_large_sparse=self.solver != 'liblinear')
         check_classification_targets(y)
         self.classes_ = np.unique(y)
         n_samples, n_features = X.shape
@@ -1220,6 +1232,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                              self.dual)
 
         if self.solver == 'liblinear':
+            if self.n_jobs != 1:
+                warnings.warn("'n_jobs' > 1 does not have any effect when"
+                              " 'solver' is set to 'liblinear'. Got 'n_jobs'"
+                              " = {}.".format(self.n_jobs))
             self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
                 X, y, self.C, self.fit_intercept, self.intercept_scaling,
                 self.class_weight, self.penalty, self.dual, self.verbose,
@@ -1325,11 +1341,17 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         """
         if not hasattr(self, "coef_"):
             raise NotFittedError("Call fit before prediction")
-        calculate_ovr = self.coef_.shape[0] == 1 or self.multi_class == "ovr"
-        if calculate_ovr:
+        if self.multi_class == "ovr":
             return super(LogisticRegression, self)._predict_proba_lr(X)
         else:
-            return softmax(self.decision_function(X), copy=False)
+            decision = self.decision_function(X)
+            if decision.ndim == 1:
+                # Workaround for multi_class="multinomial" and binary outcomes
+                # which requires softmax prediction with only a 1D decision.
+                decision_2d = np.c_[-decision, decision]
+            else:
+                decision_2d = decision
+            return softmax(decision_2d, copy=False)
 
     def predict_log_proba(self, X):
         """Log of probability estimates.
@@ -1386,34 +1408,24 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the decision function.
 
-    class_weight : dict or 'balanced', optional
-        Weights associated with classes in the form ``{class_label: weight}``.
-        If not given, all classes are supposed to have weight one.
-
-        The "balanced" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``.
-
-        Note that these weights will be multiplied with sample_weight (passed
-        through the fit method) if sample_weight is specified.
-
-        .. versionadded:: 0.17
-           class_weight == 'balanced'
-
-    cv : integer or cross-validation generator
+    cv : integer or cross-validation generator, default: None
         The default cross-validation generator used is Stratified K-Folds.
         If an integer is provided, then it is the number of folds used.
         See the module :mod:`sklearn.model_selection` module for the
         list of possible cross-validation objects.
 
-    penalty : str, 'l1' or 'l2'
-        Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties.
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     dual : bool
         Dual or primal formulation. Dual formulation is only implemented for
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
+
+    penalty : str, 'l1' or 'l2'
+        Used to specify the norm used in the penalization. The 'newton-cg',
+        'sag' and 'lbfgs' solvers support only l2 penalties.
 
     scoring : string, callable, or None
         A string (see model evaluation documentation) or
@@ -1422,19 +1434,19 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         that can be used, look at :mod:`sklearn.metrics`. The
         default scoring option used is 'accuracy'.
 
-    solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
-        default: 'liblinear'
+    solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
+        default: 'lbfgs'
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
-            'saga' are faster for large ones.
+          'saga' are faster for large ones.
         - For multiclass problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
-            handle multinomial loss; 'liblinear' is limited to one-versus-rest
-            schemes.
+          handle multinomial loss; 'liblinear' is limited to one-versus-rest
+          schemes.
         - 'newton-cg', 'lbfgs' and 'sag' only handle L2 penalty, whereas
-            'liblinear' and 'saga' handle L1 penalty.
+          'liblinear' and 'saga' handle L1 penalty.
         - 'liblinear' might be slower in LogisticRegressionCV because it does
-            not handle warm-starting.
+          not handle warm-starting.
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can preprocess the data
@@ -1451,6 +1463,20 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     max_iter : int, optional
         Maximum number of iterations of the optimization algorithm.
 
+    class_weight : dict or 'balanced', optional
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one.
+
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``.
+
+        Note that these weights will be multiplied with sample_weight (passed
+        through the fit method) if sample_weight is specified.
+
+        .. versionadded:: 0.17
+           class_weight == 'balanced'
+
     n_jobs : int, optional
         Number of CPU cores used during the cross-validation loop. If given
         a value of -1, all cores are used.
@@ -1466,16 +1492,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Otherwise the coefs, intercepts and C that correspond to the
         best scores across folds are averaged.
 
-    multi_class : str, {'ovr', 'multinomial'}
-        Multiclass option can be either 'ovr' or 'multinomial'. If the option
-        chosen is 'ovr', then a binary problem is fit for each label. Else
-        the loss minimised is the multinomial loss fit across
-        the entire probability distribution. Works only for the 'newton-cg',
-        'sag' and 'lbfgs' solver.
-
-        .. versionadded:: 0.18
-           Stochastic Average Gradient descent solver for 'multinomial' case.
-
     intercept_scaling : float, default 1.
         Useful only when the solver 'liblinear' is used
         and self.fit_intercept is set to True. In this case, x becomes
@@ -1488,6 +1504,16 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         as all other features.
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
+
+    multi_class : str, {'ovr', 'multinomial'}
+        Multiclass option can be either 'ovr' or 'multinomial'. If the option
+        chosen is 'ovr', then a binary problem is fit for each label. Else
+        the loss minimised is the multinomial loss fit across
+        the entire probability distribution. Does not work for 'liblinear'
+        solver.
+
+        .. versionadded:: 0.18
+           Stochastic Average Gradient descent solver for 'multinomial' case.
 
     random_state : int, RandomState instance or None, optional, default None
         If int, random_state is the seed used by the random number generator;
@@ -1548,7 +1574,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     """
 
-    def __init__(self, Cs=10, fit_intercept=True, cv=None, dual=False,
+    def __init__(self, Cs=10, fit_intercept=True, cv='warn', dual=False,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=1, verbose=0,
                  refit=True, intercept_scaling=1., multi_class='ovr',
@@ -1589,7 +1615,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Returns
         -------
         self : object
-            Returns self.
         """
         _check_solver_option(self.solver, self.multi_class, self.penalty,
                              self.dual)
@@ -1602,7 +1627,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                              "positive; got (tol=%r)" % self.tol)
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
-                         order="C")
+                         order="C",
+                         accept_large_sparse=self.solver != 'liblinear')
         check_classification_targets(y)
 
         class_weight = self.class_weight
@@ -1777,3 +1803,37 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         self.C_ = np.asarray(self.C_)
         return self
+
+    def score(self, X, y, sample_weight=None):
+        """Returns the score using the `scoring` option on the given
+        test data and labels.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Test samples.
+
+        y : array-like, shape = (n_samples,)
+            True labels for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Score of self.predict(X) wrt. y.
+
+        """
+
+        if self.scoring is not None:
+            warnings.warn("The long-standing behavior to use the "
+                          "accuracy score has changed. The scoring "
+                          "parameter is now used. "
+                          "This warning will disappear in version 0.22.",
+                          ChangedBehaviorWarning)
+        scoring = self.scoring or 'accuracy'
+        if isinstance(scoring, six.string_types):
+            scoring = get_scorer(scoring)
+
+        return scoring(self, X, y, sample_weight=sample_weight)

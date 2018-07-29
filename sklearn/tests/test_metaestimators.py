@@ -1,5 +1,5 @@
 """Common tests for metaestimators"""
-
+import pytest
 import functools
 
 import numpy as np
@@ -7,11 +7,14 @@ import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.externals.six import iterkeys
 from sklearn.datasets import make_classification
+
 from sklearn.utils.testing import assert_true, assert_false, assert_raises
+from sklearn.utils.validation import check_is_fitted
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.ensemble import BaggingClassifier
+from sklearn.exceptions import NotFittedError
 
 
 class DelegatorData(object):
@@ -44,6 +47,7 @@ DELEGATING_METAESTIMATORS = [
 ]
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_metaestimator_delegation():
     # Ensures specified metaestimators have methods iff subestimator does
     def hides(method):
@@ -64,8 +68,7 @@ def test_metaestimator_delegation():
             return True
 
         def _check_fit(self):
-            if not hasattr(self, 'coef_'):
-                raise RuntimeError('Estimator is not fit')
+            check_is_fitted(self, 'coef_')
 
         @hides
         def inverse_transform(self, X, *args, **kwargs):
@@ -116,8 +119,8 @@ def test_metaestimator_delegation():
             assert_true(hasattr(delegator, method),
                         msg="%s does not have method %r when its delegate does"
                             % (delegator_data.name, method))
-            # delegation before fit raises an exception
-            assert_raises(Exception, getattr(delegator, method),
+            # delegation before fit raises a NotFittedError
+            assert_raises(NotFittedError, getattr(delegator, method),
                           delegator_data.fit_args[0])
 
         delegator.fit(*delegator_data.fit_args)

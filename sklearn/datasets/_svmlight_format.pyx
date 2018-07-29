@@ -26,7 +26,7 @@ cdef bytes COLON = u':'.encode('ascii')
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
-                        bint query_id):
+                        bint query_id, long long offset, long long length):
     cdef array.array data, indices, indptr
     cdef bytes line
     cdef char *hash_ptr
@@ -35,6 +35,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
     cdef Py_ssize_t i
     cdef bytes qid_prefix = b('qid')
     cdef Py_ssize_t n_features
+    cdef long long offset_max = offset + length if length > 0 else -1
 
     # Special-case float32 but use float64 for everything else;
     # the Python code will do further conversions.
@@ -51,6 +52,12 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
         labels = []
     else:
         labels = array.array("d")
+
+    if offset > 0:
+        f.seek(offset)
+        # drop the current line that might be truncated and is to be
+        # fetched by another call
+        f.readline()
 
     for line in f:
         # skip comments
@@ -90,7 +97,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
             idx = int(idx_s)
             if idx < 0 or not zero_based and idx == 0:
                 raise ValueError(
-                        "Invalid index %d in SVMlight/LibSVM data file." % idx)
+                    "Invalid index %d in SVMlight/LibSVM data file." % idx)
             if idx <= prev_idx:
                 raise ValueError("Feature indices in SVMlight/LibSVM data "
                                  "file should be sorted and unique.")
@@ -105,5 +112,9 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
 
         array.resize_smart(indptr, len(indptr) + 1)
         indptr[len(indptr) - 1] = len(data)
+
+        if offset_max != -1 and f.tell() > offset_max:
+            # Stop here and let another call deal with the following.
+            break
 
     return (dtype, data, indices, indptr, labels, query)

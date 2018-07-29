@@ -30,7 +30,18 @@ MLDATA_BASE_URL = "http://mldata.org/repository/data/download/matlab/%s"
 
 
 def mldata_filename(dataname):
-    """Convert a raw name for a data set in a mldata.org filename."""
+    """Convert a raw name for a data set in a mldata.org filename.
+
+    Parameters
+    ----------
+    dataname : str
+        Name of dataset
+
+    Returns
+    -------
+    fname : str
+        The converted dataname.
+    """
     dataname = dataname.lower().replace(' ', '-')
     return re.sub(r'[().]', '', dataname)
 
@@ -62,7 +73,7 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     Parameters
     ----------
 
-    dataname :
+    dataname : str
         Name of the data set on mldata.org,
         e.g.: "leukemia", "Whistler Daily Snowfall", etc.
         The raw name is automatically converted to a mldata.org URL .

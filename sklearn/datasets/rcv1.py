@@ -1,4 +1,8 @@
 """RCV1 dataset.
+
+The dataset page is available at
+
+    http://jmlr.csail.mit.edu/papers/volume5/lewis04a/
 """
 
 # Author: Tom Dupre la Tour
@@ -6,21 +10,17 @@
 
 import logging
 
-from os.path import exists, join
+from os import remove
+from os.path import dirname, exists, join
 from gzip import GzipFile
-from io import BytesIO
-from contextlib import closing
-
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
 
 import numpy as np
 import scipy.sparse as sp
 
 from .base import get_data_home
 from .base import _pkl_filepath
+from .base import _fetch_remote
+from .base import RemoteFileMetadata
 from ..utils.fixes import makedirs
 from ..externals import joblib
 from .svmlight_format import load_svmlight_files
@@ -28,28 +28,70 @@ from ..utils import shuffle as shuffle_
 from ..utils import Bunch
 
 
-URL = ('http://jmlr.csail.mit.edu/papers/volume5/lewis04a/'
-       'a13-vector-files/lyrl2004_vectors')
-URL_topics = ('http://jmlr.csail.mit.edu/papers/volume5/lewis04a/'
-              'a08-topic-qrels/rcv1-v2.topics.qrels.gz')
+# The original vectorized data can be found at:
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt0.dat.gz
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt1.dat.gz
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt2.dat.gz
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt3.dat.gz
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_train.dat.gz
+# while the original stemmed token files can be found
+# in the README, section B.12.i.:
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/lyrl2004_rcv1v2_README.htm
+XY_METADATA = (
+    RemoteFileMetadata(
+        url='https://ndownloader.figshare.com/files/5976069',
+        checksum=('ed40f7e418d10484091b059703eeb95a'
+                  'e3199fe042891dcec4be6696b9968374'),
+        filename='lyrl2004_vectors_test_pt0.dat.gz'),
+    RemoteFileMetadata(
+        url='https://ndownloader.figshare.com/files/5976066',
+        checksum=('87700668ae45d45d5ca1ef6ae9bd81ab'
+                  '0f5ec88cc95dcef9ae7838f727a13aa6'),
+        filename='lyrl2004_vectors_test_pt1.dat.gz'),
+    RemoteFileMetadata(
+        url='https://ndownloader.figshare.com/files/5976063',
+        checksum=('48143ac703cbe33299f7ae9f4995db4'
+                  '9a258690f60e5debbff8995c34841c7f5'),
+        filename='lyrl2004_vectors_test_pt2.dat.gz'),
+    RemoteFileMetadata(
+        url='https://ndownloader.figshare.com/files/5976060',
+        checksum=('dfcb0d658311481523c6e6ca0c3f5a3'
+                  'e1d3d12cde5d7a8ce629a9006ec7dbb39'),
+        filename='lyrl2004_vectors_test_pt3.dat.gz'),
+    RemoteFileMetadata(
+        url='https://ndownloader.figshare.com/files/5976057',
+        checksum=('5468f656d0ba7a83afc7ad44841cf9a5'
+                  '3048a5c083eedc005dcdb5cc768924ae'),
+        filename='lyrl2004_vectors_train.dat.gz')
+)
 
-logger = logging.getLogger()
+# The original data can be found at:
+# http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a08-topic-qrels/rcv1-v2.topics.qrels.gz
+TOPICS_METADATA = RemoteFileMetadata(
+    url='https://ndownloader.figshare.com/files/5976048',
+    checksum=('2a98e5e5d8b770bded93afc8930d882'
+              '99474317fe14181aee1466cc754d0d1c1'),
+    filename='rcv1v2.topics.qrels.gz')
+
+logger = logging.getLogger(__name__)
 
 
 def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
-               random_state=None, shuffle=False):
-    """Load the RCV1 multilabel dataset, downloading it if necessary.
+               random_state=None, shuffle=False, return_X_y=False):
+    """Load the RCV1 multilabel dataset (classification).
+
+    Download it if necessary.
 
     Version: RCV1-v2, vectors, full sets, topics multilabels.
 
-    ==============     =====================
-    Classes                              103
-    Samples total                     804414
-    Dimensionality                     47236
-    Features           real, between 0 and 1
-    ==============     =====================
+    =================   =====================
+    Classes                               103
+    Samples total                      804414
+    Dimensionality                      47236
+    Features            real, between 0 and 1
+    =================   =====================
 
-    Read more in the :ref:`User Guide <datasets>`.
+    Read more in the :ref:`User Guide <rcv1_dataset>`.
 
     .. versionadded:: 0.17
 
@@ -69,15 +111,20 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        Random state for shuffling the dataset.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset shuffling. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     shuffle : bool, default=False
         Whether to shuffle dataset.
+
+    return_X_y : boolean, default=False.
+        If True, returns ``(dataset.data, dataset.target)`` instead of a Bunch
+        object. See below for more information about the `dataset.data` and
+        `dataset.target` object.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -99,12 +146,9 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     dataset.DESCR : string
         Description of the RCV1 dataset.
 
-    References
-    ----------
-    Lewis, D. D., Yang, Y., Rose, T. G., & Li, F. (2004). RCV1: A new
-    benchmark collection for text categorization research. The Journal of
-    Machine Learning Research, 5, 361-397.
+    (data, target) : tuple if ``return_X_y`` is True
 
+        .. versionadded:: 0.20
     """
     N_SAMPLES = 804414
     N_FEATURES = 47236
@@ -114,7 +158,8 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     data_home = get_data_home(data_home=data_home)
     rcv1_dir = join(data_home, "RCV1")
     if download_if_missing:
-        makedirs(rcv1_dir, exist_ok=True)
+        if not exists(rcv1_dir):
+            makedirs(rcv1_dir)
 
     samples_path = _pkl_filepath(rcv1_dir, "samples.pkl")
     sample_id_path = _pkl_filepath(rcv1_dir, "sample_id.pkl")
@@ -124,16 +169,11 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     # load data (X) and sample_id
     if download_if_missing and (not exists(samples_path) or
                                 not exists(sample_id_path)):
-        file_urls = ["%s_test_pt%d.dat.gz" % (URL, i) for i in range(4)]
-        file_urls.append("%s_train.dat.gz" % URL)
         files = []
-        for file_url in file_urls:
-            logger.warning("Downloading %s" % file_url)
-            with closing(urlopen(file_url)) as online_file:
-                # buffer the full file in memory to make possible to Gzip to
-                # work correctly
-                f = BytesIO(online_file.read())
-            files.append(GzipFile(fileobj=f))
+        for each in XY_METADATA:
+            logger.info("Downloading %s" % each.url)
+            file_path = _fetch_remote(each, dirname=rcv1_dir)
+            files.append(GzipFile(filename=file_path))
 
         Xy = load_svmlight_files(files, n_features=N_FEATURES)
 
@@ -145,6 +185,10 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         joblib.dump(X, samples_path, compress=9)
         joblib.dump(sample_id, sample_id_path, compress=9)
 
+        # delete archives
+        for f in files:
+            f.close()
+            remove(f.name)
     else:
         X = joblib.load(samples_path)
         sample_id = joblib.load(sample_id_path)
@@ -152,9 +196,9 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     # load target (y), categories, and sample_id_bis
     if download_if_missing and (not exists(sample_topics_path) or
                                 not exists(topics_path)):
-        logger.warning("Downloading %s" % URL_topics)
-        with closing(urlopen(URL_topics)) as online_topics:
-            f = BytesIO(online_topics.read())
+        logger.info("Downloading %s" % TOPICS_METADATA.url)
+        topics_archive_path = _fetch_remote(TOPICS_METADATA,
+                                            dirname=rcv1_dir)
 
         # parse the target file
         n_cat = -1
@@ -163,20 +207,24 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         y = np.zeros((N_SAMPLES, N_CATEGORIES), dtype=np.uint8)
         sample_id_bis = np.zeros(N_SAMPLES, dtype=np.int32)
         category_names = {}
-        for line in GzipFile(fileobj=f, mode='rb'):
-            line_components = line.decode("ascii").split(u" ")
-            if len(line_components) == 3:
-                cat, doc, _ = line_components
-                if cat not in category_names:
-                    n_cat += 1
-                    category_names[cat] = n_cat
+        with GzipFile(filename=topics_archive_path, mode='rb') as f:
+            for line in f:
+                line_components = line.decode("ascii").split(u" ")
+                if len(line_components) == 3:
+                    cat, doc, _ = line_components
+                    if cat not in category_names:
+                        n_cat += 1
+                        category_names[cat] = n_cat
 
-                doc = int(doc)
-                if doc != doc_previous:
-                    doc_previous = doc
-                    n_doc += 1
-                    sample_id_bis[n_doc] = doc
-                y[n_doc, category_names[cat]] = 1
+                    doc = int(doc)
+                    if doc != doc_previous:
+                        doc_previous = doc
+                        n_doc += 1
+                        sample_id_bis[n_doc] = doc
+                    y[n_doc, category_names[cat]] = 1
+
+        # delete archive
+        remove(topics_archive_path)
 
         # Samples in X are ordered with sample_id,
         # whereas in y, they are ordered with sample_id_bis.
@@ -195,7 +243,6 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
         joblib.dump(y, sample_topics_path, compress=9)
         joblib.dump(categories, topics_path, compress=9)
-
     else:
         y = joblib.load(sample_topics_path)
         categories = joblib.load(topics_path)
@@ -217,8 +264,15 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     if shuffle:
         X, y, sample_id = shuffle_(X, y, sample_id, random_state=random_state)
 
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'rcv1.rst')) as rst_file:
+        fdescr = rst_file.read()
+
+    if return_X_y:
+        return X, y
+
     return Bunch(data=X, target=y, sample_id=sample_id,
-                 target_names=categories, DESCR=__doc__)
+                 target_names=categories, DESCR=fdescr)
 
 
 def _inverse_permutation(p):

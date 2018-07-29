@@ -25,7 +25,7 @@ from sklearn.model_selection import permutation_test_score
 from sklearn import datasets
 
 
-##############################################################################
+# #############################################################################
 # Loading a dataset
 iris = datasets.load_iris()
 X = iris.data
@@ -47,7 +47,7 @@ score, permutation_scores, pvalue = permutation_test_score(
 
 print("Classification score %s (pvalue : %s)" % (score, pvalue))
 
-###############################################################################
+# #############################################################################
 # View histogram of permutation scores
 plt.hist(permutation_scores, 20, label='Permutation scores',
          edgecolor='black')

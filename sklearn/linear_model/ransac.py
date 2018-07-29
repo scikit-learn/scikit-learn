@@ -13,6 +13,7 @@ from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted
 from .base import LinearRegression
 from ..utils.validation import has_fit_parameter
+from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.spacing(1)
 
@@ -73,6 +74,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
            which is used for the stop criterion defined by `stop_score`.
            Additionally, the score is used to decide which of two equally
            large consensus sets is chosen as the better one.
+         * `predict(X)`: Returns predicted values using the linear model,
+           which is used to compute residual error using loss function.
 
         If `base_estimator` is None, then
         ``base_estimator=sklearn.linear_model.LinearRegression()`` is used for
@@ -135,17 +138,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         as 0.99 (the default) and e is the current fraction of inliers w.r.t.
         the total number of samples.
 
-    residual_metric : callable, optional
-        Metric to reduce the dimensionality of the residuals to 1 for
-        multi-dimensional target values ``y.shape[1] > 1``. By default the sum
-        of absolute differences is used::
-
-            lambda dy: np.sum(np.abs(dy), axis=1)
-
-        .. deprecated:: 0.18
-           ``residual_metric`` is deprecated from 0.18 and will be removed in
-           0.20. Use ``loss`` instead.
-
     loss : string, callable, optional, default "absolute_loss"
         String inputs, "absolute_loss" and "squared_loss" are supported which
         find the absolute loss and squared loss per sample
@@ -153,11 +145,11 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
         If ``loss`` is a callable, then it should be a function that takes
         two arrays as inputs, the true and predicted value and returns a 1-D
-        array with the ``i``th value of the array corresponding to the loss
-        on `X[i]`.
+        array with the i-th value of the array corresponding to the loss
+        on ``X[i]``.
 
-        If the loss on a sample is greater than the ``residual_threshold``, then
-        this sample is classified as an outlier.
+        If the loss on a sample is greater than the ``residual_threshold``,
+        then this sample is classified as an outlier.
 
     random_state : int, RandomState instance or None, optional, default None
         The generator used to initialize the centers.  If int, random_state is
@@ -197,7 +189,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     References
     ----------
     .. [1] https://en.wikipedia.org/wiki/RANSAC
-    .. [2] http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf
+    .. [2] https://www.sri.com/sites/default/files/publications/ransac-publication.pdf
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
     """
 
@@ -205,8 +197,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                  residual_threshold=None, is_data_valid=None,
                  is_model_valid=None, max_trials=100, max_skips=np.inf,
                  stop_n_inliers=np.inf, stop_score=np.inf,
-                 stop_probability=0.99, residual_metric=None,
-                 loss='absolute_loss', random_state=None):
+                 stop_probability=0.99, loss='absolute_loss',
+                 random_state=None):
 
         self.base_estimator = base_estimator
         self.min_samples = min_samples
@@ -218,7 +210,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         self.stop_n_inliers = stop_n_inliers
         self.stop_score = stop_score
         self.stop_probability = stop_probability
-        self.residual_metric = residual_metric
         self.random_state = random_state
         self.loss = loss
 
@@ -270,7 +261,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                              "positive.")
         if min_samples > X.shape[0]:
             raise ValueError("`min_samples` may not be larger than number "
-                             "of samples ``X.shape[0]``.")
+                             "of samples: n_samples = %d." % (X.shape[0]))
 
         if self.stop_probability < 0 or self.stop_probability > 1:
             raise ValueError("`stop_probability` must be in range [0, 1].")
@@ -280,12 +271,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             residual_threshold = np.median(np.abs(y - np.median(y)))
         else:
             residual_threshold = self.residual_threshold
-
-        if self.residual_metric is not None:
-            warnings.warn(
-                "'residual_metric' was deprecated in version 0.18 and "
-                "will be removed in version 0.20. Use 'loss' instead.",
-                DeprecationWarning)
 
         if self.loss == "absolute_loss":
             if y.ndim == 1:
@@ -379,15 +364,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
             # residuals of all data for current random sample model
             y_pred = base_estimator.predict(X)
-
-            # XXX: Deprecation: Remove this if block in 0.20
-            if self.residual_metric is not None:
-                diff = y_pred - y
-                if diff.ndim == 1:
-                    diff = diff.reshape(-1, 1)
-                residuals_subset = self.residual_metric(diff)
-            else:
-                residuals_subset = loss_function(y, y_pred)
+            residuals_subset = loss_function(y, y_pred)
 
             # classify data into inliers and outliers
             inlier_mask_subset = residuals_subset < residual_threshold
@@ -453,7 +430,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                               " early due to skipping more iterations than"
                               " `max_skips`. See estimator attributes for"
                               " diagnostics (n_skips*).",
-                              UserWarning)
+                              ConvergenceWarning)
 
         # estimate final model using all inliers
         base_estimator.fit(X_inlier_best, y_inlier_best)

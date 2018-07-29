@@ -61,16 +61,16 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
+    p : integer, optional (default = 2)
+        Power parameter for the Minkowski metric. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
     metric : string or callable, default 'minkowski'
         the distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of the DistanceMetric class for a
         list of available metrics.
-
-    p : integer, optional (default = 2)
-        Power parameter for the Minkowski metric. When p = 1, this is
-        equivalent to using manhattan_distance (l1), and euclidean_distance
-        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
@@ -91,7 +91,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     >>> print(neigh.predict([[1.1]]))
     [0]
     >>> print(neigh.predict_proba([[0.9]]))
-    [[ 0.66666667  0.33333333]]
+    [[0.66666667 0.33333333]]
 
     See also
     --------
@@ -120,10 +120,12 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                  p=2, metric='minkowski', metric_params=None, n_jobs=1,
                  **kwargs):
 
-        self._init_params(n_neighbors=n_neighbors,
-                          algorithm=algorithm,
-                          leaf_size=leaf_size, metric=metric, p=p,
-                          metric_params=metric_params, n_jobs=n_jobs, **kwargs)
+        super(KNeighborsClassifier, self).__init__(
+            n_neighbors=n_neighbors,
+            algorithm=algorithm,
+            leaf_size=leaf_size, metric=metric, p=p,
+            metric_params=metric_params,
+            n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -143,7 +145,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
-
         classes_ = self.classes_
         _y = self._y
         if not self.outputs_2d_:
@@ -268,16 +269,16 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
+    p : integer, optional (default = 2)
+        Power parameter for the Minkowski metric. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
     metric : string or callable, default 'minkowski'
         the distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of the DistanceMetric class for a
         list of available metrics.
-
-    p : integer, optional (default = 2)
-        Power parameter for the Minkowski metric. When p = 1, this is
-        equivalent to using manhattan_distance (l1), and euclidean_distance
-        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     outlier_label : int, optional (default = None)
         Label, which is given for outlier samples (samples with no
@@ -286,6 +287,10 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
+
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
 
     Examples
     --------
@@ -315,12 +320,13 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
     def __init__(self, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30, p=2, metric='minkowski',
-                 outlier_label=None, metric_params=None, **kwargs):
-        self._init_params(radius=radius,
-                          algorithm=algorithm,
-                          leaf_size=leaf_size,
-                          metric=metric, p=p, metric_params=metric_params,
-                          **kwargs)
+                 outlier_label=None, metric_params=None, n_jobs=1, **kwargs):
+        super(RadiusNeighborsClassifier, self).__init__(
+              radius=radius,
+              algorithm=algorithm,
+              leaf_size=leaf_size,
+              metric=metric, p=p, metric_params=metric_params,
+              n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
         self.outlier_label = outlier_label
 

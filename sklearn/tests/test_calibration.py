@@ -2,6 +2,7 @@
 # License: BSD 3 clause
 
 from __future__ import division
+import pytest
 import numpy as np
 from scipy import sparse
 from sklearn.model_selection import LeaveOneOut
@@ -17,14 +18,15 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import Imputer
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import brier_score_loss, log_loss
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_calibration():
     """Test calibration objects with isotonic and sigmoid"""
     n_samples = 100
@@ -100,6 +102,7 @@ def test_calibration():
         assert_raises(RuntimeError, clf_base_regressor.fit, X_train, y_train)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_sample_weight():
     n_samples = 100
     X, y = make_classification(n_samples=2 * n_samples, n_features=6,
@@ -266,7 +269,7 @@ def test_calibration_nan_imputer():
                                random_state=42)
     X[0, 0] = np.nan
     clf = Pipeline(
-        [('imputer', Imputer()),
+        [('imputer', SimpleImputer()),
          ('rf', RandomForestClassifier(n_estimators=1))])
     clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic')
     clf_c.fit(X, y)

@@ -94,7 +94,7 @@ loads and prepare you data and then use the IPython integrated profiler
 for interactively exploring the relevant part for the code.
 
 Suppose we want to profile the Non Negative Matrix Factorization module
-of the scikit. Let us setup a new IPython session and load the digits
+of scikit-learn. Let us setup a new IPython session and load the digits
 dataset and as in the :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py` example::
 
   In [1]: from sklearn.decomposition import NMF
@@ -388,8 +388,7 @@ Checkout the official joblib documentation:
 
 .. _warm-restarts:
 
-A sample algorithmic trick: warm restarts for cross validation
+A sample algorithmic trick: warm restarts
 ==============================================================
 
-TODO: demonstrate the warm restart tricks for cross validation of linear
-regression with Coordinate Descent.
+See the glossary entry for `warm_start <http://scikit-learn.org/dev/glossary.html#term-warm-start>`_

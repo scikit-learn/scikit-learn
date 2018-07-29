@@ -30,7 +30,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import VotingClassifier
 
 clf1 = LogisticRegression(random_state=123)
-clf2 = RandomForestClassifier(random_state=123)
+clf2 = RandomForestClassifier(n_estimators=100, random_state=123)
 clf3 = GaussianNB()
 X = np.array([[-1.0, -1.0], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
 y = np.array([1, 1, 2, 2])
@@ -56,12 +56,16 @@ width = 0.35  # bar width
 fig, ax = plt.subplots()
 
 # bars for classifier 1-3
-p1 = ax.bar(ind, np.hstack(([class1_1[:-1], [0]])), width, color='green')
-p2 = ax.bar(ind + width, np.hstack(([class2_1[:-1], [0]])), width, color='lightgreen')
+p1 = ax.bar(ind, np.hstack(([class1_1[:-1], [0]])), width,
+            color='green', edgecolor='k')
+p2 = ax.bar(ind + width, np.hstack(([class2_1[:-1], [0]])), width,
+            color='lightgreen', edgecolor='k')
 
 # bars for VotingClassifier
-p3 = ax.bar(ind, [0, 0, 0, class1_1[-1]], width, color='blue')
-p4 = ax.bar(ind + width, [0, 0, 0, class2_1[-1]], width, color='steelblue')
+p3 = ax.bar(ind, [0, 0, 0, class1_1[-1]], width,
+            color='blue', edgecolor='k')
+p4 = ax.bar(ind + width, [0, 0, 0, class2_1[-1]], width,
+            color='steelblue', edgecolor='k')
 
 # plot annotations
 plt.axvline(2.8, color='k', linestyle='dashed')

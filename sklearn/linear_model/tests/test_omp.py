@@ -22,6 +22,9 @@ from sklearn.datasets import make_sparse_coded_signal
 n_samples, n_features, n_nonzero_coefs, n_targets = 20, 30, 5, 3
 y, X, gamma = make_sparse_coded_signal(n_targets, n_features, n_samples,
                                        n_nonzero_coefs, random_state=0)
+# Make X not of norm 1 for testing
+X *= 10
+y *= 10
 G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 # this makes X (n_samples, n_features)
 # and y (n_samples, 3)
@@ -101,6 +104,20 @@ def test_perfect_signal_recovery():
     assert_array_almost_equal(gamma[:, 0], gamma_gram, decimal=2)
 
 
+def test_orthogonal_mp_gram_readonly():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/5956
+    idx, = gamma[:, 0].nonzero()
+    G_readonly = G.copy()
+    G_readonly.setflags(write=False)
+    Xy_readonly = Xy.copy()
+    Xy_readonly.setflags(write=False)
+    gamma_gram = orthogonal_mp_gram(G_readonly, Xy_readonly[:, 0], 5,
+                                    copy_Gram=False, copy_Xy=False)
+    assert_array_equal(idx, np.flatnonzero(gamma_gram))
+    assert_array_almost_equal(gamma[:, 0], gamma_gram, decimal=2)
+
+
 def test_estimator():
     omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
     omp.fit(X, y[:, 0])
@@ -113,12 +130,16 @@ def test_estimator():
     assert_equal(omp.intercept_.shape, (n_targets,))
     assert_true(np.count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs)
 
-    omp.set_params(fit_intercept=False, normalize=False)
-
+    coef_normalized = omp.coef_[0].copy()
+    omp.set_params(fit_intercept=True, normalize=False)
     omp.fit(X, y[:, 0])
+    assert_array_almost_equal(coef_normalized, omp.coef_)
+
+    omp.set_params(fit_intercept=False, normalize=False)
+    omp.fit(X, y[:, 0])
+    assert_true(np.count_nonzero(omp.coef_) <= n_nonzero_coefs)
     assert_equal(omp.coef_.shape, (n_features,))
     assert_equal(omp.intercept_, 0)
-    assert_true(np.count_nonzero(omp.coef_) <= n_nonzero_coefs)
 
     omp.fit(X, y)
     assert_equal(omp.coef_.shape, (n_targets, n_features))

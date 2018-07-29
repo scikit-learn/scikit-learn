@@ -12,7 +12,7 @@ list of multi-dimensional observations. We say that the first axis of
 these arrays is the **samples** axis, while the second is the
 **features** axis.
 
-.. topic:: A simple example shipped with the scikit: iris dataset
+.. topic:: A simple example shipped with scikit-learn: iris dataset
 
     ::
 
@@ -46,7 +46,7 @@ needs to be preprocessed in order to be used by scikit-learn.
         >>> plt.imshow(digits.images[-1], cmap=plt.cm.gray_r) #doctest: +SKIP
         <matplotlib.image.AxesImage object at ...>
 
-    To use this dataset with the scikit, we transform each 8x8 image into a
+    To use this dataset with scikit-learn, we transform each 8x8 image into a
     feature vector of length 64 ::
 
         >>> data = digits.images.reshape((digits.images.shape[0], -1))

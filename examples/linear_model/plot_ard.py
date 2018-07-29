@@ -30,7 +30,7 @@ from scipy import stats
 
 from sklearn.linear_model import ARDRegression, LinearRegression
 
-###############################################################################
+# #############################################################################
 # Generating simulated data with Gaussian weights
 
 # Parameters of the example
@@ -51,7 +51,7 @@ noise = stats.norm.rvs(loc=0, scale=1. / np.sqrt(alpha_), size=n_samples)
 # Create the target
 y = np.dot(X, w) + noise
 
-###############################################################################
+# #############################################################################
 # Fit the ARD Regression
 clf = ARDRegression(compute_score=True)
 clf.fit(X, y)
@@ -59,7 +59,7 @@ clf.fit(X, y)
 ols = LinearRegression()
 ols.fit(X, y)
 
-###############################################################################
+# #############################################################################
 # Plot the true weights, the estimated weights, the histogram of the
 # weights, and predictions with standard deviations
 plt.figure(figsize=(6, 5))
@@ -76,7 +76,7 @@ plt.legend(loc=1)
 plt.figure(figsize=(6, 5))
 plt.title("Histogram of the weights")
 plt.hist(clf.coef_, bins=n_features, color='navy', log=True)
-plt.scatter(clf.coef_[relevant_features], 5 * np.ones(len(relevant_features)),
+plt.scatter(clf.coef_[relevant_features], np.full(len(relevant_features), 5.),
             color='gold', marker='o', label="Relevant features")
 plt.ylabel("Features")
 plt.xlabel("Values of the weights")

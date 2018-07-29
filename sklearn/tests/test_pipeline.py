@@ -1,7 +1,7 @@
 """
 Test the pipeline module.
 """
-
+from distutils.version import LooseVersion
 from tempfile import mkdtemp
 import shutil
 import time
@@ -19,19 +19,22 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_dict_equal
+from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, Lasso
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.dummy import DummyRegressor
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.externals.joblib import Memory
+from sklearn.utils import Memory
+from sklearn.utils._joblib import __version__ as joblib_version
 
 
 JUNK_FOOD_DOCS = (
@@ -67,12 +70,12 @@ class NoTrans(NoFit):
 
 
 class NoInvTransf(NoTrans):
-    def transform(self, X, y=None):
+    def transform(self, X):
         return X
 
 
 class Transf(NoInvTransf):
-    def transform(self, X, y=None):
+    def transform(self, X):
         return X
 
     def inverse_transform(self, X):
@@ -142,6 +145,17 @@ class DummyTransf(Transf):
         return self
 
 
+class DummyEstimatorParams(BaseEstimator):
+    """Mock classifier that takes params on predict"""
+
+    def fit(self, X, y):
+        return self
+
+    def predict(self, X, got_attribute=False):
+        self.got_attribute = got_attribute
+        return self
+
+
 def test_pipeline_init():
     # Test the various init parameters of the pipeline.
     assert_raises(TypeError, Pipeline)
@@ -187,7 +201,7 @@ def test_pipeline_init():
     assert_raises(ValueError, pipe.set_params, anova__C=0.1)
 
     # Test clone
-    pipe2 = clone(pipe)
+    pipe2 = assert_no_warnings(clone, pipe)
     assert_false(pipe.named_steps['svc'] is pipe2.named_steps['svc'])
 
     # Check that apart from estimators, the parameters are the same
@@ -206,6 +220,18 @@ def test_pipeline_init():
     params2.pop('svc')
     params2.pop('anova')
     assert_equal(params, params2)
+
+
+def test_pipeline_init_tuple():
+    # Pipeline accepts steps as tuple
+    X = np.array([[1, 2]])
+    pipe = Pipeline((('transf', Transf()), ('clf', FitParamT())))
+    pipe.fit(X, y=None)
+    pipe.score(X)
+
+    pipe.set_params(transf=None)
+    pipe.fit(X, y=None)
+    pipe.score(X)
 
 
 def test_pipeline_methods_anova():
@@ -276,7 +302,7 @@ def test_pipeline_raise_set_params_error():
                  'with `estimator.get_params().keys()`.')
 
     assert_raise_message(ValueError,
-                         error_msg % ('fake', 'Pipeline'),
+                         error_msg % ('fake', pipe),
                          pipe.set_params,
                          fake='nope')
 
@@ -293,7 +319,7 @@ def test_pipeline_methods_pca_svm():
     X = iris.data
     y = iris.target
     # Test with PCA + SVC
-    clf = SVC(probability=True, random_state=0)
+    clf = SVC(gamma='scale', probability=True, random_state=0)
     pca = PCA(svd_solver='full', n_components='mle', whiten=True)
     pipe = Pipeline([('pca', pca), ('svc', clf)])
     pipe.fit(X, y)
@@ -312,7 +338,8 @@ def test_pipeline_methods_preprocessing_svm():
     n_classes = len(np.unique(y))
     scaler = StandardScaler()
     pca = PCA(n_components=2, svd_solver='randomized', whiten=True)
-    clf = SVC(probability=True, random_state=0, decision_function_shape='ovr')
+    clf = SVC(gamma='scale', probability=True, random_state=0,
+              decision_function_shape='ovr')
 
     for preprocessing in [scaler, pca]:
         pipe = Pipeline([('preprocess', preprocessing), ('svc', clf)])
@@ -384,6 +411,16 @@ def test_fit_predict_with_intermediate_fit_params():
     assert_false('should_succeed' in pipe.named_steps['transf'].fit_params)
 
 
+def test_predict_with_predict_params():
+    # tests that Pipeline passes predict_params to the final estimator
+    # when predict is invoked
+    pipe = Pipeline([('transf', Transf()), ('clf', DummyEstimatorParams())])
+    pipe.fit(None, None)
+    pipe.predict(X=None, got_attribute=True)
+
+    assert_true(pipe.named_steps['clf'].got_attribute)
+
+
 def test_feature_union():
     # basic sanity check for feature union
     iris = load_iris()
@@ -409,6 +446,10 @@ def test_feature_union():
     X_sp_transformed = fs.fit_transform(X_sp, y)
     assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
 
+    # Test clone
+    fs2 = assert_no_warnings(clone, fs)
+    assert_false(fs.transformer_list[0][1] is fs2.transformer_list[0][1])
+
     # test setting parameters
     fs.set_params(select__k=2)
     assert_equal(fs.fit_transform(X, y).shape, (X.shape[0], 4))
@@ -424,6 +465,10 @@ def test_feature_union():
                         'transform.*\\bNoTrans\\b',
                         FeatureUnion,
                         [("transform", Transf()), ("no_transform", NoTrans())])
+
+    # test that init accepts tuples
+    fs = FeatureUnion((("svd", svd), ("select", select)))
+    fs.fit(X, y)
 
 
 def test_make_union():
@@ -842,6 +887,16 @@ def test_step_name_validation():
                                  [[1]], [1])
 
 
+def test_set_params_nested_pipeline():
+    estimator = Pipeline([
+        ('a', Pipeline([
+            ('b', DummyRegressor())
+        ]))
+    ])
+    estimator.set_params(a__b__alpha=0.001, a__b=Lasso())
+    estimator.set_params(a__steps=[('b', LogisticRegression())], a__b__C=5)
+
+
 def test_pipeline_wrong_memory():
     # Test that an error is raised when memory is not a string or a Memory
     # instance
@@ -850,11 +905,35 @@ def test_pipeline_wrong_memory():
     y = iris.target
     # Define memory as an integer
     memory = 1
-    cached_pipe = Pipeline([('transf', DummyTransf()), ('svc', SVC())],
-                           memory=memory)
-    assert_raises_regex(ValueError, "'memory' should either be a string or a"
-                        " sklearn.externals.joblib.Memory instance, got",
-                        cached_pipe.fit, X, y)
+    cached_pipe = Pipeline([('transf', DummyTransf()),
+                            ('svc', SVC())], memory=memory)
+    assert_raises_regex(ValueError, "'memory' should be None, a string or"
+                        " have the same interface as "
+                        "sklearn.utils.Memory."
+                        " Got memory='1' instead.", cached_pipe.fit, X, y)
+
+
+class DummyMemory(object):
+    def cache(self, func):
+        return func
+
+
+class WrongDummyMemory(object):
+    pass
+
+
+def test_pipeline_with_cache_attribute():
+    X = np.array([[1, 2]])
+    pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
+                    memory=DummyMemory())
+    pipe.fit(X, y=None)
+    dummy = WrongDummyMemory()
+    pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
+                    memory=dummy)
+    assert_raises_regex(ValueError, "'memory' should be None, a string or"
+                        " have the same interface as "
+                        "sklearn.utils.Memory."
+                        " Got memory='{}' instead.".format(dummy), pipe.fit, X)
 
 
 def test_pipeline_memory():
@@ -863,9 +942,13 @@ def test_pipeline_memory():
     y = iris.target
     cachedir = mkdtemp()
     try:
-        memory = Memory(cachedir=cachedir, verbose=10)
+        if LooseVersion(joblib_version) < LooseVersion('0.12'):
+            # Deal with change of API in joblib
+            memory = Memory(cachedir=cachedir, verbose=10)
+        else:
+            memory = Memory(location=cachedir, verbose=10)
         # Test with Transformer + SVC
-        clf = SVC(probability=True, random_state=0)
+        clf = SVC(gamma='scale', probability=True, random_state=0)
         transf = DummyTransf()
         pipe = Pipeline([('transf', clone(transf)), ('svc', clf)])
         cached_pipe = Pipeline([('transf', transf), ('svc', clf)],
@@ -874,7 +957,7 @@ def test_pipeline_memory():
         # Memoize the transformer at the first fit
         cached_pipe.fit(X, y)
         pipe.fit(X, y)
-        # Get the time stamp of the tranformer in the cached pipeline
+        # Get the time stamp of the transformer in the cached pipeline
         ts = cached_pipe.named_steps['transf'].timestamp_
         # Check that cached_pipe and pipe yield identical results
         assert_array_equal(pipe.predict(X), cached_pipe.predict(X))
@@ -899,7 +982,7 @@ def test_pipeline_memory():
         assert_equal(ts, cached_pipe.named_steps['transf'].timestamp_)
         # Create a new pipeline with cloned estimators
         # Check that even changing the name step does not affect the cache hit
-        clf_2 = SVC(probability=True, random_state=0)
+        clf_2 = SVC(gamma='scale', probability=True, random_state=0)
         transf_2 = DummyTransf()
         cached_pipe_2 = Pipeline([('transf_2', transf_2), ('svc', clf_2)],
                                  memory=memory)
@@ -921,7 +1004,11 @@ def test_pipeline_memory():
 
 def test_make_pipeline_memory():
     cachedir = mkdtemp()
-    memory = Memory(cachedir=cachedir)
+    if LooseVersion(joblib_version) < LooseVersion('0.12'):
+        # Deal with change of API in joblib
+        memory = Memory(cachedir=cachedir, verbose=10)
+    else:
+        memory = Memory(location=cachedir, verbose=10)
     pipeline = make_pipeline(DummyTransf(), SVC(), memory=memory)
     assert_true(pipeline.memory is memory)
     pipeline = make_pipeline(DummyTransf(), SVC())

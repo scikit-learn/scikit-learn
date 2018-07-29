@@ -20,8 +20,9 @@ from sklearn.utils.testing import assert_greater, assert_in, assert_less
 from sklearn.utils.testing import assert_raises_regexp, assert_warns
 from sklearn.utils.testing import assert_warns_message, assert_raise_message
 from sklearn.utils.testing import ignore_warnings, assert_raises
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.externals import six
 
@@ -54,7 +55,7 @@ def test_libsvm_iris():
 
     # shuffle the dataset so that labels are not ordered
     for k in ('linear', 'rbf'):
-        clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
+        clf = svm.SVC(gamma='scale', kernel=k).fit(iris.data, iris.target)
         assert_greater(np.mean(clf.predict(iris.data) == iris.target), 0.9)
         assert_true(hasattr(clf, "coef_") == (k == 'linear'))
 
@@ -119,7 +120,7 @@ def test_precomputed():
     # matrix. kernel is just a linear kernel
 
     kfunc = lambda x, y: np.dot(x, y.T)
-    clf = svm.SVC(kernel=kfunc)
+    clf = svm.SVC(gamma='scale', kernel=kfunc)
     clf.fit(X, Y)
     pred = clf.predict(T)
 
@@ -151,7 +152,7 @@ def test_precomputed():
     pred = clf.predict(K)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
-    clf = svm.SVC(kernel=kfunc)
+    clf = svm.SVC(gamma='scale', kernel=kfunc)
     clf.fit(iris.data, iris.target)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
@@ -171,7 +172,7 @@ def test_svr():
 
     # non-regression test; previously, BaseLibSVM would check that
     # len(np.unique(y)) < 2, which must only be done for SVC
-    svm.SVR().fit(diabetes.data, np.ones(len(diabetes.data)))
+    svm.SVR(gamma='scale').fit(diabetes.data, np.ones(len(diabetes.data)))
     svm.LinearSVR().fit(diabetes.data, np.ones(len(diabetes.data)))
 
 
@@ -230,22 +231,22 @@ def test_svr_errors():
     y = [0.0, 0.5]
 
     # Bad kernel
-    clf = svm.SVR(kernel=lambda x, y: np.array([[1.0]]))
+    clf = svm.SVR(gamma='scale', kernel=lambda x, y: np.array([[1.0]]))
     clf.fit(X, y)
     assert_raises(ValueError, clf.predict, X)
 
 
 def test_oneclass():
     # Test OneClassSVM
-    clf = svm.OneClassSVM()
+    clf = svm.OneClassSVM(gamma='scale')
     clf.fit(X)
     pred = clf.predict(T)
 
     assert_array_equal(pred, [-1, -1, -1])
     assert_equal(pred.dtype, np.dtype('intp'))
-    assert_array_almost_equal(clf.intercept_, [-1.008], decimal=3)
+    assert_array_almost_equal(clf.intercept_, [-1.117], decimal=3)
     assert_array_almost_equal(clf.dual_coef_,
-                              [[0.632, 0.233, 0.633, 0.234, 0.632, 0.633]],
+                              [[0.681, 0.139, 0.68, 0.14, 0.68, 0.68]],
                               decimal=3)
     assert_raises(AttributeError, lambda: clf.coef_)
 
@@ -280,6 +281,13 @@ def test_oneclass_decision_function():
     assert_array_equal((dec_func_outliers > 0).ravel(), y_pred_outliers == 1)
 
 
+def test_oneclass_score_samples():
+    X_train = [[1, 1], [1, 2], [2, 1]]
+    clf = svm.OneClassSVM(gamma=1).fit(X_train)
+    assert_array_equal(clf.score_samples([[2., 2.]]),
+                       clf.decision_function([[2., 2.]]) + clf.offset_)
+
+
 def test_tweak_params():
     # Make sure some tweaking of parameters works.
     # We change clf.dual_coef_ at run time and expect .predict() to change
@@ -299,8 +307,9 @@ def test_probability():
     # Predict probabilities using SVC
     # This uses cross validation, so we use a slightly bigger testing set.
 
-    for clf in (svm.SVC(probability=True, random_state=0, C=1.0),
-                svm.NuSVC(probability=True, random_state=0)):
+    for clf in (svm.SVC(gamma='scale', probability=True, random_state=0,
+                C=1.0), svm.NuSVC(gamma='scale', probability=True,
+                                  random_state=0)):
         clf.fit(iris.data, iris.target)
 
         prob_predict = clf.predict_proba(iris.data)
@@ -396,7 +405,7 @@ def test_svr_predict():
 
 def test_weight():
     # Test class weights
-    clf = svm.SVC(class_weight={1: 0.1})
+    clf = svm.SVC(gamma='scale', class_weight={1: 0.1})
     # we give a small weights to class 1
     clf.fit(X, Y)
     # so all predicted values belong to class 2
@@ -406,7 +415,7 @@ def test_weight():
                                  weights=[0.833, 0.167], random_state=2)
 
     for clf in (linear_model.LogisticRegression(),
-                svm.LinearSVC(random_state=0), svm.SVC()):
+                svm.LinearSVC(random_state=0), svm.SVC(gamma="scale")):
         clf.set_params(class_weight={0: .1, 1: 10})
         clf.fit(X_[:100], y_[:100])
         y_pred = clf.predict(X_[100:])
@@ -416,7 +425,7 @@ def test_weight():
 def test_sample_weights():
     # Test weights on individual samples
     # TODO: check on NuSVR, OneClass, etc.
-    clf = svm.SVC()
+    clf = svm.SVC(gamma="scale")
     clf.fit(X, Y)
     assert_array_equal(clf.predict([X[2]]), [1.])
 
@@ -425,7 +434,7 @@ def test_sample_weights():
     assert_array_equal(clf.predict([X[2]]), [2.])
 
     # test that rescaling all samples is the same as changing C
-    clf = svm.SVC()
+    clf = svm.SVC(gamma="scale")
     clf.fit(X, Y)
     dual_coef_no_weight = clf.dual_coef_
     clf.set_params(C=100)
@@ -433,13 +442,15 @@ def test_sample_weights():
     assert_array_almost_equal(dual_coef_no_weight, clf.dual_coef_)
 
 
+@ignore_warnings(category=UndefinedMetricWarning)
 def test_auto_weight():
     # Test class weights for imbalanced data
     from sklearn.linear_model import LogisticRegression
     # We take as dataset the two-dimensional projection of iris so
     # that it is not separable and remove half of predictors from
     # class 1.
-    # We add one to the targets as a non-regression test: class_weight="balanced"
+    # We add one to the targets as a non-regression test:
+    # class_weight="balanced"
     # used to work only when the labels where a range [0..K).
     from sklearn.utils import compute_class_weight
     X, y = iris.data[:, :2], iris.target + 1
@@ -463,17 +474,17 @@ def test_auto_weight():
 def test_bad_input():
     # Test that it gives proper exception on deficient input
     # impossible value of C
-    assert_raises(ValueError, svm.SVC(C=-1).fit, X, Y)
+    assert_raises(ValueError, svm.SVC(gamma='scale', C=-1).fit, X, Y)
 
     # impossible value of nu
-    clf = svm.NuSVC(nu=0.0)
+    clf = svm.NuSVC(gamma='scale', nu=0.0)
     assert_raises(ValueError, clf.fit, X, Y)
 
     Y2 = Y[:-1]  # wrong dimensions for labels
     assert_raises(ValueError, clf.fit, X, Y2)
 
     # Test with arrays that are non-contiguous.
-    for clf in (svm.SVC(), svm.LinearSVC(random_state=0)):
+    for clf in (svm.SVC(gamma="scale"), svm.LinearSVC(random_state=0)):
         Xf = np.asfortranarray(X)
         assert_false(Xf.flags['C_CONTIGUOUS'])
         yf = np.ascontiguousarray(np.tile(Y, (2, 1)).T)
@@ -488,44 +499,42 @@ def test_bad_input():
     assert_raises(ValueError, clf.fit, X, Y)
 
     # sample_weight bad dimensions
-    clf = svm.SVC()
+    clf = svm.SVC(gamma="scale")
     assert_raises(ValueError, clf.fit, X, Y, sample_weight=range(len(X) - 1))
 
     # predict with sparse input when trained with dense
-    clf = svm.SVC().fit(X, Y)
+    clf = svm.SVC(gamma="scale").fit(X, Y)
     assert_raises(ValueError, clf.predict, sparse.lil_matrix(X))
 
     Xt = np.array(X).T
     clf.fit(np.dot(X, Xt), Y)
     assert_raises(ValueError, clf.predict, X)
 
-    clf = svm.SVC()
+    clf = svm.SVC(gamma="scale")
     clf.fit(X, Y)
     assert_raises(ValueError, clf.predict, Xt)
 
 
 def test_unicode_kernel():
-    # Test that a unicode kernel name does not cause a TypeError on clf.fit
+    # Test that a unicode kernel name does not cause a TypeError
     if six.PY2:
         # Test unicode (same as str on python3)
-        clf = svm.SVC(kernel=unicode('linear'))
+        clf = svm.SVC(kernel=u'linear', probability=True)
         clf.fit(X, Y)
-
-        # Test ascii bytes (str is bytes in python2)
-        clf = svm.SVC(kernel=str('linear'))
-        clf.fit(X, Y)
-    else:
-        # Test unicode (str is unicode in python3)
-        clf = svm.SVC(kernel=str('linear'))
-        clf.fit(X, Y)
-
-        # Test ascii bytes (same as str on python2)
-        clf = svm.SVC(kernel=bytes('linear', 'ascii'))
-        clf.fit(X, Y)
+        clf.predict_proba(T)
+        svm.libsvm.cross_validation(iris.data,
+                                    iris.target.astype(np.float64), 5,
+                                    kernel=u'linear',
+                                    random_seed=0)
 
     # Test default behavior on both versions
-    clf = svm.SVC(kernel='linear')
+    clf = svm.SVC(gamma='scale', kernel='linear', probability=True)
     clf.fit(X, Y)
+    clf.predict_proba(T)
+    svm.libsvm.cross_validation(iris.data,
+                                iris.target.astype(np.float64), 5,
+                                kernel='linear',
+                                random_seed=0)
 
 
 def test_sparse_precomputed():
@@ -806,7 +815,7 @@ def test_linearsvc_verbose():
 def test_svc_clone_with_callable_kernel():
     # create SVM with callable linear kernel, check that results are the same
     # as with built-in linear kernel
-    svm_callable = svm.SVC(kernel=lambda x, y: np.dot(x, y.T),
+    svm_callable = svm.SVC(gamma='scale', kernel=lambda x, y: np.dot(x, y.T),
                            probability=True, random_state=0,
                            decision_function_shape='ovr')
     # clone for checking clonability with lambda functions..
@@ -832,7 +841,7 @@ def test_svc_clone_with_callable_kernel():
 
 
 def test_svc_bad_kernel():
-    svc = svm.SVC(kernel=lambda x, y: x)
+    svc = svm.SVC(gamma='scale', kernel=lambda x, y: x)
     assert_raises(ValueError, svc.fit, X, Y)
 
 
@@ -845,11 +854,11 @@ def test_timeout():
 def test_unfitted():
     X = "foo!"  # input validation not required when SVM not fitted
 
-    clf = svm.SVC()
+    clf = svm.SVC(gamma="scale")
     assert_raises_regexp(Exception, r".*\bSVC\b.*\bnot\b.*\bfitted\b",
                          clf.predict, X)
 
-    clf = svm.NuSVR()
+    clf = svm.NuSVR(gamma='scale')
     assert_raises_regexp(Exception, r".*\bNuSVR\b.*\bnot\b.*\bfitted\b",
                          clf.predict, X)
 
@@ -864,12 +873,16 @@ def test_consistent_proba():
     assert_array_almost_equal(proba_1, proba_2)
 
 
-def test_linear_svc_convergence_warnings():
+def test_linear_svm_convergence_warnings():
     # Test that warnings are raised if model does not converge
 
-    lsvc = svm.LinearSVC(max_iter=2, verbose=1)
+    lsvc = svm.LinearSVC(random_state=0, max_iter=2)
     assert_warns(ConvergenceWarning, lsvc.fit, X, Y)
     assert_equal(lsvc.n_iter_, 2)
+
+    lsvr = svm.LinearSVR(random_state=0, max_iter=2)
+    assert_warns(ConvergenceWarning, lsvr.fit, iris.data, iris.target)
+    assert_equal(lsvr.n_iter_, 2)
 
 
 def test_svr_coef_sign():
@@ -908,12 +921,12 @@ def test_hasattr_predict_proba():
     # Method must be (un)available before or after fit, switched by
     # `probability` param
 
-    G = svm.SVC(probability=True)
+    G = svm.SVC(gamma='scale', probability=True)
     assert_true(hasattr(G, 'predict_proba'))
     G.fit(iris.data, iris.target)
     assert_true(hasattr(G, 'predict_proba'))
 
-    G = svm.SVC(probability=False)
+    G = svm.SVC(gamma='scale', probability=False)
     assert_false(hasattr(G, 'predict_proba'))
     G.fit(iris.data, iris.target)
     assert_false(hasattr(G, 'predict_proba'))
@@ -930,7 +943,7 @@ def test_decision_function_shape_two_class():
     for n_classes in [2, 3]:
         X, y = make_blobs(centers=n_classes, random_state=0)
         for estimator in [svm.SVC, svm.NuSVC]:
-            clf = OneVsRestClassifier(estimator(
+            clf = OneVsRestClassifier(estimator(gamma='scale',
                 decision_function_shape="ovr")).fit(X, y)
             assert_equal(len(clf.predict(X)), len(y))
 
@@ -975,3 +988,29 @@ def test_ovr_decision_function():
     # Test if the first point has lower decision value on every quadrant
     # compared to the second point
     assert_true(np.all(pred_class_deci_val[:, 0] < pred_class_deci_val[:, 1]))
+
+
+def test_gamma_auto():
+    X, y = [[0.0, 1.2], [1.0, 1.3]], [0, 1]
+
+    msg = ("The default value of gamma will change from 'auto' to 'scale' in "
+           "version 0.22 to account better for unscaled features. Set gamma "
+           "explicitly to 'auto' or 'scale' to avoid this warning.")
+
+    assert_warns_message(FutureWarning, msg,
+                         svm.SVC().fit, X, y)
+    assert_no_warnings(svm.SVC(kernel='linear').fit, X, y)
+    assert_no_warnings(svm.SVC(kernel='precomputed').fit, X, y)
+
+
+def test_gamma_scale():
+    X, y = [[0.], [1.]], [0, 1]
+
+    clf = svm.SVC(gamma='scale')
+    assert_no_warnings(clf.fit, X, y)
+    assert_equal(clf._gamma, 2.)
+
+    # X_std ~= 1 shouldn't raise warning, for when
+    # gamma is not explicitly set.
+    X, y = [[1, 2], [3, 2 * np.sqrt(6) / 3 + 2]], [0, 1]
+    assert_no_warnings(clf.fit, X, y)
