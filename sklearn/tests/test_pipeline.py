@@ -700,6 +700,7 @@ def test_pipeline_ducktyping():
     pipeline.inverse_transform
 
     pipeline = make_pipeline('passthrough')
+    assert pipeline.steps[0] == ('passthrough', 'passthrough')
     assert_false(hasattr(pipeline, 'predict'))
     pipeline.transform
     pipeline.inverse_transform

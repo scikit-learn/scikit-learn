@@ -550,7 +550,11 @@ class Pipeline(_BaseComposition):
 def _name_estimators(estimators):
     """Generate names for estimators."""
 
-    names = [type(estimator).__name__.lower() for estimator in estimators]
+    names = [
+        estimator.lower()
+        if isinstance(estimator, str) else type(estimator).__name__.lower()
+        for estimator in estimators
+    ]
     namecount = defaultdict(int)
     for est, name in zip(estimators, names):
         namecount[name] += 1
