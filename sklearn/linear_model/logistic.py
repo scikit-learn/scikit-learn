@@ -429,12 +429,15 @@ def _check_solver_option(solver, multi_class, penalty, dual,
 
     # default values raises a future warning
     if solver == 'warn':
-        # solver will eventually change back to previous_default_solver, but we
-        # warn only if the 'auto' solver would have selected a different solver
-        solver = 'auto'
-        warn_solver = True
-    else:
-        warn_solver = False
+        # previous_default_solver is used since LogisticRegression and
+        # LogisticRegressionCV don't have the same default in 0.19.
+        solver = previous_default_solver
+
+        # Do not warn if the 'auto' solver selects the previous default solver
+        if previous_default_solver != 'lbfgs':
+            warnings.warn("Default solver will be changed to 'lbfgs' in 0.22. "
+                          "Use a specific solver to silence this warning.",
+                          FutureWarning)
 
     if multi_class == 'warn':
         multi_class = 'ovr'
@@ -442,13 +445,11 @@ def _check_solver_option(solver, multi_class, penalty, dual,
                       " 0.22. Use a specific option to silence this warning.",
                       FutureWarning)
 
-    # multi_class checks
     if multi_class not in ['multinomial', 'ovr']:
         raise ValueError("multi_class should be either multinomial or "
                          "ovr, got %s." % multi_class)
 
-    # solver checks
-    all_solvers = ['liblinear', 'newton-cg', 'lbfgs', 'sag', 'saga', 'auto']
+    all_solvers = ['liblinear', 'newton-cg', 'lbfgs', 'sag', 'saga']
     if solver not in all_solvers:
         raise ValueError("Logistic Regression supports only solvers in %s, got"
                          " %s." % (all_solvers, solver))
@@ -457,22 +458,6 @@ def _check_solver_option(solver, multi_class, penalty, dual,
     if penalty not in all_penalties:
         raise ValueError("Logistic Regression supports only penalties in %s,"
                          " got %s." % (all_penalties, penalty))
-
-    if solver == 'auto':
-        if penalty == 'l1':
-            solver = 'saga'
-        else:
-            solver = 'lbfgs'
-
-    if warn_solver and solver != previous_default_solver:
-        # Do not warn if the 'auto' solver selects the previous default solver
-
-        # previous_default_solver is used since LogisticRegression and
-        # LogisticRegressionCV don't have the same default in 0.19.
-        solver = previous_default_solver
-        warnings.warn("Default solver will be changed to 'auto' in 0.22. "
-                      "Use a specific solver to silence this warning.",
-                      FutureWarning)
 
     # Compatibility checks
     if multi_class == 'multinomial' and solver == 'liblinear':
@@ -1396,7 +1381,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         # This check can be removed in 0.22, changing back to self.multi_class
         _, multi_class = _check_solver_option(
-            self.solver, self.multi_class, self.penalty, self.dual)
+            self.solver, self.multi_class, self.penalty, self.dual, 'lbfgs')
 
         if multi_class == "ovr":
             return super(LogisticRegression, self)._predict_proba_lr(X)
