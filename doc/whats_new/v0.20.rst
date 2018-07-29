@@ -195,7 +195,7 @@ Decomposition, manifold learning and clustering
   :issue:`6374` by :user:`John Kirkham <jakirkham>`.
 
 - :class:`decomposition.SparsePCA` now exposes ``normalize_components``. When
-  set to True, the train and test data are centered with the train mean 
+  set to True, the train and test data are centered with the train mean
   repsectively during the fit phase and the transform phase. This fixes the
   behavior of SparsePCA. When set to False, which is the default, the previous
   abnormal behaviour still holds. The False value is for backward
@@ -749,7 +749,7 @@ Preprocessing
 Feature selection
 
 - Fixed computation of ``n_features_to_compute`` for edge case with tied CV
-  scores in :class:`feature_selection.RFECV`. :issue:`9222` by `Nick Hoh
+  scores in :class:`feature_selection.RFECV`. :issue:`9222` by :user:`Nick Hoh
   <nickypie>`.
 
 Model evaluation and meta-estimators
@@ -805,6 +805,12 @@ Linear, kernelized and related models
 - Added convergence warning to :class:`svm.LinearSVC` and
   :class:`linear_model.LogisticRegression` when ``verbose`` is set to 0.
   :issue:`10881` by :user:`Alexandre Sevin <AlexandreSev>`.
+
+- The default values of the ``solver`` and ``multi_class`` parameters of
+  :class:`linear_model.LogisticRegression` will change respectively from
+  ``'liblinear'`` and ``'ovr'`` in version 0.20 to ``'lbfgs'`` and
+  ``'multinomial'`` in version 0.22. A FutureWarning is raised when the default
+  value is used. :issue:`11476` by `Tom Dupre la Tour`_.
 
 Preprocessing
 
@@ -914,7 +920,7 @@ Outlier Detection models
 
 - Novelty detection with :class:`neighbors.LocalOutlierFactor`:
   Add a ``novelty`` parameter to :class:`neighbors.LocalOutlierFactor`. When
-  ``novelty`` is set to True, :class:`neighbors.LocalOutlierFactor` can then 
+  ``novelty`` is set to True, :class:`neighbors.LocalOutlierFactor` can then
   be used for novelty detection, i.e. predict on new unseen data. Available
   prediction methods are ``predict``, ``decision_function`` and
   ``score_samples``. By default, ``novelty`` is set to ``False``, and only
