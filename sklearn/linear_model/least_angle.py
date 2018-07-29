@@ -65,7 +65,7 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
         matrix is precomputed from the given X, if there are more samples
         than features.
 
-    n_samples: integer or float, optional (default=None)
+    n_samples : integer or float, optional (default=None)
         Equivalent size of sample.
 
     max_iter : integer, optional (default=500)
@@ -216,7 +216,7 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
     if verbose:
         if verbose > 1:
-            print('Step\t\tAdded\t\tDropped\t\tActive set size\t\tC')
+            print("Step\t\tAdded\t\tDropped\t\tActive set size\t\tC")
         else:
             sys.stdout.write('.')
             sys.stdout.flush()
@@ -249,7 +249,6 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
             prev_coef = coefs[n_iter - 1]
 
         alpha[0] = C / n_samples
-
         if alpha[0] <= alpha_min + equality_tolerance:  # early stopping
             if abs(alpha[0] - alpha_min) > equality_tolerance:
                 # interpolation factor 0 <= ss < 1
@@ -342,7 +341,7 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
             n_active += 1
 
             if verbose > 1:
-                print('%s\t\t%s\t\t%s\t\t%s\t\t%s' % (n_iter, active[-1], '',
+                print("%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
                                                       n_active, C))
 
         if method == 'lasso' and n_iter > 0 and prev_alpha[0] < alpha[0]:
@@ -450,7 +449,7 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
             # handle the case when idx is not length of 1
             [arrayfuncs.cholesky_delete(L[:n_active, :n_active], ii) for ii in
-             idx]
+                idx]
 
             n_active -= 1
             m, n = idx, n_active
@@ -491,7 +490,7 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
             sign_active = np.delete(sign_active, idx)
             sign_active = np.append(sign_active, 0.)  # just to maintain size
             if verbose > 1:
-                print('%s\t\t%s\t\t%s\t\t%s\t\t%s' % (n_iter, '', drop_idx,
+                print("%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
                                                       n_active, abs(temp)))
 
     if return_path:
@@ -1191,8 +1190,8 @@ class LarsCV(Lars):
         return self
 
     @property
-    @deprecated('Attribute alpha is deprecated in 0.19 and '
-                'will be removed in 0.21. See ``alpha_`` instead')
+    @deprecated("Attribute alpha is deprecated in 0.19 and "
+                "will be removed in 0.21. See ``alpha_`` instead")
     def alpha(self):
         # impedance matching for the above Lars.fit (should not be documented)
         return self.alpha_
