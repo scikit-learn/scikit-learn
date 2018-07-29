@@ -15,7 +15,7 @@ import numpy as np
 from scipy import sparse
 
 from .base import clone, TransformerMixin
-from .externals.joblib import Parallel, delayed
+from .utils import Parallel, delayed
 from .externals import six
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch
@@ -67,6 +67,11 @@ class Pipeline(_BaseComposition):
     named_steps : bunch object, a dictionary with attribute access
         Read-only attribute to access any step parameter by user given name.
         Keys are step names and values are steps parameters.
+
+    See also
+    --------
+    sklearn.pipeline.make_pipeline : convenience function for simplified
+        pipeline construction.
 
     Examples
     --------
@@ -201,15 +206,27 @@ class Pipeline(_BaseComposition):
             if transformer is None:
                 pass
             else:
-                if hasattr(memory, 'cachedir') and memory.cachedir is None:
-                    # we do not clone when caching is disabled to preserve
-                    # backward compatibility
-                    cloned_transformer = transformer
+                if hasattr(memory, 'location'):
+                    # joblib >= 0.12
+                    if memory.location is None:
+                        # we do not clone when caching is disabled to
+                        # preserve backward compatibility
+                        cloned_transformer = transformer
+                    else:
+                        cloned_transformer = clone(transformer)
+                elif hasattr(memory, 'cachedir'):
+                    # joblib < 0.11
+                    if memory.cachedir is None:
+                        # we do not clone when caching is disabled to
+                        # preserve backward compatibility
+                        cloned_transformer = transformer
+                    else:
+                        cloned_transformer = clone(transformer)
                 else:
                     cloned_transformer = clone(transformer)
                 # Fit or load from cache the current transfomer
                 Xt, fitted_transformer = fit_transform_one_cached(
-                    cloned_transformer, None, Xt, y,
+                    cloned_transformer, Xt, y, None,
                     **fit_params_steps[name])
                 # Replace the transformer of the step with the fitted
                 # transformer. This is necessary when loading the transformer
@@ -549,6 +566,11 @@ def make_pipeline(*steps, **kwargs):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
+    See also
+    --------
+    sklearn.pipeline.Pipeline : Class for creating a pipeline of
+        transforms with a final estimator.
+
     Examples
     --------
     >>> from sklearn.naive_bayes import GaussianNB
@@ -572,11 +594,14 @@ def make_pipeline(*steps, **kwargs):
     return Pipeline(_name_estimators(steps), memory=memory)
 
 
-def _fit_one_transformer(transformer, X, y):
+# weight and fit_params are not used but it allows _fit_one_transformer,
+# _transform_one and _fit_transform_one to have the same signature to
+#  factorize the code in ColumnTransformer
+def _fit_one_transformer(transformer, X, y, weight=None, **fit_params):
     return transformer.fit(X, y)
 
 
-def _transform_one(transformer, weight, X):
+def _transform_one(transformer, X, y, weight, **fit_params):
     res = transformer.transform(X)
     # if we have a weight for this transformer, multiply output
     if weight is None:
@@ -584,8 +609,7 @@ def _transform_one(transformer, weight, X):
     return res * weight
 
 
-def _fit_transform_one(transformer, weight, X, y,
-                       **fit_params):
+def _fit_transform_one(transformer, X, y, weight, **fit_params):
     if hasattr(transformer, 'fit_transform'):
         res = transformer.fit_transform(X, y, **fit_params)
     else:
@@ -623,6 +647,21 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
 
+    See also
+    --------
+    sklearn.pipeline.make_union : convenience function for simplified
+        feature union construction.
+
+    Examples
+    --------
+    >>> from sklearn.pipeline import FeatureUnion
+    >>> from sklearn.decomposition import PCA, TruncatedSVD
+    >>> union = FeatureUnion([("pca", PCA(n_components=1)),
+    ...                       ("svd", TruncatedSVD(n_components=2))])
+    >>> X = [[0., 1., 3], [2., 2., 5]]
+    >>> union.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    array([[ 1.5       ,  3.0...,  0.8...],
+           [-1.5       ,  5.7..., -0.4...]])
     """
     def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
         self.transformer_list = transformer_list
@@ -675,7 +714,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
                                 (t, type(t)))
 
     def _iter(self):
-        """Generate (name, est, weight) tuples excluding None transformers
+        """
+        Generate (name, trans, weight) tuples excluding None transformers
         """
         get_weight = (self.transformer_weights or {}).get
         return ((name, trans, get_weight(name))
@@ -743,7 +783,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         """
         self._validate_transformers()
         result = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_transform_one)(trans, weight, X, y,
+            delayed(_fit_transform_one)(trans, X, y, weight,
                                         **fit_params)
             for name, trans, weight in self._iter())
 
@@ -773,7 +813,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             sum of n_components (output dimension) over transformers.
         """
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, weight, X)
+            delayed(_transform_one)(trans, X, None, weight)
             for name, trans, weight in self._iter())
         if not Xs:
             # All transformers are None
@@ -809,6 +849,11 @@ def make_union(*transformers, **kwargs):
     Returns
     -------
     f : FeatureUnion
+
+    See also
+    --------
+    sklearn.pipeline.FeatureUnion : Class for concatenating the results
+        of multiple transformer objects.
 
     Examples
     --------

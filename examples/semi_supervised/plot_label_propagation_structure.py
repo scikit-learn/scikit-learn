@@ -24,7 +24,7 @@ from sklearn.datasets import make_circles
 n_samples = 200
 X, y = make_circles(n_samples=n_samples, shuffle=False)
 outer, inner = 0, 1
-labels = -np.ones(n_samples)
+labels = np.full(n_samples, -1.)
 labels[0] = outer
 labels[-1] = inner
 

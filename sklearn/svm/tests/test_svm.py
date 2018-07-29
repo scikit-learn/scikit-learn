@@ -22,7 +22,7 @@ from sklearn.utils.testing import assert_warns_message, assert_raise_message
 from sklearn.utils.testing import ignore_warnings, assert_raises
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.externals import six
 
@@ -283,7 +283,7 @@ def test_oneclass_decision_function():
 
 def test_oneclass_score_samples():
     X_train = [[1, 1], [1, 2], [2, 1]]
-    clf = svm.OneClassSVM().fit(X_train)
+    clf = svm.OneClassSVM(gamma=1).fit(X_train)
     assert_array_equal(clf.score_samples([[2., 2.]]),
                        clf.decision_function([[2., 2.]]) + clf.offset_)
 
@@ -442,13 +442,15 @@ def test_sample_weights():
     assert_array_almost_equal(dual_coef_no_weight, clf.dual_coef_)
 
 
+@ignore_warnings(category=UndefinedMetricWarning)
 def test_auto_weight():
     # Test class weights for imbalanced data
     from sklearn.linear_model import LogisticRegression
     # We take as dataset the two-dimensional projection of iris so
     # that it is not separable and remove half of predictors from
     # class 1.
-    # We add one to the targets as a non-regression test: class_weight="balanced"
+    # We add one to the targets as a non-regression test:
+    # class_weight="balanced"
     # used to work only when the labels where a range [0..K).
     from sklearn.utils import compute_class_weight
     X, y = iris.data[:, :2], iris.target + 1
@@ -871,12 +873,16 @@ def test_consistent_proba():
     assert_array_almost_equal(proba_1, proba_2)
 
 
-def test_linear_svc_convergence_warnings():
+def test_linear_svm_convergence_warnings():
     # Test that warnings are raised if model does not converge
 
-    lsvc = svm.LinearSVC(max_iter=2, verbose=1)
+    lsvc = svm.LinearSVC(random_state=0, max_iter=2)
     assert_warns(ConvergenceWarning, lsvc.fit, X, Y)
     assert_equal(lsvc.n_iter_, 2)
+
+    lsvr = svm.LinearSVR(random_state=0, max_iter=2)
+    assert_warns(ConvergenceWarning, lsvr.fit, iris.data, iris.target)
+    assert_equal(lsvr.n_iter_, 2)
 
 
 def test_svr_coef_sign():

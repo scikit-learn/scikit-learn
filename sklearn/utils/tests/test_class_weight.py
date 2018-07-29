@@ -124,6 +124,28 @@ def test_compute_class_weight_balanced_unordered():
     assert_array_almost_equal(cw, [2., 1., 2. / 3])
 
 
+def test_compute_class_weight_default():
+    # Test for the case where no weight is given for a present class.
+    # Current behaviour is to assign the unweighted classes a weight of 1.
+    y = np.asarray([2, 2, 2, 3, 3, 4])
+    classes = np.unique(y)
+    classes_len = len(classes)
+
+    # Test for non specified weights
+    cw = compute_class_weight(None, classes, y)
+    assert_equal(len(cw), classes_len)
+    assert_array_almost_equal(cw, np.ones(3))
+
+    # Tests for partly specified weights
+    cw = compute_class_weight({2: 1.5}, classes, y)
+    assert_equal(len(cw), classes_len)
+    assert_array_almost_equal(cw, [1.5, 1., 1.])
+
+    cw = compute_class_weight({2: 1.5, 4: 0.5}, classes, y)
+    assert_equal(len(cw), classes_len)
+    assert_array_almost_equal(cw, [1.5, 1., 0.5])
+
+
 def test_compute_sample_weight():
     # Test (and demo) compute_sample_weight.
     # Test with balanced classes

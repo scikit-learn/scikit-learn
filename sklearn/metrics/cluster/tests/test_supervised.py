@@ -12,10 +12,12 @@ from sklearn.metrics.cluster import homogeneity_score
 from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import v_measure_score
+from sklearn.metrics.cluster.supervised import _generalized_average
 
 from sklearn.utils import assert_all_finite
 from sklearn.utils.testing import (
         assert_equal, assert_almost_equal, assert_raise_message,
+        assert_warns_message, ignore_warnings
 )
 from numpy.testing import assert_array_almost_equal
 
@@ -30,6 +32,18 @@ score_funcs = [
 ]
 
 
+def test_future_warning():
+    score_funcs_with_changing_means = [
+        normalized_mutual_info_score,
+        adjusted_mutual_info_score,
+    ]
+    warning_msg = "The behavior of "
+    args = [0, 0, 0], [0, 0, 0]
+    for score_func in score_funcs_with_changing_means:
+        assert_warns_message(FutureWarning, warning_msg, score_func, *args)
+
+
+@ignore_warnings(category=FutureWarning)
 def test_error_messages_on_wrong_input():
     for score_func in score_funcs:
         expected = ('labels_true and labels_pred must have same size,'
@@ -46,6 +60,17 @@ def test_error_messages_on_wrong_input():
                              [0, 1, 0], [[1, 1], [0, 0]])
 
 
+def test_generalized_average():
+    a, b = 1, 2
+    methods = ["min", "geometric", "arithmetic", "max"]
+    means = [_generalized_average(a, b, method) for method in methods]
+    assert means[0] <= means[1] <= means[2] <= means[3]
+    c, d = 12, 12
+    means = [_generalized_average(c, d, method) for method in methods]
+    assert means[0] == means[1] == means[2] == means[3]
+
+
+@ignore_warnings(category=FutureWarning)
 def test_perfect_matches():
     for score_func in score_funcs:
         assert_equal(score_func([], []), 1.0)
@@ -55,6 +80,20 @@ def test_perfect_matches():
         assert_equal(score_func([0., 1., 0.], [42., 7., 42.]), 1.0)
         assert_equal(score_func([0., 1., 2.], [42., 7., 2.]), 1.0)
         assert_equal(score_func([0, 1, 2], [42, 7, 2]), 1.0)
+    score_funcs_with_changing_means = [
+        normalized_mutual_info_score,
+        adjusted_mutual_info_score,
+    ]
+    means = {"min", "geometric", "arithmetic", "max"}
+    for score_func in score_funcs_with_changing_means:
+        for mean in means:
+            assert score_func([], [], mean) == 1.0
+            assert score_func([0], [1], mean) == 1.0
+            assert score_func([0, 0, 0], [0, 0, 0], mean) == 1.0
+            assert score_func([0, 1, 0], [42, 7, 42], mean) == 1.0
+            assert score_func([0., 1., 0.], [42., 7., 42.], mean) == 1.0
+            assert score_func([0., 1., 2.], [42., 7., 2.], mean) == 1.0
+            assert score_func([0, 1, 2], [42, 7, 2], mean) == 1.0
 
 
 def test_homogeneous_but_not_complete_labeling():
@@ -87,7 +126,7 @@ def test_not_complete_and_not_homogeneous_labeling():
     assert_almost_equal(v, 0.52, 2)
 
 
-def test_non_consicutive_labels():
+def test_non_consecutive_labels():
     # regression tests for labels with gaps
     h, c, v = homogeneity_completeness_v_measure(
         [0, 0, 0, 2, 2, 2],
@@ -109,6 +148,7 @@ def test_non_consicutive_labels():
     assert_almost_equal(ari_2, 0.24, 2)
 
 
+@ignore_warnings(category=FutureWarning)
 def uniform_labelings_scores(score_func, n_samples, k_range, n_runs=10,
                              seed=42):
     # Compute score for random uniform cluster labelings
@@ -122,6 +162,7 @@ def uniform_labelings_scores(score_func, n_samples, k_range, n_runs=10,
     return scores
 
 
+@ignore_warnings(category=FutureWarning)
 def test_adjustment_for_chance():
     # Check that adjusted scores are almost zero on random labels
     n_clusters_range = [2, 10, 50, 90]
@@ -135,6 +176,7 @@ def test_adjustment_for_chance():
     assert_array_almost_equal(max_abs_scores, [0.02, 0.03, 0.03, 0.02], 2)
 
 
+@ignore_warnings(category=FutureWarning)
 def test_adjusted_mutual_info_score():
     # Compute the Adjusted Mutual Information and test against known values
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
@@ -173,15 +215,16 @@ def test_expected_mutual_info_overflow():
     assert expected_mutual_information(np.array([[70000]]), 70000) <= 1
 
 
-def test_int_overflow_mutual_info_score():
-    # Test overflow in mutual_info_classif
+def test_int_overflow_mutual_info_fowlkes_mallows_score():
+    # Test overflow in mutual_info_classif and fowlkes_mallows_score
     x = np.array([1] * (52632 + 2529) + [2] * (14660 + 793) + [3] * (3271 +
                  204) + [4] * (814 + 39) + [5] * (316 + 20))
     y = np.array([0] * 52632 + [1] * 2529 + [0] * 14660 + [1] * 793 +
                  [0] * 3271 + [1] * 204 + [0] * 814 + [1] * 39 + [0] * 316 +
                  [1] * 20)
 
-    assert_all_finite(mutual_info_score(x.ravel(), y.ravel()))
+    assert_all_finite(mutual_info_score(x, y))
+    assert_all_finite(fowlkes_mallows_score(x, y))
 
 
 def test_entropy():
@@ -214,6 +257,7 @@ def test_contingency_matrix_sparse():
                                     eps=1e-10, sparse=True)
 
 
+@ignore_warnings(category=FutureWarning)
 def test_exactly_zero_info_score():
     # Check numerical stability when information is exactly zero
     for i in np.logspace(1, 4, 4).astype(np.int):
@@ -223,6 +267,11 @@ def test_exactly_zero_info_score():
         assert_equal(v_measure_score(labels_a, labels_b), 0.0)
         assert_equal(adjusted_mutual_info_score(labels_a, labels_b), 0.0)
         assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
+        for method in ["min", "geometric", "arithmetic", "max"]:
+            assert adjusted_mutual_info_score(labels_a, labels_b,
+                                              method) == 0.0
+            assert normalized_mutual_info_score(labels_a, labels_b,
+                                                method) == 0.0
 
 
 def test_v_measure_and_mutual_information(seed=36):
@@ -234,6 +283,11 @@ def test_v_measure_and_mutual_information(seed=36):
         assert_almost_equal(v_measure_score(labels_a, labels_b),
                             2.0 * mutual_info_score(labels_a, labels_b) /
                             (entropy(labels_a) + entropy(labels_b)), 0)
+        avg = 'arithmetic'
+        assert_almost_equal(v_measure_score(labels_a, labels_b),
+                            normalized_mutual_info_score(labels_a, labels_b,
+                                                         average_method=avg)
+                            )
 
 
 def test_fowlkes_mallows_score():

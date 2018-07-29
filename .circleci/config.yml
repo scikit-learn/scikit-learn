@@ -47,6 +47,7 @@ jobs:
       - SCIPY_VERSION: 0.14
       - MATPLOTLIB_VERSION: 1.3
       - SCIKIT_IMAGE_VERSION: 0.9.3
+      - PANDAS_VERSION: 0.13.1
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -63,6 +64,7 @@ jobs:
       - store_artifacts:
           path: ~/log.txt
           destination: log.txt
+
 
   deploy:
     docker:
@@ -90,4 +92,3 @@ workflows:
       - deploy:
           requires:
             - python3
-            - python2

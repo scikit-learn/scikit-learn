@@ -18,11 +18,6 @@ import warnings
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.uint32_t UINT32_t
-ctypedef floating (*DOT)(int N, floating *X, int incX, floating *Y,
-                         int incY) nogil
-ctypedef void (*AXPY)(int N, floating alpha, floating *X, int incX,
-                      floating *Y, int incY) nogil
-ctypedef floating (*ASUM)(int N, floating *X, int incX) nogil
 
 np.import_array()
 
@@ -162,10 +157,6 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     """
 
     # fused types version of BLAS functions
-    cdef DOT dot
-    cdef AXPY axpy
-    cdef ASUM asum
-
     if floating is float:
         dtype = np.float32
         dot = sdot
@@ -355,9 +346,6 @@ def sparse_enet_coordinate_descent(floating [:] w,
     cdef floating[:] XtA
 
     # fused types version of BLAS functions
-    cdef DOT dot
-    cdef ASUM asum
-
     if floating is float:
         dtype = np.float32
         n_tasks = y.strides[0] / sizeof(float)
@@ -480,8 +468,9 @@ def sparse_enet_coordinate_descent(floating [:] w,
                 if d_w_ii > d_w_max:
                     d_w_max = d_w_ii
 
-                if w[ii] > w_max:
-                    w_max = w[ii]
+                if fabs(w[ii]) > w_max:
+                    w_max = fabs(w[ii])
+
             if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
@@ -558,10 +547,6 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
     """
 
     # fused types version of BLAS functions
-    cdef DOT dot
-    cdef AXPY axpy
-    cdef ASUM asum
-
     if floating is float:
         dtype = np.float32
         dot = sdot
@@ -712,10 +697,6 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
 
     """
     # fused types version of BLAS functions
-    cdef DOT dot
-    cdef AXPY axpy
-    cdef ASUM asum
-
     if floating is float:
         dtype = np.float32
         dot = sdot
