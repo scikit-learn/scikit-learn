@@ -1,5 +1,4 @@
 from sklearn.base import BaseEstimator
-from sklearn.pipeline import Pipeline
 from inspect import signature
 import numpy as np
 import re
@@ -127,7 +126,8 @@ class _Formatter(object):
                     steps_str += (self.lfchar + self.htchar *
                                   (indent + len("steps=[") + offset))
                 items = [
-                    self._format_all(item, indent + offset + len("steps=[") + 1)
+                    self._format_all(item, indent + offset +
+                                     len("steps=[") + 1)
                     for item in step
                 ]
                 steps_str += "(%s)" % self._join_items(

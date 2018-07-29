@@ -1,6 +1,7 @@
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
+from sklearn.feature_selection import RFE
 from sklearn._pprint import _Formatter
 from sklearn.utils.testing import assert_raise_message
 from sklearn.base import BaseEstimator
@@ -58,16 +59,57 @@ Pipeline(
     assert expected_repr == f(pipeline)
 
 
-def test_qqqq():
+def test_visual():
+    # Not really tests. Just here to make reviewing easier.
 
-    class Veeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeerylong(BaseEstimator):
-        def __init__(slef, something=True):
+    # 84 chararacters long estimator name
+    class Veeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeerylong(BaseEstimator): # noqa
+        def __init__(self, something=True):
             pass
+
         def fit(X):
             pass
 
-    pipeline = make_pipeline(StandardScaler(),
-                             Veeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeerylong())
+    VeryLongName =  Veeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeerylong  # noqa
+
     f = _Formatter()
-    print()
-    print(f(pipeline))
+
+    expected_repr = """
+Veeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeerylong(
+    something=None)"""
+    expected_repr = expected_repr[1:]  # Remove first \n
+    assert expected_repr == f(VeryLongName())
+
+    pipeline = make_pipeline(StandardScaler(), VeryLongName())
+    expected_repr = """
+Pipeline(
+    steps=[('standardscaler',
+            StandardScaler(copy=True, with_mean=True, with_std=True))
+           (
+            'veeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeerylong',
+            Veeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeerylong(
+                something=None))],
+    memory=None)"""
+    expected_repr = expected_repr[1:]  # Remove first \n
+    assert expected_repr == f(pipeline)
+
+
+    estimator = RFE(RFE(RFE(RFE(RFE(RFE(RFE(LogisticRegression)))))))
+    expected_repr = """
+RFE(
+    estimator=RFE(
+        estimator=RFE(
+            estimator=RFE(
+                estimator=RFE(
+                    estimator=RFE(
+                        estimator=RFE(
+                            estimator=<class 'sklearn.linear_model.logistic.LogisticRegression'>,
+                            n_features_to_select=None, step=1, verbose=0),
+                        n_features_to_select=None, step=1, verbose=0),
+                    n_features_to_select=None, step=1, verbose=0),
+                n_features_to_select=None, step=1, verbose=0),
+            n_features_to_select=None, step=1, verbose=0),
+        n_features_to_select=None, step=1, verbose=0),
+    n_features_to_select=None, step=1, verbose=0)"""
+    expected_repr = expected_repr[1:]  # Remove first \n
+    assert expected_repr == f(estimator)
