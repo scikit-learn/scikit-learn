@@ -1,7 +1,23 @@
 from sklearn.base import BaseEstimator
-from inspect import signature
 import numpy as np
 import re
+
+
+def get_params(func):
+    """Return dict (name: default value) describing the parameters of given
+    function."""
+    try:  # Python 3
+        from inspect import signature
+        params = signature(func).parameters
+        params = {name: param.default for (name, param) in params.items()}
+    except ImportError:  # Python 2
+        from inspect import getargspec
+        from itertools import izip_longest
+        arg_specs = getargspec(func)
+        names = arg_specs.args[1:]  # Remove self param
+        params = dict(izip_longest(names, arg_specs.defaults, fillvalue=None))
+
+    return params
 
 
 def changed_params(estimator):
@@ -12,9 +28,9 @@ def changed_params(estimator):
     filtered_params = {}
     init = getattr(estimator.__init__, 'deprecated_original',
                    estimator.__init__)
-    init_params = signature(init).parameters
+    init_params = get_params(init)
     for k, v in params.items():
-        if v != init_params[k].default:
+        if v != init_params[k]:
             filtered_params[k] = v
     return filtered_params
 

@@ -25,7 +25,12 @@ Pipeline(
                                     warm_start=False))],
          memory=None)"""
     expected_repr = expected_repr[1:]  # Remove first \n
-    assert expected_repr == f(pipeline)
+    repr_ = f(pipeline)
+    try:
+        assert expected_repr == repr_
+    except AssertionError:  # Older versions, different param orders
+        assert set(expected_repr) == set(repr_)
+    assert max(len(line) for line in repr_.split('\n')) <= f.width
 
     f = _Formatter(indent_est='step')
     expected_repr = """
@@ -39,7 +44,12 @@ Pipeline(
                 solver='liblinear', tol=0.0001, verbose=0, warm_start=False))],
     memory=None)"""
     expected_repr = expected_repr[1:]  # Remove first \n
-    assert expected_repr == f(pipeline)
+    repr_ = f(pipeline)
+    try:
+        assert expected_repr == repr_
+    except AssertionError:  # Older versions, different param orders
+        assert set(expected_repr) == set(repr_)
+    assert max(len(line) for line in repr_.split('\n')) <= f.width
 
     f = _Formatter(indent_est='wrong')
     assert_raise_message(ValueError, "Invalid indent_est parameter.", f,
@@ -78,7 +88,12 @@ def test_visual():
 Veeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeerylong(
     something=None)"""
     expected_repr = expected_repr[1:]  # Remove first \n
-    assert expected_repr == f(VeryLongName())
+    repr_ = f(VeryLongName())
+    try:
+        assert expected_repr == repr_
+    except AssertionError:  # Older versions, different param orders
+        assert set(expected_repr) == set(repr_)
+    # assert max(len(line) for line in repr_.split('\n')) <= f.width
 
     pipeline = make_pipeline(StandardScaler(), VeryLongName())
     expected_repr = """
@@ -91,7 +106,12 @@ Pipeline(
                 something=None))],
     memory=None)"""
     expected_repr = expected_repr[1:]  # Remove first \n
-    assert expected_repr == f(pipeline)
+    repr_ = f(pipeline)
+    try:
+        assert expected_repr == repr_
+    except AssertionError:  # Older versions, different param orders
+        assert set(expected_repr) == set(repr_)
+    #  assert max(len(line) for line in repr_.split('\n')) <= f.width
 
     estimator = RFE(RFE(RFE(RFE(RFE(RFE(RFE(LogisticRegression())))))))
     expected_repr = """
@@ -102,7 +122,7 @@ RFE(
                 estimator=RFE(
                     estimator=RFE(
                         estimator=RFE(
-                            estimator=LogisticRegression(C=1.0, class_weight=None,  # noqa
+                            estimator=LogisticRegression(C=1.0, class_weight=None,
                                 dual=False, fit_intercept=True,
                                 intercept_scaling=1, max_iter=100,
                                 multi_class='ovr', n_jobs=1, penalty='l2',
@@ -117,4 +137,9 @@ RFE(
     n_features_to_select=None, step=1, verbose=0)"""
 
     expected_repr = expected_repr[1:]  # Remove first \n
-    assert expected_repr == f(estimator)
+    repr_ = f(estimator)
+    try:
+        assert expected_repr == repr_
+    except AssertionError:  # Older versions, different param orders
+        assert set(expected_repr) == set(repr_)
+    #  assert max(len(line) for line in repr_.split('\n')) <= f.width
