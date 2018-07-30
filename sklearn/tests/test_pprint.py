@@ -114,7 +114,7 @@ Pipeline(
     #  assert max(len(line) for line in repr_.split('\n')) <= f.width
 
     estimator = RFE(RFE(RFE(RFE(RFE(RFE(RFE(LogisticRegression())))))))
-    expected_repr = """
+    expected_repr = ("""
 RFE(
     estimator=RFE(
         estimator=RFE(
@@ -122,7 +122,8 @@ RFE(
                 estimator=RFE(
                     estimator=RFE(
                         estimator=RFE(
-                            estimator=LogisticRegression(C=1.0, class_weight=None,
+                            estimator=LogisticRegression(C=1.0, class_weight=None,"""  # noqa
+                     """
                                 dual=False, fit_intercept=True,
                                 intercept_scaling=1, max_iter=100,
                                 multi_class='ovr', n_jobs=1, penalty='l2',
@@ -134,7 +135,7 @@ RFE(
                 n_features_to_select=None, step=1, verbose=0),
             n_features_to_select=None, step=1, verbose=0),
         n_features_to_select=None, step=1, verbose=0),
-    n_features_to_select=None, step=1, verbose=0)"""
+    n_features_to_select=None, step=1, verbose=0)""")
 
     expected_repr = expected_repr[1:]  # Remove first \n
     repr_ = f(estimator)
