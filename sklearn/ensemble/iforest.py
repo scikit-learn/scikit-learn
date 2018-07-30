@@ -89,6 +89,26 @@ class IsolationForest(BaseBagging, OutlierMixin):
         The number of jobs to run in parallel for both `fit` and `predict`.
         If -1, then the number of jobs is set to the number of cores.
 
+    behaviour : str, default='old'
+        Behaviour of the ``decision_function`` which can be either 'old' or
+        'new'. Passing ``behaviour='new'`` makes the ``decision_function``
+        change to match other anomaly detection algorithm API which will be
+        the default behaviour in the future. As explained in details in the
+        ``offset_`` attribute documentation, the ``decision_function`` becomes
+        dependent on the contamination parameter, in such a way that 0 becomes
+        its natural threshold to detect outliers.
+
+        .. versionadded:: 0.20
+           ``behaviour`` is added in 0.20 for back-compatibility purpose.
+
+        .. deprecated:: 0.20
+           ``behaviour='old'`` is deprecated in 0.20 and will not be possible
+           in 0.22.
+
+        .. deprecated:: 0.22
+           ``behaviour`` parameter will be deprecated in 0.22 and removed in
+           0.24.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -114,12 +134,16 @@ class IsolationForest(BaseBagging, OutlierMixin):
     offset_ : float
         Offset used to define the decision function from the raw scores.
         We have the relation: ``decision_function = score_samples - offset_``.
+        Assuming behaviour == 'new', offset_ is defined as follows.
         When the contamination parameter is set to "auto", the offset is equal
         to -0.5 as the scores of inliers are close to 0 and the scores of
         outliers are close to -1. When a contamination parameter different
         than "auto" is provided, the offset is defined in such a way we obtain
         the expected number of outliers (samples with decision function < 0)
         in training.
+        Assuming the behaviour parameter is set to 'old', we always have
+        offset_ = -0.5, making the decision function independent from the
+        contamination parameter.
 
     References
     ----------
@@ -138,6 +162,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
                  max_features=1.,
                  bootstrap=False,
                  n_jobs=1,
+                 behaviour='old',
                  random_state=None,
                  verbose=0):
         super(IsolationForest, self).__init__(
@@ -154,6 +179,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
+
+        self.behaviour = behaviour
         self.contamination = contamination
 
     def _set_oob_score(self, X, y):
@@ -184,6 +211,13 @@ class IsolationForest(BaseBagging, OutlierMixin):
             self._contamination = 0.1
         else:
             self._contamination = self.contamination
+
+        if self.behaviour == 'old':
+            warnings.warn('behaviour="old" is deprecated and will be removed '
+                          'in version 0.22. Please use behaviour="new", which '
+                          'makes the decision_function change to match '
+                          'other anomaly detection algorithm API.',
+                          FutureWarning)
 
         X = check_array(X, accept_sparse=['csc'])
         if issparse(X):
@@ -226,16 +260,29 @@ class IsolationForest(BaseBagging, OutlierMixin):
                                           max_depth=max_depth,
                                           sample_weight=sample_weight)
 
+        if self.behaviour == 'old':
+            # in this case, decision_function = 0.5 + self.score_samples(X):
+            if self._contamination == "auto":
+                raise ValueError("contamination parameter cannot be set to "
+                                 "'auto' when behaviour == 'old'.")
+
+            self.offset_ = -0.5
+            self._threshold_ = sp.stats.scoreatpercentile(
+                self.decision_function(X), 100. * self._contamination)
+
+            return self
+
+        # else, self.behaviour == 'new':
         if self._contamination == "auto":
             # 0.5 plays a special role as described in the original paper.
             # we take the opposite as we consider the opposite of their score.
             self.offset_ = -0.5
-            # need to save (depreciated) threshold_ in this case:
-            self._threshold_ = sp.stats.scoreatpercentile(
-                self.score_samples(X), 100. * 0.1)
-        else:
-            self.offset_ = sp.stats.scoreatpercentile(
-                self.score_samples(X), 100. * self._contamination)
+            return self
+
+        # else, define offset_ wrt contamination parameter, so that the
+        # threshold_ attribute is implicitly 0 and is not needed anymore:
+        self.offset_ = sp.stats.scoreatpercentile(
+            self.score_samples(X), 100. * self._contamination)
 
         return self
 
@@ -258,7 +305,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
         check_is_fitted(self, ["offset_"])
         X = check_array(X, accept_sparse='csr')
         is_inlier = np.ones(X.shape[0], dtype=int)
-        is_inlier[self.decision_function(X) < 0] = -1
+        threshold = self.threshold_ if self.behaviour == 'old' else 0
+        is_inlier[self.decision_function(X) < threshold] = -1
         return is_inlier
 
     def decision_function(self, X):
@@ -359,11 +407,12 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
     @property
     def threshold_(self):
+        if self.behaviour != 'old':
+            raise AttributeError("threshold_ attribute does not exist when "
+                                 "behaviour != 'old'")
         warnings.warn("threshold_ attribute is deprecated in 0.20 and will"
                       " be removed in 0.22.", DeprecationWarning)
-        if self.contamination == 'auto':
-            return self._threshold_
-        return self.offset_
+        return self._threshold_
 
 
 def _average_path_length(n_samples_leaf):

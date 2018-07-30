@@ -34,6 +34,8 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
     clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
     neighborhood radius. Optimized for usage on large point datasets.
 
+    Read more in the :ref:`User Guide <optics>`.
+
     Parameters
     ----------
     X : array, shape (n_samples, n_features)
@@ -100,6 +102,7 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
+
         - 'ball_tree' will use :class:`BallTree`
         - 'kd_tree' will use :class:`KDTree`
         - 'brute' will use a brute-force search.
@@ -127,6 +130,14 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
     labels_ : array, shape (n_samples,)
         The estimated labels.
 
+    See also
+    --------
+    OPTICS
+        An estimator interface for this clustering algorithm.
+    dbscan
+        A similar clustering for a specified neighborhood radius (eps).
+        Our implementation is optimized for runtime.
+
     References
     ----------
     Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel, and Jörg Sander.
@@ -150,6 +161,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
     Equivalent to DBSCAN, finds core sample of high density and expands
     clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
     neighborhood radius. Optimized for usage on large point datasets.
+
+    Read more in the :ref:`User Guide <optics>`.
 
     Parameters
     ----------
@@ -214,6 +227,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
+
         - 'ball_tree' will use :class:`BallTree`
         - 'kd_tree' will use :class:`KDTree`
         - 'brute' will use a brute-force search.
@@ -256,11 +270,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
     --------
 
     DBSCAN
-        CPU optimized algorithm that clusters at specified neighborhood
-        radius (eps).
-    HDBSCAN
-        Related clustering algorithm that calculates the minimum spanning tree
-        across mutual reachability space.
+        A similar clustering for a specified neighborhood radius (eps).
+        Our implementation is optimized for runtime.
 
     References
     ----------
@@ -320,7 +331,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.core_distances_ = np.empty(n_samples)
         self.core_distances_.fill(np.nan)
         # Start all points as noise ##
-        self.labels_ = -np.ones(n_samples, dtype=int)
+        self.labels_ = np.full(n_samples, -1, dtype=int)
         self.ordering_ = []
 
         # Check for valid n_samples relative to min_samples
@@ -540,7 +551,7 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     clustid = 0
     n_samples = len(reachability)
     is_core = np.zeros(n_samples, dtype=bool)
-    labels = -np.ones(n_samples, dtype=int)
+    labels = np.full(n_samples, -1, dtype=int)
     # Start all points as non-core noise
     for leaf in leaves:
         index = ordering[leaf.start:leaf.end]

@@ -817,7 +817,7 @@ def has_fit_parameter(estimator, parameter):
     estimator : object
         An estimator to inspect.
 
-    parameter: str
+    parameter : str
         The searched parameter.
 
     Returns

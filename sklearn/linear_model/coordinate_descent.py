@@ -418,7 +418,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     if check_input:
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, Xy, precompute, normalize=False,
-                     fit_intercept=False, copy=False)
+                     fit_intercept=False, copy=False, check_input=check_input)
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
         # above
@@ -447,7 +447,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                          dtype=X.dtype)
 
     if coef_init is None:
-        coef_ = np.asfortranarray(np.zeros(coefs.shape[:-1], dtype=X.dtype))
+        coef_ = np.zeros(coefs.shape[:-1], dtype=X.dtype, order='F')
     else:
         coef_ = np.asfortranarray(coef_init, dtype=X.dtype)
 
@@ -717,7 +717,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         should_copy = self.copy_X and not X_copied
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
-                     self.fit_intercept, copy=should_copy)
+                     self.fit_intercept, copy=should_copy,
+                     check_input=check_input)
         if y.ndim == 1:
             y = y[:, np.newaxis]
         if Xy is not None and Xy.ndim == 1:
@@ -826,9 +827,9 @@ class Lasso(ElasticNet):
         reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
         Given this, you should use the :class:`LinearRegression` object.
 
-    fit_intercept : boolean
-        whether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
+    fit_intercept : boolean, optional, default True
+        Whether to calculate the intercept for this model. If set
+        to False, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False

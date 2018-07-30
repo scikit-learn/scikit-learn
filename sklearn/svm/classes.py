@@ -543,7 +543,7 @@ class SVC(BaseSVC):
         non-trivial. See the section about multi-class classification in the
         SVM section of the User Guide for details.
 
-    coef_ : array, shape = [n_class-1, n_features]
+    coef_ : array, shape = [n_class * (n_class-1) / 2, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
@@ -707,7 +707,7 @@ class NuSVC(BaseSVC):
         non-trivial. See the section about multi-class classification in
         the SVM section of the User Guide for details.
 
-    coef_ : array, shape = [n_class-1, n_features]
+    coef_ : array, shape = [n_class * (n_class-1) / 2, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 

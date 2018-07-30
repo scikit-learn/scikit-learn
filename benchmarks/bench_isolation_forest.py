@@ -119,7 +119,8 @@ for dat in datasets:
     y_test = y[n_samples_train:]
 
     print('--- Fitting the IsolationForest estimator...')
-    model = IsolationForest(n_jobs=-1, random_state=random_state)
+    model = IsolationForest(behaviour='new', n_jobs=-1,
+                            random_state=random_state)
     tstart = time()
     model.fit(X_train)
     fit_time = time() - tstart
