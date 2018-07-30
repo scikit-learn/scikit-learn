@@ -424,20 +424,14 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
     return grad, hessp
 
 
-def _check_solver_option(solver, multi_class, penalty, dual,
-                         previous_default_solver='liblinear'):
+def _check_solver_option(solver, multi_class, penalty, dual):
 
-    # default values raises a future warning
+    # Default values raises a future warning
     if solver == 'warn':
-        # previous_default_solver is used since LogisticRegression and
-        # LogisticRegressionCV don't have the same default in 0.19.
-        solver = previous_default_solver
-
-        # Do not warn if the 'auto' solver selects the previous default solver
-        if previous_default_solver != 'lbfgs':
-            warnings.warn("Default solver will be changed to 'lbfgs' in 0.22. "
-                          "Use a specific solver to silence this warning.",
-                          FutureWarning)
+        solver = 'liblinear'
+        warnings.warn("Default solver will be changed to 'lbfgs' in 0.22. "
+                      "Use a specific solver to silence this warning.",
+                      FutureWarning)
 
     if multi_class == 'warn':
         multi_class = 'ovr'
@@ -445,6 +439,7 @@ def _check_solver_option(solver, multi_class, penalty, dual,
                       " 0.22. Use a specific option to silence this warning.",
                       FutureWarning)
 
+    # Check the string parameters
     if multi_class not in ['multinomial', 'ovr']:
         raise ValueError("multi_class should be either multinomial or "
                          "ovr, got %s." % multi_class)
@@ -477,7 +472,7 @@ def _check_solver_option(solver, multi_class, penalty, dual,
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
-                             solver='warn', coef=None,
+                             solver='lbfgs', coef=None,
                              class_weight=None, dual=False, penalty='l2',
                              intercept_scaling=1., multi_class='warn',
                              random_state=None, check_input=True,
@@ -527,7 +522,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         For the liblinear and lbfgs solvers set verbose to any positive
         number for verbosity.
 
-    solver : {'lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga', 'auto'}
+    solver : {'lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'}
         Numerical solver to use.
 
     coef : array-like, shape (n_features,), default None
@@ -618,16 +613,16 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
 
+    solver, multi_class = _check_solver_option(
+        solver, multi_class, penalty, dual)
+
     # Preprocessing.
     if check_input:
         X = check_array(X, accept_sparse='csr', dtype=np.float64,
                         accept_large_sparse=solver != 'liblinear')
         y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
-
-    n_samples, n_features = X.shape
-    solver, multi_class = _check_solver_option(
-        solver, multi_class, penalty, dual, 'lbfgs')
+    _, n_features = X.shape
 
     classes = np.unique(y)
     random_state = check_random_state(random_state)
@@ -805,7 +800,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           scoring=None, fit_intercept=False,
                           max_iter=100, tol=1e-4, class_weight=None,
-                          verbose=0, solver='warn', penalty='l2',
+                          verbose=0, solver='lbfgs', penalty='l2',
                           dual=False, intercept_scaling=1.,
                           multi_class='warn', random_state=None,
                           max_squared_sum=None, sample_weight=None):
@@ -867,7 +862,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         For the liblinear and lbfgs solvers set verbose to any positive
         number for verbosity.
 
-    solver : {'lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga', 'auto'}
+    solver : {'lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'}
         Decides which solver to use.
 
     penalty : str, 'l1' or 'l2'
@@ -931,9 +926,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     n_iter : array, shape(n_cs,)
         Actual number of iteration for each Cs.
     """
-    n_samples, n_features = X.shape
     solver, multi_class = _check_solver_option(
-        solver, multi_class, penalty, dual, 'lbfgs')
+        solver, multi_class, penalty, dual)
 
     X_train = X[train]
     X_test = X[test]
@@ -1075,8 +1069,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         instance used by `np.random`. Used when ``solver`` == 'sag' or
         'liblinear'.
 
-    solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga', 'auto'},
-        default: 'liblinear'. Will be changed to 'auto' solver in 0.22.
+    solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
+        default: 'liblinear'. Will be changed to 'lbfgs' solver in 0.22.
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
@@ -1086,8 +1080,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
           schemes.
         - 'newton-cg', 'lbfgs' and 'sag' only handle L2 penalty, whereas
           'liblinear' and 'saga' handle L1 penalty.
-        - 'auto' automatically chooses a solver based on the penalty
-          parameter.
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can
@@ -1097,8 +1089,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
            Stochastic Average Gradient descent solver.
         .. versionadded:: 0.19
            SAGA solver.
-        .. versionadded:: 0.20
-           'auto' solver.
+        .. versionchanged:: 0.20
+            Default will change from 'liblinear' to 'lbfgs' in 0.22.
 
     max_iter : int, default: 100
         Useful only for the newton-cg, sag and lbfgs solvers.
@@ -1114,6 +1106,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         .. versionadded:: 0.18
            Stochastic Average Gradient descent solver for 'multinomial' case.
+        .. versionchanged:: 0.20
+            Default will change from 'ovr' to 'multinomial' in 0.22.
 
     verbose : int, default: 0
         For the liblinear and lbfgs solvers set verbose to any positive
@@ -1254,8 +1248,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                              "positive; got (tol=%r)" % self.tol)
 
         solver, multi_class = _check_solver_option(
-            self.solver, self.multi_class, self.penalty, self.dual,
-            'liblinear')
+            self.solver, self.multi_class, self.penalty, self.dual)
 
         if solver in ['newton-cg']:
             _dtype = [np.float64, np.float32]
@@ -1282,7 +1275,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             return self
 
         if solver in ['sag', 'saga']:
-            max_squared_sum = np.percentile(row_norms(X, squared=True), 90)
+            max_squared_sum = row_norms(X, squared=True).max()
         else:
             max_squared_sum = None
 
@@ -1379,11 +1372,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if not hasattr(self, "coef_"):
             raise NotFittedError("Call fit before prediction")
 
-        # This check can be removed in 0.22, changing back to self.multi_class
-        _, multi_class = _check_solver_option(
-            self.solver, self.multi_class, self.penalty, self.dual, 'lbfgs')
-
-        if multi_class == "ovr":
+        if self.multi_class == "ovr" or self.multi_class == "warn":
             return super(LogisticRegression, self)._predict_proba_lr(X)
         else:
             decision = self.decision_function(X)
@@ -1476,8 +1465,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         that can be used, look at :mod:`sklearn.metrics`. The
         default scoring option used is 'accuracy'.
 
-    solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga', 'auto'},
-        default: 'lbfgs'.  Will be changed to 'auto' solver in 0.22.
+    solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
+        default: 'lbfgs'.
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
@@ -1489,8 +1478,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
           'liblinear' and 'saga' handle L1 penalty.
         - 'liblinear' might be slower in LogisticRegressionCV because it does
           not handle warm-starting.
-        - 'auto' automatically chooses a solver based on the penalty
-          parameter.
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can preprocess the data
@@ -1500,8 +1487,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
            Stochastic Average Gradient descent solver.
         .. versionadded:: 0.19
            SAGA solver.
-        .. versionadded:: 0.20
-           'auto' solver.
 
     tol : float, optional
         Tolerance for stopping criteria.
@@ -1561,6 +1546,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         .. versionadded:: 0.18
            Stochastic Average Gradient descent solver for 'multinomial' case.
+        .. versionchanged:: 0.20
+            Default will change from 'ovr' to 'multinomial' in 0.22.
 
     random_state : int, RandomState instance or None, optional, default None
         If int, random_state is the seed used by the random number generator;
@@ -1621,7 +1608,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     """
     def __init__(self, Cs=10, fit_intercept=True, cv='warn', dual=False,
-                 penalty='l2', scoring=None, solver='warn', tol=1e-4,
+                 penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=1, verbose=0,
                  refit=True, intercept_scaling=1., multi_class='warn',
                  random_state=None):
@@ -1663,7 +1650,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self : object
         """
         solver, multi_class = _check_solver_option(
-            self.solver, self.multi_class, self.penalty, self.dual, 'lbfgs')
+            self.solver, self.multi_class, self.penalty, self.dual)
 
         if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
             raise ValueError("Maximum number of iteration must be positive;"
@@ -1691,7 +1678,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         encoded_labels = label_encoder.transform(label_encoder.classes_)
 
         if solver in ['sag', 'saga']:
-            max_squared_sum = np.percentile(row_norms(X, squared=True), 90)
+            max_squared_sum = row_norms(X, squared=True).max()
         else:
             max_squared_sum = None
 
