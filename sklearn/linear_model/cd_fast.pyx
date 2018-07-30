@@ -141,7 +141,7 @@ cdef extern from "cblas.h":
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
+def enet_coordinate_descent(np.ndarray[floating, ndim=1, mode='c'] w,
                             floating alpha, floating beta,
                             np.ndarray[floating, ndim=2, mode='fortran'] X,
                             np.ndarray[floating, ndim=1, mode='c'] y,
