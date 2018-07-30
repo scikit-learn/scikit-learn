@@ -187,7 +187,6 @@ def test_collinearity_sufficient_stats():
     y = np.array([1., 0., 0])
     G = np.dot(X.T, X)
     Xy = np.dot(X.T, y)
-    rng = np.random.RandomState(0)
     _, _, coef_path_ = ignore_warnings(linear_model.lars_path)(
         None, None, Xy=Xy, Gram=G, n_samples=y.size, alpha_min=0.01)
     assert_true(not np.isnan(coef_path_).any())
