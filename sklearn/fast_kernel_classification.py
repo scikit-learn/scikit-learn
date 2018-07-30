@@ -68,9 +68,6 @@ class FastKernelClassification(ClassifierMixin, BaseEstimator):
                The random seed to be used. This class uses np.random for
                number generation.
 
-           dtype : (float32 or float64), default = np.float32
-               The data type to be used for computations
-
        References
        ----------
        * Siyuan Ma, Mikhail Belkin
@@ -79,7 +76,7 @@ class FastKernelClassification(ClassifierMixin, BaseEstimator):
 
        Examples
        --------
-           >>> from fast_kernel_regression import FastKernelRegression
+           >>> from sklearn.fast_kernel_regression import FastKernelRegression
            >>> import numpy as np
            >>> n_samples, n_features, n_targets = 4000, 20, 3
            >>> rng = np.random.RandomState(1)
@@ -87,10 +84,10 @@ class FastKernelClassification(ClassifierMixin, BaseEstimator):
            >>> y_train = rng.randn(n_samples, n_targets)
            >>> rgs = FastKernelRegression(n_epoch=3, bandwidth=1)
            >>> rgs.fit(x_train, y_train)
-           FastKernelRegression(bandwidth=1, bs='auto', coef0=1, degree=3,
-                      dtype=<type 'numpy.float32'>, gamma=None, kernel='gaussian',
-                      kernel_params=None, mem_gb=12, n_components=1000, n_epoch=3,
-                      random_state=None, subsample_size='auto')
+           FastKernelRegression(bandwidth=1, bs='auto', coef0=1, degree=3, gamma=None,
+                      kernel='gaussian', kernel_params=None, mem_gb=12,
+                      n_components=1000, n_epoch=3, random_state=None,
+                      subsample_size='auto')
            >>> y_pred = rgs.predict(x_train)
            >>> loss = np.mean(np.square(y_train - y_pred))
        """
@@ -98,7 +95,7 @@ class FastKernelClassification(ClassifierMixin, BaseEstimator):
     def __init__(self, bs="auto", n_epoch=1, n_components=1000,
                  subsample_size="auto", mem_gb=12, kernel="gaussian",
                  bandwidth=5, gamma=None, degree=3, coef0=1,
-                 kernel_params=None, random_state=None, dtype=np.float32):
+                 kernel_params=None, random_state=None):
         self.bs = bs
         self.n_epoch = n_epoch
         self.n_components = n_components
@@ -111,14 +108,6 @@ class FastKernelClassification(ClassifierMixin, BaseEstimator):
         self.coef0 = coef0
         self.kernel_params = kernel_params
         self.random_state = random_state
-        self.dtype = dtype
-
-    # def get_params(self, deep=True):
-    # return self.regressor.get_params(deep=deep)
-
-    # def set_params(self, **parameters):
-    #   self.regressor.set_params(**parameters)
-    #  return self
 
     def fit(self, X, y):
         """ Train fast kernel classification model
@@ -139,8 +128,7 @@ class FastKernelClassification(ClassifierMixin, BaseEstimator):
             bs=self.bs, n_epoch=self.n_epoch, n_components=self.n_components,
             subsample_size=self.subsample_size, mem_gb=self.mem_gb, kernel=self.kernel,
             bandwidth=self.bandwidth, gamma=self.gamma, degree=self.degree, coef0=self.coef0,
-            kernel_params=self.kernel_params, random_state=self.random_state,
-            dtype=self.dtype)
+            kernel_params=self.kernel_params, random_state=self.random_state)
         X, y = check_X_y(X, y, multi_output=False, ensure_min_samples=3)
         check_classification_targets(y)
         self.classes_, ind = np.unique(y, return_inverse=True)

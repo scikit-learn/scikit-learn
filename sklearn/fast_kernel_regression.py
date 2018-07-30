@@ -68,37 +68,34 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
             The random seed to be used. This class uses np.random for number
             generation.
 
-        dtype : (float32 or float64), default = np.float32
-            The data type to be used for computations.
+       References
+       ----------
+       * Siyuan Ma, Mikhail Belkin
+         "Diving into the shallows: a computational perspective on
+         large-scale machine learning", NIPS 2017.
 
-    References
-    ----------
-    * Siyuan Ma, Mikhail Belkin
-      "Diving into the shallows: a computational perspective on
-      large-scale machine learning", NIPS 2017.
-
-    Examples
-    --------
-        >>> from fast_kernel_regression import FastKernelRegression
-        >>> import numpy as np
-        >>> n_samples, n_features, n_targets = 4000, 20, 3
-        >>> rng = np.random.RandomState(1)
-        >>> x_train = rng.randn(n_samples, n_features)
-        >>> y_train = rng.randn(n_samples, n_targets)
-        >>> rgs = FastKernelRegression(n_epoch=3, bandwidth=1)
-        >>> rgs.fit(x_train, y_train)
-        FastKernelRegression(bandwidth=1, bs='auto', coef0=1, degree=3,
-                   dtype=<type 'numpy.float32'>, gamma=None, kernel='gaussian',
-                   kernel_params=None, mem_gb=12, n_components=1000, n_epoch=3,
-                   random_state=None, subsample_size='auto')
-        >>> y_pred = rgs.predict(x_train)
-        >>> loss = np.mean(np.square(y_train - y_pred))
+       Examples
+       --------
+           >>> from sklearn.fast_kernel_classification import FastKernelClassification
+           >>> import numpy as np
+           >>> n_samples, n_features, n_targets = 4000, 20, 3
+           >>> rng = np.random.RandomState(1)
+           >>> x_train = rng.randn(n_samples, n_features)
+           >>> y_train = rng.randn(n_samples, n_targets)
+           >>> rgs = FastKernelClassification(n_epoch=3, bandwidth=1)
+           >>> rgs.fit(x_train, y_train)
+           FastKernelClassification(bandwidth=1, bs='auto', coef0=1, degree=3, gamma=None,
+                      kernel='gaussian', kernel_params=None, mem_gb=12,
+                      n_components=1000, n_epoch=3, random_state=None,
+                      subsample_size='auto')
+           >>> y_pred = rgs.predict(x_train)
+           >>> loss = np.mean(np.square(y_train - y_pred))
     """
 
     def __init__(self, bs="auto", n_epoch=1, n_components=1000,
                  subsample_size="auto", mem_gb=12, kernel="gaussian",
                  bandwidth=5, gamma=None, degree=3, coef0=1,
-                 kernel_params=None, random_state=None, dtype=np.float32):
+                 kernel_params=None, random_state=None):
         self.bs = bs
         self.n_epoch = n_epoch
         self.n_components = n_components
@@ -111,7 +108,6 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
         self.coef0 = coef0
         self.kernel_params = kernel_params
         self.random_state = random_state
-        self.dtype = dtype
 
     def _kernel(self, X, Y, Y_squared=None):
         """Calculate the kernel matrix
@@ -145,7 +141,7 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
                                     filter_params=True, **params)
         distance = euclidean_distances(X, Y, squared=True,
                                        Y_norm_squared=Y_squared)
-        bandwidth = self.dtype(self.bandwidth)
+        bandwidth = np.float32(self.bandwidth)
         if self.kernel == "gaussian":
             shape = -1 / (2 * (np.square(bandwidth)))
             K = np.exp(distance * shape)
@@ -182,14 +178,14 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
         """
         m, _ = X.shape
         K = self._kernel(X, X)
-        W = K * (self.dtype(n_samples) / m)
+        W = K * (np.float32(n_samples) / m)
         S, V = sp.linalg.eigh(W, eigvals=(m - n_components, m - 1))
 
         # Flip so eigenvalues are in descending order.
-        S = np.maximum(self.dtype(1e-7), np.flipud(S))
+        S = np.maximum(np.float32(1e-7), np.flipud(S))
         V = np.fliplr(V)
 
-        return S, V[:, :n_components] * (np.sqrt(self.dtype(n_samples) / m))
+        return S, V[:, :n_components] * (np.sqrt(np.float32(n_samples) / m))
 
     def _setup(self, feat, max_components, n_samples, mG, alpha):
         """Compute preconditioner and scale factors for EigenPro iteration
@@ -219,7 +215,7 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
         max_kxx : float
             Maximum of k(x,x) where k is the EigenPro kernel.
         """
-        alpha = self.dtype(alpha)
+        alpha = np.float32(alpha)
 
         # Estimate eigenvalues (S) and eigenvectors (V) of the kernel matrix
         # corresponding to the feature matrix.
@@ -229,7 +225,7 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
         # Calculate the number of components to be used such that the
         # corresponding batch size is bounded by the subsample size and the
         # memory size.
-        n_components = np.sum(self.dtype(n_samples) / S <
+        n_components = np.sum(np.float32(n_samples) / S <
                               min(n_subsamples, mG)) - 1
         self.V_ = V[:, :n_components]
 
@@ -240,7 +236,7 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
         self.Q_ = (1 - np.power(S[n_components] / S[:n_components],
                                 alpha)) / S[:n_components]
 
-        max_S = (S[0] / n_samples).astype(self.dtype)
+        max_S = (S[0] / n_samples).astype(np.float32)
         kxx = 1 - np.sum(self.V_ ** 2, axis=1) * n_subsamples / n_samples
         return max_S / scale, np.max(kxx)
 
@@ -289,7 +285,7 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
                                          max_S)
         else:
             self.eta_ = 0.95 * 2 / max_S
-        self.eta_ = self.dtype(self.eta_)
+        self.eta_ = np.float32(self.eta_)
 
         # Remember the shape of Y for predict() and ensure it's shape is 2-D.
         self.was_1D_ = False
@@ -313,21 +309,19 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
         -------
         self : returns an instance of self.
         """
-        if not (np.issubdtype(self.dtype, np.floating)):
-            raise ValueError("The given datatype is not a float")
-        X, Y = check_X_y(X, Y, dtype=self.dtype, multi_output=True,
+        X, Y = check_X_y(X, Y, dtype=np.float32, multi_output=True,
                          ensure_min_samples=3, y_numeric=True)
-        Y = Y.astype(self.dtype)  # check_X_y does not seem to do this
+        Y = Y.astype(np.float32)  # check_X_y does not seem to do this
         """Parameter Initialization"""
         Y = self._initialize_params(X, Y)
 
         """Training loop"""
         n = self.centers_.shape[0]
 
-        self.coef_ = np.zeros((n, Y.shape[1]), dtype=self.dtype)
+        self.coef_ = np.zeros((n, Y.shape[1]), dtype=np.float32)
         self.centers_squared_ = \
             np.square(self.centers_).sum(axis=1, keepdims=True).T
-        step = self.dtype(self.eta_ / self.bs_)
+        step = np.float32(self.eta_ / self.bs_)
         for epoch in range(0, self.n_epoch):
             epoch_inds = \
                 self.random_state_.choice(n, n // self.bs_ * self.bs_,
@@ -368,7 +362,7 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
         """
         check_is_fitted(self, ["bs_", "centers_", "centers_squared_", "coef_",
                                "eta_", "random_state_", "pinx_", "Q_", "V_", "was_1D_"])
-        X = np.asarray(X, dtype=self.dtype)
+        X = np.asarray(X, dtype=np.float32)
         if len(X.shape) == 1:
             raise ValueError("Reshape your data. X should be a matrix of shape"
                              " (n_samples, n_features).")
