@@ -208,11 +208,10 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
     if Gram is None:
         L = np.empty((max_features, max_features), dtype=X.dtype)
         swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (X,))
-        solve_cholesky, = get_lapack_funcs(('potrs',), (L,))
     else:
         L = np.empty((max_features, max_features), dtype=Gram.dtype)
         swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (Cov,))
-        solve_cholesky, = get_lapack_funcs(('potrs',), (L,))
+    solve_cholesky, = get_lapack_funcs(('potrs',), (L,))
 
     if verbose:
         if verbose > 1:
