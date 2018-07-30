@@ -1497,8 +1497,8 @@ def test_l1_ratios_param(l1_ratios):
                                               l1_ratios=l1_ratios, cv=2).fit,
                          X, Y1)
     if l1_ratios is not None:
-        msg = ("l1_ratios parameter is only used when penalty is 'elastic-net'."
-               " Got (penalty=l1)")
+        msg = ("l1_ratios parameter is only used when penalty is "
+               "'elastic-net'. Got (penalty=l1)")
         function = LogisticRegressionCV(penalty='l1', solver='saga',
                                         l1_ratios=l1_ratios, cv=2).fit
         assert_warns_message(UserWarning, msg, function, X, Y1)

@@ -63,13 +63,13 @@ for i, C in enumerate((100, 1, 0.01)):
     print("{:<40} {:.2f}%".format("Sparsity with L1 penalty:", sparsity_l1_LR))
     print("{:<40} {:.2f}%".format("Sparsity with L2 penalty:", sparsity_l2_LR))
     print("{:<40} {:.2f}%".format("Sparsity with elastic-net penalty:",
-                                 sparsity_EN_LR))
+                                  sparsity_EN_LR))
     print("{:<40} {:.2f}".format("Score with L1 penalty:",
-                                  clf_l1_LR.score(X, y)))
+                                 clf_l1_LR.score(X, y)))
     print("{:<40} {:.2f}".format("Score with L2 penalty:",
-                                  clf_l2_LR.score(X, y)))
+                                 clf_l2_LR.score(X, y)))
     print("{:<40} {:.2f}".format("Score with elastic-net penalty:",
-                                  clf_EN_LR.score(X, y)))
+                                 clf_EN_LR.score(X, y)))
 
     l1_plot = plt.subplot(3, 3, 3 * i + 1)
     l2_plot = plt.subplot(3, 3, 3 * i + 2)

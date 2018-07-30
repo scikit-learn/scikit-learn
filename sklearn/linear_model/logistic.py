@@ -1252,9 +1252,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                              % self.C)
         if self.penalty == 'elastic-net':
             if (not isinstance(self.l1_ratio, numbers.Number) or
-                self.l1_ratio < 0 or self.l1_ratio > 1):
-                raise ValueError("l1_ratio must be between 0 and 1; got "
-                                 "(l1_ratio=%r)" % self.l1_ratio)
+                    self.l1_ratio < 0 or self.l1_ratio > 1):
+                        raise ValueError("l1_ratio must be between 0 and 1;"
+                                         "got (l1_ratio=%r)" % self.l1_ratio)
         elif self.l1_ratio is not None:
             warnings.warn("l1_ratio parameter is only used when penalty is "
                           "'elastic-net'. Got "
@@ -1847,7 +1847,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             if self.refit:
                 best_index = scores.sum(axis=0).argmax()
 
-                best_index_C =  best_index % len(self.Cs_)
+                best_index_C = best_index % len(self.Cs_)
                 C_ = self.Cs_[best_index_C]
                 self.C_.append(C_)
 
@@ -1884,7 +1884,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 w = np.mean([coefs_paths[i][best_indices[i]]
                              for i in range(len(folds))], axis=0)
 
-                best_indices_C =  best_indices % len(self.Cs_)
+                best_indices_C = best_indices % len(self.Cs_)
                 self.C_.append(np.mean(self.Cs_[best_indices_C]))
 
                 best_indices_l1 = best_indices // len(self.Cs_)
