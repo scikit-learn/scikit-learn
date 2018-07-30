@@ -1254,7 +1254,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             if (not isinstance(self.l1_ratio, numbers.Number) or
                     self.l1_ratio < 0 or self.l1_ratio > 1):
                         raise ValueError("l1_ratio must be between 0 and 1;"
-                                         "got (l1_ratio=%r)" % self.l1_ratio)
+                                         " got (l1_ratio=%r)" % self.l1_ratio)
         elif self.l1_ratio is not None:
             warnings.warn("l1_ratio parameter is only used when penalty is "
                           "'elastic-net'. Got "
