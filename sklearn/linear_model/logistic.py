@@ -1696,13 +1696,14 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 raise ValueError("l1_ratios must be a list of numbers between "
                                  "0 and 1; got (l1_ratios=%r)" %
                                  self.l1_ratios)
+            l1_ratios_ = self.l1_ratios
         else:
             if self.l1_ratios is not None:
                 warnings.warn("l1_ratios parameter is only used when penalty "
                               "is 'elastic-net'. Got (penalty={})".format(
                                   self.penalty))
 
-            self.l1_ratios = [None]
+            l1_ratios_ = [None]
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
                          order="C",
@@ -1785,7 +1786,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                       )
             for label in iter_encoded_labels
             for train, test in folds
-            for l1_ratio in self.l1_ratios)
+            for l1_ratio in l1_ratios_)
 
         if self.multi_class == 'multinomial':
             multi_coefs_paths, Cs, multi_scores, n_iter_ = zip(*fold_coefs_)
@@ -1806,19 +1807,19 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             self.Cs_ = Cs[0]
             self.n_iter_ = np.reshape(n_iter_, (1, len(folds),
                                                 len(self.Cs_) *
-                                                len(self.l1_ratios)))
+                                                len(l1_ratios_)))
 
         else:
             coefs_paths, Cs, scores, n_iter_ = zip(*fold_coefs_)
             self.Cs_ = Cs[0]
             coefs_paths = np.reshape(
                 coefs_paths,
-                (n_classes, len(folds), len(self.Cs_) * len(self.l1_ratios),
+                (n_classes, len(folds), len(self.Cs_) * len(l1_ratios_),
                  -1)
             )
             self.n_iter_ = np.reshape(
                 n_iter_,
-                (n_classes, len(folds), len(self.Cs_) * len(self.l1_ratios))
+                (n_classes, len(folds), len(self.Cs_) * len(l1_ratios_))
             )
 
         self.coefs_paths_ = dict(zip(classes, coefs_paths))
@@ -1852,7 +1853,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 self.C_.append(C_)
 
                 best_index_l1 = best_index // len(self.Cs_)
-                l1_ratio_ = self.l1_ratios[best_index_l1]
+                l1_ratio_ = l1_ratios_[best_index_l1]
                 self.l1_ratio_.append(l1_ratio_)
 
                 if self.multi_class == 'multinomial':
@@ -1888,7 +1889,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 self.C_.append(np.mean(self.Cs_[best_indices_C]))
 
                 best_indices_l1 = best_indices // len(self.Cs_)
-                self.l1_ratio_.append(np.mean(self.l1_ratios[best_indices_l1]))
+                self.l1_ratio_.append(np.mean(l1_ratios_[best_indices_l1]))
 
             if self.multi_class == 'multinomial':
                 self.C_ = np.tile(self.C_, n_classes)
@@ -1902,7 +1903,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         self.C_ = np.asarray(self.C_)
         self.l1_ratio_ = np.asarray(self.l1_ratio_)
-        self.l1_ratios_ = np.asarray(self.l1_ratios)
+        self.l1_ratios_ = np.asarray(l1_ratios_)
 
         return self
 
