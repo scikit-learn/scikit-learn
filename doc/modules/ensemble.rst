@@ -263,7 +263,7 @@ samples** they contribute to can thus be used as an estimate of the
 **relative importance of the features**. In scikit-learn, this fraction
 is combined with the mean decrease in impurity (MDI)
 to create a normalized estimate of improvement in the predictive ability
-of the tree. You can read more about MDI at `arxiv.org/abs/1407.7502 <https://arxiv.org/abs/1407.7502>`_.
+of the tree. Refer to [L2014]_ for more information on MDI and feature importance evaluation with Random Forests.
 
 By **averaging** those expected activity rates over several randomized
 trees one can **reduce the variance** of such an estimate and use it
@@ -290,6 +290,10 @@ to the prediction function.
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`
 
 .. _random_trees_embedding:
+
+.. topic:: References
+
+ .. [L2014] G. Louppe, "Understanding Random Forests: From Theory to Practice", PhD Thesis, U. of Liege, 2014.
 
 Totally Random Trees Embedding
 ------------------------------
