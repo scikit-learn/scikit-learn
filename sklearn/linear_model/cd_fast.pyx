@@ -172,9 +172,6 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     cdef unsigned int n_samples = X.shape[0]
     cdef unsigned int n_features = X.shape[1]
 
-    # get the number of tasks indirectly, using strides
-    cdef unsigned int n_tasks = y.strides[0] / sizeof(floating)
-
     # compute norms of the columns of X
     cdef np.ndarray[floating, ndim=1] norm_cols_X = (X**2).sum(axis=0)
 
@@ -218,7 +215,7 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
             R[i] = y[i] - dot(n_features, &X_data[i], n_samples, w_data, 1)
 
         # tol *= np.dot(y, y)
-        tol *= dot(n_samples, y_data, n_tasks, y_data, n_tasks)
+        tol *= dot(n_samples, y_data, 1, y_data, 1)
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -296,7 +293,7 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
 
                 # np.dot(R.T, y)
                 gap += (alpha * l1_norm
-                        - const * dot(n_samples, R_data, 1, y_data, n_tasks)
+                        - const * dot(n_samples, R_data, 1, y_data, 1)
                         + 0.5 * beta * (1 + const ** 2) * (w_norm2))
 
                 if gap < tol:
