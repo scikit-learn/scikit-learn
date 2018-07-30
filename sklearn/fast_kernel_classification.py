@@ -76,15 +76,15 @@ class FastKernelClassification(ClassifierMixin, BaseEstimator):
 
        Examples
        --------
-           >>> from sklearn.fast_kernel_regression import FastKernelRegression
+           >>> from sklearn.fast_kernel_classification import FastKernelClassification
            >>> import numpy as np
            >>> n_samples, n_features, n_targets = 4000, 20, 3
            >>> rng = np.random.RandomState(1)
            >>> x_train = rng.randn(n_samples, n_features)
-           >>> y_train = rng.randn(n_samples, n_targets)
-           >>> rgs = FastKernelRegression(n_epoch=3, bandwidth=1)
+           >>> y_train = rng.randint(n_targets, size=n_samples)
+           >>> rgs = FastKernelClassification(n_epoch=3, bandwidth=1)
            >>> rgs.fit(x_train, y_train)
-           FastKernelRegression(bandwidth=1, bs='auto', coef0=1, degree=3, gamma=None,
+           FastKernelClassification(bandwidth=1, bs='auto', coef0=1, degree=3, gamma=None,
                       kernel='gaussian', kernel_params=None, mem_gb=12,
                       n_components=1000, n_epoch=3, random_state=None,
                       subsample_size='auto')
