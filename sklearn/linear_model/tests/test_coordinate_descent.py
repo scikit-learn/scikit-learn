@@ -292,6 +292,44 @@ def test_enet_path():
 
 
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+def test_enet_selective_penalty():
+    n_features = 200
+    n_informative_features = 20
+    # A dataset with small number of samples and large number of features
+    # with the last n_informative_features as the informative ones
+    X, y, X_test, y_test = build_dataset(
+        n_samples=50, n_features=n_features,
+        n_informative_features=n_informative_features)
+
+    # Default weight is 1 for all features, keep l1 penalty
+    l1_weights = np.ones(n_features)
+
+    # Add some prior knowledge, when we know some features are important
+    # So, we will relax l1 penalty on the last n_informative_features.
+    # Use any small number, or zero if you are 100% sure of the prior
+    # knowledge
+    l1_weights[:n_informative_features-1] *= 0.001
+
+    # Run enet with prior knowledge (l1_weights)
+    clf_with_prior = ElasticNetCV(alphas=[0.01, 0.05, 0.1, 0.5, 1, 1.5],
+                                  eps=2e-3, cv=3, l1_weights=l1_weights)
+
+    ignore_warnings(clf_with_prior.fit)(X, y)
+
+    # This is a model without using any prior knowledge
+    clf_base = ElasticNetCV(alphas=[0.01, 0.05, 0.1, 0.5, 1, 1.5],
+                            eps=2e-3, cv=3)
+
+    ignore_warnings(clf_base.fit)(X, y)
+
+    # Accuracy of the model with prior knowledge should be higher
+    # than the model without prior knowledge for a hard data set
+    # (much less samples than features)
+    assert_greater(clf_with_prior.score(X_test, y_test),
+                   clf_base.score(X_test, y_test))
+
+
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_path_parameters():
     X, y, _, _ = build_dataset()
     max_iter = 100
