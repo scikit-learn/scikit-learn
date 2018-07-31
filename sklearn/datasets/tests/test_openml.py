@@ -51,8 +51,8 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
         # multi target, so target is array
         assert data_by_id.target.shape == (expected_observations,
                                            len(target_column_name))
-    assert data_by_id.data.dtype == exptected_data_dtype
-    assert data_by_id.target.dtype == exptected_target_dtype
+    assert data_by_id.data.dtype == np.float64
+    assert data_by_id.target.dtype == np.float64
     assert len(data_by_id.feature_names) == expected_features
     for feature in data_by_id.feature_names:
         assert isinstance(feature, string_types)
@@ -76,27 +76,8 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     else:
         assert isinstance(data_by_id.data, np.ndarray)
         # np.isnan doesn't work on crs matrix
-        if exptected_data_dtype == np.float64:
-            assert np.count_nonzero(np.isnan(data_by_id.data)) == \
+        assert np.count_nonzero(np.isnan(data_by_id.data)) == \
                    expected_missing
-        else:
-            # mandatory == operator (instead of 'is' keyword)
-            assert (data_by_id.data == None).sum() == expected_missing
-
-    # check numeric features. Note that the response of _get_data_features is
-    # mocked too.
-    feature_name_type = {feature['name']: feature['data_type'] for feature
-                         in _get_data_features(data_id, None)}
-    for idx, feature_name in enumerate(data_by_id.feature_names):
-        if feature_name_type[feature_name] == 'numeric':
-            # check that all elements in an object array are numeric
-            # cf. https://stackoverflow.com/a/19486803/1791279
-            if isinstance(data_by_id.data, scipy.sparse.csr_matrix):
-                dtype = np.array(list(data_by_id.data[:, idx].toarray())).dtype
-            else:
-                dtype = np.array(list(data_by_id.data[:, idx])).dtype
-            assert np.issubdtype(dtype, np.number)
-
     return data_by_id
 
 
