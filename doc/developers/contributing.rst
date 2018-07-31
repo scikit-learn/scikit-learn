@@ -140,7 +140,8 @@ feedback:
   your **Python, scikit-learn, numpy, and scipy versions**. This information
   can be found by running the following code snippet::
 
-     import sklearn; sklearn.show_versions()
+    >>> import sklearn
+    >>> sklearn.show_versions()  # doctests: +SKIP
 
   .. note::
 
