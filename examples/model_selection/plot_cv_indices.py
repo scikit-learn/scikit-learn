@@ -141,7 +141,9 @@ for cv in cvs:
     fig, ax = plt.subplots(figsize=(6, 3))
     plot_cv_indices(this_cv, X, y, groups, ax, n_splits)
 
-    ax.legend([Patch(color=cmap_cv(.8)), Patch(color=cmap_cv(.2))],
+    ax.legend([Patch(color=cmap_cv(.8)), Patch(color=cmap_cv(.02))],
               ['Testing set', 'Training set'], loc=(1.02, .8))
+    # Make the legend fit
     plt.tight_layout()
+    fig.subplots_adjust(right=.7)
 plt.show()
