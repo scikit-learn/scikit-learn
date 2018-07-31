@@ -112,7 +112,7 @@ following rules before submitting:
    `new algorithm requirements
    <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
 
--  If you are submitting a bug report, we strongly encourage you to follow the guidelines in
+-  If you are submitting a bug report, we strongly encourage you to follow the guidelines in 
    :ref:`filing_bugs`.
 
 .. _filing_bugs:
