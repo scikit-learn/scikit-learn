@@ -4,7 +4,6 @@
 
 import numpy as np
 import warnings
-from scipy.stats import scoreatpercentile
 
 from .base import NeighborsBase
 from .base import KNeighborsMixin
@@ -262,8 +261,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             # inliers score around -1 (the higher, the less abnormal).
             self.offset_ = -1.5
         else:
-            self.offset_ = scoreatpercentile(
-                self.negative_outlier_factor_, 100. * self._contamination)
+            self.offset_ = np.percentile(self.negative_outlier_factor_,
+                                         100. * self._contamination)
 
         return self
 

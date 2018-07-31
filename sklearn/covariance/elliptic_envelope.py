@@ -106,8 +106,7 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
         y : (ignored)
         """
         super(EllipticEnvelope, self).fit(X)
-        self.offset_ = sp.stats.scoreatpercentile(
-            -self.dist_, 100. * self.contamination)
+        self.offset_ = np.percentile(-self.dist_, 100. * self.contamination)
         return self
 
     def decision_function(self, X, raw_values=None):
