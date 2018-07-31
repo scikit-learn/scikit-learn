@@ -227,7 +227,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         if loss_func_name == 'log_loss' and self.out_activation_ == 'logistic':
             loss_func_name = 'binary_log_loss'
         loss = LOSS_FUNCTIONS[loss_func_name](y, activations[-1],
-            sample_weight)
+                                              sample_weight)
         # Add L2 regularization term to loss
         values = np.sum(
             np.array([np.dot(s.ravel(), s.ravel()) for s in self.coefs_]))
@@ -532,7 +532,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                     activations[0] = X[batch_slice]
                     batch_loss, coef_grads, intercept_grads = self._backprop(
                         X[batch_slice], y[batch_slice], activations, deltas,
-                        coef_grads, intercept_grads, sample_weight[batch_slice])
+                        coef_grads, intercept_grads,
+                        sample_weight[batch_slice])
                     accumulated_loss += batch_loss * (batch_slice.stop -
                                                       batch_slice.start)
 

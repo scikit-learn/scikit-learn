@@ -685,9 +685,11 @@ def test_fit_sample_weight_validation():
     for i in range(42):
         if i == 0:
             assert_raise_message(ValueError, message, clf.partial_fit, X, y,
-                classes=np.unique(y), sample_weight=sample_weight)
+                                 classes=np.unique(y),
+                                 sample_weight=sample_weight)
         else:
-            assert_raise_message(ValueError, message, clf.partial_fit, X, y, sample_weight=sample_weight)
+            assert_raise_message(ValueError, message, clf.partial_fit, X, y,
+                                 sample_weight=sample_weight)
 
     # regression
     reg = MLPRegressor()
