@@ -25,7 +25,9 @@ from scipy.sparse import csr_matrix
 from sklearn.utils.testing import (assert_raises, assert_greater, assert_equal,
                                    assert_false, ignore_warnings)
 from sklearn.utils.testing import assert_raise_message
-
+from .._base import LOSS_FUNCTIONS, log_loss, binary_log_loss, squared_loss
+from sklearn.metrics.tests.test_common import check_sample_weight_invariance
+from sklearn.utils.validation import check_random_state
 
 np.seterr(all='warn')
 
@@ -633,3 +635,53 @@ def test_n_iter_no_change_inf():
 
     # validate _update_no_improvement_count() was always triggered
     assert_equal(clf._no_improvement_count, clf.n_iter_ - 1)
+
+def test_sample_weight_invariance(n_samples=50):
+    # Test sample weight loss functions directly
+
+    # regression
+
+    # squared loss
+    random_state = check_random_state(0)
+    y_true = random_state.random_sample(size=(n_samples, 1))
+    y_pred = random_state.random_sample(size=(n_samples, 1))
+    check_sample_weight_invariance(name='squared_loss', metric=squared_loss, y1=y_true, y2=y_pred)
+
+    # classification
+
+    # binary log loss
+    random_state = check_random_state(0)
+    y_true = random_state.randint(0, 2, size=(n_samples, 1))
+    y_pred = random_state.random_sample(size=(n_samples, 1))
+    check_sample_weight_invariance(name='binary_log_loss', metric=binary_log_loss, y1=y_true, y2=y_pred)
+
+    # log loss
+    random_state = check_random_state(0)
+    y_true = random_state.randint(0, 5, size=(n_samples, 1))
+    y_pred = random_state.random_sample(size=(n_samples, 1))
+    check_sample_weight_invariance(name='log_loss', metric=log_loss, y1=y_true, y2=y_pred)
+
+def test_fit_sample_weight_validation():
+    # validate sample weight and X have the same shape when calling fit
+    n_samples = 100
+    X = X_digits_binary[:n_samples]
+    y = y_digits_binary[:n_samples]
+    # size differ
+    sample_weight = np.ones(n_samples-1, dtype=np.float64, order='C')
+    message = ('Shapes of X and sample_weight do not match.')
+
+    # classification
+    clf = MLPClassifier()
+    assert_raise_message(ValueError, message, clf.fit, X, y, sample_weight)
+    # partial fit
+    clf = MLPClassifier()
+    for i in range(42):
+        if i == 0:
+            assert_raise_message(ValueError, message, clf.partial_fit, X, y,
+                classes=np.unique(y), sample_weight=sample_weight)
+        else:
+            assert_raise_message(ValueError, message, clf.partial_fit, X, y, sample_weight=sample_weight)
+
+    # regression
+    reg = MLPRegressor()
+    assert_raise_message(ValueError, message, reg.fit, X, y, sample_weight)
