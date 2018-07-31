@@ -808,6 +808,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     def __init__(self, classes=None, sparse_output=False):
         self.classes = classes
         self.sparse_output = sparse_output
+        self._indexed_classes = None
 
     def fit(self, y):
         """Fit the label sets binarizer, storing `classes_`
@@ -891,8 +892,9 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'classes_')
 
-        class_to_index = dict(zip(self.classes_, range(len(self.classes_))))
-        yt = self._transform(y, class_to_index)
+        if self._indexed_classes is None:
+            self._indexed_classes = dict(zip(self.classes_, range(len(self.classes_))))
+        yt = self._transform(y, self._indexed_classes)
 
         if not self.sparse_output:
             yt = yt.toarray()
