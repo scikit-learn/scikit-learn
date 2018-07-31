@@ -141,7 +141,7 @@ feedback:
   can be found by running the following code snippet::
 
     >>> import sklearn
-    >>> sklearn.show_versions()  # doctests: +SKIP
+    >>> sklearn.show_versions()  # doctest: +SKIP
 
   .. note::
 
