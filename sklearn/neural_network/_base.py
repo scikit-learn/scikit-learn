@@ -175,6 +175,7 @@ DERIVATIVES = {'identity': inplace_identity_derivative,
                'logistic': inplace_logistic_derivative,
                'relu': inplace_relu_derivative}
 
+
 def _finalize_loss(y_true, y_prob, sample_weight, sample_score):
     """Helper to validate sizes and compute loss"""
     if sample_weight is not None:
@@ -184,6 +185,7 @@ def _finalize_loss(y_true, y_prob, sample_weight, sample_score):
         loss = sample_score.mean()
 
     return loss
+
 
 def squared_loss(y_true, y_pred, sample_weight):
     """Compute the squared loss for regression.
@@ -208,6 +210,7 @@ def squared_loss(y_true, y_pred, sample_weight):
     loss = _finalize_loss(y_true, y_pred, sample_weight, sample_score)
 
     return loss / 2
+
 
 def log_loss(y_true, y_prob, sample_weight):
     """Compute Logistic loss for classification.
@@ -242,6 +245,7 @@ def log_loss(y_true, y_prob, sample_weight):
 
     return loss
 
+
 def binary_log_loss(y_true, y_prob, sample_weight):
     """Compute binary logistic loss for classification.
 
@@ -266,8 +270,9 @@ def binary_log_loss(y_true, y_prob, sample_weight):
     """
     y_prob = np.clip(y_prob, 1e-10, 1 - 1e-10)
 
-    sample_score = -(y_true * np.log(y_prob) +
-                    (1 - y_true) * np.log(1 - y_prob)).sum(axis=1)
+    sample_score = -(
+        y_true * np.log(y_prob) + (1 - y_true) * np.log(1 - y_prob)
+    ).sum(axis=1)
 
     loss = _finalize_loss(y_true, y_prob, sample_weight, sample_score)
 

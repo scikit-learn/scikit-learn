@@ -226,7 +226,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         loss_func_name = self.loss
         if loss_func_name == 'log_loss' and self.out_activation_ == 'logistic':
             loss_func_name = 'binary_log_loss'
-        loss = LOSS_FUNCTIONS[loss_func_name](y, activations[-1], sample_weight)
+        loss = LOSS_FUNCTIONS[loss_func_name](y, activations[-1],
+            sample_weight)
         # Add L2 regularization term to loss
         values = np.sum(
             np.array([np.dot(s.ravel(), s.ravel()) for s in self.coefs_]))
@@ -1001,9 +1002,11 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         -------
         self : returns a trained MLP model.
         """
-        return self._fit(X, y, 
+        return self._fit(
+            X, y,
             incremental=(self.warm_start and hasattr(self, "classes_")),
-            sample_weight=sample_weight)
+            sample_weight=sample_weight
+        )
 
     @property
     def partial_fit(self):

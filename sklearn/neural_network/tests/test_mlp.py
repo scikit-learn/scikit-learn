@@ -25,7 +25,8 @@ from scipy.sparse import csr_matrix
 from sklearn.utils.testing import (assert_raises, assert_greater, assert_equal,
                                    assert_false, ignore_warnings)
 from sklearn.utils.testing import assert_raise_message
-from .._base import LOSS_FUNCTIONS, log_loss, binary_log_loss, squared_loss
+from sklearn.neural_network._base import (log_loss, binary_log_loss,
+                                          squared_loss)
 from sklearn.metrics.tests.test_common import check_sample_weight_invariance
 from sklearn.utils.validation import check_random_state
 
@@ -636,6 +637,7 @@ def test_n_iter_no_change_inf():
     # validate _update_no_improvement_count() was always triggered
     assert_equal(clf._no_improvement_count, clf.n_iter_ - 1)
 
+
 def test_sample_weight_invariance(n_samples=50):
     # Test sample weight loss functions directly
 
@@ -645,7 +647,8 @@ def test_sample_weight_invariance(n_samples=50):
     random_state = check_random_state(0)
     y_true = random_state.random_sample(size=(n_samples, 1))
     y_pred = random_state.random_sample(size=(n_samples, 1))
-    check_sample_weight_invariance(name='squared_loss', metric=squared_loss, y1=y_true, y2=y_pred)
+    check_sample_weight_invariance(name='squared_loss', metric=squared_loss,
+                                   y1=y_true, y2=y_pred)
 
     # classification
 
@@ -653,13 +656,17 @@ def test_sample_weight_invariance(n_samples=50):
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(n_samples, 1))
     y_pred = random_state.random_sample(size=(n_samples, 1))
-    check_sample_weight_invariance(name='binary_log_loss', metric=binary_log_loss, y1=y_true, y2=y_pred)
+    check_sample_weight_invariance(name='binary_log_loss',
+                                   metric=binary_log_loss,
+                                   y1=y_true, y2=y_pred)
 
     # log loss
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 5, size=(n_samples, 1))
     y_pred = random_state.random_sample(size=(n_samples, 1))
-    check_sample_weight_invariance(name='log_loss', metric=log_loss, y1=y_true, y2=y_pred)
+    check_sample_weight_invariance(name='log_loss', metric=log_loss,
+                                   y1=y_true, y2=y_pred)
+
 
 def test_fit_sample_weight_validation():
     # validate sample weight and X have the same shape when calling fit
