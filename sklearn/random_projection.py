@@ -150,7 +150,7 @@ def _check_input_size(n_components, n_features):
                          n_components)
     if n_features <= 0:
         raise ValueError("n_features must be strictly positive, got %d" %
-                         n_components)
+                         n_features)
 
 
 def gaussian_random_matrix(n_components, n_features, random_state=None):
