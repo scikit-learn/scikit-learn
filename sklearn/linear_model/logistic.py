@@ -424,7 +424,7 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
     return grad, hessp
 
 
-def _check_solver_option(solver, multi_class, penalty, dual):
+def _check_solver_option(solver, multi_class, penalty, dual, classes):
 
     # Default values raises a future warning
     if solver == 'warn':
@@ -435,9 +435,11 @@ def _check_solver_option(solver, multi_class, penalty, dual):
 
     if multi_class == 'warn':
         multi_class = 'ovr'
-        warnings.warn("Default multi_class will be changed to 'multinomial' in"
-                      " 0.22. Use a specific option to silence this warning.",
-                      FutureWarning)
+        if len(classes) > 2:  # only warn if the problem is not binary
+            warnings.warn(
+                "Default multi_class will be changed to 'multinomial' in 0.22."
+                " Use a specific option to silence this warning.",
+                FutureWarning)
 
     # Check the string parameters
     if multi_class not in ['multinomial', 'ovr']:
@@ -613,19 +615,20 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
 
-    solver, multi_class = _check_solver_option(
-        solver, multi_class, penalty, dual)
-
     # Preprocessing.
     if check_input:
+        accept_large_sparse = solver not in ['liblinear', 'warn']
         X = check_array(X, accept_sparse='csr', dtype=np.float64,
-                        accept_large_sparse=solver != 'liblinear')
+                        accept_large_sparse=accept_large_sparse)
         y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
     _, n_features = X.shape
 
     classes = np.unique(y)
     random_state = check_random_state(random_state)
+
+    solver, multi_class = _check_solver_option(
+        solver, multi_class, penalty, dual, classes=classes)
 
     if pos_class is None and multi_class != 'multinomial':
         if (classes.size > 2):
@@ -927,7 +930,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         Actual number of iteration for each Cs.
     """
     solver, multi_class = _check_solver_option(
-        solver, multi_class, penalty, dual)
+        solver, multi_class, penalty, dual, classes=np.unique(y))
 
     X_train = X[train]
     X_test = X[test]
@@ -1247,19 +1250,21 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        solver, multi_class = _check_solver_option(
-            self.solver, self.multi_class, self.penalty, self.dual)
-
-        if solver in ['newton-cg']:
+        if self.solver in ['newton-cg']:
             _dtype = [np.float64, np.float32]
         else:
             _dtype = np.float64
 
+        accept_large_sparse = self.solver not in ['liblinear', 'warn']
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype, order="C",
-                         accept_large_sparse=solver != 'liblinear')
+                         accept_large_sparse=accept_large_sparse)
         check_classification_targets(y)
         self.classes_ = np.unique(y)
         n_samples, n_features = X.shape
+
+        solver, multi_class = _check_solver_option(
+            self.solver, self.multi_class, self.penalty, self.dual,
+            classes=self.classes_)
 
         if solver == 'liblinear':
             if self.n_jobs != 1:
@@ -1649,9 +1654,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         -------
         self : object
         """
-        solver, multi_class = _check_solver_option(
-            self.solver, self.multi_class, self.penalty, self.dual)
-
         if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
             raise ValueError("Maximum number of iteration must be positive;"
                              " got (max_iter=%r)" % self.max_iter)
@@ -1659,10 +1661,14 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
+        accept_large_sparse = self.solver not in ['liblinear', 'warn']
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
-                         order="C",
-                         accept_large_sparse=solver != 'liblinear')
+                         order="C", accept_large_sparse=accept_large_sparse)
         check_classification_targets(y)
+
+        solver, multi_class = _check_solver_option(
+            self.solver, self.multi_class, self.penalty, self.dual,
+            classes=np.unique(y))
 
         class_weight = self.class_weight
 
