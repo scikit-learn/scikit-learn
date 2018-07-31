@@ -7,7 +7,8 @@
 import numpy as np
 
 from scipy.special import expit as logistic_sigmoid
-
+from ..metrics.classification import _weighted_sum
+from ..utils.validation import check_consistent_length
 
 def identity(X):
     """Simply return the input array.
@@ -174,8 +175,17 @@ DERIVATIVES = {'identity': inplace_identity_derivative,
                'logistic': inplace_logistic_derivative,
                'relu': inplace_relu_derivative}
 
+def _finalize_loss(y_true, y_prob, sample_weight, sample_score):
+    """Helper to validate sizes and compute loss"""
+    if sample_weight is not None:
+        check_consistent_length(y_true, y_prob, sample_weight)
+        loss = _weighted_sum(sample_score, sample_weight, normalize=True)
+    else:
+        loss = sample_score.mean()
 
-def squared_loss(y_true, y_pred):
+    return loss
+
+def squared_loss(y_true, y_pred, sample_weight):
     """Compute the squared loss for regression.
 
     Parameters
@@ -186,15 +196,20 @@ def squared_loss(y_true, y_pred):
     y_pred : array-like or label indicator matrix
         Predicted values, as returned by a regression estimator.
 
+    sample_weight : array-like, shape (y_true,).
+
     Returns
     -------
     loss : float
         The degree to which the samples are correctly predicted.
     """
-    return ((y_true - y_pred) ** 2).mean() / 2
+    sample_score = ((y_true - y_pred) ** 2).sum(axis=1)
 
+    loss = _finalize_loss(y_true, y_pred, sample_weight, sample_score)
 
-def log_loss(y_true, y_prob):
+    return loss / 2
+
+def log_loss(y_true, y_prob, sample_weight):
     """Compute Logistic loss for classification.
 
     Parameters
@@ -205,6 +220,8 @@ def log_loss(y_true, y_prob):
     y_prob : array-like of float, shape = (n_samples, n_classes)
         Predicted probabilities, as returned by a classifier's
         predict_proba method.
+
+    sample_weight : array-like, shape (y_true,).
 
     Returns
     -------
@@ -219,10 +236,13 @@ def log_loss(y_true, y_prob):
     if y_true.shape[1] == 1:
         y_true = np.append(1 - y_true, y_true, axis=1)
 
-    return -np.sum(y_true * np.log(y_prob)) / y_prob.shape[0]
+    sample_score = -(y_true * np.log(y_prob)).sum(axis=1)
 
+    loss = _finalize_loss(y_true, y_prob, sample_weight, sample_score)
 
-def binary_log_loss(y_true, y_prob):
+    return loss
+
+def binary_log_loss(y_true, y_prob, sample_weight):
     """Compute binary logistic loss for classification.
 
     This is identical to log_loss in binary classification case,
@@ -237,6 +257,8 @@ def binary_log_loss(y_true, y_prob):
         Predicted probabilities, as returned by a classifier's
         predict_proba method.
 
+    sample_weight : array-like, shape (y_true,).
+
     Returns
     -------
     loss : float
@@ -244,8 +266,12 @@ def binary_log_loss(y_true, y_prob):
     """
     y_prob = np.clip(y_prob, 1e-10, 1 - 1e-10)
 
-    return -np.sum(y_true * np.log(y_prob) +
-                   (1 - y_true) * np.log(1 - y_prob)) / y_prob.shape[0]
+    sample_score = -(y_true * np.log(y_prob) +
+                    (1 - y_true) * np.log(1 - y_prob)).sum(axis=1)
+
+    loss = _finalize_loss(y_true, y_prob, sample_weight, sample_score)
+
+    return loss
 
 
 LOSS_FUNCTIONS = {'squared_loss': squared_loss, 'log_loss': log_loss,
