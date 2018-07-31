@@ -332,7 +332,7 @@ class MDS(BaseEstimator):
 
     Attributes
     ----------
-    embedding_ : array-like, shape (n_components, n_samples)
+    embedding_ : array-like, shape (n_samples, n_components)
         Stores the position of the dataset in the embedding space.
 
     stress_ : float
