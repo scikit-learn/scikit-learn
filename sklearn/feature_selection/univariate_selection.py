@@ -761,10 +761,10 @@ class GenericUnivariateSelect(_BaseFilter):
     >>> X, y = load_breast_cancer(return_X_y=True)
     >>> X.shape
     (569, 30)
-    >>> transformer = GenericUnivariateSelect(chi2, 'fpr', param=0.01)
+    >>> transformer = GenericUnivariateSelect(chi2, 'k_best', param=20)
     >>> X_new = transformer.fit_transform(X, y)
     >>> X_new.shape
-    (569, 16)
+    (569, 20)
 
     See also
     --------
