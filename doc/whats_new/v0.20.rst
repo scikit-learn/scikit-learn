@@ -230,6 +230,12 @@ Misc
   exposed in :mod:`sklearn.utils`.
   :issue:`11166`by `Gael Varoquaux`_
 
+- A utility method :func:`sklearn.show_versions()` was added to print out
+  information relevant for debugging. It includes the user system, the
+  Python executable, the version of the main libraries and BLAS binding
+  information.
+  :issue:`11596` by :user:`Alexandre Boucaud <aboucaud>`
+
 Enhancements
 ............
 
