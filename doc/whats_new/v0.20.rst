@@ -593,7 +593,6 @@ Classifiers and regressors
   incorrect results in :class:`logistic.LogisticRegressionCV`. :issue:`11724`
   by :user:`Nicolas Hug <NicolasHug>`.
 
-
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
