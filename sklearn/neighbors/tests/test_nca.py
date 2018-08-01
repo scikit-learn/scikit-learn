@@ -1,4 +1,5 @@
 import pytest
+import re
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from scipy.optimize import check_grad
@@ -308,9 +309,9 @@ def test_warm_start_effectiveness():
 def test_verbose(init_name, capsys):
     # assert there is proper output when verbose = 1, for every initialization
     # except auto because auto will call one of the others
-    msgs = {'pca': "Finding principal components",
-            'lda': "Finding most discriminative components",
-            'identity': '', 'random': '', 'precomputed': ''}
+    regexp_init = '... done in \ *\d+\.\d{2}s'
+    msgs = {'pca': "Finding principal components" + regexp_init,
+            'lda': "Finding most discriminative components" + regexp_init}
     if init_name == 'precomputed':
         init = rng.randn(iris_data.shape[1], iris_data.shape[1])
     else:
@@ -320,9 +321,26 @@ def test_verbose(init_name, capsys):
     out, _ = capsys.readouterr()
 
     # check output
-    assert("[NeighborhoodComponentsAnalysis]" in out)
-    assert(msgs[init_name] in out)
-    assert ("Training took" in out)
+    lines = re.split('\n+', out)
+    # if pca or lda init, an additional line is printed, so we test
+    # it and remove it to test the rest equally among initializations
+    if init_name in ['pca', 'lda']:
+        assert re.match(msgs[init_name], lines[0])
+        lines = lines[1:]
+    assert lines[0] == '[NeighborhoodComponentsAnalysis]'
+    header = '{:>10} {:>20} {:>10}'.format('Iteration', 'Objective Value',
+                                           'Time(s)')
+    assert lines[1] == '[NeighborhoodComponentsAnalysis] {}'.format(header)
+    assert lines[2] == ('[NeighborhoodComponentsAnalysis] {}'
+                        .format('-' * len(header)))
+    for line in lines[3:-2]:
+        # The following regex will match for instance:
+        #  '[NeighborhoodComponentsAnalysis]  0    6.988936e+01   0.01'
+        assert re.match("\[NeighborhoodComponentsAnalysis\]\ *\d+\ *\d\.\d{6}e"
+                        "[+|-]\d+\ *\d+\.\d{2}", line)
+    assert re.match("\[NeighborhoodComponentsAnalysis\] Training took\ *"
+                    "\d+\.\d{2}s\.", lines[-2])
+    assert lines[-1] == ''
 
 
 def test_no_verbose(capsys):
