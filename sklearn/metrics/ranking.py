@@ -242,7 +242,7 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
-                  max_fpr=None):
+                  max_fpr=None, min_tpr=None):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     from prediction scores.
 
