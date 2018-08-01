@@ -10,6 +10,7 @@ from scipy.special import expit as logistic_sigmoid
 from ..metrics.classification import _weighted_sum
 from ..utils.validation import check_consistent_length
 
+
 def identity(X):
     """Simply return the input array.
 
