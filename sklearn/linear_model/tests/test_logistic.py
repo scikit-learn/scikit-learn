@@ -1310,7 +1310,7 @@ def test_warm_start_converge_LR():
 
 
 def test_log_reg_scoring_path_multinomial():
-    # Make sure that the scores are all differents when C is different
+    # Make sure that the scores are all different for different C values
     X, y = make_classification(n_samples=200, n_classes=3, n_informative=3,
                                random_state=0)
     train, test = next(StratifiedKFold(n_splits=5).split(X, y))
@@ -1320,5 +1320,5 @@ def test_log_reg_scoring_path_multinomial():
                                 solver='saga', random_state=0,
                                 multi_class='multinomial')
 
-    coefs, Cs, scores, n_iter = res
+    _, _, scores, _ = res
     assert len(set(scores)) != 1
