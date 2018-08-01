@@ -762,13 +762,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             multi_w0 = np.reshape(w0, (classes.size, -1))
             if classes.size == 2:
                 multi_w0 = multi_w0[1][np.newaxis, :]
-            coefs.append(multi_w0)
+            coefs.append(multi_w0.copy())
         else:
             coefs.append(w0.copy())
 
         n_iter[i] = n_iter_i
 
-    return coefs, np.array(Cs), n_iter
+    return np.array(coefs), np.array(Cs), n_iter
 
 
 # helper function for LogisticCV

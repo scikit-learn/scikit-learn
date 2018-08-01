@@ -1307,3 +1307,18 @@ def test_warm_start_converge_LR():
         lr_ws.fit(X, y)
     lr_ws_loss = log_loss(y, lr_ws.predict_proba(X))
     assert_allclose(lr_no_ws_loss, lr_ws_loss, rtol=1e-5)
+
+
+def test_log_reg_scoring_path_multinomial():
+    # Make sure that the scores are all differents when C is different
+    X, y = make_classification(n_samples=200, n_classes=3, n_informative=3,
+                               random_state=0)
+    train, test = next(StratifiedKFold(n_splits=5).split(X, y))
+
+    Cs = np.logspace(-4, 4, 5)
+    res = _log_reg_scoring_path(X, y, train, test, penalty='l1', Cs=Cs,
+                                solver='saga', random_state=0,
+                                multi_class='multinomial')
+
+    coefs, Cs, scores, n_iter = res
+    assert len(set(scores)) != 1
