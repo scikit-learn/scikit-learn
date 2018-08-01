@@ -23,12 +23,12 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
 from sklearn.utils.testing import (assert_raises, assert_greater, assert_equal,
-                                   assert_false, ignore_warnings)
-from sklearn.utils.testing import assert_raise_message
+                                   assert_false, ignore_warnings,
+                                   assert_allclose, assert_raise_message,
+                                   assert_array_almost_equal)
+from sklearn.utils.validation import check_random_state, _num_samples
 from sklearn.neural_network._base import (log_loss, binary_log_loss,
                                           squared_loss)
-from sklearn.metrics.tests.test_common import check_sample_weight_invariance
-from sklearn.utils.validation import check_random_state
 
 np.seterr(all='warn')
 
@@ -57,6 +57,8 @@ iris = load_iris()
 
 X_iris = iris.data
 y_iris = iris.target
+
+rng = np.random.RandomState(0)
 
 
 def test_alpha():
@@ -638,6 +640,83 @@ def test_n_iter_no_change_inf():
     assert_equal(clf._no_improvement_count, clf.n_iter_ - 1)
 
 
+@ignore_warnings
+def check_sample_weight_invariance(name, metric, y1, y2):
+    sample_weight = rng.randint(1, 10, size=len(y1))
+
+    # check that unit weights gives the same score as no weight
+    unweighted_score = metric(y1, y2, sample_weight=None)
+
+    assert_allclose(
+        unweighted_score,
+        metric(y1, y2, sample_weight=np.ones(shape=len(y1))),
+        err_msg="For %s sample_weight=None is not equivalent to "
+                "sample_weight=ones" % name)
+
+    # check that the weighted and unweighted scores are unequal
+    weighted_score = metric(y1, y2, sample_weight=sample_weight)
+
+    # use context manager to supply custom error message
+    with assert_raises(AssertionError) as cm:
+        assert_allclose(unweighted_score, weighted_score)
+        cm.msg = ("Unweighted and weighted scores are unexpectedly almost "
+                  "equal (%s) and (%s) for %s" % (unweighted_score,
+                                                  weighted_score, name))
+
+    # check that sample_weight can be a list
+    weighted_score_list = metric(y1, y2,
+                                 sample_weight=sample_weight.tolist())
+    assert_allclose(
+        weighted_score, weighted_score_list,
+        err_msg=("Weighted scores for array and list "
+                 "sample_weight input are not equal (%s != %s) for %s") % (
+                     weighted_score, weighted_score_list, name))
+
+    # check that integer weights is the same as repeated samples
+    repeat_weighted_score = metric(
+        np.repeat(y1, sample_weight, axis=0),
+        np.repeat(y2, sample_weight, axis=0), sample_weight=None)
+    assert_allclose(
+        weighted_score, repeat_weighted_score,
+        err_msg="Weighting %s is not equal to repeating samples" % name)
+
+    # check that ignoring a fraction of the samples is equivalent to setting
+    # the corresponding weights to zero
+    sample_weight_subset = sample_weight[1::2]
+    sample_weight_zeroed = np.copy(sample_weight)
+    sample_weight_zeroed[::2] = 0
+    y1_subset = y1[1::2]
+    y2_subset = y2[1::2]
+    weighted_score_subset = metric(y1_subset, y2_subset,
+                                   sample_weight=sample_weight_subset)
+    weighted_score_zeroed = metric(y1, y2,
+                                   sample_weight=sample_weight_zeroed)
+    assert_allclose(
+        weighted_score_subset, weighted_score_zeroed,
+        err_msg=("Zeroing weights does not give the same result as "
+                 "removing the corresponding samples (%s != %s) for %s" %
+                 (weighted_score_zeroed, weighted_score_subset, name)))
+
+    # check that the score is invariant under scaling of the weights by a
+    # common factor
+    for scaling in [2, 0.3]:
+        assert_allclose(
+            weighted_score,
+            metric(y1, y2, sample_weight=sample_weight * scaling),
+            err_msg="%s sample_weight is not invariant "
+                    "under scaling" % name)
+
+    # Check that if number of samples in y_true and sample_weight are not
+    # equal, meaningful error is raised.
+    error_message = ("Found input variables with inconsistent numbers of "
+                     "samples: [{}, {}, {}]".format(
+                         _num_samples(y1), _num_samples(y2),
+                         _num_samples(sample_weight) * 2))
+    assert_raise_message(ValueError, error_message, metric, y1, y2,
+                         sample_weight=np.hstack([sample_weight,
+                                                  sample_weight]))
+
+
 def test_sample_weight_invariance(n_samples=50):
     # Test sample weight loss functions directly
 
@@ -668,29 +747,93 @@ def test_sample_weight_invariance(n_samples=50):
                                    y1=y_true, y2=y_pred)
 
 
-def test_fit_sample_weight_validation():
-    # validate sample weight and X have the same shape when calling fit
+def test_mlp_sample_weight():
+    # validate sample weight behaviour through fit
     n_samples = 100
     X = X_digits_binary[:n_samples]
     y = y_digits_binary[:n_samples]
-    # size differ
+    seed = 0
+
+    # validate sample weight and X have the same shape when calling fit
+    # o.w. raise meaningful message
     sample_weight = np.ones(n_samples-1, dtype=np.float64, order='C')
     message = ('Shapes of X and sample_weight do not match.')
+    learners = [MLPClassifier(random_state=seed),
+                MLPRegressor(random_state=seed)]
+    for learner in learners:
+        # fit
+        assert_raise_message(ValueError, message, learner.fit, X, y,
+                             sample_weight)
+        # partial fit
+        if isinstance(learner, MLPRegressor):
+            continue
+        assert_raise_message(ValueError, message, learner.partial_fit, X, y,
+                             classes=np.unique(y),
+                             sample_weight=sample_weight)
 
-    # classification
-    clf = MLPClassifier()
-    assert_raise_message(ValueError, message, clf.fit, X, y, sample_weight)
-    # partial fit
-    clf = MLPClassifier()
-    for i in range(42):
-        if i == 0:
-            assert_raise_message(ValueError, message, clf.partial_fit, X, y,
-                                 classes=np.unique(y),
-                                 sample_weight=sample_weight)
-        else:
-            assert_raise_message(ValueError, message, clf.partial_fit, X, y,
-                                 sample_weight=sample_weight)
+    # None sample weight or all being 1 predicts same output
+    test_sample = np.ones(X.shape[1], dtype=np.float64).reshape(1, -1)
+    sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
 
-    # regression
-    reg = MLPRegressor()
-    assert_raise_message(ValueError, message, reg.fit, X, y, sample_weight)
+    for learner in [MLPClassifier, MLPRegressor]:
+        predicted = learner(random_state=seed).fit(X, y).predict(test_sample)
+
+        predicted_sw = learner(random_state=seed).fit(X, y, sample_weight).predict(test_sample)
+        assert_array_equal(predicted, predicted_sw)
+
+
+def test_mlp_class_weight():
+    """ test class weights, should validate also if
+    sample weight effect is correct. aided by ridge module"""
+
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = [1, 1, 1, -1, -1]
+    test_sample = [[-0.7, 1.0]]
+    # predict_proba: array([[0.48118508, 0.51881492]]) with below clf
+    # the sample relies in-between the hyperplane sides
+
+    # data for balance check
+    X_bal = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0], [1.0, 1.0]])
+    y_bal = [1, 1, -1, -1]
+
+    n_iter = 3000
+    clf = MLPClassifier(random_state=0, max_iter=n_iter)
+
+    # check test sample which should output label 1
+    clf.fit(X, y, class_weight=None)
+    assert_array_equal(clf.predict(test_sample), np.array([1]))
+
+    # we give a small weights to class 1
+    clf.fit(X, y, class_weight={1: 0.01})
+    # clf.predict_proba: array([[0.55461996, 0.44538004]])
+
+    # now the hyperplane should rotate
+    # the prediction on this point should shift
+    assert_array_equal(clf.predict(test_sample), np.array([-1]))
+
+    # check if class_weight = 'balanced' can handle negative labels.
+    clf.fit(X, y, class_weight='balanced')
+    assert_array_equal(clf.predict(test_sample), np.array([1]))
+
+    # class_weight = 'balanced', and class_weight = None should return
+    # same values when y has equal number of all labels
+    clf.fit(X_bal, y_bal, class_weight=None)
+    prob = clf.predict_proba(test_sample)
+
+    clf.fit(X_bal, y_bal, class_weight='balanced')
+    prob_b = clf.predict_proba(test_sample)
+
+    assert_equal(len(clf.classes_), 2)
+    assert_array_almost_equal(prob, prob_b)
+
+    # check that fit is equal to partial fit
+    clf = MLPClassifier(random_state=0, max_iter=1)
+    clf.fit(X, y)
+    prob = clf.predict_proba(test_sample)
+
+    clf = MLPClassifier(random_state=0, max_iter=1)
+    clf.partial_fit(X, y, classes=np.unique(y))
+    prob_par = clf.predict_proba(test_sample)
+
+    assert_array_almost_equal(prob, prob_par)
