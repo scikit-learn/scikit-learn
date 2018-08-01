@@ -228,7 +228,7 @@ Misc
 - An environment variable to use the site joblib instead of the vendored
   one was added (:ref:`environment_variable`). The main API of joblib is now
   exposed in :mod:`sklearn.utils`.
-  :issue:`11166`by `Gael Varoquaux`_
+  :issue:`11166` by `Gael Varoquaux`_
 
 - A utility method :func:`sklearn.show_versions()` was added to print out
   information relevant for debugging. It includes the user system, the
