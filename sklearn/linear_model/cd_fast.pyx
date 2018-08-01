@@ -302,6 +302,12 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
+                else:
+                    with gil:
+                        warnings.warn("Objective did not converge. "
+                        " You might want to increase the number of iterations",
+                        category=UserWarning)
+
     return w, gap, tol, n_iter + 1
 
 
@@ -521,6 +527,11 @@ def sparse_enet_coordinate_descent(floating [:] w,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
+                else:
+                    with gil:
+                        warnings.warn("Objective did not converge. "
+                        " You might want to increase the number of iterations",
+                        category=UserWarning)
 
     return w, gap, tol, n_iter + 1
 
@@ -675,6 +686,11 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
+                else:
+                    with gil:
+                        warnings.warn("Objective did not converge. "
+                        " You might want to increase the number of iterations",
+                        category=UserWarning)
 
     return np.asarray(w), gap, tol, n_iter + 1
 
@@ -880,5 +896,10 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
+                else:
+                    with gil:
+                        warnings.warn("Objective did not converge. "
+                        " You might want to increase the number of iterations",
+                        category=UserWarning)
 
     return np.asarray(W), gap, tol, n_iter + 1
