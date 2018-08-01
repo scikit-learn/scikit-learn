@@ -572,7 +572,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     coefs : ndarray, shape (n_cs, n_features) or (n_cs, n_features + 1)
         List of coefficients for the Logistic Regression model. If
         fit_intercept is set to True then the second dimension will be
-        n_features + 1, where the last item represents the intercept.
+        n_features + 1, where the last item represents the intercept. For
+        ``multiclass='multinomial'``, the shape is (n_classes, n_cs,
+        n_features) or (n_classes, n_cs, n_features + 1).
 
     Cs : ndarray
         Grid of Cs used for cross-validation.
