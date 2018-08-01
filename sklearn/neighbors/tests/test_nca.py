@@ -335,7 +335,7 @@ def test_verbose(init_name, capsys):
                         .format('-' * len(header)))
     for line in lines[3:-2]:
         # The following regex will match for instance:
-        #  '[NeighborhoodComponentsAnalysis]  0    6.988936e+01   0.01'
+        # '[NeighborhoodComponentsAnalysis]  0    6.988936e+01   0.01'
         assert re.match("\[NeighborhoodComponentsAnalysis\]\ *\d+\ *\d\.\d{6}e"
                         "[+|-]\d+\ *\d+\.\d{2}", line)
     assert re.match("\[NeighborhoodComponentsAnalysis\] Training took\ *"
