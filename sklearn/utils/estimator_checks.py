@@ -1197,6 +1197,11 @@ def check_pairwise_estimator_tag(name, estimator_orig):
                            ('affinity', 'precomputed'),
                            ('kernel', 'precomputed')]
 
+    # Check if _pairwise attribute is present - will be used later
+    has_pairwise_tag = (False
+                        if getattr(estimator_orig, '_pairwise', None) is None
+                        else True)
+
     # Using iris as sample data
     iris = load_iris()
     X, y_ = iris.data, iris.target
@@ -1204,16 +1209,14 @@ def check_pairwise_estimator_tag(name, estimator_orig):
 
     for attribute, attribute_value in attributes_to_check:
         # Check to see if attribute value is supported by estimator
-        if getattr(estimator_orig, attribute, None) is not None:
+        if attribute not in estimator_orig.get_params():
             continue
         try:
             # Construct new object of estimator with desired attribute value
-            modified_estimator = estimator_orig.__class__(
-                                    **{
-                                        attribute: attribute_value
-                                      })
+            modified_estimator = clone(estimator_orig).set_params(
+                                                **{attribute: attribute_value})
             # Not all estimators validate parameters, so check fit()
-            modified_estimator.fit(X=distance_matrix, y=y_)
+            modified_estimator.fit(distance_matrix, y_)
         except (TypeError, ValueError, KeyError):
             # Estimator does not support given attribute value
             continue
@@ -1222,21 +1225,20 @@ def check_pairwise_estimator_tag(name, estimator_orig):
         try:
             non_square_distance = distance_matrix[:, :-1]
             if getattr(modified_estimator, 'fit_predict', None) is not None:
-                modified_estimator.fit_predict(X=non_square_distance, y=y_)
+                modified_estimator.fit_predict(non_square_distance, y_)
             elif (getattr(modified_estimator, 'fit_transform', None)
                     is not None):
-                modified_estimator.fit_transform(X=non_square_distance, y=y_)
+                modified_estimator.fit_transform(non_square_distance, y_)
             elif getattr(modified_estimator, 'fit', None) is not None:
-                modified_estimator.fit(X=non_square_distance, y=y_)
+                modified_estimator.fit(non_square_distance, y_)
                 if getattr(modified_estimator, 'predict', None) is not None:
-                    modified_estimator.predict(X=X)
+                    modified_estimator.predict(X)
         except ValueError:
             # Check if estimator defines _pairwise attribute
-            assert_not_equal(getattr(modified_estimator, '_pairwise', None),
-                             None,
-                             msg="{0} implements {1}={2} but does"
-                                 " not implement '_pairwise' estimator tag"
-                                 "".format(name, attribute, attribute_value))
+            assert_true(has_pairwise_tag,
+                        msg="{0} implements {1}={2} but does"
+                            " not implement '_pairwise' estimator tag"
+                            "".format(name, attribute, attribute_value))
         else:
             # Estimator does not raise an error - skip
             continue
