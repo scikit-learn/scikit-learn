@@ -333,9 +333,6 @@ def sparse_enet_coordinate_descent(floating [:] w,
     cdef unsigned int startptr = X_indptr[0]
     cdef unsigned int endptr
 
-    # get the number of tasks indirectly, using strides
-    cdef unsigned int n_tasks
-
     # initial value of the residuals
     cdef floating[:] R = y.copy()
 
@@ -345,12 +342,10 @@ def sparse_enet_coordinate_descent(floating [:] w,
     # fused types version of BLAS functions
     if floating is float:
         dtype = np.float32
-        n_tasks = y.strides[0] / sizeof(float)
         dot = sdot
         asum = sasum
     else:
         dtype = np.float64
-        n_tasks = y.strides[0] / sizeof(DOUBLE)
         dot = ddot
         asum = dasum
 
@@ -511,7 +506,7 @@ def sparse_enet_coordinate_descent(floating [:] w,
                 gap += (alpha * l1_norm - const * dot(
                             n_samples,
                             &R[0], 1,
-                            &y[0], n_tasks
+                            &y[0], 1
                             )
                         + 0.5 * beta * (1 + const ** 2) * w_norm2)
 
