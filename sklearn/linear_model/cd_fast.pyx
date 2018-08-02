@@ -172,9 +172,6 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1, mode='c'] w,
     cdef unsigned int n_samples = X.shape[0]
     cdef unsigned int n_features = X.shape[1]
 
-    # get the number of tasks indirectly, using strides
-    cdef unsigned int n_tasks = y.strides[0] / sizeof(floating)
-
     # compute norms of the columns of X
     cdef np.ndarray[floating, ndim=1] norm_cols_X = (X**2).sum(axis=0)
 
@@ -218,7 +215,7 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1, mode='c'] w,
             R[i] = y[i] - dot(n_features, &X_data[i], n_samples, w_data, 1)
 
         # tol *= np.dot(y, y)
-        tol *= dot(n_samples, y_data, n_tasks, y_data, n_tasks)
+        tol *= dot(n_samples, y_data, 1, y_data, 1)
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -296,7 +293,7 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1, mode='c'] w,
 
                 # np.dot(R.T, y)
                 gap += (alpha * l1_norm
-                        - const * dot(n_samples, R_data, 1, y_data, n_tasks)
+                        - const * dot(n_samples, R_data, 1, y_data, 1)
                         + 0.5 * beta * (1 + const ** 2) * (w_norm2))
 
                 if gap < tol:
@@ -336,9 +333,6 @@ def sparse_enet_coordinate_descent(floating [::1] w,
     cdef unsigned int startptr = X_indptr[0]
     cdef unsigned int endptr
 
-    # get the number of tasks indirectly, using strides
-    cdef unsigned int n_tasks
-
     # initial value of the residuals
     cdef floating[:] R = y.copy()
 
@@ -348,12 +342,10 @@ def sparse_enet_coordinate_descent(floating [::1] w,
     # fused types version of BLAS functions
     if floating is float:
         dtype = np.float32
-        n_tasks = y.strides[0] / sizeof(float)
         dot = sdot
         asum = sasum
     else:
         dtype = np.float64
-        n_tasks = y.strides[0] / sizeof(DOUBLE)
         dot = ddot
         asum = dasum
 
@@ -514,7 +506,7 @@ def sparse_enet_coordinate_descent(floating [::1] w,
                 gap += (alpha * l1_norm - const * dot(
                             n_samples,
                             &R[0], 1,
-                            &y[0], n_tasks
+                            &y[0], 1
                             )
                         + 0.5 * beta * (1 + const ** 2) * w_norm2)
 
