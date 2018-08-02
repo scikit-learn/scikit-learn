@@ -1452,8 +1452,9 @@ def test_elastic_net_CV_multiclass_ovr():
 
 
 def test_elastic_net_CV_no_refit():
+    print()
 
-    n_classes = 5
+    n_classes = 3
     n_features = 20
     X, y = make_classification(n_samples=200, n_classes=n_classes,
                                n_informative=n_classes, n_features=n_features,
@@ -1466,6 +1467,15 @@ def test_elastic_net_CV_no_refit():
     lrcv = LogisticRegressionCV(penalty='elastic-net', Cs=Cs, solver='saga',
                                 cv=cv, l1_ratios=l1_ratios, random_state=0,
                                 refit=False)
+    lrcv.fit(X, y)
+    assert lrcv.C_.shape == (n_classes,)
+    assert lrcv.l1_ratio_.shape == (n_classes,)
+    assert lrcv.coef_.shape == (n_classes, n_features)
+
+    print()
+    lrcv = LogisticRegressionCV(penalty='elastic-net', Cs=Cs, solver='saga',
+                                cv=cv, l1_ratios=l1_ratios, random_state=0,
+                                refit=False, multi_class='multinomial')
     lrcv.fit(X, y)
     assert lrcv.C_.shape == (n_classes,)
     assert lrcv.l1_ratio_.shape == (n_classes,)
