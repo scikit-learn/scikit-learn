@@ -178,8 +178,10 @@ Linear models: :math:`y = X\beta + \epsilon`
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
     LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
     >>> print(regr.coef_)
-    [   0.30349955 -237.63931533  510.53060544  327.73698041 -814.13170937
-      492.81458798  102.84845219  184.60648906  743.51961675   76.09517222]
+    [ 3.03499549e-01 -2.37639315e+02  5.10530605e+02  3.27736980e+02
+     -8.14131709e+02  4.92814588e+02  1.02848452e+02  1.84606489e+02
+      7.43519617e+02  7.60951722e+01]
+
 
     >>> # The mean square error
     >>> np.mean((regr.predict(diabetes_X_test)-diabetes_y_test)**2)# doctest: +ELLIPSIS
@@ -371,9 +373,11 @@ function or **logistic** function:
     >>> logistic = linear_model.LogisticRegression(C=1e5)
     >>> logistic.fit(iris_X_train, iris_y_train)
     LogisticRegression(C=100000.0, class_weight=None, dual=False,
-              fit_intercept=True, intercept_scaling=1, max_iter=100,
-              multi_class='ovr', n_jobs=1, penalty='l2', random_state=None,
-              solver='liblinear', tol=0.0001, verbose=0, warm_start=False)
+              fit_intercept=True, intercept_scaling=1, l1_ratio=None,
+              max_iter=100, multi_class='ovr', n_jobs=1, penalty='l2',
+              random_state=None, solver='liblinear', tol=0.0001, verbose=0,
+              warm_start=False)
+
 
 This is known as :class:`LogisticRegression`.
 
