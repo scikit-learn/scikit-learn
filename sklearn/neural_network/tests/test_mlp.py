@@ -839,11 +839,12 @@ def test_mlp_class_weight():
 
     # check that fit is equal to partial fit
     clf = MLPClassifier(random_state=0, max_iter=1)
-    clf.fit(X, y)
+    clf.fit(X, y, class_weight={1: 10})
     prob = clf.predict_proba(test_sample)
 
     clf = MLPClassifier(random_state=0, max_iter=1)
-    clf.partial_fit(X, y, classes=np.unique(y))
+    clf.partial_fit(X, y, classes=np.unique(y),
+                    class_weight={1: 10})
     prob_par = clf.predict_proba(test_sample)
 
     assert_array_almost_equal(prob, prob_par)
