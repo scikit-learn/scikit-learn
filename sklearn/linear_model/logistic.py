@@ -1772,6 +1772,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             backend = 'threading'
         else:
             backend = 'multiprocessing'
+
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                                backend=backend)(
             path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
@@ -1790,34 +1791,30 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             for train, test in folds
             for l1_ratio in l1_ratios_)
 
+        # _log_reg_scoring_path will output different shapes depending on the
+        # multi_class param, so we need to reshape the outputs accordingly.
+        # After reshaping,
+        # - scores is of shape (n_classes X n_folds X n_features)
+        # - coefs_paths is of shape
+        #  (n_classes X n_folds X n_Cs . n_l1_ratios X n_features)
+        # - n_iter is of shape
+        #  (n_classes X n_folds X n_Cs . n_l1_ratios X n_features) or
+        #  (1 X n_folds X n_Cs . n_l1_ratios X n_features)
+        coefs_paths, Cs, scores, n_iter_ = zip(*fold_coefs_)
+        self.Cs_ = Cs[0]
         if self.multi_class == 'multinomial':
-            multi_coefs_paths, Cs, multi_scores, n_iter_ = zip(*fold_coefs_)
-            self.Cs_ = Cs[0]
-            multi_coefs_paths = np.asarray(multi_coefs_paths)
             coefs_paths = np.reshape(
-                multi_coefs_paths,
-                (n_classes, len(folds), len(self.Cs_) * len(l1_ratios_),
-                 -1)
+                coefs_paths,
+                (len(folds),  len(l1_ratios_) * len(self.Cs_), n_classes, -1)
             )
-
-            # This is just to maintain API similarity between the ovr and
-            # multinomial option.
-            # Coefs_paths in now n_folds X len(Cs) X n_classes X n_features
-            # we need it to be n_classes X len(Cs) X n_folds X n_features
-            # to be similar to "ovr".
-            #coefs_paths = np.rollaxis(multi_coefs_paths, 2, 0)
-
-            # Multinomial has a true score across all labels. Hence the
-            # shape is n_folds X len(Cs). We need to repeat this score
-            # across all labels for API similarity.
-            scores = np.tile(multi_scores, (n_classes, 1, 1))
-            self.n_iter_ = np.reshape(n_iter_, (1, len(folds),
-                                                len(self.Cs_) *
-                                                len(l1_ratios_)))
-
+            coefs_paths = np.moveaxis(coefs_paths, (0, 1, 2, 3), (1, 2, 0, 3))
+            self.n_iter_ = np.reshape(
+                n_iter_,
+                (1, len(folds), len(self.Cs_) * len(l1_ratios_))
+            )
+            # repeat same scores accross all classes
+            scores = np.tile(scores, (n_classes, 1, 1))
         else:
-            coefs_paths, Cs, scores, n_iter_ = zip(*fold_coefs_)
-            self.Cs_ = Cs[0]
             coefs_paths = np.reshape(
                 coefs_paths,
                 (n_classes, len(folds), len(self.Cs_) * len(l1_ratios_),
@@ -1827,30 +1824,32 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 n_iter_,
                 (n_classes, len(folds), len(self.Cs_) * len(l1_ratios_))
             )
-
-        self.coefs_paths_ = dict(zip(classes, coefs_paths))
         scores = np.reshape(scores, (n_classes, len(folds), -1))
         self.scores_ = dict(zip(classes, scores))
+        self.coefs_paths_ = dict(zip(classes, coefs_paths))
 
         self.C_ = list()
         self.l1_ratio_ = list()
         self.coef_ = np.empty((n_classes, X.shape[1]))
         self.intercept_ = np.zeros(n_classes)
-
-
         for index, (cls, encoded_label) in enumerate(
                 zip(iter_classes, iter_encoded_labels)):
 
             if self.multi_class == 'ovr':
-                # The scores_ / coefs_paths_ dict have unencoded class
-                # labels as their keys
                 scores = self.scores_[cls]
                 coefs_paths = self.coefs_paths_[cls]
             else:
-                # hack to iterate only once for multinomial case.
+                # For multinomial, all scores are the same accross classes
                 scores = scores[0]
+                # coefs_paths will keep its original shape because
+                # logistic_regression_path excepts it this way
 
             if self.refit:
+                # best_index is between 0 and (n_Cs . n_l1_ratios - 1)
+                # for example, with n_cs=2 and n_l1_ratios=3
+                # the layout of scores is
+                # [c1, c2, c1, c2, c1, c2]
+                #   l1_1 ,  l1_2 ,  l1_3
                 best_index = scores.sum(axis=0).argmax()
 
                 best_index_C = best_index % len(self.Cs_)
@@ -1864,7 +1863,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 if self.multi_class == 'multinomial':
                     coef_init = np.mean(coefs_paths[:, :, best_index, :],
                                         axis=1)
-                    print(coef_init)
                 else:
                     coef_init = np.mean(coefs_paths[:, best_index, :], axis=0)
 
@@ -1888,8 +1886,12 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 # Take the best scores across every fold and the average of all
                 # coefficients corresponding to the best scores.
                 best_indices = np.argmax(scores, axis=1)
-                w = np.mean([coefs_paths[i][best_indices[i]]
-                             for i in range(len(folds))], axis=0)
+                if self.multi_class == 'ovr':
+                    w = np.mean([coefs_paths[i][best_indices[i]]
+                                 for i in range(len(folds))], axis=0)
+                else:
+                    w = np.mean([coefs_paths[:, i, best_indices[i], :]
+                                 for i in range(len(folds))], axis=0)
 
                 best_indices_C = best_indices % len(self.Cs_)
                 self.C_.append(np.mean(self.Cs_[best_indices_C]))

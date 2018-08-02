@@ -1320,7 +1320,6 @@ def test_warm_start_converge_LR():
     assert_allclose(lr_no_ws_loss, lr_ws_loss, rtol=1e-5)
 
 
-<<<<<<< HEAD
 def test_elastic_net_coeffs():
     # make sure elastic-net penalty gives different coefficients from l1 and l2
     # with saga solver (l1_ratio different from 0 or 1)
@@ -1448,8 +1447,8 @@ def test_elastic_net_CV_multiclass_ovr():
     gs.fit(X_train, y_train)
 
     # Check that predictions are 80% the same
-    #assert (lrcv.predict(X_train) == gs.predict(X_train)).mean() >= .8
-    #assert (lrcv.predict(X_test) == gs.predict(X_test)).mean() >= .8
+    assert (lrcv.predict(X_train) == gs.predict(X_train)).mean() >= .8
+    assert (lrcv.predict(X_test) == gs.predict(X_test)).mean() >= .8
 
 
 def test_elastic_net_CV_no_refit():
