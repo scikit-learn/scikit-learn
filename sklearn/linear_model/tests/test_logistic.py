@@ -1451,7 +1451,7 @@ def test_elastic_net_CV_multiclass_ovr():
     assert (lrcv.predict(X_test) == gs.predict(X_test)).mean() >= .8
 
 
-def test_elastic_net_CV_no_refit():
+def test_ElasticNetCV_no_refit():
     print()
 
     n_classes = 3
