@@ -1429,6 +1429,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     of lbfgs optimizer. The newton-cg, sag and lbfgs solvers support only L2
     regularization with primal formulation. The liblinear solver supports both
     L1 and L2 regularization, with a dual formulation only for the L2 penalty.
+    Elastic net penalyy is only supported by the saga solver.
 
     For the grid of Cs values (that are set by default to be ten values in
     a logarithmic scale between 1e-4 and 1e4), the best hyperparameter is
@@ -1437,10 +1438,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     we warm start along the path i.e guess the initial coefficients of the
     present fit to be the coefficients got after convergence in the previous
     fit, so it is supposed to be faster for high-dimensional dense data.
-
-    For a multiclass problem, the hyperparameters for each class are computed
-    using the best scores got by doing a one-vs-rest in parallel across all
-    folds and classes. Hence this is not the true multinomial loss.
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
@@ -1472,9 +1469,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
-    penalty : str, 'l1' or 'l2'
+    penalty : str, 'l1', 'l2', or 'elastic-net', default: 'l2'
         Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties.
+        'sag' and 'lbfgs' solvers support only l2 penalties. 'elastic-net' is
+        only supported by the 'saga' solver.
 
     scoring : string, callable, or None
         A string (see model evaluation documentation) or
