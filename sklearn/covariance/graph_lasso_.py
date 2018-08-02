@@ -351,11 +351,11 @@ class GraphicalLasso(EmpiricalCovariance):
     >>> emp_cov = np.dot(X.T, X) / n_samples
     >>> model = GraphicalLasso()
     >>> loglik_est = -model.fit(X).score(X)
-    >>> loglik_real = -log_likelihood(emp_cov, linalg.inv(cov))
+    >>> loglik_real = -log_likelihood(emp_cov, prec)
     >>> print("estimated negative log likelihood: %g" % loglik_est)
     estimated negative log likelihood: 26.1847
     >>> print("real negative log likelihood: %g" % loglik_real)
-    real negative log likelihood: 28.0958
+    real negative log likelihood: 28.1526
 
     See Also
     --------
@@ -609,11 +609,11 @@ class GraphicalLassoCV(GraphicalLasso):
     >>> emp_cov = np.dot(X.T, X) / n_samples
     >>> model = GraphicalLassoCV(cv=5)
     >>> loglik_est = -model.fit(X).score(X)
-    >>> loglik_real = -log_likelihood(emp_cov, linalg.inv(cov))
+    >>> loglik_real = -log_likelihood(emp_cov, prec)
     >>> print("estimated negative log likelihood: %g" % loglik_est)
     estimated negative log likelihood: 27.8393
     >>> print("real negative log likelihood: %g" % loglik_real)
-    real negative log likelihood: 28.0958
+    real negative log likelihood: 28.1526
 
     See Also
     --------
