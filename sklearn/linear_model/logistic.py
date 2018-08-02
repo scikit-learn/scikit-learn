@@ -779,7 +779,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             multi_w0 = np.reshape(w0, (classes.size, -1))
             if classes.size == 2:
                 multi_w0 = multi_w0[1][np.newaxis, :]
-            coefs.append(multi_w0)
+            coefs.append(multi_w0.copy())
         else:
             coefs.append(w0.copy())
 
@@ -983,6 +983,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
             scores.append(log_reg.score(X_test, y_test))
         else:
             scores.append(scoring(log_reg, X_test, y_test))
+
     return coefs, Cs, np.array(scores), n_iter
 
 
@@ -1689,7 +1690,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
         if self.penalty == 'elastic-net':
-            print(self.l1_ratios)
             if self.l1_ratios is None or len(self.l1_ratios) == 0 or any(
                     (not isinstance(l1_ratio, numbers.Number) or l1_ratio < 0
                      or l1_ratio > 1) for l1_ratio in self.l1_ratios):
@@ -1790,21 +1790,25 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         if self.multi_class == 'multinomial':
             multi_coefs_paths, Cs, multi_scores, n_iter_ = zip(*fold_coefs_)
+            self.Cs_ = Cs[0]
             multi_coefs_paths = np.asarray(multi_coefs_paths)
-            multi_scores = np.asarray(multi_scores)
+            coefs_paths = np.reshape(
+                multi_coefs_paths,
+                (n_classes, len(folds), len(self.Cs_) * len(l1_ratios_),
+                 -1)
+            )
 
             # This is just to maintain API similarity between the ovr and
             # multinomial option.
             # Coefs_paths in now n_folds X len(Cs) X n_classes X n_features
             # we need it to be n_classes X len(Cs) X n_folds X n_features
             # to be similar to "ovr".
-            coefs_paths = np.rollaxis(multi_coefs_paths, 2, 0)
+            #coefs_paths = np.rollaxis(multi_coefs_paths, 2, 0)
 
             # Multinomial has a true score across all labels. Hence the
             # shape is n_folds X len(Cs). We need to repeat this score
             # across all labels for API similarity.
             scores = np.tile(multi_scores, (n_classes, 1, 1))
-            self.Cs_ = Cs[0]
             self.n_iter_ = np.reshape(n_iter_, (1, len(folds),
                                                 len(self.Cs_) *
                                                 len(l1_ratios_)))
@@ -1831,10 +1835,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.coef_ = np.empty((n_classes, X.shape[1]))
         self.intercept_ = np.zeros(n_classes)
 
-        # hack to iterate only once for multinomial case.
-        if self.multi_class == 'multinomial':
-            scores = multi_scores
-            coefs_paths = multi_coefs_paths
 
         for index, (cls, encoded_label) in enumerate(
                 zip(iter_classes, iter_encoded_labels)):
@@ -1844,6 +1844,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 # labels as their keys
                 scores = self.scores_[cls]
                 coefs_paths = self.coefs_paths_[cls]
+            else:
+                # hack to iterate only once for multinomial case.
+                scores = scores[0]
 
             if self.refit:
                 best_index = scores.sum(axis=0).argmax()
@@ -1857,8 +1860,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 self.l1_ratio_.append(l1_ratio_)
 
                 if self.multi_class == 'multinomial':
-                    coef_init = np.mean(coefs_paths[:, best_index, :, :],
-                                        axis=0)
+                    coef_init = np.mean(coefs_paths[:, :, best_index, :],
+                                        axis=1)
+                    print(coef_init)
                 else:
                     coef_init = np.mean(coefs_paths[:, best_index, :], axis=0)
 
