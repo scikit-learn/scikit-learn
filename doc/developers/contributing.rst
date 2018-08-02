@@ -140,6 +140,14 @@ feedback:
   your **Python, scikit-learn, numpy, and scipy versions**. This information
   can be found by running the following code snippet::
 
+    >>> import sklearn
+    >>> sklearn.show_versions()  # doctest: +SKIP
+
+  .. note::
+
+    This utility function is only available in scikit-learn v0.20+.
+    For previous versions, one has to explicitly run::
+
      import platform; print(platform.platform())
      import sys; print("Python", sys.version)
      import numpy; print("NumPy", numpy.__version__)

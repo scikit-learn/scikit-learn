@@ -1320,6 +1320,7 @@ def test_warm_start_converge_LR():
     assert_allclose(lr_no_ws_loss, lr_ws_loss, rtol=1e-5)
 
 
+<<<<<<< HEAD
 def test_elastic_net_coeffs():
     # make sure elastic-net penalty gives different coefficients from l1 and l2
     # with saga solver (l1_ratio different from 0 or 1)
@@ -1504,3 +1505,23 @@ def test_l1_ratios_param(l1_ratios):
         function = LogisticRegressionCV(penalty='l1', solver='saga',
                                         l1_ratios=l1_ratios, cv=2).fit
         assert_warns_message(UserWarning, msg, function, X, Y1)
+
+
+def test_logistic_regression_path_coefs_multinomial():
+    # Make sure that the returned coefs by logistic_regression_path when
+    # multi_class='multinomial' don't override each other (used to be a
+    # bug).
+    X, y = make_classification(n_samples=200, n_classes=3, n_informative=2,
+                               n_redundant=0, n_clusters_per_class=1,
+                               random_state=0, n_features=2)
+    Cs = [.00001, 1, 10000]
+    coefs, _, _ = logistic_regression_path(X, y, penalty='l1', Cs=Cs,
+                                           solver='saga', random_state=0,
+                                           multi_class='multinomial')
+
+    with pytest.raises(AssertionError):
+        assert_array_almost_equal(coefs[0], coefs[1], decimal=1)
+    with pytest.raises(AssertionError):
+        assert_array_almost_equal(coefs[0], coefs[2], decimal=1)
+    with pytest.raises(AssertionError):
+        assert_array_almost_equal(coefs[1], coefs[2], decimal=1)
