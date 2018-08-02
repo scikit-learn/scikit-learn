@@ -311,37 +311,36 @@ def _download_data_arff(file_id, sparse, data_home):
     return arff_file
 
 
-def _determine_target_data_type(features_dict, target_column_names):
-    # determine the data type of the y array in case there are multiple targets
+def _verify_target_data_type(features_dict, target_columns):
+    # verifies the data type of the y array in case there are multiple targets
     # (throws an error if these targets do not comply with sklearn support)
-    if not isinstance(target_column_names, list):
-        raise ValueError('target_column_name should be list, '
-                         'got: %s' % type(target_column_names))
+    if not isinstance(target_columns, list):
+        raise ValueError('target_column should be list, '
+                         'got: %s' % type(target_columns))
     found_types = set()
-    for target_column_name in target_column_names:
-        if target_column_name not in features_dict:
-            raise KeyError('Could not find target_column_name={}')
-        if features_dict[target_column_name]['data_type'] == "numeric":
+    for target_column in target_columns:
+        if target_column not in features_dict:
+            raise KeyError('Could not find target_column={}')
+        if features_dict[target_column]['data_type'] == "numeric":
             found_types.add(np.float64)
         else:
             found_types.add(object)
 
         # note: we compare to a string, not boolean
-        if features_dict[target_column_name]['is_ignore'] == 'true':
-            warn('target_column_name={} has flag is_ignore.'.format(
-                target_column_name))
-        if features_dict[target_column_name]['is_row_identifier'] == 'true':
-            warn('target_column_name={} has flag is_row_identifier.'.format(
-                target_column_name))
+        if features_dict[target_column]['is_ignore'] == 'true':
+            warn('target_column={} has flag is_ignore.'.format(
+                target_column))
+        if features_dict[target_column]['is_row_identifier'] == 'true':
+            warn('target_column={} has flag is_row_identifier.'.format(
+                target_column))
     if len(found_types) > 1:
         raise ValueError('Can only handle homogeneous multi-target datasets, '
                          'i.e., all targets are either numeric or '
                          'categorical.')
-    return list(found_types)[0] if len(found_types) > 0 else None
 
 
 def fetch_openml(name=None, version='active', data_id=None, data_home=None,
-                 target_column_name='default-target', cache=True):
+                 target_column='default-target', cache=True):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -369,7 +368,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         Specify another download and cache folder for the data sets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    target_column_name : string, list or None, default 'default-target'
+    target_column : string, list or None, default 'default-target'
         Specify the column name in the data to use as target. If
         'default-target', the standard target column a stored on the server
         is used. If ``None``, all columns are returned as data and the
@@ -442,24 +441,24 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
 
-    if target_column_name == "default-target":
+    if target_column == "default-target":
         # determines the default target based on the data feature results
         # (which is currently more reliable than the data description;
         # see issue: https://github.com/openml/OpenML/issues/768)
-        target_column_name = [feature['name'] for feature in features_list
+        target_column = [feature['name'] for feature in features_list
                               if feature['is_target'] == 'true']
 
-    # for code-simplicity, make target_column_name by default a list
-    if isinstance(target_column_name, string_types):
-        target_column_name = [target_column_name]
-    elif target_column_name is None:
-        target_column_name = []
-    elif not isinstance(target_column_name, list):
-        raise TypeError("Did not recognize type of target_column_name"
+    # for code-simplicity, make target_column by default a list
+    if isinstance(target_column, string_types):
+        target_column = [target_column]
+    elif target_column is None:
+        target_column = []
+    elif not isinstance(target_column, list):
+        raise TypeError("Did not recognize type of target_column"
                         "Should be six.string_type, list or None. Got: "
-                        "{}".format(type(target_column_name)))
+                        "{}".format(type(target_column)))
     data_columns = [feature['name'] for feature in features_list
-                    if (feature['name'] not in target_column_name and
+                    if (feature['name'] not in target_column and
                         feature['is_ignore'] != 'true' and
                         feature['is_row_identifier'] != 'true')]
 
@@ -467,10 +466,10 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     features_dict = {feature['name']: feature for feature in features_list}
 
     # XXX: col_slice_y should be all nominal or all numeric
-    _determine_target_data_type(features_dict, target_column_name)
+    _verify_target_data_type(features_dict, target_column)
 
     col_slice_y = [int(features_dict[col_name]['index'])
-                   for col_name in target_column_name]
+                   for col_name in target_column]
 
     col_slice_x = [int(features_dict[col_name]['index'])
                    for col_name in data_columns]

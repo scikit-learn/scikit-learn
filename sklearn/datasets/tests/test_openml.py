@@ -22,7 +22,7 @@ test_gzip = True
 
 
 def _fetch_dataset_from_openml(data_id, data_name, data_version,
-                               target_column_name,
+                               target_column,
                                expected_observations, expected_features,
                                expected_missing,
                                exptected_data_dtype, exptected_target_dtype,
@@ -41,16 +41,16 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
 
     # fetch with dataset id
     data_by_id = fetch_openml(data_id=data_id, cache=False,
-                              target_column_name=target_column_name)
+                              target_column=target_column)
     assert data_by_id.details['name'] == data_name
     assert data_by_id.data.shape == (expected_observations, expected_features)
-    if isinstance(target_column_name, str):
+    if isinstance(target_column, str):
         # single target, so target is vector
         assert data_by_id.target.shape == (expected_observations, )
-    elif isinstance(target_column_name, list):
+    elif isinstance(target_column, list):
         # multi target, so target is array
         assert data_by_id.target.shape == (expected_observations,
-                                           len(target_column_name))
+                                           len(target_column))
     assert data_by_id.data.dtype == np.float64
     assert data_by_id.target.dtype == np.float64
     assert len(data_by_id.feature_names) == expected_features
@@ -267,7 +267,7 @@ def test_fetch_openml_australian(monkeypatch):
         _fetch_dataset_from_openml,
         **{'data_id': data_id, 'data_name': data_name,
            'data_version': data_version,
-           'target_column_name': target_column,
+           'target_column': target_column,
            'expected_observations': expected_observations,
            'expected_features': expected_features,
            'expected_missing': expected_missing,
@@ -341,7 +341,7 @@ def test_fetch_openml_notarget(monkeypatch):
     expected_features = 5
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
-    data = fetch_openml(data_id=data_id, target_column_name=target_column,
+    data = fetch_openml(data_id=data_id, target_column=target_column,
                         cache=False)
     assert data.data.shape == (expected_observations, expected_features)
     assert data.target is None
@@ -379,44 +379,44 @@ def test_raises_illegal_multitarget(monkeypatch):
     assert_raise_message(ValueError,
                          "Can only handle homogeneous multi-target datasets,",
                          fetch_openml, data_id=data_id,
-                         target_column_name=targets, cache=False)
+                         target_column=targets, cache=False)
 
 
 def test_warn_ignore_attribute(monkeypatch):
     data_id = 40966
-    expected_row_id_msg = "target_column_name={} has flag is_row_identifier."
-    expected_ignore_msg = "target_column_name={} has flag is_ignore."
+    expected_row_id_msg = "target_column={} has flag is_row_identifier."
+    expected_ignore_msg = "target_column={} has flag is_ignore."
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
     # single column test
     assert_warns_message(UserWarning, expected_row_id_msg.format('MouseID'),
                          fetch_openml, data_id=data_id,
-                         target_column_name='MouseID',
+                         target_column='MouseID',
                          cache=False)
     assert_warns_message(UserWarning, expected_ignore_msg.format('Genotype'),
                          fetch_openml, data_id=data_id,
-                         target_column_name='Genotype',
+                         target_column='Genotype',
                          cache=False)
     # multi column test
     assert_warns_message(UserWarning, expected_row_id_msg.format('MouseID'),
                          fetch_openml, data_id=data_id,
-                         target_column_name=['MouseID', 'class'],
+                         target_column=['MouseID', 'class'],
                          cache=False)
     assert_warns_message(UserWarning, expected_ignore_msg.format('Genotype'),
                          fetch_openml, data_id=data_id,
-                         target_column_name=['Genotype', 'class'],
+                         target_column=['Genotype', 'class'],
                          cache=False)
 
 
 def test_illegal_column(monkeypatch):
     data_id = 61
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
-    assert_raise_message(KeyError, "Could not find target_column_name=",
+    assert_raise_message(KeyError, "Could not find target_column=",
                          fetch_openml, data_id=data_id,
-                         target_column_name='undefined', cache=False)
+                         target_column='undefined', cache=False)
 
-    assert_raise_message(KeyError, "Could not find target_column_name=",
+    assert_raise_message(KeyError, "Could not find target_column=",
                          fetch_openml, data_id=data_id,
-                         target_column_name=['undefined', 'class'],
+                         target_column=['undefined', 'class'],
                          cache=False)
 
 
