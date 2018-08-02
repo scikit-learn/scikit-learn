@@ -50,6 +50,9 @@ by `Joel Nothman`_. The glossary is a reference resource to help users and
 contributors become familiar with the terminology and conventions used in
 Scikit-learn.
 
+Sorry if your contribution didn't make it into the highlights. There's a lot
+here...
+
 Changed models
 --------------
 
@@ -74,10 +77,10 @@ random sampling procedures.
 - :class:`linear_model.Perceptron` (bug fix)
 - :class:`ensemble.gradient_boosting.GradientBoostingClassifier` (bug fix affecting feature importances)
 - :class:`linear_model.LogisticRegressionCV` (bug fix)
+- :class:`decomposition.SparsePCA` (bug fix)
 - The v0.19.0 release notes failed to mention a backwards incompatibility with
   :class:`model_selection.StratifiedKFold` when ``shuffle=True`` due to
   :issue:`7823`.
-- :class:`decomposition.SparsePCA` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -92,29 +95,17 @@ Support for Python 3.3 has been officially dropped.
 New features
 ............
 
-Classifiers and regressors
+Preprocessing and pipelines
 
-- :class:`ensemble.GradientBoostingClassifier` and
-  :class:`ensemble.GradientBoostingRegressor` now support early stopping
-  via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
-  by `Raghav RV`_
+- Added :class:`compose.ColumnTransformer`, which allows to apply
+  different transformers to different columns of arrays or pandas
+  DataFrames. :issue:`9012` by `Andreas Müller`_ and `Joris Van den Bossche`_,
+  and :issue:`11315` by :user:`Thomas Fan <thomasjpfan>`.
 
-- :class:`dummy.DummyRegressor` now has a ``return_std`` option in its
-  ``predict`` method. The returned standard deviations will be zeros.
-
-- Added :class:`multioutput.RegressorChain` for multi-target
-  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
-
-- Added :class:`naive_bayes.ComplementNB`, which implements the Complement
-  Naive Bayes classifier described in Rennie et al. (2003).
-  :issue:`8190` by :user:`Michael A. Alcorn <airalcorn2>`.
-
-- :class:`ensemble.BaggingRegressor` and :class:`ensemble.BaggingClassifier` can now
-  be fit with missing/non-finite values in X and/or multi-output Y to support
-  wrapping pipelines that perform their own imputation.
-  :issue:`9707` by :user:`Jimmy Wan <jimmywan>`.
-
-Preprocessing
+- Added the :class:`compose.TransformedTargetRegressor` which transforms
+  the target y before fitting a regression model. The predictions are mapped
+  back to the original space via an inverse transform. :issue:`9041` by
+  `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
 
 - Expanded :class:`preprocessing.OneHotEncoder` to allow to encode
   categorical string features as a numeric array using a one-hot (or dummy)
@@ -132,11 +123,6 @@ Preprocessing
   by :user:`Henry Lin <hlin117>`, `Hanmin Qin`_,
   `Tom Dupre la Tour`_ and :user:`Giovanni Giuseppe Costa <ggc87>`.
 
-- Added :class:`compose.ColumnTransformer`, which allows to apply
-  different transformers to different columns of arrays or pandas
-  DataFrames. :issue:`9012` by `Andreas Müller`_ and `Joris Van den Bossche`_,
-  and :issue:`11315` by :user:`Thomas Fan <thomasjpfan>`.
-
 - Added :class:`preprocessing.PowerTransformer`, which implements the
   Yeo-Johnson and Box-Cox power transformations. Power transformations try to
   find a set of feature-wise parametric transformations to approximately map
@@ -147,14 +133,16 @@ Preprocessing
   :user:`Maniteja Nandana <maniteja123>`, and :issue:`11520` by :user:`Nicolas
   Hug <nicolashug>`.
 
-- Added the :class:`compose.TransformedTargetRegressor` which transforms
-  the target y before fitting a regression model. The predictions are mapped
-  back to the original space via an inverse transform. :issue:`9041` by
-  `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
-
 - Added :class:`MissingIndicator` which generates a binary indicator for
   missing values. :issue:`8075` by :user:`Maniteja Nandana <maniteja123>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
+
+Classifiers and regressors
+
+- :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` now support early stopping
+  via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
+  by `Raghav RV`_
 
 - :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
   :class:`linear_model.PassiveAggressiveClassifier`,
@@ -166,15 +154,17 @@ Preprocessing
   ``n_iter_no_change`` consecutive epochs fail to improve the model.
   :issue:`9043` by `Tom Dupre la Tour`_.
 
-Model evaluation
+- Added :class:`multioutput.RegressorChain` for multi-target
+  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
-- Added the :func:`metrics.davies_bouldin_score` metric for unsupervised
-  evaluation of clustering models. :issue:`10827` by :user:`Luis Osa <logc>`.
+- Added :class:`naive_bayes.ComplementNB`, which implements the Complement
+  Naive Bayes classifier described in Rennie et al. (2003).
+  :issue:`8190` by :user:`Michael A. Alcorn <airalcorn2>`.
 
-- Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
-  ``'balanced_accuracy'`` scorer for binary and multiclass classification.
-  :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`, and
-  :issue:`10587` by `Joel Nothman`_.
+- :class:`ensemble.BaggingRegressor` and :class:`ensemble.BaggingClassifier`
+  can now be fit with missing/non-finite values in X and/or multi-output Y to
+  support wrapping pipelines that perform their own imputation.
+  :issue:`9707` by :user:`Jimmy Wan <jimmywan>`.
 
 Decomposition, manifold learning and clustering
 
@@ -194,29 +184,20 @@ Decomposition, manifold learning and clustering
   This applies to the dictionary and sparse code.
   :issue:`6374` by :user:`John Kirkham <jakirkham>`.
 
-- :class:`decomposition.SparsePCA` now exposes ``normalize_components``. When
-  set to True, the train and test data are centered with the train mean 
-  repsectively during the fit phase and the transform phase. This fixes the
-  behavior of SparsePCA. When set to False, which is the default, the previous
-  abnormal behaviour still holds. The False value is for backward
-  compatibility and should not be used.
-  :issue:`11585` by :user:`Ivan Panico <FollowKenny>`.
+Model evaluation
 
-Metrics
+- Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
+  ``'balanced_accuracy'`` scorer for binary and multiclass classification.
+  :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`, and
+  :issue:`10587` by `Joel Nothman`_.
+
+- Added the :func:`metrics.davies_bouldin_score` metric for evaluation of
+  clustering models without a ground truth.
+  :issue:`10827` by :user:`Luis Osa <logc>`.
 
 - Partial AUC is available via ``max_fpr`` parameter in
   :func:`metrics.roc_auc_score`. :issue:`3273` by
   :user:`Alexander Niederbühl <Alexander-N>`.
-
-- Added control over the normalization in
-  :func:`metrics.normalized_mutual_information_score` and
-  :func:`metrics.adjusted_mutual_information_score` via the ``average_method``
-  parameter. In version 0.22, the default normalizer for each will become
-  the *arithmetic* mean of the entropies of each clustering. :issue:`11124` by
-  :user:`Arya McCarthy <aryamccarthy>`.
-- Added ``output_dict`` parameter in :func:`metrics.classification_report`
-  to return classification statistics as dictionary.
-  :issue:`11160` by :user:`Dan Barkhorn <danielbarkhorn>`.
 
 Misc
 
@@ -228,7 +209,7 @@ Misc
 - An environment variable to use the site joblib instead of the vendored
   one was added (:ref:`environment_variable`). The main API of joblib is now
   exposed in :mod:`sklearn.utils`.
-  :issue:`11166`by `Gael Varoquaux`_
+  :issue:`11166`by `Gael Varoquaux`_.
 
 Enhancements
 ............
@@ -239,6 +220,9 @@ Classifiers and regressors
   is faster when using ``return_std=True`` in particular more when called
   several times in a row. :issue:`9234` by :user:`andrewww <andrewww>`
   and :user:`Minghui Liu <minghui-liu>`.
+
+- :class:`dummy.DummyRegressor` now has a ``return_std`` option in its
+  ``predict`` method. The returned standard deviations will be zeros.
 
 - Add `named_estimators_` parameter in
   :class:`ensemble.VotingClassifier` to access fitted
@@ -385,16 +369,16 @@ Model evaluation and meta-estimators
   when an error occurs in :func:`model_selection._fit_and_score`.
   :issue:`11576` by :user:`Samuel O. Ronsin <samronsin>`.
 
-Decomposition and manifold learning
+- Added control over the normalization in
+  :func:`metrics.normalized_mutual_information_score` and
+  :func:`metrics.adjusted_mutual_information_score` via the ``average_method``
+  parameter. In version 0.22, the default normalizer for each will become
+  the *arithmetic* mean of the entropies of each clustering. :issue:`11124` by
+  :user:`Arya McCarthy <aryamccarthy>`.
 
-- Speed improvements for both 'exact' and 'barnes_hut' methods in
-  :class:`manifold.TSNE`. :issue:`10593` and :issue:`10610` by
-  `Tom Dupre la Tour`_.
-
-- Support sparse input in :meth:`manifold.Isomap.fit`. :issue:`8554` by
-  :user:`Leland McInnes <lmcinnes>`.
-
-Metrics
+- Added ``output_dict`` parameter in :func:`metrics.classification_report`
+  to return classification statistics as dictionary.
+  :issue:`11160` by :user:`Dan Barkhorn <danielbarkhorn>`.
 
 - :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
   ``{0, 1}`` or ``{-1, 1}``.
@@ -416,6 +400,16 @@ Metrics
 - :func:`metrics.average_precision_score` now supports binary ``y_true``
   other than ``{0, 1}`` or ``{-1, 1}`` through ``pos_label`` parameter.
   :issue:`9980` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+
+Decomposition and manifold learning
+
+- Speed improvements for both 'exact' and 'barnes_hut' methods in
+  :class:`manifold.TSNE`. :issue:`10593` and :issue:`10610` by
+  `Tom Dupre la Tour`_.
+
+- Support sparse input in :meth:`manifold.Isomap.fit`. :issue:`8554` by
+  :user:`Leland McInnes <lmcinnes>`.
 
 Linear, kernelized and related models
 
@@ -582,6 +576,14 @@ Classifiers and regressors
   :issue:`11464` by :user:`John Stott <JohnStott>`.
 
 Decomposition, manifold learning and clustering
+
+- :class:`decomposition.SparsePCA` now exposes ``normalize_components``. When
+  set to True, the train and test data are centered with the train mean 
+  repsectively during the fit phase and the transform phase. This fixes the
+  behavior of SparsePCA. When set to False, which is the default, the previous
+  abnormal behaviour still holds. The False value is for backward
+  compatibility and should not be used.
+  :issue:`11585` by :user:`Ivan Panico <FollowKenny>`.
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
   now an error is raised if the number of components is larger than the
