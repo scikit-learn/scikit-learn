@@ -43,25 +43,9 @@ make_conda() {
 }
 
 if [[ "$DISTRIB" == "conda" ]]; then
-    TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov"
-
-		if [[ "$NUMPY_VERSION" == "latest" ]]; then
-				TO_INSTALL="$TO_INSTALL numpy"
-		else
-				TO_INSTALL="$TO_INSTALL numpy=$NUMPY_VERSION"
-		fi
-
-		if [[ "$SCIPY_VERSION" == "latest" ]]; then
-				TO_INSTALL="$TO_INSTALL scipy"
-		else
-				TO_INSTALL="$TO_INSTALL scipy=$SCIPY_VERSION"
-		fi
-
-		if [[ "$CYTHON_VERSION" == "latest" ]]; then
-				TO_INSTALL="$TO_INSTALL cython"
-		else
-				TO_INSTALL="$TO_INSTALL cython=$CYTHON_VERSION"
-		fi
+    TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov \
+                numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+                cython=$CYTHON_VERSION"
 
     if [[ "$INSTALL_MKL" == "true" ]]; then
         TO_INSTALL="$TO_INSTALL mkl"
@@ -69,12 +53,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL nomkl"
     fi
 
-		if [[ -n "$PANDAS_VERSION" ]]; then
-				if [[ "$PANDAS_VERSION" == "latest" ]]; then
-						TO_INSTALL="$TO_INSTALL pandas"
-				else
-        		TO_INSTALL="$TO_INSTALL pandas=$PANDAS_VERSION"
-				fi
+    if [[ -n "$PANDAS_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL pandas=$PANDAS_VERSION"
     fi
 
     if [[ -n "$PYAMG_VERSION" ]]; then
