@@ -776,9 +776,19 @@ def test_mlp_sample_weight():
     sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
 
     for learner in [MLPClassifier, MLPRegressor]:
-        predicted = learner(random_state=seed).fit(X, y).predict(test_sample)
 
-        predicted_sw = learner(random_state=seed).fit(X, y, sample_weight).predict(test_sample)
+        predicted = (
+                    learner(random_state=seed)
+                    .fit(X, y)
+                    .predict(test_sample)
+                )
+
+        predicted_sw = (
+                    learner(random_state=seed)
+                    .fit(X, y, sample_weight)
+                    .predict(test_sample)
+                )
+
         assert_array_equal(predicted, predicted_sw)
 
 
