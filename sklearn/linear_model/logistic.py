@@ -1128,6 +1128,15 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
             ``max_iter``. ``n_iter_`` will now report at most ``max_iter``.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> clf = LogisticRegression().fit(X, y)
+    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    0.9595...
+
     See also
     --------
     SGDClassifier : incrementally trained logistic regression (when given
@@ -1571,6 +1580,15 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     n_iter_ : array, shape (n_classes, n_folds, n_cs) or (1, n_folds, n_cs)
         Actual number of iterations for all classes, folds and Cs.
         In the binary or multinomial cases, the first dimension is equal to 1.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.linear_model import LogisticRegressionCV
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> clf = LogisticRegressionCV(solver='liblinear', cv=5).fit(X, y)
+    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    0.9736...
 
     See also
     --------
