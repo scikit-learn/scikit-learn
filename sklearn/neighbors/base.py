@@ -21,6 +21,7 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
+from ..utils.multiclass import is_valid_classification_targets
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..externals import six
@@ -856,7 +857,7 @@ class SupervisedIntegerMixin(object):
 
         y : {array-like, sparse matrix}
             Target values of shape = [n_samples] or [n_samples, n_outputs]
-
+            A sparse matrix may only be used for multilabel targets.
         """
         if not isinstance(X, (KDTree, BallTree)):
             X, y = check_X_y(X, y, "csr", multi_output=True)
@@ -873,16 +874,33 @@ class SupervisedIntegerMixin(object):
         else:
             self.outputs_2d_ = True
 
-        check_classification_targets(y)
-        self.classes_ = []
-        self._y = np.empty(y.shape, dtype=np.int)
-        for k in range(self._y.shape[1]):
-            classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
-            self.classes_.append(classes)
+        if not is_valid_classification_targets(y):
+            # specialize the ValueError message with a more informative error.
+            if issparse(y) and self.outputs_2d_:
+                raise ValueError("Sparse y is only supported for multilabel"
+                                 " case (multioutput multiclass is not"
+                                 " supported). Got: %r" % y)
+            else:
+                raise ValueError("Unknown label type: %r" % y)
 
-        if not self.outputs_2d_:
-            self.classes_ = self.classes_[0]
-            self._y = self._y.ravel()
+        self.classes_ = []
+
+        if issparse(y) and self.outputs_2d_:
+            self.outputs_2d_ = 'sparse'
+            self._y = y
+            if np.all(np.union1d(y.data, [0, 1]) == [0, 1]):
+                self.classes_ = [np.array([0, 1], dtype=np.int)] * y.shape[1]
+
+        else:
+            self._y = np.empty(y.shape, dtype=np.int)
+            for k in range(self._y.shape[1]):
+                classes, self._y[:, k] = np.unique(y[:, k],
+                                                   return_inverse=True)
+                self.classes_.append(classes)
+
+            if not self.outputs_2d_:
+                self.classes_ = self.classes_[0]
+                self._y = self._y.ravel()
 
         return self._fit(X)
 

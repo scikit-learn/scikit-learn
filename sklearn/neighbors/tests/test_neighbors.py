@@ -527,6 +527,62 @@ def test_kneighbors_classifier_sparse(n_samples=40,
             assert_array_equal(y_pred, y[:n_test_pts])
 
 
+CLASSIFIERS = {
+    'KNeighborsClassifier': neighbors.KNeighborsClassifier(n_neighbors=3),
+    'RadiusNeighborsClassifier': neighbors.RadiusNeighborsClassifier(
+        radius=0.1, outlier_label=-1),
+}
+
+
+def check_classifier_sparse_multilabel_y(name):
+    rng = check_random_state(0)
+    n_features = 2
+    n_samples = 100
+    n_output = 3
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.randint(0, 2, (n_samples, n_output))
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = CLASSIFIERS[name]
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+
+    y_sparse = csc_matrix(y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y_sparse,
+                                                        random_state=0)
+    clf.fit(X_train, y_train)
+    y_sparse_pred = clf.predict(X_test)
+    assert_equal('csc', y_sparse_pred.getformat())
+    assert_array_equal(y_pred, y_sparse_pred.toarray())
+
+
+def test_classifiers_sparse_multilabel_y():
+    for name in CLASSIFIERS:
+        yield check_classifier_sparse_multilabel_y, name
+
+
+def test_sparse_multioutput_error_raise():
+    # Test k-NN classifier on multioutput data
+    rng = check_random_state(0)
+    n_features = 5
+    n_samples = 10
+    n_output = 3
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.randint(0, 3, (n_samples, n_output))
+
+    y_sparse = csc_matrix(y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y_sparse,
+                                                        random_state=0)
+
+    knn_mo = neighbors.KNeighborsClassifier(weights=None,
+                                            algorithm='auto')
+
+    msg = 'Sparse y is only supported for multilabel'
+    assert_raise_message(ValueError, msg, knn_mo.fit, X_train, y_train)
+
+
 def test_KNeighborsClassifier_multioutput():
     # Test k-NN classifier on multioutput data
     rng = check_random_state(0)
