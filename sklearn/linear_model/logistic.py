@@ -1045,8 +1045,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         instance used by `np.random`. Used when ``solver`` == 'sag' or
         'liblinear'.
 
-    solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
-        default: 'liblinear'
+    solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
+             default: 'liblinear'
+
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
@@ -1436,8 +1437,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         that can be used, look at :mod:`sklearn.metrics`. The
         default scoring option used is 'accuracy'.
 
-    solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
-        default: 'lbfgs'
+    solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
+             default: 'lbfgs'
+
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
