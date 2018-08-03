@@ -1591,7 +1591,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     ...         cv=5,
     ...         random_state=0).fit(X, y)
     >>> clf.score(X, y) # doctest: +ELLIPSIS
-    0.9736...
+    0.9666...
 
     See also
     --------
