@@ -16,7 +16,8 @@ from .validation import (as_float_array,
                          check_symmetric)
 from .class_weight import compute_class_weight, compute_sample_weight
 from ._joblib import cpu_count, Parallel, Memory, delayed, hash
-from ._joblib import parallel_backend, effective_n_jobs
+from ._joblib import parallel_backend, register_parallel_backend
+from ._joblib import effective_n_jobs
 from ..exceptions import DataConversionWarning
 from ..utils.fixes import _Sequence as Sequence
 from .deprecation import deprecated
@@ -30,7 +31,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_consistent_length", "check_X_y", 'indexable',
            "check_symmetric", "indices_to_mask", "deprecated",
            "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
-           "hash", "effective_n_jobs"]
+           "register_parallel_backend", "hash", "effective_n_jobs"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 

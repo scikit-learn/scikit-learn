@@ -21,8 +21,8 @@ from scipy.sparse import coo_matrix
 
 import pytest
 
-from sklearn.externals.joblib import parallel_backend
-from sklearn.externals.joblib import register_parallel_backend
+from sklearn.utils import parallel_backend
+from sklearn.utils import register_parallel_backend
 from sklearn.externals.joblib.parallel import LokyBackend
 
 from sklearn.utils.testing import assert_almost_equal
