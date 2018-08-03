@@ -148,7 +148,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     """
     def __init__(self, n_neighbors=20, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None,
-                 contamination="legacy", novelty=False, n_jobs=1):
+                 contamination="legacy", novelty=False, n_jobs=None):
         super(LocalOutlierFactor, self).__init__(
             n_neighbors=n_neighbors,
             algorithm=algorithm,

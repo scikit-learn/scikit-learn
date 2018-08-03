@@ -405,7 +405,7 @@ class LinearRegression(LinearModel, RegressorMixin):
     """
 
     def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
-                 n_jobs=1):
+                 n_jobs=None):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X

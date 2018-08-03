@@ -117,7 +117,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5,
                  weights='uniform', algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, n_jobs=1,
+                 p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
 
         super(KNeighborsClassifier, self).__init__(
@@ -320,7 +320,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
     def __init__(self, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30, p=2, metric='minkowski',
-                 outlier_label=None, metric_params=None, n_jobs=1, **kwargs):
+                 outlier_label=None, metric_params=None, n_jobs=None,
+                 **kwargs):
         super(RadiusNeighborsClassifier, self).__init__(
               radius=radius,
               algorithm=algorithm,
@@ -378,10 +379,10 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                 mode = np.array([stats.mode(pl)[0]
                                  for pl in pred_labels[inliers]], dtype=np.int)
             else:
-                mode = np.array([weighted_mode(pl, w)[0]
-                                 for (pl, w)
-                                 in zip(pred_labels[inliers], weights[inliers])],
-                                dtype=np.int)
+                mode = np.array(
+                    [weighted_mode(pl, w)[0]
+                     for (pl, w) in zip(pred_labels[inliers], weights[inliers])
+                     ], dtype=np.int)
 
             mode = mode.ravel()
 

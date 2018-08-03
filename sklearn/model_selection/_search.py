@@ -412,7 +412,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
     @abstractmethod
     def __init__(self, estimator, scoring=None,
-                 fit_params=None, n_jobs=1, iid='warn',
+                 fit_params=None, n_jobs=None, iid='warn',
                  refit=True, cv='warn', verbose=0, pre_dispatch='2*n_jobs',
                  error_score='raise-deprecating', return_train_score=True):
 
@@ -951,7 +951,7 @@ class GridSearchCV(BaseSearchCV):
                          kernel='rbf', max_iter=-1, probability=False,
                          random_state=None, shrinking=True, tol=...,
                          verbose=False),
-           fit_params=None, iid=..., n_jobs=1,
+           fit_params=None, iid=..., n_jobs=None,
            param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
            scoring=..., verbose=...)
     >>> sorted(clf.cv_results_.keys())
@@ -1095,7 +1095,7 @@ class GridSearchCV(BaseSearchCV):
     """
 
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
-                 n_jobs=1, iid='warn', refit=True, cv='warn', verbose=0,
+                 n_jobs=None, iid='warn', refit=True, cv='warn', verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise-deprecating',
                  return_train_score="warn"):
         super(GridSearchCV, self).__init__(
@@ -1412,9 +1412,10 @@ class RandomizedSearchCV(BaseSearchCV):
     """
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
-                 fit_params=None, n_jobs=1, iid='warn', refit=True, cv='warn',
-                 verbose=0, pre_dispatch='2*n_jobs', random_state=None,
-                 error_score='raise-deprecating', return_train_score="warn"):
+                 fit_params=None, n_jobs=None, iid='warn', refit=True,
+                 cv='warn', verbose=0, pre_dispatch='2*n_jobs',
+                 random_state=None, error_score='raise-deprecating',
+                 return_train_score="warn"):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
