@@ -353,7 +353,7 @@ class GraphicalLasso(EmpiricalCovariance):
     >>> loglik_est = -model.fit(X).score(X)
     >>> loglik_real = -log_likelihood(emp_cov, prec)
     >>> print("estimated negative log likelihood: %g" % loglik_est)
-    estimated negative log likelihood: 26.1847
+    estimated negative log likelihood: 26.1927
     >>> print("real negative log likelihood: %g" % loglik_real)
     real negative log likelihood: 28.1526
 
@@ -611,7 +611,7 @@ class GraphicalLassoCV(GraphicalLasso):
     >>> loglik_est = -model.fit(X).score(X)
     >>> loglik_real = -log_likelihood(emp_cov, prec)
     >>> print("estimated negative log likelihood: %g" % loglik_est)
-    estimated negative log likelihood: 27.8393
+    estimated negative log likelihood: 27.7033
     >>> print("real negative log likelihood: %g" % loglik_real)
     real negative log likelihood: 28.1526
 
