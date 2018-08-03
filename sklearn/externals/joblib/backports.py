@@ -33,7 +33,8 @@ except ImportError:
 
 
 if os.name == 'nt':
-    error_access_denied = 5
+    # https://github.com/joblib/joblib/issues/540
+    access_denied_errors = (5, 13)
     try:
         from os import replace
     except ImportError:
@@ -65,7 +66,7 @@ if os.name == 'nt':
                 replace(src, dst)
                 break
             except Exception as exc:
-                if getattr(exc, 'winerror', None) == error_access_denied:
+                if getattr(exc, 'winerror', None) in access_denied_errors:
                     time.sleep(sleep_time)
                     total_sleep_time += sleep_time
                     sleep_time *= 2

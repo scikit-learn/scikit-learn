@@ -26,7 +26,7 @@ from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..utils import Parallel
 from ..utils import delayed
-from ..utils import cpu_count
+from ..utils import effective_n_jobs
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
@@ -1061,21 +1061,18 @@ def distance_metrics():
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     """Break the pairwise matrix in n_jobs even slices
     and compute them in parallel"""
-    if n_jobs < 0:
-        n_jobs = max(cpu_count() + 1 + n_jobs, 1)
 
     if Y is None:
         Y = X
 
-    if n_jobs == 1:
-        # Special case to avoid picklability checks in delayed
+    if effective_n_jobs(n_jobs) == 1:
         return func(X, Y, **kwds)
 
     # TODO: in some cases, backend='threading' may be appropriate
     fd = delayed(func)
     ret = Parallel(n_jobs=n_jobs, verbose=0)(
         fd(X, Y[s], **kwds)
-        for s in gen_even_slices(Y.shape[0], n_jobs))
+        for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs)))
 
     return np.hstack(ret)
 
@@ -1142,7 +1139,7 @@ def _check_chunk_size(reduced, chunk_size):
 
 
 def pairwise_distances_chunked(X, Y=None, reduce_func=None,
-                               metric='euclidean', n_jobs=1,
+                               metric='euclidean', n_jobs=None,
                                working_memory=None, **kwds):
     """Generate a distance matrix chunk by chunk with optional reduction
 
@@ -1291,7 +1288,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
         yield D_chunk
 
 
-def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
+def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
     """ Compute the distance matrix from a vector array X and optional Y.
 
     This method takes either a vector array or a distance matrix, and returns
@@ -1372,9 +1369,9 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
     See also
     --------
-    pairwise_distances_chunked : performs the same calculation as this funtion,
-        but returns a generator of chunks of the distance matrix, in order to
-        limit memory usage.
+    pairwise_distances_chunked : performs the same calculation as this
+        function, but returns a generator of chunks of the distance matrix, in
+        order to limit memory usage.
     paired_distances : Computes the distances between corresponding
                        elements of two arrays
     """
@@ -1397,10 +1394,9 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
                             " support sparse matrices.")
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
-
         X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
 
-        if n_jobs == 1 and X is Y:
+        if effective_n_jobs(n_jobs) == 1 and X is Y:
             return distance.squareform(distance.pdist(X, metric=metric,
                                                       **kwds))
         func = partial(distance.cdist, metric=metric, **kwds)
@@ -1478,7 +1474,7 @@ KERNEL_PARAMS = {
 
 
 def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
-                     n_jobs=1, **kwds):
+                     n_jobs=None, **kwds):
     """Compute the kernel between arrays X and optional array Y.
 
     This method takes either a vector array or a kernel matrix, and returns

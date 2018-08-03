@@ -826,7 +826,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
     """
     def __init__(self, copy=True, fit_intercept=True, normalize=True,
-                 max_iter=None, cv='warn', n_jobs=1, verbose=False):
+                 max_iter=None, cv='warn', n_jobs=None, verbose=False):
         self.copy = copy
         self.fit_intercept = fit_intercept
         self.normalize = normalize
