@@ -1130,13 +1130,12 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     Examples
     --------
-    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegression
-    >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> clf = LogisticRegression(solver='liblinear',
-    ...         random_state=0).fit(X, y)
-    >>> clf.score(X, y) # doctest: +ELLIPSIS
-    0.9595...
+    >>> X, y = load_iris(return_X_y=True)
+    >>> clf = LogisticRegression(random_state=0).fit(X, y)
+    >>> clf.score(X, y)
+    0.96
 
     See also
     --------
@@ -1584,14 +1583,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     Examples
     --------
-    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegressionCV
-    >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> clf = LogisticRegressionCV(solver='liblinear',
-    ...         cv=5,
+    >>> X, y = load_iris(return_X_y=True)
+    >>> clf = LogisticRegressionCV(cv=5,
     ...         random_state=0).fit(X, y)
     >>> clf.score(X, y) # doctest: +ELLIPSIS
-    0.9666...
+    0.9266...
 
     See also
     --------
