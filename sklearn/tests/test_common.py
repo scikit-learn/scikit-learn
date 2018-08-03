@@ -12,6 +12,7 @@ import warnings
 import sys
 import re
 import pkgutil
+import functools
 
 import pytest
 
@@ -21,11 +22,13 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
+from sklearn.exceptions import ConvergenceWarning
 
 import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
 
 from sklearn.linear_model.base import LinearClassifierMixin
+from sklearn.utils import IS_PYPY
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,
     set_checking_parameters,
@@ -75,27 +78,41 @@ def _generate_checks_per_estimator(check_generator, estimators):
             yield name, Estimator, check
 
 
+def _rename_partial(val):
+    if isinstance(val, functools.partial):
+        kwstring = "".join(["{}={}".format(k, v)
+                            for k, v in val.keywords.items()])
+        return "{}({})".format(val.func.__name__, kwstring)
+
+
 @pytest.mark.parametrize(
         "name, Estimator, check",
         _generate_checks_per_estimator(_yield_all_checks,
-                                       _tested_non_meta_estimators())
+                                       _tested_non_meta_estimators()),
+        ids=_rename_partial
 )
 def test_non_meta_estimators(name, Estimator, check):
     # Common tests for non-meta estimators
-    estimator = Estimator()
-    set_checking_parameters(estimator)
-    check(name, estimator)
+    with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
+                                   UserWarning, FutureWarning)):
+        estimator = Estimator()
+        set_checking_parameters(estimator)
+        check(name, estimator)
 
 
 @pytest.mark.parametrize("name, Estimator",
                          _tested_non_meta_estimators())
 def test_no_attributes_set_in_init(name, Estimator):
     # input validation etc for non-meta estimators
-    estimator = Estimator()
-    # check this on class
-    check_no_attributes_set_in_init(name, estimator)
+    with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
+                                   UserWarning, FutureWarning)):
+        estimator = Estimator()
+        # check this on class
+        check_no_attributes_set_in_init(name, estimator)
 
 
+@ignore_warnings(category=DeprecationWarning)
+# ignore deprecated open(.., 'U') in numpy distutils
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
     # 'configure' functions in the setup.pys in scikit-learn
@@ -146,6 +163,9 @@ def test_import_all_consistency():
     submods = [modname for _, modname, _ in pkgs]
     for modname in submods + ['sklearn']:
         if ".tests." in modname:
+            continue
+        if IS_PYPY and ('_svmlight_format' in modname or
+                        'feature_extraction._hashing' in modname):
             continue
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, '__all__', ()):

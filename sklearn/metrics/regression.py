@@ -314,7 +314,7 @@ def mean_squared_log_error(y_true, y_pred,
         raise ValueError("Mean Squared Logarithmic Error cannot be used when "
                          "targets contain negative values.")
 
-    return mean_squared_error(np.log(y_true + 1), np.log(y_pred + 1),
+    return mean_squared_error(np.log1p(y_true), np.log1p(y_pred),
                               sample_weight, multioutput)
 
 
