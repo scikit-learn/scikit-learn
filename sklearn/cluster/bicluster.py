@@ -93,7 +93,7 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
     @abstractmethod
     def __init__(self, n_clusters=3, svd_method="randomized",
                  n_svd_vecs=None, mini_batch=False, init="k-means++",
-                 n_init=10, n_jobs=1, random_state=None):
+                 n_init=10, n_jobs=None, random_state=None):
         self.n_clusters = n_clusters
         self.svd_method = svd_method
         self.n_svd_vecs = n_svd_vecs
@@ -271,7 +271,7 @@ class SpectralCoclustering(BaseSpectral):
     array([0, 0], dtype=int32)
     >>> clustering # doctest: +NORMALIZE_WHITESPACE
     SpectralCoclustering(init='k-means++', mini_batch=False, n_clusters=2,
-               n_init=10, n_jobs=1, n_svd_vecs=None, random_state=0,
+               n_init=10, n_jobs=None, n_svd_vecs=None, random_state=0,
                svd_method='randomized')
 
     References
@@ -284,7 +284,7 @@ class SpectralCoclustering(BaseSpectral):
     """
     def __init__(self, n_clusters=3, svd_method='randomized',
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
-                 n_init=10, n_jobs=1, random_state=None):
+                 n_init=10, n_jobs=None, random_state=None):
         super(SpectralCoclustering, self).__init__(n_clusters,
                                                    svd_method,
                                                    n_svd_vecs,
@@ -419,7 +419,7 @@ class SpectralBiclustering(BaseSpectral):
     >>> clustering # doctest: +NORMALIZE_WHITESPACE
     SpectralBiclustering(init='k-means++', method='bistochastic',
                mini_batch=False, n_best=3, n_clusters=2, n_components=6,
-               n_init=10, n_jobs=1, n_svd_vecs=None, random_state=0,
+               n_init=10, n_jobs=None, n_svd_vecs=None, random_state=0,
                svd_method='randomized')
 
     References
@@ -433,7 +433,7 @@ class SpectralBiclustering(BaseSpectral):
     def __init__(self, n_clusters=3, method='bistochastic',
                  n_components=6, n_best=3, svd_method='randomized',
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
-                 n_init=10, n_jobs=1, random_state=None):
+                 n_init=10, n_jobs=None, random_state=None):
         super(SpectralBiclustering, self).__init__(n_clusters,
                                                    svd_method,
                                                    n_svd_vecs,

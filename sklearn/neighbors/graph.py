@@ -32,7 +32,7 @@ def _query_include_self(X, include_self):
 
 
 def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
-                     p=2, metric_params=None, include_self=False, n_jobs=1):
+                     p=2, metric_params=None, include_self=False, n_jobs=None):
     """Computes the (weighted) graph of k-Neighbors for points in X
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
@@ -104,7 +104,8 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
 
 
 def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
-                           p=2, metric_params=None, include_self=False, n_jobs=1):
+                           p=2, metric_params=None, include_self=False,
+                           n_jobs=None):
     """Computes the (weighted) graph of Neighbors for points in X
 
     Neighborhoods are restricted the points at a distance lower than
@@ -158,7 +159,8 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
     --------
     >>> X = [[0], [3], [1]]
     >>> from sklearn.neighbors import radius_neighbors_graph
-    >>> A = radius_neighbors_graph(X, 1.5, mode='connectivity', include_self=True)
+    >>> A = radius_neighbors_graph(X, 1.5, mode='connectivity',
+    ...                            include_self=True)
     >>> A.toarray()
     array([[1., 0., 1.],
            [0., 1., 0.],
