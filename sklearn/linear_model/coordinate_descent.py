@@ -273,25 +273,21 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     The elastic net optimization function varies for mono and multi-outputs.
 
-    For mono-output tasks it is:
+    For mono-output tasks it is::
 
-    .. math::
+        1 / (2 * n_samples) * ||y - Xw||^2_2
+        + alpha * l1_ratio * ||w||_1
+        + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
-        \\frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \\alpha \\rho
-        ||w||_1 + \\frac{\\alpha(1-\\rho)}{2} ||w||_2 ^ 2
+    For multi-output tasks it is::
 
-    For multi-output tasks it is:
+        (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
+        + alpha * l1_ratio * ||W||_21
+        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
 
-    .. math::
+    Where::
 
-        \\frac{1}{2n_{samples}} ||X W - y||_{Fro}^2 + \\alpha \\rho
-        ||W||_{21} + \\frac{\\alpha(1-\\rho)}{2} ||W||_{Fro} ^ 2
-
-    Where:
-
-    .. math::
-
-        ||W||_{21} = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -514,27 +510,20 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 class ElasticNet(LinearModel, RegressorMixin):
     """Linear regression with combined L1 and L2 priors as regularizer.
 
-    Minimizes the objective function:
+    Minimizes the objective function::
 
-    .. math::
-
-        \\min_{w} { \\frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \\alpha \\rho
-        ||w||_1 + \\frac{\\alpha(1-\\rho)}{2} ||w||_2 ^ 2}
-
-    where :math:`\\rho` corresponds to the ``l1_ratio`` parameter.
+            1 / (2 * n_samples) * ||y - Xw||^2_2
+            + alpha * l1_ratio * ||w||_1
+            + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
     If you are interested in controlling the L1 and L2 penalty
-    separately, keep in mind that this is equivalent to:
+    separately, keep in mind that this is equivalent to::
 
-    .. math::
+            a * L1 + b * L2
 
-        a \\times L1 + b \\times L2
+    where::
 
-    where:
-
-    .. math::
-
-        \\alpha = a + b ~\\text{ and l1_ratio }~ = \\frac{a}{a + b}
+            alpha = a + b and l1_ratio = a / (a + b)
 
     The parameter l1_ratio corresponds to alpha in the glmnet R package while
     alpha corresponds to the lambda parameter in glmnet. Specifically, l1_ratio
