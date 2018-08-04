@@ -132,6 +132,20 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     log_marginal_likelihood_value_ : float
         The log-marginal-likelihood of ``self.kernel_.theta``
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_diabetes
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import DotProduct
+    >>> 
+    >>> X, y = load_diabetes(return_X_y=True)
+    >>> 
+    >>> kernel = DotProduct(sigma_0_bounds=(1e-3, 1e3))
+    >>> gpr = GaussianProcessRegressor(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpr.score(X, y) # doctest: +ELLIPSIS
+    0.5177...
+
     """
     def __init__(self, kernel=None, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
