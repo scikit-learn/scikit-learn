@@ -20,7 +20,8 @@ from ._dbscan_inner import dbscan_inner
 
 
 def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
-           algorithm='auto', leaf_size=30, p=2, sample_weight=None, n_jobs=1):
+           algorithm='auto', leaf_size=30, p=2, sample_weight=None,
+           n_jobs=None):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     Read more in the :ref:`User Guide <dbscan>`.
@@ -255,7 +256,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     array([ 0,  0,  0,  1,  1, -1])
     >>> clustering # doctest: +NORMALIZE_WHITESPACE
     DBSCAN(algorithm='auto', eps=3, leaf_size=30, metric='euclidean',
-        metric_params=None, min_samples=2, n_jobs=1, p=None)
+        metric_params=None, min_samples=2, n_jobs=None, p=None)
 
     See also
     --------
@@ -296,7 +297,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
                  metric_params=None, algorithm='auto', leaf_size=30, p=None,
-                 n_jobs=1):
+                 n_jobs=None):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric

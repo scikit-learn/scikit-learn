@@ -228,7 +228,13 @@ Misc
 - An environment variable to use the site joblib instead of the vendored
   one was added (:ref:`environment_variable`). The main API of joblib is now
   exposed in :mod:`sklearn.utils`.
-  :issue:`11166`by `Gael Varoquaux`_
+  :issue:`11166` by `Gael Varoquaux`_
+
+- A utility method :func:`sklearn.show_versions()` was added to print out
+  information relevant for debugging. It includes the user system, the
+  Python executable, the version of the main libraries and BLAS binding
+  information.
+  :issue:`11596` by :user:`Alexandre Boucaud <aboucaud>`
 
 Enhancements
 ............
@@ -580,6 +586,12 @@ Classifiers and regressors
   cause suboptimal splits to be chosen since the impurity calculation
   considered all samples to be of equal weight importance.
   :issue:`11464` by :user:`John Stott <JohnStott>`.
+
+- Fixed a bug in :func:`logistic.logistic_regression_path` to ensure that the
+  returned coefficients are correct when ``multiclass='multinomial'``.
+  Previously, some of the coefficients would override each other, leading to
+  incorrect results in :class:`logistic.LogisticRegressionCV`. :issue:`11724`
+  by :user:`Nicolas Hug <NicolasHug>`.
 
 Decomposition, manifold learning and clustering
 

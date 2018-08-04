@@ -342,7 +342,7 @@ and ``value`` is an estimator object::
     >>> estimators = [('linear_pca', PCA()), ('kernel_pca', KernelPCA())]
     >>> combined = FeatureUnion(estimators)
     >>> combined # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    FeatureUnion(n_jobs=1,
+    FeatureUnion(n_jobs=None,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
                                    ('kernel_pca', KernelPCA(alpha=1.0,...))],
                  transformer_weights=None)
@@ -357,7 +357,7 @@ and ignored by setting to ``None``::
 
     >>> combined.set_params(kernel_pca=None)
     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    FeatureUnion(n_jobs=1,
+    FeatureUnion(n_jobs=None,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
                                    ('kernel_pca', None)],
                  transformer_weights=None)
@@ -423,7 +423,7 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
   ...      remainder='drop')
 
   >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=1, remainder='drop', sparse_threshold=0.3,
+  ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
       transformer_weights=None,
       transformers=...)
 
@@ -496,7 +496,7 @@ above example would be::
   ...     ('city', CountVectorizer(analyzer=lambda x: [x])),
   ...     ('title', CountVectorizer()))
   >>> column_trans # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=1, remainder='drop', sparse_threshold=0.3,
+  ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
            transformer_weights=None,
            transformers=[('countvectorizer-1', ...)
 
