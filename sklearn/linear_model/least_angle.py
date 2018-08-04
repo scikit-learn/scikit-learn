@@ -606,7 +606,8 @@ class Lars(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.fit_path = fit_path
 
-    def _get_gram(self, precompute, X, y):
+    @staticmethod
+    def _get_gram(precompute, X, y):
         if (not hasattr(precompute, '__array__')) and (
                 (precompute is True) or
                 (precompute == 'auto' and X.shape[0] > X.shape[1]) or
