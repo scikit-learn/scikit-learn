@@ -157,7 +157,7 @@ boolean mask array or callable
     """
 
     def __init__(self, transformers, remainder='drop', sparse_threshold=0.3,
-                 n_jobs=1, transformer_weights=None):
+                 n_jobs=None, transformer_weights=None):
         self.transformers = transformers
         self.remainder = remainder
         self.sparse_threshold = sparse_threshold
@@ -687,7 +687,7 @@ def make_column_transformer(*transformers, **kwargs):
     ...     (['numerical_column'], StandardScaler()),
     ...     (['categorical_column'], OneHotEncoder()))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ColumnTransformer(n_jobs=1, remainder='drop', sparse_threshold=0.3,
+    ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
              transformer_weights=None,
              transformers=[('standardscaler',
                             StandardScaler(...),
@@ -697,7 +697,7 @@ def make_column_transformer(*transformers, **kwargs):
                             ['categorical_column'])])
 
     """
-    n_jobs = kwargs.pop('n_jobs', 1)
+    n_jobs = kwargs.pop('n_jobs', None)
     remainder = kwargs.pop('remainder', 'drop')
     if kwargs:
         raise TypeError('Unknown keyword arguments: "{}"'
