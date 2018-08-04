@@ -1586,10 +1586,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegressionCV
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegressionCV(cv=5,
-    ...         random_state=0).fit(X, y)
+    >>> clf = LogisticRegressionCV(cv=3, random_state=0).fit(X, y)
     >>> clf.score(X, y) # doctest: +ELLIPSIS
-    0.9266...
+    0.9666...
 
     See also
     --------
