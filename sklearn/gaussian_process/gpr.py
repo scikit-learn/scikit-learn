@@ -137,9 +137,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     >>> from sklearn.datasets import load_diabetes
     >>> from sklearn.gaussian_process import GaussianProcessRegressor
     >>> from sklearn.gaussian_process.kernels import DotProduct
-    >>> 
     >>> X, y = load_diabetes(return_X_y=True)
-    >>> 
     >>> kernel = DotProduct(sigma_0_bounds=(1e-3, 1e3))
     >>> gpr = GaussianProcessRegressor(kernel=kernel,
     ...         random_state=0).fit(X, y)
