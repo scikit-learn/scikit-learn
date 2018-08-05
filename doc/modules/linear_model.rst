@@ -934,7 +934,7 @@ follows:
 Mathematical formulation
 ------------------------
 
-In the unpenalized case, the assumptions are the folowing:
+In the unpenalized case, the assumptions are the following:
 
     * The target values :math:`y_i` are realizations of random variables
       :math:`Y_i \overset{i.i.d}{\sim} \mathrm{EDM}(\mu_i, \frac{\phi}{s_i})`
@@ -951,7 +951,7 @@ same as specifying a unit variance function (they are one-to-one).
 
 Including penalties helps to avoid overfitting or, in case of L1 penalty, to
 obtain sparse solutions. But there are also other motivations to include them,
-e.g. accounting fo dependence structure of :math:`y`.
+e.g. accounting for the dependence structure of :math:`y`.
 
 The objective function, which is independent of :math:`\phi`, is minimized with
 respect to the coefficients :math:`w`.
