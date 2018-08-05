@@ -24,8 +24,8 @@ from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
-from ..externals.joblib import Memory
-
+from ..utils._joblib import Memory
+from ..utils._joblib import __version__ as joblib_version
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -183,7 +183,7 @@ def check_memory(memory):
     """Check that ``memory`` is joblib.Memory-like.
 
     joblib.Memory-like means that ``memory`` can be converted into a
-    sklearn.externals.joblib.Memory instance (typically a str denoting the
+    sklearn.utils.Memory instance (typically a str denoting the
     ``cachedir``) or has the same interface (has a ``cache`` method).
 
     Parameters
@@ -201,10 +201,13 @@ def check_memory(memory):
     """
 
     if memory is None or isinstance(memory, six.string_types):
-        memory = Memory(cachedir=memory, verbose=0)
+        if LooseVersion(joblib_version) < '0.12':
+            memory = Memory(cachedir=memory, verbose=0)
+        else:
+            memory = Memory(location=memory, verbose=0)
     elif not hasattr(memory, 'cache'):
         raise ValueError("'memory' should be None, a string or have the same"
-                         " interface as sklearn.externals.joblib.Memory."
+                         " interface as sklearn.utils.Memory."
                          " Got memory='{}' instead.".format(memory))
     return memory
 
@@ -466,6 +469,12 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         # not a data type (e.g. a column named dtype in a pandas DataFrame)
         dtype_orig = None
 
+    # check if the object contains several dtypes (typically a pandas
+    # DataFrame), and store them. If not, store None.
+    dtypes_orig = None
+    if hasattr(array, "dtypes") and hasattr(array, "__array__"):
+        dtypes_orig = np.array(array.dtypes)
+
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
             # if input is object, convert to float.
@@ -540,10 +549,12 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         # in the future np.flexible dtypes will be handled like object dtypes
         if dtype_numeric and np.issubdtype(array.dtype, np.flexible):
             warnings.warn(
-                "Beginning in version 0.22, arrays of strings will be "
-                "interpreted as decimal numbers if parameter 'dtype' is "
-                "'numeric'. It is recommended that you convert the array to "
-                "type np.float64 before passing it to check_array.",
+                "Beginning in version 0.22, arrays of bytes/strings will be "
+                "converted to decimal numbers if dtype='numeric'. "
+                "It is recommended that you convert the array to "
+                "a float dtype before using it in scikit-learn, "
+                "for example by using "
+                "your_array = your_array.astype(np.float64).",
                 FutureWarning)
 
         # make sure we actually converted to numeric:
@@ -580,6 +591,16 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
 
     if copy and np.may_share_memory(array, array_orig):
         array = np.array(array, dtype=dtype, order=order)
+
+    if (warn_on_dtype and dtypes_orig is not None and
+            {array.dtype} != set(dtypes_orig)):
+        # if there was at the beginning some other types than the final one
+        # (for instance in a DataFrame that can contain several dtypes) then
+        # some data must have been converted
+        msg = ("Data with input dtype %s were all converted to %s%s."
+               % (', '.join(map(str, sorted(set(dtypes_orig)))), array.dtype,
+                  context))
+        warnings.warn(msg, DataConversionWarning, stacklevel=3)
 
     return array
 
@@ -796,7 +817,7 @@ def has_fit_parameter(estimator, parameter):
     estimator : object
         An estimator to inspect.
 
-    parameter: str
+    parameter : str
         The searched parameter.
 
     Returns

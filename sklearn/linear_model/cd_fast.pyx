@@ -18,11 +18,6 @@ import warnings
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.uint32_t UINT32_t
-ctypedef floating (*DOT)(int N, floating *X, int incX, floating *Y,
-                         int incY) nogil
-ctypedef void (*AXPY)(int N, floating alpha, floating *X, int incX,
-                      floating *Y, int incY) nogil
-ctypedef floating (*ASUM)(int N, floating *X, int incX) nogil
 
 np.import_array()
 
@@ -146,7 +141,7 @@ cdef extern from "cblas.h":
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
+def enet_coordinate_descent(np.ndarray[floating, ndim=1, mode='c'] w,
                             floating alpha, floating beta,
                             np.ndarray[floating, ndim=2, mode='fortran'] X,
                             np.ndarray[floating, ndim=1, mode='c'] y,
@@ -162,10 +157,6 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     """
 
     # fused types version of BLAS functions
-    cdef DOT dot
-    cdef AXPY axpy
-    cdef ASUM asum
-
     if floating is float:
         dtype = np.float32
         dot = sdot
@@ -317,7 +308,7 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def sparse_enet_coordinate_descent(floating [:] w,
+def sparse_enet_coordinate_descent(floating [::1] w,
                             floating alpha, floating beta,
                             np.ndarray[floating, ndim=1, mode='c'] X_data,
                             np.ndarray[int, ndim=1, mode='c'] X_indices,
@@ -355,9 +346,6 @@ def sparse_enet_coordinate_descent(floating [:] w,
     cdef floating[:] XtA
 
     # fused types version of BLAS functions
-    cdef DOT dot
-    cdef ASUM asum
-
     if floating is float:
         dtype = np.float32
         n_tasks = y.strides[0] / sizeof(float)
@@ -540,7 +528,8 @@ def sparse_enet_coordinate_descent(floating [:] w,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
+def enet_coordinate_descent_gram(floating[::1] w,
+                                 floating alpha, floating beta,
                                  np.ndarray[floating, ndim=2, mode='c'] Q,
                                  np.ndarray[floating, ndim=1, mode='c'] q,
                                  np.ndarray[floating, ndim=1] y,
@@ -559,10 +548,6 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
     """
 
     # fused types version of BLAS functions
-    cdef DOT dot
-    cdef AXPY axpy
-    cdef ASUM asum
-
     if floating is float:
         dtype = np.float32
         dot = sdot
@@ -713,10 +698,6 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
 
     """
     # fused types version of BLAS functions
-    cdef DOT dot
-    cdef AXPY axpy
-    cdef ASUM asum
-
     if floating is float:
         dtype = np.float32
         dot = sdot

@@ -6,6 +6,7 @@ import pytest
 
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
+from sklearn.metrics.scorer import get_scorer
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import compute_class_weight
@@ -29,7 +30,7 @@ from sklearn.linear_model.logistic import (
     logistic_regression_path, LogisticRegressionCV,
     _logistic_loss_and_grad, _logistic_grad_hess,
     _multinomial_grad_hess, _logistic_loss,
-)
+    _log_reg_scoring_path)
 
 X = [[-1, 0], [0, 1], [1, 1]]
 X_sp = sp.csr_matrix(X)
@@ -428,7 +429,7 @@ def test_logistic_grad_hess():
     X_sp[X_sp < .1] = 0
     X_sp = sp.csr_matrix(X_sp)
     for X in (X_ref, X_sp):
-        w = .1 * np.ones(n_features)
+        w = np.full(n_features, .1)
 
         # First check that _logistic_grad_hess is consistent
         # with _logistic_loss_and_grad
@@ -466,6 +467,7 @@ def test_logistic_grad_hess():
         assert_array_almost_equal(grad_interp, grad_interp_2)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_logistic_cv():
     # test for LogisticRegressionCV object
     n_samples, n_features = 50, 5
@@ -492,6 +494,41 @@ def test_logistic_cv():
     assert_array_equal(scores.shape, (1, 3, 1))
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.parametrize('scoring, multiclass_agg_list',
+                         [('accuracy', ['']),
+                          ('precision', ['_macro', '_weighted']),
+                          # no need to test for micro averaging because it
+                          # is the same as accuracy for f1, precision,
+                          # and recall (see https://github.com/
+                          # scikit-learn/scikit-learn/pull/
+                          # 11578#discussion_r203250062)
+                          ('f1', ['_macro', '_weighted']),
+                          ('neg_log_loss', ['']),
+                          ('recall', ['_macro', '_weighted'])])
+def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
+    # test that LogisticRegressionCV uses the right score to compute its
+    # cross-validation scores when using a multinomial scoring
+    # see https://github.com/scikit-learn/scikit-learn/issues/8720
+    X, y = make_classification(n_samples=100, random_state=0, n_classes=3,
+                               n_informative=6)
+    train, test = np.arange(80), np.arange(80, 100)
+    lr = LogisticRegression(C=1., solver='lbfgs', multi_class='multinomial')
+    # we use lbfgs to support multinomial
+    params = lr.get_params()
+    # we store the params to set them further in _log_reg_scoring_path
+    for key in ['C', 'n_jobs', 'warm_start']:
+        del params[key]
+    lr.fit(X[train], y[train])
+    for averaging in multiclass_agg_list:
+        scorer = get_scorer(scoring + averaging)
+        assert_array_almost_equal(
+            _log_reg_scoring_path(X, y, train, test, Cs=[1.],
+                                  scoring=scorer, **params)[2][0],
+            scorer(lr, X[test], y[test]))
+
+
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_multinomial_logistic_regression_string_inputs():
     # Test with string labels for LogisticRegression(CV)
     n_samples, n_features, n_classes = 50, 5, 3
@@ -531,6 +568,7 @@ def test_multinomial_logistic_regression_string_inputs():
     assert_equal(sorted(np.unique(lr_cv_str.predict(X_ref))), ['bar', 'baz'])
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_logistic_cv_sparse():
     X, y = make_classification(n_samples=50, n_features=5,
                                random_state=0)
@@ -694,6 +732,7 @@ def test_logistic_regression_solvers_multiclass():
     assert_array_almost_equal(saga.coef_, lib.coef_, decimal=4)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_logistic_regressioncv_class_weights():
     for weight in [{0: 0.1, 1: 0.2}, {0: 0.1, 1: 0.2, 2: 0.5}]:
         n_classes = len(weight)
@@ -733,6 +772,7 @@ def test_logistic_regressioncv_class_weights():
             assert_array_almost_equal(clf_saga.coef_, clf_lbf.coef_, decimal=4)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_logistic_regression_sample_weights():
     X, y = make_classification(n_samples=20, n_features=5, n_informative=3,
                                n_classes=2, random_state=0)
@@ -848,6 +888,7 @@ def test_logistic_regression_class_weights():
         assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=6)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_logistic_regression_multinomial():
     # Tests for the multinomial option in logistic regression
 
@@ -941,6 +982,7 @@ def test_liblinear_decision_function_zero():
     assert_array_equal(clf.predict(X), np.zeros(5))
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_liblinear_logregcv_sparse():
     # Test LogRegCV with solver='liblinear' works for sparse matrices
 
@@ -949,6 +991,7 @@ def test_liblinear_logregcv_sparse():
     clf.fit(sparse.csr_matrix(X), y)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_saga_sparse():
     # Test LogRegCV with solver='liblinear' works for sparse matrices
 
@@ -1041,6 +1084,7 @@ def test_logreg_l1_sparse_data():
     assert_array_almost_equal(lr_saga.coef_, lr_saga_dense.coef_)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_logreg_cv_penalty():
     # Test that the correct penalty is passed to the final fit.
     X, y = make_classification(n_samples=50, n_features=20, random_state=0)
@@ -1224,18 +1268,21 @@ def test_dtype_match():
         for multi_class in ['ovr', 'multinomial']:
 
             # Check type consistency
-            lr_32 = LogisticRegression(solver=solver, multi_class=multi_class)
+            lr_32 = LogisticRegression(solver=solver, multi_class=multi_class,
+                                       random_state=42)
             lr_32.fit(X_32, y_32)
             assert_equal(lr_32.coef_.dtype, X_32.dtype)
 
             # check consistency with sparsity
             lr_32_sparse = LogisticRegression(solver=solver,
-                                              multi_class=multi_class)
+                                              multi_class=multi_class,
+                                              random_state=42)
             lr_32_sparse.fit(X_sparse_32, y_32)
             assert_equal(lr_32_sparse.coef_.dtype, X_sparse_32.dtype)
 
             # Check accuracy consistency
-            lr_64 = LogisticRegression(solver=solver, multi_class=multi_class)
+            lr_64 = LogisticRegression(solver=solver, multi_class=multi_class,
+                                       random_state=42)
             lr_64.fit(X_64, y_64)
             assert_equal(lr_64.coef_.dtype, X_64.dtype)
             assert_almost_equal(lr_32.coef_, lr_64.coef_.astype(np.float32))

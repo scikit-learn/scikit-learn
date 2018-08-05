@@ -18,7 +18,7 @@ from .base import _preprocess_data
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
@@ -418,7 +418,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     if check_input:
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, Xy, precompute, normalize=False,
-                     fit_intercept=False, copy=False)
+                     fit_intercept=False, copy=False, check_input=check_input)
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
         # above
@@ -447,7 +447,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                          dtype=X.dtype)
 
     if coef_init is None:
-        coef_ = np.asfortranarray(np.zeros(coefs.shape[:-1], dtype=X.dtype))
+        coef_ = np.zeros(coefs.shape[:-1], dtype=X.dtype, order='F')
     else:
         coef_ = np.asfortranarray(coef_init, dtype=X.dtype)
 
@@ -717,7 +717,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         should_copy = self.copy_X and not X_copied
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
-                     self.fit_intercept, copy=should_copy)
+                     self.fit_intercept, copy=should_copy,
+                     check_input=check_input)
         if y.ndim == 1:
             y = y[:, np.newaxis]
         if Xy is not None and Xy.ndim == 1:
@@ -826,9 +827,9 @@ class Lasso(ElasticNet):
         reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
         Given this, you should use the :class:`LinearRegression` object.
 
-    fit_intercept : boolean
-        whether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
+    fit_intercept : boolean, optional, default True
+        Whether to calculate the intercept for this model. If set
+        to False, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
@@ -1052,7 +1053,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
     @abstractmethod
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv=None, verbose=False, n_jobs=1,
+                 copy_X=True, cv='warn', verbose=False, n_jobs=1,
                  positive=False, random_state=None, selection='cyclic'):
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1311,6 +1312,10 @@ class LassoCV(LinearModelCV, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     verbose : bool or integer
         Amount of verbosity.
 
@@ -1381,7 +1386,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv=None, verbose=False, n_jobs=1,
+                 copy_X=True, cv='warn', verbose=False, n_jobs=1,
                  positive=False, random_state=None, selection='cyclic'):
         super(LassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
@@ -1463,6 +1468,10 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1573,7 +1582,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
-                 max_iter=1000, tol=1e-4, cv=None, copy_X=True,
+                 max_iter=1000, tol=1e-4, cv='warn', copy_X=True,
                  verbose=0, n_jobs=1, positive=False, random_state=None,
                  selection='cyclic'):
         self.l1_ratio = l1_ratio
@@ -1994,6 +2003,10 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
@@ -2048,11 +2061,11 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> clf = linear_model.MultiTaskElasticNetCV()
+    >>> clf = linear_model.MultiTaskElasticNetCV(cv=3)
     >>> clf.fit([[0,0], [1, 1], [2, 2]],
     ...         [[0, 0], [1, 1], [2, 2]])
     ... #doctest: +NORMALIZE_WHITESPACE
-    MultiTaskElasticNetCV(alphas=None, copy_X=True, cv=None, eps=0.001,
+    MultiTaskElasticNetCV(alphas=None, copy_X=True, cv=3, eps=0.001,
            fit_intercept=True, l1_ratio=0.5, max_iter=1000, n_alphas=100,
            n_jobs=1, normalize=False, random_state=None, selection='cyclic',
            tol=0.0001, verbose=0)
@@ -2079,7 +2092,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False,
-                 max_iter=1000, tol=1e-4, cv=None, copy_X=True,
+                 max_iter=1000, tol=1e-4, cv='warn', copy_X=True,
                  verbose=0, n_jobs=1, random_state=None, selection='cyclic'):
         self.l1_ratio = l1_ratio
         self.eps = eps
@@ -2164,6 +2177,10 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     verbose : bool or integer
         Amount of verbosity.
 
@@ -2225,7 +2242,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
-                 cv=None, verbose=False, n_jobs=1, random_state=None,
+                 cv='warn', verbose=False, n_jobs=1, random_state=None,
                  selection='cyclic'):
         super(MultiTaskLassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,

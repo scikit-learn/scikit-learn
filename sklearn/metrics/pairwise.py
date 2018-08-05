@@ -24,9 +24,9 @@ from ..utils import gen_even_slices
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
-from ..externals.joblib import Parallel
-from ..externals.joblib import delayed
-from ..externals.joblib import cpu_count
+from ..utils import Parallel
+from ..utils import delayed
+from ..utils import cpu_count
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
@@ -491,7 +491,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
            [4., 4.]])
     >>> import numpy as np
     >>> X = np.ones((1, 2))
-    >>> y = 2 * np.ones((2, 2))
+    >>> y = np.full((2, 2), 2.)
     >>> manhattan_distances(X, y, sum_over_features=False)#doctest:+ELLIPSIS
     array([[1., 1.],
            [1., 1.]])

@@ -15,7 +15,7 @@ import numpy as np
 from scipy import sparse
 
 from .base import clone, TransformerMixin
-from .externals.joblib import Parallel, delayed
+from .utils import Parallel, delayed
 from .externals import six
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch
@@ -206,10 +206,22 @@ class Pipeline(_BaseComposition):
             if transformer is None:
                 pass
             else:
-                if hasattr(memory, 'cachedir') and memory.cachedir is None:
-                    # we do not clone when caching is disabled to preserve
-                    # backward compatibility
-                    cloned_transformer = transformer
+                if hasattr(memory, 'location'):
+                    # joblib >= 0.12
+                    if memory.location is None:
+                        # we do not clone when caching is disabled to
+                        # preserve backward compatibility
+                        cloned_transformer = transformer
+                    else:
+                        cloned_transformer = clone(transformer)
+                elif hasattr(memory, 'cachedir'):
+                    # joblib < 0.11
+                    if memory.cachedir is None:
+                        # we do not clone when caching is disabled to
+                        # preserve backward compatibility
+                        cloned_transformer = transformer
+                    else:
+                        cloned_transformer = clone(transformer)
                 else:
                     cloned_transformer = clone(transformer)
                 # Fit or load from cache the current transfomer
