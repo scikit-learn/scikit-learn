@@ -849,6 +849,7 @@ def test_enet_coordinate_descent_gram():
     y = np.ones([n_samples])
     assert_warns(ConvergenceWarning, clf.fit, X, y)
 
+
 def test_enet_coordinate_descent_multi_task():
     """Test that a warning is issued if model does not converge"""
     clf = MultiTaskLasso()
