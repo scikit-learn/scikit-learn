@@ -582,6 +582,16 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def _run_search(self, evaluate_candidates):
         """Repeatedly calls `evaluate_candidates` to conduct a search.
 
+        This method, implemented in sub-classes, makes it is possible to
+        customize the the scheduling of evaluations: GridSearchCV and
+        RandomizedSearchCV schedule evaluations for their whole parameter
+        search space at once but other more sequential approaches are also
+        possible: for instance is possible to iteratively schedule evaluations
+        for new regions of the parameter search space based on previously
+        collected evaluation results. This makes it possible to implement
+        Bayesian optimization or more generally sequential model-based
+        optimization by deriving from the BaseSearchCV abstract base class.
+
         Parameters
         ----------
         evaluate_candidates : callable
@@ -594,7 +604,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         ::
 
-            def _run_search(self):
+            def _run_search(self, evaluate_candidates):
                 'Try C=0.1 only if C=1 is better than C=10'
                 all_results = evaluate_candidates([{'C': 1}, {'C': 10}])
                 score = all_results['mean_test_score']
