@@ -1,3 +1,5 @@
+# coding=utf-8
+
 """ Multiple Correspondance Analysis
 not possible without Vivek Yadak's help
 http://vxy10.github.io/2016/06/10/intro-MCA/
