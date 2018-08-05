@@ -818,3 +818,33 @@ def test_coef_shape_not_zero():
     est_no_intercept = Lasso(fit_intercept=False)
     est_no_intercept.fit(np.c_[np.ones(3)], np.ones(3))
     assert est_no_intercept.coef_.shape == (1,)
+
+
+def test_enet_coordinate_descent():
+    """Test that a warning is issued if model does not converge"""
+    clf = Lasso()
+    n_samples = 15500
+    n_features = 500
+    X = np.ones([n_samples, n_features]) * 1e50
+    y = np.ones([n_samples])
+    assert_warns(ConvergenceWarning, clf.fit, X, y)
+
+
+def test_enet_coordinate_descent_gram():
+    """Test that a warning is issued if model does not converge"""
+    clf = Lasso(precompute=True)
+    n_samples = 15500
+    n_features = 500
+    X = np.ones([n_samples, n_features]) * 1e50
+    y = np.ones([n_samples])
+    assert_warns(ConvergenceWarning, clf.fit, X, y)
+
+def test_enet_coordinate_descent_multi_task():
+    """Test that a warning is issued if model does not converge"""
+    clf = MultiTaskLasso()
+    n_samples = 15500
+    n_features = 500
+    n_classes = 2
+    X = np.ones([n_samples, n_features]) * 1e50
+    y = np.ones([n_samples, n_classes])
+    assert_warns(ConvergenceWarning, clf.fit, X, y)

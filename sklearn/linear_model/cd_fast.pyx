@@ -15,6 +15,7 @@ cimport cython
 from cpython cimport bool
 from cython cimport floating
 import warnings
+from ..exceptions import ConvergenceWarning
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.uint32_t UINT32_t
@@ -299,6 +300,12 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1, mode='c'] w,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
+                else:
+                    with gil:
+                        warnings.warn("Objective did not converge."
+                        " You might want to increase the number of iterations.",
+                        ConvergenceWarning)
+
     return w, gap, tol, n_iter + 1
 
 
@@ -513,6 +520,11 @@ def sparse_enet_coordinate_descent(floating [::1] w,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
+                else:
+                    with gil:
+                        warnings.warn("Objective did not converge."
+                        " You might want to increase the number of iterations.",
+                        ConvergenceWarning)
 
     return w, gap, tol, n_iter + 1
 
@@ -668,6 +680,11 @@ def enet_coordinate_descent_gram(floating[::1] w,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
+                else:
+                    with gil:
+                        warnings.warn("Objective did not converge."
+                        " You might want to increase the number of iterations.",
+                        ConvergenceWarning)
 
     return np.asarray(w), gap, tol, n_iter + 1
 
@@ -873,5 +890,10 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
+                else:
+                    with gil:
+                        warnings.warn("Objective did not converge."
+                        " You might want to increase the number of iterations.",
+                        ConvergenceWarning)
 
     return np.asarray(W), gap, tol, n_iter + 1
