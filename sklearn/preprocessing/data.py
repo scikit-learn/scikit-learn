@@ -831,6 +831,20 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         The number of samples processed by the estimator. Will be reset on
         new calls to fit, but increments across ``partial_fit`` calls.
 
+    Examples
+    --------
+    >>> from sklearn.preprocessing import MaxAbsScaler
+    >>> X = [[ 1., -1.,  2.],
+    ...      [ 2.,  0.,  0.],
+    ...      [ 0.,  1., -1.]]
+    >>> transformer = MaxAbsScaler().fit(X)
+    >>> transformer
+    MaxAbsScaler(copy=True)
+    >>> transformer.transform(X)
+    array([[ 0.5, -1. ,  1. ],
+           [ 1. ,  0. ,  0. ],
+           [ 0. ,  1. , -0.5]])
+
     See also
     --------
     maxabs_scale: Equivalent function without the estimator API.
@@ -1067,6 +1081,21 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
         .. versionadded:: 0.17
            *scale_* attribute.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import RobustScaler
+    >>> X = [[ 1., -1.,  2.],
+    ...      [ 2.,  0.,  0.],
+    ...      [ 0.,  1., -1.]]
+    >>> transformer = RobustScaler().fit(X)
+    >>> transformer
+    RobustScaler(copy=True, quantile_range=(25.0, 75.0), with_centering=True,
+           with_scaling=True)
+    >>> transformer.transform(X)
+    array([[ 0.        , -1.        ,  1.33333333],
+           [ 1.        ,  0.        ,  0.        ],
+           [-1.        ,  1.        , -0.66666667]])
 
     See also
     --------
@@ -1580,6 +1609,20 @@ class Normalizer(BaseEstimator, TransformerMixin):
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix).
 
+    Examples
+    --------
+    >>> from sklearn.preprocessing import Normalizer
+    >>> X = [[ 1., -1.,  2.],
+    ...      [ 2.,  0.,  0.],
+    ...      [ 0.,  1., -1.]]
+    >>> transformer = Normalizer().fit(X) # fit does nothing.
+    >>> transformer
+    Normalizer(copy=True, norm='l2')
+    >>> transformer.transform(X)
+    array([[ 0.40824829, -0.40824829,  0.81649658],
+           [ 1.        ,  0.        ,  0.        ],
+           [ 0.        ,  0.70710678, -0.70710678]])
+
     Notes
     -----
     This estimator is stateless (besides constructor parameters), the
@@ -1707,6 +1750,20 @@ class Binarizer(BaseEstimator, TransformerMixin):
         set to False to perform inplace binarization and avoid a copy (if
         the input is already a numpy array or a scipy.sparse CSR matrix).
 
+    Examples
+    --------
+    >>> from sklearn.preprocessing import Binarizer
+    >>> X = [[ 1., -1.,  2.],
+    ...      [ 2.,  0.,  0.],
+    ...      [ 0.,  1., -1.]]
+    >>> transformer = Binarizer().fit(X) # fit does nothing.
+    >>> transformer
+    Binarizer(copy=True, threshold=0.0)
+    >>> transformer.transform(X)
+    array([[1., 0., 1.],
+           [1., 0., 0.],
+           [0., 1., 0.]])
+
     Notes
     -----
     If the input is a sparse matrix, only the non-zero values are subject
@@ -1771,6 +1828,26 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.StandardScaler(with_std=False).
 
     Read more in the :ref:`User Guide <kernel_centering>`.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import KernelCenterer
+    >>> from sklearn.gaussian_process.kernels import DotProduct
+    >>> X = [[ 1., -1.,  2.],
+    ...      [ 2.,  0.,  0.],
+    ...      [ 0.,  1., -1.]]
+    >>> K = DotProduct()(X)
+    >>> K
+    array([[ 7.,  3., -2.],
+           [ 3.,  5.,  1.],
+           [-2.,  1.,  3.]])
+    >>> transformer = KernelCenterer().fit(K)
+    >>> transformer
+    KernelCenterer()
+    >>> transformer.transform(K)
+    array([[ 3.77777778, -0.55555556, -3.22222222],
+           [-0.55555556,  1.11111111, -0.55555556],
+           [-3.22222222, -0.55555556,  3.77777778]])
     """
     def __init__(self):
         # Needed for backported inspect.signature compatibility with PyPy
