@@ -391,6 +391,13 @@ Model evaluation and meta-estimators
   when an error occurs in :func:`model_selection._fit_and_score`.
   :issue:`11576` by :user:`Samuel O. Ronsin <samronsin>`.
 
+- `BaseSearchCV` now has an experimental, private interface to support
+  customized parameter search strategies, through its ``_run_search``
+  method.  See the implementations in :class:`model_selection.GridSearchCV`
+  and :class:`model_selection.RandomizedSearchCV` and please provide feedback
+  if you use this. Note that we do not assure the stability of this API
+  beyond version 0.20. :issue:`9599` by `Joel Nothman`_
+
 Decomposition and manifold learning
 
 - Speed improvements for both 'exact' and 'barnes_hut' methods in
