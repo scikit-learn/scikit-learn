@@ -988,8 +988,8 @@ Model selection
 
 - The default number of cross-validation folds ``cv`` and the default number of
   splits ``n_splits`` in the :class:`model_selection.KFold`-like splitters will change
-  from 3 to 5 in 0.22 as 3-fold has a lot of variance.
-  :issue:`11557` by :user:`Alexandre Boucaud <aboucaud>`.
+  from 3 to 5 in 0.22 as 3-fold has a lot of variance. :issue:`11557` and
+  :issue:`11761` by :user:`Alexandre Boucaud <aboucaud>` and `Hanmin Qin`_.
 
 Changes to estimator checks
 ---------------------------
