@@ -1134,8 +1134,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = LogisticRegression(random_state=0).fit(X, y)
-    >>> clf.score(X, y)
+    >>> clf.score(X, y) # doctest: +ELLIPSIS
     0.96
+    >>> clf.predict_proba(X[:2,:])
+    array([[8.78030305e-01, 1.21958900e-01, 1.07949250e-05],
+           [7.97058292e-01, 2.02911413e-01, 3.02949242e-05]])
 
     See also
     --------
@@ -1586,9 +1589,12 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegressionCV
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegressionCV(cv=3, random_state=0).fit(X, y)
+    >>> clf = LogisticRegressionCV(cv=5, random_state=0).fit(X, y)
     >>> clf.score(X, y) # doctest: +ELLIPSIS
-    0.9666...
+    0.9266...
+    >>> clf.predict_proba(X[:2,:])
+    array([[8.72748391e-01, 1.27251609e-01, 5.50605908e-14],
+           [6.76642824e-01, 3.23357176e-01, 2.11651399e-13]])
 
     See also
     --------
