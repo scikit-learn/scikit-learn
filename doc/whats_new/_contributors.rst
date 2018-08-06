@@ -6,18 +6,51 @@
     hyperlink all contributors' names, and ``:user:`` should now be preferred.
     It also defines other ReST substitutions.
 
+.. only:: not html
 
-.. |API| replace:: [API Change]
-.. |Fix| replace:: [Fix]
-.. |Efficiency| replace:: [Efficiency]
-.. |Feature| replace:: [Feature]
-.. |MajorFeature| replace:: [Major Feature]
+    .. |API| replace:: [API Change]
+    .. |Fix| replace:: [Fix]
+    .. |Efficiency| replace:: [Efficiency]
+    .. |Feature| replace:: [Feature]
+    .. |MajorFeature| replace:: [Major Feature]
 
-..
-   Other/minor enhancement (e.g. better error message):
+    ..
+       Other/minor enhancement (e.g. better error message):
 
-.. |Enhancement| replace:: [Enhancement]
+    .. |Enhancement| replace:: [Enhancement]
 
+
+.. only:: html
+
+    .. |API| replace::
+        .. raw:: html
+
+            <span class="label label-warning">API Change</span>
+
+    .. |Fix| replace::
+        .. raw:: html
+
+            <span class="label label-danger">Fix</span>
+
+    .. |Efficiency| replace::
+        .. raw:: html
+
+            <span class="label label-info">Efficiency</span>
+
+    .. |Feature| replace::
+        .. raw:: html
+
+            <span class="label label-success">Feature</span>
+
+    .. |MajorFeature| replace::
+        .. raw:: html
+
+            <span class="label label-success">Major Feature</span>
+
+    .. |Enhancement| replace::
+        .. raw:: html
+
+            <span class="label label-info">Enhancement</span>
 
 
 .. _Olivier Grisel: https://twitter.com/ogrisel
