@@ -1513,7 +1513,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         X_csr = csr_matrix(X) if issparse(X) else None
 
         if self.n_iter_no_change is not None:
-            loss_history = np.ones(self.n_iter_no_change) * np.inf
+            loss_history = np.full(self.n_iter_no_change, np.inf)
             # We create a generator to get the predictions for X_val after
             # the addition of each successive stage
             y_val_pred_iter = self._staged_decision_function(X_val)

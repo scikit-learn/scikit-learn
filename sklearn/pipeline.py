@@ -663,7 +663,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     array([[ 1.5       ,  3.0...,  0.8...],
            [-1.5       ,  5.7..., -0.4...]])
     """
-    def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
+    def __init__(self, transformer_list, n_jobs=None,
+                 transformer_weights=None):
         self.transformer_list = transformer_list
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
@@ -860,7 +861,7 @@ def make_union(*transformers, **kwargs):
     >>> from sklearn.decomposition import PCA, TruncatedSVD
     >>> from sklearn.pipeline import make_union
     >>> make_union(PCA(), TruncatedSVD())    # doctest: +NORMALIZE_WHITESPACE
-    FeatureUnion(n_jobs=1,
+    FeatureUnion(n_jobs=None,
            transformer_list=[('pca',
                               PCA(copy=True, iterated_power='auto',
                                   n_components=None, random_state=None,
@@ -871,7 +872,7 @@ def make_union(*transformers, **kwargs):
                               random_state=None, tol=0.0))],
            transformer_weights=None)
     """
-    n_jobs = kwargs.pop('n_jobs', 1)
+    n_jobs = kwargs.pop('n_jobs', None)
     if kwargs:
         # We do not currently support `transformer_weights` as we may want to
         # change its type spec in make_union

@@ -26,7 +26,7 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
            rejection_ratio=.7, similarity_threshold=0.4,
            significant_min=.003, min_cluster_size_ratio=.005,
            min_maxima_ratio=0.001, algorithm='ball_tree',
-           leaf_size=30, n_jobs=1):
+           leaf_size=30, n_jobs=None):
     """Perform OPTICS clustering from vector array
 
     OPTICS: Ordering Points To Identify the Clustering Structure
@@ -285,7 +285,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size_ratio=.005,
                  min_maxima_ratio=0.001, algorithm='ball_tree',
-                 leaf_size=30, n_jobs=1):
+                 leaf_size=30, n_jobs=None):
 
         self.max_bound = max_bound
         self.min_samples = min_samples
@@ -331,7 +331,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.core_distances_ = np.empty(n_samples)
         self.core_distances_.fill(np.nan)
         # Start all points as noise ##
-        self.labels_ = -np.ones(n_samples, dtype=int)
+        self.labels_ = np.full(n_samples, -1, dtype=int)
         self.ordering_ = []
 
         # Check for valid n_samples relative to min_samples
@@ -394,7 +394,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # Keep n_jobs = 1 in the following lines...please
         if len(unproc) > 0:
             dists = pairwise_distances(P, np.take(X, unproc, axis=0),
-                                       self.metric, n_jobs=1).ravel()
+                                       self.metric, n_jobs=None).ravel()
 
             rdists = np.maximum(dists, self.core_distances_[point_index])
             new_reach = np.minimum(np.take(self.reachability_, unproc), rdists)
@@ -551,7 +551,7 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     clustid = 0
     n_samples = len(reachability)
     is_core = np.zeros(n_samples, dtype=bool)
-    labels = -np.ones(n_samples, dtype=int)
+    labels = np.full(n_samples, -1, dtype=int)
     # Start all points as non-core noise
     for leaf in leaves:
         index = ordering[leaf.start:leaf.end]

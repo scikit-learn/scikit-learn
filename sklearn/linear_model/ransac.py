@@ -74,6 +74,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
            which is used for the stop criterion defined by `stop_score`.
            Additionally, the score is used to decide which of two equally
            large consensus sets is chosen as the better one.
+         * `predict(X)`: Returns predicted values using the linear model,
+           which is used to compute residual error using loss function.
 
         If `base_estimator` is None, then
         ``base_estimator=sklearn.linear_model.LinearRegression()`` is used for

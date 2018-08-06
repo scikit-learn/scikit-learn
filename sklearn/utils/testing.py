@@ -582,7 +582,8 @@ META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
                    "RFE", "RFECV", "BaseEnsemble", "ClassifierChain",
                    "RegressorChain"]
 # estimators that there is no way to default-construct sensibly
-OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
+OTHER = ["Pipeline", "FeatureUnion",
+         "GridSearchCV", "RandomizedSearchCV",
          "SelectFromModel", "ColumnTransformer"]
 
 # some strange ones
@@ -938,6 +939,9 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
         return incorrect
     # Don't check docstring for property-functions
     if inspect.isdatadescriptor(func):
+        return incorrect
+    # Don't check docstring for setup / teardown pytest functions
+    if func_name.split('.')[-1] in ('setup_module', 'teardown_module'):
         return incorrect
     # Dont check estimator_checks module
     if func_name.split('.')[2] == 'estimator_checks':

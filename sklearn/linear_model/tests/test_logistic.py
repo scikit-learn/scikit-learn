@@ -429,7 +429,7 @@ def test_logistic_grad_hess():
     X_sp[X_sp < .1] = 0
     X_sp = sp.csr_matrix(X_sp)
     for X in (X_ref, X_sp):
-        w = .1 * np.ones(n_features)
+        w = np.full(n_features, .1)
 
         # First check that _logistic_grad_hess is consistent
         # with _logistic_loss_and_grad
@@ -1307,3 +1307,23 @@ def test_warm_start_converge_LR():
         lr_ws.fit(X, y)
     lr_ws_loss = log_loss(y, lr_ws.predict_proba(X))
     assert_allclose(lr_no_ws_loss, lr_ws_loss, rtol=1e-5)
+
+
+def test_logistic_regression_path_coefs_multinomial():
+    # Make sure that the returned coefs by logistic_regression_path when
+    # multi_class='multinomial' don't override each other (used to be a
+    # bug).
+    X, y = make_classification(n_samples=200, n_classes=3, n_informative=2,
+                               n_redundant=0, n_clusters_per_class=1,
+                               random_state=0, n_features=2)
+    Cs = [.00001, 1, 10000]
+    coefs, _, _ = logistic_regression_path(X, y, penalty='l1', Cs=Cs,
+                                           solver='saga', random_state=0,
+                                           multi_class='multinomial')
+
+    with pytest.raises(AssertionError):
+        assert_array_almost_equal(coefs[0], coefs[1], decimal=1)
+    with pytest.raises(AssertionError):
+        assert_array_almost_equal(coefs[0], coefs[2], decimal=1)
+    with pytest.raises(AssertionError):
+        assert_array_almost_equal(coefs[1], coefs[2], decimal=1)

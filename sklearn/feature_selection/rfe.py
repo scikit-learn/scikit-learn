@@ -15,7 +15,7 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
-from ..utils import Parallel, delayed
+from ..utils import Parallel, delayed, effective_n_jobs
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
 from ..metrics.scorer import check_scoring
@@ -432,7 +432,7 @@ class RFECV(RFE, MetaEstimatorMixin):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     def __init__(self, estimator, step=1, cv='warn', scoring=None, verbose=0,
-                 n_jobs=1):
+                 n_jobs=None):
         self.estimator = estimator
         self.step = step
         self.cv = cv
@@ -489,10 +489,11 @@ class RFECV(RFE, MetaEstimatorMixin):
         # and provides bound methods as scorers is not broken with the
         # addition of n_jobs parameter in version 0.18.
 
-        if self.n_jobs == 1:
+        if effective_n_jobs(self.n_jobs) == 1:
             parallel, func = list, _rfe_single_fit
         else:
-            parallel, func, = Parallel(n_jobs=self.n_jobs), delayed(_rfe_single_fit)
+            parallel = Parallel(n_jobs=self.n_jobs)
+            func = delayed(_rfe_single_fit)
 
         scores = parallel(
             func(rfe, self.estimator, X, y, train, test, scorer)

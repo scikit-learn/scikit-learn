@@ -18,7 +18,7 @@ from .base import _preprocess_data
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
-from ..utils import Parallel, delayed
+from ..utils import Parallel, delayed, effective_n_jobs
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
@@ -98,8 +98,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
             # Workaround to find alpha_max for sparse matrices.
             # since we should not destroy the sparsity of such matrices.
             _, _, X_offset, _, X_scale = _preprocess_data(X, y, fit_intercept,
-                                                      normalize,
-                                                      return_mean=True)
+                                                          normalize,
+                                                          return_mean=True)
             mean_dot = X_offset * np.sum(y)
 
     if Xy.ndim == 1:
@@ -418,7 +418,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     if check_input:
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, Xy, precompute, normalize=False,
-                     fit_intercept=False, copy=False)
+                     fit_intercept=False, copy=False, check_input=check_input)
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
         # above
@@ -447,7 +447,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                          dtype=X.dtype)
 
     if coef_init is None:
-        coef_ = np.asfortranarray(np.zeros(coefs.shape[:-1], dtype=X.dtype))
+        coef_ = np.zeros(coefs.shape[:-1], dtype=X.dtype, order='F')
     else:
         coef_ = np.asfortranarray(coef_init, dtype=X.dtype)
 
@@ -717,7 +717,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         should_copy = self.copy_X and not X_copied
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
-                     self.fit_intercept, copy=should_copy)
+                     self.fit_intercept, copy=should_copy,
+                     check_input=check_input)
         if y.ndim == 1:
             y = y[:, np.newaxis]
         if Xy is not None and Xy.ndim == 1:
@@ -752,8 +753,9 @@ class ElasticNet(LinearModel, RegressorMixin):
                           precompute=precompute, Xy=this_Xy,
                           fit_intercept=False, normalize=False, copy_X=True,
                           verbose=False, tol=self.tol, positive=self.positive,
-                          X_offset=X_offset, X_scale=X_scale, return_n_iter=True,
-                          coef_init=coef_[k], max_iter=self.max_iter,
+                          X_offset=X_offset, X_scale=X_scale,
+                          return_n_iter=True, coef_init=coef_[k],
+                          max_iter=self.max_iter,
                           random_state=self.random_state,
                           selection=self.selection,
                           check_input=False)
@@ -1052,7 +1054,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
     @abstractmethod
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv='warn', verbose=False, n_jobs=1,
+                 copy_X=True, cv='warn', verbose=False, n_jobs=None,
                  positive=False, random_state=None, selection='cyclic'):
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1182,7 +1184,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         path_params['copy_X'] = copy_X
         # We are not computing in parallel, we can modify X
         # inplace in the folds
-        if not (self.n_jobs == 1 or self.n_jobs is None):
+        if effective_n_jobs(self.n_jobs) > 1:
             path_params['copy_X'] = False
 
         # init cross-validation generator
@@ -1201,7 +1203,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                 for this_l1_ratio, this_alphas in zip(l1_ratios, alphas)
                 for train, test in folds)
         mse_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                             backend="threading")(jobs)
+                             prefer="threads")(jobs)
         mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
         mean_mse = np.mean(mse_paths, axis=1)
         self.mse_path_ = np.squeeze(np.rollaxis(mse_paths, 2, 1))
@@ -1385,7 +1387,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv='warn', verbose=False, n_jobs=1,
+                 copy_X=True, cv='warn', verbose=False, n_jobs=None,
                  positive=False, random_state=None, selection='cyclic'):
         super(LassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
@@ -1534,7 +1536,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     >>> regr = ElasticNetCV(cv=5, random_state=0)
     >>> regr.fit(X, y)
     ElasticNetCV(alphas=None, copy_X=True, cv=5, eps=0.001, fit_intercept=True,
-           l1_ratio=0.5, max_iter=1000, n_alphas=100, n_jobs=1,
+           l1_ratio=0.5, max_iter=1000, n_alphas=100, n_jobs=None,
            normalize=False, positive=False, precompute='auto', random_state=0,
            selection='cyclic', tol=0.0001, verbose=0)
     >>> print(regr.alpha_) # doctest: +ELLIPSIS
@@ -1582,7 +1584,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv='warn', copy_X=True,
-                 verbose=0, n_jobs=1, positive=False, random_state=None,
+                 verbose=0, n_jobs=None, positive=False, random_state=None,
                  selection='cyclic'):
         self.l1_ratio = l1_ratio
         self.eps = eps
@@ -2066,7 +2068,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     ... #doctest: +NORMALIZE_WHITESPACE
     MultiTaskElasticNetCV(alphas=None, copy_X=True, cv=3, eps=0.001,
            fit_intercept=True, l1_ratio=0.5, max_iter=1000, n_alphas=100,
-           n_jobs=1, normalize=False, random_state=None, selection='cyclic',
+           n_jobs=None, normalize=False, random_state=None, selection='cyclic',
            tol=0.0001, verbose=0)
     >>> print(clf.coef_)
     [[0.52875032 0.46958558]
@@ -2092,7 +2094,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False,
                  max_iter=1000, tol=1e-4, cv='warn', copy_X=True,
-                 verbose=0, n_jobs=1, random_state=None, selection='cyclic'):
+                 verbose=0, n_jobs=None, random_state=None,
+                 selection='cyclic'):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -2241,7 +2244,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
-                 cv='warn', verbose=False, n_jobs=1, random_state=None,
+                 cv='warn', verbose=False, n_jobs=None, random_state=None,
                  selection='cyclic'):
         super(MultiTaskLassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,

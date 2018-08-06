@@ -464,7 +464,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
     @abstractmethod
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=None, tol=None,
-                 shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1,
+                 shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=None,
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, early_stopping=False,
                  validation_fraction=0.1, n_iter_no_change=5,
@@ -481,7 +481,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             n_iter_no_change=n_iter_no_change, warm_start=warm_start,
             average=average, n_iter=n_iter)
         self.class_weight = class_weight
-        self.n_jobs = int(n_jobs)
+        self.n_jobs = n_jobs
 
     @property
     @deprecated("Attribute loss_function was deprecated in version 0.19 and "
@@ -613,7 +613,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         strategy is called OVA: One Versus All.
         """
         # Use joblib to fit OvA in parallel.
-        result = Parallel(n_jobs=self.n_jobs, backend="threading",
+        result = Parallel(n_jobs=self.n_jobs, prefer="threads",
                           verbose=self.verbose)(
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
                                 max_iter, self._expanded_class_weight[i],
@@ -927,7 +927,7 @@ class SGDClassifier(BaseSGDClassifier):
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
            l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=1000,
-           n_iter=None, n_iter_no_change=5, n_jobs=1, penalty='l2',
+           n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
            power_t=0.5, random_state=None, shuffle=True, tol=None,
            validation_fraction=0.1, verbose=0, warm_start=False)
 
@@ -942,7 +942,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
                  fit_intercept=True, max_iter=None, tol=None, shuffle=True,
-                 verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1,
+                 verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=None,
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, class_weight=None, warm_start=False,

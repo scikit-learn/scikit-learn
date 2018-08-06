@@ -435,7 +435,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                 for (mean, covariance, sample) in zip(
                     self.means_, self.covariances_, n_samples_comp)])
 
-        y = np.concatenate([j * np.ones(sample, dtype=int)
+        y = np.concatenate([np.full(sample, j, dtype=int)
                            for j, sample in enumerate(n_samples_comp)])
 
         return (X, y)

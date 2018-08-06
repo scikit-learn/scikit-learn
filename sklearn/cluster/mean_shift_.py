@@ -29,7 +29,7 @@ from ..utils import delayed
 
 
 def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
-                       n_jobs=1):
+                       n_jobs=None):
     """Estimate the bandwidth to use with the mean-shift algorithm.
 
     That this function takes time at least quadratic in n_samples. For large
@@ -107,7 +107,7 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
 
 def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                min_bin_freq=1, cluster_all=True, max_iter=300,
-               n_jobs=1):
+               n_jobs=None):
     """Perform mean shift clustering of data using a flat kernel.
 
     Read more in the :ref:`User Guide <mean_shift>`.
@@ -351,6 +351,21 @@ class MeanShift(BaseEstimator, ClusterMixin):
     labels_ :
         Labels of each point.
 
+    Examples
+    --------
+    >>> from sklearn.cluster import MeanShift
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> clustering = MeanShift(bandwidth=2).fit(X)
+    >>> clustering.labels_
+    array([0, 0, 0, 1, 1, 1])
+    >>> clustering.predict([[0, 0], [5, 5]])
+    array([0, 1])
+    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    MeanShift(bandwidth=2, bin_seeding=False, cluster_all=True, min_bin_freq=1,
+         n_jobs=None, seeds=None)
+
     Notes
     -----
 
@@ -377,7 +392,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
 
     """
     def __init__(self, bandwidth=None, seeds=None, bin_seeding=False,
-                 min_bin_freq=1, cluster_all=True, n_jobs=1):
+                 min_bin_freq=1, cluster_all=True, n_jobs=None):
         self.bandwidth = bandwidth
         self.seeds = seeds
         self.bin_seeding = bin_seeding
