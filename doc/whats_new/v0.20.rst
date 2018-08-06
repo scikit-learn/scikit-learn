@@ -62,22 +62,22 @@ occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
 - :class:`decomposition.IncrementalPCA` in Python 2 (bug fix)
+- :class:`decomposition.SparsePCA` (bug fix)
+- :class:`ensemble.gradient_boosting.GradientBoostingClassifier` (bug fix affecting feature importances)
 - :class:`isotonic.IsotonicRegression` (bug fix)
 - :class:`linear_model.ARDRegression` (bug fix)
+- :class:`linear_model.LogisticRegressionCV` (bug fix)
 - :class:`linear_model.OrthogonalMatchingPursuit` (bug fix)
-- :class:`metrics.roc_auc_score` (bug fix)
-- :class:`metrics.roc_curve` (bug fix)
-- :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
-- :class:`neural_network.MLPRegressor` (bug fix)
-- :class:`neural_network.MLPClassifier` (bug fix)
-- :class:`linear_model.SGDClassifier` (bug fix)
-- :class:`linear_model.SGDRegressor` (bug fix)
 - :class:`linear_model.PassiveAggressiveClassifier` (bug fix)
 - :class:`linear_model.PassiveAggressiveRegressor` (bug fix)
 - :class:`linear_model.Perceptron` (bug fix)
-- :class:`ensemble.gradient_boosting.GradientBoostingClassifier` (bug fix affecting feature importances)
-- :class:`linear_model.LogisticRegressionCV` (bug fix)
-- :class:`decomposition.SparsePCA` (bug fix)
+- :class:`linear_model.SGDClassifier` (bug fix)
+- :class:`linear_model.SGDRegressor` (bug fix)
+- :class:`metrics.roc_auc_score` (bug fix)
+- :class:`metrics.roc_curve` (bug fix)
+- :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
+- :class:`neural_network.MLPClassifier` (bug fix)
+- :class:`neural_network.MLPRegressor` (bug fix)
 - The v0.19.0 release notes failed to mention a backwards incompatibility with
   :class:`model_selection.StratifiedKFold` when ``shuffle=True`` due to
   :issue:`7823`.
