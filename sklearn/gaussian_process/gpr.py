@@ -143,6 +143,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y) # doctest: +ELLIPSIS
     0.5177...
+    >>> gpr.predict(X[:2,:], return_std=True)
+    (array([206.11862183,  68.05764771]), array([0.00390714, 0.00095725]))
 
     """
     def __init__(self, kernel=None, alpha=1e-10,
