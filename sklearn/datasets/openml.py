@@ -492,9 +492,12 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     is_classification = {col_name in nominal_attributes
                          for col_name in target_column}
-    if all(is_classification):
+    if not is_classification:
+        # No target
+        pass
+    elif all(is_classification):
         y = np.hstack([np.take(nominal_attributes.pop(col_name),
-                               y[:, i].astype(int))
+                               y[:, i:i+1].astype(int))
                        for i, col_name in enumerate(target_column)])
     elif any(is_classification):
         raise ValueError('Mix of nominal and non-nominal targets is not '
