@@ -112,7 +112,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
         candidate_ids = np.searchsorted(stable_cumsum(closest_dist_sq),
                                         rand_vals)
         # XXX: numerical imprecision can result in a candidate_id out of range
-        np.clip(candidate_ids, None, len(closest_dist_sq) - 1,
+        np.clip(candidate_ids, None, closest_dist_sq.size - 1,
                 out=candidate_ids)
 
         # Compute distances to center candidates
