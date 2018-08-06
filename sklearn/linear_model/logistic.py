@@ -1136,9 +1136,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     >>> clf = LogisticRegression(random_state=0).fit(X, y)
     >>> clf.score(X, y) # doctest: +ELLIPSIS
     0.96
-    >>> clf.predict_proba(X[:2,:])
-    array([[8.78030305e-01, 1.21958900e-01, 1.07949250e-05],
-           [7.97058292e-01, 2.02911413e-01, 3.02949242e-05]])
+    >>> clf.predict_proba(X[:2,:]) # doctest: +ELLIPSIS
+    array([[8.78...e-01, 1.21...e-01, 1.07...e-05],
+           [7.97...e-01, 2.02...e-01, 3.02...e-05]])
 
     See also
     --------
@@ -1592,9 +1592,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     >>> clf = LogisticRegressionCV(cv=5, random_state=0).fit(X, y)
     >>> clf.score(X, y) # doctest: +ELLIPSIS
     0.9266...
-    >>> clf.predict_proba(X[:2,:])
-    array([[8.72748391e-01, 1.27251609e-01, 5.50605908e-14],
-           [6.76642824e-01, 3.23357176e-01, 2.11651399e-13]])
+    >>> clf.predict_proba(X[:2,:]) # doctest: +ELLIPSIS
+    array([[8.72...e-01, 1.27...e-01, 5.50...e-14],
+           [6.76...e-01, 3.23...e-01, 2.11...e-13]])
 
     See also
     --------
