@@ -134,17 +134,18 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
     Examples
     --------
-    >>> from sklearn.datasets import load_diabetes
+    >>> from sklearn.datasets import make_friedman2
     >>> from sklearn.gaussian_process import GaussianProcessRegressor
-    >>> from sklearn.gaussian_process.kernels import DotProduct
-    >>> X, y = load_diabetes(return_X_y=True)
-    >>> kernel = DotProduct(sigma_0_bounds=(1e-3, 1e3))
+    >>> from sklearn.gaussian_process.kernels import DotProduct, WhiteKernel
+    >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
+    >>> #kernel = DotProduct(sigma_0_bounds=(1e-3, 1e3))
+    >>> kernel = DotProduct() + WhiteKernel()
     >>> gpr = GaussianProcessRegressor(kernel=kernel,
     ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y) # doctest: +ELLIPSIS
-    0.5177...
-    >>> gpr.predict(X[:2,:], return_std=True)
-    (array([206.11862183,  68.05764771]), array([0.00390714, 0.00095725]))
+    0.3680293861017355
+    >>> gpr.predict(X[:2,:], return_std=True) # doctest: +ELLIPSIS
+    (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
 
     """
     def __init__(self, kernel=None, alpha=1e-10,
