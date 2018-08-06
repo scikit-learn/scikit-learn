@@ -1592,7 +1592,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     >>> clf = LogisticRegressionCV(cv=5, random_state=0).fit(X, y)
     >>> clf.score(X, y) # doctest: +ELLIPSIS
     0.9266...
-    >>> clf.predict_proba(X[:2,:]) # doctest: +ELLIPSIS
+    >>> clf.predict_proba(X[:2, :]) # doctest: +ELLIPSIS
     array([[8.72...e-01, 1.27...e-01, 5.50...e-14],
            [6.76...e-01, 3.23...e-01, 2.11...e-13]])
 
