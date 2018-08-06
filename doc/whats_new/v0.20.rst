@@ -318,6 +318,8 @@ Support for Python 3.3 has been officially dropped.
   :issue:`10441` by :user:`Mayur Kulkarni <maykulkarni>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+.. rubric:: :mod:`sklearn.feature_selection`:
+
 - |Feature| Added select K best features functionality to
   :class:`feature_selection.SelectFromModel`.
   :issue:`6689` by :user:`Nihar Sheth <nsheth12>` and
@@ -453,6 +455,8 @@ Support for Python 3.3 has been officially dropped.
   perform more than the requested maximum number of iterations. Now both
   estimators will report at most ``max_iter`` iterations even if more were
   performed. :issue:`10723` by `Joel Nothman`_.
+
+.. rubric:: :mod:`sklearn.manifold`:
 
 - |Efficiency| Speed improvements for both 'exact' and 'barnes_hut' methods in
   :class:`manifold.TSNE`. :issue:`10593` and :issue:`10610` by
