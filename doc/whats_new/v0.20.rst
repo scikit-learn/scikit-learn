@@ -905,34 +905,6 @@ Support for Python 3.3 has been officially dropped.
   that arrays of bytes/strings will be interpreted as decimal numbers
   beginning in version 0.22. :issue:`10229` by :user:`Ryan Lee <rtlee9>`
 
-Miscellaneous
-
-- |MajorFeature|_ A new configuration parameter, ``working_memory`` was added
-  to control memory consumption limits in chunked operations, such as the new
-  :func:`metrics.pairwise_distances_chunked`.  See :ref:`working_memory`.
-  :issue:`10280` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
-
-- |Feature|_ Add almost complete PyPy 3 support. Known unsupported
-  functionalities are :func:`datasets.load_svmlight_file`,
-  :class:`feature_extraction.FeatureHasher` and
-  :class:`feature_extraction.text.HashingVectorizer`.  For running on PyPy,
-  PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+ are required.
-  :issue:`11010` by :user:`Ronan Lamy <rlamy>` and `Roman Yurchak`_.
-
-- |Feature|_ An environment variable to use the site joblib instead of the
-  vendored one was added (:ref:`environment_variable`). The main API of joblib
-  is now exposed in :mod:`sklearn.utils`.
-  :issue:`11166`by `Gael Varoquaux`_.
-
-- |Feature|_ A utility method :func:`sklearn.show_versions()` was added to
-  print out information relevant for debugging. It includes the user system,
-  the Python executable, the version of the main libraries and BLAS binding
-  information.  :issue:`11596` by :user:`Alexandre Boucaud <aboucaud>`
-
-- |Fix|_ Fixed a bug when setting parameters on meta-estimator, involving both
-  a wrapped estimator and its parameter. :issue:`9999` by :user:`Marcus Voss
-  <marcus-voss>` and `Joel Nothman`_.
-
 Multiple modules
 
 - |Feature|_ |API|_ More consistent outlier detection API:
@@ -975,6 +947,34 @@ Multiple modules
   :func:`decomposition.fastica`, :class:`cross_decomposition.PLSCanonical`,
   :class:`cluster.AffinityPropagation`, and :class:`cluster.Birch`.
   :issue:`#10306` by :user:`Jonathan Siebert <jotasi>`.
+
+Miscellaneous
+
+- |MajorFeature|_ A new configuration parameter, ``working_memory`` was added
+  to control memory consumption limits in chunked operations, such as the new
+  :func:`metrics.pairwise_distances_chunked`.  See :ref:`working_memory`.
+  :issue:`10280` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
+
+- |Feature|_ Add almost complete PyPy 3 support. Known unsupported
+  functionalities are :func:`datasets.load_svmlight_file`,
+  :class:`feature_extraction.FeatureHasher` and
+  :class:`feature_extraction.text.HashingVectorizer`.  For running on PyPy,
+  PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+ are required.
+  :issue:`11010` by :user:`Ronan Lamy <rlamy>` and `Roman Yurchak`_.
+
+- |Feature|_ An environment variable to use the site joblib instead of the
+  vendored one was added (:ref:`environment_variable`). The main API of joblib
+  is now exposed in :mod:`sklearn.utils`.
+  :issue:`11166`by `Gael Varoquaux`_.
+
+- |Feature|_ A utility method :func:`sklearn.show_versions()` was added to
+  print out information relevant for debugging. It includes the user system,
+  the Python executable, the version of the main libraries and BLAS binding
+  information.  :issue:`11596` by :user:`Alexandre Boucaud <aboucaud>`
+
+- |Fix|_ Fixed a bug when setting parameters on meta-estimator, involving both
+  a wrapped estimator and its parameter. :issue:`9999` by :user:`Marcus Voss
+  <marcus-voss>` and `Joel Nothman`_.
 
 Changes to estimator checks
 ---------------------------
