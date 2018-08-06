@@ -296,9 +296,9 @@ def test_same_multiple_output_sparse_dense():
 
 def test_sparse_enet_coordinate_descent():
     """Test that a warning is issued if model does not converge"""
-    clf = Lasso()
-    n_samples = 15500
-    n_features = 500
+    clf = Lasso(max_iter=2)
+    n_samples = 5
+    n_features = 2
     X = sp.csc_matrix((n_samples, n_features)) * 1e50
-    y = np.ones([n_samples])
+    y = np.ones(n_samples)
     assert_warns(ConvergenceWarning, clf.fit, X, y)
