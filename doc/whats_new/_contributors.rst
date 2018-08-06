@@ -4,6 +4,20 @@
     for core contributors, and occasionally for contributors who do not want
     their github page to be their URL target. Historically it was used to
     hyperlink all contributors' names, and ``:user:`` should now be preferred.
+    It also defines other ReST substitutions.
+
+
+.. |API| replace:: [API Change]
+.. |Fix| replace:: [Fix]
+.. |Efficiency| replace:: [Efficiency]
+.. |Feature| replace:: [Feature]
+.. |MajorFeature| replace:: [Major Feature]
+
+..
+   Other/minor enhancement (e.g. better error message):
+
+.. |Enhancement| replace:: [Enhancement]
+
 
 
 .. _Olivier Grisel: https://twitter.com/ogrisel
