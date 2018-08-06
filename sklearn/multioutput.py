@@ -63,7 +63,7 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
 class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
                                               MetaEstimatorMixin)):
     @abstractmethod
-    def __init__(self, estimator, n_jobs=1):
+    def __init__(self, estimator, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
@@ -217,7 +217,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         to the overhead of spawning processes.
     """
 
-    def __init__(self, estimator, n_jobs=1):
+    def __init__(self, estimator, n_jobs=None):
         super(MultiOutputRegressor, self).__init__(estimator, n_jobs)
 
     @if_delegate_has_method('estimator')
@@ -309,7 +309,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         Estimators used for predictions.
     """
 
-    def __init__(self, estimator, n_jobs=1):
+    def __init__(self, estimator, n_jobs=None):
         super(MultiOutputClassifier, self).__init__(estimator, n_jobs)
 
     def predict_proba(self, X):

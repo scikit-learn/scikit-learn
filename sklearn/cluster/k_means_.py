@@ -25,12 +25,13 @@ from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _num_samples
 from ..utils import check_array
-from ..utils import check_random_state
 from ..utils import gen_batches
+from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..utils import Parallel
 from ..utils import delayed
+from ..utils import effective_n_jobs
 from ..externals.six import string_types
 from ..exceptions import ConvergenceWarning
 from . import _k_means
@@ -184,8 +185,8 @@ def _check_sample_weight(X, sample_weight):
 
 def k_means(X, n_clusters, sample_weight=None, init='k-means++',
             precompute_distances='auto', n_init=10, max_iter=300,
-            verbose=False, tol=1e-4, random_state=None, copy_x=True, n_jobs=1,
-            algorithm="auto", return_n_iter=False):
+            verbose=False, tol=1e-4, random_state=None, copy_x=True,
+            n_jobs=None, algorithm="auto", return_n_iter=False):
     """K-means clustering algorithm.
 
     Read more in the :ref:`User Guide <k_means>`.
@@ -368,7 +369,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
     else:
         raise ValueError("Algorithm must be 'auto', 'full' or 'elkan', got"
                          " %s" % str(algorithm))
-    if n_jobs == 1:
+    if effective_n_jobs(n_jobs):
         # For a single thread, less memory is needed if we just store one set
         # of the best results (as opposed to one set per run per thread).
         for it in range(n_init):
@@ -913,7 +914,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     def __init__(self, n_clusters=8, init='k-means++', n_init=10,
                  max_iter=300, tol=1e-4, precompute_distances='auto',
                  verbose=0, random_state=None, copy_x=True,
-                 n_jobs=1, algorithm='auto'):
+                 n_jobs=None, algorithm='auto'):
 
         self.n_clusters = n_clusters
         self.init = init

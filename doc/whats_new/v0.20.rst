@@ -190,8 +190,6 @@ Support for Python 3.3 has been officially dropped.
   data points could be generated. :issue:`10037` by :user:`Christian Braune
   <christianbraune79>`.
 
-:mod:`decomposition`
-
 - |Feature|_ |Fix|_ :class:`decomposition.SparsePCA` now exposes
   ``normalize_components``. When set to True, the train and test data are
   centered with the train mean repsectively during the fit phase and the
@@ -320,8 +318,6 @@ Support for Python 3.3 has been officially dropped.
   :issue:`10441` by :user:`Mayur Kulkarni <maykulkarni>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
-:mod:`feature_selection`
-
 - |Feature|_ Added select K best features functionality to
   :class:`feature_selection.SelectFromModel`.
   :issue:`6689` by :user:`Nihar Sheth <nsheth12>` and
@@ -377,6 +373,12 @@ Support for Python 3.3 has been officially dropped.
 - |Feature|_ Add `sample_weight` parameter to the fit method of
   :class:`linear_model.BayesianRidge` for weighted linear regression.
   :issue:`10111` by :user:`Peter St. John <pstjohn>`.
+
+- |Fix|_ Fixed a bug in :func:`logistic.logistic_regression_path` to ensure
+  that the returned coefficients are correct when ``multiclass='multinomial'``.
+  Previously, some of the coefficients would override each other, leading to
+  incorrect results in :class:`logistic.LogisticRegressionCV`.
+  :issue:`11724` by :user:`Nicolas Hug <NicolasHug>`.
 
 - |Fix|_ Fixed a bug in :class:`linear_model.LogisticRegression` where when using
   the parameter ``multi_class='multinomial'``, the ``predict_proba`` method was
@@ -451,8 +453,6 @@ Support for Python 3.3 has been officially dropped.
   perform more than the requested maximum number of iterations. Now both
   estimators will report at most ``max_iter`` iterations even if more were
   performed. :issue:`10723` by `Joel Nothman`_.
-
-:mod:`manifold`
 
 - |Efficiency|_ Speed improvements for both 'exact' and 'barnes_hut' methods in
   :class:`manifold.TSNE`. :issue:`10593` and :issue:`10610` by
@@ -613,9 +613,16 @@ Support for Python 3.3 has been officially dropped.
   when an error occurs in :func:`model_selection._fit_and_score`.
   :issue:`11576` by :user:`Samuel O. Ronsin <samronsin>`.
 
-- |Enhancement|_ Add improved error message in :func:`model_selection.cross_val_score` when
-  multiple metrics are passed in ``scoring`` keyword.
-  :issue:`11006` by :user:`Ming Li <minggli>`.
+- |Feature|_ `BaseSearchCV` now has an experimental, private interface to
+  support customized parameter search strategies, through its ``_run_search``
+  method.  See the implementations in :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` and please provide feedback if
+  you use this. Note that we do not assure the stability of this API beyond
+  version 0.20. :issue:`9599` by `Joel Nothman`_
+
+- |Enhancement|_ Add improved error message in
+  :func:`model_selection.cross_val_score` when multiple metrics are passed in
+  ``scoring`` keyword.  :issue:`11006` by :user:`Ming Li <minggli>`.
 
 - |API|_ The default number of cross-validation folds ``cv`` and the default
   number of splits ``n_splits`` in the :class:`model_selection.KFold`-like
@@ -916,6 +923,11 @@ Miscellaneous
   vendored one was added (:ref:`environment_variable`). The main API of joblib
   is now exposed in :mod:`sklearn.utils`.
   :issue:`11166`by `Gael Varoquaux`_.
+
+- |Feature|_ A utility method :func:`sklearn.show_versions()` was added to
+  print out information relevant for debugging. It includes the user system,
+  the Python executable, the version of the main libraries and BLAS binding
+  information.  :issue:`11596` by :user:`Alexandre Boucaud <aboucaud>`
 
 - |Fix|_ Fixed a bug when setting parameters on meta-estimator, involving both
   a wrapped estimator and its parameter. :issue:`9999` by :user:`Marcus Voss

@@ -571,7 +571,7 @@ class GraphicalLassoCV(GraphicalLasso):
     """
 
     def __init__(self, alphas=4, n_refinements=4, cv='warn', tol=1e-4,
-                 enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=1,
+                 enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=None,
                  verbose=False, assume_centered=False):
         super(GraphicalLassoCV, self).__init__(
             mode=mode, tol=tol, verbose=verbose, enet_tol=enet_tol,

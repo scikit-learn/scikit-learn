@@ -161,7 +161,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
                  contamination="legacy",
                  max_features=1.,
                  bootstrap=False,
-                 n_jobs=1,
+                 n_jobs=None,
                  behaviour='old',
                  random_state=None,
                  verbose=0):

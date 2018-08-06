@@ -26,6 +26,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import ignore_warnings
@@ -54,6 +55,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
+from sklearn.model_selection._search import BaseSearchCV
 
 from sklearn.model_selection._validation import FitFailedWarning
 
@@ -936,8 +938,8 @@ def test_random_search_cv_results():
         check_cv_results_array_types(search, param_keys, score_keys)
         check_cv_results_keys(cv_results, param_keys, score_keys, n_cand)
         # For random_search, all the param array vals should be unmasked
-        assert_false(any(cv_results['param_C'].mask) or
-                     any(cv_results['param_gamma'].mask))
+        assert_false(any(np.ma.getmaskarray(cv_results['param_C'])) or
+                     any(np.ma.getmaskarray(cv_results['param_gamma'])))
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -1625,6 +1627,55 @@ def test_transform_inverse_transform_round_trip():
     grid_search.fit(X, y)
     X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
     assert_array_equal(X, X_round_trip)
+
+
+def test_custom_run_search():
+    def check_results(results, gscv):
+        exp_results = gscv.cv_results_
+        assert sorted(results.keys()) == sorted(exp_results)
+        for k in results:
+            if not k.endswith('_time'):
+                # XXX: results['params'] is a list :|
+                results[k] = np.asanyarray(results[k])
+                if results[k].dtype.kind == 'O':
+                    assert_array_equal(exp_results[k], results[k],
+                                       err_msg='Checking ' + k)
+                else:
+                    assert_allclose(exp_results[k], results[k],
+                                    err_msg='Checking ' + k)
+
+    def fit_grid(param_grid):
+        return GridSearchCV(clf, param_grid, cv=5,
+                            return_train_score=True).fit(X, y)
+
+    class CustomSearchCV(BaseSearchCV):
+        def __init__(self, estimator, **kwargs):
+            super(CustomSearchCV, self).__init__(estimator, **kwargs)
+
+        def _run_search(self, evaluate):
+            results = evaluate([{'max_depth': 1}, {'max_depth': 2}])
+            check_results(results, fit_grid({'max_depth': [1, 2]}))
+            results = evaluate([{'min_samples_split': 5},
+                                {'min_samples_split': 10}])
+            check_results(results, fit_grid([{'max_depth': [1, 2]},
+                                             {'min_samples_split': [5, 10]}]))
+
+    # Using regressor to make sure each score differs
+    clf = DecisionTreeRegressor(random_state=0)
+    X, y = make_classification(n_samples=100, n_informative=4,
+                               random_state=0)
+    mycv = CustomSearchCV(clf, cv=5, return_train_score=True).fit(X, y)
+    gscv = fit_grid([{'max_depth': [1, 2]},
+                     {'min_samples_split': [5, 10]}])
+
+    results = mycv.cv_results_
+    check_results(results, gscv)
+    for attr in dir(gscv):
+        if attr[0].islower() and attr[-1:] == '_' and \
+           attr not in {'cv_results_', 'best_estimator_',
+                        'refit_time_'}:
+            assert getattr(gscv, attr) == getattr(mycv, attr), \
+                   "Attribute %s not equal" % attr
 
 
 def test_deprecated_grid_search_iid():

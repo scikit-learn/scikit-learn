@@ -89,7 +89,7 @@ class Isomap(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_neighbors=5, n_components=2, eigen_solver='auto',
                  tol=0, max_iter=None, path_method='auto',
-                 neighbors_algorithm='auto', n_jobs=1):
+                 neighbors_algorithm='auto', n_jobs=None):
         self.n_neighbors = n_neighbors
         self.n_components = n_components
         self.eigen_solver = eigen_solver
