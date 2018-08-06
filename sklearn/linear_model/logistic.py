@@ -1211,7 +1211,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         else:
             self.intercept_scaling = intercept_scaling
 
-
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
