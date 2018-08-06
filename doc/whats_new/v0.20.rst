@@ -190,6 +190,12 @@ Support for Python 3.3 has been officially dropped.
   data points could be generated. :issue:`10037` by :user:`Christian Braune
   <christianbraune79>`.
 
+.. rubric:: :mod:`sklearn.decomposition`:
+
+- |Feature| :func:`decomposition.dict_learning` functions and models now
+  support positivity constraints.  This applies to the dictionary and sparse
+  code.  :issue:`6374` by :user:`John Kirkham <jakirkham>`.
+
 - |Feature| |Fix| :class:`decomposition.SparsePCA` now exposes
   ``normalize_components``. When set to True, the train and test data are
   centered with the train mean repsectively during the fit phase and the
@@ -223,12 +229,6 @@ Support for Python 3.3 has been officially dropped.
   sparse coding in parallel using readonly memory mapped datastructures.
   :issue:`5956` by :user:`Vighnesh Birodkar <vighneshbirodkar>` and
   :user:`Olivier Grisel <ogrisel>`.
-
-.. rubric:: :mod:`sklearn.dict_learning`:
-
-- |Feature| :mod:`dict_learning` functions and models now support positivity
-  constraints.  This applies to the dictionary and sparse code.  :issue:`6374`
-  by :user:`John Kirkham <jakirkham>`.
 
 .. rubric:: :mod:`sklearn.discriminant_analysis`:
 
