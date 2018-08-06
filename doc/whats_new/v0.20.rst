@@ -325,7 +325,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Fix| Fixed computation of ``n_features_to_compute`` for edge case with tied
   CV scores in :class:`feature_selection.RFECV`.
-  :issue:`9222` by `Nick Hoh <nickypie>`.
+  :issue:`9222` by :user:`Nick Hoh <nickypie>`.
 
 :mod:`gaussian_process`
 
