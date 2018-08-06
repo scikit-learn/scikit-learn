@@ -1182,9 +1182,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
-                 fit_intercept=True, intercept_scaling=1, class_weight=None,
-                 random_state=None, solver='liblinear', max_iter=100,
-                 multi_class='ovr', verbose=0, warm_start=False, n_jobs=None):
+                 fit_intercept=True, intercept_scaling='warn',
+                 class_weight=None, random_state=None,
+                 solver='liblinear', max_iter=100, multi_class='ovr',
+                 verbose=0, warm_start=False, n_jobs=None):
 
         self.penalty = penalty
         self.dual = dual
@@ -1233,6 +1234,13 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
+        if self.fit_intercept and self.intercept_scaling == 'warn':
+            warnings.warn("liblinear does not regularize the intercept."
+                          " Therefore intercept_scaling should be set "
+                          "appropriately when fit_intercept is set to True. "
+                          "Default value of 1. is used.",
+                          UserWarning)
+            self.intercept_scaling = 1.
 
         if self.solver in ['newton-cg']:
             _dtype = [np.float64, np.float32]
