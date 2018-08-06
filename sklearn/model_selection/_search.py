@@ -734,7 +734,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 self.best_index_ = self.refit(results)
             else:
 
-                self.best_index_ = results["rank_test_%s" 
+                self.best_index_ = results["rank_test_%s"
                                            % refit_metric].argmin()
                 self.best_score_ = results["mean_test_%s" % refit_metric][
                                            self.best_index_]
