@@ -384,16 +384,19 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     data : Bunch
         Dictionary-like object, the interesting attributes are:
-        data : np.array or scipy.sparse.csr_matrix
-            the feature matrix
+        data : np.array or scipy.sparse.csr_matrix of floats
+            The feature matrix. Categorical features are encoded as ordinals.
         target : np.array
-            the regression target or classification labels, if applicable
+            The regression target or classification labels, if applicable
         DESCR : str
-            the full description of the dataset
+            The full description of the dataset
         feature_names : list
-            the original names of the dataset columns
-        details : json
-            more metadata from OpenML
+            The names of the dataset columns
+        categories : dict
+            Maps each categorical feature name to a list of values, such
+            that the value encoded as i is ith in the list.
+        details : dict
+            More metadata from OpenML
 
         Missing values in the 'data' and 'target' field are represented as
         NaN's.
@@ -480,9 +483,25 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         return_sparse = True
 
     # obtain the data
-    arff_data = _download_data_arff(data_description['file_id'], return_sparse,
-                                    data_home)['data']
+    arff = _download_data_arff(data_description['file_id'], return_sparse,
+                               data_home)
+    arff_data = arff['data']
+    nominal_attributes = {k: v for k, v in arff['attributes']
+                          if isinstance(v, list)}
     X, y = _convert_arff_data(arff_data, col_slice_x, col_slice_y)
+
+    is_classification = {col_name in nominal_attributes
+                         for col_name in target_column}
+    if not is_classification:
+        # No target
+        pass
+    elif all(is_classification):
+        y = np.hstack([np.take(nominal_attributes.pop(col_name),
+                               y[:, i:i+1].astype(int))
+                       for i, col_name in enumerate(target_column)])
+    elif any(is_classification):
+        raise ValueError('Mix of nominal and non-nominal targets is not '
+                         'currently supported')
 
     description = u"{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
@@ -497,6 +516,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     bunch = Bunch(
         data=X, target=y, feature_names=data_columns,
         DESCR=description, details=data_description, features=features_list,
+        categories=nominal_attributes,
         url="https://www.openml.org/d/{}".format(data_id))
 
     return bunch
