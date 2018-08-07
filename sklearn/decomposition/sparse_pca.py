@@ -96,6 +96,24 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.decomposition import SparsePCA
+    >>> 
+    >>> X, _ = load_iris(return_X_y=True)
+    >>> 
+    >>> transformer = SparsePCA(n_components=2,
+    ...         normalize_components=True,
+    ...         random_state=0)
+    >>> transformer.fit(X)
+    SparsePCA(U_init=None, V_init=None, alpha=1, max_iter=1000, method='lars',
+         n_components=2, n_jobs=None, normalize_components=True,
+         random_state=0, ridge_alpha=0.01, tol=1e-08, verbose=False)
+    >>> X_transformed = transformer.transform(X)
+    >>> X_transformed.shape
+    (150, 2)
+
     See also
     --------
     PCA
