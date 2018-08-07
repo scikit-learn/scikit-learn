@@ -100,9 +100,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     --------
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.decomposition import SparsePCA
-    >>> 
     >>> X, _ = load_iris(return_X_y=True)
-    >>> 
     >>> transformer = SparsePCA(n_components=2,
     ...         normalize_components=True,
     ...         random_state=0)
@@ -329,6 +327,24 @@ class MiniBatchSparsePCA(SparsePCA):
     mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.decomposition import MiniBatchSparsePCA
+    >>> X, _ = load_iris(return_X_y=True)
+    >>> transformer = MiniBatchSparsePCA(n_components=2,
+    ...         batch_size=50,
+    ...         normalize_components=True,
+    ...         random_state=0)
+    >>> transformer.fit(X)
+    MiniBatchSparsePCA(alpha=1, batch_size=50, callback=None, method='lars',
+              n_components=2, n_iter=100, n_jobs=None,
+              normalize_components=True, random_state=0, ridge_alpha=0.01,
+              shuffle=True, verbose=False)
+    >>> X_transformed = transformer.transform(X)
+    >>> X_transformed.shape
+    (150, 2)
 
     See also
     --------
