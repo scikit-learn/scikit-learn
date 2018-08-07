@@ -511,6 +511,10 @@ Support for Python 3.3 has been officially dropped.
   to return classification statistics as dictionary.
   :issue:`11160` by :user:`Dan Barkhorn <danielbarkhorn>`.
 
+- |Feature| :func:`metrics.classification_report` now reports all applicable averages on
+  the given data, including micro, macro and weighted average as well as samples
+  average for multilabel data. :issue:`11679` by :user:`Alexander Pacha <apacha>`. 
+
 - |Feature| :func:`metrics.average_precision_score` now supports binary
   ``y_true`` other than ``{0, 1}`` or ``{-1, 1}`` through ``pos_label``
   parameter. :issue:`9980` by :user:`Hanmin Qin <qinhanmin2014>`.

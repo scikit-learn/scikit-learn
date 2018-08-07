@@ -1483,9 +1483,12 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
               ...
             }
 
-        The reported averages are a prevalence-weighted macro-average across
-        classes (equivalent to :func:`precision_recall_fscore_support` with
-        ``average='weighted'``).
+        The reported averages include micro average (averaging the
+        total true positives, false negatives and false positives), macro
+        average (averaging the unweighted mean per label), weighted average
+        (averaging the support-weighted mean per label) and sample average
+        (only for multilabel classification). See also
+        :func:`precision_recall_fscore_support` for more details on averages.
 
         Note that in binary classification, recall of the positive class
         is also known as "sensitivity"; recall of the negative class is
@@ -1498,16 +1501,19 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     >>> y_pred = [0, 0, 2, 2, 1]
     >>> target_names = ['class 0', 'class 1', 'class 2']
     >>> print(classification_report(y_true, y_pred, target_names=target_names))
-                 precision    recall  f1-score   support
+                  precision    recall  f1-score   support
     <BLANKLINE>
-        class 0       0.50      1.00      0.67         1
-        class 1       0.00      0.00      0.00         1
-        class 2       1.00      0.67      0.80         3
+         class 0       0.50      1.00      0.67         1
+         class 1       0.00      0.00      0.00         1
+         class 2       1.00      0.67      0.80         3
     <BLANKLINE>
-    avg / total       0.70      0.60      0.61         5
+       micro avg       0.60      0.60      0.60         5
+       macro avg       0.50      0.56      0.49         5
+    weighted avg       0.70      0.60      0.61         5
     <BLANKLINE>
-
     """
+
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
     labels_given = True
     if labels is None:
@@ -1528,53 +1534,59 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
                 "target_names, {1}. Try specifying the labels "
                 "parameter".format(len(labels), len(target_names))
             )
-
-    last_line_heading = 'avg / total'
-
     if target_names is None:
         target_names = [u'%s' % l for l in labels]
-    name_width = max(len(cn) for cn in target_names)
-    width = max(name_width, len(last_line_heading), digits)
 
     headers = ["precision", "recall", "f1-score", "support"]
-    head_fmt = u'{:>{width}s} ' + u' {:>9}' * len(headers)
-    report = head_fmt.format(u'', *headers, width=width)
-    report += u'\n\n'
-
+    # compute per-class results without averaging
     p, r, f1, s = precision_recall_fscore_support(y_true, y_pred,
                                                   labels=labels,
                                                   average=None,
                                                   sample_weight=sample_weight)
-
-    row_fmt = u'{:>{width}s} ' + u' {:>9.{digits}f}' * 3 + u' {:>9}\n'
     rows = zip(target_names, p, r, f1, s)
 
-    avg_total = [np.average(p, weights=s),
-                 np.average(r, weights=s),
-                 np.average(f1, weights=s),
-                 np.sum(s)]
+    if y_type.startswith('multilabel'):
+        average_options = ('micro', 'macro', 'weighted', 'samples')
+    else:
+        average_options = ('micro', 'macro', 'weighted')
 
     if output_dict:
         report_dict = {label[0]: label[1:] for label in rows}
-
         for label, scores in report_dict.items():
-            report_dict[label] = dict(zip(headers, scores))
+            report_dict[label] = dict(zip(headers,
+                                          [i.item() for i in scores]))
+    else:
+        longest_last_line_heading = 'weighted avg'
+        name_width = max(len(cn) for cn in target_names)
+        width = max(name_width, len(longest_last_line_heading), digits)
+        head_fmt = u'{:>{width}s} ' + u' {:>9}' * len(headers)
+        report = head_fmt.format(u'', *headers, width=width)
+        report += u'\n\n'
+        row_fmt = u'{:>{width}s} ' + u' {:>9.{digits}f}' * 3 + u' {:>9}\n'
+        for row in rows:
+            report += row_fmt.format(*row, width=width, digits=digits)
+        report += u'\n'
 
-        report_dict['avg / total'] = dict(zip(headers, avg_total))
+    # compute all applicable averages
+    for average in average_options:
+        line_heading = average + ' avg'
+        # compute averages with specified averaging method
+        avg_p, avg_r, avg_f1, _ = precision_recall_fscore_support(
+            y_true, y_pred, labels=labels,
+            average=average, sample_weight=sample_weight)
+        avg = [avg_p, avg_r, avg_f1, np.sum(s)]
 
+        if output_dict:
+            report_dict[line_heading] = dict(
+                zip(headers, [i.item() for i in avg]))
+        else:
+            report += row_fmt.format(line_heading, *avg,
+                                     width=width, digits=digits)
+
+    if output_dict:
         return report_dict
-
-    for row in rows:
-        report += row_fmt.format(*row, width=width, digits=digits)
-
-    report += u'\n'
-
-    # append averages
-    report += row_fmt.format(last_line_heading,
-                             *avg_total,
-                             width=width, digits=digits)
-
-    return report
+    else:
+        return report
 
 
 def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
