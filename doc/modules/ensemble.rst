@@ -260,14 +260,13 @@ respect to the predictability of the target variable. Features used at
 the top of the tree contribute to the final prediction decision of a
 larger fraction of the input samples. The **expected fraction of the
 samples** they contribute to can thus be used as an estimate of the
-**relative importance of the features**. In scikit-learn, this fraction
-is combined with the mean decrease in impurity (MDI)
-to create a normalized estimate of improvement in the predictive ability
-of the tree. Refer to [L2014]_ for more information on MDI and feature importance evaluation with Random Forests.
+**relative importance of the features**. In scikit-learn, the fraction of
+observations is combined with the decrease in impurity from splitting them
+to create a normalized estimate of the predictive power of that feature.
 
-By **averaging** those expected activity rates over several randomized
+By **averaging** the estimates of predictive ability over several randomized
 trees one can **reduce the variance** of such an estimate and use it
-for feature selection.
+for feature selection. This is known as the mean decrease in impurity, or MDI. Refer to [L2014]_ for more information on MDI and feature importance evaluation with Random Forests.
 
 The following example shows a color-coded representation of the relative
 importances of each individual pixel for a face recognition task using
