@@ -108,6 +108,20 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     n_iter_ : int
         Number of iterations run.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import FactorAnalysis
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = FactorAnalysis(n_components=10, random_state=0)
+    >>> transformer.fit(X)
+    FactorAnalysis(copy=True, iterated_power=3, max_iter=1000, n_components=10,
+            noise_variance_init=None, random_state=0, svd_method='randomized',
+            tol=0.01)
+    >>> X_transformed = transformer.transform(X)
+    >>> X_transformed.shape
+    (1797, 10)
+
     References
     ----------
     .. David Barber, Bayesian Reasoning and Machine Learning,
