@@ -228,7 +228,13 @@ Misc
 - An environment variable to use the site joblib instead of the vendored
   one was added (:ref:`environment_variable`). The main API of joblib is now
   exposed in :mod:`sklearn.utils`.
-  :issue:`11166`by `Gael Varoquaux`_
+  :issue:`11166` by `Gael Varoquaux`_
+
+- A utility method :func:`sklearn.show_versions()` was added to print out
+  information relevant for debugging. It includes the user system, the
+  Python executable, the version of the main libraries and BLAS binding
+  information.
+  :issue:`11596` by :user:`Alexandre Boucaud <aboucaud>`
 
 Enhancements
 ............
@@ -384,6 +390,13 @@ Model evaluation and meta-estimators
   :func:`model_selection.validation_curve` to control the behavior triggered
   when an error occurs in :func:`model_selection._fit_and_score`.
   :issue:`11576` by :user:`Samuel O. Ronsin <samronsin>`.
+
+- `BaseSearchCV` now has an experimental, private interface to support
+  customized parameter search strategies, through its ``_run_search``
+  method.  See the implementations in :class:`model_selection.GridSearchCV`
+  and :class:`model_selection.RandomizedSearchCV` and please provide feedback
+  if you use this. Note that we do not assure the stability of this API
+  beyond version 0.20. :issue:`9599` by `Joel Nothman`_
 
 Decomposition and manifold learning
 
@@ -580,6 +593,12 @@ Classifiers and regressors
   cause suboptimal splits to be chosen since the impurity calculation
   considered all samples to be of equal weight importance.
   :issue:`11464` by :user:`John Stott <JohnStott>`.
+
+- Fixed a bug in :func:`logistic.logistic_regression_path` to ensure that the
+  returned coefficients are correct when ``multiclass='multinomial'``.
+  Previously, some of the coefficients would override each other, leading to
+  incorrect results in :class:`logistic.LogisticRegressionCV`. :issue:`11724`
+  by :user:`Nicolas Hug <NicolasHug>`.
 
 Decomposition, manifold learning and clustering
 

@@ -389,6 +389,17 @@ class SelectPercentile(_BaseFilter):
     pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores, None if `score_func` returned only scores.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.feature_selection import SelectPercentile, chi2
+    >>> X, y = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> X_new = SelectPercentile(chi2, percentile=10).fit_transform(X, y)
+    >>> X_new.shape
+    (1797, 7)
+
     Notes
     -----
     Ties between features with equal scores will be broken in an unspecified
@@ -463,6 +474,17 @@ class SelectKBest(_BaseFilter):
     pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores, None if `score_func` returned only scores.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.feature_selection import SelectKBest, chi2
+    >>> X, y = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> X_new = SelectKBest(chi2, k=20).fit_transform(X, y)
+    >>> X_new.shape
+    (1797, 20)
+
     Notes
     -----
     Ties between features with equal scores will be broken in an unspecified
@@ -536,6 +558,17 @@ class SelectFpr(_BaseFilter):
     pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import SelectFpr, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> X_new = SelectFpr(chi2, alpha=0.01).fit_transform(X, y)
+    >>> X_new.shape
+    (569, 16)
+
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
@@ -579,6 +612,16 @@ class SelectFdr(_BaseFilter):
     alpha : float, optional
         The highest uncorrected p-value for features to keep.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import SelectFdr, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> X_new = SelectFdr(chi2, alpha=0.01).fit_transform(X, y)
+    >>> X_new.shape
+    (569, 16)
 
     Attributes
     ----------
@@ -637,6 +680,17 @@ class SelectFwe(_BaseFilter):
 
     alpha : float, optional
         The highest uncorrected p-value for features to keep.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import SelectFwe, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> X_new = SelectFwe(chi2, alpha=0.01).fit_transform(X, y)
+    >>> X_new.shape
+    (569, 15)
 
     Attributes
     ----------
@@ -699,6 +753,18 @@ class GenericUnivariateSelect(_BaseFilter):
 
     pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores, None if `score_func` returned scores only.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import GenericUnivariateSelect, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> transformer = GenericUnivariateSelect(chi2, 'k_best', param=20)
+    >>> X_new = transformer.fit_transform(X, y)
+    >>> X_new.shape
+    (569, 20)
 
     See also
     --------
