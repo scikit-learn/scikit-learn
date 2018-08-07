@@ -1234,7 +1234,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
-        if self.fit_intercept and self.intercept_scaling == 'warn':
+        if self.solver == 'liblinear' and self.fit_intercept and \
+           self.intercept_scaling == 'warn':
             warnings.warn("liblinear does not regularize the intercept."
                           " Therefore intercept_scaling should be set "
                           "explicitly when fit_intercept is set to True. "
