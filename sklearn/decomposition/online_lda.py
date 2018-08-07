@@ -18,10 +18,10 @@ import warnings
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
-                     gen_batches, gen_even_slices, _get_n_jobs)
+                     gen_batches, gen_even_slices)
 from ..utils.fixes import logsumexp
 from ..utils.validation import check_non_negative
-from ..utils import Parallel, delayed
+from ..utils import Parallel, delayed, effective_n_jobs
 from ..externals.six.moves import xrange
 from ..exceptions import NotFittedError
 
@@ -268,7 +268,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                  learning_decay=.7, learning_offset=10., max_iter=10,
                  batch_size=128, evaluate_every=-1, total_samples=1e6,
                  perp_tol=1e-1, mean_change_tol=1e-3, max_doc_update_iter=100,
-                 n_jobs=1, verbose=0, random_state=None, n_topics=None):
+                 n_jobs=None, verbose=0, random_state=None, n_topics=None):
         self.n_components = n_components
         self.doc_topic_prior = doc_topic_prior
         self.topic_word_prior = topic_word_prior
@@ -374,7 +374,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         random_state = self.random_state_ if random_init else None
 
         # TODO: make Parallel._effective_n_jobs public instead?
-        n_jobs = _get_n_jobs(self.n_jobs)
+        n_jobs = effective_n_jobs(self.n_jobs)
         if parallel is None:
             parallel = Parallel(n_jobs=n_jobs, verbose=max(0,
                                 self.verbose - 1))
@@ -497,7 +497,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 "the model was trained with feature size %d." %
                 (n_features, self.components_.shape[1]))
 
-        n_jobs = _get_n_jobs(self.n_jobs)
+        n_jobs = effective_n_jobs(self.n_jobs)
         with Parallel(n_jobs=n_jobs, verbose=max(0,
                       self.verbose - 1)) as parallel:
             for idx_slice in gen_batches(n_samples, batch_size):
@@ -538,7 +538,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self._init_latent_vars(n_features)
         # change to perplexity later
         last_bound = None
-        n_jobs = _get_n_jobs(self.n_jobs)
+        n_jobs = effective_n_jobs(self.n_jobs)
         with Parallel(n_jobs=n_jobs, verbose=max(0,
                       self.verbose - 1)) as parallel:
             for i in xrange(max_iter):
