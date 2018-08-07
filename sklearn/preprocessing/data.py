@@ -1085,17 +1085,17 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> from sklearn.preprocessing import RobustScaler
-    >>> X = [[ 1., -1.,  2.],
-    ...      [ 2.,  0.,  0.],
-    ...      [ 0.,  1., -1.]]
+    >>> X = [[ 1., -2.,  2.],
+    ...      [ -2.,  1.,  3.],
+    ...      [ 4.,  1., -2.]]
     >>> transformer = RobustScaler().fit(X)
     >>> transformer
     RobustScaler(copy=True, quantile_range=(25.0, 75.0), with_centering=True,
            with_scaling=True)
     >>> transformer.transform(X)
-    array([[ 0.        , -1.        ,  1.33333333],
-           [ 1.        ,  0.        ,  0.        ],
-           [-1.        ,  1.        , -0.66666667]])
+    array([[ 0. , -2. ,  0. ],
+           [-1. ,  0. ,  0.4],
+           [ 1. ,  0. , -1.6]])
 
     See also
     --------
@@ -1612,16 +1612,16 @@ class Normalizer(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> from sklearn.preprocessing import Normalizer
-    >>> X = [[ 1., -1.,  2.],
-    ...      [ 2.,  0.,  0.],
-    ...      [ 0.,  1., -1.]]
+    >>> X = [[4, 1, 2, 2],
+    ...      [1, 3, 9, 3],
+    ...      [5, 7, 5, 1]]
     >>> transformer = Normalizer().fit(X) # fit does nothing.
     >>> transformer
     Normalizer(copy=True, norm='l2')
     >>> transformer.transform(X)
-    array([[ 0.40824829, -0.40824829,  0.81649658],
-           [ 1.        ,  0.        ,  0.        ],
-           [ 0.        ,  0.70710678, -0.70710678]])
+    array([[0.8, 0.2, 0.4, 0.4],
+           [0.1, 0.3, 0.9, 0.3],
+           [0.5, 0.7, 0.5, 0.1]])
 
     Notes
     -----
@@ -1832,23 +1832,24 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> from sklearn.preprocessing import KernelCenterer
-    >>> from sklearn.gaussian_process.kernels import DotProduct
-    >>> X = [[ 1., -1.,  2.],
-    ...      [ 2.,  0.,  0.],
-    ...      [ 0.,  1., -1.]]
-    >>> K = DotProduct()(X)
+    >>> from sklearn.metrics.pairwise import pairwise_kernels
+    >>> X = [[ 1., -2.,  2.],
+    ...      [ -2.,  1.,  3.],
+    ...      [ 4.,  1., -2.]]
+    >>> K = pairwise_kernels(X, metric='linear')
     >>> K
-    array([[ 7.,  3., -2.],
-           [ 3.,  5.,  1.],
-           [-2.,  1.,  3.]])
+    array([[  9.,   2.,  -2.],
+           [  2.,  14., -13.],
+           [ -2., -13.,  21.]])
     >>> transformer = KernelCenterer().fit(K)
     >>> transformer
     KernelCenterer()
     >>> transformer.transform(K)
-    array([[ 3.77777778, -0.55555556, -3.22222222],
-           [-0.55555556,  1.11111111, -0.55555556],
-           [-3.22222222, -0.55555556,  3.77777778]])
+    array([[  5.,   0.,  -5.],
+           [  0.,  14., -14.],
+           [ -5., -14.,  19.]])
     """
+
     def __init__(self):
         # Needed for backported inspect.signature compatibility with PyPy
         pass
