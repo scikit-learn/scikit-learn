@@ -9,7 +9,7 @@ Version 0.20 (under development)
 
 This release packs in a mountain of bug fixes, features and enhancements for
 the Scikit-learn library, and improvements to the documentation and examples.
-Thanks to our many contributors!
+Thanks to our contributors!
 
 .. warning::
 
@@ -23,7 +23,7 @@ We have tried to improve our support for common data-science use-cases
 including missing values, categorical variables, heterogeneous data, and
 features/targets with unusual distributions.
 Missing values in features, represented by NaNs, are now accepted in
-column-wise preprocessing such as scalers.  Each feature is fitted disregarding
+column-wise preprocessing such as scalers. Each feature is fitted disregarding
 NaNs, and data containing NaNs can be transformed. The new :mod:`impute`
 module provides estimators for learning despite missing data.
 
@@ -63,7 +63,7 @@ random sampling procedures.
 
 - :class:`decomposition.IncrementalPCA` in Python 2 (bug fix)
 - :class:`decomposition.SparsePCA` (bug fix)
-- :class:`ensemble.gradient_boosting.GradientBoostingClassifier` (bug fix affecting feature importances)
+- :class:`ensemble.GradientBoostingClassifier` (bug fix affecting feature importances)
 - :class:`isotonic.IsotonicRegression` (bug fix)
 - :class:`linear_model.ARDRegression` (bug fix)
 - :class:`linear_model.LogisticRegressionCV` (bug fix)
@@ -169,7 +169,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Feature| In :func:`datasets.make_blobs`, one can now pass a list to the
   `n_samples` parameter to indicate the number of samples to generate per
-  cluster.  :issue:`8617` by :user:`Maskani Filali Mohamed <maskani-moh>` and
+  cluster. :issue:`8617` by :user:`Maskani Filali Mohamed <maskani-moh>` and
   :user:`Konstantinos Katrioplas <kkatrio>`.
 
 - |Feature| Add ``filename`` attribute to :mod:`datasets` that have a CSV file.
@@ -177,7 +177,7 @@ Support for Python 3.3 has been officially dropped.
   and :user:`Maskani Filali Mohamed <maskani-moh>`.
 
 - |Fix| Fixed a bug in :func:`datasets.load_boston` which had a wrong data
-  point.  :issue:`10801` by :user:`Takeshi Yoshizawa <tarcusx>`.
+  point. :issue:`10801` by :user:`Takeshi Yoshizawa <tarcusx>`.
 
 - |Fix| Fixed a bug in :func:`datasets.load_iris` which had two wrong data points.
   :issue:`11082` by :user:`Sadhana Srinivasan <rotuna>`
@@ -193,15 +193,15 @@ Support for Python 3.3 has been officially dropped.
 .. rubric:: :mod:`sklearn.decomposition`:
 
 - |Feature| :func:`decomposition.dict_learning` functions and models now
-  support positivity constraints.  This applies to the dictionary and sparse
-  code.  :issue:`6374` by :user:`John Kirkham <jakirkham>`.
+  support positivity constraints. This applies to the dictionary and sparse
+  code. :issue:`6374` by :user:`John Kirkham <jakirkham>`.
 
 - |Feature| |Fix| :class:`decomposition.SparsePCA` now exposes
   ``normalize_components``. When set to True, the train and test data are
   centered with the train mean repsectively during the fit phase and the
   transform phase. This fixes the behavior of SparsePCA. When set to False,
   which is the default, the previous abnormal behaviour still holds. The False
-  value is for backward compatibility and should not be used.  :issue:`11585`
+  value is for backward compatibility and should not be used. :issue:`11585`
   by :user:`Ivan Panico <FollowKenny>`.
 
 - |Fix| Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
@@ -215,7 +215,7 @@ Support for Python 3.3 has been officially dropped.
   :issue:`9492` by :user:`James Bourbeau <jrbourbeau>`.
 
 - |Fix| In :class:`decomposition.PCA` selecting a n_components parameter greater
-  than the number of samples now raises an error.  Similarly, the
+  than the number of samples now raises an error. Similarly, the
   ``n_components=None`` case now selects the minimum of n_samples and
   n_features.
   :issue:`8484` by :user:`Wally Gauze <wallygauze>`.
@@ -233,7 +233,7 @@ Support for Python 3.3 has been officially dropped.
 .. rubric:: :mod:`sklearn.discriminant_analysis`:
 
 - |Efficiency| Memory usage improvement for :func:`_class_means` and
-  :func:`_class_cov` in :mod:`discriminant_analysis`.  :issue:`10898` by
+  :func:`_class_cov` in :mod:`discriminant_analysis`. :issue:`10898` by
   :user:`Nanxin Chen <bobchennan>`.`
 
 .. rubric:: :mod:`sklearn.dummy`:
@@ -242,7 +242,7 @@ Support for Python 3.3 has been officially dropped.
   ``predict`` method. The returned standard deviations will be zeros.
 
 - |Feature| :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor` now
-  only require X to be an object with finite length or shape.  :issue:`9832` by
+  only require X to be an object with finite length or shape. :issue:`9832` by
   :user:`Vrishank Bhardwaj <vrishank97>`.
 
 .. rubric:: :mod:`sklearn.ensemble`:
@@ -250,7 +250,7 @@ Support for Python 3.3 has been officially dropped.
 - |Feature| :class:`ensemble.BaggingRegressor` and
   :class:`ensemble.BaggingClassifier` can now be fit with missing/non-finite
   values in X and/or multi-output Y to support wrapping pipelines that perform
-  their own imputation.  :issue:`9707` by :user:`Jimmy Wan <jimmywan>`.
+  their own imputation. :issue:`9707` by :user:`Jimmy Wan <jimmywan>`.
 
 - |Feature| :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor` now support early stopping
@@ -268,8 +268,8 @@ Support for Python 3.3 has been officially dropped.
   arrays are converted to C-ordered arrays in the dense case. :issue:`9991` by
   :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| Fixed a bug in :class:`ensemble.gradient_boosting.GradientBoostingRegressor`
-  and :class:`ensemble.gradient_boosting.GradientBoostingClassifier` to have
+- |Fix| Fixed a bug in :class:`ensemble.GradientBoostingRegressor`
+  and :class:`ensemble.GradientBoostingClassifier` to have
   feature importances summed and then normalized, rather than normalizing on a
   per-tree basis. The previous behavior over-weighted the Gini importance of
   features that appear in later stages. This issue only affected feature
@@ -291,7 +291,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Fix| :class:`ensemble.BaseBagging` where one could not deterministically
   reproduce ``fit`` result usinbg the object attributes when ``random_state``
-  is set.  :issue:`9723` by :user:`Guillaume Lemaitre <glemaitre>`.
+  is set. :issue:`9723` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. rubric:: :mod:`sklearn.feature_extraction`:
 
@@ -311,9 +311,9 @@ Support for Python 3.3 has been officially dropped.
   (words or n-grams). :issue:`9147` by :user:`Claes-Fredrik Mannby <mannby>`
   and `Roman Yurchak`_.
 
-- |Fix| Fixed bug in :class:`feature_extraction.text.TFIDFVectorizer` which
+- |Fix| Fixed bug in :class:`feature_extraction.text.TfidfVectorizer` which
   was ignoring the parameter ``dtype``. In addition,
-  :class:`feature_extraction.text.TFIDFTransformer` will preserve ``dtype``
+  :class:`feature_extraction.text.TfidfTransformer` will preserve ``dtype``
   for floating and raise a warning if ``dtype`` requested is integer.
   :issue:`10441` by :user:`Mayur Kulkarni <maykulkarni>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
@@ -379,7 +379,7 @@ Support for Python 3.3 has been officially dropped.
 - |Fix| Fixed a bug in :func:`logistic.logistic_regression_path` to ensure
   that the returned coefficients are correct when ``multiclass='multinomial'``.
   Previously, some of the coefficients would override each other, leading to
-  incorrect results in :class:`logistic.LogisticRegressionCV`.
+  incorrect results in :class:`linear_model.LogisticRegressionCV`.
   :issue:`11724` by :user:`Nicolas Hug <NicolasHug>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.LogisticRegression` where when using
@@ -403,7 +403,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Fix| Fixed a bug in :class:`linear_model.ARDRegression` which caused
   incorrectly updated estimates for the standard deviation and the
-  coefficients.  :issue:`10153` by :user:`Jörg Döpfert <jdoepfert>`.
+  coefficients. :issue:`10153` by :user:`Jörg Döpfert <jdoepfert>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.RidgeClassifierCV` where
   the parameter ``store_cv_values`` was not implemented though
@@ -413,7 +413,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Fix| Fixed a bug in :class:`linear_model.ElasticNet` which caused the input
   to be overridden when using parameter ``copy_X=True`` and
-  ``check_input=False``.  :issue:`10581` by :user:`Yacine Mazari <ymazari>`.
+  ``check_input=False``. :issue:`10581` by :user:`Yacine Mazari <ymazari>`.
 
 - |Fix| Fixed a bug in :class:`sklearn.linear_model.Lasso`
   where the coefficient had wrong shape when ``fit_intercept=False``.
@@ -429,7 +429,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Fix| Fixed condition triggering gap computation in
   :class:`linear_model.Lasso` and :class:`linear_model.ElasticNet` when working
-  with sparse matrices.  :issue:`10992` by `Alexandre Gramfort`_.
+  with sparse matrices. :issue:`10992` by `Alexandre Gramfort`_.
 
 - |Fix| Fixed a bug in :class:`linear_model.SGDClassifier`,
   :class:`linear_model.SGDRegressor`,
@@ -447,11 +447,11 @@ Support for Python 3.3 has been officially dropped.
 
 - |API| Deprecate ``positive=True`` option in :class:`linear_model.Lars` as
   the underlying implementation is broken. Use :class:`linear_model.Lasso`
-  instead.  :issue:`9837` by `Alexandre Gramfort`_.
+  instead. :issue:`9837` by `Alexandre Gramfort`_.
 
 - |API| ``n_iter_`` may vary from previous releases in
   :class:`linear_model.LogisticRegression` with ``solver='lbfgs'`` and
-  :class:`linear_model.HuberRegressor`.  For Scipy <= 1.0.0, the optimizer could
+  :class:`linear_model.HuberRegressor`. For Scipy <= 1.0.0, the optimizer could
   perform more than the requested maximum number of iterations. Now both
   estimators will report at most ``max_iter`` iterations even if more were
   performed. :issue:`10723` by `Joel Nothman`_.
@@ -472,7 +472,7 @@ Support for Python 3.3 has been officially dropped.
   :func:`manifold.t_sne.trustworthiness`. Instead, the new parameter ``metric``
   should be used with any compatible metric including 'precomputed', in which
   case the input matrix ``X`` should be a matrix of pairwise distances or
-  squared distances.  :issue:`9775` by :user:`William de Vazelhes
+  squared distances. :issue:`9775` by :user:`William de Vazelhes
   <wdevazelhes>`.
 
 - |API| Deprecate ``precomputed`` parameter in function
@@ -485,12 +485,12 @@ Support for Python 3.3 has been officially dropped.
 .. rubric:: :mod:`sklearn.metrics`:
 
 - |MajorFeature| Added the :func:`metrics.davies_bouldin_score` metric for
-  evaluation of clustering models without a ground truth.  :issue:`10827` by
+  evaluation of clustering models without a ground truth. :issue:`10827` by
   :user:`Luis Osa <logc>`.
 
 - |MajorFeature| Added the :func:`metrics.balanced_accuracy_score` metric and
   a corresponding ``'balanced_accuracy'`` scorer for binary and multiclass
-  classification.  :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia
+  classification. :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia
   <dalmia>`, and :issue:`10587` by `Joel Nothman`_.
 
 - |Feature| Partial AUC is available via ``max_fpr`` parameter in
@@ -498,11 +498,11 @@ Support for Python 3.3 has been officially dropped.
   :user:`Alexander Niederbühl <Alexander-N>`.
 
 - |Feature| A scorer based on :func:`metrics.brier_score_loss` is also
-  available.  :issue:`9521` by :user:`Hanmin Qin <qinhanmin2014>`.
+  available. :issue:`9521` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 - |Feature| Added control over the normalization in
-  :func:`metrics.normalized_mutual_information_score` and
-  :func:`metrics.adjusted_mutual_information_score` via the ``average_method``
+  :func:`metrics.normalized_mutual_info_score` and
+  :func:`metrics.adjusted_mutual_info_score` via the ``average_method``
   parameter. In version 0.22, the default normalizer for each will become
   the *arithmetic* mean of the entropies of each clustering. :issue:`11124` by
   :user:`Arya McCarthy <aryamccarthy>`.
@@ -513,7 +513,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Feature| :func:`metrics.average_precision_score` now supports binary
   ``y_true`` other than ``{0, 1}`` or ``{-1, 1}`` through ``pos_label``
-  parameter.  :issue:`9980` by :user:`Hanmin Qin <qinhanmin2014>`.
+  parameter. :issue:`9980` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 - |Feature| :func:`metrics.label_ranking_average_precision_score` now supports
   ``sample_weight``.
@@ -523,8 +523,8 @@ Support for Python 3.3 has been officially dropped.
   When False and both inputs are sparse, will return a sparse matrix.
   :issue:`10999` by :user:`Taylor G Smith <tgsmith61591>`.
 
-- |Efficiency| :func:`metrics.cluster.silhouette_score` and
-  :func:`metrics.cluster.silhouette_samples` are more memory efficient and run
+- |Efficiency| :func:`metrics.silhouette_score` and
+  :func:`metrics.silhouette_samples` are more memory efficient and run
   faster. This avoids some reported freezes and MemoryErrors.
   :issue:`11135` by `Joel Nothman`_.
 
@@ -538,7 +538,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Fix| Fixed a bug where :func:`metrics.roc_curve` sometimes starts on y-axis
   instead of (0, 0), which is inconsistent with the document and other
-  implementations.  Note that this will not influence the result from
+  implementations. Note that this will not influence the result from
   :func:`metrics.roc_auc_score` :issue:`10093` by :user:`alexryndin
   <alexryndin>` and :user:`Hanmin Qin <qinhanmin2014>`.
 
@@ -561,20 +561,20 @@ Support for Python 3.3 has been officially dropped.
   ``reorder=True`` can hide bugs due to floating point error in the input.
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
 
-- |API| In :func:`metrics.normalized_mutual_information_score` and
-  :func:`metrics.adjusted_mutual_information_score`, warn that
+- |API| In :func:`metrics.normalized_mutual_info_score` and
+  :func:`metrics.adjusted_mutual_info_score`, warn that
   ``average_method`` will have a new default value. In version 0.22, the
   default normalizer for each will become the *arithmetic* mean of the
   entropies of each clustering. Currently,
-  :func:`metrics.normalized_mutual_information_score` uses the default of
+  :func:`metrics.normalized_mutual_info_score` uses the default of
   ``average_method='geometric'``, and
-  :func:`metrics.adjusted_mutual_information_score` uses the default of
+  :func:`metrics.adjusted_mutual_info_score` uses the default of
   ``average_method='max'`` to match their behaviors in version 0.19.
   :issue:`11124` by :user:`Arya McCarthy <aryamccarthy>`.
 
 - |API| The ``batch_size`` parameter to :func:`metrics.pairwise_distances_argmin_min`
   and :func:`metrics.pairwise_distances_argmin` is deprecated to be removed in
-  v0.22.  It no longer has any effect, as batch size is determined by global
+  v0.22. It no longer has any effect, as batch size is determined by global
   ``working_memory`` config. See :ref:`working_memory`. :issue:`10280` by `Joel
   Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
@@ -600,7 +600,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Feature| Add `return_estimator` parameter in
   :func:`model_selection.cross_validate` to return estimators fitted on each
-  split.  :issue:`9686` by :user:`Aurélien Bellet <bellet>`.
+  split. :issue:`9686` by :user:`Aurélien Bellet <bellet>`.
 
 - |Feature| New ``refit_time_`` attribute will be stored in
   :class:`model_selection.GridSearchCV` and
@@ -619,14 +619,14 @@ Support for Python 3.3 has been officially dropped.
 
 - |Feature| `BaseSearchCV` now has an experimental, private interface to
   support customized parameter search strategies, through its ``_run_search``
-  method.  See the implementations in :class:`model_selection.GridSearchCV` and
+  method. See the implementations in :class:`model_selection.GridSearchCV` and
   :class:`model_selection.RandomizedSearchCV` and please provide feedback if
   you use this. Note that we do not assure the stability of this API beyond
   version 0.20. :issue:`9599` by `Joel Nothman`_
 
 - |Enhancement| Add improved error message in
   :func:`model_selection.cross_val_score` when multiple metrics are passed in
-  ``scoring`` keyword.  :issue:`11006` by :user:`Ming Li <minggli>`.
+  ``scoring`` keyword. :issue:`11006` by :user:`Ming Li <minggli>`.
 
 - |API| The default number of cross-validation folds ``cv`` and the default
   number of splits ``n_splits`` in the :class:`model_selection.KFold`-like
@@ -646,7 +646,7 @@ Support for Python 3.3 has been officially dropped.
   :class:`model_selection.ParameterSampler` to a UserWarning for case where the
   class is instantiated with a greater value of ``n_iter`` than the total space
   of parameters in the parameter grid. ``n_iter`` now acts as an upper bound on
-  iterations.  :issue:`#10982` by :user:`Juliet Lawton <julietcl>`
+  iterations. :issue:`10982` by :user:`Juliet Lawton <julietcl>`
 
 - |API| Invalid input for :class:`model_selection.ParameterGrid` now
   raises TypeError.
@@ -693,7 +693,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Feature| Novelty detection with :class:`neighbors.LocalOutlierFactor`:
   Add a ``novelty`` parameter to :class:`neighbors.LocalOutlierFactor`. When
-  ``novelty`` is set to True, :class:`neighbors.LocalOutlierFactor` can then 
+  ``novelty`` is set to True, :class:`neighbors.LocalOutlierFactor` can then
   be used for novelty detection, i.e. predict on new unseen data. Available
   prediction methods are ``predict``, ``decision_function`` and
   ``score_samples``. By default, ``novelty`` is set to ``False``, and only
@@ -708,7 +708,7 @@ Support for Python 3.3 has been officially dropped.
 - |Fix| Fixed a bug so ``predict`` in
   :class:`neighbors.RadiusNeighborsRegressor` can handle empty neighbor set
   when using non uniform weights. Also raises a new warning when no neighbors
-  are found for samples.  :issue:`9655` by :user:`Andreas Bjerre-Nielsen
+  are found for samples. :issue:`9655` by :user:`Andreas Bjerre-Nielsen
   <abjer>`.
 
 - |Fix| |Efficiency| Fixed a bug in ``KDTree`` construction that results in
@@ -746,7 +746,7 @@ Support for Python 3.3 has been officially dropped.
 - |MajorFeature| Expanded :class:`preprocessing.OneHotEncoder` to allow to
   encode categorical string features as a numeric array using a one-hot (or
   dummy) encoding scheme, and added :class:`preprocessing.OrdinalEncoder` to
-  convert to ordinal integers.  Those two classes now handle encoding of all
+  convert to ordinal integers. Those two classes now handle encoding of all
   feature types (also handles string-valued features) and derives the
   categories based on the unique values in the features instead of the maximum
   value in the features. :issue:`9151` and :issue:`10521` by :user:`Vighnesh
@@ -763,7 +763,7 @@ Support for Python 3.3 has been officially dropped.
   implements the Yeo-Johnson and Box-Cox power transformations. Power
   transformations try to find a set of feature-wise parametric transformations
   to approximately map data to a Gaussian distribution centered at zero and
-  with unit variance.  This is useful as a variance-stabilizing transformation
+  with unit variance. This is useful as a variance-stabilizing transformation
   in situations where normality and homoscedasticity are desirable.
   :issue:`10210` by :user:`Eric Chang <ericchang00>` and :user:`Maniteja
   Nandana <maniteja123>`, and :issue:`11520` by :user:`Nicolas Hug
@@ -789,7 +789,7 @@ Support for Python 3.3 has been officially dropped.
   :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Feature| :class:`preprocessing.PolynomialFeatures` now supports sparse
-  input.  :issue:`10452` by :user:`Aman Dalmia <dalmia>` and `Joel Nothman`_.
+  input. :issue:`10452` by :user:`Aman Dalmia <dalmia>` and `Joel Nothman`_.
 
 - |Feature| :class:`preprocessing.RobustScaler` and
   :func:`preprocessing.robust_scale` can be fitted using sparse matrices.
@@ -797,7 +797,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Feature| :class:`preprocessing.OneHotEncoder` now supports the
   :term:`get_feature_names` method to obtain the transformed feature names.
-  :issue:`10181` by  :user:`Nirvan Anjirbag <Nirvan101>` and
+  :issue:`10181` by :user:`Nirvan Anjirbag <Nirvan101>` and
   `Joris Van den Bossche`_.
 
 - |Feature| A parameter ``check_inverse`` was added to
@@ -812,7 +812,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Fix| Fixed bugs in :class:`preprocessing.LabelEncoder` which would
   sometimes throw errors when ``transform`` or ``inverse_transform`` was called
-  with empty arrays.  :issue:`10458` by :user:`Mayur Kulkarni <maykulkarni>`.
+  with empty arrays. :issue:`10458` by :user:`Mayur Kulkarni <maykulkarni>`.
 
 - |Fix| Fix ValueError in :class:`preprocessing.LabelEncoder` when using
   ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
@@ -844,22 +844,22 @@ Support for Python 3.3 has been officially dropped.
   :issue:`9726` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
 
- - The ``axis`` parameter that was in
-   :class:`preprocessing.Imputer` is no longer present in
-   :class:`impute.SimpleImputer`. The behavior is equivalent
-   to ``axis=0`` (impute along columns).  Row-wise
-   imputation can be performed with FunctionTransformer
-   (e.g., ``FunctionTransformer(lambda X:
-   SimpleImputer().fit_transform(X.T).T)``).  :issue:`10829`
-   by :user:`Guillaume Lemaitre <glemaitre>` and
-   :user:`Gilberto Olimpio <gilbertoolimpio>`.
+- |API| The ``axis`` parameter that was in
+  :class:`preprocessing.Imputer` is no longer present in
+  :class:`impute.SimpleImputer`. The behavior is equivalent
+  to ``axis=0`` (impute along columns). Row-wise
+  imputation can be performed with FunctionTransformer
+  (e.g., ``FunctionTransformer(lambda X:
+  SimpleImputer().fit_transform(X.T).T)``). :issue:`10829`
+  by :user:`Guillaume Lemaitre <glemaitre>` and
+  :user:`Gilberto Olimpio <gilbertoolimpio>`.
 
- - The NaN marker for the missing values has been changed
-   between the :class:`preprocessing.Imputer` and the
-   :class:`impute.SimpleImputer`.
-   ``missing_values='NaN'`` should now be
-   ``missing_values=np.nan``.  :issue:`11211` by
-   :user:`Jeremie du Boisberranger <jeremiedbb>`.
+- |API| The NaN marker for the missing values has been changed
+  between the :class:`preprocessing.Imputer` and the
+  :class:`impute.SimpleImputer`.
+  ``missing_values='NaN'`` should now be
+  ``missing_values=np.nan``. :issue:`11211` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 - |API| In :class:`preprocessing.FunctionTransformer`, the default of
   ``validate`` will be from ``True`` to ``False`` in 0.22.
@@ -902,7 +902,7 @@ Support for Python 3.3 has been officially dropped.
   :issue:`11327` by :user:`Karan Dhingra <kdhingra307>` and `Joel Nothman`_.
 
 - |Efficiency| |Fix| Avoid copying the data in :func:`utils.check_array` when
-  the input data is a memmap (and ``copy=False``).  :issue:`10663` by
+  the input data is a memmap (and ``copy=False``). :issue:`10663` by
   :user:`Arthur Mensch <arthurmensch>` and :user:`Loïc Estève <lesteve>`.
 
 - |API| :func:`utils.check_array` yield a ``FutureWarning`` indicating
@@ -927,7 +927,7 @@ Support for Python 3.3 has been officially dropped.
   ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
   will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.
 
- - A ``behaviour`` parameter has been introduced in :class:`ensemble.IsolationForest`
+- |Feature| |API| A ``behaviour`` parameter has been introduced in :class:`ensemble.IsolationForest`
   to ensure backward compatibility.
   In the old behaviour, the ``decision_function`` is independent of the ``contamination``
   parameter. A threshold attribute depending on the ``contamination`` parameter is thus
@@ -950,31 +950,31 @@ Support for Python 3.3 has been officially dropped.
   :class:`gaussian_process.GaussianProcessClassifier`,
   :func:`decomposition.fastica`, :class:`cross_decomposition.PLSCanonical`,
   :class:`cluster.AffinityPropagation`, and :class:`cluster.Birch`.
-  :issue:`#10306` by :user:`Jonathan Siebert <jotasi>`.
+  :issue:`10306` by :user:`Jonathan Siebert <jotasi>`.
 
 .. rubric:: Miscellaneous
 
 - |MajorFeature| A new configuration parameter, ``working_memory`` was added
   to control memory consumption limits in chunked operations, such as the new
-  :func:`metrics.pairwise_distances_chunked`.  See :ref:`working_memory`.
+  :func:`metrics.pairwise_distances_chunked`. See :ref:`working_memory`.
   :issue:`10280` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
 - |Feature| Add almost complete PyPy 3 support. Known unsupported
   functionalities are :func:`datasets.load_svmlight_file`,
   :class:`feature_extraction.FeatureHasher` and
-  :class:`feature_extraction.text.HashingVectorizer`.  For running on PyPy,
+  :class:`feature_extraction.text.HashingVectorizer`. For running on PyPy,
   PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+ are required.
   :issue:`11010` by :user:`Ronan Lamy <rlamy>` and `Roman Yurchak`_.
 
 - |Feature| An environment variable to use the site joblib instead of the
   vendored one was added (:ref:`environment_variable`). The main API of joblib
   is now exposed in :mod:`sklearn.utils`.
-  :issue:`11166`by `Gael Varoquaux`_.
+  :issue:`11166` by `Gael Varoquaux`_.
 
 - |Feature| A utility method :func:`sklearn.show_versions()` was added to
   print out information relevant for debugging. It includes the user system,
   the Python executable, the version of the main libraries and BLAS binding
-  information.  :issue:`11596` by :user:`Alexandre Boucaud <aboucaud>`
+  information. :issue:`11596` by :user:`Alexandre Boucaud <aboucaud>`
 
 - |Fix| Fixed a bug when setting parameters on meta-estimator, involving both
   a wrapped estimator and its parameter. :issue:`9999` by :user:`Marcus Voss
@@ -1003,7 +1003,7 @@ These changes mostly affect library developers.
 
 - Add ``check_methods_subset_invariance`` to
   :func:`~utils.estimator_checks.check_estimator`, which checks that
-  estimator methods are invariant if applied to a data subset.  :issue:`10420`
+  estimator methods are invariant if applied to a data subset. :issue:`10420`
   by :user:`Jonathan Ohayon <Johayon>`
 
 - Add tests in :func:`utils.estimator_checks.check_estimator` to check that an
