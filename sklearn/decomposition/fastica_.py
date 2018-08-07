@@ -443,6 +443,20 @@ class FastICA(BaseEstimator, TransformerMixin):
         maximum number of iterations run across all components. Else
         they are just the number of iterations taken to converge.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import FastICA
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = FastICA(n_components=10,
+    ...         random_state=0)
+    >>> transformer.fit(X)
+    FastICA(algorithm='parallel', fun='logcosh', fun_args=None, max_iter=200,
+        n_components=10, random_state=0, tol=0.0001, w_init=None, whiten=True)
+    >>> X_transformed = transformer.transform(X)
+    >>> X_transformed.shape
+    (1797, 10)
+
     Notes
     -----
     Implementation based on

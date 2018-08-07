@@ -250,6 +250,35 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     n_iter_ : int
         Number of passes over the dataset.
 
+    Examples
+    --------
+    >>> from sklearn.feature_extraction.text import CountVectorizer
+    >>> from sklearn.decomposition import LatentDirichletAllocation
+    >>> from sklearn.datasets import fetch_20newsgroups
+    >>> n_samples = 1000
+    >>> n_features = 200
+    >>> n_components = 5
+    >>> dataset = fetch_20newsgroups(shuffle=True, random_state=1,
+    ...                              remove=('headers', 'footers', 'quotes'))
+    >>> X = dataset.data[:n_samples]
+    >>> tf_vectorizer = CountVectorizer(max_features=n_features,
+    ...                                 stop_words='english')
+    >>> tf = tf_vectorizer.fit_transform(X)
+    >>> lda = LatentDirichletAllocation(n_components=n_components,
+    ...     random_state=0)
+    >>> lda.fit(tf)
+    LatentDirichletAllocation(batch_size=128, doc_topic_prior=None,
+                 evaluate_every=-1, learning_decay=0.7,
+                 learning_method='batch', learning_offset=10.0,
+                 max_doc_update_iter=100, max_iter=10, mean_change_tol=0.001,
+                 n_components=5, n_jobs=None, n_topics=None, perp_tol=0.1,
+                 random_state=0, topic_word_prior=None,
+                 total_samples=1000000.0, verbose=0)
+    >>> # get topics for some given samples:
+    >>> lda.transform(tf_vectorizer.transform(dataset.data[-2:]))
+    array([[0.03509476, 0.86243059, 0.03446344, 0.03405526, 0.03395595],
+           [0.05974169, 0.70750174, 0.08565529, 0.14146641, 0.00563486]])
+
     References
     ----------
     [1] "Online Learning for Latent Dirichlet Allocation", Matthew D. Hoffman,
