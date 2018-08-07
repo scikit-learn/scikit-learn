@@ -765,7 +765,7 @@ Support for Python 3.3 has been officially dropped.
   to approximately map data to a Gaussian distribution centered at zero and
   with unit variance. This is useful as a variance-stabilizing transformation
   in situations where normality and homoscedasticity are desirable.
-  :issue:`10210` by :user:`Eric Chang <ericchang00>` and :user:`Maniteja
+  :issue:`10210` by :user:`Eric Chang <chang>` and :user:`Maniteja
   Nandana <maniteja123>`, and :issue:`11520` by :user:`Nicolas Hug
   <nicolashug>`.
 
