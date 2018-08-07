@@ -134,10 +134,9 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
             key_val_dict['data_version'] = None
         if 'status' not in key_val_dict:
             key_val_dict['status'] = "active"
-        mock_file = "%s_%s_%s.json%s" % (key_val_dict['data_name'],
-                                         key_val_dict['data_version'],
-                                         key_val_dict['status'],
-                                         path_suffix)
+        mock_file = "data_list__%s_%s_%s.json%s" % \
+                    (key_val_dict['data_name'], key_val_dict['data_version'],
+                     key_val_dict['status'], path_suffix)
         json_file_path = os.path.join(currdir, 'data', 'openml',
                                       str(data_id), mock_file)
         # load the file itself, to simulate a http error
