@@ -25,7 +25,7 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
                                target_column,
                                expected_observations, expected_features,
                                expected_missing,
-                               exptected_data_dtype, exptected_target_dtype,
+                               expected_data_dtype, expected_target_dtype,
                                expect_sparse, compare_default_target):
     # fetches a dataset in three various ways from OpenML, using the
     # fetch_openml function, and does various checks on the validity of the
@@ -52,10 +52,18 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
         assert data_by_id.target.shape == (expected_observations,
                                            len(target_column))
     assert data_by_id.data.dtype == np.float64
-    assert data_by_id.target.dtype == np.float64
+    assert data_by_id.target.dtype == expected_target_dtype
     assert len(data_by_id.feature_names) == expected_features
     for feature in data_by_id.feature_names:
         assert isinstance(feature, string_types)
+
+    # TODO: pass in a list of expected nominal features
+    for feature, categories in data_by_id.categories.items():
+        print(feature, data_by_id.feature_names)
+        feature_idx = data_by_id.feature_names.index(feature)
+        values = np.unique(data_by_id.data[:, feature_idx])
+        values = values[np.isfinite(values)]
+        assert set(values) <= set(range(len(categories)))
 
     if compare_default_target:
         # check whether the data by id and data by id target are equal
@@ -75,9 +83,9 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
         assert isinstance(data_by_id.data, scipy.sparse.csr_matrix)
     else:
         assert isinstance(data_by_id.data, np.ndarray)
-        # np.isnan doesn't work on crs matrix
-        assert np.count_nonzero(np.isnan(data_by_id.data)) == \
-                   expected_missing
+        # np.isnan doesn't work on CSR matrix
+        assert (np.count_nonzero(np.isnan(data_by_id.data)) ==
+                expected_missing)
     return data_by_id
 
 
@@ -272,8 +280,8 @@ def test_fetch_openml_australian(monkeypatch):
            'expected_features': expected_features,
            'expected_missing': expected_missing,
            'expect_sparse': True,
-           'exptected_data_dtype': np.float64,
-           'exptected_target_dtype': object,
+           'expected_data_dtype': np.float64,
+           'expected_target_dtype': object,
            'compare_default_target': False}  # numpy specific check
     )
 
