@@ -374,7 +374,8 @@ function or **logistic** function:
 
 ::
 
-    >>> logistic = linear_model.LogisticRegression(C=1e5, intercept_scaling=1)
+    >>> logistic = linear_model.LogisticRegression(C=1e5, solver='liblinear',
+    ...     fit_intercept=True, intercept_scaling=1)
     >>> logistic.fit(iris_X_train, iris_y_train)
     LogisticRegression(C=100000.0, class_weight=None, dual=False,
               fit_intercept=True, intercept_scaling=1, max_iter=100,
