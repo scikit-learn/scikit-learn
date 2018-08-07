@@ -72,8 +72,33 @@ string values or pandas categoricals when using the ``'most_frequent'`` or
      ['b' 'y']]
 
 
-:class:`SimpleImputer` can be used in a Pipeline as a way to build a composite
-estimator that supports imputation. See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
+Unlike the strategies of the :class:`SimpleImputer`, which are all deterministic,
+the :class:`SamplingImputer` class provides a non deterministic strategy to perform
+univariate feature imputation. Imputation is performed by sampling uniformly at
+random from the non missing values. Therefore the imputed feature distribution
+is asymptotically identical to the original distribution, preserving mean and
+variance for example. The :class:`SamplingImputer` class supports
+sparse and categorical data. It is used the same way as the :class:`SimpleImputer`::
+
+    >>> import numpy as np
+    >>> from sklearn.impute import SamplingImputer
+    >>> X = np.array([[1, -1],
+    ...               [2, -2],
+    ...               [np.nan, np.nan],
+    ...               [np.nan, np.nan],
+    ...               [np.nan, np.nan]])
+    >>> imp = SamplingImputer(missing_values=np.nan, random_state=0)
+    >>> print(imp.fit_transform(X))           # doctest: +NORMALIZE_WHITESPACE
+    [[ 1. -1.]
+     [ 2. -2.]
+     [ 1. -2.]
+     [ 2. -1.]
+     [ 2. -1.]]
+
+
+:class:`SimpleImputer` and :class:`SamplingImputer` can be used in a Pipeline as 
+a way to build a composite estimator that supports imputation.
+See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
 
 .. _missing_indicator:
 

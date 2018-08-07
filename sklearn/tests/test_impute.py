@@ -9,10 +9,9 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_false
-
+from sklearn.impute import SimpleImputer, SamplingImputer
 from sklearn.impute import MissingIndicator
-from sklearn.impute import SimpleImputer
+from sklearn.impute import _get_mask
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
@@ -57,21 +56,31 @@ def _check_statistics(X, X_true,
     assert_ae(X_trans, X_true, err_msg=err_msg.format(True))
 
 
-def test_imputation_shape():
-    # Verify the shapes of the imputed matrix for different strategies.
+@pytest.mark.parametrize("imputer_constructor, params",
+                         [(SimpleImputer, {'strategy': "mean"}),
+                          (SimpleImputer, {'strategy': "median"}),
+                          (SimpleImputer, {'strategy': "most_frequent"}),
+                          (SimpleImputer, {'strategy': "constant"}),
+                          (SamplingImputer, {})])
+def test_imputation_shape(imputer_constructor, params):
+    # Verify the shapes of the imputed matrix for the SamplingImputer and for
+    # the SimpleImputer with the different strategies
     X = np.random.randn(10, 2)
     X[::2] = np.nan
 
-    for strategy in ['mean', 'median', 'most_frequent', "constant"]:
-        imputer = SimpleImputer(strategy=strategy)
-        X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
-        assert X_imputed.shape == (10, 2)
-        X_imputed = imputer.fit_transform(X)
-        assert X_imputed.shape == (10, 2)
+    imputer = imputer_constructor()
+    imputer.set_params(**params)
+
+    X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
+    assert X_imputed.shape == (10, 2)
+    X_imputed = imputer.fit_transform(X)
+    assert X_imputed.shape == (10, 2)
+    X_imputed.shape == (10, 2)
 
 
 @pytest.mark.parametrize("strategy", ["const", 101, None])
 def test_imputation_error_invalid_strategy(strategy):
+    # verify that error is raised when strategy is not an allowed one
     X = np.ones((3, 5))
     X[0, 0] = np.nan
 
@@ -80,25 +89,39 @@ def test_imputation_error_invalid_strategy(strategy):
         imputer.fit_transform(X)
 
 
-@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
-def test_imputation_deletion_warning(strategy):
+@pytest.mark.parametrize("imputer_constructor, params",
+                         [(SimpleImputer, {'strategy': "mean"}),
+                          (SimpleImputer, {'strategy': "median"}),
+                          (SimpleImputer, {'strategy': "most_frequent"}),
+                          (SamplingImputer, {})])
+def test_imputation_deletion_warning(imputer_constructor, params):
+    # verify that warning is raised when deleting feature when using
+    # SimpleImputer or SamplingImputer
     X = np.ones((3, 5))
     X[:, 0] = np.nan
 
+    imputer = imputer_constructor(verbose=True)
+    imputer.set_params(**params)
+
     with pytest.warns(UserWarning, match="Deleting"):
-        imputer = SimpleImputer(strategy=strategy, verbose=True)
         imputer.fit_transform(X)
 
 
-@pytest.mark.parametrize("strategy", ["mean", "median",
-                                      "most_frequent", "constant"])
-def test_imputation_error_sparse_0(strategy):
+@pytest.mark.parametrize("imputer_constructor, params",
+                         [(SimpleImputer, {'strategy': "mean"}),
+                          (SimpleImputer, {'strategy': "median"}),
+                          (SimpleImputer, {'strategy': "most_frequent"}),
+                          (SimpleImputer, {'strategy': "constant"}),
+                          (SamplingImputer, {})])
+def test_imputation_error_sparse_0(imputer_constructor, params):
     # check that error are raised when missing_values = 0 and input is sparse
+    # when using SimpleImputer or SamplingImputer
     X = np.ones((3, 5))
     X[0] = 0
     X = sparse.csc_matrix(X)
 
-    imputer = SimpleImputer(strategy=strategy, missing_values=0)
+    imputer = imputer_constructor(missing_values=0)
+    imputer.set_params(**params)
     with pytest.raises(ValueError, match="Provide a dense array"):
         imputer.fit(X)
 
@@ -454,50 +477,56 @@ def test_imputation_pipeline_grid_search():
     gs.fit(X, Y)
 
 
-def test_imputation_copy():
+X_orig = sparse_random_matrix(5, 5, density=0.75, random_state=0)
+
+
+@pytest.mark.parametrize(
+    "X_in, imputer_constructor, params, expect_copy",
+    [(X_orig.toarray(), SimpleImputer,
+      {'missing_values': 0, 'copy': True}, True),
+     (X_orig.toarray(), SamplingImputer,
+      {'missing_values': 0, 'copy': True}, True),
+     (X_orig, SimpleImputer,
+      {'missing_values': X_orig.data[0], 'copy': True}, True),
+     (X_orig, SamplingImputer,
+      {'missing_values': X_orig.data[0], 'copy': True}, True),
+     (X_orig.toarray(), SimpleImputer,
+      {'missing_values': 0, 'copy': False}, False),
+     (X_orig.toarray(), SamplingImputer,
+      {'missing_values': 0, 'copy': False}, False),
+     (X_orig.tocsc(), SimpleImputer,
+      {'missing_values': X_orig.data[0], 'copy': False}, False),
+     (X_orig.tocsc(), SamplingImputer,
+      {'missing_values': X_orig.data[0], 'copy': False}, False),
+     (X_orig, SimpleImputer,
+      {'missing_values': X_orig.data[0], 'copy': False}, True),
+     (X_orig, SamplingImputer,
+      {'missing_values': X_orig.data[0], 'copy': False}, True)])
+def test_imputation_copy(X_in, imputer_constructor, params, expect_copy):
     # Test imputation with copy
-    X_orig = sparse_random_matrix(5, 5, density=0.75, random_state=0)
-
     # copy=True, dense => copy
-    X = X_orig.copy().toarray()
-    imputer = SimpleImputer(missing_values=0, strategy="mean", copy=True)
-    Xt = imputer.fit(X).transform(X)
-    Xt[0, 0] = -1
-    assert_false(np.all(X == Xt))
-
     # copy=True, sparse csr => copy
-    X = X_orig.copy()
-    imputer = SimpleImputer(missing_values=X.data[0], strategy="mean",
-                            copy=True)
-    Xt = imputer.fit(X).transform(X)
-    Xt.data[0] = -1
-    assert_false(np.all(X.data == Xt.data))
-
     # copy=False, dense => no copy
-    X = X_orig.copy().toarray()
-    imputer = SimpleImputer(missing_values=0, strategy="mean", copy=False)
-    Xt = imputer.fit(X).transform(X)
-    Xt[0, 0] = -1
-    assert_array_almost_equal(X, Xt)
-
     # copy=False, sparse csc => no copy
-    X = X_orig.copy().tocsc()
-    imputer = SimpleImputer(missing_values=X.data[0], strategy="mean",
-                            copy=False)
-    Xt = imputer.fit(X).transform(X)
-    Xt.data[0] = -1
-    assert_array_almost_equal(X.data, Xt.data)
-
     # copy=False, sparse csr => copy
-    X = X_orig.copy()
-    imputer = SimpleImputer(missing_values=X.data[0], strategy="mean",
-                            copy=False)
-    Xt = imputer.fit(X).transform(X)
-    Xt.data[0] = -1
-    assert_false(np.all(X.data == Xt.data))
+    X = X_in.copy()
 
-    # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
-    # made, even if copy=False.
+    imputer = imputer_constructor()
+    imputer.set_params(**params)
+
+    Xt = imputer.fit(X).transform(X)
+    if sparse.issparse(X_in):
+        Xt.data[0] = -1
+        if expect_copy:
+            assert X is not Xt
+        else:
+            assert X is Xt
+    else:
+        Xt[0, 0] = -1
+        if expect_copy:
+            assert X is not Xt
+        else:
+            assert X is Xt
 
 
 @pytest.mark.parametrize(
@@ -635,3 +664,93 @@ def test_inconsistent_dtype_X_missing_values(imputer_constructor,
 
     with pytest.raises(ValueError, match=err_msg):
         imputer.fit_transform(X)
+
+
+@pytest.mark.filterwarnings('ignore: in the future, full')
+@pytest.mark.parametrize("X_value, dtype, missing_value",
+                         [(1, int, -1),
+                          (1, None, -1),
+                          ("a", object, "NaN"),
+                          ("a", object, np.nan),
+                          ("a", object, None),
+                          (1.0, float, 0),
+                          (1.0, None, np.nan)])
+def test_sampling_deterministic(X_value, dtype, missing_value):
+    # test SamplingImputer on know output
+    X = np.full((10, 10), X_value, dtype=dtype)
+    X[:, 0] = missing_value
+    X[::2, ::2] = missing_value
+
+    X_true = np.full((10, 9), X_value, dtype=dtype)
+
+    imputer = SamplingImputer(missing_values=missing_value)
+
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_true, X_trans)
+
+
+@pytest.mark.filterwarnings('ignore: in the future, full')
+@pytest.mark.parametrize("dtype", [str, np.dtype('U'), np.dtype('S')])
+def test_sampling_error_invalid_type(dtype):
+    # Assert error are raised on invalid types
+    X = np.array([
+        [np.nan, np.nan, "a", "f"],
+        [np.nan, "c", np.nan, "d"],
+        [np.nan, "b", "d", np.nan],
+        [np.nan, "c", "d", "h"],
+    ], dtype=object)
+
+    imputer = SamplingImputer()
+
+    err_msg = "SamplingImputer does not support data"
+    with pytest.raises(ValueError, match=err_msg):
+        imputer.fit(X.astype(dtype=dtype))
+
+    imputer.fit(X)
+
+    err_msg = "SamplingImputer does not support data"
+    with pytest.raises(ValueError, match=err_msg):
+        imputer.transform(X.astype(dtype=dtype))
+
+
+@pytest.mark.filterwarnings('ignore: in the future, full')
+def test_sampling_preserved_statistics():
+    # check that: - filled values are drawn only within non-missing values
+    #             - different random_states give different imputations
+    #             - values are drawn uniformly at random
+    X = np.random.rand(20).reshape(-1, 1)
+    X[::2] = np.nan
+
+    uniques = np.unique(X)
+    uniques = uniques[~_get_mask(uniques, np.nan)]
+
+    imputer = SamplingImputer()
+    Xts = []
+    for i in range(100):
+        Xt = imputer.set_params(random_state=i).fit_transform(X)
+        assert_array_equal(uniques, np.unique(Xt))
+        Xts.append(Xt)
+
+    tests = np.full(100, True)
+    for i in range(100):
+        tests[i] = np.allclose(Xts[i], Xts[i-1])
+    assert not np.all(tests)
+
+    assert np.mean(np.concatenate(Xts)) == pytest.approx(np.nanmean(X),
+                                                         rel=1e-2)
+
+    assert np.std(np.concatenate(Xts)) == pytest.approx(np.nanstd(X),
+                                                        rel=1e-2)
+
+
+def test_sampling_transform_vs_fir_transform():
+    X = np.random.random_sample((10, 10))
+    X[::2, 1::2] = np.nan
+
+    imputer = SamplingImputer(random_state=0)
+
+    Xt1 = imputer.fit(X).transform(X)
+    Xt2 = imputer.fit_transform(X)
+
+    assert_array_almost_equal(Xt1, Xt2)

@@ -2,6 +2,7 @@
 # Authors: Nicolas Tresegnie <nicolas.tresegnie@gmail.com>
 #          Sergey Feldman <sergeyfeldman@gmail.com>
 # License: BSD 3 clause
+from __future__ import division
 
 import warnings
 import numbers
@@ -15,8 +16,10 @@ from .base import BaseEstimator, TransformerMixin
 from .utils import check_array
 from .utils.sparsefuncs import _get_median
 from .utils.validation import check_is_fitted
+from .utils.validation import check_random_state
 from .utils.validation import FLOAT_DTYPES
 from .utils.fixes import _object_dtype_isnan
+from .utils.fixes import _uniques_counts
 from .utils import is_scalar_nan
 
 from .externals import six
@@ -27,6 +30,7 @@ map = six.moves.map
 __all__ = [
     'MissingIndicator',
     'SimpleImputer',
+    'SamplingImputer'
 ]
 
 
@@ -127,16 +131,16 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     copy : boolean, optional (default=True)
         If True, a copy of X will be created. If False, imputation will
-        be done in-place whenever possible. Note that, in the following cases,
-        a new copy will always be made, even if `copy=False`:
-
-        - If X is not an array of floating values;
-        - If X is encoded as a CSR matrix.
+        be done in-place whenever possible. Note that if X is sparse and not
+        encoded as a CSC matrix, a new copy will always be made, even
+        if ``copy=False``.
 
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
-        The imputation fill value for each feature.
+        The imputation fill value for each feature. For each feature i,
+        ``statistics_[i]`` is set to ``np.nan`` if the feature contains only
+        missing values.
 
     Examples
     --------
@@ -418,7 +422,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed.
 
-    features : str, optional
+    features : {"missing-only", "all"}, optional
         Whether the imputer mask should represent all or a subset of
         features.
 
@@ -629,3 +633,257 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         """
         return self.fit(X, y).transform(X)
+
+
+class SamplingImputer(BaseEstimator, TransformerMixin):
+    """Imputation transformer for completing missing values.
+
+    Impute each feature's missing values by sampling from the empirical
+    distribution.
+
+    Read more in the :ref:`User Guide <impute>`.
+
+    Parameters
+    ----------
+    missing_values : number, string, np.nan (default) or None
+        The placeholder for the missing values. All occurrences of
+        `missing_values` will be imputed.
+
+    verbose : integer, optional (default=0)
+        Controls the verbosity of the imputer.
+
+    copy : boolean, optional (default=True)
+        If True, a copy of X will be created. If False, imputation will
+        be done in-place whenever possible. Note that if X is sparse and not
+        encoded as a CSC matrix, a new copy will always be made, even
+        if ``copy=False``.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when sampling
+        fill values.
+
+        - If int, random_state is the seed used by the random number generator;
+        - If RandomState instance, random_state is the random number generator;
+        - If None, the random number generator is the RandomState instance used
+          by ``np.random``.
+
+    Attributes
+    ----------
+    uniques_ : array of shape (n_features,)
+        For each feature i, ``uniques_[i]`` contains all the non-missing values
+        in that feature without repetitions. Set to None if the feature
+        contains only missing values.
+
+    probas_ : array of shape (n_features,)
+        The probabilities associated with all the values in uniques_. For each
+        feature i, ``probas_[i]`` is set to None if the feature contains only
+        missing values or if there are no duplicates in the non-missing values.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.impute import SamplingImputer
+    >>> imputer = SamplingImputer(random_state=1234)
+    >>> X = [[7, 2, 3], [4, np.nan, 6], [10, 5, 9]]
+    >>> print(imputer.fit_transform(X)) # doctest: +NORMALIZE_WHITESPACE
+    [[ 7.  2.  3.]
+     [ 4.  5.  6.]
+     [10.  5.  9.]]
+    >>> print(imputer.transform([[np.nan, 2, 3],
+    ...                          [4, np.nan, 6],
+    ...                          [10, np.nan, 9]]))
+    ... # doctest: +NORMALIZE_WHITESPACE
+    [[10.  2.  3.]
+     [ 4.  5.  6.]
+     [10.  2.  9.]]
+
+    Notes
+    -----
+    Columns which only contained missing values at `fit` are discarded upon
+    `transform`.
+    """
+
+    def __init__(self, missing_values=np.nan,
+                 verbose=0, copy=True, random_state=None):
+        self.missing_values = missing_values
+        self.verbose = verbose
+        self.copy = copy
+        self.random_state = random_state
+
+    def _validate_input(self, X):
+        if not is_scalar_nan(self.missing_values):
+            force_all_finite = True
+        else:
+            force_all_finite = "allow-nan"
+
+        X = check_array(X, accept_sparse='csc', dtype=None,
+                        force_all_finite=force_all_finite, copy=self.copy)
+
+        if X.dtype.kind not in ("i", "u", "f", "O"):
+            raise ValueError("SamplingImputer does not support data with dtype"
+                             " {0}. Please provide either a numeric array ( "
+                             "with a floating point or integer dtype) or "
+                             "categorical data represented either as an array "
+                             "with integer dtype or an array of string values "
+                             "with an object dtype.".format(X.dtype))
+
+        return X
+
+    def fit(self, X, y=None):
+        """Fit the imputer on X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data, where ``n_samples`` is the number of samples and
+            ``n_features`` is the number of features.
+
+        Returns
+        -------
+        self : SamplingImputer
+        """
+        self._random_state_ = getattr(self, "random_state_",
+                                      check_random_state(self.random_state))
+
+        X = self._validate_input(X)
+
+        if sparse.issparse(X):
+            # missing_values = 0 not allowed with sparse data as it would
+            # force densification
+            if self.missing_values == 0:
+                raise ValueError("Imputation not possible when missing_values"
+                                 " == 0 and input is sparse. Provide a dense "
+                                 "array instead.")
+            else:
+                self.uniques_, self.probas_ = \
+                        self._sparse_fit(X, self.missing_values)
+        else:
+            self.uniques_, self.probas_ = self._dense_fit(X,
+                                                          self.missing_values)
+
+        return self
+
+    def _sparse_fit(self, X, missing_values):
+        """Fit the transformer on sparse data."""
+        mask_data = _get_mask(X.data, missing_values)
+        n_implicit_zeros = X.shape[0] - np.diff(X.indptr)
+
+        uniques = np.empty(X.shape[1], dtype=object)
+        probas = np.empty(X.shape[1], dtype=object)
+
+        for i in range(X.shape[1]):
+            column = X.data[X.indptr[i]:X.indptr[i+1]]
+            mask_column = mask_data[X.indptr[i]:X.indptr[i+1]]
+            column = column[~mask_column]
+
+            values, counts = _uniques_counts(column)
+
+            # count implicit zeros
+            if n_implicit_zeros[i] > 0:
+                if 0 in values:
+                    counts[values == 0] += n_implicit_zeros[i]
+                else:
+                    values = np.append(values, 0)
+                    counts = np.append(counts, n_implicit_zeros[i])
+
+            if values.size > 0:
+                uniques[i] = values
+                if values.size == X.shape[0]:
+                    # Avoids doubling the memory usage when dealing with
+                    # continuous-valued feature which rarely contain duplicates
+                    probas[i] = None
+                else:
+                    probas[i] = counts / counts.sum()
+            else:
+                uniques[i] = None
+                probas[i] = None
+
+        return uniques, probas
+
+    def _dense_fit(self, X, missing_values):
+        """Fit the transformer on dense data."""
+        mask = _get_mask(X, missing_values)
+
+        uniques = np.empty(X.shape[1], dtype=object)
+        probas = np.empty(X.shape[1], dtype=object)
+
+        for i in range(X.shape[1]):
+            column = X[~mask[:, i], i]
+            if column.size > 0:
+                uniques[i], counts = _uniques_counts(column)
+                if uniques[i].size == column.size:
+                    # Avoids doubling the memory usage when dealing with
+                    # continuous-valued feature which rarely contain duplicates
+                    probas[i] = None
+                else:
+                    probas[i] = counts / counts.sum()
+            else:
+                uniques[i] = None
+                probas[i] = None
+
+        return uniques, probas
+
+    def transform(self, X):
+        """Impute all missing values in X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            The input data to complete.
+        """
+        check_is_fitted(self, ("uniques_", "probas_"))
+
+        X = self._validate_input(X)
+
+        uniques = self.uniques_
+        probas = self.probas_
+
+        if X.shape[1] != uniques.shape[0]:
+            raise ValueError("X has %d features per sample, expected %d"
+                             % (X.shape[1], self.uniques_.shape[0]))
+
+        # Delete the invalid columns
+        valid_mask = np.asarray([x is not None for x in uniques])
+        valid_indexes = np.flatnonzero(valid_mask)
+
+        if valid_mask.all():
+            valid_mask = Ellipsis
+        else:
+            missing = np.arange(X.shape[1])[~valid_mask]
+            if self.verbose:
+                warnings.warn("Deleting features without "
+                              "observed values: %s" % missing)
+            X = X[:, valid_indexes]
+
+        valid_uniques = uniques[valid_mask]
+        valid_probas = probas[valid_mask]
+
+        # Do actual imputation
+        if sparse.issparse(X):
+            if self.missing_values == 0:
+                raise ValueError("Imputation not possible when missing_values"
+                                 " == 0 and input is sparse. Provide a dense "
+                                 "array instead.")
+            else:
+                mask_data = _get_mask(X.data, self.missing_values)
+                for i in range(X.shape[1]):
+                    column = X.data[X.indptr[i]:X.indptr[i+1]]
+                    mask_column = mask_data[X.indptr[i]:X.indptr[i+1]]
+                    n_missing = mask_column.sum()
+                    values = self._random_state_.choice(valid_uniques[i],
+                                                        n_missing,
+                                                        p=valid_probas[i])
+                    column[mask_column] = values
+                # in case some missing values are imputed with 0
+                X.eliminate_zeros()
+
+        else:
+            mask = _get_mask(X, self.missing_values)
+            n_missing = np.sum(mask, axis=0)
+            for i in range(n_missing.shape[0]):
+                values = self._random_state_.choice(valid_uniques[i],
+                                                    n_missing[i],
+                                                    p=valid_probas[i])
+                X[mask[:, i], i] = values
+
+        return X

@@ -156,6 +156,10 @@ Preprocessing
   missing values. :issue:`8075` by :user:`Maniteja Nandana <maniteja123>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+- Added :class:`impute.SamplingImputer`, which is an univariate strategy for 
+  imputing missing values by sampling uniformly at random from the non missing
+  values. :issue:`11368` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
 - :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
   :class:`linear_model.PassiveAggressiveClassifier`,
   :class:`linear_model.PassiveAggressiveRegressor` and

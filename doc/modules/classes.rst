@@ -657,6 +657,7 @@ Kernels:
 
    impute.SimpleImputer
    impute.MissingIndicator
+   impute.SamplingImputer
 
 .. _kernel_approximation_ref:
 

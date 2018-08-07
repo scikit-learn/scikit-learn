@@ -78,15 +78,20 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
 
-ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MissingIndicator',
+ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MissingIndicator', 'SamplingImputer',
              'MaxAbsScaler', 'MinMaxScaler', 'RobustScaler', 'StandardScaler',
              'PowerTransformer', 'QuantileTransformer']
+
+ALLOW_NON_NUMERIC = ['SimpleImputer', 'SamplingImputer']
 
 
 def _yield_non_meta_checks(name, estimator):
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
-    yield check_dtype_object
+
+    if name not in ALLOW_NON_NUMERIC:
+        yield check_dtype_object
+
     yield check_sample_weights_pandas_series
     yield check_sample_weights_list
     yield check_sample_weights_invariance
