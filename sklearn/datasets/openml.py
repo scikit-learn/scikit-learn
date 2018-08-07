@@ -387,7 +387,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         data : np.array or scipy.sparse.csr_matrix of floats
             The feature matrix. Categorical features are encoded as ordinals.
         target : np.array
-            The regression target or classification labels, if applicable
+            The regression target or classification labels, if applicable.
+            Dtype is float if numeric, and object if categorical.
         DESCR : str
             The full description of the dataset
         feature_names : list
@@ -449,7 +450,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         # (which is currently more reliable than the data description;
         # see issue: https://github.com/openml/OpenML/issues/768)
         target_column = [feature['name'] for feature in features_list
-                              if feature['is_target'] == 'true']
+                         if feature['is_target'] == 'true']
 
     # for code-simplicity, make target_column by default a list
     if isinstance(target_column, string_types):
@@ -488,6 +489,11 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     arff_data = arff['data']
     nominal_attributes = {k: v for k, v in arff['attributes']
                           if isinstance(v, list)}
+    for feature in features_list:
+        if 'true' in (feature['is_row_identifier'],
+                      feature['is_ignore']) and (feature['name'] not in
+                                                 target_column):
+            del nominal_attributes[feature['name']]
     X, y = _convert_arff_data(arff_data, col_slice_x, col_slice_y)
 
     is_classification = {col_name in nominal_attributes
