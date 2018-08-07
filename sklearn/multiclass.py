@@ -352,11 +352,12 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             Y /= np.sum(Y, axis=1)[:, np.newaxis]
         return Y
 
-    @if_delegate_has_method(['_first_estimator', 'estimator'])
+    @if_delegate_has_method(['_first_estimator', 'estimator'],
+                            backup_method='predict_proba')
     def decision_function(self, X):
         """Returns the distance of each sample from the decision boundary for
-        each class. This can only be used with estimators which implement the
-        decision_function method.
+        each class. If decision_function is not implemented in the estimator,
+        returns predict_proba result scaled to [-1, 1]
 
         Parameters
         ----------
@@ -364,13 +365,19 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : array-like, shape = [n_samples, n_classes] or [n_samples] if
+            n_classes == 1
         """
         check_is_fitted(self, 'estimators_')
+        try:
+            T = np.array([est.decision_function(X).ravel()
+                          for est in self.estimators_]).T
+        except AttributeError:
+            T = np.array([e.predict_proba(X)[:, 1] * 2 - 1
+                          for e in self.estimators_]).T
         if len(self.estimators_) == 1:
-            return self.estimators_[0].decision_function(X)
-        return np.array([est.decision_function(X).ravel()
-                         for est in self.estimators_]).T
+            T = T.ravel()
+        return T
 
     @property
     def multilabel_(self):

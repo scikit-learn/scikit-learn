@@ -413,6 +413,12 @@ def test_ovr_multilabel_decision_function():
     assert_array_equal((clf.decision_function(X_test) > 0).astype(int),
                        clf.predict(X_test))
 
+    # Test fallback to predict_proba
+    clf = OneVsRestClassifier(DecisionTreeClassifier(min_samples_split=10))
+    clf.fit(X_train, Y_train)
+    assert_array_equal((clf.decision_function(X_test) > 0).astype(int),
+                       clf.predict(X_test))
+
 
 def test_ovr_single_label_decision_function():
     X, Y = datasets.make_classification(n_samples=100,
@@ -421,6 +427,12 @@ def test_ovr_single_label_decision_function():
     X_train, Y_train = X[:80], Y[:80]
     X_test = X[80:]
     clf = OneVsRestClassifier(svm.SVC(gamma="scale")).fit(X_train, Y_train)
+    assert_array_equal(clf.decision_function(X_test).ravel() > 0,
+                       clf.predict(X_test))
+
+    # Test fallback to predict_proba
+    clf = OneVsRestClassifier(DecisionTreeClassifier(min_samples_split=10))
+    clf.fit(X_train, Y_train)
     assert_array_equal(clf.decision_function(X_test).ravel() > 0,
                        clf.predict(X_test))
 
