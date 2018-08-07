@@ -294,7 +294,7 @@ General Concepts
         convergence of the training loss, to avoid over-fitting. This is
         generally done by monitoring the generalization score on a validation
         set. When available, it is activated through the parameter
-        ``early_stopping`` or by setting a postive :term:`n_iter_no_change`.
+        ``early_stopping`` or by setting a positive :term:`n_iter_no_change`.
 
     estimator instance
         We sometimes use this terminology to distinguish an :term:`estimator`
@@ -1383,6 +1383,8 @@ functions or non-estimator constructors.
         equal weight by giving each sample a weight inversely related
         to its class's prevalence in the training data:
         ``n_samples / (n_classes * np.bincount(y))``.
+        **Note** however that this rebalancing does not take the weight of
+        samples in each class into account.
 
         For multioutput classification, a list of dicts is used to specify
         weights for each output. For example, for four-class multilabel
@@ -1414,7 +1416,8 @@ functions or non-estimator constructors.
         - An iterable yielding train/test splits.
 
         With some exceptions (especially where not using cross validation at
-        all is an option), the default is 3-fold.
+        all is an option), the default is 3-fold and will change to 5-fold
+        in version 0.22.
 
         ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
 

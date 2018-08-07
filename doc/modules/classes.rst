@@ -48,6 +48,7 @@ Functions
    config_context
    get_config
    set_config
+   show_versions
 
 .. _calibration_ref:
 

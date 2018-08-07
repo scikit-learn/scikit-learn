@@ -4,7 +4,6 @@
 # License: BSD 3 clause
 
 import warnings
-from time import time
 import numbers
 
 import numpy as np
@@ -139,6 +138,22 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     statistics_ : array of shape (n_features,)
         The imputation fill value for each feature.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.impute import SimpleImputer
+    >>> imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
+    >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
+    ... # doctest: +NORMALIZE_WHITESPACE
+    SimpleImputer(copy=True, fill_value=None, missing_values=nan,
+           strategy='mean', verbose=0)
+    >>> X = [[np.nan, 2, 3], [4, np.nan, 6], [10, np.nan, 9]]
+    >>> print(imp_mean.transform(X))
+    ... # doctest: +NORMALIZE_WHITESPACE
+    [[ 7.   2.   3. ]
+     [ 4.   3.5  6. ]
+     [10.   3.5  9. ]]
+
     Notes
     -----
     Columns which only contained missing values at `fit` are discarded upon
@@ -259,8 +274,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         else:
             for i in range(X.shape[1]):
-                column = X.data[X.indptr[i]:X.indptr[i+1]]
-                mask_column = mask_data[X.indptr[i]:X.indptr[i+1]]
+                column = X.data[X.indptr[i]:X.indptr[i + 1]]
+                mask_column = mask_data[X.indptr[i]:X.indptr[i + 1]]
                 column = column[~mask_column]
 
                 # combine explicit and implicit zeros
@@ -340,7 +355,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data to complete.
         """
         check_is_fitted(self, 'statistics_')

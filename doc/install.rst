@@ -52,6 +52,12 @@ it as ``scikit-learn[alldeps]``. The most common use case for this is in a
 application or a Docker image. This option is not intended for manual
 installation from the command line.
 
+.. note::
+
+   For installing on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
+   are required.
+
+
 For installation instructions for more distributions see
 :ref:`other distributions <install_by_distribution>`.
 For compiling the development version from source, or building the package

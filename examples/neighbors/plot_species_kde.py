@@ -87,7 +87,7 @@ for i in range(2):
     kde.fit(Xtrain[ytrain == i])
 
     # evaluate only on the land: -9999 indicates ocean
-    Z = -9999 + np.zeros(land_mask.shape[0])
+    Z = np.full(land_mask.shape[0], -9999, dtype='int')
     Z[land_mask] = np.exp(kde.score_samples(xy))
     Z = Z.reshape(X.shape)
 

@@ -802,9 +802,10 @@ by black points below.
     be used (e.g. with sparse matrices). This matrix will consume n^2 floats.
     A couple of mechanisms for getting around this are:
 
-    - Use OPTICS clustering in conjunction with the `extract_dbscan` method. OPTICS
-      clustering also calculates the full pairwise matrix, but only keeps one row in
-      memory at a time (memory complexity n).
+    - Use :ref:`OPTICS <optics>` clustering in conjunction with the
+      `extract_dbscan` method. OPTICS clustering also calculates the full
+      pairwise matrix, but only keeps one row in memory at a time (memory
+      complexity n).
 
     - A sparse radius neighborhood graph (where missing entries are presumed to
       be out of eps) can be precomputed in a memory-efficient way and dbscan
@@ -1281,7 +1282,7 @@ following equation [VEB2009]_. In this equation,
 :math:`b_j = |V_j|` (the number of elements in :math:`V_j`).
 
 
-.. math:: E[\text{MI}(U,V)]=\sum_{i=1}^|U| \sum_{j=1}^|V| \sum_{n_{ij}=(a_i+b_j-N)^+
+.. math:: E[\text{MI}(U,V)]=\sum_{i=1}^{|U|} \sum_{j=1}^{|V|} \sum_{n_{ij}=(a_i+b_j-N)^+
    }^{\min(a_i, b_j)} \frac{n_{ij}}{N}\log \left( \frac{ N.n_{ij}}{a_i b_j}\right)
    \frac{a_i!b_j!(N-a_i)!(N-b_j)!}{N!n_{ij}!(a_i-n_{ij})!(b_j-n_{ij})!
    (N-a_i-b_j+n_{ij})!}

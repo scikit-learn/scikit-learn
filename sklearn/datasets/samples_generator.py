@@ -807,7 +807,7 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
                          "and cluster_std = {}".format(centers, cluster_std))
 
     if isinstance(cluster_std, numbers.Real):
-        cluster_std = np.ones(len(centers)) * cluster_std
+        cluster_std = np.full(len(centers), cluster_std)
 
     X = []
     y = []

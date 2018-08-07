@@ -20,7 +20,8 @@ from ._dbscan_inner import dbscan_inner
 
 
 def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
-           algorithm='auto', leaf_size=30, p=2, sample_weight=None, n_jobs=1):
+           algorithm='auto', leaf_size=30, p=2, sample_weight=None,
+           n_jobs=None):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     Read more in the :ref:`User Guide <dbscan>`.
@@ -87,6 +88,14 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     labels : array [n_samples]
         Cluster labels for each point.  Noisy samples are given the label -1.
 
+    See also
+    --------
+    DBSCAN
+        An estimator interface for this clustering algorithm.
+    optics
+        A similar clustering at multiple values of eps. Our implementation
+        is optimized for memory usage.
+
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_dbscan.py
@@ -106,6 +115,9 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
     Another way to reduce memory and computation time is to remove
     (near-)duplicate points and use ``sample_weight`` instead.
+
+    :func:`cluster.optics` provides a similar clustering with lower memory
+    usage.
 
     References
     ----------
@@ -158,7 +170,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
                                 for neighbors in neighborhoods])
 
     # Initially, all samples are noise.
-    labels = -np.ones(X.shape[0], dtype=np.intp)
+    labels = np.full(X.shape[0], -1, dtype=np.intp)
 
     # A list of all core samples found.
     core_samples = np.asarray(n_neighbors >= min_samples, dtype=np.uint8)
@@ -233,6 +245,25 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
 
+    Examples
+    --------
+    >>> from sklearn.cluster import DBSCAN
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [2, 2], [2, 3],
+    ...               [8, 7], [8, 8], [25, 80]])
+    >>> clustering = DBSCAN(eps=3, min_samples=2).fit(X)
+    >>> clustering.labels_
+    array([ 0,  0,  0,  1,  1, -1])
+    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    DBSCAN(algorithm='auto', eps=3, leaf_size=30, metric='euclidean',
+        metric_params=None, min_samples=2, n_jobs=None, p=None)
+
+    See also
+    --------
+    OPTICS
+        A similar clustering at multiple values of eps. Our implementation
+        is optimized for memory usage.
+
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_dbscan.py
@@ -253,6 +284,9 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     Another way to reduce memory and computation time is to remove
     (near-)duplicate points and use ``sample_weight`` instead.
 
+    :class:`cluster.OPTICS` provides a similar clustering with lower memory
+    usage.
+
     References
     ----------
     Ester, M., H. P. Kriegel, J. Sander, and X. Xu, "A Density-Based
@@ -263,7 +297,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
                  metric_params=None, algorithm='auto', leaf_size=30, p=None,
-                 n_jobs=1):
+                 n_jobs=None):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric

@@ -15,7 +15,7 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
-from ..utils import Parallel, delayed
+from ..utils import Parallel, delayed, effective_n_jobs
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
 from ..metrics.scorer import check_scoring
@@ -262,16 +262,61 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
     @if_delegate_has_method(delegate='estimator')
     def decision_function(self, X):
+        """Compute the decision function of ``X``.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        score : array, shape = [n_samples, n_classes] or [n_samples]
+            The decision function of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+            Regression and binary classification produce an array of shape
+            [n_samples].
+        """
         check_is_fitted(self, 'estimator_')
         return self.estimator_.decision_function(self.transform(X))
 
     @if_delegate_has_method(delegate='estimator')
     def predict_proba(self, X):
+        """Predict class probabilities for X.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        p : array of shape = [n_samples, n_classes]
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+        """
         check_is_fitted(self, 'estimator_')
         return self.estimator_.predict_proba(self.transform(X))
 
     @if_delegate_has_method(delegate='estimator')
     def predict_log_proba(self, X):
+        """Predict class log-probabilities for X.
+
+        Parameters
+        ----------
+        X : array of shape [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        p : array of shape = [n_samples, n_classes]
+            The class log-probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+        """
         check_is_fitted(self, 'estimator_')
         return self.estimator_.predict_log_proba(self.transform(X))
 
@@ -311,6 +356,10 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -382,8 +431,8 @@ class RFECV(RFE, MetaEstimatorMixin):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, step=1, cv=None, scoring=None, verbose=0,
-                 n_jobs=1):
+    def __init__(self, estimator, step=1, cv='warn', scoring=None, verbose=0,
+                 n_jobs=None):
         self.estimator = estimator
         self.step = step
         self.cv = cv
@@ -440,10 +489,11 @@ class RFECV(RFE, MetaEstimatorMixin):
         # and provides bound methods as scorers is not broken with the
         # addition of n_jobs parameter in version 0.18.
 
-        if self.n_jobs == 1:
+        if effective_n_jobs(self.n_jobs) == 1:
             parallel, func = list, _rfe_single_fit
         else:
-            parallel, func, = Parallel(n_jobs=self.n_jobs), delayed(_rfe_single_fit)
+            parallel = Parallel(n_jobs=self.n_jobs)
+            func = delayed(_rfe_single_fit)
 
         scores = parallel(
             func(rfe, self.estimator, X, y, train, test, scorer)
