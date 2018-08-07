@@ -1133,7 +1133,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegression(random_state=0).fit(X, y)
+    >>> clf = LogisticRegression(random_state=0, intercept_scaling=1).fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :]) # doctest: +ELLIPSIS
@@ -1243,6 +1243,16 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
+        if self.solver == 'liblinear' and self.fit_intercept and \
+           self.intercept_scaling == 'warn':
+            warnings.warn("liblinear does not regularize the intercept."
+                          " Therefore intercept_scaling should be set "
+                          "explicitly when fit_intercept is set to True. "
+                          "Default value of 1. is used.",
+                          UserWarning)
+            intercept_scaling = 1.
+        else:
+            intercept_scaling = self.intercept_scaling
 
         if self.solver in ['newton-cg']:
             _dtype = [np.float64, np.float32]
@@ -1264,7 +1274,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                               " 'solver' is set to 'liblinear'. Got 'n_jobs'"
                               " = {}.".format(self.n_jobs))
             self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
-                X, y, self.C, self.fit_intercept, self.intercept_scaling,
+                X, y, self.C, self.fit_intercept, intercept_scaling,
                 self.class_weight, self.penalty, self.dual, self.verbose,
                 self.max_iter, self.tol, self.random_state,
                 sample_weight=sample_weight)

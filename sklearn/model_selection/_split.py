@@ -1939,7 +1939,7 @@ def check_cv(cv='warn', y=None, classifier=False):
         The return value is a cross-validator which generates the train/test
         splits via the ``split`` method.
     """
-    if cv is 'warn':
+    if cv is None or cv is 'warn':
         warnings.warn(CV_WARNING, FutureWarning)
         cv = 3
 
