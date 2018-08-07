@@ -100,6 +100,18 @@ class IncrementalPCA(_BasePCA):
         The number of samples processed by the estimator. Will be reset on
         new calls to fit, but increments across ``partial_fit`` calls.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import IncrementalPCA
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = IncrementalPCA(n_components=10)
+    >>> transformer.fit(X)
+    IncrementalPCA(batch_size=None, copy=True, n_components=10, whiten=False)
+    >>> X_transformed = transformer.transform(X)
+    >>> X_transformed.shape
+    (1797, 10)
+
     Notes
     -----
     Implements the incremental PCA model from:
