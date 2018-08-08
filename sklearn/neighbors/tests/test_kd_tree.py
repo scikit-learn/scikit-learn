@@ -9,7 +9,6 @@ from sklearn.neighbors.kd_tree import (KDTree, NeighborsHeap,
 from sklearn.neighbors.dist_metrics import DistanceMetric
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import SkipTest, assert_allclose
-from sklearn.externals import joblib
 
 rng = np.random.RandomState(42)
 V = rng.random_sample((3, 3))
@@ -188,6 +187,7 @@ def test_kd_tree_pickle(protocol):
         ind2, dist2 = kdt2.query(X)
         assert_array_almost_equal(ind1, ind2)
         assert_array_almost_equal(dist1, dist2)
+        assert isinstance(kdt2, KDTree)
 
     check_pickle_protocol(protocol)
 
@@ -239,17 +239,3 @@ def test_simultaneous_sort(n_rows=10, n_pts=201):
 
     assert_array_almost_equal(dist, dist2)
     assert_array_almost_equal(ind, ind2)
-
-
-def test_pickling(tmpdir):
-    # make sure pickled tree keeps its class. Prior to a fix, it would be
-    # BinaryTree
-
-    data = np.reshape([1., 2., 3.], (-1, 1))
-    tree = KDTree(data)
-
-    assert isinstance(tree, KDTree)
-    file_path = str(tmpdir.join('dump.pkl'))
-    joblib.dump(tree, file_path)
-    tree = joblib.load(file_path)
-    assert isinstance(tree, KDTree)
