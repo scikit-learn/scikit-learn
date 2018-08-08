@@ -259,7 +259,7 @@ def _parse_values(s):
         for match in _RE_DENSE_VALUES.finditer(s):
             if match.group(2):
                 raise BadLayout('Error parsing %r' % match.group())
-        raise
+        raise BadLayout('Unknown parsing error')
 
 
 DENSE = 0   # Constant value representing a dense matrix
