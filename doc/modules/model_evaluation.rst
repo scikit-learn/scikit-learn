@@ -979,7 +979,7 @@ with a svm classifier in a binary class problem::
   >>> est = svm.LinearSVC(intercept_scaling=1., random_state=0)
   >>> est.fit(X, y)
   LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-       intercept_scaling=1, loss='squared_hinge', max_iter=1000,
+       intercept_scaling=1.0, loss='squared_hinge', max_iter=1000,
        multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
        verbose=0)
   >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
@@ -997,7 +997,7 @@ with a svm classifier in a multiclass problem::
   >>> est = svm.LinearSVC(intercept_scaling=1.)
   >>> est.fit(X, Y)
   LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-       intercept_scaling=1, loss='squared_hinge', max_iter=1000,
+       intercept_scaling=1.0, loss='squared_hinge', max_iter=1000,
        multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
        verbose=0)
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
