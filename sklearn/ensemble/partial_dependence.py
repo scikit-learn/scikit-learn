@@ -165,7 +165,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
 
 def plot_partial_dependence(gbrt, X, features, feature_names=None,
                             label=None, n_cols=3, grid_resolution=100,
-                            percentiles=(0.05, 0.95), n_jobs=1,
+                            percentiles=(0.05, 0.95), n_jobs=None,
                             verbose=0, ax=None, line_kw=None,
                             contour_kw=None, **fig_kw):
     """Partial dependence plots for ``features``.

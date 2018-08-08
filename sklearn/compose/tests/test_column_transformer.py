@@ -458,7 +458,7 @@ def test_column_transformer_get_set_params():
     ct = ColumnTransformer([('trans1', StandardScaler(), [0]),
                             ('trans2', StandardScaler(), [1])])
 
-    exp = {'n_jobs': 1,
+    exp = {'n_jobs': None,
            'remainder': 'drop',
            'sparse_threshold': 0.3,
            'trans1': ct.transformers[0][1],
@@ -478,7 +478,7 @@ def test_column_transformer_get_set_params():
     assert_false(ct.get_params()['trans1__with_mean'])
 
     ct.set_params(trans1='passthrough')
-    exp = {'n_jobs': 1,
+    exp = {'n_jobs': None,
            'remainder': 'drop',
            'sparse_threshold': 0.3,
            'trans1': 'passthrough',
@@ -662,6 +662,7 @@ def test_column_transformer_remainder():
     ct = make_column_transformer(([0], Trans()))
     assert ct.remainder == 'drop'
 
+
 @pytest.mark.parametrize("key", [[0], np.array([0]), slice(0, 1),
                                  np.array([True, False])])
 def test_column_transformer_remainder_numpy(key):
@@ -806,7 +807,7 @@ def test_column_transformer_get_set_params_with_remainder():
     ct = ColumnTransformer([('trans1', StandardScaler(), [0])],
                            remainder=StandardScaler())
 
-    exp = {'n_jobs': 1,
+    exp = {'n_jobs': None,
            'remainder': ct.remainder,
            'remainder__copy': True,
            'remainder__with_mean': True,
@@ -825,7 +826,7 @@ def test_column_transformer_get_set_params_with_remainder():
     assert not ct.get_params()['remainder__with_std']
 
     ct.set_params(trans1='passthrough')
-    exp = {'n_jobs': 1,
+    exp = {'n_jobs': None,
            'remainder': ct.remainder,
            'remainder__copy': True,
            'remainder__with_mean': True,

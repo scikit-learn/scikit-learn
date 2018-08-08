@@ -563,7 +563,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
                  warm_start=False, copy_X_train=True, random_state=None,
-                 multi_class="one_vs_rest", n_jobs=1):
+                 multi_class="one_vs_rest", n_jobs=None):
         self.kernel = kernel
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer

@@ -91,7 +91,7 @@ def make_dataset(X, y, sample_weight, random_state=None):
 
 
 def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
-                     sample_weight=None, return_mean=False):
+                     sample_weight=None, return_mean=False, check_input=True):
     """
     Centers data to have mean zero along axis 0. If fit_intercept=False or if
     the X is a sparse matrix, no centering is done, but normalization can still
@@ -113,8 +113,15 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
     if isinstance(sample_weight, numbers.Number):
         sample_weight = None
 
-    X = check_array(X, copy=copy, accept_sparse=['csr', 'csc'],
-                    dtype=FLOAT_DTYPES)
+    if check_input:
+        X = check_array(X, copy=copy, accept_sparse=['csr', 'csc'],
+                        dtype=FLOAT_DTYPES)
+    elif copy:
+        if sp.issparse(X):
+            X = X.copy()
+        else:
+            X = X.copy(order='K')
+
     y = np.asarray(y, dtype=X.dtype)
 
     if fit_intercept:
@@ -398,7 +405,7 @@ class LinearRegression(LinearModel, RegressorMixin):
     """
 
     def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
-                 n_jobs=1):
+                 n_jobs=None):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
@@ -465,7 +472,8 @@ class LinearRegression(LinearModel, RegressorMixin):
         return self
 
 
-def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
+def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
+             check_input=True):
     """Aux function used at beginning of fit in linear models"""
     n_samples, n_features = X.shape
 
@@ -474,11 +482,12 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
         precompute = False
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, fit_intercept=fit_intercept, normalize=normalize,
-            copy=False, return_mean=True)
+            copy=False, return_mean=True, check_input=check_input)
     else:
         # copy was done in fit if necessary
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
-            X, y, fit_intercept=fit_intercept, normalize=normalize, copy=copy)
+            X, y, fit_intercept=fit_intercept, normalize=normalize, copy=copy,
+            check_input=check_input)
     if hasattr(precompute, '__array__') and (
             fit_intercept and not np.allclose(X_offset, np.zeros(n_features)) or
             normalize and not np.allclose(X_scale, np.ones(n_features))):
