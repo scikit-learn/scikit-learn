@@ -1885,7 +1885,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     >>> X = np.array([[0], [1], [2], [3]])
     >>> Y = np.array([0, 1, 2, 3])
     >>> labels = np.array([0, 1, 2, 3])
-    >>> est = svm.LinearSVC()
+    >>> est = svm.LinearSVC(intercept_scaling=1)
     >>> est.fit(X, Y)
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
          intercept_scaling=1, loss='squared_hinge', max_iter=1000,
