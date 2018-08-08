@@ -488,7 +488,7 @@ def test_illegal_column(monkeypatch):
 def test_fetch_openml_raises_missing_values_target(monkeypatch):
     data_id = 2
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
-    assert_raise_message(ValueError, "Dataset data_id=",
+    assert_raise_message(ValueError, "Target column ",
                          fetch_openml, data_id=data_id, target_column='family')
 
 

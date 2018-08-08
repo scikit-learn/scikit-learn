@@ -486,11 +486,11 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                    for col_name in data_columns]
     for col_idx in col_slice_y:
         feat = features_list[col_idx]
-        if int(feat['number_of_missing_values']) > 0:
-            raise ValueError('Target feature {} has {} missing values. '
-                             'Hidden values are not supported for target '
-                             'columns. '.format(feat['name'],
-                                                feat['missing_values']))
+        nr_missing = int(feat['number_of_missing_values'])
+        if nr_missing > 0:
+            raise ValueError('Target column {} has {} missing values. '
+                             'Missing values are not supported for target '
+                             'columns. '.format(feat['name'], nr_missing))
 
     # determine arff encoding to return
     return_sparse = False
