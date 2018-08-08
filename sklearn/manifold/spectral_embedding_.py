@@ -18,7 +18,8 @@ from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 from ..base import BaseEstimator
 from ..externals import six
 from ..utils import (check_random_state, check_array,
-                     check_symmetric, _init_arpack_v0)
+                     check_symmetric)
+from ..utils.arpack import _init_arpack_v0
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
