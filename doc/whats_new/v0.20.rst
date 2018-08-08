@@ -92,7 +92,6 @@ Changelog
 
 Support for Python 3.3 has been officially dropped.
 
-.. _changes_0_20_sklearn_cluster
 
 :mod:`sklearn.cluster`
 ......................
@@ -145,7 +144,6 @@ Support for Python 3.3 has been officially dropped.
   :class:`cluster.AgglomerativeClustering`.
   :issue:`9875` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
-.. _changes_0_20_sklearn_compose
 
 :mod:`sklearn.compose`
 ......................
@@ -162,7 +160,6 @@ Support for Python 3.3 has been officially dropped.
   are mapped back to the original space via an inverse transform. :issue:`9041`
   by `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
 
-.. _changes_0_20_sklearn_covariance
 
 :mod:`sklearn.covariance`
 .........................
@@ -174,7 +171,6 @@ Support for Python 3.3 has been officially dropped.
   respectively and will be removed in version 0.22.
   :issue:`9993` by :user:`Artiem Krinitsyn <artiemq>`
 
-.. _changes_0_20_sklearn_datasets
 
 :mod:`sklearn.datasets`
 .......................
@@ -202,7 +198,6 @@ Support for Python 3.3 has been officially dropped.
   data points could be generated. :issue:`10037` by :user:`Christian Braune
   <christianbraune79>`.
 
-.. _changes_0_20_sklearn_decomposition
 
 :mod:`sklearn.decomposition`
 ............................
@@ -245,7 +240,6 @@ Support for Python 3.3 has been officially dropped.
   :issue:`5956` by :user:`Vighnesh Birodkar <vighneshbirodkar>` and
   :user:`Olivier Grisel <ogrisel>`.
 
-.. _changes_0_20_sklearn_discriminant_analysis
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
@@ -254,7 +248,6 @@ Support for Python 3.3 has been officially dropped.
   :func:`_class_cov` in :mod:`discriminant_analysis`. :issue:`10898` by
   :user:`Nanxin Chen <bobchennan>`.`
 
-.. _changes_0_20_sklearn_dummy
 
 :mod:`sklearn.dummy`
 ....................
@@ -266,7 +259,6 @@ Support for Python 3.3 has been officially dropped.
   only require X to be an object with finite length or shape. :issue:`9832` by
   :user:`Vrishank Bhardwaj <vrishank97>`.
 
-.. _changes_0_20_sklearn_ensemble
 
 :mod:`sklearn.ensemble`
 .......................
@@ -317,7 +309,6 @@ Support for Python 3.3 has been officially dropped.
   reproduce ``fit`` result usinbg the object attributes when ``random_state``
   is set. :issue:`9723` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-.. _changes_0_20_sklearn_feature_extraction
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -345,7 +336,6 @@ Support for Python 3.3 has been officially dropped.
   :issue:`10441` by :user:`Mayur Kulkarni <maykulkarni>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
-.. _changes_0_20_sklearn_feature_selection
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -359,7 +349,6 @@ Support for Python 3.3 has been officially dropped.
   CV scores in :class:`feature_selection.RFECV`.
   :issue:`9222` by :user:`Nick Hoh <nickypie>`.
 
-.. _changes_0_20_sklearn_gaussian_process
 
 :mod:`sklearn.gaussian_process`
 ...............................
@@ -369,7 +358,6 @@ Support for Python 3.3 has been officially dropped.
   called several times in a row. :issue:`9234` by :user:`andrewww <andrewww>`
   and :user:`Minghui Liu <minghui-liu>`.
 
-.. _changes_0_20_sklearn_impute
 
 :mod:`sklearn.impute`
 .....................
@@ -388,7 +376,6 @@ Support for Python 3.3 has been officially dropped.
   data, and so does the ``'most_frequent'`` strategy now. :issue:`11211` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
-.. _changes_0_20_sklearn_isotonic
 
 :mod:`sklearn.isotonic`
 .......................
@@ -398,7 +385,6 @@ Support for Python 3.3 has been officially dropped.
   identical X values.
   :issue:`9432` by :user:`Dallas Card <dallascard>`
 
-.. _changes_0_20_sklearn_linear_model
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -498,7 +484,6 @@ Support for Python 3.3 has been officially dropped.
   estimators will report at most ``max_iter`` iterations even if more were
   performed. :issue:`10723` by `Joel Nothman`_.
 
-.. _changes_0_20_sklearn_manifold
 
 :mod:`sklearn.manifold`
 .......................
@@ -527,7 +512,6 @@ Support for Python 3.3 has been officially dropped.
   pairwise distances or squared distances. :issue:`9775` by
   :user:`William de Vazelhes <wdevazelhes>`.
 
-.. _changes_0_20_sklearn_metrics
 
 :mod:`sklearn.metrics`
 ......................
@@ -630,7 +614,6 @@ Support for Python 3.3 has been officially dropped.
   ``working_memory`` config. See :ref:`working_memory`. :issue:`10280` by `Joel
   Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
-.. _changes_0_20_sklearn_mixture
 
 :mod:`sklearn.mixture`
 ......................
@@ -651,7 +634,6 @@ Support for Python 3.3 has been officially dropped.
   initializations (when ``n_init > 1``), but just the lower bound of the last
   initialization. :issue:`10869` by :user:`Aurélien Géron <ageron>`.
 
-.. _changes_0_20_sklearn_model_selection
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -710,7 +692,6 @@ Support for Python 3.3 has been officially dropped.
   raises TypeError.
   :issue:`10928` by :user:`Solutus Immensus <solutusimmensus>`
 
-.. _changes_0_20_sklearn_multioutput
 
 :mod:`sklearn.multioutput`
 ..........................
@@ -718,7 +699,6 @@ Support for Python 3.3 has been officially dropped.
 - |MajorFeature| Added :class:`multioutput.RegressorChain` for multi-target
   regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
-.. _changes_0_20_sklearn_naive_bayes
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -739,7 +719,6 @@ Support for Python 3.3 has been officially dropped.
   vector valued pseudocounts (alpha).
   :issue:`10346` by :user:`Tobias Madsen <TobiasMadsen>`
 
-.. _changes_0_20_sklearn_neighbors
 
 :mod:`sklearn.neighbors`
 ........................
@@ -782,7 +761,6 @@ Support for Python 3.3 has been officially dropped.
   faster construction and querying times.
   :issue:`11556` by :user:`Jake VanderPlas <jakevdp>`
 
-.. _changes_0_20_sklearn_neural_network
 
 :mod:`sklearn.neural_network`
 .............................
@@ -804,7 +782,6 @@ Support for Python 3.3 has been officially dropped.
   quit unexpectedly early due to local minima or fluctuations.
   :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`
 
-.. _changes_0_20_sklearn_pipeline
 
 :mod:`sklearn.pipeline`
 .......................
@@ -814,7 +791,6 @@ Support for Python 3.3 has been officially dropped.
   parameters such as ``return_std`` in a pipeline with caution.
   :issue:`9304` by :user:`Breno Freitas <brenolf>`.
 
-.. _changes_0_20_sklearn_preprocessing
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -941,7 +917,6 @@ Support for Python 3.3 has been officially dropped.
   ``validate`` will be from ``True`` to ``False`` in 0.22.
   :issue:`10655` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-.. _changes_0_20_sklearn_svm
 
 :mod:`sklearn.svm`
 ..................
@@ -961,7 +936,6 @@ Support for Python 3.3 has been officially dropped.
   version 0.22 to account better for unscaled features. :issue:`8361` by
   :user:`Gaurav Dhingra <gxyd>` and :user:`Ting Neo <neokt>`.
 
-.. _changes_0_20_sklearn_tree
 
 :mod:`sklearn.tree`
 ...................
@@ -976,7 +950,6 @@ Support for Python 3.3 has been officially dropped.
   considered all samples to be of equal weight importance.
   :issue:`11464` by :user:`John Stott <JohnStott>`.
 
-.. _changes_0_20_sklearn_utils
 
 :mod:`sklearn.utils`
 ....................
@@ -994,7 +967,6 @@ Support for Python 3.3 has been officially dropped.
   that arrays of bytes/strings will be interpreted as decimal numbers
   beginning in version 0.22. :issue:`10229` by :user:`Ryan Lee <rtlee9>`
 
-.. _changes_0_20_Multiple_modules
 
 Multiple modules
 ................
@@ -1040,7 +1012,6 @@ Multiple modules
   :class:`cluster.AffinityPropagation`, and :class:`cluster.Birch`.
   :issue:`10306` by :user:`Jonathan Siebert <jotasi>`.
 
-.. _changes_0_20_Miscellaneous
 
 Miscellaneous
 .............
