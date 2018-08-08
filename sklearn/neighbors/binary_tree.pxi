@@ -1119,7 +1119,7 @@ cdef class BinaryTree:
         """
         reduce method used for pickling
         """
-        return (newObj, (BinaryTree,), self.__getstate__())
+        return (newObj, (type(self),), self.__getstate__())
 
     def __getstate__(self):
         """
