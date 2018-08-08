@@ -334,7 +334,7 @@ class LinearSVR(LinearModel, RegressorMixin):
     ...          random_state=0, tol=1e-5)
     >>> regr.fit(X, y)
     LinearSVR(C=1.0, dual=True, epsilon=0.0, fit_intercept=True,
-         intercept_scaling=1.0, loss='epsilon_insensitive', max_iter=1000,
+         intercept_scaling=1, loss='epsilon_insensitive', max_iter=1000,
          random_state=0, tol=1e-05, verbose=0)
     >>> print(regr.coef_)
     [16.35... 26.91... 42.30... 60.47...]
