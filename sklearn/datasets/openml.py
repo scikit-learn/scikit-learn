@@ -290,9 +290,11 @@ def _get_data_features(data_id, data_home):
     return json_data['data_features']['feature']
 
 
-def _download_data_arff(file_id, sparse, data_home):
+def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
     # Accesses an ARFF file on the OpenML server. Documentation:
     # https://www.openml.org/api_data_docs#!/data/get_download_id
+    # encode_nominal argument is to ensure unit testing, do not alter in
+    # production!
     url = _DATA_FILE.format(file_id)
     response = _open_openml_url(url, data_home)
     if sparse is True:
@@ -301,11 +303,11 @@ def _download_data_arff(file_id, sparse, data_home):
         return_type = _arff.DENSE
 
     if PY2:
-        arff_file = _arff.load(response, encode_nominal=True,
+        arff_file = _arff.load(response, encode_nominal=encode_nominal,
                                return_type=return_type, )
     else:
         arff_file = _arff.loads(response.read().decode('utf-8'),
-                                encode_nominal=True,
+                                encode_nominal=encode_nominal,
                                 return_type=return_type)
     response.close()
     return arff_file
@@ -348,6 +350,10 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     versions of the 'iris' dataset). Please give either name or data_id
     (not both). In case a name is given, a version can also be
     provided.
+
+    NOTE: he API is experimental in version 0.20 (particularly the return value
+    structure), and might have small backward-incompatible changes in future
+    releases.
 
     Parameters
     ----------
@@ -399,8 +405,9 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         details : dict
             More metadata from OpenML
 
-        Missing values in the 'data' and 'target' field are represented as
-        NaN's.
+        Missing values in the 'data' are represented as NaN's. Missing values
+        in 'target' are represented as NaN's (numerical target) or None
+        (categorical target)
     """
     data_home = get_data_home(data_home=data_home)
     data_home = join(data_home, 'openml')
@@ -477,6 +484,13 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     col_slice_x = [int(features_dict[col_name]['index'])
                    for col_name in data_columns]
+    for col_idx in col_slice_y:
+        feat = features_list[col_idx]
+        if int(feat['number_of_missing_values']) > 0:
+            raise ValueError('Target feature {} has {} missing values. '
+                             'Hidden values are not supported for target '
+                             'columns. '.format(feat['name'],
+                                                feat['missing_values']))
 
     # determine arff encoding to return
     return_sparse = False
@@ -522,7 +536,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     bunch = Bunch(
         data=X, target=y, feature_names=data_columns,
-        DESCR=description, details=data_description, features=features_list,
+        DESCR=description, details=data_description,
         categories=nominal_attributes,
         url="https://www.openml.org/d/{}".format(data_id))
 
