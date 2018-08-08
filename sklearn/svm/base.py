@@ -862,6 +862,14 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     n_iter_ : int
         Maximum number of iterations run across all classes.
     """
+    if fit_intercept and intercept_scaling == 'warn':
+        warnings.warn("liblinear does not regularize the intercept."
+                      " Therefore intercept_scaling should be set "
+                      "explicitly when fit_intercept is set to True. "
+                      "Default value of 1. is used.",
+                      UserWarning)
+        intercept_scaling = 1.
+
     if loss not in ['epsilon_insensitive', 'squared_epsilon_insensitive']:
         enc = LabelEncoder()
         y_ind = enc.fit_transform(y)
