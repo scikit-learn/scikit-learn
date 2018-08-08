@@ -137,7 +137,7 @@ On the other hand, :class:`LinearSVC` implements "one-vs-the-rest"
 multi-class strategy, thus training n_class models. If there are only
 two classes, only one model is trained::
 
-    >>> lin_clf = svm.LinearSVC()
+    >>> lin_clf = svm.LinearSVC(intercept_scaling=1.)
     >>> lin_clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
          intercept_scaling=1, loss='squared_hinge', max_iter=1000,

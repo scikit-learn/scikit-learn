@@ -151,7 +151,8 @@ the :func:`fbeta_score` function::
     >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
     >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.svm import LinearSVC
-    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
+    >>> grid = GridSearchCV(LinearSVC(intercept_scaling=1.),
+    ...                     param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer, cv=5)
 
 The second use case is to build a completely custom scorer object
@@ -245,7 +246,7 @@ permitted and will require a wrapper to return a single metric::
     >>> from sklearn.metrics import confusion_matrix
     >>> # A sample toy binary classification dataset
     >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
-    >>> svm = LinearSVC(random_state=0)
+    >>> svm = LinearSVC(intercept_scaling=1., random_state=0)
     >>> def tn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 0]
     >>> def fp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 1]
     >>> def fn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 0]
@@ -975,7 +976,7 @@ with a svm classifier in a binary class problem::
   >>> from sklearn.metrics import hinge_loss
   >>> X = [[0], [1]]
   >>> y = [-1, 1]
-  >>> est = svm.LinearSVC(random_state=0)
+  >>> est = svm.LinearSVC(intercept_scaling=1., random_state=0)
   >>> est.fit(X, y)
   LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
        intercept_scaling=1, loss='squared_hinge', max_iter=1000,
@@ -993,7 +994,7 @@ with a svm classifier in a multiclass problem::
   >>> X = np.array([[0], [1], [2], [3]])
   >>> Y = np.array([0, 1, 2, 3])
   >>> labels = np.array([0, 1, 2, 3])
-  >>> est = svm.LinearSVC()
+  >>> est = svm.LinearSVC(intercept_scaling=1.)
   >>> est.fit(X, Y)
   LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
        intercept_scaling=1, loss='squared_hinge', max_iter=1000,
