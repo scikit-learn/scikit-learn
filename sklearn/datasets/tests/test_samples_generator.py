@@ -130,8 +130,7 @@ def test_make_classification_informative_features():
                 centroid = X[cluster_index == cluster].mean(axis=0)
                 if hypercube:
                     assert_array_almost_equal(np.abs(centroid) / class_sep,
-                                              np.array([class_sep]
-                                              * n_informative) / class_sep,
+                                              np.ones(n_informative),
                                               decimal=5,
                                               err_msg="Clusters are not "
                                                       "centered on hypercube "
@@ -139,10 +138,10 @@ def test_make_classification_informative_features():
                 else:
                     assert_raises(AssertionError,
                                   assert_array_almost_equal,
-                                  np.abs(centroid),
-                                  [class_sep] * n_informative,
-                                  decimal=0,
-                                  err_msg="Clusters should not be cenetered "
+                                  np.abs(centroid) / class_sep,
+                                  np.ones(n_informative),
+                                  decimal=5,
+                                  err_msg="Clusters should not be centered "
                                           "on hypercube vertices")
 
     assert_raises(ValueError, make, n_features=2, n_informative=2, n_classes=5,
