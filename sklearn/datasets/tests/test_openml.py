@@ -506,4 +506,3 @@ def test_fetch_openml_raises_illegal_argument():
 
     assert_raise_message(ValueError, "Neither name nor data_id are provided. "
                          "Please provide name or data_id.", fetch_openml)
-
