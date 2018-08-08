@@ -118,7 +118,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     >>> X, y = make_classification(n_features=4, random_state=0)
     >>> clf = LinearSVC(random_state=0, tol=1e-5)
     >>> clf = LinearSVC(intercept_scaling=1,
-    ...         random_state=0, tol=1e-5)
+    ...                 random_state=0, tol=1e-5)
     >>> clf.fit(X, y)
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
          intercept_scaling=1, loss='squared_hinge', max_iter=1000,
@@ -331,7 +331,7 @@ class LinearSVR(LinearModel, RegressorMixin):
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_features=4, random_state=0)
     >>> regr = LinearSVR(intercept_scaling=1,
-    ...          random_state=0, tol=1e-5)
+    ...                  random_state=0, tol=1e-5)
     >>> regr.fit(X, y)
     LinearSVR(C=1.0, dual=True, epsilon=0.0, fit_intercept=True,
          intercept_scaling=1, loss='epsilon_insensitive', max_iter=1000,

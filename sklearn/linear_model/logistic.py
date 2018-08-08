@@ -1593,8 +1593,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     >>> from sklearn.linear_model import LogisticRegressionCV
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = LogisticRegressionCV(cv=5,
-    ...         intercept_scaling=1,
-    ...         random_state=0).fit(X, y)
+    ...                            intercept_scaling=1,
+    ...                            random_state=0).fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :]) # doctest: +ELLIPSIS
