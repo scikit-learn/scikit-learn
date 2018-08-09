@@ -18,7 +18,7 @@ try:
 except ImportError:
     lightning_clf = None
 
-m = Memory(cachedir='.', verbose=0)
+m = Memory('.', verbose=0)
 
 
 # compute logistic loss

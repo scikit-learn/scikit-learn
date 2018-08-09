@@ -206,22 +206,12 @@ class Pipeline(_BaseComposition):
             if transformer is None:
                 pass
             else:
-                if hasattr(memory, 'location'):
-                    # joblib >= 0.12
-                    if memory.location is None:
-                        # we do not clone when caching is disabled to
-                        # preserve backward compatibility
-                        cloned_transformer = transformer
-                    else:
-                        cloned_transformer = clone(transformer)
-                elif hasattr(memory, 'cachedir'):
-                    # joblib < 0.11
-                    if memory.cachedir is None:
-                        # we do not clone when caching is disabled to
-                        # preserve backward compatibility
-                        cloned_transformer = transformer
-                    else:
-                        cloned_transformer = clone(transformer)
+                # XXX: cachedir was renamed to location in joblib 0.12
+                if getattr(memory, 'location',
+                           getattr(memory, 'cachedir', None)) is None:
+                    # we do not clone when caching is disabled to
+                    # preserve backward compatibility
+                    cloned_transformer = transformer
                 else:
                     cloned_transformer = clone(transformer)
                 # Fit or load from cache the current transfomer

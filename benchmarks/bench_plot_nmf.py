@@ -29,7 +29,7 @@ from sklearn.utils import check_array
 from sklearn.utils.validation import check_is_fitted, check_non_negative
 
 
-mem = Memory(cachedir='.', verbose=0)
+mem = Memory('.', verbose=0)
 
 ###################
 # Start of _PGNMF #
