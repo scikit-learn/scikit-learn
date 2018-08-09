@@ -345,10 +345,13 @@ Support for Python 3.3 has been officially dropped.
   :issue:`6689` by :user:`Nihar Sheth <nsheth12>` and
   :user:`Quazi Rahman <qmaruf>`.
 
+- |Feature| Added ``min_features_to_select`` parameter to
+  :class:`feature_selection.RFECV` to bound evaluated features counts.
+  :issue:`11293` by :user:`Brent Yi <brentyi>`.
+
 - |Fix| Fixed computation of ``n_features_to_compute`` for edge case with tied
   CV scores in :class:`feature_selection.RFECV`.
   :issue:`9222` by :user:`Nick Hoh <nickypie>`.
-
 
 :mod:`sklearn.gaussian_process`
 ...............................
