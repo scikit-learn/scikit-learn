@@ -575,6 +575,24 @@ def test_linearsvc_parameters():
                          svm.LinearSVC(loss="l3").fit, X, y)
 
 
+def test_intercept_scaling_warning():
+    clf = svm.LinearSVC(fit_intercept=True)
+    assert_warns_message(UserWarning,
+                         "liblinear does not regularize the intercept. "
+                         "Therefore intercept_scaling should be set explicitly"
+                         " when fit_intercept is set to True. Default value of"
+                         " 1. is used.",
+                         clf.fit, X, Y)
+
+    reg = svm.LinearSVR(fit_intercept=True)
+    assert_warns_message(UserWarning,
+                         "liblinear does not regularize the intercept. "
+                         "Therefore intercept_scaling should be set explicitly"
+                         " when fit_intercept is set to True. Default value of"
+                         " 1. is used.",
+                         reg.fit, X, Y)
+
+
 # FIXME remove in 1.0
 def test_linearsvx_loss_penalty_deprecations():
     X, y = [[0.0], [1.0]], [0, 1]
@@ -733,8 +751,9 @@ def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
          [1, 3],
          [2, 3]]
     y = [0, 0, 1, 1]
-    clf = classifier(fit_intercept=True, penalty='l1', loss='squared_hinge',
-                     dual=False, C=4, tol=1e-7, random_state=0)
+    clf = classifier(fit_intercept=True, intercept_scaling=1, penalty='l1',
+                     loss='squared_hinge', dual=False, C=4, tol=1e-7,
+                     random_state=0)
     assert_true(clf.intercept_scaling == 1, clf.intercept_scaling)
     assert_true(clf.fit_intercept)
 

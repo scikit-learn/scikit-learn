@@ -117,6 +117,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     >>> from sklearn.datasets import make_classification
     >>> X, y = make_classification(n_features=4, random_state=0)
     >>> clf = LinearSVC(random_state=0, tol=1e-5)
+    >>> clf = LinearSVC(intercept_scaling=1,
+    ...                 random_state=0, tol=1e-5)
     >>> clf.fit(X, y)
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
          intercept_scaling=1, loss='squared_hinge', max_iter=1000,
@@ -172,7 +174,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     def __init__(self, penalty='l2', loss='squared_hinge', dual=True, tol=1e-4,
                  C=1.0, multi_class='ovr', fit_intercept=True,
-                 intercept_scaling=1, class_weight=None, verbose=0,
+                 intercept_scaling='warn', class_weight=None, verbose=0,
                  random_state=None, max_iter=1000):
         self.dual = dual
         self.tol = tol
@@ -328,10 +330,11 @@ class LinearSVR(LinearModel, RegressorMixin):
     >>> from sklearn.svm import LinearSVR
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_features=4, random_state=0)
-    >>> regr = LinearSVR(random_state=0, tol=1e-5)
+    >>> regr = LinearSVR(intercept_scaling=1,
+    ...                  random_state=0, tol=1e-5)
     >>> regr.fit(X, y)
     LinearSVR(C=1.0, dual=True, epsilon=0.0, fit_intercept=True,
-         intercept_scaling=1.0, loss='epsilon_insensitive', max_iter=1000,
+         intercept_scaling=1, loss='epsilon_insensitive', max_iter=1000,
          random_state=0, tol=1e-05, verbose=0)
     >>> print(regr.coef_)
     [16.35... 26.91... 42.30... 60.47...]
@@ -360,7 +363,7 @@ class LinearSVR(LinearModel, RegressorMixin):
 
     def __init__(self, epsilon=0.0, tol=1e-4, C=1.0,
                  loss='epsilon_insensitive', fit_intercept=True,
-                 intercept_scaling=1., dual=True, verbose=0,
+                 intercept_scaling='warn', dual=True, verbose=0,
                  random_state=None, max_iter=1000):
         self.tol = tol
         self.C = C

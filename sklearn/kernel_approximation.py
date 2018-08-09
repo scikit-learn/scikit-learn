@@ -496,7 +496,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
     >>> from sklearn.kernel_approximation import Nystroem
     >>> digits = datasets.load_digits(n_class=9)
     >>> data = digits.data / 16.
-    >>> clf = svm.LinearSVC()
+    >>> clf = svm.LinearSVC(intercept_scaling=1)
     >>> feature_map_nystroem = Nystroem(gamma=.2,
     ...                                 random_state=1,
     ...                                 n_components=300)
