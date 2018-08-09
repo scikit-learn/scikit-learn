@@ -61,8 +61,8 @@ def _intercept_dot(w, X, y):
         Coefficient vector without the intercept weight (w[-1]) if the
         intercept should be fit. Unchanged otherwise.
 
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Training data. Unchanged.
+    c : float
+        The intercept.
 
     yz : float
         y * np.dot(X, w).
