@@ -866,7 +866,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         warnings.warn("liblinear does not regularize the intercept."
                       " Therefore intercept_scaling should be set "
                       "explicitly when fit_intercept is set to True. "
-                      "Default value of 1. is used.",
+                      "Default value of 1 is used.",
                       UserWarning)
         intercept_scaling = 1.
 

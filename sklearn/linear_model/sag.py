@@ -207,7 +207,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     >>> clf = linear_model.Ridge(solver='sag')
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,
-       normalize=False, random_state=None, solver='sag', tol=0.001)
+          normalize=False, random_state=None, solver='sag', tol=0.001)
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
     >>> clf = linear_model.LogisticRegression(solver='sag')
