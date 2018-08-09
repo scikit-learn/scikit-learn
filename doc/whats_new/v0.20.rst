@@ -761,6 +761,10 @@ Support for Python 3.3 has been officially dropped.
   faster construction and querying times.
   :issue:`11556` by :user:`Jake VanderPlas <jakevdp>`
 
+- |Fix| Fixed a bug in `neighbors.KDTree` and `neighbors.BallTree` where
+  pickled tree objects would change their type to the super class `BinaryTree`.
+  :issue:`11774` by :user:`Nicolas Hug <NicolasHug>`.
+
 
 :mod:`sklearn.neural_network`
 .............................
