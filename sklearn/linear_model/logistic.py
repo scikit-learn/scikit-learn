@@ -1192,6 +1192,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.tol = tol
         self.C = C
         self.fit_intercept = fit_intercept
+        self.intercept_scaling = intercept_scaling
         self.class_weight = class_weight
         self.random_state = random_state
         self.solver = solver
@@ -1200,16 +1201,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.verbose = verbose
         self.warm_start = warm_start
         self.n_jobs = n_jobs
-
-        if fit_intercept and intercept_scaling == 'warn':
-            warnings.warn("liblinear regularizes the intercept."
-                          " Therefore intercept_scaling should be set "
-                          "appropriately when fit_intercept is set to True. "
-                          "Default value of 1 is used.",
-                          UserWarning)
-            self.intercept_scaling = 1.
-        else:
-            self.intercept_scaling = intercept_scaling
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
