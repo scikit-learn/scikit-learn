@@ -1394,7 +1394,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if not hasattr(self, "coef_"):
             raise NotFittedError("Call fit before prediction")
 
-        if self.multi_class == "ovr" or self.multi_class == "warn":
+        if self.multi_class in ["ovr", "warn"]:
             return super(LogisticRegression, self)._predict_proba_lr(X)
         else:
             decision = self.decision_function(X)
