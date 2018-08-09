@@ -1202,7 +1202,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.n_jobs = n_jobs
 
         if fit_intercept and intercept_scaling == 'warn':
-            warnings.warn("liblinear does not regularize the intercept."
+            warnings.warn("liblinear regularizes the intercept."
                           " Therefore intercept_scaling should be set "
                           "appropriately when fit_intercept is set to True. "
                           "Default value of 1 is used.",

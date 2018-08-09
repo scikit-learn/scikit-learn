@@ -578,7 +578,7 @@ def test_linearsvc_parameters():
 def test_intercept_scaling_warning():
     clf = svm.LinearSVC(fit_intercept=True)
     assert_warns_message(UserWarning,
-                         "liblinear does not regularize the intercept. "
+                         "liblinear regularizes the intercept. "
                          "Therefore intercept_scaling should be set explicitly"
                          " when fit_intercept is set to True. Default value of"
                          " 1 is used.",
@@ -586,7 +586,7 @@ def test_intercept_scaling_warning():
 
     reg = svm.LinearSVR(fit_intercept=True)
     assert_warns_message(UserWarning,
-                         "liblinear does not regularize the intercept. "
+                         "liblinear regularizes the intercept. "
                          "Therefore intercept_scaling should be set explicitly"
                          " when fit_intercept is set to True. Default value of"
                          " 1 is used.",

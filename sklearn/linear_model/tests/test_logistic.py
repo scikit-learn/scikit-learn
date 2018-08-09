@@ -153,7 +153,7 @@ def test_lr_liblinear_warning():
 def test_lr_liblinear_intercept_scaling_warning():
     lr = LogisticRegression(solver='liblinear', n_jobs=1)
     assert_warns_message(UserWarning,
-                         "liblinear does not regularize the intercept. "
+                         "liblinear regularizes the intercept. "
                          "Therefore intercept_scaling should be set explicitly"
                          " when fit_intercept is set to True. Default value of"
                          " 1 is used.",
@@ -161,7 +161,7 @@ def test_lr_liblinear_intercept_scaling_warning():
 
     lrcv = LogisticRegressionCV(solver='liblinear', n_jobs=1)
     assert_warns_message(UserWarning,
-                         "liblinear does not regularize the intercept. "
+                         "liblinear regularizes the intercept. "
                          "Therefore intercept_scaling should be set explicitly"
                          " when fit_intercept is set to True. Default value of"
                          " 1 is used.",
