@@ -242,7 +242,7 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
-                  max_fpr=None, min_tpr=None):
+                  min_fpr=0, max_fpr=1):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     from prediction scores.
 
@@ -284,9 +284,15 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    max_fpr : float > 0 and <= 1, optional
-        If not ``None``, the standardized partial AUC [3]_ over the range
-        [0, max_fpr] is returned.
+    min_fpr : float, optional (default=0)
+        If not 0, the standardized partial AUC [3]_ over the range
+        [min_fpr, min(1, max_fpr)] is returned.
+        Must be between 0 and min(1, max_fpr).
+
+    max_fpr : float, optional (default=1)
+        If not 1, the standardized partial AUC [3]_ over the range
+        [max(0, min_fpr), max_fpr] is returned.
+        Must be between max(0, min_fpr) and 1.
 
     Returns
     -------
@@ -326,24 +332,52 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
 
         fpr, tpr, _ = roc_curve(y_true, y_score,
                                 sample_weight=sample_weight)
-        if max_fpr is None or max_fpr == 1:
-            return auc(fpr, tpr)
-        if max_fpr <= 0 or max_fpr > 1:
-            raise ValueError("Expected max_frp in range ]0, 1], got: %r"
-                             % max_fpr)
 
-        # Add a single point at max_fpr by linear interpolation
-        stop = np.searchsorted(fpr, max_fpr, 'right')
-        x_interp = [fpr[stop - 1], fpr[stop]]
-        y_interp = [tpr[stop - 1], tpr[stop]]
-        tpr = np.append(tpr[:stop], np.interp(max_fpr, x_interp, y_interp))
-        fpr = np.append(fpr[:stop], max_fpr)
+        if min_fpr == 0 and max_fpr == 1:
+            return auc(fpr, tpr)
+
+        # PAUC Calculation
+        if min_fpr < 0 or min_fpr >= 1 or min_fpr >= max_fpr:
+            raise ValueError(
+                "Expected min_frp in range [0, min(1, max_fpr)], "
+                "got: {}".format(max_fpr)
+            )
+        elif min_fpr > 0:
+            # Add a single point at min_fpr by linear interpolation
+            min_fpr_idx = np.searchsorted(fpr, min_fpr, 'left')
+            tpr_interp_min = [tpr[min_fpr_idx-1], tpr[min_fpr_idx]]
+            fpr_interp_min = [fpr[min_fpr_idx-1], fpr[min_fpr_idx]]
+
+            tpr = np.concatenate((
+                np.interp([min_fpr], fpr_interp_min, tpr_interp_min),
+                tpr[min_fpr_idx:]
+            ))
+            fpr = np.concatenate(([min_fpr], fpr[min_fpr_idx:]))
+
+        if max_fpr <= 0 or max_fpr > 1 or min_fpr >= max_fpr:
+            raise ValueError(
+                "Expected max_frp in range [max(0, min_fpr), 1], "
+                "got: {}".format(max_fpr)
+            )
+        elif max_fpr < 1:
+            # Add a single point at max_fpr by linear interpolation
+            max_fpr_idx = np.searchsorted(fpr, max_fpr, 'right')
+            tpr_interp_max = [tpr[max_fpr_idx-1], tpr[max_fpr_idx]]
+            fpr_interp_max = [fpr[max_fpr_idx-1], fpr[max_fpr_idx]]
+
+            tpr = np.concatenate((
+                tpr[:max_fpr_idx],
+                np.interp([max_fpr], fpr_interp_max, tpr_interp_max)
+            ))
+            fpr = np.concatenate((fpr[:max_fpr_idx], [max_fpr]))
+
         partial_auc = auc(fpr, tpr)
 
         # McClish correction: standardize result to be 0.5 if non-discriminant
         # and 1 if maximal
-        min_area = 0.5 * max_fpr**2
-        max_area = max_fpr
+        min_area = 0.5 * (max_fpr**2 - min_fpr**2)
+        max_area = max_fpr - min_fpr
+
         return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
     y_type = type_of_target(y_true)
