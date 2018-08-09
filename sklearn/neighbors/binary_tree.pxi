@@ -1119,7 +1119,7 @@ cdef class BinaryTree:
         """
         reduce method used for pickling
         """
-        return (newObj, (BinaryTree,), self.__getstate__())
+        return (newObj, (type(self),), self.__getstate__())
 
     def __getstate__(self):
         """
@@ -1136,7 +1136,8 @@ cdef class BinaryTree:
                 int(self.n_leaves),
                 int(self.n_splits),
                 int(self.n_calls),
-                self.dist_metric)
+                self.dist_metric,
+                self.sample_weight)
 
     def __setstate__(self, state):
         """
@@ -1162,6 +1163,7 @@ cdef class BinaryTree:
         self.dist_metric = state[11]
         self.euclidean = (self.dist_metric.__class__.__name__
                           == 'EuclideanDistance')
+        self.sample_weight = state[12]
 
     def get_tree_stats(self):
         return (self.n_trims, self.n_leaves, self.n_splits)
