@@ -206,9 +206,7 @@ def enet_coordinate_descent(floating[::1] w,
     with nogil:
         # R = y - np.dot(X, w)
         for i in range(n_samples):
-            R[i] = y[i] - dot(n_features,
-                              &X[i, 0], n_samples,
-                              &w[0], 1)
+            R[i] = y[i] - dot(n_features, &X[i, 0], n_samples, &w[0], 1)
 
         # tol *= np.dot(y, y)
         tol *= dot(n_samples, &y[0], 1, &y[0], 1)
@@ -229,8 +227,7 @@ def enet_coordinate_descent(floating[::1] w,
 
                 if w_ii != 0.0:
                     # R += w_ii * X[:,ii]
-                    axpy(n_samples, w_ii, &X[0, ii], 1,
-                         &R[0], 1)
+                    axpy(n_samples, w_ii, &X[0, ii], 1, &R[0], 1)
 
                 # tmp = (X[:,ii]*R).sum()
                 tmp = dot(n_samples, &X[0, ii], 1, &R[0], 1)
@@ -243,8 +240,7 @@ def enet_coordinate_descent(floating[::1] w,
 
                 if w[ii] != 0.0:
                     # R -=  w[ii] * X[:,ii] # Update residual
-                    axpy(n_samples, -w[ii], &X[0, ii], 1,
-                         &R[0], 1)
+                    axpy(n_samples, -w[ii], &X[0, ii], 1, &R[0], 1)
 
                 # update the maximum absolute coefficient update
                 d_w_ii = fabs(w[ii] - w_ii)
@@ -263,8 +259,8 @@ def enet_coordinate_descent(floating[::1] w,
 
                 # XtA = np.dot(X.T, R) - beta * w
                 for i in range(n_features):
-                    XtA[i] = dot(n_samples, &X[0, i],
-                                 1, &R[0], 1) - beta * w[i]
+                    XtA[i] = (dot(n_samples, &X[0, i], 1, &R[0], 1)
+                              - beta * w[i])
 
                 if positive:
                     dual_norm_XtA = max(n_features, &XtA[0])
