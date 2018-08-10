@@ -265,14 +265,19 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.n_layers_ = len(layer_units)
 
         # Output for regression
-        if not is_classifier(self):
-            self.out_activation_ = 'identity'
-        # Output for multi class
-        elif self._label_binarizer.y_type_ == 'multiclass':
-            self.out_activation_ = 'softmax'
-        # Output for binary class and multi-label
+        try:
+            self.out_activation_
+        except AttributeError:
+            if not is_classifier(self):
+                self.out_activation_ = 'identity'
+            # Output for multi class
+            elif self._label_binarizer.y_type_ == 'multiclass':
+                self.out_activation_ = 'softmax'
+            # Output for binary class and multi-label
+            else:
+                self.out_activation_ = 'logistic'
         else:
-            self.out_activation_ = 'logistic'
+            print ("out_activation_ = " + self.out_activation_)
 
         # Initialize coefficient and intercept layers
         self.coefs_ = []
