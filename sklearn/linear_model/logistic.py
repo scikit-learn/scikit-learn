@@ -1635,9 +1635,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     ...                            multi_class='multinomial').fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
-    >>> clf.predict_proba(X[:2, :]) # doctest: +ELLIPSIS
-    array([[9.9...e-01, 1.4...e-03, 9.5...e-18],
-           [9.9...e-01, 3.3...e-03, 1.2...e-16]])
+    >>> clf.predict_proba(X[:2, :]).shape
+    (2, 3)
     >>> clf.score(X, y) # doctest: +ELLIPSIS
     0.98...
 
