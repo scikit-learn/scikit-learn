@@ -173,7 +173,7 @@ def enet_coordinate_descent(floating[::1] w,
     cdef unsigned int n_features = X.shape[1]
 
     # compute norms of the columns of X
-    cdef floating[:] norm_cols_X = (X**2).sum(axis=0)
+    cdef floating[:] norm_cols_X = np.square(X).sum(axis=0)
 
     # initial value of the residuals
     cdef floating[:] R = np.empty(n_samples, dtype=dtype)
