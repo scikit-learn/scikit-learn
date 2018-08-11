@@ -162,7 +162,8 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         -------
         self : object
         """
-        y = check_array(y, accept_sparse=False, force_all_finite=True,
+        
+        y = check_array(y, accept_sparse=False, force_all_finite=False,
                         ensure_2d=False, dtype='numeric')
 
         # store the number of dimension of the target to predict an array of
@@ -194,7 +195,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             self.regressor_.fit(X, y_trans)
         else:
             self.regressor_.fit(X, y_trans, sample_weight=sample_weight)
-
+	
         return self
 
     def predict(self, X):

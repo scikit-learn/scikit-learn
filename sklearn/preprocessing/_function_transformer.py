@@ -100,7 +100,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
             self._validate = self.validate
 
         if self._validate:
-            return check_array(X, accept_sparse=self.accept_sparse)
+            return check_array(X, accept_sparse=self.accept_sparse,force_all_finite=False)
         return X
 
     def _check_inverse_transform(self, X):
