@@ -506,16 +506,18 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             Estimated probabilities.
         """
         prob = self.decision_function(X)
-        prob *= -1
-        np.exp(prob, prob)
-        prob += 1
-        np.reciprocal(prob, prob)
-        if len(self.classes_) == 2:  # binary case
+        if len(self.classes_) == 2:
+            prob *= -1
+            np.exp(prob, prob)
+            prob += 1
+            np.reciprocal(prob, prob)
             return np.column_stack([1 - prob, prob])
         else:
-            # OvR normalization, like LibLinear's predict_probability
-            prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
-            return prob
+            # compute the likelihood of the underlying gaussian models
+            # up to a multiplicative constant.
+            likelihood = np.exp(prob - prob.max(axis=1)[:, np.newaxis])
+            # compute posterior probabilities
+            return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
 
     def predict_log_proba(self, X):
         """Estimate log probability.
