@@ -20,8 +20,8 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
-from ..utils import check_X_y, _get_n_jobs
-from ..externals.joblib import Parallel, delayed
+from ..utils import check_X_y, effective_n_jobs
+from ..utils import Parallel, delayed
 from ..externals.six.moves import xrange as range
 from ..exceptions import ConvergenceWarning
 
@@ -283,7 +283,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
 
     def __init__(self, fit_intercept=True, copy_X=True,
                  max_subpopulation=1e4, n_subsamples=None, max_iter=300,
-                 tol=1.e-3, random_state=None, n_jobs=1, verbose=False):
+                 tol=1.e-3, random_state=None, n_jobs=None, verbose=False):
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
         self.max_subpopulation = int(max_subpopulation)
@@ -368,7 +368,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
                                            replace=False)
                        for _ in range(self.n_subpopulation_)]
 
-        n_jobs = _get_n_jobs(self.n_jobs)
+        n_jobs = effective_n_jobs(self.n_jobs)
         index_list = np.array_split(indices, n_jobs)
         weights = Parallel(n_jobs=n_jobs,
                            verbose=self.verbose)(

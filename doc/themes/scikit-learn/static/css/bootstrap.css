@@ -909,6 +909,11 @@ a.badge:focus {
 .badge-warning[href] {
   background-color: #c67605;
 }
+.label-danger,
+.badge-danger {
+  /* XXX: backported from later bootstrap */
+  background-color: #d9534f;
+}
 .label-success,
 .badge-success {
   background-color: #468847;

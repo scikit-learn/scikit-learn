@@ -30,7 +30,7 @@ from sklearn import feature_selection
 from sklearn.cluster import FeatureAgglomeration
 from sklearn.linear_model import BayesianRidge
 from sklearn.pipeline import Pipeline
-from sklearn.externals.joblib import Memory
+from sklearn.utils import Memory
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold
 

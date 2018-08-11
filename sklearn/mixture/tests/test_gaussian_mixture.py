@@ -96,7 +96,8 @@ class RandomData(object):
         self.X = dict(zip(COVARIANCE_TYPE, [generate_data(
             n_samples, n_features, self.weights, self.means, self.covariances,
             covar_type) for covar_type in COVARIANCE_TYPE]))
-        self.Y = np.hstack([k * np.ones(int(np.round(w * n_samples)))
+        self.Y = np.hstack([np.full(int(np.round(w * n_samples)), k,
+                                    dtype=np.int)
                             for k, w in enumerate(self.weights)])
 
 
@@ -287,8 +288,8 @@ def test_check_precisions():
     precisions_not_positive = {
         'full': precisions_not_pos,
         'tied': precisions_not_pos[0],
-        'diag': -1. * np.ones((n_components, n_features)),
-        'spherical': -1. * np.ones(n_components)}
+        'diag': np.full((n_components, n_features), -1.),
+        'spherical': np.full(n_components, -1.)}
 
     not_positive_errors = {
         'full': 'symmetric, positive-definite',

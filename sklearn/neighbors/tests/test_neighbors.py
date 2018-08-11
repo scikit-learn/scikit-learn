@@ -255,6 +255,8 @@ def test_precomputed_sparse_invalid():
                         n_neighbors=1)
 
 
+
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_precomputed_cross_validation():
     # Ensure array is split correctly
     rng = np.random.RandomState(0)
@@ -757,7 +759,7 @@ def test_radius_neighbors_regressor(n_samples=40,
                                                    weights=weights,
                                                    algorithm='auto')
         neigh.fit(X, y)
-        X_test_nan = np.ones((1, n_features))*-1
+        X_test_nan = np.full((1, n_features), -1.)
         empty_warning_msg = ("One or more samples have no neighbors "
                              "within specified radius; predicting NaN.")
         pred = assert_warns_message(UserWarning,

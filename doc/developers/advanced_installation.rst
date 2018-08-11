@@ -38,6 +38,12 @@ Scikit-learn requires:
 - NumPy (>= 1.8.2),
 - SciPy (>= 0.13.3).
 
+.. note::
+
+   For installing on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
+   are required. For PyPy, only installation instructions with pip apply.
+
+
 Building Scikit-learn also requires
 
 - Cython >=0.23 

@@ -45,7 +45,9 @@ and will store the coefficients :math:`w` of the linear model in its
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
     >>> reg.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
+    ...                                       # doctest: +NORMALIZE_WHITESPACE
+    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=None,
+                     normalize=False)
     >>> reg.coef_
     array([0.5, 0.5])
 
@@ -138,9 +140,9 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 (GCV), an efficient form of leave-one-out cross-validation::
 
     >>> from sklearn import linear_model
-    >>> reg = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
+    >>> reg = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0], cv=3)
     >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
-    RidgeCV(alphas=[0.1, 1.0, 10.0], cv=None, fit_intercept=True, scoring=None,
+    RidgeCV(alphas=[0.1, 1.0, 10.0], cv=3, fit_intercept=True, scoring=None,
         normalize=False)
     >>> reg.alpha_                                      # doctest: +SKIP
     0.1

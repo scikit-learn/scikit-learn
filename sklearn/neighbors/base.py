@@ -7,6 +7,7 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 from functools import partial
+from distutils.version import LooseVersion
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -19,12 +20,13 @@ from .kd_tree import KDTree
 from ..base import BaseEstimator
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
+from ..utils import check_X_y, check_array, gen_even_slices
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
 from ..externals import six
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed, effective_n_jobs
+from ..utils._joblib import __version__ as joblib_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
 
 VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
@@ -289,7 +291,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
     @abstractmethod
     def __init__(self, n_neighbors=None, radius=None,
                  algorithm='auto', leaf_size=30, metric='minkowski',
-                 p=2, metric_params=None, n_jobs=1):
+                 p=2, metric_params=None, n_jobs=None):
 
         self.n_neighbors = n_neighbors
         self.radius = radius
@@ -587,7 +589,7 @@ class KNeighborsMixin(object):
                 (train_size, n_neighbors)
             )
 
-        n_jobs = _get_n_jobs(self.n_jobs)
+        n_jobs = effective_n_jobs(self.n_jobs)
         chunked_results = None
         if self._fit_method == 'brute':
 
@@ -616,8 +618,16 @@ class KNeighborsMixin(object):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
-            chunked_results = Parallel(n_jobs, backend='threading')(
-                delayed(self._tree.query, check_pickle=False)(
+            if LooseVersion(joblib_version) < LooseVersion('0.12'):
+                # Deal with change of API in joblib
+                delayed_query = delayed(self._tree.query,
+                                        check_pickle=False)
+                parallel_kwargs = {"backend": "threading"}
+            else:
+                delayed_query = delayed(self._tree.query)
+                parallel_kwargs = {"prefer": "threads"}
+            chunked_results = Parallel(n_jobs, **parallel_kwargs)(
+                delayed_query(
                     X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
@@ -906,10 +916,18 @@ class RadiusNeighborsMixin(object):
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
 
-            n_jobs = _get_n_jobs(self.n_jobs)
-            chunked_results = Parallel(n_jobs, backend='threading')(
-                delayed(self._tree.query_radius, check_pickle=False)(
-                    X[s], radius, return_distance, sort_results=sort_results)
+            n_jobs = effective_n_jobs(self.n_jobs)
+            if LooseVersion(joblib_version) < LooseVersion('0.12'):
+                # Deal with change of API in joblib
+                delayed_query = delayed(self._tree.query_radius,
+                                        check_pickle=False)
+                parallel_kwargs = {"backend": "threading"}
+            else:
+                delayed_query = delayed(self._tree.query_radius)
+                parallel_kwargs = {"prefer": "threads"}
+            chunked_results = Parallel(n_jobs, **parallel_kwargs)(
+                delayed_query(X[s], radius, return_distance,
+                              sort_results=sort_results)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
             if return_distance:
