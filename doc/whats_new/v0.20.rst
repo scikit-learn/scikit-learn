@@ -540,6 +540,10 @@ Support for Python 3.3 has been officially dropped.
   a corresponding ``'balanced_accuracy'`` scorer for binary and multiclass
   classification. :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia
   <dalmia>`, and :issue:`10587` by `Joel Nothman`_.
+  
+- |Feature| Partial AUC is available via ``max_fpr`` parameter in
+  :func:`metrics.roc_auc_score`. :issue:`3273` by
+  :user:`Alexander Niederbühl <Alexander-N>`.
 
 - |Feature| A scorer based on :func:`metrics.brier_score_loss` is also
   available. :issue:`9521` by :user:`Hanmin Qin <qinhanmin2014>`.
@@ -955,6 +959,10 @@ Support for Python 3.3 has been officially dropped.
   unicode in Python2, the ``predict_proba`` method was raising an
   unexpected TypeError given dense inputs.
   :issue:`10412` by :user:`Jiongyan Zhang <qmick>`.
+  
+- |API| Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as
+  the underlying implementation is not random.
+  :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
 
 - |API| The default value of ``gamma`` parameter of :class:`svm.SVC`,
   :class:`~svm.NuSVC`, :class:`~svm.SVR`, :class:`~svm.NuSVR`,
