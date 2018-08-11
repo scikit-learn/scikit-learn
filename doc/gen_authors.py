@@ -18,16 +18,16 @@ ROW_SIZE = 7
 LOGO_URL = 'https://avatars2.githubusercontent.com/u/365630?v=4'
 
 
-def group(it, size):
+def group_iterable(iterable, size):
     """Group iterable into lines"""
-    gr = []
-    for ele in it:
-        gr.append(ele)
-        if len(gr) == size:
-            yield gr
-            gr = []
-    if len(gr) != 0:
-        yield gr
+    group = []
+    for element in iterable:
+        group.append(element)
+        if len(group) == size:
+            yield group
+            group = []
+    if len(group) != 0:
+        yield group
 
 
 def get_contributors():
@@ -53,7 +53,7 @@ def get_contributors():
 
     # get profiles from github
     profiles = [get_profile(login) for login in logins]
-    # sort by first name
+    # sort by last name
     profiles = sorted(profiles, key=key)
 
     return profiles
@@ -74,7 +74,7 @@ def get_profile(login):
 
 def key(profile):
     """Get the last name in lower case"""
-    return profile["name"].lower().split(' ')[-1]
+    return profile["name"].split(' ')[-1].lower()
 
 
 contributors = get_contributors()
@@ -88,7 +88,7 @@ print("    <style>")
 print("      img.avatar {border-radius: 10px;}")
 print("      td {vertical-align: top;}")
 print("    </style>")
-for row in group(contributors, size=ROW_SIZE):
+for row in group_iterable(contributors, size=ROW_SIZE):
     print("    <tr>")
     for contributor in row:
         print("    <td>")
