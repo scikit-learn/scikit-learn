@@ -82,12 +82,12 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
            >>> rng = np.random.RandomState(1)
            >>> x_train = rng.randn(n_samples, n_features)
            >>> y_train = rng.randn(n_samples, n_targets)
-           >>> rgs = FastKernelRegression(n_epoch=3, bandwidth=1)
+           >>> rgs = FastKernelRegression(n_epoch=3, bandwidth=1,subsample_size=50)
            >>> rgs.fit(x_train, y_train)
            FastKernelRegression(bandwidth=1, bs='auto', coef0=1, degree=3, gamma=None,
                       kernel='gaussian', kernel_params=None, mem_gb=12,
                       n_components=1000, n_epoch=3, random_state=None,
-                      subsample_size='auto')
+                      subsample_size=50)
            >>> y_pred = rgs.predict(x_train)
            >>> loss = np.mean(np.square(y_train - y_pred))
     """
@@ -143,8 +143,7 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
                                        Y_norm_squared=Y_squared)
         bandwidth = np.float32(self.bandwidth)
         if self.kernel == "gaussian":
-            shape = -1 / (2 * (np.square(bandwidth)))
-            K = np.exp(distance * shape)
+            K = np.exp(-distance / (2 * (np.square(bandwidth))))
         elif self.kernel == "laplace":
             d = np.maximum(distance, 0)
             K = np.exp(-np.sqrt(d) / bandwidth)
