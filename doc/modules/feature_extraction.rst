@@ -49,9 +49,9 @@ is a traditional numerical feature::
   >>> vec = DictVectorizer()
 
   >>> vec.fit_transform(measurements).toarray()
-  array([[  1.,   0.,   0.,  33.],
-         [  0.,   1.,   0.,  12.],
-         [  0.,   0.,   1.,  18.]])
+  array([[ 1.,  0.,  0., 33.],
+         [ 0.,  1.,  0., 12.],
+         [ 0.,  0.,  1., 18.]])
 
   >>> vec.get_feature_names()
   ['city=Dubai', 'city=London', 'city=San Francisco', 'temperature']
@@ -89,7 +89,7 @@ suitable for feeding into a classifier (maybe after being piped into a
   <1x6 sparse matrix of type '<... 'numpy.float64'>'
       with 6 stored elements in Compressed Sparse ... format>
   >>> pos_vectorized.toarray()
-  array([[ 1.,  1.,  1.,  1.,  1.,  1.]])
+  array([[1., 1., 1., 1., 1., 1.]])
   >>> vec.get_feature_names()
   ['pos+1=PP', 'pos-1=NN', 'pos-2=DT', 'word+1=on', 'word-1=cat', 'word-2=the']
 
@@ -380,6 +380,37 @@ last document::
   >>> X_2[:, feature_index]     # doctest: +ELLIPSIS
   array([0, 0, 0, 1]...)
 
+.. _stop_words:
+
+Using stop words
+................
+
+Stop words are words like "and", "the", "him", which are presumed to be
+uninformative in representing the content of a text, and which may be
+removed to avoid them being construed as signal for prediction.  Sometimes,
+however, similar words are useful for prediction, such as in classifying
+writing style or personality.
+
+There are several known issues in our provided 'english' stop word list. See
+[NQY18]_.
+
+Please take care in choosing a stop word list.
+Popular stop word lists may include words that are highly informative to
+some tasks, such as *computer*.
+
+You should also make sure that the stop word list has had the same
+preprocessing and tokenization applied as the one used in the vectorizer.
+The word *we've* is split into *we* and *ve* by CountVectorizer's default
+tokenizer, so if *we've* is in ``stop_words``, but *ve* is not, *ve* will
+be retained from *we've* in transformed text.  Our vectorizers will try to
+identify and warn about some kinds of inconsistencies.
+
+.. topic:: References
+
+    .. [NQY18] J. Nothman, H. Qin and R. Yurchak (2018).
+               `"Stop Word Lists in Free Open-source Software Packages"
+               <http://aclweb.org/anthology/W18-2502>`__.
+               In *Proc. Workshop for NLP Open Source Software*.
 
 .. _tfidf:
 
@@ -463,12 +494,12 @@ content of the documents::
       with 9 stored elements in Compressed Sparse ... format>
 
   >>> tfidf.toarray()                        # doctest: +ELLIPSIS
-  array([[ 0.81940995,  0.        ,  0.57320793],
-         [ 1.        ,  0.        ,  0.        ],
-         [ 1.        ,  0.        ,  0.        ],
-         [ 1.        ,  0.        ,  0.        ],
-         [ 0.47330339,  0.88089948,  0.        ],
-         [ 0.58149261,  0.        ,  0.81355169]])
+  array([[0.81940995, 0.        , 0.57320793],
+         [1.        , 0.        , 0.        ],
+         [1.        , 0.        , 0.        ],
+         [1.        , 0.        , 0.        ],
+         [0.47330339, 0.88089948, 0.        ],
+         [0.58149261, 0.        , 0.81355169]])
 
 Each row is normalized to have unit Euclidean norm:
 
@@ -478,7 +509,7 @@ v{_2}^2 + \dots + v{_n}^2}}`
 For example, we can compute the tf-idf of the first term in the first
 document in the `counts` array as follows:
 
-:math:`n_{d, {\text{term1}}} = 6`
+:math:`n_{d} = 6`
 
 :math:`\text{df}(d, t)_{\text{term1}} = 6`
 
@@ -523,19 +554,19 @@ And the L2-normalized tf-idf changes to
 
   >>> transformer = TfidfTransformer()
   >>> transformer.fit_transform(counts).toarray()
-  array([[ 0.85151335,  0.        ,  0.52433293],
-         [ 1.        ,  0.        ,  0.        ],
-         [ 1.        ,  0.        ,  0.        ],
-         [ 1.        ,  0.        ,  0.        ],
-         [ 0.55422893,  0.83236428,  0.        ],
-         [ 0.63035731,  0.        ,  0.77630514]])
+  array([[0.85151335, 0.        , 0.52433293],
+         [1.        , 0.        , 0.        ],
+         [1.        , 0.        , 0.        ],
+         [1.        , 0.        , 0.        ],
+         [0.55422893, 0.83236428, 0.        ],
+         [0.63035731, 0.        , 0.77630514]])
 
 The weights of each
 feature computed by the ``fit`` method call are stored in a model
 attribute::
 
   >>> transformer.idf_                       # doctest: +ELLIPSIS
-  array([ 1. ...,  2.25...,  1.84...])
+  array([1. ..., 2.25..., 1.84...])
 
 
 
@@ -657,12 +688,12 @@ In particular in a **supervised setting** it can be successfully combined
 with fast and scalable linear models to train **document classifiers**,
 for instance:
 
- * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+ * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
 In an **unsupervised setting** it can be used to group similar documents
 together by applying clustering algorithms such as :ref:`k_means`:
 
-  * :ref:`sphx_glr_auto_examples_text_document_clustering.py`
+  * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`
 
 Finally it is possible to discover the main topics of a corpus by
 relaxing the hard assignment constraint of clustering, for instance by
@@ -916,7 +947,7 @@ Some tips and tricks:
     (Note that this will not filter out punctuation.)
 
 
-    The following example will, for instance, transform some British spelling 
+    The following example will, for instance, transform some British spelling
     to American spelling::
 
         >>> import re
@@ -1011,8 +1042,8 @@ features or samples. For instance Ward clustering
 (:ref:`hierarchical_clustering`) can cluster together only neighboring pixels
 of an image, thus forming contiguous patches:
 
-.. figure:: ../auto_examples/cluster/images/sphx_glr_plot_face_ward_segmentation_001.png
-   :target: ../auto_examples/cluster/plot_face_ward_segmentation.html
+.. figure:: ../auto_examples/cluster/images/sphx_glr_plot_coin_ward_segmentation_001.png
+   :target: ../auto_examples/cluster/plot_coin_ward_segmentation.html
    :align: center
    :scale: 40
 
@@ -1030,7 +1061,7 @@ or similarity matrices.
 
 .. note:: **Examples**
 
-   * :ref:`sphx_glr_auto_examples_cluster_plot_face_ward_segmentation.py`
+   * :ref:`sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py`
 
    * :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`
 

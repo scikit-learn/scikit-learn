@@ -95,7 +95,7 @@ Scikit-learn documentation for more information about this type of classifier.)
     >>> knn = KNeighborsClassifier()
     >>> knn.fit(iris_X_train, iris_y_train) # doctest: +NORMALIZE_WHITESPACE
     KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-               metric_params=None, n_jobs=1, n_neighbors=5, p=2,
+               metric_params=None, n_jobs=None, n_neighbors=5, p=2,
                weights='uniform')
     >>> knn.predict(iris_X_test)
     array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
@@ -176,13 +176,16 @@ Linear models: :math:`y = X\beta + \epsilon`
     >>> from sklearn import linear_model
     >>> regr = linear_model.LinearRegression()
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
-    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
+    ...                                       # doctest: +NORMALIZE_WHITESPACE
+    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=None,
+                     normalize=False)
     >>> print(regr.coef_)
     [   0.30349955 -237.63931533  510.53060544  327.73698041 -814.13170937
       492.81458798  102.84845219  184.60648906  743.51961675   76.09517222]
 
     >>> # The mean square error
-    >>> np.mean((regr.predict(diabetes_X_test)-diabetes_y_test)**2)# doctest: +ELLIPSIS
+    >>> np.mean((regr.predict(diabetes_X_test)-diabetes_y_test)**2)
+    ...                                                   # doctest: +ELLIPSIS
     2004.56760268...
 
     >>> # Explained variance score: 1 is perfect prediction
@@ -257,8 +260,11 @@ diabetes dataset rather than our synthetic data::
     >>> from __future__ import print_function
     >>> print([regr.set_params(alpha=alpha
     ...             ).fit(diabetes_X_train, diabetes_y_train,
-    ...             ).score(diabetes_X_test, diabetes_y_test) for alpha in alphas]) # doctest: +ELLIPSIS
-    [0.5851110683883..., 0.5852073015444..., 0.5854677540698..., 0.5855512036503..., 0.5830717085554..., 0.57058999437...]
+    ...             ).score(diabetes_X_test, diabetes_y_test)
+    ...        for alpha in alphas])
+    ...                            # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    [0.5851110683883..., 0.5852073015444..., 0.5854677540698...,
+     0.5855512036503..., 0.5830717085554..., 0.57058999437...]
 
 
 .. note::
@@ -372,7 +378,7 @@ function or **logistic** function:
     >>> logistic.fit(iris_X_train, iris_y_train)
     LogisticRegression(C=100000.0, class_weight=None, dual=False,
               fit_intercept=True, intercept_scaling=1, max_iter=100,
-              multi_class='ovr', n_jobs=1, penalty='l2', random_state=None,
+              multi_class='ovr', n_jobs=None, penalty='l2', random_state=None,
               solver='liblinear', tol=0.0001, verbose=0, warm_start=False)
 
 This is known as :class:`LogisticRegression`.
@@ -455,9 +461,9 @@ classification --:class:`SVC` (Support Vector Classification).
     >>> svc = svm.SVC(kernel='linear')
     >>> svc.fit(iris_X_train, iris_y_train)    # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='auto', kernel='linear',
-        max_iter=-1, probability=False, random_state=None, shrinking=True,
-        tol=0.001, verbose=False)
+        decision_function_shape='ovr', degree=3, gamma='auto_deprecated',
+        kernel='linear', max_iter=-1, probability=False, random_state=None,
+        shrinking=True, tol=0.001, verbose=False)
 
 
 .. warning:: **Normalizing data**

@@ -20,22 +20,12 @@ This dataset loader will download the recommended "by date" variant of the
 dataset and which features a point in time split between the train and
 test sets. The compressed dataset size is around 14 Mb compressed. Once
 uncompressed the train set is 52 MB and the test set is 34 MB.
-
-The data is downloaded, extracted and cached in the '~/scikit_learn_data'
-folder.
-
-The `fetch_20newsgroups` function will not vectorize the data into numpy
-arrays but the dataset lists the filenames of the posts and their categories
-as target labels.
-
-The `fetch_20newsgroups_vectorized` function will in addition do a simple
-tf-idf vectorization step.
-
 """
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
 import os
+from os.path import dirname, join
 import logging
 import tarfile
 import pickle
@@ -52,6 +42,7 @@ from .base import _pkl_filepath
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils import check_random_state, Bunch
+from ..utils import deprecated
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
 from ..externals import joblib
@@ -71,7 +62,14 @@ TRAIN_FOLDER = "20news-bydate-train"
 TEST_FOLDER = "20news-bydate-test"
 
 
+@deprecated("Function 'download_20newsgroups' was renamed to "
+            "'_download_20newsgroups' in version 0.20 and will be removed in "
+            "release 0.22.")
 def download_20newsgroups(target_dir, cache_path):
+    return _download_20newsgroups(target_dir, cache_path)
+
+
+def _download_20newsgroups(target_dir, cache_path):
     """Download the 20 newsgroups data and stored it as a zipped pickle."""
     train_path = os.path.join(target_dir, TRAIN_FOLDER)
     test_path = os.path.join(target_dir, TEST_FOLDER)
@@ -101,6 +99,11 @@ def strip_newsgroup_header(text):
     """
     Given text in "news" format, strip the headers, by removing everything
     before the first blank line.
+
+    Parameters
+    ----------
+    text : string
+        The text from which to remove the signature block.
     """
     _before, _blankline, after = text.partition('\n\n')
     return after
@@ -115,6 +118,11 @@ def strip_newsgroup_quoting(text):
     Given text in "news" format, strip lines beginning with the quote
     characters > or |, plus lines that often introduce a quoted section
     (for example, because they contain the string 'writes:'.)
+
+    Parameters
+    ----------
+    text : string
+        The text from which to remove the signature block.
     """
     good_lines = [line for line in text.split('\n')
                   if not _QUOTE_RE.search(line)]
@@ -128,6 +136,11 @@ def strip_newsgroup_footer(text):
     As a rough heuristic, we assume that signatures are set apart by either
     a blank line or a line made of hyphens, and that it is the last such line
     in the file (disregarding blank lines at the end).
+
+    Parameters
+    ----------
+    text : string
+        The text from which to remove the signature block.
     """
     lines = text.strip().split('\n')
     for line_num in range(len(lines) - 1, -1, -1):
@@ -145,9 +158,19 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
                        shuffle=True, random_state=42,
                        remove=(),
                        download_if_missing=True):
-    """Load the filenames and data from the 20 newsgroups dataset.
+    """Load the filenames and data from the 20 newsgroups dataset \
+(classification).
 
-    Read more in the :ref:`User Guide <20newsgroups>`.
+    Download it if necessary.
+
+    =================   ==========
+    Classes                     20
+    Samples total            18846
+    Dimensionality               1
+    Features                  text
+    =================   ==========
+
+    Read more in the :ref:`User Guide <20newsgroups_dataset>`.
 
     Parameters
     ----------
@@ -169,8 +192,10 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         make the assumption that the samples are independent and identically
         distributed (i.i.d.), such as stochastic gradient descent.
 
-    random_state : numpy random number generator or seed integer
-        Used to shuffle the dataset.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset shuffling. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     remove : tuple
         May contain any subset of ('headers', 'footers', 'quotes'). Each of
@@ -188,6 +213,14 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     download_if_missing : optional, True by default
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
+
+    Returns
+    -------
+    bunch : Bunch object
+        bunch.data: list, length [n_samples]
+        bunch.target: array, shape [n_samples]
+        bunch.filenames: list, length [n_classes]
+        bunch.DESCR: a description of the dataset.
     """
 
     data_home = get_data_home(data_home=data_home)
@@ -211,8 +244,8 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         if download_if_missing:
             logger.info("Downloading 20news dataset. "
                         "This may take a few minutes.")
-            cache = download_20newsgroups(target_dir=twenty_home,
-                                          cache_path=cache_path)
+            cache = _download_20newsgroups(target_dir=twenty_home,
+                                           cache_path=cache_path)
         else:
             raise IOError('20Newsgroups dataset not found')
 
@@ -235,7 +268,11 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         raise ValueError(
             "subset can only be 'train', 'test' or 'all', got '%s'" % subset)
 
-    data.description = 'the 20 newsgroups by date dataset'
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'twenty_newsgroups.rst')) as rst_file:
+        fdescr = rst_file.read()
+
+    data.DESCR = fdescr
 
     if 'headers' in remove:
         data.data = [strip_newsgroup_header(text) for text in data.data]
@@ -275,15 +312,30 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
 
 def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
-                                  download_if_missing=True):
-    """Load the 20 newsgroups dataset and transform it into tf-idf vectors.
+                                  download_if_missing=True, return_X_y=False):
+    """Load the 20 newsgroups dataset and vectorize it into token counts \
+(classification).
 
-    This is a convenience function; the tf-idf transformation is done using the
-    default settings for `sklearn.feature_extraction.text.Vectorizer`. For more
+    Download it if necessary.
+
+    This is a convenience function; the transformation is done using the
+    default settings for
+    :class:`sklearn.feature_extraction.text.CountVectorizer`. For more
     advanced usage (stopword filtering, n-gram extraction, etc.), combine
-    fetch_20newsgroups with a custom `Vectorizer` or `CountVectorizer`.
+    fetch_20newsgroups with a custom
+    :class:`sklearn.feature_extraction.text.CountVectorizer`,
+    :class:`sklearn.feature_extraction.text.HashingVectorizer`,
+    :class:`sklearn.feature_extraction.text.TfidfTransformer` or
+    :class:`sklearn.feature_extraction.text.TfidfVectorizer`.
 
-    Read more in the :ref:`User Guide <20newsgroups>`.
+    =================   ==========
+    Classes                     20
+    Samples total            18846
+    Dimensionality          130107
+    Features                  real
+    =================   ==========
+
+    Read more in the :ref:`User Guide <20newsgroups_dataset>`.
 
     Parameters
     ----------
@@ -309,12 +361,23 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
+    return_X_y : boolean, default=False.
+        If True, returns ``(data.data, data.target)`` instead of a Bunch
+        object.
+
+        .. versionadded:: 0.20
+
     Returns
     -------
     bunch : Bunch object
         bunch.data: sparse matrix, shape [n_samples, n_features]
         bunch.target: array, shape [n_samples]
         bunch.target_names: list, length [n_classes]
+        bunch.DESCR: a description of the dataset.
+
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.20
     """
     data_home = get_data_home(data_home=data_home)
     filebase = '20newsgroup_vectorized'
@@ -369,4 +432,14 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
         raise ValueError("%r is not a valid subset: should be one of "
                          "['train', 'test', 'all']" % subset)
 
-    return Bunch(data=data, target=target, target_names=target_names)
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'twenty_newsgroups.rst')) as rst_file:
+        fdescr = rst_file.read()
+
+    if return_X_y:
+        return data, target
+
+    return Bunch(data=data,
+                 target=target,
+                 target_names=target_names,
+                 DESCR=fdescr)

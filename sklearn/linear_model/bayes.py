@@ -106,7 +106,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
             copy_X=True, fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06,
             n_iter=300, normalize=False, tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
-    array([ 1.])
+    array([1.])
 
     Notes
     -----
@@ -212,7 +212,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
                     U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
                 coef_ = np.dot(coef_, y)
                 if self.compute_score:
-                    logdet_sigma_ = lambda_ * np.ones(n_features)
+                    logdet_sigma_ = np.full(n_features, lambda_,
+                                            dtype=np.array(lambda_).dtype)
                     logdet_sigma_[:n_samples] += alpha_ * eigen_vals_
                     logdet_sigma_ = - np.sum(np.log(logdet_sigma_))
 
@@ -385,7 +386,7 @@ class ARDRegression(LinearModel, RegressorMixin):
             n_iter=300, normalize=False, threshold_lambda=10000.0, tol=0.001,
             verbose=False)
     >>> clf.predict([[1, 1]])
-    array([ 1.])
+    array([1.])
 
     Notes
     -----

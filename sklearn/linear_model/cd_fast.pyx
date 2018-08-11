@@ -18,11 +18,6 @@ import warnings
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.uint32_t UINT32_t
-ctypedef floating (*DOT)(int N, floating *X, int incX, floating *Y,
-                         int incY) nogil
-ctypedef void (*AXPY)(int N, floating alpha, floating *X, int incX,
-                      floating *Y, int incY) nogil
-ctypedef floating (*ASUM)(int N, floating *X, int incX) nogil
 
 np.import_array()
 
@@ -146,7 +141,7 @@ cdef extern from "cblas.h":
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
+def enet_coordinate_descent(np.ndarray[floating, ndim=1, mode='c'] w,
                             floating alpha, floating beta,
                             np.ndarray[floating, ndim=2, mode='fortran'] X,
                             np.ndarray[floating, ndim=1, mode='c'] y,
@@ -162,10 +157,6 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     """
 
     # fused types version of BLAS functions
-    cdef DOT dot
-    cdef AXPY axpy
-    cdef ASUM asum
-
     if floating is float:
         dtype = np.float32
         dot = sdot
@@ -180,9 +171,6 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     # get the data information into easy vars
     cdef unsigned int n_samples = X.shape[0]
     cdef unsigned int n_features = X.shape[1]
-
-    # get the number of tasks indirectly, using strides
-    cdef unsigned int n_tasks = y.strides[0] / sizeof(floating)
 
     # compute norms of the columns of X
     cdef np.ndarray[floating, ndim=1] norm_cols_X = (X**2).sum(axis=0)
@@ -227,7 +215,7 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
             R[i] = y[i] - dot(n_features, &X_data[i], n_samples, w_data, 1)
 
         # tol *= np.dot(y, y)
-        tol *= dot(n_samples, y_data, n_tasks, y_data, n_tasks)
+        tol *= dot(n_samples, y_data, 1, y_data, 1)
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -305,7 +293,7 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
 
                 # np.dot(R.T, y)
                 gap += (alpha * l1_norm
-                        - const * dot(n_samples, R_data, 1, y_data, n_tasks)
+                        - const * dot(n_samples, R_data, 1, y_data, 1)
                         + 0.5 * beta * (1 + const ** 2) * (w_norm2))
 
                 if gap < tol:
@@ -317,7 +305,7 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def sparse_enet_coordinate_descent(floating [:] w,
+def sparse_enet_coordinate_descent(floating [::1] w,
                             floating alpha, floating beta,
                             np.ndarray[floating, ndim=1, mode='c'] X_data,
                             np.ndarray[int, ndim=1, mode='c'] X_indices,
@@ -345,9 +333,6 @@ def sparse_enet_coordinate_descent(floating [:] w,
     cdef unsigned int startptr = X_indptr[0]
     cdef unsigned int endptr
 
-    # get the number of tasks indirectly, using strides
-    cdef unsigned int n_tasks
-
     # initial value of the residuals
     cdef floating[:] R = y.copy()
 
@@ -355,17 +340,12 @@ def sparse_enet_coordinate_descent(floating [:] w,
     cdef floating[:] XtA
 
     # fused types version of BLAS functions
-    cdef DOT dot
-    cdef ASUM asum
-
     if floating is float:
         dtype = np.float32
-        n_tasks = y.strides[0] / sizeof(float)
         dot = sdot
         asum = sasum
     else:
         dtype = np.float64
-        n_tasks = y.strides[0] / sizeof(DOUBLE)
         dot = ddot
         asum = dasum
 
@@ -480,8 +460,9 @@ def sparse_enet_coordinate_descent(floating [:] w,
                 if d_w_ii > d_w_max:
                     d_w_max = d_w_ii
 
-                if w[ii] > w_max:
-                    w_max = w[ii]
+                if fabs(w[ii]) > w_max:
+                    w_max = fabs(w[ii])
+
             if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
@@ -525,7 +506,7 @@ def sparse_enet_coordinate_descent(floating [:] w,
                 gap += (alpha * l1_norm - const * dot(
                             n_samples,
                             &R[0], 1,
-                            &y[0], n_tasks
+                            &y[0], 1
                             )
                         + 0.5 * beta * (1 + const ** 2) * w_norm2)
 
@@ -539,7 +520,8 @@ def sparse_enet_coordinate_descent(floating [:] w,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
+def enet_coordinate_descent_gram(floating[::1] w,
+                                 floating alpha, floating beta,
                                  np.ndarray[floating, ndim=2, mode='c'] Q,
                                  np.ndarray[floating, ndim=1, mode='c'] q,
                                  np.ndarray[floating, ndim=1] y,
@@ -558,10 +540,6 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
     """
 
     # fused types version of BLAS functions
-    cdef DOT dot
-    cdef AXPY axpy
-    cdef ASUM asum
-
     if floating is float:
         dtype = np.float32
         dot = sdot
@@ -712,10 +690,6 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
 
     """
     # fused types version of BLAS functions
-    cdef DOT dot
-    cdef AXPY axpy
-    cdef ASUM asum
-
     if floating is float:
         dtype = np.float32
         dot = sdot

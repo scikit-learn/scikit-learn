@@ -21,7 +21,7 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
-from os.path import exists
+from os.path import dirname, exists, join
 from os import makedirs, remove
 import tarfile
 
@@ -43,17 +43,21 @@ ARCHIVE = RemoteFileMetadata(
     checksum=('aaa5c9a6afe2225cc2aed2723682ae40'
               '3280c4a3695a2ddda4ffb5d8215ea681'))
 
-# Grab the module-level docstring to use as a description of the
-# dataset
-MODULE_DOCS = __doc__
-
 logger = logging.getLogger(__name__)
 
 
-def fetch_california_housing(data_home=None, download_if_missing=True):
-    """Loader for the California housing dataset from StatLib.
+def fetch_california_housing(data_home=None, download_if_missing=True,
+                             return_X_y=False):
+    """Load the California housing dataset (regression).
 
-    Read more in the :ref:`User Guide <datasets>`.
+    ==============     ==============
+    Samples total               20640
+    Dimensionality                  8
+    Features                     real
+    Target             real 0.15 - 5.
+    ==============     ==============
+
+    Read more in the :ref:`User Guide <california_housing_dataset>`.
 
     Parameters
     ----------
@@ -64,6 +68,13 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     download_if_missing : optional, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
+
+
+    return_X_y : boolean, default=False.
+        If True, returns ``(data.data, data.target)`` instead of a Bunch
+        object.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -80,6 +91,10 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
 
     dataset.DESCR : string
         Description of the California housing dataset.
+
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.20
 
     Notes
     ------
@@ -132,7 +147,14 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     # target in units of 100,000
     target = target / 100000.0
 
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'california_housing.rst')) as dfile:
+        descr = dfile.read()
+
+    if return_X_y:
+        return data, target
+
     return Bunch(data=data,
                  target=target,
                  feature_names=feature_names,
-                 DESCR=MODULE_DOCS)
+                 DESCR=descr)

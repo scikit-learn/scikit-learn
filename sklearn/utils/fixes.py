@@ -10,9 +10,9 @@ at which the fixe is no longer needed.
 #
 # License: BSD 3 clause
 
-import warnings
 import os
 import errno
+import sys
 
 import numpy as np
 import scipy.sparse as sp
@@ -40,6 +40,7 @@ euler_gamma = getattr(np, 'euler_gamma',
 
 np_version = _parse_version(np.__version__)
 sp_version = _parse_version(scipy.__version__)
+PY3_OR_LATER = sys.version_info[0] >= 3
 
 
 # Remove when minimum required NumPy >= 1.10
@@ -71,70 +72,15 @@ except TypeError:
         return out
 
 
-try:
-    with warnings.catch_warnings(record=True):
-        # Don't raise the numpy deprecation warnings that appear in
-        # 1.9, but avoid Python bug due to simplefilter('ignore')
-        warnings.simplefilter('always')
-        sp.csr_matrix([1.0, 2.0, 3.0]).max(axis=0)
-except (TypeError, AttributeError):
-    # in scipy < 14.0, sparse matrix min/max doesn't accept an `axis` argument
-    # the following code is taken from the scipy 0.14 codebase
+# boxcox ignore NaN in scipy.special.boxcox after 0.14
+if sp_version < (0, 14):
+    from scipy import stats
 
-    def _minor_reduce(X, ufunc):
-        major_index = np.flatnonzero(np.diff(X.indptr))
-        value = ufunc.reduceat(X.data, X.indptr[major_index])
-        return major_index, value
-
-    def _min_or_max_axis(X, axis, min_or_max):
-        N = X.shape[axis]
-        if N == 0:
-            raise ValueError("zero-size array to reduction operation")
-        M = X.shape[1 - axis]
-        mat = X.tocsc() if axis == 0 else X.tocsr()
-        mat.sum_duplicates()
-        major_index, value = _minor_reduce(mat, min_or_max)
-        not_full = np.diff(mat.indptr)[major_index] < N
-        value[not_full] = min_or_max(value[not_full], 0)
-        mask = value != 0
-        major_index = np.compress(mask, major_index)
-        value = np.compress(mask, value)
-
-        from scipy.sparse import coo_matrix
-        if axis == 0:
-            res = coo_matrix((value, (np.zeros(len(value)), major_index)),
-                             dtype=X.dtype, shape=(1, M))
-        else:
-            res = coo_matrix((value, (major_index, np.zeros(len(value)))),
-                             dtype=X.dtype, shape=(M, 1))
-        return res.A.ravel()
-
-    def _sparse_min_or_max(X, axis, min_or_max):
-        if axis is None:
-            if 0 in X.shape:
-                raise ValueError("zero-size array to reduction operation")
-            zero = X.dtype.type(0)
-            if X.nnz == 0:
-                return zero
-            m = min_or_max.reduce(X.data.ravel())
-            if X.nnz != np.product(X.shape):
-                m = min_or_max(zero, m)
-            return m
-        if axis < 0:
-            axis += 2
-        if (axis == 0) or (axis == 1):
-            return _min_or_max_axis(X, axis, min_or_max)
-        else:
-            raise ValueError("invalid axis, use 0 for rows, or 1 for columns")
-
-    def sparse_min_max(X, axis):
-        return (_sparse_min_or_max(X, axis, np.minimum),
-                _sparse_min_or_max(X, axis, np.maximum))
-
+    def boxcox(x, lmbda):
+        with np.errstate(invalid='ignore'):
+            return stats.boxcox(x, lmbda)
 else:
-    def sparse_min_max(X, axis):
-        return (X.min(axis=axis).toarray().ravel(),
-                X.max(axis=axis).toarray().ravel())
+    from scipy.special import boxcox  # noqa
 
 
 if sp_version < (0, 15):
@@ -253,7 +199,16 @@ else:
 
 
 def parallel_helper(obj, methodname, *args, **kwargs):
-    """Workaround for Python 2 limitations of pickling instance methods"""
+    """Workaround for Python 2 limitations of pickling instance methods
+
+    Parameters
+    ----------
+    obj
+    methodname
+    *args
+    **kwargs
+
+    """
     return getattr(obj, methodname)(*args, **kwargs)
 
 
@@ -295,3 +250,85 @@ if np_version < (1, 12):
                                  self._fill_value)
 else:
     from numpy.ma import MaskedArray    # noqa
+
+
+if np_version < (1, 11):
+    def nanpercentile(a, q):
+        """
+        Compute the qth percentile of the data along the specified axis,
+        while ignoring nan values.
+
+        Returns the qth percentile(s) of the array elements.
+
+        Parameters
+        ----------
+        a : array_like
+            Input array or object that can be converted to an array.
+        q : float in range of [0,100] (or sequence of floats)
+            Percentile to compute, which must be between 0 and 100
+            inclusive.
+
+        Returns
+        -------
+        percentile : scalar or ndarray
+            If `q` is a single percentile and `axis=None`, then the result
+            is a scalar. If multiple percentiles are given, first axis of
+            the result corresponds to the percentiles. The other axes are
+            the axes that remain after the reduction of `a`. If the input
+            contains integers or floats smaller than ``float64``, the output
+            data-type is ``float64``. Otherwise, the output data-type is the
+            same as that of the input. If `out` is specified, that array is
+            returned instead.
+
+        """
+        data = np.compress(~np.isnan(a), a)
+        if data.size:
+            return np.percentile(data, q)
+        else:
+            size_q = 1 if np.isscalar(q) else len(q)
+            return np.array([np.nan] * size_q)
+else:
+    from numpy import nanpercentile  # noqa
+
+
+if np_version < (1, 9):
+    def nanmedian(a, axis=None):
+        if axis is None:
+            data = a.reshape(-1)
+            return np.median(np.compress(~np.isnan(data), data))
+        else:
+            data = a.T if not axis else a
+            return np.array([np.median(np.compress(~np.isnan(row), row))
+                             for row in data])
+else:
+    from numpy import nanmedian  # noqa
+
+
+# Fix for behavior inconsistency on numpy.equal for object dtypes.
+# For numpy versions < 1.13, numpy.equal tests element-wise identity of objects
+# instead of equality. This fix returns the mask of NaNs in an array of
+# numerical or object values for all nupy versions.
+
+_nan_object_array = np.array([np.nan], dtype=object)
+_nan_object_mask = _nan_object_array != _nan_object_array
+
+if np.array_equal(_nan_object_mask, np.array([True])):
+    def _object_dtype_isnan(X):
+        return X != X
+
+else:
+    def _object_dtype_isnan(X):
+        return np.frompyfunc(lambda x: x != x, 1, 1)(X).astype(bool)
+
+
+# To be removed once this fix is included in six
+try:
+    from collections.abc import Sequence as _Sequence  # noqa
+    from collections.abc import Iterable as _Iterable  # noqa
+    from collections.abc import Mapping as _Mapping  # noqa
+    from collections.abc import Sized as _Sized  # noqa
+except ImportError:  # python <3.3
+    from collections import Sequence as _Sequence  # noqa
+    from collections import Iterable as _Iterable  # noqa
+    from collections import Mapping as _Mapping  # noqa
+    from collections import Sized as _Sized  # noqa

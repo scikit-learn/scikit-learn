@@ -1,4 +1,8 @@
 """RCV1 dataset.
+
+The dataset page is available at
+
+    http://jmlr.csail.mit.edu/papers/volume5/lewis04a/
 """
 
 # Author: Tom Dupre la Tour
@@ -7,7 +11,7 @@
 import logging
 
 from os import remove
-from os.path import exists, join
+from os.path import dirname, exists, join
 from gzip import GzipFile
 
 import numpy as np
@@ -24,12 +28,15 @@ from ..utils import shuffle as shuffle_
 from ..utils import Bunch
 
 
-# The original data can be found at:
-# http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt0.dat.gz
-# http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt1.dat.gz
-# http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt2.dat.gz
-# http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt3.dat.gz
-# http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_train.dat.gz
+# The original vectorized data can be found at:
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt0.dat.gz
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt1.dat.gz
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt2.dat.gz
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt3.dat.gz
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_train.dat.gz
+# while the original stemmed token files can be found
+# in the README, section B.12.i.:
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/lyrl2004_rcv1v2_README.htm
 XY_METADATA = (
     RemoteFileMetadata(
         url='https://ndownloader.figshare.com/files/5976069',
@@ -70,19 +77,21 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
-               random_state=None, shuffle=False):
-    """Load the RCV1 multilabel dataset, downloading it if necessary.
+               random_state=None, shuffle=False, return_X_y=False):
+    """Load the RCV1 multilabel dataset (classification).
+
+    Download it if necessary.
 
     Version: RCV1-v2, vectors, full sets, topics multilabels.
 
-    ==============     =====================
-    Classes                              103
-    Samples total                     804414
-    Dimensionality                     47236
-    Features           real, between 0 and 1
-    ==============     =====================
+    =================   =====================
+    Classes                               103
+    Samples total                      804414
+    Dimensionality                      47236
+    Features            real, between 0 and 1
+    =================   =====================
 
-    Read more in the :ref:`User Guide <datasets>`.
+    Read more in the :ref:`User Guide <rcv1_dataset>`.
 
     .. versionadded:: 0.17
 
@@ -102,15 +111,20 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        Random state for shuffling the dataset.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset shuffling. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     shuffle : bool, default=False
         Whether to shuffle dataset.
+
+    return_X_y : boolean, default=False.
+        If True, returns ``(dataset.data, dataset.target)`` instead of a Bunch
+        object. See below for more information about the `dataset.data` and
+        `dataset.target` object.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -132,12 +146,9 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     dataset.DESCR : string
         Description of the RCV1 dataset.
 
-    References
-    ----------
-    Lewis, D. D., Yang, Y., Rose, T. G., & Li, F. (2004). RCV1: A new
-    benchmark collection for text categorization research. The Journal of
-    Machine Learning Research, 5, 361-397.
+    (data, target) : tuple if ``return_X_y`` is True
 
+        .. versionadded:: 0.20
     """
     N_SAMPLES = 804414
     N_FEATURES = 47236
@@ -181,7 +192,6 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     else:
         X = joblib.load(samples_path)
         sample_id = joblib.load(sample_id_path)
-
 
     # load target (y), categories, and sample_id_bis
     if download_if_missing and (not exists(sample_topics_path) or
@@ -254,8 +264,15 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     if shuffle:
         X, y, sample_id = shuffle_(X, y, sample_id, random_state=random_state)
 
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'rcv1.rst')) as rst_file:
+        fdescr = rst_file.read()
+
+    if return_X_y:
+        return X, y
+
     return Bunch(data=X, target=y, sample_id=sample_id,
-                 target_names=categories, DESCR=__doc__)
+                 target_names=categories, DESCR=fdescr)
 
 
 def _inverse_permutation(p):

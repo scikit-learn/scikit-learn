@@ -15,8 +15,7 @@ from __future__ import division
 import warnings
 
 import numpy as np
-from scipy import linalg
-from scipy.sparse import issparse, csr_matrix
+from scipy import linalg, sparse
 
 from . import check_random_state, deprecated
 from .fixes import np_version
@@ -41,8 +40,17 @@ def norm(x):
 def squared_norm(x):
     """Squared Euclidean or Frobenius norm of x.
 
-    Returns the Euclidean norm when x is a vector, the Frobenius norm when x
-    is a matrix (2-d array). Faster than norm(x) ** 2.
+    Faster than norm(x) ** 2.
+
+    Parameters
+    ----------
+    x : array_like
+
+    Returns
+    -------
+    float
+        The Euclidean norm when x is a vector, the Frobenius norm when x
+        is a matrix (2-d array).
     """
     x = np.ravel(x, order='K')
     if np.issubdtype(x.dtype, np.integer):
@@ -59,10 +67,22 @@ def row_norms(X, squared=False):
     matrices and does not create an X.shape-sized temporary.
 
     Performs no input validation.
+
+    Parameters
+    ----------
+    X : array_like
+        The input array
+    squared : bool, optional (default = False)
+        If True, return squared norms.
+
+    Returns
+    -------
+    array_like
+        The row-wise (squared) Euclidean norm of X.
     """
-    if issparse(X):
-        if not isinstance(X, csr_matrix):
-            X = csr_matrix(X)
+    if sparse.issparse(X):
+        if not isinstance(X, sparse.csr_matrix):
+            X = sparse.csr_matrix(X)
         norms = csr_row_norms(X)
     else:
         norms = np.einsum('ij,ij->i', X, X)
@@ -77,6 +97,11 @@ def fast_logdet(A):
 
     Equivalent to : np.log(nl.det(A)) but more robust.
     It returns -Inf if det(A) is non positive or is not defined.
+
+    Parameters
+    ----------
+    A : array_like
+        The matrix
     """
     sign, ld = np.linalg.slogdet(A)
     if not sign > 0:
@@ -103,7 +128,15 @@ def fast_dot(a, b, out=None):
 def density(w, **kwargs):
     """Compute density of a sparse vector
 
-    Return a value between 0 and 1
+    Parameters
+    ----------
+    w : array_like
+        The sparse vector
+
+    Returns
+    -------
+    float
+        The density of w, between 0 and 1
     """
     if hasattr(w, "toarray"):
         d = float(w.nnz) / (w.shape[0] * w.shape[1])
@@ -131,7 +164,7 @@ def safe_sparse_dot(a, b, dense_output=False):
     dot_product : array or sparse matrix
         sparse if ``a`` or ``b`` is sparse and ``dense_output=False``.
     """
-    if issparse(a) or issparse(b):
+    if sparse.issparse(a) or sparse.issparse(b):
         ret = a * b
         if dense_output and hasattr(ret, "toarray"):
             ret = ret.toarray()
@@ -162,7 +195,7 @@ def randomized_range_finder(A, size, n_iter,
         (the fastest but numerically unstable when `n_iter` is large, e.g.
         typically 5 or larger), or 'LU' factorization (numerically stable
         but can lose slightly in accuracy). The 'auto' mode applies no
-        normalization if `n_iter`<=2 and switches to LU otherwise.
+        normalization if `n_iter` <= 2 and switches to LU otherwise.
 
         .. versionadded:: 0.18
 
@@ -259,7 +292,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         (the fastest but numerically unstable when `n_iter` is large, e.g.
         typically 5 or larger), or 'LU' factorization (numerically stable
         but can lose slightly in accuracy). The 'auto' mode applies no
-        normalization if `n_iter`<=2 and switches to LU otherwise.
+        normalization if `n_iter` <= 2 and switches to LU otherwise.
 
         .. versionadded:: 0.18
 
@@ -307,6 +340,12 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
       analysis
       A. Szlam et al. 2014
     """
+    if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
+        warnings.warn("Calculating SVD of a {} is expensive. "
+                      "csr_matrix is more efficient.".format(
+                          type(M).__name__),
+                      sparse.SparseEfficiencyWarning)
+
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
@@ -361,9 +400,9 @@ def logsumexp(arr, axis=0):
     >>> from sklearn.utils.extmath import logsumexp
     >>> a = np.arange(10)
     >>> np.log(np.sum(np.exp(a)))
-    9.4586297444267107
-    >>> logsumexp(a)
-    9.4586297444267107
+    9.458...
+    >>> logsumexp(a)  # doctest: +SKIP
+    9.458...
     """
     return scipy_logsumexp(arr, axis)
 
@@ -398,14 +437,14 @@ def weighted_mode(a, w, axis=0):
     >>> x = [4, 1, 4, 2, 4, 2]
     >>> weights = [1, 1, 1, 1, 1, 1]
     >>> weighted_mode(x, weights)
-    (array([ 4.]), array([ 3.]))
+    (array([4.]), array([3.]))
 
     The value 4 appears three times: with uniform weights, the result is
     simply the mode of the distribution.
 
     >>> weights = [1, 3, 0.5, 1.5, 1, 2] # deweight the 4's
     >>> weighted_mode(x, weights)
-    (array([ 2.]), array([ 3.5]))
+    (array([2.]), array([3.5]))
 
     The value 2 has the highest score: it appears twice with weights of
     1.5 and 2: the sum of these is 3.
@@ -423,7 +462,7 @@ def weighted_mode(a, w, axis=0):
         w = np.asarray(w)
 
     if a.shape != w.shape:
-        w = np.zeros(a.shape, dtype=w.dtype) + w
+        w = np.full(a.shape, w, dtype=w.dtype)
 
     scores = np.unique(np.ravel(a))       # get ALL unique values
     testshape = list(a.shape)
@@ -504,7 +543,12 @@ def svd_flip(u, v, u_based_decision=True):
 
     Parameters
     ----------
-    u, v : ndarray
+    u : ndarray
+        u and v are the output of `linalg.svd` or
+        `sklearn.utils.extmath.randomized_svd`, with matching inner dimensions
+        so one can compute `np.dot(u * s, v)`.
+
+    v : ndarray
         u and v are the output of `linalg.svd` or
         `sklearn.utils.extmath.randomized_svd`, with matching inner dimensions
         so one can compute `np.dot(u * s, v)`.
@@ -593,7 +637,7 @@ def softmax(X, copy=True):
 
     Parameters
     ----------
-    X : array-like, shape (M, N)
+    X : array-like of floats, shape (M, N)
         Argument to the logistic function
 
     copy : bool, optional
@@ -619,8 +663,17 @@ def safe_min(X):
 
     Adapated from http://stackoverflow.com/q/13426580
 
+    Parameters
+    ----------
+    X : array_like
+        The input array or sparse matrix
+
+    Returns
+    -------
+    Float
+        The min value of X
     """
-    if issparse(X):
+    if sparse.issparse(X):
         if len(X.data) == 0:
             return 0
         m = X.data.min()
@@ -630,10 +683,28 @@ def safe_min(X):
 
 
 def make_nonnegative(X, min_value=0):
-    """Ensure `X.min()` >= `min_value`."""
+    """Ensure `X.min()` >= `min_value`.
+
+    Parameters
+    ----------
+    X : array_like
+        The matrix to make non-negative
+    min_value : float
+        The threshold value
+
+    Returns
+    -------
+    array_like
+        The thresholded array
+
+    Raises
+    ------
+    ValueError
+        When X is sparse
+    """
     min_ = safe_min(X)
     if min_ < min_value:
-        if issparse(X):
+        if sparse.issparse(X):
             raise ValueError("Cannot make the data matrix"
                              " nonnegative because it is sparse."
                              " Adding a value to every entry would"
@@ -642,8 +713,7 @@ def make_nonnegative(X, min_value=0):
     return X
 
 
-def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
-                              last_sample_count=0):
+def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     """Calculate mean update and a Youngs and Cramer variance update.
 
     last_mean and last_variance are statistics computed at the last step by the
@@ -664,7 +734,7 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
 
     last_variance : array-like, shape: (n_features,)
 
-    last_sample_count : int
+    last_sample_count : array-like, shape (n_features,)
 
     Returns
     -------
@@ -673,7 +743,11 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
     updated_variance : array, shape (n_features,)
         If None, only mean is computed
 
-    updated_sample_count : int
+    updated_sample_count : array, shape (n_features,)
+
+    Notes
+    -----
+    NaNs are ignored during the algorithm.
 
     References
     ----------
@@ -689,9 +763,9 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
     # new = the current increment
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
-    new_sum = X.sum(axis=0)
+    new_sum = np.nansum(X, axis=0)
 
-    new_sample_count = X.shape[0]
+    new_sample_count = np.sum(~np.isnan(X), axis=0)
     updated_sample_count = last_sample_count + new_sample_count
 
     updated_mean = (last_sum + new_sum) / updated_sample_count
@@ -699,17 +773,18 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
     if last_variance is None:
         updated_variance = None
     else:
-        new_unnormalized_variance = X.var(axis=0) * new_sample_count
-        if last_sample_count == 0:  # Avoid division by 0
-            updated_unnormalized_variance = new_unnormalized_variance
-        else:
+        new_unnormalized_variance = np.nanvar(X, axis=0) * new_sample_count
+        last_unnormalized_variance = last_variance * last_sample_count
+
+        with np.errstate(divide='ignore', invalid='ignore'):
             last_over_new_count = last_sample_count / new_sample_count
-            last_unnormalized_variance = last_variance * last_sample_count
             updated_unnormalized_variance = (
-                last_unnormalized_variance +
-                new_unnormalized_variance +
+                last_unnormalized_variance + new_unnormalized_variance +
                 last_over_new_count / updated_sample_count *
                 (last_sum / last_over_new_count - new_sum) ** 2)
+
+        zeros = last_sample_count == 0
+        updated_unnormalized_variance[zeros] = new_unnormalized_variance[zeros]
         updated_variance = updated_unnormalized_variance / updated_sample_count
 
     return updated_mean, updated_variance, updated_sample_count

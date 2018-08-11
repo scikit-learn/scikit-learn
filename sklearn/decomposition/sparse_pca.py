@@ -66,6 +66,21 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    normalize_components : boolean, optional (default=False)
+        - if False, use a version of Sparse PCA without components
+          normalization and without data centering. This is likely a bug and
+          even though it's the default for backward compatibility,
+          this should not be used.
+        - if True, use a version of Sparse PCA with components normalization
+          and data centering.
+
+        .. versionadded:: 0.20
+
+        .. deprecated:: 0.22
+           ``normalize_components`` was added and set to ``False`` for
+           backward compatibility. It would be set to ``True`` from 0.22
+           onwards.
+
     Attributes
     ----------
     components_ : array, [n_components, n_features]
@@ -77,6 +92,10 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     n_iter_ : int
         Number of iterations run.
 
+    mean_ : array, shape (n_features,)
+        Per-feature empirical mean, estimated from the training set.
+        Equal to ``X.mean(axis=0)``.
+
     See also
     --------
     PCA
@@ -84,8 +103,9 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     DictionaryLearning
     """
     def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
-                 max_iter=1000, tol=1e-8, method='lars', n_jobs=1, U_init=None,
-                 V_init=None, verbose=False, random_state=None):
+                 max_iter=1000, tol=1e-8, method='lars', n_jobs=None,
+                 U_init=None, V_init=None, verbose=False, random_state=None,
+                 normalize_components=False):
         self.n_components = n_components
         self.alpha = alpha
         self.ridge_alpha = ridge_alpha
@@ -97,6 +117,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self.V_init = V_init
         self.verbose = verbose
         self.random_state = random_state
+        self.normalize_components = normalize_components
 
     def fit(self, X, y=None):
         """Fit the model from data in X.
@@ -116,6 +137,17 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         """
         random_state = check_random_state(self.random_state)
         X = check_array(X)
+
+        if self.normalize_components:
+            self.mean_ = X.mean(axis=0)
+            X = X - self.mean_
+        else:
+            warnings.warn("normalize_components=False is a "
+                          "backward-compatible setting that implements a "
+                          "non-standard definition of sparse PCA. This "
+                          "compatibility mode will be removed in 0.22.",
+                          DeprecationWarning)
+
         if self.n_components is None:
             n_components = X.shape[1]
         else:
@@ -134,6 +166,13 @@ class SparsePCA(BaseEstimator, TransformerMixin):
                                                return_n_iter=True
                                                )
         self.components_ = Vt.T
+
+        if self.normalize_components:
+            components_norm = \
+                    np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
+            components_norm[components_norm == 0] = 1
+            self.components_ /= components_norm
+
         self.error_ = E
         return self
 
@@ -178,11 +217,18 @@ class SparsePCA(BaseEstimator, TransformerMixin):
                 ridge_alpha = self.ridge_alpha
         else:
             ridge_alpha = self.ridge_alpha
+
+        if self.normalize_components:
+            X = X - self.mean_
+
         U = ridge_regression(self.components_.T, X.T, ridge_alpha,
                              solver='cholesky')
-        s = np.sqrt((U ** 2).sum(axis=0))
-        s[s == 0] = 1
-        U /= s
+
+        if not self.normalize_components:
+            s = np.sqrt((U ** 2).sum(axis=0))
+            s[s == 0] = 1
+            U /= s
+
         return U
 
 
@@ -239,16 +285,32 @@ class MiniBatchSparsePCA(SparsePCA):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    normalize_components : boolean, optional (default=False)
+        - if False, use a version of Sparse PCA without components
+          normalization and without data centering. This is likely a bug and
+          even though it's the default for backward compatibility,
+          this should not be used.
+        - if True, use a version of Sparse PCA with components normalization
+          and data centering.
+
+        .. versionadded:: 0.20
+
+        .. deprecated:: 0.22
+           ``normalize_components`` was added and set to ``False`` for
+           backward compatibility. It would be set to ``True`` from 0.22
+           onwards.
+
     Attributes
     ----------
     components_ : array, [n_components, n_features]
         Sparse components extracted from the data.
 
-    error_ : array
-        Vector of errors at each iteration.
-
     n_iter_ : int
         Number of iterations run.
+
+    mean_ : array, shape (n_features,)
+        Per-feature empirical mean, estimated from the training set.
+        Equal to ``X.mean(axis=0)``.
 
     See also
     --------
@@ -258,11 +320,13 @@ class MiniBatchSparsePCA(SparsePCA):
     """
     def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
                  n_iter=100, callback=None, batch_size=3, verbose=False,
-                 shuffle=True, n_jobs=1, method='lars', random_state=None):
+                 shuffle=True, n_jobs=None, method='lars', random_state=None,
+                 normalize_components=False):
         super(MiniBatchSparsePCA, self).__init__(
             n_components=n_components, alpha=alpha, verbose=verbose,
             ridge_alpha=ridge_alpha, n_jobs=n_jobs, method=method,
-            random_state=random_state)
+            random_state=random_state,
+            normalize_components=normalize_components)
         self.n_iter = n_iter
         self.callback = callback
         self.batch_size = batch_size
@@ -286,6 +350,17 @@ class MiniBatchSparsePCA(SparsePCA):
         """
         random_state = check_random_state(self.random_state)
         X = check_array(X)
+
+        if self.normalize_components:
+            self.mean_ = X.mean(axis=0)
+            X = X - self.mean_
+        else:
+            warnings.warn("normalize_components=False is a "
+                          "backward-compatible setting that implements a "
+                          "non-standard definition of sparse PCA. This "
+                          "compatibility mode will be removed in 0.22.",
+                          DeprecationWarning)
+
         if self.n_components is None:
             n_components = X.shape[1]
         else:
@@ -301,4 +376,11 @@ class MiniBatchSparsePCA(SparsePCA):
             random_state=random_state,
             return_n_iter=True)
         self.components_ = Vt.T
+
+        if self.normalize_components:
+            components_norm = \
+                    np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
+            components_norm[components_norm == 0] = 1
+            self.components_ /= components_norm
+
         return self

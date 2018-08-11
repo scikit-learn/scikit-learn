@@ -13,10 +13,11 @@ from __future__ import division
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-from collections import Mapping, namedtuple, defaultdict, Sequence
+from collections import namedtuple, defaultdict
 from functools import partial, reduce
 from itertools import product
 import operator
+import time
 import warnings
 
 import numpy as np
@@ -28,11 +29,13 @@ from ._split import check_cv
 from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
 from ..exceptions import NotFittedError
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..externals import six
 from ..utils import check_random_state
 from ..utils.fixes import sp_version
 from ..utils.fixes import MaskedArray
+from ..utils.fixes import _Mapping as Mapping, _Sequence as Sequence
+from ..utils.fixes import _Iterable as Iterable
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
@@ -90,10 +93,26 @@ class ParameterGrid(object):
     """
 
     def __init__(self, param_grid):
+        if not isinstance(param_grid, (Mapping, Iterable)):
+            raise TypeError('Parameter grid is not a dict or '
+                            'a list ({!r})'.format(param_grid))
+
         if isinstance(param_grid, Mapping):
             # wrap dictionary in a singleton list to support either dict
             # or list of dicts
             param_grid = [param_grid]
+
+        # check if all entries are dictionaries of lists
+        for grid in param_grid:
+            if not isinstance(grid, dict):
+                raise TypeError('Parameter grid is not a '
+                                'dict ({!r})'.format(grid))
+            for key in grid:
+                if not isinstance(grid[key], Iterable):
+                    raise TypeError('Parameter grid value is not iterable '
+                                    '(key={!r}, value={!r})'
+                                    .format(key, grid[key]))
+
         self.param_grid = param_grid
 
     def __iter__(self):
@@ -242,13 +261,16 @@ class ParameterSampler(object):
             # look up sampled parameter settings in parameter grid
             param_grid = ParameterGrid(self.param_distributions)
             grid_size = len(param_grid)
+            n_iter = self.n_iter
 
-            if grid_size < self.n_iter:
-                raise ValueError(
-                    "The total space of parameters %d is smaller "
-                    "than n_iter=%d. For exhaustive searches, use "
-                    "GridSearchCV." % (grid_size, self.n_iter))
-            for i in sample_without_replacement(grid_size, self.n_iter,
+            if grid_size < n_iter:
+                warnings.warn(
+                    'The total space of parameters %d is smaller '
+                    'than n_iter=%d. Running %d iterations. For exhaustive '
+                    'searches, use GridSearchCV.'
+                    % (grid_size, self.n_iter, grid_size), UserWarning)
+                n_iter = grid_size
+            for i in sample_without_replacement(grid_size, n_iter,
                                                 random_state=rnd):
                 yield param_grid[i]
 
@@ -273,7 +295,7 @@ class ParameterSampler(object):
 
 
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
-                   verbose, error_score='raise', **fit_params):
+                   verbose, error_score='raise-deprecating', **fit_params):
     """Run fit on one set of parameters.
 
     Parameters
@@ -311,11 +333,12 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     **fit_params : kwargs
         Additional parameter passed to the fit function of the estimator.
 
-    error_score : 'raise' (default) or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error.
+        step, which will always raise the error. Default is 'raise' but from
+        version 0.22 it will change to np.nan.
 
     Returns
     -------
@@ -385,13 +408,14 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
 
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       MetaEstimatorMixin)):
-    """Base class for hyper parameter search with cross-validation."""
+    """Abstract base class for hyper parameter search with cross-validation.
+    """
 
     @abstractmethod
     def __init__(self, estimator, scoring=None,
-                 fit_params=None, n_jobs=1, iid='warn',
-                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
-                 error_score='raise', return_train_score=True):
+                 fit_params=None, n_jobs=None, iid='warn',
+                 refit=True, cv='warn', verbose=0, pre_dispatch='2*n_jobs',
+                 error_score='raise-deprecating', return_train_score=True):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -556,6 +580,40 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self._check_is_fitted("classes_")
         return self.best_estimator_.classes_
 
+    @abstractmethod
+    def _run_search(self, evaluate_candidates):
+        """Repeatedly calls `evaluate_candidates` to conduct a search.
+
+        This method, implemented in sub-classes, makes it is possible to
+        customize the the scheduling of evaluations: GridSearchCV and
+        RandomizedSearchCV schedule evaluations for their whole parameter
+        search space at once but other more sequential approaches are also
+        possible: for instance is possible to iteratively schedule evaluations
+        for new regions of the parameter search space based on previously
+        collected evaluation results. This makes it possible to implement
+        Bayesian optimization or more generally sequential model-based
+        optimization by deriving from the BaseSearchCV abstract base class.
+
+        Parameters
+        ----------
+        evaluate_candidates : callable
+            This callback accepts a list of candidates, where each candidate is
+            a dict of parameter settings. It returns a dict of all results so
+            far, formatted like ``cv_results_``.
+
+        Examples
+        --------
+
+        ::
+
+            def _run_search(self, evaluate_candidates):
+                'Try C=0.1 only if C=1 is better than C=10'
+                all_results = evaluate_candidates([{'C': 1}, {'C': 10}])
+                score = all_results['mean_test_score']
+                if score[0] < score[1]:
+                    evaluate_candidates([{'C': 0.1}])
+        """
+
     def fit(self, X, y=None, groups=None, **fit_params):
         """Run fit with all sets of parameters.
 
@@ -615,29 +673,86 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         X, y, groups = indexable(X, y, groups)
         n_splits = cv.get_n_splits(X, y, groups)
-        # Regenerate parameter iterable for each fit
-        candidate_params = list(self._get_param_iterator())
-        n_candidates = len(candidate_params)
-        if self.verbose > 0:
-            print("Fitting {0} folds for each of {1} candidates, totalling"
-                  " {2} fits".format(n_splits, n_candidates,
-                                     n_candidates * n_splits))
 
         base_estimator = clone(self.estimator)
-        pre_dispatch = self.pre_dispatch
 
-        out = Parallel(
-            n_jobs=self.n_jobs, verbose=self.verbose,
-            pre_dispatch=pre_dispatch
-        )(delayed(_fit_and_score)(clone(base_estimator), X, y, scorers, train,
-                                  test, self.verbose, parameters,
-                                  fit_params=fit_params,
-                                  return_train_score=self.return_train_score,
-                                  return_n_test_samples=True,
-                                  return_times=True, return_parameters=False,
-                                  error_score=self.error_score)
-          for parameters, (train, test) in product(candidate_params,
-                                                   cv.split(X, y, groups)))
+        parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                            pre_dispatch=self.pre_dispatch)
+
+        fit_and_score_kwargs = dict(scorer=scorers,
+                                    fit_params=fit_params,
+                                    return_train_score=self.return_train_score,
+                                    return_n_test_samples=True,
+                                    return_times=True,
+                                    return_parameters=False,
+                                    error_score=self.error_score,
+                                    verbose=self.verbose)
+        results_container = [{}]
+        with parallel:
+            all_candidate_params = []
+            all_out = []
+
+            def evaluate_candidates(candidate_params):
+                candidate_params = list(candidate_params)
+                n_candidates = len(candidate_params)
+
+                if self.verbose > 0:
+                    print("Fitting {0} folds for each of {1} candidates,"
+                          " totalling {2} fits".format(
+                              n_splits, n_candidates, n_candidates * n_splits))
+
+                out = parallel(delayed(_fit_and_score)(clone(base_estimator),
+                                                       X, y,
+                                                       train=train, test=test,
+                                                       parameters=parameters,
+                                                       **fit_and_score_kwargs)
+                               for parameters, (train, test)
+                               in product(candidate_params,
+                                          cv.split(X, y, groups)))
+
+                all_candidate_params.extend(candidate_params)
+                all_out.extend(out)
+
+                # XXX: When we drop Python 2 support, we can use nonlocal
+                # instead of results_container
+                results_container[0] = self._format_results(
+                    all_candidate_params, scorers, n_splits, all_out)
+                return results_container[0]
+
+            self._run_search(evaluate_candidates)
+
+        results = results_container[0]
+
+        # For multi-metric evaluation, store the best_index_, best_params_ and
+        # best_score_ iff refit is one of the scorer names
+        # In single metric evaluation, refit_metric is "score"
+        if self.refit or not self.multimetric_:
+            self.best_index_ = results["rank_test_%s" % refit_metric].argmin()
+            self.best_params_ = results["params"][self.best_index_]
+            self.best_score_ = results["mean_test_%s" % refit_metric][
+                self.best_index_]
+
+        if self.refit:
+            self.best_estimator_ = clone(base_estimator).set_params(
+                **self.best_params_)
+            refit_start_time = time.time()
+            if y is not None:
+                self.best_estimator_.fit(X, y, **fit_params)
+            else:
+                self.best_estimator_.fit(X, **fit_params)
+            refit_end_time = time.time()
+            self.refit_time_ = refit_end_time - refit_start_time
+
+        # Store the only scorer not as a dict for single metric evaluation
+        self.scorer_ = scorers if self.multimetric_ else scorers['score']
+
+        self.cv_results_ = results
+        self.n_splits_ = n_splits
+
+        return self
+
+    def _format_results(self, candidate_params, scorers, n_splits, out):
+        n_candidates = len(candidate_params)
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
@@ -693,7 +808,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         for cand_i, params in enumerate(candidate_params):
             for name, value in params.items():
                 # An all masked empty array gets created for the key
-                # `"param_%s" % name` at the first occurence of `name`.
+                # `"param_%s" % name` at the first occurrence of `name`.
                 # Setting the value at an index also unmasks that index
                 param_results["param_%s" % name][cand_i] = value
 
@@ -723,7 +838,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 prev_keys = set(results.keys())
                 _store('train_%s' % scorer_name, train_scores[scorer_name],
                        splits=True)
-
                 if self.return_train_score == 'warn':
                     for key in set(results.keys()) - prev_keys:
                         message = (
@@ -734,56 +848,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                         # warn on key access
                         results.add_warning(key, message, FutureWarning)
 
-        # For multi-metric evaluation, store the best_index_, best_params_ and
-        # best_score_ iff refit is one of the scorer names
-        # In single metric evaluation, refit_metric is "score"
-        if self.refit or not self.multimetric_:
-            self.best_index_ = results["rank_test_%s" % refit_metric].argmin()
-            self.best_params_ = candidate_params[self.best_index_]
-            self.best_score_ = results["mean_test_%s" % refit_metric][
-                self.best_index_]
-
-        if self.refit:
-            self.best_estimator_ = clone(base_estimator).set_params(
-                **self.best_params_)
-            if y is not None:
-                self.best_estimator_.fit(X, y, **fit_params)
-            else:
-                self.best_estimator_.fit(X, **fit_params)
-
-        # Store the only scorer not as a dict for single metric evaluation
-        self.scorer_ = scorers if self.multimetric_ else scorers['score']
-
-        self.cv_results_ = results
-        self.n_splits_ = n_splits
-
-        return self
-
-    @property
-    def grid_scores_(self):
-        check_is_fitted(self, 'cv_results_')
-        if self.multimetric_:
-            raise AttributeError("grid_scores_ attribute is not available for"
-                                 " multi-metric evaluation.")
-        warnings.warn(
-            "The grid_scores_ attribute was deprecated in version 0.18"
-            " in favor of the more elaborate cv_results_ attribute."
-            " The grid_scores_ attribute will not be available from 0.20",
-            DeprecationWarning)
-
-        grid_scores = list()
-
-        for i, (params, mean, std) in enumerate(zip(
-                self.cv_results_['params'],
-                self.cv_results_['mean_test_score'],
-                self.cv_results_['std_test_score'])):
-            scores = np.array(list(self.cv_results_['split%d_test_score'
-                                                    % s][i]
-                                   for s in range(self.n_splits_)),
-                              dtype=np.float64)
-            grid_scores.append(_CVScoreTuple(params, mean, scores))
-
-        return grid_scores
+        return results
 
 
 class GridSearchCV(BaseSearchCV):
@@ -867,17 +932,18 @@ class GridSearchCV(BaseSearchCV):
         will change to False in version 0.21, to correspond to the standard
         definition of cross-validation.
 
-        ..versionchanged:: 0.20
+        .. versionchanged:: 0.20
             Parameter ``iid`` will change from True to False by default in
             version 0.22, and will be removed in 0.24.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train, test splits.
+
+        - None, to use the default 3-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -885,6 +951,10 @@ class GridSearchCV(BaseSearchCV):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     refit : boolean, or string, default=True
         Refit an estimator using the best found parameters on the whole
@@ -909,11 +979,12 @@ class GridSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
-    error_score : 'raise' (default) or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error.
+        step, which will always raise the error. Default is 'raise' but from
+        version 0.22 it will change to np.nan.
 
     return_train_score : boolean, optional
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -935,17 +1006,17 @@ class GridSearchCV(BaseSearchCV):
     >>> from sklearn.model_selection import GridSearchCV
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svc = svm.SVC()
-    >>> clf = GridSearchCV(svc, parameters)
+    >>> svc = svm.SVC(gamma="scale")
+    >>> clf = GridSearchCV(svc, parameters, cv=5)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(cv=None, error_score=...,
+    GridSearchCV(cv=5, error_score=...,
            estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
                          decision_function_shape='ovr', degree=..., gamma=...,
                          kernel='rbf', max_iter=-1, probability=False,
                          random_state=None, shrinking=True, tol=...,
                          verbose=False),
-           fit_params=None, iid=..., n_jobs=1,
+           fit_params=None, iid=..., n_jobs=None,
            param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
            scoring=..., verbose=...)
     >>> sorted(clf.cv_results_.keys())
@@ -1055,6 +1126,11 @@ class GridSearchCV(BaseSearchCV):
     n_splits_ : int
         The number of cross-validation splits (folds/iterations).
 
+    refit_time_ : float
+        Seconds used for refitting the best model on the whole dataset.
+
+        This is present only if ``refit`` is not False.
+
     Notes
     ------
     The parameters selected are those that maximize the score of the left out
@@ -1084,8 +1160,8 @@ class GridSearchCV(BaseSearchCV):
     """
 
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
-                 n_jobs=1, iid='warn', refit=True, cv=None, verbose=0,
-                 pre_dispatch='2*n_jobs', error_score='raise',
+                 n_jobs=None, iid='warn', refit=True, cv='warn', verbose=0,
+                 pre_dispatch='2*n_jobs', error_score='raise-deprecating',
                  return_train_score="warn"):
         super(GridSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
@@ -1095,9 +1171,9 @@ class GridSearchCV(BaseSearchCV):
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
-    def _get_param_iterator(self):
-        """Return ParameterGrid instance for the given param_grid"""
-        return ParameterGrid(self.param_grid)
+    def _run_search(self, evaluate_candidates):
+        """Search all candidates in param_grid"""
+        evaluate_candidates(ParameterGrid(self.param_grid))
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -1121,6 +1197,12 @@ class RandomizedSearchCV(BaseSearchCV):
     is given as a distribution, sampling with replacement is used.
     It is highly recommended to use continuous distributions for continuous
     parameters.
+
+    Note that before SciPy 0.16, the ``scipy.stats.distributions`` do not
+    accept a custom RNG instance and always use the singleton RNG from
+    ``numpy.random``. Hence setting ``random_state`` will not guarantee a
+    deterministic iteration whenever ``scipy.stats`` distributions are used to
+    define the parameter search space.
 
     Read more in the :ref:`User Guide <randomized_parameter_search>`.
 
@@ -1194,17 +1276,18 @@ class RandomizedSearchCV(BaseSearchCV):
         will change to False in version 0.21, to correspond to the standard
         definition of cross-validation.
 
-        ..versionchanged:: 0.20
+        .. versionchanged:: 0.20
             Parameter ``iid`` will change from True to False by default in
             version 0.22, and will be removed in 0.24.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train, test splits.
+
+        - None, to use the default 3-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -1212,6 +1295,10 @@ class RandomizedSearchCV(BaseSearchCV):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     refit : boolean, or string default=True
         Refit an estimator using the best found parameters on the whole
@@ -1244,11 +1331,12 @@ class RandomizedSearchCV(BaseSearchCV):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    error_score : 'raise' (default) or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error.
+        step, which will always raise the error. Default is 'raise' but from
+        version 0.22 it will change to np.nan.
 
     return_train_score : boolean, optional
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -1359,6 +1447,11 @@ class RandomizedSearchCV(BaseSearchCV):
     n_splits_ : int
         The number of cross-validation splits (folds/iterations).
 
+    refit_time_ : float
+        Seconds used for refitting the best model on the whole dataset.
+
+        This is present only if ``refit`` is not False.
+
     Notes
     -----
     The parameters selected are those that maximize the score of the held-out
@@ -1378,15 +1471,16 @@ class RandomizedSearchCV(BaseSearchCV):
         Does exhaustive search over a grid of parameters.
 
     :class:`ParameterSampler`:
-        A generator over parameter settins, constructed from
+        A generator over parameter settings, constructed from
         param_distributions.
 
     """
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
-                 fit_params=None, n_jobs=1, iid='warn', refit=True, cv=None,
-                 verbose=0, pre_dispatch='2*n_jobs', random_state=None,
-                 error_score='raise', return_train_score="warn"):
+                 fit_params=None, n_jobs=None, iid='warn', refit=True,
+                 cv='warn', verbose=0, pre_dispatch='2*n_jobs',
+                 random_state=None, error_score='raise-deprecating',
+                 return_train_score="warn"):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
@@ -1396,8 +1490,8 @@ class RandomizedSearchCV(BaseSearchCV):
             pre_dispatch=pre_dispatch, error_score=error_score,
             return_train_score=return_train_score)
 
-    def _get_param_iterator(self):
-        """Return ParameterSampler instance for the given distributions"""
-        return ParameterSampler(
+    def _run_search(self, evaluate_candidates):
+        """Search n_iter candidates from param_distributions"""
+        evaluate_candidates(ParameterSampler(
             self.param_distributions, self.n_iter,
-            random_state=self.random_state)
+            random_state=self.random_state))

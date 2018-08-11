@@ -18,10 +18,10 @@ import warnings
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
-                     gen_batches, gen_even_slices, _get_n_jobs)
+                     gen_batches, gen_even_slices)
 from ..utils.fixes import logsumexp
 from ..utils.validation import check_non_negative
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed, effective_n_jobs
 from ..externals.six.moves import xrange
 from ..exceptions import NotFittedError
 
@@ -42,7 +42,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
         Document word matrix.
 
     exp_topic_word_distr : dense matrix, shape=(n_topics, n_features)
-        Exponential value of expection of log topic word distribution.
+        Exponential value of expectation of log topic word distribution.
         In the literature, this is `exp(E[log(beta)])`.
 
     doc_topic_prior : float
@@ -154,14 +154,13 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     topic_word_prior : float, optional (default=None)
         Prior of topic word distribution `beta`. If the value is None, defaults
         to `1 / n_components`.
-        In the literature, this is called `eta`.
+        In the literature, this is called `beta`.
 
-    learning_method : 'batch' | 'online', default='online'
+    learning_method : 'batch' | 'online', default='batch'
         Method used to update `_component`. Only used in `fit` method.
         In general, if the data size is large, the online update will be much
         faster than the batch update.
-        The default learning method is going to be changed to 'batch' in the
-        0.20 release.
+
         Valid options::
 
             'batch': Batch variational Bayes method. Use all training data in
@@ -171,6 +170,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 mini-batch of training data to update the ``components_``
                 variable incrementally. The learning rate is controlled by the
                 ``learning_decay`` and the ``learning_offset`` parameters.
+
+        .. versionchanged:: 0.20
+            The default learning method is now ``"batch"``.
 
     learning_decay : float, optional (default=0.7)
         It is a parameter that control learning rate in the online learning
@@ -262,11 +264,11 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components=10, doc_topic_prior=None,
-                 topic_word_prior=None, learning_method=None,
+                 topic_word_prior=None, learning_method='batch',
                  learning_decay=.7, learning_offset=10., max_iter=10,
                  batch_size=128, evaluate_every=-1, total_samples=1e6,
                  perp_tol=1e-1, mean_change_tol=1e-3, max_doc_update_iter=100,
-                 n_jobs=1, verbose=0, random_state=None, n_topics=None):
+                 n_jobs=None, verbose=0, random_state=None, n_topics=None):
         self.n_components = n_components
         self.doc_topic_prior = doc_topic_prior
         self.topic_word_prior = topic_word_prior
@@ -307,7 +309,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             raise ValueError("Invalid 'learning_offset' parameter: %r"
                              % self.learning_offset)
 
-        if self.learning_method not in ("batch", "online", None):
+        if self.learning_method not in ("batch", "online"):
             raise ValueError("Invalid 'learning_method' parameter: %r"
                              % self.learning_method)
 
@@ -372,7 +374,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         random_state = self.random_state_ if random_init else None
 
         # TODO: make Parallel._effective_n_jobs public instead?
-        n_jobs = _get_n_jobs(self.n_jobs)
+        n_jobs = effective_n_jobs(self.n_jobs)
         if parallel is None:
             parallel = Parallel(n_jobs=n_jobs, verbose=max(0,
                                 self.verbose - 1))
@@ -495,7 +497,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 "the model was trained with feature size %d." %
                 (n_features, self.components_.shape[1]))
 
-        n_jobs = _get_n_jobs(self.n_jobs)
+        n_jobs = effective_n_jobs(self.n_jobs)
         with Parallel(n_jobs=n_jobs, verbose=max(0,
                       self.verbose - 1)) as parallel:
             for idx_slice in gen_batches(n_samples, batch_size):
@@ -529,12 +531,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         max_iter = self.max_iter
         evaluate_every = self.evaluate_every
         learning_method = self.learning_method
-        if learning_method is None:
-            warnings.warn("The default value for 'learning_method' will be "
-                          "changed from 'online' to 'batch' in the release "
-                          "0.20. This warning was introduced in 0.18.",
-                          DeprecationWarning)
-            learning_method = 'online'
 
         batch_size = self.batch_size
 
@@ -542,7 +538,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self._init_latent_vars(n_features)
         # change to perplexity later
         last_bound = None
-        n_jobs = _get_n_jobs(self.n_jobs)
+        n_jobs = effective_n_jobs(self.n_jobs)
         with Parallel(n_jobs=n_jobs, verbose=max(0,
                       self.verbose - 1)) as parallel:
             for i in xrange(max_iter):

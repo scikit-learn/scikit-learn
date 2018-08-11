@@ -19,7 +19,7 @@ from scipy.interpolate import interp1d
 from .base import _preprocess_data
 from ..base import BaseEstimator
 from ..externals import six
-from ..externals.joblib import Memory, Parallel, delayed
+from ..utils import Memory, Parallel, delayed
 from ..feature_selection.base import SelectorMixin
 from ..utils import (as_float_array, check_random_state, check_X_y, safe_mask,
                      deprecated)
@@ -33,7 +33,7 @@ from ..exceptions import ConvergenceWarning
 # Randomized linear model: feature selection
 
 def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
-                    n_jobs=1, verbose=False, pre_dispatch='3*n_jobs',
+                    n_jobs=None, verbose=False, pre_dispatch='3*n_jobs',
                     random_state=None, sample_fraction=.75, **params):
     random_state = check_random_state(random_state)
     # We are generating 1 - weights, and not weights
@@ -109,7 +109,7 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
             memory = Memory(cachedir=memory, verbose=0)
         elif not isinstance(memory, Memory):
             raise ValueError("'memory' should either be a string or"
-                             " a sklearn.externals.joblib.Memory"
+                             " a sklearn.utils.Memory"
                              " instance, got 'memory={!r}' instead.".format(
                                  type(memory)))
 
@@ -296,7 +296,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     Examples
     --------
     >>> from sklearn.linear_model import RandomizedLasso
-    >>> randomized_lasso = RandomizedLasso()
+    >>> randomized_lasso = RandomizedLasso() # doctest: +SKIP
 
     References
     ----------
@@ -316,7 +316,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
                  normalize=True, precompute='auto',
                  max_iter=500,
                  eps=np.finfo(np.float).eps, random_state=None,
-                 n_jobs=1, pre_dispatch='3*n_jobs',
+                 n_jobs=None, pre_dispatch='3*n_jobs',
                  memory=None):
         self.alpha = alpha
         self.scaling = scaling
@@ -490,7 +490,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     Examples
     --------
     >>> from sklearn.linear_model import RandomizedLogisticRegression
-    >>> randomized_logistic = RandomizedLogisticRegression()
+    >>> randomized_logistic = RandomizedLogisticRegression() # doctest: +SKIP
 
     References
     ----------
@@ -510,7 +510,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
                  fit_intercept=True, verbose=False,
                  normalize=True,
                  random_state=None,
-                 n_jobs=1, pre_dispatch='3*n_jobs',
+                 n_jobs=None, pre_dispatch='3*n_jobs',
                  memory=None):
         self.C = C
         self.scaling = scaling
@@ -572,7 +572,7 @@ def _lasso_stability_path(X, y, mask, weights, eps):
 def lasso_stability_path(X, y, scaling=0.5, random_state=None,
                          n_resampling=200, n_grid=100,
                          sample_fraction=0.75,
-                         eps=4 * np.finfo(np.float).eps, n_jobs=1,
+                         eps=4 * np.finfo(np.float).eps, n_jobs=None,
                          verbose=False):
     """Stability path based on randomized Lasso estimates
 

@@ -59,6 +59,27 @@ class Perceptron(BaseSGDClassifier):
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
+    early_stopping : bool, default=False
+        Whether to use early stopping to terminate training when validation.
+        score is not improving. If set to True, it will automatically set aside
+        a fraction of training data as validation and terminate training when
+        validation score is not improving by at least tol for
+        n_iter_no_change consecutive epochs.
+
+        .. versionadded:: 0.20
+
+    validation_fraction : float, default=0.1
+        The proportion of training data to set aside as validation set for
+        early stopping. Must be between 0 and 1.
+        Only used if early_stopping is True.
+
+        .. versionadded:: 0.20
+
+    n_iter_no_change : int, default=5
+        Number of iterations with no improvement to wait before early stopping.
+
+        .. versionadded:: 0.20
+
     class_weight : dict, {class_label: weight} or "balanced" or None, optional
         Preset for the class_weight fit parameter.
 
@@ -71,7 +92,8 @@ class Perceptron(BaseSGDClassifier):
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
-        initialization, otherwise, just erase the previous solution.
+        initialization, otherwise, just erase the previous solution. See
+        :term:`the Glossary <warm_start>`.
 
     n_iter : int, optional
         The number of passes over the training data (aka epochs).
@@ -96,8 +118,9 @@ class Perceptron(BaseSGDClassifier):
     Notes
     -----
 
-    `Perceptron` and `SGDClassifier` share the same underlying implementation.
-    In fact, `Perceptron()` is equivalent to `SGDClassifier(loss="perceptron",
+    ``Perceptron`` is a classification algorithm which shares the same
+    underlying implementation with ``SGDClassifier``. In fact,
+    ``Perceptron()`` is equivalent to `SGDClassifier(loss="perceptron",
     eta0=1, learning_rate="constant", penalty=None)`.
 
     See also
@@ -112,21 +135,15 @@ class Perceptron(BaseSGDClassifier):
     """
     def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
                  max_iter=None, tol=None, shuffle=True, verbose=0, eta0=1.0,
-                 n_jobs=1, random_state=0, class_weight=None,
-                 warm_start=False, n_iter=None):
-        super(Perceptron, self).__init__(loss="perceptron",
-                                         penalty=penalty,
-                                         alpha=alpha, l1_ratio=0,
-                                         fit_intercept=fit_intercept,
-                                         max_iter=max_iter,
-                                         tol=tol,
-                                         shuffle=shuffle,
-                                         verbose=verbose,
-                                         random_state=random_state,
-                                         learning_rate="constant",
-                                         eta0=eta0,
-                                         power_t=0.5,
-                                         warm_start=warm_start,
-                                         class_weight=class_weight,
-                                         n_jobs=n_jobs,
-                                         n_iter=n_iter)
+                 n_jobs=None, random_state=0, early_stopping=False,
+                 validation_fraction=0.1, n_iter_no_change=5,
+                 class_weight=None, warm_start=False, n_iter=None):
+        super(Perceptron, self).__init__(
+            loss="perceptron", penalty=penalty, alpha=alpha, l1_ratio=0,
+            fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
+            shuffle=shuffle, verbose=verbose, random_state=random_state,
+            learning_rate="constant", eta0=eta0, early_stopping=early_stopping,
+            validation_fraction=validation_fraction,
+            n_iter_no_change=n_iter_no_change, power_t=0.5,
+            warm_start=warm_start, class_weight=class_weight, n_jobs=n_jobs,
+            n_iter=n_iter)

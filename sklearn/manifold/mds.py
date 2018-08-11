@@ -12,8 +12,9 @@ import warnings
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
-from ..externals.joblib import Parallel
-from ..externals.joblib import delayed
+from ..utils import Parallel
+from ..utils import delayed
+from ..utils import effective_n_jobs
 from ..isotonic import IsotonicRegression
 
 
@@ -132,7 +133,7 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
 
 
 def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
-           n_jobs=1, max_iter=300, verbose=0, eps=1e-3, random_state=None,
+           n_jobs=None, max_iter=300, verbose=0, eps=1e-3, random_state=None,
            return_n_iter=False):
     """Computes multidimensional scaling using the SMACOF algorithm.
 
@@ -245,7 +246,7 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
 
     best_pos, best_stress = None, None
 
-    if n_jobs == 1:
+    if effective_n_jobs(n_jobs) == 1:
         for it in range(n_init):
             pos, stress, n_iter_ = _smacof_single(
                 dissimilarities, metric=metric,
@@ -332,7 +333,7 @@ class MDS(BaseEstimator):
 
     Attributes
     ----------
-    embedding_ : array-like, shape (n_components, n_samples)
+    embedding_ : array-like, shape (n_samples, n_components)
         Stores the position of the dataset in the embedding space.
 
     stress_ : float
@@ -353,7 +354,7 @@ class MDS(BaseEstimator):
 
     """
     def __init__(self, n_components=2, metric=True, n_init=4,
-                 max_iter=300, verbose=0, eps=1e-3, n_jobs=1,
+                 max_iter=300, verbose=0, eps=1e-3, n_jobs=None,
                  random_state=None, dissimilarity="euclidean"):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
@@ -379,7 +380,7 @@ class MDS(BaseEstimator):
             Input data. If ``dissimilarity=='precomputed'``, the input should
             be the dissimilarity matrix.
 
-        y: Ignored
+        y : Ignored
 
         init : ndarray, shape (n_samples,), optional, default: None
             Starting configuration of the embedding to initialize the SMACOF
@@ -399,7 +400,7 @@ class MDS(BaseEstimator):
             Input data. If ``dissimilarity=='precomputed'``, the input should
             be the dissimilarity matrix.
 
-        y: Ignored
+        y : Ignored
 
         init : ndarray, shape (n_samples,), optional, default: None
             Starting configuration of the embedding to initialize the SMACOF

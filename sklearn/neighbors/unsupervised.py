@@ -77,7 +77,6 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
-        Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
 
     Examples
     --------
@@ -115,7 +114,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5, radius=1.0,
                  algorithm='auto', leaf_size=30, metric='minkowski',
-                 p=2, metric_params=None, n_jobs=1, **kwargs):
+                 p=2, metric_params=None, n_jobs=None, **kwargs):
         super(NearestNeighbors, self).__init__(
               n_neighbors=n_neighbors,
               radius=radius,

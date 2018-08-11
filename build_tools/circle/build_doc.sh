@@ -92,6 +92,8 @@ else
     make_args=html
 fi
 
+make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
+
 # Installing required system packages to support the rendering of math
 # notation in the HTML documentation
 sudo -E apt-get -yq update
@@ -115,13 +117,14 @@ conda update --yes --quiet conda
 
 # Configure the conda environment and put it in the path using the
 # provided versions
-conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" numpy scipy \
-  cython pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=1.6.2 pillow
+conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
+  numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" cython \
+  pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=1.6.2 pillow \
+  scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}"
 
 source activate testenv
 pip install sphinx-gallery
-# Use numpydoc master (for now)
-pip install git+https://github.com/numpy/numpydoc
+pip install numpydoc==0.8
 
 # Build and install scikit-learn in dev mode
 python setup.py develop

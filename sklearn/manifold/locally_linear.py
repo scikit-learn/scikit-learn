@@ -64,15 +64,14 @@ def barycenter_weights(X, Z, reg=1e-3):
     return B
 
 
-def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=1):
+def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     """Computes the barycenter weighted graph of k-Neighbors for points in X
 
     Parameters
     ----------
-    X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
+    X : {array-like, NearestNeighbors}
         Sample data, shape = (n_samples, n_features), in the form of a
-        numpy array, sparse array, precomputed tree, or NearestNeighbors
-        object.
+        numpy array or a NearestNeighbors object.
 
     n_neighbors : int
         Number of neighbors for each sample.
@@ -187,17 +186,16 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
 def locally_linear_embedding(
         X, n_neighbors, n_components, reg=1e-3, eigen_solver='auto', tol=1e-6,
         max_iter=100, method='standard', hessian_tol=1E-4, modified_tol=1E-12,
-        random_state=None, n_jobs=1):
+        random_state=None, n_jobs=None):
     """Perform a Locally Linear Embedding analysis on the data.
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.
 
     Parameters
     ----------
-    X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
+    X : {array-like, NearestNeighbors}
         Sample data, shape = (n_samples, n_features), in the form of a
-        numpy array, sparse array, precomputed tree, or NearestNeighbors
-        object.
+        numpy array or a NearestNeighbors object.
 
     n_neighbors : integer
         number of neighbors to consider for each point.
@@ -450,7 +448,7 @@ def locally_linear_embedding(
             # compute Householder matrix which satisfies
             #  Hi*Vi.T*ones(n_neighbors) = alpha_i*ones(s)
             # using prescription from paper
-            h = alpha_i * np.ones(s_i) - np.dot(Vi.T, np.ones(n_neighbors))
+            h = np.full(s_i, alpha_i) - np.dot(Vi.T, np.ones(n_neighbors))
 
             norm_h = np.linalg.norm(h)
             if norm_h < modified_tol:
@@ -619,7 +617,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
     def __init__(self, n_neighbors=5, n_components=2, reg=1E-3,
                  eigen_solver='auto', tol=1E-6, max_iter=100,
                  method='standard', hessian_tol=1E-4, modified_tol=1E-12,
-                 neighbors_algorithm='auto', random_state=None, n_jobs=1):
+                 neighbors_algorithm='auto', random_state=None, n_jobs=None):
         self.n_neighbors = n_neighbors
         self.n_components = n_components
         self.reg = reg
@@ -657,7 +655,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         X : array-like of shape [n_samples, n_features]
             training set.
 
-        y: Ignored
+        y : Ignored
 
         Returns
         -------
@@ -674,7 +672,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         X : array-like of shape [n_samples, n_features]
             training set.
 
-        y: Ignored
+        y : Ignored
 
         Returns
         -------
