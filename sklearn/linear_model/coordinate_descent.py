@@ -15,7 +15,7 @@ from scipy import sparse
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from .base import _preprocess_data
-from ..utils import check_array, check_X_y
+from ..utils import check_array, check_X_y, safe_repr
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..externals.joblib import Parallel, delayed
@@ -477,7 +477,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 positive)
         else:
             raise ValueError("Precompute should be one of True, False, "
-                             "'auto' or array-like. Got %r" % precompute)
+                             "'auto' or array-like. Got %s" % 
+                             safe_repr(precompute))
         coef_, dual_gap_, eps_, n_iter_ = model
         coefs[..., i] = coef_
         dual_gaps[i] = dual_gap_
@@ -699,7 +700,8 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if isinstance(self.precompute, six.string_types):
             raise ValueError('precompute should be one of True, False or'
-                             ' array-like. Got %r' % self.precompute)
+                             ' array-like. Got %s'
+                             % safe_repr(self.precompute))
 
         # Remember if X is copied
         X_copied = False

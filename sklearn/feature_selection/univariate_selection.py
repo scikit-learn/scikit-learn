@@ -14,7 +14,7 @@ from scipy.sparse import issparse
 from ..base import BaseEstimator
 from ..preprocessing import LabelBinarizer
 from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
-                     safe_mask)
+                     safe_mask, safe_repr)
 from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
 from .base import SelectorMixin
@@ -737,9 +737,10 @@ class GenericUnivariateSelect(_BaseFilter):
 
     def _check_params(self, X, y):
         if self.mode not in self._selection_modes:
-            raise ValueError("The mode passed should be one of %s, %r,"
+            raise ValueError("The mode passed should be one of %s, %s,"
                              " (type %s) was passed."
-                             % (self._selection_modes.keys(), self.mode,
+                             % (self._selection_modes.keys(),
+                                safe_repr(self.mode),
                                 type(self.mode)))
 
         self._make_selector()._check_params(X, y)
