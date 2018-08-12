@@ -14,7 +14,7 @@ from ..externals.joblib import Parallel, delayed
 from .base import LinearClassifierMixin, SparseCoefMixin
 from .base import make_dataset
 from ..base import BaseEstimator, RegressorMixin
-from ..utils import check_array, check_random_state, check_X_y
+from ..utils import check_array, check_random_state, check_X_y, safe_repr
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted
@@ -284,8 +284,8 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                 "with validation_fraction=%r led to an empty set (%d and %d "
                 "samples). Please either change validation_fraction, increase "
                 "number of samples, or disable early_stopping."
-                % (n_samples, self.validation_fraction, X_train.shape[0],
-                   X_val.shape[0]))
+                % (n_samples, self_repr(self.validation_fraction),
+                   X_train.shape[0], X_val.shape[0]))
 
         self._X_val = X_val
         self._y_val = y_val
@@ -960,7 +960,7 @@ class SGDClassifier(BaseSGDClassifier):
     def _check_proba(self):
         if self.loss not in ("log", "modified_huber"):
             raise AttributeError("probability estimates are not available for"
-                                 " loss=%r" % self.loss)
+                                 " loss=%s" % safe_repr(self.loss))
 
     @property
     def predict_proba(self):
@@ -1042,7 +1042,7 @@ class SGDClassifier(BaseSGDClassifier):
         else:
             raise NotImplementedError("predict_(log_)proba only supported when"
                                       " loss='log' or loss='modified_huber' "
-                                      "(%r given)" % self.loss)
+                                      "(%s given)" % safe_repr(self.loss))
 
     @property
     def predict_log_proba(self):
