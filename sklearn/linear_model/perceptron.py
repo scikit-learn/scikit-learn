@@ -133,7 +133,7 @@ class Perceptron(BaseSGDClassifier):
       shuffle=True, tol=None, verbose=0, warm_start=False)
       
     >>> predictions=model.predict(X_test)
-    >>>print(accuracy_score(y_test,predictions))
+    >>> accuracy_score(y_test,predictions)
     
         0.72
         
