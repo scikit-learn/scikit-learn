@@ -11,7 +11,7 @@ import scipy.sparse as sp
 from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array, check_random_state
+from ..utils import check_array, check_random_state, safe_repr
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
 
@@ -176,7 +176,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
                                           n_iter=self.n_iter,
                                           random_state=random_state)
         else:
-            raise ValueError("unknown algorithm %r" % self.algorithm)
+            raise ValueError("unknown algorithm %s" 
+                             % safe_repr(self.algorithm))
 
         self.components_ = VT
 
