@@ -114,6 +114,29 @@ class Perceptron(BaseSGDClassifier):
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
+      
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.linear_model import Perceptron
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.metrics import accuracy_score
+    >>> digits=load_digits()
+    >>> data=digits.data
+    >>> label=digits.target
+    >>> X_train,X_test,y_train,y_test=train_test_split(data,label,random_state=123)
+    >>> model=Perceptron(penalty='l2',alpha=0.001,random_state=124) #Applying l2 regularization with alpha=0.001
+    >>> model.fit(X_train,y_train)
+    
+        Perceptron(alpha=0.001, class_weight=None, eta0=1.0, fit_intercept=True,
+      max_iter=None, n_iter=None, n_jobs=1, penalty='l2', random_state=124,
+      shuffle=True, tol=None, verbose=0, warm_start=False)
+      
+    >>> predictions=model.predict(X_test)
+    >>>print(accuracy_score(y_test,predictions))
+    
+        0.72
+        
 
     Notes
     -----
