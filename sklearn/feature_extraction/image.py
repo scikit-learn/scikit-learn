@@ -15,7 +15,7 @@ import numpy as np
 from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
-from ..utils import check_array, check_random_state
+from ..utils import check_array, check_random_state, safe_repr
 from ..base import BaseEstimator
 
 __all__ = ['PatchExtractor',
@@ -236,7 +236,8 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
                 and 0 < max_patches < 1):
             return int(max_patches * all_patches)
         else:
-            raise ValueError("Invalid value for max_patches: %r" % max_patches)
+            raise ValueError("Invalid value for max_patches: %s"
+                             % safe_repr(max_patches))
     else:
         return all_patches
 
