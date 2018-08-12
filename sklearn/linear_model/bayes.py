@@ -212,7 +212,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
                     U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
                 coef_ = np.dot(coef_, y)
                 if self.compute_score:
-                    logdet_sigma_ = lambda_ * np.ones(n_features)
+                    logdet_sigma_ = np.full(n_features, lambda_,
+                                            dtype=np.array(lambda_).dtype)
                     logdet_sigma_[:n_samples] += alpha_ * eigen_vals_
                     logdet_sigma_ = - np.sum(np.log(logdet_sigma_))
 

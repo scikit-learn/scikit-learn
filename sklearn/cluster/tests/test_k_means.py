@@ -68,7 +68,7 @@ def test_labels_assignment_and_inertia():
     # implementation
     rng = np.random.RandomState(42)
     noisy_centers = centers + rng.normal(size=centers.shape)
-    labels_gold = - np.ones(n_samples, dtype=np.int)
+    labels_gold = np.full(n_samples, -1, dtype=np.int)
     mindist = np.empty(n_samples)
     mindist.fill(np.infty)
     for center_id in range(n_clusters):
@@ -917,7 +917,8 @@ def _sort_centers(centers):
 def test_weighted_vs_repeated():
     # a sample weight of N should yield the same result as an N-fold
     # repetition of the sample
-    sample_weight = np.random.randint(1, 5, size=n_samples)
+    rng = np.random.RandomState(0)
+    sample_weight = rng.randint(1, 5, size=n_samples)
     X_repeat = np.repeat(X, sample_weight, axis=0)
     estimators = [KMeans(init="k-means++", n_clusters=n_clusters,
                          random_state=42),

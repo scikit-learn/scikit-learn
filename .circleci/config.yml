@@ -65,6 +65,7 @@ jobs:
           path: ~/log.txt
           destination: log.txt
 
+
   deploy:
     docker:
       - image: circleci/python:3.6.1

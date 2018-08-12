@@ -1018,7 +1018,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         # 'mu' solver should not be initialized by zeros
         if solver == 'mu':
             avg = np.sqrt(X.mean() / n_components)
-            W = avg * np.ones((n_samples, n_components))
+            W = np.full((n_samples, n_components), avg)
         else:
             W = np.zeros((n_samples, n_components))
     else:

@@ -67,7 +67,7 @@ ax[1, 1].fill(X_plot[:, 0], np.exp(log_dens), fc='#AAAAFF')
 ax[1, 1].text(-3.5, 0.31, "Gaussian Kernel Density")
 
 for axi in ax.ravel():
-    axi.plot(X[:, 0], np.zeros(X.shape[0]) - 0.01, '+k')
+    axi.plot(X[:, 0], np.full(X.shape[0], -0.01), '+k')
     axi.set_xlim(-4, 9)
     axi.set_ylim(-0.02, 0.34)
 

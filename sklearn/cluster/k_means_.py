@@ -25,13 +25,14 @@ from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _num_samples
 from ..utils import check_array
-from ..utils import check_random_state
 from ..utils import gen_batches
 from ..utils import safe_repr
+from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..externals.joblib import Parallel
-from ..externals.joblib import delayed
+from ..utils import Parallel
+from ..utils import delayed
+from ..utils import effective_n_jobs
 from ..externals.six import string_types
 from ..exceptions import ConvergenceWarning
 from . import _k_means
@@ -185,8 +186,8 @@ def _check_sample_weight(X, sample_weight):
 
 def k_means(X, n_clusters, sample_weight=None, init='k-means++',
             precompute_distances='auto', n_init=10, max_iter=300,
-            verbose=False, tol=1e-4, random_state=None, copy_x=True, n_jobs=1,
-            algorithm="auto", return_n_iter=False):
+            verbose=False, tol=1e-4, random_state=None, copy_x=True,
+            n_jobs=None, algorithm="auto", return_n_iter=False):
     """K-means clustering algorithm.
 
     Read more in the :ref:`User Guide <k_means>`.
@@ -369,7 +370,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
     else:
         raise ValueError("Algorithm must be 'auto', 'full' or 'elkan', got"
                          " %s" % str(algorithm))
-    if n_jobs == 1:
+    if effective_n_jobs(n_jobs):
         # For a single thread, less memory is needed if we just store one set
         # of the best results (as opposed to one set per run per thread).
         for it in range(n_init):
@@ -670,7 +671,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers,
     sample_weight = _check_sample_weight(X, sample_weight)
     # set the default value of centers to -1 to be able to detect any anomaly
     # easily
-    labels = -np.ones(n_samples, np.int32)
+    labels = np.full(n_samples, -1, np.int32)
     if distances is None:
         distances = np.zeros(shape=(0,), dtype=X.dtype)
     # distances will be changed in-place
@@ -914,7 +915,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     def __init__(self, n_clusters=8, init='k-means++', n_init=10,
                  max_iter=300, tol=1e-4, precompute_distances='auto',
                  verbose=0, random_state=None, copy_x=True,
-                 n_jobs=1, algorithm='auto'):
+                 n_jobs=None, algorithm='auto'):
 
         self.n_clusters = n_clusters
         self.init = init
@@ -1404,6 +1405,36 @@ class MiniBatchKMeans(KMeans):
         partition (if compute_labels is set to True). The inertia is
         defined as the sum of square distances of samples to their nearest
         neighbor.
+
+    Examples
+    --------
+    >>> from sklearn.cluster import MiniBatchKMeans
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [4, 2], [4, 0], [4, 4],
+    ...               [4, 5], [0, 1], [2, 2],
+    ...               [3, 2], [5, 5], [1, -1]])
+    >>> # manually fit on batches
+    >>> kmeans = MiniBatchKMeans(n_clusters=2,
+    ...         random_state=0,
+    ...         batch_size=6)
+    >>> kmeans = kmeans.partial_fit(X[0:6,:])
+    >>> kmeans = kmeans.partial_fit(X[6:12,:])
+    >>> kmeans.cluster_centers_
+    array([[1, 1],
+           [3, 4]])
+    >>> kmeans.predict([[0, 0], [4, 4]])
+    array([0, 1], dtype=int32)
+    >>> # fit on the whole data
+    >>> kmeans = MiniBatchKMeans(n_clusters=2,
+    ...         random_state=0,
+    ...         batch_size=6,
+    ...         max_iter=10).fit(X)
+    >>> kmeans.cluster_centers_
+    array([[3.95918367, 2.40816327],
+           [1.12195122, 1.3902439 ]])
+    >>> kmeans.predict([[0, 0], [4, 4]])
+    array([1, 0], dtype=int32)
 
     See also
     --------
