@@ -11,7 +11,7 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils.multiclass import _ovr_decision_function
 from ..utils import check_array, check_consistent_length, check_random_state
-from ..utils import column_or_1d, check_X_y
+from ..utils import column_or_1d, check_X_y, safe_repr
 from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
@@ -742,7 +742,7 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
         return _solver_type_dict[multi_class]
     elif multi_class != 'ovr':
         raise ValueError("`multi_class` must be one of `ovr`, "
-                         "`crammer_singer`, got %r" % multi_class)
+                         "`crammer_singer`, got %s" % safe_repr(multi_class))
 
     _solver_pen = _solver_type_dict.get(loss, None)
     if _solver_pen is None:
@@ -869,7 +869,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         if len(classes_) < 2:
             raise ValueError("This solver needs samples of at least 2 classes"
                              " in the data, but the data contains only one"
-                             " class: %r" % classes_[0])
+                             " class: %s" % safe_repr(classes_[0]))
 
         class_weight_ = compute_class_weight(class_weight, classes_, y)
     else:
