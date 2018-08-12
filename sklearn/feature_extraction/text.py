@@ -30,6 +30,7 @@ from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
+from ..utils import safe_repr
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils.fixes import sp_version
 
@@ -815,8 +816,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             if (not isinstance(max_features, numbers.Integral) or
                     max_features <= 0):
                 raise ValueError(
-                    "max_features=%r, neither a positive integer nor None"
-                    % max_features)
+                    "max_features=%s, neither a positive integer nor None"
+                    % safe_repr(max_features))
         self.ngram_range = ngram_range
         self.vocabulary = vocabulary
         self.binary = binary

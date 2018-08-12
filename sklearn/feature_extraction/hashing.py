@@ -9,7 +9,7 @@ import scipy.sparse as sp
 
 from . import _hashing
 from ..base import BaseEstimator, TransformerMixin
-
+from ..utils import safe_repr
 
 def _iteritems(d):
     """Like d.iteritems, but accepts any collections.Mapping."""
@@ -103,14 +103,14 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         # strangely, np.int16 instances are not instances of Integral,
         # while np.int64 instances are...
         if not isinstance(n_features, (numbers.Integral, np.integer)):
-            raise TypeError("n_features must be integral, got %r (%s)."
-                            % (n_features, type(n_features)))
+            raise TypeError("n_features must be integral, got %s (%s)."
+                            % (safe_repr(n_features), type(n_features)))
         elif n_features < 1 or n_features >= 2 ** 31:
             raise ValueError("Invalid number of features (%d)." % n_features)
 
         if input_type not in ("dict", "pair", "string"):
             raise ValueError("input_type must be 'dict', 'pair' or 'string',"
-                             " got %r." % input_type)
+                             " got %s." % safe_repr(input_type))
 
     def fit(self, X=None, y=None):
         """No-op.
