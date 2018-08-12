@@ -592,6 +592,7 @@ def is_scalar_nan(x):
     # in python 2.
     return bool(isinstance(x, (numbers.Real, np.floating)) and np.isnan(x))
 
+
 def safe_name_or_class(obj):
     """Return a representation of the name or class, or raise AttributeError.
     
@@ -610,8 +611,9 @@ def safe_name_or_class(obj):
     else:
         raise AttributeError("No __name__ or __class__ attribute.")
 
-def safe_version(transformers, no_transform):
-    """Return a function that applies the first working callable.
+
+def safe_call(callables, default_result):
+    """Return a function that applies the first callable that returns a value.
 
     The returned function, when given a single parameter, returns the
     value returned by the first callable that didn't raise an
@@ -620,17 +622,26 @@ def safe_version(transformers, no_transform):
 
     If no callable succeeds, returns no_transform.
 
-    transformers -- sequence of 1-parameter callables.
-    no_transform -- returned if no transformer function succeeds.
+    Parameters
+    ----------
+    callables : sequence of callables.
+        Callables to be tried in turn. Each callable must take a single
+        parameter.
+    default_result
+        Returned if no transformer function succeeds.
+
+    Returns
+    -------
+        Value returned by the first callable that succeeds (or default_result).
     """
     def safe_func(obj):
-        for transformer in transformers:
+        for callable_ in callables:
             try:
-                return transformer(obj)
+                return callable_(obj)
             except Exception:
                 pass
         else:
-            return no_transform
+            return default_result
 
     safe_func.__doc__ = """
         Return the value of the first function that doesn't crash on obj.
@@ -640,19 +651,22 @@ def safe_version(transformers, no_transform):
         If all functions crash, returns {!r}.
 
         obj -- object that can be consumed by the callables above.
-        """.format(transformers, no_transform)
+        """.format(callables, default_result)
 
     return safe_func
 
-safe_str = safe_version((str,), "<No string representation>")
+
+safe_str = safe_call((str,), "<No string representation>")
+
 
 # The function nice_repr() should be used when we want a more user-friendly
 # version of repr() (with a maximum width, a limited total length, etc.), that
 # also doesn't crash:
-nice_repr_unbounded = safe_version(
+nice_repr_unbounded = safe_call(
     # The pydoc.text module is not hidden but is not in the official
     # documentation, so it may have to be replaced by something else:
     (pydoc.text.repr, repr, safe_name_or_class), "<No object representation>")
+
 
 MAX_TEXT_LENGTH = 80*100  # 100 standard lines
 def max_length_nice_repr(obj):
@@ -664,6 +678,7 @@ def max_length_nice_repr(obj):
     return (text if len(text) <= MAX_TEXT_LENGTH
             else "{}...".format(text[:MAX_TEXT_LENGTH]))
 
+
 # We're taking precautions by wrapping max_length_nice_repr() with
 # safe_version(), but if we trust its code, we don't have to. This would
 # make the documentation of nice_repr() simpler to follow.
@@ -671,4 +686,4 @@ def max_length_nice_repr(obj):
 # The name "safe_repr" comes from the sklearn convention of naming
 # safe_*() some functions that do a bit more than being "safe". Here,
 # the safe_repr() also tries to provide a nicer looking representation.
-safe_repr = safe_version((max_length_nice_repr,), "<No object representation>")
+safe_repr = safe_call((max_length_nice_repr,), "<No object representation>")
