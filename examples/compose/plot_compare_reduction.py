@@ -108,7 +108,7 @@ from sklearn.utils import Memory
 
 # Create a temporary folder to store the transformers of the pipeline
 cachedir = mkdtemp()
-memory = Memory(cachedir=cachedir, verbose=10)
+memory = Memory(cachedir, verbose=10)
 cached_pipe = Pipeline([('reduce_dim', PCA()),
                         ('classify', LinearSVC())],
                        memory=memory)

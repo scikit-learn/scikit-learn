@@ -108,7 +108,7 @@ def _predict_proba(lr, X):
 
 def exp(solvers, penalties, single_target, n_samples=30000, max_iter=20,
         dataset='rcv1', n_jobs=1, skip_slow=False):
-    mem = Memory(cachedir=expanduser('~/cache'), verbose=0)
+    mem = Memory(expanduser('~/cache'), verbose=0)
 
     if dataset == 'rcv1':
         rcv1 = fetch_rcv1()

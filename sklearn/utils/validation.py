@@ -184,7 +184,7 @@ def check_memory(memory):
 
     joblib.Memory-like means that ``memory`` can be converted into a
     sklearn.utils.Memory instance (typically a str denoting the
-    ``cachedir``) or has the same interface (has a ``cache`` method).
+    cache directory) or has the same interface (has a ``cache`` method).
 
     Parameters
     ----------
@@ -201,10 +201,7 @@ def check_memory(memory):
     """
 
     if memory is None or isinstance(memory, six.string_types):
-        if LooseVersion(joblib_version) < '0.12':
-            memory = Memory(cachedir=memory, verbose=0)
-        else:
-            memory = Memory(location=memory, verbose=0)
+        memory = Memory(memory, verbose=0)
     elif not hasattr(memory, 'cache'):
         raise ValueError("'memory' should be None, a string or have the same"
                          " interface as sklearn.utils.Memory."

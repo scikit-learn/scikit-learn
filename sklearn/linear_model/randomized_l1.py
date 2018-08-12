@@ -104,9 +104,9 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
         estimator_func, params = self._make_estimator_and_params(X, y)
         memory = self.memory
         if memory is None:
-            memory = Memory(cachedir=None, verbose=0)
+            memory = Memory(None, verbose=0)
         elif isinstance(memory, six.string_types):
-            memory = Memory(cachedir=memory, verbose=0)
+            memory = Memory(memory, verbose=0)
         elif not isinstance(memory, Memory):
             raise ValueError("'memory' should either be a string or"
                              " a sklearn.utils.Memory"

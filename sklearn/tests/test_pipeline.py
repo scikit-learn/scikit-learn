@@ -942,11 +942,7 @@ def test_pipeline_memory():
     y = iris.target
     cachedir = mkdtemp()
     try:
-        if LooseVersion(joblib_version) < LooseVersion('0.12'):
-            # Deal with change of API in joblib
-            memory = Memory(cachedir=cachedir, verbose=10)
-        else:
-            memory = Memory(location=cachedir, verbose=10)
+        memory = Memory(cachedir, verbose=10)
         # Test with Transformer + SVC
         clf = SVC(gamma='scale', probability=True, random_state=0)
         transf = DummyTransf()
@@ -1004,11 +1000,7 @@ def test_pipeline_memory():
 
 def test_make_pipeline_memory():
     cachedir = mkdtemp()
-    if LooseVersion(joblib_version) < LooseVersion('0.12'):
-        # Deal with change of API in joblib
-        memory = Memory(cachedir=cachedir, verbose=10)
-    else:
-        memory = Memory(location=cachedir, verbose=10)
+    memory = Memory(cachedir, verbose=10)
     pipeline = make_pipeline(DummyTransf(), SVC(), memory=memory)
     assert_true(pipeline.memory is memory)
     pipeline = make_pipeline(DummyTransf(), SVC())
