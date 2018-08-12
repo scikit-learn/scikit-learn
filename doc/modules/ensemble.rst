@@ -261,8 +261,9 @@ the top of the tree contribute to the final prediction decision of a
 larger fraction of the input samples. The **expected fraction of the
 samples** they contribute to can thus be used as an estimate of the
 **relative importance of the features**. In scikit-learn, the fraction of
-observations is combined with the decrease in impurity from splitting them
-to create a normalized estimate of the predictive power of that feature.
+samples a feature contributes to is combined with the decrease in impurity
+from splitting them to create a normalized estimate of the predictive power
+of that feature.
 
 By **averaging** the estimates of predictive ability over several randomized
 trees one can **reduce the variance** of such an estimate and use it
