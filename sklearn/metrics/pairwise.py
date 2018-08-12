@@ -22,6 +22,7 @@ from ..utils.validation import _num_samples
 from ..utils import check_array
 from ..utils import gen_even_slices
 from ..utils import gen_batches, get_chunk_n_rows
+from ..utils import safe_repr
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..externals.joblib import Parallel
@@ -504,8 +505,9 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
 
     if issparse(X) or issparse(Y):
         if not sum_over_features:
-            raise TypeError("sum_over_features=%r not supported"
-                            " for sparse matrices" % sum_over_features)
+            raise TypeError("sum_over_features=%s not supported"
+                            " for sparse matrices"
+                            % safe_repr(sum_over_features))
 
         X = csr_matrix(X, copy=False)
         Y = csr_matrix(Y, copy=False)
@@ -1130,7 +1132,8 @@ def _check_chunk_size(reduced, chunk_size):
            for r in reduced):
         raise TypeError('reduce_func returned %r. '
                         'Expected sequence(s) of length %d.' %
-                        (reduced if is_tuple else reduced[0], chunk_size))
+                        (safe_repr(reduced if is_tuple else reduced[0]),
+                         chunk_size))
     if any(_num_samples(r) != chunk_size for r in reduced):
         # XXX: we use int(_num_samples...) because sometimes _num_samples
         #      returns a long in Python 2, even for small numbers.
@@ -1561,6 +1564,6 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     elif callable(metric):
         func = partial(_pairwise_callable, metric=metric, **kwds)
     else:
-        raise ValueError("Unknown kernel %r" % metric)
+        raise ValueError("Unknown kernel %s" % safe_repr(metric))
 
     return _parallel_pairwise(X, Y, func, n_jobs, **kwds)

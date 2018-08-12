@@ -22,6 +22,7 @@ import scipy.sparse as sp
 
 from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, safe_indexing
+from ..utils import safe_str, safe_repr
 from ..utils.deprecation import DeprecationDict
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
@@ -579,8 +580,9 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
 
         if not isinstance(score, numbers.Number):
             raise ValueError("scoring must return a number, got %s (%s) "
-                             "instead. (scorer=%r)"
-                             % (str(score), type(score), scorer))
+                             "instead. (scorer=%s)"
+                             % (safe_str(score), type(score),
+                                safe_repr(scorer)))
     return score
 
 

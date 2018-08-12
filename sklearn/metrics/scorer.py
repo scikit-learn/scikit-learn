@@ -38,6 +38,7 @@ from .cluster import adjusted_mutual_info_score
 from .cluster import normalized_mutual_info_score
 from .cluster import fowlkes_mallows_score
 
+from ..utils import safe_repr
 from ..utils.multiclass import type_of_target
 from ..utils.fixes import _Iterable as Iterable
 from ..externals import six
@@ -255,7 +256,7 @@ def check_scoring(estimator, scoring=None, allow_none=False):
     """
     if not hasattr(estimator, 'fit'):
         raise TypeError("estimator should be an estimator implementing "
-                        "'fit' method, %r was passed" % estimator)
+                        "'fit' method, %s was passed" % safe_repr(estimator))
     if isinstance(scoring, six.string_types):
         return get_scorer(scoring)
     elif callable(scoring):
@@ -279,15 +280,15 @@ def check_scoring(estimator, scoring=None, allow_none=False):
         else:
             raise TypeError(
                 "If no scoring is specified, the estimator passed should "
-                "have a 'score' method. The estimator %r does not."
-                % estimator)
+                "have a 'score' method. The estimator %s does not."
+                % safe_repr(estimator))
     elif isinstance(scoring, Iterable):
         raise ValueError("For evaluating multiple scores, use "
                          "sklearn.model_selection.cross_validate instead. "
                          "{0} was passed.".format(scoring))
     else:
         raise ValueError("scoring value should either be a callable, string or"
-                         " None. %r was passed" % scoring)
+                         " None. %s was passed" % safe_repr(scoring))
 
 
 def _check_multimetric_scoring(estimator, scoring=None):
@@ -362,8 +363,8 @@ def _check_multimetric_scoring(estimator, scoring=None):
                     else:
                         raise ValueError(err_msg +
                                          "Non-string types were found in "
-                                         "the given list. Got %r"
-                                         % repr(scoring))
+                                         "the given list. Got %s"
+                                         % safe_repr(scoring))
                 scorers = {scorer: check_scoring(estimator, scoring=scorer)
                            for scorer in scoring}
             else:
@@ -374,7 +375,8 @@ def _check_multimetric_scoring(estimator, scoring=None):
             keys = set(scoring)
             if not all(isinstance(k, six.string_types) for k in keys):
                 raise ValueError("Non-string types were found in the keys of "
-                                 "the given dict. scoring=%r" % repr(scoring))
+                                 "the given dict. scoring=%s"
+                                 % safe_repr(scoring))
             if len(keys) == 0:
                 raise ValueError("An empty dict was passed. %r"
                                  % repr(scoring))

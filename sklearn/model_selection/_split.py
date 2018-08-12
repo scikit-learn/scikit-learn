@@ -21,7 +21,7 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
-from ..utils import indexable, check_random_state, safe_indexing
+from ..utils import indexable, check_random_state, safe_indexing, safe_repr
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
@@ -577,8 +577,8 @@ class StratifiedKFold(_BaseKFold):
         allowed_target_types = ('binary', 'multiclass')
         if type_of_target_y not in allowed_target_types:
             raise ValueError(
-                'Supported target types are: {}. Got {!r} instead.'.format(
-                    allowed_target_types, type_of_target_y))
+                'Supported target types are: {}. Got {!s} instead.'.format(
+                    allowed_target_types, safe_repr(type_of_target_y)))
 
         y = column_or_1d(y)
         n_samples = y.shape[0]
@@ -1646,7 +1646,8 @@ def _validate_shuffle_split_init(test_size, train_size):
                     'than 1.0 or be an integer' % test_size)
         elif np.asarray(test_size).dtype.kind != 'i':
             # int values are checked during split based on the input
-            raise ValueError("Invalid value for test_size: %r" % test_size)
+            raise ValueError("Invalid value for test_size: %s"
+                             % safe_repr(test_size))
 
     if train_size is not None:
         if np.asarray(train_size).dtype.kind == 'f':
@@ -1661,7 +1662,8 @@ def _validate_shuffle_split_init(test_size, train_size):
                                  (train_size + test_size))
         elif np.asarray(train_size).dtype.kind != 'i':
             # int values are checked during split based on the input
-            raise ValueError("Invalid value for train_size: %r" % train_size)
+            raise ValueError("Invalid value for train_size: %s"
+                             % safe_repr(train_size))
 
 
 def _validate_shuffle_split(n_samples, test_size, train_size):

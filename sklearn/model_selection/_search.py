@@ -31,7 +31,7 @@ from ._validation import _aggregate_score_dicts
 from ..exceptions import NotFittedError
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
-from ..utils import check_random_state
+from ..utils import check_random_state, safe_repr
 from ..utils.fixes import sp_version
 from ..utils.fixes import MaskedArray
 from ..utils.fixes import _Mapping as Mapping, _Sequence as Sequence
@@ -95,7 +95,7 @@ class ParameterGrid(object):
     def __init__(self, param_grid):
         if not isinstance(param_grid, (Mapping, Iterable)):
             raise TypeError('Parameter grid is not a dict or '
-                            'a list ({!r})'.format(param_grid))
+                            'a list ({!s})'.format(safe_repr(param_grid)))
 
         if isinstance(param_grid, Mapping):
             # wrap dictionary in a singleton list to support either dict
@@ -106,12 +106,12 @@ class ParameterGrid(object):
         for grid in param_grid:
             if not isinstance(grid, dict):
                 raise TypeError('Parameter grid is not a '
-                                'dict ({!r})'.format(grid))
+                                'dict ({!s})'.format(safe_(grid)))
             for key in grid:
                 if not isinstance(grid[key], Iterable):
                     raise TypeError('Parameter grid value is not iterable '
-                                    '(key={!r}, value={!r})'
-                                    .format(key, grid[key]))
+                                    '(key={!r}, value={!s})'
+                                    .format(key, safe_repr(grid[key])))
 
         self.param_grid = param_grid
 
@@ -630,7 +630,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                  "make the best_* attributes "
                                  "available for that metric. If this is not "
                                  "needed, refit should be set to False "
-                                 "explicitly. %r was passed." % self.refit)
+                                 "explicitly. %s was passed."
+                                 % safe_repr(self.refit))
             else:
                 refit_metric = self.refit
         else:
