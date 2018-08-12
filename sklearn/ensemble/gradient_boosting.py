@@ -56,6 +56,7 @@ from ..utils import check_X_y
 from ..utils import column_or_1d
 from ..utils import check_consistent_length
 from ..utils import deprecated
+from ..utils import safe_repr
 from ..utils.fixes import logsumexp
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
@@ -844,9 +845,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             else:
                 if (not hasattr(self.init, 'fit')
                         or not hasattr(self.init, 'predict')):
-                    raise ValueError("init=%r must be valid BaseEstimator "
+                    raise ValueError("init=%s must be valid BaseEstimator "
                                      "and support both fit and "
-                                     "predict" % self.init)
+                                     "predict" % safe_repr(self.init))
 
         if not (0.0 < self.alpha < 1.0):
             raise ValueError("alpha must be in (0.0, 1.0) but "
@@ -865,9 +866,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             elif self.max_features == "log2":
                 max_features = max(1, int(np.log2(self.n_features_)))
             else:
-                raise ValueError("Invalid value for max_features: %r. "
+                raise ValueError("Invalid value for max_features: %s. "
                                  "Allowed string values are 'auto', 'sqrt' "
-                                 "or 'log2'." % self.max_features)
+                                 "or 'log2'." % safe_repr(self.max_features))
         elif self.max_features is None:
             max_features = self.n_features_
         elif isinstance(self.max_features, (numbers.Integral, np.integer)):
@@ -884,13 +885,13 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         if not isinstance(self.n_iter_no_change,
                           (numbers.Integral, np.integer, type(None))):
             raise ValueError("n_iter_no_change should either be None or an "
-                             "integer. %r was passed"
-                             % self.n_iter_no_change)
+                             "integer. %s was passed"
+                             % safe_repr(self.n_iter_no_change))
 
         allowed_presort = ('auto', True, False)
         if self.presort not in allowed_presort:
-            raise ValueError("'presort' should be in {}. Got {!r} instead."
-                             .format(allowed_presort, self.presort))
+            raise ValueError("'presort' should be in {}. Got {!s} instead."
+                             .format(allowed_presort, safe_repr(self.presort)))
 
     def _init_state(self):
         """Initialize model state and allocate model state data structures. """
@@ -1682,8 +1683,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         except NotFittedError:
             raise
         except AttributeError:
-            raise AttributeError('loss=%r does not support predict_proba' %
-                                 self.loss)
+            raise AttributeError('loss=%s does not support predict_proba' %
+                                 safe_repr(self.loss))
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities for X.
@@ -1733,8 +1734,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         except NotFittedError:
             raise
         except AttributeError:
-            raise AttributeError('loss=%r does not support predict_proba' %
-                                 self.loss)
+            raise AttributeError('loss=%s does not support predict_proba' %
+                                 safe_repr(self.loss))
 
 
 class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
