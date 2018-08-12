@@ -318,7 +318,7 @@ Refitting and updating parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Hyper-parameters of an estimator can be updated after it has been constructed
-via the ``set_params()``  method. Calling ``fit()`` more than once will
+via the :term:`set_params` method. Calling ``fit()`` more than once will
 overwrite what was learned by any previous ``fit()``::
 
   >>> import numpy as np
