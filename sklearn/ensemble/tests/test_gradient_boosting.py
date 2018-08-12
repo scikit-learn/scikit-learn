@@ -26,6 +26,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_true
@@ -632,6 +633,32 @@ def test_quantile_loss():
     clf_lad.fit(boston.data, boston.target)
     y_lad = clf_lad.predict(boston.data)
     assert_array_almost_equal(y_quantile, y_lad, decimal=4)
+
+
+def test_tobit_loss():
+    # Tobit model needs positive variance parameter
+    assert_raises(ValueError,
+                  GradientBoostingRegressor(loss='tobit', sigma=-1.).fit, X, y)
+    # Tobit: upper limit needs to be larger than lower limit
+    assert_raises(ValueError,
+                  GradientBoostingRegressor(loss='tobit', yl=1.,
+                                            yu=0.).fit, X, y)
+    # Check if results for 'tobit' loss with no censoring
+    # equal results for 'ls' loss.
+    # Use boston data with yl=0 and yu=100.
+    clf_tobit = GradientBoostingRegressor(n_estimators=100, loss='tobit',
+                                          max_depth=4, yl=0., yu=100.,
+                                          random_state=7)
+
+    clf_tobit.fit(boston.data, boston.target)
+    y_tobit = clf_tobit.predict(boston.data)
+
+    clf_ls = GradientBoostingRegressor(n_estimators=100, loss='ls',
+                                       max_depth=4, random_state=7)
+
+    clf_ls.fit(boston.data, boston.target)
+    y_ls = clf_ls.predict(boston.data)
+    assert_array_almost_equal(y_tobit, y_ls, decimal=4)
 
 
 def test_symbol_labels():
