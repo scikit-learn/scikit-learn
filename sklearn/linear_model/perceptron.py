@@ -127,17 +127,9 @@ class Perceptron(BaseSGDClassifier):
     >>> X_train,X_test,y_train,y_test=train_test_split(data,label,random_state=123)
     >>> model=perceptron.Perceptron(penalty='l2',alpha=0.001,random_state=124,max_iter=600,tol=0.23) #Applying l2 regularization with alpha=0.001
     >>> model.fit(X_train,y_train)
-    
-        Perceptron(alpha=0.001, class_weight=None, eta0=1.0, fit_intercept=True,
-      max_iter=None, n_iter=None, n_jobs=1, penalty='l2', random_state=124,
-      shuffle=True, tol=None, verbose=0, warm_start=False)
-      
     >>> predictions=model.predict(X_test)
     >>> accuracy_score(y_test,predictions)
     
-        0.72
-        
-
     Notes
     -----
 
