@@ -32,6 +32,7 @@ from ..base import RegressorMixin
 from ..base import is_classifier
 from ..externals import six
 from ..utils import check_array
+from ..utils import safe_repr
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
@@ -242,7 +243,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("max_features must be in (0, n_features]")
         if not isinstance(max_leaf_nodes, (numbers.Integral, np.integer)):
             raise ValueError("max_leaf_nodes must be integral number but was "
-                             "%r" % max_leaf_nodes)
+                             "%s" % safe_repr(max_leaf_nodes))
         if -1 < max_leaf_nodes < 2:
             raise ValueError(("max_leaf_nodes {0} must be either None "
                               "or larger than 1").format(max_leaf_nodes))
@@ -294,8 +295,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         allowed_presort = ('auto', True, False)
         if self.presort not in allowed_presort:
-            raise ValueError("'presort' should be in {}. Got {!r} instead."
-                             .format(allowed_presort, self.presort))
+            raise ValueError("'presort' should be in {}. Got {!s} instead."
+                             .format(allowed_presort, safe_repr(self.presort)))
 
         if self.presort is True and issparse(X):
             raise ValueError("Presorting is not supported for sparse "

@@ -3,8 +3,9 @@
 # License: BSD 3 clause
 
 import numpy as np
-from ..externals import six
 
+from ..externals import six
+from ..utils import safe_repr
 
 def compute_class_weight(class_weight, classes, y):
     """Estimate class weights for unbalanced datasets.
@@ -59,7 +60,7 @@ def compute_class_weight(class_weight, classes, y):
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
         if not isinstance(class_weight, dict):
             raise ValueError("class_weight must be dict, 'balanced', or None,"
-                             " got: %r" % class_weight)
+                             " got: %s" % safe_repr(class_weight))
         for c in class_weight:
             i = np.searchsorted(classes, c)
             if i >= len(classes) or classes[i] != c:

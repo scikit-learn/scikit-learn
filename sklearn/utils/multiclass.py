@@ -17,6 +17,7 @@ from scipy.sparse import lil_matrix
 import numpy as np
 
 from ..externals.six import string_types
+from ..utils import safe_repr
 from ..utils.fixes import _Sequence as Sequence
 from .validation import check_array
 
@@ -93,7 +94,7 @@ def unique_labels(*ys):
     # Get the unique set of labels
     _unique_labels = _FN_UNIQUE_LABELS.get(label_type, None)
     if not _unique_labels:
-        raise ValueError("Unknown label type: %s" % repr(ys))
+        raise ValueError("Unknown label type: %s" % safe_repr(ys))
 
     ys_labels = set(chain.from_iterable(_unique_labels(y) for y in ys))
 
@@ -240,7 +241,7 @@ def type_of_target(y):
 
     if not valid:
         raise ValueError('Expected array-like (array or non-string sequence), '
-                         'got %r' % y)
+                         'got %s' % safe_repr(y))
 
     sparseseries = (y.__class__.__name__ == 'SparseSeries')
     if sparseseries:
@@ -312,8 +313,9 @@ def _check_partial_fit_first_call(clf, classes=None):
         if getattr(clf, 'classes_', None) is not None:
             if not np.array_equal(clf.classes_, unique_labels(classes)):
                 raise ValueError(
-                    "`classes=%r` is not the same as on last call "
-                    "to partial_fit, was: %r" % (classes, clf.classes_))
+                    "`classes=%s` is not the same as on last call "
+                    "to partial_fit, was: %s"
+                    % (safe_repr(classes), safe_repr(clf.classes_)))
 
         else:
             # This is the first call to partial_fit

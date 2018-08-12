@@ -47,7 +47,7 @@ import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
 from sklearn.utils.fixes import signature
-from sklearn.utils import deprecated
+from sklearn.utils import deprecated, safe_repr
 
 
 additional_names_in_all = []
@@ -338,7 +338,7 @@ class _IgnoreWarnings(object):
 
     def __enter__(self):
         if self._entered:
-            raise RuntimeError("Cannot enter %r twice" % self)
+            raise RuntimeError("Cannot enter %s twice" % safe_repr(self))
         self._entered = True
         self._filters = self._module.filters
         self._module.filters = self._filters[:]
@@ -348,7 +348,8 @@ class _IgnoreWarnings(object):
 
     def __exit__(self, *exc_info):
         if not self._entered:
-            raise RuntimeError("Cannot exit %r without entering first" % self)
+            raise RuntimeError("Cannot exit %s without entering first"
+                               % safe_repr(self))
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
         self.log[:] = []
@@ -655,7 +656,7 @@ def all_estimators(include_meta_estimators=False,
             raise ValueError("Parameter type_filter must be 'classifier', "
                              "'regressor', 'transformer', 'cluster' or "
                              "None, got"
-                             " %s." % repr(type_filter))
+                             " %s." % safe_repr(type_filter))
 
     # drop duplicates, sort for reproducibility
     # itemgetter is used to ensure the sort does not extend to the 2nd item of

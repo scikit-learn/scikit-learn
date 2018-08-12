@@ -19,6 +19,7 @@ from distutils.version import LooseVersion
 from numpy.core.numeric import ComplexWarning
 
 from ..externals import six
+from ..utils import safe_repr
 from ..utils.fixes import signature
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
@@ -490,7 +491,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
 
     if force_all_finite not in (True, False, 'allow-nan'):
         raise ValueError('force_all_finite should be a bool or "allow-nan"'
-                         '. Got {!r} instead'.format(force_all_finite))
+                         '. Got {!s} instead'
+                         .format(safe_repr(force_all_finite)))
 
     if estimator is not None:
         if isinstance(estimator, six.string_types):
@@ -800,8 +802,8 @@ def check_random_state(seed):
         return np.random.RandomState(seed)
     if isinstance(seed, np.random.RandomState):
         return seed
-    raise ValueError('%r cannot be used to seed a numpy.random.RandomState'
-                     ' instance' % seed)
+    raise ValueError('%s cannot be used to seed a numpy.random.RandomState'
+                     ' instance' % safe_repr(seed))
 
 
 def has_fit_parameter(estimator, parameter):
