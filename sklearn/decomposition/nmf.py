@@ -18,7 +18,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_random_state, check_array
+from ..utils import check_random_state, check_array, safe_repr
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.extmath import safe_min
 from ..utils.validation import check_is_fitted, check_non_negative
@@ -1001,13 +1001,13 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     if not isinstance(n_components, INTEGER_TYPES) or n_components <= 0:
         raise ValueError("Number of components must be a positive integer;"
-                         " got (n_components=%r)" % n_components)
+                         " got (n_components=%s)" % safe_repr(n_components))
     if not isinstance(max_iter, INTEGER_TYPES) or max_iter < 0:
         raise ValueError("Maximum number of iterations must be a positive "
-                         "integer; got (max_iter=%r)" % max_iter)
+                         "integer; got (max_iter=%s)" % safe_repr(max_iter))
     if not isinstance(tol, numbers.Number) or tol < 0:
         raise ValueError("Tolerance for stopping criteria must be "
-                         "positive; got (tol=%r)" % tol)
+                "positive; got (tol=%s)" % safe_repr(tol))
 
     # check W and H, or initialize them
     if init == 'custom' and update_H:
