@@ -105,7 +105,7 @@ Usage examples:
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score', 'average_precision', 'balanced_accuracy', 'brier_score_loss', 'completeness_score', 'explained_variance', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'fowlkes_mallows_score', 'homogeneity_score', 'mutual_info_score', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_mean_squared_log_error', 'neg_median_absolute_error', 'normalized_mutual_info_score', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc', 'v_measure_score']
+    ValueError: 'wrong_choice' is not a valid scoring value. Use sorted(sklearn.metrics.SCORERS.keys()) to get valid options.
 
 .. note::
 
@@ -440,10 +440,10 @@ the total number of predictions).
 
 In contrast, if the conventional accuracy is above chance only because the
 classifier takes advantage of an imbalanced test set, then the balanced
-accuracy, as appropriate, will drop to :math:`\frac{1}{\text{n_classes}}`.
+accuracy, as appropriate, will drop to :math:`\frac{1}{\text{n\_classes}}`.
 
 The score ranges from 0 to 1, or when ``adjusted=True`` is used, it rescaled to
-the range :math:`\frac{1}{1 - \text{n_classes}}` to 1, inclusive, with
+the range :math:`\frac{1}{1 - \text{n\_classes}}` to 1, inclusive, with
 performance at random scoring 0.
 
 If :math:`y_i` is the true value of the :math:`i`-th sample, and :math:`w_i`
@@ -463,8 +463,9 @@ defined as:
 
 With ``adjusted=True``, balanced accuracy reports the relative increase from
 :math:`\texttt{balanced-accuracy}(y, \mathbf{0}, w) =
-\frac{1}{\text{n_classes}}`.  In the binary case, this is also known as
-`*Youden's J statistic* <https://en.wikipedia.org/wiki/Youden%27s_J_statistic>`_, or *informedness*.
+\frac{1}{\text{n\_classes}}`.  In the binary case, this is also known as
+`*Youden's J statistic* <https://en.wikipedia.org/wiki/Youden%27s_J_statistic>`_,
+or *informedness*.
 
 .. note::
 
@@ -590,13 +591,15 @@ and inferred labels::
    >>> y_pred = [0, 0, 2, 1, 0]
    >>> target_names = ['class 0', 'class 1', 'class 2']
    >>> print(classification_report(y_true, y_pred, target_names=target_names))
-                precision    recall  f1-score   support
+                 precision    recall  f1-score   support
    <BLANKLINE>
-       class 0       0.67      1.00      0.80         2
-       class 1       0.00      0.00      0.00         1
-       class 2       1.00      0.50      0.67         2
+        class 0       0.67      1.00      0.80         2
+        class 1       0.00      0.00      0.00         1
+        class 2       1.00      0.50      0.67         2
    <BLANKLINE>
-   avg / total       0.67      0.60      0.59         5
+      micro avg       0.60      0.60      0.60         5
+      macro avg       0.56      0.50      0.49         5
+   weighted avg       0.67      0.60      0.59         5
    <BLANKLINE>
 
 .. topic:: Example:

@@ -323,6 +323,14 @@ Example of 2-fold cross-validation on a dataset with 4 samples::
   [2 3] [0 1]
   [0 1] [2 3]
 
+Here is a visualization of the cross-validation behavior. Note that
+:class:`KFold` is not affected by classes or groups.
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_004.png
+   :target: ../auto_examples/model_selection/plot_cv_indices.html
+   :align: center
+   :scale: 75%
+
 Each fold is constituted by two arrays: the first one is related to the
 *training set*, and the second one to the *test set*.
 Thus, one can create the training/test sets using numpy indexing::
@@ -471,6 +479,14 @@ Here is a usage example::
   [2 7 5 8 0 3 4] [6 1 9]
   [4 1 0 6 8 9 3] [5 2 7]
 
+Here is a visualization of the cross-validation behavior. Note that
+:class:`ShuffleSplit` is not affected by classes or groups.
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_006.png
+   :target: ../auto_examples/model_selection/plot_cv_indices.html
+   :align: center
+   :scale: 75%
+
 :class:`ShuffleSplit` is thus a good alternative to :class:`KFold` cross
 validation that allows a finer control on the number of iterations and
 the proportion of samples on each side of the train / test split.
@@ -506,6 +522,13 @@ two slightly unbalanced classes::
   [0 1 3 4 5 8 9] [2 6 7]
   [0 1 2 4 5 6 7] [3 8 9]
 
+Here is a visualization of the cross-validation behavior.
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_007.png
+   :target: ../auto_examples/model_selection/plot_cv_indices.html
+   :align: center
+   :scale: 75%
+
 :class:`RepeatedStratifiedKFold` can be used to repeat Stratified K-Fold n times
 with different randomization in each repetition.
 
@@ -516,6 +539,13 @@ Stratified Shuffle Split
 :class:`StratifiedShuffleSplit` is a variation of *ShuffleSplit*, which returns
 stratified splits, *i.e* which creates splits by preserving the same
 percentage for each target class as in the complete set.
+
+Here is a visualization of the cross-validation behavior.
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_009.png
+   :target: ../auto_examples/model_selection/plot_cv_indices.html
+   :align: center
+   :scale: 75%
 
 .. _group_cv:
 
@@ -569,6 +599,12 @@ Each subject is in a different testing fold, and the same subject is never in
 both testing and training. Notice that the folds do not have exactly the same
 size due to the imbalance in the data.
 
+Here is a visualization of the cross-validation behavior.
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_005.png
+   :target: ../auto_examples/model_selection/plot_cv_indices.html
+   :align: center
+   :scale: 75%
 
 Leave One Group Out
 ^^^^^^^^^^^^^^^^^^^
@@ -645,6 +681,13 @@ Here is a usage example::
   [2 3 4 5] [0 1 6 7]
   [4 5 6 7] [0 1 2 3]
 
+Here is a visualization of the cross-validation behavior.
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_008.png
+   :target: ../auto_examples/model_selection/plot_cv_indices.html
+   :align: center
+   :scale: 75%
+
 This class is useful when the behavior of :class:`LeavePGroupsOut` is
 desired, but the number of groups is large enough that generating all
 possible partitions with :math:`P` groups withheld would be prohibitively
@@ -709,6 +752,12 @@ Example of 3-split time series cross-validation on a dataset with 6 samples::
   [0 1 2 3] [4]
   [0 1 2 3 4] [5]
 
+Here is a visualization of the cross-validation behavior.
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_010.png
+   :target: ../auto_examples/model_selection/plot_cv_indices.html
+   :align: center
+   :scale: 75%
 
 A note on shuffling
 ===================

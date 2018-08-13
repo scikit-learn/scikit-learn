@@ -379,7 +379,9 @@ utilities for more detailed performance analysis of the results::
                  sci.med       0.94      0.90      0.92       396
   soc.religion.christian       0.90      0.95      0.93       398
   <BLANKLINE>
-             avg / total       0.92      0.91      0.91      1502
+               micro avg       0.91      0.91      0.91      1502
+               macro avg       0.92      0.91      0.91      1502
+            weighted avg       0.92      0.91      0.91      1502
   <BLANKLINE>
 
   >>> metrics.confusion_matrix(twenty_test.target, predicted)

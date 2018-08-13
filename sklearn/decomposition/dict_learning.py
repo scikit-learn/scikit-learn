@@ -15,10 +15,10 @@ from scipy import linalg
 from numpy.lib.stride_tricks import as_strided
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import Parallel, delayed, cpu_count
+from ..utils import Parallel, delayed, effective_n_jobs
 from ..externals.six.moves import zip
 from ..utils import (check_array, check_random_state, gen_even_slices,
-                     gen_batches, _get_n_jobs)
+                     gen_batches)
 from ..utils.extmath import randomized_svd, row_norms
 from ..utils.validation import check_is_fitted
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
@@ -184,7 +184,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 # XXX : could be moved to the linear_model module
 def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                   n_nonzero_coefs=None, alpha=None, copy_cov=True, init=None,
-                  max_iter=1000, n_jobs=1, check_input=True, verbose=0,
+                  max_iter=1000, n_jobs=None, check_input=True, verbose=0,
                   positive=False):
     """Sparse coding
 
@@ -299,7 +299,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         if regularization is None:
             regularization = 1.
 
-    if n_jobs == 1 or algorithm == 'threshold':
+    if effective_n_jobs(n_jobs) or algorithm == 'threshold':
         code = _sparse_encode(X,
                               dictionary, gram, cov=cov,
                               algorithm=algorithm,
@@ -313,7 +313,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
     # Enter parallel code block
     code = np.empty((n_samples, n_components))
-    slices = list(gen_even_slices(n_samples, _get_n_jobs(n_jobs)))
+    slices = list(gen_even_slices(n_samples, effective_n_jobs(n_jobs)))
 
     code_views = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_sparse_encode)(
@@ -418,7 +418,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 
 
 def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
-                  method='lars', n_jobs=1, dict_init=None, code_init=None,
+                  method='lars', n_jobs=None, dict_init=None, code_init=None,
                   callback=None, verbose=False, random_state=None,
                   return_n_iter=False, positive_dict=False,
                   positive_code=False):
@@ -526,9 +526,6 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     alpha = float(alpha)
     random_state = check_random_state(random_state)
 
-    if n_jobs == -1:
-        n_jobs = cpu_count()
-
     # Init the code and the dictionary with SVD of Y
     if code_init is not None and dict_init is not None:
         code = np.array(code_init, order='F')
@@ -605,11 +602,11 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 
 def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
                          return_code=True, dict_init=None, callback=None,
-                         batch_size=3, verbose=False, shuffle=True, n_jobs=1,
-                         method='lars', iter_offset=0, random_state=None,
-                         return_inner_stats=False, inner_stats=None,
-                         return_n_iter=False, positive_dict=False,
-                         positive_code=False):
+                         batch_size=3, verbose=False, shuffle=True,
+                         n_jobs=None, method='lars', iter_offset=0,
+                         random_state=None, return_inner_stats=False,
+                         inner_stats=None, return_n_iter=False,
+                         positive_dict=False, positive_code=False):
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -737,9 +734,6 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     alpha = float(alpha)
     random_state = check_random_state(random_state)
 
-    if n_jobs == -1:
-        n_jobs = cpu_count()
-
     # Init V with SVD of X
     if dict_init is not None:
         dictionary = dict_init
@@ -797,6 +791,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
                                   alpha=alpha, n_jobs=n_jobs,
+                                  check_input=False,
                                   positive=positive_code).T
 
         # Update the auxiliary variables
@@ -856,7 +851,7 @@ class SparseCodingMixin(TransformerMixin):
                                   transform_algorithm='omp',
                                   transform_n_nonzero_coefs=None,
                                   transform_alpha=None, split_sign=False,
-                                  n_jobs=1, positive_code=False):
+                                  n_jobs=None, positive_code=False):
         self.n_components = n_components
         self.transform_algorithm = transform_algorithm
         self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
@@ -979,7 +974,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 
     def __init__(self, dictionary, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
-                 split_sign=False, n_jobs=1, positive_code=False):
+                 split_sign=False, n_jobs=None, positive_code=False):
         self._set_sparse_coding_params(dictionary.shape[0],
                                        transform_algorithm,
                                        transform_n_nonzero_coefs,
@@ -1135,7 +1130,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     def __init__(self, n_components=None, alpha=1, max_iter=1000, tol=1e-8,
                  fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
-                 n_jobs=1, code_init=None, dict_init=None, verbose=False,
+                 n_jobs=None, code_init=None, dict_init=None, verbose=False,
                  split_sign=False, random_state=None,
                  positive_code=False, positive_dict=False):
 
@@ -1319,7 +1314,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     """
     def __init__(self, n_components=None, alpha=1, n_iter=1000,
-                 fit_algorithm='lars', n_jobs=1, batch_size=3,
+                 fit_algorithm='lars', n_jobs=None, batch_size=3,
                  shuffle=True, dict_init=None, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  verbose=False, split_sign=False, random_state=None,
