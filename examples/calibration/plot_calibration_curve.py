@@ -24,10 +24,10 @@ curve.
 
 Calibration of the probabilities of Gaussian naive Bayes with isotonic
 regression can fix this issue as can be seen from the nearly diagonal
-calibration curve. Sigmoid calibration also improves the calibration loss slightly,
-albeit not as strongly as the non-parametric isotonic regression. This can be
-attributed to the fact that we have plenty of calibration data such that the
-greater flexibility of the non-parametric model can be exploited.
+calibration curve. Sigmoid calibration also improves the calibration loss 
+slightly, albeit not as strongly as the non-parametric isotonic regression. 
+This can be attributed to the fact that we have plenty of calibration data 
+such that the greater flexibility of the non-parametric model can be exploited.
 
 The second figure shows the calibration curve of a linear support-vector
 classifier (LinearSVC). LinearSVC shows the opposite behavior as Gaussian
