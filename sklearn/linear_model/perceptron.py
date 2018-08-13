@@ -124,7 +124,7 @@ class Perceptron(BaseSGDClassifier):
     >>> y = digits.target
     >>> model = perceptron.Perceptron(penalty = 'l2', alpha = 0.001, random_state = 124, max_iter = 600, tol = 0.23)
     >>> model.fit(X, y)
-    >>> model.score(X,y)
+    >>> model.score(X, y)
     
     Notes
     -----
