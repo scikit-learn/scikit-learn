@@ -127,16 +127,18 @@ class Perceptron(BaseSGDClassifier):
     --------
     >>> from sklearn.datasets import load_digits
     >>> from sklearn.linear_model import Perceptron
-    >>> digits = load_digits() 
+    >>> digits = load_digits()
     >>> X = digits.data
     >>> y = digits.target
-    >>> clf = Perceptron(max_iter=500,tol=0.21,random_state=123)
-    >>> clf.fit(X, y)
+    >>> clf = Perceptron(alpha=0.0001, class_weight=None, fit_intercept=True,
+      max_iter=500, n_iter=None, n_jobs=1, penalty=None, random_state=123,
+      shuffle=True, tol=0.21, verbose=0, warm_start=False, , eta0=1.0)
+    >>> clf.fit(X, y) # Default values have been assigned to the parameters
     Perceptron(alpha=0.0001, class_weight=None, eta0=1.0, fit_intercept=True,
       max_iter=500, n_iter=None, n_jobs=1, penalty=None, random_state=123,
       shuffle=True, tol=0.21, verbose=0, warm_start=False)
     >>> model.score(X, y)
-    0.9616026711185309
+    0.961...
 
     See also
     --------
