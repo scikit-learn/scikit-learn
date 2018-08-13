@@ -119,14 +119,12 @@ class Perceptron(BaseSGDClassifier):
     --------
     >>> from sklearn.datasets import load_digits
     >>> from sklearn.linear_model import perceptron
-    >>> from sklearn.model_selection import train_test_split
-    >>> from sklearn.metrics import accuracy_score
-    >>> digits=load_digits()
-    >>> data=digits.data
-    >>> label=digits.target
-    >>> X_train,X_test,y_train,y_test=train_test_split(data,label,random_state=123)
-    >>> model=perceptron.Perceptron(penalty='l2',alpha=0.001,random_state=124,max_iter=600,tol=0.23)
-    >>> model.fit(X_train,y_train);
+    >>> digits = load_digits()
+    >>> X = digits.data
+    >>> y = digits.target
+    >>> model = perceptron.Perceptron(penalty = 'l2', alpha = 0.001, random_state = 124, max_iter = 600, tol = 0.23)
+    >>> model.fit(X, y)
+    >>> model.score(X,y)
     
     Notes
     -----
