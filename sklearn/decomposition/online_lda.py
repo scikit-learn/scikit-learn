@@ -255,8 +255,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     >>> from sklearn.feature_extraction.text import CountVectorizer
     >>> from sklearn.decomposition import LatentDirichletAllocation
     >>> from sklearn.datasets import fetch_20newsgroups
-    >>> n_samples = 1000
-    >>> n_features = 200
+    >>> n_samples = 300
+    >>> n_features = 50
     >>> n_components = 5
     >>> dataset = fetch_20newsgroups(shuffle=True, random_state=1,
     ...                              remove=('headers', 'footers', 'quotes'))
@@ -276,8 +276,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                  total_samples=1000000.0, verbose=0)
     >>> # get topics for some given samples:
     >>> lda.transform(tf_vectorizer.transform(dataset.data[-2:]))
-    array([[0.03509476, 0.86243059, 0.03446344, 0.03405526, 0.03395595],
-           [0.05974169, 0.70750174, 0.08565529, 0.14146641, 0.00563486]])
+    array([[0.0503626 , 0.05039563, 0.79839686, 0.05000126, 0.05084366],
+           [0.01141977, 0.011134  , 0.72786348, 0.01134744, 0.23823531]])
 
     References
     ----------

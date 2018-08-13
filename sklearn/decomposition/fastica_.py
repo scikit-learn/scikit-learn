@@ -448,14 +448,11 @@ class FastICA(BaseEstimator, TransformerMixin):
     >>> from sklearn.datasets import load_digits
     >>> from sklearn.decomposition import FastICA
     >>> X, _ = load_digits(return_X_y=True)
-    >>> transformer = FastICA(n_components=10,
+    >>> transformer = FastICA(n_components=7,
     ...         random_state=0)
-    >>> transformer.fit(X)
-    FastICA(algorithm='parallel', fun='logcosh', fun_args=None, max_iter=200,
-        n_components=10, random_state=0, tol=0.0001, w_init=None, whiten=True)
-    >>> X_transformed = transformer.transform(X)
+    >>> X_transformed = transformer.fit_transform(X)
     >>> X_transformed.shape
-    (1797, 10)
+    (1797, 7)
 
     Notes
     -----

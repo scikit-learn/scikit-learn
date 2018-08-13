@@ -123,15 +123,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     >>> from sklearn.datasets import load_digits
     >>> from sklearn.decomposition import KernelPCA
     >>> X, _ = load_digits(return_X_y=True)
-    >>> transformer = KernelPCA(n_components=10)
-    >>> transformer.fit(X)
-    KernelPCA(alpha=1.0, coef0=1, copy_X=True, degree=3, eigen_solver='auto',
-         fit_inverse_transform=False, gamma=None, kernel='linear',
-         kernel_params=None, max_iter=None, n_components=10, n_jobs=None,
-         random_state=None, remove_zero_eig=False, tol=0)
-    >>> X_transformed = transformer.transform(X)
+    >>> transformer = KernelPCA(n_components=7)
+    >>> X_transformed = transformer.fit_transform(X)
     >>> X_transformed.shape
-    (1797, 10)
+    (1797, 7)
 
     References
     ----------
