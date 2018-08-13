@@ -6,6 +6,7 @@
 #          Hamzeh Alsalhi <ha258@cornell.edu>
 # License: BSD 3 clause
 
+from collections import Counter
 from collections import defaultdict
 import itertools
 import array
@@ -281,6 +282,39 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
                     "y contains previously unseen labels: %s" % str(diff))
         y = np.asarray(y)
         return self.classes_[y]
+
+
+class FrequencyEncoder(BaseEstimator, TransformerMixin):
+    """If a value appeared n times in the data sent to fit, it will be encoded as n."""
+
+    def fit(self, y):
+        """Fit frequency encoder
+
+        Parameters
+        ----------
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        y = column_or_1d(y, warn=True)
+        self._counts = Counter(y)
+        return self
+
+    def transform(self, y):
+        """Transform labels to frequency encoding.
+        Parameters
+        ----------
+        y : array-like of shape [n_samples]
+            Target values.
+
+        Returns
+        -------
+        y : array-like of shape [n_samples]
+        """
+        return np.array([self._counts[v] for v in y])
 
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):
