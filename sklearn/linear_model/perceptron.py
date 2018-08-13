@@ -132,11 +132,13 @@ class Perceptron(BaseSGDClassifier):
     >>> y = digits.target
     >>> model = perceptron.Perceptron(max_iter = 500, tol = 0.21)
     >>> model.fit(X, y)
-    Perceptron(alpha=0.0001, class_weight=None, eta0=1.0, fit_intercept=True,
-      max_iter=500, n_iter=None, n_jobs=1, penalty=None, random_state=0,
-      shuffle=True, tol=0.21, verbose=0, warm_start=False)
+    Perceptron(alpha=0.0001, class_weight=None, early_stopping=False, eta0=1.0,
+          fit_intercept=True, max_iter=500, n_iter=None, n_iter_no_change=5,
+          n_jobs=None, penalty=None, random_state=0, shuffle=True, tol=0.21,
+          validation_fraction=0.1, verbose=0, warm_start=False)
     >>> model.score(X, y)
     0.9510294936004452
+
     See also
     --------
 
