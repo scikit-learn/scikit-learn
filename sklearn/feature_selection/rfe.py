@@ -60,12 +60,12 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         are selected.
 
     step : int or float, optional (default=1)
-        If greater than or equal to 1, then `step` corresponds to the (integer)
-        number of features to remove at each iteration.
-        If within (0.0, 1.0), then `step` corresponds to the percentage
+        If greater than or equal to 1, then ``step`` corresponds to the
+        (integer) number of features to remove at each iteration.
+        If within (0.0, 1.0), then ``step`` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
-    verbose : int, default=0
+    verbose : int, (default=0)
         Controls verbosity of output.
 
     Attributes
@@ -335,10 +335,18 @@ class RFECV(RFE, MetaEstimatorMixin):
         attribute or through a ``feature_importances_`` attribute.
 
     step : int or float, optional (default=1)
-        If greater than or equal to 1, then `step` corresponds to the (integer)
-        number of features to remove at each iteration.
-        If within (0.0, 1.0), then `step` corresponds to the percentage
+        If greater than or equal to 1, then ``step`` corresponds to the
+        (integer) number of features to remove at each iteration.
+        If within (0.0, 1.0), then ``step`` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
+        Note that the last iteration may remove fewer than ``step`` features in
+        order to reach ``min_features_to_select``.
+
+    min_features_to_select : int, (default=1)
+        The minimum number of features to be selected. This number of features
+        will always be scored, even if the difference between the original
+        feature count and ``min_features_to_select`` isn't divisible by
+        ``step``.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -358,20 +366,20 @@ class RFECV(RFE, MetaEstimatorMixin):
         cross-validation strategies that can be used here.
 
         .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
+            ``cv`` default value of None will change from 3-fold to 5-fold
             in v0.22.
 
-    scoring : string, callable or None, optional, default: None
+    scoring : string, callable or None, optional, (default=None)
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    verbose : int, default=0
+    verbose : int, (default=0)
         Controls verbosity of output.
 
-    n_jobs : int, default 1
+    n_jobs : int, (default=1)
         Number of cores to run in parallel while fitting across folds.
-        Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
+        Defaults to 1 core. If ``n_jobs=-1``, then number of jobs is set
         to number of cores.
 
     Attributes
@@ -399,7 +407,8 @@ class RFECV(RFE, MetaEstimatorMixin):
 
     Notes
     -----
-    The size of ``grid_scores_`` is equal to ceil((n_features - 1) / step) + 1,
+    The size of ``grid_scores_`` is equal to
+    ``ceil((n_features - min_features_to_select) / step) + 1``,
     where step is the number of features removed at each iteration.
 
     Examples
@@ -431,14 +440,15 @@ class RFECV(RFE, MetaEstimatorMixin):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, step=1, cv='warn', scoring=None, verbose=0,
-                 n_jobs=None):
+    def __init__(self, estimator, step=1, min_features_to_select=1, cv='warn',
+                 scoring=None, verbose=0, n_jobs=None):
         self.estimator = estimator
         self.step = step
         self.cv = cv
         self.scoring = scoring
         self.verbose = verbose
         self.n_jobs = n_jobs
+        self.min_features_to_select = min_features_to_select
 
     def fit(self, X, y, groups=None):
         """Fit the RFE model and automatically tune the number of selected
@@ -464,7 +474,6 @@ class RFECV(RFE, MetaEstimatorMixin):
         cv = check_cv(self.cv, y, is_classifier(self.estimator))
         scorer = check_scoring(self.estimator, scoring=self.scoring)
         n_features = X.shape[1]
-        n_features_to_select = 1
 
         if 0.0 < self.step < 1.0:
             step = int(max(1, self.step * n_features))
@@ -473,8 +482,10 @@ class RFECV(RFE, MetaEstimatorMixin):
         if step <= 0:
             raise ValueError("Step must be >0")
 
+        # Build an RFE object, which will evaluate and score each possible
+        # feature count, down to self.min_features_to_select
         rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=n_features_to_select,
+                  n_features_to_select=self.min_features_to_select,
                   step=self.step, verbose=self.verbose)
 
         # Determine the number of subsets of features by fitting across
@@ -504,7 +515,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         argmax_idx = len(scores) - np.argmax(scores_rev) - 1
         n_features_to_select = max(
             n_features - (argmax_idx * step),
-            n_features_to_select)
+            self.min_features_to_select)
 
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
