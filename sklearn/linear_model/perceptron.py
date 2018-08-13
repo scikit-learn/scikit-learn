@@ -114,7 +114,7 @@ class Perceptron(BaseSGDClassifier):
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
-    
+
     Notes
     -----
 
@@ -122,7 +122,7 @@ class Perceptron(BaseSGDClassifier):
     underlying implementation with ``SGDClassifier``. In fact,
     ``Perceptron()`` is equivalent to `SGDClassifier(loss="perceptron",
     eta0=1, learning_rate="constant", penalty=None)`.
-    
+
     Examples
     --------
     from sklearn.datasets import load_digits
@@ -133,7 +133,7 @@ class Perceptron(BaseSGDClassifier):
     model = perceptron.Perceptron(max_iter = 500, tol = 0.21)
     model.fit(X, y)
     model.score(X, y)
-    
+
     See also
     --------
 
