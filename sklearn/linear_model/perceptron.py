@@ -125,14 +125,14 @@ class Perceptron(BaseSGDClassifier):
 
     Examples
     --------
-    from sklearn.datasets import load_digits
-    from sklearn.linear_model import perceptron
-    digits = load_digits()
-    X = digits.data
-    y = digits.target
-    model = perceptron.Perceptron(max_iter = 500, tol = 0.21)
-    model.fit(X, y)
-    model.score(X, y)
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.linear_model import perceptron
+    >>> digits = load_digits()
+    >>> X = digits.data
+    >>> y = digits.target
+    >>> model = perceptron.Perceptron(max_iter = 500, tol = 0.21)
+    >>> model.fit(X, y)
+    >>> model.score(X, y)
 
     See also
     --------
