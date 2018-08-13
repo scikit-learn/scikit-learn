@@ -318,7 +318,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
 def _prepare_fit_binary(est, y, i):
     """Initialization for fit_binary.
 
-    Returns y, coef, intercept.
+    Returns y, coef, intercept, average_coef, average_intercept.
     """
     y_i = np.ones(y.shape, dtype=np.float64, order="C")
     y_i[y != est.classes_[i]] = -1.0
