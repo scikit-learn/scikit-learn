@@ -130,7 +130,7 @@ class Perceptron(BaseSGDClassifier):
     >>> digits = load_digits()
     >>> X = digits.data
     >>> y = digits.target
-    >>> model = perceptron.Perceptron()
+    >>> model = perceptron.Perceptron(max_iter = 500, tol = 0.21)
     >>> model.fit(X, y)
     >>> model.score(X, y)
     0.8011...
