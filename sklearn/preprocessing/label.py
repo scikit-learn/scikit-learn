@@ -285,7 +285,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
 
 class FrequencyEncoder(BaseEstimator, TransformerMixin):
-    """If a value appeared n times in the data sent to fit, it will be encoded as n."""
+    """If a value appears n times in data sent to fit, it is encoded as n."""
 
     def fit(self, y):
         """Fit frequency encoder
