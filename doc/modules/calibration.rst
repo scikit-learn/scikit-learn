@@ -109,12 +109,10 @@ classification with 100,000 samples (1,000 of them are used for model fitting)
 with 20 features. Of the 20 features, only 2 are informative and 10 are
 redundant. The figure shows the estimated probabilities obtained with
 logistic regression, a linear support-vector classifier (SVC), and linear SVC with
-both isotonic calibration and sigmoid calibration. 
-The Brier score is a metric which is a combination of calibration loss and refinement loss,
-:func:`brier_score_loss`, reported in the legend (the smaller the better).
-Calibration loss is defined as the mean squared deviation from empirical probabilities
-derived from the slope of ROC segments. Refinement loss can be defined as the expected
-optimal loss as measured by the area under the optimal cost curve.
+both isotonic calibration and sigmoid calibration.
+The calibration loss is a metric which measures the mean absolute distance between the
+calibration curve and the diagonal (perfectly calibrated model), :func:`calibration_loss`,
+reported in the legend (the smaller the better).
 
 .. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_curve_002.png
    :target: ../auto_examples/calibration/plot_calibration_curve.html
@@ -143,7 +141,7 @@ assumption of feature-independence.
 
 Calibration of the probabilities of Gaussian naive Bayes with isotonic
 regression can fix this issue as can be seen from the nearly diagonal
-calibration curve. Sigmoid calibration also improves the brier score slightly,
+calibration curve. Sigmoid calibration also improves the calibration loss slightly,
 albeit not as strongly as the non-parametric isotonic calibration. This is an
 intrinsic limitation of sigmoid calibration, whose parametric form assumes a
 sigmoid rather than a transposed-sigmoid curve. The non-parametric isotonic
