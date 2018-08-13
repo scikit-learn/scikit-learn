@@ -458,7 +458,7 @@ Support for Python 3.3 has been officially dropped.
 - |Fix| Fixed a bug in :class:`linear_model.ARDRegression` and
   :class:`linear_model.BayesianRidge` which caused NaN predictions when fitted
   with a constant target.
-  :issue:`10195` by :user:`Jörg Döpfert <jdoepfert>`.
+  :issue:`10095` by :user:`Jörg Döpfert <jdoepfert>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.RidgeClassifierCV` where
   the parameter ``store_cv_values`` was not implemented though
