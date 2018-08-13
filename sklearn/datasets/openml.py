@@ -389,7 +389,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     -------
 
     data : Bunch
-        Dictionary-like object, the interesting attributes are:
+        Dictionary-like object, with attributes:
+        
         data : np.array or scipy.sparse.csr_matrix of floats
             The feature matrix. Categorical features are encoded as ordinals.
         target : np.array
@@ -404,6 +405,13 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
             that the value encoded as i is ith in the list.
         details : dict
             More metadata from OpenML
+
+        .. note:: EXPERIMENTAL
+
+            This interface is **experimental** as at version 0.20 and
+            subsequent releases may change attributes without notice
+            (although there should only be minor changes to ``data``
+            and ``target``).
 
         Missing values in the 'data' are represented as NaN's. Missing values
         in 'target' are represented as NaN's (numerical target) or None
