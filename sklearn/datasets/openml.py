@@ -390,7 +390,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     data : Bunch
         Dictionary-like object, with attributes:
-        
+
         data : np.array or scipy.sparse.csr_matrix of floats
             The feature matrix. Categorical features are encoded as ordinals.
         target : np.array
