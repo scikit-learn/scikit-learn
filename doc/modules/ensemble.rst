@@ -602,14 +602,14 @@ a forward stagewise fashion:
 
     F_m(x) = F_{m-1}(x) + \gamma_m h_m(x)
 
-At each stage the decision tree :math:`h_m(x)` is chosen to
+At each stage the decision tree :math:`h_m` is chosen to
 minimize the loss function :math:`L` given the current model
-:math:`F_{m-1}` and its fit :math:`F_{m-1}(x_i)`
+:math:`F_{m-1}`:
 
   .. math::
 
     F_m(x) = F_{m-1}(x) + \arg\min_{h} \sum_{i=1}^{n} L(y_i,
-    F_{m-1}(x_i) + h(x))
+    F_{m-1}(x_i) + h(x_i))
 
 The initial model :math:`F_{0}` is problem specific, for least-squares
 regression one usually chooses the mean of the target values.
