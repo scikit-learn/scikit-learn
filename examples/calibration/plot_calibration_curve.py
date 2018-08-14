@@ -15,8 +15,8 @@ features. Of the 20 features, only 2 are informative and 10 are redundant. The
 first figure shows the estimated probabilities obtained with logistic
 regression, Gaussian naive Bayes, and Gaussian naive Bayes with both isotonic
 calibration and sigmoid calibration. The calibration performance is evaluated
-with a calibration loss, reported in the legend (the smaller the better). One can
-observe here that logistic regression is well calibrated while raw Gaussian
+with a calibration loss, reported in the legend (the smaller the better). One
+can observe here that logistic regression is well calibrated while raw Gaussian
 naive Bayes performs very badly. This is because of the redundant features
 which violate the assumption of feature-independence and result in an overly
 confident classifier, which is indicated by the typical transposed-sigmoid
@@ -24,9 +24,9 @@ curve.
 
 Calibration of the probabilities of Gaussian naive Bayes with isotonic
 regression can fix this issue as can be seen from the nearly diagonal
-calibration curve. Sigmoid calibration also improves the calibration loss 
-slightly, albeit not as strongly as the non-parametric isotonic regression. 
-This can be attributed to the fact that we have plenty of calibration data 
+calibration curve. Sigmoid calibration also improves the calibration loss
+slightly, albeit not as strongly as the non-parametric isotonic regression.
+This can be attributed to the fact that we have plenty of calibration data
 such that the greater flexibility of the non-parametric model can be exploited.
 
 The second figure shows the calibration curve of a linear support-vector
