@@ -135,7 +135,7 @@ class Perceptron(BaseSGDClassifier):
           n_jobs=None, penalty=None, random_state=0, shuffle=True, tol=0.001,
           validation_fraction=0.1, verbose=0, warm_start=False)
     >>> clf.score(X, y) # doctest: +ELLIPSIS
-    0.951...
+    0.946...
 
     See also
     --------
