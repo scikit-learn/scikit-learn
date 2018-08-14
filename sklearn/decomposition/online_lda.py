@@ -252,32 +252,17 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
     Examples
     --------
-    >>> from sklearn.feature_extraction.text import CountVectorizer
     >>> from sklearn.decomposition import LatentDirichletAllocation
-    >>> from sklearn.datasets import fetch_20newsgroups
-    >>> n_samples = 300
-    >>> n_features = 50
-    >>> n_components = 5
-    >>> dataset = fetch_20newsgroups(shuffle=True, random_state=1,
-    ...                              remove=('headers', 'footers', 'quotes'))
-    >>> X = dataset.data[:n_samples]
-    >>> tf_vectorizer = CountVectorizer(max_features=n_features,
-    ...                                 stop_words='english')
-    >>> tf = tf_vectorizer.fit_transform(X)
-    >>> lda = LatentDirichletAllocation(n_components=n_components,
+    >>> from sklearn.datasets import make_multilabel_classification
+    >>> X, _ = make_multilabel_classification(random_state=0)
+    >>> lda = LatentDirichletAllocation(n_components=5,
     ...     random_state=0)
-    >>> lda.fit(tf)
-    LatentDirichletAllocation(batch_size=128, doc_topic_prior=None,
-                 evaluate_every=-1, learning_decay=0.7,
-                 learning_method='batch', learning_offset=10.0,
-                 max_doc_update_iter=100, max_iter=10, mean_change_tol=0.001,
-                 n_components=5, n_jobs=None, n_topics=None, perp_tol=0.1,
-                 random_state=0, topic_word_prior=None,
-                 total_samples=1000000.0, verbose=0)
+    >>> lda.fit(X) # doctest: +ELLIPSIS
+    LatentDirichletAllocation(...)
     >>> # get topics for some given samples:
-    >>> lda.transform(tf_vectorizer.transform(dataset.data[-2:]))
-    array([[0.0503626 , 0.05039563, 0.79839686, 0.05000126, 0.05084366],
-           [0.01141977, 0.011134  , 0.72786348, 0.01134744, 0.23823531]])
+    >>> lda.transform(X[-2:])
+    array([[0.00360392, 0.25499205, 0.0036211 , 0.64236448, 0.09541846],
+           [0.15297572, 0.00362644, 0.44412786, 0.39568399, 0.003586  ]])
 
     References
     ----------
