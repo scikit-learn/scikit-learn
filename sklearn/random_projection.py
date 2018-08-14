@@ -591,11 +591,15 @@ class SparseRandomProjection(BaseRandomProjection):
     --------
     >>> import numpy as np
     >>> from sklearn.random_projection import SparseRandomProjection
+    >>> np.random.seed(42)
     >>> X = np.random.rand(100, 10000)
     >>> transformer = SparseRandomProjection()
     >>> X_new = transformer.fit_transform(X)
     >>> X_new.shape
     (100, 3947)
+    >>> # very few components are non-zero
+    >>> np.mean(transformer.components_ != 0) # doctest: +ELLIPSIS
+    0.0100...
 
     See Also
     --------
