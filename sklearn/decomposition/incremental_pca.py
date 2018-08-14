@@ -105,7 +105,11 @@ class IncrementalPCA(_BasePCA):
     >>> from sklearn.datasets import load_digits
     >>> from sklearn.decomposition import IncrementalPCA
     >>> X, _ = load_digits(return_X_y=True)
-    >>> transformer = IncrementalPCA(n_components=7)
+    >>> transformer = IncrementalPCA(n_components=7, batch_size=200)
+    >>> # either partially fit on smaller batches of data
+    >>> transformer.partial_fit(X[:100, :])
+    IncrementalPCA(batch_size=200, copy=True, n_components=7, whiten=False)
+    >>> # or let the fit function itself divide the data into batches
     >>> X_transformed = transformer.fit_transform(X)
     >>> X_transformed.shape
     (1797, 7)
