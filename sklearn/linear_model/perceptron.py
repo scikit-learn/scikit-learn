@@ -127,7 +127,7 @@ class Perceptron(BaseSGDClassifier):
     --------
     >>> from sklearn.datasets import load_digits
     >>> from sklearn.linear_model import Perceptron
-    >>> digits = load_digits(return_X_y=True)
+    >>> X, y = load_digits(return_X_y=True)
     >>> clf = Perceptron(random_state=0)
     Perceptron(alpha=0.0001, class_weight=None, eta0=1.0, fit_intercept=True,
       max_iter=None, n_iter=None, n_jobs=1, penalty=None, random_state=0,
