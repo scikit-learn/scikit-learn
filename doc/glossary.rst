@@ -1481,8 +1481,10 @@ functions or non-estimator constructors.
         running jobs.  If set to -1, all CPUs are used. If 1 is given, no
         parallel computing code is used at all.  For n_jobs below -1, (n_cpus +
         1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one are used.
-        When ``n_jobs`` is None, joblib determines the number of jobs from the
-        current :class:`joblib.Parallel` backend context.
+
+        ``n_jobs=None`` means *unset*; it will generally be interpreted as
+        ``n_jobs=1``, unless the current :class:`joblib.Parallel` backend
+        context specifies otherwise.
 
         The use of ``n_jobs``-based parallelism in estimators varies:
 
