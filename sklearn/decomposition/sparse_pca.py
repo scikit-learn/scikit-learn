@@ -98,19 +98,20 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
     Examples
     --------
-    >>> from sklearn.datasets import load_iris
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_friedman1
     >>> from sklearn.decomposition import SparsePCA
-    >>> X, _ = load_iris(return_X_y=True)
-    >>> transformer = SparsePCA(n_components=2,
+    >>> X, _ = make_friedman1(n_samples=200, n_features=30, random_state=0)
+    >>> transformer = SparsePCA(n_components=5,
     ...         normalize_components=True,
     ...         random_state=0)
-    >>> transformer.fit(X)
-    SparsePCA(U_init=None, V_init=None, alpha=1, max_iter=1000, method='lars',
-         n_components=2, n_jobs=None, normalize_components=True,
-         random_state=0, ridge_alpha=0.01, tol=1e-08, verbose=False)
+    >>> transformer.fit(X) # doctest: +ELLIPSIS
+    SparsePCA(...)
     >>> X_transformed = transformer.transform(X)
     >>> X_transformed.shape
-    (150, 2)
+    (200, 5)
+    >>> np.mean(transformer.components_ == 0) # doctest: +ELLIPSIS
+    0.9666...
 
     See also
     --------
@@ -330,21 +331,21 @@ class MiniBatchSparsePCA(SparsePCA):
 
     Examples
     --------
-    >>> from sklearn.datasets import load_iris
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_friedman1
     >>> from sklearn.decomposition import MiniBatchSparsePCA
-    >>> X, _ = load_iris(return_X_y=True)
-    >>> transformer = MiniBatchSparsePCA(n_components=2,
+    >>> X, _ = make_friedman1(n_samples=200, n_features=30, random_state=0)
+    >>> transformer = MiniBatchSparsePCA(n_components=5,
     ...         batch_size=50,
     ...         normalize_components=True,
     ...         random_state=0)
-    >>> transformer.fit(X)
-    MiniBatchSparsePCA(alpha=1, batch_size=50, callback=None, method='lars',
-              n_components=2, n_iter=100, n_jobs=None,
-              normalize_components=True, random_state=0, ridge_alpha=0.01,
-              shuffle=True, verbose=False)
+    >>> transformer.fit(X) # doctest: +ELLIPSIS
+    MiniBatchSparsePCA(...)
     >>> X_transformed = transformer.transform(X)
     >>> X_transformed.shape
-    (150, 2)
+    (200, 5)
+    >>> np.mean(transformer.components_ == 0)
+    0.94
 
     See also
     --------
