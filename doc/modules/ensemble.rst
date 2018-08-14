@@ -295,7 +295,9 @@ to the prediction function.
 
 .. topic:: References
 
- .. [L2014] G. Louppe, "Understanding Random Forests: From Theory to Practice", PhD Thesis, U. of Liege, 2014.
+ .. [L2014] G. Louppe,
+         "Understanding Random Forests: From Theory to Practice",
+         PhD Thesis, U. of Liege, 2014.
 
 Totally Random Trees Embedding
 ------------------------------
