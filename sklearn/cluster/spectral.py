@@ -358,9 +358,12 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Parameters (keyword arguments) and values for kernel passed as
         callable object. Ignored by other kernels.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
+        If ``None``, then the number of jobs is set to 1 unless current joblib
+        backend context specifies otherwise.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
+        See :term:`Glossary <n_jobs>`.
 
     Attributes
     ----------

@@ -76,9 +76,12 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         weight may inhibit its eps-neighbor from being core.
         Note that weights are absolute, and default to 1.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
+        If ``None``, then the number of jobs is set to 1 unless current joblib
+        backend context specifies otherwise.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
+        See :term:`Glossary <n_jobs>`.
 
     Returns
     -------
@@ -229,9 +232,12 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         The power of the Minkowski metric to be used to calculate distance
         between points.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
+        If ``None``, then the number of jobs is set to 1 unless current joblib
+        backend context specifies otherwise.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
+        See :term:`Glossary <n_jobs>`.
 
     Attributes
     ----------
