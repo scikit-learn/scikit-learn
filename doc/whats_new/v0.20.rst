@@ -203,8 +203,6 @@ Support for Python 3.3 has been officially dropped.
   data points could be generated. :issue:`10037` by :user:`Christian Braune
   <christianbraune79>`.
 
-.. rubric:: :mod:`sklearn.decomposition`:
-
 :mod:`sklearn.decomposition`
 ............................
 
