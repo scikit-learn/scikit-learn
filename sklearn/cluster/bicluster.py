@@ -233,13 +233,9 @@ class SpectralCoclustering(BaseSpectral):
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        If ``None``, then the number of jobs is set to 1 unless current joblib
-        backend context specifies otherwise.
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
-        See :term:`Glossary <n_jobs>`.
+        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None (default)
         Used for randomizing the singular value decomposition and the k-means
@@ -383,13 +379,9 @@ class SpectralBiclustering(BaseSpectral):
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        If ``None``, then the number of jobs is set to 1 unless current joblib
-        backend context specifies otherwise.
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
-        See :term:`Glossary <n_jobs>`.
+        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None (default)
         Used for randomizing the singular value decomposition and the k-means

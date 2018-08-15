@@ -360,10 +360,9 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If ``None``, then the number of jobs is set to 1 unless current joblib
-        backend context specifies otherwise.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
-        See :term:`Glossary <n_jobs>`.
+        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------

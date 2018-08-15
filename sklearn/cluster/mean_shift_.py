@@ -55,10 +55,9 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``None``, then the number of jobs is set to 1 unless current joblib
-        backend context specifies otherwise.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
-        See :term:`Glossary <n_jobs>`.
+        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Returns
     -------
@@ -159,13 +158,9 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
-        If ``None``, then the number of jobs is set to 1 unless current joblib
-        backend context specifies otherwise.
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
-        See :term:`Glossary <n_jobs>`.
+        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
         .. versionadded:: 0.17
            Parallel Execution using *n_jobs*.
@@ -344,13 +339,9 @@ class MeanShift(BaseEstimator, ClusterMixin):
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
-        If ``None``, then the number of jobs is set to 1 unless current joblib
-        backend context specifies otherwise.
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
-        See :term:`Glossary <n_jobs>`.
+        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
