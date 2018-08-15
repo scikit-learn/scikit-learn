@@ -335,7 +335,8 @@ def test_roc_curve_toydata():
     y_true = [0, 0]
     y_score = [0.25, 0.75]
     # assert UndefinedMetricWarning because of no positive sample in y_true
-    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true, y_score)
+    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve,
+                               y_true, y_score)
     assert_raises(ValueError, roc_auc_score, y_true, y_score)
     assert_array_almost_equal(tpr, [0., 0.5, 1.])
     assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
@@ -343,7 +344,8 @@ def test_roc_curve_toydata():
     y_true = [1, 1]
     y_score = [0.25, 0.75]
     # assert UndefinedMetricWarning because of no negative sample in y_true
-    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true, y_score)
+    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve,
+                               y_true, y_score)
     assert_raises(ValueError, roc_auc_score, y_true, y_score)
     assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
     assert_array_almost_equal(fpr, [0., 0.5, 1.])
@@ -519,6 +521,7 @@ def test_binary_clf_curve():
     msg = "multiclass format is not supported"
     assert_raise_message(ValueError, msg, precision_recall_curve,
                          y_true, y_pred)
+
 
 def test_precision_recall_curve():
     y_true, _, probas_pred = make_prediction(binary=True)
@@ -1098,25 +1101,58 @@ def test_ranking_loss_ties_handling():
 
 
 def test_partial_roc_auc_score():
-    # Check `roc_auc_score` for max_fpr != `None`
     y_true = np.array([0, 0, 1, 1])
-    assert roc_auc_score(y_true, y_true, max_fpr=1) == 1
-    assert roc_auc_score(y_true, y_true, max_fpr=0.001) == 1
-    with pytest.raises(ValueError):
-        assert roc_auc_score(y_true, y_true, max_fpr=-0.1)
-    with pytest.raises(ValueError):
-        assert roc_auc_score(y_true, y_true, max_fpr=1.1)
-    with pytest.raises(ValueError):
-        assert roc_auc_score(y_true, y_true, max_fpr=0)
 
-    y_scores = np.array([0.1,  0,  0.1, 0.01])
-    roc_auc_with_max_fpr_one = roc_auc_score(y_true, y_scores, max_fpr=1)
-    unconstrained_roc_auc = roc_auc_score(y_true, y_scores)
-    assert roc_auc_with_max_fpr_one == unconstrained_roc_auc
-    assert roc_auc_score(y_true, y_scores, max_fpr=0.3) == 0.5
+    assert_equal(roc_auc_score(y_true, y_true, min_fpr=0.1), 1)
+    assert_equal(roc_auc_score(y_true, y_true, min_fpr=0.001), 1)
+    assert_equal(roc_auc_score(y_true, y_true, max_fpr=0.1), 1)
+    assert_equal(roc_auc_score(y_true, y_true, max_fpr=0.001), 1)
 
+    assert_equal(roc_auc_score(y_true, y_true, min_tpr=0.1), 1)
+    assert_equal(roc_auc_score(y_true, y_true, min_tpr=0.001), 1)
+
+    y_scores = np.array([0.1, 0, 0.1, 0.01])
+
+    assert_almost_equal(roc_auc_score(y_true, y_scores, min_fpr=0.2),
+                        0.6953125)
+    assert_almost_equal(roc_auc_score(y_true, y_scores, min_tpr=0.2),
+                        0.6953125)
+    assert_almost_equal(roc_auc_score(y_true, y_scores, max_fpr=0.8),
+                        0.609375)
+    assert_equal(roc_auc_score(y_true, y_scores, max_tpr=0.8), 0.5)
+
+    assert_equal(roc_auc_score(y_true, y_scores, max_tpr=0.3), 0.5)
+    assert_equal(roc_auc_score(y_true, y_scores, max_fpr=0.3), 0.5)
+
+    # Unconstraint check
+    assert_equal(roc_auc_score(y_true, y_scores),
+                 roc_auc_score(y_true, y_scores, min_fpr=0))
+    assert_equal(roc_auc_score(y_true, y_scores),
+                 roc_auc_score(y_true, y_scores, max_fpr=1))
+    assert_equal(roc_auc_score(y_true, y_scores),
+                 roc_auc_score(y_true, y_scores, min_tpr=0))
+    assert_equal(roc_auc_score(y_true, y_scores),
+                 roc_auc_score(y_true, y_scores, max_tpr=1))
+
+    # Value error check
+    assert_raises(ValueError, roc_auc_score, y_true, y_true, min_fpr=1.1)
+    assert_raises(ValueError, roc_auc_score, y_true, y_true, min_tpr=1.1)
+    assert_raises(ValueError, roc_auc_score, y_true, y_true, max_fpr=-0.1)
+    assert_raises(ValueError, roc_auc_score, y_true, y_true, max_tpr=-0.1)
+
+    # max_tpr error value check
+    assert_raises(ValueError, roc_auc_score, y_true, y_true, max_tpr=0.1)
+
+    # Over specified check
+    assert_raises(ValueError, roc_auc_score, y_true, y_true,
+                  min_fpr=0.9, min_tpr=0.9)
+    assert_raises(ValueError, roc_auc_score, y_true, y_true,
+                  max_fpr=0.9, max_tpr=0.9)
+
+    # max_fpr alternate calculation
     y_true, y_pred, _ = make_prediction(binary=True)
     for max_fpr in np.linspace(1e-4, 1, 5):
         assert_almost_equal(
             roc_auc_score(y_true, y_pred, max_fpr=max_fpr),
-            _partial_roc_auc_score(y_true, y_pred, max_fpr))
+            _partial_roc_auc_score(y_true, y_pred, max_fpr)
+        )
