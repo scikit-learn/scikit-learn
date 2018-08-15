@@ -104,28 +104,9 @@ Support for Python 3.3 has been officially dropped.
   Linkage clustering via ``linkage='single'``. :issue:`9372` by :user:`Leland
   McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
 
-
-- :class:`ensemble.BaggingRegressor` and :class:`ensemble.BaggingClassifier` can now
-  be fit with missing/non-finite values in X and/or multi-output Y to support
-  wrapping pipelines that perform their own imputation.
-  :issue:`9707` by :user:`Jimmy Wan <jimmywan>`.
-
-
-Preprocessing
-
-- Expanded :class:`preprocessing.OneHotEncoder` to allow to encode
-  categorical string features as a numeric array using a one-hot (or dummy)
-  encoding scheme, and added :class:`preprocessing.OrdinalEncoder` to
-  convert to ordinal integers.  Those two classes now handle
-  encoding of all feature types (also handles string-valued features) and
-  derives the categories based on the unique values in the features instead of
-  the maximum value in the features. :issue:`9151` and :issue:`10521` by
-  :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
-  
 - |Feature| :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans` now support
   sample weights via new parameter ``sample_weight`` in ``fit`` function.
   :issue:`10933` by :user:`Johannes Hansen <jnhansen>`.
-
 
 - |Efficiency| :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
   :func:`cluster.k_means` passed with ``algorithm='full'`` now enforces
