@@ -267,8 +267,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
                                  "'auto' when behaviour == 'old'.")
 
             self.offset_ = -0.5
-            self._threshold_ = sp.stats.scoreatpercentile(
-                self.decision_function(X), 100. * self._contamination)
+            self._threshold_ = np.percentile(self.decision_function(X),
+                                             100. * self._contamination)
 
             return self
 
@@ -281,8 +281,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
         # else, define offset_ wrt contamination parameter, so that the
         # threshold_ attribute is implicitly 0 and is not needed anymore:
-        self.offset_ = sp.stats.scoreatpercentile(
-            self.score_samples(X), 100. * self._contamination)
+        self.offset_ = np.percentile(self.score_samples(X),
+                                     100. * self._contamination)
 
         return self
 

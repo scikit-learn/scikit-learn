@@ -32,7 +32,7 @@ from ..utils.validation import check_X_y
 from ..exceptions import (NotFittedError, ConvergenceWarning,
                           ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
-from ..utils import Parallel, delayed
+from ..utils import Parallel, delayed, effective_n_jobs
 from ..model_selection import check_cv
 from ..externals import six
 from ..metrics import get_scorer
@@ -1249,10 +1249,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                              self.dual)
 
         if self.solver == 'liblinear':
-            if self.n_jobs != 1:
+            if effective_n_jobs(self.n_jobs) != 1:
                 warnings.warn("'n_jobs' > 1 does not have any effect when"
                               " 'solver' is set to 'liblinear'. Got 'n_jobs'"
-                              " = {}.".format(self.n_jobs))
+                              " = {}.".format(effective_n_jobs(self.n_jobs)))
             self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
                 X, y, self.C, self.fit_intercept, self.intercept_scaling,
                 self.class_weight, self.penalty, self.dual, self.verbose,
