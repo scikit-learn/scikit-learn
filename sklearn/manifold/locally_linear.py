@@ -64,7 +64,7 @@ def barycenter_weights(X, Z, reg=1e-3):
     return B
 
 
-def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=1):
+def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     """Computes the barycenter weighted graph of k-Neighbors for points in X
 
     Parameters
@@ -186,7 +186,7 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
 def locally_linear_embedding(
         X, n_neighbors, n_components, reg=1e-3, eigen_solver='auto', tol=1e-6,
         max_iter=100, method='standard', hessian_tol=1E-4, modified_tol=1E-12,
-        random_state=None, n_jobs=1):
+        random_state=None, n_jobs=None):
     """Perform a Locally Linear Embedding analysis on the data.
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.
@@ -617,7 +617,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
     def __init__(self, n_neighbors=5, n_components=2, reg=1E-3,
                  eigen_solver='auto', tol=1E-6, max_iter=100,
                  method='standard', hessian_tol=1E-4, modified_tol=1E-12,
-                 neighbors_algorithm='auto', random_state=None, n_jobs=1):
+                 neighbors_algorithm='auto', random_state=None, n_jobs=None):
         self.n_neighbors = n_neighbors
         self.n_components = n_components
         self.reg = reg

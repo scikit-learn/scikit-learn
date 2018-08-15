@@ -28,7 +28,7 @@ from ..utils import Parallel, delayed
 from ..externals.six.moves import xrange
 from ..externals.six import string_types
 
-solve_triangular_args = {'check_finite': False}
+SOLVE_TRIANGULAR_ARGS = {'check_finite': False}
 
 
 def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
@@ -305,7 +305,7 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
                                         L[n_active, :n_active],
                                         trans=0, lower=1,
                                         overwrite_b=True,
-                                        **solve_triangular_args)
+                                        **SOLVE_TRIANGULAR_ARGS)
 
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
             diag = max(np.sqrt(np.abs(c - v)), eps)
@@ -358,9 +358,9 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
             break
 
         # least squares solution
-        least_squares, info = solve_cholesky(L[:n_active, :n_active],
-                                             sign_active[:n_active],
-                                             lower=True)
+        least_squares, _ = solve_cholesky(L[:n_active, :n_active],
+                                          sign_active[:n_active],
+                                          lower=True)
 
         if least_squares.size == 1 and least_squares == 0:
             # This happens because sign_active[:n_active] = 0
@@ -376,7 +376,7 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
                 L_ = L[:n_active, :n_active].copy()
                 while not np.isfinite(AA):
                     L_.flat[::n_active + 1] += (2 ** i) * eps
-                    least_squares, info = solve_cholesky(
+                    least_squares, _ = solve_cholesky(
                         L_, sign_active[:n_active], lower=True)
                     tmp = max(np.sum(least_squares * sign_active[:n_active]),
                               eps)
@@ -447,8 +447,8 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
         if drop and method == 'lasso':
 
             # handle the case when idx is not length of 1
-            [arrayfuncs.cholesky_delete(L[:n_active, :n_active], ii) for ii in
-                idx]
+            for ii in idx:
+                arrayfuncs.cholesky_delete(L[:n_active, :n_active], ii)
 
             n_active -= 1
             m, n = idx, n_active
@@ -625,7 +625,8 @@ class Lars(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.fit_path = fit_path
 
-    def _get_gram(self, precompute, X, y):
+    @staticmethod
+    def _get_gram(precompute, X, y):
         if (not hasattr(precompute, '__array__')) and (
                 (precompute is True) or
                 (precompute == 'auto' and X.shape[0] > X.shape[1]) or
@@ -1095,7 +1096,7 @@ class LarsCV(Lars):
 
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
                  normalize=True, precompute='auto', cv='warn',
-                 max_n_alphas=1000, n_jobs=1, eps=np.finfo(np.float).eps,
+                 max_n_alphas=1000, n_jobs=None, eps=np.finfo(np.float).eps,
                  copy_X=True, positive=False):
         self.max_iter = max_iter
         self.cv = cv
@@ -1154,7 +1155,7 @@ class LarsCV(Lars):
         all_alphas = all_alphas[::stride]
 
         mse_path = np.empty((len(all_alphas), len(cv_paths)))
-        for index, (alphas, active, coefs, residues) in enumerate(cv_paths):
+        for index, (alphas, _, _, residues) in enumerate(cv_paths):
             alphas = alphas[::-1]
             residues = residues[::-1]
             if alphas[0] != 0:
@@ -1325,7 +1326,7 @@ class LassoLarsCV(LarsCV):
 
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
                  normalize=True, precompute='auto', cv='warn',
-                 max_n_alphas=1000, n_jobs=1, eps=np.finfo(np.float).eps,
+                 max_n_alphas=1000, n_jobs=None, eps=np.finfo(np.float).eps,
                  copy_X=True, positive=False):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
@@ -1500,7 +1501,7 @@ class LassoLarsIC(LassoLars):
 
         Gram = self.precompute
 
-        alphas_, active_, coef_path_, self.n_iter_ = lars_path(
+        alphas_, _, coef_path_, self.n_iter_ = lars_path(
             X, y, Gram=Gram, copy_X=copy_X, copy_Gram=True, alpha_min=0.0,
             method='lasso', verbose=self.verbose, max_iter=max_iter,
             eps=self.eps, return_n_iter=True, positive=self.positive)

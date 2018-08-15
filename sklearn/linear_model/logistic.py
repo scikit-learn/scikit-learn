@@ -572,7 +572,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     coefs : ndarray, shape (n_cs, n_features) or (n_cs, n_features + 1)
         List of coefficients for the Logistic Regression model. If
         fit_intercept is set to True then the second dimension will be
-        n_features + 1, where the last item represents the intercept.
+        n_features + 1, where the last item represents the intercept. For
+        ``multiclass='multinomial'``, the shape is (n_classes, n_cs,
+        n_features) or (n_classes, n_cs, n_features + 1).
 
     Cs : ndarray
         Grid of Cs used for cross-validation.
@@ -762,13 +764,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             multi_w0 = np.reshape(w0, (classes.size, -1))
             if classes.size == 2:
                 multi_w0 = multi_w0[1][np.newaxis, :]
-            coefs.append(multi_w0)
+            coefs.append(multi_w0.copy())
         else:
             coefs.append(w0.copy())
 
         n_iter[i] = n_iter_i
 
-    return coefs, np.array(Cs), n_iter
+    return np.array(coefs), np.array(Cs), n_iter
 
 
 # helper function for LogisticCV
@@ -1043,8 +1045,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         instance used by `np.random`. Used when ``solver`` == 'sag' or
         'liblinear'.
 
-    solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
-        default: 'liblinear'
+    solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
+             default: 'liblinear'
+
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
@@ -1167,7 +1170,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='liblinear', max_iter=100,
-                 multi_class='ovr', verbose=0, warm_start=False, n_jobs=1):
+                 multi_class='ovr', verbose=0, warm_start=False, n_jobs=None):
 
         self.penalty = penalty
         self.dual = dual
@@ -1284,11 +1287,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         # The SAG solver releases the GIL so it's more efficient to use
         # threads for this solver.
         if self.solver in ['sag', 'saga']:
-            backend = 'threading'
+            prefer = 'threads'
         else:
-            backend = 'multiprocessing'
+            prefer = 'processes'
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                               backend=backend)(
+                               prefer=prefer)(
             path_func(X, y, pos_class=class_, Cs=[self.C],
                       fit_intercept=self.fit_intercept, tol=self.tol,
                       verbose=self.verbose, solver=self.solver,
@@ -1434,8 +1437,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         that can be used, look at :mod:`sklearn.metrics`. The
         default scoring option used is 'accuracy'.
 
-    solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
-        default: 'lbfgs'
+    solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
+             default: 'lbfgs'
+
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
@@ -1576,7 +1580,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     def __init__(self, Cs=10, fit_intercept=True, cv='warn', dual=False,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
-                 max_iter=100, class_weight=None, n_jobs=1, verbose=0,
+                 max_iter=100, class_weight=None, n_jobs=None, verbose=0,
                  refit=True, intercept_scaling=1., multi_class='ovr',
                  random_state=None):
         self.Cs = Cs
@@ -1688,11 +1692,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         # The SAG solver releases the GIL so it's more efficient to use
         # threads for this solver.
         if self.solver in ['sag', 'saga']:
-            backend = 'threading'
+            prefer = 'threads'
         else:
-            backend = 'multiprocessing'
+            prefer = 'processes'
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                               backend=backend)(
+                               prefer=prefer)(
             path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
                       fit_intercept=self.fit_intercept, penalty=self.penalty,
                       dual=self.dual, solver=self.solver, tol=self.tol,
