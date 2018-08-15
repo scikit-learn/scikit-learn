@@ -3,6 +3,7 @@
 import os
 import scipy as sp
 import shutil
+import warnings
 
 from sklearn import datasets
 from sklearn.datasets import mldata_filename, fetch_mldata
@@ -13,6 +14,7 @@ from sklearn.utils.testing import mock_mldata_urlopen
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_warns
 
 import pytest
 
@@ -46,7 +48,8 @@ def test_download(tmpdata):
         },
     })
     try:
-        mock = fetch_mldata('mock', data_home=tmpdata)
+        mock = assert_warns(DeprecationWarning, fetch_mldata,
+                            'mock', data_home=tmpdata)
         for n in ["COL_NAMES", "DESCR", "target", "data"]:
             assert_in(n, mock)
 
@@ -54,12 +57,14 @@ def test_download(tmpdata):
         assert_equal(mock.data.shape, (150, 4))
 
         assert_raises(datasets.mldata.HTTPError,
+                      assert_warns, DeprecationWarning,
                       fetch_mldata, 'not_existing_name')
     finally:
         datasets.mldata.urlopen = _urlopen_ref
 
 
-def test_fetch_one_column(tmpdata):
+def test_fetch_one_column(tmpdata, recwarn):
+    warnings.simplefilter('ignore', DeprecationWarning)
     _urlopen_ref = datasets.mldata.urlopen
     try:
         dataname = 'onecol'
@@ -82,7 +87,8 @@ def test_fetch_one_column(tmpdata):
         datasets.mldata.urlopen = _urlopen_ref
 
 
-def test_fetch_multiple_column(tmpdata):
+def test_fetch_multiple_column(tmpdata, recwarn):
+    warnings.simplefilter('ignore', DeprecationWarning)
     _urlopen_ref = datasets.mldata.urlopen
     try:
         # create fake data set in cache

@@ -25,12 +25,18 @@ from shutil import copyfileobj
 
 from .base import get_data_home
 from ..utils import Bunch
+from ..utils import deprecated
 
 MLDATA_BASE_URL = "http://mldata.org/repository/data/download/matlab/%s"
 
 
+@deprecated('mldata_filename was deprecated in version 0.20 and will be '
+            'removed in version 0.22')
 def mldata_filename(dataname):
     """Convert a raw name for a data set in a mldata.org filename.
+
+    .. deprecated:: 0.20
+        Will be removed in version 0.22
 
     Parameters
     ----------
@@ -46,9 +52,13 @@ def mldata_filename(dataname):
     return re.sub(r'[().]', '', dataname)
 
 
+@deprecated('fetch_mldata was deprecated in version 0.20 and will be removed '
+            'in version 0.22')
 def fetch_mldata(dataname, target_name='label', data_name='data',
                  transpose_data=True, data_home=None):
     """Fetch an mldata.org data set
+
+    mldata.org is no longer operational.
 
     If the file does not exist yet, it is downloaded from mldata.org .
 
@@ -69,6 +79,9 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
 
     mldata.org data sets may have multiple columns, which are stored in the
     Bunch object with their original name.
+
+    .. deprecated:: 0.20
+        Will be removed in version 0.22
 
     Parameters
     ----------
