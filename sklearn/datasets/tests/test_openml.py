@@ -177,8 +177,6 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
                      key_val_dict['status'], path_suffix)
         json_file_path = os.path.join(currdir, 'data', 'openml',
                                       str(data_id), mock_file)
-        print(".")
-        print("a.append(('%s', '%s'))" % (url, json_file_path))
         # load the file itself, to simulate a http error
         json_data = json.loads(read_fn(json_file_path, 'rb').
                                read().decode('utf-8'))
