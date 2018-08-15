@@ -349,9 +349,11 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     (not both). In case a name is given, a version can also be
     provided.
 
-    NOTE: he API is experimental in version 0.20 (particularly the return value
-    structure), and might have small backward-incompatible changes in future
-    releases.
+    .. note:: EXPERIMENTAL
+
+        The API is experimental in version 0.20 (particularly the return value
+        structure), and might have small backward-incompatible changes in
+        future releases.
 
     Parameters
     ----------
