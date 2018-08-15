@@ -25,7 +25,7 @@ from ..utils import Bunch
 __all__ = ['fetch_openml']
 
 _OPENML_PREFIX = "https://openml.org/"
-_SEARCH_NAME = "api/v1/json/data/list/data_name/{}/limit/1"
+_SEARCH_NAME = "api/v1/json/data/list/data_name/{}/limit/2"
 _DATA_INFO = "api/v1/json/data/{}"
 _DATA_FEATURES = "api/v1/json/data/features/{}"
 _DATA_FILE = "data/v1/download/{}"
@@ -250,7 +250,12 @@ def _get_data_info_by_name(name, version, data_home):
         error_msg = "No active dataset {} found.".format(name)
         json_data = _get_json_content_from_openml_api(url, error_msg, True,
                                                       data_home)
-        return json_data['data']['dataset'][0]
+        res = json_data['data']['dataset']
+        if len(res) > 1:
+            warn("Multiple active versions of the dataset matching the name"
+                 " {name} exist. Versions may be different, returning version"
+                 " {version}.".format(name=name, version=res[0]['version']))
+        return res[0]
 
     # an integer version has been provided
     url = (_SEARCH_NAME + "/data_version/{}").format(name, version)
