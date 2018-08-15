@@ -472,6 +472,15 @@ def test_warn_ignore_attribute(monkeypatch):
                          cache=False)
 
 
+def test_string_attribute(monkeypatch):
+    data_id = 40945
+    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    # single column test
+    assert_raise_message(ValueError,
+                         'STRING attributes are not yet supported',
+                         fetch_openml, data_id=data_id, cache=False)
+
+
 def test_illegal_column(monkeypatch):
     data_id = 61
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)

@@ -458,15 +458,20 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
 
+    for feature in features_list:
+        if 'true' in (feature['is_ignore'], feature['is_row_identifier']):
+            continue
+        if feature['data_type'] == 'string':
+            raise ValueError('STRING attributes are not yet supported')
+
     if target_column == "default-target":
         # determines the default target based on the data feature results
         # (which is currently more reliable than the data description;
         # see issue: https://github.com/openml/OpenML/issues/768)
         target_column = [feature['name'] for feature in features_list
                          if feature['is_target'] == 'true']
-
-    # for code-simplicity, make target_column by default a list
-    if isinstance(target_column, string_types):
+    elif isinstance(target_column, string_types):
+        # for code-simplicity, make target_column by default a list
         target_column = [target_column]
     elif target_column is None:
         target_column = []
