@@ -62,8 +62,9 @@ def _open_openml_url(openml_path, data_home):
 
         try:
             with gzip.GzipFile(local_path, 'wb') as fdst:
-                with urlopen(_OPENML_PREFIX + openml_path) as fsrc:
-                    shutil.copyfileobj(fsrc, fdst)
+                fsrc = urlopen(_OPENML_PREFIX + openml_path)
+                shutil.copyfileobj(fsrc, fdst)
+                fsrc.close()
         except Exception:
             os.unlink(local_path)
             raise
