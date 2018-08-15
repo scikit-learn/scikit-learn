@@ -16,8 +16,8 @@ def entry_sort_key(s):
     else:
         return -1
 
-# discard headings and other non-entry lines
 
+# discard headings and other non-entry lines
 text = ''.join(l for l in sys.stdin
                if l.startswith('- ') or l.startswith(' '))
 
