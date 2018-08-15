@@ -183,7 +183,7 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
         initializations are used (``n_init``), each run of the algorithm is
         computed in parallel.
 
-        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -309,7 +309,7 @@ class MDS(BaseEstimator):
         initializations are used (``n_init``), each run of the algorithm is
         computed in parallel.
 
-        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 

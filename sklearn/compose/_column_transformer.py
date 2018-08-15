@@ -95,7 +95,7 @@ boolean mask array or callable
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
-        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -671,7 +671,7 @@ def make_column_transformer(*transformers, **kwargs):
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
-        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 

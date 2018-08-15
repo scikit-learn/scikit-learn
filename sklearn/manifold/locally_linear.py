@@ -83,7 +83,7 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -257,7 +257,7 @@ def locally_linear_embedding(
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -588,7 +588,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 

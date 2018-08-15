@@ -265,7 +265,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
-        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -837,7 +837,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
-        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 

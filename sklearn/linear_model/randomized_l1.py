@@ -259,7 +259,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     n_jobs : int or None, optional (default=None)
         Number of CPUs to use during the resampling.
-        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -455,7 +455,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     n_jobs : int or None, optional (default=None)
         Number of CPUs to use during the resampling.
-        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -614,7 +614,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
 
     n_jobs : int or None, optional (default=None)
         Number of CPUs to use during the resampling.
-        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 

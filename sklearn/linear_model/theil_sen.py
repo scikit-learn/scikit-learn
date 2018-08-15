@@ -251,7 +251,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
 
     n_jobs : int or None, optional (default=None)
         Number of CPUs to use during the cross validation.
-        ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
