@@ -214,7 +214,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         ``None`` means 1 unless in a ``joblib.parallel_backend`` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-        
+
         When individual estimators are fast to train or predict
         using `n_jobs>1` can result in slower performance due
         to the overhead of spawning processes.
