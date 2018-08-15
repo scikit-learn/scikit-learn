@@ -254,6 +254,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     --------
     >>> from sklearn.decomposition import LatentDirichletAllocation
     >>> from sklearn.datasets import make_multilabel_classification
+    >>> # This produces a feature matrix of token counts, similar to what
+    >>> # CountVectorizer would produce on text.
     >>> X, _ = make_multilabel_classification(random_state=0)
     >>> lda = LatentDirichletAllocation(n_components=5,
     ...     random_state=0)

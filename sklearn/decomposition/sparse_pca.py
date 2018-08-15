@@ -110,6 +110,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     >>> X_transformed = transformer.transform(X)
     >>> X_transformed.shape
     (200, 5)
+    >>> # most values in the components_ are zero (sparsity)
     >>> np.mean(transformer.components_ == 0) # doctest: +ELLIPSIS
     0.9666...
 
@@ -344,6 +345,7 @@ class MiniBatchSparsePCA(SparsePCA):
     >>> X_transformed = transformer.transform(X)
     >>> X_transformed.shape
     (200, 5)
+    >>> # most values in the components_ are zero (sparsity)
     >>> np.mean(transformer.components_ == 0)
     0.94
 
