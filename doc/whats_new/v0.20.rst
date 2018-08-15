@@ -178,6 +178,11 @@ Support for Python 3.3 has been officially dropped.
 :mod:`sklearn.datasets`
 .......................
 
+- |MajorFeature| Added :func:`datasets.fetch_openml` to fetch datasets from
+  `OpenML <http://openml.org>`. OpenML is a free, open data sharing platform
+  and will be used instead of mldata as it provides better service availability.
+  :issue:`9908` by `Andreas Müller`_ and :user:`Jan N. van Rijn <janvanrijn>`.
+
 - |Feature| In :func:`datasets.make_blobs`, one can now pass a list to the
   `n_samples` parameter to indicate the number of samples to generate per
   cluster. :issue:`8617` by :user:`Maskani Filali Mohamed <maskani-moh>` and
@@ -203,7 +208,6 @@ Support for Python 3.3 has been officially dropped.
 - |Fix| Fixed a bug in :func:`datasets.make_circles`, where no odd number of
   data points could be generated. :issue:`10045` by :user:`Christian Braune
   <christianbraune79>`.
-
 
 :mod:`sklearn.decomposition`
 ............................
