@@ -340,6 +340,17 @@ class MDS(BaseEstimator):
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
 
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman1
+    >>> from sklearn.manifold import MDS
+    >>> X, _ = make_friedman1(random_state=0)
+    >>> X.shape
+    (100, 10)
+    >>> embedding = MDS(n_components=2, random_state=0)
+    >>> X_transformed = embedding.fit_transform(X)
+    >>> X_transformed.shape
+    (100, 2)
 
     References
     ----------

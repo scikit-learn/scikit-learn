@@ -80,6 +80,18 @@ class Isomap(BaseEstimator, TransformerMixin):
     dist_matrix_ : array-like, shape (n_samples, n_samples)
         Stores the geodesic distance matrix of training data.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman1
+    >>> from sklearn.manifold import Isomap
+    >>> X, _ = make_friedman1(random_state=0)
+    >>> X.shape
+    (100, 10)
+    >>> embedding = Isomap(n_components=2)
+    >>> X_transformed = embedding.fit_transform(X)
+    >>> X_transformed.shape
+    (100, 2)
+
     References
     ----------
 

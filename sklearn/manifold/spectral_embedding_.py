@@ -395,6 +395,18 @@ class SpectralEmbedding(BaseEstimator):
     affinity_matrix_ : array, shape = (n_samples, n_samples)
         Affinity_matrix constructed from samples or precomputed.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman1
+    >>> from sklearn.manifold import SpectralEmbedding
+    >>> X, _ = make_friedman1(random_state=0)
+    >>> X.shape
+    (100, 10)
+    >>> embedding = SpectralEmbedding(n_components=2, random_state=0)
+    >>> X_transformed = embedding.fit_transform(X)
+    >>> X_transformed.shape
+    (100, 2)
+
     References
     ----------
 
