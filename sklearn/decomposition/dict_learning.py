@@ -248,7 +248,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
     n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -464,7 +464,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 
     n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -662,7 +662,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
     n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -960,7 +960,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 
     n_jobs : int or None, optional (default=None)
         number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -1083,7 +1083,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     n_jobs : int or None, optional (default=None)
         number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -1237,7 +1237,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     n_jobs : int or None, optional (default=None)
         number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 

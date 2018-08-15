@@ -99,7 +99,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
 
     n_jobs : int or None, optional (default=None)
         The number of CPUs to use to do the computation.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -323,7 +323,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
 
     n_jobs : int or None, optional (default=None)
         The number of CPUs to use to do the computation.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -698,7 +698,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv='warn',
 
     n_jobs : int or None, optional (default=None)
         The number of CPUs to use to do the computation.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -992,7 +992,7 @@ def permutation_test_score(estimator, X, y, groups=None, cv='warn',
 
     n_jobs : int or None, optional (default=None)
         The number of CPUs to use to do the computation.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -1150,7 +1150,7 @@ def learning_curve(estimator, X, y, groups=None,
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -1397,7 +1397,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 

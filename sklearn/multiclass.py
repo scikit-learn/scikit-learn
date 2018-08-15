@@ -159,7 +159,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -458,7 +458,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -664,7 +664,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 

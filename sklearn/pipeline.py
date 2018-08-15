@@ -642,7 +642,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -849,7 +849,7 @@ def make_union(*transformers, **kwargs):
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 

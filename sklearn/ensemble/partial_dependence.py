@@ -204,7 +204,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         The lower and upper percentile used to create the extreme values
         for the PDP axes.
     n_jobs : int or None, optional (default=None)
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
     verbose : int

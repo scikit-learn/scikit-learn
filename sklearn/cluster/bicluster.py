@@ -233,7 +233,7 @@ class SpectralCoclustering(BaseSpectral):
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -379,7 +379,7 @@ class SpectralBiclustering(BaseSpectral):
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 

@@ -1186,7 +1186,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -1348,7 +1348,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -1518,7 +1518,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 

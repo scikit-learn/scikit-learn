@@ -379,7 +379,7 @@ class RFECV(RFE, MetaEstimatorMixin):
 
     n_jobs : int or None, optional (default=None)
         Number of cores to run in parallel while fitting across folds.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 

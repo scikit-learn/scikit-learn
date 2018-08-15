@@ -71,7 +71,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     n_jobs : int or None, optional (default=None)
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 

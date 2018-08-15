@@ -1097,7 +1097,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Number of CPU cores used when parallelizing over classes if
         multi_class='ovr'". This parameter is ignored when the ``solver`` is
         set to 'liblinear' regardless of whether 'multi_class' is specified or
-        not. ``None`` means 1 unless in a :obj:``joblib.parallel_backend``
+        not. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
         context. ``-1`` means using all processors.
         See :term:`Glossary <n_jobs>` for more details.
 
@@ -1499,7 +1499,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     n_jobs : int or None, optional (default=None)
         Number of CPU cores used during the cross-validation loop.
-        ``None`` means 1 unless in a :obj:``joblib.parallel_backend`` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
