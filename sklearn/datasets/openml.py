@@ -7,10 +7,10 @@ from warnings import warn
 
 try:
     # Python 3+
-    from urllib.request import urlopen
+    from urllib.request import urlopen, Request
 except ImportError:
     # Python 2
-    from urllib2 import urlopen
+    from urllib2 import urlopen, Request
 
 
 import numpy as np
@@ -61,8 +61,10 @@ def _open_openml_url(openml_path, data_home):
             pass
 
         try:
-            with gzip.GzipFile(local_path, 'wb') as fdst:
-                fsrc = urlopen(_OPENML_PREFIX + openml_path)
+            with open(local_path, 'wb') as fdst:
+                req = Request(_OPENML_PREFIX + openml_path)
+                req.add_header('Accept-encoding', 'gzip')
+                fsrc = urlopen(req)
                 shutil.copyfileobj(fsrc, fdst)
                 fsrc.close()
         except Exception:
