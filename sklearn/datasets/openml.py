@@ -196,8 +196,6 @@ def _convert_arff_data(arff_data, col_slice_x, col_slice_y):
     y : np.array
     """
     if isinstance(arff_data, list):
-        # FIXME: It would be better to use structured arrays, to circumvent
-        # using an dtype=object array
         data = np.array(arff_data, dtype=np.float64)
         X = np.array(data[:, col_slice_x], dtype=np.float64)
         y = np.array(data[:, col_slice_y], dtype=np.float64)
