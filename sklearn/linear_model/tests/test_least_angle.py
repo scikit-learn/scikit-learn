@@ -99,7 +99,9 @@ def test_simple_precomputed_sufficient_stats():
 
 def test_all_precomputed():
     # Test that lars_path with precomputed Gram and Xy gives the right answer
-    for method in ('lar', 'lasso'):
+    G = np.dot(X.T, X)
+    Xy = np.dot(X.T, y)
+    for method in 'lar', 'lasso':
         output = linear_model.lars_path(X, y, method=method)
         output_pre = linear_model.lars_path(X, y, Gram=G, Xy=Xy, method=method)
         for expected, got in zip(output, output_pre):
@@ -276,6 +278,8 @@ def test_no_path_all_precomputed_sufficient_stats():
                                         linear_model.LassoLarsIC])
 def test_lars_precompute(classifier):
     # Check for different values of precompute
+    G = np.dot(X.T, X)
+
     clf = classifier(precompute=G)
     output_1 = ignore_warnings(clf.fit)(X, y).coef_
     for precompute in [True, False, 'auto', None]:

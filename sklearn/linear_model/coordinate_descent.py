@@ -1613,13 +1613,13 @@ class MultiTaskElasticNet(Lasso):
 
     The optimization objective for MultiTaskElasticNet is::
 
-        (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
+        (1 / (2 * n_samples)) * ||Y - XW||_Fro^2
         + alpha * l1_ratio * ||W||_21
         + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
 
     Where::
 
-        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
+        ||W||_21 = sum_i sqrt(sum_j w_ij ^ 2)
 
     i.e. the sum of norm of each row.
 

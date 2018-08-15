@@ -32,7 +32,7 @@ from ..utils.validation import check_X_y
 from ..exceptions import (NotFittedError, ConvergenceWarning,
                           ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
-from ..utils import Parallel, delayed
+from ..utils import Parallel, delayed, effective_n_jobs
 from ..model_selection import check_cv
 from ..externals import six
 from ..metrics import get_scorer
@@ -61,8 +61,8 @@ def _intercept_dot(w, X, y):
         Coefficient vector without the intercept weight (w[-1]) if the
         intercept should be fit. Unchanged otherwise.
 
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Training data. Unchanged.
+    c : float
+        The intercept.
 
     yz : float
         y * np.dot(X, w).
@@ -1128,6 +1128,20 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
             ``max_iter``. ``n_iter_`` will now report at most ``max_iter``.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> X, y = load_iris(return_X_y=True)
+    >>> clf = LogisticRegression(random_state=0).fit(X, y)
+    >>> clf.predict(X[:2, :])
+    array([0, 0])
+    >>> clf.predict_proba(X[:2, :]) # doctest: +ELLIPSIS
+    array([[8.78...e-01, 1.21...e-01, 1.079...e-05],
+           [7.97...e-01, 2.02...e-01, 3.029...e-05]])
+    >>> clf.score(X, y)
+    0.96
+
     See also
     --------
     SGDClassifier : incrementally trained logistic regression (when given
@@ -1235,10 +1249,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                              self.dual)
 
         if self.solver == 'liblinear':
-            if self.n_jobs != 1:
+            if effective_n_jobs(self.n_jobs) != 1:
                 warnings.warn("'n_jobs' > 1 does not have any effect when"
                               " 'solver' is set to 'liblinear'. Got 'n_jobs'"
-                              " = {}.".format(self.n_jobs))
+                              " = {}.".format(effective_n_jobs(self.n_jobs)))
             self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
                 X, y, self.C, self.fit_intercept, self.intercept_scaling,
                 self.class_weight, self.penalty, self.dual, self.verbose,
@@ -1571,6 +1585,20 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     n_iter_ : array, shape (n_classes, n_folds, n_cs) or (1, n_folds, n_cs)
         Actual number of iterations for all classes, folds and Cs.
         In the binary or multinomial cases, the first dimension is equal to 1.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.linear_model import LogisticRegressionCV
+    >>> X, y = load_iris(return_X_y=True)
+    >>> clf = LogisticRegressionCV(cv=5, random_state=0).fit(X, y)
+    >>> clf.predict(X[:2, :])
+    array([0, 0])
+    >>> clf.predict_proba(X[:2, :]) # doctest: +ELLIPSIS
+    array([[8.72...e-01, 1.27...e-01, 5.50...e-14],
+           [6.76...e-01, 3.23...e-01, 2.11...e-13]])
+    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    0.9266...
 
     See also
     --------
