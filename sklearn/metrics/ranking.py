@@ -341,8 +341,15 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
     0.75
 
     """
+    # Hacky to handle PEP 3104 -- Access to Names in Outer Scopes in python 2
+    # See: https://www.python.org/dev/peps/pep-3104/
+    # https://stackoverflow.com/questions/2516652/scoping-error-in-recursive-closure
+    # NOTE: For python 3 can just remove the next two lines
+    # and uncomment the nonlocal line in _binary_roc_auc_score
+    min_fpr = [min_fpr]
+    max_fpr = [max_fpr]
     def _binary_roc_auc_score(y_true, y_score, sample_weight=None):
-        nonlocal min_fpr, max_fpr
+        #nonlocal min_fpr, max_fpr
         if len(np.unique(y_true)) != 2:
             raise ValueError("Only one class present in y_true. ROC AUC score "
                              "is not defined in that case.")
@@ -350,12 +357,12 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         fpr, tpr, _ = roc_curve(y_true, y_score,
                                 sample_weight=sample_weight)
 
-        if min_fpr == min_tpr == 0 and max_fpr == max_tpr == 1:
+        if min_fpr[0] == min_tpr == 0 and max_fpr[0] == max_tpr == 1:
             return auc(fpr, tpr)
 
-        if min_fpr != 0 and min_tpr != 0:
+        if min_fpr[0] != 0 and min_tpr != 0:
             raise ValueError("Can only specify one of min_fpr or min_tpr")
-        if max_fpr != 1 and max_tpr != 1:
+        if max_fpr[0] != 1 and max_tpr != 1:
             raise ValueError("Can only specify one of max_fpr or max_tpr")
 
         # PAUC Calculation
@@ -372,22 +379,22 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
             fpr_interp_min = [fpr[min_tpr_idx-1], fpr[min_tpr_idx]]
             tpr_interp_min = [tpr[min_tpr_idx-1], tpr[min_tpr_idx]]
 
-            min_fpr = np.interp(min_tpr, tpr_interp_min, fpr_interp_min)
-        if min_fpr != 0:
-            if min_fpr < 0 or min_fpr >= min(1, max_fpr):
+            min_fpr[0] = np.interp(min_tpr, tpr_interp_min, fpr_interp_min)
+        if min_fpr[0] != 0:
+            if min_fpr[0] < 0 or min_fpr[0] >= min(1, max_fpr[0]):
                 raise ValueError(
                     "Expected min_fpr in range [0, min(1, max_fpr)], "
-                    "got: {}".format(max_fpr)
+                    "got: {}".format(max_fpr[0])
                 )
             # Add a single point at min_fpr by linear interpolation
-            min_fpr_idx = np.searchsorted(fpr, min_fpr, 'left')
+            min_fpr_idx = np.searchsorted(fpr, min_fpr[0], 'left')
 
             fpr_interp_min = [fpr[min_fpr_idx-1], fpr[min_fpr_idx]]
             tpr_interp_min = [tpr[min_fpr_idx-1], tpr[min_fpr_idx]]
 
-            fpr = np.concatenate(([min_fpr], fpr[min_fpr_idx:]))
+            fpr = np.concatenate(([min_fpr[0]], fpr[min_fpr_idx:]))
             tpr = np.concatenate((
-                np.interp([min_fpr], fpr_interp_min, tpr_interp_min),
+                np.interp([min_fpr[0]], fpr_interp_min, tpr_interp_min),
                 tpr[min_fpr_idx:]
             ))
 
@@ -404,38 +411,38 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
             tpr_interp_max = [tpr[max_tpr_idx-1], tpr[max_tpr_idx]]
             fpr_interp_max = [fpr[max_tpr_idx-1], fpr[max_tpr_idx]]
 
-            max_fpr = np.interp(max_tpr, tpr_interp_max, fpr_interp_max)
+            max_fpr[0] = np.interp(max_tpr, tpr_interp_max, fpr_interp_max)
 
-            if max_fpr <= max(0, min_fpr) or max_fpr > 1:
+            if max_fpr[0] <= max(0, min_fpr[0]) or max_fpr[0] > 1:
                 raise ValueError(
                     "max_tpr is causing max_fpr in outside of "
                     "[max(0, min_fpr), 1], "
-                    "got: {}".format(max_fpr)
+                    "got: {}".format(max_fpr[0])
                 )
-        if max_fpr != 1:
-            if max_fpr <= max(0, min_fpr) or max_fpr > 1:
+        if max_fpr[0] != 1:
+            if max_fpr[0] <= max(0, min_fpr[0]) or max_fpr[0] > 1:
                 raise ValueError(
                     "Expected max_fpr in range [max(0, min_fpr), 1], "
-                    "got: {}".format(max_fpr)
+                    "got: {}".format(max_fpr[0])
                 )
             # Add a single point at max_fpr by linear interpolation
-            max_fpr_idx = np.searchsorted(fpr, max_fpr, 'right')
+            max_fpr_idx = np.searchsorted(fpr, max_fpr[0], 'right')
 
             fpr_interp_max = [fpr[max_fpr_idx-1], fpr[max_fpr_idx]]
             tpr_interp_max = [tpr[max_fpr_idx-1], tpr[max_fpr_idx]]
 
-            fpr = np.concatenate((fpr[:max_fpr_idx], [max_fpr]))
+            fpr = np.concatenate((fpr[:max_fpr_idx], [max_fpr[0]]))
             tpr = np.concatenate((
                 tpr[:max_fpr_idx],
-                np.interp([max_fpr], fpr_interp_max, tpr_interp_max)
+                np.interp([max_fpr[0]], fpr_interp_max, tpr_interp_max)
             ))
 
         partial_auc = auc(fpr, tpr)
 
         # McClish correction: standardize result to be 0.5 if non-discriminant
         # and 1 if maximal
-        min_area = 0.5 * (max_fpr**2 - min_fpr**2)
-        max_area = max_fpr - min_fpr
+        min_area = 0.5 * (max_fpr[0]**2 - min_fpr[0]**2)
+        max_area = max_fpr[0] - min_fpr[0]
 
         return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
