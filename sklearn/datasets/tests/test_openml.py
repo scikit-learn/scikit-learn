@@ -139,28 +139,36 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
         path_suffix = '.gz'
         read_fn = gzip.open
 
-    def _mock_urlopen_data_description(url):
+    def _mock_urlopen_data_description(url, has_gzip_header):
         assert url.startswith(url_prefix_data_description)
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             'data_description.json%s' % path_suffix)
+
+        if has_gzip_header:
+            return open(path, 'rb')
         return read_fn(path, 'rb')
 
-    def _mock_urlopen_data_features(url):
+    def _mock_urlopen_data_features(url, has_gzip_header):
         assert url.startswith(url_prefix_data_features)
-
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             'data_features.json%s' % path_suffix)
+
+        if has_gzip_header:
+            return open(path, 'rb')
         return read_fn(path, 'rb')
 
-    def _mock_urlopen_download_data(url):
+    def _mock_urlopen_download_data(url, has_gzip_header):
         assert (url.startswith(url_prefix_download_data))
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             'data.arff%s' % path_suffix)
+
+        if has_gzip_header:
+            return open(path, 'rb')
         return read_fn(path, 'rb')
 
-    def _mock_urlopen_data_list(url):
+    def _mock_urlopen_data_list(url, has_gzip_header):
         # url contains key value pairs of attributes, e.g.,
         # openml.org/api/v1/json/data_name/iris/data_version/1 should
         # ideally become {data_name: 'iris', data_version: '1'}
@@ -184,17 +192,22 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
             raise HTTPError(url=None, code=412,
                             msg='Simulated mock error',
                             hdrs=None, fp=None)
+
+        if has_gzip_header:
+            return open(json_file_path, 'rb')
         return read_fn(json_file_path, 'rb')
 
-    def _mock_urlopen(url):
+    def _mock_urlopen(request):
+        url = request.get_full_url()
+        has_gzip_header = request.get_header('Accept-encoding') == "gzip"
         if url.startswith(url_prefix_data_list):
-            return _mock_urlopen_data_list(url)
+            return _mock_urlopen_data_list(url, has_gzip_header)
         elif url.startswith(url_prefix_data_features):
-            return _mock_urlopen_data_features(url)
+            return _mock_urlopen_data_features(url, has_gzip_header)
         elif url.startswith(url_prefix_download_data):
-            return _mock_urlopen_download_data(url)
+            return _mock_urlopen_download_data(url, has_gzip_header)
         elif url.startswith(url_prefix_data_description):
-            return _mock_urlopen_data_description(url)
+            return _mock_urlopen_data_description(url, has_gzip_header)
         else:
             raise ValueError('Unknown mocking URL pattern: %s' % url)
 

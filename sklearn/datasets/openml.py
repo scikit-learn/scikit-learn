@@ -50,8 +50,9 @@ def _open_openml_url(openml_path, data_home):
     result : stream
         A stream to the OpenML resource
     """
+    req = Request(_OPENML_PREFIX + openml_path)
     if data_home is None:
-        return urlopen(_OPENML_PREFIX + openml_path)
+        return urlopen(req)
     local_path = os.path.join(data_home, 'openml.org', openml_path + ".gz")
     if not os.path.exists(local_path):
         try:
@@ -62,7 +63,6 @@ def _open_openml_url(openml_path, data_home):
 
         try:
             with open(local_path, 'wb') as fdst:
-                req = Request(_OPENML_PREFIX + openml_path)
                 req.add_header('Accept-encoding', 'gzip')
                 fsrc = urlopen(req)
                 shutil.copyfileobj(fsrc, fdst)
