@@ -253,7 +253,8 @@ def _get_data_info_by_name(name, version, data_home):
         res = json_data['data']['dataset']
         if len(res) > 1:
             warn("Multiple active versions of the dataset matching the name"
-                 " {name} exist. Versions may be different, returning version"
+                 " {name} exist. Versions may be fundamentally different, "
+                 "returning version"
                  " {version}.".format(name=name, version=res[0]['version']))
         return res[0]
 
@@ -369,7 +370,10 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     version : integer or 'active', default='active'
         Version of the dataset. Can only be provided if also ``name`` is given.
-        If 'active' the oldest version that's still active is used.
+        If 'active' the oldest version that's still active is used. Since
+        there may be more than one active version of a dataset, and those
+        versions may fundamentally be different from one another, setting an
+        exact version is highly recommended.
 
     data_id : int or None
         OpenML ID of the dataset. The most specific way of retrieving a

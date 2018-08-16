@@ -217,8 +217,8 @@ def test_fetch_openml_iris(monkeypatch):
     assert_warns_message(
         UserWarning,
         "Multiple active versions of the dataset matching the name"
-        " iris exist. Versions may be different, returning version"
-        " 1.",
+        " iris exist. Versions may be fundamentally different, "
+        "returning version 1.",
         _fetch_dataset_from_openml,
         **{'data_id': data_id, 'data_name': data_name,
            'data_version': data_version,
