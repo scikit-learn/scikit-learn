@@ -347,7 +347,7 @@ def _verify_target_data_type(features_dict, target_columns):
 
 
 def fetch_openml(name=None, version='active', data_id=None, data_home=None,
-                 target_column='default-target', cache=True):
+                 target_column='default-target', cache=True, return_X_y=False):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -394,6 +394,10 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     cache : boolean, default=True
         Whether to cache downloaded datasets using joblib.
+        
+    return_X_y : boolean, default=False.
+        If True, returns ``(data, target)`` instead of a Bunch object.
+            See below for more information about the `data` and `target` object
 
     Returns
     -------
@@ -415,6 +419,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
             that the value encoded as i is ith in the list.
         details : dict
             More metadata from OpenML
+            
+    (data, target) : tuple if ``return_X_y`` is True
 
         .. note:: EXPERIMENTAL
 
@@ -562,5 +568,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         DESCR=description, details=data_description,
         categories=nominal_attributes,
         url="https://www.openml.org/d/{}".format(data_id))
+    
+    if return_X_y:
+        return X, y
 
     return bunch
