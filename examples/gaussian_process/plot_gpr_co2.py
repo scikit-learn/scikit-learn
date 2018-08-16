@@ -70,9 +70,9 @@ from matplotlib import pyplot as plt
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \
     import RBF, WhiteKernel, RationalQuadratic, ExpSineSquared
-from sklearn.datasets import fetch_mldata
+from sklearn.datasets import fetch_openml
 
-data = fetch_mldata('mauna-loa-atmospheric-co2').data
+data = fetch_openml('mauna-loa-atmospheric-co2').data
 X = data[:, [1]]
 y = data[:, 0]
 
