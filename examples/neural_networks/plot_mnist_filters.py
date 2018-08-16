@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import fetch_openml
 from sklearn.neural_network import MLPClassifier
 
-mnist = fetch_openml("MNIST original")
+mnist = fetch_openml("mnist_784")
 # rescale the data, use the traditional train/test split
 X, y = mnist.data / 255., mnist.target
 X_train, X_test = X[:60000], X[60000:]

@@ -44,10 +44,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.metrics import jaccard_similarity_score
 from sklearn.linear_model import LogisticRegression
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import fetch_mldata
 
 # Load a multi-label dataset
-yeast = fetch_openml('yeast')
+yeast = fetch_mldata('yeast')
 X = yeast['data']
 Y = yeast['target'].transpose().toarray()
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.2,

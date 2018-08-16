@@ -35,7 +35,7 @@ print(__doc__)
 t0 = time.time()
 train_samples = 5000
 
-mnist = fetch_openml('MNIST original')
+mnist = fetch_openml('mnist_784')
 X = mnist.data.astype('float64')
 y = mnist.target
 random_state = check_random_state(0)

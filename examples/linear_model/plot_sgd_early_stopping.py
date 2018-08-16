@@ -58,7 +58,7 @@ print(__doc__)
 
 def load_mnist(n_samples=None, class_0=0, class_1=8):
     """Load MNIST, select two classes, shuffle and return only n_samples."""
-    mnist = fetch_openml('MNIST original')
+    mnist = fetch_openml('mnist_784')
 
     # take only two classes for binary classification
     mask = np.logical_or(mnist.target == class_0, mnist.target == class_1)
