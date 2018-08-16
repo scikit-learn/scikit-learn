@@ -467,7 +467,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                  'with refit=False. %s is '
                                  'available only after refitting on the best '
                                  'parameters. You can refit an estimator '
-                                 'manually using the ``best_parameters_`` '
+                                 'manually using the ``best_params_`` '
                                  'attribute'
                                  % (type(self).__name__, method_name))
         else:
@@ -969,7 +969,7 @@ class GridSearchCV(BaseSearchCV):
         ``GridSearchCV`` instance.
 
         Also for multiple metric evaluation, the attributes ``best_index_``,
-        ``best_score_`` and ``best_parameters_`` will only be available if
+        ``best_score_`` and ``best_params_`` will only be available if
         ``refit`` is set and all of them will be determined w.r.t this specific
         scorer.
 
@@ -1313,7 +1313,7 @@ class RandomizedSearchCV(BaseSearchCV):
         ``RandomizedSearchCV`` instance.
 
         Also for multiple metric evaluation, the attributes ``best_index_``,
-        ``best_score_`` and ``best_parameters_`` will only be available if
+        ``best_score_`` and ``best_params_`` will only be available if
         ``refit`` is set and all of them will be determined w.r.t this specific
         scorer.
 

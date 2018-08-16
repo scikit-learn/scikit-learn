@@ -23,6 +23,7 @@ from .lfw import fetch_lfw_people
 from .twenty_newsgroups import fetch_20newsgroups
 from .twenty_newsgroups import fetch_20newsgroups_vectorized
 from .mldata import fetch_mldata, mldata_filename
+from .openml import fetch_openml
 from .samples_generator import make_classification
 from .samples_generator import make_multilabel_classification
 from .samples_generator import make_hastie_10_2
@@ -65,6 +66,7 @@ __all__ = ['clear_data_home',
            'fetch_covtype',
            'fetch_rcv1',
            'fetch_kddcup99',
+           'fetch_openml',
            'get_data_home',
            'load_boston',
            'load_diabetes',
