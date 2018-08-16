@@ -273,7 +273,7 @@ class MiniBatchSparsePCA(SparsePCA):
         whether to shuffle the data before splitting it in batches
 
     n_jobs : int or None, optional (default=None)
-        number of parallel jobs to run.
+        Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
