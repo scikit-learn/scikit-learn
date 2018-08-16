@@ -598,6 +598,18 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         Stores nearest neighbors instance, including BallTree or KDtree
         if applicable.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.manifold import LocallyLinearEmbedding
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> embedding = LocallyLinearEmbedding(n_components=2)
+    >>> X_transformed = embedding.fit_transform(X[:100])
+    >>> X_transformed.shape
+    (100, 2)
+
     References
     ----------
 
