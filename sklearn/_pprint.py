@@ -76,6 +76,7 @@ class _Formatter(object):
         self.set_formatter(tuple, self.__class__._format_tuple)
         self.set_formatter(BaseEstimator, self.__class__._format_estimator)
         self.set_formatter(np.ndarray, self.__class__._format_ndarray)
+        self.set_formatter('function', self.__class__._format_function)
 
     def set_formatter(self, cls, callback):
         """Associate given callback with the formatting of objects with class
@@ -92,6 +93,8 @@ class _Formatter(object):
             type_ = type(value)
         elif isinstance(value, BaseEstimator):
             type_ = BaseEstimator
+        elif callable(value):
+            type_ = 'function'
         else:
             type_ = object
 
@@ -118,6 +121,9 @@ class _Formatter(object):
 
     def _format_ndarray(self, value, indent):
         return self._format_all(value.tolist(), indent + self.step)
+
+    def _format_function(self, value, indent):
+        return value.__name__
 
     def _format_estimator(self, value, indent):
         if self.changed_only:
