@@ -214,11 +214,23 @@ def test_fetch_openml_iris(monkeypatch):
     expected_missing = 0
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
-    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
-                               expected_observations, expected_features,
-                               expected_missing,
-                               np.float64, object, expect_sparse=False,
-                               compare_default_target=True)
+    assert_warns_message(
+        UserWarning,
+        "Multiple active versions of the dataset matching the name"
+        " iris exist. Versions may be fundamentally different, "
+        "returning version 1.",
+        _fetch_dataset_from_openml,
+        **{'data_id': data_id, 'data_name': data_name,
+           'data_version': data_version,
+           'target_column': target_column,
+           'expected_observations': expected_observations,
+           'expected_features': expected_features,
+           'expected_missing': expected_missing,
+           'expect_sparse': False,
+           'expected_data_dtype': np.float64,
+           'expected_target_dtype': object,
+           'compare_default_target': True}
+    )
 
 
 def test_decode_iris():
