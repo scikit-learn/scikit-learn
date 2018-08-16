@@ -146,7 +146,7 @@ __author__ = 'Renato de Pontes Pereira, Matthias Feurer, Joel Nothman'
 __author_email__ = ('renato.ppontes@gmail.com, '
                     'feurerm@informatik.uni-freiburg.de, '
                     'joel.nothman@gmail.com')
-__version__ = '2.3'
+__version__ = '2.3.1'
 
 import re
 import sys
@@ -171,7 +171,7 @@ _RE_NONTRIVIAL_DATA = re.compile('["\'{}\\s]')
 
 
 def _build_re_values():
-    quoted_re = r'''(?x)
+    quoted_re = r'''
                     "      # open quote followed by zero or more of:
                     (?:
                         (?<!\\)    # no additional backslash
@@ -185,7 +185,7 @@ def _build_re_values():
                     "      # close quote
                     '''
     # a value is surrounded by " or by ' or contains no quotables
-    value_re = r'''(?x)(?:
+    value_re = r'''(?:
         %s|          # a value may be surrounded by "
         %s|          # or by '
         [^,\s"'{}]+  # or may contain no characters requiring quoting
@@ -253,7 +253,7 @@ def _parse_values(s):
             for match in _RE_SPARSE_KEY_VALUES.finditer(s):
                 if not match.group(1):
                     raise BadLayout('Error parsing %r' % match.group())
-            raise
+            raise BadLayout('Unknown parsing error')
     else:
         # an ARFF syntax error
         for match in _RE_DENSE_VALUES.finditer(s):
@@ -310,7 +310,7 @@ class BadDataFormat(ArffException):
         )
 
 class BadAttributeType(ArffException):
-    '''Error raised when some invalid type is provided into the attribute
+    '''Error raised when some invalid type is provided into the attribute 
     declaration.'''
     message = 'Bad @ATTRIBUTE type, at line %d.'
 
@@ -327,7 +327,7 @@ class BadAttributeName(ArffException):
         )
 
 class BadNominalValue(ArffException):
-    '''Error raised when a value in used in some data instance but is not
+    '''Error raised when a value in used in some data instance but is not 
     declared into it respective attribute declaration.'''
 
     def __init__(self, value):
@@ -347,7 +347,7 @@ class BadNominalFormatting(ArffException):
         )
 
 class BadNumericalValue(ArffException):
-    '''Error raised when and invalid numerical value is used in some data
+    '''Error raised when and invalid numerical value is used in some data 
     instance.'''
     message = 'Invalid numerical value, at line %d.'
 
@@ -365,14 +365,14 @@ class BadLayout(ArffException):
             self.message = BadLayout.message + ' ' + msg.replace('%', '%%')
 
 class BadObject(ArffException):
-    '''Error raised when the object representing the ARFF file has something
+    '''Error raised when the object representing the ARFF file has something 
     wrong.'''
 
     def __str__(self):
         return 'Invalid object.'
 
 class BadObject(ArffException):
-    '''Error raised when the object representing the ARFF file has something
+    '''Error raised when the object representing the ARFF file has something 
     wrong.'''
     def __init__(self, msg=''):
         self.msg = msg
@@ -636,7 +636,7 @@ class ArffDecoder(object):
         characters.
 
         This method must receive a normalized string, i.e., a string without
-        padding, including the "\r\n" characters.
+        padding, including the "\r\n" characters. 
 
         :param s: a normalized string.
         :return: a string with the decoded comment.
@@ -647,13 +647,13 @@ class ArffDecoder(object):
     def _decode_relation(self, s):
         '''(INTERNAL) Decodes a relation line.
 
-        The relation declaration is a line with the format ``@RELATION
+        The relation declaration is a line with the format ``@RELATION 
         <relation-name>``, where ``relation-name`` is a string. The string must
         start with alphabetic character and must be quoted if the name includes
         spaces, otherwise this method will raise a `BadRelationFormat` exception.
 
         This method must receive a normalized string, i.e., a string without
-        padding, including the "\r\n" characters.
+        padding, including the "\r\n" characters. 
 
         :param s: a normalized string.
         :return: a string with the decoded relation name.
@@ -670,12 +670,12 @@ class ArffDecoder(object):
     def _decode_attribute(self, s):
         '''(INTERNAL) Decodes an attribute line.
 
-        The attribute is the most complex declaration in an arff file. All
+        The attribute is the most complex declaration in an arff file. All 
         attributes must follow the template::
 
              @attribute <attribute-name> <datatype>
 
-        where ``attribute-name`` is a string, quoted if the name contains any
+        where ``attribute-name`` is a string, quoted if the name contains any 
         whitespace, and ``datatype`` can be:
 
         - Numerical attributes as ``NUMERIC``, ``INTEGER`` or ``REAL``.
@@ -683,13 +683,13 @@ class ArffDecoder(object):
         - Dates (NOT IMPLEMENTED).
         - Nominal attributes with format:
 
-            {<nominal-name1>, <nominal-name2>, <nominal-name3>, ...}
+            {<nominal-name1>, <nominal-name2>, <nominal-name3>, ...} 
 
         The nominal names follow the rules for the attribute names, i.e., they
         must be quoted if the name contains whitespaces.
 
         This method must receive a normalized string, i.e., a string without
-        padding, including the "\r\n" characters.
+        padding, including the "\r\n" characters. 
 
         :param s: a normalized string.
         :return: a tuple (ATTRIBUTE_NAME, TYPE_OR_VALUES).
@@ -874,8 +874,8 @@ class ArffEncoder(object):
     def _encode_relation(self, name):
         '''(INTERNAL) Decodes a relation line.
 
-        The relation declaration is a line with the format ``@RELATION
-        <relation-name>``, where ``relation-name`` is a string.
+        The relation declaration is a line with the format ``@RELATION 
+        <relation-name>``, where ``relation-name`` is a string. 
 
         :param name: a string.
         :return: a string with the encoded relation declaration.
@@ -901,7 +901,7 @@ class ArffEncoder(object):
         - Dates (NOT IMPLEMENTED).
         - Nominal attributes with format:
 
-            {<nominal-name1>, <nominal-name2>, <nominal-name3>, ...}
+            {<nominal-name1>, <nominal-name2>, <nominal-name3>, ...} 
 
         This method must receive a the name of the attribute and its type, if
         the attribute type is nominal, ``type`` must be a list of values.
@@ -936,7 +936,7 @@ class ArffEncoder(object):
     def iter_encode(self, obj):
         '''The iterative version of `arff.ArffEncoder.encode`.
 
-        This encodes iteratively a given object and return, one-by-one, the
+        This encodes iteratively a given object and return, one-by-one, the 
         lines of the ARFF file.
 
         :param obj: the object containing the ARFF information.
