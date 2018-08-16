@@ -568,7 +568,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         DESCR=description, details=data_description,
         categories=nominal_attributes,
         url="https://www.openml.org/d/{}".format(data_id))
-    
+
     if return_X_y:
         return X, y
 
