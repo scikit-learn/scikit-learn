@@ -20,7 +20,7 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import fetch_mldata
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -35,7 +35,7 @@ print(__doc__)
 t0 = time.time()
 train_samples = 5000
 
-mnist = fetch_openml('mnist_784')
+mnist = fetch_mldata('MNIST original')
 X = mnist.data.astype('float64')
 y = mnist.target
 random_state = check_random_state(0)
