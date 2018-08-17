@@ -409,7 +409,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             # Line 10: Compute log marginal likelihood in loop and use as
             #          convergence criterion
             lml = -0.5 * a.T.dot(f) \
-                - np.log(1 + np.exp(-(self.y_train_ * 2 - 1) * f)).sum() \
+                - np.log1p(np.exp(-(self.y_train_ * 2 - 1) * f)).sum() \
                 - np.log(np.diag(L)).sum()
             # Check if we have converged (log marginal likelihood does
             # not decrease)
@@ -563,7 +563,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
                  warm_start=False, copy_X_train=True, random_state=None,
-                 multi_class="one_vs_rest", n_jobs=1):
+                 multi_class="one_vs_rest", n_jobs=None):
         self.kernel = kernel
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer

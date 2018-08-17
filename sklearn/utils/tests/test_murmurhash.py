@@ -75,6 +75,6 @@ def test_uniform_distribution():
         bins[murmurhash3_32(i, positive=True) % n_bins] += 1
 
     means = bins / n_samples
-    expected = np.ones(n_bins) / n_bins
+    expected = np.full(n_bins, 1. / n_bins)
 
     assert_array_almost_equal(means / expected, np.ones(n_bins), 2)

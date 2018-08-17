@@ -395,6 +395,18 @@ class SpectralEmbedding(BaseEstimator):
     affinity_matrix_ : array, shape = (n_samples, n_samples)
         Affinity_matrix constructed from samples or precomputed.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.manifold import SpectralEmbedding
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> embedding = SpectralEmbedding(n_components=2)
+    >>> X_transformed = embedding.fit_transform(X[:100])
+    >>> X_transformed.shape
+    (100, 2)
+
     References
     ----------
 
@@ -413,7 +425,7 @@ class SpectralEmbedding(BaseEstimator):
 
     def __init__(self, n_components=2, affinity="nearest_neighbors",
                  gamma=None, random_state=None, eigen_solver=None,
-                 n_neighbors=None, n_jobs=1):
+                 n_neighbors=None, n_jobs=None):
         self.n_components = n_components
         self.affinity = affinity
         self.gamma = gamma
@@ -487,8 +499,6 @@ class SpectralEmbedding(BaseEstimator):
             Interpret X as precomputed adjacency graph computed from
             samples.
 
-        Y: Ignored
-
         Returns
         -------
         self : object
@@ -528,8 +538,6 @@ class SpectralEmbedding(BaseEstimator):
             X : array-like, shape (n_samples, n_samples),
             Interpret X as precomputed adjacency graph computed from
             samples.
-
-        Y: Ignored
 
         Returns
         -------

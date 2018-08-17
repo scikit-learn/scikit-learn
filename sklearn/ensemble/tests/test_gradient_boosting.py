@@ -12,7 +12,7 @@ import pytest
 
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.datasets import make_classification
+from sklearn.datasets import make_classification, fetch_california_housing
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
@@ -450,6 +450,34 @@ def test_max_feature_regression():
     gbrt.fit(X_train, y_train)
     deviance = gbrt.loss_(y_test, gbrt.decision_function(X_test))
     assert_true(deviance < 0.5, "GB failed with deviance %.4f" % deviance)
+
+
+def test_feature_importance_regression():
+    """Test that Gini importance is calculated correctly.
+
+    This test follows the example from [1]_ (pg. 373).
+
+    .. [1] Friedman, J., Hastie, T., & Tibshirani, R. (2001). The elements
+       of statistical learning. New York: Springer series in statistics.
+    """
+    california = fetch_california_housing()
+    X, y = california.data, california.target
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    reg = GradientBoostingRegressor(loss='huber', learning_rate=0.1,
+                                    max_leaf_nodes=6, n_estimators=100,
+                                    random_state=0)
+    reg.fit(X_train, y_train)
+    sorted_idx = np.argsort(reg.feature_importances_)[::-1]
+    sorted_features = [california.feature_names[s] for s in sorted_idx]
+
+    # The most important feature is the median income by far.
+    assert sorted_features[0] == 'MedInc'
+
+    # The three subsequent features are the following. Their relative ordering
+    # might change a bit depending on the randomness of the trees and the
+    # train / test split.
+    assert set(sorted_features[1:4]) == {'Longitude', 'AveOccup', 'Latitude'}
 
 
 def test_max_feature_auto():
