@@ -12,7 +12,6 @@ from math import sqrt, ceil
 
 import numpy as np
 from scipy import linalg
-from numpy.lib.stride_tricks import as_strided
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import Parallel, delayed, effective_n_jobs
@@ -407,12 +406,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
             R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
     if return_r2:
         R **= 2
-        # R is fortran-ordered. For numpy version < 1.6, sum does not
-        # follow the quick striding first, and is thus inefficient on
-        # fortran ordered data. We take a flat view of the data with no
-        # striding
-        R = as_strided(R, shape=(R.size, ), strides=(R.dtype.itemsize,))
-        R = np.sum(R)
+        R = R.sum()
         return dictionary, R
     return dictionary
 
