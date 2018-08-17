@@ -167,6 +167,8 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
         return read_fn(path, 'rb')
 
     def _mock_urlopen_data_list(url):
+        assert url.startswith(url_prefix_data_list)
+
         json_file_path = os.path.join(currdir, 'data', 'openml',
                                       str(data_id), _file_name(url, '.json'))
         # load the file itself, to simulate a http error
