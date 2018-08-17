@@ -399,8 +399,9 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
                 np.clip(dictionary[:, k], 0, None, out=dictionary[:, k])
             # Setting corresponding coefs to 0
             code[k, :] = 0.0
-            dictionary[:, k] /= sqrt(np.dot(dictionary[:, k],
-                                            dictionary[:, k]))
+            atom_norm = sqrt(np.dot(dictionary[:, k],
+                                    dictionary[:, k]))
+            dictionary[:, k] /= atom_norm
         else:
             dictionary[:, k] /= atom_norm
             # R <- -1.0 * U_k * V_k^T + R
