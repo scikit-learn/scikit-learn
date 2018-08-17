@@ -406,7 +406,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
             R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
     if return_r2:
         R **= 2
-        R = np.sum(R)
+        R = R.sum()
         return dictionary, R
     return dictionary
 
