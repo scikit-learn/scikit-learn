@@ -143,7 +143,7 @@
 
 cimport cython
 cimport numpy as np
-from libc.math cimport fabs, sqrt, exp, cos, pow, log
+from libc.math cimport fabs, sqrt, exp, cos, pow, log, log1p
 from libc.stdlib cimport calloc, malloc, free
 from libc.string cimport memcpy
 from sklearn.utils.lgamma cimport lgamma
@@ -486,7 +486,7 @@ cdef DTYPE_t _log_kernel_norm(DTYPE_t h, ITYPE_t d,
     elif kernel == EXPONENTIAL_KERNEL:
         factor = logSn(d - 1) + lgamma(d)
     elif kernel == LINEAR_KERNEL:
-        factor = logVn(d) - np.log1p(d)
+        factor = logVn(d) - log1p(d)
     elif kernel == COSINE_KERNEL:
         # this is derived from a chain rule integration
         factor = 0
