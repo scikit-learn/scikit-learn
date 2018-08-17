@@ -4,6 +4,7 @@ import gzip
 import json
 import numpy as np
 import os
+import re
 import scipy.sparse
 import sklearn
 
@@ -132,6 +133,7 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
     url_prefix_data_features = "https://openml.org/api/v1/json/data/features/"
     url_prefix_download_data = "https://openml.org/data/v1/"
     url_prefix_data_list = "https://openml.org/api/v1/json/data/list/"
+    url_prefix = "https://openml.org/"
 
     path_suffix = ''
     read_fn = open
@@ -139,47 +141,41 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
         path_suffix = '.gz'
         read_fn = gzip.open
 
+    def _file_name(url, suffix):
+        return re.sub('[^0-9a-zA-Z]', '-', url[len(url_prefix):]) \
+            + suffix + path_suffix
+
     def _mock_urlopen_data_description(url):
         assert url.startswith(url_prefix_data_description)
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
-                            'data_description.json%s' % path_suffix)
+                            _file_name(url, '.json'))
+        #print("\nurls.append('%s')\npaths.append('%s')" % (url, path))
         return read_fn(path, 'rb')
 
     def _mock_urlopen_data_features(url):
         assert url.startswith(url_prefix_data_features)
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
-                            'data_features.json%s' % path_suffix)
+                            _file_name(url, '.json'))
+        #print("\nurls.append('%s')\npaths.append('%s')" % (url, path))
         return read_fn(path, 'rb')
 
     def _mock_urlopen_download_data(url):
         assert (url.startswith(url_prefix_download_data))
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
-                            'data.arff%s' % path_suffix)
+                            _file_name(url, '.arff'))
+        #print("\nurls.append('%s')\npaths.append('%s')" % (url, path))
         return read_fn(path, 'rb')
 
     def _mock_urlopen_data_list(url):
-        # url contains key value pairs of attributes, e.g.,
-        # openml.org/api/v1/json/data_name/iris/data_version/1 should
-        # ideally become {data_name: 'iris', data_version: '1'}
-        assert url.startswith(url_prefix_data_list)
-        att_list = url[len(url_prefix_data_list):].split('/')
-        key_val_dict = dict(zip(att_list[::2], att_list[1::2]))
-        # add defaults, so we can make assumptions about the content
-        if 'data_version' not in key_val_dict:
-            key_val_dict['data_version'] = None
-        if 'status' not in key_val_dict:
-            key_val_dict['status'] = "active"
-        mock_file = "data_list__%s_%s_%s.json%s" % \
-                    (key_val_dict['data_name'], key_val_dict['data_version'],
-                     key_val_dict['status'], path_suffix)
         json_file_path = os.path.join(currdir, 'data', 'openml',
-                                      str(data_id), mock_file)
+                                      str(data_id), _file_name(url, '.json'))
         # load the file itself, to simulate a http error
         json_data = json.loads(read_fn(json_file_path, 'rb').
                                read().decode('utf-8'))
+        #print("\nurls.append('%s')\npaths.append('%s')" % (url, json_file_path))
         if 'error' in json_data:
             raise HTTPError(url=None, code=412,
                             msg='Simulated mock error',
