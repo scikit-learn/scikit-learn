@@ -29,6 +29,7 @@ _SEARCH_NAME = "api/v1/json/data/list/data_name/{}/limit/1"
 _DATA_INFO = "api/v1/json/data/{}"
 _DATA_FEATURES = "api/v1/json/data/features/{}"
 _DATA_FILE = "data/v1/download/{}"
+_DATA_TASKS = "api/v1/json/task/list/data_id/{}"
 
 
 def _open_openml_url(openml_path, data_home):
@@ -288,6 +289,12 @@ def _get_data_features(data_id, data_home):
                                                   data_home)
     return json_data['data_features']['feature']
 
+def _get_tasks_by_data_id(data_id, data_home):
+    url = _DATA_TASKS.format(data_id)
+    error_message = "Task information not found for data_id {}".format(data_id)
+    json_data = _get_json_content_from_openml_api(url, error_message, True,
+                                                  data_home)
+    return json_data
 
 def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
     # Accesses an ARFF file on the OpenML server. Documentation:
@@ -540,6 +547,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     description = u"{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
+    data_tasks = _get_tasks_by_data_id(data_id, data_home)
+    # print(data_tasks)
 
     # reshape y back to 1-D array, if there is only 1 target column; back
     # to None if there are not target columns
@@ -552,6 +561,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         data=X, target=y, feature_names=data_columns,
         DESCR=description, details=data_description,
         categories=nominal_attributes,
+        tasks=data_tasks,
         url="https://www.openml.org/d/{}".format(data_id))
 
     return bunch
