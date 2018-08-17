@@ -150,7 +150,6 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             _file_name(url, '.json'))
-        #print("\nurls.append('%s')\npaths.append('%s')" % (url, path))
         return read_fn(path, 'rb')
 
     def _mock_urlopen_data_features(url):
@@ -158,7 +157,6 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             _file_name(url, '.json'))
-        #print("\nurls.append('%s')\npaths.append('%s')" % (url, path))
         return read_fn(path, 'rb')
 
     def _mock_urlopen_download_data(url):
@@ -166,7 +164,6 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             _file_name(url, '.arff'))
-        #print("\nurls.append('%s')\npaths.append('%s')" % (url, path))
         return read_fn(path, 'rb')
 
     def _mock_urlopen_data_list(url):
@@ -175,7 +172,6 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
         # load the file itself, to simulate a http error
         json_data = json.loads(read_fn(json_file_path, 'rb').
                                read().decode('utf-8'))
-        #print("\nurls.append('%s')\npaths.append('%s')" % (url, json_file_path))
         if 'error' in json_data:
             raise HTTPError(url=None, code=412,
                             msg='Simulated mock error',
