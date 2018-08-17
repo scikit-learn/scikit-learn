@@ -533,10 +533,11 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         # Compute gradient of loss w.r.t. `transform`
         weighted_p_ij = masked_p_ij - p_ij * p
-        gradient = 2 * (X_embedded.T.dot(weighted_p_ij + weighted_p_ij.T) -
-                        X_embedded.T * np.sum(weighted_p_ij, axis=0)).dot(X)
-        # time complexity: O(n_components x n_samples x
-        # min(n_samples, n_features))
+        weighted_p_ij_sym = weighted_p_ij + weighted_p_ij.T
+        np.fill_diagonal(weighted_p_ij_sym, - weighted_p_ij.sum(axis=0))
+        gradient = 2 * (X_embedded.T.dot(weighted_p_ij_sym)).dot(X)
+        # time complexity of the gradient: O(n_components x n_samples x (
+        # n_samples + n_features))
 
         if self.verbose:
             t_funcall = time.time() - t_funcall
