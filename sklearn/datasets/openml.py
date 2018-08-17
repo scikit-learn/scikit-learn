@@ -394,7 +394,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     cache : boolean, default=True
         Whether to cache downloaded datasets using joblib.
-        
+
     return_X_y : boolean, default=False.
         If True, returns ``(data, target)`` instead of a Bunch object.
             See below for more information about the `data` and `target` object
@@ -419,7 +419,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
             that the value encoded as i is ith in the list.
         details : dict
             More metadata from OpenML
-            
+
     (data, target) : tuple if ``return_X_y`` is True
 
         .. note:: EXPERIMENTAL
