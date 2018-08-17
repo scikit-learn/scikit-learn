@@ -18,6 +18,7 @@ from sklearn.externals.six.moves.urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
 
+
 currdir = os.path.dirname(os.path.abspath(__file__))
 # if True, urlopen will be monkey patched to only use local files
 test_offline = True
