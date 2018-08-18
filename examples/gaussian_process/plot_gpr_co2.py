@@ -8,7 +8,7 @@ Learning" [RW2006]. It illustrates an example of complex kernel engineering and
 hyperparameter optimization using gradient ascent on the
 log-marginal-likelihood. The data consists of the monthly average atmospheric
 CO2 concentrations (in parts per million by volume (ppmv)) collected at the
-Mauna Loa Observatory in Hawaii, between 1958 and 1997. The objective is to
+Mauna Loa Observatory in Hawaii, between 1958 and 2001. The objective is to
 model the CO2 concentration as a function of the time t.
 
 The kernel is composed of several terms that are responsible for explaining
@@ -57,11 +57,11 @@ overall noise level is very small, indicating that the data can be very well
 explained by the model. The figure shows also that the model makes very
 confident predictions until around 2015.
 """
-print(__doc__)
-
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #
 # License: BSD 3 clause
+
+from __future__ import division, print_function
 
 import numpy as np
 
@@ -70,11 +70,46 @@ from matplotlib import pyplot as plt
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \
     import RBF, WhiteKernel, RationalQuadratic, ExpSineSquared
-from sklearn.datasets import fetch_mldata
+try:
+    from urllib.request import urlopen
+except ImportError:
+    # Python 2
+    from urllib2 import urlopen
 
-data = fetch_mldata('mauna-loa-atmospheric-co2').data
-X = data[:, [1]]
-y = data[:, 0]
+print(__doc__)
+
+
+def load_mauna_loa_atmospheric_c02():
+    url = ('http://cdiac.ess-dive.lbl.gov/'
+           'ftp/trends/co2/sio-keel-flask/maunaloa_c.dat')
+    months = []
+    ppmv_sums = []
+    counts = []
+    for line in urlopen(url):
+        line = line.decode('utf8')
+        if not line.startswith('MLO'):
+            # ignore headers
+            continue
+        station, date, weight, flag, ppmv = line.split()
+        y = date[:2]
+        m = date[2:4]
+        month_float = (int(('20' if y < '20' else '19') + y) +
+                       (int(m) - 1) / 12)
+        if not months or month_float != months[-1]:
+            months.append(month_float)
+            ppmv_sums.append(float(ppmv))
+            counts.append(1)
+        else:
+            # aggregate monthly sum to produce average
+            ppmv_sums[-1] += float(ppmv)
+            counts[-1] += 1
+
+    months = np.asarray(months).reshape(-1, 1)
+    avg_ppmvs = np.asarray(ppmv_sums) / counts
+    return months, avg_ppmvs
+
+
+X, y = load_mauna_loa_atmospheric_c02()
 
 # Kernel with parameters given in GPML book
 k1 = 66.0**2 * RBF(length_scale=67.0)  # long term smooth rising trend
