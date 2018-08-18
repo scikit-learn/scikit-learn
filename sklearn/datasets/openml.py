@@ -563,13 +563,13 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     elif y.shape[1] == 0:
         y = None
 
+    if return_X_y:
+        return X, y
+
     bunch = Bunch(
         data=X, target=y, feature_names=data_columns,
         DESCR=description, details=data_description,
         categories=nominal_attributes,
         url="https://www.openml.org/d/{}".format(data_id))
-
-    if return_X_y:
-        return X, y
 
     return bunch
