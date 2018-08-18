@@ -46,7 +46,7 @@ from sklearn.linear_model import LogisticRegression
 
 print(__doc__)
 
-# Load a multi-label dataset
+# Load a multi-label dataset from https://www.openml.org/d/40597
 yeast = fetch_openml('yeast', version=4)
 X = yeast.data
 Y = yeast.target == 'TRUE'

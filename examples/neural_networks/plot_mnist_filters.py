@@ -26,6 +26,7 @@ from sklearn.neural_network import MLPClassifier
 
 print(__doc__)
 
+# Load data from https://www.openml.org/d/554
 mnist = fetch_openml('mnist_784', version=1)
 X = mnist.data
 y = mnist.target

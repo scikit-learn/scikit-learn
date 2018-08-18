@@ -35,6 +35,7 @@ print(__doc__)
 t0 = time.time()
 train_samples = 5000
 
+# Load data from https://www.openml.org/d/554
 mnist = fetch_openml('mnist_784', version=1)
 X = mnist.data
 y = mnist.target
