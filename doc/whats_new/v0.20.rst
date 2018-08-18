@@ -1105,6 +1105,14 @@ Miscellaneous
   safe and could result in a "pop from empty list" error. :issue:`9569`
   by `Andreas Müller`_.
 
+- |API| The default value of ``n_jobs`` is changed from ``1`` to ``None`` in
+  all related functions and classes. ``n_jobs=None`` means ``unset``. It will
+  generally be interpreted as ``n_jobs=1``, unless the current
+  ``joblib.Parallel`` backend context specifies otherwise (See
+  :term:`Glossary <n_jobs>` for additional information). Note that this change
+  happens immediately (i.e., without a deprecation cycle).
+  :issue:`11741` by `Olivier Grisel`_.
+
 Changes to estimator checks
 ---------------------------
 
