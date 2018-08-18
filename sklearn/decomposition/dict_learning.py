@@ -385,7 +385,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     for k in range(n_components):
         # R <- 1.0 * U_k * V_k^T + R
         R = ger(1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
-        dictionary[:, k] = np.dot(R, code[k, :].T)
+        dictionary[:, k] = np.dot(R, code[k, :])
         if positive:
             np.clip(dictionary[:, k], 0, None, out=dictionary[:, k])
         # Scale k'th atom
