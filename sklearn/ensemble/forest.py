@@ -1229,8 +1229,8 @@ class RandomForestRegressor(ForestRegressor):
 
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
-    .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
-           Machine Learning, 63(1), 3-42, 2006.
+    .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized 
+           trees", Machine Learning, 63(1), 3-42, 2006.
 
     See also
     --------
@@ -1474,8 +1474,8 @@ class ExtraTreesClassifier(ForestClassifier):
     References
     ----------
 
-    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
-           Machine Learning, 63(1), 3-42, 2006.
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized 
+           trees", Machine Learning, 63(1), 3-42, 2006.
 
     See also
     --------
