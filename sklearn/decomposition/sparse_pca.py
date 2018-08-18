@@ -48,8 +48,11 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    n_jobs : int,
+    n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     U_init : array of shape (n_samples, n_components),
         Initial values for the loadings for warm restart scenarios.
@@ -269,8 +272,11 @@ class MiniBatchSparsePCA(SparsePCA):
     shuffle : boolean,
         whether to shuffle the data before splitting it in batches
 
-    n_jobs : int,
-        number of parallel jobs to run, or -1 to autodetect.
+    n_jobs : int or None, optional (default=None)
+        Number of parallel jobs to run.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     method : {'lars', 'cd'}
         lars: uses the least angle regression method to solve the lasso problem

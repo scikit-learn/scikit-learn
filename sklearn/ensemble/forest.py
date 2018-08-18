@@ -863,9 +863,11 @@ class RandomForestClassifier(ForestClassifier):
         Whether to use out-of-bag samples to estimate
         the generalization accuracy.
 
-    n_jobs : integer, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        If -1, then the number of jobs is set to the number of cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1146,9 +1148,11 @@ class RandomForestRegressor(ForestRegressor):
         whether to use out-of-bag samples to estimate
         the R^2 on unseen data.
 
-    n_jobs : integer, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        If -1, then the number of jobs is set to the number of cores.
+        `None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1382,9 +1386,11 @@ class ExtraTreesClassifier(ForestClassifier):
         Whether to use out-of-bag samples to estimate
         the generalization accuracy.
 
-    n_jobs : integer, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        If -1, then the number of jobs is set to the number of cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1635,9 +1641,11 @@ class ExtraTreesRegressor(ForestRegressor):
     oob_score : bool, optional (default=False)
         Whether to use out-of-bag samples to estimate the R^2 on unseen data.
 
-    n_jobs : integer, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        If -1, then the number of jobs is set to the number of cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1827,9 +1835,11 @@ class RandomTreesEmbedding(BaseForest):
         Whether or not to return a sparse CSR matrix, as default behavior,
         or to return a dense array compatible with dense pipeline operators.
 
-    n_jobs : integer, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        If -1, then the number of jobs is set to the number of cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;

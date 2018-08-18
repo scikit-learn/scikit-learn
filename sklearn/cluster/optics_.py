@@ -118,9 +118,11 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
-    n_jobs : int, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Returns
     -------
@@ -243,9 +245,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
-    n_jobs : int, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------

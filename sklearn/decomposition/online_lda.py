@@ -215,9 +215,11 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Max number of iterations for updating document topic distribution in
         the E-step.
 
-    n_jobs : int, optional (default=1)
-        The number of jobs to use in the E-step. If -1, all CPUs are used. For
-        ``n_jobs`` below -1, (n_cpus + 1 + n_jobs) are used.
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to use in the E-step.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : int, optional (default=0)
         Verbosity level.

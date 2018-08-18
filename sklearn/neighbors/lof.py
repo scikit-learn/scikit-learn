@@ -110,9 +110,11 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         that you should only use predict, decision_function and score_samples
         on new unseen data and not on the training set.
 
-    n_jobs : int, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
         Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
 
 

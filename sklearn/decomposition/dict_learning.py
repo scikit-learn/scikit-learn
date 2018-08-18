@@ -245,8 +245,11 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     max_iter : int, 1000 by default
         Maximum number of iterations to perform if `algorithm='lasso_cd'`.
 
-    n_jobs : int, optional
+    n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     check_input : boolean, optional
         If False, the input arrays X and dictionary will not be checked.
@@ -453,8 +456,11 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    n_jobs : int,
-        Number of parallel jobs to run, or -1 to autodetect.
+    n_jobs : int or None, optional (default=None)
+        Number of parallel jobs to run.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     dict_init : array of shape (n_components, n_features),
         Initial value for the dictionary for warm restart scenarios.
@@ -648,8 +654,11 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     shuffle : boolean,
         Whether to shuffle the data before splitting it in batches.
 
-    n_jobs : int,
-        Number of parallel jobs to run, or -1 to autodetect.
+    n_jobs : int or None, optional (default=None)
+        Number of parallel jobs to run.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     method : {'lars', 'cd'}
         lars: uses the least angle regression method to solve the lasso problem
@@ -943,8 +952,11 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    n_jobs : int,
-        number of parallel jobs to run
+    n_jobs : int or None, optional (default=None)
+        Number of parallel jobs to run.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     positive_code : bool
         Whether to enforce positivity when finding the code.
@@ -1063,8 +1075,11 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
-    n_jobs : int,
-        number of parallel jobs to run
+    n_jobs : int or None, optional (default=None)
+        Number of parallel jobs to run.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     code_init : array of shape (n_samples, n_components),
         initial value for the code, for warm restart
@@ -1214,8 +1229,11 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    n_jobs : int,
-        number of parallel jobs to run
+    n_jobs : int or None, optional (default=None)
+        Number of parallel jobs to run.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     batch_size : int,
         number of samples in each mini-batch

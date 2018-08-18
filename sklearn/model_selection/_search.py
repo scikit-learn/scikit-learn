@@ -903,8 +903,11 @@ class GridSearchCV(BaseSearchCV):
            0.19 and will be removed in version 0.21. Pass fit parameters to
            the ``fit`` method instead.
 
-    n_jobs : int, default=1
+    n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
@@ -1247,8 +1250,11 @@ class RandomizedSearchCV(BaseSearchCV):
            0.19 and will be removed in version 0.21. Pass fit parameters to
            the ``fit`` method instead.
 
-    n_jobs : int, default=1
+    n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
