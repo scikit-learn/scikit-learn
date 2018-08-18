@@ -558,6 +558,21 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
     n_classes_ : int
         The number of classes in the training data
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.gaussian_process import GaussianProcessClassifier
+    >>> from sklearn.gaussian_process.kernels import RBF
+    >>> X, y = load_iris(return_X_y=True)
+    >>> kernel = 1.0 * RBF(1.0)
+    >>> gpc = GaussianProcessClassifier(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpc.score(X, y) # doctest: +ELLIPSIS
+    0.9866...
+    >>> gpc.predict_proba(X[:2,:])
+    array([[0.83548752, 0.03228706, 0.13222543],
+           [0.79064206, 0.06525643, 0.14410151]])
+
     .. versionadded:: 0.18
     """
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
