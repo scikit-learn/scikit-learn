@@ -210,7 +210,7 @@ Support for Python 3.3 has been officially dropped.
   <christianbraune79>`.
 
 - |API| Deprecated :func:`sklearn.datasets.fetch_mldata` to be removed in
-  version 0.22. MLData.org is no longer operational. Until removal it will
+  version 0.22. mldata.org is no longer operational. Until removal it will
   remain possible to load cached datasets. :issue:`11466` by `Joel Nothman`_.
 
 :mod:`sklearn.decomposition`
