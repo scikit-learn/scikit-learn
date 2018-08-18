@@ -99,6 +99,24 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_friedman1
+    >>> from sklearn.decomposition import SparsePCA
+    >>> X, _ = make_friedman1(n_samples=200, n_features=30, random_state=0)
+    >>> transformer = SparsePCA(n_components=5,
+    ...         normalize_components=True,
+    ...         random_state=0)
+    >>> transformer.fit(X) # doctest: +ELLIPSIS
+    SparsePCA(...)
+    >>> X_transformed = transformer.transform(X)
+    >>> X_transformed.shape
+    (200, 5)
+    >>> # most values in the components_ are zero (sparsity)
+    >>> np.mean(transformer.components_ == 0) # doctest: +ELLIPSIS
+    0.9666...
+
     See also
     --------
     PCA
@@ -317,6 +335,25 @@ class MiniBatchSparsePCA(SparsePCA):
     mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_friedman1
+    >>> from sklearn.decomposition import MiniBatchSparsePCA
+    >>> X, _ = make_friedman1(n_samples=200, n_features=30, random_state=0)
+    >>> transformer = MiniBatchSparsePCA(n_components=5,
+    ...         batch_size=50,
+    ...         normalize_components=True,
+    ...         random_state=0)
+    >>> transformer.fit(X) # doctest: +ELLIPSIS
+    MiniBatchSparsePCA(...)
+    >>> X_transformed = transformer.transform(X)
+    >>> X_transformed.shape
+    (200, 5)
+    >>> # most values in the components_ are zero (sparsity)
+    >>> np.mean(transformer.components_ == 0)
+    0.94
 
     See also
     --------
