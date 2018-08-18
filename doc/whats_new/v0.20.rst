@@ -1072,17 +1072,25 @@ Miscellaneous
   :func:`metrics.pairwise_distances_chunked`. See :ref:`working_memory`.
   :issue:`10280` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
+- |Feature| The version of :mod:`joblib` bundled with Scikit-learn is now 0.12.
+  This uses a new default multiprocessing implementation, named `loky
+  <https://github.com/tomMoral/loky>`_. While this may incur some memory and
+  communication overhead, it should provide greater cross-platform stability
+  than relying on Python standard library multiprocessing. :issue:`11741` by
+  the Joblib developers, especially :user:`Thomas Moreau <tomMoral>` and
+  `Olivier Grisel`_.
+
+- |Feature| An environment variable to use the site joblib instead of the
+  vendored one was added (:ref:`environment_variable`). The main API of joblib
+  is now exposed in :mod:`sklearn.utils`.
+  :issue:`11166` by `Gael Varoquaux`_.
+
 - |Feature| Add almost complete PyPy 3 support. Known unsupported
   functionalities are :func:`datasets.load_svmlight_file`,
   :class:`feature_extraction.FeatureHasher` and
   :class:`feature_extraction.text.HashingVectorizer`. For running on PyPy,
   PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+ are required.
   :issue:`11010` by :user:`Ronan Lamy <rlamy>` and `Roman Yurchak`_.
-
-- |Feature| An environment variable to use the site joblib instead of the
-  vendored one was added (:ref:`environment_variable`). The main API of joblib
-  is now exposed in :mod:`sklearn.utils`.
-  :issue:`11166` by `Gael Varoquaux`_.
 
 - |Feature| A utility method :func:`sklearn.show_versions()` was added to
   print out information relevant for debugging. It includes the user system,
