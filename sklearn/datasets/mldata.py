@@ -112,40 +112,6 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
         'data', the data to learn, 'target', the classification labels,
         'DESCR', the full description of the dataset, and
         'COL_NAMES', the original names of the dataset columns.
-
-    Examples
-    --------
-    Load the 'iris' dataset from mldata.org:
-
-    >>> from sklearn.datasets.mldata import fetch_mldata
-    >>> import tempfile
-    >>> test_data_home = tempfile.mkdtemp()
-
-    >>> iris = fetch_mldata('iris', data_home=test_data_home)
-    >>> iris.target.shape
-    (150,)
-    >>> iris.data.shape
-    (150, 4)
-
-    Load the 'leukemia' dataset from mldata.org, which needs to be transposed
-    to respects the scikit-learn axes convention:
-
-    >>> leuk = fetch_mldata('leukemia', transpose_data=True,
-    ...                     data_home=test_data_home)
-    >>> leuk.data.shape
-    (72, 7129)
-
-    Load an alternative 'iris' dataset, which has different names for the
-    columns:
-
-    >>> iris2 = fetch_mldata('datasets-UCI iris', target_name=1,
-    ...                      data_name=0, data_home=test_data_home)
-    >>> iris3 = fetch_mldata('datasets-UCI iris',
-    ...                      target_name='class', data_name='double0',
-    ...                      data_home=test_data_home)
-
-    >>> import shutil
-    >>> shutil.rmtree(test_data_home)
     """
 
     # normalize dataset name
