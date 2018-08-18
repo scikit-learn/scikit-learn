@@ -574,7 +574,7 @@ def test_error():
 
 def test_min_samples_split():
     """Test min_samples_split parameter"""
-    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -607,7 +607,7 @@ def test_min_samples_split():
 
 def test_min_samples_leaf():
     # Test if leaves contain more than leaf_count training examples
-    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -792,7 +792,7 @@ def test_min_impurity_split():
     # test if min_impurity_split creates leaves with impurity
     # [0, min_impurity_split) when min_samples_leaf = 1 and
     # min_samples_split = 2.
-    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder

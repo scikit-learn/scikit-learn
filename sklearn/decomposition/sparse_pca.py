@@ -48,8 +48,11 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    n_jobs : int,
+    n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     U_init : array of shape (n_samples, n_components),
         Initial values for the loadings for warm restart scenarios.
@@ -96,6 +99,24 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_friedman1
+    >>> from sklearn.decomposition import SparsePCA
+    >>> X, _ = make_friedman1(n_samples=200, n_features=30, random_state=0)
+    >>> transformer = SparsePCA(n_components=5,
+    ...         normalize_components=True,
+    ...         random_state=0)
+    >>> transformer.fit(X) # doctest: +ELLIPSIS
+    SparsePCA(...)
+    >>> X_transformed = transformer.transform(X)
+    >>> X_transformed.shape
+    (200, 5)
+    >>> # most values in the components_ are zero (sparsity)
+    >>> np.mean(transformer.components_ == 0) # doctest: +ELLIPSIS
+    0.9666...
+
     See also
     --------
     PCA
@@ -103,8 +124,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     DictionaryLearning
     """
     def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
-                 max_iter=1000, tol=1e-8, method='lars', n_jobs=1, U_init=None,
-                 V_init=None, verbose=False, random_state=None,
+                 max_iter=1000, tol=1e-8, method='lars', n_jobs=None,
+                 U_init=None, V_init=None, verbose=False, random_state=None,
                  normalize_components=False):
         self.n_components = n_components
         self.alpha = alpha
@@ -269,8 +290,11 @@ class MiniBatchSparsePCA(SparsePCA):
     shuffle : boolean,
         whether to shuffle the data before splitting it in batches
 
-    n_jobs : int,
-        number of parallel jobs to run, or -1 to autodetect.
+    n_jobs : int or None, optional (default=None)
+        Number of parallel jobs to run.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     method : {'lars', 'cd'}
         lars: uses the least angle regression method to solve the lasso problem
@@ -312,6 +336,25 @@ class MiniBatchSparsePCA(SparsePCA):
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_friedman1
+    >>> from sklearn.decomposition import MiniBatchSparsePCA
+    >>> X, _ = make_friedman1(n_samples=200, n_features=30, random_state=0)
+    >>> transformer = MiniBatchSparsePCA(n_components=5,
+    ...         batch_size=50,
+    ...         normalize_components=True,
+    ...         random_state=0)
+    >>> transformer.fit(X) # doctest: +ELLIPSIS
+    MiniBatchSparsePCA(...)
+    >>> X_transformed = transformer.transform(X)
+    >>> X_transformed.shape
+    (200, 5)
+    >>> # most values in the components_ are zero (sparsity)
+    >>> np.mean(transformer.components_ == 0)
+    0.94
+
     See also
     --------
     PCA
@@ -320,7 +363,7 @@ class MiniBatchSparsePCA(SparsePCA):
     """
     def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
                  n_iter=100, callback=None, batch_size=3, verbose=False,
-                 shuffle=True, n_jobs=1, method='lars', random_state=None,
+                 shuffle=True, n_jobs=None, method='lars', random_state=None,
                  normalize_components=False):
         super(MiniBatchSparsePCA, self).__init__(
             n_components=n_components, alpha=alpha, verbose=verbose,

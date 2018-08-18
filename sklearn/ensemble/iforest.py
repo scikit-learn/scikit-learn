@@ -85,9 +85,11 @@ class IsolationForest(BaseBagging, OutlierMixin):
         data sampled with replacement. If False, sampling without replacement
         is performed.
 
-    n_jobs : integer, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        If -1, then the number of jobs is set to the number of cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     behaviour : str, default='old'
         Behaviour of the ``decision_function`` which can be either 'old' or
@@ -161,7 +163,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
                  contamination="legacy",
                  max_features=1.,
                  bootstrap=False,
-                 n_jobs=1,
+                 n_jobs=None,
                  behaviour='old',
                  random_state=None,
                  verbose=0):
@@ -267,8 +269,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
                                  "'auto' when behaviour == 'old'.")
 
             self.offset_ = -0.5
-            self._threshold_ = sp.stats.scoreatpercentile(
-                self.decision_function(X), 100. * self._contamination)
+            self._threshold_ = np.percentile(self.decision_function(X),
+                                             100. * self._contamination)
 
             return self
 
@@ -281,8 +283,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
         # else, define offset_ wrt contamination parameter, so that the
         # threshold_ attribute is implicitly 0 and is not needed anymore:
-        self.offset_ = sp.stats.scoreatpercentile(
-            self.score_samples(X), 100. * self._contamination)
+        self.offset_ = np.percentile(self.score_samples(X),
+                                     100. * self._contamination)
 
         return self
 

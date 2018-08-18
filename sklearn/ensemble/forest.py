@@ -139,7 +139,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
-                 n_jobs=1,
+                 n_jobs=None,
                  random_state=None,
                  verbose=0,
                  warm_start=False,
@@ -175,7 +175,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """
         X = self._validate_X_predict(X)
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                           backend="threading")(
+                           prefer="threads")(
             delayed(parallel_helper)(tree, 'apply', X, check_input=False)
             for tree in self.estimators_)
 
@@ -206,9 +206,9 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """
         X = self._validate_X_predict(X)
         indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                              backend="threading")(
+                              prefer="threads")(
             delayed(parallel_helper)(tree, 'decision_path', X,
-                                      check_input=False)
+                                     check_input=False)
             for tree in self.estimators_)
 
         n_nodes = [0]
@@ -223,8 +223,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
-            The training input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            The training input samples. Internally, its dtype will be converted
+            to ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csc_matrix``.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
@@ -321,12 +321,14 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
                                             random_state=random_state)
                 trees.append(tree)
 
-            # Parallel loop: we use the threading backend as the Cython code
+            # Parallel loop: we prefer the threading backend as the Cython code
             # for fitting the trees is internally releasing the Python GIL
-            # making threading always more efficient than multiprocessing in
-            # that case.
+            # making threading more efficient than multiprocessing in
+            # that case. However, we respect any parallel_backend contexts set
+            # at a higher level, since correctness does not rely on using
+            # threads.
             trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                             backend="threading")(
+                             prefer="threads")(
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),
                     verbose=self.verbose, class_weight=self.class_weight)
@@ -373,7 +375,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         check_is_fitted(self, 'estimators_')
 
         all_importances = Parallel(n_jobs=self.n_jobs,
-                                   backend="threading")(
+                                   prefer="threads")(
             delayed(getattr)(tree, 'feature_importances_')
             for tree in self.estimators_)
 
@@ -410,7 +412,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
-                 n_jobs=1,
+                 n_jobs=None,
                  random_state=None,
                  verbose=0,
                  warm_start=False,
@@ -589,7 +591,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         all_proba = [np.zeros((X.shape[0], j), dtype=np.float64)
                      for j in np.atleast_1d(self.n_classes_)]
         lock = threading.Lock()
-        Parallel(n_jobs=n_jobs, verbose=self.verbose, backend="threading")(
+        Parallel(n_jobs=n_jobs, verbose=self.verbose, require="sharedmem")(
             delayed(_accumulate_prediction)(e.predict_proba, X, all_proba,
                                             lock)
             for e in self.estimators_)
@@ -649,7 +651,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
-                 n_jobs=1,
+                 n_jobs=None,
                  random_state=None,
                  verbose=0,
                  warm_start=False):
@@ -697,7 +699,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
         # Parallel loop
         lock = threading.Lock()
-        Parallel(n_jobs=n_jobs, verbose=self.verbose, backend="threading")(
+        Parallel(n_jobs=n_jobs, verbose=self.verbose, require="sharedmem")(
             delayed(_accumulate_prediction)(e.predict, X, [y_hat], lock)
             for e in self.estimators_)
 
@@ -861,9 +863,11 @@ class RandomForestClassifier(ForestClassifier):
         Whether to use out-of-bag samples to estimate
         the generalization accuracy.
 
-    n_jobs : integer, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        If -1, then the number of jobs is set to the number of cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -951,7 +955,7 @@ class RandomForestClassifier(ForestClassifier):
                 max_depth=2, max_features='auto', max_leaf_nodes=None,
                 min_impurity_decrease=0.0, min_impurity_split=None,
                 min_samples_leaf=1, min_samples_split=2,
-                min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=1,
+                min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=None,
                 oob_score=False, random_state=0, verbose=0, warm_start=False)
     >>> print(clf.feature_importances_)
     [0.14205973 0.76664038 0.0282433  0.06305659]
@@ -995,7 +999,7 @@ class RandomForestClassifier(ForestClassifier):
                  min_impurity_split=None,
                  bootstrap=True,
                  oob_score=False,
-                 n_jobs=1,
+                 n_jobs=None,
                  random_state=None,
                  verbose=0,
                  warm_start=False,
@@ -1144,9 +1148,11 @@ class RandomForestRegressor(ForestRegressor):
         whether to use out-of-bag samples to estimate
         the R^2 on unseen data.
 
-    n_jobs : integer, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        If -1, then the number of jobs is set to the number of cores.
+        `None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1196,7 +1202,7 @@ class RandomForestRegressor(ForestRegressor):
                max_features='auto', max_leaf_nodes=None,
                min_impurity_decrease=0.0, min_impurity_split=None,
                min_samples_leaf=1, min_samples_split=2,
-               min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=1,
+               min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=None,
                oob_score=False, random_state=0, verbose=0, warm_start=False)
     >>> print(regr.feature_importances_)
     [0.18146984 0.81473937 0.00145312 0.00233767]
@@ -1240,7 +1246,7 @@ class RandomForestRegressor(ForestRegressor):
                  min_impurity_split=None,
                  bootstrap=True,
                  oob_score=False,
-                 n_jobs=1,
+                 n_jobs=None,
                  random_state=None,
                  verbose=0,
                  warm_start=False):
@@ -1380,9 +1386,11 @@ class ExtraTreesClassifier(ForestClassifier):
         Whether to use out-of-bag samples to estimate
         the generalization accuracy.
 
-    n_jobs : integer, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        If -1, then the number of jobs is set to the number of cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1487,7 +1495,7 @@ class ExtraTreesClassifier(ForestClassifier):
                  min_impurity_split=None,
                  bootstrap=False,
                  oob_score=False,
-                 n_jobs=1,
+                 n_jobs=None,
                  random_state=None,
                  verbose=0,
                  warm_start=False,
@@ -1633,9 +1641,11 @@ class ExtraTreesRegressor(ForestRegressor):
     oob_score : bool, optional (default=False)
         Whether to use out-of-bag samples to estimate the R^2 on unseen data.
 
-    n_jobs : integer, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        If -1, then the number of jobs is set to the number of cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1703,7 +1713,7 @@ class ExtraTreesRegressor(ForestRegressor):
                  min_impurity_split=None,
                  bootstrap=False,
                  oob_score=False,
-                 n_jobs=1,
+                 n_jobs=None,
                  random_state=None,
                  verbose=0,
                  warm_start=False):
@@ -1825,9 +1835,11 @@ class RandomTreesEmbedding(BaseForest):
         Whether or not to return a sparse CSR matrix, as default behavior,
         or to return a dense array compatible with dense pipeline operators.
 
-    n_jobs : integer, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        If -1, then the number of jobs is set to the number of cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1868,7 +1880,7 @@ class RandomTreesEmbedding(BaseForest):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  sparse_output=True,
-                 n_jobs=1,
+                 n_jobs=None,
                  random_state=None,
                  verbose=0,
                  warm_start=False):

@@ -26,7 +26,7 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
            rejection_ratio=.7, similarity_threshold=0.4,
            significant_min=.003, min_cluster_size_ratio=.005,
            min_maxima_ratio=0.001, algorithm='ball_tree',
-           leaf_size=30, n_jobs=1):
+           leaf_size=30, n_jobs=None):
     """Perform OPTICS clustering from vector array
 
     OPTICS: Ordering Points To Identify the Clustering Structure
@@ -118,9 +118,11 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
-    n_jobs : int, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Returns
     -------
@@ -243,9 +245,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
-    n_jobs : int, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -285,7 +289,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size_ratio=.005,
                  min_maxima_ratio=0.001, algorithm='ball_tree',
-                 leaf_size=30, n_jobs=1):
+                 leaf_size=30, n_jobs=None):
 
         self.max_bound = max_bound
         self.min_samples = min_samples
@@ -394,7 +398,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # Keep n_jobs = 1 in the following lines...please
         if len(unproc) > 0:
             dists = pairwise_distances(P, np.take(X, unproc, axis=0),
-                                       self.metric, n_jobs=1).ravel()
+                                       self.metric, n_jobs=None).ravel()
 
             rdists = np.maximum(dists, self.core_distances_[point_index])
             new_reach = np.minimum(np.take(self.reachability_, unproc), rdists)

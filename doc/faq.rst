@@ -364,6 +364,7 @@ See also :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_type
 example of working with heterogeneous (e.g. categorical and numeric) data.
 
 Why does Scikit-learn not directly work with, for example, pandas.DataFrame?
+----------------------------------------------------------------------------
 
 The homogeneous NumPy and SciPy data objects currently expected are most
 efficient to process for most operations. Extensive work would also be needed
