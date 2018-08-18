@@ -21,6 +21,8 @@ from sklearn.linear_model import LinearRegression, Lasso
 from sklearn import datasets
 
 from sklearn.compose import TransformedTargetRegressor
+from sklearn.utils import check_array
+from sklearn.impute import SimpleImputer
 
 friedman = datasets.make_friedman1(random_state=0)
 
@@ -265,3 +267,29 @@ def test_transform_target_regressor_ensure_y_array():
     tt.predict(X.tolist())
     assert_raises(AssertionError, tt.fit, X, y.tolist())
     assert_raises(AssertionError, tt.predict, X)
+
+def test_transform_target_regressor_allow_nan():
+    
+    # check if the TransformedTargetRegressor allows missing value in the target array
+    X, y = datasets.load_linnerud(return_X_y=True)   
+    y[5, 1] = np.NaN
+    
+    check_array(y, accept_sparse=False, force_all_finite=False,
+                        ensure_2d=False, dtype='numeric')
+    
+    class DummyInvertibleImputer(SimpleImputer):
+    	""" add a dummy inverse transform to simple impute"""
+    	def inverse_transform(self, X):
+            return X
+    
+    estimator = TransformedTargetRegressor(
+        regressor=LinearRegression(),
+        transformer=DummyInvertibleImputer(),
+        check_inverse=False
+    )
+    
+    estimator.fit(X, y)
+    estimator.predict(X)
+    # to check if the nan is still in the right place
+    assert np.isnan(y[5,1])	
+	
