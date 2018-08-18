@@ -3,7 +3,6 @@
 import os
 import scipy as sp
 import shutil
-import warnings
 
 from sklearn import datasets
 from sklearn.datasets import mldata_filename, fetch_mldata
