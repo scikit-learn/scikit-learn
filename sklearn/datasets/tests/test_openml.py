@@ -140,7 +140,7 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
         path_suffix = '.gz'
         read_fn = gzip.open
 
-    def _file_name1(url, suffix):
+    def _file_name(url, suffix):
         return (re.sub(r'\W', '-', url[len("https://openml.org/"):])
                 + suffix + path_suffix)
 
@@ -148,28 +148,28 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
         assert url.startswith(url_prefix_data_description)
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
-                            _file_name1(url, '.json'))
+                            _file_name(url, '.json'))
         return read_fn(path, 'rb')
 
     def _mock_urlopen_data_features(url):
         assert url.startswith(url_prefix_data_features)
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
-                            _file_name1(url, '.json'))
+                            _file_name(url, '.json'))
         return read_fn(path, 'rb')
 
     def _mock_urlopen_download_data(url):
         assert (url.startswith(url_prefix_download_data))
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
-                            _file_name1(url, '.arff'))
+                            _file_name(url, '.arff'))
         return read_fn(path, 'rb')
 
     def _mock_urlopen_data_list(url):
         assert url.startswith(url_prefix_data_list)
 
         json_file_path = os.path.join(currdir, 'data', 'openml',
-                                      str(data_id), _file_name1(url, '.json'))
+                                      str(data_id), _file_name(url, '.json'))
         # load the file itself, to simulate a http error
         json_data = json.loads(read_fn(json_file_path, 'rb').
                                read().decode('utf-8'))
