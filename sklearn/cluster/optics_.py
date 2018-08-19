@@ -361,8 +361,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
             if not self._processed[point]:
                 self._expand_cluster_order(point, X, nbrs)
 
-        print("ordering\n%s" % self.ordering_)
-        print("reachability_\n%s" % self.reachability_) 
         indices_, self.labels_ = _extract_optics(self.ordering_,
                                                  self.reachability_,
                                                  self.core_distances_,
@@ -564,7 +562,6 @@ def _extract_optics(ordering, reachability, core_distances, maxima_ratio=.75,
                                    similarity_threshold, significant_min,
                                    min_cluster_size_ratio, min_maxima_ratio)
     leaves = _get_leaves(root_node, [])
-    print("leaves\n%s" % [l for l in leaves])
     # Start cluster id's at 0
     clustid = 0
     n_samples = len(reachability)
@@ -641,11 +638,6 @@ class _TreeNode(object):
     def add_child(self, child):
         self.children.append(child)
 
-    def __str__(self):
-        return ("\tpoints: %s\n\tstart: %s\n\tend: %s\n\tchildren: %s\n\tsplit_point: %s" %
-                (self.points, self.start, self.end, len(self.children),
-                 self.split_point))
-
 
 def _is_local_maxima(index, reachability_plot, neighborhood_size):
     right_idx = slice(index + 1, index + neighborhood_size + 1)
@@ -684,13 +676,6 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     local_maxima_points is list of local maxima points sorted in
     descending order of reachability
     """
-    print("======_cluster_tree=====")
-    print("node", node)
-    print("parent_node", parent_node)
-    print("local_maxima_points", local_maxima_points)
-    print("reachability_plot", reachability_plot)
-    print("reachability_ordering", reachability_ordering)
-
     if len(local_maxima_points) == 0:
         return  # parent_node is a leaf
 
@@ -703,12 +688,6 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     node_1 = _TreeNode(reachability_ordering[node.start:s],
                        node.start, s, node)
     node_2_start = s + 1
-    print("add split point?")
-    print(s)
-    print(core_distances_plot[s])
-    print(reachability_plot[s])
-    print(core_distances_plot[s] * 1.5 < reachability_plot[s])
-    print("---------------")
     if core_distances_plot[s] * 1.5 < reachability_plot[s]:
         node_2_start = s
     node_2 = _TreeNode(reachability_ordering[node_2_start:node.end],
@@ -755,11 +734,9 @@ def _cluster_tree(node, parent_node, local_maxima_points,
 
         if (avg_reach1 / reachability_plot[s]) < rejection_ratio:
             # reject node 2
-            print("reject node 2")
             node_list.remove((node_2, local_max_2))
         if (avg_reach2 / reachability_plot[s]) < rejection_ratio:
             # reject node 1
-            print("reject node 1")
             node_list.remove((node_1, local_max_1))
         if ((avg_reach1 / reachability_plot[s]) >= rejection_ratio and
                 (avg_reach2 / reachability_plot[s]) >= rejection_ratio):
@@ -777,12 +754,10 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     if (len(node_1.points) < min_cluster_size and
             node_list.count((node_1, local_max_1)) > 0):
         # cluster 1 is too small
-        print("cluster 1 too small")
         node_list.remove((node_1, local_max_1))
     if (len(node_2.points) < min_cluster_size and
             node_list.count((node_2, local_max_2)) > 0):
         # cluster 2 is too small
-        print("cluster 2 too small")
         node_list.remove((node_2, local_max_2))
     if not node_list:
         # parent_node will be a leaf
@@ -818,7 +793,6 @@ def _cluster_tree(node, parent_node, local_maxima_points,
 
 def _get_leaves(node, arr):
     if node is not None:
-        print("_get_leaves node\n%s" % str(node))
         if node.split_point == -1:
             arr.append(node)
         for n in node.children:
