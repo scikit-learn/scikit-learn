@@ -570,26 +570,16 @@ def _extract_optics(ordering, reachability, core_distances, maxima_ratio=.75,
     labels = np.full(n_samples, -1, dtype=int)
     # Start all points as non-core noise
     for leaf in leaves:
-        """
-        print("leaf: ", leaf)
-        start = leaf.start
-        print("====checking leaf")
-        print(leaf.parent_node)
-        if leaf.parent_node is not None:
-            print(leaf.start == leaf.parent_node.split_point + 1)
-            print(core_distances_plot[leaf.parent_node.split_point])
-            print(core_distances_plot[leaf.start:leaf.end])
-            if leaf.start == leaf.parent_node.split_point + 1 \
-               and core_distances_plot[leaf.parent_node.split_point] \
-               <= np.max(core_distances_plot[leaf.start:leaf.end]):
-                start = leaf.start - 1
-        print("start: %s" % start)
-        index = ordering[start:leaf.end]
-        """
         index = ordering[leaf.start:leaf.end]
         labels[index] = clustid
         is_core[index] = 1
         clustid += 1
+    
+    last_point = ordering[-1]
+    if (core_distances_plot[last_point] * 1.5
+        >= reachability_plot[last_point]):
+        labels[last_point] = -1
+        is_core[last_point] = 0
     return np.arange(n_samples)[is_core], labels
 
 
@@ -665,8 +655,6 @@ def _find_local_maxima(reachability_plot, neighborhood_size):
     local_maxima_points = {}
     # 1st and last points on Reachability Plot are not taken
     # as local maxima points
-    # why? The first one is always INF?
-    # but the last one can be a NOISE
     for i in range(1, len(reachability_plot) - 1):
         # if the point is a local maxima on the reachability plot with
         # regard to neighborhood_size, insert it into priority queue and
