@@ -1093,11 +1093,13 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionadded:: 0.17
            *warm_start* to support *lbfgs*, *newton-cg*, *sag*, *saga* solvers.
 
-    n_jobs : int, default: 1
+    n_jobs : int or None, optional (default=None)
         Number of CPU cores used when parallelizing over classes if
         multi_class='ovr'". This parameter is ignored when the ``solver`` is
         set to 'liblinear' regardless of whether 'multi_class' is specified or
-        not. If given a value of -1, all cores are used.
+        not. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
+        context. ``-1`` means using all processors.
+        See :term:`Glossary <n_jobs>` for more details.
 
     Attributes
     ----------
@@ -1495,9 +1497,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         .. versionadded:: 0.17
            class_weight == 'balanced'
 
-    n_jobs : int, optional
-        Number of CPU cores used during the cross-validation loop. If given
-        a value of -1, all cores are used.
+    n_jobs : int or None, optional (default=None)
+        Number of CPU cores used during the cross-validation loop.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : int
         For the 'liblinear', 'sag' and 'lbfgs' solvers set verbose to any

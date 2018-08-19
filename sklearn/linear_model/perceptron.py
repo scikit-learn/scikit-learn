@@ -47,10 +47,12 @@ class Perceptron(BaseSGDClassifier):
     eta0 : double
         Constant by which the updates are multiplied. Defaults to 1.
 
-    n_jobs : integer, optional
+    n_jobs : int or None, optional (default=None)
         The number of CPUs to use to do the OVA (One Versus All, for
-        multi-class problems) computation. -1 means 'all CPUs'. Defaults
-        to 1.
+        multi-class problems) computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator to use when shuffling
@@ -122,6 +124,20 @@ class Perceptron(BaseSGDClassifier):
     underlying implementation with ``SGDClassifier``. In fact,
     ``Perceptron()`` is equivalent to `SGDClassifier(loss="perceptron",
     eta0=1, learning_rate="constant", penalty=None)`.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.linear_model import Perceptron
+    >>> X, y = load_digits(return_X_y=True)
+    >>> clf = Perceptron(tol=1e-3, random_state=0)
+    >>> clf.fit(X, y)
+    Perceptron(alpha=0.0001, class_weight=None, early_stopping=False, eta0=1.0,
+          fit_intercept=True, max_iter=None, n_iter=None, n_iter_no_change=5,
+          n_jobs=None, penalty=None, random_state=0, shuffle=True, tol=0.001,
+          validation_fraction=0.1, verbose=0, warm_start=False)
+    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    0.946...
 
     See also
     --------

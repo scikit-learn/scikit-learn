@@ -1041,9 +1041,11 @@ class LarsCV(Lars):
         The maximum number of points on the path used to compute the
         residuals in the cross-validation
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     eps : float, optional
         The machine-precision regularization in the computation of the
@@ -1254,9 +1256,11 @@ class LassoLarsCV(LarsCV):
         The maximum number of points on the path used to compute the
         residuals in the cross-validation
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     eps : float, optional
         The machine-precision regularization in the computation of the
