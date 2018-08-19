@@ -77,7 +77,7 @@ def compute_scores(X):
 
 def shrunk_cov_score(X):
     shrinkages = np.logspace(-2, 0, 30)
-    cv = GridSearchCV(ShrunkCovariance(), {'shrinkage': shrinkages})
+    cv = GridSearchCV(ShrunkCovariance(), {'shrinkage': shrinkages}, cv=5)
     return np.mean(cross_val_score(cv.fit(X).best_estimator_, X))
 
 
