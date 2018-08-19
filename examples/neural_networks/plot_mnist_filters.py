@@ -27,9 +27,7 @@ from sklearn.neural_network import MLPClassifier
 print(__doc__)
 
 # Load data from https://www.openml.org/d/554
-mnist = fetch_openml('mnist_784', version=1)
-X = mnist.data
-y = mnist.target
+X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
 
 # rescale the data, use the traditional train/test split
 X_train, X_test = X[:60000], X[60000:]
