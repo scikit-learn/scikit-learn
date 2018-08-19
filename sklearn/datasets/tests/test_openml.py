@@ -15,6 +15,8 @@ from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 from sklearn.externals.six import string_types
 from sklearn.externals.six.moves.urllib.error import HTTPError
+from sklearn.datasets.tests.test_common import check_return_X_y
+from functools import partial
 
 
 currdir = os.path.dirname(os.path.abspath(__file__))
@@ -124,6 +126,11 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
         # np.isnan doesn't work on CSR matrix
         assert (np.count_nonzero(np.isnan(data_by_id.data)) ==
                 expected_missing)
+
+    # test return_X_y option
+    fetch_func = partial(fetch_openml, data_id=data_id, cache=False,
+                         target_column=target_column)
+    check_return_X_y(data_by_id, fetch_func)
     return data_by_id
 
 
