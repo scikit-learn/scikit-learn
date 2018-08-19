@@ -546,15 +546,17 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     """
 
     # Extraction wrapper
+    # why are we generating only 1 (the first one) INF in the reachability?
+    # according to the paper (p. 5), for a small enough generative distance
+    # epsilong, there should be more than one INF.
     reachability = reachability / np.max(reachability[1:])
     reachability_plot = reachability[ordering].tolist()
     root_node = _automatic_cluster(reachability_plot, ordering,
                                    maxima_ratio, rejection_ratio,
                                    similarity_threshold, significant_min,
                                    min_cluster_size_ratio, min_maxima_ratio)
-    print("root_node\n%s" % root_node.__dict__)
     leaves = _get_leaves(root_node, [])
-    print("leaves\n%s" % [l.__dict__ for l in leaves])
+    print("leaves\n%s" % [l for l in leaves])
     # Start cluster id's at 0
     clustid = 0
     n_samples = len(reachability)
@@ -562,6 +564,7 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     labels = np.full(n_samples, -1, dtype=int)
     # Start all points as non-core noise
     for leaf in leaves:
+        print(leaf)
         index = ordering[leaf.start:leaf.end]
         labels[index] = clustid
         is_core[index] = 1
@@ -588,6 +591,7 @@ def _automatic_cluster(reachability_plot, ordering,
     neighborhood_size = int(min_maxima_ratio * len(ordering))
 
     # Should this check for < min_samples? Should this be public?
+    # why 5? shouldn't it be 2?
     if min_cluster_size < 5:
         min_cluster_size = 5
 
@@ -622,6 +626,11 @@ class _TreeNode(object):
     def add_child(self, child):
         self.children.append(child)
 
+    def __str__(self):
+        return ("\tpoints: %s\n\tstart: %s\n\tend: %s\n\tchildren: %s\n\tsplit_point: %s" %
+                (self.points, self.start, self.end, len(self.children),
+                 self.split_point))
+
 
 def _is_local_maxima(index, reachability_plot, neighborhood_size):
     right_idx = slice(index + 1, index + neighborhood_size + 1)
@@ -634,6 +643,8 @@ def _find_local_maxima(reachability_plot, neighborhood_size):
     local_maxima_points = {}
     # 1st and last points on Reachability Plot are not taken
     # as local maxima points
+    # why? The first one is always INF?
+    # but the last one can be a NOISE
     for i in range(1, len(reachability_plot) - 1):
         # if the point is a local maxima on the reachability plot with
         # regard to neighborhood_size, insert it into priority queue and
@@ -659,6 +670,12 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     local_maxima_points is list of local maxima points sorted in
     descending order of reachability
     """
+    print("======_cluster_tree=====")
+    print("node", node)
+    print("parent_node", parent_node)
+    print("local_maxima_points", local_maxima_points)
+    print("reachability_plot", reachability_plot)
+    print("reachability_ordering", reachability_ordering)
 
     if len(local_maxima_points) == 0:
         return  # parent_node is a leaf
@@ -676,6 +693,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     local_max_1 = []
     local_max_2 = []
 
+    # wouldn't list expansion be faster? -> realloc
     for i in local_maxima_points:
         if i < s:
             local_max_1.append(i)
@@ -686,6 +704,8 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     node_list.append((node_1, local_max_1))
     node_list.append((node_2, local_max_2))
 
+    # if local maxima are sorted by their reachability, doesn't it
+    # mean we can stop? Why do we continue?
     if reachability_plot[s] < significant_min:
         node.assign_split_point(-1)
         # if split_point is not significant, ignore this split and continue
