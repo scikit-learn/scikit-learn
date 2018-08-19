@@ -365,6 +365,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         print("reachability_\n%s" % self.reachability_) 
         indices_, self.labels_ = _extract_optics(self.ordering_,
                                                  self.reachability_,
+                                                 self.core_distances_,
                                                  self.maxima_ratio,
                                                  self.rejection_ratio,
                                                  self.similarity_threshold,
@@ -490,7 +491,7 @@ def _extract_dbscan(ordering, core_distances, reachability, eps):
     return np.arange(n_samples)[is_core], labels
 
 
-def _extract_optics(ordering, reachability, maxima_ratio=.75,
+def _extract_optics(ordering, reachability, core_distances, maxima_ratio=.75,
                     rejection_ratio=.7, similarity_threshold=0.4,
                     significant_min=.003, min_cluster_size_ratio=.005,
                     min_maxima_ratio=0.001):
@@ -503,6 +504,9 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
 
     reachability : array, shape (n_samples,)
         Reachability distances calculated by OPTICS (`reachability_`)
+
+    core_distances : array, shape (n_samples,)
+        Core distances calculated by OPTICS (`core_distances_`)
 
     maxima_ratio : float, optional
         The maximum ratio we allow of average height of clusters on the
@@ -551,7 +555,9 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     # epsilong, there should be more than one INF.
     reachability = reachability / np.max(reachability[1:])
     reachability_plot = reachability[ordering].tolist()
-    root_node = _automatic_cluster(reachability_plot, ordering,
+    core_distances_plot = core_distances[ordering].tolist()
+    root_node = _automatic_cluster(reachability_plot, core_distances_plot,
+                                   ordering,
                                    maxima_ratio, rejection_ratio,
                                    similarity_threshold, significant_min,
                                    min_cluster_size_ratio, min_maxima_ratio)
@@ -564,7 +570,22 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     labels = np.full(n_samples, -1, dtype=int)
     # Start all points as non-core noise
     for leaf in leaves:
-        print(leaf)
+        """
+        print("leaf: ", leaf)
+        start = leaf.start
+        print("====checking leaf")
+        print(leaf.parent_node)
+        if leaf.parent_node is not None:
+            print(leaf.start == leaf.parent_node.split_point + 1)
+            print(core_distances_plot[leaf.parent_node.split_point])
+            print(core_distances_plot[leaf.start:leaf.end])
+            if leaf.start == leaf.parent_node.split_point + 1 \
+               and core_distances_plot[leaf.parent_node.split_point] \
+               <= np.max(core_distances_plot[leaf.start:leaf.end]):
+                start = leaf.start - 1
+        print("start: %s" % start)
+        index = ordering[start:leaf.end]
+        """
         index = ordering[leaf.start:leaf.end]
         labels[index] = clustid
         is_core[index] = 1
@@ -572,7 +593,7 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     return np.arange(n_samples)[is_core], labels
 
 
-def _automatic_cluster(reachability_plot, ordering,
+def _automatic_cluster(reachability_plot, core_distances_plot, ordering,
                        maxima_ratio, rejection_ratio,
                        similarity_threshold, significant_min,
                        min_cluster_size_ratio, min_maxima_ratio):
@@ -592,8 +613,8 @@ def _automatic_cluster(reachability_plot, ordering,
 
     # Should this check for < min_samples? Should this be public?
     # why 5? shouldn't it be 2?
-    if min_cluster_size < 5:
-        min_cluster_size = 5
+    if min_cluster_size < 2:
+        min_cluster_size = 2
 
     # Again, should this check < min_samples, should the parameter be public?
     if neighborhood_size < min_neighborhood_size:
@@ -603,7 +624,8 @@ def _automatic_cluster(reachability_plot, ordering,
                                              neighborhood_size)
     root_node = _TreeNode(ordering, 0, len(ordering), None)
     _cluster_tree(root_node, None, local_maxima_points,
-                  reachability_plot, ordering, min_cluster_size,
+                  reachability_plot, core_distances_plot,
+                  ordering, min_cluster_size,
                   maxima_ratio, rejection_ratio,
                   similarity_threshold, significant_min)
 
@@ -660,7 +682,8 @@ def _find_local_maxima(reachability_plot, neighborhood_size):
 
 
 def _cluster_tree(node, parent_node, local_maxima_points,
-                  reachability_plot, reachability_ordering,
+                  reachability_plot, core_distances_plot,
+                  reachability_ordering,
                   min_cluster_size, maxima_ratio, rejection_ratio,
                   similarity_threshold, significant_min):
     """Recursively builds cluster tree to hold hierarchical cluster structure
@@ -688,8 +711,11 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     # create two new nodes and add to list of nodes
     node_1 = _TreeNode(reachability_ordering[node.start:s],
                        node.start, s, node)
-    node_2 = _TreeNode(reachability_ordering[s + 1:node.end],
-                       s + 1, node.end, node)
+    node_2_start = s + 1
+    if core_distances_plot[s] * 1.5 < reachability_plot[s]:
+        node_2_start = s
+    node_2 = _TreeNode(reachability_ordering[node_2_start:node.end],
+                       node_2_start, node.end, node)
     local_max_1 = []
     local_max_2 = []
 
@@ -710,7 +736,8 @@ def _cluster_tree(node, parent_node, local_maxima_points,
         node.assign_split_point(-1)
         # if split_point is not significant, ignore this split and continue
         _cluster_tree(node, parent_node, local_maxima_points,
-                      reachability_plot, reachability_ordering,
+                      reachability_plot, core_distances_plot,
+                      reachability_ordering,
                       min_cluster_size, maxima_ratio, rejection_ratio,
                       similarity_threshold, significant_min)
         return
@@ -731,9 +758,11 @@ def _cluster_tree(node, parent_node, local_maxima_points,
 
         if (avg_reach1 / reachability_plot[s]) < rejection_ratio:
             # reject node 2
+            print("reject node 2")
             node_list.remove((node_2, local_max_2))
         if (avg_reach2 / reachability_plot[s]) < rejection_ratio:
             # reject node 1
+            print("reject node 1")
             node_list.remove((node_1, local_max_1))
         if ((avg_reach1 / reachability_plot[s]) >= rejection_ratio and
                 (avg_reach2 / reachability_plot[s]) >= rejection_ratio):
@@ -741,7 +770,8 @@ def _cluster_tree(node, parent_node, local_maxima_points,
             # ignore this split and continue (reject both child nodes)
             node.assign_split_point(-1)
             _cluster_tree(node, parent_node, local_maxima_points,
-                          reachability_plot, reachability_ordering,
+                          reachability_plot, core_distances_plot,
+                          reachability_ordering,
                           min_cluster_size, maxima_ratio, rejection_ratio,
                           similarity_threshold, significant_min)
             return
@@ -750,10 +780,12 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     if (len(node_1.points) < min_cluster_size and
             node_list.count((node_1, local_max_1)) > 0):
         # cluster 1 is too small
+        print("cluster 1 too small")
         node_list.remove((node_1, local_max_1))
     if (len(node_2.points) < min_cluster_size and
             node_list.count((node_2, local_max_2)) > 0):
         # cluster 2 is too small
+        print("cluster 2 too small")
         node_list.remove((node_2, local_max_2))
     if not node_list:
         # parent_node will be a leaf
@@ -774,12 +806,14 @@ def _cluster_tree(node, parent_node, local_maxima_points,
         if bypass_node == 1:
             parent_node.add_child(nl[0])
             _cluster_tree(nl[0], parent_node, nl[1],
-                          reachability_plot, reachability_ordering,
+                          reachability_plot, core_distances_plot,
+                          reachability_ordering,
                           min_cluster_size, maxima_ratio, rejection_ratio,
                           similarity_threshold, significant_min)
         else:
             node.add_child(nl[0])
             _cluster_tree(nl[0], node, nl[1], reachability_plot,
+                          core_distances_plot,
                           reachability_ordering, min_cluster_size,
                           maxima_ratio, rejection_ratio,
                           similarity_threshold, significant_min)
@@ -787,6 +821,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
 
 def _get_leaves(node, arr):
     if node is not None:
+        print("_get_leaves node\n%s" % str(node))
         if node.split_point == -1:
             arr.append(node)
         for n in node.children:
