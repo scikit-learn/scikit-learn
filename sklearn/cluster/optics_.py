@@ -553,8 +553,10 @@ def _extract_optics(ordering, reachability, core_distances, maxima_ratio=.75,
     # why are we generating only 1 (the first one) INF in the reachability?
     # according to the paper (p. 5), for a small enough generative distance
     # epsilong, there should be more than one INF.
-    reachability = reachability / np.max(reachability[1:])
+    normalization_factor = np.max(reachability[1:])
+    reachability = reachability / normalization_factor
     reachability_plot = reachability[ordering].tolist()
+    core_distances = core_distances / normalization_factor
     core_distances_plot = core_distances[ordering].tolist()
     root_node = _automatic_cluster(reachability_plot, core_distances_plot,
                                    ordering,
@@ -580,6 +582,7 @@ def _extract_optics(ordering, reachability, core_distances, maxima_ratio=.75,
         >= reachability_plot[last_point]):
         labels[last_point] = -1
         is_core[last_point] = 0
+
     return np.arange(n_samples)[is_core], labels
 
 
@@ -700,6 +703,12 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     node_1 = _TreeNode(reachability_ordering[node.start:s],
                        node.start, s, node)
     node_2_start = s + 1
+    print("add split point?")
+    print(s)
+    print(core_distances_plot[s])
+    print(reachability_plot[s])
+    print(core_distances_plot[s] * 1.5 < reachability_plot[s])
+    print("---------------")
     if core_distances_plot[s] * 1.5 < reachability_plot[s]:
         node_2_start = s
     node_2 = _TreeNode(reachability_ordering[node_2_start:node.end],
