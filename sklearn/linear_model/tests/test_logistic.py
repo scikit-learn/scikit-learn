@@ -1277,7 +1277,7 @@ def test_warm_start_converge_LR():
 
     rng = np.random.RandomState(0)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
-    y = np.array([1] * 100 + [-1] * 100)
+    y = np.array([1] * 100 + [2] * 50 + [3] * 50)
     lr_no_ws = LogisticRegression(multi_class='multinomial',
                                   solver='sag', warm_start=False,
                                   random_state=0)
@@ -1320,7 +1320,8 @@ def test_logistic_binary_invariant_to_multi_class(est, solver):
     X, y = make_classification(n_samples=200, n_classes=2, n_informative=2,
                                n_redundant=0, n_clusters_per_class=1,
                                random_state=0, n_features=2)
-    est.set_params(multi_class='ovr', solver=solver, max_iter=10000)
+    est.set_params(multi_class='ovr', solver=solver, max_iter=10000,
+                   random_state=0)
     est.fit(X, y)
     model_ovr = np.hstack([np.squeeze(est.coef_), est.intercept_])
     assert est.coef_.shape == (1, X.shape[1])
