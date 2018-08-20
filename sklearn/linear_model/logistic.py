@@ -608,7 +608,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     if classes.size <= 2:
         multi_class = 'ovr'
         # np.unique(y) gives labels in sorted order.
-        pos_class = classes[1]
+        if pos_class is None:
+            pos_class = classes[1]
     elif multi_class == 'ovr' and pos_class is None:
         raise ValueError('To fit OvR, use the pos_class argument')
 
