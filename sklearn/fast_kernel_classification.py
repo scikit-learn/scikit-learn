@@ -6,7 +6,7 @@ from sklearn.utils.multiclass import check_classification_targets
 from sklearn.fast_kernel_regression import FastKernelRegression
 
 
-class FastKernelClassification(ClassifierMixin, BaseEstimator):
+class FastKernelClassification(BaseEstimator, ClassifierMixin):
     """Fast kernel classification.
 
        Train least squared kernel classification model with mini-batch EigenPro

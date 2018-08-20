@@ -2,11 +2,11 @@ import numpy as np
 import scipy as sp
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.metrics.pairwise import pairwise_kernels, euclidean_distances
-from sklearn.utils import check_random_state
+from sklearn.utils import check_random_state, check_array
 from sklearn.utils.validation import check_is_fitted, check_X_y
 
 
-class FastKernelRegression(RegressorMixin, BaseEstimator):
+class FastKernelRegression(BaseEstimator, RegressorMixin):
     """Fast kernel regression.
 
     Train least squared kernel regression model with mini-batch EigenPro
@@ -139,8 +139,7 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
                           "coef0": self.coef0}
             return pairwise_kernels(X, Y, metric=self.kernel,
                                     filter_params=True, **params)
-        distance = euclidean_distances(X, Y, squared=True,
-                                       Y_norm_squared=Y_squared)
+        distance = euclidean_distances(X, Y, squared=True,Y_norm_squared=Y_squared)
         bandwidth = np.float32(self.bandwidth)
         if self.kernel == "gaussian":
             K = np.exp(-distance / (2 * (np.square(bandwidth))))
@@ -361,7 +360,7 @@ class FastKernelRegression(RegressorMixin, BaseEstimator):
         """
         check_is_fitted(self, ["bs_", "centers_", "centers_squared_", "coef_",
                                "eta_", "random_state_", "pinx_", "Q_", "V_", "was_1D_"])
-        X = np.asarray(X, dtype=np.float32)
+        X = check_array(X)
         if len(X.shape) == 1:
             raise ValueError("Reshape your data. X should be a matrix of shape"
                              " (n_samples, n_features).")
