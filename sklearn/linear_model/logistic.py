@@ -605,11 +605,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     classes = np.unique(y)
     random_state = check_random_state(random_state)
 
-    if pos_class is None and multi_class != 'multinomial':
-        if (classes.size > 2):
-            raise ValueError('To fit OvR, use the pos_class argument')
+    if classes.size <= 2:
+        multi_class = 'ovr'
         # np.unique(y) gives labels in sorted order.
-        pos_class = classes[1]
+        if pos_class is None:
+            pos_class = classes[1]
+    elif multi_class == 'ovr' and pos_class is None:
+        raise ValueError('To fit OvR, use the pos_class argument')
 
     # If sample weights exist, convert them to array (support for lists)
     # and check length
@@ -949,8 +951,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         if multi_class == 'ovr':
             w = w[np.newaxis, :]
         if fit_intercept:
-            log_reg.coef_ = w[:, :-1]
-            log_reg.intercept_ = w[:, -1]
+            log_reg.coef_ = w[..., :-1]
+            log_reg.intercept_ = w[..., -1]
         else:
             log_reg.coef_ = w
             log_reg.intercept_ = 0.
@@ -1107,18 +1109,14 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     coef_ : array, shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
-        `coef_` is of shape (1, n_features) when the given problem is binary.
-        In particular, when `multi_class='multinomial'`, `coef_` corresponds
-        to outcome 1 (True) and `-coef_` corresponds to outcome 0 (False).
+        `coef_` is of shape (1, n_features) when the given problem
+        is binary.
 
     intercept_ : array, shape (1,) or (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
 
         If `fit_intercept` is set to False, the intercept is set to zero.
-        `intercept_` is of shape (1,) when the given problem is binary.
-        In particular, when `multi_class='multinomial'`, `intercept_`
-        corresponds to outcome 1 (True) and `-intercept_` corresponds to
-        outcome 0 (False).
+        `intercept_` is of shape(1,) when the problem is binary.
 
     n_iter_ : array, shape (n_classes,) or (1, )
         Actual number of iterations for all classes. If binary or multinomial,
@@ -1322,7 +1320,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
         self.n_iter_ = np.asarray(n_iter_, dtype=np.int32)[:, 0]
 
-        if self.multi_class == 'multinomial':
+        if self.multi_class == 'multinomial' and n_classes > 2:
             self.coef_ = fold_coefs_[0][0]
         else:
             self.coef_ = np.asarray(fold_coefs_)
@@ -1330,8 +1328,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                                             int(self.fit_intercept))
 
         if self.fit_intercept:
-            self.intercept_ = self.coef_[:, -1]
-            self.coef_ = self.coef_[:, :-1]
+            self.intercept_ = self.coef_[..., -1]
+            self.coef_ = self.coef_[..., :-1]
 
         return self
 
@@ -1360,17 +1358,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         """
         if not hasattr(self, "coef_"):
             raise NotFittedError("Call fit before prediction")
-        if self.multi_class == "ovr":
+        calculate_ovr = self.coef_.shape[0] == 1 or self.multi_class == "ovr"
+        if calculate_ovr:
             return super(LogisticRegression, self)._predict_proba_lr(X)
         else:
-            decision = self.decision_function(X)
-            if decision.ndim == 1:
-                # Workaround for multi_class="multinomial" and binary outcomes
-                # which requires softmax prediction with only a 1D decision.
-                decision_2d = np.c_[-decision, decision]
-            else:
-                decision_2d = decision
-            return softmax(decision_2d, copy=False)
+            return softmax(self.decision_function(X), copy=False)
 
     def predict_log_proba(self, X):
         """Log of probability estimates.
@@ -1696,17 +1688,18 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             raise ValueError("This solver needs samples of at least 2 classes"
                              " in the data, but the data contains only one"
                              " class: %r" % classes[0])
-
+        multi_class = self.multi_class
         if n_classes == 2:
             # OvR in case of binary problems is as good as fitting
             # the higher label
+            multi_class = 'ovr'
             n_classes = 1
             encoded_labels = encoded_labels[1:]
             classes = classes[1:]
 
         # We need this hack to iterate only once over labels, in the case of
         # multi_class = multinomial, without changing the value of the labels.
-        if self.multi_class == 'multinomial':
+        if multi_class == 'multinomial':
             iter_encoded_labels = iter_classes = [None]
         else:
             iter_encoded_labels = encoded_labels
@@ -1734,7 +1727,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                       dual=self.dual, solver=self.solver, tol=self.tol,
                       max_iter=self.max_iter, verbose=self.verbose,
                       class_weight=class_weight, scoring=self.scoring,
-                      multi_class=self.multi_class,
+                      multi_class=multi_class,
                       intercept_scaling=self.intercept_scaling,
                       random_state=self.random_state,
                       max_squared_sum=max_squared_sum,
@@ -1743,7 +1736,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             for label in iter_encoded_labels
             for train, test in folds)
 
-        if self.multi_class == 'multinomial':
+        if multi_class == 'multinomial':
             multi_coefs_paths, Cs, multi_scores, n_iter_ = zip(*fold_coefs_)
             multi_coefs_paths = np.asarray(multi_coefs_paths)
             multi_scores = np.asarray(multi_scores)
@@ -1780,14 +1773,14 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.intercept_ = np.zeros(n_classes)
 
         # hack to iterate only once for multinomial case.
-        if self.multi_class == 'multinomial':
+        if multi_class == 'multinomial':
             scores = multi_scores
             coefs_paths = multi_coefs_paths
 
         for index, (cls, encoded_label) in enumerate(
                 zip(iter_classes, iter_encoded_labels)):
 
-            if self.multi_class == 'ovr':
+            if multi_class == 'ovr':
                 # The scores_ / coefs_paths_ dict have unencoded class
                 # labels as their keys
                 scores = self.scores_[cls]
@@ -1798,7 +1791,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
                 C_ = self.Cs_[best_index]
                 self.C_.append(C_)
-                if self.multi_class == 'multinomial':
+                if multi_class == 'multinomial':
                     coef_init = np.mean(coefs_paths[:, best_index, :, :],
                                         axis=0)
                 else:
@@ -1812,7 +1805,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                     max_iter=self.max_iter, tol=self.tol,
                     penalty=self.penalty,
                     class_weight=class_weight,
-                    multi_class=self.multi_class,
+                    multi_class=multi_class,
                     verbose=max(0, self.verbose - 1),
                     random_state=self.random_state,
                     check_input=False, max_squared_sum=max_squared_sum,
@@ -1827,7 +1820,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                              for i in range(len(folds))], axis=0)
                 self.C_.append(np.mean(self.Cs_[best_indices]))
 
-            if self.multi_class == 'multinomial':
+            if multi_class == 'multinomial':
                 self.C_ = np.tile(self.C_, n_classes)
                 self.coef_ = w[:, :X.shape[1]]
                 if self.fit_intercept:
