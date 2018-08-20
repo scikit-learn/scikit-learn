@@ -430,14 +430,14 @@ def _check_solver_option(solver, multi_class, penalty, dual):
     if solver == 'warn':
         solver = 'liblinear'
         warnings.warn("Default solver will be changed to 'lbfgs' in 0.22. "
-                      "Use a specific solver to silence this warning.",
+                      "Specify a solver to silence this warning.",
                       FutureWarning)
 
     if multi_class == 'warn':
         multi_class = 'ovr'
         warnings.warn("Default multi_class will be changed to 'multinomial' in"
-                      " 0.22. Use a specific option to silence this warning.",
-                      FutureWarning)
+                      " 0.22. Specify the multi_class option to silence "
+                      "this warning.", FutureWarning)
 
     # Check the string parameters
     if multi_class not in ['multinomial', 'ovr']:
@@ -1072,7 +1072,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         'liblinear'.
 
     solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
-             default: 'liblinear'. Will be changed to 'lbfgs' solver in 0.22
+             default: 'liblinear'.
 
         Algorithm to use in the optimization problem.
 
@@ -1099,8 +1099,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Useful only for the newton-cg, sag and lbfgs solvers.
         Maximum number of iterations taken for the solvers to converge.
 
-    multi_class : str, {'ovr', 'multinomial'}
-        default: 'ovr'. Will be changed to 'multinomial' in 0.22.
+    multi_class : str, {'ovr', 'multinomial'}, default: 'ovr'
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
