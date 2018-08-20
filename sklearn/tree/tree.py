@@ -555,6 +555,11 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
+
         .. versionchanged:: 0.18
            Added float values for fractions.
 
@@ -562,6 +567,11 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
+
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
 
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
@@ -923,6 +933,11 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
+
         .. versionchanged:: 0.18
            Added float values for fractions.
 
@@ -930,6 +945,11 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
+
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
 
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
@@ -1181,6 +1201,11 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
+
         .. versionchanged:: 0.18
            Added float values for fractions.
 
@@ -1188,6 +1213,11 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
+
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
@@ -1365,6 +1395,11 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
+
         .. versionchanged:: 0.18
            Added float values for fractions.
 
@@ -1372,6 +1407,11 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
+
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:

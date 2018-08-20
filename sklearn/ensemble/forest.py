@@ -800,6 +800,11 @@ class RandomForestClassifier(ForestClassifier):
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
+
         .. versionchanged:: 0.18
            Added float values for fractions.
 
@@ -807,6 +812,11 @@ class RandomForestClassifier(ForestClassifier):
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
+
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
@@ -1085,6 +1095,11 @@ class RandomForestRegressor(ForestRegressor):
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
+
         .. versionchanged:: 0.18
            Added float values for fractions.
 
@@ -1092,6 +1107,11 @@ class RandomForestRegressor(ForestRegressor):
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
+
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
@@ -1323,6 +1343,11 @@ class ExtraTreesClassifier(ForestClassifier):
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
+
         .. versionchanged:: 0.18
            Added float values for fractions.
 
@@ -1330,6 +1355,11 @@ class ExtraTreesClassifier(ForestClassifier):
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
+
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
@@ -1579,6 +1609,11 @@ class ExtraTreesRegressor(ForestRegressor):
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
+
         .. versionchanged:: 0.18
            Added float values for fractions.
 
@@ -1586,6 +1621,11 @@ class ExtraTreesRegressor(ForestRegressor):
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
+
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
@@ -1791,6 +1831,11 @@ class RandomTreesEmbedding(BaseForest):
           `ceil(min_samples_leaf * n_samples)` is the minimum
           number of samples for each node.
 
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
+
         .. versionchanged:: 0.18
            Added float values for fractions.
 
@@ -1798,6 +1843,11 @@ class RandomTreesEmbedding(BaseForest):
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
+
+        .. warning::
+           We have become aware that this parameter is not effective for
+           regularization, and at worst may encourage bad splits.
+           It will likely be deprecated in a future version.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
