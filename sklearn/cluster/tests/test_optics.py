@@ -140,12 +140,16 @@ def test_auto_extract_hier():
     assert_equal(len(set(clust.labels_)), 6)
 
 
-@pytest.mark.parametrize("reach, n_child, members", [
+@pytest.mark.parametrize("reach, core_dist, n_child, members", [
     (np.array([np.inf, 0.9, 0.9, 1.0, 0.89, 0.88, 10, .9, .9, .9, 10, 0.9,
-               0.9, 0.89, 0.88, 10, .9, .9, .9, .9]), 2, np.r_[0:6]),
+               0.9, 0.89, 0.88, 10, .9, .9, .9, .9]),
+     np.array([np.inf, 0.9, 0.9, 1.0, 0.89, 0.88, 1, .9, .9, .9, 1, 0.9,
+               0.9, 0.89, 0.88, 1, .9, .9, .9, .9]), 2, np.r_[0:6]),
     (np.array([np.inf, 0.9, 0.9, 0.9, 0.89, 0.88, 10, .9, .9, .9, 10, 0.9,
-               0.9, 0.89, 0.88, 100, .9, .9, .9, .9]), 1, np.r_[0:15])])
-def test_cluster_sigmin_pruning(reach, n_child, members):
+               0.9, 0.89, 0.88, 100, .9, .9, .9, .9]),
+     np.array([np.inf, 0.9, 0.9, 0.9, 0.89, 0.88, 1, .9, .9, .9, 1, 0.9,
+               0.9, 0.89, 0.88, 1, .9, .9, .9, .9]), 1, np.r_[0:15])])
+def test_cluster_sigmin_pruning(reach, core_dist, n_child, members):
     # Tests pruning left and right, insignificant splitpoints, empty nodelists
     # Parameters chosen specifically for this task
 
@@ -159,7 +163,7 @@ def test_cluster_sigmin_pruning(reach, n_child, members):
     root = _TreeNode(ordering, 0, 20, None)
 
     # Build cluster tree inplace on root node
-    _cluster_tree(root, None, cluster_boundaries, reach, ordering,
+    _cluster_tree(root, None, cluster_boundaries, reach, core_dist, ordering,
                   5, .75, .7, .4, .3)
     assert_equal(root.split_point, cluster_boundaries[0])
     assert_equal(n_child, len(root.children))
