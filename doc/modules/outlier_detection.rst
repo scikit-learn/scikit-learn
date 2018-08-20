@@ -306,10 +306,10 @@ This strategy is illustrated below.
 .. topic:: Examples:
 
    * See :ref:`sphx_glr_auto_examples_neighbors_plot_lof_outlier_detection.py`
-   for an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
+     for an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
 
    * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` for a
-   comparison with other anomaly detection methods.
+     comparison with other anomaly detection methods.
 
 .. topic:: References:
 
