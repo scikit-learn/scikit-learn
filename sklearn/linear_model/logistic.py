@@ -605,11 +605,12 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     classes = np.unique(y)
     random_state = check_random_state(random_state)
 
-    if pos_class is None and multi_class != 'multinomial':
-        if (classes.size > 2):
-            raise ValueError('To fit OvR, use the pos_class argument')
+    if classes.size <= 2:
+        multi_class = 'ovr'
         # np.unique(y) gives labels in sorted order.
         pos_class = classes[1]
+    elif multi_class == 'ovr' and pos_class is None:
+        raise ValueError('To fit OvR, use the pos_class argument')
 
     # If sample weights exist, convert them to array (support for lists)
     # and check length
@@ -949,8 +950,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         if multi_class == 'ovr':
             w = w[np.newaxis, :]
         if fit_intercept:
-            log_reg.coef_ = w[:, :-1]
-            log_reg.intercept_ = w[:, -1]
+            log_reg.coef_ = w[..., :-1]
+            log_reg.intercept_ = w[..., -1]
         else:
             log_reg.coef_ = w
             log_reg.intercept_ = 0.
@@ -1107,18 +1108,14 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     coef_ : array, shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
-        `coef_` is of shape (1, n_features) when the given problem is binary.
-        In particular, when `multi_class='multinomial'`, `coef_` corresponds
-        to outcome 1 (True) and `-coef_` corresponds to outcome 0 (False).
+        `coef_` is of shape (1, n_features) when the given problem
+        is binary.
 
     intercept_ : array, shape (1,) or (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
 
         If `fit_intercept` is set to False, the intercept is set to zero.
-        `intercept_` is of shape (1,) when the given problem is binary.
-        In particular, when `multi_class='multinomial'`, `intercept_`
-        corresponds to outcome 1 (True) and `-intercept_` corresponds to
-        outcome 0 (False).
+        `intercept_` is of shape(1,) when the problem is binary.
 
     n_iter_ : array, shape (n_classes,) or (1, )
         Actual number of iterations for all classes. If binary or multinomial,
@@ -1330,8 +1327,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                                             int(self.fit_intercept))
 
         if self.fit_intercept:
-            self.intercept_ = self.coef_[:, -1]
-            self.coef_ = self.coef_[:, :-1]
+            self.intercept_ = self.coef_[..., -1]
+            self.coef_ = self.coef_[..., :-1]
 
         return self
 
@@ -1360,17 +1357,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         """
         if not hasattr(self, "coef_"):
             raise NotFittedError("Call fit before prediction")
-        if self.multi_class == "ovr":
+        calculate_ovr = self.coef_.shape[0] == 1 or self.multi_class == "ovr"
+        if calculate_ovr:
             return super(LogisticRegression, self)._predict_proba_lr(X)
         else:
-            decision = self.decision_function(X)
-            if decision.ndim == 1:
-                # Workaround for multi_class="multinomial" and binary outcomes
-                # which requires softmax prediction with only a 1D decision.
-                decision_2d = np.c_[-decision, decision]
-            else:
-                decision_2d = decision
-            return softmax(decision_2d, copy=False)
+            return softmax(self.decision_function(X), copy=False)
 
     def predict_log_proba(self, X):
         """Log of probability estimates.
