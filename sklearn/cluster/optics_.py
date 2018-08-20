@@ -576,8 +576,8 @@ def _extract_optics(ordering, reachability, core_distances, maxima_ratio=.75,
 
     # check if the last point in the ordering is a NOISE
     last_point = ordering[-1]
-    if (core_distances_plot[last_point] * 1.5
-            >= reachability_plot[last_point]):
+    if (core_distances_plot[-1] * 5 >= reachability_plot[-1]
+            and reachability_plot[-1] > reachability_plot[-2] * 5):
         labels[last_point] = -1
         is_core[last_point] = 0
 
@@ -689,7 +689,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     node_1 = _TreeNode(reachability_ordering[node.start:s],
                        node.start, s, node)
     node_2_start = s + 1
-    if core_distances_plot[s] * 1.5 < reachability_plot[s]:
+    if core_distances_plot[s] * 5 < reachability_plot[s]:
         node_2_start = s
     node_2 = _TreeNode(reachability_ordering[node_2_start:node.end],
                        node_2_start, node.end, node)

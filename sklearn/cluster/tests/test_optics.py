@@ -137,7 +137,47 @@ def test_auto_extract_hier():
     # Run the fit
     clust.fit(X)
 
-    assert_equal(len(set(clust.labels_)), 6)
+    assert_equal(set(clust.labels_), set([-1, 0, 1, 2, 3, 4]))
+
+
+def test_auto_extract_no_outlier():
+    np.random.seed(0)
+    n_points_per_cluster = 100
+    C1 = [-50, -20] + .08 * np.random.randn(n_points_per_cluster, 2)
+    C2 = [40, -10] + .01 * np.random.randn(n_points_per_cluster, 2)
+    C3 = [10, -20] + .02 * np.random.randn(n_points_per_cluster, 2)
+    C4 = [-20, 30] + .03 * np.random.randn(n_points_per_cluster, 2)
+    C5 = [30, -20] + .06 * np.random.randn(n_points_per_cluster, 2)
+    C6 = [50, 60] + .02 * np.random.randn(n_points_per_cluster, 2)
+    X = np.vstack((C1, C2, C3, C4, C5, C6))
+
+    clust = OPTICS(min_samples=4)
+
+    clust.fit(X)
+
+    # there should be no outliers detected
+    assert_equal(set(clust.labels_), set([0, 1, 2, 3, 4, 5]))
+
+
+def test_auto_extract_outlier():
+    np.random.seed(0)
+    n_points_per_cluster = 4
+
+    C1 = [-5, -2] + .8 * np.random.randn(n_points_per_cluster, 2)
+    C2 = [4, -1] + .1 * np.random.randn(n_points_per_cluster, 2)
+    X = np.vstack((C1, C2, np.array([[100, 200]])))
+
+    clust = OPTICS(min_samples=3).fit(X)
+
+    assert_array_equal(clust.labels_, np.r_[[0]*4, [1]*4, -1])
+
+    C1 = [-5, -2] + .8 * np.random.randn(n_points_per_cluster, 2)
+    C2 = [4, -1] + .1 * np.random.randn(n_points_per_cluster, 2)
+    X = np.vstack((C1, np.array([[100, 200]]), C2))
+
+    clust = OPTICS(min_samples=3).fit(X)
+
+    assert_array_equal(clust.labels_, np.r_[[0]*4, -1, [1]*4])
 
 
 @pytest.mark.parametrize("reach, core_dist, n_child, members", [
