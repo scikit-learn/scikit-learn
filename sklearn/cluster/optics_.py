@@ -573,7 +573,8 @@ def _extract_optics(ordering, reachability, core_distances, maxima_ratio=.75,
         labels[index] = clustid
         is_core[index] = 1
         clustid += 1
-    
+
+    # check if the last point in the ordering is a NOISE
     last_point = ordering[-1]
     if (core_distances_plot[last_point] * 1.5
             >= reachability_plot[last_point]):
@@ -695,7 +696,6 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     local_max_1 = []
     local_max_2 = []
 
-    # wouldn't list expansion be faster? -> realloc
     for i in local_maxima_points:
         if i < s:
             local_max_1.append(i)
