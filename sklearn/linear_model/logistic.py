@@ -1845,7 +1845,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 # For multinomial, all scores are the same accross classes
                 scores = scores[0]
                 # coefs_paths will keep its original shape because
-                # logistic_regression_path excepts it this way
+                # logistic_regression_path expects it this way
 
             if self.refit:
                 # best_index is between 0 and (n_Cs . n_l1_ratios - 1)

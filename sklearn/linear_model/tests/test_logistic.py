@@ -226,7 +226,7 @@ def test_check_solver_option(LR):
         lr = LR(solver=solver, dual=True)
         assert_raise_message(ValueError, msg, lr.fit, X, y)
 
-    # only saga supports elastic-net. We only test for linlinear because the
+    # only saga supports elastic-net. We only test for liblinear because the
     # error is raised before for the other solvers (solver %s supports only l2
     # penalties)
     for solver in ['liblinear']:
@@ -1341,12 +1341,11 @@ def test_elastic_net_coeffs():
     assert not np.allclose(l2_coeffs, l1_coeffs, rtol=0, atol=.1)
 
 
-def test_elastic_net_l1_l2_equivalence():
+@pytest.mark.parametrize('C', [.001, .1, 1, 10, 100, 1000, 10000000])
+def test_elastic_net_l1_l2_equivalence(C):
     # Make sure elastic-net is equivalent to l1 when l1_ratio=1 and l2 when
     # l1_ratio=0.
     X, y = make_classification(random_state=0)
-
-    C = 1 / .5
 
     lr = LogisticRegression(penalty='elastic-net', C=C, l1_ratio=0,
                             solver='saga', random_state=0)
@@ -1369,6 +1368,33 @@ def test_elastic_net_l1_l2_equivalence():
     l1_coeffs = lr.coef_
 
     assert_array_almost_equal(elastic_net_l1_one_coeffs, l1_coeffs)
+
+
+@pytest.mark.parametrize('C', [.001, 1, 100, 10000000])
+def test_elastic_net_vs_l1_l2(C):
+    # Make sure that elastic net with grid search on l1_ratio gives same or
+    # better results than just l1 or just l2.
+
+    X, y = make_classification(500, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    cv = StratifiedKFold(5, random_state=0)
+    param_grid = {'l1_ratio': np.linspace(0, 1, 10)}
+
+    enet_clf = LogisticRegression(penalty='elastic-net', C=C, solver='saga',
+                                  random_state=0)
+    gs = GridSearchCV(enet_clf, param_grid, cv=cv, iid=False, refit=True)
+
+    l1_clf = LogisticRegression(penalty='l1', C=C, solver='saga',
+                                random_state=0)
+    l2_clf = LogisticRegression(penalty='l2', C=C, solver='saga',
+                                random_state=0)
+
+    for clf in (gs, l1_clf, l2_clf):
+        clf.fit(X_train, y_train)
+
+    assert gs.score(X_test, y_test) >=  l1_clf.score(X_test, y_test)
+    assert gs.score(X_test, y_test) >=  l2_clf.score(X_test, y_test)
 
 
 def test_elastic_net_CV_grid_search():
@@ -1452,7 +1478,7 @@ def test_elastic_net_CV_multiclass_ovr():
 
 
 def test_ElasticNetCV_no_refit():
-    print()
+    # Test ElasticNetCV when refit is False
 
     n_classes = 3
     n_features = 20
@@ -1472,7 +1498,6 @@ def test_ElasticNetCV_no_refit():
     assert lrcv.l1_ratio_.shape == (n_classes,)
     assert lrcv.coef_.shape == (n_classes, n_features)
 
-    print()
     lrcv = LogisticRegressionCV(penalty='elastic-net', Cs=Cs, solver='saga',
                                 cv=cv, l1_ratios=l1_ratios, random_state=0,
                                 refit=False, multi_class='multinomial')
