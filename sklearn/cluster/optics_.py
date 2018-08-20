@@ -576,7 +576,7 @@ def _extract_optics(ordering, reachability, core_distances, maxima_ratio=.75,
     
     last_point = ordering[-1]
     if (core_distances_plot[last_point] * 1.5
-        >= reachability_plot[last_point]):
+            >= reachability_plot[last_point]):
         labels[last_point] = -1
         is_core[last_point] = 0
 
