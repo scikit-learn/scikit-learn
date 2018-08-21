@@ -3,6 +3,7 @@ import unittest
 import sys
 import os
 import atexit
+from copy import deepcopy
 
 import numpy as np
 
@@ -29,7 +30,9 @@ from sklearn.utils.testing import (
     assert_raises_regex,
     TempMemmap,
     create_memmap_backed_data,
-    _delete_folder)
+    _delete_folder,
+    assert_deep_almost_equal)
+
 
 from sklearn.utils.testing import SkipTest
 from sklearn.tree import DecisionTreeClassifier
@@ -557,3 +560,22 @@ def test_create_memmap_backed_data(monkeypatch):
     for input_array, data in zip(input_list, mmap_data_list):
         check_memmap(input_array, data)
     assert registration_counter.nb_calls == 4
+
+
+def test_assert_deep_almost_equal():
+
+    a = [{'a': 3, 'b': 'hello', 'c': {}}, [1, 2, 3]]
+    b = [{'a': 3, 'b': 'hello', 'c': {}}, [1, 2, 3 + 1e-7]]
+    c = [{'a': 3, 'b': 'hello', 'c': {}}, [1, 2, 3 + 1e-6]]
+    d = [{'a': 8, 'b': 'hello', 'c': {}}, [1, 2, 3]]
+    e = deepcopy(a)
+    e[0]['c']['a'] = 0  # just add key to a nested dict
+
+    assert_deep_almost_equal(a, a)
+    assert_deep_almost_equal(a, b, decimal=7)
+    with pytest.raises(AssertionError):
+        assert_deep_almost_equal(a, c, decimal=7)
+    with pytest.raises(AssertionError):
+        assert_deep_almost_equal(a, d)
+    with pytest.raises(AssertionError):
+        assert_deep_almost_equal(a, e)
