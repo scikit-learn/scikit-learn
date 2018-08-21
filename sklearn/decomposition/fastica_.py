@@ -309,13 +309,15 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         X -= X_mean[:, np.newaxis]
 
         # Whitening and preprocessing by PCA
-        d, u = linalg.eigh(X.dot(X.T))
-
-        eps = np.finfo(float).eps  # For numerical precision
-        d[d < eps] = eps
-
-        K = (u / np.sqrt(d)).T[:n_components]  # see (6.33) p.140
-
+        if n > p:
+            u, d, _ = linalg.svd(X, full_matrices=False)
+        else:
+            D, u = linalg.eigh(X.dot(X.T))  # Faster when n < p
+            eps = np.finfo(np.double).eps
+            D[D < eps] = eps  # For numerical issues
+            d = np.sqrt(D)
+            del D
+        K = (u / d).T[:n_components]  # see (6.33) p.140
         del u, d
         X1 = np.dot(K, X)
         # see (13.6) p.267 Here X1 is white and data
