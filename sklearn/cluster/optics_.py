@@ -564,10 +564,9 @@ def _extract_optics(ordering, reachability, core_distances, maxima_ratio=.75,
     """
 
     # Extraction wrapper
-    # why are we generating only 1 (the first one) INF in the reachability?
     # according to the paper (p. 5), for a small enough generative distance
     # epsilong, there should be more than one INF.
-    normalization_factor = np.max(reachability[1:])
+    normalization_factor = np.max(reachability[reachability < np.inf])
     reachability = reachability / normalization_factor
     reachability_plot = reachability[ordering].tolist()
     core_distances = core_distances / normalization_factor
