@@ -690,7 +690,8 @@ def _find_local_maxima(reachability_plot, neighborhood_size):
         # if the point is a local maxima on the reachability plot with
         # regard to neighborhood_size, insert it into priority queue and
         # maxima list
-        if (reachability_plot[i] > reachability_plot[i - 1] and
+        # all inf values are local maxima.
+        if (reachability_plot[i] >= reachability_plot[i - 1] and
             reachability_plot[i] >= reachability_plot[i + 1] and
             _is_local_maxima(i, np.array(reachability_plot),
                              neighborhood_size) == 1):
