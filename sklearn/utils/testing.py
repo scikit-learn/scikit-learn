@@ -17,6 +17,7 @@ import warnings
 import sys
 import struct
 import functools
+import numbers
 
 import scipy as sp
 import scipy.io
@@ -994,3 +995,39 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
             if n1 != n2:
                 incorrect += [func_name + ' ' + n1 + ' != ' + n2]
     return incorrect
+
+
+def assert_deep_almost_equal(actual, desired, decimal=7):
+    """Assert that actual and desired (arbitrarily deep objets) are almost
+    equal.
+
+    This is the same as doing
+        assert actual == desired
+    except that numbers are compared up to a given decimal.
+    """
+
+    type_err_msg = 'Cannot compare a {} (actual) with {} (desired).'
+
+    if isinstance(desired, dict):
+        if not isinstance(actual, dict):
+            raise AssertionError(type_err_msg.format(type(actual), 'a dict'))
+        assert actual.keys() == desired.keys()
+        for key in desired:
+            assert_deep_almost_equal(actual[key], desired[key],
+                                     decimal)
+
+    elif isinstance(desired, (list, tuple, np.ndarray)):
+        if not isinstance(actual, (list, tuple, np.ndarray)):
+            raise AssertionError(type_err_msg.format(type(actual),
+                                                     'an iterable'))
+        assert len(actual) == len(desired)
+        for a, d in zip(actual, desired):
+            assert_deep_almost_equal(a, d, decimal)
+
+    elif isinstance(desired, numbers.Number):
+        if not isinstance(actual, numbers.Number):
+            raise AssertionError(type_err_msg.format(type(actual), 'a number'))
+        assert_almost_equal(actual, desired, decimal)
+
+    else:
+        assert_equal(actual, desired)

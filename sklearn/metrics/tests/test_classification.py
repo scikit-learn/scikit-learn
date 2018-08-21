@@ -27,6 +27,7 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_deep_almost_equal
 from sklearn.utils.mocking import MockDataFrame
 
 from sklearn.metrics import accuracy_score
@@ -140,14 +141,7 @@ def test_classification_report_dictionary_output():
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names, output_dict=True)
 
-    # assert the 2 dicts are equal.
-    assert(report.keys() == expected_report.keys())
-    for key in expected_report:
-        assert report[key].keys() == expected_report[key].keys()
-        for metric in expected_report[key]:
-            assert_almost_equal(expected_report[key][metric],
-                                report[key][metric])
-
+    assert_deep_almost_equal(report, expected_report)
     assert type(expected_report['setosa']['precision']) == float
     assert type(expected_report['macro avg']['precision']) == float
     assert type(expected_report['setosa']['support']) == int
