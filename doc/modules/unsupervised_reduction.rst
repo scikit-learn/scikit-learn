@@ -44,7 +44,8 @@ Feature agglomeration
 
 :class:`cluster.FeatureAgglomeration` applies
 :ref:`hierarchical_clustering` to group together features that behave
-similarly.
+similarly. This approach is best applied in datasets involving large group
+of clusters.
 
 .. topic:: **Examples**
 
