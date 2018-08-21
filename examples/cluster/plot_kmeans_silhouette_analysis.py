@@ -139,4 +139,4 @@ for n_clusters in range_n_clusters:
                   "with n_clusters = %d" % n_clusters),
                  fontsize=14, fontweight='bold')
 
-    plt.show()
+plt.show()

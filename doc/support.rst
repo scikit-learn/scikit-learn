@@ -92,7 +92,7 @@ Documentation resources
 
 This documentation is relative to |release|. Documentation for
 other versions can be found `here
-<http://scikit-learn.org/dev/versions.html>`_.
+<http://scikit-learn.org/dev/versions.html>`__.
 
 Printable pdf documentation for old versions can be found `here
 <https://sourceforge.net/projects/scikit-learn/files/documentation/>`_.
