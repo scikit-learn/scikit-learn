@@ -216,6 +216,53 @@ def _convert_arff_data(arff_data, col_slice_x, col_slice_y):
         raise ValueError('Unexpected Data Type obtained from arff.')
 
 
+def _convert_arff_data_dataframe(arff_data, col_slice_x, col_slice_y,
+                                 data_columns, target_column, features_dict,
+                                 nominal_attributes):
+    """
+    """
+    try:
+        import pandas as pd
+    except ImportError:
+        raise ImportError("return_frame=True requires pandas")
+
+    nominal_attributes = dict(nominal_attributes)
+
+    data = pd.DataFrame(arff_data)
+
+    # process X data
+    X = data.iloc[:, col_slice_x]
+    X.columns = data_columns
+
+    all_numeric = all(features_dict[feature]['data_type'] == 'numeric'
+                      for feature in data_columns)
+
+    if all_numeric:
+        X = X.astype(np.float64, copy=False)
+    else:
+        X_cols = []
+
+        for feature in data_columns:
+            data_type = features_dict[feature]['data_type']
+            if data_type == 'numeric':
+                X_cols.append(X[feature].astype(np.float64))
+            elif data_type == 'nominal':
+                categories = nominal_attributes[feature]
+                X_cols.append(pd.Series(
+                    pd.Categorical(X[feature], categories=categories),
+                    name=feature))
+            elif data_type == 'string':
+                X_cols.append(X[feature])
+            else:
+                raise ValueError("invalid data type")
+        X = pd.concat(X_cols, axis=1, copy=False)
+
+    # convert y data to array
+    y = np.array(data.iloc[:, col_slice_y])
+
+    return X, y
+
+
 def _get_data_info_by_name(name, version, data_home):
     """
     Utilizes the openml dataset listing api to find a dataset by
@@ -347,7 +394,8 @@ def _verify_target_data_type(features_dict, target_columns):
 
 
 def fetch_openml(name=None, version='active', data_id=None, data_home=None,
-                 target_column='default-target', cache=True, return_X_y=False):
+                 target_column='default-target', cache=True, return_X_y=False,
+                 return_frame=False):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -476,11 +524,14 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
 
-    for feature in features_list:
-        if 'true' in (feature['is_ignore'], feature['is_row_identifier']):
-            continue
-        if feature['data_type'] == 'string':
-            raise ValueError('STRING attributes are not yet supported')
+    if not return_frame:
+        for feature in features_list:
+            if 'true' in (feature['is_ignore'], feature['is_row_identifier']):
+                continue
+            if feature['data_type'] == 'string':
+                raise ValueError('STRING attributes are not supported for '
+                                 'arrays as return value. Try '
+                                 'return_frame=True.')
 
     if target_column == "default-target":
         # determines the default target based on the data feature results
@@ -528,7 +579,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     # obtain the data
     arff = _download_data_arff(data_description['file_id'], return_sparse,
-                               data_home)
+                               data_home, encode_nominal=not return_frame)
     arff_data = arff['data']
     nominal_attributes = {k: v for k, v in arff['attributes']
                           if isinstance(v, list)}
@@ -537,7 +588,12 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                       feature['is_ignore']) and (feature['name'] not in
                                                  target_column):
             del nominal_attributes[feature['name']]
-    X, y = _convert_arff_data(arff_data, col_slice_x, col_slice_y)
+    if return_frame:
+        X, y = _convert_arff_data_dataframe(
+            arff_data, col_slice_x, col_slice_y, data_columns, target_column,
+            features_dict, nominal_attributes)
+    else:
+        X, y = _convert_arff_data(arff_data, col_slice_x, col_slice_y)
 
     is_classification = {col_name in nominal_attributes
                          for col_name in target_column}
@@ -545,10 +601,11 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         # No target
         pass
     elif all(is_classification):
-        y = np.hstack([np.take(np.asarray(nominal_attributes.pop(col_name),
-                                          dtype='O'),
-                               y[:, i:i+1].astype(int))
-                       for i, col_name in enumerate(target_column)])
+        if not return_frame:
+            y = np.hstack([np.take(np.asarray(nominal_attributes.pop(col_name),
+                                              dtype='O'),
+                                   y[:, i:i+1].astype(int))
+                          for i, col_name in enumerate(target_column)])
     elif any(is_classification):
         raise ValueError('Mix of nominal and non-nominal targets is not '
                          'currently supported')
