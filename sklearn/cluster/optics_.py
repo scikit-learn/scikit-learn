@@ -168,6 +168,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
+    NOTE: should we call this parameter min_neighbors, or n_neighbors,
+    to be more consistent with the NearestNeighbors API, which this parameter
+    is used for?
     min_samples : int
         The number of samples in a neighborhood for a point to be considered
         as a core point.
@@ -269,6 +272,19 @@ class OPTICS(BaseEstimator, ClusterMixin):
     core_distances_ : array, shape (n_samples,)
         Distance at which each sample becomes a core point.
         Points which will never be core have a distance of inf.
+
+    Examples
+    --------
+    >>> from sklearn.cluster import OPTICS
+    >>> import numpy as np
+    >>> np.random.seed(0)
+    >>> n_points_per_cluster = 3
+    >>> C1 = [-5, -2] + .8 * np.random.randn(n_points_per_cluster, 2)
+    >>> C2 = [4, -1] + .1 * np.random.randn(n_points_per_cluster, 2)
+    >>> X = np.vstack((C1, np.array([[100, 200]]), C2))
+    >>> clust = OPTICS(min_samples=2).fit(X)
+    >>> clust.labels_
+    array([ 0,  0,  0, -1,  1,  1,  1])
 
     See also
     --------
