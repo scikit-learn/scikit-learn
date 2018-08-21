@@ -739,7 +739,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 if not np.allclose(means_weighted, means_unweighted,
                                    rtol=1e-4, atol=1e-4):
                     warn = True
-                    continue
+                    break
 
             if warn:
                 warnings.warn("The default of the `iid` parameter will change "
