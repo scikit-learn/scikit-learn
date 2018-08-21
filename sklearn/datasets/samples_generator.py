@@ -337,6 +337,9 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         Only returned if ``return_distributions=True``.
 
     """
+    if n_labels == 0:
+        raise ValueError("n_labels should be more than 0")
+
     generator = check_random_state(random_state)
     p_c = generator.rand(n_classes)
     p_c /= p_c.sum()
