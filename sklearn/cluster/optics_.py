@@ -702,8 +702,7 @@ def _find_local_maxima(reachability_plot, neighborhood_size):
 
 
 def _cluster_tree(node, parent_node, local_maxima_points,
-                  reachability_plot, core_distances_plot,
-                  reachability_ordering,
+                  reachability_plot, core_distances_plot, ordering,
                   min_cluster_size, maxima_ratio, rejection_ratio,
                   similarity_threshold, significant_min):
     """Recursively builds cluster tree to hold hierarchical cluster structure
@@ -722,12 +721,12 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     local_maxima_points = local_maxima_points[1:]
 
     # create two new nodes and add to list of nodes
-    node_1 = _TreeNode(reachability_ordering[node.start:s],
+    node_1 = _TreeNode(ordering[node.start:s],
                        node.start, s, node)
     node_2_start = s + 1
     if core_distances_plot[s] * 5 < reachability_plot[s]:
         node_2_start = s
-    node_2 = _TreeNode(reachability_ordering[node_2_start:node.end],
+    node_2 = _TreeNode(ordering[node_2_start:node.end],
                        node_2_start, node.end, node)
     local_max_1 = []
     local_max_2 = []
@@ -749,7 +748,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
         # if split_point is not significant, ignore this split and continue
         #_cluster_tree(node, parent_node, local_maxima_points,
         #              reachability_plot, core_distances_plot,
-        #              reachability_ordering,
+        #              ordering,
         #              min_cluster_size, maxima_ratio, rejection_ratio,
         #              similarity_threshold, significant_min)
         return
@@ -782,8 +781,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
             # ignore this split and continue (reject both child nodes)
             node.assign_split_point(-1)
             _cluster_tree(node, parent_node, local_maxima_points,
-                          reachability_plot, core_distances_plot,
-                          reachability_ordering,
+                          reachability_plot, core_distances_plot, ordering,
                           min_cluster_size, maxima_ratio, rejection_ratio,
                           similarity_threshold, significant_min)
             return
@@ -816,15 +814,13 @@ def _cluster_tree(node, parent_node, local_maxima_points,
         if bypass_node == 1:
             parent_node.add_child(nl[0])
             _cluster_tree(nl[0], parent_node, nl[1],
-                          reachability_plot, core_distances_plot,
-                          reachability_ordering,
+                          reachability_plot, core_distances_plot, ordering,
                           min_cluster_size, maxima_ratio, rejection_ratio,
                           similarity_threshold, significant_min)
         else:
             node.add_child(nl[0])
             _cluster_tree(nl[0], node, nl[1], reachability_plot,
-                          core_distances_plot,
-                          reachability_ordering, min_cluster_size,
+                          core_distances_plot, ordering, min_cluster_size,
                           maxima_ratio, rejection_ratio,
                           similarity_threshold, significant_min)
 
