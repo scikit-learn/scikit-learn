@@ -236,7 +236,8 @@ class InfectionPropagation(LabelPropagation):
             y_static *= 1 - alpha
 
         l_previous = np.zeros((self.X_.shape[0], n_classes))
-        np.expand_dims(unlabeled,axis=1)
+        unlabeled = unlabeled[:, np.newaxis]
+        #np.expand_dims(unlabeled,axis=1)
         if sparse.isspmatrix(graph_matrix):
             graph_matrix = graph_matrix.tocsr()
         if sparse.isspmatrix(affinity_matrix):
@@ -280,7 +281,8 @@ class InfectionPropagation(LabelPropagation):
         self.label_distributions_ /= normalizer
 
         # set the transduction item
-        transduction = self.classes_[np.array(np.argmax(self.label_distributions_,axis=1))]
+        indices = np.argmax(self.label_distributions_,axis=1)
+        transduction = self.classes_[indices]
         self.transduction_ = transduction.ravel()
         return self
 
