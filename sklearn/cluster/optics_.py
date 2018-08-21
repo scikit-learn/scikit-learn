@@ -175,6 +175,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
         The number of samples in a neighborhood for a point to be considered
         as a core point.
 
+    NOTE: max_radius (similar to NearestNeighbors API)
+    or max_eps (to follow paper's jargon)
     max_bound : float, optional
         The maximum distance between two samples for them to be considered
         as in the same neighborhood. This is also the largest object size
@@ -195,6 +197,21 @@ class OPTICS(BaseEstimator, ClusterMixin):
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
+    NOTE: the API doesn't seem to be consistent with regard to metric_params,
+    i.e. in some cases it's taken as input, in some cases only a `metric`
+    is accepted and no `metric_params`
+    also, regarding metric, why is it not like t-sne for instance?
+        metric : string or callable, optional
+            The metric to use when calculating distance between instances in a
+            feature array. If metric is a string, it must be one of the options
+            allowed by scipy.spatial.distance.pdist for its metric parameter, or
+            a metric listed in pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
+            If metric is "precomputed", X is assumed to be a distance matrix.
+            Alternatively, if metric is a callable function, it is called on each
+            pair of instances (rows) and the resulting value recorded. The callable
+            should take two arrays from X as input and return a value indicating
+            the distance between them. The default is "euclidean" which is
+            interpreted as squared euclidean distance.
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
 
@@ -566,6 +583,9 @@ def _extract_optics(ordering, reachability, core_distances, maxima_ratio=.75,
     # Extraction wrapper
     # according to the paper (p. 5), for a small enough generative distance
     # epsilong, there should be more than one INF.
+    if np.all(np.isinf(reachability)):
+        raise ValueError("All reachability values are inf. Set a larger"
+                         " max_bound.")
     normalization_factor = np.max(reachability[reachability < np.inf])
     reachability = reachability / normalization_factor
     reachability_plot = reachability[ordering].tolist()
@@ -736,6 +756,8 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     # only check a certain ratio of points in the child
     # nodes formed to the left and right of the maxima
     # ...should check_ratio be a user settable parameter?
+    # NOTE: based on the description of maxima_ratio I'd guess this value
+    # should be 1, why is it less than 1?
     check_ratio = .8
     check_value_1 = int(np.round(check_ratio * len(node_1.points)))
     check_value_2 = int(np.round(check_ratio * len(node_2.points)))
@@ -744,17 +766,17 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     avg_reach2 = np.mean(reachability_plot[node_2.start:(node_2.start
                                                          + check_value_2)])
 
-    if ((avg_reach1 / reachability_plot[s]) > maxima_ratio or
-            (avg_reach2 / reachability_plot[s]) > maxima_ratio):
+    if ((avg_reach1 / maxima_ratio) > reachability_plot[s] or
+            (avg_reach2 / maxima_ratio) > reachability_plot[s]):
 
-        if (avg_reach1 / reachability_plot[s]) < rejection_ratio:
+        if (avg_reach1 / rejection_ratio) < reachability_plot[s]:
             # reject node 2
             node_list.remove((node_2, local_max_2))
-        if (avg_reach2 / reachability_plot[s]) < rejection_ratio:
+        if (avg_reach2 / rejection_ratio) < reachability_plot[s]:
             # reject node 1
             node_list.remove((node_1, local_max_1))
-        if ((avg_reach1 / reachability_plot[s]) >= rejection_ratio and
-                (avg_reach2 / reachability_plot[s]) >= rejection_ratio):
+        if ((avg_reach1 / rejection_ratio) >= reachability_plot[s] and
+                (avg_reach2 / rejection_ratio) >= reachability_plot[s]):
             # since split_point is not significant,
             # ignore this split and continue (reject both child nodes)
             node.assign_split_point(-1)
