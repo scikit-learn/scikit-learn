@@ -16,7 +16,7 @@ from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from ..utils import as_float_array, check_array, check_X_y
 from ..model_selection import check_cv
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
 dependence in the dictionary. The requested precision might not have been met.
@@ -191,7 +191,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     """
     Gram = Gram.copy('F') if copy_Gram else np.asfortranarray(Gram)
 
-    if copy_Xy:
+    if copy_Xy or not Xy.flags.writeable:
         Xy = Xy.copy()
 
     min_float = np.finfo(Gram.dtype).eps
@@ -491,6 +491,9 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         Xy = Xy[:, np.newaxis]
         if tol is not None:
             norms_squared = [norms_squared]
+    if copy_Xy or not Xy.flags.writeable:
+        # Make the copy once instead of many times in _gram_omp itself.
+        Xy = Xy.copy()
 
     if n_nonzero_coefs is None and tol is None:
         n_nonzero_coefs = int(0.1 * len(Gram))
@@ -515,7 +518,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         out = _gram_omp(
             Gram, Xy[:, k], n_nonzero_coefs,
             norms_squared[k] if tol is not None else None, tol,
-            copy_Gram=copy_Gram, copy_Xy=copy_Xy,
+            copy_Gram=copy_Gram, copy_Xy=False,
             return_path=return_path)
         if return_path:
             _, idx, coefs, n_iter = out
@@ -782,9 +785,15 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
@@ -819,7 +828,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
     """
     def __init__(self, copy=True, fit_intercept=True, normalize=True,
-                 max_iter=None, cv=None, n_jobs=1, verbose=False):
+                 max_iter=None, cv='warn', n_jobs=None, verbose=False):
         self.copy = copy
         self.fit_intercept = fit_intercept
         self.normalize = normalize

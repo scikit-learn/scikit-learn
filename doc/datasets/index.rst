@@ -9,46 +9,60 @@ Dataset loading utilities
 The ``sklearn.datasets`` package embeds some small toy datasets
 as introduced in the :ref:`Getting Started <loading_example_dataset>` section.
 
+This package also features helpers to fetch larger datasets commonly
+used by the machine learning community to benchmark algorithms on data
+that comes from the 'real world'.
+
 To evaluate the impact of the scale of the dataset (``n_samples`` and
 ``n_features``) while controlling the statistical properties of the data
 (typically the correlation and informativeness of the features), it is
 also possible to generate synthetic data.
 
-This package also features helpers to fetch larger datasets commonly
-used by the machine learning community to benchmark algorithm on data
-that comes from the 'real world'.
-
 General dataset API
 ===================
 
-There are three distinct kinds of dataset interfaces for different types
-of datasets.
-The simplest one is the interface for sample images, which is described
-below in the :ref:`sample_images` section.
+There are three main kinds of dataset interfaces that can be used to get 
+datasets depending on the desired type of dataset.
+  
+**The dataset loaders.** They can be used to load small standard datasets, 
+described in the :ref:`toy_datasets` section.  
 
-The dataset generation functions and the svmlight loader share a simplistic
-interface, returning a tuple ``(X, y)`` consisting of a ``n_samples`` *
+**The dataset fetchers.** They can be used to download and load larger datasets,
+described in the :ref:`real_world_datasets` section.
+
+Both loaders and fetchers functions return a dictionary-like object holding 
+at least two items: an array of shape ``n_samples`` * ``n_features`` with 
+key ``data`` (except for 20newsgroups) and a numpy array of 
+length ``n_samples``, containing the target values, with key ``target``.
+
+It's also possible for almost all of these function to constrain the output
+to be a tuple containing only the data and the target, by setting the 
+``return_X_y`` parameter to ``True``.
+
+The datasets also contain a full description in their ``DESCR`` attribute and 
+some contain ``feature_names`` and ``target_names``. See the dataset 
+descriptions below for details.  
+
+**The dataset generation functions.** They can be used to generate controlled 
+synthetic datasets, described in the :ref:`sample_generators` section.
+
+These functions return a tuple ``(X, y)`` consisting of a ``n_samples`` *
 ``n_features`` numpy array ``X`` and an array of length ``n_samples``
 containing the targets ``y``.
 
-The toy datasets as well as the 'real world' datasets and the datasets
-fetched from mldata.org have more sophisticated structure.
-These functions return a dictionary-like object holding at least two items:
-an array of shape ``n_samples`` * ``n_features`` with key ``data``
-(except for 20newsgroups)
-and a numpy array of length ``n_samples``, containing the target values,
-with key ``target``.
+In addition, there are also miscellanous tools to load datasets of other 
+formats or from other locations, described in the :ref:`loading_other_datasets`
+section. 
 
-The datasets also contain a description in ``DESCR`` and some contain
-``feature_names`` and ``target_names``.
-See the dataset descriptions below for details.
-
+.. _toy_datasets:
 
 Toy datasets
 ============
 
-scikit-learn comes with a few small standard datasets that do not
-require to download any file from some external website.
+scikit-learn comes with a few small standard datasets that do not require to 
+download any file from some external website. 
+
+They can be loaded using the following functions:
 
 .. autosummary::
 
@@ -67,46 +81,87 @@ These datasets are useful to quickly illustrate the behavior of the
 various algorithms implemented in scikit-learn. They are however often too
 small to be representative of real world machine learning tasks.
 
-.. _sample_images:
+.. toctree::
+    :maxdepth: 2
+    :hidden:
 
-Sample images
-=============
+    boston_house_prices
+    iris
+    diabetes
+    digits
+    linnerud
+    wine_data
+    breast_cancer
 
-Scikit-learn also embed a couple of sample JPEG images published under Creative
-Commons license by their authors. Those image can be useful to test algorithms
-and pipeline on 2D data.
+.. include:: ../../sklearn/datasets/descr/boston_house_prices.rst
+
+.. include:: ../../sklearn/datasets/descr/iris.rst
+
+.. include:: ../../sklearn/datasets/descr/diabetes.rst
+
+.. include:: ../../sklearn/datasets/descr/digits.rst
+
+.. include:: ../../sklearn/datasets/descr/linnerud.rst
+
+.. include:: ../../sklearn/datasets/descr/wine_data.rst
+
+.. include:: ../../sklearn/datasets/descr/breast_cancer.rst
+
+.. _real_world_datasets:
+
+Real world datasets
+===================
+
+scikit-learn provides tools to load larger datasets, downloading them if
+necessary.
+
+They can be loaded using the following functions:
 
 .. autosummary::
 
    :toctree: ../modules/generated/
    :template: function.rst
 
-   load_sample_images
-   load_sample_image
+   fetch_olivetti_faces
+   fetch_20newsgroups
+   fetch_20newsgroups_vectorized
+   fetch_lfw_people
+   fetch_lfw_pairs
+   fetch_covtype
+   fetch_rcv1
+   fetch_kddcup99
+   fetch_california_housing
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_color_quantization_001.png
-   :target: ../auto_examples/cluster/plot_color_quantization.html
-   :scale: 30
-   :align: right
+.. toctree::
+    :maxdepth: 2
+    :hidden:
 
+    olivetti_faces
+    twenty_newsgroups
+    labeled_faces
+    covtype
+    rcv1
+    kddcup99
+    california_housing
 
-.. warning::
+.. include:: ../../sklearn/datasets/descr/olivetti_faces.rst
 
-  The default coding of images is based on the ``uint8`` dtype to
-  spare memory.  Often machine learning algorithms work best if the
-  input is converted to a floating point representation first.  Also,
-  if you plan to use ``matplotlib.pyplpt.imshow`` don't forget to scale to the range
-  0 - 1 as done in the following example.
+.. include:: ../../sklearn/datasets/descr/twenty_newsgroups.rst
 
-.. topic:: Examples:
+.. include:: ../../sklearn/datasets/descr/lfw.rst
 
-    * :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`
+.. include:: ../../sklearn/datasets/descr/covtype.rst
 
+.. include:: ../../sklearn/datasets/descr/rcv1.rst
+
+.. include:: ../../sklearn/datasets/descr/kddcup99.rst
+
+.. include:: ../../sklearn/datasets/descr/california_housing.rst
 
 .. _sample_generators:
 
-Sample generators
-=================
+Generated datasets
+==================
 
 In addition, scikit-learn includes various random sample generators that
 can be used to build artificial datasets of controlled size and complexity.
@@ -219,10 +274,50 @@ Generators for decomposition
    make_sparse_spd_matrix
 
 
+.. _loading_other_datasets:
+
+Loading other datasets
+======================
+
+.. _sample_images:
+
+Sample images
+-------------
+
+Scikit-learn also embed a couple of sample JPEG images published under Creative
+Commons license by their authors. Those image can be useful to test algorithms
+and pipeline on 2D data.
+
+.. autosummary::
+
+   :toctree: ../modules/generated/
+   :template: function.rst
+
+   load_sample_images
+   load_sample_image
+
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_color_quantization_001.png
+   :target: ../auto_examples/cluster/plot_color_quantization.html
+   :scale: 30
+   :align: right
+
+
+.. warning::
+
+  The default coding of images is based on the ``uint8`` dtype to
+  spare memory.  Often machine learning algorithms work best if the
+  input is converted to a floating point representation first.  Also,
+  if you plan to use ``matplotlib.pyplpt.imshow`` don't forget to scale to the range
+  0 - 1 as done in the following example.
+
+.. topic:: Examples:
+
+    * :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`
+
 .. _libsvm_loader:
 
 Datasets in svmlight / libsvm format
-====================================
+------------------------------------
 
 scikit-learn includes utility functions for loading
 datasets in the svmlight / libsvm format. In this format, each line
@@ -259,7 +354,7 @@ features::
 .. _external_datasets:
 
 Loading from external datasets
-==============================
+------------------------------
 
 scikit-learn works on any numeric data stored as numpy arrays or scipy sparse
 matrices. Other types that are convertible to numeric arrays such as pandas
@@ -295,65 +390,11 @@ refer to:
   for reading WAV files into a numpy array
 
 Categorical (or nominal) features stored as strings (common in pandas DataFrames) 
-will need converting to integers, and integer categorical variables may be best 
-exploited when encoded as one-hot variables 
-(:class:`sklearn.preprocessing.OneHotEncoder`) or similar. 
+will need converting to numerical features using :class:`sklearn.preprocessing.OneHotEncoder`
+or :class:`sklearn.preprocessing.OrdinalEncoder` or similar.
 See :ref:`preprocessing`.
 
 Note: if you manage your own numerical data it is recommended to use an 
 optimized file format such as HDF5 to reduce data load times. Various libraries
 such as H5Py, PyTables and pandas provides a Python interface for reading and 
 writing data in that format.
-
-.. make sure everything is in a toc tree
-
-.. toctree::
-    :maxdepth: 2
-    :hidden:
-
-    olivetti_faces
-    twenty_newsgroups
-    mldata
-    labeled_faces
-    covtype
-    rcv1
-    kddcup99
-
-
-.. include:: olivetti_faces.rst
-
-.. include:: twenty_newsgroups.rst
-
-.. include:: mldata.rst
-
-.. include:: labeled_faces.rst
-
-.. include:: covtype.rst
-
-.. include:: rcv1.rst
-
-.. include:: kddcup99.rst
-
-.. _boston_house_prices:
-
-.. include:: ../../sklearn/datasets/descr/boston_house_prices.rst
-
-.. _breast_cancer:
-
-.. include:: ../../sklearn/datasets/descr/breast_cancer.rst
-
-.. _diabetes:
-
-.. include:: ../../sklearn/datasets/descr/diabetes.rst
-
-.. _digits:
-
-.. include:: ../../sklearn/datasets/descr/digits.rst
-
-.. _iris:
-
-.. include:: ../../sklearn/datasets/descr/iris.rst
-
-.. _linnerud:
-
-.. include:: ../../sklearn/datasets/descr/linnerud.rst

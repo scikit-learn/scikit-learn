@@ -1,6 +1,6 @@
 """
 =============================================================================
- t-SNE: The effect of various perplexity values on the shape
+t-SNE: The effect of various perplexity values on the shape
 =============================================================================
 
 An illustration of t-SNE on the two concentric circles and the S-curve

@@ -342,7 +342,7 @@ and ``value`` is an estimator object::
     >>> estimators = [('linear_pca', PCA()), ('kernel_pca', KernelPCA())]
     >>> combined = FeatureUnion(estimators)
     >>> combined # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    FeatureUnion(n_jobs=1,
+    FeatureUnion(n_jobs=None,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
                                    ('kernel_pca', KernelPCA(alpha=1.0,...))],
                  transformer_weights=None)
@@ -357,14 +357,14 @@ and ignored by setting to ``None``::
 
     >>> combined.set_params(kernel_pca=None)
     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    FeatureUnion(n_jobs=1,
+    FeatureUnion(n_jobs=None,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
                                    ('kernel_pca', None)],
                  transformer_weights=None)
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_compose_plot_feature_stacker.py`
+ * :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`
 
 
 .. _column_transformer:
@@ -404,22 +404,27 @@ preprocessing or a specific feature extraction method::
   >>> X = pd.DataFrame(
   ...     {'city': ['London', 'London', 'Paris', 'Sallisaw'],
   ...      'title': ["His Last Bow", "How Watson Learned the Trick",
-  ...                "A Moveable Feast", "The Grapes of Wrath"]})
+  ...                "A Moveable Feast", "The Grapes of Wrath"],
+  ...      'expert_rating': [5, 3, 4, 5],
+  ...      'user_rating': [4, 5, 4, 3]})
 
 For this data, we might want to encode the ``'city'`` column as a categorical
 variable, but apply a :class:`feature_extraction.text.CountVectorizer
 <sklearn.feature_extraction.text.CountVectorizer>` to the ``'title'`` column.
 As we might use multiple feature extraction methods on the same column, we give
-each transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
+each transformer a unique name, say ``'city_category'`` and ``'title_bow'``.
+By default, the remaining rating columns are ignored (``remainder='drop'``)::
 
   >>> from sklearn.compose import ColumnTransformer
   >>> from sklearn.feature_extraction.text import CountVectorizer
   >>> column_trans = ColumnTransformer(
   ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
-  ...      ('title_bow', CountVectorizer(), 'title')])
+  ...      ('title_bow', CountVectorizer(), 'title')],
+  ...      remainder='drop')
 
   >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=1, remainder='passthrough', transformer_weights=None,
+  ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
+      transformer_weights=None,
       transformers=...)
 
   >>> column_trans.get_feature_names()
@@ -448,6 +453,39 @@ as a list of multiple items, an integer array, a slice, or a boolean mask.
 Strings can reference columns if the input is a DataFrame, integers are always
 interpreted as the positional columns.
 
+We can keep the remaining rating columns by setting
+``remainder='passthrough'``. The values are appended to the end of the
+transformation::
+
+  >>> column_trans = ColumnTransformer(
+  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...      ('title_bow', CountVectorizer(), 'title')],
+  ...      remainder='passthrough')
+
+  >>> column_trans.fit_transform(X)
+  ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  array([[1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 5, 4],
+         [1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 3, 5],
+         [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 4, 4],
+         [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 5, 3]]...)
+
+The ``remainder`` parameter can be set to an estimator to transform the
+remaining rating columns. The transformed values are appended to the end of
+the transformation::
+
+  >>> from sklearn.preprocessing import MinMaxScaler
+  >>> column_trans = ColumnTransformer(
+  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...      ('title_bow', CountVectorizer(), 'title')],
+  ...      remainder=MinMaxScaler())
+
+  >>> column_trans.fit_transform(X)[:, -2:]
+  ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  array([[1. , 0.5],
+         [0. , 1. ],
+         [0.5, 0.5],
+         [1. , 0. ]])
+
 The :func:`~sklearn.compose.make_columntransformer` function is available
 to more easily create a :class:`~sklearn.compose.ColumnTransformer` object.
 Specifically, the names will be given automatically. The equivalent for the
@@ -458,10 +496,11 @@ above example would be::
   ...     ('city', CountVectorizer(analyzer=lambda x: [x])),
   ...     ('title', CountVectorizer()))
   >>> column_trans # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=1, remainder='passthrough', transformer_weights=None,
+  ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
+           transformer_weights=None,
            transformers=[('countvectorizer-1', ...)
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_compose_column_transformer.py`
- * :ref:`sphx_glr_auto_examples_compose_column_transformer_mixed_types.py`
+ * :ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
+ * :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`

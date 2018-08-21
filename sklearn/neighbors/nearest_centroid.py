@@ -161,7 +161,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             # it becomes zero.
             signs = np.sign(deviation)
             deviation = (np.abs(deviation) - self.shrink_threshold)
-            deviation[deviation < 0] = 0
+            np.clip(deviation, 0, None, out=deviation)
             deviation *= signs
             # Now adjust the centroids using the deviation
             msd = ms * deviation

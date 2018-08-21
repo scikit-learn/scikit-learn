@@ -11,7 +11,8 @@ from scipy.sparse.csgraph import connected_components
 from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,
     reconstruct_from_patches_2d, PatchExtractor, extract_patches)
-from sklearn.utils.testing import assert_equal, assert_true, assert_raises
+from sklearn.utils.testing import (assert_equal, assert_true, assert_raises,
+                                   ignore_warnings)
 
 
 def test_img_to_graph():
@@ -55,6 +56,7 @@ def test_grid_to_graph():
     assert_true(A.dtype == np.float64)
 
 
+@ignore_warnings(category=DeprecationWarning)  # scipy deprecation inside face
 def test_connect_regions():
     try:
         face = sp.face(gray=True)
@@ -68,6 +70,7 @@ def test_connect_regions():
         assert_equal(ndimage.label(mask)[1], connected_components(graph)[0])
 
 
+@ignore_warnings(category=DeprecationWarning)  # scipy deprecation inside face
 def test_connect_regions_with_grid():
     try:
         face = sp.face(gray=True)
@@ -301,9 +304,9 @@ def test_extract_patches_strided():
         ndim = len(image_shape)
 
         assert_true(patches.shape[:ndim] == expected_view)
-        last_patch_slices = [slice(i, i + j, None) for i, j in
-                             zip(last_patch, patch_size)]
-        assert_true((patches[[slice(-1, None, None)] * ndim] ==
+        last_patch_slices = tuple(slice(i, i + j, None) for i, j in
+                                  zip(last_patch, patch_size))
+        assert_true((patches[(-1, None, None) * ndim] ==
                     image[last_patch_slices].squeeze()).all())
 
 
