@@ -815,6 +815,11 @@ class RandomForestClassifier(ForestClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
+        .. deprecated:: 0.20
+           The parameter ``min_weight_fraction_leaf`` is deprecated in version
+           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
+           for regularization.
+
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
@@ -943,8 +948,9 @@ class RandomForestClassifier(ForestClassifier):
                 max_depth=2, max_features='auto', max_leaf_nodes=None,
                 min_impurity_decrease=0.0, min_impurity_split=None,
                 min_samples_leaf='deprecated', min_samples_split=2,
-                min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1,
-                oob_score=False, random_state=0, verbose=0, warm_start=False)
+                min_weight_fraction_leaf='deprecated', n_estimators=10,
+                n_jobs=1, oob_score=False, random_state=0, verbose=0,
+                warm_start=False)
     >>> print(clf.feature_importances_)
     [0.17287856 0.80608704 0.01884792 0.00218648]
     >>> print(clf.predict([[0, 0, 0, 0]]))
@@ -980,7 +986,7 @@ class RandomForestClassifier(ForestClassifier):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf=0.,
+                 min_weight_fraction_leaf='deprecated',
                  max_features="auto",
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
@@ -1097,6 +1103,11 @@ class RandomForestRegressor(ForestRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
+        .. deprecated:: 0.20
+           The parameter ``min_weight_fraction_leaf`` is deprecated in version
+           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
+           for regularization.
+
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
@@ -1187,8 +1198,9 @@ class RandomForestRegressor(ForestRegressor):
                max_features='auto', max_leaf_nodes=None,
                min_impurity_decrease=0.0, min_impurity_split=None,
                min_samples_leaf='deprecated', min_samples_split=2,
-               min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1,
-               oob_score=False, random_state=0, verbose=0, warm_start=False)
+               min_weight_fraction_leaf='deprecated', n_estimators=10,
+               n_jobs=1, oob_score=False, random_state=0, verbose=0,
+               warm_start=False)
     >>> print(regr.feature_importances_)
     [0.17339552 0.81594114 0.         0.01066333]
     >>> print(regr.predict([[0, 0, 0, 0]]))
@@ -1224,7 +1236,7 @@ class RandomForestRegressor(ForestRegressor):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf=0.,
+                 min_weight_fraction_leaf='deprecated',
                  max_features="auto",
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
@@ -1331,6 +1343,11 @@ class ExtraTreesClassifier(ForestClassifier):
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
+
+        .. deprecated:: 0.20
+           The parameter ``min_weight_fraction_leaf`` is deprecated in version
+           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
+           for regularization.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
@@ -1471,7 +1488,7 @@ class ExtraTreesClassifier(ForestClassifier):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf=0.,
+                 min_weight_fraction_leaf='deprecated',
                  max_features="auto",
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
@@ -1586,6 +1603,11 @@ class ExtraTreesRegressor(ForestRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
+        .. deprecated:: 0.20
+           The parameter ``min_weight_fraction_leaf`` is deprecated in version
+           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
+           for regularization.
+
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
@@ -1687,7 +1709,7 @@ class ExtraTreesRegressor(ForestRegressor):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf=0.,
+                 min_weight_fraction_leaf='deprecated',
                  max_features="auto",
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
@@ -1780,6 +1802,11 @@ class RandomTreesEmbedding(BaseForest):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
+        .. deprecated:: 0.20
+           The parameter ``min_weight_fraction_leaf`` is deprecated in version
+           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
+           for regularization.
+
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
@@ -1857,7 +1884,7 @@ class RandomTreesEmbedding(BaseForest):
                  max_depth=5,
                  min_samples_split=2,
                  min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf=0.,
+                 min_weight_fraction_leaf='deprecated',
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,

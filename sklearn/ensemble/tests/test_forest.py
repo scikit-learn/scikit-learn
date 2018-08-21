@@ -802,7 +802,9 @@ def check_min_weight_fraction_leaf(name):
         if "RandomForest" in name:
             est.bootstrap = False
 
-        est.fit(X, y, sample_weight=weights)
+        with pytest.warns(DeprecationWarning,
+                          match='min_weight_fraction_leaf'):
+            est.fit(X, y, sample_weight=weights)
         out = est.estimators_[0].tree_.apply(X)
         node_weights = np.bincount(out, weights=weights)
         # drop inner nodes

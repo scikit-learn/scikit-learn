@@ -1357,6 +1357,11 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
+        .. deprecated:: 0.20
+           The parameter ``min_weight_fraction_leaf`` is deprecated in version
+           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
+           for regularization.
+
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
@@ -1533,7 +1538,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
-                 min_samples_leaf='deprecated', min_weight_fraction_leaf=0.,
+                 min_samples_leaf='deprecated',
+                 min_weight_fraction_leaf='deprecated',
                  max_depth=3, min_impurity_decrease=0.,
                  min_impurity_split=None, init=None,
                  random_state=None, max_features=None, verbose=0,
@@ -1815,6 +1821,11 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
+        .. deprecated:: 0.20
+           The parameter ``min_weight_fraction_leaf`` is deprecated in version
+           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
+           for regularization.
+
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
@@ -1987,7 +1998,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
-                 min_samples_leaf='deprecated', min_weight_fraction_leaf=0.,
+                 min_samples_leaf='deprecated',
+                 min_weight_fraction_leaf='deprecated',
                  max_depth=3, min_impurity_decrease=0.,
                  min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,

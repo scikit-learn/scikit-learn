@@ -119,12 +119,16 @@ def test_classifier_parameter_checks():
             X, y
         )
 
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(min_weight_fraction_leaf=-1.).fit,
-                  X, y)
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(min_weight_fraction_leaf=0.6).fit,
-                  X, y)
+    with pytest.warns(DeprecationWarning, match='min_weight_fraction_leaf'):
+        assert_raises(ValueError,
+                      GradientBoostingClassifier(
+                          min_weight_fraction_leaf=-1.).fit,
+                      X, y)
+    with pytest.warns(DeprecationWarning, match='min_weight_fraction_leaf'):
+        assert_raises(ValueError,
+                      GradientBoostingClassifier(
+                          min_weight_fraction_leaf=0.6).fit,
+                      X, y)
 
     assert_raises(ValueError,
                   GradientBoostingClassifier(subsample=0.0).fit, X, y)

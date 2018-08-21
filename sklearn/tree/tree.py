@@ -240,7 +240,15 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
                              "number of samples=%d" % (len(y), n_samples))
-        if not 0 <= self.min_weight_fraction_leaf <= 0.5:
+
+        if self.min_weight_fraction_leaf != 'deprecated':
+            warnings.warn("'min_weight_fraction_leaf' is deprecated in 0.20 "
+                          "and will be fixed to a value of 0 in 0.22.",
+                          DeprecationWarning)
+            min_weight_fraction_leaf = self.min_weight_fraction_leaf
+        else:
+            min_weight_fraction_leaf = 0
+        if not 0 <= min_weight_fraction_leaf <= 0.5:
             raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
         if max_depth <= 0:
             raise ValueError("max_depth must be greater than zero. ")
@@ -275,10 +283,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # Set min_weight_leaf from min_weight_fraction_leaf
         if sample_weight is None:
-            min_weight_leaf = (self.min_weight_fraction_leaf *
+            min_weight_leaf = (min_weight_fraction_leaf *
                                n_samples)
         else:
-            min_weight_leaf = (self.min_weight_fraction_leaf *
+            min_weight_leaf = (min_weight_fraction_leaf *
                                np.sum(sample_weight))
 
         if self.min_impurity_split is not None:
@@ -573,6 +581,11 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
+        .. deprecated:: 0.20
+           The parameter ``min_weight_fraction_leaf`` is deprecated in version
+           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
+           for regularization.
+
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
 
@@ -739,7 +752,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf=0.,
+                 min_weight_fraction_leaf='deprecated',
                  max_features=None,
                  random_state=None,
                  max_leaf_nodes=None,
@@ -945,6 +958,11 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
+        .. deprecated:: 0.20
+           The parameter ``min_weight_fraction_leaf`` is deprecated in version
+           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
+           for regularization.
+
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
 
@@ -1082,7 +1100,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf=0.,
+                 min_weight_fraction_leaf='deprecated',
                  max_features=None,
                  random_state=None,
                  max_leaf_nodes=None,
@@ -1207,6 +1225,11 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
+        .. deprecated:: 0.20
+           The parameter ``min_weight_fraction_leaf`` is deprecated in version
+           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
+           for regularization.
+
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
 
@@ -1307,7 +1330,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf=0.,
+                 min_weight_fraction_leaf='deprecated',
                  max_features="auto",
                  random_state=None,
                  max_leaf_nodes=None,
@@ -1395,6 +1418,11 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
+        .. deprecated:: 0.20
+           The parameter ``min_weight_fraction_leaf`` is deprecated in version
+           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
+           for regularization.
+
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
 
@@ -1475,7 +1503,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf=0.,
+                 min_weight_fraction_leaf='deprecated',
                  max_features="auto",
                  random_state=None,
                  min_impurity_decrease=0.,

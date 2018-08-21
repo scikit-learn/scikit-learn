@@ -341,15 +341,7 @@ Tips on practical use
     toward the classes that are dominant. Class balancing can be done by
     sampling an equal number of samples from each class, or preferably by
     normalizing the sum of the sample weights (``sample_weight``) for each
-    class to the same value. Also note that weight-based pre-pruning criteria,
-    such as ``min_weight_fraction_leaf``, will then be less biased toward
-    dominant classes than criteria that are not aware of the sample weights,
-    like ``min_samples_split``.
-
-  * If the samples are weighted, it will be easier to optimize the tree
-    structure using weight-based pre-pruning criterion such as
-    ``min_weight_fraction_leaf``, which ensure that leaf nodes contain at least
-    a fraction of the overall sum of the sample weights.
+    class to the same value.
 
   * All decision trees use ``np.float32`` arrays internally.
     If training data is not in this format, a copy of the dataset will be made.
