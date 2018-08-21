@@ -237,7 +237,6 @@ class InfectionPropagation(LabelPropagation):
 
         l_previous = np.zeros((self.X_.shape[0], n_classes))
         unlabeled = unlabeled[:, np.newaxis]
-        #np.expand_dims(unlabeled,axis=1)
         if sparse.isspmatrix(graph_matrix):
             graph_matrix = graph_matrix.tocsr()
         if sparse.isspmatrix(affinity_matrix):
