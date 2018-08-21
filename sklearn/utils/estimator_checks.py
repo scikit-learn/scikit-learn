@@ -1545,7 +1545,7 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
     y_scores = estimator.score_samples(X)
     assert y_scores.shape == (n_samples,)
     y_dec = y_scores - estimator.offset_
-    assert_array_almost_equal(y_dec, decision)
+    assert_allclose(y_dec, decision)
 
     # raises error on malformed input for score_samples
     assert_raises(ValueError, estimator.score_samples, X.T)
