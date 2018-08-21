@@ -25,6 +25,7 @@ from __future__ import division
 
 from abc import ABCMeta
 from abc import abstractmethod
+import warnings
 
 from .base import BaseEnsemble
 from ..base import ClassifierMixin
@@ -1498,7 +1499,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         loss_ = self.loss_
 
         # Set min_weight_leaf from min_weight_fraction_leaf
-        if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
+        if self.min_weight_fraction_leaf != 'deprecated':
+            warnings.warn("'min_weight_fraction_leaf' is deprecated in 0.20 "
+                          "and will be fixed to a value of 0 in 0.22.",
+                          DeprecationWarning)
+            min_weight_leaf = 0.
+        elif self.min_weight_fraction_leaf != 0. and sample_weight is not None:
             min_weight_leaf = (self.min_weight_fraction_leaf *
                                np.sum(sample_weight))
         else:
