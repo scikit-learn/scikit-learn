@@ -10,7 +10,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.testing import (assert_raises, assert_true, assert_false,
                                    assert_warns, assert_raise_message,
-                                   ignore_warnings)
+                                   ignore_warnings, skip_if_32bit)
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -71,6 +71,7 @@ def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
         assert_raise_message(ValueError, msg, dense_svm.predict, X_test)
 
 
+@skip_if_32bit
 def test_svc():
     """Check that sparse SVC gives the same result as SVC"""
     # many class dataset:
@@ -265,6 +266,7 @@ def test_sparse_liblinear_intercept_handling():
     test_svm.test_dense_liblinear_intercept_handling(svm.LinearSVC)
 
 
+@skip_if_32bit
 def test_sparse_oneclasssvm():
     # Check that sparse OneClassSVM gives the same result as dense OneClassSVM
     # many class dataset:
