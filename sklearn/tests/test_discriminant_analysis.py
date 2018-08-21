@@ -91,6 +91,23 @@ def test_lda_predict():
     clf = LinearDiscriminantAnalysis(solver="dummy")
     assert_raises(ValueError, clf.fit, X, y)
 
+def test_lda_predict_proba():
+    # Test LDA posterior probabilities
+    # Binary case
+    clf = LinearDiscriminantAnalysis(solver='svd').fit(X6,y6)
+    probas = clf.predict_proba(X6)
+    assert_array_almost_equal(
+        probas[0],
+        np.array([0.91942108, 0.08057892])
+    )
+    # Multiclass case
+    clf = LinearDiscriminantAnalysis(solver='svd').fit(X6,y7)
+    probas = clf.predict_proba(X6)
+    assert_array_almost_equal(
+        probas[0],
+        np.array([0.25128617, 0.36876296, 0.37995087])
+    )
+
 
 def test_lda_priors():
     # Test priors (negative priors)
