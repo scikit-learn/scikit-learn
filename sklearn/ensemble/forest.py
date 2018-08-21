@@ -965,7 +965,7 @@ class RandomForestClassifier(ForestClassifier):
                 min_impurity_decrease=0.0, min_impurity_split=None,
                 min_samples_leaf='deprecated', min_samples_split=2,
                 min_weight_fraction_leaf='deprecated', n_estimators=100,
-                n_jobs=1, oob_score=False, random_state=0, verbose=0,
+                n_jobs=None, oob_score=False, random_state=0, verbose=0,
                 warm_start=False)
     >>> print(clf.feature_importances_)
     [0.14205973 0.76664038 0.0282433  0.06305659]
@@ -1222,7 +1222,7 @@ class RandomForestRegressor(ForestRegressor):
                min_impurity_decrease=0.0, min_impurity_split=None,
                min_samples_leaf='deprecated', min_samples_split=2,
                min_weight_fraction_leaf='deprecated', n_estimators=100,
-               n_jobs=1, oob_score=False, random_state=0, verbose=0,
+               n_jobs=None, oob_score=False, random_state=0, verbose=0,
                warm_start=False)
     >>> print(regr.feature_importances_)
     [0.18146984 0.81473937 0.00145312 0.00233767]
