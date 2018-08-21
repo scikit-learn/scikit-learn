@@ -280,8 +280,7 @@ class InfectionPropagation(LabelPropagation):
         self.label_distributions_ /= normalizer
 
         # set the transduction item
-        transduction = self.classes_[np.argmax(self.label_distributions_,
-                                               axis=1)]
+        transduction = self.classes_[np.array(np.argmax(self.label_distributions_,axis=1))]
         self.transduction_ = transduction.ravel()
         return self
 
