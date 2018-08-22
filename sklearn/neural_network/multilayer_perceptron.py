@@ -313,8 +313,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                                                     fan_out)
         return coef_init, intercept_init
 
-    def _fit(self, X, y, incremental=False, sample_weight=None,
-             class_weight=None):
+    def _fit(self, X, y, incremental=False, sample_weight=None):
         # Make sure self.hidden_layer_sizes is a list
         hidden_layer_sizes = self.hidden_layer_sizes
         if not hasattr(hidden_layer_sizes, "__iter__"):
@@ -338,9 +337,9 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             y = y.reshape((-1, 1))
 
         # modify the sample weights with the corresponding class weight
-        if class_weight and isinstance(self, MLPClassifier):
+        if isinstance(self, MLPClassifier) and self.class_weight is not None:
             sample_weight = (sample_weight *
-                             compute_sample_weight(class_weight, y))
+                             compute_sample_weight(self.class_weight, y))
 
         self.n_outputs_ = y.shape[1]
 
@@ -629,7 +628,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             if self.loss_curve_[-1] < self.best_loss_:
                 self.best_loss_ = self.loss_curve_[-1]
 
-    def fit(self, X, y, sample_weight=None, class_weight=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit the model to data matrix X and target(s) y.
 
         Parameters
@@ -644,21 +643,12 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         sample_weight : array-like, shape (n_samples,), optional (default=None)
             Weights applied to individual samples (1. for unweighted).
 
-        class_weight : dict or 'balanced', optional
-            Weights associated with classes in the form ``{class_label: weight}``.
-            If not given, all classes are supposed to have weight one.
-
-            The "balanced" mode uses the values of y to automatically adjust
-            weights inversely proportional to class frequencies in the input data
-            as ``n_samples / (n_classes * np.bincount(y))``
-
         Returns
         -------
         self : returns a trained MLP model.
         """
         return self._fit(X, y, incremental=False,
-                         sample_weight=sample_weight,
-                         class_weight=class_weight)
+                         sample_weight=sample_weight)
 
     @property
     def partial_fit(self):
@@ -682,9 +672,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                                  % self.solver)
         return self._partial_fit
 
-    def _partial_fit(self, X, y, sample_weight=None, class_weight=None):
-        return self._fit(X, y, incremental=True, sample_weight=sample_weight,
-                         class_weight=class_weight)
+    def _partial_fit(self, X, y, sample_weight=None):
+        return self._fit(X, y, incremental=True, sample_weight=sample_weight)
 
     def _predict(self, X):
         """Predict using the trained model
@@ -872,6 +861,16 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
         .. versionadded:: 0.20
 
+    class_weight : dict or 'balanced', optional
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one.
+
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
+
+        .. versionadded:: 0.21
+
     Attributes
     ----------
     classes_ : array or list of array of shape (n_classes,)
@@ -937,7 +936,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
-                 epsilon=1e-8, n_iter_no_change=10):
+                 epsilon=1e-8, n_iter_no_change=10, class_weight=None):
 
         sup = super(MLPClassifier, self)
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
@@ -952,6 +951,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                      validation_fraction=validation_fraction,
                      beta_1=beta_1, beta_2=beta_2, epsilon=epsilon,
                      n_iter_no_change=n_iter_no_change)
+
+        self.class_weight = class_weight
 
     def _validate_input(self, X, y, incremental):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
@@ -1001,7 +1002,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
         return self._label_binarizer.inverse_transform(y_pred)
 
-    def fit(self, X, y, sample_weight=None, class_weight=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit the model to data matrix X and target(s) y.
 
         Parameters
@@ -1016,14 +1017,6 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         sample_weight : array-like, shape (n_samples,), optional (default=None)
             Weights applied to individual samples (1. for unweighted).
 
-        class_weight : dict or 'balanced', optional
-            Weights associated with classes in the form ``{class_label: weight}``.
-            If not given, all classes are supposed to have weight one.
-
-            The "balanced" mode uses the values of y to automatically adjust
-            weights inversely proportional to class frequencies in the input data
-            as ``n_samples / (n_classes * np.bincount(y))``
-
         Returns
         -------
         self : returns a trained MLP model.
@@ -1031,8 +1024,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         return self._fit(
             X, y,
             incremental=(self.warm_start and hasattr(self, "classes_")),
-            sample_weight=sample_weight,
-            class_weight=class_weight
+            sample_weight=sample_weight
         )
 
     @property
@@ -1058,14 +1050,6 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         sample_weight : array-like, shape (n_samples,), optional (default=None)
             Weights applied to individual samples (1. for unweighted).
 
-        class_weight : dict or 'balanced', optional
-            Weights associated with classes in the form ``{class_label: weight}``.
-            If not given, all classes are supposed to have weight one.
-
-            The "balanced" mode uses the values of y to automatically adjust
-            weights inversely proportional to class frequencies in the input data
-            as ``n_samples / (n_classes * np.bincount(y))``
-
         Returns
         -------
         self : returns a trained MLP model.
@@ -1076,8 +1060,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                                  % self.solver)
         return self._partial_fit
 
-    def _partial_fit(self, X, y, classes=None, sample_weight=None,
-                     class_weight=None):
+    def _partial_fit(self, X, y, classes=None, sample_weight=None):
         if _check_partial_fit_first_call(self, classes):
             self._label_binarizer = LabelBinarizer()
             if type_of_target(y).startswith('multilabel'):
@@ -1085,8 +1068,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             else:
                 self._label_binarizer.fit(classes)
 
-        super(MLPClassifier, self)._partial_fit(X, y, sample_weight,
-                                                class_weight)
+        super(MLPClassifier, self)._partial_fit(X, y, sample_weight)
 
         return self
 
