@@ -43,7 +43,7 @@ class Pipeline(_BaseComposition):
     names and the parameter name separated by a '__', as in the example below.
     A step's estimator may be replaced entirely by setting the parameter
     with its name to another estimator, or a transformer removed by setting
-    it to 'passthrough'.
+    it to 'passthrough' or None.
 
     Read more in the :ref:`User Guide <pipeline>`.
 
@@ -159,24 +159,8 @@ class Pipeline(_BaseComposition):
         transformers_steps = self.steps[:-1]
         estimator_name, estimator = self.steps[-1]
 
-        if estimator is None:
-            warnings.warn(
-                "Estimator '%s' is set to None. Please use "
-                "'passthrough' for the same behavior. "
-                "None has been deprecated "
-                "in version 0.20 and will be removed in 0.22." %
-                estimator_name, DeprecationWarning)
-
         for name, t in transformers_steps:
-            if t is None:
-                warnings.warn(
-                    "Transformer '%s' is set to None. Please use "
-                    "'passthrough' for the same behavior. "
-                    "None has been deprecated "
-                    "in version 0.20 and will be removed in 0.22." % name,
-                    DeprecationWarning)
-                continue
-            if t == 'passthrough':
+            if t is None or t == 'passthrough':
                 continue
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
                     hasattr(t, "transform")):

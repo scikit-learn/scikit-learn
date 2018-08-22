@@ -584,37 +584,18 @@ def test_set_pipeline_step_none():
     pipeline.set_params(m3=None)
     exp = 2 * 5
 
-    depr_message = ("Transformer 'm3' is set to None. Please use "
-                    "'passthrough' for the same behavior. "
-                    "None has been deprecated "
-                    "in version 0.20 and will be removed in 0.22.")
+    assert_array_equal([[exp]], pipeline.fit_transform(X, y))
 
-    with pytest.warns(DeprecationWarning, match=depr_message):
-        assert_array_equal([[exp]], pipeline.fit_transform(X, y))
-
-    with pytest.warns(DeprecationWarning, match=depr_message):
-        assert_array_equal([exp], pipeline.fit(X).predict(X))
+    assert_array_equal([exp], pipeline.fit(X).predict(X))
 
     # last transformer is None
-    depr_message = ("Estimator 'last' is set to None. Please use "
-                    "'passthrough' for the same behavior. "
-                    "None has been deprecated "
-                    "in version 0.20 and will be removed in 0.22.")
     exp = 2 * 3
 
-    with pytest.warns(DeprecationWarning, match=depr_message):
-        pipeline = Pipeline([('m2', mult2), ('m3', mult3), ('last', None)])
-
-    with pytest.warns(DeprecationWarning, match=depr_message):
-        assert_array_equal([[exp]], pipeline.fit_transform(X, y))
+    pipeline = Pipeline([('m2', mult2), ('m3', mult3), ('last', None)])
+    assert_array_equal([[exp]], pipeline.fit_transform(X, y))
 
     # make pipeline with None
-    depr_message = ("Estimator 'nonetype' is set to None. Please use "
-                    "'passthrough' for the same behavior. "
-                    "None has been deprecated "
-                    "in version 0.20 and will be removed in 0.22.")
-    with pytest.warns(DeprecationWarning, match=depr_message):
-        pipeline = make_pipeline(None)
+    pipeline = make_pipeline(None)
 
 
 def test_set_pipeline_step_passthrough():
