@@ -164,7 +164,7 @@ boolean mask array or callable
                  transformers,
                  remainder='drop',
                  sparse_threshold=0.3,
-                 n_jobs=1,
+                 n_jobs=None,
                  transformer_weights=None,
                  verbose=False):
         self.transformers = transformers
