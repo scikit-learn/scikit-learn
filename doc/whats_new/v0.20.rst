@@ -841,9 +841,8 @@ Support for Python 3.3 has been officially dropped.
   parameters such as ``return_std`` in a pipeline with caution.
   :issue:`9304` by :user:`Breno Freitas <brenolf>`.
   
-- |API| ``drop`` can be used as a transformer in 
-  :class:`pipeline.FeatureUnion` to drop features. 
-  :issue:`11144` by :user:`thomasjpfan`.
+- |API| :class:`pipeline.FeatureUnion` now supports ``'drop'`` as a transformer
+  to drop features. :issue:`11144` by :user:`thomasjpfan`.
 
 
 :mod:`sklearn.preprocessing`
