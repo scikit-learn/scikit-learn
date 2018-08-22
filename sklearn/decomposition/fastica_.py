@@ -151,7 +151,7 @@ def _cube(x, fun_args):
 def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             fun="logcosh", fun_args=None, max_iter=200, tol=1e-04, w_init=None,
             random_state=None, return_X_mean=False, compute_sources=True,
-            return_n_iter=False):
+            return_n_iter=False, svd_solver='svd'):
     """Perform Fast Independent Component Analysis.
 
     Read more in the :ref:`User Guide <ICA>`.
@@ -202,6 +202,11 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     w_init : (n_components, n_components) array, optional
         Initial un-mixing array of dimension (n.comp,n.comp).
         If None (default) then an array of normal r.v.'s is used.
+
+    svd_solver : str, optional
+        The solver to use for whitening. Can either be 'svd' or 'eigh'.
+        'svd' is more stable numerically if the problem is degenerate.
+        'eigh' is generally faster.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -309,14 +314,19 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         X -= X_mean[:, np.newaxis]
 
         # Whitening and preprocessing by PCA
-        if n > p:
-            u, d, _ = linalg.svd(X, full_matrices=False)
-        else:
+        if svd_solver == 'eigh' and n < p:
             D, u = linalg.eigh(X.dot(X.T))  # Faster when n < p
             eps = np.finfo(np.double).eps
-            D[D < eps] = eps  # For numerical issues
+            degenerate_idx = D < eps
+            if np.any(degenerate_idx):
+                warnings.warn('There are some small singular values, using '
+                              'svd_solver = \'svd\' might lead to more '
+                              'accurate results.')
+            D[degenerate_idx] = eps  # For numerical issues
             d = np.sqrt(D)
             del D
+        else:
+            u, d, _ = linalg.svd(X, full_matrices=False)
         K = (u / d).T[:n_components]  # see (6.33) p.140
         del u, d
         X1 = np.dot(K, X)
@@ -428,6 +438,11 @@ class FastICA(BaseEstimator, TransformerMixin):
     w_init : None of an (n_components, n_components) ndarray
         The mixing matrix to be used to initialize the algorithm.
 
+    svd_solver : str, optional
+        The solver to use for whitening. Can either be 'svd' or 'eigh'.
+        'svd' is more stable numerically if the problem is degenerate.
+        'eigh' is generally faster.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -457,7 +472,7 @@ class FastICA(BaseEstimator, TransformerMixin):
     """
     def __init__(self, n_components=None, algorithm='parallel', whiten=True,
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
-                 w_init=None, random_state=None):
+                 w_init=None, svd_solver='svd', random_state=None):
         super(FastICA, self).__init__()
         self.n_components = n_components
         self.algorithm = algorithm
@@ -468,6 +483,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         self.tol = tol
         self.w_init = w_init
         self.random_state = random_state
+        self.svd_solver = svd_solver
 
     def _fit(self, X, compute_sources=False):
         """Fit the model
@@ -492,7 +508,8 @@ class FastICA(BaseEstimator, TransformerMixin):
             whiten=self.whiten, fun=self.fun, fun_args=fun_args,
             max_iter=self.max_iter, tol=self.tol, w_init=self.w_init,
             random_state=self.random_state, return_X_mean=True,
-            compute_sources=compute_sources, return_n_iter=True)
+            compute_sources=compute_sources, return_n_iter=True,
+            svd_solver=self.svd_solver)
 
         if self.whiten:
             self.components_ = np.dot(unmixing, whitening)

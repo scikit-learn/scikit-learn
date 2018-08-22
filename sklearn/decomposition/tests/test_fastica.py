@@ -115,8 +115,10 @@ def test_fastica_simple(add_noise=False):
             assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=1)
 
     # Test FastICA class
-    _, _, sources_fun = fastica(m.T, fun=nl, algorithm=algo, random_state=0)
-    ica = FastICA(fun=nl, algorithm=algo, random_state=0)
+    _, _, sources_fun = fastica(m.T, fun=nl, algorithm=algo, random_state=0,
+                                svd_solver='eigh')
+    ica = FastICA(fun=nl, algorithm=algo, random_state=0,
+                  svd_solver='eigh')
     sources = ica.fit_transform(m.T)
     assert_equal(ica.components_.shape, (2, 2))
     assert_equal(sources.shape, (1000, 2))
