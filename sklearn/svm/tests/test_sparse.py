@@ -268,7 +268,7 @@ def test_sparse_liblinear_intercept_handling():
 
 @pytest.mark.parametrize("datasets_index", range(4))
 @pytest.mark.parametrize("kernel", ["linear", "poly", "rbf", "sigmoid"])
-def test_sparse_oneclasssvm(datasets_index,kernel):
+def test_sparse_oneclasssvm(datasets_index, kernel):
     # Check that sparse OneClassSVM gives the same result as dense OneClassSVM
     # many class dataset:
     X_blobs, _ = make_blobs(n_samples=100, centers=10, random_state=0)
