@@ -4,6 +4,8 @@ import gzip
 import json
 import numpy as np
 import os
+
+import pytest
 import scipy.sparse
 import sklearn
 
@@ -127,7 +129,8 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     return data_by_id
 
 
-def _monkey_patch_webbased_functions(context, data_id, gziped_files):
+def _monkey_patch_webbased_functions(context, data_id, gziped_files,
+                                     falsify_checksum=False):
     url_prefix_data_description = "https://openml.org/api/v1/json/data/"
     url_prefix_data_features = "https://openml.org/api/v1/json/data/features/"
     url_prefix_download_data = "https://openml.org/data/v1/"
@@ -142,8 +145,13 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
     def _mock_urlopen_data_description(url):
         assert url.startswith(url_prefix_data_description)
 
-        path = os.path.join(currdir, 'data', 'openml', str(data_id),
-                            'data_description.json%s' % path_suffix)
+        if falsify_checksum:
+            path = os.path.join(currdir, 'data', 'openml', str(data_id),
+                                'data_description_false_checksum.json%s'
+                                % path_suffix)
+        else:
+            path = os.path.join(currdir, 'data', 'openml', str(data_id),
+                                'data_description.json%s' % path_suffix)
         return read_fn(path, 'rb')
 
     def _mock_urlopen_data_features(url):
@@ -515,3 +523,74 @@ def test_fetch_openml_raises_illegal_argument():
 
     assert_raise_message(ValueError, "Neither name nor data_id are provided. "
                          "Please provide name or data_id.", fetch_openml)
+
+
+###########################################################################
+    # Validate MD5 Checksum
+###########################################################################
+
+
+@pytest.mark.parametrize("data_id, true_checksum, false_checksum, cache", [
+    (61, 'ad484452702105cbf3d30f8deaba39a9',
+     'ad484452702105cbf3d30f8deaba39a8', True),
+
+    (61, 'ad484452702105cbf3d30f8deaba39a9',
+     'ad484452702105cbf3d30f8deaba39a8', False),
+
+    (561, 'e1c69097976ecd20de7d215919130ccc',
+     'e1c69097976ecd20de7d215919130ccd', True),
+
+    (561, 'e1c69097976ecd20de7d215919130ccc',
+     'e1c69097976ecd20de7d215919130ccd', False),
+])
+def test_fetch_openml_checksum_invalid(monkeypatch, tmpdir, data_id,
+                                       true_checksum, false_checksum, cache):
+
+    warn_message = 'Data set file hash {} does not match the checksum {}.'
+    warn_message = warn_message.format(true_checksum, false_checksum)
+    p = tmpdir.mkdir("tmp")
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip,
+                                     falsify_checksum=True)
+
+    assert_warns_message(UserWarning, warn_message, fetch_openml,
+                         data_id=data_id, data_home=p, cache=cache)
+
+
+@pytest.mark.parametrize('data_id, cache', [
+    (61, True),
+    (61, False),
+    (561, True),
+    (561, False)
+])
+def test_fetch_openml_checksum_valid(monkeypatch, tmpdir, data_id, cache):
+    p = tmpdir.mkdir("tmp")
+    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+
+    # Capture all warnings
+    with pytest.warns(None) as records:
+        fetch_openml(data_id=data_id, data_home=p, cache=cache)
+        # assert no warnings
+        assert not records
+
+
+@pytest.mark.parametrize('data_id, cache', [
+    (61, True),
+    (61, False),
+    (561, True),
+    (561, False)
+])
+def test_fetch_openml_checksum_invalid_no_verification(monkeypatch, tmpdir,
+                                                       data_id, cache):
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip,
+                                     falsify_checksum=True)
+
+    p = tmpdir.mkdir("tmp")
+
+    # Capture all warnings
+    with pytest.warns(None) as records:
+        fetch_openml(data_id=data_id, cache=cache, data_home=p,
+                     verify_checksum=False)
+        # assert no warnings
+        assert not records

@@ -1,8 +1,8 @@
 import gzip
+import hashlib
 import json
 import os
-import shutil
-from os.path import join
+import tempfile
 from warnings import warn
 
 try:
@@ -31,7 +31,7 @@ _DATA_FEATURES = "api/v1/json/data/features/{}"
 _DATA_FILE = "data/v1/download/{}"
 
 
-def _open_openml_url(openml_path, data_home):
+def _open_openml_url(openml_path, data_home, md5_checksum=None):
     """
     Returns a resource from OpenML.org. Caches it to data_home if required.
 
@@ -45,13 +45,32 @@ def _open_openml_url(openml_path, data_home):
         Directory to which the files will be cached. If None, no caching will
         be applied.
 
+    md5_checksum: str
+        Checksum of the OpenML ressource downloaded. If None, no verification
+        is done.
+
     Returns
     -------
     result : stream
         A stream to the OpenML resource
     """
     if data_home is None:
-        return urlopen(_OPENML_PREFIX + openml_path)
+
+        response = urlopen(_OPENML_PREFIX + openml_path)
+        content = response.read()
+
+        if md5_checksum is not None:
+            md5_hash = hashlib.md5(content).hexdigest()
+            if md5_checksum != md5_hash:
+                warn('Data set file hash {} does not match the checksum {}.'
+                     .format(md5_hash, md5_checksum))
+
+        fp = tempfile.TemporaryFile()
+        fp.write(content)
+        fp.seek(0)
+
+        return fp
+
     local_path = os.path.join(data_home, 'openml.org', openml_path + ".gz")
     if not os.path.exists(local_path):
         try:
@@ -63,7 +82,15 @@ def _open_openml_url(openml_path, data_home):
         try:
             with gzip.GzipFile(local_path, 'wb') as fdst:
                 fsrc = urlopen(_OPENML_PREFIX + openml_path)
-                shutil.copyfileobj(fsrc, fdst)
+                content = fsrc.read()
+
+                if md5_checksum is not None:
+                    md5_hash = hashlib.md5(content).hexdigest()
+                    if md5_checksum != md5_hash:
+                        warn('Data set file hash {} does not match the'
+                             ' checksum {}.'.format(md5_hash, md5_checksum))
+
+                fdst.write(content)
                 fsrc.close()
         except Exception:
             os.unlink(local_path)
@@ -289,13 +316,14 @@ def _get_data_features(data_id, data_home):
     return json_data['data_features']['feature']
 
 
-def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
+def _download_data_arff(file_id, sparse, data_home, encode_nominal=True,
+                        md5_checksum=None):
     # Accesses an ARFF file on the OpenML server. Documentation:
     # https://www.openml.org/api_data_docs#!/data/get_download_id
     # encode_nominal argument is to ensure unit testing, do not alter in
     # production!
     url = _DATA_FILE.format(file_id)
-    response = _open_openml_url(url, data_home)
+    response = _open_openml_url(url, data_home, md5_checksum)
     if sparse is True:
         return_type = _arff.COO
     else:
@@ -341,7 +369,8 @@ def _verify_target_data_type(features_dict, target_columns):
 
 
 def fetch_openml(name=None, version='active', data_id=None, data_home=None,
-                 target_column='default-target', cache=True):
+                 target_column='default-target', cache=True,
+                 verify_checksum=True):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -386,6 +415,10 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     cache : boolean, default=True
         Whether to cache downloaded datasets using joblib.
 
+    verify_checksum : boolean, default=True
+        Whether or not to validate that the dataset file's MD5 hash matches the
+        data set description's expected checksum.
+
     Returns
     -------
 
@@ -419,7 +452,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         (categorical target)
     """
     data_home = get_data_home(data_home=data_home)
-    data_home = join(data_home, 'openml')
+    data_home = os.path.join(data_home, 'openml')
     if cache is False:
         # no caching will be applied
         data_home = None
@@ -511,9 +544,14 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     if data_description['format'].lower() == 'sparse_arff':
         return_sparse = True
 
-    # obtain the data
+    # Determine whether to validate checksum
+    if verify_checksum:
+        md5_checksum = data_description['md5_checksum']
+    else:
+        md5_checksum = None
+
     arff = _download_data_arff(data_description['file_id'], return_sparse,
-                               data_home)
+                               data_home, md5_checksum=md5_checksum)
     arff_data = arff['data']
     nominal_attributes = {k: v for k, v in arff['attributes']
                           if isinstance(v, list)}
