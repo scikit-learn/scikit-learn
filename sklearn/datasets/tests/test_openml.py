@@ -562,14 +562,13 @@ def test_fetch_openml_checksum_invalid(monkeypatch, tmpdir, data_id,
 
     warn_message = 'Data set file hash {} does not match the checksum {}.'
     warn_message = warn_message.format(true_checksum, false_checksum)
-    p = tmpdir.mkdir("tmp")
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip,
                                      falsify_checksum=True)
     _monkey_patch_checksum_data_description(monkeypatch, data_id, test_gzip,
                                             false_checksum)
     assert_warns_message(UserWarning, warn_message, fetch_openml,
-                         data_id=data_id, data_home=p, cache=cache)
+                         data_id=data_id, data_home=str(tmpdir), cache=cache)
 
 
 @pytest.mark.parametrize('data_id, cache', [
@@ -579,12 +578,11 @@ def test_fetch_openml_checksum_invalid(monkeypatch, tmpdir, data_id,
     (561, False)
 ])
 def test_fetch_openml_checksum_valid(monkeypatch, tmpdir, data_id, cache):
-    p = tmpdir.mkdir("tmp")
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
 
     # Capture all warnings
     with pytest.warns(None) as records:
-        fetch_openml(data_id=data_id, data_home=p, cache=cache)
+        fetch_openml(data_id=data_id, data_home=str(tmpdir), cache=cache)
         # assert no warnings
         assert not records
 
@@ -600,12 +598,9 @@ def test_fetch_openml_checksum_invalid_no_verification(monkeypatch, tmpdir,
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip,
                                      falsify_checksum=True)
-
-    p = tmpdir.mkdir("tmp")
-
     # Capture all warnings
     with pytest.warns(None) as records:
-        fetch_openml(data_id=data_id, cache=cache, data_home=p,
+        fetch_openml(data_id=data_id, cache=cache, data_home=str(tmpdir),
                      verify_checksum=False)
         # assert no warnings
         assert not records
