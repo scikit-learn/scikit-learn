@@ -93,8 +93,11 @@ boolean mask array or callable
         the stacked result will be sparse or dense, respectively, and this
         keyword will be ignored.
 
-    n_jobs : int, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     transformer_weights : dict, optional
         Multiplicative weights for features per transformer. The output of the
@@ -666,8 +669,11 @@ def make_column_transformer(*transformers, **kwargs):
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support `fit` and `transform`.
 
-    n_jobs : int, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Returns
     -------

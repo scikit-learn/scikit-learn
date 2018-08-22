@@ -1320,9 +1320,11 @@ class LassoCV(LinearModelCV, RegressorMixin):
     verbose : bool or integer
         Amount of verbosity.
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs.
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     positive : bool, optional
         If positive, restrict regression coefficients to be positive
@@ -1480,9 +1482,11 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     verbose : bool or integer
         Amount of verbosity.
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs.
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
@@ -2014,10 +2018,12 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     verbose : bool or integer
         Amount of verbosity.
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs. Note that this is used only if multiple values for
-        l1_ratio are given.
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation. Note that this is
+        used only if multiple values for l1_ratio are given.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
@@ -2186,10 +2192,12 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     verbose : bool or integer
         Amount of verbosity.
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs. Note that this is used only if multiple values for
-        l1_ratio are given.
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation. Note that this is
+        used only if multiple values for l1_ratio are given.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random

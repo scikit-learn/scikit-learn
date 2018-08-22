@@ -467,7 +467,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                  'with refit=False. %s is '
                                  'available only after refitting on the best '
                                  'parameters. You can refit an estimator '
-                                 'manually using the ``best_parameters_`` '
+                                 'manually using the ``best_params_`` '
                                  'attribute'
                                  % (type(self).__name__, method_name))
         else:
@@ -821,7 +821,19 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       dtype=np.int)
         iid = self.iid
         if self.iid == 'warn':
-            if len(np.unique(test_sample_counts)) > 1:
+            warn = False
+            for scorer_name in scorers.keys():
+                scores = test_scores[scorer_name].reshape(n_candidates,
+                                                          n_splits)
+                means_weighted = np.average(scores, axis=1,
+                                            weights=test_sample_counts)
+                means_unweighted = np.average(scores, axis=1)
+                if not np.allclose(means_weighted, means_unweighted,
+                                   rtol=1e-4, atol=1e-4):
+                    warn = True
+                    break
+
+            if warn:
                 warnings.warn("The default of the `iid` parameter will change "
                               "from True to False in version 0.22 and will be"
                               " removed in 0.24. This will change numeric"
@@ -903,8 +915,11 @@ class GridSearchCV(BaseSearchCV):
            0.19 and will be removed in version 0.21. Pass fit parameters to
            the ``fit`` method instead.
 
-    n_jobs : int, default=1
+    n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
@@ -969,7 +984,7 @@ class GridSearchCV(BaseSearchCV):
         ``GridSearchCV`` instance.
 
         Also for multiple metric evaluation, the attributes ``best_index_``,
-        ``best_score_`` and ``best_parameters_`` will only be available if
+        ``best_score_`` and ``best_params_`` will only be available if
         ``refit`` is set and all of them will be determined w.r.t this specific
         scorer.
 
@@ -1247,8 +1262,11 @@ class RandomizedSearchCV(BaseSearchCV):
            0.19 and will be removed in version 0.21. Pass fit parameters to
            the ``fit`` method instead.
 
-    n_jobs : int, default=1
+    n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
@@ -1313,7 +1331,7 @@ class RandomizedSearchCV(BaseSearchCV):
         ``RandomizedSearchCV`` instance.
 
         Also for multiple metric evaluation, the attributes ``best_index_``,
-        ``best_score_`` and ``best_parameters_`` will only be available if
+        ``best_score_`` and ``best_params_`` will only be available if
         ``refit`` is set and all of them will be determined w.r.t this specific
         scorer.
 
