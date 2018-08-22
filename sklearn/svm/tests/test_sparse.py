@@ -10,10 +10,9 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.testing import (assert_raises, assert_true, assert_false,
                                    assert_warns, assert_raise_message,
-                                   ignore_warnings, skip_if_32bit)                                
+                                   ignore_warnings, skip_if_32bit)
 import pytest
 
-                                   
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -267,7 +266,6 @@ def test_sample_weights():
 def test_sparse_liblinear_intercept_handling():
     # Test that sparse liblinear honours intercept_scaling param
     test_svm.test_dense_liblinear_intercept_handling(svm.LinearSVC)
-
 
 
 @pytest.mark.parametrize("datasets_index", range(4))
