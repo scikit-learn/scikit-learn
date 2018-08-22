@@ -6,5 +6,6 @@ Propagation.
 """
 
 from .label_propagation import LabelPropagation, LabelSpreading
+from .infection_propagation import InfectionPropagation
 
-__all__ = ['LabelPropagation', 'LabelSpreading']
+__all__ = ['LabelPropagation', 'LabelSpreading','InfectionPropagation']
