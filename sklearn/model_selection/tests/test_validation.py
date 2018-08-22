@@ -239,9 +239,7 @@ y2 = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 3])
 P_sparse = coo_matrix(np.eye(5))
 
 
-@pytest.mark.filterwarnings('ignore: From version 0.22, errors during fit')
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
-# FIXME issue in error_score parameter
 def test_cross_val_score():
     clf = MockClassifier()
 
@@ -279,7 +277,8 @@ def test_cross_val_score():
     scores = cross_val_score(clf, X_3d, y2)
 
     clf = MockClassifier(allow_nd=False)
-    assert_raises(ValueError, cross_val_score, clf, X_3d, y2)
+    assert_raises(ValueError, cross_val_score, clf, X_3d, y2,
+                  error_score='raise')
 
 
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
@@ -1171,8 +1170,6 @@ def test_learning_curve_with_boolean_indices():
                               np.linspace(0.1, 1.0, 10))
 
 
-@pytest.mark.filterwarnings('ignore: From version 0.22, errors during fit')
-# FIXME this is an error in the error_score change!
 def test_learning_curve_with_shuffle():
     # Following test case was designed this way to verify the code
     # changes made in pull request: #7506.
@@ -1195,7 +1192,8 @@ def test_learning_curve_with_shuffle():
     assert_array_almost_equal(test_scores_batch.mean(axis=1),
                               np.array([0.36111111, 0.25, 0.25]))
     assert_raises(ValueError, learning_curve, estimator, X, y, cv=cv, n_jobs=1,
-                  train_sizes=np.linspace(0.3, 1.0, 3), groups=groups)
+                  train_sizes=np.linspace(0.3, 1.0, 3), groups=groups,
+                  error_score='raise')
 
     train_sizes_inc, train_scores_inc, test_scores_inc = learning_curve(
         estimator, X, y, cv=cv, n_jobs=1, train_sizes=np.linspace(0.3, 1.0, 3),
@@ -1477,6 +1475,7 @@ def test_fit_and_score():
     failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
     # dummy X data
     X = np.arange(1, 10)
+    y = np.ones(9)
     fit_and_score_args = [failing_clf, X, None, dict(), None, None, 0,
                           None, None]
     # passing error score to trigger the warning message
@@ -1510,3 +1509,24 @@ def test_fit_and_score():
     assert_raise_message(ValueError, "Failing classifier failed as required",
                          _fit_and_score, *fit_and_score_args,
                          **fit_and_score_kwargs)
+
+    # check that functions upstream pass error_score param to _fit_and_score
+    error_message = ("error_score must be the string 'raise' or a"
+                     " numeric value. (Hint: if using 'raise', please"
+                     " make sure that it has been spelled correctly.)")
+
+    assert_raise_message(ValueError, error_message, cross_validate,
+                         failing_clf, X, cv=3, error_score='unvalid-string')
+
+    assert_raise_message(ValueError, error_message, cross_val_score,
+                         failing_clf, X, cv=3, error_score='unvalid-string')
+
+    assert_raise_message(ValueError, error_message, learning_curve,
+                         failing_clf, X, y, cv=3, error_score='unvalid-string')
+
+    assert_raise_message(ValueError, error_message, validation_curve,
+                         failing_clf, X, y, 'parameter',
+                         [FailingClassifier.FAILING_PARAMETER], cv=3,
+                         error_score='unvalid-string')
+
+    assert_equal(failing_clf.score(), 0.)  # FailingClassifier coverage

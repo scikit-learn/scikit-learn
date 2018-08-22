@@ -4,7 +4,6 @@
 
 import numpy as np
 import warnings
-from scipy.stats import scoreatpercentile
 
 from .base import NeighborsBase
 from .base import KNeighborsMixin
@@ -111,9 +110,11 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         that you should only use predict, decision_function and score_samples
         on new unseen data and not on the training set.
 
-    n_jobs : int, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
         Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
 
 
@@ -121,7 +122,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     ----------
     negative_outlier_factor_ : numpy array, shape (n_samples,)
         The opposite LOF of the training samples. The higher, the more normal.
-        Inliers tend to have a LOF score close to 1 (`negative_outlier_factor_`
+        Inliers tend to have a LOF score close to 1 (``negative_outlier_factor_``
         close to -1), while outliers tend to have a larger LOF score.
 
         The local outlier factor (LOF) of a sample captures its
@@ -148,7 +149,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     """
     def __init__(self, n_neighbors=20, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None,
-                 contamination="legacy", novelty=False, n_jobs=1):
+                 contamination="legacy", novelty=False, n_jobs=None):
         super(LocalOutlierFactor, self).__init__(
             n_neighbors=n_neighbors,
             algorithm=algorithm,
@@ -262,8 +263,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             # inliers score around -1 (the higher, the less abnormal).
             self.offset_ = -1.5
         else:
-            self.offset_ = scoreatpercentile(
-                self.negative_outlier_factor_, 100. * self._contamination)
+            self.offset_ = np.percentile(self.negative_outlier_factor_,
+                                         100. * self._contamination)
 
         return self
 
@@ -403,7 +404,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         Also, the samples in X are not considered in the neighborhood of any
         point.
         The score_samples on training data is available by considering the
-        the negative_outlier_factor_ attribute.
+        the ``negative_outlier_factor_`` attribute.
 
         Parameters
         ----------
@@ -439,7 +440,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         Also, the samples in X are not considered in the neighborhood of any
         point.
         The score_samples on training data is available by considering the
-        the negative_outlier_factor_ attribute.
+        the ``negative_outlier_factor_`` attribute.
 
         Parameters
         ----------

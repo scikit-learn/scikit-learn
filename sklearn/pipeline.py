@@ -165,17 +165,17 @@ class Pipeline(_BaseComposition):
         for t in transformers:
             if t is None:
                 continue
-            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
-                    hasattr(t, "transform")):
+            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform"))
+                    or not hasattr(t, "transform")):
                 raise TypeError("All intermediate steps should be "
                                 "transformers and implement fit and transform."
                                 " '%s' (type %s) doesn't" % (t, type(t)))
 
         # We allow last estimator to be None as an identity transformation
         if estimator is not None and not hasattr(estimator, "fit"):
-            raise TypeError("Last step of Pipeline should implement fit. "
-                            "'%s' (type %s) doesn't"
-                            % (estimator, type(estimator)))
+            raise TypeError(
+                "Last step of Pipeline should implement fit. "
+                "'%s' (type %s) doesn't" % (estimator, type(estimator)))
 
     @property
     def _estimator_type(self):
@@ -195,10 +195,9 @@ class Pipeline(_BaseComposition):
             return
         if step_idx < 0:
             step_idx = len(self.steps) + step_idx
-        n_steps = len([est for _, est in self.steps
-                       if est is not None])
-        step_num = len([est for _, est in self.steps[:step_idx + 1]
-                        if est is not None])
+        n_steps = len([est for _, est in self.steps if est is not None])
+        step_num = len(
+            [est for _, est in self.steps[:step_idx + 1] if est is not None])
         return '(step %d of %d) Fitting %s' % (step_num, n_steps,
                                                self.steps[step_idx][0])
 
@@ -213,8 +212,8 @@ class Pipeline(_BaseComposition):
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
-        fit_params_steps = dict((name, {}) for name, step in self.steps
-                                if step is not None)
+        fit_params_steps = dict(
+            (name, {}) for name, step in self.steps if step is not None)
         for pname, pval in six.iteritems(fit_params):
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
@@ -244,8 +243,7 @@ class Pipeline(_BaseComposition):
                 # Fit or load from cache the current transfomer
                 Xt, fitted_transformer = fit_transform_one_cached(
                     True, 'Pipeline', self._log_message(step_idx),
-                    cloned_transformer, None, Xt, y,
-                    **fit_params_steps[name])
+                    cloned_transformer, None, Xt, y, **fit_params_steps[name])
                 # Replace the transformer of the step with the fitted
                 # transformer. This is necessary when loading the transformer
                 # from the cache.
@@ -618,8 +616,8 @@ def make_pipeline(*steps, **kwargs):
     memory = kwargs.pop('memory', None)
     verbose = kwargs.pop('verbose', False)
     if kwargs:
-        raise TypeError('Unknown keyword arguments: "{}"'
-                        .format(list(kwargs.keys())[0]))
+        raise TypeError('Unknown keyword arguments: "{}"'.format(
+            list(kwargs.keys())[0]))
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
@@ -631,9 +629,8 @@ def _transform_one(transformer, X, y, weight, **fit_params):
     return res * weight
 
 
-def _fit_transform_one(is_transform, clsname, message,
-                       transformer, weight,
-                       X, y, **fit_params):
+def _fit_transform_one(is_transform, clsname, message, transformer, weight, X,
+                       y, **fit_params):
     with log_elapsed(clsname, message):
         if not is_transform:
             return None, transformer.fit(X, y, **fit_params)
@@ -667,8 +664,11 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         List of transformer objects to be applied to the data. The first
         half of each tuple is the name of the transformer.
 
-    n_jobs : int, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     transformer_weights : dict, optional
         Multiplicative weights for features per transformer.
@@ -694,7 +694,10 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
            [-1.5       ,  5.7..., -0.4...]])
     """
 
-    def __init__(self, transformer_list, n_jobs=1, transformer_weights=None,
+    def __init__(self,
+                 transformer_list,
+                 n_jobs=1,
+                 transformer_weights=None,
                  verbose=False):
         self.transformer_list = transformer_list
         self.n_jobs = n_jobs
@@ -740,11 +743,11 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         for t in transformers:
             if t is None:
                 continue
-            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
-                    hasattr(t, "transform")):
-                raise TypeError("All estimators should implement fit and "
-                                "transform. '%s' (type %s) doesn't" %
-                                (t, type(t)))
+            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform"))
+                    or not hasattr(t, "transform")):
+                raise TypeError(
+                    "All estimators should implement fit and "
+                    "transform. '%s' (type %s) doesn't" % (t, type(t)))
 
     def _iter(self):
         """
@@ -752,8 +755,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         """
         get_weight = (self.transformer_weights or {}).get
         return ((name, trans, get_weight(name))
-                for name, trans in self.transformer_list
-                if trans is not None)
+                for name, trans in self.transformer_list if trans is not None)
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -767,10 +769,10 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         for name, trans, weight in self._iter():
             if not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s (type %s) does not "
-                                     "provide get_feature_names."
-                                     % (str(name), type(trans).__name__))
-            feature_names.extend([name + "__" + f for f in
-                                  trans.get_feature_names()])
+                                     "provide get_feature_names." %
+                                     (str(name), type(trans).__name__))
+            feature_names.extend(
+                [name + "__" + f for f in trans.get_feature_names()])
         return feature_names
 
     def fit(self, X, y=None):
@@ -817,14 +819,11 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         self._validate_transformers()
         transformers = list(self._iter())
         result = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_transform_one)(
-                is_transform, 'FeatureUnion',
-                ('(step %d of %d) Fitting %s' % (idx + 1, len(transformers),
-                                                 name)
-                 if self.verbose else None),
-                transformer, weight, X, y, **fit_params)
-            for idx, (name, transformer, weight)
-            in enumerate(transformers))
+            delayed(_fit_transform_one)(is_transform, 'FeatureUnion', (
+                '(step %d of %d) Fitting %s' %
+                (idx + 1, len(transformers), name) if self.verbose else None
+            ), transformer, weight, X, y, **fit_params)
+            for idx, (name, transformer, weight) in enumerate(transformers))
 
         if not result:
             # All transformers are None
@@ -868,10 +867,9 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
-        self.transformer_list[:] = [
-            (name, None if old is None else next(transformers))
-            for name, old in self.transformer_list
-        ]
+        self.transformer_list[:] = [(name, None
+                                     if old is None else next(transformers))
+                                    for name, old in self.transformer_list]
 
 
 def make_union(*transformers, **kwargs):
@@ -885,8 +883,11 @@ def make_union(*transformers, **kwargs):
     ----------
     *transformers : list of estimators
 
-    n_jobs : int, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : boolean, optional
          Verbosity mode.
@@ -905,7 +906,7 @@ def make_union(*transformers, **kwargs):
     >>> from sklearn.decomposition import PCA, TruncatedSVD
     >>> from sklearn.pipeline import make_union
     >>> make_union(PCA(), TruncatedSVD())    # doctest: +NORMALIZE_WHITESPACE
-    FeatureUnion(n_jobs=1,
+    FeatureUnion(n_jobs=None,
            transformer_list=[('pca',
                               PCA(copy=True, iterated_power='auto',
                                   n_components=None, random_state=None,
@@ -921,7 +922,7 @@ def make_union(*transformers, **kwargs):
     if kwargs:
         # We do not currently support `transformer_weights` as we may want to
         # change its type spec in make_union
-        raise TypeError('Unknown keyword arguments: "{}"'
-                        .format(list(kwargs.keys())[0]))
-    return FeatureUnion(_name_estimators(transformers), n_jobs=n_jobs,
-                        verbose=verbose)
+        raise TypeError('Unknown keyword arguments: "{}"'.format(
+            list(kwargs.keys())[0]))
+    return FeatureUnion(
+        _name_estimators(transformers), n_jobs=n_jobs, verbose=verbose)

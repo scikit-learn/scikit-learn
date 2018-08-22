@@ -17,16 +17,13 @@ from scipy import sparse
 from ..base import clone, TransformerMixin
 from ..utils import Parallel, delayed
 from ..externals import six
-from ..pipeline import (
-    _fit_transform_one, _transform_one, _name_estimators)
+from ..pipeline import (_fit_transform_one, _transform_one, _name_estimators)
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_is_fitted
 
-
 __all__ = ['ColumnTransformer', 'make_column_transformer']
-
 
 _ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
                      "Try to specify the column selection as a list of one "
@@ -94,8 +91,11 @@ boolean mask array or callable
         the stacked result will be sparse or dense, respectively, and this
         keyword will be ignored.
 
-    n_jobs : int, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     transformer_weights : dict, optional
         Multiplicative weights for features per transformer. The output of the
@@ -160,8 +160,13 @@ boolean mask array or callable
 
     """
 
-    def __init__(self, transformers, remainder='drop', sparse_threshold=0.3,
-                 n_jobs=1, transformer_weights=None, verbose=False):
+    def __init__(self,
+                 transformers,
+                 remainder='drop',
+                 sparse_threshold=0.3,
+                 n_jobs=1,
+                 transformer_weights=None,
+                 verbose=False):
         self.transformers = transformers
         self.remainder = remainder
         self.sparse_threshold = sparse_threshold
@@ -181,9 +186,10 @@ boolean mask array or callable
 
     @_transformers.setter
     def _transformers(self, value):
-        self.transformers = [
-            (name, trans, col) for ((name, trans), (_, _, col))
-            in zip(value, self.transformers)]
+        self.transformers = [(name, trans, col)
+                             for ((name, trans),
+                                  (_, _,
+                                   col)) in zip(value, self.transformers)]
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -232,7 +238,8 @@ boolean mask array or callable
                 # skip in case of 'drop'
                 if trans == 'passthrough':
                     trans = FunctionTransformer(
-                        validate=False, accept_sparse=True,
+                        validate=False,
+                        accept_sparse=True,
                         check_inverse=False)
                 elif trans == 'drop':
                     continue
@@ -252,12 +259,12 @@ boolean mask array or callable
         for t in transformers:
             if t in ('drop', 'passthrough'):
                 continue
-            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
-                    hasattr(t, "transform")):
-                raise TypeError("All estimators should implement fit and "
-                                "transform, or can be 'drop' or 'passthrough' "
-                                "specifiers. '%s' (type %s) doesn't." %
-                                (t, type(t)))
+            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform"))
+                    or not hasattr(t, "transform")):
+                raise TypeError(
+                    "All estimators should implement fit and "
+                    "transform, or can be 'drop' or 'passthrough' "
+                    "specifiers. '%s' (type %s) doesn't." % (t, type(t)))
 
     def _validate_remainder(self, X):
         """
@@ -292,8 +299,8 @@ boolean mask array or callable
 
         """
         # Use Bunch object to improve autocomplete
-        return Bunch(**dict([(name, trans) for name, trans, _
-                             in self.transformers_]))
+        return Bunch(**dict([(name, trans)
+                             for name, trans, _ in self.transformers_]))
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -314,10 +321,10 @@ boolean mask array or callable
                     "a 'passthrough' transformer.")
             elif not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s (type %s) does not "
-                                     "provide get_feature_names."
-                                     % (str(name), type(trans).__name__))
-            feature_names.extend([name + "__" + f for f in
-                                  trans.get_feature_names()])
+                                     "provide get_feature_names." %
+                                     (str(name), type(trans).__name__))
+            feature_names.extend(
+                [name + "__" + f for f in trans.get_feature_names()])
         return feature_names
 
     def _update_fitted_transformers(self, transformers):
@@ -370,8 +377,8 @@ boolean mask array or callable
         on the passed function.
         ``fitted=True`` ensures the fitted transformers are used.
         """
-        transformers = list(self._iter(
-            X=X, fitted=fitted, replace_strings=True))
+        transformers = list(
+            self._iter(X=X, fitted=fitted, replace_strings=True))
         try:
             return Parallel(n_jobs=self.n_jobs)(
                 delayed(func)(
@@ -379,8 +386,7 @@ boolean mask array or callable
                     X=X_sel,
                     y=y,
                     weight=weight,
-                    message=self._log_message(
-                        name, idx, len(transformers)))
+                    message=self._log_message(name, idx, len(transformers)))
                 for idx, (name, trans, X_sel,
                           weight) in enumerate(transformers, 1))
         except ValueError as e:
@@ -437,9 +443,7 @@ boolean mask array or callable
         self._validate_transformers()
 
         fit_transform_one = partial(
-            _fit_transform_one,
-            is_transform=True,
-            clsname='ColumnTransformer')
+            _fit_transform_one, is_transform=True, clsname='ColumnTransformer')
 
         result = self._fit_transform(X, y, fit_transform_one)
 
@@ -455,8 +459,9 @@ boolean mask array or callable
             self.sparse_output_ = True
         elif any(sparse.issparse(X) for X in Xs):
             nnz = sum(X.nnz if sparse.issparse(X) else X.size for X in Xs)
-            total = sum(X.shape[0] * X.shape[1] if sparse.issparse(X)
-                        else X.size for X in Xs)
+            total = sum(
+                X.shape[0] * X.shape[1] if sparse.issparse(X) else X.size
+                for X in Xs)
             density = nnz / total
             self.sparse_output_ = density < self.sparse_threshold
         else:
@@ -465,7 +470,7 @@ boolean mask array or callable
         self._update_fitted_transformers(transformers)
         self._validate_output(Xs)
 
-        return _hstack(list(Xs), self.sparse_output_)
+        return self._hstack(list(Xs))
 
     def transform(self, X):
         """Transform X separately by each transformer, concatenate results.
@@ -492,7 +497,23 @@ boolean mask array or callable
             # All transformers are None
             return np.zeros((X.shape[0], 0))
 
-        return _hstack(list(Xs), self.sparse_output_)
+        return self._hstack(list(Xs))
+
+    def _hstack(self, Xs):
+        """Stacks Xs horizontally.
+
+        This allows subclasses to control the stacking behavior, while reusing
+        everything else from ColumnTransformer.
+
+        Parameters
+        ----------
+        Xs : List of numpy arrays, sparse arrays, or DataFrames
+        """
+        if self.sparse_output_:
+            return sparse.hstack(Xs).tocsr()
+        else:
+            Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
+            return np.hstack(Xs)
 
 
 def _check_key_type(key, superclass):
@@ -513,8 +534,8 @@ def _check_key_type(key, superclass):
     if isinstance(key, superclass):
         return True
     if isinstance(key, slice):
-        return (isinstance(key.start, (superclass, type(None))) and
-                isinstance(key.stop, (superclass, type(None))))
+        return (isinstance(key.start, (superclass, type(None)))
+                and isinstance(key.stop, (superclass, type(None))))
     if isinstance(key, list):
         return all(isinstance(x, superclass) for x in key)
     if hasattr(key, 'dtype'):
@@ -524,20 +545,6 @@ def _check_key_type(key, superclass):
             # superclass = six.string_types
             return key.dtype.kind in ('O', 'U', 'S')
     return False
-
-
-def _hstack(X, sparse_):
-    """
-    Stacks X horizontally.
-
-    Supports input types (X): list of
-        numpy arrays, sparse arrays and DataFrames
-    """
-    if sparse_:
-        return sparse.hstack(X).tocsr()
-    else:
-        X = [f.toarray() if sparse.issparse(f) else f for f in X]
-        return np.hstack(X)
 
 
 def _get_column(X, key):
@@ -685,8 +692,11 @@ def make_column_transformer(*transformers, **kwargs):
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support `fit` and `transform`.
 
-    n_jobs : int, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Returns
     -------
@@ -706,7 +716,7 @@ def make_column_transformer(*transformers, **kwargs):
     ...     (['numerical_column'], StandardScaler()),
     ...     (['categorical_column'], OneHotEncoder()))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ColumnTransformer(n_jobs=1, remainder='drop', sparse_threshold=0.3,
+    ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
              transformer_weights=None,
              transformers=[('standardscaler',
                             StandardScaler(...),
@@ -716,11 +726,11 @@ def make_column_transformer(*transformers, **kwargs):
                             ['categorical_column'])], verbose=False)
 
     """
-    n_jobs = kwargs.pop('n_jobs', 1)
+    n_jobs = kwargs.pop('n_jobs', None)
     remainder = kwargs.pop('remainder', 'drop')
     if kwargs:
-        raise TypeError('Unknown keyword arguments: "{}"'
-                        .format(list(kwargs.keys())[0]))
+        raise TypeError('Unknown keyword arguments: "{}"'.format(
+            list(kwargs.keys())[0]))
     transformer_list = _get_transformer_list(transformers)
-    return ColumnTransformer(transformer_list, n_jobs=n_jobs,
-                             remainder=remainder)
+    return ColumnTransformer(
+        transformer_list, n_jobs=n_jobs, remainder=remainder)

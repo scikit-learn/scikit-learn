@@ -25,12 +25,13 @@ from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _num_samples
 from ..utils import check_array
-from ..utils import check_random_state
 from ..utils import gen_batches
+from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..utils import Parallel
 from ..utils import delayed
+from ..utils import effective_n_jobs
 from ..externals.six import string_types
 from ..exceptions import ConvergenceWarning
 from . import _k_means
@@ -184,8 +185,8 @@ def _check_sample_weight(X, sample_weight):
 
 def k_means(X, n_clusters, sample_weight=None, init='k-means++',
             precompute_distances='auto', n_init=10, max_iter=300,
-            verbose=False, tol=1e-4, random_state=None, copy_x=True, n_jobs=1,
-            algorithm="auto", return_n_iter=False):
+            verbose=False, tol=1e-4, random_state=None, copy_x=True,
+            n_jobs=None, algorithm="auto", return_n_iter=False):
     """K-means clustering algorithm.
 
     Read more in the :ref:`User Guide <k_means>`.
@@ -260,14 +261,13 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         the data mean, in this case it will also not ensure that data is
         C-contiguous which may cause a significant slowdown.
 
-    n_jobs : int
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     algorithm : "auto", "full" or "elkan", default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
@@ -368,7 +368,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
     else:
         raise ValueError("Algorithm must be 'auto', 'full' or 'elkan', got"
                          " %s" % str(algorithm))
-    if n_jobs == 1:
+    if effective_n_jobs(n_jobs):
         # For a single thread, less memory is needed if we just store one set
         # of the best results (as opposed to one set per run per thread).
         for it in range(n_init):
@@ -833,14 +833,13 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         the data mean, in this case it will also not ensure that data is
         C-contiguous which may cause a significant slowdown.
 
-    n_jobs : int
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     algorithm : "auto", "full" or "elkan", default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
@@ -913,7 +912,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     def __init__(self, n_clusters=8, init='k-means++', n_init=10,
                  max_iter=300, tol=1e-4, precompute_distances='auto',
                  verbose=0, random_state=None, copy_x=True,
-                 n_jobs=1, algorithm='auto'):
+                 n_jobs=None, algorithm='auto'):
 
         self.n_clusters = n_clusters
         self.init = init

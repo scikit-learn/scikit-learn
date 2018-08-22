@@ -222,7 +222,10 @@ DBSCAN with Levenshtein distances::
     array([[0],
            [1],
            [2]])
-    >>> dbscan(X, metric=lev_metric, eps=5, min_samples=2)  # doctest: +SKIP
+    >>> # We need to specify algoritum='brute' as the default assumes
+    >>> # a continuous feature space.
+    >>> dbscan(X, metric=lev_metric, eps=5, min_samples=2, algorithm='brute')
+    ... # doctest: +SKIP
     ([0, 1], array([ 0,  0, -1]))
 
 (This uses the third-party edit distance package ``leven``.)
@@ -364,6 +367,7 @@ See also :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_type
 example of working with heterogeneous (e.g. categorical and numeric) data.
 
 Why does Scikit-learn not directly work with, for example, pandas.DataFrame?
+----------------------------------------------------------------------------
 
 The homogeneous NumPy and SciPy data objects currently expected are most
 efficient to process for most operations. Extensive work would also be needed
