@@ -841,9 +841,9 @@ Support for Python 3.3 has been officially dropped.
   parameters such as ``return_std`` in a pipeline with caution.
   :issue:`9304` by :user:`Breno Freitas <brenolf>`.
 
-- |API| Using ``None`` as a transformer in :class:`pipeline.Pipeline` is
-  deprecated and will be removed in v0.22. Use ``'passthrough'`` instead.
-  :issue:`11144` by :user:`thomasjpfan`.
+- |API| :class:`pipeline.Pipeline` now supports using ``'passthrough'`` as a 
+  transformer. :issue:`11144` by :user:`thomasjpfan`.
+  
 
 :mod:`sklearn.preprocessing`
 ............................
