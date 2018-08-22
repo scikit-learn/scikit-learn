@@ -4,6 +4,7 @@ import gzip
 import json
 import numpy as np
 import os
+import re
 
 import pytest
 import scipy.sparse
@@ -142,49 +143,36 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files,
         path_suffix = '.gz'
         read_fn = gzip.open
 
+    def _file_name(url, suffix):
+        return (re.sub(r'\W', '-', url[len("https://openml.org/"):])
+                + suffix + path_suffix)
+
     def _mock_urlopen_data_description(url):
         assert url.startswith(url_prefix_data_description)
 
-        if falsify_checksum:
-            path = os.path.join(currdir, 'data', 'openml', str(data_id),
-                                'data_description_false_checksum.json%s'
-                                % path_suffix)
-        else:
-            path = os.path.join(currdir, 'data', 'openml', str(data_id),
-                                'data_description.json%s' % path_suffix)
+        path = os.path.join(currdir, 'data', 'openml', str(data_id),
+                            _file_name(url, '.json'))
         return read_fn(path, 'rb')
 
     def _mock_urlopen_data_features(url):
         assert url.startswith(url_prefix_data_features)
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
-                            'data_features.json%s' % path_suffix)
+                            _file_name(url, '.json'))
         return read_fn(path, 'rb')
 
     def _mock_urlopen_download_data(url):
         assert (url.startswith(url_prefix_download_data))
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
-                            'data.arff%s' % path_suffix)
+                            _file_name(url, '.arff'))
         return read_fn(path, 'rb')
 
     def _mock_urlopen_data_list(url):
-        # url contains key value pairs of attributes, e.g.,
-        # openml.org/api/v1/json/data_name/iris/data_version/1 should
-        # ideally become {data_name: 'iris', data_version: '1'}
         assert url.startswith(url_prefix_data_list)
-        att_list = url[len(url_prefix_data_list):].split('/')
-        key_val_dict = dict(zip(att_list[::2], att_list[1::2]))
-        # add defaults, so we can make assumptions about the content
-        if 'data_version' not in key_val_dict:
-            key_val_dict['data_version'] = None
-        if 'status' not in key_val_dict:
-            key_val_dict['status'] = "active"
-        mock_file = "data_list__%s_%s_%s.json%s" % \
-                    (key_val_dict['data_name'], key_val_dict['data_version'],
-                     key_val_dict['status'], path_suffix)
+
         json_file_path = os.path.join(currdir, 'data', 'openml',
-                                      str(data_id), mock_file)
+                                      str(data_id), _file_name(url, '.json'))
         # load the file itself, to simulate a http error
         json_data = json.loads(read_fn(json_file_path, 'rb').
                                read().decode('utf-8'))
@@ -529,6 +517,31 @@ def test_fetch_openml_raises_illegal_argument():
     # Validate MD5 Checksum
 ###########################################################################
 
+def _monkey_patch_checksum_data_description(context, data_id,
+                                            gziped_files, false_checksum):
+
+    path_suffix = ''
+    read_fn = open
+    if gziped_files:
+        path_suffix = '.gz'
+        read_fn = gzip.open
+
+    def mock_data_description(data_id, data_home):
+        path = os.path.join(currdir, 'data', 'openml', str(data_id),
+                            'api-v1-json-data-' + str(data_id) + '.json' +
+                            path_suffix)
+
+        fp = read_fn(path)
+
+        json_data = json.load(fp)
+        data_description = json_data['data_set_description']
+        data_description['md5_checksum'] = false_checksum
+
+        return data_description
+
+    context.setattr(sklearn.datasets.openml, '_get_data_description_by_id',
+                    mock_data_description)
+
 
 @pytest.mark.parametrize("data_id, true_checksum, false_checksum, cache", [
     (61, 'ad484452702105cbf3d30f8deaba39a9',
@@ -552,7 +565,8 @@ def test_fetch_openml_checksum_invalid(monkeypatch, tmpdir, data_id,
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip,
                                      falsify_checksum=True)
-
+    _monkey_patch_checksum_data_description(monkeypatch, data_id, test_gzip,
+                                            false_checksum)
     assert_warns_message(UserWarning, warn_message, fetch_openml,
                          data_id=data_id, data_home=p, cache=cache)
 

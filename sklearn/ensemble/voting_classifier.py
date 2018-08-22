@@ -59,9 +59,11 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         predicted class labels (`hard` voting) or class probabilities
         before averaging (`soft` voting). Uses uniform weights if `None`.
 
-    n_jobs : int, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for ``fit``.
-        If -1, then the number of jobs is set to the number of cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     flatten_transform : bool, optional (default=None)
         Affects shape of transform output only when voting='soft'
