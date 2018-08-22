@@ -531,13 +531,11 @@ def _monkey_patch_checksum_data_description(context, data_id,
                             'api-v1-json-data-' + str(data_id) + '.json' +
                             path_suffix)
 
-        fp = read_fn(path)
+        json_data = json.loads(read_fn(path, 'rb').read().decode('utf-8'))
 
-        json_data = json.load(fp)
         data_description = json_data['data_set_description']
         # Falsify the checksum to purposefully get a warning
         data_description['md5_checksum'] = false_checksum
-
         return data_description
 
     context.setattr(sklearn.datasets.openml, '_get_data_description_by_id',
