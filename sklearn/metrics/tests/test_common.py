@@ -12,7 +12,6 @@ import pytest
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils.multiclass import type_of_target
-from sklearn.utils.validation import _num_samples
 from sklearn.utils.validation import check_random_state
 from sklearn.utils import shuffle
 
@@ -23,6 +22,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import check_sample_weight_invariance
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
@@ -1012,85 +1012,6 @@ def test_averaging_multilabel_all_ones(name):
 
     check_averaging(name, y_true, y_true_binarize,
                     y_pred, y_pred_binarize, y_score)
-
-
-@ignore_warnings
-def check_sample_weight_invariance(name, metric, y1, y2):
-    rng = np.random.RandomState(0)
-    sample_weight = rng.randint(1, 10, size=len(y1))
-
-    # check that unit weights gives the same score as no weight
-    unweighted_score = metric(y1, y2, sample_weight=None)
-
-    assert_allclose(
-        unweighted_score,
-        metric(y1, y2, sample_weight=np.ones(shape=len(y1))),
-        err_msg="For %s sample_weight=None is not equivalent to "
-                "sample_weight=ones" % name)
-
-    # check that the weighted and unweighted scores are unequal
-    weighted_score = metric(y1, y2, sample_weight=sample_weight)
-
-    # use context manager to supply custom error message
-    with assert_raises(AssertionError) as cm:
-        assert_allclose(unweighted_score, weighted_score)
-        cm.msg = ("Unweighted and weighted scores are unexpectedly almost "
-                  "equal (%s) and (%s) for %s" % (unweighted_score,
-                                                  weighted_score, name))
-
-    # check that sample_weight can be a list
-    weighted_score_list = metric(y1, y2,
-                                 sample_weight=sample_weight.tolist())
-    assert_allclose(
-        weighted_score, weighted_score_list,
-        err_msg=("Weighted scores for array and list "
-                 "sample_weight input are not equal (%s != %s) for %s") % (
-                     weighted_score, weighted_score_list, name))
-
-    # check that integer weights is the same as repeated samples
-    repeat_weighted_score = metric(
-        np.repeat(y1, sample_weight, axis=0),
-        np.repeat(y2, sample_weight, axis=0), sample_weight=None)
-    assert_allclose(
-        weighted_score, repeat_weighted_score,
-        err_msg="Weighting %s is not equal to repeating samples" % name)
-
-    # check that ignoring a fraction of the samples is equivalent to setting
-    # the corresponding weights to zero
-    sample_weight_subset = sample_weight[1::2]
-    sample_weight_zeroed = np.copy(sample_weight)
-    sample_weight_zeroed[::2] = 0
-    y1_subset = y1[1::2]
-    y2_subset = y2[1::2]
-    weighted_score_subset = metric(y1_subset, y2_subset,
-                                   sample_weight=sample_weight_subset)
-    weighted_score_zeroed = metric(y1, y2,
-                                   sample_weight=sample_weight_zeroed)
-    assert_allclose(
-        weighted_score_subset, weighted_score_zeroed,
-        err_msg=("Zeroing weights does not give the same result as "
-                 "removing the corresponding samples (%s != %s) for %s" %
-                 (weighted_score_zeroed, weighted_score_subset, name)))
-
-    if not name.startswith('unnormalized'):
-        # check that the score is invariant under scaling of the weights by a
-        # common factor
-        for scaling in [2, 0.3]:
-            assert_allclose(
-                weighted_score,
-                metric(y1, y2, sample_weight=sample_weight * scaling),
-                err_msg="%s sample_weight is not invariant "
-                        "under scaling" % name)
-
-    # Check that if number of samples in y_true and sample_weight are not
-    # equal, meaningful error is raised.
-    error_message = ("Found input variables with inconsistent numbers of "
-                     "samples: [{}, {}, {}]".format(
-                         _num_samples(y1), _num_samples(y2),
-                         _num_samples(sample_weight) * 2))
-    assert_raise_message(ValueError, error_message, metric, y1, y2,
-                         sample_weight=np.hstack([sample_weight,
-                                                  sample_weight]))
 
 
 @pytest.mark.parametrize(
