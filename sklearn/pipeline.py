@@ -631,6 +631,16 @@ def _transform_one(transformer, X, y, weight, **fit_params):
 
 def _fit_transform_one(is_transform, clsname, message, transformer, weight, X,
                        y, **fit_params):
+    """
+    Fits ``transformer`` to ``X`` and ``y``.
+
+    If ``is_transform`` is ``True``, then ``X``, ``y`` will be transformed. The
+    transformed result is returned with the fitted transformer. If ``weight``
+    is not ``None``, the result will be multipled by ``weight``.
+
+    If ``is_transform`` is ``False``, then a tuple of
+    (``None``, fitted_transformer) will be returned.
+    """
     with log_elapsed(clsname, message):
         if not is_transform:
             return None, transformer.fit(X, y, **fit_params)
