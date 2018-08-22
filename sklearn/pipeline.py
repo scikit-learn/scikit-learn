@@ -631,7 +631,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     Parameters of the transformers may be set using its name and the parameter
     name separated by a '__'. A transformer may be replaced entirely by
     setting the parameter with its name to another transformer,
-    or removed by setting to 'drop'.
+    or removed by setting to 'drop' or ``None``.
 
     Read more in the :ref:`User Guide <feature_union>`.
 
@@ -702,15 +702,6 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         self._set_params('transformer_list', **kwargs)
         return self
 
-    def _check_params(self):
-        for idx, (name, trans) in enumerate(self.transformer_list):
-            if trans is None:
-                warnings.warn(
-                    "Transformer '%s' is set to None. Please use 'drop' "
-                    "for the same behavior. None has been deprecated "
-                    "in version 0.20 and will be removed in 0.22." % name,
-                    DeprecationWarning)
-
     def _validate_transformers(self):
         names, transformers = zip(*self.transformer_list)
 
@@ -771,7 +762,6 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         self : FeatureUnion
             This estimator
         """
-        self._check_params()
         self.transformer_list = list(self.transformer_list)
         self._validate_transformers()
         transformers = Parallel(n_jobs=self.n_jobs)(
@@ -797,7 +787,6 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
-        self._check_params()
         self._validate_transformers()
         result = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_transform_one)(trans, X, y, weight,
@@ -829,7 +818,6 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
-        self._check_params()
         Xs = Parallel(n_jobs=self.n_jobs)(
             delayed(_transform_one)(trans, X, None, weight)
             for name, trans, weight in self._iter())

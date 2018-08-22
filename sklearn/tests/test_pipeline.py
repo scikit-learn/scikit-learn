@@ -838,15 +838,8 @@ def test_set_feature_union_test_none():
     ft = FeatureUnion([('m2', mult2), ('m3', mult3)])
     ft.set_params(m2=None)
 
-    depr_message = ("Transformer 'm2' is set to None. Please use 'drop' "
-                    "for the same behavior. None has been deprecated "
-                    "in version 0.20 and will be removed in 0.22.")
-
-    with pytest.warns(DeprecationWarning, match=depr_message):
-        assert_array_equal([[3]], ft.fit_transform(X))
-
-    with pytest.warns(DeprecationWarning, match=depr_message):
-        assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert_array_equal([[3]], ft.fit_transform(X))
+    assert_array_equal([[3]], ft.fit(X).transform(X))
 
 
 def test_set_feature_union_step_drop():
