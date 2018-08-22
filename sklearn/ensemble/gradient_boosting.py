@@ -38,7 +38,6 @@ from ._gradient_boosting import _random_sample_mask
 import numbers
 import numpy as np
 
-from scipy import stats
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
@@ -91,7 +90,7 @@ class QuantileEstimator(object):
             Individual weights for each sample
         """
         if sample_weight is None:
-            self.quantile = stats.scoreatpercentile(y, self.alpha * 100.0)
+            self.quantile = np.percentile(y, self.alpha * 100.0)
         else:
             self.quantile = _weighted_percentile(y, sample_weight,
                                                  self.alpha * 100.0)
@@ -608,7 +607,7 @@ class HuberLossFunction(RegressionLossFunction):
         gamma = self.gamma
         if gamma is None:
             if sample_weight is None:
-                gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
+                gamma = np.percentile(np.abs(diff), self.alpha * 100)
             else:
                 gamma = _weighted_percentile(np.abs(diff), sample_weight, self.alpha * 100)
 
@@ -641,7 +640,7 @@ class HuberLossFunction(RegressionLossFunction):
         pred = pred.ravel()
         diff = y - pred
         if sample_weight is None:
-            gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
+            gamma = np.percentile(np.abs(diff), self.alpha * 100)
         else:
             gamma = _weighted_percentile(np.abs(diff), sample_weight, self.alpha * 100)
         gamma_mask = np.abs(diff) <= gamma

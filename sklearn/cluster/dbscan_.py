@@ -20,7 +20,8 @@ from ._dbscan_inner import dbscan_inner
 
 
 def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
-           algorithm='auto', leaf_size=30, p=2, sample_weight=None, n_jobs=1):
+           algorithm='auto', leaf_size=30, p=2, sample_weight=None,
+           n_jobs=None):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     Read more in the :ref:`User Guide <dbscan>`.
@@ -75,9 +76,11 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         weight may inhibit its eps-neighbor from being core.
         Note that weights are absolute, and default to 1.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Returns
     -------
@@ -228,9 +231,11 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         The power of the Minkowski metric to be used to calculate distance
         between points.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+       ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -255,7 +260,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     array([ 0,  0,  0,  1,  1, -1])
     >>> clustering # doctest: +NORMALIZE_WHITESPACE
     DBSCAN(algorithm='auto', eps=3, leaf_size=30, metric='euclidean',
-        metric_params=None, min_samples=2, n_jobs=1, p=None)
+        metric_params=None, min_samples=2, n_jobs=None, p=None)
 
     See also
     --------
@@ -296,7 +301,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
                  metric_params=None, algorithm='auto', leaf_size=30, p=None,
-                 n_jobs=1):
+                 n_jobs=None):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
