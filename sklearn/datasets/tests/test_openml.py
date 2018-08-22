@@ -535,6 +535,7 @@ def _monkey_patch_checksum_data_description(context, data_id,
 
         json_data = json.load(fp)
         data_description = json_data['data_set_description']
+        # Falsify the checksum to purposefully get a warning
         data_description['md5_checksum'] = false_checksum
 
         return data_description
