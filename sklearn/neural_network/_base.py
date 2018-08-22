@@ -7,7 +7,6 @@
 import numpy as np
 
 from scipy.special import expit as logistic_sigmoid
-from ..metrics.classification import _weighted_sum
 from ..utils.validation import check_consistent_length
 
 
@@ -177,17 +176,6 @@ DERIVATIVES = {'identity': inplace_identity_derivative,
                'relu': inplace_relu_derivative}
 
 
-def _finalize_loss(y_true, y_prob, sample_weight, sample_score):
-    """Helper to validate sizes and compute loss"""
-    if sample_weight is not None:
-        check_consistent_length(y_true, y_prob, sample_weight)
-        loss = _weighted_sum(sample_score, sample_weight, normalize=True)
-    else:
-        loss = sample_score.mean()
-
-    return loss
-
-
 def squared_loss(y_true, y_pred, sample_weight):
     """Compute the squared loss for regression.
 
@@ -206,9 +194,11 @@ def squared_loss(y_true, y_pred, sample_weight):
     loss : float
         The degree to which the samples are correctly predicted.
     """
+    check_consistent_length(y_true, y_pred, sample_weight)
+
     sample_score = ((y_true - y_pred) ** 2).sum(axis=1)
 
-    loss = _finalize_loss(y_true, y_pred, sample_weight, sample_score)
+    loss = np.average(a=sample_score, axis=0, weights=sample_weight)
 
     return loss / 2
 
@@ -240,9 +230,11 @@ def log_loss(y_true, y_prob, sample_weight):
     if y_true.shape[1] == 1:
         y_true = np.append(1 - y_true, y_true, axis=1)
 
+    check_consistent_length(y_true, y_prob, sample_weight)
+
     sample_score = -(y_true * np.log(y_prob)).sum(axis=1)
 
-    loss = _finalize_loss(y_true, y_prob, sample_weight, sample_score)
+    loss = np.average(a=sample_score, axis=0, weights=sample_weight)
 
     return loss
 
@@ -275,7 +267,9 @@ def binary_log_loss(y_true, y_prob, sample_weight):
         y_true * np.log(y_prob) + (1 - y_true) * np.log(1 - y_prob)
     ).sum(axis=1)
 
-    loss = _finalize_loss(y_true, y_prob, sample_weight, sample_score)
+    check_consistent_length(y_true, y_prob, sample_weight)
+
+    loss = np.average(a=sample_score, axis=0, weights=sample_weight)
 
     return loss
 
