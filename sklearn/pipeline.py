@@ -706,7 +706,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     def __init__(self,
                  transformer_list,
-                 n_jobs=1,
+                 n_jobs=None,
                  transformer_weights=None,
                  verbose=False):
         self.transformer_list = transformer_list
@@ -927,7 +927,7 @@ def make_union(*transformers, **kwargs):
                               random_state=None, tol=0.0))],
            transformer_weights=None, verbose=False)
     """
-    n_jobs = kwargs.pop('n_jobs', 1)
+    n_jobs = kwargs.pop('n_jobs', None)
     verbose = kwargs.pop('verbose', False)
     if kwargs:
         # We do not currently support `transformer_weights` as we may want to
