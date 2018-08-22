@@ -841,7 +841,7 @@ Support for Python 3.3 has been officially dropped.
   parameters such as ``return_std`` in a pipeline with caution.
   :issue:`9304` by :user:`Breno Freitas <brenolf>`.
   
-- |Feature| ``drop`` can be used as a transformer in 
+- |API| ``drop`` can be used as a transformer in 
   :class:`pipeline.FeatureUnion` to drop features. 
   :issue:`11144` by :user:`thomasjpfan`.
 
