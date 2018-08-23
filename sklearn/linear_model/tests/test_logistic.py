@@ -1286,10 +1286,7 @@ def test_dtype_match(multi_class):
     lr_64.fit(X_64, y_64)
     assert_equal(lr_64.coef_.dtype, X_64.dtype)
 
-    if IS_32BIT:
-        rtol = 1e-6
-    else:
-        rtol = 1e-3
+    rtol = 1e-2 if IS_32BIT else 1e-6
 
     assert_allclose(lr_32.coef_, lr_64.coef_.astype(np.float32), rtol=rtol)
 
