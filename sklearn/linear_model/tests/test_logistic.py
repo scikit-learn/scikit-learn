@@ -247,23 +247,6 @@ def test_multinomial_binary(solver):
     assert_greater(np.mean(pred == target), .9)
 
 
-def test_multinomial_binary_probabilities():
-    # Test multinomial LR gives expected probabilities based on the
-    # decision function, for a binary problem.
-    X, y = make_classification()
-    clf = LogisticRegression(multi_class='multinomial', solver='saga')
-    clf.fit(X, y)
-
-    decision = clf.decision_function(X)
-    proba = clf.predict_proba(X)
-
-    expected_proba_class_1 = (np.exp(decision) /
-                              (np.exp(decision) + np.exp(-decision)))
-    expected_proba = np.c_[1-expected_proba_class_1, expected_proba_class_1]
-
-    assert_almost_equal(proba, expected_proba)
-
-
 def test_sparsify():
     # Test sparsify and densify members.
     n_samples, n_features = iris.data.shape
@@ -1294,7 +1277,7 @@ def test_warm_start_converge_LR():
 
     rng = np.random.RandomState(0)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
-    y = np.array([1] * 100 + [-1] * 100)
+    y = np.array([1] * 100 + [2] * 50 + [3] * 50)
     lr_no_ws = LogisticRegression(multi_class='multinomial',
                                   solver='sag', warm_start=False,
                                   random_state=0)
@@ -1327,3 +1310,23 @@ def test_logistic_regression_path_coefs_multinomial():
         assert_array_almost_equal(coefs[0], coefs[2], decimal=1)
     with pytest.raises(AssertionError):
         assert_array_almost_equal(coefs[1], coefs[2], decimal=1)
+
+
+@pytest.mark.parametrize('est', [LogisticRegression(),
+                                 LogisticRegressionCV(cv=3)])
+@pytest.mark.parametrize('solver', ['newton-cg', 'lbfgs', 'sag', 'saga'])
+def test_logistic_binary_invariant_to_multi_class(est, solver):
+    # Make sure that multi_class does not affect binary classification
+    X, y = make_classification(n_samples=200, n_classes=2, n_informative=2,
+                               n_redundant=0, n_clusters_per_class=1,
+                               random_state=0, n_features=2)
+    est.set_params(multi_class='ovr', solver=solver, max_iter=10000,
+                   random_state=0)
+    est.fit(X, y)
+    model_ovr = np.hstack([np.squeeze(est.coef_), est.intercept_])
+    assert est.coef_.shape == (1, X.shape[1])
+    est.set_params(multi_class='multinomial')
+    est.fit(X, y)
+    assert est.coef_.shape == (1, X.shape[1])
+    model_multi = np.hstack([np.squeeze(est.coef_), est.intercept_])
+    assert_allclose(model_ovr, model_multi, rtol=0.01)

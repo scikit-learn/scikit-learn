@@ -446,10 +446,11 @@ Support for Python 3.3 has been officially dropped.
   incorrect results in :class:`linear_model.LogisticRegressionCV`.
   :issue:`11724` by :user:`Nicolas Hug <NicolasHug>`.
 
-- |Fix| Fixed a bug in :class:`linear_model.LogisticRegression` where when using
-  the parameter ``multi_class='multinomial'``, the ``predict_proba`` method was
-  returning incorrect probabilities in the case of binary outcomes.
-  :issue:`9939` by :user:`Roger Westover <rwolst>`.
+- |Fix| Fixed a bug in :class:`linear_model.LogisticRegression` where incorrect
+  coefficients and probabilities were reported for binary targets if
+  ``multi_class='multinomial'``.
+  ``multi_class`` is now disregarded for binary targets.
+  :issue:`XXX` by :user:`Roger Westover <rwolst>` and `Joel Nothman`_.
 
 - |Fix| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the
   ``score`` method always computes accuracy, not the metric given by
@@ -770,7 +771,6 @@ Support for Python 3.3 has been officially dropped.
 - |Fix| Fixed a bug in :class:`naive_bayes.MultinomialNB` which did not accept
   vector valued pseudocounts (alpha).
   :issue:`10346` by :user:`Tobias Madsen <TobiasMadsen>`
-
 
 :mod:`sklearn.neighbors`
 ........................
