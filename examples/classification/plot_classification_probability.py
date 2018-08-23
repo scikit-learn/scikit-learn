@@ -41,7 +41,7 @@ classifiers = {'L1 logistic': LogisticRegression(C=C, penalty='l1'),
                'Linear SVC': SVC(kernel='linear', C=C, probability=True,
                                  random_state=0),
                'L2 logistic (Multinomial)': LogisticRegression(
-                C=C, solver='lbfgs', multi_class='multinomial'),
+                C=C, solver='lbfgs', multinomial=True),
                'GPC': GaussianProcessClassifier(kernel)
                }
 

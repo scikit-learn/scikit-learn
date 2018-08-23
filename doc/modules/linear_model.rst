@@ -763,7 +763,7 @@ weights to zero) model.
 
 The "lbfgs", "sag" and "newton-cg" solvers only support L2 penalization and
 are found to converge faster for some high dimensional data. Setting
-`multi_class` to "multinomial" with these solvers learns a true multinomial
+`multinomial=True` with these solvers learns a true multinomial
 logistic regression model [5]_, which means that its probability estimates
 should be better calibrated than the default "one-vs-rest" setting.
 
@@ -833,9 +833,9 @@ with 'log' loss.
 builtin cross-validation to find out the optimal C parameter.
 "newton-cg", "sag", "saga" and "lbfgs" solvers are found to be faster
 for high-dimensional dense data, due to warm-starting. For the
-multiclass case, if `multi_class` option is set to "ovr", an optimal C
-is obtained for each class and if the `multi_class` option is set to
-"multinomial", an optimal C is obtained by minimizing the cross-entropy
+multiclass case, if `multinomial` option is set to False, an optimal C
+is obtained for each class and if the `multinomial` option is set to
+True, an optimal C is obtained by minimizing the cross-entropy
 loss.
 
 .. topic:: References:
