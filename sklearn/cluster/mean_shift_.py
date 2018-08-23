@@ -229,6 +229,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
             unique[neighbor_idxs] = 0
             unique[i] = 1  # leave the current point as unique
     cluster_centers = sorted_centers[unique]
+
     # ASSIGN LABELS: a point belongs to the cluster that it is closest to
     nbrs = NearestNeighbors(n_neighbors=1, n_jobs=n_jobs).fit(cluster_centers)
     labels = np.zeros(n_samples, dtype=np.int)
