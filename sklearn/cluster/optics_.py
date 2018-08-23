@@ -307,16 +307,18 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.n_jobs = n_jobs
 
 
-    def _dump(self, A):
-        self._check(A)
+    def _dump(self, A, comment=""):
+        self._check(A, comment)
         np.save("/tmp/%d.npy" % self.adrin, A)
         self.adrin += 1
 
 
-    def _check(self, A):
+    def _check(self, A, comment):
         try:
-            data = np.load("/tmp/32/%d.npy")
-            print("level: %d, max diff:" % self.adrin, np.max(np.abs(A - data)))
+            data = np.load("/tmp/32/%d.npy" % self.adrin)
+            diff = np.max(np.abs(A - data))
+            if diff > 1e-4:
+                print("%s level: %d, max diff:" % (comment, self.adrin), diff)
         except Exception:
             pass
 
@@ -370,14 +372,14 @@ class OPTICS(BaseEstimator, ClusterMixin):
         nbrs.fit(X)
         self.core_distances_[:] = nbrs.kneighbors(X,
                                                   self.min_samples)[0][:, -1]
-        self._dump(self.core_distances_)
+        self._dump(self.core_distances_, "core dist")
 
         # Main OPTICS loop. Not parallelizable. The order that entries are
         # written to the 'ordering_' list is important!
         for point in range(n_samples):
             if not self._processed[point]:
                 self._expand_cluster_order(point, X, nbrs)
-                self._dump(self.reachability_)
+                self._dump(self.reachability_, "main reach loop")
 
         indices_, self.labels_ = _extract_optics(self.ordering_,
                                                  self.reachability_,
@@ -414,14 +416,15 @@ class OPTICS(BaseEstimator, ClusterMixin):
         unproc = np.compress((~np.take(self._processed, indices)).ravel(),
                              indices, axis=0)
         # Keep n_jobs = 1 in the following lines...please
+        self._dump(unproc, "unproc")
         if len(unproc) > 0:
             dists = pairwise_distances(P, np.take(X, unproc, axis=0),
                                        self.metric, n_jobs=None).ravel()
 
             rdists = np.maximum(dists, self.core_distances_[point_index])
-            self._dump(rdists)
+            #self._dump(rdists, "rdists")
             new_reach = np.minimum(np.take(self.reachability_, unproc), rdists)
-            self._dump(new_reach)
+            #self._dump(new_reach, "new_reach")
             self.reachability_[unproc] = new_reach
 
         # Checks to see if everything is already processed;
