@@ -55,11 +55,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         The default is larger than the default in `randomized_svd` to handle
         sparse matrices that may have large slowly decaying spectrum.
 
-    random_state : int, RandomState instance or None, optional, default = None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        See :term:`Glossary <random_state>`.
 
     tol : float, optional
         Tolerance for ARPACK. 0 means machine precision. Ignored by randomized

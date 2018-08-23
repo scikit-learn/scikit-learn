@@ -355,11 +355,8 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         Whether to compute and return the residual sum of squares corresponding
         to the computed solution.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        See :term:`Glossary <random_state>`.
 
     positive : boolean, optional
         Whether to enforce positivity when finding the dictionary.
@@ -477,11 +474,8 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     verbose : bool, optional (default: False)
         To control the verbosity of the procedure.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        See :term:`Glossary <random_state>`.
 
     return_n_iter : bool
         Whether or not to return the number of iterations.
@@ -674,11 +668,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         Number of previous iterations completed on the dictionary used for
         initialization.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        See :term:`Glossary <random_state>`.
 
     return_inner_stats : boolean, optional
         Return the inner statistics A (dictionary covariance) and B
@@ -1098,11 +1089,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        See :term:`Glossary <random_state>`.
 
     positive_code : bool
         Whether to enforce positivity when finding the code.
@@ -1281,11 +1269,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        See :term:`Glossary <random_state>`.
 
     positive_code : bool
         Whether to enforce positivity when finding the code.
