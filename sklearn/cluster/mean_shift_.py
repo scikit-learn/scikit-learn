@@ -360,9 +360,9 @@ class MeanShift(BaseEstimator, ClusterMixin):
     ...               [4, 7], [3, 5], [3, 6]])
     >>> clustering = MeanShift(bandwidth=2).fit(X)
     >>> clustering.labels_
-    array([0, 0, 0, 1, 1, 1])
+    array([1, 1, 1, 0, 0, 0])
     >>> clustering.predict([[0, 0], [5, 5]])
-    array([0, 1])
+    array([1, 0])
     >>> clustering # doctest: +NORMALIZE_WHITESPACE
     MeanShift(bandwidth=2, bin_seeding=False, cluster_all=True, min_bin_freq=1,
          n_jobs=None, seeds=None)
