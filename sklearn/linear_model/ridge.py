@@ -289,12 +289,10 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         Verbosity level. Setting verbose > 0 will display additional
         information depending on the solver used.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag'.
+        the data. Used when ``solver`` == 'sag'.
+        See :term:`Glossary <random_state>`.
 
     return_n_iter : boolean, default False
         If True, the method also returns `n_iter`, the actual number of
@@ -605,12 +603,10 @@ class Ridge(_BaseRidge, RegressorMixin):
         .. versionadded:: 0.19
            SAGA solver.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag'.
+        the data. Used when ``solver`` == 'sag'.
+        See :term:`Glossary <random_state>`.
 
         .. versionadded:: 0.17
            *random_state* to support Stochastic Average Gradient.

@@ -251,11 +251,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        See :term:`Glossary <random_state>`.
 
     n_jobs : int or None, optional (default=None)
         Number of CPUs to use during the resampling.
@@ -312,6 +309,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     --------
     RandomizedLogisticRegression, Lasso, ElasticNet
     """
+
     def __init__(self, alpha='aic', scaling=.5, sample_fraction=.75,
                  n_resampling=200, selection_threshold=.25,
                  fit_intercept=True, verbose=False,
@@ -447,11 +445,8 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
         `preprocessing.StandardScaler` before calling `fit` on an estimator
         with `normalize=False`.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        See :term:`Glossary <random_state>`.
 
     n_jobs : int or None, optional (default=None)
         Number of CPUs to use during the resampling.
@@ -508,6 +503,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     --------
     RandomizedLasso, LogisticRegression
     """
+
     def __init__(self, C=1, scaling=.5, sample_fraction=.75,
                  n_resampling=200,
                  selection_threshold=.25, tol=1e-3,
@@ -592,11 +588,9 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
         The alpha parameter in the stability selection article used to
         randomly scale the features. Should be between 0 and 1.
 
-    random_state : int, RandomState instance or None, optional, default=None
-        The generator used to randomize the design.  If int, random_state is
-        the seed used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        The generator used to randomize the design.
+        See :term:`Glossary <random_state>`.
 
     n_resampling : int, optional, default=200
         Number of randomized models.
@@ -662,8 +656,8 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
             alphas = np.r_[alphas, all_alphas[-1]]
             coefs = np.c_[coefs, np.zeros((n_features, 1))]
         scores_path += (interp1d(alphas, coefs,
-                        kind='nearest', bounds_error=False,
-                        fill_value=0, axis=-1)(all_alphas) != 0)
+                                 kind='nearest', bounds_error=False,
+                                 fill_value=0, axis=-1)(all_alphas) != 0)
 
     scores_path /= n_resampling
     return all_alphas, scores_path

@@ -75,12 +75,10 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, optional, default=None
+    random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        the data.
+        See :term:`Glossary <random_state>`.
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
@@ -166,6 +164,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
+
     def __init__(self, C=1.0, fit_intercept=True, max_iter=None, tol=None,
                  early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, shuffle=True, verbose=0, loss="hinge",
@@ -327,12 +326,10 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         If the difference between the current prediction and the correct label
         is below this threshold, the model is not updated.
 
-    random_state : int, RandomState instance or None, optional, default=None
+    random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        the data.
+        See :term:`Glossary <random_state>`.
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
@@ -403,6 +400,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
+
     def __init__(self, C=1.0, fit_intercept=True, max_iter=None, tol=None,
                  early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, shuffle=True, verbose=0,

@@ -585,13 +585,10 @@ class ElasticNet(LinearModel, RegressorMixin):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'.
+        feature to update. Used when ``selection`` == 'random'.
+        See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
@@ -867,13 +864,10 @@ class Lasso(ElasticNet):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'.
+        feature to update. Used when ``selection`` == 'random'.
+        See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
@@ -1329,13 +1323,10 @@ class LassoCV(LinearModelCV, RegressorMixin):
     positive : bool, optional
         If positive, restrict regression coefficients to be positive
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'.
+        feature to update. Used when ``selection`` == 'random'.
+        See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
@@ -1491,13 +1482,10 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'.
+        feature to update. Used when ``selection`` == 'random'.
+        See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
@@ -1670,13 +1658,10 @@ class MultiTaskElasticNet(Lasso):
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'.
+        feature to update. Used when ``selection`` == 'random'.
+        See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
@@ -1861,13 +1846,10 @@ class MultiTaskLasso(MultiTaskElasticNet):
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'.
+        feature to update. Used when ``selection`` == 'random'.
+        See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
@@ -2025,13 +2007,10 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'.
+        feature to update. Used when ``selection`` == 'random'.
+        See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
@@ -2199,13 +2178,10 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'
+        feature to update. Used when ``selection`` == 'random'.
+        See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
