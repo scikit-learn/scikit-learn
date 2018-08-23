@@ -153,6 +153,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
     random_state : int, RandomState instance or None (default)
         The generator used to initialize the centers.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Attributes

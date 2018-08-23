@@ -76,8 +76,9 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         for more details.
 
     random_state : int, RandomState instance or None (default)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.
+        Used to shuffle the training data, when ``shuffle`` is set to
+        ``True``. Pass an int for reproducible output across multiple
+        function calls.
         See :term:`Glossary <random_state>`.
 
     warm_start : bool, optional
@@ -327,8 +328,9 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         is below this threshold, the model is not updated.
 
     random_state : int, RandomState instance or None (default)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.
+        Used to shuffle the training data, when ``shuffle`` is set to
+        ``True``. Pass an int for reproducible output across multiple
+        function calls.
         See :term:`Glossary <random_state>`.
 
     warm_start : bool, optional

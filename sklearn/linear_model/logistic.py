@@ -550,6 +550,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator to use when shuffling
         the data. Used when ``solver`` == 'sag' or 'liblinear'.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     check_input : bool, default True
@@ -870,6 +871,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator to use when shuffling
         the data. Used when ``solver`` == 'sag' or 'liblinear'.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     max_squared_sum : float, default None
@@ -1034,6 +1036,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator to use when shuffling
         the data. Used when ``solver`` == 'sag' or 'liblinear'.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
@@ -1529,6 +1532,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
            Stochastic Average Gradient descent solver for 'multinomial' case.
 
     random_state : int, RandomState instance or None (default)
+        Used when ``solver`` == 'sag' or 'liblinear', to calculate
+        the logistic regression paths and scores.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Attributes

@@ -290,8 +290,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         information depending on the solver used.
 
     random_state : int, RandomState instance or None (default)
-        The seed of the pseudo random number generator to use when shuffling
-        the data. Used when ``solver`` == 'sag'.
+        Used for shuffling the data when ``solver`` == 'sag'.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     return_n_iter : boolean, default False
@@ -604,8 +604,8 @@ class Ridge(_BaseRidge, RegressorMixin):
            SAGA solver.
 
     random_state : int, RandomState instance or None (default)
-        The seed of the pseudo random number generator to use when shuffling
-        the data. Used when ``solver`` == 'sag'.
+        Used for shuffling the data when ``solver`` == 'sag'.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
         .. versionadded:: 0.17

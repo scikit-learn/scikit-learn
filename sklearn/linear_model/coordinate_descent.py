@@ -588,6 +588,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator that selects a random
         feature to update. Used when ``selection`` == 'random'.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
@@ -867,6 +868,7 @@ class Lasso(ElasticNet):
     random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator that selects a random
         feature to update. Used when ``selection`` == 'random'.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
@@ -1326,6 +1328,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
     random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator that selects a random
         feature to update. Used when ``selection`` == 'random'.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
@@ -1485,6 +1488,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator that selects a random
         feature to update. Used when ``selection`` == 'random'.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
@@ -1661,6 +1665,7 @@ class MultiTaskElasticNet(Lasso):
     random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator that selects a random
         feature to update. Used when ``selection`` == 'random'.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
@@ -1849,6 +1854,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
     random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator that selects a random
         feature to update. Used when ``selection`` == 'random'.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
@@ -2010,6 +2016,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator that selects a random
         feature to update. Used when ``selection`` == 'random'.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
@@ -2181,6 +2188,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     random_state : int, RandomState instance or None (default)
         The seed of the pseudo random number generator that selects a random
         feature to update. Used when ``selection`` == 'random'.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'

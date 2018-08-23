@@ -252,6 +252,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         the tolerance of the optimization.
 
     random_state : int, RandomState instance or None (default)
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     n_jobs : int or None, optional (default=None)
@@ -446,6 +447,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
         with `normalize=False`.
 
     random_state : int, RandomState instance or None (default)
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     n_jobs : int or None, optional (default=None)
@@ -590,6 +592,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
 
     random_state : int, RandomState instance or None (default)
         The generator used to randomize the design.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     n_resampling : int, optional, default=200

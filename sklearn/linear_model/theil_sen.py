@@ -244,7 +244,8 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
 
     random_state : int, RandomState instance or None (default)
         A random number generator instance to define the state of the random
-        permutations generator.
+        permutations generator. Pass an int for reproducible output across
+        multiple function calls.
         See :term:`Glossary <random_state>`
 
     n_jobs : int or None, optional (default=None)

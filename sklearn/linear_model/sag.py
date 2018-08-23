@@ -151,8 +151,8 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
         The verbosity level.
 
     random_state : int, RandomState instance or None (default)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.
+        Used when shuffling the data. Pass an int for reproducible output
+        across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     check_input : bool, default True
