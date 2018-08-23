@@ -11,6 +11,8 @@ from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.testing import (assert_raises, assert_true, assert_false,
                                    assert_warns, assert_raise_message,
                                    ignore_warnings, skip_if_32bit)
+import pytest
+
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -266,22 +268,21 @@ def test_sparse_liblinear_intercept_handling():
     test_svm.test_dense_liblinear_intercept_handling(svm.LinearSVC)
 
 
+@pytest.mark.parametrize("datasets_index", range(4))
+@pytest.mark.parametrize("kernel", ["linear", "poly", "rbf", "sigmoid"])
 @skip_if_32bit
-def test_sparse_oneclasssvm():
+def test_sparse_oneclasssvm(datasets_index, kernel):
     # Check that sparse OneClassSVM gives the same result as dense OneClassSVM
     # many class dataset:
     X_blobs, _ = make_blobs(n_samples=100, centers=10, random_state=0)
     X_blobs = sparse.csr_matrix(X_blobs)
-
     datasets = [[X_sp, None, T], [X2_sp, None, T2],
                 [X_blobs[:80], None, X_blobs[80:]],
                 [iris.data, None, iris.data]]
-    kernels = ["linear", "poly", "rbf", "sigmoid"]
-    for dataset in datasets:
-        for kernel in kernels:
-            clf = svm.OneClassSVM(gamma='scale', kernel=kernel)
-            sp_clf = svm.OneClassSVM(gamma='scale', kernel=kernel)
-            check_svm_model_equal(clf, sp_clf, *dataset)
+    dataset = datasets[datasets_index]
+    clf = svm.OneClassSVM(gamma='scale', kernel=kernel)
+    sp_clf = svm.OneClassSVM(gamma='scale', kernel=kernel)
+    check_svm_model_equal(clf, sp_clf, *dataset)
 
 
 def test_sparse_realdata():
