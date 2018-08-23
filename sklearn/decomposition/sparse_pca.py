@@ -64,6 +64,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         Controls the verbosity; the higher, the more messages. Defaults to 0.
 
     random_state : int, RandomState instance or None (default)
+        Used during dictionary learning. Pass an int for reproducible output
+        across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     normalize_components : boolean, optional (default=False)
@@ -301,6 +303,9 @@ class MiniBatchSparsePCA(SparsePCA):
         the estimated components are sparse.
 
     random_state : int, RandomState instance or None (default)
+        Used for random shuffling when ``shuffle`` is set to ``True``,
+        during online dictionary learning. Pass an int for reproducible output
+        across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     normalize_components : boolean, optional (default=False)

@@ -356,6 +356,8 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         to the computed solution.
 
     random_state : int, RandomState instance or None (default)
+        Used for randomly initializing the dictionary. Pass an int for
+        reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     positive : boolean, optional
@@ -475,6 +477,8 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         To control the verbosity of the procedure.
 
     random_state : int, RandomState instance or None (default)
+        Used for randomly initializing the dictionary. Pass an int for
+        reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     return_n_iter : bool
@@ -669,6 +673,10 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         initialization.
 
     random_state : int, RandomState instance or None (default)
+        Used for initializing the dictionary when ``dict_init`` is not
+        specified, randomly shuffling the data when ``shuffle`` is set to
+        ``True``, and updating the dictionary. Pass an int for reproducible
+        output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     return_inner_stats : boolean, optional
@@ -1090,6 +1098,10 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         performance of downstream classifiers.
 
     random_state : int, RandomState instance or None (default)
+        Used for initializing the dictionary when ``dict_init`` is not
+        specified, randomly shuffling the data when ``shuffle`` is set to
+        ``True``, and updating the dictionary. Pass an int for reproducible
+        output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     positive_code : bool
@@ -1270,6 +1282,10 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         performance of downstream classifiers.
 
     random_state : int, RandomState instance or None (default)
+        Used for initializing the dictionary when ``dict_init`` is not
+        specified, randomly shuffling the data when ``shuffle`` is set to
+        ``True``, and updating the dictionary. Pass an int for reproducible
+        output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     positive_code : bool

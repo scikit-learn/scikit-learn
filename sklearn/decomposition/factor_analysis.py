@@ -89,7 +89,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         if ``svd_method`` equals 'randomized'
 
     random_state : int, RandomState instance or None (default=0)
-        Only used when ``svd_method`` equals 'randomized'.
+        Only used when ``svd_method`` equals 'randomized'. Pass an int for
+        reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Attributes

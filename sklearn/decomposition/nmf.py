@@ -283,7 +283,8 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
         Truncate all values less then this in output to zero.
 
     random_state : int, RandomState instance or None (default)
-        Used when ``random`` == 'nndsvdar' or 'random'.
+        Used when ``init`` == 'nndsvdar' or 'random'. Pass an int for
+        reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
@@ -460,6 +461,9 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
         If true, randomize the order of coordinates in the CD solver.
 
     random_state : int, RandomState instance or None (default)
+        Used to randomize the coordinates in the CD solver, when
+        ``shuffle`` is set to ``True``. Pass an int for reproducible
+        output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
@@ -940,6 +944,9 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         transformation (W), both or none of them.
 
     random_state : int, RandomState instance or None (default)
+        Used for NMF initialisation (when ``init`` == 'nndsvdar' or
+        'random'), and in Coordinate Descent. Pass an int for reproducible
+        output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     verbose : integer, default: 0
@@ -1127,6 +1134,9 @@ class NMF(BaseEstimator, TransformerMixin):
         Maximum number of iterations before timing out.
 
     random_state : int, RandomState instance or None (default)
+        Used for initialisation (when ``init`` == 'nndsvdar' or
+        'random'), and in Coordinate Descent. Pass an int for reproducible
+        output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     alpha : double, default: 0.
