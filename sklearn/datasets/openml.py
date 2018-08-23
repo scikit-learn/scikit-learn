@@ -58,21 +58,20 @@ def _open_openml_url(openml_path, data_home, md5_checksum=None):
     if data_home is None:
 
         response = urlopen(_OPENML_PREFIX + openml_path)
+
+        if md5_checksum is None:
+            return response
+
         stream = io.BytesIO()
+        md5 = hashlib.md5()
+        block_size = 128 * md5.block_size
+        for block in iter(lambda: response.read(block_size), b''):
+            md5.update(block)
+            stream.write(block)
 
-        if md5_checksum is not None:
-            md5 = hashlib.md5()
-            block_size = 128 * md5.block_size
-            for block in iter(lambda: response.read(block_size), b''):
-                md5.update(block)
-                stream.write(block)
-
-            if md5_checksum != md5.hexdigest():
-                warn('Data set file hash {} does not match the checksum {}.'
-                     .format(md5.hexdigest(), md5_checksum))
-        else:
-            shutil.copyfileobj(response, stream)
-
+        if md5_checksum != md5.hexdigest():
+            warn('Data set file hash {} does not match the checksum {}.'
+                 .format(md5.hexdigest(), md5_checksum))
         stream.seek(0)
         return stream
 
