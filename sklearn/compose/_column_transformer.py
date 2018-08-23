@@ -376,31 +376,33 @@ boolean mask array or callable
             else:
                 raise
 
-    def _calculate_inverse_indices(self, X):
+    def _calculate_inverse_indices(self, X, Xs):
         """
         Private function to calcuate indicies for inverse_transform
         """
         # checks for overlap
-        all_indexes = set()
+        all_indices = set()
         input_indices = []
         for name, trans, cols in self.transformers:
             col_indices = _get_column_indices(X, cols)
             col_indices_set = set(col_indices)
-            if not all_indexes.isdisjoint(col_indices_set):
-                self._invert_error = ("Unable to invert: transformers "
-                                      "contain overlaping columns")
+            if not all_indices.isdisjoint(col_indices_set):
+                self._invert_error = (
+                    "transformers contain overlapping columns")
                 return
             if trans == 'drop':
-                self._invert_error = "'{}' drops columns".format(name)
+                self._invert_error = ("dropping columns is not supported. "
+                                      "'{}' drops columns".format(name))
                 return
             input_indices.append(col_indices)
-            all_indexes.update(col_indices_set)
+            all_indices.update(col_indices_set)
 
         # check remainder
         remainder_indices = self._remainder.indices
         if (remainder_indices is not None
                 and self._remainder.transformer == 'drop'):
-            self._invert_error = "remainder drops columns"
+            self._invert_error = ("dropping columns is not supported. "
+                                  "remainder drops columns")
             return
 
         if remainder_indices is not None:
@@ -408,13 +410,12 @@ boolean mask array or callable
 
         self._input_indices = input_indices
         self._n_features_in = X.shape[1]
-        self._X_columns = X.columns if hasattr(X, 'columns') else None
+        self._X_columns = getattr(X, 'columns', None)
         self._X_is_sparse = sparse.issparse(X)
         self._invert_error = ""
         self._output_indices = []
         cur_index = 0
 
-        Xs = self._fit_transform(X[0:1], None, _transform_one, fitted=True)
         for X_transform in Xs:
             X_features = X_transform.shape[-1]
             self._output_indices.append(
@@ -492,7 +493,7 @@ boolean mask array or callable
             self.sparse_output_ = False
 
         self._update_fitted_transformers(transformers)
-        self._calculate_inverse_indices(X)
+        self._calculate_inverse_indices(X, Xs)
         self._validate_output(Xs)
 
         return _hstack(list(Xs), self.sparse_output_)
@@ -555,12 +556,12 @@ boolean mask array or callable
                 trans = FunctionTransformer(
                     validate=False, accept_sparse=True, check_inverse=False)
 
-            inv_transformers.append((name, trans, sub, get_weight(name)))
+            inv_transformers.append((trans, sub, get_weight(name)))
 
         Xs = Parallel(n_jobs=self.n_jobs)(
             delayed(_inverse_transform_one)(
                 trans, X_sel, weight)
-            for _, trans, X_sel, weight in inv_transformers)
+            for trans, X_sel, weight in inv_transformers)
 
         if not Xs:
             # All transformers are None
@@ -570,7 +571,7 @@ boolean mask array or callable
             inverse_Xs = sparse.lil_matrix((Xs[0].shape[0],
                                             self._n_features_in))
         else:
-            inverse_Xs = np.zeros((Xs[0].shape[0], self._n_features_in))
+            inverse_Xs = np.empty((Xs[0].shape[0], self._n_features_in))
         for indices, inverse_X in zip(self._input_indices, Xs):
             if sparse.issparse(inverse_X):
                 if self._X_is_sparse:
