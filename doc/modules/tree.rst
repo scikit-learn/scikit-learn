@@ -330,29 +330,18 @@ Tips on practical use
     for each additional level the tree grows to.  Use ``max_depth`` to control
     the size of the tree to prevent overfitting.
 
-  * Use ``min_samples_split`` or ``min_samples_leaf`` to control the number of
-    samples at a leaf node.  A very small number will usually mean the tree
-    will overfit, whereas a large number will prevent the tree from learning
-    the data. Try ``min_samples_leaf=5`` as an initial value. If the sample size
-    varies greatly, a float number can be used as percentage in these two parameters.
-    The main difference between the two is that ``min_samples_leaf`` guarantees
-    a minimum number of samples in a leaf, while ``min_samples_split`` can
-    create arbitrary small leaves, though ``min_samples_split`` is more common
-    in the literature.
+  * Use ``min_samples_split`` to control the number of samples at a leaf node.
+    A very small number will usually mean the tree will overfit, whereas a
+    large number will prevent the tree from learning the data. If the sample
+    size varies greatly, a float number can be used as percentage in this
+    parameter. Note that ``min_samples_split`` can create arbitrarily
+    small leaves.
 
   * Balance your dataset before training to prevent the tree from being biased
     toward the classes that are dominant. Class balancing can be done by
     sampling an equal number of samples from each class, or preferably by
     normalizing the sum of the sample weights (``sample_weight``) for each
-    class to the same value. Also note that weight-based pre-pruning criteria,
-    such as ``min_weight_fraction_leaf``, will then be less biased toward
-    dominant classes than criteria that are not aware of the sample weights,
-    like ``min_samples_leaf``.
-
-  * If the samples are weighted, it will be easier to optimize the tree
-    structure using weight-based pre-pruning criterion such as
-    ``min_weight_fraction_leaf``, which ensure that leaf nodes contain at least
-    a fraction of the overall sum of the sample weights.
+    class to the same value.
 
   * All decision trees use ``np.float32`` arrays internally.
     If training data is not in this format, a copy of the dataset will be made.
