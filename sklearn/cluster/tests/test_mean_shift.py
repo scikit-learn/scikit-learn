@@ -112,6 +112,7 @@ def test_cluster_intensity_tie():
     assert_array_equal(c1.labels_, [1, 1, 1, 0, 0, 0])
     assert_array_equal(c2.labels_, [0, 0, 0, 1, 1, 1])
 
+
 def test_bin_seeds():
     # Test the bin seeding technique which can be used in the mean shift
     # algorithm
