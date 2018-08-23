@@ -162,7 +162,8 @@ def test_pipeline_init():
     # Check that we can't instantiate pipelines with objects without fit
     # method
     assert_raises_regex(TypeError,
-                        'Last step of Pipeline should implement fit. '
+                        'Last step of Pipeline should implement fit '
+                        'or be the string \'passthrough\''
                         '.*NoFit.*',
                         Pipeline, [('clf', NoFit())])
     # Smoke test with only an estimator
