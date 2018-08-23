@@ -402,7 +402,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
             while not self._processed[point]:
                 self._processed[point] = True
                 self.ordering_.append(point)
+                self._dump(self.ordering_, "ordering")
                 point = self._set_reach_dist(point, X, nbrs)
+                self._dump(point, "point %d" % point)
         else:  # For very noisy points
             self.ordering_.append(point)
             self._processed[point] = True
@@ -416,7 +418,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
         unproc = np.compress((~np.take(self._processed, indices)).ravel(),
                              indices, axis=0)
         # Keep n_jobs = 1 in the following lines...please
-        self._dump(unproc, "unproc")
         if len(unproc) > 0:
             dists = pairwise_distances(P, np.take(X, unproc, axis=0),
                                        self.metric, n_jobs=None).ravel()
