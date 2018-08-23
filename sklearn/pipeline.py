@@ -149,16 +149,16 @@ class Pipeline(_BaseComposition):
         return self
 
     def _validate_steps(self):
-        names, _ = zip(*self.steps)
+        names, estimators = zip(*self.steps)
 
         # validate names
         self._validate_names(names)
 
         # validate estimators
-        transformers_steps = self.steps[:-1]
-        estimator_name, estimator = self.steps[-1]
+        transformers = estimators[:-1]
+        estimator = estimators[-1]
 
-        for name, t in transformers_steps:
+        for t in transformers:
             if t is None or t == 'passthrough':
                 continue
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
