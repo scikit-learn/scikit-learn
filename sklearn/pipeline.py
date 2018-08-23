@@ -536,7 +536,7 @@ def _name_estimators(estimators):
     """Generate names for estimators."""
 
     names = [
-        estimator.lower()
+        estimator
         if isinstance(estimator, str) else type(estimator).__name__.lower()
         for estimator in estimators
     ]
