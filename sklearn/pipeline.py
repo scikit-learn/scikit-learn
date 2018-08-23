@@ -10,7 +10,6 @@ estimator, as a chain of transforms and estimators.
 # License: BSD
 
 from collections import defaultdict
-import warnings
 
 import numpy as np
 from scipy import sparse

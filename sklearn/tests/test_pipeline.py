@@ -8,7 +8,6 @@ import time
 
 import numpy as np
 from scipy import sparse
-import pytest
 
 from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_raises
