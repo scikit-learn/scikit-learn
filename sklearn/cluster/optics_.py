@@ -402,7 +402,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
             while not self._processed[point]:
                 self._processed[point] = True
                 self.ordering_.append(point)
-                self._dump(self.ordering_, "ordering")
                 point = self._set_reach_dist(point, X, nbrs)
                 self._dump(point, "point %d" % point)
         else:  # For very noisy points
