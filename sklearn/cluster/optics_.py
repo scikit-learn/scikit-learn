@@ -306,6 +306,21 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.leaf_size = leaf_size
         self.n_jobs = n_jobs
 
+
+    def _dump(self, A):
+        self._check(A)
+        np.save("/tmp/%d.npy", self.adrin)
+        self.adrin += 1
+
+
+    def _check(self, A):
+        try:
+            data = np.load("/tmp/32/%d.npy")
+            print("level: %d, max diff:" % self.adrin, np.max(np.abs(A - data)))
+        except Exception:
+            pass
+
+
     def fit(self, X, y=None):
         """Perform OPTICS clustering
 
@@ -325,6 +340,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self : instance of OPTICS
             The instance.
         """
+        self.adrin = 0
         X = check_array(X, dtype=np.float)
 
         n_samples = len(X)
@@ -354,14 +370,14 @@ class OPTICS(BaseEstimator, ClusterMixin):
         nbrs.fit(X)
         self.core_distances_[:] = nbrs.kneighbors(X,
                                                   self.min_samples)[0][:, -1]
-        np.save("/tmp/core_distances.npy", self.core_distances_)
+        self._dump(self.core_distances_)
 
         # Main OPTICS loop. Not parallelizable. The order that entries are
         # written to the 'ordering_' list is important!
         for point in range(n_samples):
             if not self._processed[point]:
                 self._expand_cluster_order(point, X, nbrs)
-                np.save("/tmp/%d.npy" % point, self.reachability_)
+                self._dump(self.reachability_)
 
         indices_, self.labels_ = _extract_optics(self.ordering_,
                                                  self.reachability_,
@@ -403,7 +419,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
                                        self.metric, n_jobs=None).ravel()
 
             rdists = np.maximum(dists, self.core_distances_[point_index])
+            self._dump(rdists)
             new_reach = np.minimum(np.take(self.reachability_, unproc), rdists)
+            self._dump(new_reach)
             self.reachability_[unproc] = new_reach
 
         # Checks to see if everything is already processed;
