@@ -246,6 +246,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     min_maxima_ratio : float, optional (default=.001)
         Used to determine neighborhood size for minimum cluster membership.
+        Each local maxima should be a largest value in a neighborhood
+        of the `size min_maxima_ratio * len(X)` from left and right.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
