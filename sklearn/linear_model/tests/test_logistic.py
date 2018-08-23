@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
@@ -1286,7 +1287,10 @@ def test_dtype_match(multi_class):
     lr_64.fit(X_64, y_64)
     assert_equal(lr_64.coef_.dtype, X_64.dtype)
 
-    rtol = 1e-2 if IS_32BIT else 1e-6
+    rtol = 1e-6
+    if os.name == 'nt' and IS_32BIT:
+        # FIXME
+        rtol = 1e-2
 
     assert_allclose(lr_32.coef_, lr_64.coef_.astype(np.float32), rtol=rtol)
 
