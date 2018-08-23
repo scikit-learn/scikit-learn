@@ -577,11 +577,8 @@ def test_fetch_openml_checksum_invalid(monkeypatch, tmpdir, data_id,
 ])
 def test_fetch_openml_checksum_valid(monkeypatch, tmpdir, data_id, cache):
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
-
-    # Capture all warnings
     with pytest.warns(None) as records:
         fetch_openml(data_id=data_id, data_home=str(tmpdir), cache=cache)
-        # assert no warnings
         assert not records
 
 
@@ -596,9 +593,7 @@ def test_fetch_openml_checksum_invalid_no_verification(monkeypatch, tmpdir,
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip,
                                      falsify_checksum=True)
-    # Capture all warnings
     with pytest.warns(None) as records:
         fetch_openml(data_id=data_id, cache=cache, data_home=str(tmpdir),
                      verify_checksum=False)
-        # assert no warnings
         assert not records

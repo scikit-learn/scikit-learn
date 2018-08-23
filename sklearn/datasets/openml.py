@@ -1,8 +1,9 @@
 import gzip
 import hashlib
+import io
 import json
 import os
-import tempfile
+import shutil
 from warnings import warn
 
 try:
@@ -57,19 +58,23 @@ def _open_openml_url(openml_path, data_home, md5_checksum=None):
     if data_home is None:
 
         response = urlopen(_OPENML_PREFIX + openml_path)
-        content = response.read()
+        stream = io.BytesIO()
 
         if md5_checksum is not None:
-            md5_hash = hashlib.md5(content).hexdigest()
-            if md5_checksum != md5_hash:
+            md5 = hashlib.md5()
+            block_size = 128 * md5.block_size
+            for block in iter(lambda: response.read(block_size), b''):
+                md5.update(block)
+                stream.write(block)
+
+            if md5_checksum != md5.hexdigest():
                 warn('Data set file hash {} does not match the checksum {}.'
-                     .format(md5_hash, md5_checksum))
+                     .format(md5.hexdigest(), md5_checksum))
+        else:
+            shutil.copyfileobj(response, stream)
 
-        fp = tempfile.TemporaryFile()
-        fp.write(content)
-        fp.seek(0)
-
-        return fp
+        stream.seek(0)
+        return stream
 
     local_path = os.path.join(data_home, 'openml.org', openml_path + ".gz")
     if not os.path.exists(local_path):
@@ -82,15 +87,19 @@ def _open_openml_url(openml_path, data_home, md5_checksum=None):
         try:
             with gzip.GzipFile(local_path, 'wb') as fdst:
                 fsrc = urlopen(_OPENML_PREFIX + openml_path)
-                content = fsrc.read()
-
                 if md5_checksum is not None:
-                    md5_hash = hashlib.md5(content).hexdigest()
-                    if md5_checksum != md5_hash:
-                        warn('Data set file hash {} does not match the'
-                             ' checksum {}.'.format(md5_hash, md5_checksum))
+                    md5 = hashlib.md5()
+                    block_size = 128 * md5.block_size
+                    for block in iter(lambda: fsrc.read(block_size), b''):
+                        md5.update(block)
+                        fdst.write(block)
 
-                fdst.write(content)
+                    if md5_checksum != md5.hexdigest():
+                        warn('Data set file hash {} does not match the '
+                             'checksum {}.'.format(md5.hexdigest(),
+                                                   md5_checksum))
+                else:
+                    shutil.copyfileobj(fsrc, fdst)
                 fsrc.close()
         except Exception:
             os.unlink(local_path)
