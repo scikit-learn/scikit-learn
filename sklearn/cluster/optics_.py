@@ -309,7 +309,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     def _dump(self, A):
         self._check(A)
-        np.save("/tmp/%d.npy", self.adrin)
+        np.save("/tmp/%d.npy" % self.adrin, A)
         self.adrin += 1
 
 
