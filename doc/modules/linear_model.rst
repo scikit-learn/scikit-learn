@@ -763,7 +763,7 @@ weights to zero) model.
 
 The "lbfgs", "sag" and "newton-cg" solvers only support L2 penalization and
 are found to converge faster for some high dimensional data. Setting
-`multi_class` to "multinomial" with these solvers learns a true multinomial
+`multinomial=True` with these solvers learns a true multinomial
 logistic regression model [5]_, which means that its probability estimates
 should be better calibrated than the default "one-vs-rest" setting.
 
@@ -775,15 +775,20 @@ The "saga" solver [7]_ is a variant of "sag" that also supports the
 non-smooth `penalty="l1"` option. This is therefore the solver of choice
 for sparse multinomial logistic regression.
 
-In a nutshell, one may choose the solver with the following rules:
+In a nutshell, the following table summarizes the solvers characteristics:
 
-=================================  =====================================
-Case                               Solver
-=================================  =====================================
-L1 penalty                         "liblinear" or "saga"
-Multinomial loss                   "lbfgs", "sag", "saga" or "newton-cg"
-Very Large dataset (`n_samples`)   "sag" or "saga"
-=================================  =====================================
+============================   ===========  =======  ===========  =====  ======
+solver                         'liblinear'  'lbfgs'  'newton-cg'  'sag'  'saga'
+============================   ===========  =======  ===========  =====  ======
+Multinomial + L2 penalty       no           yes      yes          yes    yes
+OVR + L2 penalty               yes          yes      yes          yes    yes
+Multinomial + L1 penalty       no           no       no           no     yes
+OVR + L1 penalty               yes          no       no           no     yes
+============================   ===========  =======  ===========  =====  ======
+Penalize the intercept (bad)   yes          no       no           no     no
+Faster for large datasets      no           no       no           yes    yes
+Robust to unscaled datasets    yes          yes      yes          no     no
+============================   ===========  =======  ===========  =====  ======
 
 The "saga" solver is often the best choice. The "liblinear" solver is
 used by default for historical reasons.
@@ -828,9 +833,9 @@ with 'log' loss.
 builtin cross-validation to find out the optimal C parameter.
 "newton-cg", "sag", "saga" and "lbfgs" solvers are found to be faster
 for high-dimensional dense data, due to warm-starting. For the
-multiclass case, if `multi_class` option is set to "ovr", an optimal C
-is obtained for each class and if the `multi_class` option is set to
-"multinomial", an optimal C is obtained by minimizing the cross-entropy
+multiclass case, if `multinomial` option is set to False, an optimal C
+is obtained for each class and if the `multinomial` option is set to
+True, an optimal C is obtained by minimizing the cross-entropy
 loss.
 
 .. topic:: References:

@@ -22,12 +22,13 @@ X, y = make_blobs(n_samples=1000, centers=centers, random_state=40)
 transformation = [[0.4, 0.2], [-0.4, 1.2]]
 X = np.dot(X, transformation)
 
-for multi_class in ('multinomial', 'ovr'):
+for multinomial in (False, True):
     clf = LogisticRegression(solver='sag', max_iter=100, random_state=42,
-                             multi_class=multi_class).fit(X, y)
+                             multinomial=multinomial).fit(X, y)
 
     # print the training scores
-    print("training score : %.3f (%s)" % (clf.score(X, y), multi_class))
+    print("training score : %.3f (multinomial=%s)" %
+          (clf.score(X, y), multinomial))
 
     # create a mesh to plot in
     h = .02  # step size in the mesh
@@ -43,7 +44,8 @@ for multi_class in ('multinomial', 'ovr'):
     Z = Z.reshape(xx.shape)
     plt.figure()
     plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)
-    plt.title("Decision surface of LogisticRegression (%s)" % multi_class)
+    plt.title("Decision surface of LogisticRegression (multinomial=%s)" %
+              multinomial)
     plt.axis('tight')
 
     # Plot also the training points

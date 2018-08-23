@@ -55,8 +55,8 @@ n_classes = np.unique(y).shape[0]
 print('Dataset 20newsgroup, train_samples=%i, n_features=%i, n_classes=%i'
       % (train_samples, n_features, n_classes))
 
-models = {'ovr': {'name': 'One versus Rest', 'iters': [1, 3]},
-          'multinomial': {'name': 'Multinomial', 'iters': [1, 3, 7]}}
+models = {False: {'name': 'One versus Rest', 'iters': [1, 3]},
+          True: {'name': 'Multinomial', 'iters': [1, 3, 7]}}
 
 for model in models:
     # Add initial chance-level values for plotting purpose
@@ -71,7 +71,7 @@ for model in models:
         print('[model=%s, solver=%s] Number of epochs: %s' %
               (model_params['name'], solver, this_max_iter))
         lr = LogisticRegression(solver=solver,
-                                multi_class=model,
+                                multinomial=model,
                                 C=1,
                                 penalty='l1',
                                 fit_intercept=True,

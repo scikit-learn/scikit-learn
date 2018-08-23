@@ -76,8 +76,10 @@ if you're using one of these, unless you want custom multiclass behavior:
   - :class:`sklearn.semi_supervised.LabelSpreading`
   - :class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
   - :class:`sklearn.svm.LinearSVC` (setting multi_class="crammer_singer")
-  - :class:`sklearn.linear_model.LogisticRegression` (setting multi_class="multinomial")
-  - :class:`sklearn.linear_model.LogisticRegressionCV` (setting multi_class="multinomial")
+  - :class:`sklearn.linear_model.LogisticRegression`
+    (setting multinomial=True)
+  - :class:`sklearn.linear_model.LogisticRegressionCV`
+    (setting multinomial=True)
   - :class:`sklearn.neural_network.MLPClassifier`
   - :class:`sklearn.neighbors.NearestCentroid`
   - :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
@@ -99,8 +101,10 @@ if you're using one of these, unless you want custom multiclass behavior:
   - :class:`sklearn.ensemble.GradientBoostingClassifier`
   - :class:`sklearn.gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_rest")
   - :class:`sklearn.svm.LinearSVC` (setting multi_class="ovr")
-  - :class:`sklearn.linear_model.LogisticRegression` (setting multi_class="ovr")
-  - :class:`sklearn.linear_model.LogisticRegressionCV` (setting multi_class="ovr")
+  - :class:`sklearn.linear_model.LogisticRegression`
+    (setting multinomial=False or multinomial='multiclass')
+  - :class:`sklearn.linear_model.LogisticRegressionCV`
+    (setting multinomial=False or multinomial='multiclass')
   - :class:`sklearn.linear_model.SGDClassifier`
   - :class:`sklearn.linear_model.Perceptron`
   - :class:`sklearn.linear_model.PassiveAggressiveClassifier`

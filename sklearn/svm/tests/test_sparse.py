@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 from scipy import sparse
 from numpy.testing import (assert_array_almost_equal, assert_array_equal,
@@ -237,6 +238,8 @@ def test_linearsvc_iris():
     assert_array_equal(pred, sp_clf.predict(iris.data))
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_weight():
     # Test class weights
     X_, y_ = make_classification(n_samples=200, n_features=100,
