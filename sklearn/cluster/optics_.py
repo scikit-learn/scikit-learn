@@ -361,6 +361,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         for point in range(n_samples):
             if not self._processed[point]:
                 self._expand_cluster_order(point, X, nbrs)
+                np.save("/tmp/%d.npy" % point, self.reachability_)
 
         indices_, self.labels_ = _extract_optics(self.ordering_,
                                                  self.reachability_,
