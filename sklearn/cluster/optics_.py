@@ -354,6 +354,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         nbrs.fit(X)
         self.core_distances_[:] = nbrs.kneighbors(X,
                                                   self.min_samples)[0][:, -1]
+        np.save("/tmp/core_distances.npz", self.core_distances_)
 
         # Main OPTICS loop. Not parallelizable. The order that entries are
         # written to the 'ordering_' list is important!
