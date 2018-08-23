@@ -6,7 +6,6 @@ from tempfile import mkdtemp
 import shutil
 import time
 
-import pytest
 import numpy as np
 from scipy import sparse
 

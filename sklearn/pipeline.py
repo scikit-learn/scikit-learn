@@ -11,7 +11,6 @@ estimator, as a chain of transforms and estimators.
 
 from collections import defaultdict
 from itertools import islice
-import warnings
 
 import numpy as np
 from scipy import sparse
