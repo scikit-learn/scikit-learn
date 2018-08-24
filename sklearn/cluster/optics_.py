@@ -437,8 +437,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # if so, return control to main loop
         if unproc.size > 0:
             # Define return order based on reachability distance
-            return(unproc[quick_scan(np.take(self.reachability_, unproc),
-                                     dists)])
+            idx = quick_scan(np.take(self.reachability_, unproc),
+                             dists)
+            self._dump(self.reachability_, "reachability")
+            self._dump(idx, "idx")
+            return(unproc[idx])
         else:
             return point_index
 
