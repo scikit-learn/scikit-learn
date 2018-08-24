@@ -212,7 +212,8 @@ def test_check_solver_option(LR):
     lr = LR(solver="wrong_name", multi_class="ovr")
     assert_raise_message(ValueError, msg, lr.fit, X, y)
 
-    msg = "multi_class should be either multinomial or ovr, got wrong_name"
+    msg = ("multi_class should be 'multinomial', 'ovr' or 'auto'. "
+           "Got wrong_name")
     lr = LR(solver='newton-cg', multi_class="wrong_name")
     assert_raise_message(ValueError, msg, lr.fit, X, y)
 
@@ -253,6 +254,9 @@ def test_logistic_regression_warnings(model, params, warn_solver):
 
     assert_warns_message(FutureWarning, multi_class_warning_msg,
                          clf_multi_class_warning.fit, iris.data, iris.target)
+    # But no warning when binary target:
+    assert_no_warnings(clf_multi_class_warning.fit,
+                       iris.data, iris.target == 0)
     assert_no_warnings(clf_no_warnings.fit, iris.data, iris.target)
 
 
