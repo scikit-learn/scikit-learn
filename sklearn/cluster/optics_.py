@@ -419,9 +419,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # Getting indices of neighbors that have not been processed
         unproc = np.compress((~np.take(self._processed, indices)).ravel(),
                              indices, axis=0)
-        self._dump(indices, "indices")
-        self._dump(self._processed, "processed")
-        self._dump(unproc, "unproc")
+        #self._dump(indices, "indices")
+        #self._dump(self._processed, "processed")
+        #self._dump(unproc, "unproc")
         # Keep n_jobs = 1 in the following lines...please
         if len(unproc) > 0:
             dists = pairwise_distances(P, np.take(X, unproc, axis=0),

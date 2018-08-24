@@ -20,12 +20,12 @@ cpdef quick_scan(double[:] rdists, double[:] dists):
     dist = np.inf
     n = len(rdists)
     for i from 0 <= i < n:
-        if rdists[i] < rdist:
+        if rdists[i] + 1e-7 < rdist:
             rdist = rdists[i]
             dist = dists[i]
             idx = i
-        if rdists[i] == rdist:
-            if dists[i] < dist:
+        if np.abs(rdists[i] - rdist) < 1e-7:
+            if dists[i] + 1e-7 < dist:
                 dist = dists[i]
                 idx = i
     return idx
