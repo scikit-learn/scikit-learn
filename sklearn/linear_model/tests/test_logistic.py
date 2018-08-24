@@ -10,7 +10,7 @@ from sklearn.metrics import log_loss
 from sklearn.metrics.scorer import get_scorer
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
-from sklearn.utils import compute_class_weight, IS_32BIT
+from sklearn.utils import compute_class_weight, _IS_32BIT
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
@@ -1288,7 +1288,7 @@ def test_dtype_match(multi_class):
     assert_equal(lr_64.coef_.dtype, X_64.dtype)
 
     rtol = 1e-6
-    if os.name == 'nt' and IS_32BIT:
+    if os.name == 'nt' and _IS_32BIT:
         # FIXME
         rtol = 1e-2
 

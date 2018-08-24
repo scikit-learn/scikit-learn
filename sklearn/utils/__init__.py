@@ -35,7 +35,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "register_parallel_backend", "hash", "effective_n_jobs"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
-IS_32BIT = 8 * struct.calcsize("P") == 32
+_IS_32BIT = 8 * struct.calcsize("P") == 32
 
 
 class Bunch(dict):

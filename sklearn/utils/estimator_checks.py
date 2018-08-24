@@ -13,7 +13,7 @@ from scipy import sparse
 from scipy.stats import rankdata
 
 from sklearn.externals.six.moves import zip
-from sklearn.utils import IS_PYPY, IS_32BIT
+from sklearn.utils import IS_PYPY, _IS_32BIT
 from sklearn.utils._joblib import hash, Memory
 from sklearn.utils.testing import assert_raises, _get_args
 from sklearn.utils.testing import assert_raises_regex
@@ -937,7 +937,7 @@ def check_transformers_unfitted(name, transformer):
 
 
 def _check_transformer(name, transformer_orig, X, y):
-    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and IS_32BIT:
+    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _IS_32BIT:
         # Those transformers yield non-deterministic output when executed on
         # a 32bit Python. The same transformers are stable on 64bit Python.
         # FIXME: try to isolate a minimalistic reproduction case only depending
@@ -1015,7 +1015,7 @@ def _check_transformer(name, transformer_orig, X, y):
 
 @ignore_warnings
 def check_pipeline_consistency(name, estimator_orig):
-    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and IS_32BIT:
+    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _IS_32BIT:
         # Those transformers yield non-deterministic output when executed on
         # a 32bit Python. The same transformers are stable on 64bit Python.
         # FIXME: try to isolate a minimalistic reproduction case only depending
