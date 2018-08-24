@@ -434,13 +434,14 @@ def _check_solver_option(solver, multi_class, penalty, dual):
                       FutureWarning)
 
     if multi_class == 'warn':
+        # FIXME: don't warn when y is binary
         multi_class = 'ovr'
-        warnings.warn("Default multi_class will be changed to 'multinomial' in"
+        warnings.warn("Default multi_class will be changed to 'auto' in"
                       " 0.22. Specify the multi_class option to silence "
                       "this warning.", FutureWarning)
 
     # Check the string parameters
-    if multi_class not in ['multinomial', 'ovr']:
+    if multi_class not in ['multinomial', 'ovr', 'auto']:
         raise ValueError("multi_class should be either multinomial or "
                          "ovr, got %s." % multi_class)
 
@@ -563,11 +564,17 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         (and therefore on the intercept) intercept_scaling has to be increased.
 
     multi_class : str, {'ovr', 'multinomial'}
+        default: 'ovr'. Will be changed to 'multinomial' in 0.22.
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
         the entire probability distribution. Does not work for 'liblinear'
         solver.
+
+        .. versionadded:: 0.18
+           Stochastic Average Gradient descent solver for 'multinomial' case.
+        .. versionchanged:: 0.20
+            Default will change from 'ovr' to 'multinomial' in 0.22.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator to use when shuffling
@@ -629,6 +636,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     classes = np.unique(y)
     random_state = check_random_state(random_state)
 
+    if multi_class == 'auto':
+        multi_class = ('ovr' if classes.size <= 2 or solver == 'liblinear'
+                       else 'multinomial')
     if pos_class is None and multi_class != 'multinomial':
         if (classes.size > 2):
             raise ValueError('To fit OvR, use the pos_class argument')
@@ -953,6 +963,10 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
     log_reg = LogisticRegression(solver=solver, multi_class=multi_class)
 
+    if multi_class == 'auto':
+        multi_class = ('ovr' if coefs[0].shape[0] <= 2 or solver == 'liblinear'
+                       else 'multinomial')
+
     # The score method of Logistic Regression has a classes_ attribute.
     if multi_class == 'ovr':
         log_reg.classes_ = np.array([-1, 1])
@@ -1099,17 +1113,18 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Useful only for the newton-cg, sag and lbfgs solvers.
         Maximum number of iterations taken for the solvers to converge.
 
-    multi_class : str, {'ovr', 'multinomial'}, default: 'ovr'
-        Multiclass option can be either 'ovr' or 'multinomial'. If the option
-        chosen is 'ovr', then a binary problem is fit for each label. Else
-        the loss minimised is the multinomial loss fit across
-        the entire probability distribution. Does not work for 'liblinear'
-        solver.
+    multi_class : str, {'ovr', 'multinomial', 'auto'}, default: 'ovr'
+        If the option chosen is 'ovr', then a binary problem is fit for each
+        label. For 'multinomial' the loss minimised is the multinomial loss fit
+        across the entire probability distribution, *even when the data is
+        binary*. 'multinomial' is unavailable when solver='liblinear'.
+        'auto' selects 'ovr' if the data is binary, or if solver='liblinear',
+        and otherwise selects 'multinomial'.
 
         .. versionadded:: 0.18
            Stochastic Average Gradient descent solver for 'multinomial' case.
         .. versionchanged:: 0.20
-            Default will change from 'ovr' to 'multinomial' in 0.22.
+            Default will change from 'ovr' to 'auto' in 0.22.
 
     verbose : int, default: 0
         For the liblinear and lbfgs solvers set verbose to any positive
@@ -1278,8 +1293,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.classes_ = np.unique(y)
         n_samples, n_features = X.shape
 
-        _check_solver_option(self.solver, self.multi_class, self.penalty,
-                             self.dual)
+        if multi_class == 'auto':
+            multi_class = ('ovr' if (self.classes_.size <= 2
+                                     or solver == 'liblinear')
+                           else 'multinomial')
 
         if solver == 'liblinear':
             if effective_n_jobs(self.n_jobs) != 1:
@@ -1392,7 +1409,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if not hasattr(self, "coef_"):
             raise NotFittedError("Call fit before prediction")
 
-        if self.multi_class in ["ovr", "warn"]:
+        ovr = (self.multi_class in ["ovr", "warn"] or
+               (self.multi_class == 'auto' and (self.classes_.size <= 2 or
+                                                self.solver == 'liblinear')))
+        if ovr:
             return super(LogisticRegression, self)._predict_proba_lr(X)
         else:
             decision = self.decision_function(X)
@@ -1557,18 +1577,18 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    multi_class : str, {'ovr', 'multinomial'}
-        default: 'ovr'. Will be changed to 'multinomial' in 0.22.
-        Multiclass option can be either 'ovr' or 'multinomial'. If the option
-        chosen is 'ovr', then a binary problem is fit for each label. Else
-        the loss minimised is the multinomial loss fit across
-        the entire probability distribution. Does not work for 'liblinear'
-        solver.
+    multi_class : str, {'ovr', 'multinomial', 'auto'}, default: 'ovr'
+        If the option chosen is 'ovr', then a binary problem is fit for each
+        label. For 'multinomial' the loss minimised is the multinomial loss fit
+        across the entire probability distribution, *even when the data is
+        binary*. 'multinomial' is unavailable when solver='liblinear'.
+        'auto' selects 'ovr' if the data is binary, or if solver='liblinear',
+        and otherwise selects 'multinomial'.
 
         .. versionadded:: 0.18
            Stochastic Average Gradient descent solver for 'multinomial' case.
         .. versionchanged:: 0.20
-            Default will change from 'ovr' to 'multinomial' in 0.22.
+            Default will change from 'ovr' to 'auto' in 0.22.
 
     random_state : int, RandomState instance or None, optional, default None
         If int, random_state is the seed used by the random number generator;
@@ -1711,6 +1731,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         # The original class labels
         classes = self.classes_ = label_encoder.classes_
         encoded_labels = label_encoder.transform(label_encoder.classes_)
+
+        if multi_class == 'auto':
+            multi_class = ('ovr' if classes.size <= 2 or solver == 'liblinear'
+                           else 'multinomial')
 
         if solver in ['sag', 'saga']:
             max_squared_sum = row_norms(X, squared=True).max()

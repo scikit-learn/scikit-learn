@@ -4,6 +4,7 @@ from scipy import linalg, optimize, sparse
 
 import pytest
 
+from sklearn.base import clone
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
 from sklearn.metrics.scorer import get_scorer
@@ -242,7 +243,7 @@ def test_logistic_regression_warnings(model, params, warn_solver):
     clf_no_warnings = model(solver='lbfgs', multi_class='ovr', **params)
 
     solver_warning_msg = "Default solver will be changed to 'lbfgs'"
-    multi_class_warning_msg = "Default multi_class will be changed to 'multi"
+    multi_class_warning_msg = "Default multi_class will be changed to 'auto"
 
     if warn_solver:
         assert_warns_message(FutureWarning, solver_warning_msg,
@@ -1384,3 +1385,46 @@ def test_logistic_regression_path_coefs_multinomial():
         assert_array_almost_equal(coefs[0], coefs[2], decimal=1)
     with pytest.raises(AssertionError):
         assert_array_almost_equal(coefs[1], coefs[2], decimal=1)
+
+
+@pytest.mark.parametrize('est', [LogisticRegression(random_state=0),
+                                 LogisticRegressionCV(random_state=0, cv=3),
+                                 ])
+@pytest.mark.parametrize('solver', ['liblinear', 'lbfgs', 'newton-cg', 'sag',
+                                    'saga'])
+def test_logistic_regression_multi_class_auto(est, solver):
+    # check multi_class='auto' => multi_class='ovr' iff binary y or liblinear
+
+    def fit(X, y, **kw):
+        return clone(est).set_params(**kw).fit(X, y)
+
+    X = iris.data[::10]
+    X2 = iris.data[1::10]
+    y_multi = iris.target[::10]
+    y_bin = y_multi == 0
+    est_auto_bin = fit(X, y_bin, multi_class='auto', solver=solver)
+    est_ovr_bin = fit(X, y_bin, multi_class='ovr', solver=solver)
+    assert np.allclose(est_auto_bin.coef_, est_ovr_bin.coef_)
+    assert np.allclose(est_auto_bin.predict_proba(X2),
+                       est_ovr_bin.predict_proba(X2))
+
+    est_auto_multi = fit(X, y_multi, multi_class='auto', solver=solver)
+    if solver == 'liblinear':
+        est_ovr_multi = fit(X, y_multi, multi_class='ovr', solver=solver)
+        assert np.allclose(est_auto_multi.coef_, est_ovr_multi.coef_)
+        assert np.allclose(est_auto_multi.predict_proba(X2),
+                           est_ovr_multi.predict_proba(X2))
+    else:
+        est_multi_multi = fit(X, y_multi, multi_class='multinomial',
+                              solver=solver)
+        assert np.allclose(est_auto_multi.coef_, est_multi_multi.coef_)
+        assert np.allclose(est_auto_multi.predict_proba(X2),
+                           est_multi_multi.predict_proba(X2))
+
+        # Make sure multi_class='ovr' is distinct from ='multinomial'
+        assert not np.allclose(est_auto_bin.coef_,
+                               fit(X, y_bin, multi_class='multinomial',
+                                   solver=solver).coef_)
+        assert not np.allclose(est_auto_bin.coef_,
+                               fit(X, y_multi, multi_class='multinomial',
+                                   solver=solver).coef_)
