@@ -440,7 +440,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
             idx = quick_scan(np.take(self.reachability_, unproc),
                              dists)
             self._dump(self.reachability_, "reachability")
-            self._dump(idx, "idx")
+            self._dump(np.array([idx]), "idx")
             return(unproc[idx])
         else:
             return point_index
