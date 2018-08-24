@@ -319,6 +319,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
             diff = np.max(np.abs(A - data))
             if diff > 1e-4:
                 print("%s level: %d, max diff:" % (comment, self.adrin), diff)
+                print("loaded data")
+                print(data)
+                print("calculated data")
+                print(A)
         except Exception:
             pass
 
@@ -412,10 +416,12 @@ class OPTICS(BaseEstimator, ClusterMixin):
         P = np.array(X[point_index]).reshape(1, -1)
         indices = nbrs.radius_neighbors(P, radius=self.max_bound,
                                         return_distance=False)[0]
-        self._dump(indices, "neighbors")
         # Getting indices of neighbors that have not been processed
         unproc = np.compress((~np.take(self._processed, indices)).ravel(),
                              indices, axis=0)
+        self._dump(indices, "indices")
+        self._dump(self._processed, "processed")
+        self._dump(unproc, "unproc")
         # Keep n_jobs = 1 in the following lines...please
         if len(unproc) > 0:
             dists = pairwise_distances(P, np.take(X, unproc, axis=0),
