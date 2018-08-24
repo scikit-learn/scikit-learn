@@ -563,18 +563,18 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    multi_class : str, {'ovr', 'multinomial'}
-        default: 'ovr'. Will be changed to 'multinomial' in 0.22.
-        Multiclass option can be either 'ovr' or 'multinomial'. If the option
-        chosen is 'ovr', then a binary problem is fit for each label. Else
-        the loss minimised is the multinomial loss fit across
-        the entire probability distribution. Does not work for 'liblinear'
-        solver.
+    multi_class : str, {'ovr', 'multinomial', 'auto'}, default: 'ovr'
+        If the option chosen is 'ovr', then a binary problem is fit for each
+        label. For 'multinomial' the loss minimised is the multinomial loss fit
+        across the entire probability distribution, *even when the data is
+        binary*. 'multinomial' is unavailable when solver='liblinear'.
+        'auto' selects 'ovr' if the data is binary, or if solver='liblinear',
+        and otherwise selects 'multinomial'.
 
         .. versionadded:: 0.18
            Stochastic Average Gradient descent solver for 'multinomial' case.
         .. versionchanged:: 0.20
-            Default will change from 'ovr' to 'multinomial' in 0.22.
+            Default will change from 'ovr' to 'auto' in 0.22.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator to use when shuffling
@@ -898,12 +898,13 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    multi_class : str, {'ovr', 'multinomial'}
-        Multiclass option can be either 'ovr' or 'multinomial'. If the option
-        chosen is 'ovr', then a binary problem is fit for each label. Else
-        the loss minimised is the multinomial loss fit across
-        the entire probability distribution. Does not work for 'liblinear'
-        solver.
+    multi_class : str, {'ovr', 'multinomial', 'auto'}
+        If the option chosen is 'ovr', then a binary problem is fit for each
+        label. For 'multinomial' the loss minimised is the multinomial loss fit
+        across the entire probability distribution, *even when the data is
+        binary*. 'multinomial' is unavailable when solver='liblinear'.
+        'auto' selects 'ovr' if the data is binary, or if solver='liblinear',
+        and otherwise selects 'multinomial'.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator to use when shuffling
