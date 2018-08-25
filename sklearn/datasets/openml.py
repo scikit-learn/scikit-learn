@@ -25,7 +25,7 @@ from ..utils import Bunch
 __all__ = ['fetch_openml']
 
 _OPENML_PREFIX = "https://openml.org/"
-_SEARCH_NAME = "api/v1/json/data/list/data_name/{}/limit/1"
+_SEARCH_NAME = "api/v1/json/data/list/data_name/{}/limit/2"
 _DATA_INFO = "api/v1/json/data/{}"
 _DATA_FEATURES = "api/v1/json/data/features/{}"
 _DATA_FILE = "data/v1/download/{}"
@@ -252,7 +252,13 @@ def _get_data_info_by_name(name, version, data_home):
         error_msg = "No active dataset {} found.".format(name)
         json_data = _get_json_content_from_openml_api(url, error_msg, True,
                                                       data_home)
-        return json_data['data']['dataset'][0]
+        res = json_data['data']['dataset']
+        if len(res) > 1:
+            warn("Multiple active versions of the dataset matching the name"
+                 " {name} exist. Versions may be fundamentally different, "
+                 "returning version"
+                 " {version}.".format(name=name, version=res[0]['version']))
+        return res[0]
 
     # an integer version has been provided
     url = (_SEARCH_NAME + "/data_version/{}").format(name, version)
@@ -343,7 +349,7 @@ def _verify_target_data_type(features_dict, target_columns):
 
 
 def fetch_openml(name=None, version='active', data_id=None, data_home=None,
-                 target_column='default-target', cache=True):
+                 target_column='default-target', cache=True, return_X_y=False):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -366,7 +372,10 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     version : integer or 'active', default='active'
         Version of the dataset. Can only be provided if also ``name`` is given.
-        If 'active' the oldest version that's still active is used.
+        If 'active' the oldest version that's still active is used. Since
+        there may be more than one active version of a dataset, and those
+        versions may fundamentally be different from one another, setting an
+        exact version is highly recommended.
 
     data_id : int or None
         OpenML ID of the dataset. The most specific way of retrieving a
@@ -388,6 +397,10 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     cache : boolean, default=True
         Whether to cache downloaded datasets using joblib.
 
+    return_X_y : boolean, default=False.
+        If True, returns ``(data, target)`` instead of a Bunch object. See
+        below for more information about the `data` and `target` objects.
+
     Returns
     -------
 
@@ -408,6 +421,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
             that the value encoded as i is ith in the list.
         details : dict
             More metadata from OpenML
+
+    (data, target) : tuple if ``return_X_y`` is True
 
         .. note:: EXPERIMENTAL
 
@@ -549,6 +564,9 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         y = y.reshape((-1,))
     elif y.shape[1] == 0:
         y = None
+
+    if return_X_y:
+        return X, y
 
     bunch = Bunch(
         data=X, target=y, feature_names=data_columns,

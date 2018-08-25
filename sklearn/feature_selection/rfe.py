@@ -377,10 +377,11 @@ class RFECV(RFE, MetaEstimatorMixin):
     verbose : int, (default=0)
         Controls verbosity of output.
 
-    n_jobs : int, (default=1)
+    n_jobs : int or None, optional (default=None)
         Number of cores to run in parallel while fitting across folds.
-        Defaults to 1 core. If ``n_jobs=-1``, then number of jobs is set
-        to number of cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------

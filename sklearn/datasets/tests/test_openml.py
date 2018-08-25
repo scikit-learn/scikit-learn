@@ -4,6 +4,7 @@ import gzip
 import json
 import numpy as np
 import os
+import re
 import scipy.sparse
 import sklearn
 
@@ -15,6 +16,8 @@ from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 from sklearn.externals.six import string_types
 from sklearn.externals.six.moves.urllib.error import HTTPError
+from sklearn.datasets.tests.test_common import check_return_X_y
+from functools import partial
 
 
 currdir = os.path.dirname(os.path.abspath(__file__))
@@ -124,6 +127,11 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
         # np.isnan doesn't work on CSR matrix
         assert (np.count_nonzero(np.isnan(data_by_id.data)) ==
                 expected_missing)
+
+    # test return_X_y option
+    fetch_func = partial(fetch_openml, data_id=data_id, cache=False,
+                         target_column=target_column)
+    check_return_X_y(data_by_id, fetch_func)
     return data_by_id
 
 
@@ -139,11 +147,15 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
         path_suffix = '.gz'
         read_fn = gzip.open
 
+    def _file_name(url, suffix):
+        return (re.sub(r'\W', '-', url[len("https://openml.org/"):])
+                + suffix + path_suffix)
+
     def _mock_urlopen_data_description(url, has_gzip_header):
         assert url.startswith(url_prefix_data_description)
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
-                            'data_description.json%s' % path_suffix)
+                            _file_name(url, '.json'))
 
         if has_gzip_header:
             return open(path, 'rb')
@@ -152,8 +164,7 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
     def _mock_urlopen_data_features(url, has_gzip_header):
         assert url.startswith(url_prefix_data_features)
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
-                            'data_features.json%s' % path_suffix)
-
+                            _file_name(url, '.json'))
         if has_gzip_header:
             return open(path, 'rb')
         return read_fn(path, 'rb')
@@ -162,29 +173,17 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
         assert (url.startswith(url_prefix_download_data))
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
-                            'data.arff%s' % path_suffix)
+                            _file_name(url, '.arff'))
 
         if has_gzip_header:
             return open(path, 'rb')
         return read_fn(path, 'rb')
 
     def _mock_urlopen_data_list(url, has_gzip_header):
-        # url contains key value pairs of attributes, e.g.,
-        # openml.org/api/v1/json/data_name/iris/data_version/1 should
-        # ideally become {data_name: 'iris', data_version: '1'}
         assert url.startswith(url_prefix_data_list)
-        att_list = url[len(url_prefix_data_list):].split('/')
-        key_val_dict = dict(zip(att_list[::2], att_list[1::2]))
-        # add defaults, so we can make assumptions about the content
-        if 'data_version' not in key_val_dict:
-            key_val_dict['data_version'] = None
-        if 'status' not in key_val_dict:
-            key_val_dict['status'] = "active"
-        mock_file = "data_list__%s_%s_%s.json%s" % \
-                    (key_val_dict['data_name'], key_val_dict['data_version'],
-                     key_val_dict['status'], path_suffix)
+
         json_file_path = os.path.join(currdir, 'data', 'openml',
-                                      str(data_id), mock_file)
+                                      str(data_id), _file_name(url, '.json'))
         # load the file itself, to simulate a http error
         json_data = json.loads(read_fn(json_file_path, 'rb').
                                read().decode('utf-8'))
@@ -227,11 +226,23 @@ def test_fetch_openml_iris(monkeypatch):
     expected_missing = 0
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
-    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
-                               expected_observations, expected_features,
-                               expected_missing,
-                               np.float64, object, expect_sparse=False,
-                               compare_default_target=True)
+    assert_warns_message(
+        UserWarning,
+        "Multiple active versions of the dataset matching the name"
+        " iris exist. Versions may be fundamentally different, "
+        "returning version 1.",
+        _fetch_dataset_from_openml,
+        **{'data_id': data_id, 'data_name': data_name,
+           'data_version': data_version,
+           'target_column': target_column,
+           'expected_observations': expected_observations,
+           'expected_features': expected_features,
+           'expected_missing': expected_missing,
+           'expect_sparse': False,
+           'expected_data_dtype': np.float64,
+           'expected_target_dtype': object,
+           'compare_default_target': True}
+    )
 
 
 def test_decode_iris():

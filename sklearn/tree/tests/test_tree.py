@@ -507,16 +507,28 @@ def test_error():
         assert_raises(ValueError, est.predict_proba, X2)
 
     for name, TreeEstimator in ALL_TREES.items():
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=-1).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=.6).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=0.).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=3.).fit, X, y)
-        assert_raises(ValueError,
-                      TreeEstimator(min_weight_fraction_leaf=-1).fit,
-                      X, y)
-        assert_raises(ValueError,
-                      TreeEstimator(min_weight_fraction_leaf=0.51).fit,
-                      X, y)
+        with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+            assert_raises(ValueError,
+                          TreeEstimator(min_samples_leaf=-1).fit, X, y)
+        with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+            assert_raises(ValueError,
+                          TreeEstimator(min_samples_leaf=.6).fit, X, y)
+        with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+            assert_raises(ValueError,
+                          TreeEstimator(min_samples_leaf=0.).fit, X, y)
+        with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+            assert_raises(ValueError,
+                          TreeEstimator(min_samples_leaf=3.).fit, X, y)
+        with pytest.warns(DeprecationWarning,
+                          match='min_weight_fraction_leaf'):
+            assert_raises(ValueError,
+                          TreeEstimator(min_weight_fraction_leaf=-1).fit,
+                          X, y)
+        with pytest.warns(DeprecationWarning,
+                          match='min_weight_fraction_leaf'):
+            assert_raises(ValueError,
+                          TreeEstimator(min_weight_fraction_leaf=0.51).fit,
+                          X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_split=-1).fit,
                       X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_split=0.0).fit,
@@ -619,7 +631,8 @@ def test_min_samples_leaf():
         est = TreeEstimator(min_samples_leaf=5,
                             max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
-        est.fit(X, y)
+        with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+            est.fit(X, y)
         out = est.tree_.apply(X)
         node_counts = np.bincount(out)
         # drop inner nodes
@@ -631,7 +644,8 @@ def test_min_samples_leaf():
         est = TreeEstimator(min_samples_leaf=0.1,
                             max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
-        est.fit(X, y)
+        with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+            est.fit(X, y)
         out = est.tree_.apply(X)
         node_counts = np.bincount(out)
         # drop inner nodes
@@ -660,7 +674,9 @@ def check_min_weight_fraction_leaf(name, datasets, sparse=False):
         est = TreeEstimator(min_weight_fraction_leaf=frac,
                             max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
-        est.fit(X, y, sample_weight=weights)
+        with pytest.warns(DeprecationWarning,
+                          match='min_weight_fraction_leaf'):
+            est.fit(X, y, sample_weight=weights)
 
         if sparse:
             out = est.tree_.apply(X.tocsr())
@@ -685,7 +701,9 @@ def check_min_weight_fraction_leaf(name, datasets, sparse=False):
         est = TreeEstimator(min_weight_fraction_leaf=frac,
                             max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
-        est.fit(X, y)
+        with pytest.warns(DeprecationWarning,
+                          match='min_weight_fraction_leaf'):
+            est.fit(X, y)
 
         if sparse:
             out = est.tree_.apply(X.tocsr())
@@ -731,7 +749,8 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
                             max_leaf_nodes=max_leaf_nodes,
                             min_samples_leaf=5,
                             random_state=0)
-        est.fit(X, y)
+        with pytest.warns(DeprecationWarning):
+            est.fit(X, y)
 
         if sparse:
             out = est.tree_.apply(X.tocsr())
@@ -756,7 +775,8 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
                             max_leaf_nodes=max_leaf_nodes,
                             min_samples_leaf=.1,
                             random_state=0)
-        est.fit(X, y)
+        with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+            est.fit(X, y)
 
         if sparse:
             out = est.tree_.apply(X.tocsr())
@@ -1412,10 +1432,16 @@ def check_sparse_parameters(tree, dataset):
     assert_array_almost_equal(s.predict(X), d.predict(X))
 
     # Check min_samples_leaf
-    d = TreeEstimator(random_state=0,
-                      min_samples_leaf=X_sparse.shape[0] // 2).fit(X, y)
-    s = TreeEstimator(random_state=0,
-                      min_samples_leaf=X_sparse.shape[0] // 2).fit(X_sparse, y)
+    with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+        d = TreeEstimator(
+                random_state=0,
+                min_samples_leaf=X_sparse.shape[0] // 2
+            ).fit(X, y)
+    with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+        s = TreeEstimator(
+                random_state=0,
+                min_samples_leaf=X_sparse.shape[0] // 2
+            ).fit(X_sparse, y)
     assert_tree_equal(d.tree_, s.tree_,
                       "{0} with dense and sparse format gave different "
                       "trees".format(tree))
@@ -1560,7 +1586,8 @@ def _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight):
     assert_equal(est.tree_.max_depth, 1)
 
     est = TreeEstimator(random_state=0, min_weight_fraction_leaf=0.4)
-    est.fit(X, y, sample_weight=sample_weight)
+    with pytest.warns(DeprecationWarning, match='min_weight_fraction_leaf'):
+        est.fit(X, y, sample_weight=sample_weight)
     assert_equal(est.tree_.max_depth, 0)
 
 
