@@ -130,8 +130,7 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     return data_by_id
 
 
-def _monkey_patch_webbased_functions(context, data_id, gziped_files,
-                                     falsify_checksum=False):
+def _monkey_patch_webbased_functions(context, data_id, gziped_files):
     url_prefix_data_description = "https://openml.org/api/v1/json/data/"
     url_prefix_data_features = "https://openml.org/api/v1/json/data/features/"
     url_prefix_download_data = "https://openml.org/data/v1/"
@@ -561,8 +560,7 @@ def test_fetch_openml_checksum_invalid(monkeypatch, tmpdir, data_id,
     warn_message = 'Data set file hash {} does not match the checksum {}.'
     warn_message = warn_message.format(true_checksum, false_checksum)
 
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip,
-                                     falsify_checksum=True)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
     _monkey_patch_checksum_data_description(monkeypatch, data_id, test_gzip,
                                             false_checksum)
     assert_warns_message(UserWarning, warn_message, fetch_openml,
@@ -582,17 +580,18 @@ def test_fetch_openml_checksum_valid(monkeypatch, tmpdir, data_id, cache):
         assert not records
 
 
-@pytest.mark.parametrize('data_id, cache', [
-    (61, True),
-    (61, False),
-    (561, True),
-    (561, False)
+@pytest.mark.parametrize('data_id, cache, false_checksum', [
+    (61, True, 'ad484452702105cbf3d30f8deaba39a8'),
+    (61, False, 'ad484452702105cbf3d30f8deaba39a8'),
+    (561, True, 'e1c69097976ecd20de7d215919130ccd'),
+    (561, False, 'e1c69097976ecd20de7d215919130ccd')
 ])
-def test_fetch_openml_checksum_invalid_no_verification(monkeypatch, tmpdir,
-                                                       data_id, cache):
+def test_fetch_openml_checksum_invalid_no_verification(
+        monkeypatch, tmpdir, data_id, cache, false_checksum):
 
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip,
-                                     falsify_checksum=True)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_checksum_data_description(monkeypatch, data_id, test_gzip,
+                                            false_checksum)
     with pytest.warns(None) as records:
         fetch_openml(data_id=data_id, cache=cache, data_home=str(tmpdir),
                      verify_checksum=False)
