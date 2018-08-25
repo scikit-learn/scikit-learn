@@ -688,7 +688,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             le = LabelEncoder()
             Y_multi = le.fit_transform(y).astype(X.dtype, copy=False)
 
-        w0 = np.zeros((max(2, classes.size), n_features + int(fit_intercept)),
+        w0 = np.zeros((classes.size, n_features + int(fit_intercept)),
                       order='F', dtype=X.dtype)
 
     if coef is not None:
@@ -958,10 +958,6 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         sample_weight=sample_weight)
 
     log_reg = LogisticRegression(solver=solver, multi_class=multi_class)
-
-    if multi_class == 'auto':
-        multi_class = ('ovr' if coefs[0].shape[0] <= 2 or solver == 'liblinear'
-                       else 'multinomial')
 
     # The score method of Logistic Regression has a classes_ attribute.
     if multi_class == 'ovr':

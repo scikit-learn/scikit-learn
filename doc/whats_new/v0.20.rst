@@ -509,7 +509,7 @@ Support for Python 3.3 has been officially dropped.
   :class:`linear_model.LogisticRegression` will change respectively from
   ``'liblinear'`` and ``'ovr'`` in version 0.20 to ``'lbfgs'`` and
   ``'auto'`` in version 0.22. A FutureWarning is raised when the default
-  values are used. :issue:`11476` by `Tom Dupre la Tour`_.
+  values are used. :issue:`11905` by `Tom Dupre la Tour`_ and `Joel Nothman`_.
 
 - |API| Deprecate ``positive=True`` option in :class:`linear_model.Lars` as
   the underlying implementation is broken. Use :class:`linear_model.Lasso`
