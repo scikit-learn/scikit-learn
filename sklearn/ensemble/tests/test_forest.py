@@ -21,6 +21,10 @@ from scipy.sparse import coo_matrix
 
 import pytest
 
+from sklearn.utils import parallel_backend
+from sklearn.utils import register_parallel_backend
+from sklearn.externals.joblib.parallel import LokyBackend
+
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -758,13 +762,16 @@ def check_min_samples_leaf(name):
     ForestEstimator = FOREST_ESTIMATORS[name]
 
     # test boundary value
-    assert_raises(ValueError,
-                  ForestEstimator(min_samples_leaf=-1).fit, X, y)
-    assert_raises(ValueError,
-                  ForestEstimator(min_samples_leaf=0).fit, X, y)
+    with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+        assert_raises(ValueError,
+                      ForestEstimator(min_samples_leaf=-1).fit, X, y)
+    with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+        assert_raises(ValueError,
+                      ForestEstimator(min_samples_leaf=0).fit, X, y)
 
     est = ForestEstimator(min_samples_leaf=5, n_estimators=1, random_state=0)
-    est.fit(X, y)
+    with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+        est.fit(X, y)
     out = est.estimators_[0].tree_.apply(X)
     node_counts = np.bincount(out)
     # drop inner nodes
@@ -774,7 +781,8 @@ def check_min_samples_leaf(name):
 
     est = ForestEstimator(min_samples_leaf=0.25, n_estimators=1,
                           random_state=0)
-    est.fit(X, y)
+    with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+        est.fit(X, y)
     out = est.estimators_[0].tree_.apply(X)
     node_counts = np.bincount(out)
     # drop inner nodes
@@ -807,7 +815,9 @@ def check_min_weight_fraction_leaf(name):
         if "RandomForest" in name:
             est.bootstrap = False
 
-        est.fit(X, y, sample_weight=weights)
+        with pytest.warns(DeprecationWarning,
+                          match='min_weight_fraction_leaf'):
+            est.fit(X, y, sample_weight=weights)
         out = est.estimators_[0].tree_.apply(X)
         node_weights = np.bincount(out, weights=weights)
         # drop inner nodes
@@ -1263,3 +1273,31 @@ def test_nestimators_future_warning(forest):
     # When n_estimators is a valid value not equal to the default
     est = forest(n_estimators=100)
     est = assert_no_warnings(est.fit, X, y)
+
+
+class MyBackend(LokyBackend):
+    def __init__(self, *args, **kwargs):
+        self.count = 0
+        super(MyBackend, self).__init__(*args, **kwargs)
+
+    def start_call(self):
+        self.count += 1
+        return super(MyBackend, self).start_call()
+
+
+register_parallel_backend('testing', MyBackend)
+
+
+def test_backend_respected():
+    clf = RandomForestClassifier(n_estimators=10, n_jobs=2)
+
+    with parallel_backend("testing") as (ba, _):
+        clf.fit(X, y)
+
+    assert ba.count > 0
+
+    # predict_proba requires shared memory. Ensure that's honored.
+    with parallel_backend("testing") as (ba, _):
+        clf.predict_proba(X)
+
+    assert ba.count == 0

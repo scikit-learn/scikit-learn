@@ -38,13 +38,13 @@ matrix:
            NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.16.1" CYTHON_VERSION="0.25.2"
            PILLOW_VERSION="4.0.0" COVERAGE=true
       if: type != cron
-    # This environment tests the newest supported Anaconda release.
+    # This environment tests the latest available dependencies.
     # It runs tests requiring pandas and PyAMG.
     # It also runs with the site joblib instead of the vendored copy of joblib.
-    - env: DISTRIB="conda" PYTHON_VERSION="3.6.2" INSTALL_MKL="true"
-           NUMPY_VERSION="1.14.2" SCIPY_VERSION="1.0.0" PANDAS_VERSION="0.20.3"
-           CYTHON_VERSION="0.26.1" PYAMG_VERSION="3.3.2" PILLOW_VERSION="4.3.0"
-           JOBLIB_VERSION="0.12" COVERAGE=true
+    - env: DISTRIB="conda" PYTHON_VERSION="*" INSTALL_MKL="true"
+           NUMPY_VERSION="*" SCIPY_VERSION="*" PANDAS_VERSION="*"
+           CYTHON_VERSION="*" PYAMG_VERSION="*" PILLOW_VERSION="*"
+           JOBLIB_VERSION="*" COVERAGE=true
            CHECK_PYTEST_SOFT_DEPENDENCY="true" TEST_DOCSTRINGS="true"
            SKLEARN_SITE_JOBLIB=1
       if: type != cron
