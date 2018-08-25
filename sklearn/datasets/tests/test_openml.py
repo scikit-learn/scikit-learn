@@ -1,15 +1,16 @@
 """Test the openml loader.
 """
+from functools import partial
 import gzip
 import json
-import numpy as np
 import os
 import re
 
+import numpy as np
 import pytest
 import scipy.sparse
-import sklearn
 
+import sklearn
 from sklearn.datasets import fetch_openml
 from sklearn.datasets.openml import (_open_openml_url,
                                      _get_data_description_by_id,
@@ -18,6 +19,7 @@ from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 from sklearn.externals.six import string_types
 from sklearn.externals.six.moves.urllib.error import HTTPError
+from sklearn.datasets.tests.test_common import check_return_X_y
 
 
 currdir = os.path.dirname(os.path.abspath(__file__))
@@ -127,6 +129,11 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
         # np.isnan doesn't work on CSR matrix
         assert (np.count_nonzero(np.isnan(data_by_id.data)) ==
                 expected_missing)
+
+    # test return_X_y option
+    fetch_func = partial(fetch_openml, data_id=data_id, cache=False,
+                         target_column=target_column)
+    check_return_X_y(data_by_id, fetch_func)
     return data_by_id
 
 
@@ -209,11 +216,23 @@ def test_fetch_openml_iris(monkeypatch):
     expected_missing = 0
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
-    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
-                               expected_observations, expected_features,
-                               expected_missing,
-                               np.float64, object, expect_sparse=False,
-                               compare_default_target=True)
+    assert_warns_message(
+         UserWarning,
+         "Multiple active versions of the dataset matching the name"
+         " iris exist. Versions may be fundamentally different, "
+         "returning version 1.",
+         _fetch_dataset_from_openml,
+         **{'data_id': data_id, 'data_name': data_name,
+            'data_version': data_version,
+            'target_column': target_column,
+            'expected_observations': expected_observations,
+            'expected_features': expected_features,
+            'expected_missing': expected_missing,
+            'expect_sparse': False,
+            'expected_data_dtype': np.float64,
+            'expected_target_dtype': object,
+            'compare_default_target': True}
+    )
 
 
 def test_decode_iris():
