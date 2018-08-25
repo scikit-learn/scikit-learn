@@ -8,6 +8,7 @@ import time
 
 import numpy as np
 from scipy import sparse
+import pytest
 
 from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_raises
@@ -827,21 +828,8 @@ def test_set_feature_union_steps():
     assert_equal(['mock__x5'], ft.get_feature_names())
 
 
-def test_set_feature_union_test_none():
-    mult2 = Mult(2)
-    mult2.get_feature_names = lambda: ['x2']
-    mult3 = Mult(3)
-    mult3.get_feature_names = lambda: ['x3']
-    X = np.asarray([[1]])
-
-    ft = FeatureUnion([('m2', mult2), ('m3', mult3)])
-    ft.set_params(m2=None)
-
-    assert_array_equal([[3]], ft.fit_transform(X))
-    assert_array_equal([[3]], ft.fit(X).transform(X))
-
-
-def test_set_feature_union_step_drop():
+@pytest.mark.parametrize('drop', ['drop', None])
+def test_set_feature_union_step_drop(drop):
     mult2 = Mult(2)
     mult2.get_feature_names = lambda: ['x2']
     mult3 = Mult(3)
@@ -853,12 +841,12 @@ def test_set_feature_union_step_drop():
     assert_array_equal([[2, 3]], ft.fit_transform(X))
     assert_equal(['m2__x2', 'm3__x3'], ft.get_feature_names())
 
-    ft.set_params(m2='drop')
+    ft.set_params(m2=drop)
     assert_array_equal([[3]], ft.fit(X).transform(X))
     assert_array_equal([[3]], ft.fit_transform(X))
     assert_equal(['m3__x3'], ft.get_feature_names())
 
-    ft.set_params(m3='drop')
+    ft.set_params(m3=drop)
     assert_array_equal([[]], ft.fit(X).transform(X))
     assert_array_equal([[]], ft.fit_transform(X))
     assert_equal([], ft.get_feature_names())
@@ -868,7 +856,7 @@ def test_set_feature_union_step_drop():
     assert_array_equal([[3]], ft.fit(X).transform(X))
 
     # Check 'drop' step at construction time
-    ft = FeatureUnion([('m2', 'drop'), ('m3', mult3)])
+    ft = FeatureUnion([('m2', drop), ('m3', mult3)])
     assert_array_equal([[3]], ft.fit(X).transform(X))
     assert_array_equal([[3]], ft.fit_transform(X))
     assert_equal(['m3__x3'], ft.get_feature_names())
