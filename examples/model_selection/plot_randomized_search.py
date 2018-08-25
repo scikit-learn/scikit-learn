@@ -55,7 +55,6 @@ def report(results, n_top=3):
 param_dist = {"max_depth": [3, None],
               "max_features": sp_randint(1, 11),
               "min_samples_split": sp_randint(2, 11),
-              "min_samples_leaf": sp_randint(1, 11),
               "bootstrap": [True, False],
               "criterion": ["gini", "entropy"]}
 
@@ -74,7 +73,6 @@ report(random_search.cv_results_)
 param_grid = {"max_depth": [3, None],
               "max_features": [1, 3, 10],
               "min_samples_split": [2, 3, 10],
-              "min_samples_leaf": [1, 3, 10],
               "bootstrap": [True, False],
               "criterion": ["gini", "entropy"]}
 

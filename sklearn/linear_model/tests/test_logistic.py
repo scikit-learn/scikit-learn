@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
@@ -9,7 +10,7 @@ from sklearn.metrics import log_loss
 from sklearn.metrics.scorer import get_scorer
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
-from sklearn.utils import compute_class_weight
+from sklearn.utils import compute_class_weight, _IS_32BIT
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
@@ -1255,7 +1256,8 @@ def test_saga_vs_liblinear():
                 assert_array_almost_equal(saga.coef_, liblinear.coef_, 3)
 
 
-def test_dtype_match():
+@pytest.mark.parametrize('multi_class', ['ovr', 'multinomial'])
+def test_dtype_match(multi_class):
     # Test that np.float32 input data is not cast to np.float64 when possible
 
     X_32 = np.array(X).astype(np.float32)
@@ -1264,28 +1266,33 @@ def test_dtype_match():
     y_64 = np.array(Y1).astype(np.float64)
     X_sparse_32 = sp.csr_matrix(X, dtype=np.float32)
 
-    for solver in ['newton-cg']:
-        for multi_class in ['ovr', 'multinomial']:
+    solver = 'newton-cg'
 
-            # Check type consistency
-            lr_32 = LogisticRegression(solver=solver, multi_class=multi_class,
-                                       random_state=42)
-            lr_32.fit(X_32, y_32)
-            assert_equal(lr_32.coef_.dtype, X_32.dtype)
+    # Check type consistency
+    lr_32 = LogisticRegression(solver=solver, multi_class=multi_class,
+                               random_state=42)
+    lr_32.fit(X_32, y_32)
+    assert_equal(lr_32.coef_.dtype, X_32.dtype)
 
-            # check consistency with sparsity
-            lr_32_sparse = LogisticRegression(solver=solver,
-                                              multi_class=multi_class,
-                                              random_state=42)
-            lr_32_sparse.fit(X_sparse_32, y_32)
-            assert_equal(lr_32_sparse.coef_.dtype, X_sparse_32.dtype)
+    # check consistency with sparsity
+    lr_32_sparse = LogisticRegression(solver=solver,
+                                      multi_class=multi_class,
+                                      random_state=42)
+    lr_32_sparse.fit(X_sparse_32, y_32)
+    assert_equal(lr_32_sparse.coef_.dtype, X_sparse_32.dtype)
 
-            # Check accuracy consistency
-            lr_64 = LogisticRegression(solver=solver, multi_class=multi_class,
-                                       random_state=42)
-            lr_64.fit(X_64, y_64)
-            assert_equal(lr_64.coef_.dtype, X_64.dtype)
-            assert_almost_equal(lr_32.coef_, lr_64.coef_.astype(np.float32))
+    # Check accuracy consistency
+    lr_64 = LogisticRegression(solver=solver, multi_class=multi_class,
+                               random_state=42)
+    lr_64.fit(X_64, y_64)
+    assert_equal(lr_64.coef_.dtype, X_64.dtype)
+
+    rtol = 1e-6
+    if os.name == 'nt' and _IS_32BIT:
+        # FIXME
+        rtol = 1e-2
+
+    assert_allclose(lr_32.coef_, lr_64.coef_.astype(np.float32), rtol=rtol)
 
 
 def test_warm_start_converge_LR():
