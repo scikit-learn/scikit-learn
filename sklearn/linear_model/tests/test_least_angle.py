@@ -732,12 +732,14 @@ def test_lars_path_positive_constraint_sufficient_stats():
     method = 'lasso'
     alpha, active, coefs = \
         linear_model.lars_path_gram(Xy=Xy, Gram=G, n_samples=n_samples,
-                               return_path=True, method=method, positive=False)
+                                    return_path=True, method=method,
+                                    positive=False)
     assert_true(coefs.min() < 0)
 
     alpha, active, coefs = \
         linear_model.lars_path_gram(Xy=Xy, Gram=G, n_samples=n_samples,
-                               return_path=True, method=method, positive=True)
+                                    return_path=True, method=method,
+                                    positive=True)
     assert_true(coefs.min() >= 0)
 
 
