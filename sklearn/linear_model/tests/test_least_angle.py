@@ -80,9 +80,8 @@ def test_simple_precomputed():
 
 def test_simple_precomputed_sufficient_stats():
     # The same, with precomputed Gram matrix
-    alphas_, active, coef_path_ = linear_model.lars_path(
-        None, None, Xy=Xy, Gram=G, n_samples=n_samples,
-        method='lar')
+    alphas_, active, coef_path_ = linear_model.lars_path_gram(
+        Xy=Xy, Gram=G, n_samples=n_samples, method='lar')
 
     for i, coef_ in enumerate(coef_path_.T):
         res = y - np.dot(X, coef_)
@@ -112,8 +111,8 @@ def test_all_precomputed_sufficient_stats():
     # Test that lars_path with precomputed Gram and Xy gives the right answer
     for method in ('lar', 'lasso'):
         output = linear_model.lars_path(X, y, method=method)
-        output_suff = linear_model.lars_path(
-            None, None, Gram=G, Xy=Xy, n_samples=n_samples, method=method)
+        output_suff = linear_model.lars_path_gram(
+            Gram=G, Xy=Xy, n_samples=n_samples, method=method)
         for expected, got in zip(output, output_suff):
             assert_array_almost_equal(expected, got)
 
@@ -146,8 +145,8 @@ def test_lasso_gives_lstsq_solution():
 def test_lasso_gives_lstsq_solution_sufficient_stats():
     # Test that Lars Lasso gives least square solution at the end
     # of the path
-    alphas_, active, coef_path_ = linear_model.lars_path(
-        None, None, Gram=G, Xy=Xy, n_samples=n_samples, method='lasso')
+    alphas_, active, coef_path_ = linear_model.lars_path_gram(
+        Gram=G, Xy=Xy, n_samples=n_samples, method='lasso')
     coef_lstsq = np.linalg.lstsq(X, y)[0]
     assert_array_almost_equal(coef_lstsq, coef_path_[:, -1])
 
@@ -184,8 +183,8 @@ def test_collinearity_sufficient_stats():
     y = np.array([1., 0., 0])
     G = np.dot(X.T, X)
     Xy = np.dot(X.T, y)
-    _, _, coef_path_ = ignore_warnings(linear_model.lars_path)(
-        None, None, Xy=Xy, Gram=G, n_samples=y.size, alpha_min=0.01)
+    _, _, coef_path_ = ignore_warnings(linear_model.lars_path_gram)(
+        Xy=Xy, Gram=G, n_samples=y.size, alpha_min=0.01)
     assert_true(not np.isnan(coef_path_).any())
     residual = np.dot(X, coef_path_[:, -1]) - y
     assert_less((residual ** 2).sum(), 1.)  # just make sure it's bounded
@@ -206,9 +205,8 @@ def test_no_path_sufficient_stats():
     # Test that the ``return_path=False`` option returns the correct output
     alphas_, active_, coef_path_ = linear_model.lars_path(
         X, y, method='lar')
-    alpha_, active, coef = linear_model.lars_path(
-        None, None, Gram=G, Xy=Xy, n_samples=n_samples, method='lar',
-        return_path=False)
+    alpha_, active, coef = linear_model.lars_path_gram(
+        Gram=G, Xy=Xy, n_samples=n_samples, method='lar', return_path=False)
     assert_array_almost_equal(coef, coef_path_[:, -1])
     assert_true(alpha_ == alphas_[-1])
 
@@ -229,10 +227,10 @@ def test_no_path_precomputed_sufficient_stats():
 
     G = np.dot(diabetes.data.T, diabetes.data)
 
-    alphas_, active_, coef_path_ = linear_model.lars_path(
-        None, None, Xy=Xy, Gram=G, n_samples=n_samples, method="lar")
-    alpha_, active, coef = linear_model.lars_path(
-        None, None, Xy=Xy, Gram=G, n_samples=n_samples, method="lar",
+    alphas_, active_, coef_path_ = linear_model.lars_path_gram(
+        Xy=Xy, Gram=G, n_samples=n_samples, method="lar")
+    alpha_, active, coef = linear_model.lars_path_gram(
+        Xy=Xy, Gram=G, n_samples=n_samples, method="lar",
         return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
@@ -262,12 +260,12 @@ def test_no_path_all_precomputed_sufficient_stats():
     G = np.dot(X.T, X)
     Xy = np.dot(X.T, y)
 
-    alphas_, active_, coef_path_ = linear_model.lars_path(
-        None, None, Xy=Xy, Gram=G, n_samples=n_samples, method="lasso",
+    alphas_, active_, coef_path_ = linear_model.lars_path_gram(
+        Xy=Xy, Gram=G, n_samples=n_samples, method="lasso",
         alpha_min=0.9)
-    alpha_, active, coef = linear_model.lars_path(
-         None, None, Xy=Xy, Gram=G, n_samples=n_samples, method="lasso",
-         alpha_min=0.9, return_path=False)
+    alpha_, active, coef = linear_model.lars_path_gram(
+        Xy=Xy, Gram=G, n_samples=n_samples, method="lasso",
+        alpha_min=0.9, return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
     assert_true(alpha_ == alphas_[-1])
@@ -303,8 +301,8 @@ def test_singular_matrix_sufficient_stats():
     G1 = np.dot(X1.T, X1)
     Xy1 = np.dot(X1.T, y1)
     n_samples1 = y1.size
-    alphas, active, coef_path = linear_model.lars_path(
-        None, None, Xy=Xy1, Gram=G1, n_samples=n_samples1)
+    alphas, active, coef_path = linear_model.lars_path_gram(
+        Xy=Xy1, Gram=G1, n_samples=n_samples1)
     assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
 
 
@@ -376,8 +374,8 @@ def test_lasso_lars_vs_lasso_cd_sufficient_stats():
     # Test that LassoLars and Lasso using coordinate descent give the
     # same results.
     X = 3 * diabetes.data
-    alphas, _, lasso_path = linear_model.lars_path(
-        None, None, Xy=3 * Xy, Gram=9*G, n_samples=n_samples, method='lasso')
+    alphas, _, lasso_path = linear_model.lars_path_gram(
+        Xy=3 * Xy, Gram=9*G, n_samples=n_samples, method='lasso')
     lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
     for c, a in zip(lasso_path.T, alphas):
         if a == 0:
@@ -397,8 +395,8 @@ def test_lasso_lars_vs_lasso_cd_sufficient_stats():
 
     # same test, with normalized data
     X = diabetes.data
-    alphas, _, lasso_path = linear_model.lars_path(
-        None, None, Xy=Xy, Gram=G, n_samples=n_samples, method='lasso')
+    alphas, _, lasso_path = linear_model.lars_path_gram(
+        Xy=Xy, Gram=G, n_samples=n_samples, method='lasso')
     lasso_cd = linear_model.Lasso(fit_intercept=False, normalize=True,
                                   tol=1e-8)
     for c, a in zip(lasso_path.T, alphas):
@@ -443,8 +441,8 @@ def test_lasso_lars_vs_lasso_cd_early_stopping_sufficient_stats():
     # (test : before, in the middle, and in the last part of the path)
     alphas_min = [10, 0.9, 1e-4]
     for alpha_min in alphas_min:
-        alphas, _, lasso_path = linear_model.lars_path(
-            None, None, Xy=Xy, Gram=G, method='lasso', n_samples=n_samples,
+        alphas, _, lasso_path = linear_model.lars_path_gram(
+            Xy=Xy, Gram=G, method='lasso', n_samples=n_samples,
             alpha_min=alpha_min)
         lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
         lasso_cd.alpha = alphas[-1]
@@ -454,8 +452,8 @@ def test_lasso_lars_vs_lasso_cd_early_stopping_sufficient_stats():
 
     # same test, with normalization
     for alpha_min in alphas_min:
-        alphas, _, lasso_path = linear_model.lars_path(
-            None, None, Xy=Xy, Gram=G, method='lasso', n_samples=n_samples,
+        alphas, _, lasso_path = linear_model.lars_path_gram(
+            Xy=Xy, Gram=G, method='lasso', n_samples=n_samples,
             alpha_min=alpha_min)
         lasso_cd = linear_model.Lasso(fit_intercept=True, normalize=True,
                                       tol=1e-8)
@@ -532,8 +530,8 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned_sufficient_stats():
     y = y.squeeze()
     Xy = np.dot(X.T, y)
     G = np.dot(X.T, X)
-    lars_alphas, _, lars_coef = linear_model.lars_path(
-        None, None, Xy=Xy, Gram=G, n_samples=n, method='lasso')
+    lars_alphas, _, lars_coef = linear_model.lars_path_gram(
+        Xy=Xy, Gram=G, n_samples=n, method='lasso')
 
     _, lasso_coef2, _ = linear_model.lasso_path(X, y,
                                                 alphas=lars_alphas,
@@ -733,12 +731,12 @@ def test_lars_path_positive_constraint_sufficient_stats():
 
     method = 'lasso'
     alpha, active, coefs = \
-        linear_model.lars_path(None, None, Xy=Xy, Gram=G, n_samples=n_samples,
+        linear_model.lars_path_gram(Xy=Xy, Gram=G, n_samples=n_samples,
                                return_path=True, method=method, positive=False)
     assert_true(coefs.min() < 0)
 
     alpha, active, coefs = \
-        linear_model.lars_path(None, None, Xy=Xy, Gram=G, n_samples=n_samples,
+        linear_model.lars_path_gram(Xy=Xy, Gram=G, n_samples=n_samples,
                                return_path=True, method=method, positive=True)
     assert_true(coefs.min() >= 0)
 
@@ -835,8 +833,8 @@ def test_lasso_lars_vs_lasso_cd_positive_sufficient_stats():
     # not normalized data
     X = 3 * diabetes.data
 
-    alphas, _, lasso_path = linear_model.lars_path(
-        None, None, Xy=3*Xy, Gram=9*G, n_samples=n_samples, method='lasso',
+    alphas, _, lasso_path = linear_model.lars_path_gram(
+        Xy=3*Xy, Gram=9*G, n_samples=n_samples, method='lasso',
         positive=True)
     lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8, positive=True)
     for c, a in zip(lasso_path.T, alphas):
@@ -866,8 +864,8 @@ def test_lasso_lars_vs_lasso_cd_positive_sufficient_stats():
 
     # normalized data
     X = diabetes.data
-    alphas, _, lasso_path = linear_model.lars_path(
-        None, None, Xy=Xy, Gram=G, n_samples=n_samples, method='lasso',
+    alphas, _, lasso_path = linear_model.lars_path_gram(
+        Xy=Xy, Gram=G, n_samples=n_samples, method='lasso',
         positive=True)
     lasso_cd = linear_model.Lasso(fit_intercept=False, normalize=True,
                                   tol=1e-8, positive=True)
