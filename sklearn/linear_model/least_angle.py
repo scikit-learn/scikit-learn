@@ -31,9 +31,8 @@ from ..externals.six import string_types
 SOLVE_TRIANGULAR_ARGS = {'check_finite': False}
 
 
-def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
-              alpha_min=0, method='lar', copy_X=True,
-              eps=np.finfo(np.float).eps,
+def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
+              method='lar', copy_X=True, eps=np.finfo(np.float).eps,
               copy_Gram=True, verbose=0, return_path=True,
               return_n_iter=False, positive=False):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
@@ -145,18 +144,17 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
 
     """
-    return _lars_path(X=X, y=y, Xy=Xy, Gram=Gram, n_samples=None, max_iter=max_iter,
-              alpha_min=alpha_min, method=method, copy_X=copy_X,
-              eps=eps,
-              copy_Gram=copy_Gram, verbose=verbose, return_path=return_path,
-              return_n_iter=return_n_iter, positive=positive)
+    return _lars_path(
+        X=X, y=y, Xy=Xy, Gram=Gram, n_samples=None, max_iter=max_iter,
+        alpha_min=alpha_min, method=method, copy_X=copy_X,
+        eps=eps, copy_Gram=copy_Gram, verbose=verbose, return_path=return_path,
+        return_n_iter=return_n_iter, positive=positive)
 
 
-def lars_path_gram(Xy, Gram, n_samples, max_iter=500,
-              alpha_min=0, method='lar', copy_X=True,
-              eps=np.finfo(np.float).eps,
-              copy_Gram=True, verbose=0, return_path=True,
-              return_n_iter=False, positive=False):
+def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
+                   method='lar', copy_X=True, eps=np.finfo(np.float).eps,
+                   copy_Gram=True, verbose=0, return_path=True,
+                   return_n_iter=False, positive=False):
     """lars_path in the sufficient stats mode [1]
 
     The optimization objective for the case method='lasso' is::
@@ -267,10 +265,9 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500,
 
 
 def _lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
-              alpha_min=0, method='lar', copy_X=True,
-              eps=np.finfo(np.float).eps,
-              copy_Gram=True, verbose=0, return_path=True,
-              return_n_iter=False, positive=False):
+               alpha_min=0, method='lar', copy_X=True,
+               eps=np.finfo(np.float).eps, copy_Gram=True, verbose=0,
+               return_path=True, return_n_iter=False, positive=False):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
 
     The optimization objective for the case method='lasso' is::
