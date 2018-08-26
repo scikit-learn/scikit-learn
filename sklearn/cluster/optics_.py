@@ -24,7 +24,7 @@ from ._optics_inner import quick_scan
 def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
            p=2, metric_params=None, maxima_ratio=.75,
            rejection_ratio=.7, similarity_threshold=0.4,
-           significant_min=.003, min_cluster_size_ratio=.005,
+           significant_min=.003, min_cluster_size=.005,
            min_maxima_ratio=0.001, algorithm='ball_tree',
            leaf_size=30, n_jobs=None):
     """Perform OPTICS clustering from vector array
@@ -94,8 +94,10 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
     significant_min : float, optional
         Sets a lower threshold on how small a significant maxima can be.
 
-    min_cluster_size_ratio : float, optional
-        Minimum percentage of dataset expected for cluster membership.
+    min_cluster_size : int > 1 or float between 0 and 1
+        Minimum number of samples in an OPTICS cluster, expressed as an
+        absolute number or a fraction of the number of samples (rounded
+        to be at least 2).
 
     min_maxima_ratio : float, optional
         Used to determine neighborhood size for minimum cluster membership.
@@ -150,7 +152,7 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
     clust = OPTICS(min_samples, max_bound, metric, p, metric_params,
                    maxima_ratio, rejection_ratio,
                    similarity_threshold, significant_min,
-                   min_cluster_size_ratio, min_maxima_ratio,
+                   min_cluster_size, min_maxima_ratio,
                    algorithm, leaf_size, n_jobs)
     clust.fit(X)
     return clust.core_sample_indices_, clust.labels_
@@ -221,8 +223,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
     significant_min : float, optional
         Sets a lower threshold on how small a significant maxima can be.
 
-    min_cluster_size_ratio : float, optional
-        Minimum percentage of dataset expected for cluster membership.
+    min_cluster_size : int > 1 or loat between 0 and 1
+        Minimum number of samples in an OPTICS cluster, expressed as an
+        absolute number or a fraction of the number of samples (rounded
+        to be at least 2).
 
     min_maxima_ratio : float, optional
         Used to determine neighborhood size for minimum cluster membership.
@@ -287,7 +291,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     def __init__(self, min_samples=5, max_bound=np.inf, metric='euclidean',
                  p=2, metric_params=None, maxima_ratio=.75,
                  rejection_ratio=.7, similarity_threshold=0.4,
-                 significant_min=.003, min_cluster_size_ratio=.005,
+                 significant_min=.003, min_cluster_size=.005,
                  min_maxima_ratio=0.001, algorithm='ball_tree',
                  leaf_size=30, n_jobs=None):
 
@@ -297,7 +301,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.rejection_ratio = rejection_ratio
         self.similarity_threshold = similarity_threshold
         self.significant_min = significant_min
-        self.min_cluster_size_ratio = min_cluster_size_ratio
+        self.min_cluster_size = min_cluster_size
         self.min_maxima_ratio = min_maxima_ratio
         self.algorithm = algorithm
         self.metric = metric
@@ -367,7 +371,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                                                  self.rejection_ratio,
                                                  self.similarity_threshold,
                                                  self.significant_min,
-                                                 self.min_cluster_size_ratio,
+                                                 self.min_cluster_size,
                                                  self.min_maxima_ratio)
         self.core_sample_indices_ = indices_
         self.n_clusters_ = np.max(self.labels_)
@@ -490,7 +494,7 @@ def _extract_dbscan(ordering, core_distances, reachability, eps):
 
 def _extract_optics(ordering, reachability, maxima_ratio=.75,
                     rejection_ratio=.7, similarity_threshold=0.4,
-                    significant_min=.003, min_cluster_size_ratio=.005,
+                    significant_min=.003, min_cluster_size=.005,
                     min_maxima_ratio=0.001):
     """Performs automatic cluster extraction for variable density data.
 
@@ -528,8 +532,10 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     significant_min : float, optional
         Sets a lower threshold on how small a significant maxima can be.
 
-    min_cluster_size_ratio : float, optional
-        Minimum percentage of dataset expected for cluster membership.
+    min_cluster_size : int > 1 or loat between 0 and 1
+        Minimum number of samples in an OPTICS cluster, expressed as an
+        absolute number or a fraction of the number of samples (rounded
+        to be at least 2).
 
     min_maxima_ratio : float, optional
         Used to determine neighborhood size for minimum cluster membership.
@@ -549,7 +555,7 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     root_node = _automatic_cluster(reachability_plot, ordering,
                                    maxima_ratio, rejection_ratio,
                                    similarity_threshold, significant_min,
-                                   min_cluster_size_ratio, min_maxima_ratio)
+                                   min_cluster_size, min_maxima_ratio)
     leaves = _get_leaves(root_node, [])
     # Start cluster id's at 0
     clustid = 0
@@ -568,7 +574,7 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
 def _automatic_cluster(reachability_plot, ordering,
                        maxima_ratio, rejection_ratio,
                        similarity_threshold, significant_min,
-                       min_cluster_size_ratio, min_maxima_ratio):
+                       min_cluster_size, min_maxima_ratio):
     """Converts reachability plot to cluster tree and returns root node.
 
     Parameters
@@ -580,12 +586,9 @@ def _automatic_cluster(reachability_plot, ordering,
     """
 
     min_neighborhood_size = 2
-    min_cluster_size = int(min_cluster_size_ratio * len(ordering))
+    if min_cluster_size <= 1:
+        min_cluster_size = max(2, int(min_cluster_size * len(ordering)))
     neighborhood_size = int(min_maxima_ratio * len(ordering))
-
-    # Should this check for < min_samples? Should this be public?
-    if min_cluster_size < 5:
-        min_cluster_size = 5
 
     # Again, should this check < min_samples, should the parameter be public?
     if neighborhood_size < min_neighborhood_size:
