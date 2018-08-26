@@ -187,6 +187,8 @@ def test_ovr_fit_predict_sparse():
         assert_array_equal(dec_pred, clf_sprs.predict(X_test).toarray())
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_ovr_always_present():
     # Test that ovr works with classes that are always present or absent.
     # Note: tests is the case where _ConstantPredictor is utilised
@@ -244,6 +246,8 @@ def test_ovr_multiclass():
         assert_array_equal(y_pred, [0, 0, 1])
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_ovr_binary():
     # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 0, 5], [0, 5, 0], [3, 0, 0], [0, 0, 6], [6, 0, 0]])

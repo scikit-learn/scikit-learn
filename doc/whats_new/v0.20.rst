@@ -161,6 +161,7 @@ Support for Python 3.3 has been officially dropped.
   by `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
 
 
+
 :mod:`sklearn.covariance`
 .........................
 
@@ -513,6 +514,12 @@ Support for Python 3.3 has been officially dropped.
   if passed a scipy.sparse matrix with 64-bit indices. They now raise a
   ValueError.
   :issue:`11327` by :user:`Karan Dhingra <kdhingra307>` and `Joel Nothman`_.
+
+- |API| The default values of the ``solver`` and ``multi_class`` parameters of
+  :class:`linear_model.LogisticRegression` will change respectively from
+  ``'liblinear'`` and ``'ovr'`` in version 0.20 to ``'lbfgs'`` and
+  ``'auto'`` in version 0.22. A FutureWarning is raised when the default
+  values are used. :issue:`11905` by `Tom Dupre la Tour`_ and `Joel Nothman`_.
 
 - |API| Deprecate ``positive=True`` option in :class:`linear_model.Lars` as
   the underlying implementation is broken. Use :class:`linear_model.Lasso`
