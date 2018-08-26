@@ -5,7 +5,6 @@
 from __future__ import division
 
 import numpy as np
-import scipy as sp
 import warnings
 from warnings import warn
 from sklearn.utils.fixes import euler_gamma
@@ -136,7 +135,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
     offset_ : float
         Offset used to define the decision function from the raw scores.
         We have the relation: ``decision_function = score_samples - offset_``.
-        Assuming behaviour == 'new', offset_ is defined as follows.
+        Assuming behaviour == 'new', ``offset_`` is defined as follows.
         When the contamination parameter is set to "auto", the offset is equal
         to -0.5 as the scores of inliers are close to 0 and the scores of
         outliers are close to -1. When a contamination parameter different
@@ -144,7 +143,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
         the expected number of outliers (samples with decision function < 0)
         in training.
         Assuming the behaviour parameter is set to 'old', we always have
-        offset_ = -0.5, making the decision function independent from the
+        ``offset_ = -0.5``, making the decision function independent from the
         contamination parameter.
 
     References

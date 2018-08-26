@@ -43,11 +43,11 @@ X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
 X_test, y_test = X[2000:], y[2000:]
 X_train, y_train = X[:2000], y[:2000]
 
-dt_stump = DecisionTreeClassifier(max_depth=1, min_samples_leaf=1)
+dt_stump = DecisionTreeClassifier(max_depth=1)
 dt_stump.fit(X_train, y_train)
 dt_stump_err = 1.0 - dt_stump.score(X_test, y_test)
 
-dt = DecisionTreeClassifier(max_depth=9, min_samples_leaf=1)
+dt = DecisionTreeClassifier(max_depth=9)
 dt.fit(X_train, y_train)
 dt_err = 1.0 - dt.score(X_test, y_test)
 

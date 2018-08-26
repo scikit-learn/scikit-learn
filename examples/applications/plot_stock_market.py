@@ -166,7 +166,7 @@ variation = close_prices - open_prices
 
 # #############################################################################
 # Learn a graphical structure from the correlations
-edge_model = covariance.GraphicalLassoCV()
+edge_model = covariance.GraphicalLassoCV(cv=5)
 
 # standardize the time series: using correlations rather than covariance
 # is more efficient for structure recovery
