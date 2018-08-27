@@ -12,7 +12,6 @@ from sklearn.cluster.optics_ import _find_local_maxima
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.cluster.dbscan_ import DBSCAN
 from sklearn.utils.testing import assert_equal, assert_warns
-from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_allclose
