@@ -411,8 +411,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
             # R <- -1.0 * U_k * V_k^T + R
             R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
     if return_r2:
-        R **= 2
-        R = R.sum()
+        R = nrm2(R) ** 2.0
         return dictionary, R
     return dictionary
 
