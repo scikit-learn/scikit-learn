@@ -408,7 +408,7 @@ def test_reach_dists():
 
     # FIXME: known failure in 32bit Linux; numerical imprecision results in
     # different ordering in quick_scan
-    if _IS_32BIT:
+    if _IS_32BIT:  # pragma: no cover
         assert_allclose(clust.reachability_, np.array(v), rtol=1e-2)
     else:
         # we compare to truncated decimals, so use atol
