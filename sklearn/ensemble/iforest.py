@@ -79,6 +79,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
             - If int, then draw `max_features` features.
             - If float, then draw `max_features * X.shape[1]` features.
 
+    feature_weight :
+
     bootstrap : boolean, optional (default=False)
         If True, individual trees are fit on random subsets of the training
         data sampled with replacement. If False, sampling without replacement
