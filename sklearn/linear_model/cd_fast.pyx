@@ -159,14 +159,18 @@ def enet_coordinate_descent(floating[::1] w,
     # fused types version of BLAS functions
     if floating is float:
         dtype = np.float32
+        gemv = sgemv
         dot = sdot
         axpy = saxpy
         asum = sasum
+        copy = scopy
     else:
         dtype = np.float64
+        gemv = dgemv
         dot = ddot
         axpy = daxpy
         asum = dasum
+        copy = dcopy
 
     # get the data information into easy vars
     cdef unsigned int n_samples = X.shape[0]
@@ -205,8 +209,11 @@ def enet_coordinate_descent(floating[::1] w,
 
     with nogil:
         # R = y - np.dot(X, w)
-        for i in range(n_samples):
-            R[i] = y[i] - dot(n_features, &X[i, 0], n_samples, &w[0], 1)
+        copy(n_samples, &y[0], 1, &R[0], 1)
+        gemv(CblasColMajor, CblasNoTrans,
+             n_samples, n_features, -1.0, &X[0, 0], n_samples,
+             &w[0], 1,
+             1.0, &R[0], 1)
 
         # tol *= np.dot(y, y)
         tol *= dot(n_samples, &y[0], 1, &y[0], 1)
