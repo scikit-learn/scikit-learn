@@ -1,16 +1,15 @@
 """Test the openml loader.
 """
-from functools import partial
 import gzip
 import json
+import numpy as np
 import os
 import re
 
-import numpy as np
 import pytest
 import scipy.sparse
-
 import sklearn
+
 from sklearn.datasets import fetch_openml
 from sklearn.datasets.openml import (_open_openml_url,
                                      _get_data_description_by_id,
@@ -20,6 +19,7 @@ from sklearn.utils.testing import (assert_warns_message,
 from sklearn.externals.six import string_types
 from sklearn.externals.six.moves.urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
+from functools import partial
 
 
 currdir = os.path.dirname(os.path.abspath(__file__))
@@ -217,21 +217,21 @@ def test_fetch_openml_iris(monkeypatch):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
     assert_warns_message(
-         UserWarning,
-         "Multiple active versions of the dataset matching the name"
-         " iris exist. Versions may be fundamentally different, "
-         "returning version 1.",
-         _fetch_dataset_from_openml,
-         **{'data_id': data_id, 'data_name': data_name,
-            'data_version': data_version,
-            'target_column': target_column,
-            'expected_observations': expected_observations,
-            'expected_features': expected_features,
-            'expected_missing': expected_missing,
-            'expect_sparse': False,
-            'expected_data_dtype': np.float64,
-            'expected_target_dtype': object,
-            'compare_default_target': True}
+        UserWarning,
+        "Multiple active versions of the dataset matching the name"
+        " iris exist. Versions may be fundamentally different, "
+        "returning version 1.",
+        _fetch_dataset_from_openml,
+        **{'data_id': data_id, 'data_name': data_name,
+           'data_version': data_version,
+           'target_column': target_column,
+           'expected_observations': expected_observations,
+           'expected_features': expected_features,
+           'expected_missing': expected_missing,
+           'expect_sparse': False,
+           'expected_data_dtype': np.float64,
+           'expected_target_dtype': object,
+           'compare_default_target': True}
     )
 
 
