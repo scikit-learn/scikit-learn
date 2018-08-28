@@ -1436,8 +1436,8 @@ def test_logistic_regression_multi_class_auto(est, solver):
                                    est_multi_multi.scores_[k])
                        for k in est_auto_multi.scores_)
             for k in est_auto_multi.coefs_paths_:
-                print(max(abs(est_auto_multi.coefs_paths_[k] - est_multi_multi.coefs_paths_[k])))
-                print(max(abs(est_auto_multi.coefs_paths_[k] - est_multi_multi.coefs_paths_[k]) / est_multi_multi.coefs_paths_[k]))
+                print('k', 'abs', np.max(np.abs(est_auto_multi.coefs_paths_[k] - est_multi_multi.coefs_paths_[k])))
+                print('k', 'rel', np.max(np.abs(est_auto_multi.coefs_paths_[k] - est_multi_multi.coefs_paths_[k]) / est_multi_multi.coefs_paths_[k]))
                 assert_allclose(est_auto_multi.coefs_paths_[k],
                                 est_multi_multi.coefs_paths_[k],
                                 rtol=1e-5, atol=1e-3)
