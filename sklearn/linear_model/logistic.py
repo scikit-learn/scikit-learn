@@ -1221,7 +1221,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
-                 fit_intercept=True, intercept_scaling=1, class_weight=None,
+                 fit_intercept=True, intercept_scaling='warn', class_weight=None,
                  random_state=None, solver='warn', max_iter=100,
                  multi_class='warn', verbose=0, warm_start=False, n_jobs=None):
 
@@ -1658,7 +1658,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     def __init__(self, Cs=10, fit_intercept=True, cv='warn', dual=False,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=None, verbose=0,
-                 refit=True, intercept_scaling=1., multi_class='warn',
+                 refit=True, intercept_scaling='warn', multi_class='warn',
                  random_state=None):
         self.Cs = Cs
         self.fit_intercept = fit_intercept
