@@ -10,7 +10,7 @@ from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
 from sklearn.metrics.scorer import get_scorer
 from sklearn.model_selection import StratifiedKFold
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, LabelBinarizer
 from sklearn.utils import compute_class_weight, _IS_32BIT
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_allclose
@@ -33,7 +33,7 @@ from sklearn.linear_model.logistic import (
     logistic_regression_path, LogisticRegressionCV,
     _logistic_loss_and_grad, _logistic_grad_hess,
     _multinomial_grad_hess, _logistic_loss,
-    _log_reg_scoring_path)
+    _log_reg_scoring_path, _multinomial_loss_grad)
 
 X = [[-1, 0], [0, 1], [1, 1]]
 X_sp = sp.csr_matrix(X)
@@ -1453,3 +1453,26 @@ def test_logistic_regression_multi_class_auto(est, solver):
         assert not np.allclose(est_auto_bin.coef_,
                                fit(X, y_multi, multi_class='multinomial',
                                    solver=solver).coef_)
+
+
+def test_lbfgs_stability():
+    def func(x, *args):
+        return _multinomial_loss_grad(x, *args)[0:2]
+
+    X = iris.data[::10]
+    y_multi = LabelBinarizer().fit_transform(iris.target[::10])
+    n_features = X.shape[1]
+
+    results = []
+    for i in range(50):
+        w0 = np.zeros((3, n_features + 1),
+                      order='F', dtype=X.dtype)
+        w0, loss, info = optimize.fmin_l_bfgs_b(
+            func, w0.ravel(), fprime=None,
+            args=(X, y_multi, 1e-3, np.ones(X.shape[0])),
+            iprint=1, pgtol=1e-4, maxiter=10000)
+        results.append(w0)
+
+    import itertools
+    for i, j in itertools.combinations(range(len(results)), 2):
+        assert_allclose(results[i], results[j], atol=0, rtol=0)
