@@ -1108,7 +1108,7 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
             shrinking, False, cache_size, None, verbose, max_iter,
             random_state)
 
-    def fit(self, X, sample_weight=None, **params):
+    def fit(self, X, sample_weight=None):
         """
         Detects the soft boundary of the set of samples X.
 
@@ -1137,7 +1137,7 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
                           " be removed in version 0.22.", DeprecationWarning)
 
         super(OneClassSVM, self).fit(X, np.ones(_num_samples(X)),
-                                     sample_weight=sample_weight, **params)
+                                     sample_weight=sample_weight)
         self.offset_ = -self._intercept_
         return self
 
