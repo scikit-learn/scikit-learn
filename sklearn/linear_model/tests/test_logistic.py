@@ -1435,9 +1435,9 @@ def test_logistic_regression_multi_class_auto(est, solver):
             assert all(np.allclose(est_auto_multi.scores_[k],
                                    est_multi_multi.scores_[k])
                        for k in est_auto_multi.scores_)
-            assert all(np.allclose(est_auto_multi.coefs_paths_[k],
-                                   est_multi_multi.coefs_paths_[k])
-                       for k in est_auto_multi.coefs_paths_)
+            for k in est_auto_multi.coefs_paths_:
+                assert_allclose(est_auto_multi.coefs_paths_[k],
+                                est_multi_multi.coefs_paths_[k])
         assert np.allclose(est_auto_multi.coef_, est_multi_multi.coef_)
         assert np.allclose(est_auto_multi.predict_proba(X2),
                            est_multi_multi.predict_proba(X2))
