@@ -391,6 +391,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         P = np.array(X[point_index]).reshape(1, -1)
         indices = nbrs.radius_neighbors(P, radius=self.max_bound,
                                         return_distance=False)[0]
+
         # Getting indices of neighbors that have not been processed
         unproc = np.compress((~np.take(self._processed, indices)).ravel(),
                              indices, axis=0)
