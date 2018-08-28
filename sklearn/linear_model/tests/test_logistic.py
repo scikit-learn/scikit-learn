@@ -1463,16 +1463,19 @@ def test_lbfgs_stability():
     y_multi = LabelBinarizer().fit_transform(iris.target[::10])
     n_features = X.shape[1]
 
-    results = []
+    results = {0: [], 1: [], 2: []}
     for i in range(50):
-        w0 = np.zeros((3, n_features + 1),
-                      order='F', dtype=X.dtype)
-        w0, loss, info = optimize.fmin_l_bfgs_b(
-            func, w0.ravel(), fprime=None,
-            args=(X, y_multi, 1e-3, np.ones(X.shape[0])),
-            iprint=1, pgtol=1e-4, maxiter=10000)
-        results.append(w0)
+        for split in range(3):
+            idx = np.arange(len(X))[::split]
+            w0 = np.zeros((3, n_features + 1),
+                          order='F', dtype=X.dtype)
+            w0, loss, info = optimize.fmin_l_bfgs_b(
+                func, w0.ravel(), fprime=None,
+                args=(X[idx], y_multi[idx], 1e-3, np.ones(X.shape[0])),
+                iprint=1, pgtol=1e-4, maxiter=10000)
+            results[split].append(w0)
 
     import itertools
-    for i, j in itertools.combinations(range(len(results)), 2):
-        assert_allclose(results[i], results[j], atol=0, rtol=0)
+    for split in range(3):
+        for i, j in itertools.combinations(range(len(results)), 2):
+            assert_allclose(results[i], results[j], atol=0, rtol=0)
