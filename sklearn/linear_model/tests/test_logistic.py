@@ -1398,8 +1398,10 @@ def test_logistic_regression_path_coefs_multinomial():
         assert_array_almost_equal(coefs[1], coefs[2], decimal=1)
 
 
-@pytest.mark.parametrize('est', [LogisticRegression(random_state=0),
-                                 LogisticRegressionCV(random_state=0, cv=3),
+@pytest.mark.parametrize('est', [LogisticRegression(random_state=0,
+                                                    max_iter=10000),
+                                 LogisticRegressionCV(random_state=0, cv=3,
+                                                      max_iter=10000),
                                  ])
 @pytest.mark.parametrize('solver', ['liblinear', 'lbfgs', 'newton-cg', 'sag',
                                     'saga'])
@@ -1428,6 +1430,14 @@ def test_logistic_regression_multi_class_auto(est, solver):
     else:
         est_multi_multi = fit(X, y_multi, multi_class='multinomial',
                               solver=solver)
+        if est.__class__.__name__.endswith('CV'):
+            assert_allclose(est_auto_multi.Cs_, est_multi_multi.Cs_)
+            assert all(np.allclose(est_auto_multi.scores_[k],
+                                   est_multi_multi.scores_[k])
+                       for k in est_auto_multi.scores_)
+            assert all(np.allclose(est_auto_multi.coefs_paths_[k],
+                                   est_multi_multi.coefs_paths_[k])
+                       for k in est_auto_multi.coefs_paths_)
         assert np.allclose(est_auto_multi.coef_, est_multi_multi.coef_)
         assert np.allclose(est_auto_multi.predict_proba(X2),
                            est_multi_multi.predict_proba(X2))
