@@ -1421,7 +1421,7 @@ def test_logistic_regression_multi_class_auto(est, solver):
     assert np.allclose(est_auto_bin.predict_proba(X2),
                        est_ovr_bin.predict_proba(X2))
 
-    est_auto_multi = fit(X, y_multi, multi_class='multinomial', solver=solver)
+    est_auto_multi = fit(X, y_multi, multi_class='auto', solver=solver)
     if solver == 'liblinear':
         est_ovr_multi = fit(X, y_multi, multi_class='ovr', solver=solver)
         assert np.allclose(est_auto_multi.coef_, est_ovr_multi.coef_)
