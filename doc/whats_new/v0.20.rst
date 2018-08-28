@@ -92,7 +92,9 @@ Changelog
 
 Support for Python 3.3 has been officially dropped.
 
-.. rubric:: :mod:`sklearn.cluster`:
+
+:mod:`sklearn.cluster`
+......................
 
 - |MajorFeature| A new clustering algorithm: :class:`cluster.OPTICS`: an
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
@@ -142,7 +144,9 @@ Support for Python 3.3 has been officially dropped.
   :class:`cluster.AgglomerativeClustering`.
   :issue:`9875` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
-.. rubric:: :mod:`sklearn.compose`:
+
+:mod:`sklearn.compose`
+......................
 
 - New module.
 
@@ -156,7 +160,13 @@ Support for Python 3.3 has been officially dropped.
   are mapped back to the original space via an inverse transform. :issue:`9041`
   by `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
 
-.. rubric:: :mod:`sklearn.covariance`:
+
+
+:mod:`sklearn.covariance`
+.........................
+
+- |Efficiency| Runtime improvements to :class:`covariance.GraphicalLasso`.
+  :issue:`9858` by :user:`Steven Brown <stevendbrown>`.
 
 - |API| The :func:`covariance.graph_lasso`,
   :class:`covariance.GraphLasso` and :class:`covariance.GraphLassoCV` have been
@@ -165,7 +175,14 @@ Support for Python 3.3 has been officially dropped.
   respectively and will be removed in version 0.22.
   :issue:`9993` by :user:`Artiem Krinitsyn <artiemq>`
 
-.. rubric:: :mod:`sklearn.datasets`:
+
+:mod:`sklearn.datasets`
+.......................
+
+- |MajorFeature| Added :func:`datasets.fetch_openml` to fetch datasets from
+  `OpenML <http://openml.org>`. OpenML is a free, open data sharing platform
+  and will be used instead of mldata as it provides better service availability.
+  :issue:`9908` by `Andreas Müller`_ and :user:`Jan N. van Rijn <janvanrijn>`.
 
 - |Feature| In :func:`datasets.make_blobs`, one can now pass a list to the
   `n_samples` parameter to indicate the number of samples to generate per
@@ -176,8 +193,11 @@ Support for Python 3.3 has been officially dropped.
   :issue:`9101` by :user:`alex-33 <alex-33>`
   and :user:`Maskani Filali Mohamed <maskani-moh>`.
 
+- |Feature| ``return_X_y`` parameter has been added to several dataset loaders.
+  :issue:`10774` by :user:`Chris Catalfo <ccatalfo>`.
+
 - |Fix| Fixed a bug in :func:`datasets.load_boston` which had a wrong data
-  point. :issue:`10801` by :user:`Takeshi Yoshizawa <tarcusx>`.
+  point. :issue:`10795` by :user:`Takeshi Yoshizawa <tarcusx>`.
 
 - |Fix| Fixed a bug in :func:`datasets.load_iris` which had two wrong data points.
   :issue:`11082` by :user:`Sadhana Srinivasan <rotuna>`
@@ -187,10 +207,15 @@ Support for Python 3.3 has been officially dropped.
   properly shuffled. :issue:`9731` by `Nicolas Goix`_.
 
 - |Fix| Fixed a bug in :func:`datasets.make_circles`, where no odd number of
-  data points could be generated. :issue:`10037` by :user:`Christian Braune
+  data points could be generated. :issue:`10045` by :user:`Christian Braune
   <christianbraune79>`.
 
-.. rubric:: :mod:`sklearn.decomposition`:
+- |API| Deprecated :func:`sklearn.datasets.fetch_mldata` to be removed in
+  version 0.22. mldata.org is no longer operational. Until removal it will
+  remain possible to load cached datasets. :issue:`11466` by `Joel Nothman`_.
+
+:mod:`sklearn.decomposition`
+............................
 
 - |Feature| :func:`decomposition.dict_learning` functions and models now
   support positivity constraints. This applies to the dictionary and sparse
@@ -203,6 +228,9 @@ Support for Python 3.3 has been officially dropped.
   which is the default, the previous abnormal behaviour still holds. The False
   value is for backward compatibility and should not be used. :issue:`11585`
   by :user:`Ivan Panico <FollowKenny>`.
+
+- |Efficiency| Efficiency improvements in :func:`decomposition.dict_learning`.
+  :issue:`11420` and others by :user:`John Kirkham <jakirkham>`.
 
 - |Fix| Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
   now an error is raised if the number of components is larger than the
@@ -225,18 +253,25 @@ Support for Python 3.3 has been officially dropped.
   versions.
   :issue:`9886` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+- |Fix| Fixed an underflow in calculating KL-divergence for
+  :class:`decomposition.NMF` :issue:`10142` by `Tom Dupre la Tour`_.
+
 - |Fix| Fixed a bug in :class:`decomposition.SparseCoder` when running OMP
   sparse coding in parallel using readonly memory mapped datastructures.
   :issue:`5956` by :user:`Vighnesh Birodkar <vighneshbirodkar>` and
   :user:`Olivier Grisel <ogrisel>`.
 
-.. rubric:: :mod:`sklearn.discriminant_analysis`:
+
+:mod:`sklearn.discriminant_analysis`
+....................................
 
 - |Efficiency| Memory usage improvement for :func:`_class_means` and
   :func:`_class_cov` in :mod:`discriminant_analysis`. :issue:`10898` by
   :user:`Nanxin Chen <bobchennan>`.`
 
-.. rubric:: :mod:`sklearn.dummy`:
+
+:mod:`sklearn.dummy`
+....................
 
 - |Feature| :class:`dummy.DummyRegressor` now has a ``return_std`` option in its
   ``predict`` method. The returned standard deviations will be zeros.
@@ -245,7 +280,9 @@ Support for Python 3.3 has been officially dropped.
   only require X to be an object with finite length or shape. :issue:`9832` by
   :user:`Vrishank Bhardwaj <vrishank97>`.
 
-.. rubric:: :mod:`sklearn.ensemble`:
+
+:mod:`sklearn.ensemble`
+.......................
 
 - |Feature| :class:`ensemble.BaggingRegressor` and
   :class:`ensemble.BaggingClassifier` can now be fit with missing/non-finite
@@ -289,20 +326,32 @@ Support for Python 3.3 has been officially dropped.
   while mask does not allow this functionality.
   :issue:`9524` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |API| The parameters ``min_samples_leaf`` and ``min_weight_fraction_leaf`` in
+  tree-based ensembles are deprecated and will be removed (fixed to 1 and 0
+  respectively) in version 0.22.  These parameters were not effective for
+  regularization and at worst would produce bad splits.  :issue:`10773` by
+  :user:`Bob Chen <lasagnaman>` and `Joel Nothman`_.
+
 - |Fix| :class:`ensemble.BaseBagging` where one could not deterministically
-  reproduce ``fit`` result usinbg the object attributes when ``random_state``
+  reproduce ``fit`` result using the object attributes when ``random_state``
   is set. :issue:`9723` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-.. rubric:: :mod:`sklearn.feature_extraction`:
+
+:mod:`sklearn.feature_extraction`
+.................................
 
 - |Feature| Enable the call to :term:`get_feature_names` in unfitted
   :class:`feature_extraction.text.CountVectorizer` initialized with a
   vocabulary. :issue:`10908` by :user:`Mohamed Maskani <maskani-moh>`.
 
+- |Enhancement| ``idf_`` can now be set on a
+  :class:`feature_extraction.text.TfidfTransformer`.
+  :issue:`10899` by :user:`Sergey Melderis <serega>`.
+
 - |Fix| Fixed a bug in :func:`feature_extraction.image.extract_patches_2d` which
   would throw an exception if ``max_patches`` was greater than or equal to the
   number of all possible patches rather than simply returning the number of
-  possible patches. :issue:`10100` by :user:`Varun Agrawal <varunagrawal>`
+  possible patches. :issue:`10101` by :user:`Varun Agrawal <varunagrawal>`
 
 - |Fix| Fixed a bug in :class:`feature_extraction.text.CountVectorizer`,
   :class:`feature_extraction.text.TfidfVectorizer`,
@@ -318,25 +367,37 @@ Support for Python 3.3 has been officially dropped.
   :issue:`10441` by :user:`Mayur Kulkarni <maykulkarni>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
-.. rubric:: :mod:`sklearn.feature_selection`:
+
+:mod:`sklearn.feature_selection`
+................................
 
 - |Feature| Added select K best features functionality to
   :class:`feature_selection.SelectFromModel`.
   :issue:`6689` by :user:`Nihar Sheth <nsheth12>` and
   :user:`Quazi Rahman <qmaruf>`.
 
+- |Feature| Added ``min_features_to_select`` parameter to
+  :class:`feature_selection.RFECV` to bound evaluated features counts.
+  :issue:`11293` by :user:`Brent Yi <brentyi>`.
+
+- |Feature| :class:`feature_selection.RFECV`'s fit method now supports
+  :term:`groups`.  :issue:`9656` by :user:`Adam Greenhall <adamgreenhall>`.
+
 - |Fix| Fixed computation of ``n_features_to_compute`` for edge case with tied
   CV scores in :class:`feature_selection.RFECV`.
   :issue:`9222` by :user:`Nick Hoh <nickypie>`.
 
-.. rubric:: :mod:`sklearn.gaussian_process`:
+:mod:`sklearn.gaussian_process`
+...............................
 
 - |Efficiency| In :class:`gaussian_process.GaussianProcessRegressor`, method
   ``predict`` is faster when using ``return_std=True`` in particular more when
   called several times in a row. :issue:`9234` by :user:`andrewww <andrewww>`
   and :user:`Minghui Liu <minghui-liu>`.
 
-.. rubric:: :mod:`sklearn.impute`:
+
+:mod:`sklearn.impute`
+.....................
 
 - New module, adopting ``preprocessing.Imputer`` as
   :class:`impute.SimpleImputer` with minor changes (see under preprocessing
@@ -352,14 +413,18 @@ Support for Python 3.3 has been officially dropped.
   data, and so does the ``'most_frequent'`` strategy now. :issue:`11211` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
-.. rubric:: :mod:`sklearn.isotonic`:
+
+:mod:`sklearn.isotonic`
+.......................
 
 - |Fix| Fixed a bug in :class:`isotonic.IsotonicRegression` which incorrectly
   combined weights when fitting a model to data involving points with
   identical X values.
-  :issue:`9432` by :user:`Dallas Card <dallascard>`
+  :issue:`9484` by :user:`Dallas Card <dallascard>`
 
-.. rubric:: :mod:`sklearn.linear_model`:
+
+:mod:`sklearn.linear_model`
+...........................
 
 - |Feature| :class:`linear_model.SGDClassifier`,
   :class:`linear_model.SGDRegressor`,
@@ -374,7 +439,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Feature| Add `sample_weight` parameter to the fit method of
   :class:`linear_model.BayesianRidge` for weighted linear regression.
-  :issue:`10111` by :user:`Peter St. John <pstjohn>`.
+  :issue:`10112` by :user:`Peter St. John <pstjohn>`.
 
 - |Fix| Fixed a bug in :func:`logistic.logistic_regression_path` to ensure
   that the returned coefficients are correct when ``multiclass='multinomial'``.
@@ -405,6 +470,11 @@ Support for Python 3.3 has been officially dropped.
   incorrectly updated estimates for the standard deviation and the
   coefficients. :issue:`10153` by :user:`Jörg Döpfert <jdoepfert>`.
 
+- |Fix| Fixed a bug in :class:`linear_model.ARDRegression` and
+  :class:`linear_model.BayesianRidge` which caused NaN predictions when fitted
+  with a constant target.
+  :issue:`10095` by :user:`Jörg Döpfert <jdoepfert>`.
+
 - |Fix| Fixed a bug in :class:`linear_model.RidgeClassifierCV` where
   the parameter ``store_cv_values`` was not implemented though
   it was documented in ``cv_values`` as a way to set up the storage
@@ -425,7 +495,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Fix| Fixed a bug in :class:`linear_model.RidgeCV` where using integer
   ``alphas`` raised an error.
-  :issue:`10393` by :user:`Mabel Villalba-Jiménez <mabelvj>`.
+  :issue:`10397` by :user:`Mabel Villalba-Jiménez <mabelvj>`.
 
 - |Fix| Fixed condition triggering gap computation in
   :class:`linear_model.Lasso` and :class:`linear_model.ElasticNet` when working
@@ -445,6 +515,12 @@ Support for Python 3.3 has been officially dropped.
   ValueError.
   :issue:`11327` by :user:`Karan Dhingra <kdhingra307>` and `Joel Nothman`_.
 
+- |API| The default values of the ``solver`` and ``multi_class`` parameters of
+  :class:`linear_model.LogisticRegression` will change respectively from
+  ``'liblinear'`` and ``'ovr'`` in version 0.20 to ``'lbfgs'`` and
+  ``'auto'`` in version 0.22. A FutureWarning is raised when the default
+  values are used. :issue:`11905` by `Tom Dupre la Tour`_ and `Joel Nothman`_.
+
 - |API| Deprecate ``positive=True`` option in :class:`linear_model.Lars` as
   the underlying implementation is broken. Use :class:`linear_model.Lasso`
   instead. :issue:`9837` by `Alexandre Gramfort`_.
@@ -456,7 +532,9 @@ Support for Python 3.3 has been officially dropped.
   estimators will report at most ``max_iter`` iterations even if more were
   performed. :issue:`10723` by `Joel Nothman`_.
 
-.. rubric:: :mod:`sklearn.manifold`:
+
+:mod:`sklearn.manifold`
+.......................
 
 - |Efficiency| Speed improvements for both 'exact' and 'barnes_hut' methods in
   :class:`manifold.TSNE`. :issue:`10593` and :issue:`10610` by
@@ -467,6 +545,12 @@ Support for Python 3.3 has been officially dropped.
 
 - |Feature| :func:`manifold.t_sne.trustworthiness` accepts metrics other than
   Euclidean. :issue:`9775` by :user:`William de Vazelhes <wdevazelhes>`.
+
+- |Fix| Fixed a bug in :func:`manifold.spectral_embedding` where the
+  normalization of the spectrum was using a division instead of a
+  multiplication. :issue:`8129` by :user:`Jan Margeta <jmargeta>`,
+  :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Devansh D.
+  <devanshdalal>`.
 
 - |API| |Feature| Deprecate ``precomputed`` parameter in function
   :func:`manifold.t_sne.trustworthiness`. Instead, the new parameter ``metric``
@@ -482,7 +566,9 @@ Support for Python 3.3 has been officially dropped.
   pairwise distances or squared distances. :issue:`9775` by
   :user:`William de Vazelhes <wdevazelhes>`.
 
-.. rubric:: :mod:`sklearn.metrics`:
+
+:mod:`sklearn.metrics`
+......................
 
 - |MajorFeature| Added the :func:`metrics.davies_bouldin_score` metric for
   evaluation of clustering models without a ground truth. :issue:`10827` by
@@ -494,7 +580,7 @@ Support for Python 3.3 has been officially dropped.
   <dalmia>`, and :issue:`10587` by `Joel Nothman`_.
 
 - |Feature| Partial AUC is available via ``max_fpr`` parameter in
-  :func:`metrics.roc_auc_score`. :issue:`3273` by
+  :func:`metrics.roc_auc_score`. :issue:`3840` by
   :user:`Alexander Niederbühl <Alexander-N>`.
 
 - |Feature| A scorer based on :func:`metrics.brier_score_loss` is also
@@ -582,7 +668,9 @@ Support for Python 3.3 has been officially dropped.
   ``working_memory`` config. See :ref:`working_memory`. :issue:`10280` by `Joel
   Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
-.. rubric:: :mod:`sklearn.mixture`:
+
+:mod:`sklearn.mixture`
+......................
 
 - |Feature| Added function :term:`fit_predict` to :class:`mixture.GaussianMixture`
   and :class:`mixture.GaussianMixture`, which is essentially equivalent to
@@ -600,7 +688,9 @@ Support for Python 3.3 has been officially dropped.
   initializations (when ``n_init > 1``), but just the lower bound of the last
   initialization. :issue:`10869` by :user:`Aurélien Géron <ageron>`.
 
-.. rubric:: :mod:`sklearn.model_selection`:
+
+:mod:`sklearn.model_selection`
+..............................
 
 - |Feature| Add `return_estimator` parameter in
   :func:`model_selection.cross_validate` to return estimators fitted on each
@@ -646,6 +736,11 @@ Support for Python 3.3 has been officially dropped.
   group-based CV strategies. :issue:`9085` by :user:`Laurent Direr <ldirer>`
   and `Andreas Müller`_.
 
+- |API| The default value of the ``error_score`` parameter in
+  :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` will change to ``np.NaN`` in
+  version 0.22. :issue:`10677` by :user:`Kirill Zhdanovich <Zhdanovich>`.
+
 - |API| Changed ValueError exception raised in
   :class:`model_selection.ParameterSampler` to a UserWarning for case where the
   class is instantiated with a greater value of ``n_iter`` than the total space
@@ -656,12 +751,16 @@ Support for Python 3.3 has been officially dropped.
   raises TypeError.
   :issue:`10928` by :user:`Solutus Immensus <solutusimmensus>`
 
-.. rubric:: :mod:`sklearn.multioutput`:
+
+:mod:`sklearn.multioutput`
+..........................
 
 - |MajorFeature| Added :class:`multioutput.RegressorChain` for multi-target
   regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
-.. rubric:: :mod:`sklearn.naive_bayes`:
+
+:mod:`sklearn.naive_bayes`
+..........................
 
 - |MajorFeature| Added :class:`naive_bayes.ComplementNB`, which implements the
   Complement Naive Bayes classifier described in Rennie et al. (2003).
@@ -679,12 +778,14 @@ Support for Python 3.3 has been officially dropped.
   vector valued pseudocounts (alpha).
   :issue:`10346` by :user:`Tobias Madsen <TobiasMadsen>`
 
-.. rubric:: :mod:`sklearn.neighbors`:
+
+:mod:`sklearn.neighbors`
+........................
 
 - |Efficiency| :class:`neighbors.RadiusNeighborsRegressor` and
   :class:`neighbors.RadiusNeighborsClassifier` are now
   parallelized according to ``n_jobs`` regardless of ``algorithm``.
-  :issue:`8003` by :user:`Joël Billaud <recamshak>`.
+  :issue:`10887` by :user:`Joël Billaud <recamshak>`.
 
 - |Efficiency| :mod:`Nearest neighbors <neighbors>` query methods are now more
   memory efficient when ``algorithm='brute'``.
@@ -719,7 +820,13 @@ Support for Python 3.3 has been officially dropped.
   faster construction and querying times.
   :issue:`11556` by :user:`Jake VanderPlas <jakevdp>`
 
-.. rubric:: :mod:`sklearn.neural_network`:
+- |Fix| Fixed a bug in `neighbors.KDTree` and `neighbors.BallTree` where
+  pickled tree objects would change their type to the super class `BinaryTree`.
+  :issue:`11774` by :user:`Nicolas Hug <NicolasHug>`.
+
+
+:mod:`sklearn.neural_network`
+.............................
 
 - |Feature| Add `n_iter_no_change` parameter in
   :class:`neural_network.BaseMultilayerPerceptron`,
@@ -738,14 +845,18 @@ Support for Python 3.3 has been officially dropped.
   quit unexpectedly early due to local minima or fluctuations.
   :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`
 
-.. rubric:: :mod:`sklearn.pipeline`:
+
+:mod:`sklearn.pipeline`
+.......................
 
 - |Feature| The ``predict`` method of :class:`pipeline.Pipeline` now passes
   keyword arguments on to the pipeline's last estimator, enabling the use of
   parameters such as ``return_std`` in a pipeline with caution.
   :issue:`9304` by :user:`Breno Freitas <brenolf>`.
 
-.. rubric:: :mod:`sklearn.preprocessing`:
+
+:mod:`sklearn.preprocessing`
+............................
 
 - |MajorFeature| Expanded :class:`preprocessing.OneHotEncoder` to allow to
   encode categorical string features as a numeric array using a one-hot (or
@@ -869,7 +980,9 @@ Support for Python 3.3 has been officially dropped.
   ``validate`` will be from ``True`` to ``False`` in 0.22.
   :issue:`10655` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-.. rubric:: :mod:`sklearn.svm`:
+
+:mod:`sklearn.svm`
+..................
 
 - |Fix| Fixed a bug in :class:`svm.SVC` where when the argument ``kernel`` is
   unicode in Python2, the ``predict_proba`` method was raising an
@@ -886,7 +999,14 @@ Support for Python 3.3 has been officially dropped.
   version 0.22 to account better for unscaled features. :issue:`8361` by
   :user:`Gaurav Dhingra <gxyd>` and :user:`Ting Neo <neokt>`.
 
-.. rubric:: :mod:`sklearn.tree`:
+
+:mod:`sklearn.tree`
+...................
+
+- |Enhancement| Although private (and hence not assured API stability),
+  :class:`tree._criterion.ClassificationCriterion` and
+  :class:`tree._criterion.RegressionCriterion` may now be cimported and
+  extended. :issue:`10325` by :user:`Camil Staps <camilstaps>`.
 
 - |Fix| Fixed a bug in :class:`tree.BaseDecisionTree` with `splitter="best"`
   where split threshold could become infinite when values in X were
@@ -898,7 +1018,16 @@ Support for Python 3.3 has been officially dropped.
   considered all samples to be of equal weight importance.
   :issue:`11464` by :user:`John Stott <JohnStott>`.
 
-.. rubric:: :mod:`sklearn.utils`:
+- |API| The parameters ``min_samples_leaf`` and ``min_weight_fraction_leaf`` in
+  :class:`tree.DecisionTreeClassifier` and :class:`tree.DecisionTreeRegressor`
+  are deprecated and will be removed (fixed to 1 and 0 respectively) in version
+  0.22.  These parameters were not effective for regularization and at worst
+  would produce bad splits.  :issue:`10773` by :user:`Bob Chen <lasagnaman>`
+  and `Joel Nothman`_.
+
+
+:mod:`sklearn.utils`
+....................
 
 - |Feature| :func:`utils.check_array` and :func:`utils.check_X_y` now have
   ``accept_large_sparse`` to control whether scipy.sparse matrices with 64-bit
@@ -913,7 +1042,9 @@ Support for Python 3.3 has been officially dropped.
   that arrays of bytes/strings will be interpreted as decimal numbers
   beginning in version 0.22. :issue:`10229` by :user:`Ryan Lee <rtlee9>`
 
-.. rubric:: Multiple modules
+
+Multiple modules
+................
 
 - |Feature| |API| More consistent outlier detection API:
   Add a ``score_samples`` method in :class:`svm.OneClassSVM`,
@@ -956,12 +1087,27 @@ Support for Python 3.3 has been officially dropped.
   :class:`cluster.AffinityPropagation`, and :class:`cluster.Birch`.
   :issue:`10306` by :user:`Jonathan Siebert <jotasi>`.
 
-.. rubric:: Miscellaneous
+
+Miscellaneous
+.............
 
 - |MajorFeature| A new configuration parameter, ``working_memory`` was added
   to control memory consumption limits in chunked operations, such as the new
   :func:`metrics.pairwise_distances_chunked`. See :ref:`working_memory`.
   :issue:`10280` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
+
+- |Feature| The version of :mod:`joblib` bundled with Scikit-learn is now 0.12.
+  This uses a new default multiprocessing implementation, named `loky
+  <https://github.com/tomMoral/loky>`_. While this may incur some memory and
+  communication overhead, it should provide greater cross-platform stability
+  than relying on Python standard library multiprocessing. :issue:`11741` by
+  the Joblib developers, especially :user:`Thomas Moreau <tomMoral>` and
+  `Olivier Grisel`_.
+
+- |Feature| An environment variable to use the site joblib instead of the
+  vendored one was added (:ref:`environment_variable`). The main API of joblib
+  is now exposed in :mod:`sklearn.utils`.
+  :issue:`11166` by `Gael Varoquaux`_.
 
 - |Feature| Add almost complete PyPy 3 support. Known unsupported
   functionalities are :func:`datasets.load_svmlight_file`,
@@ -969,11 +1115,6 @@ Support for Python 3.3 has been officially dropped.
   :class:`feature_extraction.text.HashingVectorizer`. For running on PyPy,
   PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+ are required.
   :issue:`11010` by :user:`Ronan Lamy <rlamy>` and `Roman Yurchak`_.
-
-- |Feature| An environment variable to use the site joblib instead of the
-  vendored one was added (:ref:`environment_variable`). The main API of joblib
-  is now exposed in :mod:`sklearn.utils`.
-  :issue:`11166` by `Gael Varoquaux`_.
 
 - |Feature| A utility method :func:`sklearn.show_versions()` was added to
   print out information relevant for debugging. It includes the user system,
@@ -984,10 +1125,30 @@ Support for Python 3.3 has been officially dropped.
   a wrapped estimator and its parameter. :issue:`9999` by :user:`Marcus Voss
   <marcus-voss>` and `Joel Nothman`_.
 
+- |Fix| Fixed a bug where calling :func:`sklearn.base.clone` was not thread
+  safe and could result in a "pop from empty list" error. :issue:`9569`
+  by `Andreas Müller`_.
+
+- |API| The default value of ``n_jobs`` is changed from ``1`` to ``None`` in
+  all related functions and classes. ``n_jobs=None`` means ``unset``. It will
+  generally be interpreted as ``n_jobs=1``, unless the current
+  ``joblib.Parallel`` backend context specifies otherwise (See
+  :term:`Glossary <n_jobs>` for additional information). Note that this change
+  happens immediately (i.e., without a deprecation cycle).
+  :issue:`11741` by `Olivier Grisel`_.
+
 Changes to estimator checks
 ---------------------------
 
 These changes mostly affect library developers.
+
+- Checks for transformers now apply if the estimator implements
+  :term:`transform`, regardless of whether it inherits from
+  :class:`sklearn.base.TransformerMixin`. :issue:`10474` by `Joel Nothman`_.
+
+- Classifiers are now checked for consistency between :term:`decision_function`
+  and categorical predictions.
+  :issue:`10500` by :user:`Narine Kokhlikyan <NarineK>`.
 
 - Allow tests in :func:`utils.estimator_checks.check_estimator` to test functions
   that accept pairwise data.
@@ -1007,8 +1168,8 @@ These changes mostly affect library developers.
 
 - Add ``check_methods_subset_invariance`` to
   :func:`~utils.estimator_checks.check_estimator`, which checks that
-  estimator methods are invariant if applied to a data subset. :issue:`10420`
-  by :user:`Jonathan Ohayon <Johayon>`
+  estimator methods are invariant if applied to a data subset.
+  :issue:`10428` by :user:`Jonathan Ohayon <Johayon>`
 
 - Add tests in :func:`utils.estimator_checks.check_estimator` to check that an
   estimator can handle read-only memmap input data. :issue:`10663` by
@@ -1017,3 +1178,7 @@ These changes mostly affect library developers.
 - ``check_sample_weights_pandas_series`` now uses 8 rather than 6 samples
   to accommodate for the default number of clusters in :class:`cluster.KMeans`.
   :issue:`10933` by :user:`Johannes Hansen <jnhansen>`.
+
+- Estimators are now checked for whether ``sample_weight=None`` equates to
+  ``sample_weight=np.ones(...)``.
+  :issue:`11558` by :user:`Sergul Aydore <sergulaydore>`.

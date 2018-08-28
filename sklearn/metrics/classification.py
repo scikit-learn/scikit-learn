@@ -628,8 +628,9 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
         F1 = 2 * (precision * recall) / (precision + recall)
 
-    In the multi-class and multi-label case, this is the weighted average of
-    the F1 score of each class.
+    In the multi-class and multi-label case, this is the average of
+    the F1 score of each class with weighting depending on the ``average``
+    parameter.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 

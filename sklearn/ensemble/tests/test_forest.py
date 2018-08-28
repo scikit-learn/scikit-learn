@@ -762,13 +762,16 @@ def check_min_samples_leaf(name):
     ForestEstimator = FOREST_ESTIMATORS[name]
 
     # test boundary value
-    assert_raises(ValueError,
-                  ForestEstimator(min_samples_leaf=-1).fit, X, y)
-    assert_raises(ValueError,
-                  ForestEstimator(min_samples_leaf=0).fit, X, y)
+    with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+        assert_raises(ValueError,
+                      ForestEstimator(min_samples_leaf=-1).fit, X, y)
+    with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+        assert_raises(ValueError,
+                      ForestEstimator(min_samples_leaf=0).fit, X, y)
 
     est = ForestEstimator(min_samples_leaf=5, n_estimators=1, random_state=0)
-    est.fit(X, y)
+    with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+        est.fit(X, y)
     out = est.estimators_[0].tree_.apply(X)
     node_counts = np.bincount(out)
     # drop inner nodes
@@ -778,7 +781,8 @@ def check_min_samples_leaf(name):
 
     est = ForestEstimator(min_samples_leaf=0.25, n_estimators=1,
                           random_state=0)
-    est.fit(X, y)
+    with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+        est.fit(X, y)
     out = est.estimators_[0].tree_.apply(X)
     node_counts = np.bincount(out)
     # drop inner nodes
@@ -811,7 +815,9 @@ def check_min_weight_fraction_leaf(name):
         if "RandomForest" in name:
             est.bootstrap = False
 
-        est.fit(X, y, sample_weight=weights)
+        with pytest.warns(DeprecationWarning,
+                          match='min_weight_fraction_leaf'):
+            est.fit(X, y, sample_weight=weights)
         out = est.estimators_[0].tree_.apply(X)
         node_weights = np.bincount(out, weights=weights)
         # drop inner nodes

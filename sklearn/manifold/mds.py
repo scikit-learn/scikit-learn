@@ -178,15 +178,14 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
         determined by the run with the smallest final stress. If ``init`` is
         provided, this option is overridden and a single run is performed.
 
-    n_jobs : int, optional, default: 1
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. If multiple
         initializations are used (``n_init``), each run of the algorithm is
         computed in parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For ``n_jobs`` below -1,
-        (``n_cpus + 1 + n_jobs``) are used. Thus for ``n_jobs = -2``, all CPUs
-        but one are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     max_iter : int, optional, default: 300
         Maximum number of iterations of the SMACOF algorithm for a single run.
@@ -305,15 +304,14 @@ class MDS(BaseEstimator):
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    n_jobs : int, optional, default: 1
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. If multiple
         initializations are used (``n_init``), each run of the algorithm is
         computed in parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For ``n_jobs`` below -1,
-        (``n_cpus + 1 + n_jobs``) are used. Thus for ``n_jobs = -2``, all CPUs
-        but one are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional, default: None
         The generator used to initialize the centers.  If int, random_state is
@@ -340,6 +338,17 @@ class MDS(BaseEstimator):
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.manifold import MDS
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> embedding = MDS(n_components=2)
+    >>> X_transformed = embedding.fit_transform(X[:100])
+    >>> X_transformed.shape
+    (100, 2)
 
     References
     ----------

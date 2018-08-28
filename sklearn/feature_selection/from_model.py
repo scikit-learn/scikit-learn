@@ -16,12 +16,13 @@ def _get_feature_importances(estimator, norm_order=1):
     """Retrieve or aggregate feature importances from estimator"""
     importances = getattr(estimator, "feature_importances_", None)
 
-    if importances is None and hasattr(estimator, "coef_"):
+    coef_ = getattr(estimator, "coef_", None)
+    if importances is None and coef_ is not None:
         if estimator.coef_.ndim == 1:
-            importances = np.abs(estimator.coef_)
+            importances = np.abs(coef_)
 
         else:
-            importances = np.linalg.norm(estimator.coef_, axis=0,
+            importances = np.linalg.norm(coef_, axis=0,
                                          ord=norm_order)
 
     elif importances is None:

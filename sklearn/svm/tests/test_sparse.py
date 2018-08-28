@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 from scipy import sparse
 from numpy.testing import (assert_array_almost_equal, assert_array_equal,
@@ -10,7 +11,9 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.testing import (assert_raises, assert_true, assert_false,
                                    assert_warns, assert_raise_message,
-                                   ignore_warnings)
+                                   ignore_warnings, skip_if_32bit)
+import pytest
+
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -71,6 +74,7 @@ def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
         assert_raise_message(ValueError, msg, dense_svm.predict, X_test)
 
 
+@skip_if_32bit
 def test_svc():
     """Check that sparse SVC gives the same result as SVC"""
     # many class dataset:
@@ -234,6 +238,8 @@ def test_linearsvc_iris():
     assert_array_equal(pred, sp_clf.predict(iris.data))
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_weight():
     # Test class weights
     X_, y_ = make_classification(n_samples=200, n_features=100,
@@ -265,21 +271,21 @@ def test_sparse_liblinear_intercept_handling():
     test_svm.test_dense_liblinear_intercept_handling(svm.LinearSVC)
 
 
-def test_sparse_oneclasssvm():
+@pytest.mark.parametrize("datasets_index", range(4))
+@pytest.mark.parametrize("kernel", ["linear", "poly", "rbf", "sigmoid"])
+@skip_if_32bit
+def test_sparse_oneclasssvm(datasets_index, kernel):
     # Check that sparse OneClassSVM gives the same result as dense OneClassSVM
     # many class dataset:
     X_blobs, _ = make_blobs(n_samples=100, centers=10, random_state=0)
     X_blobs = sparse.csr_matrix(X_blobs)
-
     datasets = [[X_sp, None, T], [X2_sp, None, T2],
                 [X_blobs[:80], None, X_blobs[80:]],
                 [iris.data, None, iris.data]]
-    kernels = ["linear", "poly", "rbf", "sigmoid"]
-    for dataset in datasets:
-        for kernel in kernels:
-            clf = svm.OneClassSVM(gamma='scale', kernel=kernel)
-            sp_clf = svm.OneClassSVM(gamma='scale', kernel=kernel)
-            check_svm_model_equal(clf, sp_clf, *dataset)
+    dataset = datasets[datasets_index]
+    clf = svm.OneClassSVM(gamma='scale', kernel=kernel)
+    sp_clf = svm.OneClassSVM(gamma='scale', kernel=kernel)
+    check_svm_model_equal(clf, sp_clf, *dataset)
 
 
 def test_sparse_realdata():

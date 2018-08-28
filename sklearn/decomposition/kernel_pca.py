@@ -89,9 +89,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         .. versionadded:: 0.18
 
-    n_jobs : int, default=1
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If `-1`, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
         .. versionadded:: 0.18
 
@@ -117,6 +119,16 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     X_fit_ : (n_samples, n_features)
         The data used to fit the model. If `copy_X=False`, then `X_fit_` is
         a reference. This attribute is used for the calls to transform.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import KernelPCA
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = KernelPCA(n_components=7, kernel='linear')
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> X_transformed.shape
+    (1797, 7)
 
     References
     ----------

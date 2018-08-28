@@ -187,6 +187,7 @@ def test_kd_tree_pickle(protocol):
         ind2, dist2 = kdt2.query(X)
         assert_array_almost_equal(ind1, ind2)
         assert_array_almost_equal(dist1, dist2)
+        assert isinstance(kdt2, KDTree)
 
     check_pickle_protocol(protocol)
 

@@ -218,7 +218,7 @@ setting ``oob_score=True``.
     The size of the model with the default parameters is :math:`O( M * N * log (N) )`,
     where :math:`M` is the number of trees and :math:`N` is the number of samples.
     In order to reduce the size of the model, you can change these parameters:
-    ``min_samples_split``, ``min_samples_leaf``, ``max_leaf_nodes`` and ``max_depth``.
+    ``min_samples_split``, ``max_leaf_nodes`` and ``max_depth``.
 
 Parallelization
 ---------------
@@ -260,11 +260,16 @@ respect to the predictability of the target variable. Features used at
 the top of the tree contribute to the final prediction decision of a
 larger fraction of the input samples. The **expected fraction of the
 samples** they contribute to can thus be used as an estimate of the
-**relative importance of the features**.
+**relative importance of the features**. In scikit-learn, the fraction of
+samples a feature contributes to is combined with the decrease in impurity
+from splitting them to create a normalized estimate of the predictive power
+of that feature.
 
-By **averaging** those expected activity rates over several randomized
+By **averaging** the estimates of predictive ability over several randomized
 trees one can **reduce the variance** of such an estimate and use it
-for feature selection.
+for feature selection. This is known as the mean decrease in impurity, or MDI.
+Refer to [L2014]_ for more information on MDI and feature importance
+evaluation with Random Forests.
 
 The following example shows a color-coded representation of the relative
 importances of each individual pixel for a face recognition task using
@@ -287,6 +292,12 @@ to the prediction function.
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`
 
 .. _random_trees_embedding:
+
+.. topic:: References
+
+ .. [L2014] G. Louppe,
+         "Understanding Random Forests: From Theory to Practice",
+         PhD Thesis, U. of Liege, 2014.
 
 Totally Random Trees Embedding
 ------------------------------
@@ -382,9 +393,7 @@ The number of weak learners is controlled by the parameter ``n_estimators``. The
 the final combination. By default, weak learners are decision stumps. Different
 weak learners can be specified through the ``base_estimator`` parameter.
 The main parameters to tune to obtain good results are ``n_estimators`` and
-the complexity of the base estimators (e.g., its depth ``max_depth`` or
-minimum required number of samples at a leaf ``min_samples_leaf`` in case of
-decision trees).
+the complexity of the base estimators (e.g., its depth ``max_depth``).
 
 .. topic:: Examples:
 
@@ -964,7 +973,8 @@ The following example shows how to fit the majority rule classifier::
    >>> iris = datasets.load_iris()
    >>> X, y = iris.data[:, 1:3], iris.target
 
-   >>> clf1 = LogisticRegression(random_state=1)
+   >>> clf1 = LogisticRegression(solver='lbfgs', multi_class='multinomial',
+   ...                           random_state=1)
    >>> clf2 = RandomForestClassifier(n_estimators=50, random_state=1)
    >>> clf3 = GaussianNB()
 
@@ -973,10 +983,10 @@ The following example shows how to fit the majority rule classifier::
    >>> for clf, label in zip([clf1, clf2, clf3, eclf], ['Logistic Regression', 'Random Forest', 'naive Bayes', 'Ensemble']):
    ...     scores = cross_val_score(clf, X, y, cv=5, scoring='accuracy')
    ...     print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (scores.mean(), scores.std(), label))
-   Accuracy: 0.90 (+/- 0.05) [Logistic Regression]
+   Accuracy: 0.95 (+/- 0.04) [Logistic Regression]
    Accuracy: 0.94 (+/- 0.04) [Random Forest]
    Accuracy: 0.91 (+/- 0.04) [naive Bayes]
-   Accuracy: 0.95 (+/- 0.05) [Ensemble]
+   Accuracy: 0.95 (+/- 0.04) [Ensemble]
 
 
 Weighted Average Probabilities (Soft Voting)
@@ -1049,7 +1059,8 @@ The `VotingClassifier` can also be used together with `GridSearch` in order
 to tune the hyperparameters of the individual estimators::
 
    >>> from sklearn.model_selection import GridSearchCV
-   >>> clf1 = LogisticRegression(random_state=1)
+   >>> clf1 = LogisticRegression(solver='lbfgs', multi_class='multinomial',
+   ...                           random_state=1)
    >>> clf2 = RandomForestClassifier(random_state=1)
    >>> clf3 = GaussianNB()
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
