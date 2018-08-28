@@ -307,26 +307,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.n_jobs = n_jobs
 
 
-    def _dump(self, A, comment=""):
-        self._check(A, comment)
-        np.save("/tmp/%d.npy" % self.adrin, A)
-        self.adrin += 1
-
-
-    def _check(self, A, comment):
-        try:
-            data = np.load("/tmp/32/%d.npy" % self.adrin)
-            diff = np.max(np.abs(A - data))
-            if diff > 1e-4:
-                print("%s level: %d, max diff:" % (comment, self.adrin), diff)
-                print("loaded data")
-                print(data)
-                print("calculated data")
-                print(A)
-        except Exception:
-            pass
-
-
     def fit(self, X, y=None):
         """Perform OPTICS clustering
 
@@ -376,14 +356,12 @@ class OPTICS(BaseEstimator, ClusterMixin):
         nbrs.fit(X)
         self.core_distances_[:] = nbrs.kneighbors(X,
                                                   self.min_samples)[0][:, -1]
-        self._dump(self.core_distances_, "core dist")
 
         # Main OPTICS loop. Not parallelizable. The order that entries are
         # written to the 'ordering_' list is important!
         for point in range(n_samples):
             if not self._processed[point]:
                 self._expand_cluster_order(point, X, nbrs)
-                self._dump(self.reachability_, "main reach loop")
 
         indices_, self.labels_ = _extract_optics(self.ordering_,
                                                  self.reachability_,
@@ -407,7 +385,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 self._processed[point] = True
                 self.ordering_.append(point)
                 point = self._set_reach_dist(point, X, nbrs)
-                self._dump(point, "point %d" % point)
         else:  # For very noisy points
             self.ordering_.append(point)
             self._processed[point] = True
@@ -419,18 +396,13 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # Getting indices of neighbors that have not been processed
         unproc = np.compress((~np.take(self._processed, indices)).ravel(),
                              indices, axis=0)
-        #self._dump(indices, "indices")
-        #self._dump(self._processed, "processed")
-        #self._dump(unproc, "unproc")
         # Keep n_jobs = 1 in the following lines...please
         if len(unproc) > 0:
             dists = pairwise_distances(P, np.take(X, unproc, axis=0),
                                        self.metric, n_jobs=None).ravel()
 
             rdists = np.maximum(dists, self.core_distances_[point_index])
-            #self._dump(rdists, "rdists")
             new_reach = np.minimum(np.take(self.reachability_, unproc), rdists)
-            #self._dump(new_reach, "new_reach")
             self.reachability_[unproc] = new_reach
 
         # Checks to see if everything is already processed;
@@ -439,8 +411,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
             # Define return order based on reachability distance
             idx = quick_scan(np.take(self.reachability_, unproc),
                              dists)
-            self._dump(self.reachability_, "reachability")
-            self._dump(np.array([idx]), "idx")
             return(unproc[idx])
         else:
             return point_index
