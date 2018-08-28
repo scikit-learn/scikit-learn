@@ -1478,4 +1478,5 @@ def test_lbfgs_stability():
     import itertools
     for split in range(3):
         for i, j in itertools.combinations(range(len(results)), 2):
-            assert_allclose(results[i], results[j], atol=0, rtol=0)
+            assert_allclose(results[split][i], results[split][j],
+                            atol=0, rtol=0)
