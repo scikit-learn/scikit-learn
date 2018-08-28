@@ -1869,6 +1869,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 w = w[0]
                 print(self.__class__.__name__, self.multi_class, self.solver,
                       'init', coef_init, 'final', w, '', 'C %s' % C_, sep='\n')
+                print(coefs_paths[:, best_index, :])
 
             else:
                 # Take the best scores across every fold and the average of all
