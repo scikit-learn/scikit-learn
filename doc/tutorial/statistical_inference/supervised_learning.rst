@@ -374,7 +374,6 @@ function or **logistic** function:
 
 ::
 
-
     >>> log = linear_model.LogisticRegression(solver='lbfgs', C=1e5,
     ...                                       multi_class='multinomial')
     >>> log.fit(iris_X_train, iris_y_train)  # doctest: +NORMALIZE_WHITESPACE
