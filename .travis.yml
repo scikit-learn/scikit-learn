@@ -34,7 +34,6 @@ matrix:
             - libatlas3-base
             - libatlas-dev
     - os: osx
-      python: 3.6
       install: pip install pytest pytest-cov coverage codecov numpy scipy cython .
       if: type != cron
     # Python 3.4 build
