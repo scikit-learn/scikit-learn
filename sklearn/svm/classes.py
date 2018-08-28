@@ -1177,6 +1177,7 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         Perform classification on samples in X.
 
         For an one-class model, +1 or -1 is returned.
+        Label +1 implies that the sample predicted to be an outlier (or novel).
 
         Parameters
         ----------
