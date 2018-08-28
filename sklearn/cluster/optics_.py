@@ -306,7 +306,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.leaf_size = leaf_size
         self.n_jobs = n_jobs
 
-
     def fit(self, X, y=None):
         """Perform OPTICS clustering
 
@@ -326,7 +325,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self : instance of OPTICS
             The instance.
         """
-        self.adrin = 0
         X = check_array(X, dtype=np.float)
 
         n_samples = len(X)
@@ -409,9 +407,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # if so, return control to main loop
         if unproc.size > 0:
             # Define return order based on reachability distance
-            idx = quick_scan(np.take(self.reachability_, unproc),
-                             dists)
-            return(unproc[idx])
+            return(unproc[quick_scan(np.take(self.reachability_, unproc),
+                                     dists)])
         else:
             return point_index
 

@@ -24,7 +24,7 @@ cpdef quick_scan(double[:] rdists, double[:] dists):
             rdist = rdists[i]
             dist = dists[i]
             idx = i
-        if np.abs(rdists[i] - rdist) < 1e-7:
+        if np.isclose(rdists[i], rdist):
             if dists[i] < dist:
                 dist = dists[i]
                 idx = i
