@@ -1480,3 +1480,60 @@ def test_lbfgs_stability():
         for i, j in itertools.combinations(range(len(results)), 2):
             assert_allclose(results[split][i], results[split][j],
                             atol=0, rtol=0)
+
+
+def test_logistic_regression_path_stability():
+    X = iris.data[::10]
+    y_multi = iris.target[::10]
+
+    results = {0: [], 1: [], 2: []}
+    for i in range(50):
+        for split in range(3):
+            coef = logistic_regression_path(X, y_multi, max_iter=10000,
+                                            solver='lbfgs',
+                                            multi_class='multinomial')[0]
+            results[split].append(coef)
+
+    import itertools
+    for split in range(3):
+        for i, j in itertools.combinations(range(len(results)), 2):
+            assert_allclose(results[split][i], results[split][j],
+                            atol=0, rtol=0)
+
+
+def test_logistic_regression_stability():
+    X = iris.data[::10]
+    y_multi = iris.target[::10]
+
+    results = {0: [], 1: [], 2: []}
+    for i in range(50):
+        for split in range(3):
+            lr = LogisticRegression(max_iter=10000,
+                                    solver='lbfgs',
+                                    multi_class='multinomial')
+            coef = lr.fit(X, y_multi).coef_
+            results[split].append(coef)
+
+    import itertools
+    for split in results:
+        for i, j in itertools.combinations(range(len(results)), 2):
+            assert_allclose(results[split][i], results[split][j],
+                            atol=0, rtol=0)
+
+
+def test_logistic_regression_cv_stability():
+    X = iris.data[::10]
+    y_multi = iris.target[::10]
+
+    results = []
+    for i in range(50):
+        lr = LogisticRegressionCV(max_iter=10000, cv=3,
+                                  solver='lbfgs',
+                                  multi_class='multinomial')
+        coef = lr.fit(X, y_multi).coef_
+        results.append(coef)
+
+    import itertools
+    for i, j in itertools.combinations(range(len(results)), 2):
+        assert_allclose(results[i], results[j],
+                        atol=0, rtol=0)
