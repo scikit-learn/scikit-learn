@@ -1466,12 +1466,12 @@ def test_lbfgs_stability():
     results = {0: [], 1: [], 2: []}
     for i in range(50):
         for split in range(3):
-            idx = np.arange(len(X))[::split]
+            idx = np.arange(len(X))[split::3]
             w0 = np.zeros((3, n_features + 1),
                           order='F', dtype=X.dtype)
             w0, loss, info = optimize.fmin_l_bfgs_b(
                 func, w0.ravel(), fprime=None,
-                args=(X[idx], y_multi[idx], 1e-3, np.ones(X.shape[0])),
+                args=(X[idx], y_multi[idx], 1e-3, np.ones(idx.shape[0])),
                 iprint=1, pgtol=1e-4, maxiter=10000)
             results[split].append(w0)
 
