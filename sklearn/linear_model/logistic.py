@@ -10,6 +10,7 @@ Logistic Regression
 #         Simon Wu <s8wu@uwaterloo.ca>
 #         Arthur Mensch <arthur.mensch@m4x.org
 
+from __future__ import print_function
 import numbers
 import warnings
 
