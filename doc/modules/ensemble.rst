@@ -973,7 +973,8 @@ The following example shows how to fit the majority rule classifier::
    >>> iris = datasets.load_iris()
    >>> X, y = iris.data[:, 1:3], iris.target
 
-   >>> clf1 = LogisticRegression(random_state=1)
+   >>> clf1 = LogisticRegression(solver='lbfgs', multi_class='multinomial',
+   ...                           random_state=1)
    >>> clf2 = RandomForestClassifier(n_estimators=50, random_state=1)
    >>> clf3 = GaussianNB()
 
@@ -982,10 +983,10 @@ The following example shows how to fit the majority rule classifier::
    >>> for clf, label in zip([clf1, clf2, clf3, eclf], ['Logistic Regression', 'Random Forest', 'naive Bayes', 'Ensemble']):
    ...     scores = cross_val_score(clf, X, y, cv=5, scoring='accuracy')
    ...     print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (scores.mean(), scores.std(), label))
-   Accuracy: 0.90 (+/- 0.05) [Logistic Regression]
+   Accuracy: 0.95 (+/- 0.04) [Logistic Regression]
    Accuracy: 0.94 (+/- 0.04) [Random Forest]
    Accuracy: 0.91 (+/- 0.04) [naive Bayes]
-   Accuracy: 0.95 (+/- 0.05) [Ensemble]
+   Accuracy: 0.95 (+/- 0.04) [Ensemble]
 
 
 Weighted Average Probabilities (Soft Voting)
@@ -1058,7 +1059,8 @@ The `VotingClassifier` can also be used together with `GridSearch` in order
 to tune the hyperparameters of the individual estimators::
 
    >>> from sklearn.model_selection import GridSearchCV
-   >>> clf1 = LogisticRegression(random_state=1)
+   >>> clf1 = LogisticRegression(solver='lbfgs', multi_class='multinomial',
+   ...                           random_state=1)
    >>> clf2 = RandomForestClassifier(random_state=1)
    >>> clf3 = GaussianNB()
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
