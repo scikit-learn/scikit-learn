@@ -24,7 +24,6 @@ from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted
-from ..utils.testing import assert_almost_equal
 
 
 __all__ = ["BaggingClassifier",
