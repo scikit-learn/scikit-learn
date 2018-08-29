@@ -1537,13 +1537,17 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                                      X_csc, X_csr)
 
             # track deviance (= loss)
-            self.train_score_[i] = loss_(y[sample_mask], y_pred[sample_mask],
-                                         sample_weight[sample_mask])
             if do_oob:
+                self.train_score_[i] = loss_(y[sample_mask],
+                                             y_pred[sample_mask],
+                                             sample_weight[sample_mask])
                 self.oob_improvement_[i] = (
                     old_oob_score - loss_(y[~sample_mask],
                                           y_pred[~sample_mask],
                                           sample_weight[~sample_mask]))
+            else:
+                # no need to fancy index w/ no subsampling
+                self.train_score_[i] = loss_(y, y_pred, sample_weight)
 
             if self.verbose > 0:
                 verbose_reporter.update(i, self)
