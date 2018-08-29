@@ -15,7 +15,6 @@ from sklearn.utils.testing import assert_equal, assert_warns
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_allclose
-from sklearn.utils import _IS_32BIT
 
 from sklearn.cluster.tests.common import generate_clustered_data
 
@@ -251,10 +250,4 @@ def test_reach_dists():
          12.24758945, 11.14464297,  2.29458767,  6.01813273, 20.81401082,
          8.56541443,  5.3200597,  6.9362395,  1.25852424,  4.36094583]
 
-    # FIXME: known failure in 32bit Linux; numerical imprecision results in
-    # different ordering in quick_scan
-    if _IS_32BIT:  # pragma: no cover
-        assert_allclose(clust.reachability_, np.array(v), rtol=1e-2)
-    else:
-        # we compare to truncated decimals, so use atol
-        assert_allclose(clust.reachability_, np.array(v), atol=1e-5)
+    assert_allclose(clust.reachability_, np.array(v))
