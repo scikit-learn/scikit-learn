@@ -587,7 +587,7 @@ def _automatic_cluster(reachability_plot, ordering,
 
     min_neighborhood_size = 2
     if min_cluster_size <= 1:
-        min_cluster_size = max(2, int(min_cluster_size * len(ordering)))
+        min_cluster_size = max(2, min_cluster_size * len(ordering))
     neighborhood_size = int(min_maxima_ratio * len(ordering))
 
     # Again, should this check < min_samples, should the parameter be public?
