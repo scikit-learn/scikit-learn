@@ -87,6 +87,15 @@ Details are listed in the changelog below.
 (While we are trying to better inform users by providing this information, we
 cannot assure that this list is complete.)
 
+Known Major Bugs
+----------------
+
+* :issue:`11924`: :class:`LogisticRegressionCV` with `solver='lbfgs'` and
+  `multi_class='multinomial'` may be non-deterministic or otherwise broken on
+  MacOS. This appears to be the case on Travis CI servers, but has not been
+  confirmed on personal MacBooks! This issue has been present in previous
+  releases.
+
 Changelog
 ---------
 

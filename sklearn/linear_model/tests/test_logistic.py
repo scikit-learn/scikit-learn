@@ -1,4 +1,5 @@
 import os
+import sys
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
@@ -1403,6 +1404,9 @@ def test_logistic_regression_path_coefs_multinomial():
                                  ])
 @pytest.mark.parametrize('solver', ['liblinear', 'lbfgs', 'newton-cg', 'sag',
                                     'saga'])
+@pytest.xfail(sys.platform == 'darwin',
+              'LogisticRegressionCV(solver="lbfgs", multi_class="multinomial")'
+              ' is nondterministic on MacOS.')
 def test_logistic_regression_multi_class_auto(est, solver):
     # check multi_class='auto' => multi_class='ovr' iff binary y or liblinear
 
