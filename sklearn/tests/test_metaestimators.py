@@ -47,7 +47,8 @@ DELEGATING_METAESTIMATORS = [
                                 'predict']),
     DelegatorData('Self-Training', lambda est: SelfTraining(est),
                   skip_methods=['transform', 'inverse_transform', 'score',
-                                'predict_log_proba', 'decision_funtion'])
+                                'predict_proba', 'predict_log_proba',
+                                'predict', 'decision_function']),
 ]
 
 
