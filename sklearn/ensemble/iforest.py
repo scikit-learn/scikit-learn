@@ -79,8 +79,6 @@ class IsolationForest(BaseBagging, OutlierMixin):
             - If int, then draw `max_features` features.
             - If float, then draw `max_features * X.shape[1]` features.
 
-    feature_weight :
-
     bootstrap : boolean, optional (default=False)
         If True, individual trees are fit on random subsets of the training
         data sampled with replacement. If False, sampling without replacement
@@ -189,7 +187,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by iforest")
 
-    def fit(self, X, y=None, sample_weight=None):
+    def fit(self, X, y=None, sample_weight=None, feature_weight=None):
         """Fit estimator.
 
         Parameters
@@ -261,7 +259,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
         max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
         super(IsolationForest, self)._fit(X, y, max_samples,
                                           max_depth=max_depth,
-                                          sample_weight=sample_weight)
+                                          sample_weight=sample_weight,
+                                          feature_weight=feature_weight)
 
         if self.behaviour == 'old':
             # in this case, decision_function = 0.5 + self.score_samples(X):
