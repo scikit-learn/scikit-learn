@@ -1,4 +1,5 @@
 import os
+import sys
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
@@ -1428,6 +1429,10 @@ def test_logistic_regression_multi_class_auto(est, solver):
     else:
         est_multi_multi = fit(X, y_multi, multi_class='multinomial',
                               solver=solver)
+        if sys.platform == 'darwin' and solver == 'lbfgs':
+            pytest.xfail('Issue #11924: LogisticRegressionCV(solver="lbfgs", '
+                         'multi_class="multinomial") is nondterministic on '
+                         'MacOS.')  # pragma: no cover
         assert np.allclose(est_auto_multi.coef_, est_multi_multi.coef_)
         assert np.allclose(est_auto_multi.predict_proba(X2),
                            est_multi_multi.predict_proba(X2))
