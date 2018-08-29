@@ -8,12 +8,12 @@ The iris dataset is loaded, and a SVC classifier is created. Then, a
 SelfTraining classifier is initialised, using the same SVC as its
 base estimator.
 
-The dataset contains 150 data points, and the SelfTraining classifier is trained
-using all 150 data points, although most are unlabeled. The normal SVC is
-trained using only the labeled data points.
+The dataset contains 150 data points, and the SelfTraining classifier is
+trained using all 150 data points, although most are unlabeled. The normal SVC
+is trained using only the labeled data points.
 
-The graph shows that the SelfTraining classifier outperforms the normal SVC when
-only few labeled data points are available.
+The graph shows that the SelfTraining classifier outperforms the normal SVC
+when only few labeled data points are available.
 """
 # Authors: Oliver Rausch <oliverrausch99@gmail.com>
 #          Patrice Becker <patrice@5becker.de>
