@@ -30,6 +30,7 @@ from sklearn.utils import check_random_state
 from sklearn.metrics import roc_auc_score
 
 from scipy.sparse import csc_matrix, csr_matrix
+from scipy.stats import kurtosis
 
 rng = check_random_state(0)
 
@@ -139,6 +140,13 @@ def test_iforest_error():
     assert_raises_regex(AttributeError, msg, getattr,
                         IsolationForest(behaviour='new'), 'threshold_')
 
+    # test feature_weight lenght match n_features:
+    assert_raises(ValueError, IsolationForest().fit, X,
+                  feature_weight=[1])
+    # test feature_weight does not add up to 1:
+    assert_raises(ValueError, IsolationForest().fit, X,
+                  feature_weight=[0.1, 0.2, 0.3, 0.3])
+
 
 @pytest.mark.filterwarnings('ignore:default contamination')
 @pytest.mark.filterwarnings('ignore:behaviour="old"')
@@ -212,6 +220,39 @@ def test_iforest_performance():
 
     # fit the model
     clf = IsolationForest(max_samples=100, random_state=rng).fit(X_train)
+
+    # predict scores (the lower, the more normal)
+    y_pred = - clf.decision_function(X_test)
+
+    # check that there is at most 6 errors (false positive or false negative)
+    assert_greater(roc_auc_score(y_test, y_pred), 0.98)
+
+
+@pytest.mark.filterwarnings('ignore:default contamination')
+@pytest.mark.filterwarnings('ignore:behaviour="old"')
+def test_iforest_performance_feature_weight():
+    """Test Isolation Forest performs well"""
+
+    # Generate train/test data
+    rng = check_random_state(2)
+    X = 0.3 * rng.randn(120, 2)
+    X = np.hstack([X, rng.uniform(-4, 4, (len(X), 3))])
+    X_train = np.r_[X + 2, X - 2]
+    X_train = X[:100]
+
+    # Generate some abnormal novel observations
+    X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
+    X_outliers = np.hstack([X_outliers,
+                            rng.uniform(-4, 4, (len(X_outliers), 3))])
+    X_test = np.r_[X[100:], X_outliers]
+    y_test = np.array([0] * 20 + [1] * 20)
+
+    feature_weight = kurtosis(X, fisher=False)
+    feature_weight /= feature_weight.sum()
+
+    # fit the model
+    clf = IsolationForest(max_samples=100, random_state=rng)
+    clf.fit(X_train, feature_weight=feature_weight)
 
     # predict scores (the lower, the more normal)
     y_pred = - clf.decision_function(X_test)
