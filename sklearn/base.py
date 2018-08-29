@@ -494,6 +494,9 @@ class OutlierMixin(object):
         X : ndarray, shape (n_samples, n_features)
             Input data.
 
+        y : Ignored
+            not used, present for API consistency by convention.
+
         Returns
         -------
         y : ndarray, shape (n_samples,)
