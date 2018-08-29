@@ -714,7 +714,7 @@ class TimeSeriesSplit(_BaseKFold):
     Parameters
     ----------
     n_splits : int, default=3
-        Number of splits. Must be at least 1.
+        Number of splits. Must be at least 2.
 
         .. versionchanged:: 0.20
             ``n_splits`` default value will change from 3 to 5 in v0.22.
