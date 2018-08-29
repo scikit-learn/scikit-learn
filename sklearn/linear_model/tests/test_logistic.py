@@ -6,6 +6,7 @@ from sklearn.metrics import log_loss
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import compute_class_weight
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -1175,3 +1176,21 @@ def test_dtype_match():
             lr_64.fit(X_64, y_64)
             assert_equal(lr_64.coef_.dtype, X_64.dtype)
             assert_almost_equal(lr_32.coef_, lr_64.coef_.astype(np.float32))
+
+
+def test_logistic_regression_cv_stability():
+    X = iris.data[::10]
+    y_multi = iris.target[::10]
+
+    results = []
+    for i in range(50):
+        lr = LogisticRegressionCV(max_iter=10000, cv=3,
+                                  solver='lbfgs',
+                                  multi_class='multinomial')
+        coef = lr.fit(X, y_multi).coef_
+        results.append(coef)
+
+    import itertools
+    for i, j in itertools.combinations(range(len(results)), 2):
+        assert_allclose(results[i], results[j],
+                        atol=0, rtol=0)
