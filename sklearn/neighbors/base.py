@@ -145,7 +145,8 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         elif self.metric not in VALID_METRICS[alg_check]:
             raise ValueError("Metric '%s' not valid. Use "
                              "sorted(sklearn.neighbors.VALID_METRICS['%s']) "
-                             "for valid options."
+                             "for valid options. Metric can also be a "
+                             "callable function."
                              % (self.metric, alg_check))
 
         if self.metric_params is not None and 'p' in self.metric_params:
