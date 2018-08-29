@@ -1404,9 +1404,6 @@ def test_logistic_regression_path_coefs_multinomial():
                                  ])
 @pytest.mark.parametrize('solver', ['liblinear', 'lbfgs', 'newton-cg', 'sag',
                                     'saga'])
-@pytest.xfail(sys.platform == 'darwin',
-              'LogisticRegressionCV(solver="lbfgs", multi_class="multinomial")'
-              ' is nondterministic on MacOS.')
 def test_logistic_regression_multi_class_auto(est, solver):
     # check multi_class='auto' => multi_class='ovr' iff binary y or liblinear
 
@@ -1432,6 +1429,10 @@ def test_logistic_regression_multi_class_auto(est, solver):
     else:
         est_multi_multi = fit(X, y_multi, multi_class='multinomial',
                               solver=solver)
+        if sys.platform == 'darwin' and solver == 'lbfgs':
+            pytest.xfail('Issue #11924: LogisticRegressionCV(solver="lbfgs", '
+                         'multi_class="multinomial") is nondterministic on '
+                         'MacOS.')
         assert np.allclose(est_auto_multi.coef_, est_multi_multi.coef_)
         assert np.allclose(est_auto_multi.predict_proba(X2),
                            est_multi_multi.predict_proba(X2))
