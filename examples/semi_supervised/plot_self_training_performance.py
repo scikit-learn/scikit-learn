@@ -1,6 +1,6 @@
 """
 ===================================================
-Self-Training: Comparing performance
+Self-training: Comparing performance
 ===================================================
 This example demonstrates the performance of the SelfTraining classifier.
 

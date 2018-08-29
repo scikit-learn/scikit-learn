@@ -13,22 +13,46 @@ def _check_estimator(estimator):
 
 class SelfTraining(BaseEstimator):
 
-    """Self-Training classifier
+    """Self-training classifier
 
     Parameters
     ----------
-    estimator : estimator object
+    base : estimator object
         An estimator object implementing `fit` and `predict_proba`.
 
     threshold : float
         Threshold above which predictions are added to the labeled dataset
 
     max_iter : integer
-        Change maximum number of iterations allowed
+        Maximum number of iterations allowed
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn import datasets
+    >>> from sklearn.semi_supervised import SelfTraining
+    >>> from sklearn.svm import SVC
+    >>> svc = SVC(probability=True)
+    >>> self_training_model = SelfTraining(svc)
+    >>> iris = datasets.load_iris()
+    >>> rng = np.random.RandomState(42)
+    >>> random_unlabeled_points = rng.rand(len(iris.target)) < 0.3
+    >>> labels = np.copy(iris.target)
+    >>> labels[random_unlabeled_points] = -1
+    >>> self_training_model.fit(iris.data, labels)
+    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    SVC(...)
+
+    References
+    ----------
+    David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
+    supervised methods. In Proceedings of the 33rd annual meeting on
+    Association for Computational Linguistics (ACL '95). Association for
+    Computational Linguistics, Stroudsburg, PA, USA, 189-196. DOI:
+    https://doi.org/10.3115/981658.981684
     """
-    def __init__(self, estimator, threshold=0.7, max_iter=500):
-        self.estimator = estimator
+    def __init__(self, base, threshold=0.75, max_iter=100):
+        self.base = base
         self.threshold = threshold
         self.max_iter = max_iter
 
@@ -48,7 +72,7 @@ class SelfTraining(BaseEstimator):
         self: returns an instance of self.
         """
         X, y = check_X_y(X, y)
-        _check_estimator(self.estimator)
+        _check_estimator(self.base)
 
         # Data usable for supervised training
         X_labeled = X[safe_mask(X, np.where(y != -1))][0]
@@ -61,7 +85,7 @@ class SelfTraining(BaseEstimator):
         iter = 0
         while (len(X_labeled) < len(X) and iter < self.max_iter):
             iter += 1
-            self.estimator.fit(X_labeled, y_labeled)
+            self.base.fit(X_labeled, y_labeled)
 
             # Select prediction where confidence is above the threshold
             pred = self.predict(X_unlabeled)
@@ -76,8 +100,8 @@ class SelfTraining(BaseEstimator):
             X_unlabeled = np.delete(X_unlabeled, confident, axis=0)
             y_unlabeled = np.delete(y_unlabeled, confident, axis=0)
 
-        self.estimator.fit(X_labeled, y_labeled)
-        return self.estimator
+        self.base.fit(X_labeled, y_labeled)
+        return self.base
 
     def predict(self, X):
         """Predict on a dataset.
@@ -92,9 +116,9 @@ class SelfTraining(BaseEstimator):
         y : array-like, shape = (n_samples, 1)
             array with predicted labels
         """
-        check_is_fitted(self, 'estimator')
+        check_is_fitted(self, 'base')
         X = check_array(X)
-        return self.estimator.predict(X)
+        return self.base.predict(X)
 
     def predict_proba(self, X):
         """Predict probability for each possible outcome.
@@ -109,6 +133,6 @@ class SelfTraining(BaseEstimator):
         y : array-like, shape = (n_samples, n_features)
             array with prediction probabilities
         """
-        _check_estimator(self.estimator)
-        check_is_fitted(self, 'estimator')
-        return self.estimator.predict_proba(X)
+        _check_estimator(self.base)
+        check_is_fitted(self, 'base')
+        return self.base.predict_proba(X)
