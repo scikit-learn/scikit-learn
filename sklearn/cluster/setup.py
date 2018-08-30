@@ -29,25 +29,35 @@ def configuration(parent_package='', top_path=None):
                          language="c++",
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
-    config.add_extension('_k_means_elkan',
-                         sources=['_k_means_elkan.pyx'],
+
+    config.add_extension('_k_means',
+                         sources=['_k_means.pyx'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
-    config.add_extension('_k_means',
+    config.add_extension('_k_means_lloyd',
                          libraries=cblas_libs,
-                         sources=['_k_means.pyx'],
+                         sources=['_k_means_lloyd.pyx'],
                          include_dirs=[join('..', 'src', 'cblas'),
                                        numpy.get_include(),
                                        blas_info.pop('include_dirs', [])],
+                         extra_link_args=['-fopenmp'],
                          extra_compile_args=blas_info.pop(
-                             'extra_compile_args', []),
+                             'extra_compile_args', []) + ['-fopenmp'],
                          **blas_info
                          )
+
+    config.add_extension('_k_means_elkan',
+                         sources=['_k_means_elkan.pyx'],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries,
+                         extra_link_args=['-fopenmp'],
+                         extra_compile_args=['-fopenmp'])
 
     config.add_subpackage('tests')
 
     return config
+
 
 if __name__ == '__main__':
     from numpy.distutils.core import setup

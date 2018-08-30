@@ -234,29 +234,20 @@ def test_k_means_new_centers():
         np.testing.assert_array_equal(this_labels, labels)
 
 
+def test_k_means_precompute_distances_deprecated():
+    # check that the deprecation warning is raised for precompute_distances
+    with pytest.warns(DeprecationWarning, match='precompute_distances'):
+        km = KMeans(precompute_distances='auto')
+        km.fit(X)
+
+    with pytest.warns(DeprecationWarning, match='precompute_distances'):
+        k_means(X, n_clusters, precompute_distances='auto')
+
+
 @if_safe_multiprocessing_with_blas
 def test_k_means_plus_plus_init_2_jobs():
     km = KMeans(init="k-means++", n_clusters=n_clusters, n_jobs=2,
                 random_state=42).fit(X)
-    _check_fitted_model(km)
-
-
-def test_k_means_precompute_distances_flag():
-    # check that a warning is raised if the precompute_distances flag is not
-    # supported
-    km = KMeans(precompute_distances="wrong")
-    assert_raises(ValueError, km.fit, X)
-
-
-def test_k_means_plus_plus_init_not_precomputed():
-    km = KMeans(init="k-means++", n_clusters=n_clusters, random_state=42,
-                precompute_distances=False).fit(X)
-    _check_fitted_model(km)
-
-
-def test_k_means_random_init_not_precomputed():
-    km = KMeans(init="random", n_clusters=n_clusters, random_state=42,
-                precompute_distances=False).fit(X)
     _check_fitted_model(km)
 
 
@@ -310,8 +301,7 @@ def test_k_means_fortran_aligned_data():
     X = np.asfortranarray([[0, 0], [0, 1], [0, 1]])
     centers = np.array([[0, 0], [0, 1]])
     labels = np.array([0, 1, 1])
-    km = KMeans(n_init=1, init=centers, precompute_distances=False,
-                random_state=42, n_clusters=2)
+    km = KMeans(n_init=1, init=centers, random_state=42, n_clusters=2)
     km.fit(X)
     assert_array_almost_equal(km.cluster_centers_, centers)
     assert_array_equal(km.labels_, labels)

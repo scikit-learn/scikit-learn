@@ -1,7 +1,4 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: profile=True
+# cython: profile=True, boundscheck=False, wraparound=False, cdivision=True
 #
 # Author: Andreas Mueller
 #
@@ -10,30 +7,48 @@
 import numpy as np
 cimport numpy as np
 cimport cython
+cimport openmp
 from cython cimport floating
-
+from cython.parallel import prange, parallel
 from libc.math cimport sqrt
+from libc.stdlib cimport malloc, free
+from libc.string cimport memset, memcpy
 
 from ..metrics import euclidean_distances
-from ._k_means import _centers_dense
+from ._k_means import _relocate_empty_clusters_dense
+
+
+np.import_array()
 
 
 cdef floating euclidean_dist(floating* a, floating* b, int n_features) nogil:
-    cdef floating result, tmp
-    result = 0
-    cdef int i
-    for i in range(n_features):
-        tmp = (a[i] - b[i])
-        result += tmp * tmp
+    """Euclidean distance between a and b, optimized for vectorization"""
+    cdef:
+        int i
+        int n = n_features // 4
+        int rem = n_features % 4
+        floating result = 0
+
+    for i in range(n):
+        result += ((a[0] - b[0]) * (a[0] - b[0])
+                  +(a[1] - b[1]) * (a[1] - b[1])
+                  +(a[2] - b[2]) * (a[2] - b[2])
+                  +(a[3] - b[3]) * (a[3] - b[3]))
+        a += 4; b += 4
+
+    for i in range(rem):
+        result += (a[i] - b[i]) * (a[i] - b[i])
+
     return sqrt(result)
 
 
-cdef update_labels_distances_inplace(
-        floating* X, floating* centers, floating[:, :] center_half_distances,
-        int[:] labels, floating[:, :] lower_bounds, floating[:] upper_bounds,
-        int n_samples, int n_features, int n_clusters):
-    """
-    Calculate upper and lower bounds for each sample.
+cpdef _init_bounds(np.ndarray[floating, ndim=2, mode='c'] X,
+                   floating[:, ::1] centers,
+                   floating[:, ::1] center_half_distances,
+                   int[::1] labels,
+                   floating[::1] upper_bounds,
+                   floating[:, ::1] lower_bounds):
+    """Initialize upper and lower bounds for each sample.
 
     Given X, centers and the pairwise distances divided by 2.0 between the
     centers this calculates the upper bounds and lower bounds for each sample.
@@ -69,193 +84,275 @@ cdef update_labels_distances_inplace(
     upper_bounds : nd-array, shape(n_samples,)
         The distance of each sample from its closest cluster center.  This is
         modified in place by the function.
-
-    n_samples : int
-        The number of samples.
-
-    n_features : int
-        The number of features.
-
-    n_clusters : int
-        The number of clusters.
     """
-    # assigns closest center to X
-    # uses triangle inequality
-    cdef floating* x
-    cdef floating* c
-    cdef floating d_c, dist
-    cdef int c_x, j, sample
-    for sample in range(n_samples):
-        # assign first cluster center
-        c_x = 0
-        x = X + sample * n_features
-        d_c = euclidean_dist(x, centers, n_features)
-        lower_bounds[sample, 0] = d_c
+    cdef:
+        int n_samples = X.shape[0]
+        int n_clusters = centers.shape[0]
+        int n_features = X.shape[1]
+
+        floating min_dist, dist
+        int best_cluster, i, j
+
+    center_half_distances = euclidean_distances(np.asarray(centers)) / 2
+
+    for i in range(n_samples):
+        best_cluster = 0
+        min_dist = euclidean_dist(&X[i, 0], &centers[0, 0], n_features)
+        lower_bounds[i, 0] = min_dist
         for j in range(1, n_clusters):
-            if d_c > center_half_distances[c_x, j]:
-                c = centers + j * n_features
-                dist = euclidean_dist(x, c, n_features)
-                lower_bounds[sample, j] = dist
-                if dist < d_c:
-                    d_c = dist
-                    c_x = j
-        labels[sample] = c_x
-        upper_bounds[sample] = d_c
+            if min_dist > center_half_distances[best_cluster, j]:
+                dist = euclidean_dist(&X[i, 0], &centers[j, 0], n_features)
+                lower_bounds[i, j] = dist
+                if dist < min_dist:
+                    min_dist = dist
+                    best_cluster = j
+        labels[i] = best_cluster
+        upper_bounds[i] = min_dist
 
 
-def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_,
-                  np.ndarray[floating, ndim=1, mode='c'] sample_weight,
-                  int n_clusters,
-                  np.ndarray[floating, ndim=2, mode='c'] init,
-                  float tol=1e-4, int max_iter=30, verbose=False):
-    """Run Elkan's k-means.
+cpdef void _elkan_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
+                                     floating[::1] sample_weight,
+                                     floating[:, ::1] centers_old,
+                                     floating[:, ::1] centers_new,
+                                     floating[::1] weight_in_clusters, 
+                                     floating[:, ::1] center_half_distances,
+                                     floating[::1] distance_next_center,
+                                     floating[::1] upper_bounds,
+                                     floating[:, ::1] lower_bounds,
+                                     int[::1] labels,
+                                     int n_jobs = -1,
+                                     bint update_centers = True):
+    """Single interation of K-means elkan algorithm
+
+    Update labels and centers (inplace), for one iteration, distributed
+    over data chunks.
 
     Parameters
     ----------
-    X_ : nd-array, shape (n_samples, n_features)
+    X : {float32, float64} array-like, shape (n_samples, n_features)
+        The observations to cluster.
 
-    sample_weight : nd-array, shape (n_samples,)
+    sample_weight : {float32, float64} array-like, shape (n_samples,)
         The weights for each observation in X.
 
-    n_clusters : int
-        Number of clusters to find.
+    centers_old : {float32, float64} array-like, shape (n_clusters, n_features)
+        Centers before previous iteration, placeholder for the centers after
+        previous iteration.
 
-    init : nd-array, shape (n_clusters, n_features)
-        Initial position of centers.
+    centers_new : {float32, float64} array-like, shape (n_clusters, n_features)
+        Centers after previous iteration, placeholder for the new centers
+        computed during this iteration.
 
-    tol : float, default=1e-4
-        The relative increment in cluster means before declaring convergence.
+    weight_in_clusters : {float32, float64} array-like, shape (n_clusters,)
+        Placeholder for the sums of the weights of every observation assigned
+        to each center.
 
-    max_iter : int, default=30
-    Maximum number of iterations of the k-means algorithm.
+    center_half_distances : {float32, float64} array-like, \
+shape (n_clusters, n_clusters)
+        Half pairwise distances between centers.
 
-    verbose : bool, default=False
-        Whether to be verbose.
+    distance_next_center : {float32, float64} array-like, shape (n_clusters,)
+        Distance between each center it's closest center.
+    
+    upper_bounds : {float32, float64} array-like, shape (n_samples,)
+        Upper bound for the distance between each sample and it's center,
+        updated inplace.
 
+    lower_bounds : {float32, float64} array-like, shape (n_samples, n_clusters)
+        Lower bound for the distance between each sample and each center,
+        updated inplace.
+
+    labels : int array-like, shape (n_samples,)
+        labels assignment.
+
+    n_jobs : int
+        The number of threads to be used by openmp. If -1, openmp will use as
+        many as possible.
+
+    update_centers : bool
+        - If True, the labels and the new centers will be computed, i.e. runs
+          the E-step and the M-step of the algorithm.
+        - If False, only the labels will be computed, i.e runs the E-step of
+          the algorithm.
     """
-    if floating is float:
-        dtype = np.float32
-    else:
-        dtype = np.float64
+    cdef:
+        int n_samples = X.shape[0]
+        int n_features = X.shape[1]
+        int n_clusters = centers_new.shape[0]
 
-    # initialize
-    cdef np.ndarray[floating, ndim=2, mode='c'] centers_ = init
-    cdef floating* centers_p = <floating*>centers_.data
-    cdef floating* X_p = <floating*>X_.data
-    cdef floating* x_p
-    cdef Py_ssize_t n_samples = X_.shape[0]
-    cdef Py_ssize_t n_features = X_.shape[1]
-    cdef int point_index, center_index, label
-    cdef floating upper_bound, distance
-    cdef floating[:, :] center_half_distances = euclidean_distances(centers_) / 2.
-    cdef floating[:, :] lower_bounds = np.zeros((n_samples, n_clusters), dtype=dtype)
-    cdef floating[:] distance_next_center
-    labels_ = np.empty(n_samples, dtype=np.int32)
-    cdef int[:] labels = labels_
-    upper_bounds_ = np.empty(n_samples, dtype=dtype)
-    cdef floating[:] upper_bounds = upper_bounds_
+        # hard-coded number of samples per chunk. Appeared to be close to
+        # optimal in all situations.
+        int n_samples_chunk = 256 if n_samples > 256 else n_samples
+        int n_chunks = n_samples // n_samples_chunk
+        int n_samples_r = n_samples % n_samples_chunk
+        int chunk_idx, n_samples_chunk_eff
+        int num_threads
 
-    # Get the initial set of upper bounds and lower bounds for each sample.
-    update_labels_distances_inplace(X_p, centers_p, center_half_distances,
-                                    labels, lower_bounds, upper_bounds,
-                                    n_samples, n_features, n_clusters)
-    cdef np.uint8_t[:] bounds_tight = np.ones(n_samples, dtype=np.uint8)
-    cdef np.uint8_t[:] points_to_update = np.zeros(n_samples, dtype=np.uint8)
-    cdef np.ndarray[floating, ndim=2, mode='c'] new_centers
+        int i, j, k
+        int label
+        floating alpha, tmp, x
 
-    if max_iter <= 0:
-        raise ValueError('Number of iterations should be a positive number'
-        ', got %d instead' % max_iter)
+        floating *centers_new_chunk
+        floating *weight_in_clusters_chunk
 
-    col_indices = np.arange(center_half_distances.shape[0], dtype=np.int)
-    for iteration in range(max_iter):
-        if verbose:
-            print("start iteration")
+        floating[::1] center_shift = np.zeros(n_clusters, dtype=X.dtype)
 
-        cd =  np.asarray(center_half_distances)
-        distance_next_center = np.partition(cd, kth=1, axis=0)[1]
+    # count remainder chunk in total number of chunks
+    n_chunks += n_samples != n_chunks * n_samples_chunk
 
-        if verbose:
-            print("done sorting")
+    # re-initialize all arrays at each iteration
+    if update_centers:
+        memcpy(&centers_old[0, 0], &centers_new[0, 0], n_clusters * n_features * sizeof(floating))
+        memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
+        memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
-        for point_index in range(n_samples):
-            upper_bound = upper_bounds[point_index]
-            label = labels[point_index]
+    # compute pairwise distances between centers and get next closest center
+    distance_next_center = np.partition(np.asarray(center_half_distances), kth=1, axis=0)[1]
 
-            # This means that the next likely center is far away from the
-            # currently assigned center and the sample is unlikely to be
-            # reassigned.
-            if distance_next_center[label] >= upper_bound:
-                continue
-            x_p = X_p + point_index * n_features
+    # set number of threads to be used by openmp
+    num_threads = n_jobs if n_jobs != -1 else openmp.omp_get_max_threads()
 
-            # TODO: get pointer to lower_bounds[point_index, center_index]
-            for center_index in range(n_clusters):
+    with nogil, parallel(num_threads=num_threads):
+        # thread local buffers
+        centers_new_chunk = <floating*> malloc(n_clusters * n_features * sizeof(floating))
+        weight_in_clusters_chunk = <floating*> malloc(n_clusters * sizeof(floating))
+        # initialize local buffers
+        memset(centers_new_chunk, 0, n_clusters * n_features * sizeof(floating))
+        memset(weight_in_clusters_chunk, 0, n_clusters * sizeof(floating))
+
+        for chunk_idx in prange(n_chunks):
+            if n_samples_r > 0 and chunk_idx == n_chunks - 1:
+                n_samples_chunk_eff = n_samples_r
+            else:
+                n_samples_chunk_eff = n_samples_chunk
+
+            _update_chunk(
+                &X[chunk_idx * n_samples_chunk, 0],
+                &sample_weight[chunk_idx * n_samples_chunk],
+                &centers_old[0, 0],
+                centers_new_chunk,
+                &center_half_distances[0, 0],
+                &distance_next_center[0],
+                weight_in_clusters_chunk,
+                &labels[chunk_idx * n_samples_chunk],
+                &upper_bounds[chunk_idx * n_samples_chunk],
+                &lower_bounds[chunk_idx * n_samples_chunk, 0],
+                n_samples_chunk_eff,
+                n_clusters,
+                n_features,
+                update_centers)
+
+        # reduction from local buffers. The gil is necessary for that to avoid
+        # race conditions.
+        if update_centers:
+            with gil:
+                for j in xrange(n_clusters):
+                    weight_in_clusters[j] += weight_in_clusters_chunk[j]
+                    for k in xrange(n_features):
+                        centers_new[j, k] += centers_new_chunk[j * n_features + k]
+
+        free(weight_in_clusters_chunk)
+        free(centers_new_chunk)
+
+    if update_centers:
+        _relocate_empty_clusters_dense(X, sample_weight, centers_new,
+                                       weight_in_clusters, labels)
+
+        # average new centers wrt sample weights
+        for j in xrange(n_clusters):
+            if weight_in_clusters[j] > 0:
+                alpha = 1.0 / weight_in_clusters[j]
+                for k in xrange(n_features):
+                    centers_new[j, k] *= alpha
+
+        # compute shift distance between old and new centers
+        for j in range(n_clusters):
+            tmp = 0
+            for k in range(n_features):
+                x = centers_new[j, k] - centers_old[j, k]
+                tmp += x * x
+            center_shift[j] = sqrt(tmp)
+
+        # update lower and upper bounds accordingly
+        for i in range(n_samples):
+            upper_bounds[i] += center_shift[labels[i]]
+
+            for j in range(n_clusters):
+                lower_bounds[i, j] -= center_shift[j]
+                if lower_bounds[i, j] < 0:
+                    lower_bounds[i, j] = 0
+
+        center_half_distances = euclidean_distances(np.asarray(centers_old)) / 2
+
+
+cdef void _update_chunk(floating *X,
+                        floating *sample_weight,
+                        floating *centers_old,
+                        floating *centers_new,
+                        floating *center_half_distances,
+                        floating *distance_next_center,
+                        floating *weight_in_clusters, 
+                        int *labels,
+                        floating *upper_bounds,
+                        floating *lower_bounds,
+                        int n_samples,
+                        int n_clusters,
+                        int n_features,
+                        bint update_centers) nogil:
+    """K-means step for one data chunk using elkan algorithm
+    
+    Compute the partial contribution of a single data chunk to the labels and
+    centers.
+    """
+    cdef:
+        floating upper_bound, distance
+        int i, j, k, label
+
+    for i in range(n_samples):
+        upper_bound = upper_bounds[i]
+        bounds_tight = 0
+        label = labels[i]
+
+        # Next center is not far away from the currently assigned center.
+        # Sample might need to be assigned to another center.
+        if not distance_next_center[label] >= upper_bound:
+
+            for j in range(n_clusters):
 
                 # If this holds, then center_index is a good candidate for the
                 # sample to be relabelled, and we need to confirm this by
                 # recomputing the upper and lower bounds.
-                if (center_index != label
-                        and (upper_bound > lower_bounds[point_index, center_index])
-                        and (upper_bound > center_half_distances[center_index, label])):
+                if (j != label
+                    and (upper_bound > lower_bounds[i * n_clusters + j])
+                    and (upper_bound > center_half_distances[label * n_clusters + j])):
 
-                    # Recompute the upper bound by calculating the actual distance
-                    # between the sample and label.
-                    if not bounds_tight[point_index]:
-                        upper_bound = euclidean_dist(x_p, centers_p + label * n_features, n_features)
-                        lower_bounds[point_index, label] = upper_bound
-                        bounds_tight[point_index] = 1
+                    # Recompute upper bound by calculating the actual distance
+                    # between the sample and it's current assigned center.
+                    if not bounds_tight:
+                        upper_bound = euclidean_dist(X + i * n_features,
+                                                     centers_old + label * n_features,
+                                                     n_features)
+                        lower_bounds[i * n_clusters + label] = upper_bound
+                        bounds_tight = 1
 
-                    # If the condition still holds, then compute the actual distance between
-                    # the sample and center_index. If this is still lesser than the previous
-                    # distance, reassign labels.
-                    if (upper_bound > lower_bounds[point_index, center_index]
-                            or (upper_bound > center_half_distances[label, center_index])):
-                        distance = euclidean_dist(x_p, centers_p + center_index * n_features, n_features)
-                        lower_bounds[point_index, center_index] = distance
+                    # If the condition still holds, then compute the actual
+                    # distance between the sample and center. If this is less
+                    #than the previous distance, reassign label.
+                    if (upper_bound > lower_bounds[i * n_clusters + j]
+                        or (upper_bound > center_half_distances[label * n_clusters + j])):
+
+                        distance = euclidean_dist(X + i * n_features,
+                                                  centers_old + j * n_features,
+                                                  n_features)
+                        lower_bounds[i * n_clusters + j] = distance
                         if distance < upper_bound:
-                            label = center_index
+                            label = j
                             upper_bound = distance
 
-            labels[point_index] = label
-            upper_bounds[point_index] = upper_bound
+            labels[i] = label
+            upper_bounds[i] = upper_bound
 
-        if verbose:
-            print("end inner loop")
-
-        # compute new centers
-        new_centers = _centers_dense(X_, sample_weight, labels_,
-                                     n_clusters, upper_bounds_)
-        bounds_tight[:] = 0
-
-        # compute distance each center moved
-        center_shift = np.sqrt(np.sum((centers_ - new_centers) ** 2, axis=1))
-
-        # update bounds accordingly
-        lower_bounds = np.maximum(lower_bounds - center_shift, 0)
-        upper_bounds = upper_bounds + center_shift[labels_]
-
-        # reassign centers
-        centers_ = new_centers
-        centers_p = <floating*>new_centers.data
-
-        # update between-center distances
-        center_half_distances = euclidean_distances(centers_) / 2.
-        if verbose:
-            print('Iteration %i, inertia %s'
-                    % (iteration, np.sum((X_ - centers_[labels]) ** 2 *
-                                         sample_weight[:,np.newaxis])))
-        center_shift_total = np.sum(center_shift)
-        if center_shift_total ** 2 < tol:
-            if verbose:
-                print("center shift %e within tolerance %e"
-                      % (center_shift_total, tol))
-            break
-
-    # We need this to make sure that the labels give the same output as
-    # predict(X)
-    if center_shift_total > 0:
-        update_labels_distances_inplace(X_p, centers_p, center_half_distances,
-                                        labels, lower_bounds, upper_bounds,
-                                        n_samples, n_features, n_clusters)
-    return centers_, labels_, iteration + 1
+        if update_centers:
+            weight_in_clusters[label] += sample_weight[i]
+            for k in range(n_features):  
+                centers_new[label * n_features + k] += X[i * n_features + k] * sample_weight[i]
