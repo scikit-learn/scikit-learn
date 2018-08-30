@@ -355,6 +355,7 @@ def test_glm_log_regression():
             assert_array_almost_equal(res.coef_, coef)
 
 
+@pytest.mark.filterwarnings('ignore:DeprecationWarning')
 def test_normal_ridge():
     """Test ridge regression for Normal distributions
 
