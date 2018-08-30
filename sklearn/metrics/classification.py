@@ -139,9 +139,9 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     Returns
     -------
     score : float
-        If ``normalize == True``, return the correctly classified samples
-        (float), else it returns the number of correctly classified samples
-        (int).
+        If ``normalize == True``, return the fraction of correctly
+        classified samples (float), else returns the number of correctly
+        classified samples (int).
 
         The best performance is 1 with ``normalize == True`` and the number
         of samples with ``normalize == False``.
