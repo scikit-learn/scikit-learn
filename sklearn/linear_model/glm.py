@@ -93,12 +93,22 @@ class Link(six.with_metaclass(ABCMeta)):
     def link(self, mu):
         """The link function g(mu) with argument mu=E[Y] returns the
         linear predictor.
+
+        Parameters
+        ----------
+        mu : array, shape (n_samples,)
+            Usually the predicted mean.
         """
         raise NotImplementedError
 
     @abstractmethod
     def derivative(self, mu):
         """Derivative of the link g'(mu).
+
+        Parameters
+        ----------
+        mu : array, shape (n_samples,)
+            Usually the predicted mean.
         """
         raise NotImplementedError
 
@@ -106,18 +116,33 @@ class Link(six.with_metaclass(ABCMeta)):
     def inverse(self, lin_pred):
         """The inverse link function h(lin_pred) with the linear predictor as
         argument returns mu=E[Y].
+
+        Parameters
+        ----------
+        lin_pred : array, shape (n_samples,)
+            Usually the (predicted) linear predictor.
         """
         raise NotImplementedError
 
     @abstractmethod
     def inverse_derivative(self, lin_pred):
         """Derivative of the inverse link function h'(lin_pred).
+
+        Parameters
+        ----------
+        lin_pred : array, shape (n_samples,)
+            Usually the (predicted) linear predictor.
         """
         raise NotImplementedError
 
     @abstractmethod
     def inverse_derivative2(self, lin_pred):
         """Second derivative of the inverse link function h''(lin_pred).
+
+        Parameters
+        ----------
+        lin_pred : array, shape (n_samples,)
+            Usually the (predicted) linear predictor.
         """
         raise NotImplementedError
 
@@ -236,6 +261,11 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
 
     def in_y_range(self, x):
         """Returns true if `x` is in the valid range of Y~EDM.
+
+        Parameters
+        ----------
+        x : array, shape (n_samples,)
+            Target values.
         """
         if self.include_lower_bound:
             if self.include_upper_bound:
@@ -263,12 +293,22 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
             \partial\mu^2}}\big|_{y=\mu}
 
         See also :func:`variance`.
+
+        Parameters
+        ----------
+        mu : array, shape (n_samples,)
+            Predicted mean.
         """
         raise NotImplementedError()
 
     @abstractmethod
     def unit_variance_derivative(self, mu):
         r"""The derivative of the unit variance w.r.t. `mu`, :math:`v'(\mu)`.
+
+        Parameters
+        ----------
+        mu : array, shape (n_samples,)
+            Target values.
         """
         raise NotImplementedError()
 
@@ -276,6 +316,17 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
         r"""The variance of :math:`Y_i \sim \mathrm{EDM}(\mu_i,\phi/s_i)` is
         :math:`\mathrm{Var}[Y_i]=\phi/s_i*v(\mu_i)`,
         with unit variance :math:`v(\mu)` and weights :math:`s_i`.
+
+        Parameters
+        ----------
+        mu : array, shape (n_samples,)
+            Predicted mean.
+
+        phi : float
+            Dispersion parameter.
+
+        weights : array, shape (n_samples,) (default=1)
+            Weights or exposure to which variance is inverse proportional.
         """
         return phi/weights * self.unit_variance(mu)
 
@@ -284,6 +335,17 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
         :math:`\frac{\partial}{\partial\mu}\mathrm{Var}[Y_i]
         =phi/s_i*v'(\mu_i)`, with unit variance :math:`v(\mu)`
         and weights :math:`s_i`.
+
+        Parameters
+        ----------
+        mu : array, shape (n_samples,)
+            Predicted mean.
+
+        phi : float (default=1)
+            Dispersion parameter.
+
+        weights : array, shape (n_samples,) (default=1)
+            Weights or exposure to which variance is inverse proportional.
         """
         return phi/weights * self.unit_variance_derivative(mu)
 
@@ -293,6 +355,14 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
         In terms of the log-likelihood it is given by
         :math:`d(y,\mu) = -2\phi\cdot
         \left(loglike(y,\mu,phi) - loglike(y,y,phi)\right).`
+
+        Parameters
+        ----------
+        y : array, shape (n_samples,)
+            Target values.
+
+        mu : array, shape (n_samples,)
+            Predicted mean.
         """
         raise NotImplementedError()
 
@@ -301,9 +371,13 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
         :math:`\frac{\partial}{\partial\mu}d(y,\mu) = -2\frac{y-\mu}{v(\mu)}`
         with unit variance :math:`v(\mu)`.
 
-        Returns
-        -------
-        derivative: array, shape = (n_samples,)
+        Parameters
+        ----------
+        y : array, shape (n_samples,)
+            Target values.
+
+        mu : array, shape (n_samples,)
+            Predicted mean.
         """
         return -2*(y-mu)/self.unit_variance(mu)
 
@@ -313,6 +387,17 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
         In terms of the likelihood it is :math:`D = -2\phi\cdot
         \left(loglike(y,\mu,\frac{phi}{s})
         - loglike(y,y,\frac{phi}{s})\right)`.
+
+        Parameters
+        ----------
+        y : array, shape (n_samples,)
+            Target values.
+
+        mu : array, shape (n_samples,)
+            Predicted mean.
+
+        weights : array, shape (n_samples,) (default=1)
+            Weights or exposure to which variance is inverse proportional.
         """
         return np.sum(weights*self.unit_deviance(y, mu))
 
@@ -326,6 +411,17 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
 
     def deviance_derivative(self, y, mu, weights=1):
         """The derivative w.r.t. `mu` of the deviance.
+
+        Parameters
+        ----------
+        y : array, shape (n_samples,)
+            Target values.
+
+        mu : array, shape (n_samples,)
+            Predicted mean.
+
+        weights : array, shape (n_samples,) (default=1)
+            Weights or exposure to which variance is inverse proportional.
         """
         return weights*self.unit_deviance_derivative(y, mu)
 
@@ -464,7 +560,16 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
         return eta, mu, score, fisher
 
     def starting_mu(self, y, weights=1):
-        """Starting values for the mean mu_i in (unpenalized) IRLS."""
+        """Starting values for the mean mu_i in (unpenalized) IRLS.
+
+        Parameters
+        ----------
+        y : array, shape (n_samples,)
+            Target values.
+
+        weights : array, shape (n_samples,) (default=1)
+            Weights or exposure to which variance is inverse proportional.
+        """
         return ((weights*y+np.mean(weights*y)) /
                 (2.*np.sum(np.ones_like(y)*weights)))
 
@@ -656,12 +761,12 @@ def _irls_step(X, W, P2, z):
     X : numpy array or sparse matrix of shape (n_samples, n_features)
         Training data (with intercept included if present)
 
-    W : numpy array of shape (n_samples, )
+    W : numpy array of shape (n_samples,)
 
     P2 : numpy array or sparse matrix of shape (n_features, n_features)
         The l2-penalty matrix or vector (=diagonal matrix)
 
-    z  : numpy array of shape (n_samples, )
+    z  : numpy array of shape (n_samples,)
         Working observations
 
     Returns
@@ -927,12 +1032,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         Parameters
         ----------
         X : numpy array or sparse matrix of shape (n_samples, n_features)
-            Training data
+            Training data.
 
-        y : numpy array of shape (n_samples, )
-            Target values
+        y : numpy array of shape (n_samples,)
+            Target values.
 
-        sample_weight : array of shape (n_samples, ) or None,\
+        sample_weight : array of shape (n_samples,) or None,\
                 optinal (default=None)
             Individual weights w_i for each sample. Note that for an
             Exponential Dispersion Model (EDM), one has
