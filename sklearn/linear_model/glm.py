@@ -579,6 +579,17 @@ class TweedieDistribution(ExponentialDispersionModel):
     They have :math:`\mu=\mathrm{E}[Y]` and
     :math:`\mathrm{Var}[Y] \propto \mu^power.
 
+    Special cases are:
+
+    ===== ================
+    Power Distribution
+    ===== ================
+    0     Normal
+    1     Poisson
+    (0,1) Compound Poisson
+    2     Gamma
+    3     Inverse Gaussian
+
     Attributes
     ----------
     power : float
@@ -586,6 +597,12 @@ class TweedieDistribution(ExponentialDispersionModel):
             :math:`v(\mu) = \mu^{power}`.
     """
     def __init__(self, power=0):
+        """
+        Parameters
+        ----------
+        power : float (default=0)
+            Power of (of mu) of the variance function.
+        """
         self.power = power
         self._upper_bound = np.Inf
         self._include_upper_bound = False
@@ -623,6 +640,9 @@ class TweedieDistribution(ExponentialDispersionModel):
             # Positive Stable
             self._lower_bound = 0
             self._include_lower_bound = False
+        else:
+            raise ValueError('The power must be a float, i.e. real number, '
+                             'got (power={})'.format(power))
 
     @property
     def power(self):
@@ -653,12 +673,22 @@ class TweedieDistribution(ExponentialDispersionModel):
 
     def unit_variance(self, mu):
         """The unit variance of a Tweedie distribution is v(mu)=mu**power.
+
+        Parameters
+        ----------
+        mu : array, shape (n_samples,)
+            Predicted mean.
         """
         return np.power(mu, self.power)
 
     def unit_variance_derivative(self, mu):
         """The derivative of the unit variance of a Tweedie distribution is
         v(mu)=power*mu**(power-1).
+
+        Parameters
+        ----------
+        mu : array, shape (n_samples,)
+            Predicted mean.
         """
         return self.power*np.power(mu, self.power-1)
 
@@ -679,9 +709,6 @@ class TweedieDistribution(ExponentialDispersionModel):
             #    - y*mu**(1-p)/(1-p) + mu**(2-p)/(2-p))
             return 2 * (np.power(np.maximum(y, 0), 2-p)/((1-p)*(2-p)) -
                         y*np.power(mu, 1-p)/(1-p) + np.power(mu, 2-p)/(2-p))
-
-    def likelihood(self, y, X, w, phi, weights=1):
-        raise NotImplementedError('This function is not (yet) implemented.')
 
 
 class NormalDistribution(TweedieDistribution):
