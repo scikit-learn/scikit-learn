@@ -266,9 +266,9 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
 
 
 def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
-               alpha_min=0, method='lar', copy_X=True,
-               eps=np.finfo(np.float).eps, copy_Gram=True, verbose=0,
-               return_path=True, return_n_iter=False, positive=False):
+                      alpha_min=0, method='lar', copy_X=True,
+                      eps=np.finfo(np.float).eps, copy_Gram=True, verbose=0,
+                      return_path=True, return_n_iter=False, positive=False):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
 
     The optimization objective for the case method='lasso' is::
