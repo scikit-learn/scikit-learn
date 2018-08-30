@@ -40,8 +40,8 @@ fi
 cd $DOC_REPO
 git config core.sparseCheckout true
 echo $dir > .git/info/sparse-checkout
-git checkout $CIRCLE_BRANCH
-git reset --hard origin/$CIRCLE_BRANCH
+git checkout master
+git reset --hard origin/master
 if [ -d $dir ]
 then
 	git rm -rf $dir/ && rm -rf $dir/
