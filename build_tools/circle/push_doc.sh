@@ -38,8 +38,17 @@ if [ ! -d $DOC_REPO ];
 then git clone --depth 1 --no-checkout "git@github.com:scikit-learn/"$DOC_REPO".git";
 fi
 cd $DOC_REPO
-git config core.sparseCheckout true
+
+# check if it's a new branch
+
 echo $dir > .git/info/sparse-checkout
+if ! git show HEAD:$dir >/dev/null
+then
+	# directory does not exist. Need to make it so sparse checkout works
+	mkdir $dir
+	touch $dir/index.html
+	git add $dir
+fi
 git checkout master
 git reset --hard origin/master
 if [ -d $dir ]
