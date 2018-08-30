@@ -147,16 +147,18 @@ class Queue(mp_Queue):
                             return
 
                         # serialize the data before acquiring the lock
-                        obj = CustomizableLokyPickler.dumps(
+                        obj_ = CustomizableLokyPickler.dumps(
                             obj, reducers=reducers)
                         if wacquire is None:
-                            send_bytes(obj)
+                            send_bytes(obj_)
                         else:
                             wacquire()
                             try:
-                                send_bytes(obj)
+                                send_bytes(obj_)
                             finally:
                                 wrelease()
+                        # Remove references early to avoid leaking memory
+                        del obj, obj_
                 except IndexError:
                     pass
             except BaseException as e:

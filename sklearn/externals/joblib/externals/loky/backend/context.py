@@ -18,25 +18,41 @@ import warnings
 import multiprocessing as mp
 
 
-from .process import LokyProcess
+from .process import LokyProcess, LokyInitMainProcess
+
+START_METHODS = ['loky', 'loky_init_main']
+_DEFAULT_START_METHOD = None
 
 if sys.version_info[:2] >= (3, 4):
-    from multiprocessing import get_context as get_mp_context
+    from multiprocessing import get_context as mp_get_context
     from multiprocessing.context import assert_spawning, set_spawning_popen
     from multiprocessing.context import get_spawning_popen, BaseContext
 
-    def get_context(method="loky"):
+    START_METHODS += ['spawn']
+    if sys.platform != 'win32':
+        START_METHODS += ['fork', 'forkserver']
+
+    def get_context(method=None):
+        # Try to overload the default context
+        method = method or _DEFAULT_START_METHOD or "loky"
         if method == "fork":
-            warnings.warn("`fork` start method should not be used with `loky` "
-                          "as it does not respect POSIX. Try using `spawn` or "
-                          "`loky` instead.", UserWarning)
-        return get_mp_context(method)
+            # If 'fork' is explicitly requested, warn user about potential
+            # issues.
+            warnings.warn("`fork` start method should not be used with "
+                          "`loky` as it does not respect POSIX. Try using "
+                          "`spawn` or `loky` instead.", UserWarning)
+        try:
+            context = mp_get_context(method)
+        except ValueError:
+            raise ValueError("Unknown context '{}'. Value should be in {}."
+                             .format(method, START_METHODS))
+
+        return context
 
 else:
-    METHODS = ['loky', 'loky_init_main']
     if sys.platform != 'win32':
         import threading
-        # Mecanism to check that the current thread is spawning a child process
+        # Mechanism to check that the current thread is spawning a process
         _tls = threading.local()
         popen_attr = 'spawning_popen'
     else:
@@ -59,14 +75,30 @@ else:
                 ' through inheritance' % type(obj).__name__
             )
 
-    def get_context(method="loky"):
+    def get_context(method=None):
+        method = method or _DEFAULT_START_METHOD or 'loky'
         if method == "loky":
             return LokyContext()
         elif method == "loky_init_main":
             return LokyInitMainContext()
         else:
-            raise ValueError("Method {} is not implemented. The available "
-                             "methods are {}".format(method, METHODS))
+            raise ValueError("Unknown context '{}'. Value should be in {}."
+                             .format(method, START_METHODS))
+
+
+def set_start_method(method, force=False):
+    global _DEFAULT_START_METHOD
+    if _DEFAULT_START_METHOD is not None and not force:
+        raise RuntimeError('context has already been set')
+    assert method is None or method in START_METHODS, (
+        "'{}' is not a valid start_method. It should be in {}"
+        .format(method, START_METHODS))
+
+    _DEFAULT_START_METHOD = method
+
+
+def get_start_method():
+    return _DEFAULT_START_METHOD
 
 
 def cpu_count():
@@ -138,7 +170,7 @@ class LokyContext(BaseContext):
             return self
 
         def get_start_method(self):
-            return "loky"
+            return self._name
 
         def Pipe(self, duplex=True):
             '''Returns two connection object connected by a pipe'''
@@ -216,12 +248,12 @@ class LokyInitMainContext(LokyContext):
     For more details, see the end of the following section of python doc
     https://docs.python.org/3/library/multiprocessing.html#multiprocessing-programming
     """
-    def Process(self, *args, **kwargs):
-        kwargs.pop('init_main_module', True)
-        return LokyProcess(*args, init_main_module=True, **kwargs)
+    _name = 'loky_init_main'
+    Process = LokyInitMainProcess
 
 
 if sys.version_info > (3, 4):
     """Register loky context so it works with multiprocessing.get_context"""
-    mp.context._concrete_contexts['loky'] = LokyContext()
+    ctx_loky = LokyContext()
+    mp.context._concrete_contexts['loky'] = ctx_loky
     mp.context._concrete_contexts['loky_init_main'] = LokyInitMainContext()
