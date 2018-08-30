@@ -15,13 +15,13 @@ X7, y7 = make_regression(noise=5)
 
 def test_fast_kernel_regression_gaussian():
     FKR_prediction = FastKernelRegression(
-        kernel="gaussian", n_epoch=50, bandwidth=.1, random_state=0).fit(X, y).predict(X)
+        kernel="gaussian", n_epoch=50, bandwidth=1, random_state=0).fit(X, y).predict(X)
     assert_array_almost_equal(abs(FKR_prediction / y), 1, decimal=2)
 
 
 def test_fast_kernel_regression_laplace():
     FKR_prediction = FastKernelRegression(
-        kernel="laplace", n_epoch=50, bandwidth=.1, random_state=0).fit(X, y).predict(X)
+        kernel="laplace", n_epoch=50, bandwidth=1, random_state=0).fit(X, y).predict(X)
     assert_array_almost_equal(abs(FKR_prediction / y), 1, decimal=2)
 
 
@@ -33,30 +33,30 @@ def test_fast_kernel_regression_cauchy():
 
 def test_fast_kernel_regression_2d():
     FKR_prediction = FastKernelRegression(
-        kernel="gaussian", n_epoch=50, bandwidth=.1, random_state=0).fit(X2,Y2).predict(X2)
+        kernel="gaussian", n_epoch=50, bandwidth=1, random_state=0).fit(X2,Y2).predict(X2)
     assert_array_almost_equal(abs(FKR_prediction / Y2), 1, decimal=2)
 
 def test_fast_kernel_regression_many_features():
     FKR_prediction = FastKernelRegression(
-        kernel="gaussian", n_epoch=50, bandwidth=.1, random_state=0).fit(X3,y3).predict(X3)
+        kernel="gaussian", n_epoch=50, bandwidth=1, random_state=0).fit(X3,y3).predict(X3)
     assert_array_almost_equal(abs(FKR_prediction / y3), 1, decimal=2)
 
 def test_fast_kernel_regression_simple():
     FKR_prediction = FastKernelRegression(
-        kernel="gaussian", n_epoch=200, bandwidth=.1, random_state=0).fit(X4, y4).predict(X4)
+        kernel="gaussian", n_epoch=200, bandwidth=1, random_state=0).fit(X4, y4).predict(X4)
     assert_array_almost_equal(abs(FKR_prediction / y4), 1, decimal=2)
 
 def test_fast_kernel_regression_complex():
     FKR_prediction = FastKernelRegression(
-        kernel="gaussian", n_epoch=50, bandwidth=.1, random_state=0).fit(X5, y5).predict(X5)
+        kernel="gaussian", n_epoch=50, bandwidth=1, random_state=0).fit(X5, y5).predict(X5)
     assert_array_almost_equal(abs(FKR_prediction / y5), 1, decimal=2)
 
 def test_fast_kernel_regression_duplicate_data():
     FKR_prediction = FastKernelRegression(
-        kernel="gaussian", n_epoch=50, bandwidth=.1, random_state=0).fit(X6, y6).predict(X6)
+        kernel="gaussian", n_epoch=50, bandwidth=1, random_state=0).fit(X6, y6).predict(X6)
     assert_array_almost_equal(abs(FKR_prediction / y6), 1, decimal=2)
 
 def test_fast_kernel_regression_conflict_data():
     FKR_prediction = FastKernelRegression(
-        kernel="gaussian", n_epoch=50, bandwidth=.1, random_state=0).fit(X7, y7).predict(X7)
+        kernel="gaussian", n_epoch=50, bandwidth=1, random_state=0).fit(X7, y7).predict(X7)
     assert_array_almost_equal(abs(FKR_prediction / y7), 1, decimal=2)

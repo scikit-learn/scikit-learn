@@ -360,7 +360,7 @@ class FastKernelRegression(BaseEstimator, RegressorMixin):
         """
         check_is_fitted(self, ["bs_", "centers_", "centers_squared_", "coef_",
                                "eta_", "random_state_", "pinx_", "Q_", "V_", "was_1D_"])
-        X = check_array(X)
+        X = np.asarray(X,dtype=np.float64)
         if len(X.shape) == 1:
             raise ValueError("Reshape your data. X should be a matrix of shape"
                              " (n_samples, n_features).")
@@ -374,9 +374,7 @@ class FastKernelRegression(BaseEstimator, RegressorMixin):
 
             pred = np.dot(kfeat, self.coef_)
             Ys.append(pred)
-
         Y = np.vstack(Ys)
         if self.was_1D_:
             Y = np.reshape(Y, Y.shape[0])
-
         return Y
