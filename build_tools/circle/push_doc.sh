@@ -42,7 +42,10 @@ git config core.sparseCheckout true
 echo $dir > .git/info/sparse-checkout
 git checkout $CIRCLE_BRANCH
 git reset --hard origin/$CIRCLE_BRANCH
-git rm -rf $dir/ && rm -rf $dir/
+if [ -d $dir ]
+then
+	git rm -rf $dir/ && rm -rf $dir/
+fi
 cp -R $GENERATED_DOC_DIR $dir
 git config user.email "olivier.grisel+sklearn-ci@gmail.com"
 git config user.name $USERNAME
