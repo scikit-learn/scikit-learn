@@ -192,7 +192,7 @@ class PCA(_BasePCA):
 
     random_state : int, RandomState instance or None (default)
         Used when ``svd_solver`` == 'arpack' or 'randomized'. Pass an int
-        for reproducible output across multiple function calls.
+        for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
         .. versionadded:: 0.18.0

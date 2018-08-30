@@ -76,7 +76,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
     random_state : int, RandomState instance or None (default)
         Used when ``eigen_solver`` == 'arpack'. Pass an int for reproducible
-        output across multiple function calls.
+        results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
         .. versionadded:: 0.18

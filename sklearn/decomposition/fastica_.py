@@ -206,7 +206,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     random_state : int, RandomState instance or None (default)
         Used to initialize ``w_init`` when not specified, with a
-        normal distribution. Pass an int, for reproducible output
+        normal distribution. Pass an int, for reproducible results
         across multiple function calls.
         See :term:`Glossary <random_state>`.
 
@@ -426,7 +426,7 @@ class FastICA(BaseEstimator, TransformerMixin):
 
     random_state : int, RandomState instance or None (default)
         Used to initialize ``w_init`` when not specified, with a
-        normal distribution. Pass an int, for reproducible output
+        normal distribution. Pass an int, for reproducible results
         across multiple function calls.
         See :term:`Glossary <random_state>`.
 
