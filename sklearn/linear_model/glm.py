@@ -601,7 +601,7 @@ class TweedieDistribution(ExponentialDispersionModel):
         Parameters
         ----------
         power : float (default=0)
-            Power of (of mu) of the variance function.
+            Variance power of the `unit_variance` function.
         """
         self.power = power
         self._upper_bound = np.Inf
@@ -798,7 +798,7 @@ def _irls_step(X, W, P2, z):
 
     Returns
     -------
-    coef: array, shape = (X.shape[1])
+    coef: array, shape (X.shape[1])
     """
     # TODO: scipy.linalg.solve is faster, but ordinary least squares uses
     #       scipy.linalg.lstsq. What is more appropriate?
@@ -898,7 +898,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         is an L1 penalty.  For ``0 < l1_ratio < 1``, the penalty is a
         combination of L1 and L2.
 
-    P1 : None or array of shape (n_features*, ), optional\
+    P1 : None or array of shape (n_features*,), optional\
             (default=None)
         With this array, you can exclude coefficients from the L1 penalty.
         Set the corresponding value to 1 (include) or 0 (exclude). The
@@ -1007,7 +1007,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features, )
+    coef_ : array, shape (n_features,)
         Estimated coefficients for the linear predictor (X*coef_) in the GLM.
 
     intercept_ : float
@@ -1679,7 +1679,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         if self.fit_dispersion in ['chisqr', 'deviance']:
             # attention because of rescaling of weights
-            self.dispersion_ = self.estimate_phi(y, X, weights)*weights_sum
+            self.dispersion_ = self.estimate_phi(X, y, weights)*weights_sum
 
         return self
 
@@ -1688,12 +1688,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : numpy array or sparse matrix of shape [n_samples,n_features]
+        X : numpy array or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        C : array, shape = (n_samples)
+        C : array, shape (n_samples)
             Returns predicted values of linear predictor.
         """
         check_is_fitted(self, "coef_")
@@ -1709,12 +1709,15 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : numpy array or sparse matrix of shape [n_samples,n_features]
+        X : numpy array or sparse matrix, shape (n_samples, n_features)
             Samples.
+
+        sample_weight : array of shape (n_samples,) or None , \
+             (default=None)
 
         Returns
         -------
-        C : array, shape = (n_samples)
+        C : array, shape (n_samples,)
             Returns predicted values times sample_weight.
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
@@ -1726,9 +1729,21 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         return mu*weights
 
-    def estimate_phi(self, y, X, sample_weight=None):
-        """Estimation of the dispersion parameter.
+    def estimate_phi(self, X, y, sample_weight=None):
+        """Estimation of the dispersion parameter phi.
         Returns the estimate.
+
+        Parameters
+        ----------
+        X : numpy array or sparse matrix of shape (n_samples, n_features)
+            Training data.
+
+        y : numpy array, shape (n_samples,)
+            Target values.
+
+        sample_weight : array of shape (n_samples,) or None,\
+                optinal (default=None)
+            Sample weights.
         """
         check_is_fitted(self, "coef_")
         _dtype = [np.float64, np.float32]
@@ -1773,13 +1788,13 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Test samples
 
-        y : array-like of shape = (n_samples)
+        y : array-like, shape (n_samples,)
             True valeus for X.
 
-        sample_weight : array-like, shape = (n_samples), optional
+        sample_weight : array-like, shape = (n_samples,), optional
             Sample weights.
 
         Returns
