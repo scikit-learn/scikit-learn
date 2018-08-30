@@ -73,6 +73,21 @@ class LokyProcess(BaseProcess):
             '''
             self._authkey = AuthenticationKey(authkey)
 
+        def _bootstrap(self):
+            from .context import set_start_method
+            set_start_method(self._start_method)
+            super(LokyProcess, self)._bootstrap()
+
+
+class LokyInitMainProcess(LokyProcess):
+    _start_method = 'loky_init_main'
+
+    def __init__(self, group=None, target=None, name=None, args=(),
+                 kwargs={}, daemon=None):
+        super(LokyInitMainProcess, self).__init__(
+            group=group, target=target, name=name, args=args, kwargs=kwargs,
+            daemon=daemon, init_main_module=True)
+
 
 #
 # We subclass bytes to avoid accidental transmission of auth keys over network
