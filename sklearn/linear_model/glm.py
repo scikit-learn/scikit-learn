@@ -577,7 +577,7 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
 class TweedieDistribution(ExponentialDispersionModel):
     r"""A class for the Tweedie distribution.
     They have :math:`\mu=\mathrm{E}[Y]` and
-    :math:`\mathrm{Var}[Y] \propto \mu^power.
+    :math:`\mathrm{Var}[Y] \propto \mu^power`.
 
     Special cases are:
 
@@ -593,7 +593,7 @@ class TweedieDistribution(ExponentialDispersionModel):
     Attributes
     ----------
     power : float
-            The variance power of the unit_variance
+            The variance power of the `unit_variance`
             :math:`v(\mu) = \mu^{power}`.
     """
     def __init__(self, power=0):
