@@ -351,6 +351,8 @@ features::
 
  _`Faster API-compatible implementation`: https://github.com/mblondel/svmlight-loader
 
+.. include:: openml.rst
+
 .. _external_datasets:
 
 Loading from external datasets
