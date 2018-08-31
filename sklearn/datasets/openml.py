@@ -51,8 +51,15 @@ def _open_openml_url(openml_path, data_home):
         A stream to the OpenML resource
     """
     req = Request(_OPENML_PREFIX + openml_path)
+    req.add_header('Accept-encoding', 'gzip')
+    fsrc = urlopen(req)
+    is_gzip = fsrc.getheader('Content-Encoding', '') == 'gzip'
+
     if data_home is None:
-        return urlopen(req)
+        if is_gzip:
+            return gzip.GzipFile(fileobj=fsrc, mode='rb')
+        return fsrc
+
     local_path = os.path.join(data_home, 'openml.org', openml_path + ".gz")
     if not os.path.exists(local_path):
         try:
@@ -71,7 +78,9 @@ def _open_openml_url(openml_path, data_home):
             os.unlink(local_path)
             raise
     # XXX: unnecessary decompression on first access
-    return gzip.GzipFile(local_path, 'rb')
+    if is_gzip:
+        return gzip.GzipFile(local_path, 'rb')
+    return fsrc
 
 
 def _get_json_content_from_openml_api(url, error_message, raise_if_error,
