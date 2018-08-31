@@ -42,11 +42,11 @@ def _check_predict_proba(clf, X, y):
         assert_array_almost_equal(np.log(proba[k]), log_proba[k])
 
 
-def _check_behavior_2d(clf):
+def _check_behavior_2d(estimator):
     # 1d case
     X = np.array([[0], [0], [0], [0]])  # ignored
     y = np.array([1, 2, 1, 1])
-    est = clone(clf)
+    est = clone(estimator)
     est.fit(X, y)
     y_pred = est.predict(X)
     assert_equal(y.shape, y_pred.shape)
@@ -56,20 +56,20 @@ def _check_behavior_2d(clf):
                   [2, 0],
                   [1, 0],
                   [1, 3]])
-    est = clone(clf)
+    est = clone(estimator)
     est.fit(X, y)
     y_pred = est.predict(X)
     assert_equal(y.shape, y_pred.shape)
 
 
-def _check_behavior_2d_for_constant(clf):
+def _check_behavior_2d_for_constant(estimator):
     # 2d case only
     X = np.array([[0], [0], [0], [0]])  # ignored
     y = np.array([[1, 0, 5, 4, 3],
                   [2, 0, 1, 2, 5],
                   [1, 0, 4, 5, 2],
                   [1, 3, 3, 2, 0]])
-    est = clone(clf)
+    est = clone(estimator)
     est.fit(X, y)
     y_pred = est.predict(X)
     assert_equal(y.shape, y_pred.shape)
@@ -200,6 +200,30 @@ def test_string_labels():
     assert_array_equal(clf.predict(X), ["paris"] * 5)
 
 
+def test_classifier_score_with_None():
+    y = [2, 1, 1, 1]
+    y_test = [2, 2, 1, 1]
+
+    clf = DummyClassifier(strategy="constant", constant=1)
+    clf.fit(None, y)
+    assert_equal(clf.score(None, y_test), 0.5)
+
+
+def test_classifier_score_with_None_multioutput():
+    y = np.array([[2, 2],
+                  [1, 1],
+                  [1, 1],
+                  [1, 1]])
+    y_test = np.array([[2, 2],
+                       [2, 2],
+                       [1, 1],
+                       [1, 1]])
+
+    clf = DummyClassifier(strategy="most_frequent")
+    clf.fit(None, y)
+    assert_equal(clf.score(None, y_test), 0.5)
+
+
 def test_classifier_exceptions():
     clf = DummyClassifier(strategy="unknown")
     assert_raises(ValueError, clf.fit, [], [])
@@ -233,13 +257,13 @@ def test_mean_strategy_multioutput_regressor():
     y_test = random_state.randn(20, 5)
 
     # Correctness oracle
-    est = DummyRegressor()
-    est.fit(X_learn, y_learn)
-    y_pred_learn = est.predict(X_learn)
-    y_pred_test = est.predict(X_test)
+    reg = DummyRegressor()
+    reg.fit(X_learn, y_learn)
+    y_pred_learn = reg.predict(X_learn)
+    y_pred_test = reg.predict(X_test)
 
     _check_equality_regressor(mean, y_learn, y_pred_learn, y_test, y_pred_test)
-    _check_behavior_2d(est)
+    _check_behavior_2d(reg)
 
 
 def test_regressor_exceptions():
@@ -272,14 +296,14 @@ def test_median_strategy_multioutput_regressor():
     y_test = random_state.randn(20, 5)
 
     # Correctness oracle
-    est = DummyRegressor(strategy="median")
-    est.fit(X_learn, y_learn)
-    y_pred_learn = est.predict(X_learn)
-    y_pred_test = est.predict(X_test)
+    reg = DummyRegressor(strategy="median")
+    reg.fit(X_learn, y_learn)
+    y_pred_learn = reg.predict(X_learn)
+    y_pred_test = reg.predict(X_test)
 
     _check_equality_regressor(
         median, y_learn, y_pred_learn, y_test, y_pred_test)
-    _check_behavior_2d(est)
+    _check_behavior_2d(reg)
 
 
 def test_quantile_strategy_regressor():
@@ -320,24 +344,24 @@ def test_quantile_strategy_multioutput_regressor():
     y_test = random_state.randn(20, 5)
 
     # Correctness oracle
-    est = DummyRegressor(strategy="quantile", quantile=0.5)
-    est.fit(X_learn, y_learn)
-    y_pred_learn = est.predict(X_learn)
-    y_pred_test = est.predict(X_test)
+    reg = DummyRegressor(strategy="quantile", quantile=0.5)
+    reg.fit(X_learn, y_learn)
+    y_pred_learn = reg.predict(X_learn)
+    y_pred_test = reg.predict(X_test)
 
     _check_equality_regressor(
         median, y_learn, y_pred_learn, y_test, y_pred_test)
-    _check_behavior_2d(est)
+    _check_behavior_2d(reg)
 
     # Correctness oracle
-    est = DummyRegressor(strategy="quantile", quantile=0.8)
-    est.fit(X_learn, y_learn)
-    y_pred_learn = est.predict(X_learn)
-    y_pred_test = est.predict(X_test)
+    reg = DummyRegressor(strategy="quantile", quantile=0.8)
+    reg.fit(X_learn, y_learn)
+    y_pred_learn = reg.predict(X_learn)
+    y_pred_test = reg.predict(X_test)
 
     _check_equality_regressor(
         quantile_values, y_learn, y_pred_learn, y_test, y_pred_test)
-    _check_behavior_2d(est)
+    _check_behavior_2d(reg)
 
 
 def test_quantile_invalid():
@@ -345,28 +369,28 @@ def test_quantile_invalid():
     X = [[0]] * 5  # ignored
     y = [0] * 5  # ignored
 
-    est = DummyRegressor(strategy="quantile")
-    assert_raises(ValueError, est.fit, X, y)
+    reg = DummyRegressor(strategy="quantile")
+    assert_raises(ValueError, reg.fit, X, y)
 
-    est = DummyRegressor(strategy="quantile", quantile=None)
-    assert_raises(ValueError, est.fit, X, y)
+    reg = DummyRegressor(strategy="quantile", quantile=None)
+    assert_raises(ValueError, reg.fit, X, y)
 
-    est = DummyRegressor(strategy="quantile", quantile=[0])
-    assert_raises(ValueError, est.fit, X, y)
+    reg = DummyRegressor(strategy="quantile", quantile=[0])
+    assert_raises(ValueError, reg.fit, X, y)
 
-    est = DummyRegressor(strategy="quantile", quantile=-0.1)
-    assert_raises(ValueError, est.fit, X, y)
+    reg = DummyRegressor(strategy="quantile", quantile=-0.1)
+    assert_raises(ValueError, reg.fit, X, y)
 
-    est = DummyRegressor(strategy="quantile", quantile=1.1)
-    assert_raises(ValueError, est.fit, X, y)
+    reg = DummyRegressor(strategy="quantile", quantile=1.1)
+    assert_raises(ValueError, reg.fit, X, y)
 
-    est = DummyRegressor(strategy="quantile", quantile='abc')
-    assert_raises(TypeError, est.fit, X, y)
+    reg = DummyRegressor(strategy="quantile", quantile='abc')
+    assert_raises(TypeError, reg.fit, X, y)
 
 
 def test_quantile_strategy_empty_train():
-    est = DummyRegressor(strategy="quantile", quantile=0.4)
-    assert_raises(ValueError, est.fit, [], [])
+    reg = DummyRegressor(strategy="quantile", quantile=0.4)
+    assert_raises(ValueError, reg.fit, [], [])
 
 
 def test_constant_strategy_regressor():
@@ -399,40 +423,40 @@ def test_constant_strategy_multioutput_regressor():
     y_test = random_state.randn(20, 5)
 
     # Correctness oracle
-    est = DummyRegressor(strategy="constant", constant=constants)
-    est.fit(X_learn, y_learn)
-    y_pred_learn = est.predict(X_learn)
-    y_pred_test = est.predict(X_test)
+    reg = DummyRegressor(strategy="constant", constant=constants)
+    reg.fit(X_learn, y_learn)
+    y_pred_learn = reg.predict(X_learn)
+    y_pred_test = reg.predict(X_test)
 
     _check_equality_regressor(
         constants, y_learn, y_pred_learn, y_test, y_pred_test)
-    _check_behavior_2d_for_constant(est)
+    _check_behavior_2d_for_constant(reg)
 
 
 def test_y_mean_attribute_regressor():
     X = [[0]] * 5
     y = [1, 2, 4, 6, 8]
     # when strategy = 'mean'
-    est = DummyRegressor(strategy='mean')
-    est.fit(X, y)
+    reg = DummyRegressor(strategy='mean')
+    reg.fit(X, y)
 
-    assert_equal(est.constant_, np.mean(y))
+    assert_equal(reg.constant_, np.mean(y))
 
 
 def test_unknown_strategey_regressor():
     X = [[0]] * 5
     y = [1, 2, 4, 6, 8]
 
-    est = DummyRegressor(strategy='gona')
-    assert_raises(ValueError, est.fit, X, y)
+    reg = DummyRegressor(strategy='gona')
+    assert_raises(ValueError, reg.fit, X, y)
 
 
 def test_constants_not_specified_regressor():
     X = [[0]] * 5
     y = [1, 2, 4, 6, 8]
 
-    est = DummyRegressor(strategy='constant')
-    assert_raises(TypeError, est.fit, X, y)
+    reg = DummyRegressor(strategy='constant')
+    assert_raises(TypeError, reg.fit, X, y)
 
 
 def test_constant_size_multioutput_regressor():
@@ -440,8 +464,8 @@ def test_constant_size_multioutput_regressor():
     X = random_state.randn(10, 10)
     y = random_state.randn(10, 5)
 
-    est = DummyRegressor(strategy='constant', constant=[1, 2, 3, 4])
-    assert_raises(ValueError, est.fit, X, y)
+    reg = DummyRegressor(strategy='constant', constant=[1, 2, 3, 4])
+    assert_raises(ValueError, reg.fit, X, y)
 
 
 def test_constant_strategy():
@@ -588,15 +612,15 @@ def test_dummy_regressor_sample_weight(n_samples=10):
     y = random_state.rand(n_samples)
     sample_weight = random_state.rand(n_samples)
 
-    est = DummyRegressor(strategy="mean").fit(X, y, sample_weight)
-    assert_equal(est.constant_, np.average(y, weights=sample_weight))
+    reg = DummyRegressor(strategy="mean").fit(X, y, sample_weight)
+    assert_equal(reg.constant_, np.average(y, weights=sample_weight))
 
-    est = DummyRegressor(strategy="median").fit(X, y, sample_weight)
-    assert_equal(est.constant_, _weighted_percentile(y, sample_weight, 50.))
+    reg = DummyRegressor(strategy="median").fit(X, y, sample_weight)
+    assert_equal(reg.constant_, _weighted_percentile(y, sample_weight, 50.))
 
-    est = DummyRegressor(strategy="quantile", quantile=.95).fit(X, y,
+    reg = DummyRegressor(strategy="quantile", quantile=.95).fit(X, y,
                                                                 sample_weight)
-    assert_equal(est.constant_, _weighted_percentile(y, sample_weight, 95.))
+    assert_equal(reg.constant_, _weighted_percentile(y, sample_weight, 95.))
 
 
 def test_dummy_regressor_on_3D_array():
@@ -633,3 +657,25 @@ def test_dummy_regressor_return_std():
     assert_equal(len(y_pred_list), 2)
     # the second element should be all zeros
     assert_array_equal(y_pred_list[1], y_std_expected)
+
+
+def test_regressor_score_with_None():
+    y = [1, 1, 1, 2]
+    y_test = [1.25] * 4
+
+    reg = DummyRegressor()
+    reg.fit(None, y)
+    assert_equal(reg.score(None, y_test), 1.0)
+
+
+def test_regressor_score_with_None_multioutput():
+    y = np.array([[2, 2],
+                  [1, 1],
+                  [1, 1],
+                  [1, 1]])
+
+    y_test = [[1.25, 1.25]] * 4
+
+    reg = DummyRegressor()
+    reg.fit(None, y)
+    assert_equal(reg.score(None, y_test), 1.0)
