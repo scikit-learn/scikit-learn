@@ -179,7 +179,7 @@ def test_multi_inf_in_reachability():
 
     clust = OPTICS(min_samples=2, max_bound=2).fit(X)
 
-    assert_array_equal(clust.labels_, np.r_[[0]*3, -1, -1, [1]*3])
+    assert_array_equal(clust.labels_, np.r_[[0] * 3, -1, -1, [1] * 3])
     assert_array_equal(clust.reachability_[[0, 3, 4, 5]], [np.inf] * 4)
 
 
@@ -193,7 +193,7 @@ def test_auto_extract_outlier():
 
     clust = OPTICS(min_samples=3).fit(X)
 
-    assert_array_equal(clust.labels_, np.r_[[0]*4, [1]*4, -1])
+    assert_array_equal(clust.labels_, np.r_[[0] * 4, [1] * 4, -1])
 
     C1 = [-5, -2] + .8 * np.random.randn(n_points_per_cluster, 2)
     C2 = [4, -1] + .1 * np.random.randn(n_points_per_cluster, 2)
@@ -201,7 +201,7 @@ def test_auto_extract_outlier():
 
     clust = OPTICS(min_samples=3).fit(X)
 
-    assert_array_equal(clust.labels_, np.r_[[0]*4, -1, -1, [1]*4])
+    assert_array_equal(clust.labels_, np.r_[[0] * 4, -1, -1, [1] * 4])
 
 
 @pytest.mark.parametrize("reach, core_dist, n_child, members", [
