@@ -597,12 +597,6 @@ class TweedieDistribution(ExponentialDispersionModel):
             :math:`v(\mu) = \mu^{power}`.
     """
     def __init__(self, power=0):
-        """
-        Parameters
-        ----------
-        power : float (default=0)
-            Variance power of the `unit_variance` function.
-        """
         self.power = power
         self._upper_bound = np.Inf
         self._include_upper_bound = False
