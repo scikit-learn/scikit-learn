@@ -590,7 +590,7 @@ class TweedieDistribution(ExponentialDispersionModel):
     2     Gamma
     3     Inverse Gaussian
 
-    Attributes
+    Parameters
     ----------
     power : float
             The variance power of the `unit_variance`
