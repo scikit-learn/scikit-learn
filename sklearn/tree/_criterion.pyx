@@ -716,8 +716,28 @@ cdef class GainRatio(Entropy):
         The absolute impurity improvement is only computed by the
         impurity_improvement method once the best split has been found.
         """
-        return self.impurity_improvement(self.node_impurity())
 
+        # Code is almost duplicated from impurity_improvement.
+        cdef double impurity_left
+        cdef double impurity_right
+        cdef double split_fraction_left = self.weighted_n_left/self.weighted_n_node_samples
+        cdef double split_fraction_right = self.weighted_n_right/self.weighted_n_node_samples
+        cdef double split_info = 1.0
+        # corrected gain ratio according to (https://arxiv.org/pdf/1801.08310.pdf) equation (9)
+
+        if split_fraction_left > 0.0:
+            split_info -= split_fraction_left * log(split_fraction_left)
+        if split_fraction_right > 0.0:
+            split_info -= split_fraction_right * log(split_fraction_right)
+
+        self.children_impurity(&impurity_left, &impurity_right)
+        # drops a factor in comparison to impurity_improvement to increase performance a bit
+        return (self.node_impurity() - (self.weighted_n_right / 
+                            self.weighted_n_node_samples * impurity_right)
+                         - (self.weighted_n_left / 
+                            self.weighted_n_node_samples * impurity_left)) / (split_info)
+
+ 
     cdef double impurity_improvement(self, double impurity) nogil:
         """Compute the improvement in impurity
 
