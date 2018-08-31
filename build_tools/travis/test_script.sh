@@ -36,9 +36,9 @@ run_tests() {
     export SKLEARN_SKIP_NETWORK_TESTS=1
 
     if [[ "$COVERAGE" == "true" ]]; then
-        TEST_CMD="$TEST_CMD --cov sklearn"
+        TEST_CMD="$TEST_CMD --cov sklearn.linear_model.tests.test_logistic"
     fi
-    $TEST_CMD sklearn
+    $TEST_CMD sklearn.linear_model.tests.test_logistic
 
     # Going back to git checkout folder needed to test documentation
     cd $OLDPWD
