@@ -355,7 +355,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         Whether to compute and return the residual sum of squares corresponding
         to the computed solution.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance or None, optional (default=None)
         Used for randomly initializing the dictionary. Pass an int for
         reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -476,7 +476,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     verbose : bool, optional (default: False)
         To control the verbosity of the procedure.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance or None, optional (default=None)
         Used for randomly initializing the dictionary. Pass an int for
         reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -672,7 +672,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         Number of previous iterations completed on the dictionary used for
         initialization.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance or None, optional (default=None)
         Used for initializing the dictionary when ``dict_init`` is not
         specified, randomly shuffling the data when ``shuffle`` is set to
         ``True``, and updating the dictionary. Pass an int for reproducible
@@ -1097,7 +1097,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance or None, optional (default=None)
         Used for initializing the dictionary when ``dict_init`` is not
         specified, randomly shuffling the data when ``shuffle`` is set to
         ``True``, and updating the dictionary. Pass an int for reproducible
@@ -1281,7 +1281,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance or None, optional (default=None)
         Used for initializing the dictionary when ``dict_init`` is not
         specified, randomly shuffling the data when ``shuffle`` is set to
         ``True``, and updating the dictionary. Pass an int for reproducible

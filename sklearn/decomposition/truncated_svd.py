@@ -55,7 +55,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         The default is larger than the default in `randomized_svd` to handle
         sparse matrices that may have large slowly decaying spectrum.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance or None, optional (default=None)
         Used during randomized svd. Pass an int for reproducible results across
         multiple function calls.
         See :term:`Glossary <random_state>`.
