@@ -3,8 +3,6 @@
 #          Denis Engemann <denis-alexander.engemann@inria.fr>
 #
 # License: BSD 3 clause
-import itertools
-
 import numpy as np
 from scipy import sparse
 from scipy import linalg

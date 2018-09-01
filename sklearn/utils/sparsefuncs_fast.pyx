@@ -157,11 +157,11 @@ def csc_mean_variance_axis0(X):
     return means, variances
 
 
-def _csc_mean_variance_axis0(floating[::1] X_data,
+def _csc_mean_variance_axis0(floating[:] X_data,
                              unsigned long long n_samples,
                              unsigned long long n_features,
-                             integral[::1] X_indices,
-                             integral[::1] X_indptr):
+                             integral[:] X_indices,
+                             integral[:] X_indptr):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
@@ -262,39 +262,34 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n):
                                      last_n)
 
 
-def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
+def _incr_mean_variance_axis0(floating[:] X_data,
                               unsigned long long n_samples,
                               unsigned long long n_features,
-                              np.ndarray[integral, ndim=1] X_indices,
-                              np.ndarray[integral, ndim=1] X_indptr,
+                              integral[:] X_indices,
+                              integral[:] X_indptr,
                               str X_format,
-                              np.ndarray[floating, ndim=1] last_mean,
-                              np.ndarray[floating, ndim=1] last_var,
-                              np.ndarray[np.int64_t, ndim=1] last_n):
+                              floating[:] last_mean,
+                              floating[:] last_var,
+                              np.int64_t[:] last_n):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
-    cdef:
-        np.npy_intp i
-
-    # last = stats until now
-    # new = the current increment
-    # updated = the aggregated stats
-    # when arrays, they are indexed by i per-feature
-    cdef:
-        np.ndarray[floating, ndim=1] new_mean
-        np.ndarray[floating, ndim=1] new_var
-        np.ndarray[floating, ndim=1] updated_mean
-        np.ndarray[floating, ndim=1] updated_var
 
     if floating is float:
         dtype = np.float32
     else:
         dtype = np.float64
 
-    new_mean = np.zeros(n_features, dtype=dtype)
-    new_var = np.zeros_like(new_mean, dtype=dtype)
-    updated_mean = np.zeros_like(new_mean, dtype=dtype)
-    updated_var = np.zeros_like(new_mean, dtype=dtype)
+    # last = stats until now
+    # new = the current increment
+    # updated = the aggregated stats
+    # when arrays, they are indexed by i per-feature
+    cdef:
+        np.npy_intp i
+
+        floating[::1] new_mean = np.zeros(n_features, dtype=dtype)
+        floating[::1] new_var = np.zeros_like(new_mean, dtype=dtype)
+        floating[::1] updated_mean = np.zeros_like(new_mean, dtype=dtype)
+        floating[::1] updated_var = np.zeros_like(new_mean, dtype=dtype)
 
     cdef:
         np.ndarray[np.int64_t, ndim=1] new_n
