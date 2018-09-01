@@ -205,3 +205,29 @@ def test_spectral_clustering_with_arpack_amg_solvers():
         assert_raises(
             ValueError, spectral_clustering,
             graph, n_clusters=2, eigen_solver='amg', random_state=0)
+
+
+def test_issue10278_regression():
+
+    # make an image with two circles and construct a graph
+    x, y = np.indices((40, 40))
+    center1, center2 = (14, 12), (20, 25)
+    radius1, radius2 = 8, 7
+
+    circle1 = (x - center1[0]) ** 2 + (y - center1[1]) ** 2 < radius1 ** 2
+    circle2 = (x - center2[0]) ** 2 + (y - center2[1]) ** 2 < radius2 ** 2
+
+    circles = circle1 | circle2
+    mask = circles.copy()
+    img = circles.astype(float)
+
+    graph = img_to_graph(img, mask=mask)
+    graph.data = np.exp(-graph.data / graph.data.std())
+
+    # this fails on windows for seemingly random versions of Python
+    # on linux the results can be sensitive to tiny image variations
+    xx = list()
+    for solver in ['arpack', 'lobpcg']:
+        xx.append(spectral_clustering(graph, n_clusters=2, eigen_solver=solver, random_state=0))
+
+    assert_array_equal(xx[0], xx[1])
