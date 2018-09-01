@@ -18,7 +18,7 @@ import scipy.sparse
 
 from sklearn.externals import _arff
 from .base import get_data_home
-from ..externals.six import string_types, PY2
+from ..externals.six import string_types, PY2, BytesIO
 from ..externals.six.moves.urllib.error import HTTPError
 from ..utils import Bunch
 
@@ -53,10 +53,12 @@ def _open_openml_url(openml_path, data_home):
     req = Request(_OPENML_PREFIX + openml_path)
     req.add_header('Accept-encoding', 'gzip')
     fsrc = urlopen(req)
-    is_gzip = fsrc.getheader('Content-Encoding', '') == 'gzip'
+    is_gzip = fsrc.info().get('Content-Encoding', '') == 'gzip'
 
     if data_home is None:
         if is_gzip:
+            if PY2:
+                fsrc = BytesIO(fsrc.read())
             return gzip.GzipFile(fileobj=fsrc, mode='rb')
         return fsrc
 
@@ -70,8 +72,6 @@ def _open_openml_url(openml_path, data_home):
 
         try:
             with open(local_path, 'wb') as fdst:
-                req.add_header('Accept-encoding', 'gzip')
-                fsrc = urlopen(req)
                 shutil.copyfileobj(fsrc, fdst)
                 fsrc.close()
         except Exception:
@@ -319,7 +319,7 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
         return_type = _arff.DENSE
 
     if PY2:
-        arff_file = _arff.load(response, encode_nominal=encode_nominal,
+        arff_file = _arff.load(response.read(), encode_nominal=encode_nominal,
                                return_type=return_type, )
     else:
         arff_file = _arff.loads(response.read().decode('utf-8'),
