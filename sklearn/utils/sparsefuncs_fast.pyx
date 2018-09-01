@@ -28,7 +28,7 @@ ctypedef np.float64_t DOUBLE
 def csr_row_norms(X):
     """L2 norm of each row in CSR matrix X."""
     if X.dtype != np.float32:
-        X = X.astype(np.float64)
+        X = X.astype(np.float64, copy=False)
     return _csr_row_norms(X.data, X.shape, X.indices, X.indptr)
 
 
@@ -73,7 +73,7 @@ def csr_mean_variance_axis0(X):
 
     """
     if X.dtype != np.float32:
-        X = X.astype(np.float64)
+        X = X.astype(np.float64, copy=False)
     means, variances, _ =  _csr_mean_variance_axis0(X.data, X.shape[0],
                                                     X.shape[1], X.indices)
     return means, variances
@@ -153,7 +153,7 @@ def csc_mean_variance_axis0(X):
 
     """
     if X.dtype != np.float32:
-        X = X.astype(np.float64)
+        X = X.astype(np.float64, copy=False)
     means, variances, _ = _csc_mean_variance_axis0(X.data, X.shape[0],
                                                    X.shape[1], X.indices,
                                                   X.indptr)
@@ -261,7 +261,7 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n):
 
     """
     if X.dtype != np.float32:
-        X = X.astype(np.float64)
+        X = X.astype(np.float64, copy=False)
     return _incr_mean_variance_axis0(X.data, X.shape[0], X.shape[1], X.indices,
                                      X.indptr, X.format, last_mean, last_var,
                                      last_n)
