@@ -206,8 +206,9 @@ def test_spectral_clustering_with_arpack_amg_solvers():
             ValueError, spectral_clustering,
             graph, n_clusters=2, eigen_solver='amg', random_state=0)
 
-
-def test_issue10278_regression():
+@pytest.mark.parametrize("seed", [0, 1, 2, 3, 5, 7, 9, 11, 13, 42, 86, 99,
+                                  314, 666, 999, 1984, 101010, 654321])
+def test_issue10278_regression(seed):
 
     # make an image with two circles and construct a graph
     x, y = np.indices((40, 40))
@@ -228,6 +229,7 @@ def test_issue10278_regression():
     # on linux the results can be sensitive to tiny image variations
     xx = list()
     for solver in ['arpack', 'lobpcg']:
-        xx.append(spectral_clustering(graph, n_clusters=2, eigen_solver=solver, random_state=0))
+        xx.append(spectral_clustering(graph, n_clusters=2,
+                                      eigen_solver=solver, random_state=seed))
 
     assert_array_equal(xx[0], xx[1])
