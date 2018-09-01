@@ -94,7 +94,7 @@ Known Major Bugs
 
 * :issue:`11924`: :class:`LogisticRegressionCV` with `solver='lbfgs'` and
   `multi_class='multinomial'` may be non-deterministic or otherwise broken on
-  MacOS. This appears to be the case on Travis CI servers, but has not been
+  macOS. This appears to be the case on Travis CI servers, but has not been
   confirmed on personal MacBooks! This issue has been present in previous
   releases.
 
@@ -109,7 +109,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |MajorFeature| A new clustering algorithm: :class:`cluster.OPTICS`: an
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
-  to set and tat scales better, by :user:`Shane <espg>`.
+  to set and that scales better, by :user:`Shane <espg>`.
 
 - |MajorFeature| :class:`cluster.AgglomerativeClustering` now supports Single
   Linkage clustering via ``linkage='single'``. :issue:`9372` by :user:`Leland
@@ -128,7 +128,7 @@ Support for Python 3.3 has been officially dropped.
   regardless of ``algorithm``.
   :issue:`8003` by :user:`Joël Billaud <recamshak>`.
 
-- |Enhancement| :class:`cluster.KMeans` now gives a warning, if the number of
+- |Enhancement| :class:`cluster.KMeans` now gives a warning if the number of
   distinct clusters found is smaller than ``n_clusters``. This may occur when
   the number of distinct points in the data set is actually smaller than the
   number of cluster one is looking for.
@@ -147,8 +147,8 @@ Support for Python 3.3 has been officially dropped.
   and :user:`Devansh D. <devanshdalal>`.
 
 - |Fix| Fixed a bug in :func:`cluster.k_means_elkan` where the returned
-  `iteration` was 1 less than the correct value. Also added the missing
-  `n_iter_` attribute in the docstring of :class:`cluster.KMeans`.
+  ``iteration`` was 1 less than the correct value. Also added the missing
+  ``n_iter_`` attribute in the docstring of :class:`cluster.KMeans`.
   :issue:`11353` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 - |API| Deprecate ``pooling_func`` unused parameter in
@@ -191,12 +191,12 @@ Support for Python 3.3 has been officially dropped.
 .......................
 
 - |MajorFeature| Added :func:`datasets.fetch_openml` to fetch datasets from
-  `OpenML <http://openml.org>`. OpenML is a free, open data sharing platform
+  `OpenML <http://openml.org>`_. OpenML is a free, open data sharing platform
   and will be used instead of mldata as it provides better service availability.
   :issue:`9908` by `Andreas Müller`_ and :user:`Jan N. van Rijn <janvanrijn>`.
 
 - |Feature| In :func:`datasets.make_blobs`, one can now pass a list to the
-  `n_samples` parameter to indicate the number of samples to generate per
+  ``n_samples`` parameter to indicate the number of samples to generate per
   cluster. :issue:`8617` by :user:`Maskani Filali Mohamed <maskani-moh>` and
   :user:`Konstantinos Katrioplas <kkatrio>`.
 
@@ -255,8 +255,8 @@ Support for Python 3.3 has been officially dropped.
 
 - |Fix| In :class:`decomposition.PCA` selecting a n_components parameter greater
   than the number of samples now raises an error. Similarly, the
-  ``n_components=None`` case now selects the minimum of n_samples and
-  n_features.
+  ``n_components=None`` case now selects the minimum of ``n_samples`` and
+  ``n_features``.
   :issue:`8484` by :user:`Wally Gauze <wallygauze>`.
 
 - |Fix| Fixed a bug in :class:`decomposition.PCA` where users will get
@@ -268,7 +268,7 @@ Support for Python 3.3 has been officially dropped.
   :class:`decomposition.NMF` :issue:`10142` by `Tom Dupre la Tour`_.
 
 - |Fix| Fixed a bug in :class:`decomposition.SparseCoder` when running OMP
-  sparse coding in parallel using readonly memory mapped datastructures.
+  sparse coding in parallel using read-only memory mapped datastructures.
   :issue:`5956` by :user:`Vighnesh Birodkar <vighneshbirodkar>` and
   :user:`Olivier Grisel <ogrisel>`.
 
@@ -278,7 +278,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Efficiency| Memory usage improvement for :func:`_class_means` and
   :func:`_class_cov` in :mod:`discriminant_analysis`. :issue:`10898` by
-  :user:`Nanxin Chen <bobchennan>`.`
+  :user:`Nanxin Chen <bobchennan>`.
 
 
 :mod:`sklearn.dummy`
@@ -305,7 +305,7 @@ Support for Python 3.3 has been officially dropped.
   via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
   by `Raghav RV`_
 
-- |Feature| Add `named_estimators_` parameter in
+- |Feature| Added ``named_estimators_`` parameter in
   :class:`ensemble.VotingClassifier` to access fitted estimators.
   :issue:`9157` by :user:`Herilalaina Rakotoarison <herilalaina>`.
 
@@ -470,7 +470,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Fix| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the
   'ovr' strategy was always used to compute cross-validation scores in the
-  multiclass setting, even if 'multinomial' was set.
+  multiclass setting, even if ``'multinomial'`` was set.
   :issue:`8720` by :user:`William de Vazelhes <wdevazelhes>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
@@ -501,7 +501,7 @@ Support for Python 3.3 has been officially dropped.
   :issue:`10687` by :user:`Martin Hahn <martin-hahn>`.
 
 - |Fix| Fixed a bug in :func:`sklearn.linear_model.LogisticRegression` where the
-  multi_class='multinomial' with binary output with warm_start = True
+  ``multi_class='multinomial'`` with binary output ``with warm_start=True``
   :issue:`10836` by :user:`Aishwarya Srinivasan <aishgrt1>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.RidgeCV` where using integer
@@ -517,7 +517,7 @@ Support for Python 3.3 has been officially dropped.
   :class:`linear_model.PassiveAggressiveClassifier`,
   :class:`linear_model.PassiveAggressiveRegressor` and
   :class:`linear_model.Perceptron`, where the stopping criterion was stopping
-  the algorithm before convergence. A parameter `n_iter_no_change` was added
+  the algorithm before convergence. A parameter ``n_iter_no_change`` was added
   and set by default to 5. Previous behavior is equivalent to setting the
   parameter to 1. :issue:`9043` by `Tom Dupre la Tour`_.
 
@@ -802,7 +802,7 @@ Support for Python 3.3 has been officially dropped.
   memory efficient when ``algorithm='brute'``.
   :issue:`11136` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
-- |Feature| Add `sample_weight` parameter to the fit method of
+- |Feature| Add ``sample_weight`` parameter to the fit method of
   :class:`neighbors.KernelDensity` to enable weighting in kernel density
   estimation.
   :issue:`4394` by :user:`Samuel O. Ronsin <samronsin>`.
@@ -831,8 +831,8 @@ Support for Python 3.3 has been officially dropped.
   faster construction and querying times.
   :issue:`11556` by :user:`Jake VanderPlas <jakevdp>`
 
-- |Fix| Fixed a bug in `neighbors.KDTree` and `neighbors.BallTree` where
-  pickled tree objects would change their type to the super class `BinaryTree`.
+- |Fix| Fixed a bug in :class:`neighbors.KDTree` and :class:`neighbors.BallTree` where
+  pickled tree objects would change their type to the super class :class:`BinaryTree`.
   :issue:`11774` by :user:`Nicolas Hug <NicolasHug>`.
 
 
@@ -949,7 +949,7 @@ Support for Python 3.3 has been officially dropped.
   :issue:`11042` by :user:`Daniel Morales <DanielMorales9>`.
 
 - |Fix| Fix ``fit`` and ``partial_fit`` in
-  :class:`preprocessing.StandardScaler` in the rare case when `with_mean=False`
+  :class:`preprocessing.StandardScaler` in the rare case when ``with_mean=False``
   and `with_std=False` which was crashing by calling ``fit`` more than once and
   giving inconsistent results for ``mean_`` whether the input was a sparse or a
   dense matrix. ``mean_`` will be set to ``None`` with both sparse and dense
