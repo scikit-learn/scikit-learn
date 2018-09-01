@@ -10,7 +10,7 @@ cimport numpy as np
 ctypedef np.float64_t DTYPE_t
 
 
-cdef DTYPE_t _inner_log_logistic_sigmoid(DTYPE_t x):
+cdef inline DTYPE_t _inner_log_logistic_sigmoid(DTYPE_t x) nogil:
     """Log of the logistic sigmoid function log(1 / (1 + e ** -x))"""
     if x > 0:
         return -log(1 + exp(-x))

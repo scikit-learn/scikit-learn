@@ -3,6 +3,7 @@
 #          Denis Engemann <denis-alexander.engemann@inria.fr>
 #
 # License: BSD 3 clause
+import itertools
 
 import numpy as np
 from scipy import sparse
@@ -24,6 +25,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import create_memmap_backed_data
 from sklearn.utils.fixes import np_version
 
 from sklearn.utils.extmath import density
@@ -39,6 +41,9 @@ from sklearn.utils.extmath import _incremental_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
+
+from sklearn.utils.sparsefuncs_fast import csc_mean_variance_axis0
+from sklearn.utils.sparsefuncs_fast import csr_mean_variance_axis0
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -679,3 +684,38 @@ def test_stable_cumsum():
     assert_array_equal(stable_cumsum(A, axis=0), np.cumsum(A, axis=0))
     assert_array_equal(stable_cumsum(A, axis=1), np.cumsum(A, axis=1))
     assert_array_equal(stable_cumsum(A, axis=2), np.cumsum(A, axis=2))
+
+
+@pytest.fixture(scope='module')
+def data_dense_mmap(request):
+    rng = np.random.RandomState(42)
+    X = rng.rand(100, 20)
+    return create_memmap_backed_data(X)
+
+
+@pytest.fixture(scope='module')
+def data_csr_mmap(request):
+    rng = np.random.RandomState(42)
+    X = sparse.rand(100, 1000, format='csr', random_state=rng)
+    return create_memmap_backed_data(X)
+
+
+@pytest.fixture(scope='module')
+def data_csc_mmap(request):
+    rng = np.random.RandomState(42)
+    X = sparse.rand(100, 1000, format='csc', random_state=rng)
+    return create_memmap_backed_data(X)
+
+
+@pytest.mark.parametrize(
+        'func, array_format',
+        itertools.chain.from_iterable([
+                itertools.product([row_norms], ['dense', 'csr', 'csc']),
+                [(csc_mean_variance_axis0, 'csc'),
+                 (csr_mean_variance_axis0, 'csr')]
+        ]))
+def test_read_only_memmap(func, array_format, data_dense_mmap, data_csr_mmap,
+                          data_csc_mmap):
+    data = {'dense': data_dense_mmap, 'csr': data_csr_mmap,
+            'csc': data_csc_mmap}[array_format]
+    func(data)

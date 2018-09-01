@@ -32,27 +32,27 @@ def csr_row_norms(X):
     return _csr_row_norms(X.data, X.shape, X.indices, X.indptr)
 
 
-def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
+def _csr_row_norms(floating[::1] X_data,
                    shape,
-                   np.ndarray[integral, ndim=1, mode="c"] X_indices,
-                   np.ndarray[integral, ndim=1, mode="c"] X_indptr):
+                   integral[::1] X_indices,
+                   integral[::1] X_indptr):
     cdef:
         unsigned long long n_samples = shape[0]
         unsigned long long n_features = shape[1]
-        np.ndarray[DOUBLE, ndim=1, mode="c"] norms
 
         np.npy_intp i, j
         double sum_
 
-    norms = np.zeros(n_samples, dtype=np.float64)
+    cdef double[::1] norms = np.zeros(n_samples, dtype=np.float64)
 
-    for i in range(n_samples):
-        sum_ = 0.0
-        for j in range(X_indptr[i], X_indptr[i + 1]):
-            sum_ += X_data[j] * X_data[j]
-        norms[i] = sum_
+    with nogil:
+        for i in range(n_samples):
+            sum_ = 0.0
+            for j in range(X_indptr[i], X_indptr[i + 1]):
+                sum_ += X_data[j] * X_data[j]
+            norms[i] = sum_
 
-    return norms
+    return norms.base
 
 
 def csr_mean_variance_axis0(X):
@@ -79,10 +79,10 @@ def csr_mean_variance_axis0(X):
     return means, variances
 
 
-def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
+def _csr_mean_variance_axis0(floating[::1] X_data,
                              unsigned long long n_samples,
                              unsigned long long n_features,
-                             np.ndarray[integral, ndim=1] X_indices):
+                             integral[::1] X_indices):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
@@ -90,49 +90,46 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
         unsigned long long non_zero = X_indices.shape[0]
         np.npy_intp col_ind
         floating diff
-        # means[j] contains the mean of feature j
-        np.ndarray[floating, ndim=1] means
-        # variances[j] contains the variance of feature j
-        np.ndarray[floating, ndim=1] variances
 
     if floating is float:
         dtype = np.float32
     else:
         dtype = np.float64
 
-    means = np.zeros(n_features, dtype=dtype)
-    variances = np.zeros_like(means, dtype=dtype)
 
     cdef:
+        # means[j] contains the mean of feature j
+        floating[::1] means = np.zeros(n_features, dtype=dtype)
+        # variances[j] contains the variance of feature j
+        floating[::1] variances = np.zeros_like(means, dtype=dtype)
         # counts[j] contains the number of samples where feature j is non-zero
-        np.ndarray[np.int64_t, ndim=1] counts = np.zeros(n_features,
-                                                         dtype=np.int64)
+        np.int64_t[::1]  counts = np.zeros(n_features, dtype=np.int64)
         # counts_nan[j] contains the number of NaNs for feature j
-        np.ndarray[np.int64_t, ndim=1] counts_nan = np.zeros(n_features,
-                                                             dtype=np.int64)
+        np.int64_t[::1] counts_nan = np.zeros(n_features, dtype=np.int64)
 
-    for i in xrange(non_zero):
-        col_ind = X_indices[i]
-        if not isnan(X_data[i]):
-            means[col_ind] += X_data[i]
-        else:
-            counts_nan[col_ind] += 1
+    with nogil:
+        for i in xrange(non_zero):
+            col_ind = X_indices[i]
+            if not isnan(X_data[i]):
+                means[col_ind] += X_data[i]
+            else:
+                counts_nan[col_ind] += 1
 
-    for i in xrange(n_features):
-        means[i] /= (n_samples - counts_nan[i])
+        for i in xrange(n_features):
+            means[i] /= (n_samples - counts_nan[i])
 
-    for i in xrange(non_zero):
-        col_ind = X_indices[i]
-        if not isnan(X_data[i]):
-            diff = X_data[i] - means[col_ind]
-            variances[col_ind] += diff * diff
-            counts[col_ind] += 1
+        for i in xrange(non_zero):
+            col_ind = X_indices[i]
+            if not isnan(X_data[i]):
+                diff = X_data[i] - means[col_ind]
+                variances[col_ind] += diff * diff
+                counts[col_ind] += 1
 
-    for i in xrange(n_features):
-        variances[i] += (n_samples - counts_nan[i] - counts[i]) * means[i]**2
-        variances[i] /= (n_samples - counts_nan[i])
+        for i in xrange(n_features):
+            variances[i] += (n_samples - counts_nan[i] - counts[i]) * means[i]**2
+            variances[i] /= (n_samples - counts_nan[i])
 
-    return means, variances, counts_nan
+    return means.base, variances.base, counts_nan.base
 
 
 def csc_mean_variance_axis0(X):
@@ -160,11 +157,11 @@ def csc_mean_variance_axis0(X):
     return means, variances
 
 
-def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
+def _csc_mean_variance_axis0(floating[::1] X_data,
                              unsigned long long n_samples,
                              unsigned long long n_features,
-                             np.ndarray[integral, ndim=1] X_indices,
-                             np.ndarray[integral, ndim=1] X_indptr):
+                             integral[::1] X_indices,
+                             integral[::1] X_indptr):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
@@ -174,44 +171,42 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
         unsigned long long endptr
         floating diff
         # means[j] contains the mean of feature j
-        np.ndarray[floating, ndim=1] means
         # variances[j] contains the variance of feature j
-        np.ndarray[floating, ndim=1] variances
 
     if floating is float:
         dtype = np.float32
     else:
         dtype = np.float64
 
-    means = np.zeros(n_features, dtype=dtype)
-    variances = np.zeros_like(means, dtype=dtype)
+    cdef: 
+        floating[::1] means = np.zeros(n_features, dtype=dtype)
+        floating[::1] variances = np.zeros_like(means, dtype=dtype)
+        np.int64_t[::1] counts_nan = np.zeros(n_features, dtype=np.int64)
 
-    cdef np.ndarray[np.int64_t, ndim=1] counts_nan = np.zeros(n_features,
-                                                              dtype=np.int64)
+    with nogil:
+        for i in xrange(n_features):
 
-    for i in xrange(n_features):
+            startptr = X_indptr[i]
+            endptr = X_indptr[i + 1]
+            counts = endptr - startptr
 
-        startptr = X_indptr[i]
-        endptr = X_indptr[i + 1]
-        counts = endptr - startptr
+            for j in xrange(startptr, endptr):
+                if not isnan(X_data[j]):
+                    means[i] += X_data[j]
+                else:
+                    counts_nan[i] += 1
+            counts -= counts_nan[i]
+            means[i] /= (n_samples - counts_nan[i])
 
-        for j in xrange(startptr, endptr):
-            if not isnan(X_data[j]):
-                means[i] += X_data[j]
-            else:
-                counts_nan[i] += 1
-        counts -= counts_nan[i]
-        means[i] /= (n_samples - counts_nan[i])
+            for j in xrange(startptr, endptr):
+                if not isnan(X_data[j]):
+                    diff = X_data[j] - means[i]
+                    variances[i] += diff * diff
 
-        for j in xrange(startptr, endptr):
-            if not isnan(X_data[j]):
-                diff = X_data[j] - means[i]
-                variances[i] += diff * diff
+            variances[i] += (n_samples - counts_nan[i] - counts) * means[i]**2
+            variances[i] /= (n_samples - counts_nan[i])
 
-        variances[i] += (n_samples - counts_nan[i] - counts) * means[i]**2
-        variances[i] /= (n_samples - counts_nan[i])
-
-    return means, variances, counts_nan
+    return means.base, variances.base, counts_nan.base
 
 
 def incr_mean_variance_axis0(X, last_mean, last_var, last_n):
