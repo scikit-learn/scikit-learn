@@ -24,7 +24,6 @@ PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
                                                         path=sklearn.__path__)
                       if not ("._" in pckg[1] or ".tests." in pckg[1])])
 
-
 # functions to ignore args / docstring of
 _DOCSTRING_IGNORES = [
     'sklearn.utils.deprecation.load_mlcomp',
@@ -76,7 +75,7 @@ def test_docstring_parameters():
             this_incorrect = []
             if cname in _DOCSTRING_IGNORES or cname.startswith('_'):
                 continue
-            if isabstract(cls):
+            if inspect.isabstract(cls):
                 continue
             with warnings.catch_warnings(record=True) as w:
                 cdoc = docscrape.ClassDoc(cls)
@@ -88,10 +87,10 @@ def test_docstring_parameters():
 
             if _is_deprecated(cls_init):
                 continue
-
             elif cls_init is not None:
                 this_incorrect += check_docstring_parameters(
                     cls.__init__, cdoc, class_name=cname)
+
             for method_name in cdoc.methods:
                 method = getattr(cls, method_name)
                 if _is_deprecated(method):
@@ -141,7 +140,7 @@ def test_tabs():
         # because we don't import
         mod = importlib.import_module(modname)
         try:
-            source = getsource(mod)
+            source = inspect.getsource(mod)
         except IOError:  # user probably should have run "make clean"
             continue
         assert '\t' not in source, ('"%s" has tabs, please remove them ',

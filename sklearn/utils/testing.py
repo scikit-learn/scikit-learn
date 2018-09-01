@@ -950,11 +950,13 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     # Dont check estimator_checks module
     if func_name.split('.')[2] == 'estimator_checks':
         return incorrect
+    # Get the arguments from the function signature
     args = list(filter(lambda x: x not in ignore, _get_args(func)))
     # drop self
     if len(args) > 0 and args[0] == 'self':
         args.remove('self')
 
+    # Analize function's docstring
     if doc is None:
         with warnings.catch_warnings(record=True) as w:
             try:
@@ -967,6 +969,7 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
 
     param_names = []
     for name, type_definition, param_doc in doc['Parameters']:
+        # Type hints are empty only if parameter name ended with :
         if not type_definition.strip():
             if ':' in name and name[:name.index(':')][-1:].strip():
                 incorrect += [func_name +
@@ -977,14 +980,27 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
                               ' Parameter %r has an empty type spec. '
                               'Remove the colon' % (name.lstrip())]
 
+        # Create a list of parameters to compare with the parameters gotten
+        # from the func signature
         if '*' not in name:
             param_names.append(name.split(':')[0].strip('` '))
 
+    # Remove the parameters that should be ignored from list
     param_names = list(filter(lambda x: x not in ignore, param_names))
 
-    if len(param_names) != len(args):
-        bad = str(sorted(list(set(param_names) ^ set(args))))
-        incorrect += [func_name + ' arg mismatch: ' + bad]
+    param_doc, param_func = set(param_names), set(args)
+    complete_params = param_func & param_doc
+
+    if (len(complete_params) != len(args) or len(complete_params) !=
+            len(param_names)):
+        missing_from_func = param_doc.difference(param_func)
+        missing_from_doc = param_func.difference(param_doc)
+        message = func_name + ' contains a parameter mismatch between the function signature and its docstring.\n'
+        if missing_from_doc:
+            message += 'Parameters defined in the function signature and not defined in its docstring: {}\n'.format(missing_from_doc)
+        if missing_from_func:
+            message += 'Parameters defined in the function docstring and not defined in its signature: {}\n'.format(missing_from_func)
+        incorrect += [message]
     else:
         for n1, n2 in zip(param_names, args):
             if n1 != n2:
