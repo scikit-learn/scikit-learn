@@ -709,11 +709,13 @@ def data_csc_mmap(request):
 
 @pytest.mark.parametrize(
         'func, array_format',
-        itertools.chain.from_iterable([
-                itertools.product([row_norms], ['dense', 'csr', 'csc']),
-                [(csc_mean_variance_axis0, 'csc'),
-                 (csr_mean_variance_axis0, 'csr')]
-        ]))
+        [
+          (row_norms, 'dense'),
+          (row_norms, 'csr'),
+          (row_norms, 'csc'),
+          (csc_mean_variance_axis0, 'csc'),
+          (csr_mean_variance_axis0, 'csr')
+        ])
 def test_read_only_memmap(func, array_format, data_dense_mmap, data_csr_mmap,
                           data_csc_mmap):
     data = {'dense': data_dense_mmap, 'csr': data_csr_mmap,
