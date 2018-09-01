@@ -139,7 +139,7 @@ class FastKernelRegression(BaseEstimator, RegressorMixin):
                           "coef0": self.coef0}
             return pairwise_kernels(X, Y, metric=self.kernel,
                                     filter_params=True, **params)
-        distance = euclidean_distances(X, Y, squared=True,Y_norm_squared=Y_squared)
+        distance = euclidean_distances(X, Y, squared=True, Y_norm_squared=Y_squared)
         bandwidth = np.float32(self.bandwidth)
         if self.kernel == "gaussian":
             K = np.exp(-distance / (2 * (np.square(bandwidth))))
