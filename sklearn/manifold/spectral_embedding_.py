@@ -282,6 +282,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             laplacian *= -1
 
     if eigen_solver == 'amg':
+        if eigen_tol == 0:
+            eigen_tol = 1e-12
         # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
         if not sparse.issparse(laplacian):
@@ -294,7 +296,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         M = ml.aspreconditioner()
         X = random_state.rand(laplacian.shape[0], n_components + 1)
         X[:, 0] = dd.ravel()
-        lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12,
+        lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=eigen_tol,
                                         largest=False)
         embedding = diffusion_map.T
         if norm_laplacian:
@@ -303,6 +305,10 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             raise ValueError
 
     elif eigen_solver == "lobpcg":
+
+        if eigen_tol == 0:
+            eigen_tol = 1e-15
+
         # lobpcg needs double precision floats
         laplacian = check_array(laplacian, dtype=np.float64,
                                 accept_sparse=True)
@@ -322,7 +328,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             # doesn't behave well in low dimension
             X = random_state.rand(laplacian.shape[0], n_components + 1)
             X[:, 0] = dd.ravel()
-            lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
+            lambdas, diffusion_map = lobpcg(laplacian, X, tol=eigen_tol,
                                             largest=False, maxiter=2000)
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
