@@ -1376,6 +1376,8 @@ class LassoCV(LinearModelCV, RegressorMixin):
     >>> reg = LassoCV(cv=5, random_state=0).fit(X, y)
     >>> reg.score(X, y) # doctest: +ELLIPSIS
     0.9993...
+    >>> reg.predict(X[:1,])
+    array([-78.4951...])
 
     Notes
     -----

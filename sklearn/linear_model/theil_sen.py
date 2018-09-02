@@ -285,6 +285,8 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
     >>> reg = TheilSenRegressor(random_state=0).fit(X, y)
     >>> reg.score(X, y) # doctest: +ELLIPSIS
     0.9884...
+    >>> reg.predict(X[:1,])
+    array([-31.5871...])
 
     References
     ----------

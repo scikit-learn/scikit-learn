@@ -1075,10 +1075,12 @@ class LarsCV(Lars):
     >>> from sklearn.linear_model import LarsCV
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(
-    ...     n_samples=200, n_features=2, noise=4.0 random_state=0)
+    ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
     >>> reg = LarsCV(cv=5).fit(X, y)
     >>> reg.score(X, y) # doctest: +ELLIPSIS
     0.9885...
+    >>> reg.predict(X[:1,])
+    array([-31.9417...])
 
     See also
     --------
@@ -1309,6 +1311,8 @@ class LassoLarsCV(LarsCV):
     >>> reg = LassoLarsCV(cv=5).fit(X, y)
     >>> reg.score(X, y) # doctest: +ELLIPSIS
     0.9885...
+    >>> reg.predict(X[:1,])
+    array([-31.9417...])
 
     Notes
     -----

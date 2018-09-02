@@ -203,7 +203,9 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> X[:4] = np.random.uniform(10, 20, (4, 2))
     >>> y[:4] = np.random.uniform(10, 20, 4)
     >>> huber = HuberRegressor().fit(X, y)
-    >>> linear = LinearRegression().fit(X, y) # doctest: +ELLIPSIS
+    >>> huber.predict(X[:1,]) # doctest: +ELLIPSIS
+    array([806.7200...])
+    >>> linear = LinearRegression().fit(X, y)
     >>> print("True coefficients: %s\nHuber coefficients: %s\n"
     ...       "Linear Regression coefficients: %s"
     ...       % (coef, huber.coef_, linear.coef_))

@@ -407,6 +407,8 @@ class LinearRegression(LinearModel, RegressorMixin):
     >>> reg = LinearRegression().fit(X, y)
     >>> reg.score(X, y) # doctest: +ELLIPSIS
     0.9997...
+    >>> reg.predict(X[:1,])
+    array([9.8117...])
 
     Notes
     -----

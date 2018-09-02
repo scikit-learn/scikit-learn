@@ -591,6 +591,8 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     >>> reg = OrthogonalMatchingPursuit().fit(X, y)
     >>> reg.score(X, y) # doctest: +ELLIPSIS
     0.9991...
+    >>> reg.predict(X[:1,])
+    array([-78.3854...])
 
     Notes
     -----
@@ -831,6 +833,8 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
     >>> reg = OrthogonalMatchingPursuitCV(cv=5).fit(X, y)
     >>> reg.score(X, y) # doctest: +ELLIPSIS
     0.9991...
+    >>> reg.predict(X[:1,])
+    array([-78.3854...])
 
     See also
     --------
