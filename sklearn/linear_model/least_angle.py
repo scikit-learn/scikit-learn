@@ -1070,6 +1070,16 @@ class LarsCV(Lars):
     n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import LarsCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(
+    ...     n_samples=200, n_features=2, noise=4.0 random_state=0)
+    >>> reg = LarsCV(cv=5).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9885...
+
     See also
     --------
     lars_path, LassoLars, LassoLarsCV
@@ -1289,6 +1299,16 @@ class LassoLarsCV(LarsCV):
 
     n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import LassoLarsCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(
+    ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
+    >>> reg = LassoLarsCV(cv=5).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9885...
 
     Notes
     -----
