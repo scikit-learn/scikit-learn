@@ -223,7 +223,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     significant_min : float, optional
         Sets a lower threshold on how small a significant maxima can be.
 
-    min_cluster_size : int > 1 or loat between 0 and 1
+    min_cluster_size : int > 1 or float between 0 and 1
         Minimum number of samples in an OPTICS cluster, expressed as an
         absolute number or a fraction of the number of samples (rounded
         to be at least 2).
@@ -532,7 +532,7 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     significant_min : float, optional
         Sets a lower threshold on how small a significant maxima can be.
 
-    min_cluster_size : int > 1 or loat between 0 and 1
+    min_cluster_size : int > 1 or float between 0 and 1
         Minimum number of samples in an OPTICS cluster, expressed as an
         absolute number or a fraction of the number of samples (rounded
         to be at least 2).
