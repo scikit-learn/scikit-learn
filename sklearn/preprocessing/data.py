@@ -671,8 +671,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         # incr_mean_variance_axis and _incremental_variance_axis
         if (hasattr(self, 'n_samples_seen_') and
                 isinstance(self.n_samples_seen_, (int, np.integer))):
-            self.n_samples_seen_ = np.repeat(self.n_samples_seen_,
-                                             X.shape[1]).astype(np.int64)
+            self.n_samples_seen_ = np.repeat(
+                self.n_samples_seen_, X.shape[1]).astype(np.int64, copy=False)
 
         if sparse.issparse(X):
             if self.with_mean:
@@ -687,8 +687,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                         shape=X.shape).sum(axis=0).A.ravel()
 
             if not hasattr(self, 'n_samples_seen_'):
-                self.n_samples_seen_ = (X.shape[0] -
-                                        counts_nan).astype(np.int64)
+                self.n_samples_seen_ = (
+                        X.shape[0] - counts_nan).astype(np.int64, copy=False)
 
             if self.with_std:
                 # First pass

@@ -971,7 +971,7 @@ class OrdinalEncoder(_BaseEncoder):
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 
         for i in range(n_features):
-            labels = X[:, i].astype('int64')
+            labels = X[:, i].astype('int64', copy=False)
             X_tr[:, i] = self.categories_[i][labels]
 
         return X_tr

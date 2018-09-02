@@ -605,7 +605,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     elif all(is_classification):
         y = np.hstack([np.take(np.asarray(nominal_attributes.pop(col_name),
                                           dtype='O'),
-                               y[:, i:i+1].astype(int))
+                               y[:, i:i+1].astype(int, copy=False))
                        for i, col_name in enumerate(target_column)])
     elif any(is_classification):
         raise ValueError('Mix of nominal and non-nominal targets is not '

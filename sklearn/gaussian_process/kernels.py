@@ -33,7 +33,7 @@ from ..base import clone
 
 
 def _check_length_scale(X, length_scale):
-    length_scale = np.squeeze(length_scale).astype(float)
+    length_scale = np.squeeze(length_scale).astype(float, copy=False)
     if np.ndim(length_scale) > 1:
         raise ValueError("length_scale cannot be of dimension greater than 1")
     if np.ndim(length_scale) == 1 and X.shape[1] != length_scale.shape[0]:

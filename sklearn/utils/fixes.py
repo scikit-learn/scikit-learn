@@ -231,3 +231,27 @@ def _joblib_parallel_args(**kwargs):
         if require == 'sharedmem':
             args['backend'] = 'threading'
     return args
+
+
+# To be removed once this fix is included in six
+try:
+    from collections.abc import Sequence as _Sequence  # noqa
+    from collections.abc import Iterable as _Iterable  # noqa
+    from collections.abc import Mapping as _Mapping  # noqa
+    from collections.abc import Sized as _Sized  # noqa
+except ImportError:  # python <3.3
+    from collections import Sequence as _Sequence  # noqa
+    from collections import Iterable as _Iterable  # noqa
+    from collections import Mapping as _Mapping  # noqa
+    from collections import Sized as _Sized  # noqa
+
+
+# TODO: replace by copy=False, when only scipy > 1.1 is supported.
+def _astype_copy_false(X):
+    """Returns the copy=False parameter for {ndarray,csr_matrix,csc_matrix}.astype
+    when possible, otherwise don't specify
+    """
+    if sp_version >= (1, 1) or not sp.issparse(X):
+        return {'copy': False}
+    else:
+        return {}
