@@ -7,10 +7,10 @@ from warnings import warn
 
 try:
     # Python 3+
-    from urllib.request import urlopen
+    from urllib.request import urlopen, Request
 except ImportError:
     # Python 2
-    from urllib2 import urlopen
+    from urllib2 import urlopen, Request
 
 
 import numpy as np
@@ -18,7 +18,7 @@ import scipy.sparse
 
 from sklearn.externals import _arff
 from .base import get_data_home
-from ..externals.six import string_types, PY2
+from ..externals.six import string_types, PY2, BytesIO
 from ..externals.six.moves.urllib.error import HTTPError
 from ..utils import Bunch
 
@@ -50,8 +50,18 @@ def _open_openml_url(openml_path, data_home):
     result : stream
         A stream to the OpenML resource
     """
+    req = Request(_OPENML_PREFIX + openml_path)
+    req.add_header('Accept-encoding', 'gzip')
+    fsrc = urlopen(req)
+    is_gzip = fsrc.info().get('Content-Encoding', '') == 'gzip'
+
     if data_home is None:
-        return urlopen(_OPENML_PREFIX + openml_path)
+        if is_gzip:
+            if PY2:
+                fsrc = BytesIO(fsrc.read())
+            return gzip.GzipFile(fileobj=fsrc, mode='rb')
+        return fsrc
+
     local_path = os.path.join(data_home, 'openml.org', openml_path + ".gz")
     if not os.path.exists(local_path):
         try:
@@ -61,15 +71,16 @@ def _open_openml_url(openml_path, data_home):
             pass
 
         try:
-            with gzip.GzipFile(local_path, 'wb') as fdst:
-                fsrc = urlopen(_OPENML_PREFIX + openml_path)
+            with open(local_path, 'wb') as fdst:
                 shutil.copyfileobj(fsrc, fdst)
                 fsrc.close()
         except Exception:
             os.unlink(local_path)
             raise
     # XXX: unnecessary decompression on first access
-    return gzip.GzipFile(local_path, 'rb')
+    if is_gzip:
+        return gzip.GzipFile(local_path, 'rb')
+    return fsrc
 
 
 def _get_json_content_from_openml_api(url, error_message, raise_if_error,
@@ -308,7 +319,7 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
         return_type = _arff.DENSE
 
     if PY2:
-        arff_file = _arff.load(response, encode_nominal=encode_nominal,
+        arff_file = _arff.load(response.read(), encode_nominal=encode_nominal,
                                return_type=return_type, )
     else:
         arff_file = _arff.loads(response.read().decode('utf-8'),
