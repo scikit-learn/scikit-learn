@@ -345,7 +345,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             Mean accuracy of self.predict(X) wrt. y.
 
         """
-        X = _ensure_consistent_lenght(X, y)
+        X = _ensure_consistent_length(X, y)
         return super(DummyClassifier, self).score(X, y, sample_weight)
 
 
@@ -543,11 +543,11 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         score : float
             R^2 of self.predict(X) wrt. y.
         """
-        X = _ensure_consistent_lenght(X, y)
+        X = _ensure_consistent_length(X, y)
         return super(DummyRegressor, self).score(X, y, sample_weight)
 
 
-def _ensure_consistent_lenght(X, y):
+def _ensure_consistent_length(X, y):
     if X is None:
-        X = [[None] for _ in range(len(y))]
+        X = np.zeros(shape=(len(y), 1))
     return X
