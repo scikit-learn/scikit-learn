@@ -482,14 +482,14 @@ def test_connectivity_fixing_non_lil():
 
 def test_int_float_dict():
     rng = np.random.RandomState(0)
-    keys = np.unique(rng.randint(100, size=10).astype(np.intp))
+    keys = np.unique(rng.randint(100, size=10).astype(np.intp, copy=False))
     values = rng.rand(len(keys))
 
     d = IntFloatDict(keys, values)
     for key, value in zip(keys, values):
         assert d[key] == value
 
-    other_keys = np.arange(50).astype(np.intp)[::2]
+    other_keys = np.arange(50, dtype=np.intp)[::2]
     other_values = np.full(50, 0.5)[::2]
     other = IntFloatDict(other_keys, other_values)
     # Complete smoke test
