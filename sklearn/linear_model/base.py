@@ -399,6 +399,15 @@ class LinearRegression(LinearModel, RegressorMixin):
     intercept_ : array
         Independent term in the linear model.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_features=10, noise=4, random_state=0)
+    >>> reg = LinearRegression().fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9997...
+
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
