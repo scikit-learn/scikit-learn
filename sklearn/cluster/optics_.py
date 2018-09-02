@@ -168,9 +168,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    NOTE: should we call this parameter min_neighbors, or n_neighbors,
-    to be more consistent with the NearestNeighbors API, which this parameter
-    is used for?
     min_samples : int (default=5)
         The number of samples in a neighborhood for a point to be considered
         as a core point.
@@ -197,21 +194,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    NOTE: the API doesn't seem to be consistent with regard to metric_params,
-    i.e. in some cases it's taken as input, in some cases only a `metric`
-    is accepted and no `metric_params`
-    also, regarding metric, why is it not like t-sne for instance?
-        metric : string or callable, optional
-            The metric to use when calculating distance between instances in a
-            feature array. If metric is a string, it must be one of the options
-            allowed by scipy.spatial.distance.pdist for its metric parameter, or
-            a metric listed in pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
-            If metric is "precomputed", X is assumed to be a distance matrix.
-            Alternatively, if metric is a callable function, it is called on each
-            pair of instances (rows) and the resulting value recorded. The callable
-            should take two arrays from X as input and return a value indicating
-            the distance between them. The default is "euclidean" which is
-            interpreted as squared euclidean distance.
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
 
