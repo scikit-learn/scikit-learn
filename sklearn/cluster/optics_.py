@@ -21,7 +21,7 @@ from ..metrics import pairwise_distances
 from ._optics_inner import quick_scan
 
 
-def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
+def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
            p=2, metric_params=None, maxima_ratio=.75,
            rejection_ratio=.7, similarity_threshold=0.4,
            significant_min=.003, min_cluster_size_ratio=.005,
@@ -45,11 +45,11 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
         The number of samples in a neighborhood for a point to be considered
         as a core point.
 
-    max_bound : float, optional
+    max_eps : float, optional
         The maximum distance between two samples for them to be considered
         as in the same neighborhood. This is also the largest object size
         expected within the dataset. Default value of "np.inf" will identify
-        clusters across all scales; reducing `max_bound` will result in
+        clusters across all scales; reducing `max_eps` will result in
         shorter run times.
 
     metric : string or callable, optional
@@ -147,7 +147,7 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
     Record 28, no. 2 (1999): 49-60.
     """
 
-    clust = OPTICS(min_samples, max_bound, metric, p, metric_params,
+    clust = OPTICS(min_samples, max_eps, metric, p, metric_params,
                    maxima_ratio, rejection_ratio,
                    similarity_threshold, significant_min,
                    min_cluster_size_ratio, min_maxima_ratio,
@@ -172,11 +172,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
         The number of samples in a neighborhood for a point to be considered
         as a core point.
 
-    max_bound : float, optional
+    max_eps : float, optional
         The maximum distance between two samples for them to be considered
         as in the same neighborhood. This is also the largest object size
         expected within the dataset. Default value of "np.inf" will identify
-        clusters across all scales; reducing `max_bound` will result in
+        clusters across all scales; reducing `max_eps` will result in
         shorter run times.
 
     metric : string or callable, optional
@@ -284,14 +284,14 @@ class OPTICS(BaseEstimator, ClusterMixin):
     Record 28, no. 2 (1999): 49-60.
     """
 
-    def __init__(self, min_samples=5, max_bound=np.inf, metric='euclidean',
+    def __init__(self, min_samples=5, max_eps=np.inf, metric='euclidean',
                  p=2, metric_params=None, maxima_ratio=.75,
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size_ratio=.005,
                  min_maxima_ratio=0.001, algorithm='ball_tree',
                  leaf_size=30, n_jobs=None):
 
-        self.max_bound = max_bound
+        self.max_eps = max_eps
         self.min_samples = min_samples
         self.maxima_ratio = maxima_ratio
         self.rejection_ratio = rejection_ratio
@@ -310,7 +310,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         """Perform OPTICS clustering
 
         Extracts an ordered list of points and reachability distances, and
-        performs initial clustering using `max_bound` distance specified at
+        performs initial clustering using `max_eps` distance specified at
         OPTICS object instantiation.
 
         Parameters
@@ -378,7 +378,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     def _expand_cluster_order(self, point, X, nbrs):
         # As above, not parallelizable. Parallelizing would allow items in
         # the 'unprocessed' list to switch to 'processed'
-        if self.core_distances_[point] <= self.max_bound:
+        if self.core_distances_[point] <= self.max_eps:
             while not self._processed[point]:
                 self._processed[point] = True
                 self.ordering_.append(point)
@@ -389,7 +389,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     def _set_reach_dist(self, point_index, X, nbrs):
         P = np.array(X[point_index]).reshape(1, -1)
-        indices = nbrs.radius_neighbors(P, radius=self.max_bound,
+        indices = nbrs.radius_neighbors(P, radius=self.max_eps,
                                         return_distance=False)[0]
 
         # Getting indices of neighbors that have not been processed
@@ -416,17 +416,17 @@ class OPTICS(BaseEstimator, ClusterMixin):
     def extract_dbscan(self, eps):
         """Performs DBSCAN extraction for an arbitrary epsilon.
 
-        Extraction runs in linear time. Note that if the `max_bound` OPTICS
+        Extraction runs in linear time. Note that if the `max_eps` OPTICS
         parameter was set to < inf for extracting reachability and ordering
         arrays, DBSCAN extractions will be unstable for `eps` values close to
-        `max_bound`. Setting `eps` < (`max_bound` / 5.0) will guarantee
+        `max_eps`. Setting `eps` < (`max_eps` / 5.0) will guarantee
         extraction parity with DBSCAN.
 
         Parameters
         ----------
         eps : float or int, required
-            DBSCAN `eps` parameter. Must be set to < `max_bound`. Equivalence
-            with DBSCAN algorithm is achieved if `eps` is < (`max_bound` / 5)
+            DBSCAN `eps` parameter. Must be set to < `max_eps`. Equivalence
+            with DBSCAN algorithm is achieved if `eps` is < (`max_eps` / 5)
 
         Returns
         -------
@@ -438,14 +438,14 @@ class OPTICS(BaseEstimator, ClusterMixin):
         """
         check_is_fitted(self, 'reachability_')
 
-        if eps > self.max_bound:
+        if eps > self.max_eps:
             raise ValueError('Specify an epsilon smaller than %s. Got %s.'
-                             % (self.max_bound, eps))
+                             % (self.max_eps, eps))
 
-        if eps * 5.0 > (self.max_bound * 1.05):
+        if eps * 5.0 > (self.max_eps * 1.05):
             warnings.warn(
-                "Warning, max_bound (%s) is close to eps (%s): "
-                "Output may be unstable." % (self.max_bound, eps),
+                "Warning, max_eps (%s) is close to eps (%s): "
+                "Output may be unstable." % (self.max_eps, eps),
                 RuntimeWarning, stacklevel=2)
         # Stability warning is documented in _extract_dbscan method...
 

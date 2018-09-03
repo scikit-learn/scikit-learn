@@ -27,7 +27,7 @@ def test_correct_number_of_clusters():
     X = generate_clustered_data(n_clusters=n_clusters)
     # Parameters chosen specifically for this task.
     # Compute OPTICS
-    clust = OPTICS(max_bound=5.0 * 6.0, min_samples=4, metric='euclidean')
+    clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4, metric='euclidean')
     clust.fit(X)
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(clust.labels_)) - int(-1 in clust.labels_)
@@ -41,7 +41,7 @@ def test_minimum_number_of_sample_check():
 
     # Compute OPTICS
     X = [[1, 1]]
-    clust = OPTICS(max_bound=5.0 * 0.3, min_samples=10)
+    clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10)
 
     # Run the fit
     assert_raise_message(ValueError, msg, clust.fit, X)
@@ -51,7 +51,7 @@ def test_empty_extract():
     # Test extract where fit() has not yet been run.
     msg = ("This OPTICS instance is not fitted yet. Call 'fit' with "
            "appropriate arguments before using this method.")
-    clust = OPTICS(max_bound=5.0 * 0.3, min_samples=10)
+    clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10)
     assert_raise_message(ValueError, msg, clust.extract_dbscan, 0.01)
 
 
@@ -63,7 +63,7 @@ def test_bad_extract():
                                 cluster_std=0.4, random_state=0)
 
     # Compute OPTICS
-    clust = OPTICS(max_bound=5.0 * 0.003, min_samples=10)
+    clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10)
     clust2 = clust.fit(X)
     assert_raise_message(ValueError, msg, clust2.extract_dbscan, 0.3)
 
@@ -76,7 +76,7 @@ def test_close_extract():
                                 cluster_std=0.4, random_state=0)
 
     # Compute OPTICS
-    clust = OPTICS(max_bound=1.0, min_samples=10)
+    clust = OPTICS(max_eps=1.0, min_samples=10)
     clust3 = clust.fit(X)
     # check warning when centers are passed
     assert_warns(RuntimeWarning, clust3.extract_dbscan, .3)
