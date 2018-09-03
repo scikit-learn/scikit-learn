@@ -332,6 +332,24 @@ class OPTICS(BaseEstimator, ClusterMixin):
         X = check_array(X, dtype=np.float)
 
         n_samples = len(X)
+
+        if self.min_samples > n_samples:
+            raise ValueError("Number of training samples (n_samples=%d) must "
+                             "be greater than min_samples (min_samples=%d) "
+                             "used for clustering." %
+                             (n_samples, self.min_samples))
+
+        if self.min_cluster_size <= 0 or (self.min_cluster_size !=
+                                          int(self.min_cluster_size)
+                                          and self.min_cluster_size > 1):
+            raise ValueError('min_cluster_size must be a positive integer or '
+                             'a float between 0 and 1. Got %r' %
+                             self.min_cluster_size)
+        elif self.min_cluster_size > n_samples:
+            raise ValueError('min_cluster_size must be no greater than the '
+                             'number of samples (%d). Got %d' %
+                             (n_samples, self.min_cluster_size))
+
         # Start all points as 'unprocessed' ##
         self._processed = np.zeros((n_samples, 1), dtype=bool)
         self.reachability_ = np.empty(n_samples)
@@ -341,13 +359,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # Start all points as noise ##
         self.labels_ = np.full(n_samples, -1, dtype=int)
         self.ordering_ = []
-
-        # Check for valid n_samples relative to min_samples
-        if self.min_samples > n_samples:
-            raise ValueError("Number of training samples (n_samples=%d) must "
-                             "be greater than min_samples (min_samples=%d) "
-                             "used for clustering." %
-                             (n_samples, self.min_samples))
 
         nbrs = NearestNeighbors(n_neighbors=self.min_samples,
                                 algorithm=self.algorithm,
