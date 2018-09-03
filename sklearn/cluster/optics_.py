@@ -41,20 +41,19 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
     X : array, shape (n_samples, n_features)
         The data.
 
-    min_samples : int
+    min_samples : int (default=5)
         The number of samples in a neighborhood for a point to be considered
         as a core point.
 
-    max_eps : float, optional
+    max_eps : float, optional (default=np.inf)
         The maximum distance between two samples for them to be considered
-        as in the same neighborhood. This is also the largest object size
-        expected within the dataset. Default value of "np.inf" will identify
+        as in the same neighborhood. Default value of "np.inf" will identify
         clusters across all scales; reducing `max_eps` will result in
         shorter run times.
 
-    metric : string or callable, optional
+    metric : string or callable, optional (default='euclidean')
         The distance metric to use for neighborhood lookups. Default is
-        "minkowski". Other options include "euclidean", "manhattan",
+        "euclidean". Other options include "minkowski", "manhattan",
         "chebyshev", "haversine", "seuclidean", "hamming", "canberra",
         and "braycurtis". The "wminkowski" and "mahalanobis" metrics are
         also valid with an additional argument.
@@ -68,20 +67,20 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
 
-    maxima_ratio : float, optional
+    maxima_ratio : float, optional (default=.75)
         The maximum ratio we allow of average height of clusters on the
         right and left to the local maxima in question. The higher the
         ratio, the more generous the algorithm is to preserving local
         minima, and the more cuts the resulting tree will have.
 
-    rejection_ratio : float, optional
+    rejection_ratio : float, optional (default=.7)
         Adjusts the fitness of the clustering. When the maxima_ratio is
         exceeded, determine which of the clusters to the left and right to
         reject based on rejection_ratio. Higher values will result in points
         being more readily classified as noise; conversely, lower values will
         result in more points being clustered.
 
-    similarity_threshold : float, optional
+    similarity_threshold : float, optional (default=.4)
         Used to check if nodes can be moved up one level, that is, if the
         new cluster created is too "similar" to its parent, given the
         similarity threshold. Similarity can be determined by 1) the size
@@ -91,19 +90,21 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
         node. A lower value for the similarity threshold means less levels
         in the tree.
 
-    significant_min : float, optional
+    significant_min : float, optional (default=.003)
         Sets a lower threshold on how small a significant maxima can be.
 
-    min_cluster_size_ratio : float, optional
+    min_cluster_size_ratio : float, optional (default=.005)
         Minimum percentage of dataset expected for cluster membership.
 
-    min_maxima_ratio : float, optional
+    min_maxima_ratio : float, optional (default=.001)
         Used to determine neighborhood size for minimum cluster membership.
+        Each local maxima should be a largest value in a neighborhood
+        of the `size min_maxima_ratio * len(X)` from left and right.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree`
+        - 'ball_tree' will use :class:`BallTree` (default)
         - 'kd_tree' will use :class:`KDTree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
@@ -168,20 +169,19 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    min_samples : int
+    min_samples : int (default=5)
         The number of samples in a neighborhood for a point to be considered
         as a core point.
 
-    max_eps : float, optional
+    max_eps : float, optional (default=np.inf)
         The maximum distance between two samples for them to be considered
-        as in the same neighborhood. This is also the largest object size
-        expected within the dataset. Default value of "np.inf" will identify
+        as in the same neighborhood. Default value of "np.inf" will identify
         clusters across all scales; reducing `max_eps` will result in
         shorter run times.
 
-    metric : string or callable, optional
+    metric : string or callable, optional (default='euclidean')
         The distance metric to use for neighborhood lookups. Default is
-        "minkowski". Other options include "euclidean", "manhattan",
+        "euclidean". Other options include "minkowski", "manhattan",
         "chebyshev", "haversine", "seuclidean", "hamming", "canberra",
         and "braycurtis". The "wminkowski" and "mahalanobis" metrics are
         also valid with an additional argument.
@@ -195,20 +195,20 @@ class OPTICS(BaseEstimator, ClusterMixin):
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
 
-    maxima_ratio : float, optional
+    maxima_ratio : float, optional (default=.75)
         The maximum ratio we allow of average height of clusters on the
         right and left to the local maxima in question. The higher the
         ratio, the more generous the algorithm is to preserving local
         minima, and the more cuts the resulting tree will have.
 
-    rejection_ratio : float, optional
+    rejection_ratio : float, optional (default=.7)
         Adjusts the fitness of the clustering. When the maxima_ratio is
         exceeded, determine which of the clusters to the left and right to
         reject based on rejection_ratio. Higher values will result in points
         being more readily classified as noise; conversely, lower values will
         result in more points being clustered.
 
-    similarity_threshold : float, optional
+    similarity_threshold : float, optional (default=.4)
         Used to check if nodes can be moved up one level, that is, if the
         new cluster created is too "similar" to its parent, given the
         similarity threshold. Similarity can be determined by 1) the size
@@ -218,19 +218,21 @@ class OPTICS(BaseEstimator, ClusterMixin):
         node. A lower value for the similarity threshold means less levels
         in the tree.
 
-    significant_min : float, optional
+    significant_min : float, optional (default=.003)
         Sets a lower threshold on how small a significant maxima can be.
 
-    min_cluster_size_ratio : float, optional
+    min_cluster_size_ratio : float, optional (default=.005)
         Minimum percentage of dataset expected for cluster membership.
 
-    min_maxima_ratio : float, optional
+    min_maxima_ratio : float, optional (default=.001)
         Used to determine neighborhood size for minimum cluster membership.
+        Each local maxima should be a largest value in a neighborhood
+        of the `size min_maxima_ratio * len(X)` from left and right.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree`
+        - 'ball_tree' will use :class:`BallTree` (default)
         - 'kd_tree' will use :class:`KDTree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
