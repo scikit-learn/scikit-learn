@@ -8,7 +8,6 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import skip_if_32bit
@@ -35,6 +34,7 @@ def test_invalid_input():
         assert_raises(ValueError, model.transform, data)
 
 
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_input_estimator_unchanged():
     # Test that SelectFromModel fits on a clone of the estimator.
     est = RandomForestClassifier()
@@ -177,6 +177,8 @@ def test_feature_importances():
         assert_array_almost_equal(X_new, X[:, feature_mask])
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_sample_weight():
     # Ensure sample weights are passed to underlying estimator
     X, y = datasets.make_classification(
@@ -213,6 +215,8 @@ def test_coef_default_threshold():
     assert_array_almost_equal(X_new, X[:, mask])
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @skip_if_32bit
 def test_2d_coef():
     X, y = datasets.make_classification(
@@ -238,6 +242,7 @@ def test_2d_coef():
             assert_array_almost_equal(X_new, X[:, feature_mask])
 
 
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_partial_fit():
     est = PassiveAggressiveClassifier(random_state=0, shuffle=False,
                                       max_iter=5, tol=None)

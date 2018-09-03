@@ -56,19 +56,19 @@ that contain the missing values::
 The :class:`SimpleImputer` class also supports sparse matrices::
 
     >>> import scipy.sparse as sp
-    >>> X = sp.csc_matrix([[1, 2], [0, 3], [7, 6]])
-    >>> imp = SimpleImputer(missing_values=0, strategy='mean')
+    >>> X = sp.csc_matrix([[1, 2], [0, -1], [8, 4]])
+    >>> imp = SimpleImputer(missing_values=-1, strategy='mean')
     >>> imp.fit(X)                  # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(copy=True, fill_value=None, missing_values=0, strategy='mean', verbose=0)
-    >>> X_test = sp.csc_matrix([[0, 2], [6, 0], [7, 6]])
-    >>> print(imp.transform(X_test))      # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
-    [[4.          2.        ]
-     [6.          3.666...]
-     [7.          6.        ]]
+    SimpleImputer(copy=True, fill_value=None, missing_values=-1, strategy='mean', verbose=0)
+    >>> X_test = sp.csc_matrix([[-1, 2], [6, -1], [7, 6]])
+    >>> print(imp.transform(X_test).toarray())      # doctest: +NORMALIZE_WHITESPACE
+    [[3. 2.]
+     [6. 3.]
+     [7. 6.]]
 
-Note that, here, missing values are encoded by 0 and are thus implicitly stored
-in the matrix. This format is thus suitable when there are many more missing
-values than observed values.
+Note that this format is not meant to be used to implicitly store missing values
+in the matrix because it would densify it at transform time. Missing values encoded
+by 0 must be used with dense input.
 
 The :class:`SimpleImputer` class also supports categorical data represented as
 string values or pandas categoricals when using the ``'most_frequent'`` or

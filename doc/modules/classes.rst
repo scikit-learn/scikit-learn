@@ -48,6 +48,7 @@ Functions
    config_context
    get_config
    set_config
+   show_versions
 
 .. _calibration_ref:
 
@@ -256,8 +257,8 @@ Loaders
    datasets.fetch_kddcup99
    datasets.fetch_lfw_pairs
    datasets.fetch_lfw_people
-   datasets.fetch_mldata
    datasets.fetch_olivetti_faces
+   datasets.fetch_openml
    datasets.fetch_rcv1
    datasets.fetch_species_distributions
    datasets.get_data_home
@@ -1475,6 +1476,22 @@ Low-level methods
    utils.testing.assert_raise_message
    utils.testing.all_estimators
 
+Utilities from joblib:
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   utils.Memory
+   utils.Parallel
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.cpu_count
+   utils.delayed
+   utils.parallel_backend
 
 Recently deprecated
 ===================
@@ -1496,6 +1513,7 @@ To be removed in 0.22
    :template: deprecated_function.rst
 
    covariance.graph_lasso
+   datasets.fetch_mldata
 
 
 To be removed in 0.21

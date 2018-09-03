@@ -59,7 +59,12 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
             # w = X.T * inv(X X^t + alpha*Id) y
             C = sp_linalg.LinearOperator(
                 (n_samples, n_samples), matvec=mv, dtype=X.dtype)
-            coef, info = sp_linalg.cg(C, y_column, tol=tol)
+            # FIXME atol
+            try:
+                coef, info = sp_linalg.cg(C, y_column, tol=tol, atol='legacy')
+            except TypeError:
+                # old scipy
+                coef, info = sp_linalg.cg(C, y_column, tol=tol)
             coefs[i] = X1.rmatvec(coef)
         else:
             # linear ridge
@@ -67,8 +72,15 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
             y_column = X1.rmatvec(y_column)
             C = sp_linalg.LinearOperator(
                 (n_features, n_features), matvec=mv, dtype=X.dtype)
-            coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
-                                          tol=tol)
+            # FIXME atol
+            try:
+                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
+                                              tol=tol, atol='legacy')
+            except TypeError:
+                # old scipy
+                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
+                                              tol=tol)
+
         if info < 0:
             raise ValueError("Failed with error code %d" % info)
 
@@ -767,6 +779,15 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.linear_model import RidgeClassifier
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> clf = RidgeClassifier().fit(X, y)
+    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    0.9595...
+
     See also
     --------
     Ridge : Ridge regression
@@ -1237,6 +1258,15 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     alpha_ : float
         Estimated regularization parameter.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_diabetes
+    >>> from sklearn.linear_model import RidgeCV
+    >>> X, y = load_diabetes(return_X_y=True)
+    >>> clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
+    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    0.5166...
+
     See also
     --------
     Ridge : Ridge regression
@@ -1326,6 +1356,15 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     alpha_ : float
         Estimated regularization parameter
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.linear_model import RidgeClassifierCV
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> clf = RidgeClassifierCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
+    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    0.9630...
 
     See also
     --------

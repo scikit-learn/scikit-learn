@@ -21,6 +21,12 @@ Scikit-learn requires:
 - NumPy (>= 1.8.2),
 - SciPy (>= 0.13.3).
 
+
+.. warning::
+
+    Scikit-learn 0.20 is the last version to support Python 2.7 and Python 3.4.
+    Scikit-learn 0.21 will require Python 3.5 or newer.
+
 If you already have a working installation of numpy and scipy,
 the easiest way to install scikit-learn is using ``pip`` ::
 
@@ -46,6 +52,12 @@ it as ``scikit-learn[alldeps]``. The most common use case for this is in a
 application or a Docker image. This option is not intended for manual
 installation from the command line.
 
+.. note::
+
+   For installing on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
+   are required.
+
+
 For installation instructions for more distributions see
 :ref:`other distributions <install_by_distribution>`.
 For compiling the development version from source, or building the package
@@ -66,7 +78,7 @@ Canopy and Anaconda for all supported platforms
 
 `Canopy
 <https://www.enthought.com/products/canopy>`_ and `Anaconda
-<https://www.continuum.io/downloads>`_ both ship a recent
+<https://www.anaconda.com/download>`_ both ship a recent
 version of scikit-learn, in addition to a large set of scientific python
 library for Windows, Mac OSX and Linux.
 

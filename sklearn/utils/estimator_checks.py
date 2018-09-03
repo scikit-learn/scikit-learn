@@ -6,7 +6,6 @@ import sys
 import traceback
 import pickle
 from copy import deepcopy
-import struct
 from functools import partial
 
 import numpy as np
@@ -14,7 +13,8 @@ from scipy import sparse
 from scipy.stats import rankdata
 
 from sklearn.externals.six.moves import zip
-from sklearn.externals.joblib import hash, Memory
+from sklearn.utils import IS_PYPY, _IS_32BIT
+from sklearn.utils._joblib import hash, Memory
 from sklearn.utils.testing import assert_raises, _get_args
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
@@ -89,6 +89,7 @@ def _yield_non_meta_checks(name, estimator):
     yield check_dtype_object
     yield check_sample_weights_pandas_series
     yield check_sample_weights_list
+    yield check_sample_weights_invariance
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
     yield check_complex_data
@@ -154,7 +155,7 @@ def check_supervised_y_no_nan(name, estimator_orig):
     estimator = clone(estimator_orig)
     rng = np.random.RandomState(888)
     X = rng.randn(10, 5)
-    y = np.ones(10) * np.inf
+    y = np.full(10, np.inf)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
     errmsg = "Input contains NaN, infinity or a value too large for " \
@@ -225,8 +226,9 @@ def _yield_clustering_checks(name, clusterer):
 
 def _yield_outliers_checks(name, estimator):
 
-    # checks for all outlier detectors
-    yield check_outliers_fit_predict
+    # checks for outlier detectors that have a fit_predict method
+    if hasattr(estimator, 'fit_predict'):
+        yield check_outliers_fit_predict
 
     # checks for estimators that can be used on a test set
     if hasattr(estimator, 'predict'):
@@ -342,7 +344,13 @@ def set_checking_parameters(estimator):
         estimator.set_params(n_resampling=5)
     if "n_estimators" in params:
         # especially gradient boosting with default 100
-        estimator.set_params(n_estimators=min(5, estimator.n_estimators))
+        # FIXME: The default number of trees was changed and is set to 'warn'
+        # for some of the ensemble methods. We need to catch this case to avoid
+        # an error during the comparison. To be reverted in 0.22.
+        if estimator.n_estimators == 'warn':
+            estimator.set_params(n_estimators=5)
+        else:
+            estimator.set_params(n_estimators=min(5, estimator.n_estimators))
     if "max_trials" in params:
         # RANSAC
         estimator.set_params(max_trials=10)
@@ -360,6 +368,13 @@ def set_checking_parameters(estimator):
     if estimator.__class__.__name__ == "TheilSenRegressor":
         estimator.max_subpopulation = 100
 
+    if estimator.__class__.__name__ == "IsolationForest":
+        # XXX to be removed in 0.22.
+        # this is used because the old IsolationForest does not
+        # respect the outlier detection API and thus and does not
+        # pass the outlier detection common tests.
+        estimator.set_params(behaviour='new')
+
     if isinstance(estimator, BaseRandomProjection):
         # Due to the jl lemma and often very few samples, the number
         # of components of the random matrix projection will be probably
@@ -374,18 +389,19 @@ def set_checking_parameters(estimator):
 
 
 class NotAnArray(object):
-    " An object that is convertable to an array"
+    """An object that is convertible to an array
+
+    Parameters
+    ----------
+    data : array_like
+        The data.
+    """
 
     def __init__(self, data):
         self.data = data
 
     def __array__(self, dtype=None):
         return self.data
-
-
-def _is_32bit():
-    """Detect if process is 32bit Python."""
-    return struct.calcsize('P') * 8 == 32
 
 
 def _is_pairwise(estimator):
@@ -417,7 +433,7 @@ def _is_pairwise_metric(estimator):
     out : bool
         True if _pairwise is set to True and False otherwise.
     """
-    metric = getattr(estimator,  "metric", None)
+    metric = getattr(estimator, "metric", None)
 
     return bool(metric == 'precomputed')
 
@@ -553,6 +569,40 @@ def check_sample_weights_list(name, estimator_orig):
         sample_weight = [3] * 10
         # Test that estimators don't raise any exception
         estimator.fit(X, y, sample_weight=sample_weight)
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_sample_weights_invariance(name, estimator_orig):
+    # check that the estimators yield same results for
+    # unit weights and no weights
+    if (has_fit_parameter(estimator_orig, "sample_weight") and
+            not (hasattr(estimator_orig, "_pairwise")
+                 and estimator_orig._pairwise)):
+        # We skip pairwise because the data is not pairwise
+
+        estimator1 = clone(estimator_orig)
+        estimator2 = clone(estimator_orig)
+        set_random_state(estimator1, random_state=0)
+        set_random_state(estimator2, random_state=0)
+
+        X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
+                      [2, 1], [2, 1], [2, 1], [2, 1],
+                      [3, 3], [3, 3], [3, 3], [3, 3],
+                      [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.dtype('float'))
+        y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
+                      1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('int'))
+
+        estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)))
+        estimator2.fit(X, y=y, sample_weight=None)
+
+        for method in ["predict", "transform"]:
+            if hasattr(estimator_orig, method):
+                X_pred1 = getattr(estimator1, method)(X)
+                X_pred2 = getattr(estimator2, method)(X)
+                assert_allclose(X_pred1, X_pred2,
+                                err_msg="For %s sample_weight=None is not"
+                                        " equivalent to sample_weight=ones"
+                                        % name)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning, UserWarning))
@@ -854,9 +904,6 @@ def check_transformer_general(name, transformer, readonly_memmap=False):
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
     X -= X.min()
-    if name == 'PowerTransformer':
-        # Box-Cox requires positive, non-zero data
-        X += 1
 
     if readonly_memmap:
         X, y = create_memmap_backed_data([X, y])
@@ -891,7 +938,7 @@ def check_transformers_unfitted(name, transformer):
 
 
 def _check_transformer(name, transformer_orig, X, y):
-    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _is_32bit():
+    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _IS_32BIT:
         # Those transformers yield non-deterministic output when executed on
         # a 32bit Python. The same transformers are stable on 64bit Python.
         # FIXME: try to isolate a minimalistic reproduction case only depending
@@ -969,7 +1016,7 @@ def _check_transformer(name, transformer_orig, X, y):
 
 @ignore_warnings
 def check_pipeline_consistency(name, estimator_orig):
-    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _is_32bit():
+    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _IS_32BIT:
         # Those transformers yield non-deterministic output when executed on
         # a 32bit Python. The same transformers are stable on 64bit Python.
         # FIXME: try to isolate a minimalistic reproduction case only depending
@@ -982,9 +1029,6 @@ def check_pipeline_consistency(name, estimator_orig):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X -= X.min()
-    if name == 'PowerTransformer':
-        # Box-Cox requires positive, non-zero data
-        X += 1
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
@@ -1046,9 +1090,6 @@ def check_estimators_dtypes(name, estimator_orig):
     methods = ["predict", "transform", "decision_function", "predict_proba"]
 
     for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
-        if name == 'PowerTransformer':
-            # Box-Cox requires positive, non-zero data
-            X_train = np.abs(X_train) + 1
         estimator = clone(estimator_orig)
         set_random_state(estimator, 1)
         estimator.fit(X_train, y)
@@ -1163,9 +1204,6 @@ def check_estimators_pickle(name, estimator_orig):
 
     # some estimators can't do features less than 0
     X -= X.min()
-    if name == 'PowerTransformer':
-        # Box-Cox requires positive, non-zero data
-        X += 1
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
 
     # include NaN values when the estimator should deal with them
@@ -1182,6 +1220,11 @@ def check_estimators_pickle(name, estimator_orig):
 
     set_random_state(estimator)
     estimator.fit(X, y)
+
+    result = dict()
+    for method in check_methods:
+        if hasattr(estimator, method):
+            result[method] = getattr(estimator, method)(X)
 
     # pickle and unpickle!
     pickled_estimator = pickle.dumps(estimator)
@@ -1497,15 +1540,18 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
     y_scores = estimator.score_samples(X)
     assert y_scores.shape == (n_samples,)
     y_dec = y_scores - estimator.offset_
-    assert_array_equal(y_dec, decision)
+    assert_allclose(y_dec, decision)
 
     # raises error on malformed input for score_samples
     assert_raises(ValueError, estimator.score_samples, X.T)
 
     # contamination parameter (not for OneClassSVM which has the nu parameter)
-    if hasattr(estimator, "contamination"):
+    if (hasattr(estimator, 'contamination')
+            and not hasattr(estimator, 'novelty')):
         # proportion of outliers equal to contamination parameter when not
-        # set to 'auto'
+        # set to 'auto'. This is true for the training set and cannot thus be
+        # checked as follows for estimators with a novelty parameter such as
+        # LocalOutlierFactor (tested in check_outliers_fit_predict)
         contamination = 0.1
         estimator.set_params(contamination=contamination)
         estimator.fit(X)
@@ -1525,9 +1571,6 @@ def check_estimators_fit_returns_self(name, estimator_orig,
     X, y = make_blobs(random_state=0, n_samples=9, n_features=4)
     # some want non-negative input
     X -= X.min()
-    if name == 'PowerTransformer':
-        # Box-Cox requires positive, non-zero data
-        X += 1
     X = pairwise_estimator_convert_X(X, estimator_orig)
 
     estimator = clone(estimator_orig)
@@ -1552,24 +1595,25 @@ def check_estimators_unfitted(name, estimator_orig):
     # Common test for Regressors, Classifiers and Outlier detection estimators
     X, y = _boston_subset()
 
-    est = clone(estimator_orig)
+    estimator = clone(estimator_orig)
 
     msg = "fit"
-    if hasattr(est, 'predict'):
-        assert_raise_message((AttributeError, ValueError), msg,
-                             est.predict, X)
 
-    if hasattr(est, 'decision_function'):
+    if hasattr(estimator, 'predict'):
         assert_raise_message((AttributeError, ValueError), msg,
-                             est.decision_function, X)
+                             estimator.predict, X)
 
-    if hasattr(est, 'predict_proba'):
+    if hasattr(estimator, 'decision_function'):
         assert_raise_message((AttributeError, ValueError), msg,
-                             est.predict_proba, X)
+                             estimator.decision_function, X)
 
-    if hasattr(est, 'predict_log_proba'):
+    if hasattr(estimator, 'predict_proba'):
         assert_raise_message((AttributeError, ValueError), msg,
-                             est.predict_log_proba, X)
+                             estimator.predict_proba, X)
+
+    if hasattr(estimator, 'predict_log_proba'):
+        assert_raise_message((AttributeError, ValueError), msg,
+                             estimator.predict_log_proba, X)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -1888,9 +1932,6 @@ def check_estimators_overwrite_params(name, estimator_orig):
     X, y = make_blobs(random_state=0, n_samples=9)
     # some want non-negative input
     X -= X.min()
-    if name == 'PowerTransformer':
-        # Box-Cox requires positive, non-zero data
-        X += 1
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
@@ -1929,6 +1970,11 @@ def check_no_attributes_set_in_init(name, estimator):
         return
 
     init_params = _get_args(type(estimator).__init__)
+    if IS_PYPY:
+        # __init__ signature has additional objects in PyPy
+        for key in ['obj']:
+            if key in init_params:
+                init_params.remove(key)
     parents_init_params = [param for params_parent in
                            (_get_args(parent) for parent in
                             type(estimator).__mro__)
@@ -2281,7 +2327,9 @@ def check_outliers_fit_predict(name, estimator_orig):
     assert y_pred.dtype.kind == 'i'
     assert_array_equal(np.unique(y_pred), np.array([-1, 1]))
 
-    # check fit_predict = fit.predict when possible
+    # check fit_predict = fit.predict when the estimator has both a predict and
+    # a fit_predict method. recall that it is already assumed here that the
+    # estimator has a fit_predict method
     if hasattr(estimator, 'predict'):
         y_pred_2 = estimator.fit(X).predict(X)
         assert_array_equal(y_pred, y_pred_2)

@@ -17,7 +17,7 @@ from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
-from ..metrics.pairwise import pairwise_distances
+from ..metrics import pairwise_distances
 from ._optics_inner import quick_scan
 
 
@@ -26,13 +26,15 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
            rejection_ratio=.7, similarity_threshold=0.4,
            significant_min=.003, min_cluster_size_ratio=.005,
            min_maxima_ratio=0.001, algorithm='ball_tree',
-           leaf_size=30, n_jobs=1):
+           leaf_size=30, n_jobs=None):
     """Perform OPTICS clustering from vector array
 
     OPTICS: Ordering Points To Identify the Clustering Structure
     Equivalent to DBSCAN, finds core sample of high density and expands
     clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
     neighborhood radius. Optimized for usage on large point datasets.
+
+    Read more in the :ref:`User Guide <optics>`.
 
     Parameters
     ----------
@@ -59,7 +61,7 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
 
     p : integer, optional (default=2)
         Parameter for the Minkowski metric from
-        :ref:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this is
+        :class:`sklearn.metrics.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
@@ -100,6 +102,7 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
+
         - 'ball_tree' will use :class:`BallTree`
         - 'kd_tree' will use :class:`KDTree`
         - 'brute' will use a brute-force search.
@@ -115,9 +118,11 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
-    n_jobs : int, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Returns
     -------
@@ -126,6 +131,14 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
 
     labels_ : array, shape (n_samples,)
         The estimated labels.
+
+    See also
+    --------
+    OPTICS
+        An estimator interface for this clustering algorithm.
+    dbscan
+        A similar clustering for a specified neighborhood radius (eps).
+        Our implementation is optimized for runtime.
 
     References
     ----------
@@ -151,6 +164,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
     clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
     neighborhood radius. Optimized for usage on large point datasets.
 
+    Read more in the :ref:`User Guide <optics>`.
+
     Parameters
     ----------
     min_samples : int
@@ -173,7 +188,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     p : integer, optional (default=2)
         Parameter for the Minkowski metric from
-        :ref:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this is
+        :class:`sklearn.metrics.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
@@ -214,6 +229,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
+
         - 'ball_tree' will use :class:`BallTree`
         - 'kd_tree' will use :class:`KDTree`
         - 'brute' will use a brute-force search.
@@ -229,9 +245,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
-    n_jobs : int, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -256,11 +274,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
     --------
 
     DBSCAN
-        CPU optimized algorithm that clusters at specified neighborhood
-        radius (eps).
-    HDBSCAN
-        Related clustering algorithm that calculates the minimum spanning tree
-        across mutual reachability space.
+        A similar clustering for a specified neighborhood radius (eps).
+        Our implementation is optimized for runtime.
 
     References
     ----------
@@ -274,7 +289,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size_ratio=.005,
                  min_maxima_ratio=0.001, algorithm='ball_tree',
-                 leaf_size=30, n_jobs=1):
+                 leaf_size=30, n_jobs=None):
 
         self.max_bound = max_bound
         self.min_samples = min_samples
@@ -320,7 +335,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.core_distances_ = np.empty(n_samples)
         self.core_distances_.fill(np.nan)
         # Start all points as noise ##
-        self.labels_ = -np.ones(n_samples, dtype=int)
+        self.labels_ = np.full(n_samples, -1, dtype=int)
         self.ordering_ = []
 
         # Check for valid n_samples relative to min_samples
@@ -383,7 +398,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # Keep n_jobs = 1 in the following lines...please
         if len(unproc) > 0:
             dists = pairwise_distances(P, np.take(X, unproc, axis=0),
-                                       self.metric, n_jobs=1).ravel()
+                                       self.metric, n_jobs=None).ravel()
 
             rdists = np.maximum(dists, self.core_distances_[point_index])
             new_reach = np.minimum(np.take(self.reachability_, unproc), rdists)
@@ -540,7 +555,7 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     clustid = 0
     n_samples = len(reachability)
     is_core = np.zeros(n_samples, dtype=bool)
-    labels = -np.ones(n_samples, dtype=int)
+    labels = np.full(n_samples, -1, dtype=int)
     # Start all points as non-core noise
     for leaf in leaves:
         index = ordering[leaf.start:leaf.end]
