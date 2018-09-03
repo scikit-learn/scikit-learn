@@ -667,4 +667,3 @@ def test_regressor_score_with_None(y, y_test):
     reg = DummyRegressor()
     reg.fit(None, y)
     assert_equal(reg.score(None, y_test), 1.0)
-
