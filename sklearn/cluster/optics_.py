@@ -53,7 +53,7 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
 
     metric : string or callable, optional (default='euclidean')
         The distance metric to use for neighborhood lookups. Default is
-        "minkowski". Other options include "euclidean", "manhattan",
+        "euclidean". Other options include "minkowski", "manhattan",
         "chebyshev", "haversine", "seuclidean", "hamming", "canberra",
         and "braycurtis". The "wminkowski" and "mahalanobis" metrics are
         also valid with an additional argument.
@@ -181,7 +181,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     metric : string or callable, optional (default='euclidean')
         The distance metric to use for neighborhood lookups. Default is
-        "minkowski". Other options include "euclidean", "manhattan",
+        "euclidean". Other options include "minkowski", "manhattan",
         "chebyshev", "haversine", "seuclidean", "hamming", "canberra",
         and "braycurtis". The "wminkowski" and "mahalanobis" metrics are
         also valid with an additional argument.
