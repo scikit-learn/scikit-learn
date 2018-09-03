@@ -7,7 +7,7 @@ from __future__ import division
 
 import warnings
 import numbers
-import time
+from time import time
 
 import numpy as np
 import numpy.ma as ma
