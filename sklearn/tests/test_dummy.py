@@ -1,5 +1,7 @@
 from __future__ import division
 
+import pytest
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -200,25 +202,18 @@ def test_string_labels():
     assert_array_equal(clf.predict(X), ["paris"] * 5)
 
 
-def test_classifier_score_with_None():
-    y = [2, 1, 1, 1]
-    y_test = [2, 2, 1, 1]
-
-    clf = DummyClassifier(strategy="constant", constant=1)
-    clf.fit(None, y)
-    assert_equal(clf.score(None, y_test), 0.5)
-
-
-def test_classifier_score_with_None_multioutput():
-    y = np.array([[2, 2],
-                  [1, 1],
-                  [1, 1],
-                  [1, 1]])
-    y_test = np.array([[2, 2],
-                       [2, 2],
-                       [1, 1],
-                       [1, 1]])
-
+@pytest.mark.parametrize("y,y_test", [
+    ([2, 1, 1, 1], [2, 2, 1, 1]),
+    (np.array([[2, 2],
+               [1, 1],
+               [1, 1],
+               [1, 1]]),
+     np.array([[2, 2],
+               [2, 2],
+               [1, 1],
+               [1, 1]]))
+])
+def test_classifier_score_with_None(y, y_test):
     clf = DummyClassifier(strategy="most_frequent")
     clf.fit(None, y)
     assert_equal(clf.score(None, y_test), 0.5)
@@ -659,23 +654,17 @@ def test_dummy_regressor_return_std():
     assert_array_equal(y_pred_list[1], y_std_expected)
 
 
-def test_regressor_score_with_None():
-    y = [1, 1, 1, 2]
-    y_test = [1.25] * 4
+@pytest.mark.parametrize("y,y_test", [
+    ([1, 1, 1, 2], [1.25] * 4),
+    (np.array([[2, 2],
+               [1, 1],
+               [1, 1],
+               [1, 1]]),
+     [[1.25, 1.25]] * 4)
 
+])
+def test_regressor_score_with_None(y, y_test):
     reg = DummyRegressor()
     reg.fit(None, y)
     assert_equal(reg.score(None, y_test), 1.0)
 
-
-def test_regressor_score_with_None_multioutput():
-    y = np.array([[2, 2],
-                  [1, 1],
-                  [1, 1],
-                  [1, 1]])
-
-    y_test = [[1.25, 1.25]] * 4
-
-    reg = DummyRegressor()
-    reg.fit(None, y)
-    assert_equal(reg.score(None, y_test), 1.0)
