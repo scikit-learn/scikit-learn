@@ -656,8 +656,9 @@ Kernels:
    :template: class.rst
 
    impute.SimpleImputer
+   impute.ChainedImputer
    impute.MissingIndicator
-
+   
 .. _kernel_approximation_ref:
 
 :mod:`sklearn.kernel_approximation` Kernel Approximation
