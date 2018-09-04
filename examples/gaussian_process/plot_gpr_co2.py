@@ -79,7 +79,7 @@ except ImportError:
 print(__doc__)
 
 
-def load_mauna_loa_atmospheric_c02():
+def load_mauna_loa_atmospheric_co2():
     ml_data = fetch_openml(data_id=41187)
     months = []
     ppmv_sums = []
@@ -90,14 +90,14 @@ def load_mauna_loa_atmospheric_c02():
     month_float = y + (m - 1) / 12
     ppmvs = ml_data.target
 
-    for i in range(len(ppmvs)):
-        if not months or month_float[i] != months[-1]:
-            months.append(month_float[i])
-            ppmv_sums.append(ppmvs[i])
+    for month, ppmv in zip(month_float, ppmvs):
+        if not months or month != months[-1]:
+            months.append(month)
+            ppmv_sums.append(ppmv)
             counts.append(1)
         else:
             # aggregate monthly sum to produce average
-            ppmv_sums[-1] += float(ppmvs[i])
+            ppmv_sums[-1] += ppmv
             counts[-1] += 1
 
     months = np.asarray(months).reshape(-1, 1)
@@ -105,7 +105,7 @@ def load_mauna_loa_atmospheric_c02():
     return months, avg_ppmvs
 
 
-X, y = load_mauna_loa_atmospheric_c02()
+X, y = load_mauna_loa_atmospheric_co2()
 
 # Kernel with parameters given in GPML book
 k1 = 66.0**2 * RBF(length_scale=67.0)  # long term smooth rising trend
