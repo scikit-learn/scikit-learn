@@ -139,8 +139,9 @@ def assert_grid_iter_equals_getitem(grid):
       "(key='foo', value=0)")]
 )
 def test_validate_parameter_grid_input(input, error_type, error_message):
-    with pytest.raises(error_type, message=error_message):
+    with pytest.raises(error_type) as raised_error:
         ParameterGrid(input)
+    assert str(raised_error.value) == error_message
 
 
 def test_parameter_grid():
