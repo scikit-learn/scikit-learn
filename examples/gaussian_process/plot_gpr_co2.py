@@ -66,7 +66,7 @@ from __future__ import division, print_function
 import numpy as np
 
 from matplotlib import pyplot as plt
-
+from sklearn.datasets import fetch_openml
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \
     import RBF, WhiteKernel, RationalQuadratic, ExpSineSquared
@@ -80,30 +80,26 @@ print(__doc__)
 
 
 def load_mauna_loa_atmospheric_c02():
-    url = ('http://cdiac.ess-dive.lbl.gov/'
-           'ftp/trends/co2/sio-keel-flask/maunaloa_c.dat')
+    ml_data = fetch_openml(data_id=41187)
     months = []
     ppmv_sums = []
     counts = []
-    for line in urlopen(url):
-        line = line.decode('utf8')
-        if not line.startswith('MLO'):
-            # ignore headers
-            continue
-        station, date, weight, flag, ppmv = line.split()
-        y = date[:2]
-        m = date[2:4]
-        month_float = (int(('20' if y < '20' else '19') + y) +
-                       (int(m) - 1) / 12)
-        if not months or month_float != months[-1]:
-            months.append(month_float)
-            ppmv_sums.append(float(ppmv))
+
+    y = ml_data.data[:,0]
+    m = ml_data.data[:,1]
+    month_float = y + (m - 1) / 12
+    ppmvs = ml_data.target
+
+    for i in range(len(ppmvs)):
+        if not months or month_float[i] != months[-1]:
+            months.append(month_float[i])
+            ppmv_sums.append(ppmvs[i])
             counts.append(1)
         else:
             # aggregate monthly sum to produce average
-            ppmv_sums[-1] += float(ppmv)
+            ppmv_sums[-1] += float(ppmvs[i])
             counts[-1] += 1
-
+            
     months = np.asarray(months).reshape(-1, 1)
     avg_ppmvs = np.asarray(ppmv_sums) / counts
     return months, avg_ppmvs
