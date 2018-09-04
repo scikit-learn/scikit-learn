@@ -351,6 +351,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t feature_offset
         cdef SIZE_t i
         cdef SIZE_t j
+        cdef SIZE_t valid_end
 
         cdef SIZE_t n_visited_features = 0
         # Number of features discovered to be constant during the split search
@@ -449,10 +450,11 @@ cdef class BestSplitter(BaseDenseSplitter):
 
                     # Evaluate all splits
                     self.criterion.reset()
-                    p = start
+                    p = start + min_samples_leaf - 1
+                    valid_end = end - min_samples_leaf + 1
 
-                    while p < end:
-                        while (p + 1 < end and
+                    while p < valid_end:
+                        while (p + 1 < valid_end and
                                Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
                             p += 1
 
@@ -462,13 +464,8 @@ cdef class BestSplitter(BaseDenseSplitter):
                         # (p >= end) or (X[samples[p], current.feature] >
                         #                X[samples[p - 1], current.feature])
 
-                        if p < end:
+                        if p < valid_end:
                             current.pos = p
-
-                            # Reject if min_samples_leaf is not guaranteed
-                            if (((current.pos - start) < min_samples_leaf) or
-                                    ((end - current.pos) < min_samples_leaf)):
-                                continue
 
                             self.criterion.update(current.pos)
 
@@ -1247,6 +1244,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         # n_total_constants = n_known_constants + n_found_constants
         cdef SIZE_t n_total_constants = n_known_constants
         cdef DTYPE_t current_feature_value
+        cdef SIZE_t valid_end
 
         cdef SIZE_t p_next
         cdef SIZE_t p_prev
@@ -1341,15 +1339,16 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
 
                     # Evaluate all splits
                     self.criterion.reset()
-                    p = start
+                    p = start + min_samples_leaf - 1
 
-                    while p < end:
+                    valid_end = end - min_samples_leaf + 1
+                    while p < valid_end:
                         if p + 1 != end_negative:
                             p_next = p + 1
                         else:
                             p_next = start_positive
 
-                        while (p_next < end and
+                        while (p_next < valid_end and
                                Xf[p_next] <= Xf[p] + FEATURE_THRESHOLD):
                             p = p_next
                             if p + 1 != end_negative:
@@ -1366,13 +1365,8 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                         #                X[samples[p_prev], current.feature])
 
 
-                        if p < end:
+                        if p < valid_end:
                             current.pos = p
-
-                            # Reject if min_samples_leaf is not guaranteed
-                            if (((current.pos - start) < min_samples_leaf) or
-                                    ((end - current.pos) < min_samples_leaf)):
-                                continue
 
                             self.criterion.update(current.pos)
 
