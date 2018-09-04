@@ -85,8 +85,8 @@ def load_mauna_loa_atmospheric_c02():
     ppmv_sums = []
     counts = []
 
-    y = ml_data.data[:,0]
-    m = ml_data.data[:,1]
+    y = ml_data.data[:, 0]
+    m = ml_data.data[:, 1]
     month_float = y + (m - 1) / 12
     ppmvs = ml_data.target
 
@@ -99,7 +99,7 @@ def load_mauna_loa_atmospheric_c02():
             # aggregate monthly sum to produce average
             ppmv_sums[-1] += float(ppmvs[i])
             counts[-1] += 1
-            
+
     months = np.asarray(months).reshape(-1, 1)
     avg_ppmvs = np.asarray(ppmv_sums) / counts
     return months, avg_ppmvs
