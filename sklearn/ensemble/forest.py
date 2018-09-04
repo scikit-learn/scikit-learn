@@ -784,8 +784,8 @@ class RandomForestClassifier(ForestClassifier):
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
-        - If int, then consider ``min_samples_split`` as the minimum number.
-        - If float, then ``min_samples_split`` is a fraction and
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
@@ -795,27 +795,18 @@ class RandomForestClassifier(ForestClassifier):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
-        - If int, then consider ``min_samples_leaf`` as the minimum number.
-        - If float, then ``min_samples_leaf`` is a fraction and
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
            Added float values for fractions.
-        .. deprecated:: 0.20
-           The parameter ``min_samples_leaf`` is deprecated in version 0.20 and
-           will be fixed to a value of 1 in version 0.22. It was not effective
-           for regularization and empirically, 1 is the best value.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
-
-        .. deprecated:: 0.20
-           The parameter ``min_weight_fraction_leaf`` is deprecated in version
-           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
-           for regularization.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
@@ -963,10 +954,9 @@ class RandomForestClassifier(ForestClassifier):
     RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
                 max_depth=2, max_features='auto', max_leaf_nodes=None,
                 min_impurity_decrease=0.0, min_impurity_split=None,
-                min_samples_leaf='deprecated', min_samples_split=2,
-                min_weight_fraction_leaf='deprecated', n_estimators=100,
-                n_jobs=None, oob_score=False, random_state=0, verbose=0,
-                warm_start=False)
+                min_samples_leaf=1, min_samples_split=2,
+                min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=None,
+                oob_score=False, random_state=0, verbose=0, warm_start=False)
     >>> print(clf.feature_importances_)
     [0.14205973 0.76664038 0.0282433  0.06305659]
     >>> print(clf.predict([[0, 0, 0, 0]]))
@@ -975,7 +965,7 @@ class RandomForestClassifier(ForestClassifier):
     Notes
     -----
     The default values for the parameters controlling the size of the trees
-    (e.g. ``max_depth``, ``min_samples_split``, etc.) lead to fully grown and
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
@@ -1001,8 +991,8 @@ class RandomForestClassifier(ForestClassifier):
                  criterion="gini",
                  max_depth=None,
                  min_samples_split=2,
-                 min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf='deprecated',
+                 min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
@@ -1079,8 +1069,8 @@ class RandomForestRegressor(ForestRegressor):
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
-        - If int, then consider ``min_samples_split`` as the minimum number.
-        - If float, then ``min_samples_split`` is a fraction and
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
@@ -1090,27 +1080,18 @@ class RandomForestRegressor(ForestRegressor):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
-        - If int, then consider ``min_samples_leaf`` as the minimum number.
-        - If float, then ``min_samples_leaf`` is a fraction and
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
            Added float values for fractions.
-        .. deprecated:: 0.20
-           The parameter ``min_samples_leaf`` is deprecated in version 0.20 and
-           will be fixed to a value of 1 in version 0.22. It was not effective
-           for regularization and empirically, 1 is the best value.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
-
-        .. deprecated:: 0.20
-           The parameter ``min_weight_fraction_leaf`` is deprecated in version
-           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
-           for regularization.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
@@ -1220,10 +1201,9 @@ class RandomForestRegressor(ForestRegressor):
     RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=2,
                max_features='auto', max_leaf_nodes=None,
                min_impurity_decrease=0.0, min_impurity_split=None,
-               min_samples_leaf='deprecated', min_samples_split=2,
-               min_weight_fraction_leaf='deprecated', n_estimators=100,
-               n_jobs=None, oob_score=False, random_state=0, verbose=0,
-               warm_start=False)
+               min_samples_leaf=1, min_samples_split=2,
+               min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=None,
+               oob_score=False, random_state=0, verbose=0, warm_start=False)
     >>> print(regr.feature_importances_)
     [0.18146984 0.81473937 0.00145312 0.00233767]
     >>> print(regr.predict([[0, 0, 0, 0]]))
@@ -1232,7 +1212,7 @@ class RandomForestRegressor(ForestRegressor):
     Notes
     -----
     The default values for the parameters controlling the size of the trees
-    (e.g. ``max_depth``, ``min_samples_split``, etc.) lead to fully grown and
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
@@ -1265,8 +1245,8 @@ class RandomForestRegressor(ForestRegressor):
                  criterion="mse",
                  max_depth=None,
                  min_samples_split=2,
-                 min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf='deprecated',
+                 min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
@@ -1334,8 +1314,8 @@ class ExtraTreesClassifier(ForestClassifier):
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
-        - If int, then consider ``min_samples_split`` as the minimum number.
-        - If float, then ``min_samples_split`` is a fraction and
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
@@ -1345,27 +1325,18 @@ class ExtraTreesClassifier(ForestClassifier):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
-        - If int, then consider ``min_samples_leaf`` as the minimum number.
-        - If float, then ``min_samples_leaf`` is a fraction and
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
            Added float values for fractions.
-        .. deprecated:: 0.20
-           The parameter ``min_samples_leaf`` is deprecated in version 0.20 and
-           will be fixed to a value of 1 in version 0.22. It was not effective
-           for regularization and empirically, 1 is the best value.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
-
-        .. deprecated:: 0.20
-           The parameter ``min_weight_fraction_leaf`` is deprecated in version
-           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
-           for regularization.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
@@ -1501,7 +1472,7 @@ class ExtraTreesClassifier(ForestClassifier):
     Notes
     -----
     The default values for the parameters controlling the size of the trees
-    (e.g. ``max_depth``, ``min_samples_split``, etc.) lead to fully grown and
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
@@ -1523,8 +1494,8 @@ class ExtraTreesClassifier(ForestClassifier):
                  criterion="gini",
                  max_depth=None,
                  min_samples_split=2,
-                 min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf='deprecated',
+                 min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
@@ -1599,8 +1570,8 @@ class ExtraTreesRegressor(ForestRegressor):
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
-        - If int, then consider ``min_samples_split`` as the minimum number.
-        - If float, then ``min_samples_split`` is a fraction and
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
@@ -1610,27 +1581,18 @@ class ExtraTreesRegressor(ForestRegressor):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
-        - If int, then consider ``min_samples_leaf`` as the minimum number.
-        - If float, then ``min_samples_leaf`` is a fraction and
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
            Added float values for fractions.
-        .. deprecated:: 0.20
-           The parameter ``min_samples_leaf`` is deprecated in version 0.20 and
-           will be fixed to a value of 1 in version 0.22. It was not effective
-           for regularization and empirically, 1 is the best value.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
-
-        .. deprecated:: 0.20
-           The parameter ``min_weight_fraction_leaf`` is deprecated in version
-           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
-           for regularization.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
@@ -1729,7 +1691,7 @@ class ExtraTreesRegressor(ForestRegressor):
     Notes
     -----
     The default values for the parameters controlling the size of the trees
-    (e.g. ``max_depth``, ``min_samples_split``, etc.) lead to fully grown and
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
@@ -1750,8 +1712,8 @@ class ExtraTreesRegressor(ForestRegressor):
                  criterion="mse",
                  max_depth=None,
                  min_samples_split=2,
-                 min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf='deprecated',
+                 min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
@@ -1820,8 +1782,8 @@ class RandomTreesEmbedding(BaseForest):
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
-        - If int, then consider ``min_samples_split`` as the minimum number.
-        - If float, then ``min_samples_split`` is a fraction and
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` is the minimum
           number of samples for each split.
 
@@ -1831,27 +1793,18 @@ class RandomTreesEmbedding(BaseForest):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
-        - If int, then consider ``min_samples_leaf`` as the minimum number.
-        - If float, then ``min_samples_leaf`` is a fraction and
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` is the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
            Added float values for fractions.
-        .. deprecated:: 0.20
-           The parameter ``min_samples_leaf`` is deprecated in version 0.20 and
-           will be fixed to a value of 1 in version 0.22. It was not effective
-           for regularization and empirically, 1 is the best value.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
-
-        .. deprecated:: 0.20
-           The parameter ``min_weight_fraction_leaf`` is deprecated in version
-           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
-           for regularization.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
@@ -1928,8 +1881,8 @@ class RandomTreesEmbedding(BaseForest):
                  n_estimators='warn',
                  max_depth=5,
                  min_samples_split=2,
-                 min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf='deprecated',
+                 min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
