@@ -53,7 +53,7 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
 
     metric : string or callable, optional (default='euclidean')
         The distance metric to use for neighborhood lookups. Default is
-        "minkowski". Other options include "euclidean", "manhattan",
+        "euclidean". Other options include "minkowski", "manhattan",
         "chebyshev", "haversine", "seuclidean", "hamming", "canberra",
         and "braycurtis". The "wminkowski" and "mahalanobis" metrics are
         also valid with an additional argument.
@@ -181,7 +181,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     metric : string or callable, optional (default='euclidean')
         The distance metric to use for neighborhood lookups. Default is
-        "minkowski". Other options include "euclidean", "manhattan",
+        "euclidean". Other options include "minkowski", "manhattan",
         "chebyshev", "haversine", "seuclidean", "hamming", "canberra",
         and "braycurtis". The "wminkowski" and "mahalanobis" metrics are
         also valid with an additional argument.
@@ -650,12 +650,6 @@ class _TreeNode(object):
         self.children = []
         self.split_point = -1
 
-    def assign_split_point(self, split_point):
-        self.split_point = split_point
-
-    def add_child(self, child):
-        self.children.append(child)
-
 
 def _is_local_maxima(index, reachability_plot, neighborhood_size):
     right_idx = slice(index + 1, index + neighborhood_size + 1)
@@ -699,7 +693,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
 
     # take largest local maximum as possible separation between clusters
     s = local_maxima_points[0]
-    node.assign_split_point(s)
+    node.split_point = s
     local_maxima_points = local_maxima_points[1:]
 
     # create two new nodes and add to list of nodes
@@ -726,7 +720,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     # if local maxima are sorted by their reachability, doesn't it
     # mean we can stop? Why do we continue?
     if reachability_plot[s] < significant_min:
-        node.assign_split_point(-1)
+        node.split_point = -1
         # if split_point is not significant, ignore this split and continue
         # _cluster_tree(node, parent_node, local_maxima_points,
         #              reachability_plot, core_distances_plot,
@@ -761,7 +755,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
                 (avg_reach2 / rejection_ratio) >= reachability_plot[s]):
             # since split_point is not significant,
             # ignore this split and continue (reject both child nodes)
-            node.assign_split_point(-1)
+            node.split_point = -1
             _cluster_tree(node, parent_node, local_maxima_points,
                           reachability_plot, core_distances_plot, ordering,
                           min_cluster_size, maxima_ratio, rejection_ratio,
@@ -779,7 +773,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
         node_list.remove((node_2, local_max_2))
     if not node_list:
         # parent_node will be a leaf
-        node.assign_split_point(-1)
+        node.split_point = -1
         return
 
     # Check if nodes can be moved up one level - the new cluster created
@@ -794,13 +788,13 @@ def _cluster_tree(node, parent_node, local_maxima_points,
 
     for nl in node_list:
         if bypass_node == 1:
-            parent_node.add_child(nl[0])
+            parent_node.children.append(nl[0])
             _cluster_tree(nl[0], parent_node, nl[1],
                           reachability_plot, core_distances_plot, ordering,
                           min_cluster_size, maxima_ratio, rejection_ratio,
                           similarity_threshold, significant_min)
         else:
-            node.add_child(nl[0])
+            node.children.append(nl[0])
             _cluster_tree(nl[0], node, nl[1], reachability_plot,
                           core_distances_plot, ordering, min_cluster_size,
                           maxima_ratio, rejection_ratio,
