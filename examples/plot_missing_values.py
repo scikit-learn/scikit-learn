@@ -73,13 +73,13 @@ def get_results(dataset):
                                          scoring='neg_mean_squared_error',
                                          cv=5)
 
-    # Estimate the score after chained imputation of the missing values
+    # Estimate the score after iterative imputation of the missing values
     estimator = make_pipeline(
         make_union(IterativeImputer(missing_values=0, random_state=0),
                    MissingIndicator(missing_values=0)),
         RandomForestRegressor(random_state=0, n_estimators=100))
-    chained_impute_scores = cross_val_score(estimator, X_missing, y_missing,
-                                            scoring='neg_mean_squared_error')
+    iterative_impute_scores = cross_val_score(estimator, X_missing, y_missing,
+                                              scoring='neg_mean_squared_error')
 
     return ((full_scores.mean(), full_scores.std()),
             (zero_impute_scores.mean(), zero_impute_scores.std()),
