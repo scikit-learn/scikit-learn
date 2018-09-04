@@ -25,6 +25,7 @@ from __future__ import division
 
 from abc import ABCMeta
 from abc import abstractmethod
+import warnings
 
 from .base import BaseEnsemble
 from ..base import ClassifierMixin
@@ -38,7 +39,6 @@ from ._gradient_boosting import _random_sample_mask
 import numbers
 import numpy as np
 
-from scipy import stats
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
@@ -91,7 +91,7 @@ class QuantileEstimator(object):
             Individual weights for each sample
         """
         if sample_weight is None:
-            self.quantile = stats.scoreatpercentile(y, self.alpha * 100.0)
+            self.quantile = np.percentile(y, self.alpha * 100.0)
         else:
             self.quantile = _weighted_percentile(y, sample_weight,
                                                  self.alpha * 100.0)
@@ -608,7 +608,7 @@ class HuberLossFunction(RegressionLossFunction):
         gamma = self.gamma
         if gamma is None:
             if sample_weight is None:
-                gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
+                gamma = np.percentile(np.abs(diff), self.alpha * 100)
             else:
                 gamma = _weighted_percentile(np.abs(diff), sample_weight, self.alpha * 100)
 
@@ -641,7 +641,7 @@ class HuberLossFunction(RegressionLossFunction):
         pred = pred.ravel()
         diff = y - pred
         if sample_weight is None:
-            gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
+            gamma = np.percentile(np.abs(diff), self.alpha * 100)
         else:
             gamma = _weighted_percentile(np.abs(diff), sample_weight, self.alpha * 100)
         gamma_mask = np.abs(diff) <= gamma
@@ -1125,13 +1125,13 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, criterion,
-                 min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
+                 min_samples_split, min_weight_fraction_leaf,
                  max_depth, min_impurity_decrease, min_impurity_split,
                  init, subsample, max_features,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='auto',
-                 validation_fraction=0.1, n_iter_no_change=None,
-                 tol=1e-4):
+                 min_samples_leaf='deprecated', warm_start=False,
+                 presort='auto', validation_fraction=0.1,
+                 n_iter_no_change=None, tol=1e-4):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -1190,22 +1190,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 # no inplace multiplication!
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
-            if X_csc is not None:
-                tree.fit(X_csc, residual, sample_weight=sample_weight,
-                         check_input=False, X_idx_sorted=X_idx_sorted)
-            else:
-                tree.fit(X, residual, sample_weight=sample_weight,
-                         check_input=False, X_idx_sorted=X_idx_sorted)
+            X = X_csr if X_csr is not None else X
+            tree.fit(X, residual, sample_weight=sample_weight,
+                     check_input=False, X_idx_sorted=X_idx_sorted)
 
             # update tree leaves
-            if X_csr is not None:
-                loss.update_terminal_regions(tree.tree_, X_csr, y, residual, y_pred,
-                                             sample_weight, sample_mask,
-                                             self.learning_rate, k=k)
-            else:
-                loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
-                                             sample_weight, sample_mask,
-                                             self.learning_rate, k=k)
+            loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
+                                         sample_weight, sample_mask,
+                                         self.learning_rate, k=k)
 
             # add tree to ensemble
             self.estimators_[i, k] = tree
@@ -1498,9 +1490,17 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         n_inbag = max(1, int(self.subsample * n_samples))
         loss_ = self.loss_
 
+        if self.min_weight_fraction_leaf != 'deprecated':
+            warnings.warn("'min_weight_fraction_leaf' is deprecated in 0.20 "
+                          "and will be fixed to a value of 0 in 0.22.",
+                          DeprecationWarning)
+            min_weight_fraction_leaf = self.min_weight_fraction_leaf
+        else:
+            min_weight_fraction_leaf = 0.
+
         # Set min_weight_leaf from min_weight_fraction_leaf
-        if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
-            min_weight_leaf = (self.min_weight_fraction_leaf *
+        if min_weight_fraction_leaf != 0. and sample_weight is not None:
+            min_weight_leaf = (min_weight_fraction_leaf *
                                np.sum(sample_weight))
         else:
             min_weight_leaf = 0.
@@ -1738,8 +1738,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
-        - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a fraction and
+        - If int, then consider ``min_samples_split`` as the minimum number.
+        - If float, then ``min_samples_split`` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
@@ -1749,18 +1749,27 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
-        - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a fraction and
+        - If int, then consider ``min_samples_leaf`` as the minimum number.
+        - If float, then ``min_samples_leaf`` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
            Added float values for fractions.
+        .. deprecated:: 0.20
+           The parameter ``min_samples_leaf`` is deprecated in version 0.20 and
+           will be fixed to a value of 1 in version 0.22. It was not effective
+           for regularization and empirically, 1 is the best value.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
+
+        .. deprecated:: 0.20
+           The parameter ``min_weight_fraction_leaf`` is deprecated in version
+           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
+           for regularization.
 
     max_depth : integer, optional (default=3)
         maximum depth of the individual regression estimators. The maximum
@@ -1938,7 +1947,8 @@ shape (n_estimators, ``loss_.K``)
 
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
-                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
+                 min_samples_leaf='deprecated',
+                 min_weight_fraction_leaf='deprecated',
                  max_depth=3, min_impurity_decrease=0.,
                  min_impurity_split=None, init=None,
                  random_state=None, max_features=None, verbose=0,
@@ -2193,8 +2203,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
-        - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a fraction and
+        - If int, then consider ``min_samples_split`` as the minimum number.
+        - If float, then ``min_samples_split`` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
@@ -2204,13 +2214,17 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
-        - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a fraction and
+        - If int, then consider ``min_samples_leaf`` as the minimum number.
+        - If float, then ``min_samples_leaf`` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
            Added float values for fractions.
+        .. deprecated:: 0.20
+           The parameter ``min_samples_leaf`` is deprecated in version 0.20 and
+           will be fixed to a value of 1 in version 0.22. It was not effective
+           for regularization and empirically, 1 is the best value.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
@@ -2388,7 +2402,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
-                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
+                 min_samples_leaf='deprecated',
+                 min_weight_fraction_leaf='deprecated',
                  max_depth=3, min_impurity_decrease=0.,
                  min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,

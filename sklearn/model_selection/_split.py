@@ -714,7 +714,7 @@ class TimeSeriesSplit(_BaseKFold):
     Parameters
     ----------
     n_splits : int, default=3
-        Number of splits. Must be at least 1.
+        Number of splits. Must be at least 2.
 
         .. versionchanged:: 0.20
             ``n_splits`` default value will change from 3 to 5 in v0.22.
@@ -1939,7 +1939,7 @@ def check_cv(cv='warn', y=None, classifier=False):
         The return value is a cross-validator which generates the train/test
         splits via the ``split`` method.
     """
-    if cv is 'warn':
+    if cv is None or cv is 'warn':
         warnings.warn(CV_WARNING, FutureWarning)
         cv = 3
 

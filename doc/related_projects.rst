@@ -183,7 +183,10 @@ and tasks.
 
 - `multiisotonic <https://github.com/alexfields/multiisotonic>`_ Isotonic
   regression on multidimensional features.
-  
+
+- `scikit-multilearn <https://scikit.ml>`_ Multi-label classification with 
+  focus on label space manipulation.
+
 - `seglearn <https://github.com/dmbee/seglearn>`_ Time series and sequence 
   learning using sliding window segmentation.
 

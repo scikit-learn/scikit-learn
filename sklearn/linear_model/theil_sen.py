@@ -249,9 +249,11 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         random number generator; If None, the random number generator is the
         RandomState instance used by `np.random`.
 
-    n_jobs : integer, optional, default 1
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs.
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : boolean, optional, default False
         Verbose mode when fitting the model.

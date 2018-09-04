@@ -55,7 +55,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5,
 
 # Fit classifier with out-of-bag estimates
 params = {'n_estimators': 1200, 'max_depth': 3, 'subsample': 0.5,
-          'learning_rate': 0.01, 'min_samples_leaf': 1, 'random_state': 3}
+          'learning_rate': 0.01, 'random_state': 3}
 clf = ensemble.GradientBoostingClassifier(**params)
 
 clf.fit(X_train, y_train)

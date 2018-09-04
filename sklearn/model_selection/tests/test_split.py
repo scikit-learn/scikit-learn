@@ -1444,7 +1444,7 @@ def test_nsplit_default_warn():
 def test_check_cv_default_warn():
     # Test that warnings are raised. Will be removed in 0.22
     assert_warns_message(FutureWarning, CV_WARNING, check_cv)
-
+    assert_warns_message(FutureWarning, CV_WARNING, check_cv, None)
     assert_no_warnings(check_cv, cv=5)
 
 
