@@ -21,7 +21,7 @@ from ..metrics import pairwise_distances
 from ._optics_inner import quick_scan
 
 
-def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
+def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
            p=2, metric_params=None, maxima_ratio=.75,
            rejection_ratio=.7, similarity_threshold=0.4,
            significant_min=.003, min_cluster_size_ratio=.005,
@@ -41,20 +41,19 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
     X : array, shape (n_samples, n_features)
         The data.
 
-    min_samples : int
+    min_samples : int (default=5)
         The number of samples in a neighborhood for a point to be considered
         as a core point.
 
-    max_bound : float, optional
+    max_eps : float, optional (default=np.inf)
         The maximum distance between two samples for them to be considered
-        as in the same neighborhood. This is also the largest object size
-        expected within the dataset. Default value of "np.inf" will identify
-        clusters across all scales; reducing `max_bound` will result in
+        as in the same neighborhood. Default value of "np.inf" will identify
+        clusters across all scales; reducing `max_eps` will result in
         shorter run times.
 
-    metric : string or callable, optional
+    metric : string or callable, optional (default='euclidean')
         The distance metric to use for neighborhood lookups. Default is
-        "minkowski". Other options include "euclidean", "manhattan",
+        "euclidean". Other options include "minkowski", "manhattan",
         "chebyshev", "haversine", "seuclidean", "hamming", "canberra",
         and "braycurtis". The "wminkowski" and "mahalanobis" metrics are
         also valid with an additional argument.
@@ -68,20 +67,20 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
 
-    maxima_ratio : float, optional
+    maxima_ratio : float, optional (default=.75)
         The maximum ratio we allow of average height of clusters on the
         right and left to the local maxima in question. The higher the
         ratio, the more generous the algorithm is to preserving local
         minima, and the more cuts the resulting tree will have.
 
-    rejection_ratio : float, optional
+    rejection_ratio : float, optional (default=.7)
         Adjusts the fitness of the clustering. When the maxima_ratio is
         exceeded, determine which of the clusters to the left and right to
         reject based on rejection_ratio. Higher values will result in points
         being more readily classified as noise; conversely, lower values will
         result in more points being clustered.
 
-    similarity_threshold : float, optional
+    similarity_threshold : float, optional (default=.4)
         Used to check if nodes can be moved up one level, that is, if the
         new cluster created is too "similar" to its parent, given the
         similarity threshold. Similarity can be determined by 1) the size
@@ -91,19 +90,21 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
         node. A lower value for the similarity threshold means less levels
         in the tree.
 
-    significant_min : float, optional
+    significant_min : float, optional (default=.003)
         Sets a lower threshold on how small a significant maxima can be.
 
-    min_cluster_size_ratio : float, optional
+    min_cluster_size_ratio : float, optional (default=.005)
         Minimum percentage of dataset expected for cluster membership.
 
-    min_maxima_ratio : float, optional
+    min_maxima_ratio : float, optional (default=.001)
         Used to determine neighborhood size for minimum cluster membership.
+        Each local maxima should be a largest value in a neighborhood
+        of the `size min_maxima_ratio * len(X)` from left and right.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree`
+        - 'ball_tree' will use :class:`BallTree` (default)
         - 'kd_tree' will use :class:`KDTree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
@@ -147,7 +148,7 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
     Record 28, no. 2 (1999): 49-60.
     """
 
-    clust = OPTICS(min_samples, max_bound, metric, p, metric_params,
+    clust = OPTICS(min_samples, max_eps, metric, p, metric_params,
                    maxima_ratio, rejection_ratio,
                    similarity_threshold, significant_min,
                    min_cluster_size_ratio, min_maxima_ratio,
@@ -168,20 +169,19 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    min_samples : int
+    min_samples : int (default=5)
         The number of samples in a neighborhood for a point to be considered
         as a core point.
 
-    max_bound : float, optional
+    max_eps : float, optional (default=np.inf)
         The maximum distance between two samples for them to be considered
-        as in the same neighborhood. This is also the largest object size
-        expected within the dataset. Default value of "np.inf" will identify
-        clusters across all scales; reducing `max_bound` will result in
+        as in the same neighborhood. Default value of "np.inf" will identify
+        clusters across all scales; reducing `max_eps` will result in
         shorter run times.
 
-    metric : string or callable, optional
+    metric : string or callable, optional (default='euclidean')
         The distance metric to use for neighborhood lookups. Default is
-        "minkowski". Other options include "euclidean", "manhattan",
+        "euclidean". Other options include "minkowski", "manhattan",
         "chebyshev", "haversine", "seuclidean", "hamming", "canberra",
         and "braycurtis". The "wminkowski" and "mahalanobis" metrics are
         also valid with an additional argument.
@@ -195,20 +195,20 @@ class OPTICS(BaseEstimator, ClusterMixin):
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
 
-    maxima_ratio : float, optional
+    maxima_ratio : float, optional (default=.75)
         The maximum ratio we allow of average height of clusters on the
         right and left to the local maxima in question. The higher the
         ratio, the more generous the algorithm is to preserving local
         minima, and the more cuts the resulting tree will have.
 
-    rejection_ratio : float, optional
+    rejection_ratio : float, optional (default=.7)
         Adjusts the fitness of the clustering. When the maxima_ratio is
         exceeded, determine which of the clusters to the left and right to
         reject based on rejection_ratio. Higher values will result in points
         being more readily classified as noise; conversely, lower values will
         result in more points being clustered.
 
-    similarity_threshold : float, optional
+    similarity_threshold : float, optional (default=.4)
         Used to check if nodes can be moved up one level, that is, if the
         new cluster created is too "similar" to its parent, given the
         similarity threshold. Similarity can be determined by 1) the size
@@ -218,19 +218,21 @@ class OPTICS(BaseEstimator, ClusterMixin):
         node. A lower value for the similarity threshold means less levels
         in the tree.
 
-    significant_min : float, optional
+    significant_min : float, optional (default=.003)
         Sets a lower threshold on how small a significant maxima can be.
 
-    min_cluster_size_ratio : float, optional
+    min_cluster_size_ratio : float, optional (default=.005)
         Minimum percentage of dataset expected for cluster membership.
 
-    min_maxima_ratio : float, optional
+    min_maxima_ratio : float, optional (default=.001)
         Used to determine neighborhood size for minimum cluster membership.
+        Each local maxima should be a largest value in a neighborhood
+        of the `size min_maxima_ratio * len(X)` from left and right.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree`
+        - 'ball_tree' will use :class:`BallTree` (default)
         - 'kd_tree' will use :class:`KDTree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
@@ -284,14 +286,14 @@ class OPTICS(BaseEstimator, ClusterMixin):
     Record 28, no. 2 (1999): 49-60.
     """
 
-    def __init__(self, min_samples=5, max_bound=np.inf, metric='euclidean',
+    def __init__(self, min_samples=5, max_eps=np.inf, metric='euclidean',
                  p=2, metric_params=None, maxima_ratio=.75,
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size_ratio=.005,
                  min_maxima_ratio=0.001, algorithm='ball_tree',
                  leaf_size=30, n_jobs=None):
 
-        self.max_bound = max_bound
+        self.max_eps = max_eps
         self.min_samples = min_samples
         self.maxima_ratio = maxima_ratio
         self.rejection_ratio = rejection_ratio
@@ -310,7 +312,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         """Perform OPTICS clustering
 
         Extracts an ordered list of points and reachability distances, and
-        performs initial clustering using `max_bound` distance specified at
+        performs initial clustering using `max_eps` distance specified at
         OPTICS object instantiation.
 
         Parameters
@@ -378,7 +380,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     def _expand_cluster_order(self, point, X, nbrs):
         # As above, not parallelizable. Parallelizing would allow items in
         # the 'unprocessed' list to switch to 'processed'
-        if self.core_distances_[point] <= self.max_bound:
+        if self.core_distances_[point] <= self.max_eps:
             while not self._processed[point]:
                 self._processed[point] = True
                 self.ordering_.append(point)
@@ -389,7 +391,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     def _set_reach_dist(self, point_index, X, nbrs):
         P = np.array(X[point_index]).reshape(1, -1)
-        indices = nbrs.radius_neighbors(P, radius=self.max_bound,
+        indices = nbrs.radius_neighbors(P, radius=self.max_eps,
                                         return_distance=False)[0]
 
         # Getting indices of neighbors that have not been processed
@@ -416,17 +418,17 @@ class OPTICS(BaseEstimator, ClusterMixin):
     def extract_dbscan(self, eps):
         """Performs DBSCAN extraction for an arbitrary epsilon.
 
-        Extraction runs in linear time. Note that if the `max_bound` OPTICS
+        Extraction runs in linear time. Note that if the `max_eps` OPTICS
         parameter was set to < inf for extracting reachability and ordering
         arrays, DBSCAN extractions will be unstable for `eps` values close to
-        `max_bound`. Setting `eps` < (`max_bound` / 5.0) will guarantee
+        `max_eps`. Setting `eps` < (`max_eps` / 5.0) will guarantee
         extraction parity with DBSCAN.
 
         Parameters
         ----------
         eps : float or int, required
-            DBSCAN `eps` parameter. Must be set to < `max_bound`. Equivalence
-            with DBSCAN algorithm is achieved if `eps` is < (`max_bound` / 5)
+            DBSCAN `eps` parameter. Must be set to < `max_eps`. Equivalence
+            with DBSCAN algorithm is achieved if `eps` is < (`max_eps` / 5)
 
         Returns
         -------
@@ -438,14 +440,14 @@ class OPTICS(BaseEstimator, ClusterMixin):
         """
         check_is_fitted(self, 'reachability_')
 
-        if eps > self.max_bound:
+        if eps > self.max_eps:
             raise ValueError('Specify an epsilon smaller than %s. Got %s.'
-                             % (self.max_bound, eps))
+                             % (self.max_eps, eps))
 
-        if eps * 5.0 > (self.max_bound * 1.05):
+        if eps * 5.0 > (self.max_eps * 1.05):
             warnings.warn(
-                "Warning, max_bound (%s) is close to eps (%s): "
-                "Output may be unstable." % (self.max_bound, eps),
+                "Warning, max_eps (%s) is close to eps (%s): "
+                "Output may be unstable." % (self.max_eps, eps),
                 RuntimeWarning, stacklevel=2)
         # Stability warning is documented in _extract_dbscan method...
 
@@ -612,12 +614,6 @@ class _TreeNode(object):
         self.children = []
         self.split_point = -1
 
-    def assign_split_point(self, split_point):
-        self.split_point = split_point
-
-    def add_child(self, child):
-        self.children.append(child)
-
 
 def _is_local_maxima(index, reachability_plot, neighborhood_size):
     right_idx = slice(index + 1, index + neighborhood_size + 1)
@@ -661,7 +657,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
 
     # take largest local maximum as possible separation between clusters
     s = local_maxima_points[0]
-    node.assign_split_point(s)
+    node.split_point = s
     local_maxima_points = local_maxima_points[1:]
 
     # create two new nodes and add to list of nodes
@@ -683,7 +679,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     node_list.append((node_2, local_max_2))
 
     if reachability_plot[s] < significant_min:
-        node.assign_split_point(-1)
+        node.split_point = -1
         # if split_point is not significant, ignore this split and continue
         _cluster_tree(node, parent_node, local_maxima_points,
                       reachability_plot, reachability_ordering,
@@ -715,7 +711,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
                 (avg_reach2 / reachability_plot[s]) >= rejection_ratio):
             # since split_point is not significant,
             # ignore this split and continue (reject both child nodes)
-            node.assign_split_point(-1)
+            node.split_point = -1
             _cluster_tree(node, parent_node, local_maxima_points,
                           reachability_plot, reachability_ordering,
                           min_cluster_size, maxima_ratio, rejection_ratio,
@@ -733,7 +729,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
         node_list.remove((node_2, local_max_2))
     if not node_list:
         # parent_node will be a leaf
-        node.assign_split_point(-1)
+        node.split_point = -1
         return
 
     # Check if nodes can be moved up one level - the new cluster created
@@ -748,13 +744,13 @@ def _cluster_tree(node, parent_node, local_maxima_points,
 
     for nl in node_list:
         if bypass_node == 1:
-            parent_node.add_child(nl[0])
+            parent_node.children.append(nl[0])
             _cluster_tree(nl[0], parent_node, nl[1],
                           reachability_plot, reachability_ordering,
                           min_cluster_size, maxima_ratio, rejection_ratio,
                           similarity_threshold, significant_min)
         else:
-            node.add_child(nl[0])
+            node.children.append(nl[0])
             _cluster_tree(nl[0], node, nl[1], reachability_plot,
                           reachability_ordering, min_cluster_size,
                           maxima_ratio, rejection_ratio,
