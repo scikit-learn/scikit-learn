@@ -1549,7 +1549,7 @@ def test_elastic_net_CV_multiclass_ovr():
     assert (lrcv.predict(X_test) == gs.predict(X_test)).mean() >= .8
 
 
-@pytest.mark.parametrize('multi_class', ('ovr', ''))
+@pytest.mark.parametrize('multi_class', ('ovr', 'multinomial'))
 def test_ElasticNetCV_no_refit(multi_class):
     # Test ElasticNetCV when refit is False
 
