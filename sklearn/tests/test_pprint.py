@@ -32,10 +32,7 @@ Pipeline(
          memory=None)"""
     expected_repr = expected_repr[1:]  # Remove first \n
     repr_ = f(pipeline)
-    try:
-        assert expected_repr == repr_
-    except AssertionError:  # Older versions, different param orders
-        assert set(expected_repr) == set(repr_)
+    assert expected_repr == repr_
     assert max(len(line) for line in repr_.split('\n')) <= f.width
 
     f = _Formatter(indent_est='step')
@@ -51,10 +48,7 @@ Pipeline(
     memory=None)"""
     expected_repr = expected_repr[1:]  # Remove first \n
     repr_ = f(pipeline)
-    try:
-        assert expected_repr == repr_
-    except AssertionError:  # Older versions, different param orders
-        assert set(expected_repr) == set(repr_)
+    assert set(expected_repr) == set(repr_)
     assert max(len(line) for line in repr_.split('\n')) <= f.width
 
     f = _Formatter(indent_est='wrong')
@@ -72,7 +66,8 @@ Pipeline(
            ('logisticregression', LogisticRegression(C=999))],
     )"""
     expected_repr = expected_repr[1:]  # Remove first \n
-    assert expected_repr == f(pipeline)
+    repr_ = f(pipeline)
+    assert expected_repr == repr_
 
 
 def test_visual():
@@ -95,10 +90,7 @@ Veeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeery
     something=None)"""
     expected_repr = expected_repr[1:]  # Remove first \n
     repr_ = f(VeryLongName())
-    try:
-        assert expected_repr == repr_
-    except AssertionError:  # Older versions, different param orders
-        assert set(expected_repr) == set(repr_)
+    assert expected_repr == repr_
     # assert max(len(line) for line in repr_.split('\n')) <= f.width
 
     # Pipeline with very long estimator name
@@ -114,10 +106,7 @@ Pipeline(
     memory=None)"""
     expected_repr = expected_repr[1:]  # Remove first \n
     repr_ = f(pipeline)
-    try:
-        assert expected_repr == repr_
-    except AssertionError:  # Older versions, different param orders
-        assert set(expected_repr) == set(repr_)
+    assert expected_repr == repr_
     #  assert max(len(line) for line in repr_.split('\n')) <= f.width
 
     # Deeply nested estimator
@@ -147,10 +136,7 @@ RFE(
 
     expected_repr = expected_repr[1:]  # Remove first \n
     repr_ = f(estimator)
-    try:
-        assert expected_repr == repr_
-    except AssertionError:  # Older versions, different param orders
-        assert set(expected_repr) == set(repr_)
+    assert expected_repr == repr_
     #  assert max(len(line) for line in repr_.split('\n')) <= f.width
 
     # Grid Search
@@ -167,18 +153,15 @@ GridSearchCV(cv=5, error_score='raise-deprecating',
         shrinking=True, tol=0.001, verbose=False),
     fit_params=None, iid='warn', n_jobs=1,
     param_grid=[
-        {'kernel': ['rbf'], 'gamma': [0.001, 0.0001],
-            'C': [1, 10, 100, 1000]},
-        {'kernel': ['linear'], 'C': [1, 10, 100, 1000]}],
+        {'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001],
+            'kernel': ['rbf']},
+        {'C': [1, 10, 100, 1000], 'kernel': ['linear']}],
     pre_dispatch='2*n_jobs', refit=True, return_train_score='warn',
     scoring=None, verbose=0)"""
 
     expected_repr = expected_repr[1:]  # Remove first \n
     repr_ = f(gs)
-    try:
-        assert expected_repr == repr_
-    except AssertionError:  # Older versions, different param orders
-        assert set(expected_repr) == set(repr_)
+    assert expected_repr == repr_
     #  assert max(len(line) for line in repr_.split('\n')) <= f.width
 
     # Grid Search with a pipeline inside
@@ -216,7 +199,7 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
         memory=None),
     fit_params=None, iid='warn', n_jobs=1,
     param_grid=[
-        {
+        {'classify__C': [1, 10, 100, 1000],
             'reduce_dim': [
                 PCA(copy=True, iterated_power=7, n_components=None,
                     random_state=None, svd_solver='auto', tol=0.0,
@@ -224,17 +207,14 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
                 NMF(alpha=0.0, beta_loss='frobenius', init=None, l1_ratio=0.0,
                     max_iter=200, n_components=None, random_state=None,
                     shuffle=False, solver='cd', tol=0.0001, verbose=0)],
-            'reduce_dim__n_components': [2, 4, 8],
-            'classify__C': [1, 10, 100, 1000]},
-        {'reduce_dim': [SelectKBest(k=10, score_func=chi2)],
-            'reduce_dim__k': [2, 4, 8], 'classify__C': [1, 10, 100, 1000]}],
+            'reduce_dim__n_components': [2, 4, 8]},
+        {'classify__C': [1, 10, 100, 1000],
+            'reduce_dim': [SelectKBest(k=10, score_func=chi2)],
+            'reduce_dim__k': [2, 4, 8]}],
     pre_dispatch='2*n_jobs', refit=True, return_train_score='warn',
     scoring=None, verbose=0)"""
 
     expected_repr = expected_repr[1:]  # Remove first \n
     repr_ = f(gs)
-    try:
-        assert expected_repr == repr_
-    except AssertionError:  # Older versions, different param orders
-        assert set(expected_repr) == set(repr_)
+    assert expected_repr == repr_
     #  assert max(len(line) for line in repr_.split('\n')) <= f.width

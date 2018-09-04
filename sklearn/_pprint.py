@@ -1,21 +1,31 @@
-from sklearn.base import BaseEstimator
-import numpy as np
+from collections import OrderedDict
 import re
+
+import numpy as np
+
+from sklearn.base import BaseEstimator
 
 
 def get_params(func):
-    """Return dict (name: default value) describing the parameters of given
+    """Return dict (name: default_value) describing the parameters of given
     function."""
     try:  # Python 3
         from inspect import signature
         params = signature(func).parameters
-        params = {name: param.default for (name, param) in params.items()}
+        names = list(sorted(params.keys()))
+        defaults = [params[name].default for name in names]
+        params = OrderedDict(zip(names, defaults))
     except ImportError:  # Python 2
         from inspect import getargspec
         from itertools import izip_longest
         arg_specs = getargspec(func)
-        names = arg_specs.args[1:]  # Remove self param
-        params = dict(izip_longest(names, arg_specs.defaults, fillvalue=None))
+        if arg_specs.args[0] == 'self':
+            names = arg_specs.args[1:]
+        else:
+            names = arg_specs.args
+        names, defaults = zip(*sorted(izip_longest(names, arg_specs.defaults,
+                                                   fillvalue=None)))
+        params = OrderedDict(zip(names, defaults))
 
     return params
 
@@ -108,7 +118,7 @@ class _Formatter(object):
     def _format_dict(self, value, indent):
         items = [repr(key) + ': ' + self._format_all(value[key], indent +
                                                      self.step)
-                 for key in value]
+                 for key in sorted(value.keys())]
         return "{%s}" % self._join_items(items, indent + self.step)
 
     def _format_list(self, value, indent):
@@ -131,6 +141,10 @@ class _Formatter(object):
             params = changed_params(value)
         else:
             params = value.get_params(deep=False)
+
+        # Sort params for version consistency
+        params = OrderedDict((key, params[key]) for key in
+                             sorted(params.keys()))
 
         if self.indent_est == 'step':
             offset = self.step
