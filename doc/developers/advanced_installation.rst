@@ -276,9 +276,8 @@ Testing
 Testing scikit-learn once installed
 -----------------------------------
 
-Testing requires having the `pytest
-<https://docs.pytest.org>`_ library (version >= 3.3.0). Some tests also require
-having `pandas <https://pandas.pydata.org/>` installed.
+Testing requires having `pytest <https://docs.pytest.org>`_ >= 3.3.0. Some
+tests also require having `pandas <https://pandas.pydata.org/>` installed.
 After installation, the package can be tested by executing *from outside* the
 source directory::
 
