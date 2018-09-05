@@ -35,9 +35,7 @@ from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
 from .label import LabelEncoder
 
-
 BOUNDS_THRESHOLD = 1e-7
-
 
 zip = six.moves.zip
 map = six.moves.map
@@ -1269,6 +1267,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
+
     def __init__(self, degree=2, interaction_only=False, include_bias=True):
         self.degree = degree
         self.interaction_only = interaction_only
@@ -1942,6 +1941,18 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     n_values_ : array of shape (n_features,)
         Maximum number of values per feature.
 
+    handle_missing : int, 0, 1, 2
+        What should be done to missing values. Should be one of:
+
+        all-missing: Replace with a row of NaNs as above
+
+        all-zero: Replace with a row of zeros
+
+        category: Represent with a separate one-hot column
+
+    missing_values: NaN or None
+        What should be considered as a missing value?
+
     Examples
     --------
     Given a dataset with three features and four samples, we let the encoder
@@ -1979,13 +1990,16 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
       and n_classes-1.
     """
+
     def __init__(self, n_values="auto", categorical_features="all",
-                 dtype=np.float64, sparse=True, handle_unknown='error'):
+                 dtype=np.float64, sparse=True, handle_unknown='error', missing_values=None, handle_missing=None):
         self.n_values = n_values
         self.categorical_features = categorical_features
         self.dtype = dtype
         self.sparse = sparse
         self.handle_unknown = handle_unknown
+        self.handle_missing = handle_missing
+        self.missing_values = missing_values
 
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
@@ -2061,8 +2075,27 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X : array-like, shape [n_samples, n_feature]
             Input array of type int.
         """
-        return _transform_selected(X, self._fit_transform,
-                                   self.categorical_features, copy=True)
+        if not self.missing_values:
+            return _transform_selected(X, self._fit_transform,
+                                       self.categorical_features, copy=True)
+        if self.missing_values and self.missing_values != "NaN":
+            raise ValueError("Wrong 'missing_missing' value specified. "
+                             "'missing_values' should be one of either 'None' or 'NaN'")
+        if self.missing_values == "NaN":
+            if not self.handle_missing:
+                raise ValueError("'handle_missing' cannot be None when 'missing_values' is passed.")
+            if self.handle_missing not in ["all-missing", "all-zero", "category"]:
+                raise ValueError("Wrong 'handle_missing' value specified. "
+                                 "'handle_missing' should be one of either ['all-missing', 'all-zero', 'category']")
+            if self.handle_missing == "all-missing":
+                # Replace entire row with NaN
+                pass
+            if self.handle_missing == "all-zero":
+                # Replace with a row of zeros
+                pass
+            else:
+                # Replace with a seperate one-hot column
+                pass
 
     def _transform(self, X):
         """Assumes X contains only categorical features."""
@@ -2374,9 +2407,9 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             # used (the upper when we do ascending, and the
             # lower for descending). We take the mean of these two
             X_col[isfinite_mask] = .5 * (
-                np.interp(X_col_finite, quantiles, self.references_)
-                - np.interp(-X_col_finite, -quantiles[::-1],
-                            -self.references_[::-1]))
+                    np.interp(X_col_finite, quantiles, self.references_)
+                    - np.interp(-X_col_finite, -quantiles[::-1],
+                                -self.references_[::-1]))
         else:
             X_col[isfinite_mask] = np.interp(X_col_finite,
                                              self.references_, quantiles)
@@ -2415,7 +2448,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         if self.output_distribution not in ('normal', 'uniform'):
             raise ValueError("'output_distribution' has to be either 'normal'"
                              " or 'uniform'. Got '{}' instead.".format(
-                                 self.output_distribution))
+                self.output_distribution))
 
         return X
 
@@ -2690,6 +2723,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     Royal Statistical Society B, 26, 211-252 (1964).
 
     """
+
     def __init__(self, method='box-cox', standardize=True, copy=True):
         self.method = method
         self.standardize = standardize
@@ -3138,7 +3172,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         if self.encoding == 'ordinal' and X.shape[1] != n_features:
             raise ValueError(msg.format(n_features, X.shape[1]))
         elif (self.encoding.startswith('onehot')
-                and X.shape[1] != n_transformed_features):
+              and X.shape[1] != n_transformed_features):
             raise ValueError(msg.format(n_transformed_features, X.shape[1]))
 
         # create resulting array of appropriate dtype
