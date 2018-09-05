@@ -63,6 +63,7 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- :class:`cluster.MeanShift` (bug fix)
 - :class:`decomposition.IncrementalPCA` in Python 2 (bug fix)
 - :class:`decomposition.SparsePCA` (bug fix)
 - :class:`ensemble.GradientBoostingClassifier` (bug fix affecting feature importances)
@@ -150,6 +151,11 @@ Support for Python 3.3 has been officially dropped.
   ``iteration`` was 1 less than the correct value. Also added the missing
   ``n_iter_`` attribute in the docstring of :class:`cluster.KMeans`.
   :issue:`11353` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :func:`cluster.mean_shift` where the assigned labels
+  were not deterministic if there were multiple clusters with the same
+  intensities.
+  :issue:`11901` by :user:`Adrin Jalali <adrinjalali>`.
 
 - |API| Deprecate ``pooling_func`` unused parameter in
   :class:`cluster.AgglomerativeClustering`.

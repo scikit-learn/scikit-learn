@@ -215,8 +215,10 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     # If the distance between two kernels is less than the bandwidth,
     # then we have to remove one because it is a duplicate. Remove the
     # one with fewer points.
+
     sorted_by_intensity = sorted(center_intensity_dict.items(),
-                                 key=lambda tup: tup[1], reverse=True)
+                                 key=lambda tup: (tup[1], tup[0]),
+                                 reverse=True)
     sorted_centers = np.array([tup[0] for tup in sorted_by_intensity])
     unique = np.ones(len(sorted_centers), dtype=np.bool)
     nbrs = NearestNeighbors(radius=bandwidth,
@@ -359,9 +361,9 @@ class MeanShift(BaseEstimator, ClusterMixin):
     ...               [4, 7], [3, 5], [3, 6]])
     >>> clustering = MeanShift(bandwidth=2).fit(X)
     >>> clustering.labels_
-    array([0, 0, 0, 1, 1, 1])
+    array([1, 1, 1, 0, 0, 0])
     >>> clustering.predict([[0, 0], [5, 5]])
-    array([0, 1])
+    array([1, 0])
     >>> clustering # doctest: +NORMALIZE_WHITESPACE
     MeanShift(bandwidth=2, bin_seeding=False, cluster_all=True, min_bin_freq=1,
          n_jobs=None, seeds=None)
