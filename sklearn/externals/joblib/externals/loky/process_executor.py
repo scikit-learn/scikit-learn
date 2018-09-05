@@ -117,14 +117,16 @@ _global_shutdown = False
 MAX_DEPTH = int(os.environ.get("LOKY_MAX_DEPTH", 10))
 _CURRENT_DEPTH = 0
 
-# Minimum time interval between two consecutive memory usage checks.
-_MEMORY_CHECK_DELAY = 1.
+# Minimum time interval between two consecutive memory leak protection checks.
+_MEMORY_LEAK_CHECK_DELAY = 1.
 
 # Number of bytes of memory usage allowed over the reference process size.
 _MAX_MEMORY_LEAK_SIZE = int(1e8)
 
+
 try:
     from psutil import Process
+    _USE_PSUTIL = True
 
     def _get_memory_usage(pid, force_gc=False):
         if force_gc:
@@ -133,7 +135,7 @@ try:
         return Process(pid).memory_info().rss
 
 except ImportError:
-    _get_memory_usage = None
+    _USE_PSUTIL = False
 
 
 class _ThreadWakeup:
@@ -383,7 +385,7 @@ def _process_worker(call_queue, result_queue, initializer, initargs,
     global _CURRENT_DEPTH
     _CURRENT_DEPTH = current_depth
     _process_reference_size = None
-    _process_last_memory_check = None
+    _last_memory_leak_check = None
     pid = os.getpid()
 
     mp.util.debug('Worker started with timeout=%s' % timeout)
@@ -422,20 +424,22 @@ def _process_worker(call_queue, result_queue, initializer, initargs,
             result_queue.put(_ResultItem(call_item.work_id, exception=exc))
         else:
             _sendback_result(result_queue, call_item.work_id, result=r)
+            del r
 
         # Free the resource as soon as possible, to avoid holding onto
         # open files or shared memory that is not needed anymore
         del call_item
 
-        if _get_memory_usage is not None:
+        if _USE_PSUTIL:
             if _process_reference_size is None:
                 # Make reference measurement after the first call
                 _process_reference_size = _get_memory_usage(pid, force_gc=True)
-                _process_last_memory_check = time()
+                _last_memory_leak_check = time()
                 continue
-            if time() - _process_last_memory_check > _MEMORY_CHECK_DELAY:
+            if time() - _last_memory_leak_check > _MEMORY_LEAK_CHECK_DELAY:
                 mem_usage = _get_memory_usage(pid)
-                _process_last_memory_check = time()
+                print(mem_usage)
+                _last_memory_leak_check = time()
                 if mem_usage - _process_reference_size < _MAX_MEMORY_LEAK_SIZE:
                     # Memory usage stays within bounds: everything is fine.
                     continue
@@ -444,7 +448,7 @@ def _process_worker(call_queue, result_queue, initializer, initargs,
                 # after a forced garbage collection to break any reference
                 # cycles.
                 mem_usage = _get_memory_usage(pid, force_gc=True)
-                _process_last_memory_check = time()
+                _last_memory_leak_check = time()
                 if mem_usage - _process_reference_size < _MAX_MEMORY_LEAK_SIZE:
                     # The GC managed to free the memory: everything is fine.
                     continue
@@ -455,6 +459,14 @@ def _process_worker(call_queue, result_queue, initializer, initargs,
                 result_queue.put(pid)
                 with worker_exit_lock:
                     return
+        else:
+            # if psutil is not installed, trigger gc.collect events
+            # regularly to limit potential memory leaks due to reference cycles
+            if ((_last_memory_leak_check is None) or
+                    (time() - _last_memory_leak_check >
+                     _MEMORY_LEAK_CHECK_DELAY)):
+                gc.collect()
+                _last_memory_leak_check = time()
 
 
 def _add_call_item_to_queue(pending_work_items,

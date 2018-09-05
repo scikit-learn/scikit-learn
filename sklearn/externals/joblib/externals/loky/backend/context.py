@@ -106,12 +106,13 @@ def cpu_count():
 
     The returned number of CPUs accounts for:
      * the number of CPUs in the system, as given by
-       ``multiprocessing.cpu_count``
+       ``multiprocessing.cpu_count``;
      * the CPU affinity settings of the current process
-       (available with Python 3.4+ on some Unix systems)
-     * CFS scheduler CPU bandwidth limit
-       (available on Linux only)
-    and is given as the minimum of these three constraints.
+       (available with Python 3.4+ on some Unix systems);
+     * CFS scheduler CPU bandwidth limit (available on Linux only, typically
+       set by docker and similar container orchestration systems);
+     * the value of the LOKY_MAX_CPU_COUNT environment variable if defined.
+    and is given as the minimum of these constraints.
     It is also always larger or equal to 1.
     """
     import math
@@ -141,10 +142,15 @@ def cpu_count():
             cfs_period_us = int(fh.read())
 
         if cfs_quota_us > 0 and cfs_period_us > 0:
-            cpu_count_cfs = math.ceil(cfs_quota_us / cfs_period_us)
-            cpu_count_cfs = max(cpu_count_cfs, 1)
+            # Make sure this quantity is an int as math.ceil returns a
+            # float in python2.7. (See issue #165)
+            cpu_count_cfs = int(math.ceil(cfs_quota_us / cfs_period_us))
 
-    return min(cpu_count_mp, cpu_count_affinity, cpu_count_cfs)
+    # User defined soft-limit passed as an loky specific environment variable.
+    cpu_count_loky = int(os.environ.get('LOKY_MAX_CPU_COUNT', cpu_count_mp))
+    aggregate_cpu_count = min(cpu_count_mp, cpu_count_affinity, cpu_count_cfs,
+                              cpu_count_loky)
+    return max(aggregate_cpu_count, 1)
 
 
 class LokyContext(BaseContext):
