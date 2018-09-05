@@ -470,29 +470,85 @@ def test_check_docstring_parameters():
         incorrect == [
             "sklearn.utils.tests.test_testing.f_check_param_definition There "
             "was no space between the param name and colon ('a: int')",
+
             "sklearn.utils.tests.test_testing.f_check_param_definition There "
             "was no space between the param name and colon ('b:')",
+
             "sklearn.utils.tests.test_testing.f_check_param_definition "
             "Parameter 'c :' has an empty type spec. Remove the colon",
+
             "sklearn.utils.tests.test_testing.f_check_param_definition There "
             "was no space between the param name and colon ('d:int')",
         ])
 
-    messages = ["a != b", "arg mismatch: ['b']", "arg mismatch: ['X', 'y']",
-                "predict y != X",
-                "predict_proba arg mismatch: ['X']",
-                "score arg mismatch: ['X']",
-                ".fit arg mismatch: ['X', 'y']"]
+    messages = [
+            [
+                "There's a difference in the order of the parameters in"
+                + " sklearn.utils.tests.test_testing.f_bad_order's signature"
+                + " and its docstring.\nAccording to the function signature"
+                + " the parameter in this place of the docstring should be:"
+                + " \"b\" but instead is \"a\"",
+
+                "There's a difference in the order of the parameters in"
+                + " sklearn.utils.tests.test_testing.f_bad_order's signature"
+                + " and its docstring.\nAccording to the function signature"
+                + " the parameter in this place of the docstring should be:"
+                + " \"a\" but instead is \"b\""
+            ],
+
+            "There's a difference in the number of parameters in"
+            + " sklearn.utils.tests.test_testing.f_missing's signature and its"
+            + " docstring.\nParameters defined in the function signature and"
+            + " not defined in its docstring: ['b']\n",
+
+            "There's a difference in the number of parameters in"
+            + " sklearn.utils.tests.test_testing.f_missing's signature and its"
+            + " docstring.\nParameters defined in the function signature and"
+            + " not defined in its docstring: ['X', 'y']\n",
+
+            "There's a difference in the number of parameters in"
+            + " sklearn.utils.tests.test_testing.predict's signature and its"
+
+            + " docstring.\nParameters defined in the function signature and"
+            + " not defined in its docstring: ['X']\nParameters defined in the"
+            + " function docstring and not defined in its signature: ['y']\n",
+
+            "There's a difference in the number of parameters in"
+            + " sklearn.utils.tests.test_testing.predict_proba's signature and"
+            + " its docstring.\nParameters defined in the function signature"
+            + " and not defined in its docstring: ['X']\n",
+
+            "There's a difference in the number of parameters in"
+            + " sklearn.utils.tests.test_testing.score's signature and its"
+            + " docstring.\nParameters defined in the function signature and"
+            + " not defined in its docstring: ['X']\n",
+
+            "There's a difference in the number of parameters in"
+            + " sklearn.utils.tests.test_testing.fit's signature and its"
+            + " docstring.\nParameters defined in the function signature and"
+            + " not defined in its docstring: ['X', 'y']\n",
+            ]
 
     mock_meta = MockMetaEstimator(delegate=MockEst())
 
     for mess, f in zip(messages,
-                       [f_bad_order, f_missing, Klass.f_missing,
-                        mock_meta.predict, mock_meta.predict_proba,
-                        mock_meta.score, mock_meta.fit]):
+                       [f_bad_order,
+                        f_missing,
+                        Klass.f_missing,
+                        mock_meta.predict,
+                        mock_meta.predict_proba,
+                        mock_meta.score,
+                        mock_meta.fit]):
         incorrect = check_docstring_parameters(f)
-        assert len(incorrect) >= 1
-        assert mess in incorrect[0], '"%s" not in "%s"' % (mess, incorrect[0])
+        if isinstance(mess, list):
+            for i, _ in enumerate(mess):
+                assert len(incorrect[i]) >= 1
+                assert mess[i] in incorrect[i], '\n"%s"\n not in \n"%s"' \
+                    % (mess[i], incorrect[i])
+        else:
+            assert len(incorrect) >= 1
+            assert mess in incorrect[0], '\n"%s"\n not in \n"%s"' \
+                % (mess, incorrect[i])
 
 
 class RegistrationCounter(object):

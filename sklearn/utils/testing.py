@@ -994,15 +994,28 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     if (len(complete_params) != len(args) or len(complete_params) !=
             len(param_names)):
         missing_from_func = param_doc.difference(param_func)
+        missing_func = [x for x in param_names if x in missing_from_func]
         missing_from_doc = param_func.difference(param_doc)
-        message = func_name + ' contains a parameter mismatch between the function signature and its docstring.\n'
-        if missing_from_doc:
-            message += 'Parameters defined in the function signature and not defined in its docstring: {}\n'.format(missing_from_doc)
-        if missing_from_func:
-            message += 'Parameters defined in the function docstring and not defined in its signature: {}\n'.format(missing_from_func)
+        missing_doc = [x for x in args if x in missing_from_doc]
+
+        message = "There's a difference in the number of parameters in " \
+                  + func_name + "'s signature and its docstring.\n"
+        if missing_doc:
+            message += 'Parameters defined in the function signature and not' \
+                       + ' defined in its docstring: {}\n'.format(missing_doc)
+        if missing_func:
+            message += 'Parameters defined in the function docstring and not' \
+                       + ' defined in its signature: {}\n'.format(missing_func)
         incorrect += [message]
     else:
-        for n1, n2 in zip(param_names, args):
-            if n1 != n2:
-                incorrect += [func_name + ' ' + n1 + ' != ' + n2]
+        message = None
+        for doc_param, func_param in zip(param_names, args):
+            if doc_param != func_param:
+                message = "There's a difference in the order of the" \
+                          + " parameters in " + func_name + "'s signature" \
+                          + " and its docstring.\nAccording to the function" \
+                          + " signature the parameter in this place of the" \
+                          + " docstring should be: \"" + func_param + "\"" \
+                          + " but instead is \"" + doc_param + "\""
+                incorrect += [message]
     return incorrect
