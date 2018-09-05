@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.datasets import make_blobs
@@ -65,6 +66,8 @@ def test_compute_class_weight_dict():
                          classes, y)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_compute_class_weight_invariance():
     # Test that results with class_weight="balanced" is invariant wrt
     # class imbalance if the number of samples is identical.

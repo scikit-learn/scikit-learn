@@ -1,9 +1,8 @@
 """Test functionality of mldata fetching utilities."""
 
 import os
-import shutil
-import tempfile
 import scipy as sp
+import shutil
 
 from sklearn import datasets
 from sklearn.datasets import mldata_filename, fetch_mldata
@@ -14,24 +13,21 @@ from sklearn.utils.testing import mock_mldata_urlopen
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_warns
+
+import pytest
 
 
-tmpdir = None
+@pytest.fixture(scope='module')
+def tmpdata(tmpdir_factory):
+    tmpdir = tmpdir_factory.mktemp('tmp')
+    tmpdir_path = str(tmpdir.join('mldata'))
+    os.makedirs(tmpdir_path)
+    yield str(tmpdir)
+    shutil.rmtree(str(tmpdir))
 
 
-def setup_tmpdata():
-    # create temporary dir
-    global tmpdir
-    tmpdir = tempfile.mkdtemp()
-    os.makedirs(os.path.join(tmpdir, 'mldata'))
-
-
-def teardown_tmpdata():
-    # remove temporary dir
-    if tmpdir is not None:
-        shutil.rmtree(tmpdir)
-
-
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_mldata_filename():
     cases = [('datasets-UCI iris', 'datasets-uci-iris'),
              ('news20.binary', 'news20binary'),
@@ -42,9 +38,9 @@ def test_mldata_filename():
         assert_equal(mldata_filename(name), desired)
 
 
-def test_download():
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
+def test_download(tmpdata):
     """Test that fetch_mldata is able to download and cache a data set."""
-    setup_tmpdata()
     _urlopen_ref = datasets.mldata.urlopen
     datasets.mldata.urlopen = mock_mldata_urlopen({
         'mock': {
@@ -53,7 +49,8 @@ def test_download():
         },
     })
     try:
-        mock = fetch_mldata('mock', data_home=tmpdir)
+        mock = assert_warns(DeprecationWarning, fetch_mldata,
+                            'mock', data_home=tmpdata)
         for n in ["COL_NAMES", "DESCR", "target", "data"]:
             assert_in(n, mock)
 
@@ -61,14 +58,14 @@ def test_download():
         assert_equal(mock.data.shape, (150, 4))
 
         assert_raises(datasets.mldata.HTTPError,
+                      assert_warns, DeprecationWarning,
                       fetch_mldata, 'not_existing_name')
     finally:
         datasets.mldata.urlopen = _urlopen_ref
-        teardown_tmpdata()
 
 
-def test_fetch_one_column():
-    setup_tmpdata()
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
+def test_fetch_one_column(tmpdata):
     _urlopen_ref = datasets.mldata.urlopen
     try:
         dataname = 'onecol'
@@ -76,7 +73,7 @@ def test_fetch_one_column():
         x = sp.arange(6).reshape(2, 3)
         datasets.mldata.urlopen = mock_mldata_urlopen({dataname: {'x': x}})
 
-        dset = fetch_mldata(dataname, data_home=tmpdir)
+        dset = fetch_mldata(dataname, data_home=tmpdata)
         for n in ["COL_NAMES", "DESCR", "data"]:
             assert_in(n, dset)
         assert_not_in("target", dset)
@@ -85,15 +82,14 @@ def test_fetch_one_column():
         assert_array_equal(dset.data, x)
 
         # transposing the data array
-        dset = fetch_mldata(dataname, transpose_data=False, data_home=tmpdir)
+        dset = fetch_mldata(dataname, transpose_data=False, data_home=tmpdata)
         assert_equal(dset.data.shape, (3, 2))
     finally:
         datasets.mldata.urlopen = _urlopen_ref
-        teardown_tmpdata()
 
 
-def test_fetch_multiple_column():
-    setup_tmpdata()
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
+def test_fetch_multiple_column(tmpdata):
     _urlopen_ref = datasets.mldata.urlopen
     try:
         # create fake data set in cache
@@ -114,7 +110,7 @@ def test_fetch_multiple_column():
             ),
         })
 
-        dset = fetch_mldata(dataname, data_home=tmpdir)
+        dset = fetch_mldata(dataname, data_home=tmpdata)
         for n in ["COL_NAMES", "DESCR", "target", "data", "z"]:
             assert_in(n, dset)
         assert_not_in("x", dset)
@@ -130,7 +126,7 @@ def test_fetch_multiple_column():
             dataname: ({'y': y, 'x': x, 'z': z},
                        ['y', 'x', 'z']), })
 
-        dset = fetch_mldata(dataname, data_home=tmpdir)
+        dset = fetch_mldata(dataname, data_home=tmpdata)
         for n in ["COL_NAMES", "DESCR", "target", "data", "z"]:
             assert_in(n, dset)
         assert_not_in("x", dset)
@@ -148,7 +144,7 @@ def test_fetch_multiple_column():
         })
 
         dset = fetch_mldata(dataname, target_name=2, data_name=0,
-                            data_home=tmpdir)
+                            data_home=tmpdata)
         for n in ["COL_NAMES", "DESCR", "target", "data", "x"]:
             assert_in(n, dset)
         assert_not_in("y", dset)
@@ -159,7 +155,7 @@ def test_fetch_multiple_column():
 
         # by name
         dset = fetch_mldata(dataname, target_name='y', data_name='z',
-                            data_home=tmpdir)
+                            data_home=tmpdata)
         for n in ["COL_NAMES", "DESCR", "target", "data", "x"]:
             assert_in(n, dset)
         assert_not_in("y", dset)
@@ -167,4 +163,3 @@ def test_fetch_multiple_column():
 
     finally:
         datasets.mldata.urlopen = _urlopen_ref
-        teardown_tmpdata()

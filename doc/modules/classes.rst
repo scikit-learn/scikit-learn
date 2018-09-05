@@ -48,6 +48,7 @@ Functions
    config_context
    get_config
    set_config
+   show_versions
 
 .. _calibration_ref:
 
@@ -98,6 +99,7 @@ Classes
    cluster.AgglomerativeClustering
    cluster.Birch
    cluster.DBSCAN
+   cluster.OPTICS
    cluster.FeatureAgglomeration
    cluster.KMeans
    cluster.MiniBatchKMeans
@@ -112,6 +114,7 @@ Functions
 
    cluster.affinity_propagation
    cluster.dbscan
+   cluster.optics
    cluster.estimate_bandwidth
    cluster.k_means
    cluster.mean_shift
@@ -158,7 +161,14 @@ details.
     :toctree: generated
     :template: class.rst
 
+    compose.ColumnTransformer
     compose.TransformedTargetRegressor
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   compose.make_column_transformer
 
 .. _covariance_ref:
 
@@ -247,8 +257,8 @@ Loaders
    datasets.fetch_kddcup99
    datasets.fetch_lfw_pairs
    datasets.fetch_lfw_people
-   datasets.fetch_mldata
    datasets.fetch_olivetti_faces
+   datasets.fetch_openml
    datasets.fetch_rcv1
    datasets.fetch_species_distributions
    datasets.get_data_home
@@ -646,7 +656,7 @@ Kernels:
    :template: class.rst
 
    impute.SimpleImputer
-   impute.MICEImputer
+   impute.MissingIndicator
 
 .. _kernel_approximation_ref:
 
@@ -749,6 +759,7 @@ Kernels:
    linear_model.logistic_regression_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
+   linear_model.ridge_regression
 
 
 .. _manifold_ref:
@@ -1232,6 +1243,7 @@ Model validation
 
    preprocessing.Binarizer
    preprocessing.FunctionTransformer
+   preprocessing.KBinsDiscretizer
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
@@ -1240,7 +1252,7 @@ Model validation
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
-   preprocessing.CategoricalEncoder
+   preprocessing.OrdinalEncoder
    preprocessing.PolynomialFeatures
    preprocessing.PowerTransformer
    preprocessing.QuantileTransformer
@@ -1463,6 +1475,23 @@ Low-level methods
    utils.testing.assert_raise_message
    utils.testing.all_estimators
 
+Utilities from joblib:
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   utils.Memory
+   utils.Parallel
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.cpu_count
+   utils.delayed
+   utils.parallel_backend
+
 Recently deprecated
 ===================
 
@@ -1483,6 +1512,7 @@ To be removed in 0.22
    :template: deprecated_function.rst
 
    covariance.graph_lasso
+   datasets.fetch_mldata
 
 
 To be removed in 0.21
@@ -1502,46 +1532,3 @@ To be removed in 0.21
 
    datasets.load_mlcomp
    linear_model.lasso_stability_path
-
-
-To be removed in 0.20
----------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   cross_validation.KFold
-   cross_validation.LabelKFold
-   cross_validation.LeaveOneLabelOut
-   cross_validation.LeaveOneOut
-   cross_validation.LeavePOut
-   cross_validation.LeavePLabelOut
-   cross_validation.LabelShuffleSplit
-   cross_validation.ShuffleSplit
-   cross_validation.StratifiedKFold
-   cross_validation.StratifiedShuffleSplit
-   cross_validation.PredefinedSplit
-   decomposition.RandomizedPCA
-   gaussian_process.GaussianProcess
-   grid_search.ParameterGrid
-   grid_search.ParameterSampler
-   grid_search.GridSearchCV
-   grid_search.RandomizedSearchCV
-   mixture.DPGMM
-   mixture.GMM
-   mixture.VBGMM
-
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   cross_validation.check_cv
-   cross_validation.cross_val_predict
-   cross_validation.cross_val_score
-   cross_validation.permutation_test_score
-   cross_validation.train_test_split
-   grid_search.fit_grid_point
-   learning_curve.learning_curve
-   learning_curve.validation_curve

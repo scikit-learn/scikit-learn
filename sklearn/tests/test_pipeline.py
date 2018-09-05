@@ -1,11 +1,12 @@
 """
 Test the pipeline module.
 """
-
+from distutils.version import LooseVersion
 from tempfile import mkdtemp
 import shutil
 import time
 
+import pytest
 import numpy as np
 from scipy import sparse
 
@@ -33,7 +34,8 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.externals.joblib import Memory
+from sklearn.utils import Memory
+from sklearn.utils._joblib import __version__ as joblib_version
 
 
 JUNK_FOOD_DOCS = (
@@ -233,6 +235,8 @@ def test_pipeline_init_tuple():
     pipe.score(X)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_pipeline_methods_anova():
     # Test the various methods of the pipeline (anova).
     iris = load_iris()
@@ -783,6 +787,8 @@ def test_feature_union_feature_names():
                          'get_feature_names', ft.get_feature_names)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classes_property():
     iris = load_iris()
     X = iris.data
@@ -886,6 +892,8 @@ def test_step_name_validation():
                                  [[1]], [1])
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_set_params_nested_pipeline():
     estimator = Pipeline([
         ('a', Pipeline([
@@ -908,7 +916,7 @@ def test_pipeline_wrong_memory():
                             ('svc', SVC())], memory=memory)
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
-                        "sklearn.externals.joblib.Memory."
+                        "sklearn.utils.Memory."
                         " Got memory='1' instead.", cached_pipe.fit, X, y)
 
 
@@ -931,7 +939,7 @@ def test_pipeline_with_cache_attribute():
                     memory=dummy)
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
-                        "sklearn.externals.joblib.Memory."
+                        "sklearn.utils.Memory."
                         " Got memory='{}' instead.".format(dummy), pipe.fit, X)
 
 
@@ -941,7 +949,11 @@ def test_pipeline_memory():
     y = iris.target
     cachedir = mkdtemp()
     try:
-        memory = Memory(cachedir=cachedir, verbose=10)
+        if LooseVersion(joblib_version) < LooseVersion('0.12'):
+            # Deal with change of API in joblib
+            memory = Memory(cachedir=cachedir, verbose=10)
+        else:
+            memory = Memory(location=cachedir, verbose=10)
         # Test with Transformer + SVC
         clf = SVC(gamma='scale', probability=True, random_state=0)
         transf = DummyTransf()
@@ -999,7 +1011,11 @@ def test_pipeline_memory():
 
 def test_make_pipeline_memory():
     cachedir = mkdtemp()
-    memory = Memory(cachedir=cachedir)
+    if LooseVersion(joblib_version) < LooseVersion('0.12'):
+        # Deal with change of API in joblib
+        memory = Memory(cachedir=cachedir, verbose=10)
+    else:
+        memory = Memory(location=cachedir, verbose=10)
     pipeline = make_pipeline(DummyTransf(), SVC(), memory=memory)
     assert_true(pipeline.memory is memory)
     pipeline = make_pipeline(DummyTransf(), SVC())

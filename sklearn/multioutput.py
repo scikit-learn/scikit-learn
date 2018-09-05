@@ -25,7 +25,7 @@ from .utils.fixes import parallel_helper
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import check_is_fitted, has_fit_parameter
 from .utils.multiclass import check_classification_targets
-from .externals.joblib import Parallel, delayed
+from .utils import Parallel, delayed
 from .externals import six
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
@@ -63,7 +63,7 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
 class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
                                               MetaEstimatorMixin)):
     @abstractmethod
-    def __init__(self, estimator, n_jobs=1):
+    def __init__(self, estimator, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
@@ -209,15 +209,18 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
     estimator : estimator object
         An estimator object implementing `fit` and `predict`.
 
-    n_jobs : int, optional, default=1
-        The number of jobs to run in parallel for `fit`. If -1,
-        then the number of jobs is set to the number of cores.
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to run in parallel for `fit`.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
         When individual estimators are fast to train or predict
         using `n_jobs>1` can result in slower performance due
         to the overhead of spawning processes.
     """
 
-    def __init__(self, estimator, n_jobs=1):
+    def __init__(self, estimator, n_jobs=None):
         super(MultiOutputRegressor, self).__init__(estimator, n_jobs)
 
     @if_delegate_has_method('estimator')
@@ -295,13 +298,12 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
     estimator : estimator object
         An estimator object implementing `fit`, `score` and `predict_proba`.
 
-    n_jobs : int, optional, default=1
-        The number of jobs to use for the computation. If -1 all CPUs are used.
-        If 1 is given, no parallel computing code is used at all, which is
-        useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
-        used. Thus for n_jobs = -2, all CPUs but one are used.
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
         It does each target variable in y in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -309,7 +311,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         Estimators used for predictions.
     """
 
-    def __init__(self, estimator, n_jobs=1):
+    def __init__(self, estimator, n_jobs=None):
         super(MultiOutputClassifier, self).__init__(estimator, n_jobs)
 
     def predict_proba(self, X):
@@ -508,9 +510,10 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         labels for the results of previous estimators in the chain.
         If cv is None the true labels are used when fitting. Otherwise
         possible inputs for cv are:
-            * integer, to specify the number of folds in a (Stratified)KFold,
-            * An object to be used as a cross-validation generator.
-            * An iterable yielding train, test splits.
+
+        * integer, to specify the number of folds in a (Stratified)KFold,
+        * An object to be used as a cross-validation generator.
+        * An iterable yielding train, test splits.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -547,6 +550,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
 
     def fit(self, X, Y):
         """Fit the model to data matrix X and targets Y.
+
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
@@ -662,9 +666,10 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         labels for the results of previous estimators in the chain.
         If cv is None the true labels are used when fitting. Otherwise
         possible inputs for cv are:
-            * integer, to specify the number of folds in a (Stratified)KFold,
-            * An object to be used as a cross-validation generator.
-            * An iterable yielding train, test splits.
+
+        * integer, to specify the number of folds in a (Stratified)KFold,
+        * An object to be used as a cross-validation generator.
+        * An iterable yielding train, test splits.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;

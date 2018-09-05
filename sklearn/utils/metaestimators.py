@@ -23,16 +23,16 @@ class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
         pass
 
     def _get_params(self, attr, deep=True):
-        out = super(_BaseComposition, self).get_params(deep=False)
+        out = super(_BaseComposition, self).get_params(deep=deep)
         if not deep:
             return out
         estimators = getattr(self, attr)
         out.update(estimators)
         for name, estimator in estimators:
-            if estimator is None:
-                continue
-            for key, value in six.iteritems(estimator.get_params(deep=True)):
-                out['%s__%s' % (name, key)] = value
+            if hasattr(estimator, 'get_params'):
+                for key, value in six.iteritems(
+                        estimator.get_params(deep=True)):
+                    out['%s__%s' % (name, key)] = value
         return out
 
     def _set_params(self, attr, **params):
@@ -41,7 +41,10 @@ class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
         if attr in params:
             setattr(self, attr, params.pop(attr))
         # 2. Step replacement
-        names, _ = zip(*getattr(self, attr))
+        items = getattr(self, attr)
+        names = []
+        if items:
+            names, _ = zip(*items)
         for name in list(six.iterkeys(params)):
             if '__' not in name and name in names:
                 self._replace_estimator(attr, name, params.pop(name))
