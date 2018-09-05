@@ -372,7 +372,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
                                                  self.min_cluster_size_ratio,
                                                  self.min_maxima_ratio)
         self.core_sample_indices_ = indices_
-        self.n_clusters_ = np.max(self.labels_)
         return self
 
     # OPTICS helper functions; these should not be public #
