@@ -11,7 +11,7 @@ else
         JOBLIB=$1
 fi
 
-pip install $JOBLIB --target $INSTALL_FOLDER
+pip install --no-cache $JOBLIB --target $INSTALL_FOLDER
 cp -r $INSTALL_FOLDER/joblib joblib
 rm -rf $INSTALL_FOLDER
 

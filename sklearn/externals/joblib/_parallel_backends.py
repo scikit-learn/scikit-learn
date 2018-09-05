@@ -130,7 +130,6 @@ class ParallelBackendBase(with_metaclass(ABCMeta)):
         else:
             return ThreadingBackend(nesting_level=nesting_level)
 
-
     @contextlib.contextmanager
     def retrieval_context(self):
         """Context manager to manage an execution context.
@@ -348,7 +347,8 @@ class ThreadingBackend(PoolManagerMixin, ParallelBackendBase):
         n_jobs = self.effective_n_jobs(n_jobs)
         if n_jobs == 1:
             # Avoid unnecessary overhead and use sequential backend instead.
-            raise FallbackToBackend(SequentialBackend())
+            raise FallbackToBackend(
+                SequentialBackend(nesting_level=self.nesting_level))
         self.parallel = parallel
         self._n_jobs = n_jobs
         return n_jobs
@@ -421,7 +421,8 @@ class MultiprocessingBackend(PoolManagerMixin, AutoBatchingMixin,
         """Build a process or thread pool and return the number of workers"""
         n_jobs = self.effective_n_jobs(n_jobs)
         if n_jobs == 1:
-            raise FallbackToBackend(SequentialBackend())
+            raise FallbackToBackend(
+                SequentialBackend(nesting_level=self.nesting_level))
 
         already_forked = int(os.environ.get(self.JOBLIB_SPAWNED_PROCESS, 0))
         if already_forked:
@@ -462,7 +463,8 @@ class LokyBackend(AutoBatchingMixin, ParallelBackendBase):
         """Build a process executor and return the number of workers"""
         n_jobs = self.effective_n_jobs(n_jobs)
         if n_jobs == 1:
-            raise FallbackToBackend(SequentialBackend())
+            raise FallbackToBackend(
+                SequentialBackend(nesting_level=self.nesting_level))
 
         self._workers = get_memmapping_executor(
             n_jobs, timeout=idle_worker_timeout,
