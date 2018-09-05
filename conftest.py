@@ -12,6 +12,10 @@ import pytest
 from _pytest.doctest import DoctestItem
 
 
+if LooseVersion(pytest.__version__) < '3.3.0':
+    raise('Your version of pytest is too old, you should have at least '
+          'pytest >= 3.3.0 installed.')
+
 def pytest_collection_modifyitems(config, items):
 
     # FeatureHasher is not compatible with PyPy
