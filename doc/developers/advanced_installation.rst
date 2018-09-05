@@ -50,7 +50,7 @@ Building Scikit-learn also requires
 
 Running tests requires
 
-- pytest >=3.3.0
+- pytest >=\ |Pytest|
 
 Some tests also require `pandas <https://pandas.pydata.org>`_.
 
@@ -276,8 +276,8 @@ Testing
 Testing scikit-learn once installed
 -----------------------------------
 
-Testing requires having `pytest <https://docs.pytest.org>`_ >= 3.3.0. Some
-tests also require having `pandas <https://pandas.pydata.org/>` installed.
+Testing requires having `pytest <https://docs.pytest.org>`_ >=\ |Pytest|\ .
+Some tests also require having `pandas <https://pandas.pydata.org/>` installed.
 After installation, the package can be tested by executing *from outside* the
 source directory::
 
