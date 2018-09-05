@@ -131,7 +131,7 @@ with open(os.path.join('..', 'conftest.py')) as fp:
 
 # using variables in substitutions
 rst_prolog = """
-.. |Pytest| replace:: {pytest_min_version}
+.. |PytestMinVersion| replace:: {pytest_min_version}
 """.format(pytest_min_version=conftest_vars['PYTEST_MIN_VERSION'])
 
 # -- Options for HTML output -------------------------------------------------

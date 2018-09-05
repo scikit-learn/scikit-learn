@@ -50,7 +50,7 @@ Building Scikit-learn also requires
 
 Running tests requires
 
-- pytest >=\ |Pytest|
+- pytest >=\ |PytestMinVersion|
 
 Some tests also require `pandas <https://pandas.pydata.org>`_.
 
@@ -276,7 +276,7 @@ Testing
 Testing scikit-learn once installed
 -----------------------------------
 
-Testing requires having `pytest <https://docs.pytest.org>`_ >=\ |Pytest|\ .
+Testing requires having `pytest <https://docs.pytest.org>`_ >=\ |PytestMinVersion|\ .
 Some tests also require having `pandas <https://pandas.pydata.org/>` installed.
 After installation, the package can be tested by executing *from outside* the
 source directory::
