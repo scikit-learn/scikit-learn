@@ -285,8 +285,9 @@ def test_fetch_openml_iris(monkeypatch, gzip_response):
     )
 
 
-def test_decode_iris():
+def test_decode_iris(monkeypatch):
     data_id = 61
+    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip, False)
     _test_features_list(data_id)
 
 
@@ -330,8 +331,9 @@ def test_fetch_openml_anneal(monkeypatch, gzip_response):
                                compare_default_target=True)
 
 
-def test_decode_anneal():
+def test_decode_anneal(monkeypatch):
     data_id = 2
+    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip, False)
     _test_features_list(data_id)
 
 
@@ -374,8 +376,9 @@ def test_fetch_openml_cpu(monkeypatch, gzip_response):
                                compare_default_target=True)
 
 
-def test_decode_cpu():
+def test_decode_cpu(monkeypatch):
     data_id = 561
+    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip, False)
     _test_features_list(data_id)
 
 
@@ -456,8 +459,9 @@ def test_fetch_openml_emotions(monkeypatch, gzip_response):
                                compare_default_target=True)
 
 
-def test_decode_emotions():
+def test_decode_emotions(monkeypatch):
     data_id = 40589
+    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip, False)
     _test_features_list(data_id)
 
 
