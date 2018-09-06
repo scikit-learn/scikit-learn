@@ -218,6 +218,18 @@ class OneHotEncoder(_BaseEncoder):
             The ``n_values_`` attribute was deprecated in version
             0.20 and will be removed in 0.22.
 
+    handle_missing : all-missing, all-zero or category
+        What should be done to missing values. Should be one of:
+
+        all-missing: Replace with a row of NaNs as above
+
+        all-zero: Replace with a row of zeros
+
+        category: Represent with a separate one-hot column
+
+    missing_values: NaN or None
+        What should be considered as a missing value?
+
     Examples
     --------
     Given a dataset with two features, we let the encoder find the unique
@@ -260,13 +272,15 @@ class OneHotEncoder(_BaseEncoder):
 
     def __init__(self, n_values=None, categorical_features=None,
                  categories=None, sparse=True, dtype=np.float64,
-                 handle_unknown='error'):
+                 handle_unknown='error', missing_values=None, handle_missing=None):
         self.categories = categories
         self.sparse = sparse
         self.dtype = dtype
         self.handle_unknown = handle_unknown
         self.n_values = n_values
         self.categorical_features = categorical_features
+        self.missing_values = missing_values
+        self.handle_missing = handle_missing
 
     # Deprecated attributes
 
@@ -567,12 +581,30 @@ class OneHotEncoder(_BaseEncoder):
         X_out : sparse matrix if sparse=True else a 2-d array
             Transformed input.
         """
-        if self._legacy_mode:
-            return _transform_selected(X, self._legacy_transform, self.dtype,
+        if not self.missing_values:
+            if self._legacy_mode:
+                return _transform_selected(X, self._legacy_transform, self.dtype,
                                        self._categorical_features,
                                        copy=True)
-        else:
             return self._transform_new(X)
+        if self.missing_values and self.missing_values != "NaN":
+            raise ValueError("Wrong 'missing_missing' value specified. "
+                             "'missing_values' should be one of either 'None' or 'NaN'")
+        if self.missing_values == "NaN":
+            if not self.handle_missing:
+                raise ValueError("'handle_missing' cannot be None when 'missing_values' is passed.")
+            if self.handle_missing not in ["all-missing", "all-zero", "category"]:
+                raise ValueError("Wrong 'handle_missing' value specified. "
+                                 "'handle_missing' should be one of either ['all-missing', 'all-zero', 'category']")
+            if self.handle_missing == "all-missing":
+                # Replace entire row with NaN
+                pass
+            if self.handle_missing == "all-zero":
+                # Replace with a row of zeros
+                pass
+            else:
+                # Replace with a seperate one-hot column
+                pass
 
     def inverse_transform(self, X):
         """Convert the back data to the original representation.

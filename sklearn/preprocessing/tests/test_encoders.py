@@ -576,3 +576,35 @@ def test_one_hot_encoder_warning():
 def test_categorical_encoder_stub():
     from sklearn.preprocessing import CategoricalEncoder
     assert_raises(RuntimeError, CategoricalEncoder, encoding='ordinal')
+
+
+def test_one_hot_encoder_invalid_handle_missing():
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
+    y = np.array([[4, 1, 1]])
+     # Test that one hot encoder raises error for unknown features
+    # present during transform.
+    oh = OneHotEncoder(handle_unknown='error', handle_missing='abcde')
+    oh.fit(X)
+    assert_raises(ValueError, oh.transform, y)
+
+
+def test_one_hot_encoder_missing_values_none_handle_missing_passed():
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
+    y = np.array([[4, 1, 1]])
+     # Test that one hot encoder raises error for unknown features
+    # present during transform.
+    oh = OneHotEncoder(handle_unknown='error', missing_values=None,handle_missing='abcde')
+    oh.fit(X)
+    assert_raises(ValueError, oh.transform, y)
+
+
+def test_one_hot_encoder_handle_missing_all_zeros():
+    pass
+
+
+def test_one_hot_encoder_handle_missing_all_missing():
+    pass
+
+
+def test_one_hot_encoder_handle_missing_category():
+    pass

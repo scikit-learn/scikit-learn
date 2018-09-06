@@ -540,6 +540,15 @@ columns for this feature will be all zeros
     array([[1., 0., 0., 0., 0., 0.]])
 
 
+Missing categorical features in the training data can be handled by specifying what happens to them using the ``handle_missing`` parameter. The values for this can be one of :
+
+`all-missing`: This will replace all missing rows with NaN.
+`all-zero` : This will replace all missing rows with zeros.
+`categorical` : This will replace all missing rows as a representation of a separate one hot column.
+
+Note that, for scikit-learn to handle your missing values using OneHotEncoder, you have to pass a placeholder of what should be recorded as a missing value. This is the `missing_values` parameter and possible values can be either a `NaN` or a custom value of your choice.
+
+
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as scalars.
 
