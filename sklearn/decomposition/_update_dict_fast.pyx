@@ -17,6 +17,13 @@ from sklearn.utils import check_random_state
 np.import_array()
 
 
+cdef struct bint_false_type:
+    char empty
+
+cdef struct bint_true_type:
+    char empty
+
+
 cdef extern from "numpy/arrayobject.h":
     bint PyArray_IS_C_CONTIGUOUS(ndarray)
     bint PyArray_IS_F_CONTIGUOUS(ndarray)
@@ -251,6 +258,185 @@ cdef inline void clip_negative(floating* a, npy_intp n) nogil:
         a[i] = fmax(a[i], 0.0)
 
 
+cdef fused positive_bint_type:
+    bint_false_type
+    bint_true_type
+
+
+cdef fused verbose_bint_type:
+    bint_false_type
+    bint_true_type
+
+
+@cython.boundscheck(False)
+@cython.cdivision(True)
+@cython.initializedcheck(False)
+@cython.wraparound(False)
+cdef bint compute_dict(npy_intp n_features,
+                       npy_intp n_samples,
+                       npy_intp n_components,
+                       floating[::, :] dictionary_F,
+                       floating[::, :] R,
+                       floating[:, ::] code_C,
+                       const char* msg,
+                       uint32_t* rand_r_state_ptr,
+                       floating* R2_ptr,
+                       bint return_r2,
+                       positive_bint_type* positive,
+                       verbose_bint_type* verbose) nogil:
+
+    # Indices to iterate over
+    cdef npy_intp k
+
+    # Pointers to data for readability
+    cdef floating* dictionary_F_ptr
+    cdef floating* code_C_ptr
+    cdef floating* R_ptr
+
+    # Pointers to kth atom and kth sparse code
+    cdef floating* kth_dictionary_F_ptr
+    cdef floating* kth_code_C_ptr
+
+    # For holding the kth atom
+    cdef floating atom_norm2
+
+    # Get pointer to memoryviews' data
+    dictionary_F_ptr = &dictionary_F[0, 0]
+    code_C_ptr = &code_C[0, 0]
+    R_ptr = &R[0, 0]
+
+    # R <- -1.0 * U * V^T + 1.0 * Y
+    gemm(CblasColMajor, CblasNoTrans, CblasTrans,
+         n_features, n_samples, n_components,
+         -1.0, dictionary_F_ptr, n_features,
+         code_C_ptr, n_samples,
+         1.0, R_ptr, n_features)
+
+    for k in range(n_components):
+        # Get pointers to current atom and code
+        kth_dictionary_F_ptr = &dictionary_F[0, k]
+        kth_code_C_ptr = &code_C[k, 0]
+
+        # R <- 1.0 * U_k * V_k^T + R
+        ger(CblasColMajor, n_features, n_samples,
+            1.0, kth_dictionary_F_ptr, 1,
+            kth_code_C_ptr, 1,
+            R_ptr, n_features)
+
+        # U_k <- 1.0 * R * V_k^T
+        gemv(CblasColMajor, CblasNoTrans,
+             n_features, n_samples,
+             1.0, R_ptr, n_features,
+             kth_code_C_ptr, 1,
+             0.0, kth_dictionary_F_ptr, 1)
+
+        # Clip negative values
+        if positive_bint_type is bint_true_type:
+            clip_negative(kth_dictionary_F_ptr, n_features)
+
+        # Scale k'th atom
+        # U_k * U_k
+        atom_norm2 = dot(n_features,
+                         kth_dictionary_F_ptr, 1,
+                         kth_dictionary_F_ptr, 1)
+
+        # Generate random atom to replace inconsequential one
+        if atom_norm2 < 1e-20:
+            # Handle verbose mode
+            if verbose_bint_type is bint_true_type:
+                if puts(msg) == EOF or fflush(stdout) == EOF:
+                    return True
+
+            # Seed random atom
+            randn_atom(rand_r_state_ptr, kth_dictionary_F_ptr, n_features)
+
+            # Clip negative values
+            if positive_bint_type is bint_true_type:
+                clip_negative(kth_dictionary_F_ptr, n_features)
+
+            # Setting corresponding coefs to 0
+            scal(n_samples, 0.0, kth_code_C_ptr, 1)
+
+            # Compute new norm
+            # U_k * U_k
+            atom_norm2 = dot(n_features,
+                             kth_dictionary_F_ptr, 1,
+                             kth_dictionary_F_ptr, 1)
+
+            # Normalize atom
+            scal(n_features, 1.0 / sqrt(atom_norm2), kth_dictionary_F_ptr, 1)
+        else:
+            # Normalize atom
+            scal(n_features, 1.0 / sqrt(atom_norm2), kth_dictionary_F_ptr, 1)
+
+            # R <- -1.0 * U_k * V_k^T + R
+            ger(CblasColMajor, n_features, n_samples,
+                -1.0, kth_dictionary_F_ptr, 1,
+                kth_code_C_ptr, 1,
+                R_ptr, n_features)
+
+    # Compute sum of squared residuals
+    if return_r2:
+        R2_ptr[0] = dot(n_features * n_samples, R_ptr, 1, R_ptr, 1)
+
+    return False
+
+
+@cython.boundscheck(False)
+@cython.cdivision(True)
+@cython.initializedcheck(False)
+@cython.wraparound(False)
+cdef inline bint dispatch_compute_dict(npy_intp n_features,
+                                       npy_intp n_samples,
+                                       npy_intp n_components,
+                                       floating[::, :] dictionary_F,
+                                       floating[::, :] R,
+                                       floating[:, ::] code_C,
+                                       const char* msg,
+                                       uint32_t* rand_r_state_ptr,
+                                       floating* R2_ptr,
+                                       bint positive,
+                                       bint verbose,
+                                       bint return_r2) nogil:
+
+    # Positive/Verbose condition case
+    cdef unsigned int case
+
+    # Determine case case
+    case = 2 * positive + verbose
+
+    # Dispatch to specialization with right condition
+    # Avoids repeated checks within a for-loop
+    if case == 3:
+        return compute_dict(n_features, n_samples, n_components,
+                            dictionary_F, R, code_C,
+                            msg, rand_r_state_ptr,
+                            R2_ptr, return_r2,
+                            <bint_true_type*>NULL,
+                            <bint_true_type*>NULL)
+    elif case == 2:
+        return compute_dict(n_features, n_samples, n_components,
+                            dictionary_F, R, code_C,
+                            msg, rand_r_state_ptr,
+                            R2_ptr, return_r2,
+                            <bint_true_type*>NULL,
+                            <bint_false_type*>NULL)
+    elif case == 1:
+        return compute_dict(n_features, n_samples, n_components,
+                            dictionary_F, R, code_C,
+                            msg, rand_r_state_ptr,
+                            R2_ptr, return_r2,
+                            <bint_false_type*>NULL,
+                            <bint_true_type*>NULL)
+    else:
+        return compute_dict(n_features, n_samples, n_components,
+                            dictionary_F, R, code_C,
+                            msg, rand_r_state_ptr,
+                            R2_ptr, return_r2,
+                            <bint_false_type*>NULL,
+                            <bint_false_type*>NULL)
+
+
 @cython.boundscheck(False)
 @cython.cdivision(True)
 @cython.initializedcheck(False)
@@ -303,32 +489,11 @@ def update_dict(np.ndarray[floating, ndim=2] dictionary not None,
     cdef floating[:, ::] code_C
     cdef floating[::, :] R
 
-    # Get bounds
-    cdef npy_intp n_features
-    cdef npy_intp n_samples
-    cdef npy_intp n_components
-
-    # Indices to iterate over
-    cdef npy_intp k
-
-    # Pointers to data for readability
-    cdef floating* dictionary_F_ptr
-    cdef floating* code_C_ptr
-    cdef floating* R_ptr
-
-    # Pointers to kth atom and kth sparse code
-    cdef floating* kth_dictionary_F_ptr
-    cdef floating* kth_code_C_ptr
-
-    # For holding the kth atom
-    cdef floating atom_norm2
-
     # Verbose message
     cdef char* msg
 
     # Random number seed for use in C
     cdef uint32_t rand_r_state
-    cdef uint32_t* rand_r_state_ptr
 
     # Results
     cdef bint ioerr
@@ -346,19 +511,6 @@ def update_dict(np.ndarray[floating, ndim=2] dictionary not None,
     R = ensure_fortran(Y, True)
 
     with nogil:
-        # Assign bounds
-        n_features = Y.shape[0]
-        n_components = code_C.shape[0]
-        n_samples = Y.shape[1]
-
-        # Get pointer to R's data
-        dictionary_F_ptr = &dictionary_F[0, 0]
-        code_C_ptr = &code_C[0, 0]
-        R_ptr = &R[0, 0]
-
-        # Denote whether an IO error occurred
-        ioerr = False
-
         # Determine verbose message
         if verbose == 0:
             msg = NULL
@@ -367,89 +519,11 @@ def update_dict(np.ndarray[floating, ndim=2] dictionary not None,
         else:
             msg = b"Adding new random atom"
 
-        # Get pointer to random state
-        rand_r_state_ptr = &rand_r_state
-
-        # R <- -1.0 * U * V^T + 1.0 * Y
-        gemm(CblasColMajor, CblasNoTrans, CblasTrans,
-             n_features, n_samples, n_components,
-             -1.0, dictionary_F_ptr, n_features,
-             code_C_ptr, n_samples,
-             1.0, R_ptr, n_features)
-
-        for k in range(n_components):
-            # Get pointers to current atom and code
-            kth_dictionary_F_ptr = &dictionary_F[0, k]
-            kth_code_C_ptr = &code_C[k, 0]
-
-            # R <- 1.0 * U_k * V_k^T + R
-            ger(CblasColMajor, n_features, n_samples,
-                1.0, kth_dictionary_F_ptr, 1,
-                kth_code_C_ptr, 1,
-                R_ptr, n_features)
-
-            # U_k <- 1.0 * R * V_k^T
-            gemv(CblasColMajor, CblasNoTrans,
-                 n_features, n_samples,
-                 1.0, R_ptr, n_features,
-                 kth_code_C_ptr, 1,
-                 0.0, kth_dictionary_F_ptr, 1)
-
-            # Clip negative values
-            if positive:
-                clip_negative(kth_dictionary_F_ptr, n_features)
-
-            # Scale k'th atom
-            # U_k * U_k
-            atom_norm2 = dot(n_features,
-                             kth_dictionary_F_ptr, 1,
-                             kth_dictionary_F_ptr, 1)
-
-            # Generate random atom to replace inconsequential one
-            if atom_norm2 < 1e-20:
-                # Handle verbose mode
-                if msg is not NULL:
-                    if puts(msg) == EOF or fflush(stdout) == EOF:
-                        ioerr = True
-                        break
-
-                # Seed random atom
-                randn_atom(rand_r_state_ptr, kth_dictionary_F_ptr, n_features)
-
-                # Clip negative values
-                if positive:
-                    clip_negative(kth_dictionary_F_ptr, n_features)
-
-                # Setting corresponding coefs to 0
-                scal(n_samples, 0.0, kth_code_C_ptr, 1)
-
-                # Compute new norm
-                # U_k * U_k
-                atom_norm2 = dot(n_features,
-                                 kth_dictionary_F_ptr, 1,
-                                 kth_dictionary_F_ptr, 1)
-
-                # Normalize atom
-                scal(n_features,
-                     1.0 / sqrt(atom_norm2),
-                     kth_dictionary_F_ptr, 1)
-            else:
-                # Normalize atom
-                scal(n_features,
-                     1.0 / sqrt(atom_norm2),
-                     kth_dictionary_F_ptr, 1)
-
-                # R <- -1.0 * U_k * V_k^T + R
-                ger(CblasColMajor, n_features, n_samples,
-                    -1.0, kth_dictionary_F_ptr, 1,
-                    kth_code_C_ptr, 1,
-                    R_ptr, n_features)
-
-        # Compute sum of squared residuals
-        if not ioerr and return_r2:
-            R2 = dot(n_features * n_samples,
-                     R_ptr, 1,
-                     R_ptr, 1)
+        # Compute updated dictionary
+        ioerr = dispatch_compute_dict(Y.shape[0], Y.shape[1], code_C.shape[0],
+                                      dictionary_F, R, code_C,
+                                      msg, &rand_r_state, &R2,
+                                      positive, verbose, return_r2)
 
     # Raise if verbose printing failed
     if ioerr:
