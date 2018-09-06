@@ -10,6 +10,7 @@ from sklearn.cluster.optics_ import OPTICS
 from sklearn.cluster.optics_ import _TreeNode, _cluster_tree
 from sklearn.cluster.optics_ import _find_local_maxima
 from sklearn.metrics.cluster import contingency_matrix
+from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster.dbscan_ import DBSCAN
 from sklearn.utils.testing import assert_equal, assert_warns
 from sklearn.utils.testing import assert_array_equal
@@ -413,3 +414,26 @@ def test_reach_dists():
     else:
         # we compare to truncated decimals, so use atol
         assert_allclose(clust.reachability_, np.array(v), atol=1e-5)
+
+
+def test_precomputed_dists():
+    rng = np.random.RandomState(0)
+    n_points_per_cluster = 50
+
+    C1 = [-5, -2] + .8 * rng.randn(n_points_per_cluster, 2)
+    C2 = [4, -1] + .1 * rng.randn(n_points_per_cluster, 2)
+    C3 = [1, -2] + .2 * rng.randn(n_points_per_cluster, 2)
+    C4 = [-2, 3] + .3 * rng.randn(n_points_per_cluster, 2)
+    C5 = [3, -2] + 1.6 * rng.randn(n_points_per_cluster, 2)
+    C6 = [5, 6] + 2 * rng.randn(n_points_per_cluster, 2)
+    X = np.vstack((C1, C2, C3, C4, C5, C6))
+
+    dists = pairwise_distances(X, metric='euclidean')
+    clust1 = OPTICS(min_samples=10, algorithm='brute',
+                    metric='precomputed').fit(dists)
+    clust2 = OPTICS(min_samples=10, algorithm='brute',
+                    metric='euclidean').fit(X)
+
+    assert_allclose(clust1.reachability_, clust2.reachability_)
+    assert_array_equal(clust1.labels_, clust2.labels_)
+    assert_array_equal(clust1.ordering_, clust2.ordering_)
