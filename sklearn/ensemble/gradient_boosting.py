@@ -1358,9 +1358,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         y : array-like, shape (n_samples,)
             Target values (strings or integers in classification, real numbers
