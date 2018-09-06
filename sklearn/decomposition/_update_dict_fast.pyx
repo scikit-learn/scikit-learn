@@ -229,29 +229,26 @@ cdef void our_randn(uint32_t* seed,
 @cython.cdivision(True)
 @cython.initializedcheck(False)
 @cython.wraparound(False)
-cdef inline void randn_atom_k(uint32_t* seed,
-                              npy_intp k,
-                              floating[:, :] a) nogil:
-    cdef npy_intp i, r, n
+cdef inline void randn_atom(uint32_t* seed, floating* a, npy_intp n) nogil:
+    cdef npy_intp i, r
     cdef floating tmp
 
-    n = a.shape[0]
     r = n % 2
 
     for i in range(0, n - r, 2):
-        our_randn(seed, &a[i, k], &a[i + 1, k])
+        our_randn(seed, &a[i], &a[i + 1])
     if r == 1:
-        our_randn(seed, &a[n - 1, k], &tmp)
+        our_randn(seed, &a[n - 1], &tmp)
 
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
 @cython.initializedcheck(False)
 @cython.wraparound(False)
-cdef inline void clip_negative_k(npy_intp k, floating[:, :] a) nogil:
+cdef inline void clip_negative(floating* a, npy_intp n) nogil:
     cdef npy_intp i
-    for i in range(a.shape[0]):
-        a[i, k] = fmax(a[i, k], 0.0)
+    for i in range(n):
+        a[i] = fmax(a[i], 0.0)
 
 
 @cython.boundscheck(False)
@@ -314,6 +311,15 @@ def update_dict(np.ndarray[floating, ndim=2] dictionary not None,
     # Indices to iterate over
     cdef npy_intp k
 
+    # Pointers to data for readability
+    cdef floating* dictionary_F_ptr
+    cdef floating* code_C_ptr
+    cdef floating* R_ptr
+
+    # Pointers to kth atom and kth sparse code
+    cdef floating* kth_dictionary_F_ptr
+    cdef floating* kth_code_C_ptr
+
     # For holding the kth atom
     cdef floating atom_norm2
 
@@ -345,6 +351,11 @@ def update_dict(np.ndarray[floating, ndim=2] dictionary not None,
         n_components = code_C.shape[0]
         n_samples = Y.shape[1]
 
+        # Get pointer to R's data
+        dictionary_F_ptr = &dictionary_F[0, 0]
+        code_C_ptr = &code_C[0, 0]
+        R_ptr = &R[0, 0]
+
         # Denote whether an IO error occurred
         ioerr = False
 
@@ -362,33 +373,37 @@ def update_dict(np.ndarray[floating, ndim=2] dictionary not None,
         # R <- -1.0 * U * V^T + 1.0 * Y
         gemm(CblasColMajor, CblasNoTrans, CblasTrans,
              n_features, n_samples, n_components,
-             -1.0, &dictionary_F[0, 0], n_features,
-             &code_C[0, 0], n_samples,
-             1.0, &R[0, 0], n_features)
+             -1.0, dictionary_F_ptr, n_features,
+             code_C_ptr, n_samples,
+             1.0, R_ptr, n_features)
 
         for k in range(n_components):
+            # Get pointers to current atom and code
+            kth_dictionary_F_ptr = &dictionary_F[0, k]
+            kth_code_C_ptr = &code_C[k, 0]
+
             # R <- 1.0 * U_k * V_k^T + R
             ger(CblasColMajor, n_features, n_samples,
-                1.0, &dictionary_F[0, k], 1,
-                &code_C[k, 0], 1,
-                &R[0, 0], n_features)
+                1.0, kth_dictionary_F_ptr, 1,
+                kth_code_C_ptr, 1,
+                R_ptr, n_features)
 
             # U_k <- 1.0 * R * V_k^T
             gemv(CblasColMajor, CblasNoTrans,
                  n_features, n_samples,
-                 1.0, &R[0, 0], n_features,
-                 &code_C[k, 0], 1,
-                 0.0, &dictionary_F[0, k], 1)
+                 1.0, R_ptr, n_features,
+                 kth_code_C_ptr, 1,
+                 0.0, kth_dictionary_F_ptr, 1)
 
             # Clip negative values
             if positive:
-                clip_negative_k(k, dictionary_F)
+                clip_negative(kth_dictionary_F_ptr, n_features)
 
             # Scale k'th atom
             # U_k * U_k
             atom_norm2 = dot(n_features,
-                             &dictionary_F[0, k], 1,
-                             &dictionary_F[0, k], 1)
+                             kth_dictionary_F_ptr, 1,
+                             kth_dictionary_F_ptr, 1)
 
             # Generate random atom to replace inconsequential one
             if atom_norm2 < 1e-20:
@@ -399,42 +414,42 @@ def update_dict(np.ndarray[floating, ndim=2] dictionary not None,
                         break
 
                 # Seed random atom
-                randn_atom_k(rand_r_state_ptr, k, dictionary_F)
+                randn_atom(rand_r_state_ptr, kth_dictionary_F_ptr, n_features)
 
                 # Clip negative values
                 if positive:
-                    clip_negative_k(k, dictionary_F)
+                    clip_negative(kth_dictionary_F_ptr, n_features)
 
                 # Setting corresponding coefs to 0
-                scal(n_samples, 0.0, &code_C[k, 0], 1)
+                scal(n_samples, 0.0, kth_code_C_ptr, 1)
 
                 # Compute new norm
                 # U_k * U_k
                 atom_norm2 = dot(n_features,
-                                 &dictionary_F[0, k], 1,
-                                 &dictionary_F[0, k], 1)
+                                 kth_dictionary_F_ptr, 1,
+                                 kth_dictionary_F_ptr, 1)
 
                 # Normalize atom
                 scal(n_features,
                      1.0 / sqrt(atom_norm2),
-                     &dictionary_F[0, k], 1)
+                     kth_dictionary_F_ptr, 1)
             else:
                 # Normalize atom
                 scal(n_features,
                      1.0 / sqrt(atom_norm2),
-                     &dictionary_F[0, k], 1)
+                     kth_dictionary_F_ptr, 1)
 
                 # R <- -1.0 * U_k * V_k^T + R
                 ger(CblasColMajor, n_features, n_samples,
-                    -1.0, &dictionary_F[0, k], 1,
-                    &code_C[k, 0], 1,
-                    &R[0, 0], n_features)
+                    -1.0, kth_dictionary_F_ptr, 1,
+                    kth_code_C_ptr, 1,
+                    R_ptr, n_features)
 
         # Compute sum of squared residuals
         if not ioerr and return_r2:
             R2 = dot(n_features * n_samples,
-                     &R[0, 0], 1,
-                     &R[0, 0], 1)
+                     R_ptr, 1,
+                     R_ptr, 1)
 
     # Raise if verbose printing failed
     if ioerr:
