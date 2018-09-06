@@ -620,9 +620,8 @@ def _automatic_cluster(reachability_plot, core_distances_plot, ordering,
     neighborhood_size = int(min_maxima_ratio * len(ordering))
 
     # Should this check for < min_samples? Should this be public?
-    # why 5? shouldn't it be 2?
-    if min_cluster_size < 2:
-        min_cluster_size = 2
+    if min_cluster_size < 5:
+        min_cluster_size = 5
 
     # Again, should this check < min_samples, should the parameter be public?
     if neighborhood_size < min_neighborhood_size:
@@ -717,16 +716,13 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     node_list.append((node_1, local_max_1))
     node_list.append((node_2, local_max_2))
 
-    # if local maxima are sorted by their reachability, doesn't it
-    # mean we can stop? Why do we continue?
     if reachability_plot[s] < significant_min:
         node.split_point = -1
         # if split_point is not significant, ignore this split and continue
-        # _cluster_tree(node, parent_node, local_maxima_points,
-        #              reachability_plot, core_distances_plot,
-        #              ordering,
-        #              min_cluster_size, maxima_ratio, rejection_ratio,
-        #              similarity_threshold, significant_min)
+        _cluster_tree(node, parent_node, local_maxima_points,
+                      reachability_plot, reachability_ordering,
+                      min_cluster_size, maxima_ratio, rejection_ratio,
+                      similarity_threshold, significant_min)
         return
 
     # only check a certain ratio of points in the child
