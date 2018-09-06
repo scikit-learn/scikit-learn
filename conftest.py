@@ -11,6 +11,11 @@ from distutils.version import LooseVersion
 import pytest
 from _pytest.doctest import DoctestItem
 
+PYTEST_MIN_VERSION = '3.3.0'
+
+if LooseVersion(pytest.__version__) < PYTEST_MIN_VERSION:
+    raise('Your version of pytest is too old, you should have at least '
+          'pytest >= {} installed.'.format(PYTEST_MIN_VERSION))
 
 def pytest_collection_modifyitems(config, items):
 
