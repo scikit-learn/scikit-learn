@@ -30,15 +30,13 @@ def _recursive_terminate_with_psutil(process, retries=5):
     except psutil.NoSuchProcess:
         return
 
-    for child in children:
+    # Kill the children in reverse order to avoid killing the parents before
+    # the children in cases where there are more processes nested.
+    for child in children[::-1]:
         try:
-            child.terminate()
+            child.kill()
         except psutil.NoSuchProcess:
             pass
-
-    gone, still_alive = psutil.wait_procs(children, timeout=5)
-    for child_process in still_alive:
-        child_process.kill()
 
     process.terminate()
     process.join()

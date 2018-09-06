@@ -1122,6 +1122,9 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
             Per-sample weights. Rescale C per sample. Higher weights
             force the classifier to put more emphasis on these points.
 
+        y : Ignored
+            not used, present for API consistency by convention.
+
         Returns
         -------
         self : object

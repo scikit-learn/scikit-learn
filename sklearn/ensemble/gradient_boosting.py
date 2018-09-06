@@ -1190,22 +1190,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 # no inplace multiplication!
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
-            if X_csc is not None:
-                tree.fit(X_csc, residual, sample_weight=sample_weight,
-                         check_input=False, X_idx_sorted=X_idx_sorted)
-            else:
-                tree.fit(X, residual, sample_weight=sample_weight,
-                         check_input=False, X_idx_sorted=X_idx_sorted)
+            X = X_csr if X_csr is not None else X
+            tree.fit(X, residual, sample_weight=sample_weight,
+                     check_input=False, X_idx_sorted=X_idx_sorted)
 
             # update tree leaves
-            if X_csr is not None:
-                loss.update_terminal_regions(tree.tree_, X_csr, y, residual, y_pred,
-                                             sample_weight, sample_mask,
-                                             self.learning_rate, k=k)
-            else:
-                loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
-                                             sample_weight, sample_mask,
-                                             self.learning_rate, k=k)
+            loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
+                                         sample_weight, sample_mask,
+                                         self.learning_rate, k=k)
 
             # add tree to ensemble
             self.estimators_[i, k] = tree
@@ -1366,9 +1358,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         y : array-like, shape (n_samples,)
             Target values (strings or integers in classification, real numbers

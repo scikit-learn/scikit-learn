@@ -200,6 +200,9 @@ class IsolationForest(BaseBagging, OutlierMixin):
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted.
 
+        y : Ignored
+            not used, present for API consistency by convention.
+
         Returns
         -------
         self : object

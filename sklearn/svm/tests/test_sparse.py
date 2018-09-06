@@ -1,7 +1,9 @@
+import pytest
+
 import numpy as np
-from scipy import sparse
 from numpy.testing import (assert_array_almost_equal, assert_array_equal,
                            assert_equal)
+from scipy import sparse
 
 from sklearn import datasets, svm, linear_model, base
 from sklearn.datasets import make_classification, load_digits, make_blobs
@@ -11,7 +13,6 @@ from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.testing import (assert_raises, assert_true, assert_false,
                                    assert_warns, assert_raise_message,
                                    ignore_warnings, skip_if_32bit)
-import pytest
 
 
 # test sample 1
@@ -237,6 +238,8 @@ def test_linearsvc_iris():
     assert_array_equal(pred, sp_clf.predict(iris.data))
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_weight():
     # Test class weights
     X_, y_ = make_classification(n_samples=200, n_features=100,
