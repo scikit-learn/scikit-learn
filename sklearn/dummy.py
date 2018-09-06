@@ -331,7 +331,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             Test samples with shape = (n_samples, n_features) or
             None. Passing None as test samples gives the same result
             as passing real test samples, since DummyClassifier
-            operates solely on the targets.
+            operates independent of the sampled observations.
 
         y : array-like, shape = (n_samples) or (n_samples, n_outputs)
             True labels for X.
@@ -345,7 +345,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             Mean accuracy of self.predict(X) wrt. y.
 
         """
-        X = _handle_missing_X(X, y)
+        if X is None:
+            X = np.zeros(shape=(len(y), 1))
         return super(DummyClassifier, self).score(X, y, sample_weight)
 
 
@@ -530,7 +531,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             samples used in the fitting for the estimator.
             Passing None as test samples gives the same result
             as passing real test samples, since DummyRegressor
-            operates solely on the targets.
+            operates independent of the sampled observations.
 
         y : array-like, shape = (n_samples) or (n_samples, n_outputs)
             True values for X.
@@ -543,11 +544,6 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         score : float
             R^2 of self.predict(X) wrt. y.
         """
-        X = _handle_missing_X(X, y)
+        if X is None:
+            X = np.zeros(shape=(len(y), 1))
         return super(DummyRegressor, self).score(X, y, sample_weight)
-
-
-def _handle_missing_X(X, y):
-    if X is None:
-        X = np.zeros(shape=(len(y), 1))
-    return X
