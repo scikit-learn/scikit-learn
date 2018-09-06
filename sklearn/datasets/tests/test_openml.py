@@ -24,7 +24,6 @@ from functools import partial
 currdir = os.path.dirname(os.path.abspath(__file__))
 # if True, urlopen will be monkey patched to only use local files
 test_offline = True
-test_gzip = True
 
 
 def _test_features_list(data_id):
@@ -138,18 +137,14 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
 
 def _monkey_patch_webbased_functions(context,
                                      data_id,
-                                     gziped_files,
                                      gzip_response):
     url_prefix_data_description = "https://openml.org/api/v1/json/data/"
     url_prefix_data_features = "https://openml.org/api/v1/json/data/features/"
     url_prefix_download_data = "https://openml.org/data/v1/"
     url_prefix_data_list = "https://openml.org/api/v1/json/data/list/"
 
-    path_suffix = ''
-    read_fn = open
-    if gziped_files:
-        path_suffix = '.gz'
-        read_fn = gzip.open
+    path_suffix = '.gz'
+    read_fn = gzip.open
 
     class MockHTTPResponse(object):
         def __init__(self, data, is_gzip):
@@ -264,8 +259,7 @@ def test_fetch_openml_iris(monkeypatch, gzip_response):
     expected_features = 4
     expected_missing = 0
 
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, test_gzip, gzip_response)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     assert_warns_message(
         UserWarning,
         "Multiple active versions of the dataset matching the name"
@@ -285,8 +279,9 @@ def test_fetch_openml_iris(monkeypatch, gzip_response):
     )
 
 
-def test_decode_iris():
+def test_decode_iris(monkeypatch):
     data_id = 61
+    _monkey_patch_webbased_functions(monkeypatch, data_id, False)
     _test_features_list(data_id)
 
 
@@ -301,8 +296,7 @@ def test_fetch_openml_iris_multitarget(monkeypatch, gzip_response):
     expected_features = 3
     expected_missing = 0
 
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, test_gzip, gzip_response)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
@@ -321,8 +315,7 @@ def test_fetch_openml_anneal(monkeypatch, gzip_response):
     expected_observations = 11
     expected_features = 38
     expected_missing = 267
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, test_gzip, gzip_response)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
@@ -330,8 +323,9 @@ def test_fetch_openml_anneal(monkeypatch, gzip_response):
                                compare_default_target=True)
 
 
-def test_decode_anneal():
+def test_decode_anneal(monkeypatch):
     data_id = 2
+    _monkey_patch_webbased_functions(monkeypatch, data_id, False)
     _test_features_list(data_id)
 
 
@@ -346,8 +340,7 @@ def test_fetch_openml_anneal_multitarget(monkeypatch, gzip_response):
     expected_observations = 11
     expected_features = 36
     expected_missing = 267
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, test_gzip, gzip_response)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
@@ -365,8 +358,7 @@ def test_fetch_openml_cpu(monkeypatch, gzip_response):
     expected_observations = 209
     expected_features = 7
     expected_missing = 0
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, test_gzip, gzip_response)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
@@ -374,8 +366,9 @@ def test_fetch_openml_cpu(monkeypatch, gzip_response):
                                compare_default_target=True)
 
 
-def test_decode_cpu():
+def test_decode_cpu(monkeypatch):
     data_id = 561
+    _monkey_patch_webbased_functions(monkeypatch, data_id, False)
     _test_features_list(data_id)
 
 
@@ -393,8 +386,7 @@ def test_fetch_openml_australian(monkeypatch, gzip_response):
     expected_observations = 85
     expected_features = 14
     expected_missing = 0
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, test_gzip, gzip_response)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     assert_warns_message(
         UserWarning,
         "Version 1 of dataset Australian is inactive,",
@@ -426,8 +418,7 @@ def test_fetch_openml_miceprotein(monkeypatch, gzip_response):
     expected_observations = 7
     expected_features = 77
     expected_missing = 7
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, test_gzip, gzip_response)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
@@ -446,8 +437,7 @@ def test_fetch_openml_emotions(monkeypatch, gzip_response):
     expected_observations = 13
     expected_features = 72
     expected_missing = 0
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, test_gzip, gzip_response)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
 
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
@@ -456,8 +446,9 @@ def test_fetch_openml_emotions(monkeypatch, gzip_response):
                                compare_default_target=True)
 
 
-def test_decode_emotions():
+def test_decode_emotions(monkeypatch):
     data_id = 40589
+    _monkey_patch_webbased_functions(monkeypatch, data_id, False)
     _test_features_list(data_id)
 
 
@@ -466,7 +457,7 @@ def test_open_openml_url_cache(monkeypatch, gzip_response):
     data_id = 61
 
     _monkey_patch_webbased_functions(
-        monkeypatch, data_id, test_gzip, gzip_response)
+        monkeypatch, data_id, gzip_response)
     openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
     test_directory = os.path.join(os.path.expanduser('~'), 'scikit_learn_data')
     # first fill the cache
@@ -486,8 +477,7 @@ def test_fetch_openml_notarget(monkeypatch, gzip_response):
     expected_observations = 150
     expected_features = 5
 
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, test_gzip, gzip_response)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     data = fetch_openml(data_id=data_id, target_column=target_column,
                         cache=False)
     assert data.data.shape == (expected_observations, expected_features)
@@ -498,8 +488,7 @@ def test_fetch_openml_notarget(monkeypatch, gzip_response):
 def test_fetch_openml_inactive(monkeypatch, gzip_response):
     # fetch inactive dataset by id
     data_id = 40675
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, test_gzip, gzip_response)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     glas2 = assert_warns_message(
         UserWarning, "Version 1 of dataset glass2 is inactive,", fetch_openml,
         data_id=data_id, cache=False)
@@ -515,8 +504,7 @@ def test_fetch_openml_inactive(monkeypatch, gzip_response):
 def test_fetch_nonexiting(monkeypatch, gzip_response):
     # there is no active version of glass2
     data_id = 40675
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, test_gzip, gzip_response)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     # Note that we only want to search by name (not data id)
     assert_raise_message(ValueError, "No active dataset glass2 found",
                          fetch_openml, name='glass2', cache=False)
@@ -526,8 +514,7 @@ def test_fetch_nonexiting(monkeypatch, gzip_response):
 def test_raises_illegal_multitarget(monkeypatch, gzip_response):
     data_id = 61
     targets = ['sepalwidth', 'class']
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, test_gzip, gzip_response)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     # Note that we only want to search by name (not data id)
     assert_raise_message(ValueError,
                          "Can only handle homogeneous multi-target datasets,",
@@ -540,8 +527,7 @@ def test_warn_ignore_attribute(monkeypatch, gzip_response):
     data_id = 40966
     expected_row_id_msg = "target_column={} has flag is_row_identifier."
     expected_ignore_msg = "target_column={} has flag is_ignore."
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, test_gzip, gzip_response)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     # single column test
     assert_warns_message(UserWarning, expected_row_id_msg.format('MouseID'),
                          fetch_openml, data_id=data_id,
@@ -565,8 +551,7 @@ def test_warn_ignore_attribute(monkeypatch, gzip_response):
 @pytest.mark.parametrize('gzip_response', [True, False])
 def test_string_attribute(monkeypatch, gzip_response):
     data_id = 40945
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, test_gzip, gzip_response)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     # single column test
     assert_raise_message(ValueError,
                          'STRING attributes are not yet supported',
@@ -576,8 +561,7 @@ def test_string_attribute(monkeypatch, gzip_response):
 @pytest.mark.parametrize('gzip_response', [True, False])
 def test_illegal_column(monkeypatch, gzip_response):
     data_id = 61
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, test_gzip, gzip_response)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     assert_raise_message(KeyError, "Could not find target_column=",
                          fetch_openml, data_id=data_id,
                          target_column='undefined', cache=False)
@@ -591,8 +575,7 @@ def test_illegal_column(monkeypatch, gzip_response):
 @pytest.mark.parametrize('gzip_response', [True, False])
 def test_fetch_openml_raises_missing_values_target(monkeypatch, gzip_response):
     data_id = 2
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, test_gzip, gzip_response)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     assert_raise_message(ValueError, "Target column ",
                          fetch_openml, data_id=data_id, target_column='family')
 
