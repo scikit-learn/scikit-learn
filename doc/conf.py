@@ -122,18 +122,6 @@ pygments_style = 'sphinx'
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
 
-## Substitutions to be used in all documents:
-
-# loading variables
-conftest_vars = {}
-with open(os.path.join('..', 'conftest.py')) as fp:
-    exec(fp.read(), conftest_vars)
-
-# using variables in substitutions
-rst_prolog = """
-.. |PytestMinVersion| replace:: {pytest_min_version}
-""".format(pytest_min_version=conftest_vars['PYTEST_MIN_VERSION'])
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with

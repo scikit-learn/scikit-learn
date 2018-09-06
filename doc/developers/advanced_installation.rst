@@ -50,6 +50,8 @@ Building Scikit-learn also requires
 
 Running tests requires
 
+.. |PytestMinVersion| replace:: 3.3.0
+
 - pytest >=\ |PytestMinVersion|
 
 Some tests also require `pandas <https://pandas.pydata.org>`_.

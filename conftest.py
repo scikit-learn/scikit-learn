@@ -11,7 +11,6 @@ from distutils.version import LooseVersion
 import pytest
 from _pytest.doctest import DoctestItem
 
-# if you change pytest min version here, also change it in README.rst
 PYTEST_MIN_VERSION = '3.3.0'
 
 if LooseVersion(pytest.__version__) < PYTEST_MIN_VERSION:

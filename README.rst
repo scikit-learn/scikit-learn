@@ -119,8 +119,6 @@ contribute to scikit-learn: https://github.com/scikit-learn/scikit-learn/blob/ma
 Testing
 ~~~~~~~
 
-.. if you change pytest min version here, also change it in conftest.py
-
 After installation, you can launch the test suite from outside the
 source directory (you will need to have ``pytest`` >= 3.3.0 installed)::
 
