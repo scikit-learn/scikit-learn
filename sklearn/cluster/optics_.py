@@ -117,7 +117,7 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
 
     leaf_size : int, optional (default=30)
         Leaf size passed to :class:`BallTree` or :class:`KDTree`. This can
-        affect the speed of the construction anquery, as well as the memory
+        affect the speed of the construction and query, as well as the memory
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
