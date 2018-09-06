@@ -40,6 +40,14 @@ Support for Python 3.4 and below has been officially dropped.
 - An entry goes here
 - An entry goes here
 
+
+:mod:`sklearn.dummy`
+....................
+- |Feature| :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor`
+  can now be scored without supplying test samples.
+  :issue:`11951` by :user:`Rüdiger Busche <JarnoRFB>`.
+
+
 Multiple modules
 ................
 
