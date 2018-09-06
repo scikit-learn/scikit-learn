@@ -365,7 +365,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self : instance of OPTICS
             The instance.
         """
-        X = check_array(X, dtype=np.float, accept_sparse=True)
+        X = check_array(X, dtype=np.float)
 
         n_samples = len(X)
         # Start all points as 'unprocessed' ##
