@@ -52,8 +52,8 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             X = X_temp
 
         if X.dtype == np.dtype('object'):
-           if _object_dtype_isnan(X).any():
-               raise ValueError("Input contains NaN")
+            if _object_dtype_isnan(X).any():
+                raise ValueError("Input contains NaN")
 
         return X
 
