@@ -14,7 +14,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..utils import check_array
 from ..utils import deprecated
-from ..utils.fixes import _argmax
+from ..utils.fixes import _argmax, _object_dtype_isnan
 from ..utils.validation import check_is_fitted
 
 from .base import _transform_selected
@@ -37,13 +37,28 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
     """
 
-    def _fit(self, X, handle_unknown='error'):
+    def _check_X(self, X):
+        """
+        Perform custom check_array:
+        - convert list of strings to object dtype
+        - check for missing values for object dtype data (check_array does
+          not do that)
 
+        """
         X_temp = check_array(X, dtype=None)
         if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
             X = check_array(X, dtype=np.object)
         else:
             X = X_temp
+
+        if X.dtype == np.dtype('object'):
+           if _object_dtype_isnan(X).any():
+               raise ValueError("Input contains NaN")
+
+        return X
+
+    def _fit(self, X, handle_unknown='error'):
+        X = self._check_X(X)
 
         n_samples, n_features = X.shape
 
@@ -74,12 +89,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             self.categories_.append(cats)
 
     def _transform(self, X, handle_unknown='error'):
-
-        X_temp = check_array(X, dtype=None)
-        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
-            X = check_array(X, dtype=np.object)
-        else:
-            X = X_temp
+        X = self._check_X(X)
 
         _, n_features = X.shape
         X_int = np.zeros_like(X, dtype=np.int)
