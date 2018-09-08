@@ -1258,14 +1258,14 @@ def learning_curve(estimator, X, y, groups=None,
         for train, test in cv_iter:
             for n_train_samples in train_sizes_abs:
                 if stratify and n_train_samples < n_max_training_samples:
-                    cv = StratifiedShuffleSplit(test_size=None,
+                    cvi = StratifiedShuffleSplit(test_size=None,
                                                 train_size=n_train_samples,
                                                 random_state=random_seed)
                     # Test size can be too small to pass validation checks
                     # in cv.split() method, therefore we call private methods
-                    class_counts, n_classes, n_test, n_train, y_indices = cv.\
+                    class_counts, n_classes, n_test, n_train, y_indices = cvi.\
                         _compute_counts(X=train, y=y[train])
-                    cur_train_indices, useless = next(cv._split_from_counts(
+                    cur_train_indices, useless = next(cvi._split_from_counts(
                         class_counts, n_classes, n_test, n_train, y_indices))
                     cur_train = safe_indexing(train, cur_train_indices)
                 else:

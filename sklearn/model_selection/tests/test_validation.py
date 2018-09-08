@@ -1284,22 +1284,11 @@ def test_learning_curve_with_stratify():
     X = np.hstack((X_ids.T, X_features))
     y = np.array([1] * ones + [0] * zeros)
     cv = StratifiedKFold(5)
-
-    # Check that without stratify it is possible to have training sets
-    # with just one classes for some random seeds
     estimator = PassiveAggressiveClassifier(max_iter=5, tol=None,
                                             shuffle=False)
 
-    # e.g. for this data without stratify it works only with random_state=2,
-    # but not 0 or 1
-    learning_curve(estimator, X, y, cv=cv, train_sizes=[0.1], shuffle=True,
-                   random_state=2)
-    assert_raises(ValueError, learning_curve, estimator, X, y, cv=cv,
-                  train_sizes=[0.1], shuffle=True, random_state=0)
-    assert_raises(ValueError, learning_curve, estimator, X, y, cv=cv,
-                  train_sizes=[0.1], shuffle=True, random_state=1)
-
-    # ...but with stratify=True it works for all random seeds
+    # Check that with stratify=True it works for all random seeds,
+    # while for some of them we may have just one class in training set
     for rand_state in range(10):
         learning_curve(estimator, X, y, cv=cv, train_sizes=[0.1], shuffle=True,
                        stratify=True, random_state=rand_state)
@@ -1318,7 +1307,7 @@ def test_learning_curve_with_stratify():
 
     # Check that there is no ValueError with too small test size
     # 1 - 1 / (2500 * 4/5) = 0.9995 => there would be 1 item in test set
-    learning_curve(estimator, X, y, cv=cv, train_sizes=[0.1, 0.9995],
+    learning_curve(estimator, X, y, cv=cv, train_sizes=[0.9995],
                    shuffle=True, stratify=True, random_state=0)
 
 
