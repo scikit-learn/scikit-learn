@@ -1316,6 +1316,11 @@ def test_learning_curve_with_stratify():
     check_growing_subsets(X, y, 0)
     check_growing_subsets(X, y, np.random.RandomState(0))
 
+    # Check that there is no ValueError with too small test size
+    # 1 - 1 / (2500 * 4/5) = 0.9995 => there would be 1 item in test set
+    learning_curve(estimator, X, y, cv=cv, train_sizes=[0.1, 0.9995],
+                   shuffle=True, stratify=True, random_state=0)
+
 
 def test_validation_curve():
     X, y = make_classification(n_samples=2, n_features=1, n_informative=1,

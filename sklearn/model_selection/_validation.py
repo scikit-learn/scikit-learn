@@ -30,7 +30,7 @@ from ..utils._joblib import logger
 from ..externals.six.moves import zip
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
-from ._split import check_cv, train_test_split
+from ._split import check_cv, StratifiedShuffleSplit
 from ..preprocessing import LabelEncoder
 
 
@@ -1258,9 +1258,16 @@ def learning_curve(estimator, X, y, groups=None,
         for train, test in cv_iter:
             for n_train_samples in train_sizes_abs:
                 if stratify and n_train_samples < n_max_training_samples:
-                    cur_train, useless_test = train_test_split(
-                        train, stratify=y[train], train_size=n_train_samples,
-                        test_size=None, random_state=random_seed)
+                    cv = StratifiedShuffleSplit(test_size=None,
+                                                train_size=n_train_samples,
+                                                random_state=random_seed)
+                    # Test size can be too small to pass validation checks
+                    # in cv.split() method, therefore we call private methods
+                    class_counts, n_classes, n_test, n_train, y_indices = cv.\
+                        _compute_counts(X=train, y=y[train])
+                    cur_train_indices, useless = next(cv._split_from_counts(
+                        class_counts, n_classes, n_test, n_train, y_indices))
+                    cur_train = safe_indexing(train, cur_train_indices)
                 else:
                     cur_train = train[:n_train_samples]
                 train_test_proportions.append((cur_train, test))
