@@ -1403,6 +1403,13 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
     --------
     recall_score, roc_auc_score
 
+    Notes
+    -----
+    Some literature promotes alternative definitions of balanced accuracy. Our
+    definition is equivalent to :func:`accuracy_score` with class-balanced
+    sample weights, and shares desirable properties with the binary case.
+    See the :ref:`User Guide <balanced_accuracy_score>`.
+
     References
     ----------
     .. [1] Brodersen, K.H.; Ong, C.S.; Stephan, K.E.; Buhmann, J.M. (2010).
