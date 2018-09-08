@@ -221,11 +221,14 @@ class OneHotEncoder(_BaseEncoder):
     handle_missing : all-missing, all-zero or category
         What should be done to missing values. Should be one of:
 
-        all-missing: Replace with a row of NaNs as above
+        all-missing:
+            Replace with a row of NaNs as above
 
-        all-zero: Replace with a row of zeros
+        all-zero:
+            Replace with a row of zeros
 
-        category: Represent with a separate one-hot column
+        category:
+            Represent with a separate one-hot column
 
     missing_values: NaN or None
         What should be considered as a missing value?
