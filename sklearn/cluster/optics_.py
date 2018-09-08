@@ -680,10 +680,6 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     if reachability_plot[s] < significant_min:
         node.split_point = -1
         # if split_point is not significant, ignore this split and continue
-        _cluster_tree(node, parent_node, local_maxima_points,
-                      reachability_plot, reachability_ordering,
-                      min_cluster_size, maxima_ratio, rejection_ratio,
-                      similarity_threshold, significant_min)
         return
 
     # only check a certain ratio of points in the child
