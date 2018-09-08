@@ -1584,8 +1584,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                              'equal to the number of classes = %d' %
                              (n_test, n_classes))
 
-        yield from self._split_from_counts(class_counts, n_classes, n_test,
-                                           n_train, y_indices)
+        for train, test in self._split_from_counts(class_counts, n_classes,
+                                                   n_test, n_train, y_indices):
+            yield train, test
 
     def _compute_counts(self, X, y):
         n_samples = _num_samples(X)
