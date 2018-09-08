@@ -353,7 +353,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.core_distances_[:] = nbrs.kneighbors(X,
                                                   self.min_samples)[0][:, -1]
 
-        self.ordering_ = self._expand_cluster_order(X, nbrs)
+        self.ordering_ = self._calculate_optics_order(X, nbrs)
 
         indices_, self.labels_ = _extract_optics(self.ordering_,
                                                  self.reachability_,
@@ -369,7 +369,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     # OPTICS helper functions; these should not be public #
 
-    def _expand_cluster_order(self, X, nbrs):
+    def _calculate_optics_order(self, X, nbrs):
         # Main OPTICS loop. Not parallelizable. The order that entries are
         # written to the 'ordering_' list is important!
         processed = np.zeros(X.shape[0], dtype=bool)
