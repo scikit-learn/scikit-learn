@@ -31,7 +31,7 @@ of squares between the observed responses in the dataset, and the
 responses predicted by the linear approximation. Mathematically it
 solves a problem of the form:
 
-.. math:: \underset{w}{min\,} {|| X w - y||_2}^2
+.. math:: \min_{w} {|| X w - y||_2}^2
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
    :target: ../auto_examples/linear_model/plot_ols.html
@@ -45,7 +45,9 @@ and will store the coefficients :math:`w` of the linear model in its
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
     >>> reg.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
+    ...                                       # doctest: +NORMALIZE_WHITESPACE
+    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=None,
+                     normalize=False)
     >>> reg.coef_
     array([0.5, 0.5])
 
@@ -83,7 +85,7 @@ of squares,
 
 .. math::
 
-   \underset{w}{min\,} {{|| X w - y||_2}^2 + \alpha {||w||_2}^2}
+   \min_{w} {{|| X w - y||_2}^2 + \alpha {||w||_2}^2}
 
 
 Here, :math:`\alpha \geq 0` is a complexity parameter that controls the amount
@@ -138,9 +140,9 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 (GCV), an efficient form of leave-one-out cross-validation::
 
     >>> from sklearn import linear_model
-    >>> reg = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
+    >>> reg = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0], cv=3)
     >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
-    RidgeCV(alphas=[0.1, 1.0, 10.0], cv=None, fit_intercept=True, scoring=None,
+    RidgeCV(alphas=[0.1, 1.0, 10.0], cv=3, fit_intercept=True, scoring=None,
         normalize=False)
     >>> reg.alpha_                                      # doctest: +SKIP
     0.1
@@ -170,7 +172,7 @@ weights (see
 Mathematically, it consists of a linear model trained with :math:`\ell_1` prior
 as regularizer. The objective function to minimize is:
 
-.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
+.. math::  \min_{w} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
 
 The lasso estimate thus solves the minimization of the
 least-squares penalty with :math:`\alpha ||w||_1` added, where
@@ -319,7 +321,7 @@ Mathematically, it consists of a linear model trained with a mixed
 :math:`\ell_1` :math:`\ell_2` prior as regularizer.
 The objective function to minimize is:
 
-.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro} ^ 2 + \alpha ||W||_{21}}
+.. math::  \min_{w} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro} ^ 2 + \alpha ||W||_{21}}
 
 where :math:`Fro` indicates the Frobenius norm:
 
@@ -355,7 +357,7 @@ The objective function to minimize is in this case
 
 .. math::
 
-    \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha \rho ||w||_1 +
+    \min_{w} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha \rho ||w||_1 +
     \frac{\alpha(1-\rho)}{2} ||w||_2 ^ 2}
 
 
@@ -402,7 +404,7 @@ The objective function to minimize is:
 
 .. math::
 
-    \underset{W}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro}^2 + \alpha \rho ||W||_{2 1} +
+    \min_{W} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro}^2 + \alpha \rho ||W||_{2 1} +
     \frac{\alpha(1-\rho)}{2} ||W||_{Fro}^2}
 
 The implementation in the class :class:`MultiTaskElasticNet` uses coordinate descent as
@@ -522,14 +524,14 @@ Being a forward feature selection method like :ref:`least_angle_regression`,
 orthogonal matching pursuit can approximate the optimum solution vector with a
 fixed number of non-zero elements:
 
-.. math:: \text{arg\,min\,} ||y - X\gamma||_2^2 \text{ subject to } \
-    ||\gamma||_0 \leq n_{nonzero\_coefs}
+.. math::
+    \underset{\gamma}{\operatorname{arg\,min\,}}  ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{nonzero\_coefs}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
 
-.. math:: \text{arg\,min\,} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \
-    \leq \text{tol}
+.. math::
+    \underset{\gamma}{\operatorname{arg\,min\,}} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \leq \text{tol}
 
 
 OMP is based on a greedy algorithm that includes at each step the atom most
@@ -608,7 +610,7 @@ regression problem as described above.
 The prior for the parameter :math:`w` is given by a spherical Gaussian:
 
 .. math:: p(w|\lambda) =
-    \mathcal{N}(w|0,\lambda^{-1}\bold{I_{p}})
+    \mathcal{N}(w|0,\lambda^{-1}\mathbf{I}_{p})
 
 The priors over :math:`\alpha` and :math:`\lambda` are chosen to be `gamma
 distributions <https://en.wikipedia.org/wiki/Gamma_distribution>`__, the
@@ -734,12 +736,12 @@ regularization.
 As an optimization problem, binary class L2 penalized logistic regression
 minimizes the following cost function:
 
-.. math:: \underset{w, c}{min\,} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
+.. math:: \min_{w, c} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
 
 Similarly, L1 regularized logistic regression solves the following
 optimization problem
 
-.. math:: \underset{w, c}{min\,} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1).
+.. math:: \min_{w, c} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1).
 
 Note that, in this notation, it's assumed that the observation :math:`y_i` takes values in the set
 :math:`{-1, 1}` at trial :math:`i`.
@@ -773,15 +775,20 @@ The "saga" solver [7]_ is a variant of "sag" that also supports the
 non-smooth `penalty="l1"` option. This is therefore the solver of choice
 for sparse multinomial logistic regression.
 
-In a nutshell, one may choose the solver with the following rules:
+In a nutshell, the following table summarizes the solvers characteristics:
 
-=================================  =====================================
-Case                               Solver
-=================================  =====================================
-L1 penalty                         "liblinear" or "saga"
-Multinomial loss                   "lbfgs", "sag", "saga" or "newton-cg"
-Very Large dataset (`n_samples`)   "sag" or "saga"
-=================================  =====================================
+============================   ===========  =======  ===========  =====  ======
+solver                         'liblinear'  'lbfgs'  'newton-cg'  'sag'  'saga'
+============================   ===========  =======  ===========  =====  ======
+Multinomial + L2 penalty       no           yes      yes          yes    yes
+OVR + L2 penalty               yes          yes      yes          yes    yes
+Multinomial + L1 penalty       no           no       no           no     yes
+OVR + L1 penalty               yes          no       no           no     yes
+============================   ===========  =======  ===========  =====  ======
+Penalize the intercept (bad)   yes          no       no           no     no
+Faster for large datasets      no           no       no           yes    yes
+Robust to unscaled datasets    yes          yes      yes          no     no
+============================   ===========  =======  ===========  =====  ======
 
 The "saga" solver is often the best choice. The "liblinear" solver is
 used by default for historical reasons.
@@ -1137,13 +1144,13 @@ The loss function that :class:`HuberRegressor` minimizes is given by
 
 .. math::
 
-  \underset{w, \sigma}{min\,} {\sum_{i=1}^n\left(\sigma + H_m\left(\frac{X_{i}w - y_{i}}{\sigma}\right)\sigma\right) + \alpha {||w||_2}^2}
+  \min_{w, \sigma} {\sum_{i=1}^n\left(\sigma + H_{\epsilon}\left(\frac{X_{i}w - y_{i}}{\sigma}\right)\sigma\right) + \alpha {||w||_2}^2}
 
 where
 
 .. math::
 
-  H_m(z) = \begin{cases}
+  H_{\epsilon}(z) = \begin{cases}
          z^2, & \text {if } |z| < \epsilon, \\
          2\epsilon|z| - \epsilon^2, & \text{otherwise}
   \end{cases}

@@ -104,6 +104,20 @@ def test_perfect_signal_recovery():
     assert_array_almost_equal(gamma[:, 0], gamma_gram, decimal=2)
 
 
+def test_orthogonal_mp_gram_readonly():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/5956
+    idx, = gamma[:, 0].nonzero()
+    G_readonly = G.copy()
+    G_readonly.setflags(write=False)
+    Xy_readonly = Xy.copy()
+    Xy_readonly.setflags(write=False)
+    gamma_gram = orthogonal_mp_gram(G_readonly, Xy_readonly[:, 0], 5,
+                                    copy_Gram=False, copy_Xy=False)
+    assert_array_equal(idx, np.flatnonzero(gamma_gram))
+    assert_array_almost_equal(gamma[:, 0], gamma_gram, decimal=2)
+
+
 def test_estimator():
     omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
     omp.fit(X, y[:, 0])

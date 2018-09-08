@@ -18,6 +18,7 @@ from sklearn.random_projection import sparse_random_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
 
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -214,7 +215,7 @@ def test_weighted_classification_toy():
         assert_array_equal(clf.predict(T), true_result,
                            "Failed with {0}".format(name))
 
-        clf.fit(X, y, sample_weight=np.ones(len(X)) * 0.5)
+        clf.fit(X, y, sample_weight=np.full(len(X), 0.5))
         assert_array_equal(clf.predict(T), true_result,
                            "Failed with {0}".format(name))
 
@@ -506,16 +507,28 @@ def test_error():
         assert_raises(ValueError, est.predict_proba, X2)
 
     for name, TreeEstimator in ALL_TREES.items():
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=-1).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=.6).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=0.).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=3.).fit, X, y)
-        assert_raises(ValueError,
-                      TreeEstimator(min_weight_fraction_leaf=-1).fit,
-                      X, y)
-        assert_raises(ValueError,
-                      TreeEstimator(min_weight_fraction_leaf=0.51).fit,
-                      X, y)
+        with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+            assert_raises(ValueError,
+                          TreeEstimator(min_samples_leaf=-1).fit, X, y)
+        with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+            assert_raises(ValueError,
+                          TreeEstimator(min_samples_leaf=.6).fit, X, y)
+        with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+            assert_raises(ValueError,
+                          TreeEstimator(min_samples_leaf=0.).fit, X, y)
+        with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+            assert_raises(ValueError,
+                          TreeEstimator(min_samples_leaf=3.).fit, X, y)
+        with pytest.warns(DeprecationWarning,
+                          match='min_weight_fraction_leaf'):
+            assert_raises(ValueError,
+                          TreeEstimator(min_weight_fraction_leaf=-1).fit,
+                          X, y)
+        with pytest.warns(DeprecationWarning,
+                          match='min_weight_fraction_leaf'):
+            assert_raises(ValueError,
+                          TreeEstimator(min_weight_fraction_leaf=0.51).fit,
+                          X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_split=-1).fit,
                       X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_split=0.0).fit,
@@ -573,7 +586,7 @@ def test_error():
 
 def test_min_samples_split():
     """Test min_samples_split parameter"""
-    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -606,7 +619,7 @@ def test_min_samples_split():
 
 def test_min_samples_leaf():
     # Test if leaves contain more than leaf_count training examples
-    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -618,7 +631,8 @@ def test_min_samples_leaf():
         est = TreeEstimator(min_samples_leaf=5,
                             max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
-        est.fit(X, y)
+        with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+            est.fit(X, y)
         out = est.tree_.apply(X)
         node_counts = np.bincount(out)
         # drop inner nodes
@@ -630,7 +644,8 @@ def test_min_samples_leaf():
         est = TreeEstimator(min_samples_leaf=0.1,
                             max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
-        est.fit(X, y)
+        with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+            est.fit(X, y)
         out = est.tree_.apply(X)
         node_counts = np.bincount(out)
         # drop inner nodes
@@ -659,7 +674,9 @@ def check_min_weight_fraction_leaf(name, datasets, sparse=False):
         est = TreeEstimator(min_weight_fraction_leaf=frac,
                             max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
-        est.fit(X, y, sample_weight=weights)
+        with pytest.warns(DeprecationWarning,
+                          match='min_weight_fraction_leaf'):
+            est.fit(X, y, sample_weight=weights)
 
         if sparse:
             out = est.tree_.apply(X.tocsr())
@@ -684,7 +701,9 @@ def check_min_weight_fraction_leaf(name, datasets, sparse=False):
         est = TreeEstimator(min_weight_fraction_leaf=frac,
                             max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
-        est.fit(X, y)
+        with pytest.warns(DeprecationWarning,
+                          match='min_weight_fraction_leaf'):
+            est.fit(X, y)
 
         if sparse:
             out = est.tree_.apply(X.tocsr())
@@ -730,7 +749,8 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
                             max_leaf_nodes=max_leaf_nodes,
                             min_samples_leaf=5,
                             random_state=0)
-        est.fit(X, y)
+        with pytest.warns(DeprecationWarning):
+            est.fit(X, y)
 
         if sparse:
             out = est.tree_.apply(X.tocsr())
@@ -755,7 +775,8 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
                             max_leaf_nodes=max_leaf_nodes,
                             min_samples_leaf=.1,
                             random_state=0)
-        est.fit(X, y)
+        with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+            est.fit(X, y)
 
         if sparse:
             out = est.tree_.apply(X.tocsr())
@@ -791,7 +812,7 @@ def test_min_impurity_split():
     # test if min_impurity_split creates leaves with impurity
     # [0, min_impurity_split) when min_samples_leaf = 1 and
     # min_samples_split = 2.
-    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -1280,13 +1301,13 @@ def test_with_only_one_non_constant_features():
         est = TreeEstimator(random_state=0, max_features=1)
         est.fit(X, y)
         assert_equal(est.tree_.max_depth, 1)
-        assert_array_equal(est.predict_proba(X), 0.5 * np.ones((4, 2)))
+        assert_array_equal(est.predict_proba(X), np.full((4, 2), 0.5))
 
     for name, TreeEstimator in REG_TREES.items():
         est = TreeEstimator(random_state=0, max_features=1)
         est.fit(X, y)
         assert_equal(est.tree_.max_depth, 1)
-        assert_array_equal(est.predict(X), 0.5 * np.ones((4, )))
+        assert_array_equal(est.predict(X), np.full((4, ), 0.5))
 
 
 def test_big_input():
@@ -1411,10 +1432,16 @@ def check_sparse_parameters(tree, dataset):
     assert_array_almost_equal(s.predict(X), d.predict(X))
 
     # Check min_samples_leaf
-    d = TreeEstimator(random_state=0,
-                      min_samples_leaf=X_sparse.shape[0] // 2).fit(X, y)
-    s = TreeEstimator(random_state=0,
-                      min_samples_leaf=X_sparse.shape[0] // 2).fit(X_sparse, y)
+    with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+        d = TreeEstimator(
+                random_state=0,
+                min_samples_leaf=X_sparse.shape[0] // 2
+            ).fit(X, y)
+    with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
+        s = TreeEstimator(
+                random_state=0,
+                min_samples_leaf=X_sparse.shape[0] // 2
+            ).fit(X_sparse, y)
     assert_tree_equal(d.tree_, s.tree_,
                       "{0} with dense and sparse format gave different "
                       "trees".format(tree))
@@ -1559,7 +1586,8 @@ def _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight):
     assert_equal(est.tree_.max_depth, 1)
 
     est = TreeEstimator(random_state=0, min_weight_fraction_leaf=0.4)
-    est.fit(X, y, sample_weight=sample_weight)
+    with pytest.warns(DeprecationWarning, match='min_weight_fraction_leaf'):
+        est.fit(X, y, sample_weight=sample_weight)
     assert_equal(est.tree_.max_depth, 0)
 
 
@@ -1693,18 +1721,100 @@ def test_no_sparse_y_support(name):
 
 
 def test_mae():
-    # check MAE criterion produces correct results
-    # on small toy dataset
+    """Check MAE criterion produces correct results on small toy dataset:
+
+    ------------------
+    | X | y | weight |
+    ------------------
+    | 3 | 3 |  0.1   |
+    | 5 | 3 |  0.3   |
+    | 8 | 4 |  1.0   |
+    | 3 | 6 |  0.6   |
+    | 5 | 7 |  0.3   |
+    ------------------
+    |sum wt:|  2.3   |
+    ------------------
+
+    Because we are dealing with sample weights, we cannot find the median by
+    simply choosing/averaging the centre value(s), instead we consider the
+    median where 50% of the cumulative weight is found (in a y sorted data set)
+    . Therefore with regards to this test data, the cumulative weight is >= 50%
+    when y = 4.  Therefore:
+    Median = 4
+
+    For all the samples, we can get the total error by summing:
+    Absolute(Median - y) * weight
+
+    I.e., total error = (Absolute(4 - 3) * 0.1)
+                      + (Absolute(4 - 3) * 0.3)
+                      + (Absolute(4 - 4) * 1.0)
+                      + (Absolute(4 - 6) * 0.6)
+                      + (Absolute(4 - 7) * 0.3)
+                      = 2.5
+
+    Impurity = Total error / total weight
+             = 2.5 / 2.3
+             = 1.08695652173913
+             ------------------
+
+    From this root node, the next best split is between X values of 3 and 5.
+    Thus, we have left and right child nodes:
+
+    LEFT                    RIGHT
+    ------------------      ------------------
+    | X | y | weight |      | X | y | weight |
+    ------------------      ------------------
+    | 3 | 3 |  0.1   |      | 5 | 3 |  0.3   |
+    | 3 | 6 |  0.6   |      | 8 | 4 |  1.0   |
+    ------------------      | 5 | 7 |  0.3   |
+    |sum wt:|  0.7   |      ------------------
+    ------------------      |sum wt:|  1.6   |
+                            ------------------
+
+    Impurity is found in the same way:
+    Left node Median = 6
+    Total error = (Absolute(6 - 3) * 0.1)
+                + (Absolute(6 - 6) * 0.6)
+                = 0.3
+
+    Left Impurity = Total error / total weight
+            = 0.3 / 0.7
+            = 0.428571428571429
+            -------------------
+
+    Likewise for Right node:
+    Right node Median = 4
+    Total error = (Absolute(4 - 3) * 0.3)
+                + (Absolute(4 - 4) * 1.0)
+                + (Absolute(4 - 7) * 0.3)
+                = 1.2
+
+    Right Impurity = Total error / total weight
+            = 1.2 / 1.6
+            = 0.75
+            ------
+    """
     dt_mae = DecisionTreeRegressor(random_state=0, criterion="mae",
                                    max_leaf_nodes=2)
-    dt_mae.fit([[3], [5], [3], [8], [5]], [6, 7, 3, 4, 3])
-    assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0/3.0])
+
+    # Test MAE where sample weights are non-uniform (as illustrated above):
+    dt_mae.fit(X=[[3], [5], [3], [8], [5]], y=[6, 7, 3, 4, 3],
+               sample_weight=[0.6, 0.3, 0.1, 1.0, 0.3])
+    assert_allclose(dt_mae.tree_.impurity, [2.5 / 2.3, 0.3 / 0.7, 1.2 / 1.6])
+    assert_array_equal(dt_mae.tree_.value.flat, [4.0, 6.0, 4.0])
+
+    # Test MAE where all sample weights are uniform:
+    dt_mae.fit(X=[[3], [5], [3], [8], [5]], y=[6, 7, 3, 4, 3],
+               sample_weight=np.ones(5))
+    assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0 / 3.0])
     assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
 
-    dt_mae.fit([[3], [5], [3], [8], [5]], [6, 7, 3, 4, 3],
-               [0.6, 0.3, 0.1, 1.0, 0.3])
-    assert_array_equal(dt_mae.tree_.impurity, [7.0/2.3, 3.0/0.7, 4.0/1.6])
-    assert_array_equal(dt_mae.tree_.value.flat, [4.0, 6.0, 4.0])
+    # Test MAE where a `sample_weight` is not explicitly provided.
+    # This is equivalent to providing uniform sample weights, though
+    # the internal logic is different:
+    dt_mae.fit(X=[[3], [5], [3], [8], [5]], y=[6, 7, 3, 4, 3])
+    assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0 / 3.0])
+    assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
 
 
 def test_criterion_copy():

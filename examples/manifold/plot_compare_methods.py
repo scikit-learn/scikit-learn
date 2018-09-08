@@ -1,6 +1,6 @@
 """
 =========================================
- Comparison of Manifold Learning methods
+Comparison of Manifold Learning methods
 =========================================
 
 An illustration of dimensionality reduction on the S-curve dataset

@@ -121,7 +121,7 @@ def incr_mean_variance_axis(X, axis, last_mean, last_var, last_n):
     last_var : float array with shape (n_features,)
         Array of feature-wise var to update with the new data X.
 
-    last_n : int
+    last_n : int with shape (n_features,)
         Number of samples seen so far, excluded X.
 
     Returns
@@ -133,8 +133,12 @@ def incr_mean_variance_axis(X, axis, last_mean, last_var, last_n):
     variances : float array with shape (n_features,)
         Updated feature-wise variances.
 
-    n : int
+    n : int with shape (n_features,)
         Updated number of seen samples.
+
+    Notes
+    -----
+    NaNs are ignored in the algorithm.
 
     """
     _raise_error_wrong_axis(axis)
