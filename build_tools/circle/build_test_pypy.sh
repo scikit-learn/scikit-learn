@@ -19,7 +19,7 @@ python --version
 which python
 
 pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy==1.14.4 Cython pytest
-pip install "scipy>=1.1.0" sphinx numpydoc docutils
+pip install "scipy>=1.1.0" sphinx numpydoc docutils pytest-xdist
 
 ccache -M 512M
 export CCACHE_COMPRESS=1
@@ -27,4 +27,5 @@ export PATH=/usr/lib/ccache:$PATH
 
 pip install -e .
 
-make test
+pytest -n 1 sklearn/
+make test-sphinxext test-doc
