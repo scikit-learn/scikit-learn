@@ -222,7 +222,7 @@ class OneHotEncoder(_BaseEncoder):
         What should be done to missing values. Should be one of:
 
         all-missing:
-            Replace with a row of NaNs as above
+            Replace with a row of NaNs
 
         all-zero:
             Replace with a row of zeros
