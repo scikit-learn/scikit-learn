@@ -92,7 +92,7 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
 
     significant_min : float, optional (default=.003)
         Sets a lower threshold on how small a significant maxima can be.
-        
+
     min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
         Minimum number of samples in an OPTICS cluster, expressed as an
         absolute number or a fraction of the number of samples (rounded
