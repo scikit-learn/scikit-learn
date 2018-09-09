@@ -331,14 +331,12 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         n_samples = len(X)
         # Start all points as 'unprocessed' ##
-        self._processed = np.zeros((n_samples, 1), dtype=bool)
         self.reachability_ = np.empty(n_samples)
         self.reachability_.fill(np.inf)
         self.core_distances_ = np.empty(n_samples)
         self.core_distances_.fill(np.nan)
         # Start all points as noise ##
         self.labels_ = np.full(n_samples, -1, dtype=int)
-        self.ordering_ = []
 
         # Check for valid n_samples relative to min_samples
         if self.min_samples > n_samples:
@@ -357,11 +355,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.core_distances_[:] = nbrs.kneighbors(X,
                                                   self.min_samples)[0][:, -1]
 
-        # Main OPTICS loop. Not parallelizable. The order that entries are
-        # written to the 'ordering_' list is important!
-        for point in range(n_samples):
-            if not self._processed[point]:
-                self._expand_cluster_order(point, X, nbrs)
+        self.ordering_ = self._calculate_optics_order(X, nbrs)
 
         indices_, self.labels_ = _extract_optics(self.ordering_,
                                                  self.reachability_,
@@ -374,45 +368,52 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.core_sample_indices_ = indices_
         return self
 
-    # OPTICS helper functions; these should not be public #
+    # OPTICS helper functions
 
-    def _expand_cluster_order(self, point, X, nbrs):
-        # As above, not parallelizable. Parallelizing would allow items in
-        # the 'unprocessed' list to switch to 'processed'
-        if self.core_distances_[point] <= self.max_eps:
-            while not self._processed[point]:
-                self._processed[point] = True
-                self.ordering_.append(point)
-                point = self._set_reach_dist(point, X, nbrs)
-        else:  # For very noisy points
-            self.ordering_.append(point)
-            self._processed[point] = True
+    def _calculate_optics_order(self, X, nbrs):
+        # Main OPTICS loop. Not parallelizable. The order that entries are
+        # written to the 'ordering_' list is important!
+        processed = np.zeros(X.shape[0], dtype=bool)
+        ordering = np.zeros(X.shape[0], dtype=int)
+        ordering_idx = 0
+        for point in range(X.shape[0]):
+            if processed[point]:
+                continue
+            if self.core_distances_[point] <= self.max_eps:
+                while not processed[point]:
+                    processed[point] = True
+                    ordering[ordering_idx] = point
+                    ordering_idx += 1
+                    point = self._set_reach_dist(point, processed, X, nbrs)
+            else:  # For very noisy points
+                ordering[ordering_idx] = point
+                ordering_idx += 1
+                processed[point] = True
+        return ordering
 
-    def _set_reach_dist(self, point_index, X, nbrs):
-        P = np.array(X[point_index]).reshape(1, -1)
+    def _set_reach_dist(self, point_index, processed, X, nbrs):
+        P = X[point_index:point_index + 1]
         indices = nbrs.radius_neighbors(P, radius=self.max_eps,
                                         return_distance=False)[0]
 
         # Getting indices of neighbors that have not been processed
-        unproc = np.compress((~np.take(self._processed, indices)).ravel(),
+        unproc = np.compress((~np.take(processed, indices)).ravel(),
                              indices, axis=0)
         # Keep n_jobs = 1 in the following lines...please
-        if len(unproc) > 0:
-            dists = pairwise_distances(P, np.take(X, unproc, axis=0),
-                                       self.metric, n_jobs=None).ravel()
-
-            rdists = np.maximum(dists, self.core_distances_[point_index])
-            new_reach = np.minimum(np.take(self.reachability_, unproc), rdists)
-            self.reachability_[unproc] = new_reach
-
-        # Checks to see if everything is already processed;
-        # if so, return control to main loop
-        if unproc.size > 0:
-            # Define return order based on reachability distance
-            return(unproc[quick_scan(np.take(self.reachability_, unproc),
-                                     dists)])
-        else:
+        if not unproc.size:
+            # Everything is already processed. Return to main loop
             return point_index
+
+        dists = pairwise_distances(P, np.take(X, unproc, axis=0),
+                                   self.metric, n_jobs=1).ravel()
+
+        rdists = np.maximum(dists, self.core_distances_[point_index])
+        new_reach = np.minimum(np.take(self.reachability_, unproc), rdists)
+        self.reachability_[unproc] = new_reach
+
+        # Define return order based on reachability distance
+        return (unproc[quick_scan(np.take(self.reachability_, unproc),
+                                  dists)])
 
     def extract_dbscan(self, eps):
         """Performs DBSCAN extraction for an arbitrary epsilon.

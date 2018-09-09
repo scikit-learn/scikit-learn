@@ -33,6 +33,24 @@ def test_correct_number_of_clusters():
     n_clusters_1 = len(set(clust.labels_)) - int(-1 in clust.labels_)
     assert_equal(n_clusters_1, n_clusters)
 
+    # check attribute types and sizes
+    assert clust.core_sample_indices_.ndim == 1
+    assert clust.core_sample_indices_.size > 0
+    assert clust.core_sample_indices_.dtype.kind == 'i'
+
+    assert clust.labels_.shape == (len(X),)
+    assert clust.labels_.dtype.kind == 'i'
+
+    assert clust.reachability_.shape == (len(X),)
+    assert clust.reachability_.dtype.kind == 'f'
+
+    assert clust.core_distances_.shape == (len(X),)
+    assert clust.core_distances_.dtype.kind == 'f'
+
+    assert clust.ordering_.shape == (len(X),)
+    assert clust.ordering_.dtype.kind == 'i'
+    assert set(clust.ordering_) == set(range(len(X)))
+
 
 def test_minimum_number_of_sample_check():
     # test that we check a minimum number of samples
