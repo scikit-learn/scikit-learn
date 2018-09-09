@@ -84,7 +84,11 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
-    pip install pytest pytest-cov cython==$CYTHON_VERSION
+    # FIXME: Importing scipy.sparse with numpy 1.8.2 and scipy 0.13.3 produces
+    # a deprecation warning and the test suite fails on such warnings.
+    # To test these numpy/scipy versions, we use pytest<3.8 as it has
+    # a known limitation/bug of not capturing warnings during test collection.
+    pip install pytest==3.7.4 pytest-cov cython==$CYTHON_VERSION
 
 elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     make_conda python=3.7
