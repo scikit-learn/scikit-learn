@@ -75,9 +75,9 @@ test_script:
   - cd "../empty_folder"
   - ps: >-
         if (Test-Path variable:global:CHECK_WARNINGS) {
-            $env.PYTEST_ARGS = "-Werror::DeprecationWarning -Werror::FutureWarning"
+            $env:PYTEST_ARGS = "-Werror::DeprecationWarning -Werror::FutureWarning"
         } else {
-            $env.PYTEST_ARGS = ""
+            $env:PYTEST_ARGS = ""
         }
   - "pytest --showlocals --durations=20 %PYTEST_ARGS% --pyargs sklearn"
   # Move back to the project folder
