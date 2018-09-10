@@ -401,14 +401,18 @@ class LinearRegression(LinearModel, RegressorMixin):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.linear_model import LinearRegression
-    >>> from sklearn.datasets import make_regression
-    >>> X, y = make_regression(n_features=10, noise=4, random_state=0)
+    >>> X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
+    >>> # y = 1 * x_0 + 2 * x_1
+    >>> y = np.dot(X, np.array([1, 2]))
     >>> reg = LinearRegression().fit(X, y)
-    >>> reg.score(X, y) # doctest: +ELLIPSIS
-    0.9997...
-    >>> reg.predict(X[:1,])
-    array([9.8117...])
+    >>> reg.score(X, y)
+    1.0
+    >>> reg.coef_
+    array([1., 2.])
+    >>> reg.predict(np.array([[3, 5]]))
+    array([13.])
 
     Notes
     -----
