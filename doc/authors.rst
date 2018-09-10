@@ -21,8 +21,8 @@
     <p>Matthieu Brucher</p>
     </td>
     <td>
-    <a href='https://github.com/bthirion'><img src='https://avatars1.githubusercontent.com/u/234454?v=4' class='avatar' /></a> <br />
-    <p>bthirion</p>
+    <a href='https://github.com/larsmans'><img src='https://avatars1.githubusercontent.com/u/335383?v=4' class='avatar' /></a> <br />
+    <p>Lars Buitinck</p>
     </td>
     <td>
     <a href='https://github.com/cournape'><img src='https://avatars1.githubusercontent.com/u/25111?v=4' class='avatar' /></a> <br />
@@ -40,11 +40,11 @@
     <tr>
     <td>
     <a href='https://github.com/dubourg'><img src='https://avatars0.githubusercontent.com/u/401766?v=4' class='avatar' /></a> <br />
-    <p>dubourg</p>
+    <p>Vincent Dubourg</p>
     </td>
     <td>
     <a href='https://github.com/duchesnay'><img src='https://avatars1.githubusercontent.com/u/344402?v=4' class='avatar' /></a> <br />
-    <p>Duchesnay</p>
+    <p>Edouard Duchesnay</p>
     </td>
     <td>
     <a href='https://github.com/lesteve'><img src='https://avatars1.githubusercontent.com/u/1680079?v=4' class='avatar' /></a> <br />
@@ -107,8 +107,8 @@
     <p>Kyle Kastner</p>
     </td>
     <td>
-    <a href='https://github.com/larsmans'><img src='https://avatars1.githubusercontent.com/u/335383?v=4' class='avatar' /></a> <br />
-    <p>Lars</p>
+    <a href='https://github.com/MechCoder'><img src='https://avatars3.githubusercontent.com/u/1867024?v=4' class='avatar' /></a> <br />
+    <p>Manoj Kumar</p>
     </td>
     <td>
     <a href='https://github.com/robertlayton'><img src='https://avatars2.githubusercontent.com/u/800543?v=4' class='avatar' /></a> <br />
@@ -133,10 +133,6 @@
     <p>Gilles Louppe</p>
     </td>
     <td>
-    <a href='https://github.com/MechCoder'><img src='https://avatars3.githubusercontent.com/u/1867024?v=4' class='avatar' /></a> <br />
-    <p>MechCoder</p>
-    </td>
-    <td>
     <a href='https://github.com/jmetzen'><img src='https://avatars1.githubusercontent.com/u/1116263?v=4' class='avatar' /></a> <br />
     <p>Jan Hendrik Metzen</p>
     </td>
@@ -156,12 +152,12 @@
     <a href='https://github.com/vene'><img src='https://avatars0.githubusercontent.com/u/241745?v=4' class='avatar' /></a> <br />
     <p>Vlad Niculae</p>
     </td>
-    </tr>
-    <tr>
     <td>
     <a href='https://github.com/jnothman'><img src='https://avatars2.githubusercontent.com/u/78827?v=4' class='avatar' /></a> <br />
     <p>Joel Nothman</p>
     </td>
+    </tr>
+    <tr>
     <td>
     <a href='https://github.com/alextp'><img src='https://avatars0.githubusercontent.com/u/5061?v=4' class='avatar' /></a> <br />
     <p>Alexandre Passos</p>
@@ -186,6 +182,10 @@
     <a href='https://github.com/jmschrei'><img src='https://avatars2.githubusercontent.com/u/3916816?v=4' class='avatar' /></a> <br />
     <p>Jacob Schreiber</p>
     </td>
+    <td>
+    <a href='https://github.com/bthirion'><img src='https://avatars1.githubusercontent.com/u/234454?v=4' class='avatar' /></a> <br />
+    <p>Bertrand Thirion</p>
+    </td>
     </tr>
     <tr>
     <td>
@@ -197,12 +197,12 @@
     <p>Jake Vanderplas</p>
     </td>
     <td>
-    <a href='https://github.com/GaelVaroquaux'><img src='https://avatars3.githubusercontent.com/u/208217?v=4' class='avatar' /></a> <br />
-    <p>Gael Varoquaux</p>
-    </td>
-    <td>
     <a href='https://github.com/NelleV'><img src='https://avatars0.githubusercontent.com/u/184798?v=4' class='avatar' /></a> <br />
     <p>Nelle Varoquaux</p>
+    </td>
+    <td>
+    <a href='https://github.com/GaelVaroquaux'><img src='https://avatars3.githubusercontent.com/u/208217?v=4' class='avatar' /></a> <br />
+    <p>Gael Varoquaux</p>
     </td>
     <td>
     <a href='https://github.com/dwf'><img src='https://avatars1.githubusercontent.com/u/60206?v=4' class='avatar' /></a> <br />
