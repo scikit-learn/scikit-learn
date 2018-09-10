@@ -556,7 +556,6 @@ class LODData(Data):
 
     def decode_data(self, s, conversors):
         values = _parse_values(s)
-        n_conversors = len(conversors)
 
         if not isinstance(values, dict):
             raise BadLayout()
