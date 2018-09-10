@@ -79,6 +79,10 @@ class IsolationForest(BaseBagging, OutlierMixin):
             - If int, then draw `max_features` features.
             - If float, then draw `max_features * X.shape[1]` features.
 
+    feature_weight : array-like, shape = [n_features] or None, optional (default=None)
+        Feature weights in feature sampling. Weights have to sum to 1.
+        If None, then features are equally weighted.
+
     bootstrap : boolean, optional (default=False)
         If True, individual trees are fit on random subsets of the training
         data sampled with replacement. If False, sampling without replacement
@@ -161,6 +165,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
                  max_samples="auto",
                  contamination="legacy",
                  max_features=1.,
+                 feature_weight=None,
                  bootstrap=False,
                  n_jobs=None,
                  behaviour='old',
@@ -177,6 +182,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
             n_estimators=n_estimators,
             max_samples=max_samples,
             max_features=max_features,
+            feature_weight=feature_weight,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
@@ -184,10 +190,15 @@ class IsolationForest(BaseBagging, OutlierMixin):
         self.behaviour = behaviour
         self.contamination = contamination
 
+        if self.feature_weight is not None:
+            if np.abs(np.sum(self.feature_weight) - 1) > 1e-7:
+                raise ValueError("Feature weights sum to {}, do not sum to 1."
+                                 .format(np.sum(feature_weight)))
+
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by iforest")
 
-    def fit(self, X, y=None, sample_weight=None, feature_weight=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Fit estimator.
 
         Parameters
@@ -199,9 +210,6 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted.
-
-        feature_weight : array-like, shape = [n_features] or None
-            Feature weights. If None, then features are equally weighted.
 
         Returns
         -------
@@ -262,8 +270,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
         max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
         super(IsolationForest, self)._fit(X, y, max_samples,
                                           max_depth=max_depth,
-                                          sample_weight=sample_weight,
-                                          feature_weight=feature_weight)
+                                          sample_weight=sample_weight)
 
         if self.behaviour == 'old':
             # in this case, decision_function = 0.5 + self.score_samples(X):

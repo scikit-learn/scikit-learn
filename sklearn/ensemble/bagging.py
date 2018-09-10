@@ -66,12 +66,12 @@ def _generate_bagging_indices(random_state, bootstrap_features,
 
 
 def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
-                               feature_weight, seeds, total_n_estimators,
-                               verbose):
+                               seeds, total_n_estimators, verbose):
     """Private function used to build a batch of estimators within a job."""
     # Retrieve settings
     n_samples, n_features = X.shape
     max_features = ensemble._max_features
+    feature_weight = ensemble.feature_weight
     max_samples = ensemble._max_samples
     bootstrap = ensemble.bootstrap
     bootstrap_features = ensemble.bootstrap_features
@@ -204,6 +204,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
                  n_estimators=10,
                  max_samples=1.0,
                  max_features=1.0,
+                 feature_weight=None,
                  bootstrap=True,
                  bootstrap_features=False,
                  oob_score=False,
@@ -217,6 +218,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
 
         self.max_samples = max_samples
         self.max_features = max_features
+        self.feature_weight = feature_weight
         self.bootstrap = bootstrap
         self.bootstrap_features = bootstrap_features
         self.oob_score = oob_score
@@ -225,7 +227,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         self.random_state = random_state
         self.verbose = verbose
 
-    def fit(self, X, y, sample_weight=None, feature_weight=None):
+    def fit(self, X, y, sample_weight=None):
         """Build a Bagging ensemble of estimators from the training
            set (X, y).
 
@@ -244,18 +246,13 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
             Note that this is supported only if the base estimator supports
             sample weighting.
 
-        feature_weight : array-like, shape = [n_features] or None
-            Feature weights. If None, then features are equally weighted.
-
         Returns
         -------
         self : object
         """
-        return self._fit(X, y, self.max_samples, sample_weight=sample_weight,
-                         feature_weight=feature_weight)
+        return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
 
-    def _fit(self, X, y, max_samples=None, max_depth=None, sample_weight=None,
-             feature_weight=None):
+    def _fit(self, X, y, max_samples=None, max_depth=None, sample_weight=None):
         """Build a Bagging ensemble of estimators from the training
            set (X, y).
 
@@ -281,9 +278,6 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
             Note that this is supported only if the base estimator supports
             sample weighting.
 
-        feature_weight : array-like, shape = [n_features] or None
-            Feature weights. If None, then features are equally weighted.
-
         Returns
         -------
         self : object
@@ -303,12 +297,6 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         n_samples, self.n_features_ = X.shape
         self._n_samples = n_samples
         y = self._validate_y(y)
-
-        if feature_weight is not None:
-            feature_weight = check_array(feature_weight, ensure_2d=False)
-            if len(feature_weight) != self.n_features_:
-                raise ValueError("Feature weights must have shape "
-                                 "[n_features]")
 
         # Check parameters
         self._validate_estimator()
@@ -339,6 +327,14 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
 
         # Store validated integer feature sampling value
         self._max_features = max_features
+
+        # Validate feature weight has the same length as n_features
+        if self.feature_weight is not None:
+            self.feature_weight = check_array(self.feature_weight,
+                                              ensure_2d=False)
+            if len(self.feature_weight) != self.n_features_:
+                raise ValueError("Feature weights must have shape "
+                                 "[n_features]")
 
         # Other checks
         if not self.bootstrap and self.oob_score:
@@ -389,7 +385,6 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
                 X,
                 y,
                 sample_weight,
-                feature_weight,
                 seeds[starts[i]:starts[i + 1]],
                 total_n_estimators,
                 verbose=self.verbose)

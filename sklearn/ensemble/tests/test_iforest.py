@@ -140,11 +140,10 @@ def test_iforest_error():
     assert_raises_regex(AttributeError, msg, getattr,
                         IsolationForest(behaviour='new'), 'threshold_')
 
-    # test feature_weight lenght match n_features:
-    assert_raises(ValueError, IsolationForest().fit, X,
-                  feature_weight=[1])
-    # test feature_weight does not add up to 1:
-    assert_raises(ValueError, IsolationForest().fit, X,
+    # test feature_weight length matches n_features:
+    assert_raises(ValueError, IsolationForest(feature_weight=[1]).fit, X)
+    # test feature_weight adding up to 1:
+    assert_raises(ValueError, IsolationForest,
                   feature_weight=[0.1, 0.2, 0.3, 0.3])
 
 
@@ -251,8 +250,9 @@ def test_iforest_performance_feature_weight():
     feature_weight /= feature_weight.sum()
 
     # fit the model
-    clf = IsolationForest(max_samples=100, random_state=rng)
-    clf.fit(X_train, feature_weight=feature_weight)
+    clf = IsolationForest(max_samples=100, random_state=rng,
+                          feature_weight=feature_weight)
+    clf.fit(X_train)
 
     # predict scores (the lower, the more normal)
     y_pred = - clf.decision_function(X_test)
