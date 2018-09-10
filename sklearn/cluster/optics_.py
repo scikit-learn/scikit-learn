@@ -369,7 +369,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self : instance of OPTICS
             The instance.
         """
-        X = check_array(X, dtype=np.float64)
+        X = check_array(X, dtype=np.float)
 
         n_samples = len(X)
 
