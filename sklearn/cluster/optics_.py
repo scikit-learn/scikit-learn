@@ -25,7 +25,7 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
            p=2, metric_params=None, maxima_ratio=.75,
            rejection_ratio=.7, similarity_threshold=0.4,
            significant_min=.003, min_cluster_size=.005,
-           min_maxima_ratio=0.001, xi=0.8, algorithm='ball_tree',
+           min_maxima_ratio=0.001, xi=0.9, algorithm='ball_tree',
            leaf_size=30, n_jobs=None):
     """Perform OPTICS clustering from vector array
 
@@ -294,7 +294,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                  p=2, metric_params=None, maxima_ratio=.75,
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size=.005,
-                 min_maxima_ratio=0.001, xi=.8, algorithm='ball_tree',
+                 min_maxima_ratio=0.001, xi=.9, algorithm='ball_tree',
                  leaf_size=30, n_jobs=None):
 
         self.max_eps = max_eps
@@ -510,7 +510,7 @@ def _extract_dbscan(ordering, core_distances, reachability, eps):
 def _extract_optics(ordering, reachability, maxima_ratio=.75,
                     rejection_ratio=.7, similarity_threshold=0.4,
                     significant_min=.003, min_cluster_size=.005,
-                    min_maxima_ratio=0.001, xi=0.8):
+                    min_maxima_ratio=0.001, xi=0.9):
     """Performs automatic cluster extraction for variable density data.
 
     Parameters
@@ -583,12 +583,6 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
         labels[index] = clustid
         is_core[index] = 1
         clustid += 1
-
-    # check if the last point is xi-steep upward
-    last_point = ordering[-1]
-    if reachability_plot[-2] <= reachability_plot[-1] * (1 - xi):
-        labels[last_point] = -1
-        is_core[last_point] = 0
 
     return np.arange(n_samples)[is_core], labels
 
@@ -692,8 +686,15 @@ def _cluster_tree(node, parent_node, local_maxima_points,
         node_2_start = s
     else:
         node_2_start = s + 1
-    node_2 = _TreeNode(reachability_ordering[node_2_start:node.end],
-                       node_2_start, node.end, node)
+
+    # check if the last point is xi-steep upward
+    node_2_end = node.end
+    if (reachability_plot[node.end - 1] * (1 - xi)
+        >= reachability_plot[node.end - 2]):
+        node_2_end = node.end - 1
+
+    node_2 = _TreeNode(reachability_ordering[node_2_start:node_2_end],
+                       node_2_start, node_2_end, node)
     local_max_1 = []
     local_max_2 = []
 
