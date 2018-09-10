@@ -38,13 +38,21 @@ Scikit-learn requires:
 - NumPy (>= 1.8.2),
 - SciPy (>= 0.13.3).
 
+.. note::
+
+   For installing on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
+   are required. For PyPy, only installation instructions with pip apply.
+
+
 Building Scikit-learn also requires
 
 - Cython >=0.23 
 
 Running tests requires
 
-- pytest
+.. |PytestMinVersion| replace:: 3.3.0
+
+- pytest >=\ |PytestMinVersion|
 
 Some tests also require `pandas <https://pandas.pydata.org>`_.
 
@@ -270,9 +278,8 @@ Testing
 Testing scikit-learn once installed
 -----------------------------------
 
-Testing requires having the `pytest
-<https://docs.pytest.org>`_ library. Some tests also require having
-`pandas <https://pandas.pydata.org/>` installed.
+Testing requires having `pytest <https://docs.pytest.org>`_ >=\ |PytestMinVersion|\ .
+Some tests also require having `pandas <https://pandas.pydata.org/>` installed.
 After installation, the package can be tested by executing *from outside* the
 source directory::
 

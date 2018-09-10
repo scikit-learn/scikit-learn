@@ -548,7 +548,11 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -916,7 +920,11 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -1174,7 +1182,11 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -1358,7 +1370,11 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and

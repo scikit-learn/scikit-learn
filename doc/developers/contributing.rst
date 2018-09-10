@@ -79,6 +79,7 @@ link to it from your website, or simply star to say "I use it":
    * `joblib <https://github.com/joblib/joblib/issues>`__
    * `sphinx-gallery <https://github.com/sphinx-gallery/sphinx-gallery/issues>`__
    * `numpydoc <https://github.com/numpy/numpydoc/issues>`__
+   * `liac-arff <https://github.com/renatopp/liac-arff>`__
 
    and larger projects:
 
@@ -139,6 +140,14 @@ feedback:
 - Please include your **operating system type and version number**, as well as
   your **Python, scikit-learn, numpy, and scipy versions**. This information
   can be found by running the following code snippet::
+
+    >>> import sklearn
+    >>> sklearn.show_versions()  # doctest: +SKIP
+
+  .. note::
+
+    This utility function is only available in scikit-learn v0.20+.
+    For previous versions, one has to explicitly run::
 
      import platform; print(platform.platform())
      import sys; print("Python", sys.version)
@@ -352,7 +361,7 @@ and Cython optimizations.
 
    * Travis is used for testing on Linux platforms
    * Appveyor is used for testing on Windows platforms
-   * CircleCI is used to build the docs for viewing
+   * CircleCI is used to build the docs for viewing and for testing with PyPy on Linux
 
    Please note that if one of the following markers appear in the latest commit
    message, the following actions are taken.

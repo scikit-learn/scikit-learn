@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_in
+from sklearn.utils.testing import fails_if_pypy
 from sklearn.utils.fixes import sp_version
 
 import sklearn
@@ -29,6 +30,8 @@ datafile = os.path.join(currdir, "data", "svmlight_classification.txt")
 multifile = os.path.join(currdir, "data", "svmlight_multilabel.txt")
 invalidfile = os.path.join(currdir, "data", "svmlight_invalid.txt")
 invalidfile2 = os.path.join(currdir, "data", "svmlight_invalid_order.txt")
+
+pytestmark = fails_if_pypy
 
 
 def test_load_svmlight_file():
@@ -119,7 +122,8 @@ def test_load_compressed():
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".gz") as tmp:
         tmp.close()  # necessary under windows
         with open(datafile, "rb") as f:
-            shutil.copyfileobj(f, gzip.open(tmp.name, "wb"))
+            with gzip.open(tmp.name, "wb") as fh_out:
+                shutil.copyfileobj(f, fh_out)
         Xgz, ygz = load_svmlight_file(tmp.name)
         # because we "close" it manually and write to it,
         # we need to remove it manually.
@@ -130,7 +134,8 @@ def test_load_compressed():
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".bz2") as tmp:
         tmp.close()  # necessary under windows
         with open(datafile, "rb") as f:
-            shutil.copyfileobj(f, BZ2File(tmp.name, "wb"))
+            with BZ2File(tmp.name, "wb") as fh_out:
+                shutil.copyfileobj(f, fh_out)
         Xbz, ybz = load_svmlight_file(tmp.name)
         # because we "close" it manually and write to it,
         # we need to remove it manually.

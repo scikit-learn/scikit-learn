@@ -80,7 +80,6 @@ def test_simple_precomputed():
 
 def test_all_precomputed():
     # Test that lars_path with precomputed Gram and Xy gives the right answer
-    X, y = diabetes.data, diabetes.target
     G = np.dot(X.T, X)
     Xy = np.dot(X.T, y)
     for method in 'lar', 'lasso':
@@ -182,12 +181,12 @@ def test_no_path_all_precomputed():
     assert_true(alpha_ == alphas_[-1])
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 @pytest.mark.parametrize(
         'classifier',
         [linear_model.Lars, linear_model.LarsCV, linear_model.LassoLarsIC])
 def test_lars_precompute(classifier):
     # Check for different values of precompute
-    X, y = diabetes.data, diabetes.target
     G = np.dot(X.T, X)
 
     clf = classifier(precompute=G)
@@ -418,6 +417,7 @@ def test_multitarget():
             assert_array_almost_equal(Y_pred[:, k], y_pred)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_lars_cv():
     # Test the LassoLarsCV object by checking that the optimal alpha
     # increases as the number of samples increases.
@@ -434,6 +434,7 @@ def test_lars_cv():
     assert_false(hasattr(lars_cv, 'n_nonzero_coefs'))
 
 
+@pytest.mark.filterwarnings('ignore::FutureWarning')
 def test_lars_cv_max_iter():
     with warnings.catch_warnings(record=True) as w:
         X = diabetes.data
@@ -524,6 +525,7 @@ estimator_parameter_map = {'LassoLars': {'alpha': 0.1},
                            'LassoLarsIC': {}}
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_estimatorclasses_positive_constraint():
     # testing the transmissibility for the positive option of all estimator
     # classes in this same function here

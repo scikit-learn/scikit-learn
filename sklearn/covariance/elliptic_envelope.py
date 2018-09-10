@@ -103,11 +103,13 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
         ----------
         X : numpy array or sparse matrix, shape (n_samples, n_features).
             Training data
-        y : (ignored)
+
+        y : Ignored
+            not used, present for API consistency by convention.
+
         """
         super(EllipticEnvelope, self).fit(X)
-        self.offset_ = sp.stats.scoreatpercentile(
-            -self.dist_, 100. * self.contamination)
+        self.offset_ = np.percentile(-self.dist_, 100. * self.contamination)
         return self
 
     def decision_function(self, X, raw_values=None):
@@ -179,7 +181,7 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
         X = check_array(X)
-        is_inlier = -np.ones(X.shape[0], dtype=int)
+        is_inlier = np.full(X.shape[0], -1, dtype=int)
         values = self.decision_function(X)
         is_inlier[values >= 0] = 1
 

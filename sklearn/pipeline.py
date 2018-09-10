@@ -206,10 +206,22 @@ class Pipeline(_BaseComposition):
             if transformer is None:
                 pass
             else:
-                if hasattr(memory, 'cachedir') and memory.cachedir is None:
-                    # we do not clone when caching is disabled to preserve
-                    # backward compatibility
-                    cloned_transformer = transformer
+                if hasattr(memory, 'location'):
+                    # joblib >= 0.12
+                    if memory.location is None:
+                        # we do not clone when caching is disabled to
+                        # preserve backward compatibility
+                        cloned_transformer = transformer
+                    else:
+                        cloned_transformer = clone(transformer)
+                elif hasattr(memory, 'cachedir'):
+                    # joblib < 0.11
+                    if memory.cachedir is None:
+                        # we do not clone when caching is disabled to
+                        # preserve backward compatibility
+                        cloned_transformer = transformer
+                    else:
+                        cloned_transformer = clone(transformer)
                 else:
                     cloned_transformer = clone(transformer)
                 # Fit or load from cache the current transfomer
@@ -628,8 +640,11 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         List of transformer objects to be applied to the data. The first
         half of each tuple is the name of the transformer.
 
-    n_jobs : int, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     transformer_weights : dict, optional
         Multiplicative weights for features per transformer.
@@ -651,7 +666,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     array([[ 1.5       ,  3.0...,  0.8...],
            [-1.5       ,  5.7..., -0.4...]])
     """
-    def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
+    def __init__(self, transformer_list, n_jobs=None,
+                 transformer_weights=None):
         self.transformer_list = transformer_list
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
@@ -831,8 +847,11 @@ def make_union(*transformers, **kwargs):
     ----------
     *transformers : list of estimators
 
-    n_jobs : int, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Returns
     -------
@@ -848,7 +867,7 @@ def make_union(*transformers, **kwargs):
     >>> from sklearn.decomposition import PCA, TruncatedSVD
     >>> from sklearn.pipeline import make_union
     >>> make_union(PCA(), TruncatedSVD())    # doctest: +NORMALIZE_WHITESPACE
-    FeatureUnion(n_jobs=1,
+    FeatureUnion(n_jobs=None,
            transformer_list=[('pca',
                               PCA(copy=True, iterated_power='auto',
                                   n_components=None, random_state=None,
@@ -859,7 +878,7 @@ def make_union(*transformers, **kwargs):
                               random_state=None, tol=0.0))],
            transformer_weights=None)
     """
-    n_jobs = kwargs.pop('n_jobs', 1)
+    n_jobs = kwargs.pop('n_jobs', None)
     if kwargs:
         # We do not currently support `transformer_weights` as we may want to
         # change its type spec in make_union

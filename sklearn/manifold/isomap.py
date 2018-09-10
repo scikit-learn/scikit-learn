@@ -58,9 +58,11 @@ class Isomap(BaseEstimator, TransformerMixin):
         Algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -80,6 +82,18 @@ class Isomap(BaseEstimator, TransformerMixin):
     dist_matrix_ : array-like, shape (n_samples, n_samples)
         Stores the geodesic distance matrix of training data.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.manifold import Isomap
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> embedding = Isomap(n_components=2)
+    >>> X_transformed = embedding.fit_transform(X[:100])
+    >>> X_transformed.shape
+    (100, 2)
+
     References
     ----------
 
@@ -89,7 +103,7 @@ class Isomap(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_neighbors=5, n_components=2, eigen_solver='auto',
                  tol=0, max_iter=None, path_method='auto',
-                 neighbors_algorithm='auto', n_jobs=1):
+                 neighbors_algorithm='auto', n_jobs=None):
         self.n_neighbors = n_neighbors
         self.n_components = n_components
         self.eigen_solver = eigen_solver

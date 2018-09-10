@@ -33,7 +33,7 @@ from ..exceptions import ConvergenceWarning
 # Randomized linear model: feature selection
 
 def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
-                    n_jobs=1, verbose=False, pre_dispatch='3*n_jobs',
+                    n_jobs=None, verbose=False, pre_dispatch='3*n_jobs',
                     random_state=None, sample_fraction=.75, **params):
     random_state = check_random_state(random_state)
     # We are generating 1 - weights, and not weights
@@ -257,9 +257,11 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the resampling. If '-1', use
-        all the CPUs
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the resampling.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
@@ -316,7 +318,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
                  normalize=True, precompute='auto',
                  max_iter=500,
                  eps=np.finfo(np.float).eps, random_state=None,
-                 n_jobs=1, pre_dispatch='3*n_jobs',
+                 n_jobs=None, pre_dispatch='3*n_jobs',
                  memory=None):
         self.alpha = alpha
         self.scaling = scaling
@@ -380,7 +382,8 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
     for this_C, this_scores in zip(C, scores.T):
         # XXX : would be great to do it with a warm_start ...
         clf = LogisticRegression(C=this_C, tol=tol, penalty='l1', dual=False,
-                                 fit_intercept=fit_intercept)
+                                 fit_intercept=fit_intercept,
+                                 solver='liblinear', multi_class='ovr')
         clf.fit(X, y)
         this_scores[:] = np.any(
             np.abs(clf.coef_) > 10 * np.finfo(np.float).eps, axis=0)
@@ -451,9 +454,11 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the resampling. If '-1', use
-        all the CPUs
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the resampling.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
@@ -510,7 +515,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
                  fit_intercept=True, verbose=False,
                  normalize=True,
                  random_state=None,
-                 n_jobs=1, pre_dispatch='3*n_jobs',
+                 n_jobs=None, pre_dispatch='3*n_jobs',
                  memory=None):
         self.C = C
         self.scaling = scaling
@@ -572,7 +577,7 @@ def _lasso_stability_path(X, y, mask, weights, eps):
 def lasso_stability_path(X, y, scaling=0.5, random_state=None,
                          n_resampling=200, n_grid=100,
                          sample_fraction=0.75,
-                         eps=4 * np.finfo(np.float).eps, n_jobs=1,
+                         eps=4 * np.finfo(np.float).eps, n_jobs=None,
                          verbose=False):
     """Stability path based on randomized Lasso estimates
 
@@ -608,9 +613,11 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
     eps : float, optional
         Smallest value of alpha / alpha_max considered
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the resampling. If '-1', use
-        all the CPUs
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the resampling.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : boolean or integer, optional
         Sets the verbosity amount

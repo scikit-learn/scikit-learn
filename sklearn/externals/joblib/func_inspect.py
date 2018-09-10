@@ -11,11 +11,16 @@ import inspect
 import warnings
 import re
 import os
+import collections
 
 from ._compat import _basestring
 from .logger import pformat
 from ._memory_helpers import open_py_source
 from ._compat import PY3_OR_LATER
+
+full_argspec_fields = ('args varargs varkw defaults kwonlyargs '
+                       'kwonlydefaults annotations')
+full_argspec_type = collections.namedtuple('FullArgSpec', full_argspec_fields)
 
 
 def get_func_code(func):
@@ -169,18 +174,13 @@ def getfullargspec(func):
         return inspect.getfullargspec(func)
     except AttributeError:
         arg_spec = inspect.getargspec(func)
-        import collections
-        tuple_fields = ('args varargs varkw defaults kwonlyargs '
-                        'kwonlydefaults annotations')
-        tuple_type = collections.namedtuple('FullArgSpec', tuple_fields)
-
-        return tuple_type(args=arg_spec.args,
-                          varargs=arg_spec.varargs,
-                          varkw=arg_spec.keywords,
-                          defaults=arg_spec.defaults,
-                          kwonlyargs=[],
-                          kwonlydefaults=None,
-                          annotations={})
+        return full_argspec_type(args=arg_spec.args,
+                                 varargs=arg_spec.varargs,
+                                 varkw=arg_spec.keywords,
+                                 defaults=arg_spec.defaults,
+                                 kwonlyargs=[],
+                                 kwonlydefaults=None,
+                                 annotations={})
 
 
 def _signature_str(function_name, arg_spec):
@@ -240,8 +240,10 @@ def filter_args(func, ignore_lst, args=(), kwargs=dict()):
     arg_spec = getfullargspec(func)
     arg_names = arg_spec.args + arg_spec.kwonlyargs
     arg_defaults = arg_spec.defaults or ()
-    arg_defaults = arg_defaults + tuple(arg_spec.kwonlydefaults[k]
-                                        for k in arg_spec.kwonlyargs)
+    if arg_spec.kwonlydefaults:
+        arg_defaults = arg_defaults + tuple(arg_spec.kwonlydefaults[k]
+                                            for k in arg_spec.kwonlyargs
+                                            if k in arg_spec.kwonlydefaults)
     arg_varargs = arg_spec.varargs
     arg_varkw = arg_spec.varkw
 
@@ -273,7 +275,7 @@ def filter_args(func, ignore_lst, args=(), kwargs=dict()):
         else:
             position = arg_position - len(arg_names)
             if arg_name in kwargs:
-                arg_dict[arg_name] = kwargs.pop(arg_name)
+                arg_dict[arg_name] = kwargs[arg_name]
             else:
                 try:
                     arg_dict[arg_name] = arg_defaults[position]
