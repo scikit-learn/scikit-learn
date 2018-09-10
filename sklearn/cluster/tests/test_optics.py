@@ -179,6 +179,26 @@ def test_min_cluster_size_invalid2():
         clust.fit(X)
 
 
+def test_auto_extract_outlier():
+    np.random.seed(0)
+
+    n_points_per_cluster = 4
+
+    C1 = [-5, -2] + .8 * np.random.randn(n_points_per_cluster, 2)
+    C2 = [4, -1] + .1 * np.random.randn(n_points_per_cluster, 2)
+    X = np.vstack((C1, C2, np.array([[100, 200]])))
+    clust = OPTICS(min_samples=3).fit(X)
+
+    assert_array_equal(clust.labels_, np.r_[[0] * 4, [1] * 4, -1])
+
+    C1 = [-5, -2] + .8 * np.random.randn(n_points_per_cluster, 2)
+    C2 = [4, -1] + .1 * np.random.randn(n_points_per_cluster, 2)
+    X = np.vstack((C1, np.array([[100, 200], [200, 300]]), C2))
+    clust = OPTICS(min_samples=3).fit(X)
+
+    assert_array_equal(clust.labels_, np.r_[[0] * 4, -1, -1, [1] * 4])
+
+
 @pytest.mark.parametrize("reach, n_child, members", [
     (np.array([np.inf, 0.9, 0.9, 1.0, 0.89, 0.88, 10, .9, .9, .9, 10, 0.9,
                0.9, 0.89, 0.88, 10, .9, .9, .9, .9]), 2, np.r_[0:6]),
@@ -199,7 +219,7 @@ def test_cluster_sigmin_pruning(reach, n_child, members):
 
     # Build cluster tree inplace on root node
     _cluster_tree(root, None, cluster_boundaries, reach, ordering,
-                  5, .75, .7, .4, .3)
+                  5, .75, .7, .4, .3, 1)
     assert_equal(root.split_point, cluster_boundaries[0])
     assert_equal(n_child, len(root.children))
     assert_array_equal(members, root.children[0].points)
