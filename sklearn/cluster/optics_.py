@@ -103,6 +103,11 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
         Each local maxima should be a largest value in a neighborhood
         of the `size min_maxima_ratio * len(X)` from left and right.
 
+    xi : float between 0 and 1, optional (default=.9)
+        Defines the steepness used to include/explude a split point and
+        the last point of a split in that cluster. Setting `xi` to 1
+        would always exclude those split points. 
+
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
 
@@ -232,6 +237,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
         Used to determine neighborhood size for minimum cluster membership.
         Each local maxima should be a largest value in a neighborhood
         of the `size min_maxima_ratio * len(X)` from left and right.
+
+    xi : float between 0 and 1, optional (default=.9)
+        Defines the steepness used to include/explude a split point and
+        the last point of a split in that cluster. Setting `xi` to 1
+        would always exclude those split points.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
