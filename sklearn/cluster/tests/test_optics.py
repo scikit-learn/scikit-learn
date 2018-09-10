@@ -440,23 +440,12 @@ def test_reach_dists():
 
 
 def test_precomputed_dists():
-    rng = np.random.RandomState(0)
-    n_points_per_cluster = 50
-
-    C1 = [-5, -2] + .8 * rng.randn(n_points_per_cluster, 2)
-    C2 = [4, -1] + .1 * rng.randn(n_points_per_cluster, 2)
-    C3 = [1, -2] + .2 * rng.randn(n_points_per_cluster, 2)
-    C4 = [-2, 3] + .3 * rng.randn(n_points_per_cluster, 2)
-    C5 = [3, -2] + 1.6 * rng.randn(n_points_per_cluster, 2)
-    C6 = [5, 6] + 2 * rng.randn(n_points_per_cluster, 2)
-    X = np.vstack((C1, C2, C3, C4, C5, C6))
-
-    dists = pairwise_distances(X, metric='euclidean')
+    redX = X[::10]
+    dists = pairwise_distances(redX, metric='euclidean')
     clust1 = OPTICS(min_samples=10, algorithm='brute',
                     metric='precomputed').fit(dists)
     clust2 = OPTICS(min_samples=10, algorithm='brute',
-                    metric='euclidean').fit(X)
+                    metric='euclidean').fit(redX)
 
     assert_allclose(clust1.reachability_, clust2.reachability_)
     assert_array_equal(clust1.labels_, clust2.labels_)
-    assert_array_equal(clust1.ordering_, clust2.ordering_)
