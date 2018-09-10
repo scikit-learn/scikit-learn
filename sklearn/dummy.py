@@ -105,9 +105,11 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         -------
         self : object
         """
-        if self.strategy not in ("most_frequent", "stratified", "uniform",
-                                 "constant", "prior"):
-            raise ValueError("Unknown strategy type.")
+        allowed_strategies = ("most_frequent", "stratified", "uniform",
+                              "constant", "prior")
+        if self.strategy not in allowed_strategies:
+            raise ValueError("Unknown strategy type: %s, expected one of %s."
+                             % (self.strategy, allowed_strategies))
 
         if self.strategy == "uniform" and sp.issparse(y):
             y = y.toarray()
@@ -386,10 +388,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         -------
         self : object
         """
-        if self.strategy not in ("mean", "median", "quantile", "constant"):
-            raise ValueError("Unknown strategy type: %s, expected "
-                             "'mean', 'median', 'quantile' or 'constant'"
-                             % self.strategy)
+        allowed_strategies = ("mean", "median", "quantile", "constant")
+        if self.strategy not in allowed_strategies:
+            raise ValueError("Unknown strategy type: %s, expected one of %s."
+                             % (self.strategy, allowed_strategies))
 
         y = check_array(y, ensure_2d=False)
         if len(y) == 0:
