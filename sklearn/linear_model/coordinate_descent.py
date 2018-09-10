@@ -2254,6 +2254,8 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     >>> reg = MultiTaskLassoCV(cv=5, random_state=0).fit(X, y)
     >>> reg.score(X, y) # doctest: +ELLIPSIS
     0.9994...
+    >>> reg.alpha_
+    0.5713...
     >>> reg.predict(X[:1,])
     array([[153.7971...,  94.9015...]])
 
