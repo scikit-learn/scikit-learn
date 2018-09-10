@@ -457,8 +457,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
             # Everything is already processed. Return to main loop
             return point_index
 
-        dists = pairwise_distances(P, np.take(X, unproc, axis=0),
-                                   self.metric, n_jobs=1).ravel()
+        if self.metric == 'precomputed':
+            dists = X[point_index, unproc]
+        else:
+            dists = pairwise_distances(P, np.take(X, unproc, axis=0),
+                                       self.metric, n_jobs=None).ravel()
 
         rdists = np.maximum(dists, self.core_distances_[point_index])
         new_reach = np.minimum(np.take(self.reachability_, unproc), rdists)
