@@ -219,6 +219,28 @@ def test_classifier_score_with_None(y, y_test):
     assert_equal(clf.score(None, y_test), 0.5)
 
 
+@pytest.mark.parametrize("strategy", [
+    "stratified",
+    "most_frequent",
+    "prior",
+    "uniform",
+    "constant"
+])
+def test_classifier_prediction_independent_of_X(strategy):
+    y = [0, 2, 1, 1]
+    X1 = [[0]] * 4
+    clf1 = DummyClassifier(strategy=strategy, random_state=0, constant=0)
+    clf1.fit(X1, y)
+    predictions1 = clf1.predict(X1)
+
+    X2 = [[1]] * 4
+    clf2 = DummyClassifier(strategy=strategy, random_state=0, constant=0)
+    clf2.fit(X2, y)
+    predictions2 = clf2.predict(X2)
+
+    assert_array_equal(predictions1, predictions2)
+
+
 def test_classifier_exceptions():
     clf = DummyClassifier(strategy="unknown")
     assert_raises(ValueError, clf.fit, [], [])
@@ -667,3 +689,24 @@ def test_regressor_score_with_None(y, y_test):
     reg = DummyRegressor()
     reg.fit(None, y)
     assert_equal(reg.score(None, y_test), 1.0)
+
+
+@pytest.mark.parametrize("strategy", [
+    "mean",
+    "median",
+    "quantile",
+    "constant"
+])
+def test_regressor_prediction_independent_of_X(strategy):
+    y = [0, 2, 1, 1]
+    X1 = [[0]] * 4
+    reg1 = DummyRegressor(strategy=strategy, constant=0, quantile=0.7)
+    reg1.fit(X1, y)
+    predictions1 = reg1.predict(X1)
+
+    X2 = [[1]] * 4
+    reg2 = DummyRegressor(strategy=strategy, constant=0, quantile=0.7)
+    reg2.fit(X2, y)
+    predictions2 = reg2.predict(X2)
+
+    assert_array_equal(predictions1, predictions2)
