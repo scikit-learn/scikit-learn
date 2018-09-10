@@ -1,3 +1,11 @@
+"""
+This script generates an html table of contributors, with names and avatars.
+The list is generated from scikit-learn's teams on GitHub, plus a small number
+of hard-coded contributors.
+
+The table should be updated for each new inclusion in the teams.
+Generating the table requires admin rights.
+"""
 from __future__ import print_function
 
 import sys
@@ -31,8 +39,8 @@ def group_iterable(iterable, size):
 
 
 def get_contributors():
-    """Get the list of contributor profiles. Require the push rights."""
-    # get members of scikit-learn teams on github
+    """Get the list of contributor profiles. Require admin rights."""
+    # get members of scikit-learn teams on GitHub
     members = []
     for team in [11523, 33471]:
         for page in [1, 2]:  # 30 per page
@@ -42,16 +50,16 @@ def get_contributors():
 
     # keep only the logins
     logins = [c['login'] for c in members]
-    # add missing contributors with github accounts
+    # add missing contributors with GitHub accounts
     logins.extend(['dubourg', 'jarrodmillman', 'mbrucher', 'thouis'])
-    # add missing contributors without github accounts
+    # add missing contributors without GitHub accounts
     logins.extend(['Angel Soler Gollonet'])
     # remove duplicate
     logins = set(logins)
     # remove CI
     logins.remove('sklearn-ci')
 
-    # get profiles from github
+    # get profiles from GitHub
     profiles = [get_profile(login) for login in logins]
     # sort by last name
     profiles = sorted(profiles, key=key)
@@ -64,11 +72,20 @@ def get_profile(login):
     profile = requests.get("https://api.github.com/users/%s" % login,
                            auth=auth).json()
     if 'name' not in profile:
-        # default if the login does not exist
+        # default profile if the login does not exist
         return dict(name=login, avatar_url=LOGO_URL, html_url="")
     else:
         if profile["name"] is None:
             profile["name"] = profile["login"]
+
+        # fix missing names
+        missing_names = {'bthirion': 'Bertrand Thirion',
+                         'dubourg': 'Vincent Dubourg',
+                         'Duchesnay': 'Edouard Duchesnay',
+                         'Lars': 'Lars Buitinck',
+                         'MechCoder': 'Manoj Kumar'}
+        if profile["name"] in missing_names:
+            profile["name"] = missing_names[profile["name"]]
         return profile
 
 

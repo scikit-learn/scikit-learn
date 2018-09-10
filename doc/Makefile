@@ -108,6 +108,3 @@ optipng:
 
 dist: html latexpdf
 	cp _build/latex/user_guide.pdf _build/html/stable/_downloads/scikit-learn-docs.pdf
-
-authors:
-	python gen_authors.py > authors.rst
