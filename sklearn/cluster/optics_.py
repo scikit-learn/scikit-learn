@@ -25,7 +25,7 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
            p=2, metric_params=None, maxima_ratio=.75,
            rejection_ratio=.7, similarity_threshold=0.4,
            significant_min=.003, min_cluster_size=.005,
-           min_maxima_ratio=0.001, algorithm='ball_tree',
+           min_maxima_ratio=0.001, xi=0.8, algorithm='ball_tree',
            leaf_size=30, n_jobs=None):
     """Perform OPTICS clustering from vector array
 
@@ -153,7 +153,7 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
     clust = OPTICS(min_samples, max_eps, metric, p, metric_params,
                    maxima_ratio, rejection_ratio,
                    similarity_threshold, significant_min,
-                   min_cluster_size, min_maxima_ratio,
+                   min_cluster_size, min_maxima_ratio, xi,
                    algorithm, leaf_size, n_jobs)
     clust.fit(X)
     return clust.core_sample_indices_, clust.labels_
@@ -294,7 +294,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                  p=2, metric_params=None, maxima_ratio=.75,
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size=.005,
-                 min_maxima_ratio=0.001, algorithm='ball_tree',
+                 min_maxima_ratio=0.001, xi=.8, algorithm='ball_tree',
                  leaf_size=30, n_jobs=None):
 
         self.max_eps = max_eps
@@ -305,6 +305,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.significant_min = significant_min
         self.min_cluster_size = min_cluster_size
         self.min_maxima_ratio = min_maxima_ratio
+        self.xi = xi
         self.algorithm = algorithm
         self.metric = metric
         self.metric_params = metric_params
@@ -379,7 +380,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
                                                  self.similarity_threshold,
                                                  self.significant_min,
                                                  self.min_cluster_size,
-                                                 self.min_maxima_ratio)
+                                                 self.min_maxima_ratio,
+                                                 self.xi)
         self.core_sample_indices_ = indices_
         return self
 
@@ -508,7 +510,7 @@ def _extract_dbscan(ordering, core_distances, reachability, eps):
 def _extract_optics(ordering, reachability, maxima_ratio=.75,
                     rejection_ratio=.7, similarity_threshold=0.4,
                     significant_min=.003, min_cluster_size=.005,
-                    min_maxima_ratio=0.001):
+                    min_maxima_ratio=0.001, xi=0.8):
     """Performs automatic cluster extraction for variable density data.
 
     Parameters
@@ -568,7 +570,7 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     root_node = _automatic_cluster(reachability_plot, ordering,
                                    maxima_ratio, rejection_ratio,
                                    similarity_threshold, significant_min,
-                                   min_cluster_size, min_maxima_ratio)
+                                   min_cluster_size, min_maxima_ratio, xi)
     leaves = _get_leaves(root_node, [])
     # Start cluster id's at 0
     clustid = 0
@@ -581,13 +583,20 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
         labels[index] = clustid
         is_core[index] = 1
         clustid += 1
+
+    # check if the last point is xi-steep upward
+    last_point = ordering[-1]
+    if reachability_plot[-2] <= reachability_plot[-1] * (1 - xi):
+        labels[last_point] = -1
+        is_core[last_point] = 0
+
     return np.arange(n_samples)[is_core], labels
 
 
 def _automatic_cluster(reachability_plot, ordering,
                        maxima_ratio, rejection_ratio,
                        similarity_threshold, significant_min,
-                       min_cluster_size, min_maxima_ratio):
+                       min_cluster_size, min_maxima_ratio, xi):
     """Converts reachability plot to cluster tree and returns root node.
 
     Parameters
@@ -613,7 +622,7 @@ def _automatic_cluster(reachability_plot, ordering,
     _cluster_tree(root_node, None, local_maxima_points,
                   reachability_plot, ordering, min_cluster_size,
                   maxima_ratio, rejection_ratio,
-                  similarity_threshold, significant_min)
+                  similarity_threshold, significant_min, xi)
 
     return root_node
 
@@ -657,7 +666,7 @@ def _find_local_maxima(reachability_plot, neighborhood_size):
 def _cluster_tree(node, parent_node, local_maxima_points,
                   reachability_plot, reachability_ordering,
                   min_cluster_size, maxima_ratio, rejection_ratio,
-                  similarity_threshold, significant_min):
+                  similarity_threshold, significant_min, xi):
     """Recursively builds cluster tree to hold hierarchical cluster structure
 
     node is a node or the root of the tree in the first call
@@ -677,15 +686,21 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     # create two new nodes and add to list of nodes
     node_1 = _TreeNode(reachability_ordering[node.start:s],
                        node.start, s, node)
-    node_2 = _TreeNode(reachability_ordering[s + 1:node.end],
-                       s + 1, node.end, node)
+
+    # check if s is xi-steep downward
+    if reachability_plot[s] * (1 - xi) >= reachability_plot[s + 1]:
+        node_2_start = s
+    else:
+        node_2_start = s + 1
+    node_2 = _TreeNode(reachability_ordering[node_2_start:node.end],
+                       node_2_start, node.end, node)
     local_max_1 = []
     local_max_2 = []
 
     for i in local_maxima_points:
         if i < s:
             local_max_1.append(i)
-        if i > s:
+        if i >= node_2_start:
             local_max_2.append(i)
 
     node_list = []
@@ -725,7 +740,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
             _cluster_tree(node, parent_node, local_maxima_points,
                           reachability_plot, reachability_ordering,
                           min_cluster_size, maxima_ratio, rejection_ratio,
-                          similarity_threshold, significant_min)
+                          similarity_threshold, significant_min, xi)
             return
 
     # remove clusters that are too small
@@ -758,13 +773,13 @@ def _cluster_tree(node, parent_node, local_maxima_points,
             _cluster_tree(nl[0], parent_node, nl[1],
                           reachability_plot, reachability_ordering,
                           min_cluster_size, maxima_ratio, rejection_ratio,
-                          similarity_threshold, significant_min)
+                          similarity_threshold, significant_min, xi)
         else:
             node.children.append(nl[0])
             _cluster_tree(nl[0], node, nl[1], reachability_plot,
                           reachability_ordering, min_cluster_size,
                           maxima_ratio, rejection_ratio,
-                          similarity_threshold, significant_min)
+                          similarity_threshold, significant_min, xi)
 
 
 def _get_leaves(node, arr):
