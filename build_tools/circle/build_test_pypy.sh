@@ -25,7 +25,7 @@ ccache -M 512M
 export CCACHE_COMPRESS=1
 export PATH=/usr/lib/ccache:$PATH
 
-pip install -e .
+pip install -vv -e . 
 
-pytest -n 1 sklearn/
+pytest -n 1 -Wignore::DeprecationWarning -Wignore::FutureWarning sklearn/
 make test-sphinxext test-doc
