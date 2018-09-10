@@ -48,6 +48,7 @@ Pipeline(
     memory=None)"""
     expected_repr = expected_repr[1:]  # Remove first \n
     repr_ = f(pipeline)
+    print(repr_)
     assert set(expected_repr) == set(repr_)
     assert max(len(line) for line in repr_.split('\n')) <= f.width
 
@@ -136,6 +137,8 @@ RFE(
 
     expected_repr = expected_repr[1:]  # Remove first \n
     repr_ = f(estimator)
+    print()
+    print(repr_)
     assert expected_repr == repr_
     #  assert max(len(line) for line in repr_.split('\n')) <= f.width
 
@@ -218,3 +221,58 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
     repr_ = f(gs)
     assert expected_repr == repr_
     #  assert max(len(line) for line in repr_.split('\n')) <= f.width
+
+def zob():
+    class Estiii(BaseEstimator):
+        def __init__(self, attrrrr):
+            self.attrrrr = attrrrr
+
+    f = _Formatter()
+
+    est = Estiii(list(range(30)))
+    print(f(est))
+
+    est = Estiii(dict(zip(range(30), range(30))))
+    print(f(est))
+
+    attr = dict(zip(range(30), range(30)))
+    attr[2] = list(range(10))
+    est = Estiii(attr)
+    print(f(est))
+
+    attr = dict(zip(range(30), range(30)))
+    attr[2] = list(range(20))
+    est = Estiii(attr)
+    print(f(est))
+
+    from prettyprinter import pprint
+    pprint(est, width=80, compact=True)
+
+zob()
+
+
+def hello():
+
+    import re
+    param_grid = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
+                   'C': [1, 10, 100, 1000]},
+                  {'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
+
+    gs = GridSearchCV(SVC(), param_grid, cv=5)
+    s = repr(gs)
+    s = re.sub(r'\n', '', s)
+    s = re.sub(r' +', ' ', s)
+    s = s.split()
+
+    space_left = 79
+    for i in range(len(s)):
+        print(s[i], end='')
+        space_left -= len(s[i])
+        if i + 1 < len(s) and len(s[i + 1]) <= space_left:
+            print(' ', end='')
+        else:
+            print()
+            print(' ' * 4, end='')
+            space_left = 79 - 4
+    print()
+
