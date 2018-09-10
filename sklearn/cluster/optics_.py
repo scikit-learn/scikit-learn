@@ -106,7 +106,7 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
     xi : float between 0 and 1, optional (default=.9)
         Defines the steepness used to include/explude a split point and
         the last point of a split in that cluster. Setting `xi` to 1
-        would always exclude those split points. 
+        would always exclude those split points.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
@@ -700,7 +700,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     # check if the last point is xi-steep upward
     node_2_end = node.end
     if (reachability_plot[node.end - 1] * (1 - xi)
-        >= reachability_plot[node.end - 2]):
+            >= reachability_plot[node.end - 2]):
         node_2_end = node.end - 1
 
     node_2 = _TreeNode(reachability_ordering[node_2_start:node_2_end],
