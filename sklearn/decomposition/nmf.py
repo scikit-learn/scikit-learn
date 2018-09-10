@@ -306,7 +306,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     check_non_negative(X, "NMF initialization")
     n_samples, n_features = X.shape
 
-    if (init and init != 'random'
+    if (init is not None and init != 'random'
             and n_components > min(n_samples, n_features)):
         raise ValueError("init = '{}' can only be used when "
                          "n_components <= min(n_samples, n_features)"
