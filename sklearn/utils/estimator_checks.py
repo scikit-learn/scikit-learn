@@ -1193,9 +1193,8 @@ def check_estimators_pickle(name, estimator_orig):
 
 
 def check_pairwise_estimator_tag(name, estimator_orig):
-    attributes_to_check = [('metric', 'precomputed'),
-                           ('affinity', 'precomputed'),
-                           ('kernel', 'precomputed')]
+    attributes_to_check = ['metric', 'affinity', 'kernel']
+    attribute_value = 'precomputed'
 
     # Check if _pairwise attribute is present - will be used later
     has_pairwise_tag = (False
@@ -1207,15 +1206,15 @@ def check_pairwise_estimator_tag(name, estimator_orig):
     X, y_ = iris.data, iris.target
     distance_matrix = pairwise_distances(X)
 
-    for attribute, attribute_value in attributes_to_check:
+    for attribute in attributes_to_check:
         # Check to see if attribute value is supported by estimator
-        if attribute not in estimator_orig.get_params():
+        if attribute not in estimator_orig.get_params(deep=False):
             continue
         try:
             # Construct new object of estimator with desired attribute value
             modified_estimator = clone(estimator_orig).set_params(
                                                 **{attribute: attribute_value})
-            # Not all estimators validate parameters, so check fit()
+            # Estimators may validate parameters in fit if not in set_params
             modified_estimator.fit(distance_matrix, y_)
         except (TypeError, ValueError, KeyError):
             # Estimator does not support given attribute value
@@ -1235,10 +1234,10 @@ def check_pairwise_estimator_tag(name, estimator_orig):
                     modified_estimator.predict(X)
         except ValueError:
             # Check if estimator defines _pairwise attribute
-            assert_true(has_pairwise_tag,
-                        msg="{0} implements {1}={2} but does"
-                            " not implement '_pairwise' estimator tag"
-                            "".format(name, attribute, attribute_value))
+            error_message = ("{0} implements {1}={2} but does"
+                             " not implement '_pairwise' estimator tag"
+                             "".format(name, attribute, attribute_value))
+            assert has_pairwise_tag is True, error_message
         else:
             # Estimator does not raise an error - skip
             continue
