@@ -1,218 +1,229 @@
-from collections import OrderedDict
-import re
-
-import numpy as np
-
-from sklearn.base import BaseEstimator
+import pprint
+from .base import BaseEstimator
 
 
-def get_params(func):
-    """Return dict (name: default_value) describing the parameters of given
-    function."""
-    try:  # Python 3
-        from inspect import signature
-        params = signature(func).parameters
-        names = list(sorted(params.keys()))
-        defaults = [params[name].default for name in names]
-        params = OrderedDict(zip(names, defaults))
-    except ImportError:  # Python 2
-        from inspect import getargspec
-        from itertools import izip_longest
-        arg_specs = getargspec(func)
-        if arg_specs.args[0] == 'self':
-            names = arg_specs.args[1:]
-        else:
-            names = arg_specs.args
-        names, defaults = zip(*sorted(izip_longest(names, arg_specs.defaults,
-                                                   fillvalue=None)))
-        params = OrderedDict(zip(names, defaults))
-
-    return params
+# Dummy classes for correctly rendering key-value tuples from dicts or
+# parameters
+class KeyValTuple(tuple):
+    pass
 
 
-def changed_params(estimator):
-    """Return dict (name: value) of parameters that were given to estimator
-    with non-default values."""
-
-    params = estimator.get_params(deep=False)
-    filtered_params = {}
-    init = getattr(estimator.__init__, 'deprecated_original',
-                   estimator.__init__)
-    init_params = get_params(init)
-    for k, v in params.items():
-        if v != init_params[k]:
-            filtered_params[k] = v
-    return filtered_params
+class KeyValTupleParam(KeyValTuple):
+    pass
 
 
-def _strip_color(string):
-    """Remove terminal color characters from a string"""
-    return re.sub('\033\[[0-9;]+m', "", string)
+class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
+    """Pretty Printer class for estimator objects.
 
+    Quick overview of the pprint.PrettyPrinter class (see also
+    https://stackoverflow.com/questions/49565047/pprint-with-hex-numbers):
 
-class _Formatter(object):
-    """Formatter class for pretty printing scikit-learn objects.
+    - the entry point is the _format() method which calls format() (overridden
+      here)
+    - format() directly calls _safe_repr() for a first try at rendering the
+      object
+    - _safe_repr formats the whole object reccursively, only calling itself,
+      not caring about line lenght or anything
+    - back to _format(), if the output string is too long, _format() then calls
+      the appropriate _pprint_TYPE() method (e.g. _pprint_list()) depending on
+      the type of the object. This where the line length and the compact
+      parameters are taken into account.
+    - those _pprint_TYPE() methods will internally use the format() method for
+      rendering the nested objects of an objects (e.g. the elements of a list)
 
-    Parameters
-    ----------
-    indent_est : str, optional (default='step')
-        Indentation strategy for long strings describing estimators. If 'step',
-        the indentation is constant and the next line is endented with 4 blank
-        spaces. If 'name', the next line is aligned after the estimator name.
-    changed_only : bool, optional (default=False)
-        If True, only show parameters that have non-default values.
-    color_changed : bool, optional (default=False)
-        If True, color the parameters with non-default values.
-    default_color : str, optional
-        Color for the parameters with non-default values. Default is light grey
-        (r=100,g=100,b=100).
+    In the end, everything has to be implemented twice: in _safe_repr and in
+    the custom _pprint_TYPE methods.
     """
-    def __init__(self, indent_est='step', changed_only=False,
-                 color_changed=False, default_color='\033[38;2;100;100;100m'):
-        self.indent_est = indent_est
-        self.changed_only = changed_only
-        self.color_changed = color_changed
 
-        self.default_color = default_color
-        self.types = {}
-        self.htchar = ' '
-        self.lfchar = '\n'
-        self.step = 4
-        self.width = 79
 
-        self.set_formatter(object, self.__class__._format_object)
-        self.set_formatter(dict, self.__class__._format_dict)
-        self.set_formatter(list, self.__class__._format_list)
-        self.set_formatter(tuple, self.__class__._format_tuple)
-        self.set_formatter(BaseEstimator, self.__class__._format_estimator)
-        self.set_formatter(np.ndarray, self.__class__._format_ndarray)
-        self.set_formatter('callable', self.__class__._format_callable)
+    def format(self, object, context, maxlevels, level):
+        return _safe_repr(object, context, maxlevels, level)
 
-    def set_formatter(self, cls, callback):
-        """Associate given callback with the formatting of objects with class
-        cls"""
-        self.types[cls] = callback
+    def _pprint_estimator(self, object, stream, indent, allowance, context,
+                          level):
+        stream.write(object.__class__.__name__ + '(')
+        params = object.get_params(deep=False)
+        self._format_params(params.items(), stream, indent +
+                            len(object.__class__.__name__), allowance + 1,
+                            context, level)
+        stream.write(')')
 
-    def __call__(self, value):
-        return self._format_all(value, indent=0, start_on=0)
+    def _format_dict_items(self, items, stream, indent, allowance, context,
+                           level):
+        return self._format_params_or_dict_items(
+            items, stream, indent, allowance, context, level, is_dict=True)
 
-    def _format_all(self, value, indent, start_on):
-        """Return formated string for object value"""
+    def _format_params(self, items, stream, indent, allowance, context, level):
+        return self._format_params_or_dict_items(
+            items, stream, indent, allowance, context, level, is_dict=False)
 
-        if type(value) in self.types:
-            type_ = type(value)
-        elif isinstance(value, BaseEstimator):
-            type_ = BaseEstimator
-        elif callable(value):
-            type_ = 'callable'
+    def _format_params_or_dict_items(self, object, stream, indent, allowance,
+                                     context, level, is_dict):
+        """Format dict items or parameters respecting the compact=True
+        parameter. For some reason, the builtin rendering of dict items doesn't
+        respect compact=True and will use one line per key-value if all cannot
+        fit in a single line.
+        Dict items will be rendered as <'key': value> while params will be
+        rendered as <key=value>. The implementation is mostly copy/pasting from
+        the builtin _format_items().
+        """
+        write = stream.write
+        indent += self._indent_per_level
+        delimnl = ',\n' + ' ' * indent
+        delim = ''
+        width = max_width = self._width - indent + 1
+        it = iter(object)
+        try:
+            next_ent = next(it)
+        except StopIteration:
+            return
+        last = False
+        while not last:
+            ent = next_ent
+            try:
+                next_ent = next(it)
+            except StopIteration:
+                last = True
+                max_width -= allowance
+                width -= allowance
+            if self._compact:
+                k, v = ent
+                krepr = self._repr(k, context, level)
+                vrepr = self._repr(v, context, level)
+                if not is_dict:
+                    krepr = krepr.strip("'")
+                middle = ': ' if is_dict else '='
+                rep = krepr + middle + vrepr
+                w = len(rep) + 2
+                if width < w:
+                    width = max_width
+                    if delim:
+                        delim = delimnl
+                if width >= w:
+                    width -= w
+                    write(delim)
+                    delim = ', '
+                    write(rep)
+                    continue
+            write(delim)
+            delim = delimnl
+            class_ = KeyValTuple if is_dict else KeyValTupleParam
+            self._format(class_(ent), stream, indent,
+                         allowance if last else 1, context, level)
+
+    def _pprint_key_val_tuple(self, object, stream, indent, allowance, context,
+                              level):
+        """Pretty printing for key-value tuples from dict or parameters."""
+        k, v = object
+        rep = self._repr(k, context, level)
+        if isinstance(object, KeyValTupleParam):
+            rep = rep.strip("'")
+            middle = '='
         else:
-            type_ = object
+            middle = ': '
+        stream.write(rep)
+        stream.write(middle)
+        self._format(v, stream, indent + len(rep) + len(middle), allowance,
+                     context, level)
 
-        formatter = self.types[type_]
+    _dispatch = pprint.PrettyPrinter._dispatch
+    _dispatch[BaseEstimator.__repr__] = _pprint_estimator
+    _dispatch[KeyValTuple.__repr__] = _pprint_key_val_tuple
 
-        return formatter(self, value, indent, start_on)
 
-    def _format_object(self, value, indent, start_on):
-        return repr(value)
+def _safe_repr(object, context, maxlevels, level):
+    """Same as the builtin _safe_repr, with added support for Estimator
+    objects."""
+    typ = type(object)
 
-    def _format_dict(self, value, indent, start_on):
-        items = [repr(key) + ': ' + self._format_all(value[key], indent +
-                                                     self.step, start_on)
-                 for key in sorted(value.keys())]
-        return "{%s}" % self._join_items(items, start_on + len('{'),
-                                         start_on + len('{'))
+    if typ in pprint._builtin_scalars:
+        return repr(object), True, False
 
-    def _format_list(self, value, indent, start_on):
-        items = [self._format_all(item, indent + self.step, start_on) for item in value]
-        return "[%s]" % self._join_items(items, start_on + len('['),
-                                         start_on + len('['))
+    r = getattr(typ, "__repr__", None)
+    if issubclass(typ, dict) and r is dict.__repr__:
+        if not object:
+            return "{}", True, False
+        objid = id(object)
+        if maxlevels and level >= maxlevels:
+            return "{...}", False, objid in context
+        if objid in context:
+            return _recursion(object), False, True
+        context[objid] = 1
+        readable = True
+        recursive = False
+        components = []
+        append = components.append
+        level += 1
+        saferepr = _safe_repr
+        items = sorted(object.items(), key=pprint._safe_tuple)
+        for k, v in items:
+            krepr, kreadable, krecur = saferepr(k, context, maxlevels, level)
+            vrepr, vreadable, vrecur = saferepr(v, context, maxlevels, level)
+            append("%s: %s" % (krepr, vrepr))
+            readable = readable and kreadable and vreadable
+            if krecur or vrecur:
+                recursive = True
+        del context[objid]
+        return "{%s}" % ", ".join(components), readable, recursive
 
-    def _format_tuple(self, value, indent):
-        items = [self._format_all(item, indent + self.step) for item in value]
-        return "(%s)" % self._join_items(items, indent + self.step)
-
-    def _format_ndarray(self, value, indent):
-        return self._format_all(value.tolist(), indent + self.step)
-
-    def _format_callable(self, value, indent):
-        # Used for functions and classes
-        return value.__name__
-
-    def _format_estimator(self, value, indent, start_on):
-        if self.changed_only:
-            params = changed_params(value)
+    if (issubclass(typ, list) and r is list.__repr__) or \
+       (issubclass(typ, tuple) and r is tuple.__repr__):
+        if issubclass(typ, list):
+            if not object:
+                return "[]", True, False
+            format = "[%s]"
+        elif len(object) == 1:
+            format = "(%s,)"
         else:
-            params = value.get_params(deep=False)
+            if not object:
+                return "()", True, False
+            format = "(%s)"
+        objid = id(object)
+        if maxlevels and level >= maxlevels:
+            return format % "...", False, objid in context
+        if objid in context:
+            return _recursion(object), False, True
+        context[objid] = 1
+        readable = True
+        recursive = False
+        components = []
+        append = components.append
+        level += 1
+        for o in object:
+            orepr, oreadable, orecur = _safe_repr(o, context, maxlevels, level)
+            append(orepr)
+            if not oreadable:
+                readable = False
+            if orecur:
+                recursive = True
+        del context[objid]
+        return format % ", ".join(components), readable, recursive
 
-        # Sort params for version consistency
-        params = OrderedDict((key, params[key]) for key in
-                             sorted(params.keys()))
+    if issubclass(typ, BaseEstimator):
+        objid = id(object)
+        if maxlevels and level >= maxlevels:
+            return "{...}", False, objid in context
+        if objid in context:
+            return _recursion(object), False, True
+        context[objid] = 1
+        readable = True
+        recursive = False
+        params = object.get_params(deep=False)
+        components = []
+        append = components.append
+        level += 1
+        saferepr = _safe_repr
+        items = sorted(params.items(), key=pprint._safe_tuple)
+        for k, v in items:
+            krepr, kreadable, krecur = saferepr(k, context, maxlevels, level)
+            vrepr, vreadable, vrecur = saferepr(v, context, maxlevels, level)
+            append("%s=%s" % (krepr, vrepr))
+            readable = readable and kreadable and vreadable
+            if krecur or vrecur:
+                recursive = True
+        del context[objid]
+        return ("%s(%s)" % (typ.__name__, ", ".join(components)), readable,
+                recursive)
 
-        if self.indent_est == 'step':
-            offset = self.step
-        elif self.indent_est == "name":
-            offset = len(value.__class__.__name__) + 1
-        else:
-            raise ValueError("Invalid indent_est parameter.")
-
-        # steps representation (only for Pipeline object)
-        steps = params.pop("steps", None)
-        if steps is not None:
-            steps_str = (self.lfchar + self.htchar * (indent + offset) +
-                         "steps=[")
-            for i, step in enumerate(steps):
-                if i > 0:
-                    steps_str += (self.lfchar + self.htchar *
-                                  (indent + len("steps=[") + offset))
-                items = [
-                    self._format_all(item, indent + offset +
-                                     len("steps=[") + 1)
-                    for item in step
-                ]
-                steps_str += "(%s)" % self._join_items(
-                    items, indent + offset + len("steps=[") + 1)
-            steps_str += "]," + self.lfchar + self.htchar * (indent + offset)
-            start_on = indent + offset  # +=   ########
-        else:
-            steps_str = ""
-            start_on += len(value.__class__.__name__ + '(')
-
-        # Param representation
-        items = [str(key) + '=' + self._format_all(params[key], indent +
-                                                   offset, start_on +
-                                                   len(str(key) + '='))
-                 for key in params]
-        # add colors if needed
-        if self.color_changed:
-            changed = changed_params(value)
-
-            def color(string, key):
-                if key in changed:
-                    return self.default_color + string + '\033[0m'
-                else:
-                    return string
-
-            items = [color(item, key) for (item, key) in zip(items, params)]
-        param_repr = self._join_items(items, indent + offset, start_on)
-
-        return '%s(%s)' % (value.__class__.__name__, steps_str + param_repr)
-
-    def _join_items(self, items, indent, start_on):
-        # This method is used to separate items (typically parameter
-        # lists) with commas and to break long lines appropriately
-        this_string = ""
-        pos = len(self.htchar) * (start_on + 1)
-        for i, item in enumerate(items):
-            if i > 0:
-                this_string += ','
-                pos += 1
-            if (pos + len(_strip_color(item) + ',') > self.width and not
-                    ('\n' in item and len(item.split('\n')[0] + ',') <= self.width)):
-                this_string += self.lfchar + self.htchar * indent
-                pos = len(self.htchar) * (indent + 1)
-            elif i > 0:
-                this_string += " "
-                pos += 1
-            this_string += item
-            pos += len(_strip_color(item))
-        return this_string
+    rep = repr(object)
+    return rep, (rep and not rep.startswith('<')), False

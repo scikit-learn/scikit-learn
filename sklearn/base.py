@@ -224,9 +224,9 @@ class BaseEstimator(object):
         return self
 
     def __repr__(self):
-        class_name = self.__class__.__name__
-        return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
-                                               offset=len(class_name),),)
+        from ._pprint import _EstimatorPrettyPrinter
+        pp = _EstimatorPrettyPrinter(compact=True)
+        return '%s' % pp.pformat(self)
 
     def __getstate__(self):
         try:
