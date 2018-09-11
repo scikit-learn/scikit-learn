@@ -35,7 +35,6 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
     the custom _pprint_TYPE methods.
     """
 
-
     def format(self, object, context, maxlevels, level):
         return _safe_repr(object, context, maxlevels, level)
 
@@ -147,7 +146,7 @@ def _safe_repr(object, context, maxlevels, level):
         if maxlevels and level >= maxlevels:
             return "{...}", False, objid in context
         if objid in context:
-            return _recursion(object), False, True
+            return pprint._recursion(object), False, True
         context[objid] = 1
         readable = True
         recursive = False
@@ -182,7 +181,7 @@ def _safe_repr(object, context, maxlevels, level):
         if maxlevels and level >= maxlevels:
             return format % "...", False, objid in context
         if objid in context:
-            return _recursion(object), False, True
+            return pprint._recursion(object), False, True
         context[objid] = 1
         readable = True
         recursive = False
@@ -204,7 +203,7 @@ def _safe_repr(object, context, maxlevels, level):
         if maxlevels and level >= maxlevels:
             return "{...}", False, objid in context
         if objid in context:
-            return _recursion(object), False, True
+            return pprint._recursion(object), False, True
         context[objid] = 1
         readable = True
         recursive = False
