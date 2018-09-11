@@ -1,4 +1,6 @@
+from inspect import signature
 import pprint
+
 from .base import BaseEstimator
 
 
@@ -10,6 +12,23 @@ class KeyValTuple(tuple):
 
 class KeyValTupleParam(KeyValTuple):
     pass
+
+
+def changed_params(estimator):
+    """Return dict (name: value) of parameters that were given to estimator
+    with non-default values."""
+
+    params = estimator.get_params(deep=False)
+    filtered_params = {}
+    init_func = getattr(estimator.__init__, 'deprecated_original',
+                        estimator.__init__)
+    init_params = signature(init_func).parameters
+    init_params = {name: param.default for (name, param) in
+                   init_params.items()}
+    for k, v in params.items():
+        if v != init_params[k]:
+            filtered_params[k] = v
+    return filtered_params
 
 
 class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
@@ -35,15 +54,29 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
     the custom _pprint_TYPE methods.
     """
 
+    def __init__(self, indent=1, width=80, depth=None, stream=None, *,
+                 compact=False, indent_at_name=True, changed_only=False):
+        super().__init__(indent, width, depth, stream, compact=compact)
+        self._indent_at_name = indent_at_name
+        if self._indent_at_name:
+            self._indent_per_level = 1  # ignore indent param
+        self._changed_only = changed_only
+
     def format(self, object, context, maxlevels, level):
         return _safe_repr(object, context, maxlevels, level)
 
     def _pprint_estimator(self, object, stream, indent, allowance, context,
                           level):
         stream.write(object.__class__.__name__ + '(')
-        params = object.get_params(deep=False)
-        self._format_params(params.items(), stream, indent +
-                            len(object.__class__.__name__), allowance + 1,
+        if self._indent_at_name:
+            indent += len(object.__class__.__name__)
+
+        if self._changed_only:
+            params = changed_params(object)
+        else:
+            params = object.get_params(deep=False)
+
+        self._format_params(params.items(), stream, indent, allowance + 1,
                             context, level)
         stream.write(')')
 
