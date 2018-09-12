@@ -169,7 +169,7 @@ def test_cluster_sigmin_pruning(reach, n_child, members):
 def test_reach_dists():
     # Tests against known extraction array
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(12)
     n_points_per_cluster = 50
 
     C1 = [-5, -2] + .8 * rng.randn(n_points_per_cluster, 2)
