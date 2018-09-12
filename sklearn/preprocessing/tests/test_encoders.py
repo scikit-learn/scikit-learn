@@ -504,15 +504,15 @@ def test_one_hot_encoder_feature_names_unicode():
 def test_one_hot_encoder_raise_missing(X, handle_unknown):
     ohe = OneHotEncoder(categories='auto', handle_unknown=handle_unknown)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Input contains NaN"):
         ohe.fit(X)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Input contains NaN"):
         ohe.fit_transform(X)
 
     ohe.fit(X[:1, :])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Input contains NaN"):
         ohe.transform(X)
 
 
@@ -549,15 +549,15 @@ def test_ordinal_encoder_inverse():
 def test_ordinal_encoder_raise_missing(X):
     ohe = OrdinalEncoder()
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Input contains NaN"):
         ohe.fit(X)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Input contains NaN"):
         ohe.fit_transform(X)
 
     ohe.fit(X[:1, :])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Input contains NaN"):
         ohe.transform(X)
 
 
