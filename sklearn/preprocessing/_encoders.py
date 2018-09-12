@@ -10,6 +10,7 @@ import warnings
 import numpy as np
 from scipy import sparse
 
+from .. import get_config as _get_config
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..utils import check_array
@@ -52,8 +53,9 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             X = X_temp
 
         if X.dtype == np.dtype('object'):
-            if _object_dtype_isnan(X).any():
-                raise ValueError("Input contains NaN")
+            if not _get_config()['assume_finite']:
+                if _object_dtype_isnan(X).any():
+                    raise ValueError("Input contains NaN")
 
         return X
 
