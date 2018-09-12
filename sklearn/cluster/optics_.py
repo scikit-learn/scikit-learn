@@ -24,7 +24,7 @@ from ._optics_inner import quick_scan
 def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
            p=2, metric_params=None, maxima_ratio=.75,
            rejection_ratio=.7, similarity_threshold=0.4,
-           significant_min=.003, min_cluster_size_ratio=.005,
+           significant_min=.003, min_cluster_size=.005,
            min_maxima_ratio=0.001, algorithm='ball_tree',
            leaf_size=30, n_jobs=None):
     """Perform OPTICS clustering from vector array
@@ -93,8 +93,10 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
     significant_min : float, optional (default=.003)
         Sets a lower threshold on how small a significant maxima can be.
 
-    min_cluster_size_ratio : float, optional (default=.005)
-        Minimum percentage of dataset expected for cluster membership.
+    min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
+        Minimum number of samples in an OPTICS cluster, expressed as an
+        absolute number or a fraction of the number of samples (rounded
+        to be at least 2).
 
     min_maxima_ratio : float, optional (default=.001)
         Used to determine neighborhood size for minimum cluster membership.
@@ -151,7 +153,7 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
     clust = OPTICS(min_samples, max_eps, metric, p, metric_params,
                    maxima_ratio, rejection_ratio,
                    similarity_threshold, significant_min,
-                   min_cluster_size_ratio, min_maxima_ratio,
+                   min_cluster_size, min_maxima_ratio,
                    algorithm, leaf_size, n_jobs)
     clust.fit(X)
     return clust.core_sample_indices_, clust.labels_
@@ -221,8 +223,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
     significant_min : float, optional (default=.003)
         Sets a lower threshold on how small a significant maxima can be.
 
-    min_cluster_size_ratio : float, optional (default=.005)
-        Minimum percentage of dataset expected for cluster membership.
+    min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
+        Minimum number of samples in an OPTICS cluster, expressed as an
+        absolute number or a fraction of the number of samples (rounded
+        to be at least 2).
 
     min_maxima_ratio : float, optional (default=.001)
         Used to determine neighborhood size for minimum cluster membership.
@@ -289,7 +293,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     def __init__(self, min_samples=5, max_eps=np.inf, metric='euclidean',
                  p=2, metric_params=None, maxima_ratio=.75,
                  rejection_ratio=.7, similarity_threshold=0.4,
-                 significant_min=.003, min_cluster_size_ratio=.005,
+                 significant_min=.003, min_cluster_size=.005,
                  min_maxima_ratio=0.001, algorithm='ball_tree',
                  leaf_size=30, n_jobs=None):
 
@@ -299,7 +303,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.rejection_ratio = rejection_ratio
         self.similarity_threshold = similarity_threshold
         self.significant_min = significant_min
-        self.min_cluster_size_ratio = min_cluster_size_ratio
+        self.min_cluster_size = min_cluster_size
         self.min_maxima_ratio = min_maxima_ratio
         self.algorithm = algorithm
         self.metric = metric
@@ -330,22 +334,31 @@ class OPTICS(BaseEstimator, ClusterMixin):
         X = check_array(X, dtype=np.float)
 
         n_samples = len(X)
+
+        if self.min_samples > n_samples:
+            raise ValueError("Number of training samples (n_samples=%d) must "
+                             "be greater than min_samples (min_samples=%d) "
+                             "used for clustering." %
+                             (n_samples, self.min_samples))
+
+        if self.min_cluster_size <= 0 or (self.min_cluster_size !=
+                                          int(self.min_cluster_size)
+                                          and self.min_cluster_size > 1):
+            raise ValueError('min_cluster_size must be a positive integer or '
+                             'a float between 0 and 1. Got %r' %
+                             self.min_cluster_size)
+        elif self.min_cluster_size > n_samples:
+            raise ValueError('min_cluster_size must be no greater than the '
+                             'number of samples (%d). Got %d' %
+                             (n_samples, self.min_cluster_size))
+
         # Start all points as 'unprocessed' ##
-        self._processed = np.zeros((n_samples, 1), dtype=bool)
         self.reachability_ = np.empty(n_samples)
         self.reachability_.fill(np.inf)
         self.core_distances_ = np.empty(n_samples)
         self.core_distances_.fill(np.nan)
         # Start all points as noise ##
         self.labels_ = np.full(n_samples, -1, dtype=int)
-        self.ordering_ = []
-
-        # Check for valid n_samples relative to min_samples
-        if self.min_samples > n_samples:
-            raise ValueError("Number of training samples (n_samples=%d) must "
-                             "be greater than min_samples (min_samples=%d) "
-                             "used for clustering." %
-                             (n_samples, self.min_samples))
 
         nbrs = NearestNeighbors(n_neighbors=self.min_samples,
                                 algorithm=self.algorithm,
@@ -357,11 +370,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.core_distances_[:] = nbrs.kneighbors(X,
                                                   self.min_samples)[0][:, -1]
 
-        # Main OPTICS loop. Not parallelizable. The order that entries are
-        # written to the 'ordering_' list is important!
-        for point in range(n_samples):
-            if not self._processed[point]:
-                self._expand_cluster_order(point, X, nbrs)
+        self.ordering_ = self._calculate_optics_order(X, nbrs)
 
         indices_, self.labels_ = _extract_optics(self.ordering_,
                                                  self.reachability_,
@@ -369,50 +378,57 @@ class OPTICS(BaseEstimator, ClusterMixin):
                                                  self.rejection_ratio,
                                                  self.similarity_threshold,
                                                  self.significant_min,
-                                                 self.min_cluster_size_ratio,
+                                                 self.min_cluster_size,
                                                  self.min_maxima_ratio)
         self.core_sample_indices_ = indices_
         return self
 
-    # OPTICS helper functions; these should not be public #
+    # OPTICS helper functions
 
-    def _expand_cluster_order(self, point, X, nbrs):
-        # As above, not parallelizable. Parallelizing would allow items in
-        # the 'unprocessed' list to switch to 'processed'
-        if self.core_distances_[point] <= self.max_eps:
-            while not self._processed[point]:
-                self._processed[point] = True
-                self.ordering_.append(point)
-                point = self._set_reach_dist(point, X, nbrs)
-        else:  # For very noisy points
-            self.ordering_.append(point)
-            self._processed[point] = True
+    def _calculate_optics_order(self, X, nbrs):
+        # Main OPTICS loop. Not parallelizable. The order that entries are
+        # written to the 'ordering_' list is important!
+        processed = np.zeros(X.shape[0], dtype=bool)
+        ordering = np.zeros(X.shape[0], dtype=int)
+        ordering_idx = 0
+        for point in range(X.shape[0]):
+            if processed[point]:
+                continue
+            if self.core_distances_[point] <= self.max_eps:
+                while not processed[point]:
+                    processed[point] = True
+                    ordering[ordering_idx] = point
+                    ordering_idx += 1
+                    point = self._set_reach_dist(point, processed, X, nbrs)
+            else:  # For very noisy points
+                ordering[ordering_idx] = point
+                ordering_idx += 1
+                processed[point] = True
+        return ordering
 
-    def _set_reach_dist(self, point_index, X, nbrs):
-        P = np.array(X[point_index]).reshape(1, -1)
+    def _set_reach_dist(self, point_index, processed, X, nbrs):
+        P = X[point_index:point_index + 1]
         indices = nbrs.radius_neighbors(P, radius=self.max_eps,
                                         return_distance=False)[0]
 
         # Getting indices of neighbors that have not been processed
-        unproc = np.compress((~np.take(self._processed, indices)).ravel(),
+        unproc = np.compress((~np.take(processed, indices)).ravel(),
                              indices, axis=0)
         # Keep n_jobs = 1 in the following lines...please
-        if len(unproc) > 0:
-            dists = pairwise_distances(P, np.take(X, unproc, axis=0),
-                                       self.metric, n_jobs=None).ravel()
-
-            rdists = np.maximum(dists, self.core_distances_[point_index])
-            new_reach = np.minimum(np.take(self.reachability_, unproc), rdists)
-            self.reachability_[unproc] = new_reach
-
-        # Checks to see if everything is already processed;
-        # if so, return control to main loop
-        if unproc.size > 0:
-            # Define return order based on reachability distance
-            return(unproc[quick_scan(np.take(self.reachability_, unproc),
-                                     dists)])
-        else:
+        if not unproc.size:
+            # Everything is already processed. Return to main loop
             return point_index
+
+        dists = pairwise_distances(P, np.take(X, unproc, axis=0),
+                                   self.metric, n_jobs=1).ravel()
+
+        rdists = np.maximum(dists, self.core_distances_[point_index])
+        new_reach = np.minimum(np.take(self.reachability_, unproc), rdists)
+        self.reachability_[unproc] = new_reach
+
+        # Define return order based on reachability distance
+        return (unproc[quick_scan(np.take(self.reachability_, unproc),
+                                  dists)])
 
     def extract_dbscan(self, eps):
         """Performs DBSCAN extraction for an arbitrary epsilon.
@@ -491,7 +507,7 @@ def _extract_dbscan(ordering, core_distances, reachability, eps):
 
 def _extract_optics(ordering, reachability, maxima_ratio=.75,
                     rejection_ratio=.7, similarity_threshold=0.4,
-                    significant_min=.003, min_cluster_size_ratio=.005,
+                    significant_min=.003, min_cluster_size=.005,
                     min_maxima_ratio=0.001):
     """Performs automatic cluster extraction for variable density data.
 
@@ -529,8 +545,10 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     significant_min : float, optional
         Sets a lower threshold on how small a significant maxima can be.
 
-    min_cluster_size_ratio : float, optional
-        Minimum percentage of dataset expected for cluster membership.
+    min_cluster_size : int > 1 or float between 0 and 1
+        Minimum number of samples in an OPTICS cluster, expressed as an
+        absolute number or a fraction of the number of samples (rounded
+        to be at least 2).
 
     min_maxima_ratio : float, optional
         Used to determine neighborhood size for minimum cluster membership.
@@ -550,7 +568,7 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     root_node = _automatic_cluster(reachability_plot, ordering,
                                    maxima_ratio, rejection_ratio,
                                    similarity_threshold, significant_min,
-                                   min_cluster_size_ratio, min_maxima_ratio)
+                                   min_cluster_size, min_maxima_ratio)
     leaves = _get_leaves(root_node, [])
     # Start cluster id's at 0
     clustid = 0
@@ -569,7 +587,7 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
 def _automatic_cluster(reachability_plot, ordering,
                        maxima_ratio, rejection_ratio,
                        similarity_threshold, significant_min,
-                       min_cluster_size_ratio, min_maxima_ratio):
+                       min_cluster_size, min_maxima_ratio):
     """Converts reachability plot to cluster tree and returns root node.
 
     Parameters
@@ -581,12 +599,9 @@ def _automatic_cluster(reachability_plot, ordering,
     """
 
     min_neighborhood_size = 2
-    min_cluster_size = int(min_cluster_size_ratio * len(ordering))
+    if min_cluster_size <= 1:
+        min_cluster_size = max(2, min_cluster_size * len(ordering))
     neighborhood_size = int(min_maxima_ratio * len(ordering))
-
-    # Should this check for < min_samples? Should this be public?
-    if min_cluster_size < 5:
-        min_cluster_size = 5
 
     # Again, should this check < min_samples, should the parameter be public?
     if neighborhood_size < min_neighborhood_size:
@@ -680,10 +695,6 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     if reachability_plot[s] < significant_min:
         node.split_point = -1
         # if split_point is not significant, ignore this split and continue
-        _cluster_tree(node, parent_node, local_maxima_points,
-                      reachability_plot, reachability_ordering,
-                      min_cluster_size, maxima_ratio, rejection_ratio,
-                      similarity_threshold, significant_min)
         return
 
     # only check a certain ratio of points in the child

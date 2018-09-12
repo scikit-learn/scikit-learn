@@ -343,12 +343,6 @@ Support for Python 3.3 has been officially dropped.
   while mask does not allow this functionality.
   :issue:`9524` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |API| The parameters ``min_samples_leaf`` and ``min_weight_fraction_leaf`` in
-  tree-based ensembles are deprecated and will be removed (fixed to 1 and 0
-  respectively) in version 0.22.  These parameters were not effective for
-  regularization and at worst would produce bad splits.  :issue:`10773` by
-  :user:`Bob Chen <lasagnaman>` and `Joel Nothman`_.
-
 - |Fix| :class:`ensemble.BaseBagging` where one could not deterministically
   reproduce ``fit`` result using the object attributes when ``random_state``
   is set. :issue:`9723` by :user:`Guillaume Lemaitre <glemaitre>`.
@@ -1034,13 +1028,6 @@ Support for Python 3.3 has been officially dropped.
   cause suboptimal splits to be chosen since the impurity calculation
   considered all samples to be of equal weight importance.
   :issue:`11464` by :user:`John Stott <JohnStott>`.
-
-- |API| The parameters ``min_samples_leaf`` and ``min_weight_fraction_leaf`` in
-  :class:`tree.DecisionTreeClassifier` and :class:`tree.DecisionTreeRegressor`
-  are deprecated and will be removed (fixed to 1 and 0 respectively) in version
-  0.22.  These parameters were not effective for regularization and at worst
-  would produce bad splits.  :issue:`10773` by :user:`Bob Chen <lasagnaman>`
-  and `Joel Nothman`_.
 
 
 :mod:`sklearn.utils`
