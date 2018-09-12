@@ -2,17 +2,17 @@
 ===================================================
 Self-training: Comparing performance
 ===================================================
-This example demonstrates the performance of the SelfTraining classifier.
+This example demonstrates the performance of the SelfTrainingClassifier.
 
 The iris dataset is loaded, and a SVC classifier is created. Then, a
-SelfTraining classifier is initialised, using the same SVC as its
+SelfTrainingClassifier is initialised, using the same SVC as its
 base estimator.
 
-The dataset contains 150 data points, and the SelfTraining classifier is
+The dataset contains 150 data points, and the SelfTrainingClassifier is
 trained using all 150 data points, although most are unlabeled. The normal SVC
 is trained using only the labeled data points.
 
-The graph shows that the SelfTraining classifier outperforms the normal SVC
+The graph shows that the SelfTrainingClassifier outperforms the normal SVC
 when only few labeled data points are available.
 """
 # Authors: Oliver Rausch <oliverrausch99@gmail.com>
@@ -21,7 +21,7 @@ when only few labeled data points are available.
 print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.semi_supervised.self_training import SelfTraining
+from sklearn.semi_supervised.self_training import SelfTrainingClassifier
 from sklearn.utils import shuffle
 from sklearn.svm import SVC
 from sklearn.datasets import load_iris
@@ -34,7 +34,7 @@ self_training_score = []
 x_values = []
 
 clf = SVC(probability=True, C=100, gamma=0.8, kernel='rbf')
-self_training_clf = SelfTraining(
+self_training_clf = SelfTrainingClassifier(
     clone(clf, safe=True), max_iter=100, threshold=0.8
 )
 
@@ -78,7 +78,8 @@ for t in range(80, 15, -5):
 
 plt.figure(1)
 plt.plot(x_values, supervised_score, label='Supervised (SVC)')
-plt.plot(x_values, self_training_score, label='SelfTraining')
+plt.plot(x_values, self_training_score,
+         label='SelfTrainingClassifier using SVC')
 plt.legend()
 plt.ylabel("f1_score (macro average)")
 plt.title("Comparison of classifiers on limited labeled data")

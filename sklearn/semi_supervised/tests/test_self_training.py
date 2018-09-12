@@ -1,23 +1,10 @@
-import numpy as np
-
-from sklearn.base import BaseEstimator
-
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_raise_message
+from sklearn.exceptions import NotFittedError
 
-from sklearn.semi_supervised import SelfTraining
+from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import ParameterGrid
-from sklearn.linear_model import Perceptron
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
@@ -45,6 +32,7 @@ limit = 50
 y_train_missing_labels = y_train.copy()
 y_train_missing_labels[limit:] = -1
 
+
 def test_classification():
     # Check classification for various parameter settings.
     grid = ParameterGrid({"max_iter": [1, 50, 100],
@@ -55,27 +43,55 @@ def test_classification():
                            KNeighborsClassifier(),
                            SVC(gamma="scale", probability=True)]:
         for params in grid:
-            SelfTraining(base_estimator,
-                         **params).fit(X_train, y_train_missing_labels).predict(X_test)
+            st = SelfTrainingClassifier(base_estimator, **params)
+            st.fit(X_train, y_train_missing_labels).predict(X_test)
 
 
 def test_missing_predict_proba():
     # Check that an error is thrown if predict_proba is not implemented
     base_estimator = SVC(gamma="scale")
-    self_training = SelfTraining(base_estimator)
+    self_training = SelfTrainingClassifier(base_estimator)
     message = "The base_estimator should implement predict_proba!"
     assert_raise_message(ValueError, message, self_training.fit, X_train,
                          y_train)
 
-def test_single_estimator():
+
+def test_invalid_iters():
+    # Test negative iterations
+    grid = ParameterGrid({"max_iter": [-1, -100, -10]})
+    base_estimator = SVC(gamma="scale", probability=True)
+    for params in grid:
+        st = SelfTrainingClassifier(base_estimator, **params)
+        message = "max_iter must be >= 0"
+        assert_raise_message(ValueError, message, st.fit, X_train, y_train)
+
+
+def test_single_iteration():
     # Check classification for single iteration.
-    # Fitting a SelfTraining estimator with one iteration and 100 unlabeled 
-    # datapoints should give the same results as fitting a normal classifier 
+    # Fitting a SelfTrainingClassifier with one iteration and 100 unlabeled
+    # datapoints should give the same results as fitting a normal classifier
     # with only 50 labeled datapoints.
 
-    clf1 = SelfTraining(base_estimator=KNeighborsClassifier(),
-                            max_iter=0).fit(X_train, y_train_missing_labels)
+    clf1 = SelfTrainingClassifier(KNeighborsClassifier(),
+                                  max_iter=0).fit(X_train,
+                                                  y_train_missing_labels)
 
     clf2 = KNeighborsClassifier().fit(X_train[:limit], y_train[:limit])
 
     assert_array_equal(clf1.predict(X_test), clf2.predict(X_test))
+
+
+def test_notfitted():
+    # Test that predicting without training throws an error
+    st = SelfTrainingClassifier(KNeighborsClassifier())
+    msg = ("This SelfTrainingClassifier instance is not fitted yet. Call "
+           "\'fit\' with appropriate arguments before using this method.")
+    assert_raise_message(NotFittedError, msg, st.predict, X_train)
+    assert_raise_message(NotFittedError, msg, st.predict_proba, X_train)
+
+
+def test_fitted():
+    # Sanity check to see that no errors are thrown
+    st = SelfTrainingClassifier(KNeighborsClassifier())
+    st.fit(X_train, y_train_missing_labels)
+    st.predict(X_train)

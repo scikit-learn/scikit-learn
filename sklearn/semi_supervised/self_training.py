@@ -4,15 +4,19 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..utils.validation import check_X_y, check_array, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils import safe_mask
+from ..base import clone
+
+__all__ = ["SelfTrainingClassifier"]
 
 
 def _check_estimator(estimator):
     """Make sure that an estimator implements the necessary methods."""
+
     if not hasattr(estimator, "predict_proba"):
         raise ValueError("The base_estimator should implement predict_proba!")
 
 
-class SelfTraining(BaseEstimator, ClassifierMixin):
+class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
 
     """Self-training classifier
 
@@ -33,10 +37,10 @@ class SelfTraining(BaseEstimator, ClassifierMixin):
     --------
     >>> import numpy as np
     >>> from sklearn import datasets
-    >>> from sklearn.semi_supervised import SelfTraining
+    >>> from sklearn.semi_supervised import SelfTrainingClassifier
     >>> from sklearn.svm import SVC
     >>> svc = SVC(probability=True, gamma="auto")
-    >>> self_training_model = SelfTraining(svc)
+    >>> self_training_model = SelfTrainingClassifier(svc)
     >>> iris = datasets.load_iris()
     >>> rng = np.random.RandomState(42)
     >>> random_unlabeled_points = rng.rand(len(iris.target)) < 0.3
@@ -64,7 +68,7 @@ class SelfTraining(BaseEstimator, ClassifierMixin):
 
     def fit(self, X, y):
         """
-        Fits SelfTraining estimator to dataset
+        Fits SelfTrainingClassifier to dataset
 
         Parameters
         ----------
@@ -79,6 +83,7 @@ class SelfTraining(BaseEstimator, ClassifierMixin):
         """
         X, y = check_X_y(X, y)
         _check_estimator(self.base_estimator)
+        self.base_estimator_ = clone(self.base_estimator)
 
         if not 0 <= self.max_iter:
             raise ValueError("max_iter must be >= 0")
@@ -92,13 +97,14 @@ class SelfTraining(BaseEstimator, ClassifierMixin):
         y_unlabeled = y[safe_mask(y, np.where(y == -1))][0]
 
         iter = 0
-        while (len(X_labeled) < len(X) and iter < self.max_iter):
+        while len(X_labeled) < len(X) and iter < self.max_iter:
             iter += 1
-            self.base_estimator.fit(X_labeled, y_labeled)
+            self.base_estimator_.fit(X_labeled, y_labeled)
 
-            # Select prediction where confidence is above the threshold
-            pred = self.base_estimator.predict(X_unlabeled)
-            max_proba = np.max(self.base_estimator.predict_proba(X_unlabeled), axis=1)
+            # Select predictions where confidence is above the threshold
+            pred = self.base_estimator_.predict(X_unlabeled)
+            max_proba = np.max(self.base_estimator_.predict_proba(X_unlabeled),
+                               axis=1)
             confident = np.where(max_proba > self.threshold)[0]
 
             # Add newly labeled confident predictions to the dataset
@@ -109,8 +115,8 @@ class SelfTraining(BaseEstimator, ClassifierMixin):
             X_unlabeled = np.delete(X_unlabeled, confident, axis=0)
             y_unlabeled = np.delete(y_unlabeled, confident, axis=0)
 
-        self.base_estimator.fit(X_labeled, y_labeled)
-        return self.base_estimator
+        self.base_estimator_.fit(X_labeled, y_labeled)
+        return self
 
     def predict(self, X):
         """Predict on a dataset.
@@ -125,10 +131,9 @@ class SelfTraining(BaseEstimator, ClassifierMixin):
         y : array-like, shape = (n_samples, 1)
             array with predicted labels
         """
-        check_is_fitted(self, 'self')
+        check_is_fitted(self, 'base_estimator_')
         X = check_array(X)
-        return self.base_estimator.predict(X)
-
+        return self.base_estimator_.predict(X)
 
     def predict_proba(self, X):
         """Predict probability for each possible outcome.
@@ -143,14 +148,19 @@ class SelfTraining(BaseEstimator, ClassifierMixin):
         y : array-like, shape = (n_samples, n_features)
             array with prediction probabilities
         """
-        check_is_fitted(self, 'self')
-        return self.base_estimator.predict_proba(X)
+        check_is_fitted(self, 'base_estimator_')
+        return self.base_estimator_.predict_proba(X)
 
     def score(self, X, y, sample_weight=None):
-        check_is_fitted(self, 'self')
-        return self.base_estimator.score(X, y, sample_weight=sample_weight)
+        check_is_fitted(self, 'base_estimator_')
+        return self.base_estimator_.score(X, y, sample_weight=sample_weight)
 
     @if_delegate_has_method(delegate='base_estimator')
     def decision_function(self, X):
-        return self.base_estimator.decision_function(X)
+        check_is_fitted(self, 'base_estimator_')
+        return self.base_estimator_.decision_function(X)
 
+    @if_delegate_has_method(delegate='base_estimator')
+    def predict_log_proba(self, X):
+        check_is_fitted(self, 'base_estimator_')
+        return self.base_estimator_.predict_log_proba(X)

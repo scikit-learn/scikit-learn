@@ -6,6 +6,6 @@ Propagation.
 """
 
 from .label_propagation import LabelPropagation, LabelSpreading
-from .self_training import SelfTraining
+from .self_training import SelfTrainingClassifier
 
-__all__ = ['SelfTraining', 'LabelPropagation', 'LabelSpreading']
+__all__ = ['SelfTrainingClassifier', 'LabelPropagation', 'LabelSpreading']
