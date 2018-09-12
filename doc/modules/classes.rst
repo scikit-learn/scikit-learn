@@ -1317,6 +1317,7 @@ Model validation
 
    semi_supervised.LabelPropagation
    semi_supervised.LabelSpreading
+   semi_supervised.SelfTrainingClassifier
 
 
 .. _svm_ref:

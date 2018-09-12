@@ -17,7 +17,6 @@ def _check_estimator(estimator):
 
 
 class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
-
     """Self-training classifier
 
     Parameters
@@ -27,7 +26,7 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
 
     threshold : float
         Threshold above which predictions are added to the labeled dataset.
-        Should be in [0, 1].
+        Should be in [0, 1).
 
     max_iter : integer
         Maximum number of iterations allowed. Should be greater than or equal
@@ -48,7 +47,7 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
     >>> labels[random_unlabeled_points] = -1
     >>> self_training_model.fit(iris.data, labels)
     ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    SVC(...)
+    SelfTrainingClassifier(...)
 
     References
     ----------
@@ -102,9 +101,11 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
             self.base_estimator_.fit(X_labeled, y_labeled)
 
             # Select predictions where confidence is above the threshold
-            pred = self.base_estimator_.predict(X_unlabeled)
-            max_proba = np.max(self.base_estimator_.predict_proba(X_unlabeled),
-                               axis=1)
+            predict_proba = self.base_estimator_.predict_proba(X_unlabeled)
+
+            pred = np.argmax(predict_proba, axis=1)
+            max_proba = np.max(predict_proba, axis=1)
+
             confident = np.where(max_proba > self.threshold)[0]
 
             # Add newly labeled confident predictions to the dataset
@@ -157,10 +158,34 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
 
     @if_delegate_has_method(delegate='base_estimator')
     def decision_function(self, X):
+        """Calls decision function of the base_estimator
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            array representing the data
+
+        Returns
+        -------
+        y : array-like, shape = (n_samples, n_features)
+            result of the decision function of the base_estimator
+        """
         check_is_fitted(self, 'base_estimator_')
         return self.base_estimator_.decision_function(X)
 
     @if_delegate_has_method(delegate='base_estimator')
     def predict_log_proba(self, X):
+        """Predict log probability for each possible outcome.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            array representing the data
+
+        Returns
+        -------
+        y : array-like, shape = (n_samples, n_features)
+            array with log prediction probabilities
+        """
         check_is_fitted(self, 'base_estimator_')
         return self.base_estimator_.predict_log_proba(X)
