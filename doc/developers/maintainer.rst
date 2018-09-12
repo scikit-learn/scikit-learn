@@ -6,7 +6,7 @@ Before a release
 
 1. Update authors table::
 
-    $ cd maint_tools; make authors; cd ..
+    $ cd build_tools; make authors; cd ..
 
    and commit.
 
