@@ -20,9 +20,7 @@ from ..utils.validation import check_is_fitted
 from .base import _transform_selected
 from .label import _encode, _encode_check_unknown
 
-
 range = six.moves.range
-
 
 __all__ = [
     'OneHotEncoder',
@@ -221,13 +219,13 @@ class OneHotEncoder(_BaseEncoder):
     handle_missing : all-missing, all-zero or category
         What should be done to missing values. Should be one of:
 
-        all-missing:
+        'all-missing':
             Replace with a row of NaNs
 
-        all-zero:
+        'all-zero:
             Replace with a row of zeros
 
-        category:
+        'category:
             Represent with a separate one-hot column
 
     missing_values: NaN or None
@@ -275,7 +273,7 @@ class OneHotEncoder(_BaseEncoder):
 
     def __init__(self, n_values=None, categorical_features=None,
                  categories=None, sparse=True, dtype=np.float64,
-                 handle_unknown='error', missing_values=None, handle_missing=None):
+                 handle_unknown='error', missing_values="NaN", handle_missing="all-missing"):
         self.categories = categories
         self.sparse = sparse
         self.dtype = dtype
@@ -584,30 +582,30 @@ class OneHotEncoder(_BaseEncoder):
         X_out : sparse matrix if sparse=True else a 2-d array
             Transformed input.
         """
-        if not self.missing_values:
-            if self._legacy_mode:
-                return _transform_selected(X, self._legacy_transform, self.dtype,
-                                       self._categorical_features,
-                                       copy=True)
-            return self._transform_new(X)
-        if self.missing_values and self.missing_values != "NaN":
-            raise ValueError("Wrong 'missing_missing' value specified. "
-                             "'missing_values' should be one of either 'None' or 'NaN'")
-        if self.missing_values == "NaN":
-            if not self.handle_missing:
-                raise ValueError("'handle_missing' cannot be None when 'missing_values' is passed.")
-            if self.handle_missing not in ["all-missing", "all-zero", "category"]:
-                raise ValueError("Wrong 'handle_missing' value specified. "
-                                 "'handle_missing' should be one of either ['all-missing', 'all-zero', 'category']")
-            if self.handle_missing == "all-missing":
-                # Replace entire row with NaN
-                pass
-            if self.handle_missing == "all-zero":
-                # Replace with a row of zeros
-                pass
-            else:
-                # Replace with a seperate one-hot column
-                pass
+
+        if not self.handle_missing or self.handle_missing not in ["all-missing",
+                                                                  "all-zero", "category"]:
+            raise ValueError("Wrong 'handle_missing' value specified. "
+                             "'handle_missing' should be one of either "
+                             "['all-missing', 'all-zero', 'category']. "
+                             "Getting {0}".format(self.handle_missing))
+        missing_indices = np.argwhere(np.isnan(X)) if self.missing_values == "NaN" else \
+            np.argwhere(X == self.missing_values)
+        if self.handle_missing == "all-missing":
+            for i in missing_indices:
+                X[i] = np.nan
+        if self.handle_missing == "all-zero":
+            for i in missing_indices:
+                X[i] = 0
+        else:
+            # Replace with a seperate one-hot column
+            pass
+
+        if self._legacy_mode:
+            return _transform_selected(X, self._legacy_transform,
+                                       self.dtype,
+                                       self._categorical_features, copy=True)
+        return self._transform_new(X)
 
     def inverse_transform(self, X):
         """Convert the back data to the original representation.
@@ -694,7 +692,7 @@ class OneHotEncoder(_BaseEncoder):
         cats = self.categories_
         if input_features is None:
             input_features = ['x%d' % i for i in range(len(cats))]
-        elif(len(input_features) != len(self.categories_)):
+        elif (len(input_features) != len(self.categories_)):
             raise ValueError(
                 "input_features should have length equal to number of "
                 "features ({}), got {}".format(len(self.categories_),
