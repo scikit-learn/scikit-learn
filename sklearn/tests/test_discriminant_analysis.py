@@ -148,6 +148,18 @@ def test_lda_transform():
     assert_raise_message(NotImplementedError, msg, clf.transform, X)
 
 
+def test_lda_n_components():
+    clf = LinearDiscriminantAnalysis(solver="svd", n_components=2)
+    assert_warns_message(UserWarning, "'n_components' is not less than the "
+                         "number of classes, setting '_max_components' to "
+                         "'n_classes' - 1", clf.fit, X, y)
+    X_transformed = clf.fit(X, y).transform(X)
+    assert_equal(X_transformed.shape[1], 1)
+    clf = LinearDiscriminantAnalysis(solver="svd", n_components=2)
+    X_transformed = clf.fit(X, y3).transform(X)
+    assert_equal(X_transformed.shape[1], 2)
+
+
 def test_lda_explained_variance_ratio():
     # Test if the sum of the normalized eigen vectors values equals 1,
     # Also tests whether the explained_variance_ratio_ formed by the
