@@ -435,7 +435,9 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     verify_checksum : boolean, default=True
         Whether or not to validate that the dataset file's MD5 hash matches the
-        data set description's expected checksum.
+        data set description's expected checksum. Verification occurs when
+        fetching the data, so if cache=True, the data will be presumed valid on
+        subsequent calls.
 
     Returns
     -------
