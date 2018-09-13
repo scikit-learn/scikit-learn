@@ -143,8 +143,11 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                     "kd_tree algorithm does not support callable metric '%s'"
                     % self.metric)
         elif self.metric not in VALID_METRICS[alg_check]:
-            raise ValueError("Metric '%s' not valid for algorithm '%s'"
-                             % (self.metric, self.algorithm))
+            raise ValueError("Metric '%s' not valid. Use "
+                             "sorted(sklearn.neighbors.VALID_METRICS['%s']) "
+                             "to get valid options. "
+                             "Metric can also be a callable function."
+                             % (self.metric, alg_check))
 
         if self.metric_params is not None and 'p' in self.metric_params:
             warnings.warn("Parameter p is found in metric_params. "
