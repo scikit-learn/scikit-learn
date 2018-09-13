@@ -297,6 +297,10 @@ Support for Python 3.3 has been officially dropped.
   only require X to be an object with finite length or shape. :issue:`9832` by
   :user:`Vrishank Bhardwaj <vrishank97>`.
 
+- |Feature| :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor`
+  can now be scored without supplying test samples.
+  :issue:`11951` by :user:`Rüdiger Busche <JarnoRFB>`.
+
 
 :mod:`sklearn.ensemble`
 .......................

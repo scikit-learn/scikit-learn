@@ -320,6 +320,37 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         else:
             return [np.log(p) for p in proba]
 
+    def score(self, X, y, sample_weight=None):
+        """Returns the mean accuracy on the given test data and labels.
+
+        In multi-label classification, this is the subset accuracy
+        which is a harsh metric since you require for each sample that
+        each label set be correctly predicted.
+
+        Parameters
+        ----------
+        X : {array-like, None}
+            Test samples with shape = (n_samples, n_features) or
+            None. Passing None as test samples gives the same result
+            as passing real test samples, since DummyClassifier
+            operates independently of the sampled observations.
+
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+            True labels for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Mean accuracy of self.predict(X) wrt. y.
+
+        """
+        if X is None:
+            X = np.zeros(shape=(len(y), 1))
+        return super(DummyClassifier, self).score(X, y, sample_weight)
+
 
 class DummyRegressor(BaseEstimator, RegressorMixin):
     """
@@ -480,3 +511,41 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             y_std = np.ravel(y_std)
 
         return (y, y_std) if return_std else y
+
+    def score(self, X, y, sample_weight=None):
+        """Returns the coefficient of determination R^2 of the prediction.
+
+        The coefficient R^2 is defined as (1 - u/v), where u is the residual
+        sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
+        sum of squares ((y_true - y_true.mean()) ** 2).sum().
+        The best possible score is 1.0 and it can be negative (because the
+        model can be arbitrarily worse). A constant model that always
+        predicts the expected value of y, disregarding the input features,
+        would get a R^2 score of 0.0.
+
+        Parameters
+        ----------
+        X : {array-like, None}
+            Test samples with shape = (n_samples, n_features) or None.
+            For some estimators this may be a
+            precomputed kernel matrix instead, shape = (n_samples,
+            n_samples_fitted], where n_samples_fitted is the number of
+            samples used in the fitting for the estimator.
+            Passing None as test samples gives the same result
+            as passing real test samples, since DummyRegressor
+            operates independently of the sampled observations.
+
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+            True values for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            R^2 of self.predict(X) wrt. y.
+        """
+        if X is None:
+            X = np.zeros(shape=(len(y), 1))
+        return super(DummyRegressor, self).score(X, y, sample_weight)
