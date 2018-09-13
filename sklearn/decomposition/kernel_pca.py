@@ -269,6 +269,21 @@ class KernelPCA(BaseEstimator, TransformerMixin):
             self.alphas_ = self.alphas_[:, self.lambdas_ > 0]
             self.lambdas_ = self.lambdas_[self.lambdas_ > 0]
 
+        # Maintenance note on Eigenvectors normalization
+        # ----------------------------------------------
+        # there is a link between the eigenvectors of K=Phi(X)'Phi(X) and the ones of Phi(X)Phi(X)'
+        # if v is an eigenvector of K             then Phi(X)v  is an eigenvector of Phi(X)Phi(X)',
+        # if u is an eigenvector of Phi(X)Phi(X)' then Phi(X)'u is an eigenvector of Phi(X)Phi(X)'
+        #
+        # At this stage our self.alphas_ (the v) have norm 1, we need to scale them so that
+        # eigenvectors in kernel feature space (the u) have norm=1 instead
+        #
+        # We COULD scale them here:
+        # self.alphas_ = self.alphas_ / np.sqrt(np.tile(self.lambdas_, (self.alphas_.shape[0], 1)))
+        #
+        # But the original choice was to perform the division or multiplication by sqrt(lambdas)
+        # LATER when needed: see transform(), inverse_transform(), etc.
+
         return K
 
     def _fit_inverse_transform(self, X_transformed, X):
