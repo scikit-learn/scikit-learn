@@ -42,13 +42,13 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
     - format() directly calls _safe_repr() for a first try at rendering the
       object
     - _safe_repr formats the whole object reccursively, only calling itself,
-      not caring about line lenght or anything
+      not caring about line length or anything
     - back to _format(), if the output string is too long, _format() then calls
       the appropriate _pprint_TYPE() method (e.g. _pprint_list()) depending on
       the type of the object. This where the line length and the compact
       parameters are taken into account.
     - those _pprint_TYPE() methods will internally use the format() method for
-      rendering the nested objects of an objects (e.g. the elements of a list)
+      rendering the nested objects of an object (e.g. the elements of a list)
 
     In the end, everything has to be implemented twice: in _safe_repr and in
     the custom _pprint_TYPE methods.
@@ -63,7 +63,8 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
         self._changed_only = changed_only
 
     def format(self, object, context, maxlevels, level):
-        return _safe_repr(object, context, maxlevels, level)
+        return _safe_repr(object, context, maxlevels, level,
+                          changed_only=self._changed_only)
 
     def _pprint_estimator(self, object, stream, indent, allowance, context,
                           level):
@@ -120,6 +121,8 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
                 width -= allowance
             if self._compact:
                 k, v = ent
+                if k == "steps":
+                    print(k, v)
                 krepr = self._repr(k, context, level)
                 vrepr = self._repr(v, context, level)
                 if not is_dict:
@@ -163,7 +166,7 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
     _dispatch[KeyValTuple.__repr__] = _pprint_key_val_tuple
 
 
-def _safe_repr(object, context, maxlevels, level):
+def _safe_repr(object, context, maxlevels, level, changed_only=False):
     """Same as the builtin _safe_repr, with added support for Estimator
     objects."""
     typ = type(object)
@@ -240,7 +243,10 @@ def _safe_repr(object, context, maxlevels, level):
         context[objid] = 1
         readable = True
         recursive = False
-        params = object.get_params(deep=False)
+        if changed_only:
+            params = changed_params(object)
+        else:
+            params = object.get_params(deep=False)
         components = []
         append = components.append
         level += 1
@@ -249,7 +255,7 @@ def _safe_repr(object, context, maxlevels, level):
         for k, v in items:
             krepr, kreadable, krecur = saferepr(k, context, maxlevels, level)
             vrepr, vreadable, vrecur = saferepr(v, context, maxlevels, level)
-            append("%s=%s" % (krepr, vrepr))
+            append("%s=%s" % (krepr.strip("'"), vrepr))
             readable = readable and kreadable and vreadable
             if krecur or vrecur:
                 recursive = True
