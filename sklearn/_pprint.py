@@ -17,8 +17,8 @@ class KeyValTupleParam(KeyValTuple):
 
 
 def changed_params(estimator):
-    """Return dict (name: value) of parameters that were given to estimator
-    with non-default values."""
+    """Return dict (param_name: value) of parameters that were given to
+    estimator with non-default values."""
 
     params = estimator.get_params(deep=False)
     filtered_params = {}
@@ -36,7 +36,8 @@ def changed_params(estimator):
 class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
     """Pretty Printer class for estimator objects.
 
-    Quick overview of the pprint.PrettyPrinter class (see also
+    This extends the pprint.PrettyPrinter class. Quick overview of
+    pprint.PrettyPrinter (see also
     https://stackoverflow.com/questions/49565047/pprint-with-hex-numbers):
 
     - the entry point is the _format() method which calls format() (overridden
@@ -78,6 +79,7 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
             params = changed_params(object)
         else:
             params = object.get_params(deep=False)
+
 
         self._format_params(params.items(), stream, indent, allowance + 1,
                             context, level)
@@ -123,8 +125,6 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
                 width -= allowance
             if self._compact:
                 k, v = ent
-                if k == "steps":
-                    print(k, v)
                 krepr = self._repr(k, context, level)
                 vrepr = self._repr(v, context, level)
                 if not is_dict:
@@ -194,8 +194,10 @@ def _safe_repr(object, context, maxlevels, level, changed_only=False):
         saferepr = _safe_repr
         items = sorted(object.items(), key=pprint._safe_tuple)
         for k, v in items:
-            krepr, kreadable, krecur = saferepr(k, context, maxlevels, level)
-            vrepr, vreadable, vrecur = saferepr(v, context, maxlevels, level)
+            krepr, kreadable, krecur = saferepr(
+                k, context, maxlevels, level, changed_only=changed_only)
+            vrepr, vreadable, vrecur = saferepr(
+                v, context, maxlevels, level, changed_only=changed_only)
             append("%s: %s" % (krepr, vrepr))
             readable = readable and kreadable and vreadable
             if krecur or vrecur:
@@ -227,7 +229,8 @@ def _safe_repr(object, context, maxlevels, level, changed_only=False):
         append = components.append
         level += 1
         for o in object:
-            orepr, oreadable, orecur = _safe_repr(o, context, maxlevels, level)
+            orepr, oreadable, orecur = _safe_repr(
+                o, context, maxlevels, level, changed_only=changed_only)
             append(orepr)
             if not oreadable:
                 readable = False
@@ -255,8 +258,10 @@ def _safe_repr(object, context, maxlevels, level, changed_only=False):
         saferepr = _safe_repr
         items = sorted(params.items(), key=pprint._safe_tuple)
         for k, v in items:
-            krepr, kreadable, krecur = saferepr(k, context, maxlevels, level)
-            vrepr, vreadable, vrecur = saferepr(v, context, maxlevels, level)
+            krepr, kreadable, krecur = saferepr(
+                k, context, maxlevels, level, changed_only=changed_only)
+            vrepr, vreadable, vrecur = saferepr(
+                v, context, maxlevels, level, changed_only=changed_only)
             append("%s=%s" % (krepr.strip("'"), vrepr))
             readable = readable and kreadable and vreadable
             if krecur or vrecur:
