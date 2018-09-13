@@ -22,6 +22,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.metaestimators import _ValidateInputMockEstimator
 from sklearn.exceptions import ConvergenceWarning
 
 import sklearn
@@ -36,6 +37,8 @@ from sklearn.utils.estimator_checks import (
     check_no_attributes_set_in_init,
     check_class_weight_balanced_linear_classifier)
 
+import numpy as np
+
 
 def test_all_estimator_no_base_class():
     # test that all_estimators doesn't find abstract classes.
@@ -43,6 +46,25 @@ def test_all_estimator_no_base_class():
         msg = ("Base estimators such as {0} should not be included"
                " in all_estimators").format(name)
         assert_false(name.lower().startswith('base'), msg=msg)
+
+def test_meta_estimators():
+    dataset = np.random.randint(0, 1000, size=(100,100,10))
+    print()
+
+    for name, Estimator in all_estimators(type_filter='meta-estimator'):
+        if 'base_estimator' in Estimator().get_params():
+            default_base_est = Estimator().get_params()['base_estimator']
+        else:
+            default_base_est = getattr(Estimator(), 'base_estimator', None)
+            if default_base_est == None:
+                print ("Skipping {0} - 'base_estimator' key not supported".format(name))
+                continue
+        wrapper = _ValidateInputMockEstimator(dataset, default_base_est)
+        estimator = Estimator(wrapper)
+        try:
+            estimator.fit(dataset, np.random.randint(0, 2, size=dataset.shape[-1]))
+        except Exception as ex:
+            print ("{0} raised error '{1}' when parsing data".format(name, str(ex)))
 
 
 def test_all_estimators():

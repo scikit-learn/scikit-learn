@@ -14,6 +14,19 @@ from ..base import BaseEstimator
 
 __all__ = ['if_delegate_has_method']
 
+class _ValidateInputMockEstimator(BaseEstimator):
+    def __init__(self, dataset, estimator):
+        self.dataset = dataset
+        self.estimator = estimator
+        super(_ValidateInputMockEstimator, self).__init__()
+
+    def fit(self, dataset, *args, **kwargs):
+        assert np.array_equal(self.dataset, dataset)
+        return self.estimator.fit(dataset, *args, **kwargs)
+
+    def predict(self, *args, **kwargs):
+        return self.estimator.predict(*args, **kwargs)
+
 
 class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Handles parameter management for classifiers composed of named estimators.

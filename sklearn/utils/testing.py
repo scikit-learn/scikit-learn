@@ -81,7 +81,7 @@ from numpy.testing import assert_approx_equal
 import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
-                          ClusterMixin)
+                          ClusterMixin, MetaEstimatorMixin)
 from sklearn.utils._unittest_backport import TestCase
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
@@ -637,7 +637,7 @@ def all_estimators(include_meta_estimators=False,
     type_filter : string, list of string,  or None, default=None
         Which kind of estimators should be returned. If None, no filter is
         applied and all estimators are returned.  Possible values are
-        'classifier', 'regressor', 'cluster' and 'transformer' to get
+        'meta-estimator', 'classifier', 'regressor', 'cluster' and 'transformer' to get
         estimators only of these specific types, or a list of these to
         get the estimators that fit at least one of the types.
 
@@ -696,12 +696,15 @@ def all_estimators(include_meta_estimators=False,
         filters = {'classifier': ClassifierMixin,
                    'regressor': RegressorMixin,
                    'transformer': TransformerMixin,
-                   'cluster': ClusterMixin}
+                   'cluster': ClusterMixin,
+                   'meta-estimator': MetaEstimatorMixin}
         for name, mixin in filters.items():
             if name in type_filter:
                 type_filter.remove(name)
-                filtered_estimators.extend([est for est in estimators
-                                            if issubclass(est[1], mixin)])
+                satisfying_estimators = [est for est in estimators
+                                                 if issubclass(est[1], mixin)]
+                filtered_estimators.extend(satisfying_estimators)
+
         estimators = filtered_estimators
         if type_filter:
             raise ValueError("Parameter type_filter must be 'classifier', "
