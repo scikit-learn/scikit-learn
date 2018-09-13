@@ -63,15 +63,7 @@ def _open_openml_url(openml_path, data_home, md5_checksum=None):
             return response
 
         stream = io.BytesIO()
-        md5 = hashlib.md5()
-        block_size = 128 * md5.block_size
-        for block in iter(lambda: response.read(block_size), b''):
-            md5.update(block)
-            stream.write(block)
-
-        if md5_checksum != md5.hexdigest():
-            warn('Data set file hash {} does not match the checksum {}.'
-                 .format(md5.hexdigest(), md5_checksum))
+        _check_md5_checksum(response, stream, md5_checksum)
         stream.seek(0)
         return stream
 
@@ -87,16 +79,7 @@ def _open_openml_url(openml_path, data_home, md5_checksum=None):
             with gzip.GzipFile(local_path, 'wb') as fdst:
                 fsrc = urlopen(_OPENML_PREFIX + openml_path)
                 if md5_checksum is not None:
-                    md5 = hashlib.md5()
-                    block_size = 128 * md5.block_size
-                    for block in iter(lambda: fsrc.read(block_size), b''):
-                        md5.update(block)
-                        fdst.write(block)
-
-                    if md5_checksum != md5.hexdigest():
-                        warn('Data set file hash {} does not match the '
-                             'checksum {}.'.format(md5.hexdigest(),
-                                                   md5_checksum))
+                    _check_md5_checksum(fsrc, fdst, md5_checksum)
                 else:
                     shutil.copyfileobj(fsrc, fdst)
                 fsrc.close()
@@ -105,6 +88,20 @@ def _open_openml_url(openml_path, data_home, md5_checksum=None):
             raise
     # XXX: unnecessary decompression on first access
     return gzip.GzipFile(local_path, 'rb')
+
+
+def _check_md5_checksum(fsrc, fdst, md5_checksum):
+
+    md5 = hashlib.md5()
+    block_size = 128 * md5.block_size
+    for block in iter(lambda: fsrc.read(block_size), b''):
+        md5.update(block)
+        fdst.write(block)
+
+    if md5_checksum != md5.hexdigest():
+        msg = 'Data set file hash {} does not match the checksum {}.'
+        msg = msg.format(md5.hexdigest(), md5_checksum)
+        raise Exception(msg)
 
 
 def _get_json_content_from_openml_api(url, error_message, raise_if_error,

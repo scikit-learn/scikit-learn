@@ -576,13 +576,13 @@ def _monkey_patch_checksum_data_description(context, data_id,
 def test_fetch_openml_checksum_invalid(monkeypatch, tmpdir, data_id,
                                        true_checksum, false_checksum, cache):
 
-    warn_message = 'Data set file hash {} does not match the checksum {}.'
-    warn_message = warn_message.format(true_checksum, false_checksum)
+    msg = 'Data set file hash {} does not match the checksum {}.'
+    msg = msg.format(true_checksum, false_checksum)
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
     _monkey_patch_checksum_data_description(monkeypatch, data_id, test_gzip,
                                             false_checksum)
-    assert_warns_message(UserWarning, warn_message, fetch_openml,
+    assert_raise_message(Exception, msg, fetch_openml,
                          data_id=data_id, data_home=str(tmpdir), cache=cache)
 
 
@@ -594,9 +594,7 @@ def test_fetch_openml_checksum_invalid(monkeypatch, tmpdir, data_id,
 ])
 def test_fetch_openml_checksum_valid(monkeypatch, tmpdir, data_id, cache):
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
-    with pytest.warns(None) as records:
-        fetch_openml(data_id=data_id, data_home=str(tmpdir), cache=cache)
-        assert not records
+    fetch_openml(data_id=data_id, data_home=str(tmpdir), cache=cache)
 
 
 @pytest.mark.parametrize('data_id, cache, false_checksum', [
@@ -611,7 +609,5 @@ def test_fetch_openml_checksum_invalid_no_verification(
     _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
     _monkey_patch_checksum_data_description(monkeypatch, data_id, test_gzip,
                                             false_checksum)
-    with pytest.warns(None) as records:
-        fetch_openml(data_id=data_id, cache=cache, data_home=str(tmpdir),
-                     verify_checksum=False)
-        assert not records
+    fetch_openml(data_id=data_id, cache=cache, data_home=str(tmpdir),
+                 verify_checksum=False)
