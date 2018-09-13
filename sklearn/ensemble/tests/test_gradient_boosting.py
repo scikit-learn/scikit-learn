@@ -2,6 +2,7 @@
 Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
 import warnings
+from test.support import transient_internet
 import numpy as np
 
 from scipy.sparse import csr_matrix
@@ -460,24 +461,28 @@ def test_feature_importance_regression():
     .. [1] Friedman, J., Hastie, T., & Tibshirani, R. (2001). The elements
        of statistical learning. New York: Springer series in statistics.
     """
-    california = fetch_california_housing()
-    X, y = california.data, california.target
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    from sklearn.datasets.california_housing import ARCHIVE
+    with transient_internet(ARCHIVE.url):
+        california = fetch_california_housing()
+        X, y = california.data, california.target
+        X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                            random_state=0)
 
-    reg = GradientBoostingRegressor(loss='huber', learning_rate=0.1,
-                                    max_leaf_nodes=6, n_estimators=100,
-                                    random_state=0)
-    reg.fit(X_train, y_train)
-    sorted_idx = np.argsort(reg.feature_importances_)[::-1]
-    sorted_features = [california.feature_names[s] for s in sorted_idx]
+        reg = GradientBoostingRegressor(loss='huber', learning_rate=0.1,
+                                        max_leaf_nodes=6, n_estimators=100,
+                                        random_state=0)
+        reg.fit(X_train, y_train)
+        sorted_idx = np.argsort(reg.feature_importances_)[::-1]
+        sorted_features = [california.feature_names[s] for s in sorted_idx]
 
-    # The most important feature is the median income by far.
-    assert sorted_features[0] == 'MedInc'
+        # The most important feature is the median income by far.
+        assert sorted_features[0] == 'MedInc'
 
-    # The three subsequent features are the following. Their relative ordering
-    # might change a bit depending on the randomness of the trees and the
-    # train / test split.
-    assert set(sorted_features[1:4]) == {'Longitude', 'AveOccup', 'Latitude'}
+        # The three subsequent features are the following. Their relative ordering
+        # might change a bit depending on the randomness of the trees and the
+        # train / test split.
+        assert set(sorted_features[1:4]) == {'Longitude', 'AveOccup',
+                                             'Latitude'}
 
 
 def test_max_feature_auto():
