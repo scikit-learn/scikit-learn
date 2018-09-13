@@ -297,6 +297,10 @@ Support for Python 3.3 has been officially dropped.
   only require X to be an object with finite length or shape. :issue:`9832` by
   :user:`Vrishank Bhardwaj <vrishank97>`.
 
+- |Feature| :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor`
+  can now be scored without supplying test samples.
+  :issue:`11951` by :user:`Rüdiger Busche <JarnoRFB>`.
+
 
 :mod:`sklearn.ensemble`
 .......................
@@ -864,6 +868,9 @@ Support for Python 3.3 has been officially dropped.
   keyword arguments on to the pipeline's last estimator, enabling the use of
   parameters such as ``return_std`` in a pipeline with caution.
   :issue:`9304` by :user:`Breno Freitas <brenolf>`.
+  
+- |API| :class:`pipeline.FeatureUnion` now supports ``'drop'`` as a transformer
+  to drop features. :issue:`11144` by :user:`thomasjpfan`.
 
 
 :mod:`sklearn.preprocessing`

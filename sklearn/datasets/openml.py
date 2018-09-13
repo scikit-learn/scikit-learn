@@ -367,6 +367,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     (not both). In case a name is given, a version can also be
     provided.
 
+    Read more in the :ref:`User Guide <openml>`.
+
     .. note:: EXPERIMENTAL
 
         The API is experimental in version 0.20 (particularly the return value
