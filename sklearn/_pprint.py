@@ -80,7 +80,6 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
         else:
             params = object.get_params(deep=False)
 
-
         self._format_params(params.items(), stream, indent, allowance + 1,
                             context, level)
         stream.write(')')
