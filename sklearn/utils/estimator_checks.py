@@ -1216,7 +1216,7 @@ def check_pairwise_estimator_tag(name, estimator_orig):
                                                 **{attribute: attribute_value})
             # Estimators may validate parameters in fit if not in set_params
             modified_estimator.fit(distance_matrix, y_)
-        except (TypeError, ValueError, KeyError):
+        except Exception:
             # Estimator does not support given attribute value
             continue
 
