@@ -207,8 +207,9 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         # center kernel
         K = self._centerer.fit_transform(K)
 
+        # adjust n_components according to user inputs
         if self.n_components is None:
-            n_components = K.shape[0]
+            n_components = K.shape[0]  # use all dimensions
         else:
             n_components = min(K.shape[0], self.n_components)
 
@@ -263,7 +264,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.lambdas_ = self.lambdas_[indices]
         self.alphas_ = self.alphas_[:, indices]
 
-        # remove eigenvectors with a zero eigenvalue
+        # remove eigenvectors with a zero eigenvalue (null space) if required
         if self.remove_zero_eig or self.n_components is None:
             self.alphas_ = self.alphas_[:, self.lambdas_ > 0]
             self.lambdas_ = self.lambdas_[self.lambdas_ > 0]
