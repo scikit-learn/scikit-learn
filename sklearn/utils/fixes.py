@@ -248,8 +248,9 @@ except ImportError:  # python <3.3
 
 # TODO: replace by copy=False, when only scipy > 1.1 is supported.
 def _astype_copy_false(X):
-    """Returns the copy=False parameter for {ndarray,csr_matrix,csc_matrix}.astype
-    when possible, otherwise don't specify
+    """Returns the copy=False parameter for
+    {ndarray, csr_matrix, csc_matrix}.astype when possible,
+    otherwise don't specify
     """
     if sp_version >= (1, 1) or not sp.issparse(X):
         return {'copy': False}
