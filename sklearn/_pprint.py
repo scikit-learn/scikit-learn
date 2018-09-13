@@ -7,7 +7,9 @@ from .base import BaseEstimator
 # Dummy classes for correctly rendering key-value tuples from dicts or
 # parameters
 class KeyValTuple(tuple):
-    pass
+    def __repr__(self):
+        # needed for _dispatch[tuple.__repr__] not to be overridden
+        return super().__repr__()
 
 
 class KeyValTupleParam(KeyValTuple):
