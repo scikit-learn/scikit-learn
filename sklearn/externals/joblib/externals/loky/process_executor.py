@@ -62,7 +62,6 @@ __author__ = 'Thomas Moreau (thomas.moreau.2010@gmail.com)'
 import os
 import gc
 import sys
-import types
 import struct
 import weakref
 import warnings
@@ -438,7 +437,6 @@ def _process_worker(call_queue, result_queue, initializer, initargs,
                 continue
             if time() - _last_memory_leak_check > _MEMORY_LEAK_CHECK_DELAY:
                 mem_usage = _get_memory_usage(pid)
-                print(mem_usage)
                 _last_memory_leak_check = time()
                 if mem_usage - _process_reference_size < _MAX_MEMORY_LEAK_SIZE:
                     # Memory usage stays within bounds: everything is fine.
@@ -618,34 +616,41 @@ def _queue_management_worker(executor_reference,
         worker_sentinels = [p.sentinel for p in processes.values()]
         ready = wait(readers + worker_sentinels)
 
-        broken = ("A process in the executor was terminated abruptly", None)
+        broken = ("A worker process managed by the executor was unexpectedly "
+                  "terminated. This could be caused by a segmentation fault "
+                  "while calling the function or by an excessive memory usage "
+                  "causing the Operating System to kill the worker.", None,
+                  TerminatedWorkerError)
         if result_reader in ready:
             try:
                 result_item = result_reader.recv()
                 broken = None
                 if isinstance(result_item, _RemoteTraceback):
-                    cause = result_item.tb
-                    broken = ("A task has failed to un-serialize", cause)
+                    broken = ("A task has failed to un-serialize. Please "
+                              "ensure that the arguments of the function are "
+                              "all picklable.", result_item.tb,
+                              BrokenProcessPool)
             except BaseException as e:
                 tb = getattr(e, "__traceback__", None)
                 if tb is None:
                     _, _, tb = sys.exc_info()
-                broken = ("A result has failed to un-serialize",
-                          traceback.format_exception(type(e), e, tb))
+                broken = ("A result has failed to un-serialize. Please "
+                          "ensure that the objects returned by the function "
+                          "are always picklable.",
+                          traceback.format_exception(type(e), e, tb),
+                          BrokenProcessPool)
         elif wakeup_reader in ready:
             broken = None
             result_item = None
         thread_wakeup.clear()
-        if broken:
-            msg, cause = broken
-            # Mark the process pool broken so that submits fail right now.
-            executor_flags.flag_as_broken(
-                msg + ", the pool is not usable anymore.")
-            bpe = BrokenProcessPool(
-                msg + " while the future was running or pending.")
-            if cause is not None:
+        if broken is not None:
+            msg, cause_tb, exc_type = broken
+            bpe = exc_type(msg)
+            if cause_tb is not None:
                 bpe.__cause__ = _RemoteTraceback(
-                    "\n'''\n{}'''".format(''.join(cause)))
+                    "\n'''\n{}'''".format(''.join(cause_tb)))
+            # Mark the process pool broken so that submits fail right now.
+            executor_flags.flag_as_broken(bpe)
 
             # All futures in flight must be marked failed
             for work_id, work_item in pending_work_items.items():
@@ -808,6 +813,15 @@ class LokyRecursionError(RuntimeError):
 
 
 class BrokenProcessPool(_BPPException):
+    """
+    Raised when the executor is broken while a future was in the running state.
+    The cause can an error raised when unpickling the task in the worker
+    process or when unpickling the result value in the parent process. It can
+    also be caused by a worker process being terminated unexpectedly.
+    """
+
+
+class TerminatedWorkerError(BrokenProcessPool):
     """
     Raised when a process in a ProcessPoolExecutor terminated abruptly
     while a future was in the running state.
@@ -998,8 +1012,8 @@ class ProcessPoolExecutor(_base.Executor):
 
     def submit(self, fn, *args, **kwargs):
         with self._flags.shutdown_lock:
-            if self._flags.broken:
-                raise BrokenProcessPool(self._flags.broken)
+            if self._flags.broken is not None:
+                raise self._flags.broken
             if self._flags.shutdown:
                 raise ShutdownExecutorError(
                     'cannot schedule new futures after shutdown')
