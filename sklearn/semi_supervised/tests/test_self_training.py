@@ -36,7 +36,7 @@ y_train_missing_labels[limit:] = -1
 def test_classification():
     # Check classification for various parameter settings.
     grid = ParameterGrid({"max_iter": [1, 50, 100],
-                          "threshold": [0.0, 0.5, 1.0]})
+                          "threshold": [0.0, 0.5, 0.9]})
 
     for base_estimator in [DummyClassifier(),
                            DecisionTreeClassifier(),
@@ -56,13 +56,20 @@ def test_missing_predict_proba():
                          y_train)
 
 
-def test_invalid_iters():
+def test_invalid_params():
     # Test negative iterations
     grid = ParameterGrid({"max_iter": [-1, -100, -10]})
     base_estimator = SVC(gamma="scale", probability=True)
     for params in grid:
         st = SelfTrainingClassifier(base_estimator, **params)
         message = "max_iter must be >= 0"
+        assert_raise_message(ValueError, message, st.fit, X_train, y_train)
+
+    grid = ParameterGrid({"threshold": [1.0, -2, 10]})
+    base_estimator = SVC(gamma="scale", probability=True)
+    for params in grid:
+        st = SelfTrainingClassifier(base_estimator, **params)
+        message = "threshold must be in [0,1)"
         assert_raise_message(ValueError, message, st.fit, X_train, y_train)
 
 

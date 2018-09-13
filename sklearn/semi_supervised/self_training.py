@@ -87,6 +87,9 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
         if not 0 <= self.max_iter:
             raise ValueError("max_iter must be >= 0")
 
+        if not 0 <= self.threshold < 1:
+            raise ValueError("threshold must be in [0,1)")
+
         # Data usable for supervised training
         X_labeled = X[safe_mask(X, np.where(y != -1))][0]
         y_labeled = y[safe_mask(y, np.where(y != -1))][0]
@@ -119,6 +122,7 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
         self.base_estimator_.fit(X_labeled, y_labeled)
         return self
 
+    @if_delegate_has_method(delegate='base_estimator')
     def predict(self, X):
         """Predict on a dataset.
 
@@ -151,10 +155,6 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
         """
         check_is_fitted(self, 'base_estimator_')
         return self.base_estimator_.predict_proba(X)
-
-    def score(self, X, y, sample_weight=None):
-        check_is_fitted(self, 'base_estimator_')
-        return self.base_estimator_.score(X, y, sample_weight=sample_weight)
 
     @if_delegate_has_method(delegate='base_estimator')
     def decision_function(self, X):
