@@ -481,7 +481,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         Returns
         -------
-        X_new : array, shape (n_samples, n_components)
+        X_new : array, shape (n_samples, min(n_components, n_classes - 1))
             Transformed data.
         """
         if self.solver == 'lsqr':
