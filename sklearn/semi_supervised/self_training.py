@@ -4,7 +4,6 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..utils.validation import check_X_y, check_array, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils import safe_mask
-from ..base import clone
 
 __all__ = ["SelfTrainingClassifier"]
 
@@ -31,6 +30,18 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
     max_iter : integer
         Maximum number of iterations allowed. Should be greater than or equal
         to 0.
+
+    Attributes
+    ----------
+    y_labeled_ : array, shape = (n_samples)
+        The labels assigned to unlabeled datapoints during fitting
+
+    X_labeled_ : array, shape = (n_samples, n_features)
+        The labeled samples used for the final fit
+
+    y_labeled_iter_ : array, shape = (n_samples)
+        The iteration in which each sample was labeled. When a sample has
+        iteration 0, the sample was labeled in the given dataset.
 
     Examples
     --------
@@ -82,7 +93,6 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
         """
         X, y = check_X_y(X, y)
         _check_estimator(self.base_estimator)
-        self.base_estimator_ = clone(self.base_estimator)
 
         if not 0 <= self.max_iter:
             raise ValueError("max_iter must be >= 0")
@@ -91,20 +101,21 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
             raise ValueError("threshold must be in [0,1)")
 
         # Data usable for supervised training
-        X_labeled = X[safe_mask(X, np.where(y != -1))][0]
-        y_labeled = y[safe_mask(y, np.where(y != -1))][0]
+        self.X_labeled_ = X[safe_mask(X, np.where(y != -1))][0]
+        self.y_labeled_ = y[safe_mask(y, np.where(y != -1))][0]
+        self.y_labeled_iter_ = np.full_like(self.y_labeled_, 0)
 
         # Unlabeled data
         X_unlabeled = X[safe_mask(X, np.where(y == -1))][0]
         y_unlabeled = y[safe_mask(y, np.where(y == -1))][0]
 
         iter = 0
-        while len(X_labeled) < len(X) and iter < self.max_iter:
+        while len(self.X_labeled_) < len(X) and iter < self.max_iter:
             iter += 1
-            self.base_estimator_.fit(X_labeled, y_labeled)
+            self.base_estimator.fit(self.X_labeled_, self.y_labeled_)
 
             # Select predictions where confidence is above the threshold
-            predict_proba = self.base_estimator_.predict_proba(X_unlabeled)
+            predict_proba = self.base_estimator.predict_proba(X_unlabeled)
 
             pred = np.argmax(predict_proba, axis=1)
             max_proba = np.max(predict_proba, axis=1)
@@ -112,14 +123,18 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
             confident = np.where(max_proba > self.threshold)[0]
 
             # Add newly labeled confident predictions to the dataset
-            X_labeled = np.append(X_labeled, X_unlabeled[confident], axis=0)
-            y_labeled = np.append(y_labeled, pred[confident], axis=0)
+            self.X_labeled_ = np.append(
+                self.X_labeled_, X_unlabeled[confident], axis=0)
+            self.y_labeled_ = np.append(
+                self.y_labeled_, pred[confident], axis=0)
+            self.y_labeled_iter_ = np.append(
+                self.y_labeled_iter_, np.full_like(confident, iter))
 
             # Remove already labeled data from unlabeled dataset
             X_unlabeled = np.delete(X_unlabeled, confident, axis=0)
             y_unlabeled = np.delete(y_unlabeled, confident, axis=0)
 
-        self.base_estimator_.fit(X_labeled, y_labeled)
+        self.base_estimator.fit(self.X_labeled_, self.y_labeled_)
         return self
 
     @if_delegate_has_method(delegate='base_estimator')
@@ -136,9 +151,9 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
         y : array-like, shape = (n_samples, 1)
             array with predicted labels
         """
-        check_is_fitted(self, 'base_estimator_')
+        check_is_fitted(self, 'y_labeled_iter_')
         X = check_array(X)
-        return self.base_estimator_.predict(X)
+        return self.base_estimator.predict(X)
 
     def predict_proba(self, X):
         """Predict probability for each possible outcome.
@@ -153,8 +168,8 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
         y : array-like, shape = (n_samples, n_features)
             array with prediction probabilities
         """
-        check_is_fitted(self, 'base_estimator_')
-        return self.base_estimator_.predict_proba(X)
+        check_is_fitted(self, 'y_labeled_iter_')
+        return self.base_estimator.predict_proba(X)
 
     @if_delegate_has_method(delegate='base_estimator')
     def decision_function(self, X):
@@ -170,8 +185,8 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
         y : array-like, shape = (n_samples, n_features)
             result of the decision function of the base_estimator
         """
-        check_is_fitted(self, 'base_estimator_')
-        return self.base_estimator_.decision_function(X)
+        check_is_fitted(self, 'y_labeled_iter_')
+        return self.base_estimator.decision_function(X)
 
     @if_delegate_has_method(delegate='base_estimator')
     def predict_log_proba(self, X):
@@ -187,5 +202,5 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
         y : array-like, shape = (n_samples, n_features)
             array with log prediction probabilities
         """
-        check_is_fitted(self, 'base_estimator_')
-        return self.base_estimator_.predict_log_proba(X)
+        check_is_fitted(self, 'y_labeled_iter_')
+        return self.base_estimator.predict_log_proba(X)
