@@ -774,3 +774,59 @@ def _get_leaves(node, arr):
         for n in node.children:
             _get_leaves(n, arr)
     return arr
+
+
+# Determines if the reachability distance at the current index 'i' 
+# is a valid distance
+def _valid(reachability_plot, idx):
+    return (idx >= len(reachability_plot)
+            or not np.isnan(reachability_plot[idx]))
+
+
+# Determines if the reachability distance at the current index 'i' is
+# (xi) significantly higher than the next index
+def _steepDown(reachability_plot, idx, ixi):
+    if not _valid(reachability_plot, idx + 1):
+        return False
+    if np.isinf(reachability_plot[idx + 1]):
+        return False
+    return reachability_plot[idx] * ixi >= reachability_plot[i + 1]
+
+# Determines if the reachability distance at the current index 'i' is
+# (xi) significantly lower than the next index
+def _steepUp(reachability_plot, idx, ixi):
+    if np.isinf(reachability_plot[idx]):
+        return False
+    if not _valid(reachability_plot, idx + 1):
+        return True
+    return reachability_plot[idx] <= reachability_plot[idx + 1] * ixi
+
+
+def updateFilterSDASet(sdaset, mib, ixi):
+    pass
+
+
+def _extractXi(reachability, ordering, xi, minimum=False):
+    reachability_plot = reachability[ordering]
+    ixi = 1 - xi
+    steep_down_areas = list()
+    clusters = list()
+    index = 1
+    mib = 0
+    sdaset = list()
+    while index <= len(ordering):
+        mib = np.max(mib, reachability_plot[index])
+        if not _valid(reachability_plot, idx + 1):
+            break
+
+        # test if this is a steep down area
+        if _steepDown(reachability_plot, idx):
+            # Update mib values with current mib and filter
+            sdaset = updateFilterSDASet(sdaset, mib, ixi)
+            startval = reachability_plot[index]
+            mib = 0
+            startsteep = index
+            endsteep = index + 1
+            while not 
+            if _steepDown(reachability_plot, index):
+                endsteep = index + 1
