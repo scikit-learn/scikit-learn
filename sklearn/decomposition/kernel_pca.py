@@ -8,6 +8,7 @@ from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
+from ..utils.extmath import randomized_svd
 from ..utils.validation import check_is_fitted, check_array
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
@@ -20,6 +21,13 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
     Non-linear dimensionality reduction through the use of kernels (see
     :ref:`metrics`).
+
+    It uses the LAPACK implementation of the full SVD or a randomized truncated
+    SVD by the method of Halko et al. 2009, depending on the shape of the input
+    data and the number of components to extract.
+
+    It can also use the scipy.sparse.linalg ARPACK implementation of the
+    truncated SVD.
 
     Read more in the :ref:`User Guide <kernel_PCA>`.
 
@@ -54,10 +62,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Learn the inverse transform for non-precomputed kernels.
         (i.e. learn to find the pre-image of a point)
 
-    eigen_solver : string ['auto'|'dense'|'arpack'], default='auto'
+    eigen_solver : string ['auto'|'dense'|'arpack'|'randomized'], default='auto'
         Select eigensolver to use. If n_components is much less than
-        the number of training samples, arpack may be more efficient
-        than the dense eigensolver.
+        the number of training samples, randomized (or arpack to a smaller extend) may be more efficient
+        than the dense eigensolver. randomized SVD is done according to the method of Halko et al.
 
     tol : float, default=0
         Convergence tolerance for arpack.
@@ -78,7 +86,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``eigen_solver`` == 'arpack'.
+        by `np.random`. Used when ``eigen_solver`` == 'arpack' or 'randomized'.
 
         .. versionadded:: 0.18
 
@@ -96,6 +104,12 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         for more details.
 
         .. versionadded:: 0.18
+
+    iterated_power : int >= 0, or 'auto', (default 'auto')
+        Number of iterations for the power method computed by
+        svd_solver == 'randomized'.
+
+        .. versionadded:: 0.20
 
     Attributes
     ----------
@@ -137,12 +151,21 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         and Klaus-Robert Mueller. 1999. Kernel principal
         component analysis. In Advances in kernel methods,
         MIT Press, Cambridge, MA, USA 327-352.
+
+    For eigen_solver == 'arpack', refer to `scipy.sparse.linalg.svds`.
+
+    For eigen_solver == 'randomized', see:
+        `Finding structure with randomness: Stochastic algorithms
+        for constructing approximate matrix decompositions Halko, et al., 2009
+        (arXiv:909)`
+        `A randomized algorithm for the decomposition of matrices
+        Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert`
     """
 
     def __init__(self, n_components=None, kernel="linear",
                  gamma=None, degree=3, coef0=1, kernel_params=None,
                  alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
-                 tol=0, max_iter=None, remove_zero_eig=False,
+                 tol=0, max_iter=None, remove_zero_eig=False, iterated_power='auto',
                  random_state=None, copy_X=True, n_jobs=None):
         if fit_inverse_transform and kernel == 'precomputed':
             raise ValueError(
@@ -162,6 +185,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.copy_X = copy_X
+        self.iterated_power = iterated_power
 
     @property
     def _pairwise(self):
@@ -209,6 +233,27 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                                                 tol=self.tol,
                                                 maxiter=self.max_iter,
                                                 v0=v0)
+        elif eigen_solver == 'randomized':
+            random_state = check_random_state(self.random_state)
+
+            # Compute 2 extra components but do not use them since the last 2 are not reliable, see paper
+            nb_extra_components = 2
+
+            # Note: sign flipping is done inside
+            U, S, V = randomized_svd(K, n_components=n_components + nb_extra_components,
+                                     n_iter=self.iterated_power,
+                                     flip_sign=True,
+                                     random_state=random_state)
+
+            # ----- eigenvectors (only keep n_components, skip the extra)
+            self.alphas_ = U[:, :n_components]
+
+            # ----- eigenvalues (only keep n_components, skip the extra)
+            self.lambdas_ = S[:n_components]
+            # -- Make sure that there are no wrong signs (svd does not guarantee that sign of u and v is the same)
+            VU = np.matmul(V[:n_components, :], U[:, :n_components])
+            signs = np.sign(np.diag(VU))
+            self.lambdas_ = self.lambdas_ * signs
 
         # sort eigenvectors in descending order
         indices = self.lambdas_.argsort()[::-1]
