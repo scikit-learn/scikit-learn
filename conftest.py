@@ -17,6 +17,18 @@ if LooseVersion(pytest.__version__) < PYTEST_MIN_VERSION:
     raise('Your version of pytest is too old, you should have at least '
           'pytest >= {} installed.'.format(PYTEST_MIN_VERSION))
 
+
+def pytest_addoption(parser):
+    parser.addoption("--skip-network", action="store_true",
+                     help="skip network tests")
+
+
+def pytest_runtest_setup(item):
+    if 'network' in item.keywords and item.config.getoption("--skip-network"):
+        pytest.skip("skipping due to --skip-network")
+
+
+
 def pytest_collection_modifyitems(config, items):
 
     # FeatureHasher is not compatible with PyPy
