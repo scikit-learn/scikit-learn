@@ -439,6 +439,8 @@ def _average_path_length(n_samples_leaf):
     """
     if isinstance(n_samples_leaf, INTEGER_TYPES):
         if n_samples_leaf <= 1:
+            return 0.
+        if n_samples_leaf <= 2:
             return 1.
         else:
             return 2. * (np.log(n_samples_leaf - 1.) + np.euler_gamma) - 2. * (
@@ -450,10 +452,12 @@ def _average_path_length(n_samples_leaf):
         n_samples_leaf = n_samples_leaf.reshape((1, -1))
         average_path_length = np.zeros(n_samples_leaf.shape)
 
-        mask = (n_samples_leaf <= 1)
-        not_mask = np.logical_not(mask)
+        mask_1 = (n_samples_leaf <= 1)
+        mask_2 = (n_samples_leaf == 2)
+        not_mask = np.logical_not(np.logical_or(mask_1, mask_2))
 
-        average_path_length[mask] = 1.
+        average_path_length[mask_1] = 0.
+        average_path_length[mask_2] = 1.
         average_path_length[not_mask] = 2. * (
             np.log(n_samples_leaf[not_mask] - 1.) + np.euler_gamma) - 2. * (
                 n_samples_leaf[not_mask] - 1.) / n_samples_leaf[not_mask]
