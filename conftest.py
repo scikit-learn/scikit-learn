@@ -33,9 +33,10 @@ def pytest_collection_modifyitems(config, items):
             if item.name == 'sklearn.feature_extraction.hashing.FeatureHasher':
                 item.add_marker(skip_marker)
 
-    # Skip test which required internet if the flag is provided
+    # Skip tests which require internet if the flag is provided
     if config.getoption("--skip-network"):
-        skip_network = pytest.mark.skip(reason="test required internet")
+        skip_network = pytest.mark.skip(
+            reason="test requires internet connectivity")
         for item in items:
             if "network" in item.keywords:
                 item.add_marker(skip_network)
