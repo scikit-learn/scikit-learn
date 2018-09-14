@@ -62,10 +62,12 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Learn the inverse transform for non-precomputed kernels.
         (i.e. learn to find the pre-image of a point)
 
-    eigen_solver : string ['auto'|'dense'|'arpack'|'randomized'], default='auto'
-        Select eigensolver to use. If n_components is much less than
-        the number of training samples, randomized (or arpack to a smaller extend) may be more efficient
-        than the dense eigensolver. randomized SVD is done according to the method of Halko et al.
+    eigen_solver : string ['auto'|'dense'|'arpack'|'randomized'],
+        default='auto'
+        Select eigensolver to use. If n_components is much less than the number
+        of training samples, randomized (or arpack to a smaller extend) may be
+        more efficient than the dense eigensolver. randomized SVD is done
+        according to the method of Halko et al.
 
     tol : float, default=0
         Convergence tolerance for arpack.
@@ -165,7 +167,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     def __init__(self, n_components=None, kernel="linear",
                  gamma=None, degree=3, coef0=1, kernel_params=None,
                  alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
-                 tol=0, max_iter=None, remove_zero_eig=False, iterated_power='auto',
+                 tol=0, max_iter=None, remove_zero_eig=False,
+                 iterated_power='auto',
                  random_state=None, copy_X=True, n_jobs=None):
         if fit_inverse_transform and kernel == 'precomputed':
             raise ValueError(
@@ -216,7 +219,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         # compute eigenvectors
         if self.eigen_solver == 'auto':
             if n_components >= 1 and n_components < .8 * min(K.shape):
-                # For consistency this is the same decision criterion than in PCA
+                # For consistency this is the same criterion than in PCA
                 eigen_solver = 'randomized'
             elif K.shape[0] > 200 and n_components < 10:
                 eigen_solver = 'arpack'
@@ -254,7 +257,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
             # ----- eigenvalues (only keep n_components, skip the extra)
             self.lambdas_ = S[:n_components]
-            # -- Make sure that there are no wrong signs (svd does not guarantee that sign of u and v is the same)
+            # Make sure that there are no wrong signs (svd does not guarantee
+            #  that sign of u and v is the same)
             VU = np.dot(V[:n_components, :], U[:, :n_components])
             signs = np.sign(np.diag(VU))
             self.lambdas_ = self.lambdas_ * signs
@@ -271,18 +275,24 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         # Maintenance note on Eigenvectors normalization
         # ----------------------------------------------
-        # there is a link between the eigenvectors of K=Phi(X)'Phi(X) and the ones of Phi(X)Phi(X)'
-        # if v is an eigenvector of K             then Phi(X)v  is an eigenvector of Phi(X)Phi(X)',
-        # if u is an eigenvector of Phi(X)Phi(X)' then Phi(X)'u is an eigenvector of Phi(X)Phi(X)'
+        # there is a link between
+        # the eigenvectors of K=Phi(X)'Phi(X) and the ones of Phi(X)Phi(X)'
+        # if v is an eigenvector of K
+        #                      then Phi(X)v  is an eigenvector of Phi(X)Phi(X)'
+        # if u is an eigenvector of Phi(X)Phi(X)'
+        #                      then Phi(X)'u is an eigenvector of Phi(X)Phi(X)'
         #
-        # At this stage our self.alphas_ (the v) have norm 1, we need to scale them so that
-        # eigenvectors in kernel feature space (the u) have norm=1 instead
+        # At this stage our self.alphas_ (the v) have norm 1, we need to scale
+        # them so that eigenvectors in kernel feature space (the u) have norm=1
+        # instead
         #
         # We COULD scale them here:
-        # self.alphas_ = self.alphas_ / np.sqrt(np.tile(self.lambdas_, (self.alphas_.shape[0], 1)))
+        # self.alphas_ = self.alphas_ /
+        #           np.sqrt(np.tile(self.lambdas_, (self.alphas_.shape[0], 1)))
         #
-        # But the original choice was to perform the division or multiplication by sqrt(lambdas)
-        # LATER when needed: see transform(), inverse_transform(), etc.
+        # But the original choice was to perform the division or multiplication
+        # by sqrt(lambdas) LATER when needed in all the functions below.
+        # see transform(), inverse_transform(), etc.
 
         return K
 
