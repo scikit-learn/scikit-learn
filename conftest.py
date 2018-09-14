@@ -31,10 +31,11 @@ def pytest_collection_modifyitems(config, items):
     # numpy changed the str/repr formatting of numpy arrays in 1.14. We want to
     # run doctests only for numpy >= 1.14.
     skip_doctests = True
+    if sys.version_info[:1] >= (3,):
+        skip_doctests = False
     try:
         import numpy as np
-        if (LooseVersion(np.__version__) >= LooseVersion('1.14') or
-                sys.version_info[:1] >= (3,)):
+        if LooseVersion(np.__version__) >= LooseVersion('1.14'):
             skip_doctests = False
     except ImportError:
         pass
