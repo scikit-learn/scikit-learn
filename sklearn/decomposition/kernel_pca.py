@@ -255,7 +255,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
             # ----- eigenvalues (only keep n_components, skip the extra)
             self.lambdas_ = S[:n_components]
             # -- Make sure that there are no wrong signs (svd does not guarantee that sign of u and v is the same)
-            VU = np.matmul(V[:n_components, :], U[:, :n_components])
+            VU = np.dot(V[:n_components, :], U[:, :n_components])
             signs = np.sign(np.diag(VU))
             self.lambdas_ = self.lambdas_ * signs
 
