@@ -77,6 +77,12 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Maximum number of iterations for arpack.
         If None, optimal value will be chosen by arpack.
 
+    iterated_power : int >= 0, or 'auto', (default 'auto')
+        Number of iterations for the power method computed by
+        svd_solver == 'randomized'.
+
+        .. versionadded:: 0.20
+
     remove_zero_eig : boolean, default=False
         If True, then all components with zero eigenvalues are removed, so
         that the number of components in the output may be < n_components
@@ -106,12 +112,6 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         for more details.
 
         .. versionadded:: 0.18
-
-    iterated_power : int >= 0, or 'auto', (default 'auto')
-        Number of iterations for the power method computed by
-        svd_solver == 'randomized'.
-
-        .. versionadded:: 0.20
 
     Attributes
     ----------
@@ -167,8 +167,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     def __init__(self, n_components=None, kernel="linear",
                  gamma=None, degree=3, coef0=1, kernel_params=None,
                  alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
-                 tol=0, max_iter=None, remove_zero_eig=False,
-                 iterated_power='auto',
+                 tol=0, max_iter=None, iterated_power='auto',
+                 remove_zero_eig=False,
                  random_state=None, copy_X=True, n_jobs=None):
         if fit_inverse_transform and kernel == 'precomputed':
             raise ValueError(
@@ -182,13 +182,13 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.alpha = alpha
         self.fit_inverse_transform = fit_inverse_transform
         self.eigen_solver = eigen_solver
-        self.remove_zero_eig = remove_zero_eig
         self.tol = tol
         self.max_iter = max_iter
+        self.iterated_power = iterated_power
+        self.remove_zero_eig = remove_zero_eig
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.copy_X = copy_X
-        self.iterated_power = iterated_power
 
     @property
     def _pairwise(self):
