@@ -14,7 +14,7 @@ from .nearest_centroid import NearestCentroid
 from .kde import KernelDensity
 from .approximate import LSHForest
 from .lof import LocalOutlierFactor
-from .base import VALID_METRICS
+from .base import VALID_METRICS, VALID_METRICS_SPARSE
 
 __all__ = ['BallTree',
            'DistanceMetric',
@@ -30,4 +30,5 @@ __all__ = ['BallTree',
            'KernelDensity',
            'LSHForest',
            'LocalOutlierFactor',
-           'VALID_METRICS']
+           'VALID_METRICS',
+           'VALID_METRICS_SPARSE']
