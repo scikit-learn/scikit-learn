@@ -111,6 +111,20 @@ def test_column_transformer():
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2
 
+    # test case that ensures that the column transformer does also work when
+    # a given transformer doesn't have any columns to work on
+    ct = ColumnTransformer([('trans1', Trans(), [0, 1]),
+                            ('trans2', Trans(), [])])
+    assert_array_equal(ct.fit_transform(X_array), X_res_both)
+    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
+    assert len(ct.transformers_) == 2
+
+    ct = ColumnTransformer([('trans1', Trans(), []),
+                            ('trans2', Trans(), [0, 1])])
+    assert_array_equal(ct.fit_transform(X_array), X_res_both)
+    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
+    assert len(ct.transformers_) == 2
+
     # test with transformer_weights
     transformer_weights = {'trans1': .1, 'trans2': 10}
     both = ColumnTransformer([('trans1', Trans(), [0]),
@@ -180,6 +194,13 @@ def test_column_transformer_dataframe():
 
     ct = ColumnTransformer([('trans1', Trans(), ['first']),
                             ('trans2', Trans(), ['second'])])
+    assert_array_equal(ct.fit_transform(X_df), X_res_both)
+    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
+    assert len(ct.transformers_) == 2
+    assert ct.transformers_[-1][0] != 'remainder'
+
+    ct = ColumnTransformer([('trans1', Trans(), ['first', 'second']),
+                            ('trans2', Trans(), [])])
     assert_array_equal(ct.fit_transform(X_df), X_res_both)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
     assert len(ct.transformers_) == 2

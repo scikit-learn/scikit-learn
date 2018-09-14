@@ -234,6 +234,8 @@ boolean mask array or callable
                         check_inverse=False)
                 elif trans == 'drop':
                     continue
+                elif hasattr(column, '__len__') and len(column) == 0:
+                    continue
 
             yield (name, trans, sub, get_weight(name))
 
@@ -335,6 +337,8 @@ boolean mask array or callable
                 # so get next transformer, but save original string
                 next(transformers)
                 trans = 'passthrough'
+            elif hasattr(column, '__len__') and len(column) == 0:
+                trans = old
             else:
                 trans = next(transformers)
             transformers_.append((name, trans, column))
