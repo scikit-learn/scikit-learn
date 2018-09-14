@@ -139,7 +139,7 @@ if __name__ == "__main__":
     # Numpy choice based
     sampling_algorithm["numpy-choice"] = \
         lambda n_population, n_sample: \
-            np.random.choice(n_population, n_sample, False)
+        np.random.choice(n_population, n_sample, False)
 
     ###########################################################################
     # Remove unspecified algorithm
