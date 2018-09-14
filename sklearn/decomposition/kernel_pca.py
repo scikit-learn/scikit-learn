@@ -243,19 +243,16 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         elif eigen_solver == 'randomized':
             random_state = check_random_state(self.random_state)
 
-            # Compute 2 extra components but do not use them since the last 2 are not reliable, see paper
-            nb_extra_components = 2
-
             # Note: sign flipping is done inside
-            U, S, V = randomized_svd(K, n_components=n_components + nb_extra_components,
+            U, S, V = randomized_svd(K, n_components=n_components,
                                      n_iter=self.iterated_power,
                                      flip_sign=True,
                                      random_state=random_state)
 
-            # ----- eigenvectors (only keep n_components, skip the extra)
+            # ----- eigenvectors
             self.alphas_ = U[:, :n_components]
 
-            # ----- eigenvalues (only keep n_components, skip the extra)
+            # ----- eigenvalues
             self.lambdas_ = S[:n_components]
             # Make sure that there are no wrong signs (svd does not guarantee
             #  that sign of u and v is the same)
