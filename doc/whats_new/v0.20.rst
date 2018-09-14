@@ -278,6 +278,12 @@ Support for Python 3.3 has been officially dropped.
   :issue:`5956` by :user:`Vighnesh Birodkar <vighneshbirodkar>` and
   :user:`Olivier Grisel <ogrisel>`.
 
+- |Fix| Fixed a bug in :class:`decomposition.NMF` where `init = 'nndsvd'`,
+  `init = 'nndsvda'`, and `init = 'nndsvdar'` are allowed when
+  `n_components < n_features` instead of
+  `n_components <= min(n_samples, n_features)`. :issue:`11650` by
+  :user:`Hossein Pourbozorg <hossein-pourbozorg>`.
+
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
@@ -596,12 +602,6 @@ Support for Python 3.3 has been officially dropped.
 
 - |Feature| A scorer based on :func:`metrics.brier_score_loss` is also
   available. :issue:`9521` by :user:`Hanmin Qin <qinhanmin2014>`.
-
-- Fixed a bug in :class:`decomposition.NMF` where `init = 'nndsvd'`,
-  `init = 'nndsvda'`, and `init = 'nndsvdar'` are allowed when
-  `n_components < n_features` instead of
-  `n_components <= min(n_samples, n_features)`. :issue:`11650` by
-  :user:`Hossein Pourbozorg <hossein-pourbozorg>`.
 
 - |Feature| Added control over the normalization in
   :func:`metrics.normalized_mutual_info_score` and
