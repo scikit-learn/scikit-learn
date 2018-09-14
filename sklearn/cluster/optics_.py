@@ -470,6 +470,13 @@ class OPTICS(BaseEstimator, ClusterMixin):
         return _extract_dbscan(self.ordering_, self.core_distances_,
                                self.reachability_, eps)
 
+    def extract_xi(self, xi):
+        return _extract_xi(self.reachability_,
+                           self.ordering_,
+                           self.min_samples,
+                           self.min_cluster_size,
+                           xi)
+
 
 def _extract_dbscan(ordering, core_distances, reachability, eps):
     """Performs DBSCAN extraction for an arbitrary epsilon (`eps`).
@@ -777,6 +784,13 @@ def _get_leaves(node, arr):
     return arr
 
 
+def _extract_xi(reachability, ordering, min_samples, min_cluster_size, xi):
+    clusters = _xi_cluster(reachability[ordering], xi, min_samples,
+                           min_cluster_size)
+    labels = _extract_xi_labels(ordering, clusters)
+    return labels
+
+
 def _steep_upward(reachability_plot, p, ixi):
     return reachability_plot[p] <= reachability_plot[p + 1] * ixi
 
@@ -800,10 +814,11 @@ class _Area:
                 (self.start, self.end, self.maximum, self.mib))
 
 
-def _extend_downward(reachability_plot, start, ixi, min_points, n_samples):
+def _extend_downward(reachability_plot, start, ixi, min_samples, n_samples):
     #print("extend down start")
     non_downward_points = 0
     index = start
+    end = start
     # find a maximal downward area
     while index + 1 < n_samples:
         #print("index", index)
@@ -812,25 +827,27 @@ def _extend_downward(reachability_plot, start, ixi, min_points, n_samples):
         if _steep_downward(reachability_plot, index, ixi):
             #print("steep")
             non_downward_points = 0
+            end = index + 1
         elif reachability_plot[index] >= reachability_plot[index + 1]:
             #print("just down")
             # it's not a steep downward point, but still goes down.
             non_downward_points += 1
-            # region should include no more than min_points consecutive
+            # region should include no more than min_samples consecutive
             # non downward points.
-            if non_downward_points == min_points:
+            if non_downward_points == min_samples:
                 #print("non downward")
                 break
         else:
             break
     #print("extend end")
-    return index
+    return index, end
 
 
-def _extend_upward(reachability_plot, start, ixi, min_points, n_samples):
+def _extend_upward(reachability_plot, start, ixi, min_samples, n_samples):
     #print("extend up start")
     non_upward_points = 0
     index = start
+    end = start
     # find a maximal upward area
     while index + 1 < n_samples:
         #print("index", index)
@@ -839,30 +856,30 @@ def _extend_upward(reachability_plot, start, ixi, min_points, n_samples):
         if _steep_upward(reachability_plot, index, ixi):
             #print("steep")
             non_upward_points = 0
+            end = index + 1
         elif reachability_plot[index] <= reachability_plot[index + 1]:
             #print("just up")
             # it's not a steep upward point, but still goes up.
             non_upward_points += 1
-            # region should include no more than min_points consecutive
+            # region should include no more than min_samples consecutive
             # non downward points.
-            if non_upward_points == min_points:
+            if non_upward_points == min_samples:
                 #print("non upward")
                 break
         else:
             break
     #print("extend end")
-    return index
+    return index, end
 
 
 def _update_fileter_sdas(sdas, mib, ixi):
     res = [sda for sda in sdas if mib <= sda.maximum * ixi]
     for sda in res:
         sda.mib = max(sda.mib, mib)
-
     return res
 
 
-def _extract_xi(reachability_plot, xi, min_points):
+def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size, ):
     # all indices are inclusive (specially at the end)
     n_samples = len(reachability_plot)
     # add an inf to the end of reachability plot
@@ -890,13 +907,12 @@ def _extract_xi(reachability_plot, xi, min_points):
             sdas = _update_fileter_sdas(sdas, mib, ixi)
             #print("sdas", sdas)
             D_start = index
-            end = _extend_downward(reachability_plot, D_start, ixi,
-                                   min_points, n_samples)
+            index, end = _extend_downward(reachability_plot, D_start, ixi,
+                                          min_samples, n_samples)
             D = _Area(start=D_start, end=end,
                       maximum=reachability_plot[D_start], mib=0.)
             #print("D", D, "r.s %.4g" % reachability_plot[D.start], "r.e %.4g" % reachability_plot[D.end])
             sdas.append(D)
-            index = end
             mib = reachability_plot[index]
 
         elif _steep_upward(reachability_plot, index, ixi):
@@ -906,11 +922,10 @@ def _extract_xi(reachability_plot, xi, min_points):
             sdas = _update_fileter_sdas(sdas, mib, ixi)
             #print("sdas", sdas)
             U_start = index
-            end = _extend_upward(reachability_plot, U_start, ixi,
-                                 min_points, n_samples)
+            index, end = _extend_upward(reachability_plot, U_start, ixi,
+                                        min_samples, n_samples)
             U = _Area(start=U_start, end=end, maximum=reachability_plot[end],
                       mib=-1)
-            index = end
             #if np.isinf(reachability_plot[index + 1]):
             #    U.maximum = np.inf
             #    index += 1
@@ -922,7 +937,7 @@ def _extract_xi(reachability_plot, xi, min_points):
             U_clusters = list()
             for D in sdas:
                 c_start = D.start
-                c_end = U.end
+                c_end = min(U.end, n_samples - 1)
                 #print("D", D, "U", U)
                 #print("start", c_start, "end", c_end)
                 
@@ -948,7 +963,7 @@ def _extract_xi(reachability_plot, xi, min_points):
                 #print('check last point', c_end, 'index', index)
 
                 # 3.a
-                if c_end - c_start + 1 < min_points:
+                if c_end - c_start + 1 < min_cluster_size:
                     continue
                 #print('min pts pass')
 
@@ -965,3 +980,15 @@ def _extract_xi(reachability_plot, xi, min_points):
             index += 1
 
     return clusters
+
+
+def _extract_xi_labels(ordering, clusters):
+    # we rely on the fact that clusters are stored
+    # as the smaller clusters coming before the larger ones.
+    labels = np.zeros(len(ordering), dtype=np.int)
+    label = 1
+    for c in clusters:
+        if all(labels[c[0]:(c[1] + 1)] == 0):
+            labels[c[0]:(c[1] + 1)] = label
+            label += 1
+    return (labels - 1)[ordering]
