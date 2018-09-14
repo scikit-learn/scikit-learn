@@ -911,9 +911,9 @@ def _extract_xi(reachability_plot, xi, min_points):
             U = _Area(start=U_start, end=end, maximum=reachability_plot[end],
                       mib=-1)
             index = end
-            if np.isinf(reachability_plot[index + 1]):
-                U.maximum = np.inf
-                index += 1
+            #if np.isinf(reachability_plot[index + 1]):
+            #    U.maximum = np.inf
+            #    index += 1
             print("U", U, "r.s %.4g" % reachability_plot[U.start], "r.e %.4g" % reachability_plot[U.end])
             mib = reachability_plot[end - 1]
             print('mib %.4g' % mib)
