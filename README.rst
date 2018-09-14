@@ -26,6 +26,10 @@
 .. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
 .. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
 
+.. |Binder| image:: https://mybinder.org/badge.svg
+.. _Binder: https://mybinder.org/v2/gh/mwouts/scikit-learn/master?filepath=examples
+
+
 scikit-learn
 ============
 

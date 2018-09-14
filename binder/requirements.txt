@@ -1,0 +1,6 @@
+jupytext >= 0.6.5
+numpy >= 1.8.2
+scipy >= 0.13.3
+pandas
+matplotlib >= 1.1.1
+scikit-learn
