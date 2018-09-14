@@ -27,7 +27,7 @@
 .. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
 
 .. |Binder| image:: https://mybinder.org/badge.svg
-.. _Binder: https://mybinder.org/v2/gh/mwouts/scikit-learn/master?filepath=examples
+.. _Binder: https://mybinder.org/v2/gh/scikit-learn/scikit-learn/master?filepath=examples
 
 
 scikit-learn
