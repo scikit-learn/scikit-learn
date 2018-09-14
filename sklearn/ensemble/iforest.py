@@ -79,7 +79,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
             - If int, then draw `max_features` features.
             - If float, then draw `max_features * X.shape[1]` features.
 
-    feature_weight : array-like, shape = [n_features] or None, optional (default=None)
+    feature_weight : array-like, shape = [n_features] or None,
+        optional (default=None)
         Feature weights in feature sampling. Weights have to sum to 1.
         If None, then features are equally weighted.
 
