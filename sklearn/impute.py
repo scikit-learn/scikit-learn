@@ -462,7 +462,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         If ``sample_posterior`` is True, the predictor must support
         ``return_std`` in its ``predict`` method. Also, if
         ``sample_posterior=True`` the default predictor will be
-        ``BayesianRidge()`` and ``RidgeCV`` otherwise.
+        ``:class:sklearn.linear_model:BayesianRidge()`` and
+        ``:class:sklearn.linear_model.RidgeCV()`` otherwise.
 
     sample_posterior : boolean, default=False
         Whether to sample from the (Gaussian) predictive posterior of the
@@ -526,12 +527,6 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    This implementation was inspired by the R MICE package (Multivariate
-    Imputation by Chained Equations), but differs from it by returning a single
-    imputation instead of multiple imputations. However, multiple imputation
-    can be achieved with multiple instances of the imputer with different
-    random seeds run in parallel.
-
     To support imputation in inductive mode we store each feature's predictor
     during the ``fit`` phase, and predict without refitting (in order) during
     the ``transform`` phase.
@@ -539,8 +534,9 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
     Features which contain all missing values at ``fit`` are discarded upon
     ``transform``.
 
-    Features with missing values in transform which did not have any missing
-    values in fit will be imputed with the initial imputation method only.
+    Features with missing values during ``transform`` which did not have any
+    missing values during ``fit`` will be imputed with the initial imputation
+    method only.
 
     References
     ----------
