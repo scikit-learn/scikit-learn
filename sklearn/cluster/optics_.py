@@ -991,4 +991,5 @@ def _extract_xi_labels(ordering, clusters):
         if all(labels[c[0]:(c[1] + 1)] == 0):
             labels[c[0]:(c[1] + 1)] = label
             label += 1
-    return (labels - 1)[ordering]
+    labels[ordering] = labels - 1
+    return labels
