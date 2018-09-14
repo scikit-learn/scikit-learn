@@ -19,4 +19,4 @@ __all__ = ["get_reusable_executor", "cpu_count", "wait", "as_completed",
            "FIRST_COMPLETED", "FIRST_EXCEPTION", "ALL_COMPLETED", ]
 
 
-__version__ = '2.3.0'
+__version__ = '2.3.1'

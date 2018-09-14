@@ -885,7 +885,7 @@ def test_sparse_validate_centers():
     # Test that a ValueError is raised for validate_center_shape
     classifier = KMeans(n_clusters=3, init=centers, n_init=1)
 
-    msg = "The shape of the initial centers \(\(4L?, 4L?\)\) " \
+    msg = r"The shape of the initial centers \(\(4L?, 4L?\)\) " \
           "does not match the number of clusters 3"
     assert_raises_regex(ValueError, msg, classifier.fit, X)
 
@@ -969,7 +969,7 @@ def test_sample_weight_length():
     # check that an error is raised when passing sample weights
     # with an incompatible shape
     km = KMeans(n_clusters=n_clusters, random_state=42)
-    assert_raises_regex(ValueError, 'len\(sample_weight\)', km.fit, X,
+    assert_raises_regex(ValueError, r'len\(sample_weight\)', km.fit, X,
                         sample_weight=np.ones(2))
 
 
