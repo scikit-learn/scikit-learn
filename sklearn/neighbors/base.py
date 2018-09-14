@@ -217,6 +217,12 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                               "using brute force")
             if self.effective_metric_ not in VALID_METRICS_SPARSE['brute'] \
                     and not callable(self.effective_metric_):
+                raise ValueError("Metric '%s' not valid for sparse input. "
+                                 "Use sorted(sklearn.neighbors."
+                                 "VALID_METRICS['brute']) "
+                                 "to get valid options. "
+                                 "Metric can also be a callable function."
+                                 % (self.effective_metric_))
 
                 raise ValueError("metric '%s' not valid for sparse input"
                                  % self.effective_metric_)
