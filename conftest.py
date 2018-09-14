@@ -6,6 +6,7 @@
 # the one from site-packages.
 
 import platform
+import sys
 from distutils.version import LooseVersion
 
 import pytest
@@ -32,14 +33,15 @@ def pytest_collection_modifyitems(config, items):
     skip_doctests = True
     try:
         import numpy as np
-        if LooseVersion(np.__version__) >= LooseVersion('1.14'):
+        if (LooseVersion(np.__version__) >= LooseVersion('1.14') or
+                sys.version_info[:1] >= (3,)):
             skip_doctests = False
     except ImportError:
         pass
 
     if skip_doctests:
         skip_marker = pytest.mark.skip(
-            reason='doctests are only run for numpy >= 1.14')
+            reason='doctests are only run for numpy >= 1.14 and python >= 3')
 
         for item in items:
             if isinstance(item, DoctestItem):
