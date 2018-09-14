@@ -880,11 +880,13 @@ def _extract_xi(reachability_plot, xi, min_points):
         print("index", index)
         #print("r", reachability_plot[index])
         mib = max(mib, reachability_plot[index])
+        #print("mib up there:", mib)
 
         # check if a steep downward area starts
         if _steep_downward(reachability_plot, index, ixi):
             #print("steep downward")
             #print("sdas", sdas)
+            #print("filter mib:", mib)
             sdas = _update_fileter_sdas(sdas, mib, ixi)
             #print("sdas", sdas)
             D_start = index
@@ -895,11 +897,12 @@ def _extract_xi(reachability_plot, xi, min_points):
             print("D", D, "r.s %.4g" % reachability_plot[D.start], "r.e %.4g" % reachability_plot[D.end])
             sdas.append(D)
             index = end
-            #mib = reachability_plot[index]
+            mib = reachability_plot[index]
 
         elif _steep_upward(reachability_plot, index, ixi):
             #print("steep upward")
             #print("sdas", sdas)
+            #print("filter mib:", mib)
             sdas = _update_fileter_sdas(sdas, mib, ixi)
             #print("sdas", sdas)
             U_start = index
@@ -912,15 +915,16 @@ def _extract_xi(reachability_plot, xi, min_points):
                 U.maximum = np.inf
                 index += 1
             print("U", U, "r.s %.4g" % reachability_plot[U.start], "r.e %.4g" % reachability_plot[U.end])
-            mib = reachability_plot[end]
+            mib = reachability_plot[end - 1]
             print('mib %.4g' % mib)
+            print(sdas)
 
             U_clusters = list()
             for D in sdas:
                 c_start = D.start
                 c_end = U.end
-                #print("D", D, "U", U)
-                #print("start", c_start, "end", c_end)
+                print("D", D, "U", U)
+                print("start", c_start, "end", c_end)
                 
                 # 3.b
                 if D.mib > mib * ixi:
@@ -934,10 +938,14 @@ def _extract_xi(reachability_plot, xi, min_points):
                            and c_start < c_end):
                         c_start += 1
                 elif U.maximum * ixi >= D.maximum:
-                    while (reachability_plot[c_end + 1] < D.maximum
+                    while (reachability_plot[c_end - 1] > D.maximum
                            and c_end > c_start):
                         c_end -= 1
-                #print('after 4', c_start, c_end)
+                print('after 4', c_start, c_end)
+
+                if _steep_upward(reachability_plot, index - 1, ixi):
+                    c_end -= 1
+                print('check last point', c_end, 'index', index)
 
                 # 3.a
                 if c_end - c_start + 1 < min_points:
@@ -950,6 +958,7 @@ def _extract_xi(reachability_plot, xi, min_points):
             # add smaller clusters first.
             U_clusters.reverse()
             clusters.extend(U_clusters)
+            print("set of clusters:", clusters)
 
         else:
             #print("just else", index)
