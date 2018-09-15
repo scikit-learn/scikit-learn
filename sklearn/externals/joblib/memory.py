@@ -454,12 +454,16 @@ class MemorizedFunc(Logger):
         metadata: dict
             Some metadata about wrapped function call (see _persist_input()).
         """
-        # Compare the function code with the previous to see if the
-        # function code has changed
         func_id, args_id = self._get_output_identifiers(*args, **kwargs)
         metadata = None
         msg = None
+
+        # Wether or not the memorized function must be called
+        must_call = False
+
         # FIXME: The statements below should be try/excepted
+        # Compare the function code with the previous to see if the
+        # function code has changed
         if not (self._check_previous_func_code(stacklevel=4) and
                 self.store_backend.contains_item([func_id, args_id])):
             if self._verbose > 10:
@@ -469,16 +473,7 @@ class MemorizedFunc(Logger):
                           .format(name, args_id,
                                   self.store_backend.
                                   get_cached_func_info([func_id])['location']))
-            out, metadata = self.call(*args, **kwargs)
-            if self.mmap_mode is not None:
-                # Memmap the output at the first call to be consistent with
-                # later calls
-                if self._verbose:
-                    msg = _format_load_msg(func_id, args_id,
-                                           timestamp=self.timestamp,
-                                           metadata=metadata)
-                out = self.store_backend.load_item([func_id, args_id], msg=msg,
-                                                   verbose=self._verbose)
+            must_call = True
         else:
             try:
                 t0 = time.time()
@@ -507,8 +502,19 @@ class MemorizedFunc(Logger):
                 self.warn('Exception while loading results for '
                           '{}\n {}'.format(signature, traceback.format_exc()))
 
-                out, metadata = self.call(*args, **kwargs)
-                args_id = None
+                must_call = True
+
+        if must_call:
+            out, metadata = self.call(*args, **kwargs)
+            if self.mmap_mode is not None:
+                # Memmap the output at the first call to be consistent with
+                # later calls
+                if self._verbose:
+                    msg = _format_load_msg(func_id, args_id,
+                                           timestamp=self.timestamp,
+                                           metadata=metadata)
+                out = self.store_backend.load_item([func_id, args_id], msg=msg,
+                                                   verbose=self._verbose)
 
         return (out, args_id, metadata)
 

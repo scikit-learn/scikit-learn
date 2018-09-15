@@ -251,11 +251,9 @@ def enet_coordinate_descent(floating[::1] w,
 
                 # update the maximum absolute coefficient update
                 d_w_ii = fabs(w[ii] - w_ii)
-                if d_w_ii > d_w_max:
-                    d_w_max = d_w_ii
+                d_w_max = fmax(d_w_max, d_w_ii)
 
-                if fabs(w[ii]) > w_max:
-                    w_max = fabs(w[ii])
+                w_max = fmax(w_max, fabs(w[ii]))
 
             if (w_max == 0.0 or
                 d_w_max / w_max < d_w_tol or

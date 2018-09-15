@@ -845,7 +845,7 @@ class SGDClassifier(BaseSGDClassifier):
         The exponent for inverse scaling learning rate [default 0.5].
 
     early_stopping : bool, default=False
-        Whether to use early stopping to terminate training when validation.
+        Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
         a fraction of training data as validation and terminate training when
         validation score is not improving by at least tol for
@@ -1454,7 +1454,7 @@ class SGDRegressor(BaseSGDRegressor):
         The exponent for inverse scaling learning rate [default 0.5].
 
     early_stopping : bool, default=False
-        Whether to use early stopping to terminate training when validation.
+        Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
         a fraction of training data as validation and terminate training when
         validation score is not improving by at least tol for

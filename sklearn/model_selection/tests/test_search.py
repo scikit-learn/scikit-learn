@@ -133,13 +133,13 @@ def assert_grid_iter_equals_getitem(grid):
 
 @pytest.mark.parametrize(
     "input, error_type, error_message",
-    [(0, TypeError, 'Parameter grid is not a dict or a list (0)'),
-     ([{'foo': [0]}, 0], TypeError, 'Parameter grid is not a dict (0)'),
+    [(0, TypeError, r'Parameter grid is not a dict or a list \(0\)'),
+     ([{'foo': [0]}, 0], TypeError, r'Parameter grid is not a dict \(0\)'),
      ({'foo': 0}, TypeError, "Parameter grid value is not iterable "
-      "(key='foo', value=0)")]
+      r"\(key='foo', value=0\)")]
 )
 def test_validate_parameter_grid_input(input, error_type, error_message):
-    with pytest.raises(error_type, message=error_message):
+    with pytest.raises(error_type, match=error_message):
         ParameterGrid(input)
 
 
