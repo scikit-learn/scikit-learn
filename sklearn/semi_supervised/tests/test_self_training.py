@@ -106,12 +106,13 @@ def test_fitted():
 
 
 def test_y_labeled_iter():
-    # Check that the amount of datapoints labeled in iteration 0 is equal to 
+    # Check that the amount of datapoints labeled in iteration 0 is equal to
     # the amount of labeled datapoints we passed.
     for m in range(1, 5):
         st = SelfTrainingClassifier(KNeighborsClassifier(), max_iter=m)
         st.fit(X_train, y_train_missing_labels)
         amount_iter_0 = len(st.y_labeled_iter_[st.y_labeled_iter_ == 0])
         assert(amount_iter_0 == 50)
-        # Check that the max 
+        # Check that the max of the iterations is less than the total amount of
+        # iterations
         assert(np.max(st.y_labeled_iter_) <= m)

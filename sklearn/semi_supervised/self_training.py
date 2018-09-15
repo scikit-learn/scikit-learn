@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..base import BaseEstimator, ClassifierMixin
+from ..base import BaseEstimator, ClassifierMixin, clone
 from ..utils.validation import check_X_y, check_array, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils import safe_mask
@@ -21,7 +21,9 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
     Parameters
     ----------
     base_estimator : estimator object
-        An estimator object implementing `fit` and `predict_proba`.
+        An estimator object implementing ``fit`` and ``predict_proba``.
+        Invoking the ``fit`` method will fit a clone of the passed estimator,
+        which will be stored in the ``self.base_estimator_`` attribute.
 
     threshold : float
         Threshold above which predictions are added to the labeled dataset.
@@ -33,11 +35,14 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
+    base_estimator_: estimator object
+        The fitted estimator.
+
     y_labeled_ : array, shape = (n_samples)
-        The labels assigned to unlabeled datapoints during fitting
+        The labels assigned to unlabeled datapoints during fitting.
 
     X_labeled_ : array, shape = (n_samples, n_features)
-        The labeled samples used for the final fit
+        The labeled samples used for the final fit.
 
     y_labeled_iter_ : array, shape = (n_samples)
         The iteration in which each sample was labeled. When a sample has
@@ -78,7 +83,9 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
 
     def fit(self, X, y):
         """
-        Fits SelfTrainingClassifier to dataset
+        Fits this ``SelfTrainingClassifier`` to dataset, using the
+        base_estimator passed. The fitted base_estimator is stored as
+        ``self.base_estimator_``.
 
         Parameters
         ----------
@@ -93,6 +100,7 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
         """
         X, y = check_X_y(X, y)
         _check_estimator(self.base_estimator)
+        self.base_estimator_ = clone(self.base_estimator)
 
         if not 0 <= self.max_iter:
             raise ValueError("max_iter must be >= 0")
@@ -112,10 +120,10 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
         iter = 0
         while len(self.X_labeled_) < len(X) and iter < self.max_iter:
             iter += 1
-            self.base_estimator.fit(self.X_labeled_, self.y_labeled_)
+            self.base_estimator_.fit(self.X_labeled_, self.y_labeled_)
 
             # Select predictions where confidence is above the threshold
-            predict_proba = self.base_estimator.predict_proba(X_unlabeled)
+            predict_proba = self.base_estimator_.predict_proba(X_unlabeled)
 
             pred = np.argmax(predict_proba, axis=1)
             max_proba = np.max(predict_proba, axis=1)
@@ -134,7 +142,7 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
             X_unlabeled = np.delete(X_unlabeled, confident, axis=0)
             y_unlabeled = np.delete(y_unlabeled, confident, axis=0)
 
-        self.base_estimator.fit(self.X_labeled_, self.y_labeled_)
+        self.base_estimator_.fit(self.X_labeled_, self.y_labeled_)
         return self
 
     @if_delegate_has_method(delegate='base_estimator')
@@ -153,7 +161,7 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
         """
         check_is_fitted(self, 'y_labeled_iter_')
         X = check_array(X)
-        return self.base_estimator.predict(X)
+        return self.base_estimator_.predict(X)
 
     def predict_proba(self, X):
         """Predict probability for each possible outcome.
@@ -169,7 +177,7 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
             array with prediction probabilities
         """
         check_is_fitted(self, 'y_labeled_iter_')
-        return self.base_estimator.predict_proba(X)
+        return self.base_estimator_.predict_proba(X)
 
     @if_delegate_has_method(delegate='base_estimator')
     def decision_function(self, X):
@@ -186,7 +194,7 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
             result of the decision function of the base_estimator
         """
         check_is_fitted(self, 'y_labeled_iter_')
-        return self.base_estimator.decision_function(X)
+        return self.base_estimator_.decision_function(X)
 
     @if_delegate_has_method(delegate='base_estimator')
     def predict_log_proba(self, X):
@@ -203,4 +211,4 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
             array with log prediction probabilities
         """
         check_is_fitted(self, 'y_labeled_iter_')
-        return self.base_estimator.predict_log_proba(X)
+        return self.base_estimator_.predict_log_proba(X)
