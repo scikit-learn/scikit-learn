@@ -462,8 +462,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         If ``sample_posterior`` is True, the predictor must support
         ``return_std`` in its ``predict`` method. Also, if
         ``sample_posterior=True`` the default predictor will be
-        ``:class:sklearn.linear_model:BayesianRidge()`` and
-        ``:class:sklearn.linear_model.RidgeCV()`` otherwise.
+        :class:`sklearn.linear_model.BayesianRidge` and
+        :class:`sklearn.linear_model.RidgeCV` otherwise.
 
     sample_posterior : boolean, default=False
         Whether to sample from the (Gaussian) predictive posterior of the
