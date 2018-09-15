@@ -470,12 +470,38 @@ class OPTICS(BaseEstimator, ClusterMixin):
         return _extract_dbscan(self.ordering_, self.core_distances_,
                                self.reachability_, eps)
 
-    def extract_xi(self, xi):
+    def extract_xi(self, xi, return_clusters=False):
+        """Automatically extract clusters according to the
+        :func:`Xi-steep method _extract_xi`.
+
+        Parameters
+        ----------
+        xi : float, between 0 and 1
+            The main parameter in the Xi-steep method.
+
+        return_clusters : bool (default=False)
+            Return the clusters as well as the labels. If `False`, it will
+            only return the labels.
+
+        Returns
+        ------
+        labels : array, shape (n_samples)
+            The labels assigned to samples. Points which are not included
+            in any cluster are labeled as -1.
+
+        clusters : list, if return_clusters is True
+            The list of clusters in the form of (start, end) tuples,
+            with all indices inclusive. The clusters are ordered in a way that
+            larger clusters encompassing smaller clusters, come after those
+            smaller clusters.
+        """
+        check_is_fitted(self, 'reachability_')
+
         return _extract_xi(self.reachability_,
                            self.ordering_,
                            self.min_samples,
                            self.min_cluster_size,
-                           xi)
+                           xi, return_clusters)
 
 
 def _extract_dbscan(ordering, core_distances, reachability, eps):
@@ -784,22 +810,87 @@ def _get_leaves(node, arr):
     return arr
 
 
-def _extract_xi(reachability, ordering, min_samples, min_cluster_size, xi):
+def _extract_xi(reachability, ordering, min_samples, min_cluster_size, xi,
+                return_clusters):
+    """Automatically extract clusters according to the Xi-steep method.
+
+    Parameters
+    ----------
+    reachability_plot : array, shape (n_samples)
+        The reachability plot, i.e. reachability ordered according to
+        the calculated ordering, all computed by OPTICS.
+
+    xi : float, between 0 and 1
+        The main parameter in the Xi-steep method.
+
+    min_samples : integer
+       The same as the min_samples given to OPTICS. Up and down steep
+       regions can't have more then `min_samples` consecutive non-steep
+       points.
+
+    min_cluster_size : int > 1 or float between 0 and 1
+        Minimum number of samples in an OPTICS cluster, expressed as an
+        absolute number or a fraction of the number of samples (rounded
+        to be at least 2).
+
+    return_clusters : bool
+        Return the clusters as well as the labels. If `False`, it will
+        only return the labels.
+
+    Returns
+    ------
+    labels : array, shape (n_samples)
+        The labels assigned to samples. Points which are not included
+        in any cluster are labeled as -1.
+
+    clusters : list, if return_clusters is True
+        The list of clusters in the form of (start, end) tuples,
+        with all indices inclusive. The clusters are ordered in a way that
+        larger clusters encompassing smaller clusters, come after those
+        smaller clusters.
+    """
     clusters = _xi_cluster(reachability[ordering], xi, min_samples,
                            min_cluster_size)
     labels = _extract_xi_labels(ordering, clusters)
-    return labels
+    if return_clusters:
+        return labels, clusters
+    else:
+        return labels
 
 
 def _steep_upward(reachability_plot, p, ixi):
+    """Check if point p is a xi steep up area (definition 9).
+    ixi is the inverse xi, i.e. `1 - xi`"""
     return reachability_plot[p] <= reachability_plot[p + 1] * ixi
 
 
 def _steep_downward(reachability_plot, p, ixi):
+    """Check if point p is a xi steep down area (definition 9).
+    ixi is the inverse xi, i.e. `1 - xi`"""
     return reachability_plot[p] * ixi >= reachability_plot[p + 1]
 
 
 class _Area:
+    """An (upward or downward) area.
+
+    Attributes
+    ----------
+    start : integer
+        The start of the region.
+
+    end : integer
+        The end of the region.
+
+    maximum : float
+        The maximum reachability in this region, which is the
+        start of the region for a downward area and the end of
+        the region for an upward area.
+
+    mib : float
+        Maximum in between value, i.e. the maximum value between
+        the end of a steep down area and the current index. It is
+        irrelevant for steep up areas.
+    """
     def __init__(self, start, end, maximum, mib):
         self.start = start
         self.end = end
@@ -815,71 +906,166 @@ class _Area:
 
 
 def _extend_downward(reachability_plot, start, ixi, min_samples, n_samples):
-    #print("extend down start")
+    """Extend the downward area until it's maximal.
+
+    Parameters
+    ----------
+    reachability_plot : array, shape (n_samples)
+        The reachability plot, i.e. reachability ordered according to
+        the calculated ordering, all computed by OPTICS.
+
+    start : integer
+        The start of the downward region.
+
+    ixi: float, between 0 and 1
+        The inverse xi, i.e. `1 - xi`
+
+    min_samples : integer
+       The same as the min_samples given to OPTICS. Up and down steep
+       regions can't have more then `min_samples` consecutive non-steep
+       points.
+
+    n_samples : integer
+        Total number of samples.
+
+    Returns
+    -------
+    index : integer
+        The current index iterating over all the samples.
+
+    end : integer
+        The end of the downward region, which can be behind the index.
+    """
+    # print("extend down start")
     non_downward_points = 0
     index = start
     end = start
     # find a maximal downward area
     while index + 1 < n_samples:
-        #print("index", index)
-        #print("r", reachability_plot[index], "r + 1", reachability_plot[index + 1])
+        # print("index", index)
+        # print("r", reachability_plot[index], "r + 1",
+        #       reachability_plot[index + 1])
         index += 1
         if _steep_downward(reachability_plot, index, ixi):
-            #print("steep")
+            # print("steep")
             non_downward_points = 0
             end = index + 1
         elif reachability_plot[index] >= reachability_plot[index + 1]:
-            #print("just down")
+            # print("just down")
             # it's not a steep downward point, but still goes down.
             non_downward_points += 1
             # region should include no more than min_samples consecutive
             # non downward points.
             if non_downward_points == min_samples:
-                #print("non downward")
+                # print("non downward")
                 break
         else:
             break
-    #print("extend end")
+    # print("extend end")
     return index, end
 
 
 def _extend_upward(reachability_plot, start, ixi, min_samples, n_samples):
-    #print("extend up start")
+    """Extend the upward area until it's maximal.
+
+    Parameters
+    ----------
+    reachability_plot : array, shape (n_samples)
+        The reachability plot, i.e. reachability ordered according to
+        the calculated ordering, all computed by OPTICS.
+
+    start : integer
+        The start of the upward region.
+
+    ixi: float, between 0 and 1
+        The inverse xi, i.e. `1 - xi`
+
+    min_samples : integer
+       The same as the min_samples given to OPTICS. Up and down steep
+       regions can't have more then `min_samples` consecutive non-steep
+       points.
+
+    n_samples : integer
+        Total number of samples.
+
+    Returns
+    -------
+    index : integer
+        The current index iterating over all the samples.
+
+    end : integer
+        The end of the upward region, which can be behind the index.
+    """
+    # print("extend up start")
     non_upward_points = 0
     index = start
     end = start
     # find a maximal upward area
     while index + 1 < n_samples:
-        #print("index", index)
-        #print("r", reachability_plot[index], "r + 1", reachability_plot[index + 1])
+        # print("index", index)
+        # print("r", reachability_plot[index], "r + 1",
+        #       reachability_plot[index + 1])
         index += 1
         if _steep_upward(reachability_plot, index, ixi):
-            #print("steep")
+            # print("steep")
             non_upward_points = 0
             end = index + 1
         elif reachability_plot[index] <= reachability_plot[index + 1]:
-            #print("just up")
+            # print("just up")
             # it's not a steep upward point, but still goes up.
             non_upward_points += 1
             # region should include no more than min_samples consecutive
             # non downward points.
             if non_upward_points == min_samples:
-                #print("non upward")
+                # print("non upward")
                 break
         else:
             break
-    #print("extend end")
+    # print("extend end")
     return index, end
 
 
 def _update_fileter_sdas(sdas, mib, ixi):
+    """Update steep down areas (SDAs) using the new
+    maximum in between (mib) value, and the given inverse xi, i.e. `1 - xi`
+    """
     res = [sda for sda in sdas if mib <= sda.maximum * ixi]
     for sda in res:
         sda.mib = max(sda.mib, mib)
     return res
 
 
-def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size, ):
+def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
+    """Automatically extract clusters according to the Xi-steep method.
+
+    Parameters
+    ----------
+    reachability_plot : array, shape (n_samples)
+        The reachability plot, i.e. reachability ordered according to
+        the calculated ordering, all computed by OPTICS.
+
+    xi : float, between 0 and 1
+        The main parameter in the Xi-steep method.
+
+    min_samples : integer
+       The same as the min_samples given to OPTICS. Up and down steep
+       regions can't have more then `min_samples` consecutive non-steep
+       points.
+
+    min_cluster_size : int > 1 or float between 0 and 1
+        Minimum number of samples in an OPTICS cluster, expressed as an
+        absolute number or a fraction of the number of samples (rounded
+        to be at least 2).
+
+    Returns
+    -------
+    clusters : list
+        The list of clusters in the form of (start, end) tuples,
+        with all indices inclusive. The clusters are ordered in a way that
+        larger clusters encompassing smaller clusters, come after those
+        smaller clusters.
+    """
+
     # all indices are inclusive (specially at the end)
     n_samples = len(reachability_plot)
     # add an inf to the end of reachability plot
@@ -888,63 +1074,68 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size, ):
     reachability_plot = np.array(reachability_plot)
     reachability_plot = np.hstack((reachability_plot, np.inf))
 
+    if min_cluster_size <= 1:
+        min_cluster_size = max(2, min_cluster_size * n_samples)
+
     ixi = 1 - xi
     sdas = list()
     clusters = list()
     index = int(0)
-    mib = 0. # maximum in between
+    mib = 0.  # maximum in between
     while index + 1 < n_samples:
-        #print("index", index)
-        #print("r", reachability_plot[index])
+        # print("index", index)
+        # print("r", reachability_plot[index])
         mib = max(mib, reachability_plot[index])
-        #print("mib up there:", mib)
+        # print("mib up there:", mib)
 
         # check if a steep downward area starts
         if _steep_downward(reachability_plot, index, ixi):
-            #print("steep downward")
-            #print("sdas", sdas)
-            #print("filter mib:", mib)
+            # print("steep downward")
+            # print("sdas", sdas)
+            # print("filter mib:", mib)
             sdas = _update_fileter_sdas(sdas, mib, ixi)
-            #print("sdas", sdas)
+            # print("sdas", sdas)
             D_start = index
             index, end = _extend_downward(reachability_plot, D_start, ixi,
                                           min_samples, n_samples)
             D = _Area(start=D_start, end=end,
                       maximum=reachability_plot[D_start], mib=0.)
-            #print("D", D, "r.s %.4g" % reachability_plot[D.start], "r.e %.4g" % reachability_plot[D.end])
+            # print("D", D, "r.s %.4g" % reachability_plot[D.start],
+            #       "r.e %.4g" % reachability_plot[D.end])
             sdas.append(D)
             mib = reachability_plot[index]
 
         elif _steep_upward(reachability_plot, index, ixi):
-            #print("steep upward")
-            #print("sdas", sdas)
-            #print("filter mib:", mib)
+            # print("steep upward")
+            # print("sdas", sdas)
+            # print("filter mib:", mib)
             sdas = _update_fileter_sdas(sdas, mib, ixi)
-            #print("sdas", sdas)
+            # print("sdas", sdas)
             U_start = index
             index, end = _extend_upward(reachability_plot, U_start, ixi,
                                         min_samples, n_samples)
             U = _Area(start=U_start, end=end, maximum=reachability_plot[end],
                       mib=-1)
-            #if np.isinf(reachability_plot[index + 1]):
-            #    U.maximum = np.inf
-            #    index += 1
-            #print("U", U, "r.s %.4g" % reachability_plot[U.start], "r.e %.4g" % reachability_plot[U.end])
+            # if np.isinf(reachability_plot[index + 1]):
+            #     U.maximum = np.inf
+            #     index += 1
+            # print("U", U, "r.s %.4g" % reachability_plot[U.start],
+            #       "r.e %.4g" % reachability_plot[U.end])
             mib = reachability_plot[end - 1]
-            #print('mib %.4g' % mib)
-            #print(sdas)
+            # print('mib %.4g' % mib)
+            # print(sdas)
 
             U_clusters = list()
             for D in sdas:
                 c_start = D.start
                 c_end = min(U.end, n_samples - 1)
-                #print("D", D, "U", U)
-                #print("start", c_start, "end", c_end)
-                
+                # print("D", D, "U", U)
+                # print("start", c_start, "end", c_end)
+
                 # 3.b
                 if D.mib > mib * ixi:
                     continue
-                #print("3b pass")
+                # print("3b pass")
 
                 # 4
                 if D.maximum * ixi >= U.maximum:
@@ -956,35 +1147,51 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size, ):
                     while (reachability_plot[c_end - 1] > D.maximum
                            and c_end > c_start):
                         c_end -= 1
-                #print('after 4', c_start, c_end)
+                # print('after 4', c_start, c_end)
 
                 if _steep_upward(reachability_plot, index - 1, ixi):
                     c_end -= 1
-                #print('check last point', c_end, 'index', index)
+                # print('check last point', c_end, 'index', index)
 
                 # 3.a
                 if c_end - c_start + 1 < min_cluster_size:
                     continue
-                #print('min pts pass')
+                # print('min pts pass')
 
                 U_clusters.append((c_start, c_end))
-                #print('U clusters', U_clusters)
+                # print('U clusters', U_clusters)
 
             # add smaller clusters first.
             U_clusters.reverse()
             clusters.extend(U_clusters)
-            #print("set of clusters:", clusters)
+            # print("set of clusters:", clusters)
 
         else:
-            #print("just else", index)
+            # print("just else", index)
             index += 1
 
     return clusters
 
 
 def _extract_xi_labels(ordering, clusters):
-    # we rely on the fact that clusters are stored
-    # as the smaller clusters coming before the larger ones.
+    """Extracts the labels from the clusters returned by `_xi_cluster`.
+    We rely on the fact that clusters are stored
+    with the smaller clusters coming before the larger ones.
+
+    Parameters
+    ----------
+    ordering : array, shape (n_samples)
+        The ordering of points calculated by OPTICS
+
+    clusters : list
+        List of clusters i.e. (start, end) tuples,
+        as returned by `_xi_cluster`.
+
+    Returns
+    -------
+    labels : array, shape (n_samples)
+    """
+
     labels = np.zeros(len(ordering), dtype=np.int)
     label = 1
     for c in clusters:
