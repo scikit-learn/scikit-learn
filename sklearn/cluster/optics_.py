@@ -484,7 +484,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
             only return the labels.
 
         Returns
-        ------
+        -------
         labels : array, shape (n_samples)
             The labels assigned to samples. Points which are not included
             in any cluster are labeled as -1.
@@ -838,7 +838,7 @@ def _extract_xi(reachability, ordering, min_samples, min_cluster_size, xi,
         only return the labels.
 
     Returns
-    ------
+    -------
     labels : array, shape (n_samples)
         The labels assigned to samples. Points which are not included
         in any cluster are labeled as -1.
