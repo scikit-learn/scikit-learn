@@ -22,7 +22,8 @@ from ._optics_inner import quick_scan
 
 
 def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
-           p=2, metric_params=None, maxima_ratio=.75,
+           p=2, metric_params=None, extract_method='fancy',
+           maxima_ratio=.75,
            rejection_ratio=.7, similarity_threshold=0.4,
            significant_min=.003, min_cluster_size=.005,
            min_maxima_ratio=0.001, algorithm='ball_tree',
@@ -66,6 +67,11 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
 
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
+
+    extract_method : string, optional (default='fancy')
+        The extraction method used to extract clusters using the calculated
+        reachability and ordering. Possible values are "dbscan"
+        and "fancy".
 
     maxima_ratio : float, optional (default=.75)
         The maximum ratio we allow of average height of clusters on the
@@ -151,7 +157,7 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
     """
 
     clust = OPTICS(min_samples, max_eps, metric, p, metric_params,
-                   maxima_ratio, rejection_ratio,
+                   extract_method, maxima_ratio, rejection_ratio,
                    similarity_threshold, significant_min,
                    min_cluster_size, min_maxima_ratio,
                    algorithm, leaf_size, n_jobs)
@@ -196,6 +202,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
+
+    extract_method : string, optional (default='fancy')
+        The extraction method used to extract clusters using the calculated
+        reachability and ordering. Possible values are "dbscan"
+        and "fancy".
 
     maxima_ratio : float, optional (default=.75)
         The maximum ratio we allow of average height of clusters on the
@@ -291,7 +302,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, min_samples=5, max_eps=np.inf, metric='euclidean',
-                 p=2, metric_params=None, maxima_ratio=.75,
+                 p=2, metric_params=None, extract_method='fancy',
+                 maxima_ratio=.75,
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size=.005,
                  min_maxima_ratio=0.001, algorithm='ball_tree',
@@ -310,6 +322,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.metric_params = metric_params
         self.p = p
         self.leaf_size = leaf_size
+        self.extract_method = extract_method
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
@@ -352,6 +365,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
                              'number of samples (%d). Got %d' %
                              (n_samples, self.min_cluster_size))
 
+        if self.extract_method not in ['dbscan', 'fancy']:
+            raise ValueError("extract_method should be one of"
+                             " 'dbscan' or 'fancy', but is %s" %
+                             self.extract_method)
+
         # Start all points as 'unprocessed' ##
         self.reachability_ = np.empty(n_samples)
         self.reachability_.fill(np.inf)
@@ -362,25 +380,33 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         nbrs = NearestNeighbors(n_neighbors=self.min_samples,
                                 algorithm=self.algorithm,
-                                leaf_size=self.leaf_size, metric=self.metric,
-                                metric_params=self.metric_params, p=self.p,
+                                leaf_size=self.leaf_size,
+                                metric=self.metric,
+                                metric_params=self.metric_params,
+                                p=self.p,
                                 n_jobs=self.n_jobs)
 
         nbrs.fit(X)
-        self.core_distances_[:] = nbrs.kneighbors(X,
-                                                  self.min_samples)[0][:, -1]
+        self.core_distances_[:] = nbrs.kneighbors(
+            X, self.min_samples)[0][:, -1]
 
         self.ordering_ = self._calculate_optics_order(X, nbrs)
 
-        indices_, self.labels_ = _extract_optics(self.ordering_,
-                                                 self.reachability_,
-                                                 self.maxima_ratio,
-                                                 self.rejection_ratio,
-                                                 self.similarity_threshold,
-                                                 self.significant_min,
-                                                 self.min_cluster_size,
-                                                 self.min_maxima_ratio)
+        if self.extract_method == 'fancy':
+            indices_, labels_ = _extract_optics(
+                self.ordering_,
+                self.reachability_,
+                self.maxima_ratio,
+                self.rejection_ratio,
+                self.similarity_threshold,
+                self.significant_min,
+                self.min_cluster_size,
+                self.min_maxima_ratio)
+        elif self.extract_method == 'dbscan':
+            indices_, labels_ = self.extract_dbscan(self.eps)
+
         self.core_sample_indices_ = indices_
+        self.labels_ = labels_
         return self
 
     # OPTICS helper functions
