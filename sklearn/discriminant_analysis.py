@@ -447,7 +447,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             self._max_components = len(self.classes_) - 1
         elif self.n_components > len(self.classes_) - 1:
             warnings.warn("'n_components' is not less than the number of "
-                          "classes, setting '_max_components' to "
+                          "classes, setting number of components to "
                           "'n_classes' - 1",
                           UserWarning)
             self._max_components = len(self.classes_) - 1
