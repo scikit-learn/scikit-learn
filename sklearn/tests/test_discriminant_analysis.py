@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
 
@@ -157,7 +158,8 @@ def test_lda_n_components():
     X_transformed = X_fit.transform(X)
     assert X_transformed.shape[1] == 1
     clf = LinearDiscriminantAnalysis(solver="svd", n_components=2)
-    X_transformed = clf.fit(X, y3).transform(X)
+    X_fit = assert_no_warnings(clf.fit, X, y3)
+    X_transformed = X_fit.transform(X)
     assert X_transformed.shape[1] == 2
 
 
