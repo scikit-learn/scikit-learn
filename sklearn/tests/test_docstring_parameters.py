@@ -44,10 +44,10 @@ _METHODS_IGNORE_NONE_Y = [
 ]
 
 
-@fails_if_pypy  # this segfaults with PyPy-6.0
 # numpydoc 0.8.0's docscrape tool raises because of collections.abc under
 # Python 3.7
 @ignore_warnings(category=DeprecationWarning)
+@fails_if_pypy  # this segfaults with PyPy-6.0
 def test_docstring_parameters():
     # Test module docstring formatting
 

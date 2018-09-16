@@ -2,6 +2,7 @@
 from sklearn.utils._show_versions import _get_sys_info
 from sklearn.utils._show_versions import _get_deps_info
 from sklearn.utils._show_versions import show_versions
+from sklearn.utils.testing import fails_if_pypy
 
 
 def test_get_sys_info():
@@ -24,6 +25,7 @@ def test_get_deps_info():
     assert 'pandas' in deps_info
 
 
+@fails_if_pypy
 def test_show_versions_with_blas(capsys):
     show_versions()
     out, err = capsys.readouterr()
