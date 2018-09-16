@@ -77,7 +77,8 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
 
-ALLOW_NAN = ['Imputer', 'SimpleImputer', 'ChainedImputer', 'MissingIndicator',
+ALLOW_NAN = ['Imputer', 'SimpleImputer', 'IterativeImputer',
+             'MissingIndicator',
              'MaxAbsScaler', 'MinMaxScaler', 'RobustScaler', 'StandardScaler',
              'PowerTransformer', 'QuantileTransformer']
 

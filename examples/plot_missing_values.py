@@ -4,11 +4,11 @@ Imputing missing values before building an estimator
 ====================================================
 
 Missing values can be replaced by the mean, the median or the most frequent
-value using the basic :func:`sklearn.impute.SimpleImputer`.
+value using the basic :class:`sklearn.impute.SimpleImputer`.
 The median is a more robust estimator for data with high magnitude variables
 which could dominate results (otherwise known as a 'long tail').
 
-Another option is the :func:`sklearn.impute.ChainedImputer`. This uses
+Another option is the :class:`sklearn.impute.IterativeImputer`. This uses
 round-robin linear regression, treating every variable as an output in
 turn. The version implemented assumes Gaussian (output) variables. If your
 features are obviously non-Normal, consider transforming them to look more
@@ -26,7 +26,7 @@ from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import make_pipeline, make_union
-from sklearn.impute import SimpleImputer, ChainedImputer, MissingIndicator
+from sklearn.impute import SimpleImputer, IterativeImputer, MissingIndicator
 from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)
@@ -73,18 +73,18 @@ def get_results(dataset):
                                          scoring='neg_mean_squared_error',
                                          cv=5)
 
-    # Estimate the score after chained imputation of the missing values
+    # Estimate the score after iterative imputation of the missing values
     estimator = make_pipeline(
-        make_union(ChainedImputer(missing_values=0, random_state=0),
+        make_union(IterativeImputer(missing_values=0, random_state=0),
                    MissingIndicator(missing_values=0)),
         RandomForestRegressor(random_state=0, n_estimators=100))
-    chained_impute_scores = cross_val_score(estimator, X_missing, y_missing,
-                                            scoring='neg_mean_squared_error')
+    iterative_impute_scores = cross_val_score(estimator, X_missing, y_missing,
+                                              scoring='neg_mean_squared_error')
 
     return ((full_scores.mean(), full_scores.std()),
             (zero_impute_scores.mean(), zero_impute_scores.std()),
             (mean_impute_scores.mean(), mean_impute_scores.std()),
-            (chained_impute_scores.mean(), chained_impute_scores.std()))
+            (iterative_impute_scores.mean(), iterative_impute_scores.std()))
 
 
 results_diabetes = np.array(get_results(load_diabetes()))
@@ -101,7 +101,7 @@ xval = np.arange(n_bars)
 x_labels = ['Full data',
             'Zero imputation',
             'Mean Imputation',
-            'Chained Imputation']
+            'Multivariate Imputation']
 colors = ['r', 'g', 'b', 'orange']
 
 # plot diabetes results
