@@ -23,7 +23,7 @@ from ._optics_inner import quick_scan
 
 def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
            p=2, metric_params=None, extract_method='sqlnk',
-           maxima_ratio=.75,
+           eps=0.5, maxima_ratio=.75,
            rejection_ratio=.7, similarity_threshold=0.4,
            significant_min=.003, min_cluster_size=.005,
            min_maxima_ratio=0.001, algorithm='ball_tree',
@@ -72,6 +72,10 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
         The extraction method used to extract clusters using the calculated
         reachability and ordering. Possible values are "dbscan"
         and "sqlnk".
+
+    eps : float, optional (default=0.5)
+        The maximum distance between two samples for them to be considered
+        as in the same neighborhood. Used ony if `extract_method='dbscan'`.
 
     maxima_ratio : float, optional (default=.75)
         The maximum ratio we allow of average height of clusters on the
@@ -157,7 +161,7 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
     """
 
     clust = OPTICS(min_samples, max_eps, metric, p, metric_params,
-                   extract_method, maxima_ratio, rejection_ratio,
+                   extract_method, eps, maxima_ratio, rejection_ratio,
                    similarity_threshold, significant_min,
                    min_cluster_size, min_maxima_ratio,
                    algorithm, leaf_size, n_jobs)
@@ -207,6 +211,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
         The extraction method used to extract clusters using the calculated
         reachability and ordering. Possible values are "dbscan"
         and "sqlnk".
+
+    eps : float, optional (default=0.5)
+        The maximum distance between two samples for them to be considered
+        as in the same neighborhood. Used ony if `extract_method='dbscan'`.
 
     maxima_ratio : float, optional (default=.75)
         The maximum ratio we allow of average height of clusters on the
@@ -303,7 +311,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     def __init__(self, min_samples=5, max_eps=np.inf, metric='euclidean',
                  p=2, metric_params=None, extract_method='sqlnk',
-                 maxima_ratio=.75,
+                 eps=0.5, maxima_ratio=.75,
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size=.005,
                  min_maxima_ratio=0.001, algorithm='ball_tree',
@@ -323,6 +331,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.p = p
         self.leaf_size = leaf_size
         self.extract_method = extract_method
+        self.eps = eps
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
