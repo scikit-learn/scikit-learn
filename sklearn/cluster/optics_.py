@@ -630,7 +630,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
             min_cluster_size=min_cluster_size,
             min_maxima_ratio=min_maxima_ratio
         )
->>>>>>> optics/choose_extractor
 
 
 def _extract_dbscan(ordering, core_distances, reachability, eps):
