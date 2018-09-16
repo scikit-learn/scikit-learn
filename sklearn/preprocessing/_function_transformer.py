@@ -89,7 +89,16 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         self.check_inverse = check_inverse
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
-
+        
+    def __call__(self, X):
+        return self.func(X)
+    
+    def __iter__(self):
+        return (i for i in [self.func.__name__, self])
+    
+    def __getitem__(self, i):
+        return [self.func.__name__, self][i]
+    
     def _check_input(self, X):
         # FIXME: Future warning to be removed in 0.22
         if self.validate is None:
