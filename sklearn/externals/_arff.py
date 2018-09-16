@@ -641,7 +641,7 @@ class ArffDecoder(object):
         :param s: a normalized string.
         :return: a string with the decoded comment.
         '''
-        res = re.sub('^\%( )?', '', s)
+        res = re.sub(r'^\%( )?', '', s)
         return res
 
     def _decode_relation(self, s):
