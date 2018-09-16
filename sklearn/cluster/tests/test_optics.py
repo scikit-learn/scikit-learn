@@ -457,3 +457,29 @@ def test_extract_dbscan():
 
     clust = OPTICS(extract_method='dbscan', eps=.5).fit(X)
     assert_array_equal(np.sort(np.unique(clust.labels_)), [0, 1, 2, 3])
+
+
+def test_extract_dbscan_no_param():
+    # run on smaller data for speed
+    locX = X[::10]
+    cl = OPTICS(extract_method='dbscan').fit(locX)
+    res = cl.extract_dbscan()
+    l1, c1 = res[0].copy(), res[1].copy()
+    res = cl.extract_dbscan(cl.eps)
+    l2, c2 = res[0].copy(), res[1].copy()
+    assert_array_equal(l1, l2)
+    assert_array_equal(c1, c2)
+
+
+def test_extract_sqlnk_no_param():
+    # run on smaller data for speed
+    locX = X[::10]
+    cl = OPTICS(extract_method='sqlnk').fit(locX)
+    res = cl.extract_sqlnk()
+    l1, c1 = res[0].copy(), res[1].copy()
+    res = cl.extract_sqlnk(cl.maxima_ratio, cl.rejection_ratio,
+                           cl.similarity_threshold, cl.significant_min,
+                           cl.min_cluster_size, cl.min_maxima_ratio)
+    l2, c2 = res[0].copy(), res[1].copy()
+    assert_array_equal(l1, l2)
+    assert_array_equal(c1, c2)
