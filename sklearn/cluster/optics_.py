@@ -75,13 +75,14 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
 
     eps : float, optional (default=0.5)
         The maximum distance between two samples for them to be considered
-        as in the same neighborhood. Used ony if `extract_method='dbscan'`.
+        as in the same neighborhood. Used ony when `extract_method='dbscan'`.
 
     maxima_ratio : float, optional (default=.75)
         The maximum ratio we allow of average height of clusters on the
         right and left to the local maxima in question. The higher the
         ratio, the more generous the algorithm is to preserving local
         minima, and the more cuts the resulting tree will have.
+        Used only when `extract_method='sqlnk'`.
 
     rejection_ratio : float, optional (default=.7)
         Adjusts the fitness of the clustering. When the maxima_ratio is
@@ -89,6 +90,7 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
         reject based on rejection_ratio. Higher values will result in points
         being more readily classified as noise; conversely, lower values will
         result in more points being clustered.
+        Used only when `extract_method='sqlnk'`.
 
     similarity_threshold : float, optional (default=.4)
         Used to check if nodes can be moved up one level, that is, if the
@@ -99,19 +101,23 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
         relative to the average of the reachability values of the parent
         node. A lower value for the similarity threshold means less levels
         in the tree.
+        Used only when `extract_method='sqlnk'`.
 
     significant_min : float, optional (default=.003)
         Sets a lower threshold on how small a significant maxima can be.
+        Used only when `extract_method='sqlnk'`.
 
     min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
         Minimum number of samples in an OPTICS cluster, expressed as an
         absolute number or a fraction of the number of samples (rounded
         to be at least 2).
+        Used only when `extract_method='sqlnk'`.
 
     min_maxima_ratio : float, optional (default=.001)
         Used to determine neighborhood size for minimum cluster membership.
         Each local maxima should be a largest value in a neighborhood
         of the `size min_maxima_ratio * len(X)` from left and right.
+        Used only when `extract_method='sqlnk'`.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
@@ -214,13 +220,14 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     eps : float, optional (default=0.5)
         The maximum distance between two samples for them to be considered
-        as in the same neighborhood. Used ony if `extract_method='dbscan'`.
+        as in the same neighborhood. Used ony when `extract_method='dbscan'`.
 
     maxima_ratio : float, optional (default=.75)
         The maximum ratio we allow of average height of clusters on the
         right and left to the local maxima in question. The higher the
         ratio, the more generous the algorithm is to preserving local
         minima, and the more cuts the resulting tree will have.
+        Used only when `extract_method='sqlnk'`.
 
     rejection_ratio : float, optional (default=.7)
         Adjusts the fitness of the clustering. When the maxima_ratio is
@@ -228,6 +235,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         reject based on rejection_ratio. Higher values will result in points
         being more readily classified as noise; conversely, lower values will
         result in more points being clustered.
+        Used only when `extract_method='sqlnk'`.
 
     similarity_threshold : float, optional (default=.4)
         Used to check if nodes can be moved up one level, that is, if the
@@ -238,19 +246,23 @@ class OPTICS(BaseEstimator, ClusterMixin):
         relative to the average of the reachability values of the parent
         node. A lower value for the similarity threshold means less levels
         in the tree.
+        Used only when `extract_method='sqlnk'`.
 
     significant_min : float, optional (default=.003)
         Sets a lower threshold on how small a significant maxima can be.
+        Used only when `extract_method='sqlnk'`.
 
     min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
         Minimum number of samples in an OPTICS cluster, expressed as an
         absolute number or a fraction of the number of samples (rounded
         to be at least 2).
+        Used only when `extract_method='sqlnk'`.
 
     min_maxima_ratio : float, optional (default=.001)
         Used to determine neighborhood size for minimum cluster membership.
         Each local maxima should be a largest value in a neighborhood
         of the `size min_maxima_ratio * len(X)` from left and right.
+        Used only when `extract_method='sqlnk'`.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
