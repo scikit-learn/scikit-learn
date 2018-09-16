@@ -24,7 +24,7 @@ from ._optics_inner import quick_scan
 
 def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
            p=2, metric_params=None, extract_method='sqlnk',
-           eps=0.5, maxima_ratio=.75,
+           eps=0.5, xi=0.05, maxima_ratio=.75,
            rejection_ratio=.7, similarity_threshold=0.4,
            significant_min=.003, min_cluster_size=.005,
            min_maxima_ratio=0.001, algorithm='ball_tree',
@@ -520,7 +520,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         return _extract_dbscan(self.ordering_, self.core_distances_,
                                self.reachability_, eps)
 
-    def extract_xi(self, xi, return_clusters=False):
+    def extract_xi(self, xi=None, return_clusters=False):
         """Automatically extract clusters according to the
         :func:`Xi-steep method _extract_xi`.
 
@@ -546,6 +546,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
             smaller clusters.
         """
         check_is_fitted(self, 'reachability_')
+        if xi is None:
+            xi = self.xi
 
         return _extract_xi(self.reachability_,
                            self.ordering_,
