@@ -17,6 +17,7 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_docstring_parameters
 from sklearn.utils.testing import _get_func_name
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import fails_if_pypy
 from sklearn.utils.deprecation import _is_deprecated
 
 PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
@@ -43,6 +44,7 @@ _METHODS_IGNORE_NONE_Y = [
 ]
 
 
+@fails_if_pypy  # this segfaults with PyPy-6.0
 # numpydoc 0.8.0's docscrape tool raises because of collections.abc under
 # Python 3.7
 @ignore_warnings(category=DeprecationWarning)

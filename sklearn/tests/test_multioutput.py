@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import fails_if_pypy
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.datasets import make_classification
@@ -162,6 +163,7 @@ n_classes = len(np.unique(y1))
 classes = list(map(np.unique, (y1, y2, y3)))
 
 
+@fails_if_pypy  # FIXME
 def test_multi_output_classification_partial_fit_parallelism():
     sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
     mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=-1)
