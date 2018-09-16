@@ -442,3 +442,17 @@ def test_wrong_extract_method():
     with pytest.raises(ValueError, match="extract_method should be one of "):
         clust.fit(X)
 
+
+def test_extract_dbscan():
+    # testing an easy dbscan case. Not including clusters with different
+    # densities.
+    rng = np.random.RandomState(0)
+    n_points_per_cluster = 20
+    C1 = [-5, -2] + .2 * rng.randn(n_points_per_cluster, 2)
+    C2 = [4, -1] + .2 * rng.randn(n_points_per_cluster, 2)
+    C3 = [1, 2] + .2 * rng.randn(n_points_per_cluster, 2)
+    C4 = [-2, 3] + .2 * rng.randn(n_points_per_cluster, 2)
+    X = np.vstack((C1, C2, C3, C4))
+
+    clust = OPTICS(extract_method='dbscan', eps=.5).fit(X)
+    assert_array_equal(np.sort(np.unique(clust.labels_)), [0, 1, 2, 3])
