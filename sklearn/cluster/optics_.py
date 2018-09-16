@@ -334,7 +334,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     def __init__(self, min_samples=5, max_eps=np.inf, metric='euclidean',
                  p=2, metric_params=None, extract_method='sqlnk',
-                 eps=0.5, maxima_ratio=.75,
+                 eps=0.5, xi=0.05, maxima_ratio=.75,
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size=.005,
                  min_maxima_ratio=0.001, algorithm='ball_tree',
@@ -355,6 +355,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.leaf_size = leaf_size
         self.extract_method = extract_method
         self.eps = eps
+        self.xi = xi
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
@@ -397,9 +398,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
                              'number of samples (%d). Got %d' %
                              (n_samples, self.min_cluster_size))
 
-        if self.extract_method not in ['dbscan', 'sqlnk']:
+        if self.extract_method not in ['dbscan', 'sqlnk', 'xi']:
             raise ValueError("extract_method should be one of"
-                             " 'dbscan' or 'sqlnk', but is %s" %
+                             " 'dbscan', 'xi', or 'sqlnk', but is %s" %
                              self.extract_method)
 
         # Start all points as 'unprocessed' ##
@@ -437,6 +438,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
             indices_, labels_ = self.extract_sqlnk(**extract_params)
         elif self.extract_method == 'dbscan':
             indices_, labels_ = self.extract_dbscan(self.eps)
+        elif self.extract_method == 'xi':
+            indices_, labels_ = self.extract_xi(self.xi, False)
 
         self.core_sample_indices_ = indices_
         self.labels_ = labels_
