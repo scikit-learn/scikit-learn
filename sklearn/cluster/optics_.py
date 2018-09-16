@@ -439,7 +439,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
         elif self.extract_method == 'dbscan':
             indices_, labels_ = self.extract_dbscan(self.eps)
         elif self.extract_method == 'xi':
-            indices_, labels_ = self.extract_xi(self.xi, False)
+            labels_ = self.extract_xi(self.xi, False)
+            indices_ = None
 
         self.core_sample_indices_ = indices_
         self.labels_ = labels_

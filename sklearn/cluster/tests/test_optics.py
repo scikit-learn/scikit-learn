@@ -457,3 +457,25 @@ def test_extract_dbscan():
 
     clust = OPTICS(extract_method='dbscan', eps=.5).fit(X)
     assert_array_equal(np.sort(np.unique(clust.labels_)), [0, 1, 2, 3])
+
+
+def test_extract_xi():
+    # small and easy test (no clusters around other clusters)
+    # but with a clear noise data.
+    rng = np.random.RandomState(0)
+    n_points_per_cluster = 5
+
+    C1 = [-5, -2] + .8 * rng.randn(n_points_per_cluster, 2)
+    C2 = [4, -1] + .1 * rng.randn(n_points_per_cluster, 2)
+    C3 = [1, -2] + .2 * rng.randn(n_points_per_cluster, 2)
+    C4 = [-2, 3] + .3 * rng.randn(n_points_per_cluster, 2)
+    C5 = [3, -2] + .6 * rng.randn(n_points_per_cluster, 2)
+    C6 = [5, 6] + .2 * rng.randn(n_points_per_cluster, 2)
+    X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]]), C6))
+
+    clust = OPTICS(min_samples=3, min_cluster_size=2,
+                   max_eps=np.inf, extract_method='xi',
+                   xi=0.05).fit(X)
+    expected_labels = np.r_[[0] * 5, [3] * 5, [2] * 5, [1] * 5, [2] * 5,
+                            -1, [4] * 5]
+    assert_array_equal(clust.labels_, expected_labels)
