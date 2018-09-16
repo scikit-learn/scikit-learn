@@ -19,6 +19,12 @@ if LooseVersion(pytest.__version__) < PYTEST_MIN_VERSION:
     raise('Your version of pytest is too old, you should have at least '
           'pytest >= {} installed.'.format(PYTEST_MIN_VERSION))
 
+
+def pytest_addoption(parser):
+    parser.addoption("--skip-network", action="store_true", default=False,
+                     help="skip network tests")
+
+
 def pytest_collection_modifyitems(config, items):
 
     # FeatureHasher is not compatible with PyPy
@@ -28,6 +34,14 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if item.name == 'sklearn.feature_extraction.hashing.FeatureHasher':
                 item.add_marker(skip_marker)
+
+    # Skip tests which require internet if the flag is provided
+    if config.getoption("--skip-network"):
+        skip_network = pytest.mark.skip(
+            reason="test requires internet connectivity")
+        for item in items:
+            if "network" in item.keywords:
+                item.add_marker(skip_network)
 
     # numpy changed the str/repr formatting of numpy arrays in 1.14. We want to
     # run doctests only for numpy >= 1.14. We want to skip the doctest for
