@@ -78,6 +78,11 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
         The maximum distance between two samples for them to be considered
         as in the same neighborhood. Used ony when `extract_method='dbscan'`.
 
+    xi : float, between 0 and 1
+        The steepness threshold for the Xi method to detect Xi-steep
+        areas. Clusters are then hierarchically formed using these
+        areas. It is used when `extract_method='xi'`.
+
     maxima_ratio : float, optional (default=.75)
         The maximum ratio we allow of average height of clusters on the
         right and left to the local maxima in question. The higher the
@@ -222,6 +227,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
     eps : float, optional (default=0.5)
         The maximum distance between two samples for them to be considered
         as in the same neighborhood. Used ony when `extract_method='dbscan'`.
+
+    xi : float, between 0 and 1
+        The steepness threshold for the Xi method to detect Xi-steep
+        areas. Clusters are then hierarchically formed using these
+        areas. It is used when `extract_method='xi'`.
 
     maxima_ratio : float, optional (default=.75)
         The maximum ratio we allow of average height of clusters on the
@@ -527,7 +537,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
         Parameters
         ----------
         xi : float, between 0 and 1
-            The main parameter in the Xi-steep method.
+            The steepness threshold for the Xi method to detect Xi-steep
+            areas. Clusters are then hierarchically formed using these
+            areas.
 
         return_clusters : bool (default=False)
             Return the clusters as well as the labels. If `False`, it will
@@ -951,7 +963,9 @@ def _extract_xi(reachability, ordering, min_samples, min_cluster_size, xi,
         the calculated ordering, all computed by OPTICS.
 
     xi : float, between 0 and 1
-        The main parameter in the Xi-steep method.
+        The steepness threshold for the Xi method to detect Xi-steep
+        areas. Clusters are then hierarchically formed using these
+        areas.
 
     min_samples : integer
        The same as the min_samples given to OPTICS. Up and down steep
