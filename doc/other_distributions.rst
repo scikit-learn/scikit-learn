@@ -36,7 +36,7 @@ Arch Linux
 
 Arch Linux's package is provided through the `official repositories
 <https://www.archlinux.org/packages/?q=scikit-learn>`_ as
-``python-scikit-learn`` for Python 3.
+``python-scikit-learn`` for Python.
 It can be installed by typing the following command:
 
 .. code-block:: none

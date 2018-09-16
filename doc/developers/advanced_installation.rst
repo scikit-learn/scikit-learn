@@ -184,7 +184,7 @@ PATH environment variable.
 32-bit Python
 -------------
 
-For 32-bit Python 3 use Microsoft Visual C++ Express 2010.
+For 32-bit Python use Microsoft Visual C++ Express 2010.
 
 Once installed you should be able to build scikit-learn without any
 particular configuration by running the following command in the scikit-learn
