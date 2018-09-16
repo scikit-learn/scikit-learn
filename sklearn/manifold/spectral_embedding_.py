@@ -282,8 +282,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             laplacian *= -1
 
     if eigen_solver == 'amg':
-        if eigen_tol == 0:
-            eigen_tol = 1e-12
+        eigen_tol = max(1e-12, eigen_tol)
+
         # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
         if not sparse.issparse(laplacian):
