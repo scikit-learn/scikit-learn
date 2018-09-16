@@ -111,7 +111,7 @@ Linux
 Installing from source requires you to have installed the scikit-learn runtime
 dependencies, Python development headers and a working C/C++ compiler.
 Under Debian-based operating systems, which include Ubuntu.
-If you have Python 3::
+If you have Python ::
 
     sudo apt-get install build-essential python3-dev python3-setuptools \
                          python3-numpy python3-scipy \
@@ -203,7 +203,7 @@ The Windows SDKs include the MSVC compilers both for 32 and 64-bit
 architectures. They come as a ``GRMSDKX_EN_DVD.iso`` file that can be mounted
 as a new drive with a ``setup.exe`` installer in it.
 
-- For Python 3 you need SDK **v7.1**: `MS Windows SDK for Windows 7 and .NET
+- For Python  you need SDK **v7.1**: `MS Windows SDK for Windows 7 and .NET
   Framework 4
   <https://www.microsoft.com/en-us/download/details.aspx?id=8442>`_
 
