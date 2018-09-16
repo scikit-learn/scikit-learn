@@ -437,6 +437,7 @@ def test_reach_dists():
         # we compare to truncated decimals, so use atol
         assert_allclose(clust.reachability_, np.array(v), atol=1e-5)
 
+
 def test_wrong_extract_method():
     clust = OPTICS(extract_method='superfancy')
     with pytest.raises(ValueError, match="extract_method should be one of "):
