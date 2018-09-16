@@ -22,7 +22,7 @@ from ._optics_inner import quick_scan
 
 
 def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
-           p=2, metric_params=None, extract_method='fancy',
+           p=2, metric_params=None, extract_method='sqlnk',
            maxima_ratio=.75,
            rejection_ratio=.7, similarity_threshold=0.4,
            significant_min=.003, min_cluster_size=.005,
@@ -68,10 +68,10 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
 
-    extract_method : string, optional (default='fancy')
+    extract_method : string, optional (default='sqlnk')
         The extraction method used to extract clusters using the calculated
         reachability and ordering. Possible values are "dbscan"
-        and "fancy".
+        and "sqlnk".
 
     maxima_ratio : float, optional (default=.75)
         The maximum ratio we allow of average height of clusters on the
@@ -203,10 +203,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
 
-    extract_method : string, optional (default='fancy')
+    extract_method : string, optional (default='sqlnk')
         The extraction method used to extract clusters using the calculated
         reachability and ordering. Possible values are "dbscan"
-        and "fancy".
+        and "sqlnk".
 
     maxima_ratio : float, optional (default=.75)
         The maximum ratio we allow of average height of clusters on the
@@ -302,7 +302,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, min_samples=5, max_eps=np.inf, metric='euclidean',
-                 p=2, metric_params=None, extract_method='fancy',
+                 p=2, metric_params=None, extract_method='sqlnk',
                  maxima_ratio=.75,
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size=.005,
@@ -365,9 +365,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
                              'number of samples (%d). Got %d' %
                              (n_samples, self.min_cluster_size))
 
-        if self.extract_method not in ['dbscan', 'fancy']:
+        if self.extract_method not in ['dbscan', 'sqlnk']:
             raise ValueError("extract_method should be one of"
-                             " 'dbscan' or 'fancy', but is %s" %
+                             " 'dbscan' or 'sqlnk', but is %s" %
                              self.extract_method)
 
         # Start all points as 'unprocessed' ##
@@ -392,7 +392,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         self.ordering_ = self._calculate_optics_order(X, nbrs)
 
-        if self.extract_method == 'fancy':
+        if self.extract_method == 'sqlnk':
             indices_, labels_ = _extract_optics(
                 self.ordering_,
                 self.reachability_,
