@@ -26,19 +26,20 @@ labeled points and a large amount of unlabeled points.
 Self Training
 =================
 
-This self-training implementation is based on Yarowsky's [1] algorithm and provides
-a method to label a dataset for which initially only a few labels were available
-recursively.
+This self-training implementation is based on Yarowsky's [1] algorithm. It provides
+a method to iteratively label a dataset for which initially only a few labels
+were available.
 
 :class:`SelfTrainingClassifier` can be called with any classifier that
 implements ``predict_proba``, a decision threshold and a maximum number of 
-iterations. The classifier works by predicting labels of the unlabeled dataset
-in each loop iteration and adding them to the labeled dataset if the 
-classifier's confidence is above the threshold.
-The labels used for the final fitting as well as the iteration, in which each
-sample was labeled are available as class attributes.
-The max_iter argument specifies how many times the loop is executed at most.
-The classifier behaves like a regular classifier and provides all usual methods.
+iterations. 
+
+In each iteration, the classifier predicts labels for the unlabeled samples
+and adds them to the labeled dataset if the classifier's confidence 
+is above the specified threshold. The labels used for the final fitting as well
+as the iteration in which each sample was labeled are available as class
+attributes. The ``max_iter`` parameter specifies how many times the loop is executed
+at most.
 
 .. topic:: References
 
