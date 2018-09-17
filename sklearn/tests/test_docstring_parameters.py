@@ -17,8 +17,9 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_docstring_parameters
 from sklearn.utils.testing import _get_func_name
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import fails_if_pypy
 from sklearn.utils.deprecation import _is_deprecated
+
+import pytest
 
 PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
                                                         path=sklearn.__path__)
@@ -46,10 +47,12 @@ _METHODS_IGNORE_NONE_Y = [
 
 # numpydoc 0.8.0's docscrape tool raises because of collections.abc under
 # Python 3.7
-@ignore_warnings(category=DeprecationWarning)
-@fails_if_pypy  # this segfaults with PyPy-6.0
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_docstring_parameters():
     # Test module docstring formatting
+
+    if IS_PYPY:
+        raise SkipTest('this tests segfaults on PyPy')
 
     # Skip test if numpydoc is not found or if python version is < 3.5
     try:
