@@ -262,26 +262,6 @@ class KernelPCA(BaseEstimator, TransformerMixin):
             signs = np.sign(np.diag(VU))
             self.lambdas_ = self.lambdas_ * signs
 
-        # TODO a few additional checks on eigenvalues? (significant imaginary part, negative ones, ill conditioning)
-        # if ~isreal(d) & & max(abs(imag(d))) > 1e-5 * max(abs(real(d)))
-        #     error(
-        #         'there are significant imaginary parts in eigenvalues (%f of the max real part). Something may be wrong with the kernel.',
-        #         max(abs(imag(d))) / max(abs(real(d))))
-        #
-        # d = real(d);
-        # if (strcmpi(this.kernel_precision, 'double') & & (-min(d) > 1e-5 * max(max(d), 0) & & -min(d) > 1e-10)...
-        #         | | strcmpi(this.kernel_precision, 'single') & & (
-        #                 -min(d) > 5e-3 * max(max(d), 0) & & -min(d) > 1e-8))
-        #     warning(
-        #         'there are significant negative eigenvalues (%f of the max positive). Something may be wrong with the kernel.',
-        #         -min(d) / max(max(d), 0))
-        #
-        # d = max(d, 0);
-        # if any(d < max(d) / this.max_conditioning)
-        #     % warning('KernelPCA:Gram_matrix_ill_conditioned',
-        #               'The Gram matrix''s conditioning exceeds the threshold <this>.max_conditioning')
-        #     d(d < max(d) / this.max_conditioning) = 0;
-
         # sort eigenvectors in descending order
         indices = self.lambdas_.argsort()[::-1]
         self.lambdas_ = self.lambdas_[indices]
