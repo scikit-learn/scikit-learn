@@ -116,3 +116,28 @@ def test_y_labeled_iter():
         # Check that the max of the iterations is less than the total amount of
         # iterations
         assert(np.max(st.y_labeled_iter_) <= m)
+
+
+def test_prefitted_throws_error():
+    # Test that passing a pre-fitted estimator and calling predict throws an
+    # error
+    knn = KNeighborsClassifier()
+    knn.fit(X_train, y_train)
+    st = SelfTrainingClassifier(knn)
+    msg = ("This SelfTrainingClassifier instance is not fitted yet. Call "
+           "\'fit\' with appropriate arguments before using this method.")
+    assert_raise_message(NotFittedError, msg, st.predict, X_train)
+
+
+def test_no_unlabeled():
+    # Test that training on a fully labeled dataset produces the same results
+    # as training the classifier by itself.
+    knn = KNeighborsClassifier()
+    knn.fit(X_train, y_train)
+    st = SelfTrainingClassifier(knn)
+    st.fit(X_train, y_train)
+    assert_array_equal(knn.predict(X_test), st.predict(X_test))
+    # Assert that all samples were labeled in iteration 0 (since there were no
+    # unlabeled samples).
+    assert(np.where(st.y_labeled_iter_ != 0)[0].size == 0)
+    print(st.y_labeled_iter_)

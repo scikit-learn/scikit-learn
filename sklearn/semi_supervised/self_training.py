@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..base import BaseEstimator, ClassifierMixin, clone
+from ..base import BaseEstimator, clone
 from ..utils.validation import check_X_y, check_array, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils import safe_mask
@@ -15,7 +15,7 @@ def _check_estimator(estimator):
         raise ValueError("The base_estimator should implement predict_proba!")
 
 
-class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
+class SelfTrainingClassifier(BaseEstimator):
     """Self-training classifier
 
     Parameters
@@ -91,6 +91,7 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
         ----------
         X : array-like, shape = (n_samples, n_features)
             array representing the data
+
         y : array-like, shape = (n_samples, 1)
             array representing the labels
 
@@ -212,3 +213,23 @@ class SelfTrainingClassifier(BaseEstimator, ClassifierMixin):
         """
         check_is_fitted(self, 'y_labeled_iter_')
         return self.base_estimator_.predict_log_proba(X)
+
+    @if_delegate_has_method(delegate='base_estimator')
+    def score(self, X, y):
+        """Calls score on the base_estimator
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            array representing the data
+
+        y : array-like, shape = (n_samples, 1)
+            array representing the labels
+
+        Returns
+        -------
+        score : float
+            result of calling score on the base_estimator
+        """
+        check_is_fitted(self, 'y_labeled_iter_')
+        return self.base_estimator_.score(X, y)
