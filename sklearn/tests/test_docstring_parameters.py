@@ -52,7 +52,7 @@ def test_docstring_parameters():
     # Test module docstring formatting
 
     if IS_PYPY:
-        raise SkipTest('this tests segfaults on PyPy')
+        raise SkipTest('this test segfaults on PyPy')
 
     # Skip test if numpydoc is not found or if python version is < 3.5
     try:
