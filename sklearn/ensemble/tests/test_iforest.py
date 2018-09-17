@@ -262,14 +262,17 @@ def test_iforest_subsampled_features():
 def test_iforest_average_path_length():
     # It tests non-regression for #8549 which used the wrong formula
     # for average path length, strictly for the integer case
+    # Updated to test non-regression for #11839.
 
-    result_one = 2. * (np.log(4.) + np.euler_gamma) - 2. * 4. / 5.
-    result_two = 2. * (np.log(998.) + np.euler_gamma) - 2. * 998. / 999.
-    assert_almost_equal(_average_path_length(1), 1., decimal=10)
+    result_one = 2. * (np.log(4.) + euler_gamma) - 2. * 4. / 5.
+    result_two = 2. * (np.log(998.) + euler_gamma) - 2. * 998. / 999.
+    assert_almost_equal(_average_path_length(0), 0., decimal=10)
+    assert_almost_equal(_average_path_length(1), 0., decimal=10)
+    assert_almost_equal(_average_path_length(2), 1., decimal=10)
     assert_almost_equal(_average_path_length(5), result_one, decimal=10)
     assert_almost_equal(_average_path_length(999), result_two, decimal=10)
-    assert_array_almost_equal(_average_path_length(np.array([1, 5, 999])),
-                              [1., result_one, result_two], decimal=10)
+    assert_array_almost_equal(_average_path_length(np.array([1, 2, 5, 999])),
+                              [0., 1., result_one, result_two], decimal=10)
 
 
 @pytest.mark.filterwarnings('ignore:default contamination')
