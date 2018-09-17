@@ -21,6 +21,33 @@ labeled points and a large amount of unlabeled points.
     labeled data when training the model with the ``fit`` method. The identifier
     that this implementation uses is the integer value :math:`-1`.
 
+.. _self_training:
+
+Self Training
+=================
+
+This self-training implementation is based on Yarowsky's [1] algorithm and provides
+a method to label a dataset for which initially only a few labels were available
+recursively.
+
+:class:`SelfTrainingClassifier` can be called with any classifier that
+implements ``predict_proba``, a decision threshold and a maximum number of 
+iterations. The classifier works by predicting labels of the unlabeled dataset
+in each loop iteration and adding them to the labeled dataset if the 
+classifier's confidence is above the threshold.
+The labels used for the final fitting as well as the iteration, in which each
+sample was labeled are available as class attributes.
+The max_iter argument specifies how many times the loop is executed at most.
+The classifier behaves like a regular classifier and provides all usual methods.
+
+.. topic:: References
+
+    [1] David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
+     supervised methods. In Proceedings of the 33rd annual meeting on
+     Association for Computational Linguistics (ACL '95). Association for
+     Computational Linguistics, Stroudsburg, PA, USA, 189-196. DOI:
+     https://doi.org/10.3115/981658.981684
+
 .. _label_propagation:
 
 Label Propagation
