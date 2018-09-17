@@ -880,7 +880,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     init :  None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
-        Default: 'nndsvd' if n_components < n_features, otherwise random.
+        Default: 'random'.
         Valid options:
 
         - 'random': non-negative random matrices, scaled with:

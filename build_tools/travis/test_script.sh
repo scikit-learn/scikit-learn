@@ -38,6 +38,13 @@ run_tests() {
     if [[ "$COVERAGE" == "true" ]]; then
         TEST_CMD="$TEST_CMD --cov sklearn"
     fi
+
+    if [[ -n "$CHECK_WARNINGS" ]]; then
+        TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
+    fi
+
+    set -x  # print executed commands to the terminal
+
     $TEST_CMD sklearn
 
     # Going back to git checkout folder needed to test documentation
