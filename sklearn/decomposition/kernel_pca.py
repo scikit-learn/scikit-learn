@@ -69,6 +69,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         more efficient than the dense eigensolver. randomized SVD is done
         according to the method of Halko et al.
 
+        .. versionchanged:: 0.21
+
     tol : float, default=0
         Convergence tolerance for arpack.
         If 0, optimal value will be chosen by arpack.
@@ -81,7 +83,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Number of iterations for the power method computed by
         svd_solver == 'randomized'.
 
-        .. versionadded:: 0.20
+        .. versionadded:: 0.21
 
     remove_zero_eig : boolean, default=False
         If True, then all components with zero eigenvalues are removed, so
@@ -259,6 +261,26 @@ class KernelPCA(BaseEstimator, TransformerMixin):
             VU = np.dot(V[:n_components, :], U[:, :n_components])
             signs = np.sign(np.diag(VU))
             self.lambdas_ = self.lambdas_ * signs
+
+        # TODO a few additional checks on eigenvalues? (significant imaginary part, negative ones, ill conditioning)
+        # if ~isreal(d) & & max(abs(imag(d))) > 1e-5 * max(abs(real(d)))
+        #     error(
+        #         'there are significant imaginary parts in eigenvalues (%f of the max real part). Something may be wrong with the kernel.',
+        #         max(abs(imag(d))) / max(abs(real(d))))
+        #
+        # d = real(d);
+        # if (strcmpi(this.kernel_precision, 'double') & & (-min(d) > 1e-5 * max(max(d), 0) & & -min(d) > 1e-10)...
+        #         | | strcmpi(this.kernel_precision, 'single') & & (
+        #                 -min(d) > 5e-3 * max(max(d), 0) & & -min(d) > 1e-8))
+        #     warning(
+        #         'there are significant negative eigenvalues (%f of the max positive). Something may be wrong with the kernel.',
+        #         -min(d) / max(max(d), 0))
+        #
+        # d = max(d, 0);
+        # if any(d < max(d) / this.max_conditioning)
+        #     % warning('KernelPCA:Gram_matrix_ill_conditioned',
+        #               'The Gram matrix''s conditioning exceeds the threshold <this>.max_conditioning')
+        #     d(d < max(d) / this.max_conditioning) = 0;
 
         # sort eigenvectors in descending order
         indices = self.lambdas_.argsort()[::-1]
