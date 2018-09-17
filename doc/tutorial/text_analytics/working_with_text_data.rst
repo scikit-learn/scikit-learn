@@ -441,7 +441,7 @@ parameter combinations in parallel with the ``n_jobs`` parameter. If we give
 this parameter a value of ``-1``, grid search will detect how many cores
 are installed and use them all::
 
-  >>> gs_clf = GridSearchCV(text_clf, parameters, n_jobs=-1)
+  >>> gs_clf = GridSearchCV(text_clf, parameters, cv=5, iid=False, n_jobs=-1)
 
 The grid search instance behaves like a normal ``scikit-learn``
 model. Let's perform the search on a smaller subset of the training data
@@ -465,7 +465,7 @@ mean score and the parameters setting corresponding to that score::
   ...
   clf__alpha: 0.001
   tfidf__use_idf: True
-  vect__ngram_range: (1, 1)
+  vect__ngram_range: (1, 2)
 
 A more detailed summary of the search is available at ``gs_clf.cv_results_``.
 

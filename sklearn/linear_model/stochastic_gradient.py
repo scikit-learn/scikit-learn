@@ -806,10 +806,12 @@ class SGDClassifier(BaseSGDClassifier):
         For epsilon-insensitive, any differences between the current prediction
         and the correct label are ignored if they are less than this threshold.
 
-    n_jobs : integer, optional
+    n_jobs : int or None, optional (default=None)
         The number of CPUs to use to do the OVA (One Versus All, for
-        multi-class problems) computation. -1 means 'all CPUs'. Defaults
-        to 1.
+        multi-class problems) computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
@@ -843,7 +845,7 @@ class SGDClassifier(BaseSGDClassifier):
         The exponent for inverse scaling learning rate [default 0.5].
 
     early_stopping : bool, default=False
-        Whether to use early stopping to terminate training when validation.
+        Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
         a fraction of training data as validation and terminate training when
         validation score is not improving by at least tol for
@@ -1452,7 +1454,7 @@ class SGDRegressor(BaseSGDRegressor):
         The exponent for inverse scaling learning rate [default 0.5].
 
     early_stopping : bool, default=False
-        Whether to use early stopping to terminate training when validation.
+        Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
         a fraction of training data as validation and terminate training when
         validation score is not improving by at least tol for

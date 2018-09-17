@@ -1320,9 +1320,11 @@ class LassoCV(LinearModelCV, RegressorMixin):
     verbose : bool or integer
         Amount of verbosity.
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs.
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     positive : bool, optional
         If positive, restrict regression coefficients to be positive
@@ -1365,6 +1367,17 @@ class LassoCV(LinearModelCV, RegressorMixin):
     n_iter_ : int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import LassoCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(noise=4, random_state=0)
+    >>> reg = LassoCV(cv=5, random_state=0).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9993...
+    >>> reg.predict(X[:1,])
+    array([-78.4951...])
 
     Notes
     -----
@@ -1480,9 +1493,11 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     verbose : bool or integer
         Amount of verbosity.
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs.
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
@@ -2014,10 +2029,12 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     verbose : bool or integer
         Amount of verbosity.
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs. Note that this is used only if multiple values for
-        l1_ratio are given.
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation. Note that this is
+        used only if multiple values for l1_ratio are given.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
@@ -2186,10 +2203,12 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     verbose : bool or integer
         Amount of verbosity.
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs. Note that this is used only if multiple values for
-        l1_ratio are given.
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation. Note that this is
+        used only if multiple values for l1_ratio are given.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
@@ -2226,6 +2245,19 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     n_iter_ : int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import MultiTaskLassoCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_targets=2, noise=4, random_state=0)
+    >>> reg = MultiTaskLassoCV(cv=5, random_state=0).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9994...
+    >>> reg.alpha_
+    0.5713...
+    >>> reg.predict(X[:1,])
+    array([[153.7971...,  94.9015...]])
 
     See also
     --------

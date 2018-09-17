@@ -173,7 +173,7 @@ def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
      (np.inf, 'allow-nan', 'Input contains infinity'),
      (np.nan, True, 'Input contains NaN, infinity'),
      (np.nan, 'allow-inf', 'force_all_finite should be a bool or "allow-nan"'),
-     (np.nan, 1, 'force_all_finite should be a bool or "allow-nan"')]
+     (np.nan, 1, 'Input contains NaN, infinity')]
 )
 @pytest.mark.parametrize(
     "retype",
@@ -183,7 +183,7 @@ def test_check_array_force_all_finiteinvalid(value, force_all_finite,
                                              match_msg, retype):
     X = retype(np.arange(4).reshape(2, 2).astype(np.float))
     X[0, 0] = value
-    with pytest.raises(ValueError, message=match_msg):
+    with pytest.raises(ValueError, match=match_msg):
         check_array(X, force_all_finite=force_all_finite,
                     accept_sparse=True)
 

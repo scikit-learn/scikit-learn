@@ -25,7 +25,7 @@ from sklearn.model_selection import ShuffleSplit
 
 
 def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
-                        n_jobs=1, train_sizes=np.linspace(.1, 1.0, 5)):
+                        n_jobs=None, train_sizes=np.linspace(.1, 1.0, 5)):
     """
     Generate a simple plot of the test and training learning curve.
 
@@ -63,8 +63,11 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validators that can be used here.
 
-    n_jobs : integer, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     train_sizes : array-like, shape (n_ticks,), dtype float or int
         Relative or absolute numbers of training examples that will be used to

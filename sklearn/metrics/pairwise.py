@@ -1182,15 +1182,14 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
         should take two arrays from X as input and return a value indicating
         the distance between them.
 
-    n_jobs : int
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     working_memory : int, optional
         The sought maximum memory for temporary distance matrix chunks.
@@ -1345,15 +1344,14 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
         should take two arrays from X as input and return a value indicating
         the distance between them.
 
-    n_jobs : int
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
@@ -1520,15 +1518,14 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     filter_params : boolean
         Whether to filter invalid parameters or not.
 
-    n_jobs : int
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the kernel function.

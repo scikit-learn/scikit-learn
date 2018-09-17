@@ -381,10 +381,12 @@ class LinearRegression(LinearModel, RegressorMixin):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
-    n_jobs : int, optional, default 1
-        The number of jobs to use for the computation.
-        If -1 all CPUs are used. This will only provide speedup for
-        n_targets > 1 and sufficient large problems.
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to use for the computation. This will only provide
+        speedup for n_targets > 1 and sufficient large problems.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -396,6 +398,23 @@ class LinearRegression(LinearModel, RegressorMixin):
 
     intercept_ : array
         Independent term in the linear model.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.linear_model import LinearRegression
+    >>> X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
+    >>> # y = 1 * x_0 + 2 * x_1 + 3
+    >>> y = np.dot(X, np.array([1, 2])) + 3
+    >>> reg = LinearRegression().fit(X, y)
+    >>> reg.score(X, y)
+    1.0
+    >>> reg.coef_
+    array([1., 2.])
+    >>> reg.intercept_ # doctest: +ELLIPSIS
+    3.0000...
+    >>> reg.predict(np.array([[3, 5]]))
+    array([16.])
 
     Notes
     -----

@@ -326,8 +326,11 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                     "kd_tree algorithm does not support callable metric '%s'"
                     % self.metric)
         elif self.metric not in VALID_METRICS[alg_check]:
-            raise ValueError("Metric '%s' not valid for algorithm '%s'"
-                             % (self.metric, self.algorithm))
+            raise ValueError("Metric '%s' not valid. Use "
+                             "sorted(sklearn.neighbors.VALID_METRICS['%s']) "
+                             "to get valid options. "
+                             "Metric can also be a callable function."
+                             % (self.metric, alg_check))
 
         if self.metric_params is not None and 'p' in self.metric_params:
             warnings.warn("Parameter p is found in metric_params. "
@@ -400,9 +403,12 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                               "using brute force")
             if self.effective_metric_ not in VALID_METRICS_SPARSE['brute'] \
                     and not callable(self.effective_metric_):
-
-                raise ValueError("metric '%s' not valid for sparse input"
-                                 % self.effective_metric_)
+                raise ValueError("Metric '%s' not valid for sparse input. "
+                                 "Use sorted(sklearn.neighbors."
+                                 "VALID_METRICS_SPARSE['brute']) "
+                                 "to get valid options. "
+                                 "Metric can also be a callable function."
+                                 % (self.effective_metric_))
             self._fit_X = X.copy()
             self._tree = None
             self._fit_method = 'brute'

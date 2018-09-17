@@ -38,7 +38,6 @@ from ._gradient_boosting import _random_sample_mask
 import numbers
 import numpy as np
 
-from scipy import stats
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
@@ -91,7 +90,7 @@ class QuantileEstimator(object):
             Individual weights for each sample
         """
         if sample_weight is None:
-            self.quantile = stats.scoreatpercentile(y, self.alpha * 100.0)
+            self.quantile = np.percentile(y, self.alpha * 100.0)
         else:
             self.quantile = _weighted_percentile(y, sample_weight,
                                                  self.alpha * 100.0)
@@ -608,7 +607,7 @@ class HuberLossFunction(RegressionLossFunction):
         gamma = self.gamma
         if gamma is None:
             if sample_weight is None:
-                gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
+                gamma = np.percentile(np.abs(diff), self.alpha * 100)
             else:
                 gamma = _weighted_percentile(np.abs(diff), sample_weight, self.alpha * 100)
 
@@ -641,7 +640,7 @@ class HuberLossFunction(RegressionLossFunction):
         pred = pred.ravel()
         diff = y - pred
         if sample_weight is None:
-            gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
+            gamma = np.percentile(np.abs(diff), self.alpha * 100)
         else:
             gamma = _weighted_percentile(np.abs(diff), sample_weight, self.alpha * 100)
         gamma_mask = np.abs(diff) <= gamma
@@ -1190,22 +1189,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 # no inplace multiplication!
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
-            if X_csc is not None:
-                tree.fit(X_csc, residual, sample_weight=sample_weight,
-                         check_input=False, X_idx_sorted=X_idx_sorted)
-            else:
-                tree.fit(X, residual, sample_weight=sample_weight,
-                         check_input=False, X_idx_sorted=X_idx_sorted)
+            X = X_csr if X_csr is not None else X
+            tree.fit(X, residual, sample_weight=sample_weight,
+                     check_input=False, X_idx_sorted=X_idx_sorted)
 
             # update tree leaves
-            if X_csr is not None:
-                loss.update_terminal_regions(tree.tree_, X_csr, y, residual, y_pred,
-                                             sample_weight, sample_mask,
-                                             self.learning_rate, k=k)
-            else:
-                loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
-                                             sample_weight, sample_mask,
-                                             self.learning_rate, k=k)
+            loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
+                                         sample_weight, sample_mask,
+                                         self.learning_rate, k=k)
 
             # add tree to ensemble
             self.estimators_[i, k] = tree
@@ -1366,9 +1357,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         y : array-like, shape (n_samples,)
             Target values (strings or integers in classification, real numbers
@@ -1747,7 +1739,11 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -2202,7 +2198,11 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
