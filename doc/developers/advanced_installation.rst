@@ -110,11 +110,11 @@ Linux
 
 Installing from source requires you to have installed the scikit-learn runtime
 dependencies, Python development headers and a working C/C++ compiler.
-Under Debian-based operating systems, which include Ubuntu.
-
+Under Debian-based operating systems, which include Ubuntu::
+    
     sudo apt-get install build-essential python3-dev python3-setuptools \
-                         python3-numpy python3-scipy \
-                         libatlas-dev libatlas3-base
+                     python3-numpy python3-scipy \
+                     libatlas-dev libatlas3-base
 
 On recent Debian and Ubuntu (e.g. Ubuntu 14.04 or later) make sure that ATLAS
 is used to provide the implementation of the BLAS and LAPACK linear algebra
