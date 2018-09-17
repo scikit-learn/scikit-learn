@@ -108,10 +108,6 @@ Support for Python 3.3 has been officially dropped.
 :mod:`sklearn.cluster`
 ......................
 
-- |MajorFeature| A new clustering algorithm: :class:`cluster.OPTICS`: an
-  algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
-  to set and that scales better, by :user:`Shane <espg>`.
-
 - |MajorFeature| :class:`cluster.AgglomerativeClustering` now supports Single
   Linkage clustering via ``linkage='single'``. :issue:`9372` by :user:`Leland
   McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
