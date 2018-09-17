@@ -15,6 +15,10 @@ from sklearn.metrics.pairwise import rbf_kernel
 
 
 def test_kernel_pca():
+    """ Nominal test for all solvers and all known kernels + a custom one.
+    It tests
+     - that fit_transform is equivalent to fit+transform
+     - that the shapes of transforms and inverse transforms are correct """
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
@@ -24,7 +28,7 @@ def test_kernel_pca():
         assert_equal(kwargs, {})    # no kernel_params that we didn't ask for
         return np.minimum(x, y).sum()
 
-    for eigen_solver in ("auto", "dense", "arpack"):
+    for eigen_solver in ("auto", "dense", "arpack", "randomized"):
         for kernel in ("linear", "rbf", "poly", histogram):
             # histogram kernel produces singular matrix inside linalg.solve
             # XXX use a least-squares approximation?
@@ -59,6 +63,8 @@ def test_kernel_pca_invalid_parameters():
 
 
 def test_kernel_pca_consistent_transform():
+    """ Tests that after fitting a kPCA model, it is independent of the
+    original data object (uses an inner copy) """
     # X_fit_ needs to retain the old, unmodified copy of X
     state = np.random.RandomState(0)
     X = state.rand(10, 10)
@@ -72,11 +78,13 @@ def test_kernel_pca_consistent_transform():
 
 
 def test_kernel_pca_sparse():
+    """ Tests that kPCA works on a sparse data input. Same test than
+    test_kernel_pca except inverse_transform (why?) """
     rng = np.random.RandomState(0)
     X_fit = sp.csr_matrix(rng.random_sample((5, 4)))
     X_pred = sp.csr_matrix(rng.random_sample((2, 4)))
 
-    for eigen_solver in ("auto", "arpack"):
+    for eigen_solver in ("auto", "arpack", "randomized"):
         for kernel in ("linear", "rbf", "poly"):
             # transform fit data
             kpca = KernelPCA(4, kernel=kernel, eigen_solver=eigen_solver,
@@ -97,6 +105,8 @@ def test_kernel_pca_sparse():
 
 
 def test_kernel_pca_linear_kernel():
+    """ Tests that kPCA with a linear kernel is equivalent to PCA, for all
+    solvers"""
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
@@ -105,17 +115,20 @@ def test_kernel_pca_linear_kernel():
     # modulo the sign (direction)
     # fit only the first four components: fifth is near zero eigenvalue, so
     # can be trimmed due to roundoff error
-    assert_array_almost_equal(
-        np.abs(KernelPCA(4).fit(X_fit).transform(X_pred)),
-        np.abs(PCA(4).fit(X_fit).transform(X_pred)))
-
+    for solver in ("auto", "arpack", "randomized"):
+        assert_array_almost_equal(
+            np.abs(KernelPCA(4, eigen_solver=solver).fit(X_fit)
+                   .transform(X_pred)),
+            np.abs(PCA(4, svd_solver=solver).fit(X_fit).transform(X_pred)))
 
 def test_kernel_pca_n_components():
+    """ Tests that the number of components selected is correctly taken into
+    account for projections, for all solvers """
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
 
-    for eigen_solver in ("dense", "arpack"):
+    for eigen_solver in ("dense", "arpack", "randomized"):
         for c in [1, 2, 4]:
             kpca = KernelPCA(n_components=c, eigen_solver=eigen_solver)
             shape = kpca.fit(X_fit).transform(X_pred).shape
@@ -124,6 +137,8 @@ def test_kernel_pca_n_components():
 
 
 def test_remove_zero_eig():
+    """ Tests that the null-space (Zero) eigenvalues are removed when
+    remove_zero_eig=True, whereas they are not by default """
     X = np.array([[1 - 1e-30, 1], [1, 1], [1, 1 - 1e-20]])
 
     # n_components=None (default) => remove_zero_eig is True
@@ -141,11 +156,13 @@ def test_remove_zero_eig():
 
 
 def test_kernel_pca_precomputed():
+    """ Tests that kPCA works when the kernel has been precomputed, for all
+    solvers """
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
 
-    for eigen_solver in ("dense", "arpack"):
+    for eigen_solver in ("dense", "arpack", "randomized"):
         X_kpca = KernelPCA(4, eigen_solver=eigen_solver).\
             fit(X_fit).transform(X_pred)
         X_kpca2 = KernelPCA(
@@ -167,6 +184,8 @@ def test_kernel_pca_precomputed():
 
 
 def test_kernel_pca_invalid_kernel():
+    """ Tests that using an invalid kernel name raises a ValueError at fit
+    time"""
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((2, 4))
     kpca = KernelPCA(kernel="tototiti")
