@@ -105,8 +105,7 @@ def test_kernel_pca_sparse():
 
 
 def test_kernel_pca_linear_kernel():
-    """ Tests that kPCA with a linear kernel is equivalent to PCA, for all
-    solvers"""
+    """ Tests that kPCA with a linear kernel is equivalent to PCA """
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
@@ -115,11 +114,27 @@ def test_kernel_pca_linear_kernel():
     # modulo the sign (direction)
     # fit only the first four components: fifth is near zero eigenvalue, so
     # can be trimmed due to roundoff error
-    for solver in ("auto", "arpack", "randomized"):
+    assert_array_almost_equal(
+        np.abs(KernelPCA(4).fit(X_fit).transform(X_pred)),
+        np.abs(PCA(4).fit(X_fit).transform(X_pred)))
+
+
+def test_kernel_pca_linear_kernel2():
+    """ Tests that kPCA with a linear kernel is equivalent to PCA, for all
+    solvers"""
+    rng = np.random.RandomState(0)
+    X_fit = rng.random_sample((6, 10))
+    X_pred = rng.random_sample((2, 10))
+
+    # for a linear kernel, kernel PCA should find the same projection as PCA
+    # modulo the sign (direction)
+    for solver in ("auto", "dense", "arpack", "randomized"):
         assert_array_almost_equal(
             np.abs(KernelPCA(4, eigen_solver=solver).fit(X_fit)
                    .transform(X_pred)),
-            np.abs(PCA(4, svd_solver=solver).fit(X_fit).transform(X_pred)))
+            np.abs(PCA(4, svd_solver=solver if solver != "dense" else "full")
+                   .fit(X_fit).transform(X_pred)))
+
 
 def test_kernel_pca_n_components():
     """ Tests that the number of components selected is correctly taken into
