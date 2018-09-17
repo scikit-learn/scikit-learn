@@ -111,7 +111,6 @@ Linux
 Installing from source requires you to have installed the scikit-learn runtime
 dependencies, Python development headers and a working C/C++ compiler.
 Under Debian-based operating systems, which include Ubuntu.
-If you have Python ::
 
     sudo apt-get install build-essential python3-dev python3-setuptools \
                          python3-numpy python3-scipy \
