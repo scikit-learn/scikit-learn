@@ -17,7 +17,6 @@ from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
-from ..metrics import pairwise_distances
 from ._optics_inner import quick_scan
 
 
@@ -352,14 +351,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
                              'number of samples (%d). Got %d' %
                              (n_samples, self.min_cluster_size))
 
-        # Start all points as 'unprocessed' ##
-        self.reachability_ = np.empty(n_samples)
-        self.reachability_.fill(np.inf)
-        self.core_distances_ = np.empty(n_samples)
-        self.core_distances_.fill(np.nan)
-        # Start all points as noise ##
-        self.labels_ = np.full(n_samples, -1, dtype=int)
-
         nbrs = NearestNeighbors(n_neighbors=self.min_samples,
                                 algorithm=self.algorithm,
                                 leaf_size=self.leaf_size, metric=self.metric,
@@ -367,10 +358,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
                                 n_jobs=self.n_jobs)
 
         nbrs.fit(X)
-        self.core_distances_[:] = nbrs.kneighbors(X,
-                                                  self.min_samples)[0][:, -1]
-
-        self.ordering_ = self._calculate_optics_order(X, nbrs)
+        (self.core_distances_,
+         self.reachability_,
+         self.ordering_) = self._calculate_optics_order(X, nbrs)
 
         indices_, self.labels_ = _extract_optics(self.ordering_,
                                                  self.reachability_,
@@ -386,6 +376,22 @@ class OPTICS(BaseEstimator, ClusterMixin):
     # OPTICS helper functions
 
     def _calculate_optics_order(self, X, nbrs):
+        min_samples = self.min_samples
+
+        def _get_neighborhood(idx):
+            # TODO: special-case np.isinf(max_eps)
+            res = nbrs.radius_neighbors(X[idx:idx + 1], radius=self.max_eps)
+            (neigh_dist,), (neigh_idx,) = res
+            if len(neigh_idx) < self.min_samples:
+                core_dist = nbrs.kneighbors(X[point:point + 1],
+                                            min_samples)[0][0, -1]
+            else:
+                core_dist = np.partition(neigh_dist,
+                                         min_samples - 1)[min_samples - 1]
+            return neigh_dist, neigh_idx, core_dist
+
+        reachability = np.full(X.shape[0], np.inf)
+        core_distances = np.full(X.shape[0], np.nan)
         # Main OPTICS loop. Not parallelizable. The order that entries are
         # written to the 'ordering_' list is important!
         processed = np.zeros(X.shape[0], dtype=bool)
@@ -394,41 +400,46 @@ class OPTICS(BaseEstimator, ClusterMixin):
         for point in range(X.shape[0]):
             if processed[point]:
                 continue
-            if self.core_distances_[point] <= self.max_eps:
-                while not processed[point]:
-                    processed[point] = True
-                    ordering[ordering_idx] = point
-                    ordering_idx += 1
-                    point = self._set_reach_dist(point, processed, X, nbrs)
-            else:  # For very noisy points
+            neigh_dist, neigh_idx, core_dist = _get_neighborhood(point)
+            if len(neigh_idx) < self.min_samples:
+                # Very noisy point
+
+                core_distances[point] = core_dist
                 ordering[ordering_idx] = point
                 ordering_idx += 1
                 processed[point] = True
-        return ordering
+                continue
 
-    def _set_reach_dist(self, point_index, processed, X, nbrs):
-        P = X[point_index:point_index + 1]
-        indices = nbrs.radius_neighbors(P, radius=self.max_eps,
-                                        return_distance=False)[0]
+            while not processed[point]:
+                core_distances[point] = core_dist
+                processed[point] = True
+                ordering[ordering_idx] = point
+                ordering_idx += 1
+                point = self._set_reach_dist(reachability,
+                                             point, processed, core_dist,
+                                             neigh_dist, neigh_idx)
 
+                neigh_dist, neigh_idx, core_dist = _get_neighborhood(point)
+        return core_distances, reachability, ordering
+
+    def _set_reach_dist(self, reachability, point_index, processed, core_dist,
+                        neigh_dist, neigh_idx):
         # Getting indices of neighbors that have not been processed
-        unproc = np.compress((~np.take(processed, indices)).ravel(),
-                             indices, axis=0)
+        unproc_idx_into_neigh = np.flatnonzero(~processed[neigh_idx])
+
         # Keep n_jobs = 1 in the following lines...please
-        if not unproc.size:
+        if not unproc_idx_into_neigh.size:
             # Everything is already processed. Return to main loop
             return point_index
 
-        dists = pairwise_distances(P, np.take(X, unproc, axis=0),
-                                   self.metric, n_jobs=1).ravel()
-
-        rdists = np.maximum(dists, self.core_distances_[point_index])
-        new_reach = np.minimum(np.take(self.reachability_, unproc), rdists)
-        self.reachability_[unproc] = new_reach
+        dists = neigh_dist.take(unproc_idx_into_neigh)
+        rdists = np.maximum(dists, core_dist)
+        unproc = neigh_idx.take(unproc_idx_into_neigh)
+        new_reach = np.minimum(np.take(reachability, unproc), rdists)
+        reachability[unproc] = new_reach
 
         # Define return order based on reachability distance
-        return (unproc[quick_scan(np.take(self.reachability_, unproc),
-                                  dists)])
+        return unproc[quick_scan(np.take(reachability, unproc), dists)]
 
     def extract_dbscan(self, eps):
         """Performs DBSCAN extraction for an arbitrary epsilon.
