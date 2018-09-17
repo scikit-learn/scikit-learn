@@ -40,7 +40,8 @@ def get_results(dataset):
     # Estimate the score on the entire dataset, with no missing values
     estimator = RandomForestRegressor(random_state=0, n_estimators=100)
     full_scores = cross_val_score(estimator, X_full, y_full,
-                                  scoring='neg_mean_squared_error', cv=5)
+                                  scoring='neg_mean_squared_error',
+                                  cv=5)
 
     # Add missing values in 75% of the lines
     missing_rate = 0.75
@@ -75,11 +76,14 @@ def get_results(dataset):
 
     # Estimate the score after iterative imputation of the missing values
     estimator = make_pipeline(
-        make_union(IterativeImputer(missing_values=0, random_state=0),
+        make_union(IterativeImputer(missing_values=0,
+                                    random_state=0,
+                                    n_nearest_features=5),
                    MissingIndicator(missing_values=0)),
         RandomForestRegressor(random_state=0, n_estimators=100))
     iterative_impute_scores = cross_val_score(estimator, X_missing, y_missing,
-                                              scoring='neg_mean_squared_error')
+                                              scoring='neg_mean_squared_error',
+                                              cv=5)
 
     return ((full_scores.mean(), full_scores.std()),
             (zero_impute_scores.mean(), zero_impute_scores.std()),
