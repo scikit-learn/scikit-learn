@@ -30,9 +30,10 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
     """Perform OPTICS clustering from vector array
 
     OPTICS: Ordering Points To Identify the Clustering Structure
-    Equivalent to DBSCAN, finds core sample of high density and expands
+    Closely related to DBSCAN, finds core sample of high density and expands
     clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
-    neighborhood radius. Optimized for usage on large point datasets.
+    neighborhood radius. Better suited for usage on large point datasets than
+    the current sklearn implementation of DBSCAN.
 
     Read more in the :ref:`User Guide <optics>`.
 
@@ -182,9 +183,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
     """Estimate clustering structure from vector array
 
     OPTICS: Ordering Points To Identify the Clustering Structure
-    Equivalent to DBSCAN, finds core sample of high density and expands
+    Closely related to DBSCAN, finds core sample of high density and expands
     clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
-    neighborhood radius. Optimized for usage on large point datasets.
+    neighborhood radius. Better suited for usage on large point datasets than
+    the current sklearn implementation of DBSCAN.
 
     Read more in the :ref:`User Guide <optics>`.
 
