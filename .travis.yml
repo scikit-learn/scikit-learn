@@ -46,7 +46,7 @@ matrix:
            CYTHON_VERSION="*" PYAMG_VERSION="*" PILLOW_VERSION="*"
            JOBLIB_VERSION="*" COVERAGE=true
            CHECK_PYTEST_SOFT_DEPENDENCY="true" TEST_DOCSTRINGS="true"
-           SKLEARN_SITE_JOBLIB=1
+           SKLEARN_SITE_JOBLIB=1 CHECK_WARNINGS="true"
       if: type != cron
     # flake8 linting on diff wrt common ancestor with upstream/master
     - env: RUN_FLAKE8="true" SKIP_TESTS="true"
@@ -58,7 +58,7 @@ matrix:
     # installed from their CI wheels in a virtualenv with the Python
     # interpreter provided by travis.
     -  python: 3.6
-       env: DISTRIB="scipy-dev"
+       env: DISTRIB="scipy-dev" CHECK_WARNINGS="true"
        if: type = cron OR commit_message =~ /\[scipy-dev\]/
 
 install: source build_tools/travis/install.sh
