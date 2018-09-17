@@ -148,8 +148,10 @@ def test_lof():
     # compare the chained version and the compact version
     est_chain = make_pipeline(
         KNeighborsTransformer(n_neighbors=n_neighbors + 1, mode='distance'),
-        LocalOutlierFactor(metric='precomputed', n_neighbors=n_neighbors))
-    est_compact = LocalOutlierFactor(n_neighbors=n_neighbors)
+        LocalOutlierFactor(metric='precomputed', n_neighbors=n_neighbors,
+                           contamination="auto"))
+    est_compact = LocalOutlierFactor(n_neighbors=n_neighbors,
+                                     contamination="auto")
 
     pred_chain = est_chain.fit_predict(X)
     pred_compact = est_compact.fit_predict(X)
