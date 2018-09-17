@@ -12,7 +12,7 @@ Another option is the :class:`sklearn.impute.IterativeImputer`. This uses
 round-robin linear regression, treating every variable as an output in
 turn. The version implemented assumes Gaussian (output) variables. If your
 features are obviously non-Normal, consider transforming them to look more
-Normal so as to improve performance.
+Normal so as to potentially improve performance.
 
 In addition of using an imputing method, we can also keep an indication of the
 missing information using :func:`sklearn.impute.MissingIndicator` which might
