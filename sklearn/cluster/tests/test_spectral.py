@@ -216,9 +216,9 @@ def test_6489_regression():
        46,  3,  8, 17, 35, 45, 46,  3,  8, 17, 35, 45, 46,  3,  8, 17, 33,
        34, 45,  3,  8, 33, 34, 35, 46,  3,  8, 17, 33, 34, 45]] = 0
 
-    labels = SpectralClustering(n_clusters=5,
-                        affinity="precomputed",
-                        assign_labels="kmeans",
-                        random_state=1991,
-                        eigen_tol=1e-2,
-                        eigen_solver="lobpcg").fit_predict(X)
+    SpectralClustering(n_clusters=5,
+                       affinity="precomputed",
+                       assign_labels="kmeans",
+                       random_state=1991,
+                       eigen_tol=1e-2,
+                       eigen_solver="lobpcg").fit_predict(X)
