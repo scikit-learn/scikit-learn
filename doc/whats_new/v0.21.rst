@@ -56,7 +56,6 @@ Support for Python 3.4 and below has been officially dropped.
   function of other features in a round-robin fashion. :issue:`8478` by
   :user:`Sergey Feldman <sergeyf>`.
 
-
 Multiple modules
 ................
 
