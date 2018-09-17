@@ -109,8 +109,10 @@ boolean mask array or callable
     transformers_ : list
         The collection of fitted transformers as tuples of
         (name, fitted_transformer, column). `fitted_transformer` can be an
-        estimator, 'drop', or 'passthrough'. If there are remaining columns,
-        the final element is a tuple of the form:
+        estimator, 'drop', or 'passthrough'. Note that the column list is
+        allowed to be empty. In that case the transformers will not be fitted.
+        If there are remaining columns, the final element is a tuple of the
+        form:
         ('remainder', transformer, remaining_columns) corresponding to the
         ``remainder`` parameter. If there are remaining columns, then
         ``len(transformers_)==len(transformers)+1``, otherwise
@@ -338,7 +340,7 @@ boolean mask array or callable
                 next(transformers)
                 trans = 'passthrough'
             elif hasattr(column, '__len__') and len(column) == 0:
-                trans = old
+                trans = 'empty'
             else:
                 trans = next(transformers)
             transformers_.append((name, trans, column))
