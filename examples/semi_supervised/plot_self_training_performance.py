@@ -15,8 +15,8 @@ is trained using only the labeled data points.
 The graph shows that the SelfTrainingClassifier outperforms the normal SVC
 when only few labeled data points are available.
 """
-# Authors: Oliver Rausch <oliverrausch99@gmail.com>
-#          Patrice Becker <patrice@5becker.de>
+# Authors: Oliver Rausch    <rauscho@ethz.ch>
+#          Patrice Becker   <beckerp@ethz.ch>
 # License: BSD 3 clause
 print(__doc__)
 import numpy as np
