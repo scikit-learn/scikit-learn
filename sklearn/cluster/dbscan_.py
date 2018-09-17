@@ -94,9 +94,6 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     --------
     DBSCAN
         An estimator interface for this clustering algorithm.
-    optics
-        A similar clustering at multiple values of eps. Our implementation
-        is optimized for memory usage.
 
     Notes
     -----
@@ -117,9 +114,6 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
     Another way to reduce memory and computation time is to remove
     (near-)duplicate points and use ``sample_weight`` instead.
-
-    :func:`cluster.optics` provides a similar clustering with lower memory
-    usage.
 
     References
     ----------
@@ -262,12 +256,6 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     DBSCAN(algorithm='auto', eps=3, leaf_size=30, metric='euclidean',
         metric_params=None, min_samples=2, n_jobs=None, p=None)
 
-    See also
-    --------
-    OPTICS
-        A similar clustering at multiple values of eps. Our implementation
-        is optimized for memory usage.
-
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_dbscan.py
@@ -287,9 +275,6 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     Another way to reduce memory and computation time is to remove
     (near-)duplicate points and use ``sample_weight`` instead.
-
-    :class:`cluster.OPTICS` provides a similar clustering with lower memory
-    usage.
 
     References
     ----------
