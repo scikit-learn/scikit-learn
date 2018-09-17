@@ -19,7 +19,7 @@ python --version
 which python
 
 pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython pytest
-pip install "scipy>=1.1.0" sphinx numpydoc docutils pytest-xdist
+pip install "scipy>=1.1.0" sphinx numpydoc docutils
 
 ccache -M 512M
 export CCACHE_COMPRESS=1
@@ -28,6 +28,6 @@ export LOKY_MAX_CPU_COUNT="2"
 
 pip install -vv -e . 
 
-python -m pytest -n 1 sklearn/
+python -m pytest sklearn/
 python -m pytest doc/sphinxext/
 python -m pytest $(find doc -name '*.rst' | sort)
