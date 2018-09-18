@@ -48,11 +48,9 @@ _METHODS_IGNORE_NONE_Y = [
 # numpydoc 0.8.0's docscrape tool raises because of collections.abc under
 # Python 3.7
 @pytest.mark.filterwarnings('ignore::DeprecationWarning')
+@pytest.mark.skipif(IS_PYPY, reason='test segfaults on PyPy')
 def test_docstring_parameters():
     # Test module docstring formatting
-
-    if IS_PYPY:
-        raise SkipTest('this test segfaults on PyPy')
 
     # Skip test if numpydoc is not found or if python version is < 3.5
     try:
