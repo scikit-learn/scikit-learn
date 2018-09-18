@@ -18,6 +18,7 @@ In addition of using an imputing method, we can also keep an indication of the
 missing information using :func:`sklearn.impute.MissingIndicator` which might
 carry some information.
 """
+print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

@@ -17,6 +17,7 @@ In this example we will demonstrate how to use
 :class:`sklearn.impute.IterativeImputer` to replicate the functionality of
 missForest.
 """
+print(__doc__)
 
 import numpy as np
 
