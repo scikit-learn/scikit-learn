@@ -147,8 +147,8 @@ class Isomap(BaseEstimator, TransformerMixin):
         self.embedding_ = self.kernel_pca_.fit_transform(G)
 
     @property
-    @deprecated("Attribute training_data_ was deprecated in version 0.20 and "
-                "will be removed in 0.22.")
+    @deprecated("Attribute training_data_ was deprecated in version 0.21 and "
+                "will be removed in 0.23.")
     def training_data_(self):
         check_is_fitted(self, 'nbrs_')
         return self.nbrs_._fit_X
