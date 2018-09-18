@@ -1108,6 +1108,8 @@ def test_vectorizers_invalid_ngram_range(vec):
     message = ("Invalid value for ngram_range=%s "
                "lower boundary larger than the upper boundary."
                % str(invalid_range))
+    if isinstance(vec, HashingVectorizer):
+        pytest.xfail(reason='HashingVectorizer not supported on PyPy')
 
     assert_raise_message(
         ValueError, message, vec.fit, ["good news everyone"])
@@ -1119,6 +1121,7 @@ def test_vectorizers_invalid_ngram_range(vec):
             ValueError, message, vec.transform, ["good news everyone"])
 
 
+@fails_if_pypy
 def test_vectorizer_stop_words_inconsistent():
     if PY2:
         lstr = "[u'and', u'll', u've']"
