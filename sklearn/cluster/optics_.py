@@ -433,7 +433,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         X : array, shape (n_samples, n_features)
             The data.
         nbrs : NearestNeighbors instance
-            The fitted nearest neeighbors estimator
+            The fitted nearest neighbors estimator.
         working_memory : int, optional
             The sought maximum memory for temporary distance matrix chunks.
             When None (default), the value of
