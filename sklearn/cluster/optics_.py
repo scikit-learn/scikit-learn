@@ -425,7 +425,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     def _compute_core_distances_(self, X, neighbors, working_memory=None):
         """Compute the k-th nearest neighbor of each sample
 
-        Equivalent to nbrs.kneighbors(X, self.min_samples)[0][:, -1]
+        Equivalent to neighbors.kneighbors(X, self.min_samples)[0][:, -1]
         but with more memory efficiency.
 
         Parameters
