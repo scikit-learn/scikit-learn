@@ -406,7 +406,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                                 n_jobs=self.n_jobs)
 
         nbrs.fit(X)
-        self.core_distances_ = self._calculate_core_distances_(X, nbrs)
+        self.core_distances_ = self._compute_core_distances_(X, nbrs)
         self.ordering_ = self._calculate_optics_order(X, nbrs)
 
         indices_, self.labels_ = _extract_optics(self.ordering_,
@@ -422,7 +422,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     # OPTICS helper functions
 
-    def _calculate_core_distances_(self, X, nbrs, working_memory=None):
+    def _compute_core_distances_(self, X, neighbors, working_memory=None):
         """Compute the k-th nearest neighbor of each sample
 
         Equivalent to nbrs.kneighbors(X, self.min_samples)[0][:, -1]
@@ -432,7 +432,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         ----------
         X : array, shape (n_samples, n_features)
             The data.
-        nbrs : NearestNeighbors instance
+        neighbors : NearestNeighbors instance
             The fitted nearest neighbors estimator.
         working_memory : int, optional
             The sought maximum memory for temporary distance matrix chunks.
@@ -454,7 +454,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                                         working_memory=working_memory)
         slices = gen_batches(n_samples, chunk_n_rows)
         for sl in slices:
-            core_distances[sl] = nbrs.kneighbors(
+            core_distances[sl] = neighbors.kneighbors(
                 X[sl], self.min_samples)[0][:, -1]
         return core_distances
 
