@@ -873,6 +873,8 @@ def test_column_transformer_callable_specifier():
                            remainder='drop')
     assert_array_equal(ct.fit_transform(X_array), X_res_first)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_first)
+    assert callable(ct.transformers[0][2])
+    assert ct.transformers_[0][2] == [0]
 
     pd = pytest.importorskip('pandas')
     X_df = pd.DataFrame(X_array, columns=['first', 'second'])
@@ -886,3 +888,5 @@ def test_column_transformer_callable_specifier():
                            remainder='drop')
     assert_array_equal(ct.fit_transform(X_df), X_res_first)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first)
+    assert callable(ct.transformers[0][2])
+    assert ct.transformers_[0][2] == ['first']
