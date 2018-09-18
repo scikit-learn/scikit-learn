@@ -149,10 +149,6 @@ Support for Python 3.3 has been officially dropped.
   ``n_iter_`` attribute in the docstring of :class:`cluster.KMeans`.
   :issue:`11353` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
-- |Fix| Fixed a bug in :class:`cluster.DBSCAN` with precomputed sparse neighbors
-  graph, which would add explicitly zeros on the diagonal even when already
-  present. :issue:`10482` by `Tom Dupre la Tour`_.
-
 - |Fix| Fixed a bug in :func:`cluster.mean_shift` where the assigned labels
   were not deterministic if there were multiple clusters with the same
   intensities.
@@ -562,11 +558,6 @@ Support for Python 3.3 has been officially dropped.
 - |Feature| :func:`manifold.t_sne.trustworthiness` accepts metrics other than
   Euclidean. :issue:`9775` by :user:`William de Vazelhes <wdevazelhes>`.
 
-- |Feature| :class:`manifold.Isomap`, :class:`manifold.TSNE`, and
-  :class:`manifold.SpectralEmbedding` now accept precomputed sparse
-  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
-  :user:`Kumar Ashutosh <thechargedneutron>`.
-
 - |Fix| Fixed a bug in :func:`manifold.spectral_embedding` where the
   normalization of the spectrum was using a division instead of a
   multiplication. :issue:`8129` by :user:`Jan Margeta <jmargeta>`,
@@ -586,9 +577,6 @@ Support for Python 3.3 has been officially dropped.
   'precomputed', in which case the input matrix ``X`` should be a matrix of
   pairwise distances or squared distances. :issue:`9775` by
   :user:`William de Vazelhes <wdevazelhes>`.
-
-- |API| Deprecate ``training_data_`` unused attribute in
-  :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
 
 
 :mod:`sklearn.metrics`
@@ -806,12 +794,6 @@ Support for Python 3.3 has been officially dropped.
 :mod:`sklearn.neighbors`
 ........................
 
-- |MajorFeature| Added :class:`neighbors.KNeighborsTransformer` and
-  :class:`neighbors.RadiusNeighborsTransformer`, which transform input dataset
-  into a sparse neighbors graph. They give finer control on nearest neighbors
-  computations and enable easy pipeline caching for multiple use.
-  :issue:`10482` by `Tom Dupre la Tour`_.
-
 - |Efficiency| :class:`neighbors.RadiusNeighborsRegressor` and
   :class:`neighbors.RadiusNeighborsClassifier` are now
   parallelized according to ``n_jobs`` regardless of ``algorithm``.
@@ -834,14 +816,6 @@ Support for Python 3.3 has been officially dropped.
   ``score_samples``. By default, ``novelty`` is set to ``False``, and only
   the ``fit_predict`` method is avaiable.
   By :user:`Albert Thomas <albertcthomas>`.
-
-- |Feature| :class:`neighbors.KNeighborsClassifier`,
-  :class:`neighbors.KNeighborsRegressor`,
-  :class:`neighbors.RadiusNeighborsClassifier`,
-  :class:`neighbors.RadiusNeighborsRegressor`, and
-  :class:`neighbors.LocalOutlierFactor` now accept precomputed sparse
-  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
-  :user:`Kumar Ashutosh <thechargedneutron>`.
 
 - |Fix| Fixed a bug in :class:`neighbors.NearestNeighbors` where fitting a
   NearestNeighbors model fails when a) the distance metric used is a

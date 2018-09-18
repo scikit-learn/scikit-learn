@@ -17,7 +17,7 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- please add class and reason here (see version 0.20 what's new)
+- :class:`cluster.DBSCAN` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -47,6 +47,41 @@ Support for Python 3.4 and below has been officially dropped.
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>` and
   :user:`Adrin Jalali <adrinjalali>`.
+
+- |Fix| Fixed a bug in :class:`cluster.DBSCAN` with precomputed sparse neighbors
+  graph, which would add explicitly zeros on the diagonal even when already
+  present. :issue:`10482` by `Tom Dupre la Tour`_.
+
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Feature| :class:`manifold.Isomap`, :class:`manifold.TSNE`, and
+  :class:`manifold.SpectralEmbedding` now accept precomputed sparse
+  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
+  :user:`Kumar Ashutosh <thechargedneutron>`.
+
+- |API| Deprecate ``training_data_`` unused attribute in
+  :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
+
+
+:mod:`sklearn.neighbors`
+........................
+
+- |MajorFeature| Added :class:`neighbors.KNeighborsTransformer` and
+  :class:`neighbors.RadiusNeighborsTransformer`, which transform input dataset
+  into a sparse neighbors graph. They give finer control on nearest neighbors
+  computations and enable easy pipeline caching for multiple use.
+  :issue:`10482` by `Tom Dupre la Tour`_.
+
+- |Feature| :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.KNeighborsRegressor`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor`, and
+  :class:`neighbors.LocalOutlierFactor` now accept precomputed sparse
+  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
+  :user:`Kumar Ashutosh <thechargedneutron>`.
+
 
 Multiple modules
 ................
