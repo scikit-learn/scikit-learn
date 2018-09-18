@@ -212,7 +212,13 @@ boolean mask array or callable
         return self
 
     def _iter(self, X=None, fitted=False, replace_strings=False):
-        """Generate (name, trans, column, weight) tuples
+        """
+        Generate (name, trans, X_subset, weight, column) tuples.
+
+        If fitted=True, use the fitted transformers, else use the
+        user specified transformers updated with converted column names
+        and potentially appended with transformer for remainder.
+
         """
         if fitted:
             transformers = self.transformers_
@@ -240,7 +246,7 @@ boolean mask array or callable
                 elif trans == 'drop':
                     continue
 
-            yield (name, trans, sub, get_weight(name))
+            yield (name, trans, sub, get_weight(name), column)
 
     def _validate_transformers(self):
         if not self.transformers:
@@ -319,7 +325,7 @@ boolean mask array or callable
         """
         check_is_fitted(self, 'transformers_')
         feature_names = []
-        for name, trans, _, _ in self._iter(fitted=True):
+        for name, trans, _, _, _ in self._iter(fitted=True):
             if trans == 'drop':
                 continue
             elif trans == 'passthrough':
@@ -339,14 +345,7 @@ boolean mask array or callable
         fitted_transformers = iter(transformers)
         transformers_ = []
 
-        transformers = [
-                (name, trans, column) for (name, trans, _), column
-                in zip(self.transformers, self._columns)
-            ]
-        if self._remainder[2] is not None:
-            transformers = chain(transformers, [self._remainder])
-
-        for name, old, column in transformers:
+        for name, old, _, _, column in self._iter():
             if old == 'drop':
                 trans = 'drop'
             elif old == 'passthrough':
@@ -367,7 +366,8 @@ boolean mask array or callable
         Ensure that the output of each transformer is 2D. Otherwise
         hstack can raise an error or produce incorrect results.
         """
-        names = [name for name, _, _, _ in self._iter(replace_strings=True)]
+        names = [name for name, _, _, _, _ in self._iter(fitted=True,
+                                                         replace_strings=True)]
         for Xs, name in zip(result, names):
             if not getattr(Xs, 'ndim', 0) == 2:
                 raise ValueError(
@@ -386,7 +386,7 @@ boolean mask array or callable
             return Parallel(n_jobs=self.n_jobs)(
                 delayed(func)(clone(trans) if not fitted else trans,
                               X_sel, y, weight)
-                for _, trans, X_sel, weight in self._iter(
+                for _, trans, X_sel, weight, _ in self._iter(
                     X=X, fitted=fitted, replace_strings=True))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
