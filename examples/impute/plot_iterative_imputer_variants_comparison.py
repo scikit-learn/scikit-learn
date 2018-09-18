@@ -101,10 +101,7 @@ for predictor in predictors:
     mses_boston.append(-pred_scores.mean())
     stds_boston.append(pred_scores.std())
 
-
-n_bars = len(mses_boston)
-xval = np.arange(n_bars)
-
+# Plot the results
 x_labels = ['Full Data',
             'SimpleImputer w/ Mean Strategy',
             'SimpleImputer w/ Median Strategy',
@@ -116,15 +113,12 @@ x_labels = ['Full Data',
 
 # plot boston results
 fig, ax = plt.subplots(figsize=(10, 6))
-for i, j in enumerate(xval):
-    color = 'C' + str(i + 1)
-    ax.barh(j, mses_boston[j], xerr=stds_boston[j],
-            color=color, alpha=0.6, align='center')
+for i, j in enumerate(np.arange(len(mses_boston))):
+    ax.barh(j, mses_boston[j], xerr=stds_boston[j], alpha=0.6, align='center')
 
 ax.set_title('Boston Data Regression MSE With Different Imputation Methods')
-ax.set_xlim(left=0, right=45)
 ax.set_xlabel('MSE')
-ax.set_yticks(xval)
+ax.set_yticks(np.arange(len(mses_boston)))
 ax.invert_yaxis()
 ax.set_yticklabels(x_labels)
 plt.show()
