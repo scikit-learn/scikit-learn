@@ -21,7 +21,7 @@ from ..pipeline import (
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils.metaestimators import _BaseComposition
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_array, check_is_fitted
 
 
 __all__ = ['ColumnTransformer', 'make_column_transformer']
@@ -419,8 +419,7 @@ boolean mask array or callable
             sparse matrices.
 
         """
-        if isinstance(X, list):
-            X = np.array(X)
+        X = check_array(X)
 
         self._validate_remainder(X)
         self._validate_transformers()
@@ -470,8 +469,7 @@ boolean mask array or callable
         """
         check_is_fitted(self, 'transformers_')
 
-        if isinstance(X, list):
-            X = np.array(X)
+        X = check_array(X)
 
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
         self._validate_output(Xs)
