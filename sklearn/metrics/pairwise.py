@@ -19,6 +19,7 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 
 from ..utils.validation import _num_samples
+from ..utils.validation import check_non_negative
 from ..utils import check_array
 from ..utils import gen_even_slices
 from ..utils import gen_batches, get_chunk_n_rows
@@ -1381,6 +1382,10 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(X, Y, precomputed=True)
+
+        whom = ("`pairwise_distances`. Precomputed distance "
+                " need to have non-negative values.")
+        check_non_negative(X, whom=whom)
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
