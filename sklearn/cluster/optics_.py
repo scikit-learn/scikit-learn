@@ -449,7 +449,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         core_distances = np.empty(n_samples)
         core_distances.fill(np.nan)
 
-        chunk_n_rows = get_chunk_n_rows(row_bytes=8 * self.min_samples,
+        chunk_n_rows = get_chunk_n_rows(row_bytes=16 * self.min_samples,
                                         max_n_rows=n_samples,
                                         working_memory=working_memory)
         slices = gen_batches(n_samples, chunk_n_rows)
