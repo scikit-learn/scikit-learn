@@ -72,10 +72,11 @@ def _tested_non_meta_estimators():
 
 
 def _generate_checks_per_estimator(check_generator, estimators):
-    for name, Estimator in estimators:
-        estimator = Estimator()
-        for check in check_generator(name, estimator):
-            yield name, Estimator, check
+    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
+        for name, Estimator in estimators:
+            estimator = Estimator()
+            for check in check_generator(name, estimator):
+                yield name, Estimator, check
 
 
 def _rename_partial(val):

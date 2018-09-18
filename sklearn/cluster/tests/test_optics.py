@@ -11,6 +11,7 @@ from sklearn.cluster.optics_ import OPTICS
 from sklearn.cluster.optics_ import _TreeNode, _cluster_tree
 from sklearn.cluster.optics_ import _find_local_maxima
 from sklearn.metrics.cluster import contingency_matrix
+from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster.dbscan_ import DBSCAN
 from sklearn.utils.testing import assert_equal, assert_warns
 from sklearn.utils.testing import assert_array_equal
@@ -479,3 +480,16 @@ def test_extract_xi():
     expected_labels = np.r_[[0] * 5, [3] * 5, [2] * 5, [1] * 5, [2] * 5,
                             -1, [4] * 5]
     assert_array_equal(clust.labels_, expected_labels)
+
+
+def test_precomputed_dists():
+    redX = X[::10]
+    dists = pairwise_distances(redX, metric='euclidean')
+    clust1 = OPTICS(min_samples=10, algorithm='brute',
+                    metric='precomputed').fit(dists)
+    clust2 = OPTICS(min_samples=10, algorithm='brute',
+                    metric='euclidean').fit(redX)
+
+    assert_allclose(clust1.reachability_, clust2.reachability_)
+    assert_array_equal(clust1.labels_, clust2.labels_)
+
