@@ -278,6 +278,16 @@ def test_column_transformer_sparse_array():
                                      X_res_both)
 
 
+def test_column_transformer_list():
+    X_list = [[1, 2, 3]]
+    X_res = np.array([[0, 0, 0]])
+
+    ct = ColumnTransformer([('trans1', StandardScaler(), [0, 1, 2])])
+
+    assert_array_equal(ct.fit_transform(X_list), X_res)
+    assert_array_equal(ct.fit(X_list).transform(X_list), X_res)
+
+
 def test_column_transformer_sparse_stacking():
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     col_trans = ColumnTransformer([('trans1', Trans(), [0]),

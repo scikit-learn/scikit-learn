@@ -419,6 +419,9 @@ boolean mask array or callable
             sparse matrices.
 
         """
+        if isinstance(X, list):
+            X = np.array(X)
+
         self._validate_remainder(X)
         self._validate_transformers()
 
@@ -466,6 +469,9 @@ boolean mask array or callable
 
         """
         check_is_fitted(self, 'transformers_')
+
+        if isinstance(X, list):
+            X = np.array(X)
 
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
         self._validate_output(Xs)
