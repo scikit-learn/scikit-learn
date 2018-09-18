@@ -104,7 +104,21 @@ workflows:
     jobs:
       - python3
       - python2
-      - pypy3
+      - pypy3:
+          filters:
+            branches:
+              only:
+                - 0.20.X
       - deploy:
           requires:
             - python3
+  pypy:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - pypy3
