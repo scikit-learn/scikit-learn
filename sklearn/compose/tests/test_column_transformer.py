@@ -280,14 +280,14 @@ def test_column_transformer_empty_columns():
                            remainder='passthrough')
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
-    assert len(ct.transformers_) == 2 # including remainder
+    assert len(ct.transformers_) == 2  # including remainder
 
-    fixture = np.array([[],[],[]])
+    fixture = np.array([[], [], []])
     ct = ColumnTransformer([('trans', Trans(), [])],
                            remainder='drop')
     assert_array_equal(ct.fit_transform(X_array), fixture)
     assert_array_equal(ct.fit(X_array).transform(X_array), fixture)
-    assert len(ct.transformers_) == 2 # including remainder
+    assert len(ct.transformers_) == 2  # including remainder
 
 
 def test_column_transformer_sparse_array():
