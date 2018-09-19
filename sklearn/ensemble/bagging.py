@@ -472,7 +472,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     bootstrap_features : boolean, optional (default=False)
         Whether features are drawn with replacement.
 
-    oob_score : bool
+    oob_score : bool, optional (default=False)
         Whether to use out-of-bag samples to estimate
         the generalization error.
 
