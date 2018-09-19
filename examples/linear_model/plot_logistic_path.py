@@ -5,8 +5,8 @@ Regularization path of L1- Logistic Regression
 ==============================================
 
 
-Train l1-penalized logistic regression models on binary classification problem
-derived from the Iris dataset.
+Train l1-penalized logistic regression models on a binary classification
+problem derived from the Iris dataset.
 
 The models are ordered from strongest regularized to least regularized. The 4
 coefficients of the models are collected and plotted as a "regularization
@@ -17,12 +17,12 @@ coefficients can get non-zero values one after the other.
 Here we choose the SAGA solver because it can efficiently optimize for the
 Logistic Regression loss with a non-smooth, sparsity inducing l1 penalty.
 
-Also note that we set a low value for the tolerance to make sure that the
-model has converged before collecting the coefficients.
+Also note that we set a low value for the tolerance to make sure that the model
+has converged before collecting the coefficients.
 
-We also use warm_start=True which mean that the coefficients of the models
-are reused to initialize the next model fit and therefore speed-up the
-computation of the full-path.
+We also use warm_start=True which means that the coefficients of the models are
+reused to initialize the next model fit to speed-up the computation of the
+full-path.
 
 """
 print(__doc__)
