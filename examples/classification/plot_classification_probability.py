@@ -12,7 +12,7 @@ Linear SVC is not a probabilistic classifier by default but it has a built-in
 calibration option enabled in this example (`probability=True`).
 
 The logistic regression with One-Vs-Rest is not a multiclass classifier out of
-the box. As a result it has more trouvle in separating class 2 and 3 than the
+the box. As a result it has more trouble in separating class 2 and 3 than the
 other estimators.
 """
 print(__doc__)
