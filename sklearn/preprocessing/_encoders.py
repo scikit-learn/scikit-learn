@@ -393,7 +393,7 @@ class OneHotEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_feature]
+        X : array-like, shape [n_samples, n_features]
             The data to determine the categories of each feature.
 
         Returns
