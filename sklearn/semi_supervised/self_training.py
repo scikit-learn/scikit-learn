@@ -39,7 +39,7 @@ class SelfTrainingClassifier(BaseEstimator):
 
     Attributes
     ----------
-    base_estimator_: estimator object
+    base_estimator_ : estimator object
         The fitted estimator.
 
     y_labeled_ : array, shape = (n_samples)
