@@ -4,12 +4,12 @@ Self-training: Comparing performance
 ===================================================
 This example demonstrates the performance of the SelfTrainingClassifier.
 
-The iris dataset is loaded, and a SVC classifier is created. Then, a
+The digits dataset is loaded, and a SVC classifier is created. Then, a
 SelfTrainingClassifier is initialised, using the same SVC as its
 base estimator.
 
-The dataset contains 150 data points, and the SelfTrainingClassifier is
-trained using all 150 data points, although most are unlabeled. The normal SVC
+The dataset contains 1797 data points, and the SelfTrainingClassifier is
+trained using all 1797 data points, of which some are unlabeled. The normal SVC
 is trained using only the labeled data points.
 
 The graph shows that the SelfTrainingClassifier outperforms the normal SVC
@@ -24,24 +24,23 @@ import matplotlib.pyplot as plt
 from sklearn.semi_supervised.self_training import SelfTrainingClassifier
 from sklearn.utils import shuffle
 from sklearn.svm import SVC
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_digits
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score
-from sklearn.base import clone
 
 supervised_score = []
 self_training_score = []
 x_values = []
 
-clf = SVC(probability=True, C=100, gamma=0.8, kernel='rbf')
+clf = SVC(probability=True, gamma=0.001)
 self_training_clf = SelfTrainingClassifier(
-    clone(clf, safe=True), max_iter=100, threshold=0.8
+    clf, max_iter=10, threshold=0.8
 )
 
-X, y = load_iris(return_X_y=True)
+X, y = load_digits(return_X_y=True)
 X, y = shuffle(X, y, random_state=42)
 y_true = y.copy()
-for t in range(80, 15, -5):
+for t in range(1000, 0, -250):
     x_values.append(t)
 
     lim = t
@@ -63,15 +62,15 @@ for t in range(80, 15, -5):
 
         clf.fit(X_train_filtered, y_train_filtered)
         y_pred = clf.predict(X_test)
-        supervised_score_temp.append(
-            f1_score(y_test_true, y_pred, average='macro')
-        )
+        supervised_score_temp.append(f1_score(y_test_true,
+                                              y_pred,
+                                              average='macro'))
 
         self_training_clf.fit(X_train, y_train)
         y_pred = self_training_clf.predict(X_test)
-        self_training_score_temp.append(
-            f1_score(y_test_true, y_pred, average='macro')
-        )
+        self_training_score_temp.append(f1_score(y_test_true,
+                                                 y_pred,
+                                                 average='macro'))
 
     supervised_score.append(np.array(supervised_score_temp).mean())
     self_training_score.append(np.array(self_training_score_temp).mean())

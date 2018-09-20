@@ -39,18 +39,20 @@ class SelfTrainingClassifier(BaseEstimator):
 
     Attributes
     ----------
-    base_estimator_: estimator object
+    base_estimator_ : estimator object
         The fitted estimator.
 
-    y_labeled_ : array, shape = (n_samples)
-        The labels assigned to unlabeled datapoints during fitting.
+    y_labeled_ : array, shape = (n_samples,)
+        The labels used for the final fit of the classifier.
 
-    X_labeled_ : array, shape = (n_samples, n_features)
-        The labeled samples used for the final fit.
-
-    y_labeled_iter_ : array, shape = (n_samples)
+    y_labeled_iter_ : array, shape = (n_samples,)
         The iteration in which each sample was labeled. When a sample has
-        iteration 0, the sample was labeled in the given dataset.
+        iteration 0, the sample was already labeled in the given dataset. When
+        a sample has iteration -1, the sample was not labeled in any iteration.
+
+    n_iter_ : int
+        The amount of iterations the classifier during fitting.
+
 
     Examples
     --------
@@ -96,7 +98,7 @@ class SelfTrainingClassifier(BaseEstimator):
         X : array-like, shape = (n_samples, n_features)
             array representing the data
 
-        y : array-like, shape = (n_samples, 1)
+        y : array-like, shape = (n_samples,)
             array representing the labels
 
         Returns
@@ -113,41 +115,37 @@ class SelfTrainingClassifier(BaseEstimator):
         if not 0 <= self.threshold < 1:
             raise ValueError("threshold must be in [0,1)")
 
-        # Data usable for supervised training
-        self.X_labeled_ = X[safe_mask(X, np.where(y != -1))][0]
-        self.y_labeled_ = y[safe_mask(y, np.where(y != -1))][0]
-        self.y_labeled_iter_ = np.full_like(self.y_labeled_, 0)
+        has_label = y != -1
+        self.y_labels_ = np.copy(y)
+        self.y_labeled_iter_ = np.full_like(y, -1)
+        self.y_labeled_iter_[has_label] = 0
 
-        # Unlabeled data
-        X_unlabeled = X[safe_mask(X, np.where(y == -1))][0]
-        y_unlabeled = y[safe_mask(y, np.where(y == -1))][0]
+        self.n_iter_ = 0
+        while np.sum(has_label) < len(X) and self.n_iter_ < self.max_iter:
+            self.n_iter_ += 1
+            self.base_estimator_.fit(X[safe_mask(X, has_label)],
+                                     self.y_labels_[safe_mask(self.y_labels_,
+                                                              has_label)])
 
-        iter = 0
-        while len(self.X_labeled_) < len(X) and iter < self.max_iter:
-            iter += 1
-            self.base_estimator_.fit(self.X_labeled_, self.y_labeled_)
+            # Predict on the unlabeled samples
+            prob = self.base_estimator_.predict_proba(X[safe_mask(X,
+                                                                  ~has_label)])
+            pred = np.argmax(prob, axis=1)
+            max_proba = np.max(prob, axis=1)
 
-            # Select predictions where confidence is above the threshold
-            predict_proba = self.base_estimator_.predict_proba(X_unlabeled)
+            # Select samples where confidence is above the threshold
+            confident_labels = max_proba > self.threshold
 
-            pred = np.argmax(predict_proba, axis=1)
-            max_proba = np.max(predict_proba, axis=1)
-
-            confident = np.where(max_proba > self.threshold)[0]
+            new_labels_idx = np.flatnonzero(~has_label)[confident_labels]
 
             # Add newly labeled confident predictions to the dataset
-            self.X_labeled_ = np.append(
-                self.X_labeled_, X_unlabeled[confident], axis=0)
-            self.y_labeled_ = np.append(
-                self.y_labeled_, pred[confident], axis=0)
-            self.y_labeled_iter_ = np.append(
-                self.y_labeled_iter_, np.full_like(confident, iter))
+            self.y_labels_[new_labels_idx] = pred[confident_labels]
+            has_label[new_labels_idx] = True
+            self.y_labeled_iter_[new_labels_idx] = self.n_iter_
 
-            # Remove already labeled data from unlabeled dataset
-            X_unlabeled = np.delete(X_unlabeled, confident, axis=0)
-            y_unlabeled = np.delete(y_unlabeled, confident, axis=0)
-
-        self.base_estimator_.fit(self.X_labeled_, self.y_labeled_)
+        self.base_estimator_.fit(X[safe_mask(X, has_label)],
+                                 self.y_labels_[safe_mask(self.y_labels_,
+                                                          has_label)])
         return self
 
     @if_delegate_has_method(delegate='base_estimator')

@@ -45,7 +45,9 @@ def test_classification():
                            SVC(gamma="scale", probability=True)]:
         for params in grid:
             st = SelfTrainingClassifier(base_estimator, **params)
-            st.fit(X_train, y_train_missing_labels).predict(X_test)
+            st.fit(X_train, y_train_missing_labels)
+            st.predict(X_test)
+            st.predict_proba(X_test)
 
 
 def test_missing_predict_proba():
