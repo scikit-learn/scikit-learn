@@ -95,6 +95,24 @@ class ShrunkCovariance(EmpiricalCovariance):
         Coefficient in the convex combination used for the computation
         of the shrunk estimate.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import ShrunkCovariance
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> real_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> np.random.seed(0)
+    >>> X = np.random.multivariate_normal(mean=[0, 0],
+    ...                                   cov=real_cov,
+    ...                                   size=500)
+    >>> cov = ShrunkCovariance().fit(X)
+    >>> cov.covariance_ # doctest: +ELLIPSIS
+    array([[0.7387..., 0.2536...],
+           [0.2536..., 0.4110...]])
+    >>> cov.location_
+    array([0.0622..., 0.0193...])
+
     Notes
     -----
     The regularized covariance is given by:
