@@ -120,7 +120,7 @@ def test_metaestimator_delegation():
                         msg="%s does not have method %r when its delegate does"
                             % (delegator_data.name, method))
             # delegation before fit raises a NotFittedError
-            if method.startswith('score'):
+            if method == 'score':
                 assert_raises(NotFittedError, getattr(delegator, method),
                               delegator_data.fit_args[0],
                               delegator_data.fit_args[1])
@@ -133,7 +133,7 @@ def test_metaestimator_delegation():
             if method in delegator_data.skip_methods:
                 continue
             # smoke test delegation
-            if method.startswith('score'):
+            if method == 'score':
                 getattr(delegator, method)(delegator_data.fit_args[0],
                                            delegator_data.fit_args[1])
             else:
