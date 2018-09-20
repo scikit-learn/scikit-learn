@@ -30,9 +30,8 @@ This self-training implementation is based on Yarowsky's [1] algorithm. It provi
 a method to iteratively label a dataset for which initially only a few labels
 were available.
 
-:class:`SelfTrainingClassifier` can be called with any classifier that
-implements ``predict_proba``, a decision threshold and a maximum number of 
-iterations. 
+:class:`SelfTrainingClassifier` can be called with a decision threshold, a 
+maximum number of iterations and any classifier that implements ``predict_proba``.
 
 In each iteration, the classifier predicts labels for the unlabeled samples
 and adds them to the labeled dataset if the classifier's confidence 
