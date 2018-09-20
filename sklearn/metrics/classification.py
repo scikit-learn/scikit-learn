@@ -2047,9 +2047,9 @@ def fall_out(y_true, y_pred, labels=None, sample_weight=None):
        negative but they are positive .In
        other word we can say that it is the
        chances of occuring a TYPE-1 error
-    """
 
-    """Parameters
+
+       Parameters
        ----------
        y_true : array, shape = [n_samples]
            True target, consisting of integers of two values.
@@ -2072,7 +2072,7 @@ def fall_out(y_true, y_pred, labels=None, sample_weight=None):
        Returns
        -------
        loss : float"""
-    CM = confusion_matrix(y_true, y_pred, labels=labels, \
+    CM = confusion_matrix(y_true, y_pred, labels=labels,
                           sample_weight=sample_weight)
     return CM[0][1]
 
@@ -2084,9 +2084,8 @@ def miss_rate(y_true, y_pred, labels=None, sample_weight=None):
     but they actually belongs to the positive
     class or we can say that it indicates the
     chances of happening of TYPE-2 error
-    """
 
-    """Parameters
+    Parameters
     ----------
     y_true : array, shape = [n_samples]
         True target, consisting of
@@ -2107,7 +2106,7 @@ def miss_rate(y_true, y_pred, labels=None, sample_weight=None):
     Returns
     -------
     loss : float"""
-    CM = confusion_matrix(y_true, y_pred, labels=labels, \
+    CM = confusion_matrix(y_true, y_pred, labels=labels,
                           sample_weight=sample_weight)
     return CM[1][0]
 
@@ -2120,8 +2119,8 @@ def specificity(y_true, y_pred, labels=None, sample_weight=None):
     to the positive class . It also denotes the
     number of times when null Hypothesis is
     true..
-    """
-    """Parameters
+
+    Parameters
     ----------
     y_true : array, shape = [n_samples]
         True target, consisting of
@@ -2143,6 +2142,6 @@ def specificity(y_true, y_pred, labels=None, sample_weight=None):
     -------
     loss : float"""
 
-    CM = confusion_matrix(y_true, y_pred, labels=labels, \
+    CM = confusion_matrix(y_true, y_pred, labels=labels,
                           sample_weight=sample_weight)
     return CM[1][1]
