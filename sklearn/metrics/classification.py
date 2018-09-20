@@ -2072,8 +2072,8 @@ def fall_out(y_true, y_pred, labels=None, sample_weight=None):
        Returns
        -------
        loss : float"""
-    CM = confusion_matrix(y_true, y_pred, labels=labels
-                          , sample_weight=sample_weight)
+    CM = confusion_matrix(y_true, y_pred, labels=labels, \
+                          sample_weight=sample_weight)
     return CM[0][1]
 
 
@@ -2107,7 +2107,7 @@ def miss_rate(y_true, y_pred, labels=None, sample_weight=None):
     Returns
     -------
     loss : float"""
-    CM = confusion_matrix(y_true, y_pred, labels=labels,
+    CM = confusion_matrix(y_true, y_pred, labels=labels, \
                           sample_weight=sample_weight)
     return CM[1][0]
 
@@ -2143,6 +2143,6 @@ def specificity(y_true, y_pred, labels=None, sample_weight=None):
     -------
     loss : float"""
 
-    CM = confusion_matrix(y_true, y_pred, labels=labels,
+    CM = confusion_matrix(y_true, y_pred, labels=labels, \
                           sample_weight=sample_weight)
     return CM[1][1]
