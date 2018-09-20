@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-import scipy as sp
 import warnings
 from . import MinCovDet
 from ..utils.validation import check_is_fitted, check_array
@@ -68,6 +67,24 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
         The offset depends on the contamination parameter and is defined in
         such a way we obtain the expected number of outliers (samples with
         decision function < 0) in training.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import EllipticEnvelope
+    >>> real_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> X = np.random.multivariate_normal(mean=[0, 0],
+    ...                                   cov=real_cov,
+    ...                                   size=300)
+    >>> cov = EllipticEnvelope().fit(X)
+    >>> cov.covariance_ # doctest: +ELLIPSIS
+    array([[0.7411..., 0.2535...],
+           [0.2535..., 0.3053...]])
+    >>> cov.location_
+    array([0.0813... , 0.0427...])
+    >>> cov.predict(np.array([[1, 1], [5, 6]]))
+    array([ 1, -1])
 
     See Also
     --------
