@@ -65,4 +65,5 @@ plt.ylim(-.25, 1.25)
 plt.xlim(-4, 10)
 plt.legend(('Logistic Regression Model', 'Linear Regression Model'),
            loc="lower right", fontsize='small')
+plt.tight_layout()
 plt.show()
