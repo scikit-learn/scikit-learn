@@ -56,7 +56,7 @@ print(search.best_params_)
 # Plot the PCA spectrum
 pca.fit(X_digits)
 
-fig, (ax0, ax1) = plt.subplots(nrows=2, sharex=True, figsize=(4, 5))
+fig, (ax0, ax1) = plt.subplots(nrows=2, sharex=True, figsize=(6, 6))
 ax0.plot(pca.explained_variance_ratio_, linewidth=2)
 ax0.set_ylabel('PCA explained variance')
 
@@ -75,4 +75,5 @@ best_clfs.plot(x=components_col, y='mean_test_score', yerr='std_test_score',
 ax1.set_ylabel('Classification accuracy (val)')
 ax1.set_xlabel('n_components')
 
+plt.tight_layout()
 plt.show()
