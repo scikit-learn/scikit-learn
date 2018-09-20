@@ -2041,16 +2041,69 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
 
 
 def fall_out(y_true, y_pred, labels=None, sample_weight=None):
+ """Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        True target, consisting of integers of two values. The positive label
+        must be greater than the negative label.
 
+    pred_decision : array, shape = [n_samples] or [n_samples, n_classes]
+        Predicted decisions, as output by decision_function (floats).
+
+    labels : array, optional, default None
+        Contains all the labels for the problem. Used in multiclass hinge loss.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    Returns
+    -------
+    loss : float"""
     CM = confusion_matrix(y_true, y_pred, labels=None, sample_weight=None)
     return CM[0][1]
 
 
 def Miss_rate(y_true, y_pred, labels=None, sample_weight=None):
+    """Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        True target, consisting of integers of two values. The positive label
+        must be greater than the negative label.
+
+    pred_decision : array, shape = [n_samples] or [n_samples, n_classes]
+        Predicted decisions, as output by decision_function (floats).
+
+    labels : array, optional, default None
+        Contains all the labels for the problem. Used in multiclass hinge loss.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    Returns
+    -------
+    loss : float"""
     CM = confusion_matrix(y_true, y_pred, labels=None, sample_weight=None)
     return CM[1][0]
 
 
 def specificity(y_true, y_pred, labels=None, sample_weight=None):
+    """Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        True target, consisting of integers of two values. The positive label
+        must be greater than the negative label.
+
+    pred_decision : array, shape = [n_samples] or [n_samples, n_classes]
+        Predicted decisions, as output by decision_function (floats).
+
+    labels : array, optional, default None
+        Contains all the labels for the problem. Used in multiclass hinge loss.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    Returns
+    -------
+    loss : float"""
     CM = confusion_matrix(y_true, y_pred, labels=None, sample_weight=None)
-    return  CM[1][1]
+    return CM[1][1]
