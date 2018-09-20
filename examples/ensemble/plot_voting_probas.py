@@ -79,4 +79,5 @@ ax.set_xticklabels(['LogisticRegression\nweight 1',
 plt.ylim([0, 1])
 plt.title('Class probabilities for sample 1 by different classifiers')
 plt.legend([p1[0], p2[0]], ['class 1', 'class 2'], loc='upper left')
+plt.tight_layout()
 plt.show()
