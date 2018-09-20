@@ -28,6 +28,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import sgd_fast
+from sklearn.model_selection import RandomizedSearchCV
 
 
 class SparseSGDClassifier(SGDClassifier):
@@ -1471,3 +1472,17 @@ def test_gradient_squared_epsilon_insensitive():
         (2.0, 2.2, -0.2), (-2.0, 1.0, -5.8)
     ]
     _test_gradient_common(loss, cases)
+
+
+def test_multi_core_gridsearch_and_early_stopping():
+    # This is a non-regression test for a bad interaction between
+    # early stopping internal attribute and process-based multi-core parallism.
+    param_grid = {
+        'alpha': np.logspace(-4, 4, 9),
+        'n_iter_no_change': [2, 5, 10, 20],
+    }
+    clf = SGDClassifier(tol=1e-3, max_iter=1000, early_stopping=True)
+    search = RandomizedSearchCV(clf, param_grid, n_iter=10, cv=5, n_jobs=2,
+                                random_state=0)
+    search.fit(iris.data, iris.target)
+    assert search.best_score_ > 0.95
