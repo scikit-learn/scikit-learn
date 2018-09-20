@@ -826,9 +826,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         self : returns this MultiLabelBinarizer instance
         """
         if self.classes is None:
-            if self._classes_cache is None:
-                self._classes_cache = sorted(set(itertools.chain.from_iterable(y)))
-            classes = self._classes_cache
+            classes = sorted(set(itertools.chain.from_iterable(y)))
         else:
             classes = self.classes
         dtype = np.int if all(isinstance(c, int) for c in classes) else object
