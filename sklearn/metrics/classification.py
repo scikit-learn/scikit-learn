@@ -2041,40 +2041,65 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
 
 
 def fall_out(y_true, y_pred, labels=None, sample_weight=None):
+    """compute the false positive rate
+       False positive rate indicate the
+       number of sample which are classified as
+       negative but they are positive .In
+       other word we can say that it is the
+       chances of occuring a TYPE-1 error
+    """
+
     """Parameters
        ----------
        y_true : array, shape = [n_samples]
-           True target, consisting of integers of two values. The positive label
+           True target, consisting of integers of two values.
+           The positive label
            must be greater than the negative label.
 
-       pred_decision : array, shape = [n_samples] or [n_samples, n_classes]
-           Predicted decisions, as output by decision_function (floats).
+       pred_decision : array, shape = [n_samples] or
+       [n_samples, n_classes]
+           Predicted decisions, as output
+           by decision_function (floats).
 
        labels : array, optional, default None
-           Contains all the labels for the problem. Used in multiclass hinge loss.
+           Contains all the labels for the problem.
+           Used in multiclass hinge loss.
 
-       sample_weight : array-like of shape = [n_samples], optional
+       sample_weight : array-like of
+       shape = [n_samples], optional
            Sample weights.
 
        Returns
        -------
        loss : float"""
-    CM = confusion_matrix(y_true, y_pred, labels=labels, sample_weight=sample_weight)
+    CM = confusion_matrix(y_true, y_pred, labels=labels
+                          , sample_weight=sample_weight)
     return CM[0][1]
 
 
-def Miss_rate(y_true, y_pred, labels=None, sample_weight=None):
+def miss_rate(y_true, y_pred, labels=None, sample_weight=None):
+    """it calculates the miss rate
+    The miss rate indicates the number of
+    samples which are classified as negative class
+    but they actually belongs to the positive
+    class or we can say that it indicates the
+    chances of happening of TYPE-2 error
+    """
+
     """Parameters
     ----------
     y_true : array, shape = [n_samples]
-        True target, consisting of integers of two values. The positive label
+        True target, consisting of
+        integers of two values. The positive label
         must be greater than the negative label.
 
-    pred_decision : array, shape = [n_samples] or [n_samples, n_classes]
+    pred_decision : array, shape =
+    [n_samples] or [n_samples, n_classes]
         Predicted decisions, as output by decision_function (floats).
 
     labels : array, optional, default None
-        Contains all the labels for the problem. Used in multiclass hinge loss.
+        Contains all the labels for the
+        problem. Used in multiclass hinge loss.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -2082,22 +2107,34 @@ def Miss_rate(y_true, y_pred, labels=None, sample_weight=None):
     Returns
     -------
     loss : float"""
-    CM = confusion_matrix(y_true, y_pred, labels=labels, sample_weight=sample_weight)
+    CM = confusion_matrix(y_true, y_pred, labels=labels,
+                          sample_weight=sample_weight)
     return CM[1][0]
 
 
 def specificity(y_true, y_pred, labels=None, sample_weight=None):
+    """This function gives the specificity
+    Specificity defines the True positive i.e
+    it indicates the number of sample which belongs
+    to positive class when they actually belongs
+    to the positive class . It also denotes the
+    number of times when null Hypothesis is
+    true..
+    """
     """Parameters
     ----------
     y_true : array, shape = [n_samples]
-        True target, consisting of integers of two values. The positive label
+        True target, consisting of
+        integers of two values. The positive label
         must be greater than the negative label.
 
-    pred_decision : array, shape = [n_samples] or [n_samples, n_classes]
+    pred_decision : array, shape =
+    [n_samples] or [n_samples, n_classes]
         Predicted decisions, as output by decision_function (floats).
 
     labels : array, optional, default None
-        Contains all the labels for the problem. Used in multiclass hinge loss.
+        Contains all the labels for the
+        problem. Used in multiclass hinge loss.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -2106,5 +2143,6 @@ def specificity(y_true, y_pred, labels=None, sample_weight=None):
     -------
     loss : float"""
 
-    CM = confusion_matrix(y_true, y_pred, labels=labels, sample_weight=sample_weight)
+    CM = confusion_matrix(y_true, y_pred, labels=labels,
+                          sample_weight=sample_weight)
     return CM[1][1]
