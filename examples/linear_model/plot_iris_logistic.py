@@ -7,9 +7,9 @@ Logistic Regression 3-class Classifier
 =========================================================
 
 Show below is a logistic-regression classifiers decision boundaries on the
-first two dimensions (sepal length and width) of the iris data:
-`iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ dataset. The
-datapoints are colored according to their labels.
+first two dimensions (sepal length and width) of the `iris
+<https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ dataset. The datapoints
+are colored according to their labels.
 
 """
 print(__doc__)
@@ -26,10 +26,9 @@ from sklearn import datasets
 # import some data to play with
 iris = datasets.load_iris()
 X = iris.data[:, :2]  # we only take the first two features.
-X /= X.max()  # rescale to [0-1] range to speed-up convergence
 Y = iris.target
 
-logreg = LogisticRegression(C=1e5, solver='lbfgs')
+logreg = LogisticRegression(C=1e5, solver='lbfgs', multi_class='multinomial')
 
 # we create an instance of Neighbours Classifier and fit the data.
 logreg.fit(X, Y)
