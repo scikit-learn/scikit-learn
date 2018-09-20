@@ -895,8 +895,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
 
         if self._indexed_classes_cache is None:
             self._indexed_classes_cache = dict(zip(self.classes_, range(len(self.classes_))))
-        class_to_index = self._indexed_classes_cache
-        yt = self._transform(y, class_to_index)
+        yt = self._transform(y, self._indexed_classes_cache)
 
         if not self.sparse_output:
             yt = yt.toarray()
