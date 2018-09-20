@@ -907,7 +907,8 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         if (self._prev_classes.__repr__() != self.classes_.__repr__()) \
             or (self._cached_dict is None):
             self._prev_classes = self.classes_
-            self._cached_dict = dict(zip(self.classes_, range(len(self.classes_))))
+            self._cached_dict = dict(zip(self.classes_, \
+                range(len(self.classes_))))
          
         return self._cached_dict
 
