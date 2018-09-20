@@ -2038,3 +2038,19 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     y_true = np.array(y_true == pos_label, int)
     y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+
+
+def fall_out(y_true, y_pred, labels=None, sample_weight=None):
+
+    CM = confusion_matrix(y_true, y_pred, labels=None, sample_weight=None)
+    return CM[0][1]
+
+
+def Miss_rate(y_true, y_pred, labels=None, sample_weight=None):
+    CM = confusion_matrix(y_true, y_pred, labels=None, sample_weight=None)
+    return CM[1][0]
+
+
+def specificity(y_true, y_pred, labels=None, sample_weight=None):
+    CM = confusion_matrix(y_true, y_pred, labels=None, sample_weight=None)
+    return  CM[1][1]
