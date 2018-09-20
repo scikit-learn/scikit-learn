@@ -808,8 +808,6 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     def __init__(self, classes=None, sparse_output=False):
         self.classes = classes
         self.sparse_output = sparse_output
-        self._classes_cache = None
-        self._indexed_classes_cache = None
 
     def fit(self, y):
         """Fit the label sets binarizer, storing `classes_`
@@ -893,14 +891,26 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'classes_')
 
-        if self._indexed_classes_cache is None:
-            self._indexed_classes_cache = dict(zip(self.classes_, range(len(self.classes_))))
-        yt = self._transform(y, self._indexed_classes_cache)
+        class_to_index = self._cached_dict_for()
+        yt = self._transform(y, class_to_index)
 
         if not self.sparse_output:
             yt = yt.toarray()
 
         return yt
+
+    def _cached_dict_for(self):
+        if not hasattr(self, '_prev_classes'):
+            self._prev_classes = self.classes_
+            self._cached_dict = None
+
+        if (self._prev_classes.__repr__() != self.classes_.__repr__()) \
+            or (self._cached_dict is None):
+            self._prev_classes = self.classes_
+            print 'calculating..'
+            self._cached_dict = dict(zip(self.classes_, range(len(self.classes_))))
+         
+        return self._cached_dict
 
     def _transform(self, y, class_mapping):
         """Transforms the label sets with a given mapping
