@@ -374,12 +374,13 @@ function or **logistic** function:
 
 ::
 
-    >>> logistic = linear_model.LogisticRegression(C=1e5)
-    >>> logistic.fit(iris_X_train, iris_y_train)
+    >>> log = linear_model.LogisticRegression(solver='lbfgs', C=1e5,
+    ...                                       multi_class='multinomial')
+    >>> log.fit(iris_X_train, iris_y_train)  # doctest: +NORMALIZE_WHITESPACE
     LogisticRegression(C=100000.0, class_weight=None, dual=False,
-              fit_intercept=True, intercept_scaling=1, max_iter=100,
-              multi_class='ovr', n_jobs=None, penalty='l2', random_state=None,
-              solver='liblinear', tol=0.0001, verbose=0, warm_start=False)
+        fit_intercept=True, intercept_scaling=1, max_iter=100,
+        multi_class='multinomial', n_jobs=None, penalty='l2', random_state=None,
+        solver='lbfgs', tol=0.0001, verbose=0, warm_start=False)
 
 This is known as :class:`LogisticRegression`.
 

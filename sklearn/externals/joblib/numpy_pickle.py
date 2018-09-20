@@ -435,7 +435,9 @@ def dump(value, filename, compress=0, protocol=None, cache_size=None):
     else:
         compress_level = compress
 
-    if compress_method == 'lz4' and lz4 is None:
+    # LZ4 compression is only supported and installation checked with
+    # python 3+.
+    if compress_method == 'lz4' and lz4 is None and PY3_OR_LATER:
         raise ValueError(LZ4_NOT_INSTALLED_ERROR)
 
     if (compress_level is not None and

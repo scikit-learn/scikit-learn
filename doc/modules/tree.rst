@@ -330,15 +330,17 @@ Tips on practical use
     for each additional level the tree grows to.  Use ``max_depth`` to control
     the size of the tree to prevent overfitting.
 
-  * Use ``min_samples_split`` or ``min_samples_leaf`` to control the number of
-    samples at a leaf node.  A very small number will usually mean the tree
-    will overfit, whereas a large number will prevent the tree from learning
-    the data. Try ``min_samples_leaf=5`` as an initial value. If the sample size
-    varies greatly, a float number can be used as percentage in these two parameters.
-    The main difference between the two is that ``min_samples_leaf`` guarantees
-    a minimum number of samples in a leaf, while ``min_samples_split`` can
-    create arbitrary small leaves, though ``min_samples_split`` is more common
-    in the literature.
+  * Use ``min_samples_split`` or ``min_samples_leaf`` to ensure that multiple
+    samples inform every decision in the tree, by controlling which splits will
+    be considered. A very small number will usually mean the tree will overfit,
+    whereas a large number will prevent the tree from learning the data. Try
+    ``min_samples_leaf=5`` as an initial value. If the sample size varies
+    greatly, a float number can be used as percentage in these two parameters.
+    While ``min_samples_split`` can create arbitrarily small leaves,
+    ``min_samples_leaf`` guarantees that each leaf has a minimum size, avoiding
+    low-variance, over-fit leaf nodes in regression problems.  For
+    classification with few classes, ``min_samples_leaf=1`` is often the best
+    choice.
 
   * Balance your dataset before training to prevent the tree from being biased
     toward the classes that are dominant. Class balancing can be done by

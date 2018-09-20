@@ -47,9 +47,8 @@ from sklearn.linear_model import LogisticRegression
 print(__doc__)
 
 # Load a multi-label dataset from https://www.openml.org/d/40597
-yeast = fetch_openml('yeast', version=4)
-X = yeast.data
-Y = yeast.target == 'TRUE'
+X, Y = fetch_openml('yeast', version=4, return_X_y=True)
+Y = Y == 'TRUE'
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.2,
                                                     random_state=0)
 

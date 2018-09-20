@@ -793,7 +793,11 @@ class RandomForestClassifier(ForestClassifier):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -1078,7 +1082,11 @@ class RandomForestRegressor(ForestRegressor):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -1224,10 +1232,17 @@ class RandomForestRegressor(ForestRegressor):
     search of the best split. To obtain a deterministic behaviour during
     fitting, ``random_state`` has to be fixed.
 
+    The default value ``max_features="auto"`` uses ``n_features`` 
+    rather than ``n_features / 3``. The latter was originally suggested in
+    [1], whereas the former was more recently justified empirically in [2].
+
     References
     ----------
 
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+
+    .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized 
+           trees", Machine Learning, 63(1), 3-42, 2006.
 
     See also
     --------
@@ -1316,7 +1331,11 @@ class ExtraTreesClassifier(ForestClassifier):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -1473,8 +1492,8 @@ class ExtraTreesClassifier(ForestClassifier):
     References
     ----------
 
-    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
-           Machine Learning, 63(1), 3-42, 2006.
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized 
+           trees", Machine Learning, 63(1), 3-42, 2006.
 
     See also
     --------
@@ -1572,7 +1591,11 @@ class ExtraTreesRegressor(ForestRegressor):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -1784,7 +1807,11 @@ class RandomTreesEmbedding(BaseForest):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and

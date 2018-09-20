@@ -353,13 +353,13 @@ Like pipelines, feature unions have a shorthand constructor called
 
 
 Like ``Pipeline``, individual steps may be replaced using ``set_params``,
-and ignored by setting to ``'passthrough'``::
+and ignored by setting to ``'drop'``::
 
-    >>> combined.set_params(kernel_pca='passthrough')
+    >>> combined.set_params(kernel_pca='drop')
     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     FeatureUnion(n_jobs=None,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
-                                   ('kernel_pca', 'passthrough')],
+                                   ('kernel_pca', 'drop')],
                  transformer_weights=None)
 
 .. topic:: Examples:
