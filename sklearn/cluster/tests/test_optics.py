@@ -63,6 +63,8 @@ def test_correct_number_of_clusters():
     assert clust.ordering_.shape == (len(X),)
     assert clust.ordering_.dtype.kind == 'i'
     assert set(clust.ordering_) == set(range(len(X)))
+    
+    assert clust.reachability_[1] == clust.core_distances_[0]
 
 
 def test_minimum_number_of_sample_check():
