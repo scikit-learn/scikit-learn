@@ -288,7 +288,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                     "there are significant imaginary parts in eigenvalues (%f "
                     "of the max real part). Something may be wrong with the "
                     "kernel. Setting all imaginary parts to zero."
-                    "" % max_imag_abs / max_real_abs)
+                    "" % (max_imag_abs / max_real_abs))
 
         # Remove the insignificant imaginary parts
         self.lambdas_ = np.real(self.lambdas_)
@@ -304,7 +304,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                 warnings.warn("There are significant negative eigenvalues "
                               "(%f of the max positive). Something may be "
                               "wrong with the kernel. Replacing them by "
-                              "zero." % -min_eig / max_eig, KernelWarning)
+                              "zero." % (-min_eig / max_eig), KernelWarning)
             else:
                 raise ValueError("There are significant negative eigenvalues "
                                  "(such as %f) and no positive one. Something "
