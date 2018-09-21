@@ -12,7 +12,8 @@ __all__ = ['NotFittedError',
            'FitFailedWarning',
            'NonBLASDotWarning',
            'SkipTestWarning',
-           'UndefinedMetricWarning']
+           'UndefinedMetricWarning',
+           'KernelWarning']
 
 
 class NotFittedError(ValueError, AttributeError):
@@ -153,4 +154,11 @@ class UndefinedMetricWarning(UserWarning):
 
     .. versionchanged:: 0.18
        Moved from sklearn.base.
+    """
+
+
+class KernelWarning(UserWarning):
+    """Custom warning to capture kernel issues
+
+    .. versionadded:: 0.21
     """
