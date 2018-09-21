@@ -2068,7 +2068,7 @@ def false_positive(y_true, y_pred, labels=None, sample_weight=None):
 
     Returns
     -------
-    score = The number of times type-1 error has occured.
+    score = The number of times type-1 error has occurred.
     """
 
     # Checking the type of class which they belongs to
@@ -2116,7 +2116,7 @@ def false_negative(y_true, y_pred, labels=None, sample_weight=None):
     Returns
     -------
     score : Integer
-            The number of time yype-2 error has occured.
+            The number of time yype-2 error has occurred.
      """
 
     # Checking the type of class which they belongs to
