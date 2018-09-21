@@ -2040,108 +2040,146 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 
 
-def fall_out(y_true, y_pred, labels=None, sample_weight=None):
-    """compute the false positive rate
-       False positive rate indicate the
-       number of sample which are classified as
-       negative but they are positive .In
-       other word we can say that it is the
-       chances of occuring a TYPE-1 error
+def false_positive(y_true, y_pred, labels=None, sample_weight=None):
+    """Compute the false positive rate.
+
+    False positive rate indicate the
+    number of sample which are classified as
+    negative but they are positive.In
+    other word we can say that it is the
+    chances of occuring a TYPE-1 error.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        Ground truth (correct) target values.
+
+    y_pred : array, shape = [n_samples]
+        Estimated targets as returned by a classifier.
+
+    labels : array, shape = [n_classes], optional
+        List of labels to index the matrix. This may be used to reorder
+        or select a subset of labels.
+        If none is given, those that appear at least once
+        in ``y_true`` or ``y_pred`` are used in sorted order.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    Returns
+    -------
+    score = The number of times type-1 error has occured.
+    """
+
+    # Checking the type of class which they belongs to
+    type_true = type_of_target(y_true)
+    type_pred = type_of_target(y_pred)
+
+    y_type = set([type_true, type_pred])
+    if len(y_type) == 1:
+        if y_type == set(["binary"]):
+            CM = confusion_matrix(y_true, y_pred, labels=labels,
+                                  sample_weight=sample_weight)
+            return CM[0][1]
+        else:
+            raise ValueError("this metric is supported for only binary class")
+    else:
+        raise ValueError("this metric is supported for only binary class")
 
 
-       Parameters
-       ----------
-       y_true : array, shape = [n_samples]
-           True target, consisting of integers of two values.
-           The positive label
-           must be greater than the negative label.
+def false_negative(y_true, y_pred, labels=None, sample_weight=None):
+    """It calculates the miss rate.
 
-       pred_decision : array, shape = [n_samples] or
-       [n_samples, n_classes]
-           Predicted decisions, as output
-           by decision_function (floats).
-
-       labels : array, optional, default None
-           Contains all the labels for the problem.
-           Used in multiclass hinge loss.
-
-       sample_weight : array-like of
-       shape = [n_samples], optional
-           Sample weights.
-
-       Returns
-       -------
-       loss : float"""
-    CM = confusion_matrix(y_true, y_pred, labels=labels,
-                          sample_weight=sample_weight)
-    return CM[0][1]
-
-
-def miss_rate(y_true, y_pred, labels=None, sample_weight=None):
-    """it calculates the miss rate
     The miss rate indicates the number of
     samples which are classified as negative class
     but they actually belongs to the positive
     class or we can say that it indicates the
-    chances of happening of TYPE-2 error
+    chances of happening of TYPE-2 error.
 
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        True target, consisting of
-        integers of two values. The positive label
-        must be greater than the negative label.
+        Ground truth (correct) target values.
 
-    pred_decision : array, shape =
-    [n_samples] or [n_samples, n_classes]
-        Predicted decisions, as output by decision_function (floats).
+    y_pred : array, shape = [n_samples]
+        Estimated targets as returned by a classifier.
 
-    labels : array, optional, default None
-        Contains all the labels for the
-        problem. Used in multiclass hinge loss.
+    labels : array, shape = [n_classes], optional
+        List of labels to index the matrix. This may be used to reorder
+        or select a subset of labels.
+        If none is given, those that appear at least once
+        in ``y_true`` or ``y_pred`` are used in sorted order.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
     -------
-    loss : float"""
-    CM = confusion_matrix(y_true, y_pred, labels=labels,
-                          sample_weight=sample_weight)
-    return CM[1][0]
+    score : Integer
+            The number of time yype-2 error has occured.
+     """
+
+    # Checking the type of class which they belongs to
+    type_true = type_of_target(y_true)
+    type_pred = type_of_target(y_pred)
+
+    y_type = set([type_true, type_pred])
+    if len(y_type) == 1:
+        if y_type == set(["binary"]):
+            CM = confusion_matrix(y_true, y_pred, labels=labels,
+                                  sample_weight=sample_weight)
+            return CM[1][0]
+        else:
+            raise ValueError("this metric is supported for only binary class")
+    else:
+        raise ValueError("this metric is supported for only binary class")
 
 
-def specificity(y_true, y_pred, labels=None, sample_weight=None):
-    """This function gives the specificity
+def ture_positive(y_true, y_pred, labels=None, sample_weight=None):
+    """This function gives the specificity.
+
     Specificity defines the True positive i.e
     it indicates the number of sample which belongs
     to positive class when they actually belongs
-    to the positive class . It also denotes the
-    number of times when null Hypothesis is
-    true..
+    to the positive class.It also denotes the
+    number of times when null Hypothesis is.
+    true.
 
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        True target, consisting of
-        integers of two values. The positive label
-        must be greater than the negative label.
+        Ground truth (correct) target values.
 
-    pred_decision : array, shape =
-    [n_samples] or [n_samples, n_classes]
-        Predicted decisions, as output by decision_function (floats).
+    y_pred : array, shape = [n_samples]
+        Estimated targets as returned by a classifier.
 
-    labels : array, optional, default None
-        Contains all the labels for the
-        problem. Used in multiclass hinge loss.
+    labels : array, shape = [n_classes], optional
+        List of labels to index the matrix. This may be used to reorder
+        or select a subset of labels.
+        If none is given, those that appear at least once
+        in ``y_true`` or ``y_pred`` are used in sorted order.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
     -------
-    loss : float"""
+    score : Integer
+            The number of times when null hypothesis was
+            accepted.
 
-    CM = confusion_matrix(y_true, y_pred, labels=labels,
-                          sample_weight=sample_weight)
-    return CM[1][1]
+    """
+    # Checking the type of class which they belongs to
+    type_true = type_of_target(y_true)
+    type_pred = type_of_target(y_pred)
+
+    y_type = set([type_true, type_pred])
+    if len(y_type) == 1:
+        if y_type == set(["binary"]):
+            CM = confusion_matrix(y_true, y_pred, labels=labels,
+                                  sample_weight=sample_weight)
+            return CM[1][1]
+        else:
+            raise ValueError("this metric is supported for only binary class")
+    else:
+        raise ValueError("this metric is supported for only binary class")
