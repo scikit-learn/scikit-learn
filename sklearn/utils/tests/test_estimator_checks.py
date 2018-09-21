@@ -9,14 +9,16 @@ from io import StringIO
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
 from sklearn.utils import _joblib
-from sklearn.utils.testing import (assert_raises_regex, assert_equal,
-                                   ignore_warnings, assert_warns)
+from sklearn.utils.testing import (assert_raises_regex,
+                                   assert_equal, ignore_warnings,
+                                   assert_warns, assert_raises)
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
+from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
@@ -358,6 +360,15 @@ def test_check_estimator():
     check_estimator(AdaBoostClassifier())
     check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
+
+
+def test_check_outlier_corruption():
+    # should error on != outlier counts and no support for decision_function
+    assert_raises(AssertionError, check_outlier_corruption, object, 1, 2, [])
+    assert_raises(AssertionError, check_outlier_corruption, object, 2, 1, [])
+
+    # should pass if counts are equal
+    check_outlier_corruption(object, 1, 1, [])
 
 
 def test_check_estimator_transformer_no_mixin():

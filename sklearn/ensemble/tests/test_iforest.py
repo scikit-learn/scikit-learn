@@ -264,8 +264,8 @@ def test_iforest_average_path_length():
     # for average path length, strictly for the integer case
     # Updated to check average path length when input is <= 2 (issue #11839)
 
-    result_one = 2. * (np.log(4.) + euler_gamma) - 2. * 4. / 5.
-    result_two = 2. * (np.log(998.) + euler_gamma) - 2. * 998. / 999.
+    result_one = 2. * (np.log(4.) + np.euler_gamma) - 2. * 4. / 5.
+    result_two = 2. * (np.log(998.) + np.euler_gamma) - 2. * 998. / 999.
     assert _average_path_length(0) == 0.
     assert _average_path_length(1) == 0.
     assert _average_path_length(2) == 1.
