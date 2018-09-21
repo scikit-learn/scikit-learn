@@ -331,38 +331,38 @@ def test_kernel_pca_time_and_equivalence():
     std_r_time = r_time.std(axis=1)
 
     if not benchmark_mode:
-        # Test mode
+        # Test mode: a few asserts
         # Check that randomized method reduces by at least 50%
         assert max(avg_r_time / avg_ref_time) < 0.5
 
         # Check that arpack sometimes reduces the time greatly too
         assert min(avg_a_time / avg_ref_time) < 0.5
 
-    # For reference: plots
-    import matplotlib.pyplot as plt
-    plt.ion()
-    plt.figure()
+    else:
+        # Benchmark mode: plots
+        import matplotlib.pyplot as plt
+        plt.ion()
+        plt.figure()
 
-    # display 1 plot with error bars per method
-    plt.errorbar(n_compo_range, avg_ref_time, yerr=std_ref_time,
-                 marker='x', linestyle='', color='r', label='full')
-    plt.errorbar(n_compo_range, avg_a_time, yerr=std_a_time, marker='x',
-                 linestyle='', color='g', label='arpack')
-    plt.errorbar(n_compo_range, avg_r_time, yerr=std_r_time, marker='x',
-                 linestyle='', color='b', label='randomized')
-    plt.legend()
+        # display 1 plot with error bars per method
+        plt.errorbar(n_compo_range, avg_ref_time, yerr=std_ref_time,
+                     marker='x', linestyle='', color='r', label='full')
+        plt.errorbar(n_compo_range, avg_a_time, yerr=std_a_time, marker='x',
+                     linestyle='', color='g', label='arpack')
+        plt.errorbar(n_compo_range, avg_r_time, yerr=std_r_time, marker='x',
+                     linestyle='', color='b', label='randomized')
+        plt.legend()
 
-    # customize axes
-    ax = plt.gca()
-    ax.set_xscale('log')
-    ax.set_xlim(0, max(n_compo_range) * 1.1)
-    ax.set_ylabel("Execution time (s)")
-    ax.set_xlabel("n_components")
+        # customize axes
+        ax = plt.gca()
+        ax.set_xscale('log')
+        ax.set_xlim(0, max(n_compo_range) * 1.1)
+        ax.set_ylabel("Execution time (s)")
+        ax.set_xlabel("n_components")
 
-    plt.title("Execution time comparison of kPCA on %i samples with %i "
-              "features, according to the choice of `eigen_solver`" 
-              "" % (n_training_samples, n_features))
+        plt.title("Execution time comparison of kPCA on %i samples with %i "
+                  "features, according to the choice of `eigen_solver`" 
+                  "" % (n_training_samples, n_features))
 
-    if benchmark_mode:
         plt.ioff()
         plt.show()
