@@ -40,6 +40,14 @@ Support for Python 3.4 and below has been officially dropped.
 - An entry goes here
 - An entry goes here
 
+:mod:`sklearn.cluster`
+......................
+
+- |MajorFeature| A new clustering algorithm: :class:`cluster.OPTICS`: an
+  algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
+  to set and that scales better, by :user:`Shane <espg>` and
+  :user:`Adrin Jalali <adrinjalali>`.
+
 Multiple modules
 ................
 

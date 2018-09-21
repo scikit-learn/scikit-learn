@@ -30,9 +30,10 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
     """Perform OPTICS clustering from vector array
 
     OPTICS: Ordering Points To Identify the Clustering Structure
-    Equivalent to DBSCAN, finds core sample of high density and expands
+    Closely related to DBSCAN, finds core sample of high density and expands
     clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
-    neighborhood radius. Optimized for usage on large point datasets.
+    neighborhood radius. Better suited for usage on large point datasets than
+    the current sklearn implementation of DBSCAN.
 
     Read more in the :ref:`User Guide <optics>`.
 
@@ -52,11 +53,30 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
         shorter run times.
 
     metric : string or callable, optional (default='euclidean')
-        The distance metric to use for neighborhood lookups. Default is
-        "euclidean". Other options include "minkowski", "manhattan",
-        "chebyshev", "haversine", "seuclidean", "hamming", "canberra",
-        and "braycurtis". The "wminkowski" and "mahalanobis" metrics are
-        also valid with an additional argument.
+        metric to use for distance computation. Any metric from scikit-learn
+        or scipy.spatial.distance can be used.
+
+        If metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays as input and return one value indicating the
+        distance between them. This works for Scipy's metrics, but is less
+        efficient than passing the metric name as a string.
+
+        Distance matrices are not supported.
+
+        Valid values for metric are:
+
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+          'manhattan']
+
+        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
+          'yule']
+
+        See the documentation for scipy.spatial.distance for details on these
+        metrics.
 
     p : integer, optional (default=2)
         Parameter for the Minkowski metric from
@@ -163,9 +183,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
     """Estimate clustering structure from vector array
 
     OPTICS: Ordering Points To Identify the Clustering Structure
-    Equivalent to DBSCAN, finds core sample of high density and expands
+    Closely related to DBSCAN, finds core sample of high density and expands
     clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
-    neighborhood radius. Optimized for usage on large point datasets.
+    neighborhood radius. Better suited for usage on large point datasets than
+    the current sklearn implementation of DBSCAN.
 
     Read more in the :ref:`User Guide <optics>`.
 
@@ -182,11 +203,30 @@ class OPTICS(BaseEstimator, ClusterMixin):
         shorter run times.
 
     metric : string or callable, optional (default='euclidean')
-        The distance metric to use for neighborhood lookups. Default is
-        "euclidean". Other options include "minkowski", "manhattan",
-        "chebyshev", "haversine", "seuclidean", "hamming", "canberra",
-        and "braycurtis". The "wminkowski" and "mahalanobis" metrics are
-        also valid with an additional argument.
+        metric to use for distance computation. Any metric from scikit-learn
+        or scipy.spatial.distance can be used.
+
+        If metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays as input and return one value indicating the
+        distance between them. This works for Scipy's metrics, but is less
+        efficient than passing the metric name as a string.
+
+        Distance matrices are not supported.
+
+        Valid values for metric are:
+
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+          'manhattan']
+
+        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
+          'yule']
+
+        See the documentation for scipy.spatial.distance for details on these
+        metrics.
 
     p : integer, optional (default=2)
         Parameter for the Minkowski metric from
@@ -419,8 +459,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
             # Everything is already processed. Return to main loop
             return point_index
 
-        dists = pairwise_distances(P, np.take(X, unproc, axis=0),
-                                   self.metric, n_jobs=1).ravel()
+        if self.metric == 'precomputed':
+            dists = X[point_index, unproc]
+        else:
+            dists = pairwise_distances(P, np.take(X, unproc, axis=0),
+                                       self.metric, n_jobs=None).ravel()
 
         rdists = np.maximum(dists, self.core_distances_[point_index])
         new_reach = np.minimum(np.take(self.reachability_, unproc), rdists)
