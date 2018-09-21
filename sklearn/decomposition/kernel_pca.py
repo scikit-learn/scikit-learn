@@ -235,11 +235,12 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         # compute eigenvectors
         if self.eigen_solver == 'auto':
-            if n_components >= 1 and n_components < .8 * min(K.shape):
+            # Legacy (before randomized_svd introduction)
+            # if K.shape[0] > 200 and n_components < 10:
+            #     eigen_solver = 'arpack'
+            if n_components >= 1 and n_components < .8 * K.shape[0]:
                 # For consistency this is the same criterion than in PCA
                 eigen_solver = 'randomized'
-            elif K.shape[0] > 200 and n_components < 10:
-                eigen_solver = 'arpack'
             else:
                 eigen_solver = 'dense'
         else:
