@@ -32,6 +32,9 @@ limit = 50
 
 y_train_missing_labels = y_train.copy()
 y_train_missing_labels[limit:] = -1
+y_train_missing_labels_strings = y_train_missing_labels.copy()
+mapping = {0:'A', 1:'B', 2:'C', -1:-1}
+np.vectorize(mapping.get)(y_train_missing_labels)
 
 
 def test_classification():
@@ -39,15 +42,16 @@ def test_classification():
     grid = ParameterGrid({"max_iter": [1, 50, 100],
                           "threshold": [0.0, 0.5, 0.9]})
 
-    for base_estimator in [DummyClassifier(),
-                           DecisionTreeClassifier(),
-                           KNeighborsClassifier(),
-                           SVC(gamma="scale", probability=True)]:
-        for params in grid:
-            st = SelfTrainingClassifier(base_estimator, **params)
-            st.fit(X_train, y_train_missing_labels)
-            st.predict(X_test)
-            st.predict_proba(X_test)
+    for y in (y_train_missing_labels, y_train_missing_labels_strings):
+        for base_estimator in [DummyClassifier(),
+                               DecisionTreeClassifier(),
+                               KNeighborsClassifier(),
+                               SVC(gamma="scale", probability=True)]:
+            for params in grid:
+                st = SelfTrainingClassifier(base_estimator, **params)
+                st.fit(X_train, y)
+                st.predict(X_test)
+                st.predict_proba(X_test)
 
 
 def test_missing_predict_proba():
