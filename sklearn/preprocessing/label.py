@@ -823,6 +823,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         -------
         self : returns this MultiLabelBinarizer instance
         """
+        self._cached_dict = None
         if self.classes is None:
             classes = sorted(set(itertools.chain.from_iterable(y)))
         else:
@@ -889,6 +890,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             A matrix such that `y_indicator[i, j] = 1` iff `classes_[j]` is in
             `y[i]`, and 0 otherwise.
         """
+        self._cached_dict = None
         check_is_fitted(self, 'classes_')
 
         class_to_index = self._cached_dict_for()
@@ -900,13 +902,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         return yt
 
     def _cached_dict_for(self):
-        if not hasattr(self, '_prev_classes'):
-            self._prev_classes = self.classes_
-            self._cached_dict = None
-
-        if (self._prev_classes.__repr__() != self.classes_.__repr__()) \
-            or (self._cached_dict is None):
-            self._prev_classes = self.classes_
+        if (self._cached_dict is None):
             self._cached_dict = dict(zip(self.classes_, \
                 range(len(self.classes_))))
          
