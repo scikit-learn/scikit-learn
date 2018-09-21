@@ -33,7 +33,7 @@ limit = 50
 y_train_missing_labels = y_train.copy()
 y_train_missing_labels[limit:] = -1
 y_train_missing_labels_strings = y_train_missing_labels.copy()
-mapping = {0:'A', 1:'B', 2:'C', -1:-1}
+mapping = {0: 'A', 1: 'B', 2: 'C', -1: -1}
 np.vectorize(mapping.get)(y_train_missing_labels)
 
 
