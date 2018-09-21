@@ -874,3 +874,15 @@ def test_check_preserve_type():
                                                    XB.astype(np.float))
     assert_equal(XA_checked.dtype, np.float)
     assert_equal(XB_checked.dtype, np.float)
+
+def test_euclidean_precision32():
+    """dot(x,x) - 2 dot(x,y) + dot(y,y) has catastrophic precision"""
+    XA = np.array([[10000]], np.float32)
+    XB = np.array([[10001]], np.float32)
+    assert_equal(euclidean_distances(XA, XB)[0,0], 1)
+
+def test_euclidean_precision64():
+    """dot(x,x) - 2 dot(x,y) + dot(y,y) has catastrophic precision"""
+    XA = np.array([[100000000]])
+    XB = np.array([[100000001]])
+    assert_equal(euclidean_distances(XA, XB)[0,0], 1)
