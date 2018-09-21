@@ -24,10 +24,9 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
     It uses the LAPACK implementation of the full SVD or a randomized truncated
     SVD by the method of Halko et al. 2009, depending on the shape of the input
-    data and the number of components to extract.
-
-    It can also use the scipy.sparse.linalg ARPACK implementation of the
-    truncated SVD.
+    data and the number of components to extract. It can also use the
+    scipy.sparse.linalg ARPACK implementation of the truncated SVD, see
+    :ref:`eigen_solver`.
 
     Read more in the :ref:`User Guide <kernel_PCA>`.
 
@@ -62,12 +61,28 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Learn the inverse transform for non-precomputed kernels.
         (i.e. learn to find the pre-image of a point)
 
-    eigen_solver : string ['auto'|'dense'|'arpack'|'randomized'],
-        default='auto'
-        Select eigensolver to use. If n_components is much less than the number
-        of training samples, randomized (or arpack to a smaller extend) may be
-        more efficient than the dense eigensolver. randomized SVD is done
-        according to the method of Halko et al.
+    eigen_solver : string {'auto', 'dense', 'arpack', 'randomized'}
+        Select eigensolver to use (default='auto'). If n_components is much
+        less than the number of training samples, randomized (or arpack to a
+        smaller extend) may be more efficient than the dense eigensolver.
+        Randomized SVD is performed according to the method of Halko et al.
+        auto :
+            the solver is selected by a default policy based on `K.shape[0]`
+            (the number of training samples) and `n_components`:
+            if the number of components to extract is lower than 80% of
+            `K.shape[0]`, then the more efficient 'randomized'
+            method is enabled. Otherwise the exact full eigenvalue
+            decomposition is computed and optionally truncated afterwards.
+        dense :
+            run exact full eigenvalue decomposition calling the standard
+            LAPACK solver via `scipy.linalg.eigh`, and select the components
+            by postprocessing
+        arpack :
+            run SVD truncated to n_components calling ARPACK solver using
+            `scipy.sparse.linalg.svds`. It requires strictly
+            0 < n_components < `K.shape[0]` (the number of training samples)
+        randomized :
+            run randomized SVD by the method of Halko et al.
 
         .. versionchanged:: 0.21
 
@@ -251,10 +266,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                                      flip_sign=True,
                                      random_state=random_state)
 
-            # ----- eigenvectors
+            # eigenvectors
             self.alphas_ = U[:, :n_components]
 
-            # ----- eigenvalues
+            # eigenvalues
             self.lambdas_ = S[:n_components]
             # Make sure that there are no wrong signs (svd does not guarantee
             #  that sign of u and v is the same)
