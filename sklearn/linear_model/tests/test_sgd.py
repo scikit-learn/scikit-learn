@@ -284,9 +284,6 @@ class CommonTest(object):
             clf = self.factory(early_stopping=early_stopping, tol=1e-3,
                                max_iter=max_iter).fit(X, Y)
             assert clf.n_iter_ < max_iter
-            assert not hasattr(clf, '_X_val')
-            assert not hasattr(clf, '_y_val')
-            assert not hasattr(clf, '_sample_weight_val')
 
     def test_adaptive_longer_than_constant(self):
         clf1 = self.factory(learning_rate="adaptive", eta0=0.01, tol=1e-3,
@@ -1474,15 +1471,28 @@ def test_gradient_squared_epsilon_insensitive():
     _test_gradient_common(loss, cases)
 
 
+def test_multi_thread_multi_class_and_early_stopping():
+    # This is a non-regression test for a bad interaction between
+    # early stopping internal attribute and thread-based parallelism.
+    clf = SGDClassifier(alpha=1e-4, tol=1e-3, max_iter=1000,
+                        early_stopping=True, n_iter_no_change=50,
+                        random_state=0, n_jobs=2)
+    clf.fit(iris.data, iris.target)
+    clf.n_iter_ < 300
+    assert clf.score(iris.data, iris.target) > 0.8
+
+
 def test_multi_core_gridsearch_and_early_stopping():
     # This is a non-regression test for a bad interaction between
-    # early stopping internal attribute and process-based multi-core parallism.
+    # early stopping internal attribute and process-based multi-core
+    # parallelism.
     param_grid = {
         'alpha': np.logspace(-4, 4, 9),
-        'n_iter_no_change': [2, 5, 10, 20],
+        'n_iter_no_change': [5, 10, 50],
     }
-    clf = SGDClassifier(tol=1e-3, max_iter=1000, early_stopping=True)
+    clf = SGDClassifier(tol=1e-3, max_iter=1000, early_stopping=True,
+                        random_state=0)
     search = RandomizedSearchCV(clf, param_grid, n_iter=10, cv=5, n_jobs=2,
                                 random_state=0)
     search.fit(iris.data, iris.target)
-    assert search.best_score_ > 0.95
+    assert search.best_score_ > 0.8
