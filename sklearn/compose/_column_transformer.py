@@ -211,20 +211,29 @@ boolean mask array or callable
         self._set_params('_transformers', **kwargs)
         return self
 
-    def _iter(self, X=None, fitted=False, replace_strings=False):
-        """Generate (name, trans, column, weight) tuples
+    def _iter(self, fitted=False, replace_strings=False):
+        """
+        Generate (name, trans, X_subset, weight, column) tuples.
+
+        If fitted=True, use the fitted transformers, else use the
+        user specified transformers updated with converted column names
+        and potentially appended with transformer for remainder.
+
         """
         if fitted:
             transformers = self.transformers_
         else:
-            transformers = self.transformers
+            # interleave the validated column specifiers
+            transformers = [
+                (name, trans, column) for (name, trans, _), column
+                in zip(self.transformers, self._columns)
+            ]
+            # add transformer tuple for remainder
             if self._remainder[2] is not None:
                 transformers = chain(transformers, [self._remainder])
         get_weight = (self.transformer_weights or {}).get
 
         for name, trans, column in transformers:
-            sub = None if X is None else _get_column(X, column)
-
             if replace_strings:
                 # replace 'passthrough' with identity transformer and
                 # skip in case of 'drop'
@@ -235,7 +244,7 @@ boolean mask array or callable
                 elif trans == 'drop':
                     continue
 
-            yield (name, trans, sub, get_weight(name))
+            yield (name, trans, column, get_weight(name))
 
     def _validate_transformers(self):
         if not self.transformers:
@@ -257,6 +266,17 @@ boolean mask array or callable
                                 "specifiers. '%s' (type %s) doesn't." %
                                 (t, type(t)))
 
+    def _validate_column_callables(self, X):
+        """
+        Converts callable column specifications.
+        """
+        columns = []
+        for _, _, column in self.transformers:
+            if callable(column):
+                column = column(X)
+            columns.append(column)
+        self._columns = columns
+
     def _validate_remainder(self, X):
         """
         Validates ``remainder`` and defines ``_remainder`` targeting
@@ -274,7 +294,7 @@ boolean mask array or callable
 
         n_columns = X.shape[1]
         cols = []
-        for _, _, columns in self.transformers:
+        for columns in self._columns:
             cols.extend(_get_column_indices(X, columns))
         remaining_idx = sorted(list(set(range(n_columns)) - set(cols))) or None
 
@@ -320,27 +340,23 @@ boolean mask array or callable
 
     def _update_fitted_transformers(self, transformers):
         # transformers are fitted; excludes 'drop' cases
-        transformers = iter(transformers)
+        fitted_transformers = iter(transformers)
         transformers_ = []
 
-        transformer_iter = self.transformers
-        if self._remainder[2] is not None:
-            transformer_iter = chain(transformer_iter, [self._remainder])
-
-        for name, old, column in transformer_iter:
+        for name, old, column, _ in self._iter():
             if old == 'drop':
                 trans = 'drop'
             elif old == 'passthrough':
                 # FunctionTransformer is present in list of transformers,
                 # so get next transformer, but save original string
-                next(transformers)
+                next(fitted_transformers)
                 trans = 'passthrough'
             else:
-                trans = next(transformers)
+                trans = next(fitted_transformers)
             transformers_.append((name, trans, column))
 
         # sanity check that transformers is exhausted
-        assert not list(transformers)
+        assert not list(fitted_transformers)
         self.transformers_ = transformers_
 
     def _validate_output(self, result):
@@ -348,7 +364,8 @@ boolean mask array or callable
         Ensure that the output of each transformer is 2D. Otherwise
         hstack can raise an error or produce incorrect results.
         """
-        names = [name for name, _, _, _ in self._iter(replace_strings=True)]
+        names = [name for name, _, _, _ in self._iter(fitted=True,
+                                                      replace_strings=True)]
         for Xs, name in zip(result, names):
             if not getattr(Xs, 'ndim', 0) == 2:
                 raise ValueError(
@@ -366,9 +383,9 @@ boolean mask array or callable
         try:
             return Parallel(n_jobs=self.n_jobs)(
                 delayed(func)(clone(trans) if not fitted else trans,
-                              X_sel, y, weight)
-                for _, trans, X_sel, weight in self._iter(
-                    X=X, fitted=fitted, replace_strings=True))
+                              _get_column(X, column), y, weight)
+                for _, trans, column, weight in self._iter(
+                    fitted=fitted, replace_strings=True))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN)
@@ -419,8 +436,9 @@ boolean mask array or callable
             sparse matrices.
 
         """
-        self._validate_remainder(X)
         self._validate_transformers()
+        self._validate_column_callables(X)
+        self._validate_remainder(X)
 
         result = self._fit_transform(X, y, _fit_transform_one)
 
@@ -545,9 +563,6 @@ def _get_column(X, key):
           can use any hashable object as key).
 
     """
-    if callable(key):
-        key = key(X)
-
     # check whether we have string column names or integers
     if _check_key_type(key, int):
         column_names = False
@@ -588,9 +603,6 @@ def _get_column_indices(X, key):
 
     """
     n_columns = X.shape[1]
-
-    if callable(key):
-        key = key(X)
 
     if _check_key_type(key, int):
         if isinstance(key, int):
