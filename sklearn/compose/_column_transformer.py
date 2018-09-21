@@ -109,8 +109,8 @@ boolean mask array or callable
     transformers_ : list
         The collection of fitted transformers as tuples of
         (name, fitted_transformer, column). `fitted_transformer` can be an
-        estimator, 'drop', or 'passthrough'. Note that the column list is
-        allowed to be empty. In that case the transformers will not be fitted.
+        estimator, 'drop', or 'passthrough'. In case there were no columns
+        selected, this string 'empty' will stand in place of the transformer.
         If there are remaining columns, the final element is a tuple of the
         form:
         ('remainder', transformer, remaining_columns) corresponding to the
