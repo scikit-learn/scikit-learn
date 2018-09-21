@@ -33,9 +33,7 @@ self_training_score = []
 x_values = []
 
 clf = SVC(probability=True, gamma=0.001)
-self_training_clf = SelfTrainingClassifier(
-    clf, max_iter=10, threshold=0.8
-)
+self_training_clf = SelfTrainingClassifier(clf, max_iter=10, threshold=0.8)
 
 X, y = load_digits(return_X_y=True)
 X, y = shuffle(X, y, random_state=42)
