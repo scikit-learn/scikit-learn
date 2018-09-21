@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import numpy as np
 import scipy.sparse as sp
 import pytest
@@ -259,3 +261,108 @@ def test_nested_circles():
     # The data is perfectly linearly separable in that space
     train_score = Perceptron(max_iter=5).fit(X_kpca, y).score(X_kpca, y)
     assert_equal(train_score, 1.0)
+
+
+def test_kernel_pca_time_and_equivalence():
+    """Checks that 'dense', 'arpack' and 'randomized' solvers give similar
+    results and benchmarks their respective execution times. This test can
+    be transformed into a benchmark by setting benchmark_mode to True.
+    """
+
+    # Generate random data
+    n_training_samples = 2000
+    n_features = 10
+    rng = np.random.RandomState(0)
+    X_fit = rng.random_sample((n_training_samples, n_features))
+    X_pred = rng.random_sample((100, n_features))
+
+    # Experimentx
+    benchmark_mode = False  # set to True to run the full bench and plots
+    if benchmark_mode:
+        # FULL benchmark
+        n_compo_range = [1, 2, 3, 4, 7, 10, 13, 17, 21, 28, 37, 50, 64, 80,
+                         100,
+                         120, 150, 200, 280, 380, 500, 700, 1000, 1400, 1999]
+        arpack_all = True
+    else:
+        # Test: fast checks
+        n_compo_range = [2, 4, 20]
+        arpack_all = False
+
+    n_iter = 3
+
+    ref_time = np.empty((len(n_compo_range), n_iter)) * np.nan
+    a_time = np.empty((len(n_compo_range), n_iter)) * np.nan
+    r_time = np.empty((len(n_compo_range), n_iter)) * np.nan
+    for j, n_components in enumerate(n_compo_range):
+
+        # reference (full)
+        for i in range(n_iter):
+            start_time = datetime.now()
+            ref_pred = KernelPCA(n_components, eigen_solver="dense")\
+                .fit(X_fit).transform(X_pred)
+            ref_time[j, i] = (datetime.now() - start_time).total_seconds()
+
+        # arpack
+        if arpack_all or n_components < 100:
+            for i in range(n_iter):
+                start_time = datetime.now()
+                a_pred = KernelPCA(n_components, eigen_solver="arpack")\
+                    .fit(X_fit).transform(X_pred)
+                # check that the result is still correct despite the approx
+                assert_array_almost_equal(np.abs(a_pred), np.abs(ref_pred))
+                a_time[j, i] = (datetime.now() - start_time).total_seconds()
+
+        # randomized
+        for i in range(n_iter):
+            start_time = datetime.now()
+            r_pred = KernelPCA(n_components, eigen_solver="randomized")\
+                .fit(X_fit).transform(X_pred)
+            # check that the result is still correct despite the approximation
+            assert_array_almost_equal(np.abs(r_pred), np.abs(ref_pred))
+            r_time[j, i] = (datetime.now() - start_time).total_seconds()
+
+    # Compute statistics for the 3 methods
+    avg_ref_time = ref_time.mean(axis=1)
+    std_ref_time = ref_time.std(axis=1)
+    avg_a_time = a_time.mean(axis=1)
+    std_a_time = a_time.std(axis=1)
+    avg_r_time = r_time.mean(axis=1)
+    std_r_time = r_time.std(axis=1)
+
+    if not benchmark_mode:
+        # Test mode
+        # Check that randomized method reduces by at least 50%
+        assert max(avg_r_time / avg_ref_time) < 0.5
+
+        # Check that arpack sometimes reduces the time greatly too
+        assert min(avg_a_time / avg_ref_time) < 0.5
+
+    # For reference: plots
+    import matplotlib.pyplot as plt
+    plt.ion()
+    plt.figure()
+
+    # display 1 plot with error bars per method
+    plt.errorbar(n_compo_range, avg_ref_time, yerr=std_ref_time,
+                 marker='x', linestyle='', color='r', label='full')
+    plt.errorbar(n_compo_range, avg_a_time, yerr=std_a_time, marker='x',
+                 linestyle='', color='g', label='arpack')
+    plt.errorbar(n_compo_range, avg_r_time, yerr=std_r_time, marker='x',
+                 linestyle='', color='b', label='randomized')
+    plt.legend()
+
+    # customize axes
+    ax = plt.gca()
+    ax.set_xscale('log')
+    ax.set_xlim(0, max(n_compo_range) * 1.1)
+    ax.set_ylabel("Execution time (s)")
+    ax.set_xlabel("n_components")
+
+    plt.title("Execution time comparison of kPCA on %i samples with %i "
+              "features, according to the choice of `eigen_solver`" 
+              "" % (n_training_samples, n_features))
+
+    if benchmark_mode:
+        plt.ioff()
+        plt.show()
