@@ -2082,9 +2082,9 @@ def false_positive(y_true, y_pred, labels=None, sample_weight=None):
                                   sample_weight=sample_weight)
             return CM[0][1]
         else:
-            raise ValueError("this metric is supported for only binary class")
+            raise ValueError("This metric is supported for only binary class")
     else:
-        raise ValueError("this metric is supported for only binary class")
+        raise ValueError("This metric is supported for only binary class")
 
 
 def false_negative(y_true, y_pred, labels=None, sample_weight=None):
@@ -2130,9 +2130,9 @@ def false_negative(y_true, y_pred, labels=None, sample_weight=None):
                                   sample_weight=sample_weight)
             return CM[1][0]
         else:
-            raise ValueError("this metric is supported for only binary class")
+            raise ValueError("This metric is supported for only binary class")
     else:
-        raise ValueError("this metric is supported for only binary class")
+        raise ValueError("This metric is supported for only binary class")
 
 
 def ture_positive(y_true, y_pred, labels=None, sample_weight=None):
@@ -2180,6 +2180,6 @@ def ture_positive(y_true, y_pred, labels=None, sample_weight=None):
                                   sample_weight=sample_weight)
             return CM[1][1]
         else:
-            raise ValueError("this metric is supported for only binary class")
+            raise ValueError("This metric is supported for only binary class")
     else:
-        raise ValueError("this metric is supported for only binary class")
+        raise ValueError("This metric is supported for only binary class")
