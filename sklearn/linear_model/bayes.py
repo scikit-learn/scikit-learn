@@ -196,22 +196,24 @@ class BayesianRidge(LinearModel, RegressorMixin):
         # Convergence loop of the bayesian ridge regression
         for iter_ in range(self.n_iter):
 
-            # Compute mu and sigma
-            # sigma_ = lambda_ / alpha_ * np.eye(n_features) + np.dot(X.T, X)
-            # coef_ = sigma_^-1 * XT * y
+            # Compute posterior mean and posterior covariance:
+            # posterior covariance is given by 1/alpha_ * scaled_sigma_ where
+            # scaled_sigma_ = (lambda_/alpha_ * np.eye(n_features)
+            #                  + np.dot(X.T, X))^-1
+            # and posterior mean is given by coef_ = scaled_sigma_ * X.T * y
             if n_samples > n_features:
                 coef_ = np.dot(Vh.T,
                                Vh / (eigen_vals_ +
                                      lambda_ / alpha_)[:, np.newaxis])
                 coef_ = np.dot(coef_, XT_y)
-                if self.compute_score:
+                if self.compute_score:  # compute covariance term of the score
                     logdet_sigma_ = - np.sum(
                         np.log(lambda_ + alpha_ * eigen_vals_))
             else:
                 coef_ = np.dot(X.T, np.dot(
                     U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
                 coef_ = np.dot(coef_, y)
-                if self.compute_score:
+                if self.compute_score:  # compute covariance term of the score
                     logdet_sigma_ = np.full(n_features, lambda_,
                                             dtype=np.array(lambda_).dtype)
                     logdet_sigma_[:n_samples] += alpha_ * eigen_vals_
@@ -250,10 +252,13 @@ class BayesianRidge(LinearModel, RegressorMixin):
                 break
             coef_old_ = np.copy(coef_)
 
+        # return posterior mean and posterior covariance
         self.coef_ = coef_
-        sigma_ = np.dot(Vh.T,
-                        Vh / (eigen_vals_ + lambda_ / alpha_)[:, np.newaxis])
-        self.sigma_ = (1. / alpha_) * sigma_
+        scaled_sigma_ = np.dot(Vh.T,
+                               Vh / (eigen_vals_ +
+                                     lambda_ / alpha_)[:, np.newaxis])
+        # posterior covariance is given by 1/alpha_ * scaled_sigma_
+        self.sigma_ = (1. / alpha_) * scaled_sigma_
 
         self._set_intercept(X_offset_, y_offset_, X_scale_)
         return self
