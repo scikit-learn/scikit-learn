@@ -375,7 +375,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     early_stopping : boolean
         Whether to use a stopping criterion based on the validation set.
     validation_score_cb : callable
-        A callable to compute a validation score given then current
+        A callable to compute a validation score given the current
         coefficients and intercept values.
         Used only if early_stopping is True.
     n_iter_no_change : int
@@ -499,7 +499,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     early_stopping : boolean
         Whether to use a stopping criterion based on the validation set.
     validation_score_cb : callable
-        A callable to compute a validation score given then current
+        A callable to compute a validation score given the current
         coefficients and intercept values.
         Used only if early_stopping is True.
     n_iter_no_change : int
