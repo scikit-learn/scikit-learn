@@ -366,14 +366,15 @@ def test_check_estimator():
     check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
 
+
 def test_check_outlier_corruption():
     # should error on != outlier counts and no support for decision_function
     assert_raises(AssertionError, check_outlier_corruption, object, 1, 2, [])
     assert_raises(AssertionError, check_outlier_corruption, object, 2, 1, [])
-    
+
     # should pass if counts are equal
     check_outlier_corruption(object, 1, 1, [])
-    
+
 
 def test_check_estimator_transformer_no_mixin():
     # check that TransformerMixin is not required for transformer tests to run
