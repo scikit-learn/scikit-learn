@@ -2311,7 +2311,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     validation_fraction : float, optional, default 0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
-        Only used if early_stopping is True
+        Only used if ``n_iter_no_change`` is set to an integer.
 
         .. versionadded:: 0.20
 
