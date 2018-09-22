@@ -905,8 +905,8 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     def _cached_dict_for(self):
         if self._cached_dict is None:
             self._cached_dict = dict(zip(self.classes_,
-                                        range(len(self.classes_))))
-         
+                                         range(len(self.classes_))))
+
         return self._cached_dict
 
     def _transform(self, y, class_mapping):
