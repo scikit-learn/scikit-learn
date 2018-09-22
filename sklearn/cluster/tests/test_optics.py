@@ -459,3 +459,11 @@ def test_precomputed_dists():
 
     assert_allclose(clust1.reachability_, clust2.reachability_)
     assert_array_equal(clust1.labels_, clust2.labels_)
+
+def test_processing_order():
+    """Unit test for bug in ca. version 0.20, see #12090"""
+    Y = [[0], [10], [-10], [25]]
+    clust = OPTICS(min_samples=3, max_eps=15).fit(Y)
+    assert_array_equal(clust.reachability_, [np.inf, 10, 10, 15])
+    assert_array_equal(clust.core_distances_, [10, 15, 20, 25])
+    assert_array_equal(clust.ordering_, [0, 1, 2, 3])
