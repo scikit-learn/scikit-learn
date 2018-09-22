@@ -20,7 +20,6 @@ from ..utils.validation import check_is_fitted
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
-from ._optics_inner import quick_scan
 
 
 def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
@@ -36,6 +35,13 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
     clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
     neighborhood radius. Better suited for usage on large point datasets than
     the current sklearn implementation of DBSCAN.
+
+    This implementation deviates from the original OPTICS by first performing
+    k-nearest-neighborhood searches on all points to identify core sizes, then
+    computing only the distances to unprocessed points when constructing the
+    cluster order. It also does not employ a heap to manage the expansion
+    candiates, but rather uses numpy masked arrays. This can be potentially
+    slower with some parameters (at the benefit from using fast numpy code).
 
     Read more in the :ref:`User Guide <optics>`.
 
@@ -190,6 +196,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
     neighborhood radius. Better suited for usage on large point datasets than
     the current sklearn implementation of DBSCAN.
 
+    This implementation deviates from the original OPTICS by first performing
+    k-nearest-neighborhood searches on all points to identify core sizes, then
+    computing only the distances to unprocessed points when constructing the
+    cluster order.
+
     Read more in the :ref:`User Guide <optics>`.
 
     Parameters
@@ -313,7 +324,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         ``clust.reachability_[clust.ordering_]`` to access in cluster order.
 
     ordering_ : array, shape (n_samples,)
-        The cluster ordered list of sample indices
+        The cluster ordered list of sample indices.
 
     core_distances_ : array, shape (n_samples,)
         Distance at which each sample becomes a core point, indexed by object
@@ -321,7 +332,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         ``clust.core_distances_[clust.ordering_]`` to access in cluster order.
 
     predecessor_ : array, shape (n_samples,)
-        Point that a sample was reached from.
+        Point that a sample was reached from, indexed by object order.
         Seed points have a predecessor of -1.
 
     See also
@@ -516,9 +527,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.reachability_[unproc[improved]] = rdists[improved]
         self.predecessor_[unproc[improved]] = point_index
 
-        # Define return order based on reachability distance
-        return (unproc[quick_scan(np.take(self.reachability_, unproc),
-                                  dists)])
+        # Choose next based on smallest reachability distance
+        # (And prefer smaller ids on ties).
+        # All unprocessed points qualify, not just new neighbors ("unproc")
+        return (np.ma.array(self.reachability_, mask=processed)
+                .argmin(fill_value=np.inf))
 
     def extract_dbscan(self, eps):
         """Performs DBSCAN extraction for an arbitrary epsilon.
