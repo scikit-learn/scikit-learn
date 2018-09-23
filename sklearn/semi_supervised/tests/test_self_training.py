@@ -13,7 +13,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris
 from sklearn.utils import check_random_state
 
-# Author: Oliver Rausch
+# Author: Oliver Rausch <oliverrausch99@gmail.com>
 # License: BSD 3 clause
 
 

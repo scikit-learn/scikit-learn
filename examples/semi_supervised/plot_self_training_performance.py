@@ -14,8 +14,12 @@ is trained using only the labeled data points.
 
 The graph shows that the SelfTrainingClassifier outperforms the normal SVC
 when only few labeled data points are available.
+
+This example extends the
+:ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`
+example.
 """
-# Authors: Oliver Rausch    <rauscho@ethz.ch>
+# Authors: Oliver Rausch    <oliverrausch99@gmail.com>
 #          Patrice Becker   <beckerp@ethz.ch>
 # License: BSD 3 clause
 print(__doc__)
@@ -80,5 +84,5 @@ plt.plot(x_values, self_training_score,
 plt.legend()
 plt.ylabel("f1_score (macro average)")
 plt.title("Comparison of classifiers on limited labeled data")
-plt.xlabel("Amount of Labeled Data")
+plt.xlabel("Amount of labeled data")
 plt.show()

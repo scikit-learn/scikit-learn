@@ -1,7 +1,7 @@
 .. _semi_supervised:
 
 ===================================================
-Semi-Supervised
+Semi-supervised learning
 ===================================================
 
 .. currentmodule:: sklearn.semi_supervised
@@ -21,12 +21,19 @@ labeled points and a large amount of unlabeled points.
     labeled data when training the model with the ``fit`` method. The identifier
     that this implementation uses is the integer value :math:`-1`.
 
+.. note::
+
+   Semi-supervised algorithms need to make assumptions about the distribution
+   of the dataset in order to achieve performance gains. See `here
+   <https://en.wikipedia.org/wiki/Semi-supervised_learning#Assumptions_used>`_
+   for more.
+
 .. _self_training:
 
 Self Training
 =================
 
-This self-training implementation is based on Yarowsky's [1] algorithm. It provides
+This self-training implementation is based on Yarowsky's [1]_ algorithm. It provides
 a method to iteratively label a dataset for which initially only a few labels
 were available.
 
@@ -40,13 +47,17 @@ as the iteration in which each sample was labeled are available as class
 attributes. The ``max_iter`` parameter specifies how many times the loop is executed
 at most.
 
+.. topic:: Examples
+
+  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_self_training_performance.py`
+
 .. topic:: References
 
     [1] David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
-     supervised methods. In Proceedings of the 33rd annual meeting on
-     Association for Computational Linguistics (ACL '95). Association for
-     Computational Linguistics, Stroudsburg, PA, USA, 189-196. DOI:
-     https://doi.org/10.3115/981658.981684
+    supervised methods. In Proceedings of the 33rd annual meeting on
+    Association for Computational Linguistics (ACL '95). Association for
+    Computational Linguistics, Stroudsburg, PA, USA, 189-196. DOI:
+    https://doi.org/10.3115/981658.981684
 
 .. _label_propagation:
 
@@ -117,10 +128,10 @@ which can drastically reduce running times.
 
 .. topic:: References
 
-    [1] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised
+    [2] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised
     Learning (2006), pp. 193-216
 
-    [2] Olivier Delalleau, Yoshua Bengio, Nicolas Le Roux. Efficient
+    [3] Olivier Delalleau, Yoshua Bengio, Nicolas Le Roux. Efficient
     Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
     http://research.microsoft.com/en-us/people/nicolasl/efficient_ssl.pdf
 
