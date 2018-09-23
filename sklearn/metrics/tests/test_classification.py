@@ -51,11 +51,11 @@ from sklearn.metrics.classification import true_positive
 from sklearn.metrics.classification import false_negative
 from sklearn.metrics.classification import false_positive
 
-
 from sklearn.metrics.classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
 
 from scipy.spatial.distance import hamming as sp_hamming
+
 
 ###############################################################################
 # Utilities for testing
@@ -109,7 +109,6 @@ def make_prediction(dataset=None, binary=False):
 # Tests
 
 def test_classification_report_dictionary_output():
-
     # Test performance report with dictionary output
     iris = datasets.load_iris()
     y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
@@ -145,7 +144,7 @@ def test_classification_report_dictionary_output():
         target_names=iris.target_names, output_dict=True)
 
     # assert the 2 dicts are equal.
-    assert(report.keys() == expected_report.keys())
+    assert (report.keys() == expected_report.keys())
     for key in expected_report:
         assert report[key].keys() == expected_report[key].keys()
         for metric in expected_report[key]:
@@ -563,7 +562,7 @@ def test_matthews_corrcoef_overflow(n_points):
         mcc_denominator = activity * pos_rate * (1 - activity) * (1 - pos_rate)
         return mcc_numerator / np.sqrt(mcc_denominator)
 
-    def random_ys(n_points):    # binary
+    def random_ys(n_points):  # binary
         x_true = rng.random_sample(n_points)
         x_pred = x_true + 0.2 * (rng.random_sample(n_points) - 0.5)
         y_true = (x_true > 0.5)
@@ -995,7 +994,7 @@ def test_multilabel_hamming_loss():
     assert_equal(hamming_loss(y1, np.zeros(y1.shape)), 4 / 6)
     assert_equal(hamming_loss(y2, np.zeros(y1.shape)), 0.5)
     assert_equal(hamming_loss(y1, y2, sample_weight=w), 1. / 12)
-    assert_equal(hamming_loss(y1, 1-y2, sample_weight=w), 11. / 12)
+    assert_equal(hamming_loss(y1, 1 - y2, sample_weight=w), 11. / 12)
     assert_equal(hamming_loss(y1, np.zeros_like(y1), sample_weight=w), 2. / 3)
     # sp_hamming only works with 1-D arrays
     assert_equal(hamming_loss(y1[0], y2[0]), sp_hamming(y1[0], y2[0]))
@@ -1711,8 +1710,8 @@ def test_balanced_accuracy_score(y_true, y_pred):
 def test_false_positive():
     y_true, y_pred, _ = make_prediction(binary=True)
 
-    rs = false_positive(y_true,y_pred)
-    assert_equal(rs,3)
+    rs = false_positive(y_true, y_pred)
+    assert_equal(rs, 3)
 
 
 def test_false_negative():
@@ -1727,9 +1726,3 @@ def test_true_positive():
 
     rs = true_positive(y_true, y_pred)
     assert_equal(rs, 17)
-
-
-
-
-
-
