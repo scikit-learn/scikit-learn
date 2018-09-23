@@ -1707,22 +1707,73 @@ def test_balanced_accuracy_score(y_true, y_pred):
     assert adjusted == (balanced - chance) / (1 - chance)
 
 
-def test_false_positive():
+def test_false_positive_binary():
     y_true, y_pred, _ = make_prediction(binary=True)
 
     rs = false_positive(y_true, y_pred)
     assert_equal(rs, 3)
 
 
-def test_false_negative():
+def test_false_negative_binary():
     y_true, y_pred, _ = make_prediction(binary=True)
 
     rs = false_negative(y_true, y_pred)
     assert_equal(rs, 8)
 
 
-def test_true_positive():
+def test_true_positive_binary():
     y_true, y_pred, _ = make_prediction(binary=True)
 
     rs = true_positive(y_true, y_pred)
     assert_equal(rs, 17)
+
+
+
+def test_true_positive_muticlass():
+    y_ture = np.array([1,2,3,1,1,1,1,1,1])
+    y_pred = np.array([1,1,1,1,1,1,1,1,1])
+
+    msg = "This metric is supported for only binary class"
+    assert_raise_message(ValueError,msg,true_positive,y_ture,y_pred)
+
+    y_ture = np.array([1, 2, 3, 1, 1, 1, 1, 1, 1])
+    y_pred = np.array([1, 1, 3, 1, 2, 1, 2, 1, 1])
+
+    msg = "This metric is supported for only binary class"
+    assert_raise_message(ValueError, msg, true_positive, y_ture, y_pred)
+
+
+def test_false_positive_multiclass():
+    y_ture = np.array([1, 2, 3, 1, 1, 1, 1, 1, 1])
+    y_pred = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1])
+
+    msg = "This metric is supported for only binary class"
+    assert_raise_message(ValueError, msg, false_positive, y_ture, y_pred)
+
+    y_ture = np.array([1, 2, 3, 1, 1, 1, 1, 1, 1])
+    y_pred = np.array([1, 1, 3, 1, 2, 1, 2, 1, 1])
+
+    msg = "This metric is supported for only binary class"
+    assert_raise_message(ValueError, msg, false_positive, y_ture, y_pred)
+
+
+def test_false_negative_multiclass():
+    y_ture = np.array([1, 2, 3, 1, 1, 1, 1, 1, 1])
+    y_pred = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1])
+
+    msg = "This metric is supported for only binary class"
+    assert_raise_message(ValueError, msg, false_negative, y_ture, y_pred,labels=None,sample_weight=None)
+
+    y_ture = np.array([1, 2, 3, 1, 1, 1, 1, 1, 1])
+    y_pred = np.array([1, 1, 3, 1, 2, 1, 2, 1, 1])
+
+    msg = "This metric is supported for only binary class"
+    assert_raise_message(ValueError, msg, false_negative, y_ture, y_pred)
+
+
+
+
+
+
+
+
