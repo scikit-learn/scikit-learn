@@ -5,9 +5,11 @@ from numpy import linalg
 
 from scipy.sparse import dok_matrix, csr_matrix, issparse
 from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
+from scipy.spatial.distance import cdist
 
 import pytest
 
+import sklearn
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
@@ -49,8 +51,6 @@ from sklearn.metrics.pairwise import paired_euclidean_distances
 from sklearn.metrics.pairwise import paired_manhattan_distances
 from sklearn.preprocessing import normalize
 from sklearn.exceptions import DataConversionWarning
-
-import pytest
 
 
 def test_pairwise_distances():
@@ -874,3 +874,28 @@ def test_check_preserve_type():
                                                    XB.astype(np.float))
     assert_equal(XA_checked.dtype, np.float)
     assert_equal(XB_checked.dtype, np.float)
+
+
+@pytest.mark.parametrize('dtype', ('float32', 'float64'))
+def test_euclidean_distance_algorithm(dtype):
+    XA = np.random.RandomState(42).rand(100, 10).astype(dtype)
+    XB = np.random.RandomState(41).rand(200, 10).astype(dtype)
+
+    dist_exact = euclidean_distances(XA, XB, algorithm='exact')
+    assert_allclose(dist_exact, cdist(XA, XB, 'euclidean'))
+
+    dist_exact_squared = euclidean_distances(XA, XB, algorithm='exact',
+                                             squared=True)
+
+    assert_allclose(dist_exact_squared, dist_exact**2)
+
+    dist_approx = euclidean_distances(XA, XB, algorithm='quadratic-expansion')
+    assert_allclose(dist_exact, dist_approx, rtol=1e-5)
+
+    with sklearn.config_context(euclidean_distance_algorithm='exact'):
+        assert_allclose(dist_exact,
+                        euclidean_distances(XA, XB))
+
+    with pytest.raises(ValueError,
+                       match="algorithm='exact' does not support sparse data"):
+        euclidean_distances(csr_matrix(XA), csr_matrix(XB), algorithm='exact')

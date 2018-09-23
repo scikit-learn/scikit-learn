@@ -27,6 +27,7 @@ from ..preprocessing import normalize
 from ..utils import Parallel
 from ..utils import delayed
 from ..utils import effective_n_jobs
+from ..utils import get_config
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
@@ -162,13 +163,13 @@ def check_paired_arrays(X, Y):
 
 # Pairwise distances
 def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
-                        X_norm_squared=None):
+                        X_norm_squared=None, algorithm=None):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
 
-    For efficiency reasons, the euclidean distance between a pair of row
-    vector x and y is computed as::
+    For efficiency reasons, by default, the euclidean distance between a
+    pair of row vector x and y is computed as::
 
         dist(x, y) = sqrt(dot(x, x) - 2 * dot(x, y) + dot(y, y))
 
@@ -180,6 +181,12 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     However, this is not the most precise way of doing this computation, and
     the distance matrix returned by this function may not be exactly
     symmetric as required by, e.g., ``scipy.spatial.distance`` functions.
+    To use a slower but exact approach for dense data, either provide
+    `algorithm="exact"` or set the global ``euclidean_distance_algorithm``
+    parameter::
+
+        with sklearn.config_context(euclidean_distance_algorithm='exact'):
+            knn = KNeighboursClassifier(algorithm='brute', metric='euclidean')
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -199,6 +206,18 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     X_norm_squared : array-like, shape = [n_samples_1], optional
         Pre-computed dot-products of vectors in X (e.g.,
         ``(X**2).sum(axis=1)``)
+
+    algorithm : {str, None}, default: None
+        Method of computing the euclidean distances: "exact" uses
+        ``scipy.spatial.distance.cdist`` while "quadratic-expansion" uses
+        a faster but less precise quadratic expansion. For sparse data, only
+        "quadratic-expansion" is supported.
+
+        When None (default), the value of
+        ``sklearn.get_config()['euclidean_distance_algorithm']`` is used (
+        default: "quadratic-expansion")
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -222,6 +241,20 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     paired_distances : distances betweens pairs of elements of X and Y.
     """
     X, Y = check_pairwise_arrays(X, Y)
+
+    if algorithm is None:
+        algorithm = get_config()['euclidean_distance_algorithm']
+
+    if algorithm not in ['exact', 'quadratic-expansion']:
+        raise ValueError('algorithm=%s invalid, must be one of '
+                         '"exact", "quadratic-expansion"' % algorithm)
+
+    if algorithm == 'exact':
+        if issparse(X) or issparse(Y):
+            raise ValueError("algorithm='exact' does not support sparse data")
+
+        metric = 'sqeuclidean' if squared else 'euclidean'
+        return distance.cdist(X, Y, metric)
 
     if X_norm_squared is not None:
         XX = check_array(X_norm_squared)

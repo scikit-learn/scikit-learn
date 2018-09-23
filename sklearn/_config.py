@@ -5,7 +5,8 @@ from contextlib import contextmanager as contextmanager
 
 _global_config = {
     'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE', False)),
-    'working_memory': int(os.environ.get('SKLEARN_WORKING_MEMORY', 1024))
+    'working_memory': int(os.environ.get('SKLEARN_WORKING_MEMORY', 1024)),
+    'euclidean_distance_algorithm': 'quadratic-expansion'
 }
 
 
@@ -20,7 +21,8 @@ def get_config():
     return _global_config.copy()
 
 
-def set_config(assume_finite=None, working_memory=None):
+def set_config(assume_finite=None, working_memory=None,
+               euclidean_distance_algorithm=None):
     """Set global scikit-learn configuration
 
     Parameters
@@ -36,11 +38,23 @@ def set_config(assume_finite=None, working_memory=None):
         to this number of MiB (per job when parallelised), often saving both
         computation time and memory on expensive operations that can be
         performed in chunks. Global default: 1024.
+
+    euclidean_distance_algorithm : {str, None}, default: None
+        Method of computing the euclidean distances: "exact" uses
+        ``scipy.spatial.distance.cdist`` while "quadratic-expansion" uses
+        a faster but less precise quadratic expansion. For sparse data, only
+        "quadratic-expansion" is supported.
+        Global default: "quadratic-expansion"
+
+        .. versionadded:: 0.20
     """
     if assume_finite is not None:
         _global_config['assume_finite'] = assume_finite
     if working_memory is not None:
         _global_config['working_memory'] = working_memory
+    if euclidean_distance_algorithm is not None:
+        _global_config['euclidean_distance_algorithm'] = (
+                euclidean_distance_algorithm)
 
 
 @contextmanager
@@ -60,6 +74,15 @@ def config_context(**new_config):
         to this number of MiB (per job when parallelised), often saving both
         computation time and memory on expensive operations that can be
         performed in chunks. Global default: 1024.
+
+    euclidean_distance_algorithm : {str, None}, default: None
+        Method of computing the euclidean distances: "exact" uses
+        ``scipy.spatial.distance.cdist`` while "quadratic-expansion" uses
+        a faster but less precise quadratic expansion. For sparse data, only
+        "quadratic-expansion" is supported.
+        Global default: "quadratic-expansion"
+
+        .. versionadded:: 0.20
 
     Notes
     -----
