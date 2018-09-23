@@ -2135,7 +2135,7 @@ def false_negative(y_true, y_pred, labels=None, sample_weight=None):
         raise ValueError("This metric is supported for only binary class")
 
 
-def ture_positive(y_true, y_pred, labels=None, sample_weight=None):
+def true_positive(y_true, y_pred, labels=None, sample_weight=None):
     """This function gives the specificity.
 
     Specificity defines the True positive i.e
