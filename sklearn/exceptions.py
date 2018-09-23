@@ -96,6 +96,17 @@ class EfficiencyWarning(UserWarning):
     """
 
 
+class NumericalPrecisionWarning(UserWarning):
+    """Warning used to notify the user of possibly inaccurate computation.
+
+    This warning notifies the user that the numerical accuracy may not be
+    optimal due to some reason which may be included as a part of the warning
+    message.
+
+    .. versionadded:: 0.21
+    """
+
+
 class FitFailedWarning(RuntimeWarning):
     """Warning class used if there is an error while fitting the estimator.
 

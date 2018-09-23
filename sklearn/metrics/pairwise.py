@@ -18,6 +18,7 @@ from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 
+from ..exceptions import NumericalPrecisionWarning
 from ..utils.validation import _num_samples
 from ..utils import check_array
 from ..utils import gen_even_slices
@@ -27,6 +28,7 @@ from ..preprocessing import normalize
 from ..utils import Parallel
 from ..utils import delayed
 from ..utils import effective_n_jobs
+from ..utils.fixes import nanpercentile
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
@@ -243,6 +245,51 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
                 "Incompatible dimensions for Y and Y_norm_squared")
     else:
         YY = row_norms(Y, squared=True)[np.newaxis, :]
+
+    if XX.size > 0 and YY.size > 0:
+        # Heuristics to detect possible numerical precision issues, with
+        # the used quadratic expansion that occurs when the distance between
+        # considered vectors is much lower than their norm.
+        #
+        # Here, a warning is raised if all considered vectors are within a ND
+        # sperical shell with a thickness to diameter ratio lower than
+        # the threshold value of 1e-7 in 64 bit. While such a configuration
+        # is generally uncommon, it occurs when a distribution with an
+        # inertia (or mean radius) of I, is shifted by I/threshold out of
+        # of the origin.
+
+        # min and max of sample norms, ignoring outliers
+        XX_min = nanpercentile(XX, 5)**0.5
+        XX_max = nanpercentile(XX, 95)**0.5
+        YY_min = nanpercentile(YY, 5)**0.5
+        YY_max = nanpercentile(YY, 95)**0.5
+        XY_min = min(XX_min, YY_min)
+        XY_max = max(XX_max, YY_max)
+
+        # only float64, float32 dtypes are possible
+        if X.dtype == np.float64:
+            threshold = 1e-7
+        elif X.dtype == np.float32:
+            threshold = 1e-3
+
+        if (abs(XY_max - XY_min) < threshold*XY_max and
+                # ignore null vector
+                XX_max > 0.0 and YY_max > 0
+                # ignore comparison between the vector and itself
+                and XX_max != YY_max):
+
+            warning_message = (
+                    "with the provided data, computing "
+                    "Euclidean distances with the quadratic expansion may "
+                    "lead to numerically inaccurate results. ")
+            if not issparse(X):
+                warning_message += (
+                    "Consider standardizing features by removing the mean, "
+                    "or setting globally "
+                    "euclidean_distances_algorithm='exact' for slower but "
+                    "more precise implementation.")
+
+            warnings.warn(warning_message, NumericalPrecisionWarning)
 
     distances = safe_sparse_dot(X, Y.T, dense_output=True)
     distances *= -2
