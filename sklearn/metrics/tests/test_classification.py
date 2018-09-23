@@ -47,9 +47,9 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
-from sklearn.metrics import true_positive
-from sklearn.metrics import false_negative
-from sklearn.metrics import false_positive
+from sklearn.metrics.classification import true_positive
+from sklearn.metrics.classification import false_negative
+from sklearn.metrics.classification import false_positive
 
 
 from sklearn.metrics.classification import _check_targets
@@ -1711,22 +1711,22 @@ def test_balanced_accuracy_score(y_true, y_pred):
 def test_false_positive():
     y_true, y_pred, _ = make_prediction(binary=True)
 
-    CM = confusion_matrix(y_true,y_pred)
-    assert_equal(CM[0][1],3)
+    rs = false_positive(y_true,y_pred)
+    assert_equal(rs,3)
 
 
 def test_false_negative():
     y_true, y_pred, _ = make_prediction(binary=True)
 
-    CM = confusion_matrix(y_true, y_pred)
-    assert_equal(CM[1][0], 8)
+    rs = false_negative(y_true, y_pred)
+    assert_equal(rs, 8)
 
 
 def test_true_positive():
     y_true, y_pred, _ = make_prediction(binary=True)
 
-    CM = confusion_matrix(y_true, y_pred)
-    assert_equal(CM[1][1], 17)
+    rs = true_positive(y_true, y_pred)
+    assert_equal(rs, 17)
 
 
 
