@@ -35,6 +35,7 @@ from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
 
 from ._encoders import OneHotEncoder
+from .csr_expansion import csr_expansion_deg2
 
 
 BOUNDS_THRESHOLD = 1e-7
@@ -1454,30 +1455,43 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, ['n_input_features_', 'n_output_features_'])
 
-        X = check_array(X, dtype=FLOAT_DTYPES, accept_sparse='csc')
+        X = check_array(X, dtype=FLOAT_DTYPES, accept_sparse=('csc', 'csr'))
         n_samples, n_features = X.shape
 
         if n_features != self.n_input_features_:
             raise ValueError("X shape does not match training shape")
-
-        combinations = self._combinations(n_features, self.degree,
-                                          self.interaction_only,
-                                          self.include_bias)
-        if sparse.isspmatrix(X):
-            columns = []
-            for comb in combinations:
-                if comb:
-                    out_col = 1
-                    for col_idx in comb:
-                        out_col = X[:, col_idx].multiply(out_col)
-                    columns.append(out_col)
-                else:
-                    columns.append(sparse.csc_matrix(np.ones((X.shape[0], 1))))
-            XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
+                    
+        if sparse.isspmatrix_csr(X):
+          if self.degree != 2:
+            raise ValueError("Expansions on CSR matrices must be of degree=2")
+          to_stack = []
+          if self.include_bias:
+            to_stack.append(np.ones(shape=(n_samples, 1)))
+          to_stack.append(X)
+          XP = csr_expansion_deg2(X.data, X.indices, X.indptr,
+                                  n_features, int(self.interaction_only))
+          assert sparse.isspmatrix_csr(XP)
+          to_stack.append(XP)
+          return sparse.hstack(to_stack, format='csr')
         else:
-            XP = np.empty((n_samples, self.n_output_features_), dtype=X.dtype)
-            for i, comb in enumerate(combinations):
-                XP[:, i] = X[:, comb].prod(1)
+          combinations = self._combinations(n_features, self.degree,
+                                            self.interaction_only,
+                                            self.include_bias)
+          if sparse.isspmatrix(X):
+              columns = []
+              for comb in combinations:
+                  if comb:
+                      out_col = 1
+                      for col_idx in comb:
+                          out_col = X[:, col_idx].multiply(out_col)
+                      columns.append(out_col)
+                  else:
+                      columns.append(sparse.csc_matrix(np.ones((X.shape[0], 1))))
+              XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
+          else:
+              XP = np.empty((n_samples, self.n_output_features_), dtype=X.dtype)
+              for i, comb in enumerate(combinations):
+                  XP[:, i] = X[:, comb].prod(1)
 
         return XP
 
