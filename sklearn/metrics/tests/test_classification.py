@@ -1753,7 +1753,8 @@ def test_false_positive_multiclass():
     y_pred = np.array([1, 1, 3, 1, 2, 1, 2, 1, 1])
 
     msg = "This metric is supported for only binary class"
-    assert_raise_message(ValueError, msg, false_positive, y_ture, y_pred)
+    assert_raise_message(ValueError, msg, false_positive, y_ture, y_pred,
+                         labels=None, sample_weight=None)
 
 
 def test_false_negative_multiclass():
@@ -1761,10 +1762,12 @@ def test_false_negative_multiclass():
     y_pred = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1])
 
     msg = "This metric is supported for only binary class"
-    assert_raise_message(ValueError, msg, false_negative, y_ture, y_pred, labels=None, sample_weight=None)
+    assert_raise_message(ValueError, msg, false_negative, y_ture, y_pred,
+                         labels=None, sample_weight=None)
 
     y_ture = np.array([1, 2, 3, 1, 1, 1, 1, 1, 1])
     y_pred = np.array([1, 1, 3, 1, 2, 1, 2, 1, 1])
 
     msg = "This metric is supported for only binary class"
-    assert_raise_message(ValueError, msg, false_negative, y_ture, y_pred)
+    assert_raise_message(ValueError, msg, false_negative, y_ture, y_pred,
+                         labels=None, sample_weight=None)
