@@ -1717,7 +1717,7 @@ def test_false_positive():
 def test_false_negative():
     y_true, y_pred, _ = make_prediction(binary=True)
 
-    rs = sklearn.metrics.classification.false_negative(y_true, y_pred)
+    rs = false_negative(y_true, y_pred)
     assert_equal(rs, 8)
 
 
