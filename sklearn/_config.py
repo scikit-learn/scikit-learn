@@ -39,7 +39,7 @@ def set_config(assume_finite=None, working_memory=None,
         computation time and memory on expensive operations that can be
         performed in chunks. Global default: 1024.
 
-    euclidean_distance_algorithm : {str, None}, default: None
+    euclidean_distance_algorithm : {str, None}
         Method of computing the euclidean distances: "exact" uses
         ``scipy.spatial.distance.cdist`` while "quadratic-expansion" uses
         a faster but less precise quadratic expansion. For sparse data, only
@@ -75,7 +75,7 @@ def config_context(**new_config):
         computation time and memory on expensive operations that can be
         performed in chunks. Global default: 1024.
 
-    euclidean_distance_algorithm : {str, None}, default: None
+    euclidean_distance_algorithm : {str, None}
         Method of computing the euclidean distances: "exact" uses
         ``scipy.spatial.distance.cdist`` while "quadratic-expansion" uses
         a faster but less precise quadratic expansion. For sparse data, only
