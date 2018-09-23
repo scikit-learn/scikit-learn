@@ -419,8 +419,7 @@ boolean mask array or callable
             sparse matrices.
 
         """
-        X = check_array(X)
-
+        X = _check_X(X)
         self._validate_remainder(X)
         self._validate_transformers()
 
@@ -469,8 +468,7 @@ boolean mask array or callable
         """
         check_is_fitted(self, 'transformers_')
 
-        X = check_array(X)
-
+        X = _check_X(X)
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
         self._validate_output(Xs)
 
@@ -495,6 +493,13 @@ boolean mask array or callable
         else:
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
             return np.hstack(Xs)
+
+
+def _check_X(X):
+    """Use check_array only on lists and other non-array-likes / sparse"""
+    if hasattr(X, '__array__') or sparse.issparse(X):
+        return X
+    return check_array(X)
 
 
 def _check_key_type(key, superclass):
