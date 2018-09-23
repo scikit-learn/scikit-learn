@@ -24,8 +24,10 @@ def csr_expansion_deg2(ndarray[DATA_T, ndim=1] data not None,
          ndarray[INDEX_T, ndim=1] indptr not None,
          INDEX_T D, INDEX_T interaction_only):
     """
-    Perform a second-degree polynomial or interaction expansion on a compressed scipy
-    sparse row (CSR) matrix.
+    Perform a second-degree polynomial or interaction expansion on a scipy compressed
+    sparse row (CSR) matrix. The method used only takes products of non-zero features. For
+    a matrix with density d, this results in a speedup on the order of d^k where k is the
+    degree of the expansion, assuming all rows are of similar density.
     
     Parameters
     ----------
