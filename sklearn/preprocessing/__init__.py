@@ -5,6 +5,8 @@ normalization, binarization and imputation methods.
 
 from ._function_transformer import FunctionTransformer
 
+from ._csr_expansion import csr_expansion_deg2
+
 from .data import Binarizer
 from .data import KernelCenterer
 from .data import MinMaxScaler

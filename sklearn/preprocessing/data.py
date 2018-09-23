@@ -35,8 +35,6 @@ from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
 
 from ._encoders import OneHotEncoder
-from .csr_expansion import csr_expansion_deg2
-
 
 BOUNDS_THRESHOLD = 1e-7
 
