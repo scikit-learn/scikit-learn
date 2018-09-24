@@ -262,7 +262,7 @@ def test_column_transformer_empty_columns(pandas, column):
 
     if pandas:
         pd = pytest.importorskip('pandas')
-        X =  pd.DataFrame(X_array, columns=['first', 'second'])
+        X = pd.DataFrame(X_array, columns=['first', 'second'])
     else:
         X = X_array
 
