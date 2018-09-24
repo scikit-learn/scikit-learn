@@ -257,17 +257,18 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
 
     """
-    return _lars_path_solver(X=None, y=None, Xy=Xy, Gram=Gram, n_samples=n_samples,
-                      max_iter=max_iter, alpha_min=alpha_min, method=method,
-                      copy_X=copy_X, eps=eps, copy_Gram=copy_Gram,
-                      verbose=verbose, return_path=return_path,
-                      return_n_iter=return_n_iter, positive=positive)
+    return _lars_path_solver(
+        X=None, y=None, Xy=Xy, Gram=Gram, n_samples=n_samples,
+        max_iter=max_iter, alpha_min=alpha_min, method=method,
+        copy_X=copy_X, eps=eps, copy_Gram=copy_Gram,
+        verbose=verbose, return_path=return_path,
+        return_n_iter=return_n_iter, positive=positive)
 
 
 def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
-               alpha_min=0, method='lar', copy_X=True,
-               eps=np.finfo(np.float).eps, copy_Gram=True, verbose=0,
-               return_path=True, return_n_iter=False, positive=False):
+                      alpha_min=0, method='lar', copy_X=True,
+                      eps=np.finfo(np.float).eps, copy_Gram=True, verbose=0,
+                      return_path=True, return_n_iter=False, positive=False):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
 
     The optimization objective for the case method='lasso' is::
