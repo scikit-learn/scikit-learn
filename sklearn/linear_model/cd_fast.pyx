@@ -239,7 +239,7 @@ def enet_coordinate_descent(floating[::1] w,
                 # tmp = (X[:,ii]*R).sum()
                 tmp = dot(n_samples, &X[0, ii], 1, &R[0], 1)
 
-                if positive and tmp < 0:
+                if positive and tmp <= alpha:
                     w[ii] = 0.0
                 else:
                     w[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
