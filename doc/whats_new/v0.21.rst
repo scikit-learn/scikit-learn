@@ -1,0 +1,57 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _changes_0_21:
+
+Version 0.21.0
+==============
+
+**In development**
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- please add class and reason here (see version 0.20 what's new)
+
+Details are listed in the changelog below.
+
+(While we are trying to better inform users by providing this information, we
+cannot assure that this list is complete.)
+
+Changelog
+---------
+
+Support for Python 3.4 and below has been officially dropped.
+
+..
+    See version doc/whats_new/v0.20.rst for structure. Entries should be
+    prefixed with one of the labels: |MajorFeature|, |Feature|, |Efficiency|,
+    |Enhancement|, |Fix| or |API|. They should be under a heading for the
+    relevant module (or *Multiple Modules* or *Miscellaneous*), and within each
+    section should be ordered according to the label ordering above. Entries
+    should end with: :issue:`123456` by :user:`Joe Bloggs <joeongithub>`.
+
+- An entry goes here
+- An entry goes here
+
+:mod:`sklearn.cluster`
+......................
+
+- |MajorFeature| A new clustering algorithm: :class:`cluster.OPTICS`: an
+  algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
+  to set and that scales better, by :user:`Shane <espg>` and
+  :user:`Adrin Jalali <adrinjalali>`.
+
+Multiple modules
+................
+
+Changes to estimator checks
+---------------------------
+
+These changes mostly affect library developers.
