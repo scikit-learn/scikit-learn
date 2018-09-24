@@ -347,12 +347,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         # instead
         #
         # We COULD scale them here:
-        # self.alphas_ = self.alphas_ /
-        #           np.sqrt(np.tile(self.lambdas_, (self.alphas_.shape[0], 1)))
+        #       self.alphas_ = self.alphas_ / np.sqrt(self.lambdas_)
         #
-        # But the original choice was to perform the division or multiplication
-        # by sqrt(lambdas) LATER when needed in all the functions below.
-        # see transform(), inverse_transform(), etc.
+        # But the original choice was to perform that LATER when needed, in
+        # fit() and in transform(). We keep it to preserve the meaning of
+        # self.alphas_ across sk-learn versions.
 
         return K
 
@@ -387,8 +386,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self._fit_transform(K)
 
         if self.fit_inverse_transform:
-            sqrt_lambdas = np.diag(np.sqrt(self.lambdas_))
-            X_transformed = np.dot(self.alphas_, sqrt_lambdas)
+            # Transform X
+            # (shortcut since we transform the same X that was used to fit)
+            X_transformed = self.alphas_ * np.sqrt(self.lambdas_)
+
             self._fit_inverse_transform(X_transformed, X)
 
         self.X_fit_ = X
@@ -409,6 +410,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         """
         self.fit(X, **params)
 
+        # Transform X
+        # (shortcut since we transform the same X that was used to fit)
         X_transformed = self.alphas_ * np.sqrt(self.lambdas_)
 
         if self.fit_inverse_transform:
@@ -429,8 +432,17 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'X_fit_')
 
+        # Compute centered gram matrix between X and training data X_fit_
         K = self._centerer.transform(self._get_kernel(X, self.X_fit_))
-        return np.dot(K, self.alphas_ / np.sqrt(self.lambdas_))
+
+        # scale eigenvectors
+        scaled_alphas = self.alphas_ / np.sqrt(self.lambdas_)
+
+        # properly take null-space into account for the dot product
+        scaled_alphas[:, self.lambdas_ == 0] = 0
+
+        # Project by doing a scalar product between K and the scaled eigenvects
+        return np.dot(K, scaled_alphas)
 
     def inverse_transform(self, X):
         """Transform X back to original space.
