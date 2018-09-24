@@ -438,6 +438,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     warn_on_dtype : boolean (default=False)
         Raise DataConversionWarning if the dtype of the input data structure
         does not match the requested dtype, causing a memory copy.
+        This warning is not raised if the original data has an object dtype.
 
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
@@ -584,7 +585,9 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                              % (n_features, shape_repr, ensure_min_features,
                                 context))
 
-    if warn_on_dtype and dtype_orig is not None and array.dtype != dtype_orig:
+    if (warn_on_dtype and dtype_orig is not None
+            and dtype_orig.kind != 'O'
+            and array.dtype != dtype_orig):
         msg = ("Data with input dtype %s was converted to %s%s."
                % (dtype_orig, array.dtype, context))
         warnings.warn(msg, DataConversionWarning)

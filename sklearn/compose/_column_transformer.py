@@ -16,8 +16,7 @@ from scipy import sparse
 from ..base import clone, TransformerMixin
 from ..utils import Parallel, delayed
 from ..externals import six
-from ..pipeline import (
-    _fit_one_transformer, _fit_transform_one, _transform_one, _name_estimators)
+from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils.metaestimators import _BaseComposition
@@ -517,7 +516,7 @@ def _check_X(X):
     """Use check_array only on lists and other non-array-likes / sparse"""
     if hasattr(X, '__array__') or sparse.issparse(X):
         return X
-    return check_array(X)
+    return check_array(X, force_all_finite='allow-nan', dtype=np.object)
 
 
 def _check_key_type(key, superclass):

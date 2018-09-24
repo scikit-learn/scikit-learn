@@ -279,13 +279,24 @@ def test_column_transformer_sparse_array():
 
 
 def test_column_transformer_list():
-    X_list = [[1, 2, 3]]
-    X_res = np.array([[0, 0, 0]])
+    X_list = [
+        [1, float('nan'), 'a'],
+        [0, 0, 'b']
+    ]
+    expected_result = np.array([
+        [1, float('nan'), 1, 0],
+        [-1, 0, 0, 1],
+    ])
 
-    ct = ColumnTransformer([('trans1', StandardScaler(), [0, 1, 2])])
+    ct = ColumnTransformer([
+        ('numerical', StandardScaler(), [0, 1]),
+        ('categorical', OneHotEncoder(), [2]),
+    ])
 
-    assert_array_equal(ct.fit_transform(X_list), X_res)
-    assert_array_equal(ct.fit(X_list).transform(X_list), X_res)
+    with pytest.warns(None) as record:
+        assert_array_equal(ct.fit_transform(X_list), expected_result)
+        assert_array_equal(ct.fit(X_list).transform(X_list), expected_result)
+    assert [w.message for w in record.list] == []
 
 
 def test_column_transformer_sparse_stacking():
