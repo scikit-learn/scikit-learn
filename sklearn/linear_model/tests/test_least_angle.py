@@ -96,6 +96,14 @@ def test_simple_precomputed_sufficient_stats():
             assert_true(ocur == X.shape[1])
 
 
+def test_x_none_raises_deprecation_warning():
+    # Test that lars_path with precomputed Gram and Xy gives the right answer
+    G = np.dot(X.T, X)
+    Xy = np.dot(X.T, y)
+    with pytest.warns(DeprecationWarning):
+        linear_model.lars_path(None, y, Gram=G, Xy=Xy)
+
+
 def test_all_precomputed():
     # Test that lars_path with precomputed Gram and Xy gives the right answer
     G = np.dot(X.T, X)
