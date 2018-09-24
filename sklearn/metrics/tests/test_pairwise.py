@@ -8,7 +8,6 @@ from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
 
 import pytest
 
-import sklearn
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
@@ -896,13 +895,16 @@ def test_euclidean_distance_precision(dtype):
         with pytest.raises(AssertionError):
             assert pairwise_distances(XA, XB)[0, 0] == 1.
 
-    with pytest.warns(None) as record:
-        assert euclidean_distances(XA, XB, algorithm='exact')[0, 0] == 1
+    # Note: this needs https://github.com/scikit-learn/scikit-learn/pull/12136
+    # to be merged first.
+    #
+    #  with pytest.warns(None) as record:
+    #      assert euclidean_distances(XA, XB, algorithm='exact')[0, 0] == 1
 
-        with sklearn.config_context(euclidean_distances_algorithm='exact'):
-            assert euclidean_distances(XA, XB)[0, 0] == 1
-            assert pairwise_distances(XA, XB)[0, 0] == 1.
-    assert len(record) == 0
+    #      with sklearn.config_context(euclidean_distances_algorithm='exact'):
+    #          assert euclidean_distances(XA, XB)[0, 0] == 1
+    #          assert pairwise_distances(XA, XB)[0, 0] == 1.
+    #  assert len(record) == 0
 
 
 @pytest.mark.parametrize('dtype', ('float32', 'float64'))
