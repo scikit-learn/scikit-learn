@@ -15,7 +15,6 @@ import numpy as np
 
 from ..utils import check_array
 from ..utils import gen_batches, get_chunk_n_rows
-from ..utils.validation import check_is_fitted
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
@@ -182,9 +181,9 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
 
     References
     ----------
-    [1] Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel, and Jörg Sander.
-    "OPTICS: ordering points to identify the clustering structure." ACM SIGMOD
-    Record 28, no. 2 (1999): 49-60.
+    [1] Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel,
+    and Jörg Sander. "OPTICS: ordering points to identify the clustering
+    structure." ACM SIGMOD Record 28, no. 2 (1999): 49-60.
 
     [2] Sander, Jörg, Xuejie Qin, Zhiyong Lu, Nan Niu, and Alex Kovarsky.
     "Automatic extraction of clusters from hierarchical clustering
@@ -362,9 +361,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     References
     ----------
-    [1] Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel, and Jörg Sander.
-    "OPTICS: ordering points to identify the clustering structure." ACM SIGMOD
-    Record 28, no. 2 (1999): 49-60.
+    [1] Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel,
+    and Jörg Sander. "OPTICS: ordering points to identify the clustering
+    structure." ACM SIGMOD Record 28, no. 2 (1999): 49-60.
 
     [2] Sander, Jörg, Xuejie Qin, Zhiyong Lu, Nan Niu, and Alex Kovarsky.
     "Automatic extraction of clusters from hierarchical clustering
@@ -442,6 +441,18 @@ class OPTICS(BaseEstimator, ClusterMixin):
                              " 'dbscan' or 'sqlnk', but is %s" %
                              self.extract_method)
 
+        if self.extract_method == 'dbscan':
+            if self.eps > self.max_eps:
+                raise ValueError('Specify an epsilon smaller than %s. Got %s.'
+                                 % (self.max_eps, self.eps))
+
+            if self.eps * 5.0 > (self.max_eps * 1.05):
+                warnings.warn(
+                    "Warning, max_eps (%s) is close to eps (%s): "
+                    "Output may be unstable." % (self.max_eps, self.eps),
+                    RuntimeWarning, stacklevel=2)
+                # Stability warning is documented in _extract_dbscan method...
+
         # Start all points as 'unprocessed' ##
         self.reachability_ = np.empty(n_samples)
         self.reachability_.fill(np.inf)
@@ -463,6 +474,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # Extract clusters from the calculated orders and reachability
         if self.extract_method == 'sqlnk':
             extract_params = {
+                'reachability': self.reachability_,
+                'ordering': self.ordering_,
                 'maxima_ratio': self.maxima_ratio,
                 'rejection_ratio': self.rejection_ratio,
                 'similarity_threshold': self.similarity_threshold,
@@ -470,9 +483,12 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 'min_cluster_size': self.min_cluster_size,
                 'min_maxima_ratio': self.min_maxima_ratio
             }
-            indices_, labels_ = self.extract_sqlnk(**extract_params)
+            indices_, labels_ = extract_optics_sqlnk(**extract_params)
         elif self.extract_method == 'dbscan':
-            indices_, labels_ = self.extract_dbscan(self.eps)
+            indices_, labels_ = extract_optics_dbscan(self.reachability_,
+                                                      self.core_distances_,
+                                                      self.ordering_,
+                                                      self.eps)
 
         self.core_sample_indices_ = indices_
         self.labels_ = labels_
@@ -564,139 +580,30 @@ class OPTICS(BaseEstimator, ClusterMixin):
         return (unproc[quick_scan(np.take(self.reachability_, unproc),
                                   dists)])
 
-    def extract_dbscan(self, eps=None):
-        """Performs DBSCAN extraction for an arbitrary epsilon.
 
-        Extraction runs in linear time. Note that if the `max_eps` OPTICS
-        parameter was set to < inf for extracting reachability and ordering
-        arrays, DBSCAN extractions will be unstable for `eps` values close to
-        `max_eps`. Setting `eps` < (`max_eps` / 5.0) will guarantee
-        extraction parity with DBSCAN.
+def extract_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
+    """Performs DBSCAN extraction for an arbitrary epsilon.
 
-        Parameters
-        ----------
-        eps : float, optional
-            DBSCAN `eps` parameter. Must be set to < `max_eps`. Equivalence
-            with DBSCAN algorithm is achieved if `eps` is < (`max_eps` / 5)
-
-        Returns
-        -------
-        core_sample_indices_ : array, shape (n_core_samples,)
-            The indices of the core samples.
-
-        labels_ : array, shape (n_samples,)
-            The estimated labels.
-        """
-        check_is_fitted(self, 'reachability_')
-        if eps is None:
-            eps = self.eps
-
-        if eps > self.max_eps:
-            raise ValueError('Specify an epsilon smaller than %s. Got %s.'
-                             % (self.max_eps, eps))
-
-        if eps * 5.0 > (self.max_eps * 1.05):
-            warnings.warn(
-                "Warning, max_eps (%s) is close to eps (%s): "
-                "Output may be unstable." % (self.max_eps, eps),
-                RuntimeWarning, stacklevel=2)
-        # Stability warning is documented in _extract_dbscan method...
-
-        return _extract_dbscan(self.ordering_, self.core_distances_,
-                               self.reachability_, eps)
-
-    def extract_sqlnk(self, maxima_ratio=None,
-                      rejection_ratio=None, similarity_threshold=None,
-                      significant_min=None, min_cluster_size=None,
-                      min_maxima_ratio=None):
-        """Performs automatic cluster extraction for variable density data.
-        All parameters will use the value present in the class instance if
-        not provided.
-
-        Parameters
-        ----------
-        maxima_ratio : float, optional
-            The maximum ratio we allow of average height of clusters on the
-            right and left to the local maxima in question. The higher the
-            ratio, the more generous the algorithm is to preserving local
-            minima, and the more cuts the resulting tree will have.
-
-        rejection_ratio : float, optional
-            Adjusts the fitness of the clustering. When the maxima_ratio is
-            exceeded, determine which of the clusters to the left and right to
-            reject based on rejection_ratio. Higher values will result in
-            points being more readily classified as noise; conversely, lower
-            values will result in more points being clustered.
-
-        similarity_threshold : float, optional
-            Used to check if nodes can be moved up one level, that is, if the
-            new cluster created is too "similar" to its parent, given the
-            similarity threshold. Similarity can be determined by 1) the size
-            of the new cluster relative to the size of the parent node or
-            2) the average of the reachability values of the new cluster
-            relative to the average of the reachability values of the parent
-            node. A lower value for the similarity threshold means less levels
-            in the tree.
-
-        significant_min : float, optional
-            Sets a lower threshold on how small a significant maxima can be.
-
-        min_cluster_size : int > 1 or float between 0 and 1
-            Minimum number of samples in an OPTICS cluster, expressed as an
-            absolute number or a fraction of the number of samples (rounded
-            to be at least 2).
-
-        min_maxima_ratio : float, optional
-            Used to determine neighborhood size for minimum cluster membership.
-
-        Returns
-        -------
-        core_sample_indices_ : array, shape (n_core_samples,)
-            The indices of the core samples.
-
-        labels_ : array, shape (n_samples,)
-            The estimated labels.
-        """
-        check_is_fitted(self, 'reachability_')
-
-        if maxima_ratio is None:
-            maxima_ratio = self.maxima_ratio
-        if rejection_ratio is None:
-            rejection_ratio = self.rejection_ratio
-        if similarity_threshold is None:
-            similarity_threshold = self.similarity_threshold
-        if significant_min is None:
-            significant_min = self.significant_min
-        if min_cluster_size is None:
-            min_cluster_size = self.min_cluster_size
-        if min_maxima_ratio is None:
-            min_maxima_ratio = self.min_maxima_ratio
-
-        return _extract_optics(
-            ordering=self.ordering_,
-            reachability=self.reachability_,
-            maxima_ratio=maxima_ratio,
-            rejection_ratio=rejection_ratio,
-            similarity_threshold=similarity_threshold,
-            significant_min=significant_min,
-            min_cluster_size=min_cluster_size,
-            min_maxima_ratio=min_maxima_ratio
-        )
-
-
-def _extract_dbscan(ordering, core_distances, reachability, eps):
-    """Performs DBSCAN extraction for an arbitrary epsilon (`eps`).
+    Extraction runs in linear time. Note that if the `max_eps` OPTICS
+    parameter was set to < inf for extracting reachability and ordering
+    arrays, DBSCAN extractions will be unstable for `eps` values close to
+    `max_eps`. Setting `eps` < (`max_eps` / 5.0) will guarantee
+    extraction parity with DBSCAN.
 
     Parameters
     ----------
-    ordering : array, shape (n_samples,)
-        OPTICS ordered point indices (`ordering_`)
-    core_distances : array, shape (n_samples,)
-        Distances at which points become core (`core_distances_`)
     reachability : array, shape (n_samples,)
         Reachability distances calculated by OPTICS (`reachability_`)
-    eps : float or int
-        DBSCAN `eps` parameter
+
+    core_distances : array, shape (n_samples,)
+        Distances at which points become core (`core_distances_`)
+
+    ordering : array, shape (n_samples,)
+        OPTICS ordered point indices (`ordering_`)
+
+    eps : float, optional (default=0.5)
+        DBSCAN `eps` parameter. Must be set to < `max_eps`. Results
+        will be close to DBSCAN algorithm if `eps` is < (`max_eps` / 5)
 
     Returns
     -------
@@ -706,7 +613,6 @@ def _extract_dbscan(ordering, core_distances, reachability, eps):
     labels_ : array, shape (n_samples,)
         The estimated labels.
     """
-
     n_samples = len(core_distances)
     is_core = np.zeros(n_samples, dtype=bool)
     labels = np.zeros(n_samples, dtype=int)
@@ -719,34 +625,37 @@ def _extract_dbscan(ordering, core_distances, reachability, eps):
     return np.arange(n_samples)[is_core], labels
 
 
-def _extract_optics(ordering, reachability, maxima_ratio=.75,
-                    rejection_ratio=.7, similarity_threshold=0.4,
-                    significant_min=.003, min_cluster_size=.005,
-                    min_maxima_ratio=0.001):
+def extract_optics_sqlnk(reachability, ordering,
+                         maxima_ratio=.75,
+                         rejection_ratio=.7, similarity_threshold=.4,
+                         significant_min=.003, min_cluster_size=.005,
+                         min_maxima_ratio=.001):
     """Performs automatic cluster extraction for variable density data.
+    All parameters will use the value present in the class instance if
+    not provided.
 
     Parameters
     ----------
-    ordering : array, shape (n_samples,)
-        OPTICS ordered point indices (`ordering_`)
-
     reachability : array, shape (n_samples,)
         Reachability distances calculated by OPTICS (`reachability_`)
 
-    maxima_ratio : float, optional
+    ordering : array, shape (n_samples,)
+        OPTICS ordered point indices (`ordering_`)
+
+    maxima_ratio : float, optional (default=.75)
         The maximum ratio we allow of average height of clusters on the
         right and left to the local maxima in question. The higher the
         ratio, the more generous the algorithm is to preserving local
         minima, and the more cuts the resulting tree will have.
 
-    rejection_ratio : float, optional
+    rejection_ratio : float, optional (default=.7)
         Adjusts the fitness of the clustering. When the maxima_ratio is
         exceeded, determine which of the clusters to the left and right to
         reject based on rejection_ratio. Higher values will result in points
         being more readily classified as noise; conversely, lower values will
         result in more points being clustered.
 
-    similarity_threshold : float, optional
+    similarity_threshold : float, optional (default=.4)
         Used to check if nodes can be moved up one level, that is, if the
         new cluster created is too "similar" to its parent, given the
         similarity threshold. Similarity can be determined by 1) the size
@@ -756,16 +665,18 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
         node. A lower value for the similarity threshold means less levels
         in the tree.
 
-    significant_min : float, optional
+    significant_min : float, optional (default=.003)
         Sets a lower threshold on how small a significant maxima can be.
 
-    min_cluster_size : int > 1 or float between 0 and 1
+    min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
         Minimum number of samples in an OPTICS cluster, expressed as an
         absolute number or a fraction of the number of samples (rounded
         to be at least 2).
 
-    min_maxima_ratio : float, optional
+    min_maxima_ratio : float, optional (default=.001)
         Used to determine neighborhood size for minimum cluster membership.
+        Each local maxima should be a largest value in a neighborhood
+        of the `size min_maxima_ratio * len(X)` from left and right.
 
     Returns
     -------
@@ -779,10 +690,10 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     # Extraction wrapper
     reachability = reachability / np.max(reachability[1:])
     reachability_plot = reachability[ordering].tolist()
-    root_node = _automatic_cluster(reachability_plot, ordering,
-                                   maxima_ratio, rejection_ratio,
-                                   similarity_threshold, significant_min,
-                                   min_cluster_size, min_maxima_ratio)
+    root_node = _sqlnk_cluster(reachability_plot, ordering,
+                               maxima_ratio, rejection_ratio,
+                               similarity_threshold, significant_min,
+                               min_cluster_size, min_maxima_ratio)
     leaves = _get_leaves(root_node, [])
     # Start cluster id's at 0
     clustid = 0
@@ -798,10 +709,10 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     return np.arange(n_samples)[is_core], labels
 
 
-def _automatic_cluster(reachability_plot, ordering,
-                       maxima_ratio, rejection_ratio,
-                       similarity_threshold, significant_min,
-                       min_cluster_size, min_maxima_ratio):
+def _sqlnk_cluster(reachability_plot, ordering,
+                   maxima_ratio, rejection_ratio,
+                   similarity_threshold, significant_min,
+                   min_cluster_size, min_maxima_ratio):
     """Converts reachability plot to cluster tree and returns root node.
 
     Parameters

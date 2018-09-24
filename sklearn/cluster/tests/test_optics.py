@@ -78,14 +78,6 @@ def test_minimum_number_of_sample_check():
     assert_raise_message(ValueError, msg, clust.fit, X)
 
 
-def test_empty_extract():
-    # Test extract where fit() has not yet been run.
-    msg = ("This OPTICS instance is not fitted yet. Call 'fit' with "
-           "appropriate arguments before using this method.")
-    clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10)
-    assert_raise_message(ValueError, msg, clust.extract_dbscan, 0.01)
-
-
 def test_bad_extract():
     # Test an extraction of eps too close to original eps
     msg = "Specify an epsilon smaller than 0.015. Got 0.3."
@@ -94,9 +86,10 @@ def test_bad_extract():
                                 cluster_std=0.4, random_state=0)
 
     # Compute OPTICS
-    clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10)
-    clust2 = clust.fit(X)
-    assert_raise_message(ValueError, msg, clust2.extract_dbscan, 0.3)
+    clust = OPTICS(max_eps=5.0 * 0.003,
+                   extract_method='dbscan',
+                   eps=0.3, min_samples=10)
+    assert_raise_message(ValueError, msg, clust.fit, X)
 
 
 def test_close_extract():
@@ -107,12 +100,12 @@ def test_close_extract():
                                 cluster_std=0.4, random_state=0)
 
     # Compute OPTICS
-    clust = OPTICS(max_eps=1.0, min_samples=10)
-    clust3 = clust.fit(X)
+    clust = OPTICS(max_eps=1.0, extract_method='dbscan',
+                   eps=0.3, min_samples=10)
     # check warning when centers are passed
-    assert_warns(RuntimeWarning, clust3.extract_dbscan, .3)
+    assert_warns(RuntimeWarning, clust.fit, X)
     # Cluster ordering starts at 0; max cluster label = 2 is 3 clusters
-    assert_equal(max(clust3.extract_dbscan(.3)[1]), 2)
+    assert_equal(max(clust.labels_), 2)
 
 
 @pytest.mark.parametrize('eps', [0.1, .3, .5])
@@ -125,21 +118,22 @@ def test_dbscan_optics_parity(eps, min_samples):
                                 cluster_std=0.4, random_state=0)
 
     # calculate optics with dbscan extract at 0.3 epsilon
-    op = OPTICS(min_samples=min_samples).fit(X)
-    core_optics, labels_optics = op.extract_dbscan(eps)
+    op = OPTICS(min_samples=min_samples, extract_method='dbscan',
+                eps=eps).fit(X)
 
     # calculate dbscan labels
     db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
 
-    contingency = contingency_matrix(db.labels_, labels_optics)
+    contingency = contingency_matrix(db.labels_, op.labels_)
     agree = min(np.sum(np.max(contingency, axis=0)),
                 np.sum(np.max(contingency, axis=1)))
     disagree = X.shape[0] - agree
 
     # verify core_labels match
-    assert_array_equal(core_optics, db.core_sample_indices_)
+    assert_array_equal(op.core_sample_indices_,
+                       db.core_sample_indices_)
 
-    non_core_count = len(labels_optics) - len(core_optics)
+    non_core_count = len(op.labels_) - len(op.core_sample_indices_)
     percent_mismatch = np.round((disagree - 1) / non_core_count, 2)
 
     # verify label mismatch is <= 5% labels
@@ -458,32 +452,6 @@ def test_extract_dbscan():
 
     clust = OPTICS(extract_method='dbscan', eps=.5).fit(X)
     assert_array_equal(np.sort(np.unique(clust.labels_)), [0, 1, 2, 3])
-
-
-def test_extract_dbscan_no_param():
-    # run on smaller data for speed
-    locX = X[::10]
-    cl = OPTICS(extract_method='dbscan').fit(locX)
-    res = cl.extract_dbscan()
-    l1, c1 = res[0].copy(), res[1].copy()
-    res = cl.extract_dbscan(cl.eps)
-    l2, c2 = res[0].copy(), res[1].copy()
-    assert_array_equal(l1, l2)
-    assert_array_equal(c1, c2)
-
-
-def test_extract_sqlnk_no_param():
-    # run on smaller data for speed
-    locX = X[::10]
-    cl = OPTICS(extract_method='sqlnk').fit(locX)
-    res = cl.extract_sqlnk()
-    l1, c1 = res[0].copy(), res[1].copy()
-    res = cl.extract_sqlnk(cl.maxima_ratio, cl.rejection_ratio,
-                           cl.similarity_threshold, cl.significant_min,
-                           cl.min_cluster_size, cl.min_maxima_ratio)
-    l2, c2 = res[0].copy(), res[1].copy()
-    assert_array_equal(l1, l2)
-    assert_array_equal(c1, c2)
 
 
 def test_precomputed_dists():
