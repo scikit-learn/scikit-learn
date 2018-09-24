@@ -48,10 +48,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
 
     Parameters
     -----------
-    X : array, shape: (n_samples, n_features)
+    X : array, shape (n_samples, n_features)
         Input data.
 
-    y : array, shape: (n_samples)
+    y : array, shape (n_samples)
         Input targets.
 
     Xy : array-like, shape (n_samples,) or (n_samples, n_targets), \
@@ -59,7 +59,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
-    Gram : None, 'auto', array, shape: (n_features, n_features), optional
+    Gram : None, 'auto', array, shape (n_features, n_features), optional
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features.
@@ -107,7 +107,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
 
     Returns
     --------
-    alphas : array, shape: [n_alphas + 1]
+    alphas : array, shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
         number of nodes in the path with ``alpha >= alpha_min``, whichever
@@ -134,7 +134,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
 
     References
     ----------
-    .. [1] "Least Angle Regression", Effron et al.
+    .. [1] "Least Angle Regression", Efron et al.
            http://statweb.stanford.edu/~tibs/ftp/lars.pdf
 
     .. [2] `Wikipedia entry on the Least-angle regression
@@ -171,7 +171,7 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
     Xy : array-like, shape (n_samples,) or (n_samples, n_targets)
         Xy = np.dot(X.T, y).
 
-    Gram : array, shape: (n_features, n_features)
+    Gram : array, shape (n_features, n_features)
         Gram = np.dot(X.T * X).
 
     n_samples : integer or float
@@ -220,7 +220,7 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
 
     Returns
     --------
-    alphas : array, shape: [n_alphas + 1]
+    alphas : array, shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
         number of nodes in the path with ``alpha >= alpha_min``, whichever
@@ -247,7 +247,7 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
 
     References
     ----------
-    .. [1] "Least Angle Regression", Effron et al.
+    .. [1] "Least Angle Regression", Efron et al.
            http://statweb.stanford.edu/~tibs/ftp/lars.pdf
 
     .. [2] `Wikipedia entry on the Least-angle regression
@@ -281,10 +281,10 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
     Parameters
     -----------
-    X : None or ndarray, shape: (n_samples, n_features)
+    X : None or ndarray, shape (n_samples, n_features)
         Input data.
 
-    y : None or ndarray, shape: (n_samples)
+    y : None or ndarray, shape (n_samples)
         Input targets.
 
     Xy : array-like, shape (n_samples,) or (n_samples, n_targets), \
@@ -292,7 +292,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
-    Gram : None, 'auto', array, shape: (n_features, n_features), optional
+    Gram : None, 'auto', array, shape (n_features, n_features), optional
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features.
@@ -343,7 +343,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
     Returns
     --------
-    alphas : array, shape: [n_alphas + 1]
+    alphas : array, shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
         number of nodes in the path with ``alpha >= alpha_min``, whichever
@@ -370,7 +370,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
     References
     ----------
-    .. [1] "Least Angle Regression", Effron et al.
+    .. [1] "Least Angle Regression", Efron et al.
            http://statweb.stanford.edu/~tibs/ftp/lars.pdf
 
     .. [2] `Wikipedia entry on the Least-angle regression
@@ -455,8 +455,10 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
     tiny32 = np.finfo(np.float32).tiny  # to avoid division by 0 warning
     equality_tolerance = np.finfo(np.float32).eps
 
-    Gram_copy = deepcopy(Gram)
-    Cov_copy = deepcopy(Cov)
+    if Gram is not None:
+        Gram_copy = Gram.copy()
+        Cov_copy = Cov.copy()
+
     while True:
         if Cov.size:
             if positive:
@@ -1127,7 +1129,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     y_test : array, shape (n_samples)
         The target variable to compute the residues on
 
-    Gram : None, 'auto', array, shape: (n_features, n_features), optional
+    Gram : None, 'auto', array, shape (n_features, n_features), optional
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features
