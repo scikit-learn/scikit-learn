@@ -182,9 +182,14 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
 
     References
     ----------
-    Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel, and Jörg Sander.
+    [1] Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel, and Jörg Sander.
     "OPTICS: ordering points to identify the clustering structure." ACM SIGMOD
     Record 28, no. 2 (1999): 49-60.
+
+    [2] Sander, Jörg, Xuejie Qin, Zhiyong Lu, Nan Niu, and Alex Kovarsky.
+    "Automatic extraction of clusters from hierarchical clustering
+    representations." In Advances in Knowledge Discovery and Data
+    Mining, pp. 75-87. Springer Berlin Heidelberg, 2003.
     """
 
     clust = OPTICS(min_samples, max_eps, metric, p, metric_params,
@@ -357,9 +362,14 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     References
     ----------
-    Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel, and Jörg Sander.
+    [1] Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel, and Jörg Sander.
     "OPTICS: ordering points to identify the clustering structure." ACM SIGMOD
     Record 28, no. 2 (1999): 49-60.
+
+    [2] Sander, Jörg, Xuejie Qin, Zhiyong Lu, Nan Niu, and Alex Kovarsky.
+    "Automatic extraction of clusters from hierarchical clustering
+    representations." In Advances in Knowledge Discovery and Data
+    Mining, pp. 75-87. Springer Berlin Heidelberg, 2003.
     """
 
     def __init__(self, min_samples=5, max_eps=np.inf, metric='euclidean',
