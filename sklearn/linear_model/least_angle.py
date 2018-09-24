@@ -142,7 +142,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
 
     """
-    if X is not None and Xy is not None and Gram is not None:
+    if X is None and y is None:
         warnings.warn('Use lars_path_gram to avoid passing X and y. '
                       'The current option will be removed in future versions.',
                       DeprecationWarning)

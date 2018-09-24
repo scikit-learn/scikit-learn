@@ -102,11 +102,10 @@ def test_all_precomputed():
     Xy = np.dot(X.T, y)
     for method in 'lar', 'lasso':
         output = linear_model.lars_path(X, y, method=method)
-        with pytest.warns(DeprecationWarning):
-            output_pre = linear_model.lars_path(X, y, Gram=G, Xy=Xy,
-                                                method=method)
-            for expected, got in zip(output, output_pre):
-                assert_array_almost_equal(expected, got)
+        output_pre = linear_model.lars_path(X, y, Gram=G, Xy=Xy,
+                                            method=method)
+        for expected, got in zip(output, output_pre):
+            assert_array_almost_equal(expected, got)
 
 
 def test_all_precomputed_sufficient_stats():
@@ -245,11 +244,10 @@ def test_no_path_all_precomputed():
     X, y = 3 * diabetes.data, diabetes.target
     G = np.dot(X.T, X)
     Xy = np.dot(X.T, y)
-    with pytest.warns(DeprecationWarning):
-        alphas_, _, coef_path_ = linear_model.lars_path(
-            X, y, method='lasso', Xy=Xy, Gram=G, alpha_min=0.9)
-        alpha_, _, coef = linear_model.lars_path(
-            X, y, method='lasso', Gram=G, Xy=Xy, alpha_min=0.9, return_path=False)
+    alphas_, _, coef_path_ = linear_model.lars_path(
+        X, y, method='lasso', Xy=Xy, Gram=G, alpha_min=0.9)
+    alpha_, _, coef = linear_model.lars_path(
+        X, y, method='lasso', Gram=G, Xy=Xy, alpha_min=0.9, return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
     assert_true(alpha_ == alphas_[-1])
