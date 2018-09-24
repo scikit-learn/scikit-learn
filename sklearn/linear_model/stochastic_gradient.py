@@ -11,7 +11,7 @@ from abc import ABCMeta, abstractmethod
 
 from ..utils import Parallel, delayed
 
-from ..base import clone
+from ..base import clone, is_classifier
 from .base import LinearClassifierMixin, SparseCoefMixin
 from .base import make_dataset
 from ..base import BaseEstimator, RegressorMixin
@@ -21,7 +21,7 @@ from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 from ..externals import six
-from ..model_selection import train_test_split
+from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
 from .sgd_fast import plain_sgd, average_sgd
 from ..utils import compute_class_weight
@@ -288,10 +288,13 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             # use the full set for training, with an empty validation set
             return validation_mask
 
-        # TODO: use stratified shufflesplit by default?
-        idx_train, idx_val = train_test_split(
-            np.arange(n_samples), test_size=self.validation_fraction,
-            random_state=self.random_state)
+        if is_classifier(self):
+            splitter_type = StratifiedShuffleSplit
+        else:
+            splitter_type = ShuffleSplit
+        cv = splitter_type(test_size=self.validation_fraction,
+                           random_state=self.random_state)
+        idx_train, idx_val = next(cv.split(np.zeros(shape=(y.shape[0], 1)), y))
         if idx_train.shape[0] == 0 or idx_val.shape[0] == 0:
             raise ValueError(
                 "Splitting %d samples into a train set and a validation set "
