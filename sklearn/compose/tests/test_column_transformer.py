@@ -258,27 +258,29 @@ def test_column_transformer_dataframe():
     assert_array_equal(ct.transformers_[-1][2], [1])
 
 
-def test_column_transformer_empty_columns():
+@pytest.mark.parametrize("column", [[], np.array([False, False])],
+                         ids=['list', 'bool'])
+def test_column_transformer_empty_columns(column):
     # test case that ensures that the column transformer does also work when
     # a given transformer doesn't have any columns to work on
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_res_both = X_array
 
     ct = ColumnTransformer([('trans1', Trans(), [0, 1]),
-                            ('trans2', Trans(), [])])
+                            ('trans2', Trans(), column)])
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2
     assert isinstance(ct.transformers_[1][1], Trans)
 
-    ct = ColumnTransformer([('trans1', Trans(), []),
+    ct = ColumnTransformer([('trans1', Trans(), column),
                             ('trans2', Trans(), [0, 1])])
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2
     assert isinstance(ct.transformers_[0][1], Trans)
 
-    ct = ColumnTransformer([('trans', Trans(), [])],
+    ct = ColumnTransformer([('trans', Trans(), column)],
                            remainder='passthrough')
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
@@ -286,7 +288,7 @@ def test_column_transformer_empty_columns():
     assert isinstance(ct.transformers_[0][1], Trans)
 
     fixture = np.array([[], [], []])
-    ct = ColumnTransformer([('trans', Trans(), [])],
+    ct = ColumnTransformer([('trans', Trans(), column)],
                            remainder='drop')
     assert_array_equal(ct.fit_transform(X_array), fixture)
     assert_array_equal(ct.fit(X_array).transform(X_array), fixture)

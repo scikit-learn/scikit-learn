@@ -245,7 +245,7 @@ boolean mask array or callable
                         check_inverse=False)
                 elif trans == 'drop':
                     continue
-                elif hasattr(column, '__len__') and len(column) == 0:
+                elif _is_empty_column_selection(column):
                     continue
 
             yield (name, trans, column, get_weight(name))
@@ -355,7 +355,7 @@ boolean mask array or callable
                 # so get next transformer, but save original string
                 next(fitted_transformers)
                 trans = 'passthrough'
-            elif hasattr(column, '__len__') and len(column) == 0:
+            elif _is_empty_column_selection(column):
                 trans = old
             else:
                 trans = next(fitted_transformers)
@@ -648,6 +648,20 @@ def _get_column_indices(X, key):
         raise ValueError("No valid specification of the columns. Only a "
                          "scalar, list or slice of all integers or all "
                          "strings, or boolean mask is allowed")
+
+
+def _is_empty_column_selection(column):
+    """
+    Return True if the column selection is empty (empty list or all-False
+    boolean array).
+
+    """
+    if hasattr(column, 'dtype') and np.issubdtype(column.dtype, np.bool_):
+        return not column.any()
+    elif hasattr(column, '__len__'):
+        return len(column) == 0
+    else:
+        return False
 
 
 def _get_transformer_list(estimators):
