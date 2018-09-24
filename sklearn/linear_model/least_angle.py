@@ -10,7 +10,6 @@ from __future__ import print_function
 #
 # License: BSD 3 clause
 
-from copy import deepcopy
 from math import log
 import sys
 import warnings
@@ -54,8 +53,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
     y : array, shape (n_samples)
         Input targets.
 
-    Xy : array-like, shape (n_samples,) or (n_samples, n_targets), \
-            optional
+    Xy : array-like, shape (n_samples,) or (n_samples, n_targets), optional
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
@@ -144,6 +142,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
 
     """
+    if X is not None and Xy is not None and Gram is not None:
+        warnings.warn('Use lars_path_gram to avoid passing X and y. '
+                      'The current option will be removed in future versions.',
+                      DeprecationWarning)
     return _lars_path_solver(
         X=X, y=y, Xy=Xy, Gram=Gram, n_samples=None, max_iter=max_iter,
         alpha_min=alpha_min, method=method, copy_X=copy_X,
@@ -386,12 +388,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
                       ' Angle Regression (LAR). Use method="lasso".'
                       ' This option will be removed in version 0.22.',
                       DeprecationWarning)
-
-    if not n_samples:
-        if y is not None:
-            n_samples = y.size
-        else:
-            raise ValueError('y cannot be None while n_samples is None.')
+    n_samples = n_samples if n_samples is not None else y.size
 
     if Xy is None:
         Cov = np.dot(X.T, y)
