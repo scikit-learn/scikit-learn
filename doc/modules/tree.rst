@@ -166,6 +166,11 @@ render these plots inline automatically::
     .. figure:: ../images/iris.pdf
        :align: center
 
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_001.png
+   :target: ../auto_examples/tree/plot_iris.html
+   :align: center
+   :scale: 75
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_tree_plot_iris.py`
