@@ -269,18 +269,21 @@ def test_column_transformer_empty_columns():
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2
+    assert isinstance(ct.transformers_[1][1], Trans)
 
     ct = ColumnTransformer([('trans1', Trans(), []),
                             ('trans2', Trans(), [0, 1])])
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2
+    assert isinstance(ct.transformers_[0][1], Trans)
 
     ct = ColumnTransformer([('trans', Trans(), [])],
                            remainder='passthrough')
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2  # including remainder
+    assert isinstance(ct.transformers_[0][1], Trans)
 
     fixture = np.array([[], [], []])
     ct = ColumnTransformer([('trans', Trans(), [])],
@@ -288,6 +291,7 @@ def test_column_transformer_empty_columns():
     assert_array_equal(ct.fit_transform(X_array), fixture)
     assert_array_equal(ct.fit(X_array).transform(X_array), fixture)
     assert len(ct.transformers_) == 2  # including remainder
+    assert isinstance(ct.transformers_[0][1], Trans)
 
 
 def test_column_transformer_sparse_array():
