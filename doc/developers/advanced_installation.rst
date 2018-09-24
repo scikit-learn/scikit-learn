@@ -34,7 +34,7 @@ Building from source
 
 Scikit-learn requires:
 
-- Python (>= 2.7 or >= 3.4),
+- Python (>= 3.5),
 - NumPy (>= 1.8.2),
 - SciPy (>= 0.13.3).
 
@@ -110,18 +110,11 @@ Linux
 
 Installing from source requires you to have installed the scikit-learn runtime
 dependencies, Python development headers and a working C/C++ compiler.
-Under Debian-based operating systems, which include Ubuntu, if you have
-Python 2 you can install all these requirements by issuing::
-
-    sudo apt-get install build-essential python-dev python-setuptools \
-                         python-numpy python-scipy \
-                         libatlas-dev libatlas3-base
-
-If you have Python 3::
-
+Under Debian-based operating systems, which include Ubuntu::
+    
     sudo apt-get install build-essential python3-dev python3-setuptools \
-                         python3-numpy python3-scipy \
-                         libatlas-dev libatlas3-base
+                     python3-numpy python3-scipy \
+                     libatlas-dev libatlas3-base
 
 On recent Debian and Ubuntu (e.g. Ubuntu 14.04 or later) make sure that ATLAS
 is used to provide the implementation of the BLAS and LAPACK linear algebra
@@ -190,9 +183,7 @@ PATH environment variable.
 32-bit Python
 -------------
 
-For 32-bit python it is possible use the standalone installers for
-`microsoft visual c++ express 2008 <http://download.microsoft.com/download/A/5/4/A54BADB6-9C3F-478D-8657-93B3FC9FE62D/vcsetup.exe>`_
-for Python 2 or Microsoft Visual C++ Express 2010 for Python 3.
+For 32-bit Python use Microsoft Visual C++ Express 2010.
 
 Once installed you should be able to build scikit-learn without any
 particular configuration by running the following command in the scikit-learn
@@ -211,17 +202,13 @@ The Windows SDKs include the MSVC compilers both for 32 and 64-bit
 architectures. They come as a ``GRMSDKX_EN_DVD.iso`` file that can be mounted
 as a new drive with a ``setup.exe`` installer in it.
 
-- For Python 2 you need SDK **v7.0**: `MS Windows SDK for Windows 7 and .NET
-  Framework 3.5 SP1
-  <https://www.microsoft.com/en-us/download/details.aspx?id=18950>`_
-
-- For Python 3 you need SDK **v7.1**: `MS Windows SDK for Windows 7 and .NET
+- For Python  you need SDK **v7.1**: `MS Windows SDK for Windows 7 and .NET
   Framework 4
   <https://www.microsoft.com/en-us/download/details.aspx?id=8442>`_
 
 Both SDKs can be installed in parallel on the same host. To use the Windows
 SDKs, you need to setup the environment of a ``cmd`` console launched with the
-following flags (at least for SDK v7.0)::
+following flags ::
 
     cmd /E:ON /V:ON /K
 
@@ -229,15 +216,12 @@ Then configure the build environment with::
 
     SET DISTUTILS_USE_SDK=1
     SET MSSdk=1
-    "C:\Program Files\Microsoft SDKs\Windows\v7.0\Setup\WindowsSdkVer.exe" -q -version:v7.0
-    "C:\Program Files\Microsoft SDKs\Windows\v7.0\Bin\SetEnv.cmd" /x64 /release
+    "C:\Program Files\Microsoft SDKs\Windows\v7.1\Setup\WindowsSdkVer.exe" -q -version:v7.1
+    "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64 /release
 
 Finally you can build scikit-learn in the same ``cmd`` console::
 
     python setup.py install
-
-Replace ``v7.0`` by the ``v7.1`` in the above commands to do the same for
-Python 3 instead of Python 2.
 
 Replace ``/x64`` by ``/x86``  to build for 32-bit Python instead of 64-bit
 Python.
