@@ -986,6 +986,7 @@ def check_kernel_eigenvalues(lambdas):
     Note: the returned array is converted to numpy array.
 
     >>> check_kernel_eigenvalues((1, 2))      # nominal case
+    ... # doctest: +NORMALIZE_WHITESPACE
     array([1, 2])
     >>> check_kernel_eigenvalues((5, 5j))     # significant imag part
     ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -994,7 +995,8 @@ def check_kernel_eigenvalues(lambdas):
     ValueError: There are significant imaginary parts in eigenvalues (1.000000
         of the max real part). Something may be wrong with the kernel.
     >>> check_kernel_eigenvalues((5, 5e-5j))  # insignificant imag part
-    array([ 5.,  0.])
+    ... # doctest: +NORMALIZE_WHITESPACE
+    array([5., 0.])
     >>> check_kernel_eigenvalues((-5, -1))    # all negative
     ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     Traceback (most recent call last):
@@ -1002,11 +1004,14 @@ def check_kernel_eigenvalues(lambdas):
     ValueError: All eigenvalues are negative (max is -1.000000). Something may
         be wrong with the kernel.
     >>> check_kernel_eigenvalues((5, -1))     # significant negative
+    ... # doctest: +NORMALIZE_WHITESPACE
     array([5, 0])
     >>> check_kernel_eigenvalues((5, -5e-5))  # insignificant negative
-    array([ 5.,  0.])
+    ... # doctest: +NORMALIZE_WHITESPACE
+    array([5., 0.])
     >>> check_kernel_eigenvalues((5, 4e-12))  # bad conditioning (too small)
-    array([ 5.,  0.])
+    ... # doctest: +NORMALIZE_WHITESPACE
+    array([5., 0.])
 
     Parameters
     ----------
