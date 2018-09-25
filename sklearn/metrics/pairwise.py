@@ -742,7 +742,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     gamma : float, default None
         if None, defaults to 1.0 / n_features
 
-    coef0 : int, default 1
+    coef0 : float, default 1
 
     Returns
     -------
@@ -776,7 +776,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     gamma : float, default None
         If None, defaults to 1.0 / n_features
 
-    coef0 : int, default 1
+    coef0 : float, default 1
 
     Returns
     -------
