@@ -233,8 +233,8 @@ def test_nested_circles():
 def test_errors_and_warnings():
     """Tests that bad kernels raise error and warnings"""
 
-    solvers = ['dense', 'arpack', 'randomized']
-    solvers_except_arpack = ['dense', 'randomized']
+    solvers = ['dense', 'arpack']
+    solvers_except_arpack = ['dense']
 
     # First create an identity transformer class
     # ------------------------------------------
