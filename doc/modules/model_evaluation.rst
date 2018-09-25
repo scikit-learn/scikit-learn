@@ -250,8 +250,8 @@ permitted and will require a wrapper to return a single metric::
     >>> fp = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 1]
     >>> fn = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[1, 0]
     >>> tp = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[1, 1]
-    >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
-    ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
+    >>> scoring = {'tp': make_scorer(tp), 'tn': make_scorer(tn),
+    ...            'fp': make_scorer(fp), 'fn': make_scorer(fn)}
     >>> cv_results = cross_validate(svm.fit(X, y), X, y,
     ...                             scoring=scoring, cv=5)
     >>> # Getting the test set true positive scores
