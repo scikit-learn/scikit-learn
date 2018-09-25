@@ -16,12 +16,11 @@ from scipy import sparse
 from ..base import clone, TransformerMixin
 from ..utils import Parallel, delayed
 from ..externals import six
-from ..pipeline import (
-    _fit_one_transformer, _fit_transform_one, _transform_one, _name_estimators)
+from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils.metaestimators import _BaseComposition
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_array, check_is_fitted
 
 
 __all__ = ['ColumnTransformer', 'make_column_transformer']
@@ -436,6 +435,7 @@ boolean mask array or callable
             sparse matrices.
 
         """
+        X = _check_X(X)
         self._validate_transformers()
         self._validate_column_callables(X)
         self._validate_remainder(X)
@@ -485,6 +485,7 @@ boolean mask array or callable
         """
         check_is_fitted(self, 'transformers_')
 
+        X = _check_X(X)
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
         self._validate_output(Xs)
 
@@ -509,6 +510,13 @@ boolean mask array or callable
         else:
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
             return np.hstack(Xs)
+
+
+def _check_X(X):
+    """Use check_array only on lists and other non-array-likes / sparse"""
+    if hasattr(X, '__array__') or sparse.issparse(X):
+        return X
+    return check_array(X, force_all_finite='allow-nan', dtype=np.object)
 
 
 def _check_key_type(key, superclass):
