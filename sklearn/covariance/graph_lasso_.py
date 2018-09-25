@@ -336,8 +336,8 @@ class GraphicalLasso(EmpiricalCovariance):
     >>> from scipy import linalg
     >>> from sklearn.datasets import make_sparse_spd_matrix
     >>> from sklearn.covariance import GraphicalLasso, log_likelihood
-    >>> n_samples = 60
-    >>> n_features = 20
+    >>> n_samples = 100
+    >>> n_features = 10
     >>> prec = make_sparse_spd_matrix(n_features, alpha=.98,
     ...                               smallest_coef=.4,
     ...                               largest_coef=.7,
@@ -353,9 +353,9 @@ class GraphicalLasso(EmpiricalCovariance):
     >>> loglik_est = -model.fit(X).score(X)
     >>> loglik_real = -log_likelihood(emp_cov, prec)
     >>> print("estimated negative log likelihood: %g" % loglik_est)
-    estimated negative log likelihood: 25.8382
+    estimated negative log likelihood: 13.6322
     >>> print("real negative log likelihood: %g" % loglik_real)
-    real negative log likelihood: 27.8023
+    real negative log likelihood: 13.9519
 
     See Also
     --------
@@ -594,8 +594,8 @@ class GraphicalLassoCV(GraphicalLasso):
     >>> from scipy import linalg
     >>> from sklearn.datasets import make_sparse_spd_matrix
     >>> from sklearn.covariance import GraphicalLassoCV, log_likelihood
-    >>> n_samples = 60
-    >>> n_features = 20
+    >>> n_samples = 100
+    >>> n_features = 10
     >>> prec = make_sparse_spd_matrix(n_features, alpha=.98,
     ...                               smallest_coef=.4,
     ...                               largest_coef=.7,
@@ -611,9 +611,9 @@ class GraphicalLassoCV(GraphicalLasso):
     >>> loglik_est = -model.fit(X).score(X)
     >>> loglik_real = -log_likelihood(emp_cov, prec)
     >>> print("estimated negative log likelihood: %g" % loglik_est)
-    estimated negative log likelihood: 27.2292
+    estimated negative log likelihood: 13.8457
     >>> print("real negative log likelihood: %g" % loglik_real)
-    real negative log likelihood: 27.8023
+    real negative log likelihood: 13.9519
 
     See Also
     --------
