@@ -1195,7 +1195,7 @@ Code and Documentation Contributors
 -----------------------------------
 
 Thanks to everyone who has contributed to the maintenance and improvement of the
-project since version 0.18, including:
+project since version 0.19.2, including:
 
 211217613, Aarshay Jain, absolutelyNoWarranty, Adam Greenhall, Adam Kleczewski,
 Adam Richie-Halford, adelr, AdityaDaflapurkar, Adrin Jalali, Aidan Fitzgerald,
