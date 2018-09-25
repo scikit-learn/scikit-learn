@@ -275,6 +275,10 @@ def test_errors_and_warnings():
     # -------------------------------
     K = [[-5, 0],
          [0, -6e-5]]
+    # check that the inner method still works
+    with pytest.raises(ValueError):
+        check_kernel_eigenvalues((K[0][0], K[1][1]))
+
     for solver in solvers:
         kpca = KernelPCA(kernel="precomputed", eigen_solver=solver,
                          fit_inverse_transform=False)
