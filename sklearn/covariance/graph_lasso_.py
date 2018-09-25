@@ -338,24 +338,24 @@ class GraphicalLasso(EmpiricalCovariance):
     >>> from sklearn.covariance import GraphicalLasso, log_likelihood
     >>> n_samples = 60
     >>> n_features = 20
-    >>> prng = np.random.RandomState(1)
     >>> prec = make_sparse_spd_matrix(n_features, alpha=.98,
     ...                               smallest_coef=.4,
     ...                               largest_coef=.7,
-    ...                               random_state=prng)
+    ...                               random_state=0)
     >>> cov = linalg.inv(prec)
     >>> d = np.sqrt(np.diag(cov))
     >>> cov /= d
     >>> cov /= d[:, np.newaxis]
+    >>> prng = np.random.RandomState(0)
     >>> X = prng.multivariate_normal(np.zeros(n_features), cov, size=n_samples)
     >>> emp_cov = np.dot(X.T, X) / n_samples
     >>> model = GraphicalLasso()
     >>> loglik_est = -model.fit(X).score(X)
     >>> loglik_real = -log_likelihood(emp_cov, prec)
     >>> print("estimated negative log likelihood: %g" % loglik_est)
-    estimated negative log likelihood: 26.1927
+    estimated negative log likelihood: 25.8382
     >>> print("real negative log likelihood: %g" % loglik_real)
-    real negative log likelihood: 28.1067
+    real negative log likelihood: 27.8023
 
     See Also
     --------
@@ -596,24 +596,24 @@ class GraphicalLassoCV(GraphicalLasso):
     >>> from sklearn.covariance import GraphicalLassoCV, log_likelihood
     >>> n_samples = 60
     >>> n_features = 20
-    >>> prng = np.random.RandomState(1)
     >>> prec = make_sparse_spd_matrix(n_features, alpha=.98,
     ...                               smallest_coef=.4,
     ...                               largest_coef=.7,
-    ...                               random_state=prng)
+    ...                               random_state=0)
     >>> cov = linalg.inv(prec)
     >>> d = np.sqrt(np.diag(cov))
     >>> cov /= d
     >>> cov /= d[:, np.newaxis]
+    >>> prng = np.random.RandomState(0)
     >>> X = prng.multivariate_normal(np.zeros(n_features), cov, size=n_samples)
     >>> emp_cov = np.dot(X.T, X) / n_samples
     >>> model = GraphicalLassoCV(cv=5)
     >>> loglik_est = -model.fit(X).score(X)
     >>> loglik_real = -log_likelihood(emp_cov, prec)
     >>> print("estimated negative log likelihood: %g" % loglik_est)
-    estimated negative log likelihood: 27.7033
+    estimated negative log likelihood: 27.2292
     >>> print("real negative log likelihood: %g" % loglik_real)
-    real negative log likelihood: 28.1067
+    real negative log likelihood: 27.8023
 
     See Also
     --------
