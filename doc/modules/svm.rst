@@ -164,11 +164,12 @@ Each row of the coefficients corresponds to one of the ``n_class`` many
 order of the "one" class.
 
 In the case of "one-vs-one" :class:`SVC`, the layout of the attributes
-is a little more involved. In the case of having a linear kernel,
-The layout of ``coef_`` and ``intercept_`` is similar to the one
-described for :class:`LinearSVC` described above, except that the shape of
-``coef_`` is ``[n_class * (n_class - 1) / 2, n_features]``, corresponding to as
-many binary classifiers. The order for classes
+is a little more involved. In the case of having a linear kernel, the
+attributes ``coef_`` and ``intercept_`` have the shape
+``[n_class * (n_class - 1) / 2, n_features]`` and
+``[n_class * (n_class - 1) / 2]`` respectively. This is similar to the
+layout for :class:`LinearSVC` described above, with each row now corresponding
+to a binary classifier. The order for classes
 0 to n is "0 vs 1", "0 vs 2" , ... "0 vs n", "1 vs 2", "1 vs 3", "1 vs n", . .
 . "n-1 vs n".
 

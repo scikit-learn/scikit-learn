@@ -844,9 +844,6 @@ class SVR(BaseLibSVM, RegressorMixin):
     intercept_ : array, shape = [1]
         Constants in decision function.
 
-    sample_weight : array-like, shape = [n_samples]
-            Individual weights for each sample
-
     Examples
     --------
     >>> from sklearn.svm import SVR
@@ -1124,6 +1121,9 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         sample_weight : array-like, shape (n_samples,)
             Per-sample weights. Rescale C per sample. Higher weights
             force the classifier to put more emphasis on these points.
+
+        y : Ignored
+            not used, present for API consistency by convention.
 
         Returns
         -------

@@ -482,13 +482,10 @@ def test_shuffle_kfold_stratifiedkfold_reproducibility():
                                                 cv.split(*data)):
                 # cv.split(...) returns an array of tuples, each tuple
                 # consisting of an array with train indices and test indices
-                try:
+                with pytest.raises(AssertionError,
+                                   message="The splits for data, are same even"
+                                           " when random state is not set"):
                     np.testing.assert_array_equal(test_a, test_b)
-                except AssertionError:
-                    pass
-                else:
-                    raise AssertionError("The splits for data, are same even "
-                                         "when random state is not set")
 
 
 def test_shuffle_stratifiedkfold():

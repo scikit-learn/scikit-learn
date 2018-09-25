@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-import scipy as sp
 import warnings
 from . import MinCovDet
 from ..utils.validation import check_is_fitted, check_array
@@ -103,7 +102,10 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
         ----------
         X : numpy array or sparse matrix, shape (n_samples, n_features).
             Training data
-        y : (ignored)
+
+        y : Ignored
+            not used, present for API consistency by convention.
+
         """
         super(EllipticEnvelope, self).fit(X)
         self.offset_ = np.percentile(-self.dist_, 100. * self.contamination)
