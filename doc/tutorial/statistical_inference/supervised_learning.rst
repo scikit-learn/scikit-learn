@@ -258,9 +258,9 @@ diabetes dataset rather than our synthetic data::
 
     >>> from __future__ import print_function
     >>> alphas = np.logspace(-4, -1, 6)
-    >>> print([regr.set_params(alpha=alpha
-    ...             ).fit(diabetes_X_train, diabetes_y_train,
-    ...             ).score(diabetes_X_test, diabetes_y_test)
+    >>> print([regr.set_params(alpha=alpha)
+    ...            .fit(diabetes_X_train, diabetes_y_train)
+    ...            .score(diabetes_X_test, diabetes_y_test)
     ...        for alpha in alphas])
     ...                            # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [0.5851110683883..., 0.5852073015444..., 0.5854677540698...,
@@ -326,10 +326,10 @@ application of Occam's razor: *prefer simpler models*.
 ::
 
     >>> regr = linear_model.Lasso()
-    >>> scores = [regr.set_params(alpha=alpha
-    ...             ).fit(diabetes_X_train, diabetes_y_train
-    ...             ).score(diabetes_X_test, diabetes_y_test)
-    ...        for alpha in alphas]
+    >>> scores = [regr.set_params(alpha=alpha)
+    ...               .fit(diabetes_X_train, diabetes_y_train)
+    ...               .score(diabetes_X_test, diabetes_y_test)
+    ...           for alpha in alphas]
     >>> best_alpha = alphas[scores.index(max(scores))]
     >>> regr.alpha = best_alpha
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
