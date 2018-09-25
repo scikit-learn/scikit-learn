@@ -420,7 +420,7 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
   >>> column_trans = ColumnTransformer(
   ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
   ...      ('title_bow', CountVectorizer(), 'title')],
-  ...      remainder='drop')
+  ...     remainder='drop')
 
   >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
@@ -460,7 +460,7 @@ transformation::
   >>> column_trans = ColumnTransformer(
   ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
   ...      ('title_bow', CountVectorizer(), 'title')],
-  ...      remainder='passthrough')
+  ...     remainder='passthrough')
 
   >>> column_trans.fit_transform(X)
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
@@ -477,7 +477,7 @@ the transformation::
   >>> column_trans = ColumnTransformer(
   ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
   ...      ('title_bow', CountVectorizer(), 'title')],
-  ...      remainder=MinMaxScaler())
+  ...     remainder=MinMaxScaler())
 
   >>> column_trans.fit_transform(X)[:, -2:]
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
