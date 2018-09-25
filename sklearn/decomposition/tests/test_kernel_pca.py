@@ -231,7 +231,7 @@ def test_nested_circles():
 
 
 def test_errors_and_warnings():
-    """Tests that bad kernels raise error and warnings"""
+    """Tests that bad kernel decomposition raise error and warnings"""
 
     solvers = ['dense', 'arpack']
     solvers_except_arpack = ['dense']
@@ -290,6 +290,10 @@ def test_errors_and_warnings():
     # ----------------------------------------
     K = [[5, 0],
          [0, -6e-5]]
+    # check that the inner method works
+    assert_warns(KernelWarning,
+                 lambda: check_kernel_eigenvalues((K[0][0], K[1][1])))
+
     for solver in solvers_except_arpack:
         # Note: arpack detects this case and raises an error already
         kpca = KernelPCA(kernel="precomputed", eigen_solver=solver,
@@ -297,10 +301,14 @@ def test_errors_and_warnings():
         kpca._centerer = IdentityKernelTransformer()
         assert_warns(KernelWarning, lambda: kpca.fit(K))
 
-    # Bad conditionning
-    # -----------------
+    # Bad conditioning
+    # ----------------
     K = [[5, 0],
          [0, 4e-12]]
+    # check that the inner method works
+    assert_warns(KernelWarning,
+                 lambda: check_kernel_eigenvalues((K[0][0], K[1][1])))
+
     for solver in solvers_except_arpack:
         # Note: arpack detects this case and raises an error already
         kpca = KernelPCA(kernel="precomputed", eigen_solver=solver,
