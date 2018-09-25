@@ -256,8 +256,8 @@ This is an example of **bias/variance tradeoff**: the larger the ridge
 We can choose ``alpha`` to minimize left out error, this time using the
 diabetes dataset rather than our synthetic data::
 
-    >>> alphas = np.logspace(-4, -1, 6)
     >>> from __future__ import print_function
+    >>> alphas = np.logspace(-4, -1, 6)
     >>> print([regr.set_params(alpha=alpha
     ...             ).fit(diabetes_X_train, diabetes_y_train,
     ...             ).score(diabetes_X_test, diabetes_y_test)
