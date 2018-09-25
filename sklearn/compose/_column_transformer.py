@@ -689,6 +689,14 @@ def make_column_transformer(*transformers, **kwargs):
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support `fit` and `transform`.
 
+    sparse_threshold : float, default = 0.3
+        If the transformed output consists of a mix of sparse and dense data,
+        it will be stacked as a sparse matrix if the density is lower than this
+        value. Use ``sparse_threshold=0`` to always return dense.
+        When the transformed output consists of all sparse or all dense data,
+        the stacked result will be sparse or dense, respectively, and this
+        keyword will be ignored.
+
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -725,9 +733,11 @@ def make_column_transformer(*transformers, **kwargs):
     """
     n_jobs = kwargs.pop('n_jobs', None)
     remainder = kwargs.pop('remainder', 'drop')
+    sparse_threshold = kwargs.pop('sparse_threshold', 0.3)
     if kwargs:
         raise TypeError('Unknown keyword arguments: "{}"'
                         .format(list(kwargs.keys())[0]))
     transformer_list = _get_transformer_list(transformers)
     return ColumnTransformer(transformer_list, n_jobs=n_jobs,
-                             remainder=remainder)
+                             remainder=remainder,
+                             sparse_threshold=sparse_threshold)
