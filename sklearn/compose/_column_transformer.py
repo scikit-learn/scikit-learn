@@ -751,6 +751,8 @@ def make_column_transformer(*transformers, **kwargs):
                             ['categorical_column'])])
 
     """
+    # transformer_weights keyword is not passed through because the user
+    # would need to know the automatically generated names of the transformers
     n_jobs = kwargs.pop('n_jobs', None)
     remainder = kwargs.pop('remainder', 'drop')
     sparse_threshold = kwargs.pop('sparse_threshold', 0.3)

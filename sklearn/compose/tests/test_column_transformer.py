@@ -499,12 +499,12 @@ def test_make_column_transformer_kwargs():
     norm = Normalizer()
     ct = make_column_transformer(('first', scaler), (['second'], norm),
                                  n_jobs=3, remainder='drop',
-                                 sparse_threshold=0.3)
+                                 sparse_threshold=0.5)
     assert_equal(ct.transformers, make_column_transformer(
         ('first', scaler), (['second'], norm)).transformers)
     assert_equal(ct.n_jobs, 3)
     assert_equal(ct.remainder, 'drop')
-    assert_equal(ct.sparse_threshold, 0.3)
+    assert_equal(ct.sparse_threshold, 0.5)
     # invalid keyword parameters should raise an error message
     assert_raise_message(
         TypeError,
