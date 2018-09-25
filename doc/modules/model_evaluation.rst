@@ -185,7 +185,7 @@ Here is an example of building custom scorers, and of using the
     >>> # and y defined below.
     >>> score = make_scorer(my_custom_loss_func, greater_is_better=False)
     >>> X = [[1], [1]]
-    >>> y  = [0, 1]
+    >>> y = [0, 1]
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
     >>> clf = clf.fit(X, y)
