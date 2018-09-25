@@ -231,7 +231,7 @@ def test_nested_circles():
 
 
 def test_errors_and_warnings():
-    """Tests that bad kernel decomposition raise error and warnings"""
+    """Tests that bad kernels raise error and warnings"""
 
     solvers = ['dense', 'arpack']
     solvers_except_arpack = ['dense']
@@ -261,10 +261,11 @@ def test_errors_and_warnings():
     # for solver in solvers:
     #     kpca = KernelPCA(kernel=kernel_getter, eigen_solver=solver,
     #                      fit_inverse_transform=False)
-    #     kpca.n_jobs = 1
     #     kpca._centerer = IdentityKernelTransformer()
+    #     K = kpca._get_kernel(K)
     #     with pytest.raises(ValueError):
-    #         kpca.fit(K)
+    #         # note: we can not test 'fit' because _centerer would be replaced
+    #         kpca._fit_transform(K)
     #
     # For safety concerning future evolutions the corresponding code is left in
     # KernelPCA, and we test it directly by calling the inner method here:
@@ -275,7 +276,7 @@ def test_errors_and_warnings():
     # -------------------------------
     K = [[-5, 0],
          [0, -6e-5]]
-    # check that the inner method still works
+    # check that the inner method works
     with pytest.raises(ValueError):
         check_kernel_eigenvalues((K[0][0], K[1][1]))
 
@@ -283,8 +284,10 @@ def test_errors_and_warnings():
         kpca = KernelPCA(kernel="precomputed", eigen_solver=solver,
                          fit_inverse_transform=False)
         kpca._centerer = IdentityKernelTransformer()
+        K = kpca._get_kernel(K)
         with pytest.raises(ValueError):
-            kpca.fit(K)
+            # note: we can not test 'fit' because _centerer would be replaced
+            kpca._fit_transform(K)
 
     # Significant negative eigenvalue: warning
     # ----------------------------------------
@@ -299,7 +302,9 @@ def test_errors_and_warnings():
         kpca = KernelPCA(kernel="precomputed", eigen_solver=solver,
                          fit_inverse_transform=False)
         kpca._centerer = IdentityKernelTransformer()
-        assert_warns(KernelWarning, lambda: kpca.fit(K))
+        K = kpca._get_kernel(K)
+        # note: we can not test 'fit' because _centerer would be replaced
+        assert_warns(KernelWarning, lambda: kpca._fit_transform(K))
 
     # Bad conditioning
     # ----------------
@@ -314,4 +319,6 @@ def test_errors_and_warnings():
         kpca = KernelPCA(kernel="precomputed", eigen_solver=solver,
                          fit_inverse_transform=False)
         kpca._centerer = IdentityKernelTransformer()
-        assert_warns(KernelWarning, lambda: kpca.fit(K))
+        K = kpca._get_kernel(K)
+        # note: we can not test 'fit' because _centerer would be replaced
+        assert_warns(KernelWarning, lambda: kpca._fit_transform(K))
