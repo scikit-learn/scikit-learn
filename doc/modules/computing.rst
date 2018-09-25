@@ -292,7 +292,7 @@ families of supervised models.
 
 For :mod:`sklearn.linear_model` (e.g. Lasso, ElasticNet,
 SGDClassifier/Regressor, Ridge & RidgeClassifier,
-PassiveAgressiveClassifier/Regressor, LinearSVC, LogisticRegression...) the
+PassiveAggressiveClassifier/Regressor, LinearSVC, LogisticRegression...) the
 decision function that is applied at prediction time is the same (a dot product)
 , so latency should be equivalent.
 

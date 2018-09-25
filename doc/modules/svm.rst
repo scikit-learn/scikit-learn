@@ -164,11 +164,12 @@ Each row of the coefficients corresponds to one of the ``n_class`` many
 order of the "one" class.
 
 In the case of "one-vs-one" :class:`SVC`, the layout of the attributes
-is a little more involved. In the case of having a linear kernel,
-The layout of ``coef_`` and ``intercept_`` is similar to the one
-described for :class:`LinearSVC` described above, except that the shape of
-``coef_`` is ``[n_class * (n_class - 1) / 2, n_features]``, corresponding to as
-many binary classifiers. The order for classes
+is a little more involved. In the case of having a linear kernel, the
+attributes ``coef_`` and ``intercept_`` have the shape
+``[n_class * (n_class - 1) / 2, n_features]`` and
+``[n_class * (n_class - 1) / 2]`` respectively. This is similar to the
+layout for :class:`LinearSVC` described above, with each row now corresponding
+to a binary classifier. The order for classes
 0 to n is "0 vs 1", "0 vs 2" , ... "0 vs n", "1 vs 2", "1 vs 3", "1 vs n", . .
 . "n-1 vs n".
 
@@ -336,27 +337,10 @@ floating point values instead of integer values::
 Density estimation, novelty detection
 =======================================
 
-One-class SVM is used for novelty detection, that is, given a set of
-samples, it will detect the soft boundary of that set so as to
-classify new points as belonging to that set or not. The class that
-implements this is called :class:`OneClassSVM`.
+The class :class:`OneClassSVM` implements a One-Class SVM which is used in
+outlier detection. 
 
-In this case, as it is a type of unsupervised learning, the fit method
-will only take as input an array X, as there are no class labels.
-
-See, section :ref:`outlier_detection` for more details on this usage.
-
-.. figure:: ../auto_examples/svm/images/sphx_glr_plot_oneclass_001.png
-   :target: ../auto_examples/svm/plot_oneclass.html
-   :align: center
-   :scale: 75
-
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_svm_plot_oneclass.py`
- * :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
-
+See :ref:`outlier_detection` for the description and usage of OneClassSVM.
 
 Complexity
 ==========

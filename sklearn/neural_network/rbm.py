@@ -19,7 +19,6 @@ from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import gen_even_slices
-from ..utils import issparse
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
 from ..utils.validation import check_is_fitted
@@ -310,7 +309,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         # Randomly corrupt one feature in each sample in v.
         ind = (np.arange(v.shape[0]),
                rng.randint(0, v.shape[1], v.shape[0]))
-        if issparse(v):
+        if sp.issparse(v):
             data = -2 * v[ind] + 1
             v_ = v + sp.csr_matrix((data.A.ravel(), ind), shape=v.shape)
         else:

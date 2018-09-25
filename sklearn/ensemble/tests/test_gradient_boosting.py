@@ -452,6 +452,7 @@ def test_max_feature_regression():
     assert_true(deviance < 0.5, "GB failed with deviance %.4f" % deviance)
 
 
+@pytest.mark.network
 def test_feature_importance_regression():
     """Test that Gini importance is calculated correctly.
 

@@ -172,7 +172,7 @@ def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
      (np.inf, 'allow-nan', 'Input contains infinity'),
      (np.nan, True, 'Input contains NaN, infinity'),
      (np.nan, 'allow-inf', 'force_all_finite should be a bool or "allow-nan"'),
-     (np.nan, 1, 'force_all_finite should be a bool or "allow-nan"')]
+     (np.nan, 1, 'Input contains NaN, infinity')]
 )
 @pytest.mark.parametrize(
     "retype",
@@ -182,7 +182,7 @@ def test_check_array_force_all_finiteinvalid(value, force_all_finite,
                                              match_msg, retype):
     X = retype(np.arange(4).reshape(2, 2).astype(np.float))
     X[0, 0] = value
-    with pytest.raises(ValueError, message=match_msg):
+    with pytest.raises(ValueError, match=match_msg):
         check_array(X, force_all_finite=force_all_finite,
                     accept_sparse=True)
 
@@ -291,40 +291,17 @@ def test_check_array():
     assert_true(isinstance(result, np.ndarray))
 
     # deprecation warning if string-like array with dtype="numeric"
-    X_str = [['a', 'b'], ['c', 'd']]
-    assert_warns_message(
-        FutureWarning,
-        "arrays of strings will be interpreted as decimal numbers if "
-        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
-        "the array to type np.float64 before passing it to check_array.",
-        check_array, X_str, "numeric")
-    assert_warns_message(
-        FutureWarning,
-        "arrays of strings will be interpreted as decimal numbers if "
-        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
-        "the array to type np.float64 before passing it to check_array.",
-        check_array, np.array(X_str, dtype='U'), "numeric")
-    assert_warns_message(
-        FutureWarning,
-        "arrays of strings will be interpreted as decimal numbers if "
-        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
-        "the array to type np.float64 before passing it to check_array.",
-        check_array, np.array(X_str, dtype='S'), "numeric")
+    expected_warn_regex = r"converted to decimal numbers if dtype='numeric'"
+    X_str = [['11', '12'], ['13', 'xx']]
+    for X in [X_str, np.array(X_str, dtype='U'), np.array(X_str, dtype='S')]:
+        with pytest.warns(FutureWarning, match=expected_warn_regex):
+            check_array(X, dtype="numeric")
 
     # deprecation warning if byte-like array with dtype="numeric"
     X_bytes = [[b'a', b'b'], [b'c', b'd']]
-    assert_warns_message(
-        FutureWarning,
-        "arrays of strings will be interpreted as decimal numbers if "
-        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
-        "the array to type np.float64 before passing it to check_array.",
-        check_array, X_bytes, "numeric")
-    assert_warns_message(
-        FutureWarning,
-        "arrays of strings will be interpreted as decimal numbers if "
-        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
-        "the array to type np.float64 before passing it to check_array.",
-        check_array, np.array(X_bytes, dtype='V1'), "numeric")
+    for X in [X_bytes, np.array(X_bytes, dtype='V1')]:
+        with pytest.warns(FutureWarning, match=expected_warn_regex):
+            check_array(X, dtype="numeric")
 
 
 def test_check_array_pandas_dtype_object_conversion():
@@ -436,8 +413,9 @@ def test_check_array_accept_sparse_type_exception():
            "Use X.toarray() to convert to a dense numpy array.")
     assert_raise_message(TypeError, msg,
                          check_array, X_csr, accept_sparse=False)
-    assert_raise_message(TypeError, msg,
-                         check_array, X_csr, accept_sparse=None)
+    with pytest.warns(DeprecationWarning):
+        assert_raise_message(TypeError, msg,
+                             check_array, X_csr, accept_sparse=None)
 
     msg = ("Parameter 'accept_sparse' should be a string, "
            "boolean or list of strings. You provided 'accept_sparse={}'.")
@@ -755,6 +733,7 @@ class WrongDummyMemory(object):
     pass
 
 
+@pytest.mark.filterwarnings("ignore:The 'cachedir' attribute")
 def test_check_memory():
     memory = check_memory("cache_directory")
     assert_equal(memory.cachedir, os.path.join('cache_directory', 'joblib'))
@@ -765,12 +744,12 @@ def test_check_memory():
     assert memory is dummy
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
-                        "sklearn.externals.joblib.Memory."
+                        "sklearn.utils.Memory."
                         " Got memory='1' instead.", check_memory, 1)
     dummy = WrongDummyMemory()
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
-                        "sklearn.externals.joblib.Memory. Got memory='{}' "
+                        "sklearn.utils.Memory. Got memory='{}' "
                         "instead.".format(dummy), check_memory, dummy)
 
 

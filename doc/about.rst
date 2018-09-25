@@ -1,7 +1,31 @@
 About us
 ========
 
-.. include:: ../AUTHORS.rst
+History
+-------
+
+This project was started in 2007 as a Google Summer of Code project by
+David Cournapeau. Later that year, Matthieu Brucher started work on
+this project as part of his thesis.
+
+In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and Vincent
+Michel of INRIA took leadership of the project and made the first public
+release, February the 1st 2010. Since then, several releases have appeared
+following a ~3 month cycle, and a thriving international community has
+been leading the development.
+
+Authors
+-------
+
+The following people have been core contributors to scikit-learn's development
+and maintenance:
+
+.. include:: authors.rst
+
+Please do not email the authors directly to ask for assistance or report issues.
+Instead, please see `What's the best way to ask questions about scikit-learn
+<http://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
+in the FAQ.
 
 .. seealso::
 
@@ -124,6 +148,15 @@ Andreas Müller also received a grant to improve scikit-learn from the `Alfred P
    :width: 200pt
    :align: center
    :target: http://www.sydney.edu.au/
+
+`The Labex DigiCosme <https://digicosme.lri.fr>`_ funded Nicolas Goix (2015-2016),
+Tom Dupré la Tour (2015-2016 and 2017-2018), Mathurin Massias (2018-2019) to work part time
+on scikit-learn during their PhDs. It also funded a scikit-learn coding sprint in 2015.
+
+.. image:: themes/scikit-learn/static/img/digicosme.png
+   :width: 200pt
+   :align: center
+   :target: https://digicosme.lri.fr
 
 The following students were sponsored by `Google <https://developers.google.com/open-source/>`_
 to work on scikit-learn through the

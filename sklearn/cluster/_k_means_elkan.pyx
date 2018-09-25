@@ -258,4 +258,4 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_,
         update_labels_distances_inplace(X_p, centers_p, center_half_distances,
                                         labels, lower_bounds, upper_bounds,
                                         n_samples, n_features, n_clusters)
-    return centers_, labels_, iteration
+    return centers_, labels_, iteration + 1

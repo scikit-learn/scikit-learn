@@ -10,6 +10,15 @@ def total_seconds(delta):
 
     http://docs.python.org/library/datetime.html\
 #datetime.timedelta.total_seconds
+
+    Parameters
+    ----------
+    delta : datetime object
+
+    Returns
+    -------
+    int
+        The number of seconds contained in delta
     """
 
     mu_sec = 1e-6  # number of seconds in one microseconds
