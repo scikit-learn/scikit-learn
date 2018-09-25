@@ -184,7 +184,7 @@ Linear models: :math:`y = X\beta + \epsilon`
       492.81458798  102.84845219  184.60648906  743.51961675   76.09517222]
 
     >>> # The mean square error
-    >>> np.mean((regr.predict(diabetes_X_test)-diabetes_y_test)**2)
+    >>> np.mean((regr.predict(diabetes_X_test) - diabetes_y_test)**2)
     ...                                                   # doctest: +ELLIPSIS
     2004.56760268...
 
@@ -220,7 +220,7 @@ induces high variance:
 
     >>> np.random.seed(0)
     >>> for _ in range(6): # doctest: +SKIP
-    ...    this_X = .1*np.random.normal(size=(2, 1)) + X
+    ...    this_X = .1 * np.random.normal(size=(2, 1)) + X
     ...    regr.fit(this_X, y)
     ...    plt.plot(test, regr.predict(test)) # doctest: +SKIP
     ...    plt.scatter(this_X, y, s=3)  # doctest: +SKIP
@@ -245,7 +245,7 @@ regression:
 
     >>> np.random.seed(0)
     >>> for _ in range(6): # doctest: +SKIP
-    ...    this_X = .1*np.random.normal(size=(2, 1)) + X
+    ...    this_X = .1 * np.random.normal(size=(2, 1)) + X
     ...    regr.fit(this_X, y)
     ...    plt.plot(test, regr.predict(test)) # doctest: +SKIP
     ...    plt.scatter(this_X, y, s=3) # doctest: +SKIP

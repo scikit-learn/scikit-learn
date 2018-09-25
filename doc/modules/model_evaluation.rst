@@ -1297,7 +1297,7 @@ Here is a small example of usage of this function:::
     >>> y_pred = np.array([0, 1, 1, 0])
     >>> brier_score_loss(y_true, y_prob)
     0.055
-    >>> brier_score_loss(y_true, 1-y_prob, pos_label=0)
+    >>> brier_score_loss(y_true, 1 - y_prob, pos_label=0)
     0.055
     >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
     0.055
