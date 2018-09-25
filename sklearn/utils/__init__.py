@@ -11,7 +11,7 @@ import warnings
 
 from .murmurhash import murmurhash3_32
 from .validation import (as_float_array,
-                         assert_all_finite,
+                         assert_all_finite, check_kernel_eigenvalues,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
                          check_symmetric)
@@ -26,7 +26,7 @@ from .. import get_config
 
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
-           "check_random_state",
+           "check_random_state", "check_kernel_eigenvalues",
            "compute_class_weight", "compute_sample_weight",
            "column_or_1d", "safe_indexing",
            "check_consistent_length", "check_X_y", 'indexable',

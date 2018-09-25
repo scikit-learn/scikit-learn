@@ -4,14 +4,14 @@
 # License: BSD 3 clause
 
 import numpy as np
-import warnings
 from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
 from ..utils.extmath import randomized_svd
-from ..utils.validation import check_is_fitted, check_array
-from ..exceptions import NotFittedError, KernelWarning
+from ..utils.validation import check_is_fitted, check_array, \
+    check_kernel_eigenvalues
+from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
@@ -279,49 +279,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
             signs = np.sign(np.diag(VU))
             self.lambdas_ = self.lambdas_ * signs
 
-        # Check that there are no significant imaginary parts
-        if not np.isreal(self.lambdas_).all():
-            max_imag_abs = abs(np.imag(self.lambdas_)).max()
-            max_real_abs = abs(np.real(self.lambdas_)).max()
-            if max_imag_abs > 1e-5 * max_real_abs:
-                raise ValueError(
-                    "there are significant imaginary parts in eigenvalues (%f "
-                    "of the max real part). Something may be wrong with the "
-                    "kernel. Setting all imaginary parts to zero."
-                    "" % (max_imag_abs / max_real_abs))
-
-        # Remove the insignificant imaginary parts
-        self.lambdas_ = np.real(self.lambdas_)
-
-        # Check that there are no significant negative eigenvalues
-        min_eig = self.lambdas_.min()
-        max_eig = self.lambdas_.max()
-        if -min_eig > 1e-5 * max(max_eig, 0) and -min_eig > 1e-10:
-            # If kernel has been computed with single precision we would
-            # probably need more tolerant thresholds such as:
-            # (-min_eig > 5e-3 * max(max_eig, 0) and -min_eig > 1e-8)
-            if max_eig >= 0:
-                warnings.warn("There are significant negative eigenvalues "
-                              "(%f of the max positive). Something may be "
-                              "wrong with the kernel. Replacing them by "
-                              "zero." % (-min_eig / max_eig), KernelWarning)
-            else:
-                raise ValueError("There are significant negative eigenvalues "
-                                 "(such as %f) and no positive one. Something "
-                                 "may be wrong with the kernel." % min_eig)
-
-        # Remove the insignificant negative values
-        self.lambdas_[self.lambdas_ < 0] = 0
-
-        # Finally check for conditioning
-        max_conditioning = 1e12  # Max allowed conditioning (ratio big/small)
-        too_small_lambdas = self.lambdas_ < max_eig / max_conditioning
-        if too_small_lambdas.any():
-            warnings.warn("The kernel is badly conditioned: the largest "
-                          "eigenvalue is more than %.2E times the smallest. "
-                          "Small eigenvalues will be replaced "
-                          "by 0" % max_conditioning, KernelWarning)
-            self.lambdas_[too_small_lambdas] = 0
+        # make sure that there are no numerical or conditioning issues
+        self.lambdas_ = check_kernel_eigenvalues(self.lambdas_)
 
         # sort eigenvectors in descending order
         indices = self.lambdas_.argsort()[::-1]
