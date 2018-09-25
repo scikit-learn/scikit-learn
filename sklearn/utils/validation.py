@@ -21,7 +21,7 @@ from numpy.core.numeric import ComplexWarning
 from ..externals import six
 from ..utils.fixes import signature
 from .. import get_config as _get_config
-from ..exceptions import NonBLASDotWarning
+from ..exceptions import NonBLASDotWarning, KernelWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 from ..utils._joblib import Memory
@@ -957,3 +957,107 @@ def check_non_negative(X, whom):
     X = X.data if sp.issparse(X) else X
     if (X < 0).any():
         raise ValueError("Negative values in data passed to %s" % whom)
+
+
+def check_kernel_eigenvalues(lambdas):
+    """Checks that the provided array of kernel eigenvalues for numerical or
+    conditioning issues and returns a fixed validated version.
+
+    It checks:
+
+     - that there are no significant imaginary parts in eigenvalues (more than
+     1e-5 times the maximum real part). If this check fails, it raises a
+     ValueError. Otherwise all non-significant imaginary parts that may remain
+     are removed.
+
+     - that eigenvalues are not all negative. If this check fails, it raises a
+     ValueError
+
+     - that there are no significant negative eigenvalues (with absolute value
+     more than 1e-10 and more than 1e-5 times the largest positive eigenvalue).
+     If this check fails, it raises a KernelWarning. All negative eigenvalues
+     are set to zero in all cases.
+
+     - that the eigenvalues are well conditioned. That means, that the
+     eigenvalues are all greater than the maximum eigenvalue divided by 1e12.
+     If this check fails, it raises a KernelWarning and all the eigenvalues
+     that are too small are set to zero.
+
+    Note: the returned array is converted to numpy array.
+
+    >>> check_kernel_eigenvalues((1, 2))      # nominal case
+    array([1, 2])
+    >>> check_kernel_eigenvalues((5, 5j))     # significant imag part
+    Traceback (most recent call last):
+        ...
+    ValueError: There are significant imaginary parts in eigenvalues (1.000000
+        of the max real part). Something may be wrong with the kernel
+    >>> check_kernel_eigenvalues((5, 5e-5j))  # insignificant imag part
+    array([ 5.,  0.])
+    >>> check_kernel_eigenvalues((-5, -1))    # all negative
+    Traceback (most recent call last):
+        ...
+    ValueError: All eigenvalues are negative (max is -1.000000). Something may
+        be wrong with the kernel.
+    >>> check_kernel_eigenvalues((5, -1))     # significant negative
+    array([5, 0])
+    >>> check_kernel_eigenvalues((5, -5e-5))  # insignificant negative
+    array([ 5.,  0.])
+    >>> check_kernel_eigenvalues((5, 4e-12))  # bad conditioning (too small)
+    array([ 5.,  0.])
+
+    Parameters
+    ----------
+    lambdas : array-like
+        Array of eigenvalues to check / fix.
+
+    Returns
+    -------
+    lambdas_fixed : array-like
+        The fixed validated array of eigenvalues.
+    """
+
+    # Check that there are no significant imaginary parts
+    if not np.isreal(lambdas).all():
+        max_imag_abs = abs(np.imag(lambdas)).max()
+        max_real_abs = abs(np.real(lambdas)).max()
+        if max_imag_abs > 1e-5 * max_real_abs:
+            raise ValueError(
+                "There are significant imaginary parts in eigenvalues (%f "
+                "of the max real part). Something may be wrong with the "
+                "kernel." % (max_imag_abs / max_real_abs))
+
+    # Remove the insignificant imaginary parts
+    lambdas = np.real(lambdas)
+
+    # Check that there are no significant negative eigenvalues
+    max_eig = lambdas.max()
+    if max_eig < 0:
+        raise ValueError("All eigenvalues are negative (max is %f). Something "
+                         "may be wrong with the kernel." % max_eig)
+
+    else:
+        min_eig = lambdas.min()
+        if -min_eig > 1e-5 * max(max_eig, 0) and -min_eig > 1e-10:
+            # If kernel has been computed with single precision we would
+            # probably need more tolerant thresholds such as:
+            # (-min_eig > 5e-3 * max(max_eig, 0) and -min_eig > 1e-8)
+            warnings.warn("There are significant negative eigenvalues "
+                          "(%f of the max positive). Something may be "
+                          "wrong with the kernel. Replacing them by "
+                          "zero." % (-min_eig / max_eig), KernelWarning)
+
+    # Remove all negative values in all cases
+    lambdas[lambdas < 0] = 0
+
+    # Finally check for conditioning
+    max_conditioning = 1e12  # Max allowed conditioning (ratio big/small)
+    too_small_lambdas = lambdas < max_eig / max_conditioning
+    if too_small_lambdas.any():
+        warnings.warn("The kernel is badly conditioned: the largest "
+                      "eigenvalue is more than %.2E times the smallest. "
+                      "Small eigenvalues will be replaced "
+                      "by 0" % max_conditioning, KernelWarning)
+        lambdas[too_small_lambdas] = 0
+
+    return lambdas

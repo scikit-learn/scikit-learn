@@ -1,10 +1,13 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
+from sklearn.base import BaseEstimator, TransformerMixin
 
+from sklearn.exceptions import KernelWarning
+from sklearn.utils.validation import check_kernel_eigenvalues
 from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
                                    assert_equal, assert_not_equal,
-                                   assert_raises, ignore_warnings)
+                                   assert_raises, assert_warns)
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
@@ -225,3 +228,78 @@ def test_nested_circles():
     # The data is perfectly linearly separable in that space
     train_score = Perceptron(max_iter=5).fit(X_kpca, y).score(X_kpca, y)
     assert_equal(train_score, 1.0)
+
+
+def test_errors_and_warnings():
+    """Tests that bad kernels raise error and warnings"""
+
+    solvers = ['dense', 'arpack', 'randomized']
+    solvers_except_arpack = ['dense', 'randomized']
+
+    # First create an identity transformer class
+    # ------------------------------------------
+    class IdentityKernelTransformer(BaseEstimator, TransformerMixin):
+        """We will use this transformer so that the passed kernel matrix is
+        not centered when kPCA is fit"""
+
+        def __init__(self):
+            pass
+
+        def fit(self, K, y=None):
+            return self
+
+        def transform(self, K, y=None, copy=True):
+            return K
+
+    # Significant imaginary parts: error
+    # ----------------------------------
+    # As of today it seems that the kernel matrix is always cast as a float
+    # whatever the method (precomputed or callable).
+    # The following test therefore fails ("did not raise").
+    K = [[5, 0],
+         [0, 6 * 1e-5j]]
+    # for solver in solvers:
+    #     kpca = KernelPCA(kernel=kernel_getter, eigen_solver=solver,
+    #                      fit_inverse_transform=False)
+    #     kpca.n_jobs = 1
+    #     kpca._centerer = IdentityKernelTransformer()
+    #     with pytest.raises(ValueError):
+    #         kpca.fit(K)
+    #
+    # For safety concerning future evolutions the corresponding code is left in
+    # KernelPCA, and we test it directly by calling the inner method here:
+    with pytest.raises(ValueError):
+        check_kernel_eigenvalues((K[0][0], K[1][1]))
+
+    # All negative eigenvalues: error
+    # -------------------------------
+    K = [[-5, 0],
+         [0, -6e-5]]
+    for solver in solvers:
+        kpca = KernelPCA(kernel="precomputed", eigen_solver=solver,
+                         fit_inverse_transform=False)
+        kpca._centerer = IdentityKernelTransformer()
+        with pytest.raises(ValueError):
+            kpca.fit(K)
+
+    # Significant negative eigenvalue: warning
+    # ----------------------------------------
+    K = [[5, 0],
+         [0, -6e-5]]
+    for solver in solvers_except_arpack:
+        # Note: arpack detects this case and raises an error already
+        kpca = KernelPCA(kernel="precomputed", eigen_solver=solver,
+                         fit_inverse_transform=False)
+        kpca._centerer = IdentityKernelTransformer()
+        assert_warns(KernelWarning, lambda: kpca.fit(K))
+
+    # Bad conditionning
+    # -----------------
+    K = [[5, 0],
+         [0, 4e-12]]
+    for solver in solvers_except_arpack:
+        # Note: arpack detects this case and raises an error already
+        kpca = KernelPCA(kernel="precomputed", eigen_solver=solver,
+                         fit_inverse_transform=False)
+        kpca._centerer = IdentityKernelTransformer()
+        assert_warns(KernelWarning, lambda: kpca.fit(K))
