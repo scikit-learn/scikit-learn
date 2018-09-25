@@ -301,7 +301,7 @@ class CommonTest(object):
         validation_fraction = 0.4
         random_state = 42
         shuffle = False
-        max_iter = 1000
+        max_iter = 10
         clf1 = self.factory(early_stopping=True, random_state=random_state,
                             validation_fraction=validation_fraction,
                             learning_rate='constant', eta0=0.01,
@@ -321,6 +321,7 @@ class CommonTest(object):
             cv = ShuffleSplit(test_size=validation_fraction,
                               random_state=random_state)
         idx_train, idx_val = next(cv.split(X, Y))
+        idx_train = np.sort(idx_train)  # remove shuffling
         clf2.fit(X[idx_train], Y[idx_train])
         assert clf2.n_iter_ == max_iter
 
@@ -1484,7 +1485,7 @@ def test_multi_thread_multi_class_and_early_stopping():
     # This is a non-regression test for a bad interaction between
     # early stopping internal attribute and thread-based parallelism.
     clf = SGDClassifier(alpha=1e-3, tol=1e-3, max_iter=1000,
-                        early_stopping=True, n_iter_no_change=50,
+                        early_stopping=True, n_iter_no_change=100,
                         random_state=0, n_jobs=2)
     clf.fit(iris.data, iris.target)
     assert clf.n_iter_ > clf.n_iter_no_change
