@@ -581,22 +581,15 @@ def test_linearsvc_parameters():
                          svm.LinearSVC(loss="l3").fit, X, y)
 
 
-def test_intercept_scaling_warning():
-    clf = svm.LinearSVC(fit_intercept=True)
+@pytest.mark.parametrize('klass', [svm.LinearSVC, svm.LinearSVR])
+def test_intercept_scaling_warning(klass):
+    clf = klass(fit_intercept=True)
     assert_warns_message(UserWarning,
                          "liblinear regularizes the intercept. "
                          "Therefore intercept_scaling should be set explicitly"
                          " when fit_intercept is set to True. Default value of"
                          " 1 is used.",
                          clf.fit, X, Y)
-
-    reg = svm.LinearSVR(fit_intercept=True)
-    assert_warns_message(UserWarning,
-                         "liblinear regularizes the intercept. "
-                         "Therefore intercept_scaling should be set explicitly"
-                         " when fit_intercept is set to True. Default value of"
-                         " 1 is used.",
-                         reg.fit, X, Y)
 
 
 # FIXME remove in 1.0

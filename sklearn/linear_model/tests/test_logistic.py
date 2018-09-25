@@ -157,22 +157,15 @@ def test_lr_liblinear_warning():
                          lr.fit, iris.data, target)
 
 
-def test_lr_liblinear_intercept_scaling_warning():
-    lr = LogisticRegression(solver='liblinear', n_jobs=1)
+@pytest.mark.parametrize('klass', [LogisticRegression, LogisticRegressionCV])
+def test_lr_liblinear_intercept_scaling_warning(klass):
+    lr = klass(solver='liblinear', n_jobs=1)
     assert_warns_message(UserWarning,
                          "liblinear regularizes the intercept. "
                          "Therefore intercept_scaling should be set explicitly"
                          " when fit_intercept is set to True. Default value of"
                          " 1 is used.",
                          lr.fit, iris.data, iris.target)
-
-    lrcv = LogisticRegressionCV(solver='liblinear', n_jobs=1)
-    assert_warns_message(UserWarning,
-                         "liblinear regularizes the intercept. "
-                         "Therefore intercept_scaling should be set explicitly"
-                         " when fit_intercept is set to True. Default value of"
-                         " 1 is used.",
-                         lrcv.fit, iris.data, iris.target)
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
