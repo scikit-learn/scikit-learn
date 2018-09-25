@@ -141,7 +141,7 @@ projection transformer::
 
   >>> import numpy as np
   >>> from sklearn import random_projection
-  >>> X = np.random.rand(100,10000)
+  >>> X = np.random.rand(100, 10000)
   >>> transformer = random_projection.SparseRandomProjection()
   >>> X_new = transformer.fit_transform(X)
   >>> X_new.shape
