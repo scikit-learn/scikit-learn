@@ -43,7 +43,7 @@ def test_label_binarizer():
     # For dense case:
     inp = ["pos", "pos", "pos", "pos"]
     lb = LabelBinarizer(sparse_output=False)
-    expected = np.array([[0, 0, 0, 0]]).T
+    expected = np.zeros((len(inp), 1), dtype=int)
     got = lb.fit_transform(inp)
     assert_array_equal(lb.classes_, ["pos"])
     assert_array_equal(expected, got)
@@ -505,12 +505,11 @@ def check_binarized_results(y, classes, pos_label, neg_label, expected):
             inversed = _inverse_binarize_multiclass(binarized, classes=classes)
 
         else:
+            threshold = ((neg_label + pos_label) / 2.)
             inversed = _inverse_binarize_thresholding(binarized,
                                                       output_type=y_type,
                                                       classes=classes,
-                                                      threshold=((neg_label +
-                                                                 pos_label) /
-                                                                 2.))
+                                                      threshold=threshold)
 
         assert_array_equal(toarray(inversed), toarray(y))
 
@@ -549,7 +548,7 @@ def test_label_binarize_multiclass():
     classes = [0, 1, 2]
     pos_label = 2
     neg_label = 0
-    expected = 2 * np.eye(3)
+    expected = pos_label * np.eye(3)
 
     check_binarized_results(y, classes, pos_label, neg_label, expected)
 
@@ -578,6 +577,8 @@ def test_label_binarize_multilabel():
 def test_invalid_input_label_binarize():
     assert_raises(ValueError, label_binarize, [0, 2], classes=[0, 2],
                   pos_label=0, neg_label=1)
+    assert_raises(ValueError, label_binarize, [0, 2], classes=[0, 2],
+                  pos_label=0, neg_label=0)
 
 
 def test_inverse_binarize_multiclass():
