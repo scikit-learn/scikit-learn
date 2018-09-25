@@ -18,7 +18,7 @@ from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.base import BaseEstimator
 from sklearn.externals import six
 from sklearn.compose import ColumnTransformer, make_column_transformer
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import NotFittedError, DataConversionWarning
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
 from sklearn.feature_extraction import DictVectorizer
 
@@ -276,6 +276,28 @@ def test_column_transformer_sparse_array():
         assert_allclose_dense_sparse(ct.fit_transform(X_sparse), X_res_both)
         assert_allclose_dense_sparse(ct.fit(X_sparse).transform(X_sparse),
                                      X_res_both)
+
+
+def test_column_transformer_list():
+    X_list = [
+        [1, float('nan'), 'a'],
+        [0, 0, 'b']
+    ]
+    expected_result = np.array([
+        [1, float('nan'), 1, 0],
+        [-1, 0, 0, 1],
+    ])
+
+    ct = ColumnTransformer([
+        ('numerical', StandardScaler(), [0, 1]),
+        ('categorical', OneHotEncoder(), [2]),
+    ])
+
+    with pytest.warns(DataConversionWarning):
+        # TODO: this warning is not very useful in this case, would be good
+        # to get rid of it
+        assert_array_equal(ct.fit_transform(X_list), expected_result)
+        assert_array_equal(ct.fit(X_list).transform(X_list), expected_result)
 
 
 def test_column_transformer_sparse_stacking():
