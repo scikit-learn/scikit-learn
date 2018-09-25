@@ -73,7 +73,7 @@ This example shows an example usage of the ``split`` method.
 The cross-validation can then be performed easily::
 
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
-    ...          for train, test in k_fold.split(X_digits)]  # doctest: +ELLIPSIS
+    ...  for train, test in k_fold.split(X_digits)]  # doctest: +ELLIPSIS
     [0.963..., 0.922..., 0.963..., 0.963..., 0.930...]
 
 The cross-validation score can be directly calculated using the
