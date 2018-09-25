@@ -220,10 +220,10 @@ induces high variance:
 
     >>> np.random.seed(0)
     >>> for _ in range(6): # doctest: +SKIP
-    ...    this_X = .1 * np.random.normal(size=(2, 1)) + X
-    ...    regr.fit(this_X, y)
-    ...    plt.plot(test, regr.predict(test)) # doctest: +SKIP
-    ...    plt.scatter(this_X, y, s=3)  # doctest: +SKIP
+    ...     this_X = .1 * np.random.normal(size=(2, 1)) + X
+    ...     regr.fit(this_X, y)
+    ...     plt.plot(test, regr.predict(test)) # doctest: +SKIP
+    ...     plt.scatter(this_X, y, s=3)  # doctest: +SKIP
 
 
 
@@ -245,10 +245,10 @@ regression:
 
     >>> np.random.seed(0)
     >>> for _ in range(6): # doctest: +SKIP
-    ...    this_X = .1 * np.random.normal(size=(2, 1)) + X
-    ...    regr.fit(this_X, y)
-    ...    plt.plot(test, regr.predict(test)) # doctest: +SKIP
-    ...    plt.scatter(this_X, y, s=3) # doctest: +SKIP
+    ...     this_X = .1 * np.random.normal(size=(2, 1)) + X
+    ...     regr.fit(this_X, y)
+    ...     plt.plot(test, regr.predict(test)) # doctest: +SKIP
+    ...     plt.scatter(this_X, y, s=3) # doctest: +SKIP
 
 This is an example of **bias/variance tradeoff**: the larger the ridge
 ``alpha`` parameter, the higher the bias and the lower the variance.
