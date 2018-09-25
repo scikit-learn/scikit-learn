@@ -251,6 +251,51 @@ def test_column_transformer_dataframe():
     assert_array_equal(ct.transformers_[-1][2], [1])
 
 
+@pytest.mark.parametrize("pandas", [True, False], ids=['pandas', 'numpy'])
+@pytest.mark.parametrize("column", [[], np.array([False, False])],
+                         ids=['list', 'bool'])
+def test_column_transformer_empty_columns(pandas, column):
+    # test case that ensures that the column transformer does also work when
+    # a given transformer doesn't have any columns to work on
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    X_res_both = X_array
+
+    if pandas:
+        pd = pytest.importorskip('pandas')
+        X = pd.DataFrame(X_array, columns=['first', 'second'])
+    else:
+        X = X_array
+
+    ct = ColumnTransformer([('trans1', Trans(), [0, 1]),
+                            ('trans2', Trans(), column)])
+    assert_array_equal(ct.fit_transform(X), X_res_both)
+    assert_array_equal(ct.fit(X).transform(X), X_res_both)
+    assert len(ct.transformers_) == 2
+    assert isinstance(ct.transformers_[1][1], Trans)
+
+    ct = ColumnTransformer([('trans1', Trans(), column),
+                            ('trans2', Trans(), [0, 1])])
+    assert_array_equal(ct.fit_transform(X), X_res_both)
+    assert_array_equal(ct.fit(X).transform(X), X_res_both)
+    assert len(ct.transformers_) == 2
+    assert isinstance(ct.transformers_[0][1], Trans)
+
+    ct = ColumnTransformer([('trans', Trans(), column)],
+                           remainder='passthrough')
+    assert_array_equal(ct.fit_transform(X), X_res_both)
+    assert_array_equal(ct.fit(X).transform(X), X_res_both)
+    assert len(ct.transformers_) == 2  # including remainder
+    assert isinstance(ct.transformers_[0][1], Trans)
+
+    fixture = np.array([[], [], []])
+    ct = ColumnTransformer([('trans', Trans(), column)],
+                           remainder='drop')
+    assert_array_equal(ct.fit_transform(X), fixture)
+    assert_array_equal(ct.fit(X).transform(X), fixture)
+    assert len(ct.transformers_) == 2  # including remainder
+    assert isinstance(ct.transformers_[0][1], Trans)
+
+
 def test_column_transformer_sparse_array():
     X_sparse = sparse.eye(3, 2).tocsr()
 
