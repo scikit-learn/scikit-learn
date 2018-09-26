@@ -30,9 +30,9 @@ X, y = make_circles(n_samples=n_samples, factor=.3, noise=.05)
 
 # 2- Design experiment / Init plots
 # ---------------------------------
-n_compo_to_try = 5
-n_components_range = [np.floor(np.exp((x / n_compo_to_try) * np.log(n_samples)))
-                      for x in range(1, n_compo_to_try + 1)]
+grid_size = 5
+n_components_range = [np.floor(np.exp((x / grid_size) * np.log(n_samples)))
+                      for x in range(1, grid_size + 1)]
 plt.figure(figsize=(15, 20))
 
 # top left: original
