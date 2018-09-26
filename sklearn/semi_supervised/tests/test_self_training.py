@@ -63,6 +63,15 @@ def test_classification():
             assert_array_equal(proba, proba1)
 
 
+def test_string_lists():
+    # Another test for string support
+    x = [[1, 2], [2, 3], [3, 4], [4, 5]]
+    y = ['a', 'b', 'c', 'd']
+    base_estimator = SVC(gamma="scale", probability=True)
+    self_training = SelfTrainingClassifier(base_estimator)
+    self_training.fit(x, y)
+
+
 def test_missing_predict_proba():
     # Check that an error is thrown if predict_proba is not implemented
     base_estimator = SVC(gamma="scale")
