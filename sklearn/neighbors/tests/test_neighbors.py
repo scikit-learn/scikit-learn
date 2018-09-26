@@ -1317,11 +1317,12 @@ def test_same_radius_neighbors_parallel(algorithm):
         assert_array_equal(ind[i], ind_parallel[i])
     assert_array_almost_equal(graph, graph_parallel)
 
+
 @pytest.mark.parametrize('backend', ['loky', 'multiprocessing', 'threading'])
 @pytest.mark.parametrize('algorithm', ALGORITHMS)
 def test_knn_forcing_backend(backend, algorithm):
-    # Non-regression test which ensure the knn is properly working
-    # even when forcing the global joblib backend
+    # Non-regression test which ensure the knn methods are properly working
+    # even when forcing the global joblib backend.
     with parallel_backend(backend):
         X, y = datasets.make_classification(n_samples=30, n_features=5,
                                             n_redundant=0, random_state=0)
@@ -1331,9 +1332,9 @@ def test_knn_forcing_backend(backend, algorithm):
                                              algorithm=algorithm,
                                              n_jobs=3)
         clf.fit(X_train, y_train)
-        y = clf.predict(X_test)
-        dist, ind = clf.kneighbors(X_test)
-        graph = clf.kneighbors_graph(X_test, mode='distance').toarray()
+        clf.predict(X_test)
+        clf.kneighbors(X_test)
+        clf.kneighbors_graph(X_test, mode='distance').toarray()
 
 
 def test_dtype_convert():
