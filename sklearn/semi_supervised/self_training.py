@@ -99,7 +99,8 @@ class SelfTrainingClassifier(BaseEstimator):
             array representing the data
 
         y : array-like, shape = (n_samples,)
-            array representing the labels
+            array representing the labels. Unlabeled samples should have the
+            label -1.
 
         Returns
         -------
@@ -115,7 +116,11 @@ class SelfTrainingClassifier(BaseEstimator):
         if not 0 <= self.threshold < 1:
             raise ValueError("threshold must be in [0,1)")
 
-        has_label = y != -1
+        if y.dtype.kind == 'U' or y.dtype.kind == 'S':
+            has_label = y != '-1'
+        else:
+            has_label = y != -1
+
         self.y_labels_ = np.copy(y)
         self.y_labeled_iter_ = np.full_like(y, -1)
         self.y_labeled_iter_[has_label] = 0
@@ -130,7 +135,7 @@ class SelfTrainingClassifier(BaseEstimator):
             # Predict on the unlabeled samples
             prob = self.base_estimator_.predict_proba(X[safe_mask(X,
                                                                   ~has_label)])
-            pred = np.argmax(prob, axis=1)
+            pred = self.base_estimator_.classes_[np.argmax(prob, axis=1)]
             max_proba = np.max(prob, axis=1)
 
             # Select samples where confidence is above the threshold

@@ -59,7 +59,7 @@ def test_classification():
             pred1 = st1.predict(X_test)
             proba1 = st.predict_proba(X_test)
 
-            assert_array_equal(pred, pred1)
+            assert_array_equal(np.vectorize(mapping.get)(pred), pred1)
             assert_array_equal(proba, proba1)
 
 
@@ -131,6 +131,7 @@ def test_y_labeled_iter():
         # Check that the max of the iterations is less than the total amount of
         # iterations
         assert(np.max(st.y_labeled_iter_) <= m)
+        assert(np.max(st.y_labeled_iter_) <= st.n_iter_)
 
 
 def test_prefitted_throws_error():
@@ -155,4 +156,3 @@ def test_no_unlabeled():
     # Assert that all samples were labeled in iteration 0 (since there were no
     # unlabeled samples).
     assert(np.where(st.y_labeled_iter_ != 0)[0].size == 0)
-    print(st.y_labeled_iter_)
