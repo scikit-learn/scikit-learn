@@ -121,6 +121,18 @@ Both :class:`SimpleImputer` and :class:`IterativeImputer` can be used in a Pipel
 as a way to build a composite estimator that supports imputation.
 See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
 
+Flexibility of IterativeImputer
+===============================
+
+There are many well-established imputation packages in the R data science
+ecosystem: Amelia, mi, mice, missForest, etc. missForest is popular, and turns
+out to be a particular instance of different sequential imputation algorithms
+that can all be implemented with :class:`IterativeImputer` by passing in different
+regressors to be used for predicting missing feature values. In the case of missForest,
+this regressor is a Random Forest.
+See :ref:`sphx_glr_auto_examples_plot_iterative_imputer_variants_comparison.py`.
+
+
 .. _multiple_imputation:
 
 Multiple vs. Single Imputation
