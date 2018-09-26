@@ -2,6 +2,27 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_20_1:
+
+Version 0.20.1
+==============
+
+**October XX, 2018**
+
+This is a bug-fix release with some minor documentation improvements and
+enhancements to features released in 0.20.0.
+
+- |Efficiency| make :class:`cluster.MeanShift` no longer try to do nested
+  parallelism as the overhead would hurt performance significantly when
+  ``n_jobs > 1``.
+  :issue:`12159` by :user:`Olivier Grisel <ogrisel>`.
+
+- |Fix| :func:`linear_model.SGDClassifier` and variants
+  with ``early_stopping=True`` would not use a consistent validation
+  split in the multiclass case and this would cause a crash when using
+  those estimators as part of parallel parameter search or cross-validation.
+  :issue:`12122` by :user:`Olivier Grisel <ogrisel>`.
+
 .. _changes_0_20:
 
 Version 0.20.0
