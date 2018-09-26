@@ -4,6 +4,7 @@ from ..base import BaseEstimator, clone
 from ..utils.validation import check_X_y, check_array, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils import safe_mask
+from ..base import is_classifier
 
 __all__ = ["SelfTrainingClassifier"]
 
@@ -14,6 +15,8 @@ __all__ = ["SelfTrainingClassifier"]
 
 def _check_estimator(estimator):
     """Make sure that an estimator implements the necessary methods."""
+    if not is_classifier(estimator):
+        raise ValueError("The base_estimator should be a classifier!")
 
     if not hasattr(estimator, "predict_proba"):
         raise ValueError("The base_estimator should implement predict_proba!")
@@ -79,6 +82,8 @@ class SelfTrainingClassifier(BaseEstimator):
     Computational Linguistics, Stroudsburg, PA, USA, 189-196. DOI:
     https://doi.org/10.3115/981658.981684
     """
+    _estimator_type = "classifier"
+
     def __init__(self,
                  base_estimator,
                  threshold=0.75,

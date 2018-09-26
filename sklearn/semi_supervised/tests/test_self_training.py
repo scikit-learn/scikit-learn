@@ -12,6 +12,9 @@ from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris
 from sklearn.utils import check_random_state
+from sklearn.linear_model import Lasso
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
 
 # Author: Oliver Rausch <rauscho@ethz.ch>
 # License: BSD 3 clause
@@ -165,3 +168,10 @@ def test_no_unlabeled():
     # Assert that all samples were labeled in iteration 0 (since there were no
     # unlabeled samples).
     assert(np.where(st.y_labeled_iter_ != 0)[0].size == 0)
+
+
+def test_non_classifiers():
+    for est in [Lasso(), KMeans(), PCA(), [1, 2, 3], "I'm not a classifier"]:
+        st = SelfTrainingClassifier(est)
+        msg = "The base_estimator should be a classifier!"
+        assert_raise_message(ValueError, msg, st.fit, X_train, y_train)
