@@ -1189,3 +1189,79 @@ These changes mostly affect library developers.
 - Estimators are now checked for whether ``sample_weight=None`` equates to
   ``sample_weight=np.ones(...)``.
   :issue:`11558` by :user:`Sergul Aydore <sergulaydore>`.
+
+
+Code and Documentation Contributors
+-----------------------------------
+
+Thanks to everyone who has contributed to the maintenance and improvement of the
+project since version 0.19, including:
+
+211217613, Aarshay Jain, absolutelyNoWarranty, Adam Greenhall, Adam Kleczewski,
+Adam Richie-Halford, adelr, AdityaDaflapurkar, Adrin Jalali, Aidan Fitzgerald,
+aishgrt1, Akash Shivram, Alan Liddell, Alan Yee, Albert Thomas, Alexander
+Lenail, Alexander-N, Alexandre Boucaud, Alexandre Gramfort, Alexandre Sevin,
+Alex Egg, Alvaro Perez-Diaz, Amanda, Aman Dalmia, Andreas Bjerre-Nielsen,
+Andreas Mueller, Andrew Peng, Angus Williams, Aniruddha Dave, annaayzenshtat,
+Anthony Gitter, Antonio Quinonez, Anubhav Marwaha, Arik Pamnani, Arthur Ozga,
+Artiem K, Arunava, Arya McCarthy, Attractadore, Aurélien Bellet, Aurélien
+Geron, Ayush Gupta, Balakumaran Manoharan, Bangda Sun, Barry Hart, Bastian
+Venthur, Ben Lawson, Benn Roth, Breno Freitas, Brent Yi, brett koonce, Caio
+Oliveira, Camil Staps, cclauss, Chady Kamar, Charlie Brummitt, Charlie Newey,
+chris, Chris, Chris Catalfo, Chris Foster, Chris Holdgraf, Christian Braune,
+Christian Hirsch, Christian Hogan, Christopher Jenness, Clement Joudet, cnx,
+cwitte, Dallas Card, Dan Barkhorn, Daniel, Daniel Ferreira, Daniel Gomez,
+Daniel Klevebring, Danielle Shwed, Daniel Mohns, Danil Baibak, Darius Morawiec,
+David Beach, David Burns, David Kirkby, David Nicholson, David Pickup, Derek,
+Didi Bar-Zev, diegodlh, Dillon Gardner, Dillon Niederhut, dilutedsauce,
+dlovell, Dmitry Mottl, Dmitry Petrov, Dor Cohen, Douglas Duhaime, Ekaterina
+Tuzova, Eric Chang, Eric Dean Sanchez, Erich Schubert, Eunji, Fang-Chieh Chou,
+FarahSaeed, felix, Félix Raimundo, fenx, filipj8, FrankHui, Franz Wompner,
+Freija Descamps, frsi, Gabriele Calvo, Gael Varoquaux, Gaurav Dhingra, Georgi
+Peev, Gil Forsyth, Giovanni Giuseppe Costa, gkevinyen5418, goncalo-rodrigues,
+Gryllos Prokopis, Guillaume Lemaitre, Guillaume "Vermeille" Sanchez, Gustavo De
+Mari Pereira, hakaa1, Hanmin Qin, Henry Lin, Hong, Honghe, Hossein Pourbozorg,
+Hristo, Hunan Rostomyan, iampat, Ivan PANICO, Jaewon Chung, Jake VanderPlas,
+jakirkham, James Bourbeau, James Malcolm, Jamie Cox, Jan Koch, Jan Margeta, Jan
+Schlüter, janvanrijn, Jason Wolosonovich, JC Liu, Jeb Bearer, jeremiedbb, Jimmy
+Wan, Jinkun Wang, Jiongyan Zhang, jjabl, jkleint, Joan Massich, Joël Billaud,
+Joel Nothman, Johannes Hansen, JohnStott, Jonatan Samoocha, Jonathan Ohayon,
+Jörg Döpfert, Joris Van den Bossche, Jose Perez-Parras Toledano, josephsalmon,
+jotasi, jschendel, Julian Kuhlmann, Julien Chaumond, julietcl, Justin Shenk,
+Karl F, Kasper Primdal Lauritzen, Katrin Leinweber, Kirill, ksemb, Kuai Yu,
+Kumar Ashutosh, Kyeongpil Kang, Kye Taylor, kyledrogo, Leland McInnes, Léo DS,
+Liam Geron, Liutong Zhou, Lizao Li, lkjcalc, Loic Esteve, louib, Luciano Viola,
+Lucija Gregov, Luis Osa, Luis Pedro Coelho, Luke M Craig, Luke Persola, Mabel,
+Mabel Villalba, Maniteja Nandana, MarkIwanchyshyn, Mark Roth, Markus Müller,
+MarsGuy, Martin Gubri, martin-hahn, martin-kokos, mathurinm, Matthias Feurer,
+Max Copeland, Mayur Kulkarni, Meghann Agarwal, Melanie Goetz, Michael A.
+Alcorn, Minghui Liu, Ming Li, Minh Le, Mohamed Ali Jamaoui, Mohamed Maskani,
+Mohammad Shahebaz, Muayyad Alsadi, Nabarun Pal, Nagarjuna Kumar, Naoya Kanai,
+Narendran Santhanam, NarineK, Nathaniel Saul, Nathan Suh, Nicholas Nadeau,
+P.Eng.,  AVS, Nick Hoh, Nicolas Goix, Nicolas Hug, Nicolau Werneck,
+nielsenmarkus11, Nihar Sheth, Nikita Titov, Nilesh Kevlani, Nirvan Anjirbag,
+notmatthancock, nzw, Oleksandr Pavlyk, oliblum90, Oliver Rausch, Olivier
+Grisel, Oren Milman, Osaid Rehman Nasir, pasbi, Patrick Fernandes, Patrick
+Olden, Paul Paczuski, Pedro Morales, Peter, Peter St. John, pierreablin,
+pietruh, Pinaki Nath Chowdhury, Piotr Szymański, Pradeep Reddy Raamana, Pravar
+D Mahajan, pravarmahajan, QingYing Chen, Raghav RV, Rajendra arora,
+RAKOTOARISON Herilalaina, Rameshwar Bhaskaran, RankyLau, Rasul Kerimov,
+Reiichiro Nakano, Rob, Roman Kosobrodov, Roman Yurchak, Ronan Lamy, rragundez,
+Rüdiger Busche, Ryan, Sachin Kelkar, Sagnik Bhattacharya, Sailesh Choyal, Sam
+Radhakrishnan, Sam Steingold, Samuel Bell, Samuel O. Ronsin, Saqib Nizam
+Shamsi, SATISH J, Saurabh Gupta, Scott Gigante, Sebastian Flennerhag, Sebastian
+Raschka, Sebastien Dubois, Sébastien Lerique, Sebastin Santy, Sergey Feldman,
+Sergey Melderis, Sergul Aydore, Shahebaz, Shalil Awaley, Shangwu Yao, Sharad
+Vijalapuram, Sharan Yalburgi, shenhanc78, Shivam Rastogi, Shu Haoran, siftikha,
+Sinclert Pérez, SolutusImmensus, Somya Anand, srajan paliwal, Sriharsha Hatwar,
+Sri Krishna, Stefan van der Walt, Stephen McDowell, Steven Brown, syonekura,
+Taehoon Lee, Takanori Hayashi, tarcusx, Taylor G Smith, theriley106, Thomas,
+Thomas Fan, Thomas Heavey, Tobias Madsen, tobycheese, Tom Augspurger, Tom Dupré
+la Tour, Tommy, Trevor Stephens, Trishnendu Ghorai, Tulio Casagrande,
+twosigmajab, Umar Farouk Umar, Urvang Patel, Utkarsh Upadhyay, Vadim
+Markovtsev, Varun Agrawal, Vathsala Achar, Vilhelm von Ehrenheim, Vinayak
+Mehta, Vinit, Vinod Kumar L, Viraj Mavani, Viraj Navkal, Vivek Kumar, Vlad
+Niculae, vqean3, Vrishank Bhardwaj, vufg, wallygauze, Warut Vijitbenjaronk,
+wdevazelhes, Wenhao Zhang, Wes Barnett, Will, William de Vazelhes, Will
+Rosenfeld, Xin Xiong, Yiming (Paul) Li, ymazari, Yufeng, Zach Griffith, Zé
+Vinícius, Zhenqing Hu, Zhiqing Xiao, Zijie (ZJ) Poh
