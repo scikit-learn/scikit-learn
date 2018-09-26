@@ -255,6 +255,7 @@ def test_compute_sample_weight_errors():
 
 def test_compute_sample_weight_more_than_32():
     # Non-regression smoke test for #12146
-    y = np.arange(50)
-    weight = compute_sample_weight('balanced', y, indices=np.arange(50))
-    assert len(np.unique(weight))
+    y = np.arange(50)  # more than 32 distinct classes
+    indices = np.arange(50)  # use subsampling
+    weight = compute_sample_weight('balanced', y, indices=indices)
+    assert_array_almost_equal(weight, np.ones(y.shape[0]))
