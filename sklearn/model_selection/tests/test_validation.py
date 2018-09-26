@@ -1393,7 +1393,7 @@ def get_expected_predictions(X, y, cv, classes, est, method):
         est.fit(X[train], y[train])
         expected_predictions_ = func(X[test])
         # To avoid 2 dimensional indexing
-        if method is 'predict_proba':
+        if method == 'predict_proba':
             exp_pred_test = np.zeros((len(test), classes))
         else:
             exp_pred_test = np.full((len(test), classes),
