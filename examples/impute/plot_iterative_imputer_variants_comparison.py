@@ -16,6 +16,9 @@ imputation with `IterativeImputer`::
     RandomForestRegressor: equivalent to missForest in R
     KNeighborsRegressor: comparable to other KNN imputation approaches
 
+Of particular interest is the ability of ``IterativeImputer`` to mimic the
+behavior of missForest, a popular imputation package for R.
+
 The goal is to compare different predictors to see which one is best for
 the `IterativeImputer` when using a ``RandomForestRegressor`` estimator on the
 Boston dataset.
@@ -84,6 +87,7 @@ predictors = [
     RidgeCV(alphas=(1e-7, 0.01, 0.1, 1.0, 10.0)),
     HuberRegressor(),
     DecisionTreeRegressor(random_state=0, max_features='sqrt'),
+    # Random Forest predictor with default values set as in missForest docs
     RandomForestRegressor(random_state=0,
                           n_estimators=100,
                           max_features='sqrt'),
@@ -112,7 +116,7 @@ x_labels = ['Full Data',
             'IterativeImputer w/ KNeighborsRegressor']
 
 # plot boston results
-fig, ax = plt.subplots(figsize=(10, 6))
+fig, ax = plt.subplots(figsize=(14, 6))
 for i, j in enumerate(np.arange(len(mses_boston))):
     ax.barh(j, mses_boston[j], xerr=stds_boston[j], alpha=0.6, align='center')
 
@@ -121,4 +125,5 @@ ax.set_xlabel('MSE')
 ax.set_yticks(np.arange(len(mses_boston)))
 ax.invert_yaxis()
 ax.set_yticklabels(x_labels)
+plt.tight_layout(pad=1)
 plt.show()
