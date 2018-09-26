@@ -226,8 +226,9 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
             # Update alpha and lambda
             rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
-            gamma_ = (np.sum((alpha_ * eigen_vals_) /
-                      (lambda_ + alpha_ * eigen_vals_)))
+            # gamma parameter defined in Bayesian Interpolation (MacKay, 1992)
+            gamma_ = np.sum((alpha_ * eigen_vals_) /
+                            (lambda_ + alpha_ * eigen_vals_))
             lambda_ = ((gamma_ + 2 * lambda_1) /
                        (np.sum(coef_ ** 2) + 2 * lambda_2))
             alpha_ = ((n_samples - gamma_ + 2 * alpha_1) /
