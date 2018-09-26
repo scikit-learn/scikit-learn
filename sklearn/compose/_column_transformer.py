@@ -214,7 +214,7 @@ boolean mask array or callable
 
     def _iter(self, fitted=False, replace_strings=False):
         """
-        Generate (name, trans, X_subset, weight, column) tuples.
+        Generate (name, trans, column, weight) tuples.
 
         If fitted=True, use the fitted transformers, else use the
         user specified transformers updated with converted column names
