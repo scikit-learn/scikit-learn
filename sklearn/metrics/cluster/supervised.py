@@ -852,7 +852,7 @@ def normalized_mutual_info_score(labels_true, labels_pred,
             classes.shape[0] == clusters.shape[0] == 0):
         return 1.0
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    contingency = contingency.astype(np.float64)
+    contingency = contingency.astype(np.float64, copy=False)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred,
                            contingency=contingency)

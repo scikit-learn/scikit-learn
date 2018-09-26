@@ -283,7 +283,7 @@ def test_scikit_vs_scipy():
 
             out = hierarchy.linkage(X, method=linkage)
 
-            children_ = out[:, :2].astype(np.int)
+            children_ = out[:, :2].astype(np.int, copy=False)
             children, _, n_leaves, _ = _TREE_BUILDERS[linkage](X, connectivity)
 
             # Sort the order of child nodes per row for consistency

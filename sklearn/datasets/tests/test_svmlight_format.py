@@ -241,7 +241,7 @@ def test_dump():
                     # where X.astype(dtype) overflows. The result is
                     # then platform dependent and X_dense.astype(dtype) may be
                     # different from X_sparse.astype(dtype).asarray().
-                    X_input = X.astype(dtype)
+                    X_input = X.astype(dtype, copy=False)
 
                     dump_svmlight_file(X_input, y, f, comment="test",
                                        zero_based=zero_based)
@@ -273,13 +273,13 @@ def test_dump():
                         assert_array_almost_equal(
                             X_input_dense, X2_dense, 4)
                         assert_array_almost_equal(
-                            y_dense.astype(dtype), y2, 4)
+                            y_dense.astype(dtype, copy=False), y2, 4)
                     else:
                         # allow a rounding error at the last decimal place
                         assert_array_almost_equal(
                             X_input_dense, X2_dense, 15)
                         assert_array_almost_equal(
-                            y_dense.astype(dtype), y2, 15)
+                            y_dense.astype(dtype, copy=False), y2, 15)
 
 
 def test_dump_multilabel():

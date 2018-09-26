@@ -856,10 +856,12 @@ def test_confusion_matrix_dtype():
     assert_equal(cm.dtype, np.int64)
     # The dtype of confusion_matrix is always 64 bit
     for dtype in [np.bool_, np.int32, np.uint64]:
-        cm = confusion_matrix(y, y, sample_weight=weight.astype(dtype))
+        cm = confusion_matrix(y, y,
+                              sample_weight=weight.astype(dtype, copy=False))
         assert_equal(cm.dtype, np.int64)
     for dtype in [np.float32, np.float64, None, object]:
-        cm = confusion_matrix(y, y, sample_weight=weight.astype(dtype))
+        cm = confusion_matrix(y, y,
+                              sample_weight=weight.astype(dtype, copy=False))
         assert_equal(cm.dtype, np.float64)
 
     # np.iinfo(np.uint32).max should be accumulated correctly

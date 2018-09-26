@@ -480,7 +480,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
 
     if affinity == 'precomputed':
         distances = X[connectivity.row, connectivity.col].astype(
-                'float64', **_astype_copy_false(X))
+            'float64', **_astype_copy_false(X))
     else:
         # FIXME We compute all the distances, while we could have only computed
         # the "interesting" distances
