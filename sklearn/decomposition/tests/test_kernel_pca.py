@@ -374,7 +374,7 @@ def test_kernel_pca_time_and_equivalence():
     X_pred = rng.random_sample((100, n_features))
 
     # Experiments design
-    n_compo_range = [20, 50, 100]
+    n_compo_range = [4, 10, 20]
     arpack_all = False
     n_iter = 3
 
