@@ -150,12 +150,12 @@ def compute_sample_weight(class_weight, y, indices=None):
             y_subsample = y[indices, k]
             classes_subsample = np.unique(y_subsample)
 
-            weight_k = np.choose(np.searchsorted(classes_subsample,
-                                                 classes_full),
-                                 compute_class_weight(class_weight_k,
-                                                      classes_subsample,
-                                                      y_subsample),
-                                 mode='clip')
+            weight_k = np.take(compute_class_weight(class_weight_k,
+                                                    classes_subsample,
+                                                    y_subsample),
+                               np.searchsorted(classes_subsample,
+                                               classes_full),
+                               mode='clip')
 
             classes_missing = set(classes_full) - set(classes_subsample)
         else:
