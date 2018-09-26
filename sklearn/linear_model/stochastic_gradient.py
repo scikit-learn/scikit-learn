@@ -350,7 +350,7 @@ def _prepare_fit_binary(est, y, i):
 
 
 def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
-               pos_weight, neg_weight, sample_weight):
+               pos_weight, neg_weight, sample_weight, validation_mask=None):
     """Fit a single binary classifier.
 
     The i'th class is considered the "positive" class.
@@ -390,6 +390,10 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
 
     sample_weight : numpy array of shape [n_samples, ]
         The weight of each sample
+
+    validation_mask numpy array of shape [n_samples, ] or None
+        Precomputed validation mask in case _fit_binary is called in the
+        context of a one-vs-rest reduction.
     """
     # if average is not true, average_coef, and average_intercept will be
     # unused
@@ -401,7 +405,8 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     penalty_type = est._get_penalty_type(est.penalty)
     learning_rate_type = est._get_learning_rate_type(learning_rate)
 
-    validation_mask = est._make_validation_split(y)
+    if validation_mask is None:
+        validation_mask = est._make_validation_split(y_i)
     classes = np.array([-1, 1], dtype=y_i.dtype)
     validation_score_cb = est._make_validation_score_cb(
         validation_mask, X, y_i, sample_weight, classes=classes)
@@ -616,12 +621,17 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         Each binary classifier predicts one class versus all others. This
         strategy is called OvA (One versus All) or OvR (One versus Rest).
         """
+        # Precompute the validation split using the multiclass labels
+        # to ensure proper balancing of the classes.
+        validation_mask = self._make_validation_split(y)
+
         # Use joblib to fit OvA in parallel.
         result = Parallel(n_jobs=self.n_jobs, prefer="threads",
                           verbose=self.verbose)(
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
                                 max_iter, self._expanded_class_weight[i],
-                                1., sample_weight)
+                                1., sample_weight,
+                                validation_mask=validation_mask)
             for i in range(len(self.classes_)))
 
         # take the maximum of n_iter_ over every binary fit
