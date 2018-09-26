@@ -391,7 +391,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     sample_weight : numpy array of shape [n_samples, ]
         The weight of each sample
 
-    validation_mask numpy array of shape [n_samples, ] or None
+    validation_mask : numpy array of shape [n_samples, ] or None
         Precomputed validation mask in case _fit_binary is called in the
         context of a one-vs-rest reduction.
     """
