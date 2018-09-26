@@ -19,7 +19,7 @@ This example extends the
 :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`
 example.
 """
-# Authors: Oliver Rausch    <oliverrausch99@gmail.com>
+# Authors: Oliver Rausch    <rauscho@ethz.ch>
 #          Patrice Becker   <beckerp@ethz.ch>
 # License: BSD 3 clause
 print(__doc__)
@@ -30,11 +30,12 @@ from sklearn.utils import shuffle
 from sklearn.svm import SVC
 from sklearn.datasets import load_digits
 from sklearn.model_selection import StratifiedKFold
-from sklearn.metrics import f1_score
+from sklearn.metrics import accuracy_score
 
-supervised_score = []
-self_training_score = []
-x_values = []
+cv_folds = 8
+x_values = np.array([250, 500, 750, 1000])
+supervised_scores = np.empty((len(x_values), cv_folds))
+self_training_scores = np.empty_like(supervised_scores)
 
 clf = SVC(probability=True, gamma=0.001)
 self_training_clf = SelfTrainingClassifier(clf, max_iter=10, threshold=0.8)
@@ -42,16 +43,14 @@ self_training_clf = SelfTrainingClassifier(clf, max_iter=10, threshold=0.8)
 X, y = load_digits(return_X_y=True)
 X, y = shuffle(X, y, random_state=42)
 y_true = y.copy()
-for t in range(1000, 0, -250):
-    x_values.append(t)
 
-    lim = t
+for i in range(3, -1, -1):
+    lim = x_values[i]
     y[lim:] = -1
 
-    supervised_score_temp = []
-    self_training_score_temp = []
-
-    skfolds = StratifiedKFold(n_splits=3, random_state=42)
+    # Perform manual cross validation
+    skfolds = StratifiedKFold(n_splits=cv_folds, random_state=42)
+    j = 0
     for train_index, test_index in skfolds.split(X, y):
         X_train = X[train_index]
         y_train = y[train_index]
@@ -59,30 +58,30 @@ for t in range(1000, 0, -250):
         y_test = y[test_index]
         y_test_true = y_true[test_index]
 
-        X_train_filtered = X_train[np.where(y_train != -1)]
-        y_train_filtered = y_train[np.where(y_train != -1)]
+        X_train_filtered = X_train[y_train != -1]
+        y_train_filtered = y_train[y_train != -1]
 
+        # Train the supervised SVC using only data that has labels
         clf.fit(X_train_filtered, y_train_filtered)
         y_pred = clf.predict(X_test)
-        supervised_score_temp.append(f1_score(y_test_true,
-                                              y_pred,
-                                              average='macro'))
+        supervised_scores[i, j] = accuracy_score(y_test_true, y_pred)
 
+        # Train the semi-supervised SVC using all available data (in the fold)
         self_training_clf.fit(X_train, y_train)
         y_pred = self_training_clf.predict(X_test)
-        self_training_score_temp.append(f1_score(y_test_true,
-                                                 y_pred,
-                                                 average='macro'))
+        self_training_scores[i, j] = accuracy_score(y_test_true, y_pred)
+        j = j + 1
 
-    supervised_score.append(np.array(supervised_score_temp).mean())
-    self_training_score.append(np.array(self_training_score_temp).mean())
-
+# Plot the results
 plt.figure(1)
-plt.plot(x_values, supervised_score, label='Supervised (SVC)')
-plt.plot(x_values, self_training_score,
-         label='SelfTrainingClassifier using SVC')
+plt.errorbar(x_values, supervised_scores.mean(axis=1),
+             yerr=supervised_scores.std(axis=1),
+             label='Supervised (SVC)', capsize=2)
+plt.errorbar(x_values, self_training_scores.mean(axis=1),
+             yerr=self_training_scores.std(axis=1),
+             label='SelfTrainingClassifier using SVC', capsize=2)
 plt.legend()
-plt.ylabel("f1_score (macro average)")
+plt.ylabel("Accuracy")
 plt.title("Comparison of classifiers on limited labeled data")
-plt.xlabel("Amount of labeled data")
+plt.xlabel("Amount of labeled samples")
 plt.show()

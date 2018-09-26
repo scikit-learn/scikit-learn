@@ -7,7 +7,7 @@ from ..utils import safe_mask
 
 __all__ = ["SelfTrainingClassifier"]
 
-# Authors: Oliver Rausch   <oliverrausch99@gmail.com>
+# Authors: Oliver Rausch   <rauscho@ethz.ch>
 #          Patrice Becker  <beckerp@ethz.ch>
 # License: BSD 3 clause
 

@@ -13,7 +13,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris
 from sklearn.utils import check_random_state
 
-# Author: Oliver Rausch <oliverrausch99@gmail.com>
+# Author: Oliver Rausch <rauscho@ethz.ch>
 # License: BSD 3 clause
 
 
@@ -34,7 +34,7 @@ y_train_missing_labels = y_train.copy()
 y_train_missing_labels[limit:] = -1
 y_train_missing_labels_strings = y_train_missing_labels.copy()
 mapping = {0: 'A', 1: 'B', 2: 'C', -1: -1}
-np.vectorize(mapping.get)(y_train_missing_labels)
+y_train_missing_strings = np.vectorize(mapping.get)(y_train_missing_labels)
 
 
 def test_classification():
@@ -55,11 +55,10 @@ def test_classification():
             pred = st.predict(X_test)
             proba = st.predict_proba(X_test)
 
-            st1.fit(X_train, y_train_missing_labels_strings)
+            st1.fit(X_train, y_train_missing_strings)
             pred1 = st1.predict(X_test)
             proba1 = st.predict_proba(X_test)
 
-            np.vectorize(mapping.get)(pred1)
             assert_array_equal(pred, pred1)
             assert_array_equal(proba, proba1)
 
