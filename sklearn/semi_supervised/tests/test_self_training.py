@@ -39,19 +39,29 @@ np.vectorize(mapping.get)(y_train_missing_labels)
 
 def test_classification():
     # Check classification for various parameter settings.
+    # Also assert that predictions for strings and numerical labels are equal.
     grid = ParameterGrid({"max_iter": [1, 50, 100],
                           "threshold": [0.0, 0.5, 0.9]})
 
-    for y in (y_train_missing_labels, y_train_missing_labels_strings):
-        for base_estimator in [DummyClassifier(),
-                               DecisionTreeClassifier(),
-                               KNeighborsClassifier(),
-                               SVC(gamma="scale", probability=True)]:
-            for params in grid:
-                st = SelfTrainingClassifier(base_estimator, **params)
-                st.fit(X_train, y)
-                st.predict(X_test)
-                st.predict_proba(X_test)
+    for base_estimator in [DummyClassifier(random_state=0),
+                           DecisionTreeClassifier(random_state=0),
+                           KNeighborsClassifier(),
+                           SVC(gamma="scale", probability=True,
+                               random_state=0)]:
+        for params in grid:
+            st = SelfTrainingClassifier(base_estimator, **params)
+            st1 = SelfTrainingClassifier(base_estimator, **params)
+            st.fit(X_train, y_train_missing_labels)
+            pred = st.predict(X_test)
+            proba = st.predict_proba(X_test)
+
+            st1.fit(X_train, y_train_missing_labels_strings)
+            pred1 = st1.predict(X_test)
+            proba1 = st.predict_proba(X_test)
+
+            np.vectorize(mapping.get)(pred1)
+            assert_array_equal(pred, pred1)
+            assert_array_equal(proba, proba1)
 
 
 def test_missing_predict_proba():
