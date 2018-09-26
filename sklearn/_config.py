@@ -46,7 +46,7 @@ def set_config(assume_finite=None, working_memory=None,
         "quadratic-expansion" is supported.
         Global default: "quadratic-expansion"
 
-        .. versionadded:: 0.20
+        .. versionadded:: 0.21
     """
     if assume_finite is not None:
         _global_config['assume_finite'] = assume_finite
@@ -82,7 +82,7 @@ def config_context(**new_config):
         "quadratic-expansion" is supported.
         Global default: "quadratic-expansion"
 
-        .. versionadded:: 0.20
+        .. versionadded:: 0.21
 
     Notes
     -----

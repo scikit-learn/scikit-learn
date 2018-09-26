@@ -624,12 +624,6 @@ Support for Python 3.3 has been officially dropped.
   When False and both inputs are sparse, will return a sparse matrix.
   :issue:`10999` by :user:`Taylor G Smith <tgsmith61591>`.
 
-- |Feature| Added ``algorithm`` parameter to :func:`metrics.euclidean_distances`
-  to compute Euclidean distances without the quadratic expansion formula,
-  which is slower but more precise numerically, particularly in 32 bit.
-  Also added a global ``euclidean_distances_algorithm`` config parameter
-  with the same effect.  :issue:`12136` by `Roman Yurchak`_.
-
 - |Efficiency| :func:`metrics.silhouette_score` and
   :func:`metrics.silhouette_samples` are more memory efficient and run
   faster. This avoids some reported freezes and MemoryErrors.

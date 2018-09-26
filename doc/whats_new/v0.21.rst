@@ -48,6 +48,15 @@ Support for Python 3.4 and below has been officially dropped.
   to set and that scales better, by :user:`Shane <espg>` and
   :user:`Adrin Jalali <adrinjalali>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| Added ``algorithm`` parameter to :func:`metrics.euclidean_distances`
+  to compute Euclidean distances without the quadratic expansion formula,
+  which is slower but more precise numerically, particularly in 32 bit.
+  Also added a global ``euclidean_distances_algorithm`` config parameter
+  with the same effect.  :issue:`12136` by `Roman Yurchak`_.
+
 Multiple modules
 ................
 

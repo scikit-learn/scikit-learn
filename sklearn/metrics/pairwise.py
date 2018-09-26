@@ -217,7 +217,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
         ``sklearn.get_config()['euclidean_distance_algorithm']`` is used (
         default: "quadratic-expansion")
 
-        .. versionadded:: 0.20
+        .. versionadded:: 0.21
 
     Returns
     -------
