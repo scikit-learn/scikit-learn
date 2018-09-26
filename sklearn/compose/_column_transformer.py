@@ -691,7 +691,7 @@ def make_column_transformer(*transformers, **kwargs):
     This is a shorthand for the ColumnTransformer constructor; it does not
     require, and does not permit, naming the transformers. Instead, they will
     be given names automatically based on their types. It also does not allow
-    weighting.
+    weighting with ``transformer_weights``.
 
     Parameters
     ----------
