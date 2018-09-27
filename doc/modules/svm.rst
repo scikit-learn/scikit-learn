@@ -392,6 +392,11 @@ Tips on Practical Use
   * **Setting C**: ``C`` is ``1`` by default and it's a reasonable default
     choice.  If you have a lot of noisy observations you should decrease it.
     It corresponds to regularize more the estimation.
+    
+    :class:`LinearSVC` and :class`LinearSVR` are less sensitive to ``C`` when
+    ``C`` becomes large, and performance stays the same after a certain 
+    threshold. In fact, large ``C`` values will take more time to train, 
+    sometimes up to 10 times longer.
 
   * Support Vector Machine algorithms are not scale invariant, so **it
     is highly recommended to scale your data**. For example, scale each
