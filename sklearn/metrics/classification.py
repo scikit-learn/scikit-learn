@@ -39,6 +39,7 @@ from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
+from __future__ import division
 
 
 def _check_targets(y_true, y_pred):
@@ -1996,6 +1997,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
 
 
 def calibration_loss(y_true, y_prob, bin_size=2):
+
     """Compute Calibration score by bins.
     The calibration loss is defined as the measure to access the quality of
     learning methods and learned models. A calibration measure based on
@@ -2032,11 +2034,11 @@ def calibration_loss(y_true, y_prob, bin_size=2):
     pos_loss = 0.0
     neg_loss = 0.0
 
-    for bin_start in range(0, len(y_true)-bin_size + 1):
+    for bin_start in range(0, len(y_true) - bin_size + 1):
 
         bin_end = bin_start + bin_size
         actual_per_pos_class = (y_true[bin_start:bin_end]
-                                .sum()) / float(bin_size)
+                                .sum()) / bin_size
         bin_error_pos = abs(y_prob[bin_start:bin_end]
                             - actual_per_pos_class).sum()
         pos_loss += bin_error_pos
