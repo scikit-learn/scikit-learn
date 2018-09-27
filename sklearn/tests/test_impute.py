@@ -4,6 +4,7 @@ import pytest
 
 import numpy as np
 from scipy import sparse
+from scipy.stats import kstest
 
 import io
 
@@ -591,6 +592,28 @@ def test_iterative_imputer_clip():
     assert_allclose(Xt[X != 0], X[X != 0])
 
 
+def test_iterative_imputer_normal_posterior():
+    rng = np.random.RandomState(0)
+
+    X = np.random.random((5, 5))
+    X[0][0] = np.nan
+
+    imputer = IterativeImputer(min_value=0,
+                               max_value=0.5,
+                               sample_posterior=True,
+                               random_state=rng)
+
+    imputer.fit_transform(X)
+    # generate multiple imputations for the single missing value
+    imputations = np.array([imputer.transform(X)[0][0] for _ in range(1000)])
+    mu, sigma = imputations.mean(), imputations.std()
+    ks_statistic, p_value = kstest((imputations-mu)/sigma, 'norm')
+    # we want to fail to reject null hypothesis
+    # null hypothesis: distributions are the same
+    assert ks_statistic < 0.1 or p_value > 0.1, \
+        "The posterior does appear to be normal"
+
+
 @pytest.mark.parametrize(
     "strategy",
     ["mean", "median", "most_frequent"]
@@ -760,6 +783,7 @@ def test_iterative_imputer_error_param():
     imputer = IterativeImputer(n_iter=-1)
     with pytest.raises(ValueError, match='should be a positive integer'):
         imputer.fit_transform(X)
+
 
 @pytest.mark.parametrize(
     "X_fit, X_trans, params, msg_err",
