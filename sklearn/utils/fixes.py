@@ -89,6 +89,10 @@ if sp_version < (0, 15):
 else:
     from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
 
+if sp_version < (0, 17):
+    from ._scipy_truncnorm_backport import truncnorm
+else:
+    from scipy.stats import truncnorm  # noqa
 
 try:  # SciPy >= 0.19
     from scipy.special import comb, logsumexp

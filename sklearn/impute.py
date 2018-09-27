@@ -22,7 +22,7 @@ from .utils import check_array, check_random_state, safe_indexing
 from .utils.sparsefuncs import _get_median
 from .utils.validation import check_is_fitted
 from .utils.validation import FLOAT_DTYPES
-from .utils.fixes import _object_dtype_isnan
+from .utils.fixes import _object_dtype_isnan, truncnorm
 from .utils import is_scalar_nan
 
 from .externals import six
@@ -653,10 +653,10 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             imputed_values[~good_sigmas] = mus[~good_sigmas]
             a = (self._min_value - mus) / sigmas
             b = (self._max_value - mus) / sigmas
-            truncated_normal = stats.truncnorm(a=a,
-                                               b=b,
-                                               loc=mus[good_sigmas],
-                                               scale=sigmas[good_sigmas])
+            truncated_normal = truncnorm(a=a,
+                                         b=b,
+                                         loc=mus[good_sigmas],
+                                         scale=sigmas[good_sigmas])
             imputed_values[good_sigmas] = truncated_normal.rvs(
                                                random_state=self.random_state_)
         else:
