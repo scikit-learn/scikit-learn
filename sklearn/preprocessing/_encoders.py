@@ -421,9 +421,9 @@ class OneHotEncoder(_BaseEncoder):
         dtype = getattr(X, 'dtype', None)
         X = check_array(X, dtype=np.int)
         if np.any(X < 0):
-            raise ValueError("X needs to contain only non-negative integers, "
-                             "this behavior is now deprecated. New behaviour "
-                             "supports negative input. Instantiate using "
+            raise ValueError("X needs to contain only non-negative integers,"
+                             "this behavior is now deprecated. New behaviour"
+                             "supports negative input. Instantiate using"
                              "`categories='auto'`.")
         n_samples, n_features = X.shape
         if (isinstance(self.n_values, six.string_types) and
@@ -507,9 +507,9 @@ class OneHotEncoder(_BaseEncoder):
         """Assumes X contains only categorical features."""
         X = check_array(X, dtype=np.int)
         if np.any(X < 0):
-            raise ValueError("X needs to contain only non-negative integers, "
-                             "this behavior is now deprecated. New behaviour "
-                             "supports negative input. Instantiate using "
+            raise ValueError("X needs to contain only non-negative integers,"
+                             "this behavior is now deprecated. New behaviour"
+                             "supports negative input. Instantiate using"
                              "`categories='auto'`.")
         n_samples, n_features = X.shape
 
