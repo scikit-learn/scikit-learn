@@ -45,7 +45,9 @@ and will store the coefficients :math:`w` of the linear model in its
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
     >>> reg.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
+    ...                                       # doctest: +NORMALIZE_WHITESPACE
+    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=None,
+                     normalize=False)
     >>> reg.coef_
     array([0.5, 0.5])
 
@@ -773,15 +775,20 @@ The "saga" solver [7]_ is a variant of "sag" that also supports the
 non-smooth `penalty="l1"` option. This is therefore the solver of choice
 for sparse multinomial logistic regression.
 
-In a nutshell, one may choose the solver with the following rules:
+In a nutshell, the following table summarizes the solvers characteristics:
 
-=================================  =====================================
-Case                               Solver
-=================================  =====================================
-L1 penalty                         "liblinear" or "saga"
-Multinomial loss                   "lbfgs", "sag", "saga" or "newton-cg"
-Very Large dataset (`n_samples`)   "sag" or "saga"
-=================================  =====================================
+============================   ===========  =======  ===========  =====  ======
+solver                         'liblinear'  'lbfgs'  'newton-cg'  'sag'  'saga'
+============================   ===========  =======  ===========  =====  ======
+Multinomial + L2 penalty       no           yes      yes          yes    yes
+OVR + L2 penalty               yes          yes      yes          yes    yes
+Multinomial + L1 penalty       no           no       no           no     yes
+OVR + L1 penalty               yes          no       no           no     yes
+============================   ===========  =======  ===========  =====  ======
+Penalize the intercept (bad)   yes          no       no           no     no
+Faster for large datasets      no           no       no           yes    yes
+Robust to unscaled datasets    yes          yes      yes          no     no
+============================   ===========  =======  ===========  =====  ======
 
 The "saga" solver is often the best choice. The "liblinear" solver is
 used by default for historical reasons.

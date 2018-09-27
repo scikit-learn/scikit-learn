@@ -10,11 +10,12 @@ import warnings
 import numpy as np
 from scipy import sparse
 
+from .. import get_config as _get_config
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..utils import check_array
 from ..utils import deprecated
-from ..utils.fixes import _argmax
+from ..utils.fixes import _argmax, _object_dtype_isnan
 from ..utils.validation import check_is_fitted
 
 from .base import _transform_selected
@@ -37,13 +38,29 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
     """
 
-    def _fit(self, X, handle_unknown='error'):
+    def _check_X(self, X):
+        """
+        Perform custom check_array:
+        - convert list of strings to object dtype
+        - check for missing values for object dtype data (check_array does
+          not do that)
 
+        """
         X_temp = check_array(X, dtype=None)
         if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
             X = check_array(X, dtype=np.object)
         else:
             X = X_temp
+
+        if X.dtype == np.dtype('object'):
+            if not _get_config()['assume_finite']:
+                if _object_dtype_isnan(X).any():
+                    raise ValueError("Input contains NaN")
+
+        return X
+
+    def _fit(self, X, handle_unknown='error'):
+        X = self._check_X(X)
 
         n_samples, n_features = X.shape
 
@@ -74,12 +91,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             self.categories_.append(cats)
 
     def _transform(self, X, handle_unknown='error'):
-
-        X_temp = check_array(X, dtype=None)
-        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
-            X = check_array(X, dtype=np.object)
-        else:
-            X = X_temp
+        X = self._check_X(X)
 
         _, n_features = X.shape
         X_int = np.zeros_like(X, dtype=np.int)
@@ -381,7 +393,7 @@ class OneHotEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_feature]
+        X : array-like, shape [n_samples, n_features]
             The data to determine the categories of each feature.
 
         Returns
@@ -462,13 +474,17 @@ class OneHotEncoder(_BaseEncoder):
     def fit_transform(self, X, y=None):
         """Fit OneHotEncoder to X, then transform X.
 
-        Equivalent to self.fit(X).transform(X), but more convenient and more
-        efficient. See fit for the parameters, transform for the return value.
+        Equivalent to fit(X).transform(X) but more convenient.
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_feature]
-            Input array of type int.
+        X : array-like, shape [n_samples, n_features]
+            The data to encode.
+
+        Returns
+        -------
+        X_out : sparse matrix if sparse=True else a 2-d array
+            Transformed input.
         """
         if self.handle_unknown not in ('error', 'ignore'):
             msg = ("handle_unknown should be either 'error' or 'ignore', "

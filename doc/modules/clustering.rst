@@ -838,9 +838,9 @@ algorithm builds a *reachability* graph, which assigns each sample both a
 ``reachability_`` distance, and a spot within the cluster ``ordering_``
 attribute; these two attributes are assigned when the model is fitted, and are
 used to determine cluster membership. If OPTICS is run with the default value
-of *inf* set for ``max_bound``, then DBSCAN style cluster extraction can be
+of *inf* set for ``max_eps``, then DBSCAN style cluster extraction can be
 performed in linear time for any given ``eps`` value using the
-``extract_dbscan`` method. Setting ``max_bound`` to a lower value will result
+``extract_dbscan`` method. Setting ``max_eps`` to a lower value will result
 in shorter run times, and can be thought of as the maximum cluster object size
 (in diameter) that OPTICS will be able to extract.
 
@@ -892,10 +892,10 @@ larger parent cluster.
     shorter run time than OPTICS; however, for repeated runs at varying ``eps``
     values, a single run of OPTICS may require less cumulative runtime than
     DBSCAN. It is also important to note that OPTICS output can be unstable at
-    ``eps`` values very close to the initial ``max_bound`` value. OPTICS seems
+    ``eps`` values very close to the initial ``max_eps`` value. OPTICS seems
     to produce near identical results to DBSCAN provided that ``eps`` passed to
     ``extract_dbscan`` is a half order of magnitude less than the inital
-    ``max_bound`` that was used to fit; using a value close to ``max_bound``
+    ``max_eps`` that was used to fit; using a value close to ``max_eps``
     will throw a warning, and using a value larger will result in an exception. 
 
 .. topic:: Computational Complexity
@@ -909,7 +909,7 @@ larger parent cluster.
     multithreaded, and has better algorithmic runtime complexity than OPTICS--
     at the cost of worse memory scaling. For extremely large datasets that
     exhaust system memory using HDBSCAN, OPTICS will maintain *n* (as opposed
-    to *n^2* memory scaling); however, tuning of the ``max_bound`` parameter
+    to *n^2* memory scaling); however, tuning of the ``max_eps`` parameter
     will likely need to be used to give a solution in a reasonable amount of
     wall time.
 

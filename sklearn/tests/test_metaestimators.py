@@ -37,9 +37,9 @@ DELEGATING_METAESTIMATORS = [
                       est, param_distributions={'param': [5]}, cv=2, n_iter=1),
                   skip_methods=['score']),
     DelegatorData('RFE', RFE,
-                  skip_methods=['transform', 'inverse_transform', 'score']),
+                  skip_methods=['transform', 'inverse_transform']),
     DelegatorData('RFECV', RFECV,
-                  skip_methods=['transform', 'inverse_transform', 'score']),
+                  skip_methods=['transform', 'inverse_transform']),
     DelegatorData('BaggingClassifier', BaggingClassifier,
                   skip_methods=['transform', 'inverse_transform', 'score',
                                 'predict_proba', 'predict_log_proba',
@@ -101,7 +101,7 @@ def test_metaestimator_delegation():
             return np.ones(X.shape[0])
 
         @hides
-        def score(self, X, *args, **kwargs):
+        def score(self, X, y, *args, **kwargs):
             self._check_fit()
             return 1.0
 
@@ -120,15 +120,24 @@ def test_metaestimator_delegation():
                         msg="%s does not have method %r when its delegate does"
                             % (delegator_data.name, method))
             # delegation before fit raises a NotFittedError
-            assert_raises(NotFittedError, getattr(delegator, method),
-                          delegator_data.fit_args[0])
+            if method == 'score':
+                assert_raises(NotFittedError, getattr(delegator, method),
+                              delegator_data.fit_args[0],
+                              delegator_data.fit_args[1])
+            else:
+                assert_raises(NotFittedError, getattr(delegator, method),
+                              delegator_data.fit_args[0])
 
         delegator.fit(*delegator_data.fit_args)
         for method in methods:
             if method in delegator_data.skip_methods:
                 continue
             # smoke test delegation
-            getattr(delegator, method)(delegator_data.fit_args[0])
+            if method == 'score':
+                getattr(delegator, method)(delegator_data.fit_args[0],
+                                           delegator_data.fit_args[1])
+            else:
+                getattr(delegator, method)(delegator_data.fit_args[0])
 
         for method in methods:
             if method in delegator_data.skip_methods:

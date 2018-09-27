@@ -2,6 +2,7 @@
 #          Amy X. Zhang <axz@mit.edu>
 # License: BSD 3 clause
 
+from __future__ import print_function, division
 import numpy as np
 import pytest
 
@@ -10,13 +11,26 @@ from sklearn.cluster.optics_ import OPTICS
 from sklearn.cluster.optics_ import _TreeNode, _cluster_tree
 from sklearn.cluster.optics_ import _find_local_maxima
 from sklearn.metrics.cluster import contingency_matrix
+from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster.dbscan_ import DBSCAN
 from sklearn.utils.testing import assert_equal, assert_warns
-from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_allclose
+from sklearn.utils import _IS_32BIT
 
 from sklearn.cluster.tests.common import generate_clustered_data
+
+
+rng = np.random.RandomState(0)
+n_points_per_cluster = 250
+C1 = [-5, -2] + .8 * rng.randn(n_points_per_cluster, 2)
+C2 = [4, -1] + .1 * rng.randn(n_points_per_cluster, 2)
+C3 = [1, -2] + .2 * rng.randn(n_points_per_cluster, 2)
+C4 = [-2, 3] + .3 * rng.randn(n_points_per_cluster, 2)
+C5 = [3, -2] + 1.6 * rng.randn(n_points_per_cluster, 2)
+C6 = [5, 6] + 2 * rng.randn(n_points_per_cluster, 2)
+X = np.vstack((C1, C2, C3, C4, C5, C6))
 
 
 def test_correct_number_of_clusters():
@@ -26,11 +40,29 @@ def test_correct_number_of_clusters():
     X = generate_clustered_data(n_clusters=n_clusters)
     # Parameters chosen specifically for this task.
     # Compute OPTICS
-    clust = OPTICS(max_bound=5.0 * 6.0, min_samples=4, metric='euclidean')
+    clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4, metric='euclidean')
     clust.fit(X)
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(clust.labels_)) - int(-1 in clust.labels_)
     assert_equal(n_clusters_1, n_clusters)
+
+    # check attribute types and sizes
+    assert clust.core_sample_indices_.ndim == 1
+    assert clust.core_sample_indices_.size > 0
+    assert clust.core_sample_indices_.dtype.kind == 'i'
+
+    assert clust.labels_.shape == (len(X),)
+    assert clust.labels_.dtype.kind == 'i'
+
+    assert clust.reachability_.shape == (len(X),)
+    assert clust.reachability_.dtype.kind == 'f'
+
+    assert clust.core_distances_.shape == (len(X),)
+    assert clust.core_distances_.dtype.kind == 'f'
+
+    assert clust.ordering_.shape == (len(X),)
+    assert clust.ordering_.dtype.kind == 'i'
+    assert set(clust.ordering_) == set(range(len(X)))
 
 
 def test_minimum_number_of_sample_check():
@@ -40,7 +72,7 @@ def test_minimum_number_of_sample_check():
 
     # Compute OPTICS
     X = [[1, 1]]
-    clust = OPTICS(max_bound=5.0 * 0.3, min_samples=10)
+    clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10)
 
     # Run the fit
     assert_raise_message(ValueError, msg, clust.fit, X)
@@ -50,7 +82,7 @@ def test_empty_extract():
     # Test extract where fit() has not yet been run.
     msg = ("This OPTICS instance is not fitted yet. Call 'fit' with "
            "appropriate arguments before using this method.")
-    clust = OPTICS(max_bound=5.0 * 0.3, min_samples=10)
+    clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10)
     assert_raise_message(ValueError, msg, clust.extract_dbscan, 0.01)
 
 
@@ -62,7 +94,7 @@ def test_bad_extract():
                                 cluster_std=0.4, random_state=0)
 
     # Compute OPTICS
-    clust = OPTICS(max_bound=5.0 * 0.003, min_samples=10)
+    clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10)
     clust2 = clust.fit(X)
     assert_raise_message(ValueError, msg, clust2.extract_dbscan, 0.3)
 
@@ -75,7 +107,7 @@ def test_close_extract():
                                 cluster_std=0.4, random_state=0)
 
     # Compute OPTICS
-    clust = OPTICS(max_bound=1.0, min_samples=10)
+    clust = OPTICS(max_eps=1.0, min_samples=10)
     clust3 = clust.fit(X)
     # check warning when centers are passed
     assert_warns(RuntimeWarning, clust3.extract_dbscan, .3)
@@ -116,27 +148,36 @@ def test_dbscan_optics_parity(eps, min_samples):
 
 def test_auto_extract_hier():
     # Tests auto extraction gets correct # of clusters with varying density
-
-    # Generate sample data
-    rng = np.random.RandomState(0)
-    n_points_per_cluster = 250
-
-    C1 = [-5, -2] + .8 * rng.randn(n_points_per_cluster, 2)
-    C2 = [4, -1] + .1 * rng.randn(n_points_per_cluster, 2)
-    C3 = [1, -2] + .2 * rng.randn(n_points_per_cluster, 2)
-    C4 = [-2, 3] + .3 * rng.randn(n_points_per_cluster, 2)
-    C5 = [3, -2] + 1.6 * rng.randn(n_points_per_cluster, 2)
-    C6 = [5, 6] + 2 * rng.randn(n_points_per_cluster, 2)
-    X = np.vstack((C1, C2, C3, C4, C5, C6))
-
-    # Compute OPTICS
-
-    clust = OPTICS(min_samples=9)
-
-    # Run the fit
-    clust.fit(X)
-
+    clust = OPTICS(min_samples=9).fit(X)
     assert_equal(len(set(clust.labels_)), 6)
+
+
+# try arbitrary minimum sizes
+@pytest.mark.parametrize('min_cluster_size', range(2, X.shape[0] // 10, 23))
+def test_min_cluster_size(min_cluster_size):
+    redX = X[::10]  # reduce for speed
+    clust = OPTICS(min_samples=9, min_cluster_size=min_cluster_size).fit(redX)
+    cluster_sizes = np.bincount(clust.labels_[clust.labels_ != -1])
+    if cluster_sizes.size:
+        assert min(cluster_sizes) >= min_cluster_size
+    # check behaviour is the same when min_cluster_size is a fraction
+    clust_frac = OPTICS(min_samples=9,
+                        min_cluster_size=min_cluster_size / redX.shape[0])
+    clust_frac.fit(redX)
+    assert_array_equal(clust.labels_, clust_frac.labels_)
+
+
+@pytest.mark.parametrize('min_cluster_size', [0, -1, 1.1, 2.2])
+def test_min_cluster_size_invalid(min_cluster_size):
+    clust = OPTICS(min_cluster_size=min_cluster_size)
+    with pytest.raises(ValueError, match="must be a positive integer or a "):
+        clust.fit(X)
+
+
+def test_min_cluster_size_invalid2():
+    clust = OPTICS(min_cluster_size=len(X) + 1)
+    with pytest.raises(ValueError, match="must be no greater than the "):
+        clust.fit(X)
 
 
 @pytest.mark.parametrize("reach, n_child, members", [
@@ -168,23 +209,7 @@ def test_cluster_sigmin_pruning(reach, n_child, members):
 def test_reach_dists():
     # Tests against known extraction array
 
-    rng = np.random.RandomState(0)
-    n_points_per_cluster = 250
-
-    C1 = [-5, -2] + .8 * rng.randn(n_points_per_cluster, 2)
-    C2 = [4, -1] + .1 * rng.randn(n_points_per_cluster, 2)
-    C3 = [1, -2] + .2 * rng.randn(n_points_per_cluster, 2)
-    C4 = [-2, 3] + .3 * rng.randn(n_points_per_cluster, 2)
-    C5 = [3, -2] + 1.6 * rng.randn(n_points_per_cluster, 2)
-    C6 = [5, 6] + 2 * rng.randn(n_points_per_cluster, 2)
-    X = np.vstack((C1, C2, C3, C4, C5, C6))
-
-    # Compute OPTICS
-
-    clust = OPTICS(min_samples=10, metric='minkowski')
-
-    # Run the fit
-    clust.fit(X)
+    clust = OPTICS(min_samples=10, metric='minkowski').fit(X)
 
     # Expected values, matches 'RD' results from:
     # http://chemometria.us.edu.pl/download/optics.py
@@ -405,4 +430,22 @@ def test_reach_dists():
          1.364861, 0.459580, 1.025370, 0.980304, 0.607592, 0.533907, 1.134650,
          0.446161, 0.629962]
 
-    assert_array_almost_equal(clust.reachability_, np.array(v))
+    # FIXME: known failure in 32bit Linux; numerical imprecision results in
+    # different ordering in quick_scan
+    if _IS_32BIT:  # pragma: no cover
+        assert_allclose(clust.reachability_, np.array(v), rtol=1e-2)
+    else:
+        # we compare to truncated decimals, so use atol
+        assert_allclose(clust.reachability_, np.array(v), atol=1e-5)
+
+
+def test_precomputed_dists():
+    redX = X[::10]
+    dists = pairwise_distances(redX, metric='euclidean')
+    clust1 = OPTICS(min_samples=10, algorithm='brute',
+                    metric='precomputed').fit(dists)
+    clust2 = OPTICS(min_samples=10, algorithm='brute',
+                    metric='euclidean').fit(redX)
+
+    assert_allclose(clust1.reachability_, clust2.reachability_)
+    assert_array_equal(clust1.labels_, clust2.labels_)

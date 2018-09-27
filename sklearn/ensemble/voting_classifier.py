@@ -59,9 +59,11 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         predicted class labels (`hard` voting) or class probabilities
         before averaging (`soft` voting). Uses uniform weights if `None`.
 
-    n_jobs : int, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for ``fit``.
-        If -1, then the number of jobs is set to the number of cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     flatten_transform : bool, optional (default=None)
         Affects shape of transform output only when voting='soft'
@@ -90,7 +92,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.naive_bayes import GaussianNB
     >>> from sklearn.ensemble import RandomForestClassifier, VotingClassifier
-    >>> clf1 = LogisticRegression(random_state=1)
+    >>> clf1 = LogisticRegression(solver='lbfgs', multi_class='multinomial',
+    ...                           random_state=1)
     >>> clf2 = RandomForestClassifier(n_estimators=50, random_state=1)
     >>> clf3 = GaussianNB()
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
@@ -121,7 +124,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     >>>
     """
 
-    def __init__(self, estimators, voting='hard', weights=None, n_jobs=1,
+    def __init__(self, estimators, voting='hard', weights=None, n_jobs=None,
                  flatten_transform=None):
         self.estimators = estimators
         self.voting = voting

@@ -104,12 +104,33 @@ class EmpiricalCovariance(BaseEstimator):
 
     Attributes
     ----------
+    location_ : array-like, shape (n_features,)
+        Estimated location, i.e. the estimated mean.
+
     covariance_ : 2D ndarray, shape (n_features, n_features)
         Estimated covariance matrix
 
     precision_ : 2D ndarray, shape (n_features, n_features)
         Estimated pseudo-inverse matrix.
         (stored only if store_precision is True)
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import EmpiricalCovariance
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> real_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> np.random.seed(0)
+    >>> X = np.random.multivariate_normal(mean=[0, 0],
+    ...                                   cov=real_cov,
+    ...                                   size=500)
+    >>> cov = EmpiricalCovariance().fit(X)
+    >>> cov.covariance_ # doctest: +ELLIPSIS
+    array([[0.7569..., 0.2818...],
+           [0.2818..., 0.3928...]])
+    >>> cov.location_
+    array([0.0622..., 0.0193...])
 
     """
     def __init__(self, store_precision=True, assume_centered=False):

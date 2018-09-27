@@ -279,7 +279,7 @@
 
     {%- if pagename != "install" %}
       <p class="doc-version"><b>{{project}} v{{ release|e }}</b><br/>
-      <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
+      <a href="http://scikit-learn.org/dev/versions.html">Other versions</a></p>
     {%- endif %}
     <p class="citing">Please <b><a href="{{ pathto('about').replace('#', '') }}#citing-scikit-learn" style="font-size: 110%;">cite us </a></b>if you use the software.</p>
     {{ toc }}
@@ -340,17 +340,13 @@
      </div>
 
     {% if theme_google_analytics|tobool %}
-    <script type="text/javascript">
-      var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-22606712-2']);
-      _gaq.push(['_trackPageview']);
-
-      (function() {
-        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-      })();
+    <script>
+        window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+        ga('create', 'UA-22606712-2', 'auto');
+        ga('set', 'anonymizeIp', true);
+        ga('send', 'pageview');
     </script>
+    <script async src='https://www.google-analytics.com/analytics.js'></script>
     {% endif %}
     <script>
       (function() {

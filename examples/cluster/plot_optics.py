@@ -68,8 +68,8 @@ for k, c in zip(range(0, 5), color):
     Rk = reachability[labels == k]
     ax1.plot(Xk, Rk, c, alpha=0.3)
 ax1.plot(space[labels == -1], reachability[labels == -1], 'k.', alpha=0.3)
-ax1.plot(space, np.full_like(space, 0.75), 'k-', alpha=0.5)
-ax1.plot(space, np.full_like(space, 0.25), 'k-.', alpha=0.5)
+ax1.plot(space, np.full_like(space, 0.75, dtype=float), 'k-', alpha=0.5)
+ax1.plot(space, np.full_like(space, 0.25, dtype=float), 'k-.', alpha=0.5)
 ax1.set_ylabel('Reachability (epsilon distance)')
 ax1.set_title('Reachability Plot')
 
