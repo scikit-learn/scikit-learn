@@ -17,6 +17,10 @@ enhancements to features released in 0.20.0.
   ``n_jobs > 1``.
   :issue:`12159` by :user:`Olivier Grisel <ogrisel>`.
 
+- |Fix| Fixed a bug mostly affecting :class:`ensemble.RandomForestClassifier`
+  where ``class_weight='balanced_subsample'`` failed with more than 32 classes.
+  :issue:`12165` by `Joel Nothman`_.
+
 - |Fix| :func:`linear_model.SGDClassifier` and variants
   with ``early_stopping=True`` would not use a consistent validation
   split in the multiclass case and this would cause a crash when using

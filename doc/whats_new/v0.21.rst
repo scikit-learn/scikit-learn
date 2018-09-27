@@ -48,14 +48,6 @@ Support for Python 3.4 and below has been officially dropped.
   to set and that scales better, by :user:`Shane <espg>` and
   :user:`Adrin Jalali <adrinjalali>`.
 
-:mod:`sklearn.ensemble`
-.......................
-
-- |Fix| Fixed a bug mostly affecting :class:`ensemble.RandomForestClassifier`
-  where ``class_weight='balanced_subsample'`` failed with more than 32 classes.
-  :issue:`12165` by `Joel Nothman`_.
-
-
 Multiple modules
 ................
 
