@@ -58,7 +58,7 @@ class truncnorm_gen(rv_continuous):
     `truncnorm` takes :math:`a` and :math:`b` as shape parameters.
     """
     def __init__(self, seed=None, name=None, **kwds):
-        super(rv_continuous, self).__init__(**kwds)
+        super(truncnorm_gen, self).__init__(**kwds)
         self._random_state = check_random_state(seed)
 
     def _argcheck(self, a, b):
@@ -183,5 +183,6 @@ class truncnorm_gen(rv_continuous):
             The frozen distribution.
         """
         return rv_frozen_patch(self, *args, **kwds)
+
 
 truncnorm = truncnorm_gen(name='truncnorm')
