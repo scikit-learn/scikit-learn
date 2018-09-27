@@ -4,6 +4,7 @@
 #
 import numbers
 
+import numpy as np
 from .fixes import sp_version
 if sp_version < (0, 14):
     from scipy.stats.distributions import rv_frozen, rv_continuous
@@ -12,8 +13,8 @@ if sp_version < (0, 14):
 else:
     from scipy.stats._distn_infrastructure import rv_frozen, rv_continuous
     from scipy.stats._continuous_distns import (_norm_cdf, _norm_sf, _norm_pdf,
-                                           _norm_logpdf, _norm_isf, _norm_ppf)
-import numpy as np
+                                                _norm_logpdf, _norm_isf,
+                                                _norm_ppf)
 
 __all__ = ['truncnorm']
 
