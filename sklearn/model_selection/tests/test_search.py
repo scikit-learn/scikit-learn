@@ -1686,7 +1686,7 @@ def test__custom_fit_no_run_search():
         def fit(self, X, y=None, groups=None, **fit_params):
             return self
 
-    ccv = NoRunSearchSearchCV(SVC()).fit(X, y)
+    ccv = NoRunSearchSearchCV(SVC(), cv=5).fit(X, y)
 
     class BadSearchCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
@@ -1694,7 +1694,7 @@ def test__custom_fit_no_run_search():
 
     with pytest.raises(NotImplementedError,
                        match="_run_search not implemented."):
-        ccv = BadSearchCV(SVC()).fit(X, y)
+        ccv = BadSearchCV(SVC(), cv=5).fit(X, y)
 
 
 def test_deprecated_grid_search_iid():
