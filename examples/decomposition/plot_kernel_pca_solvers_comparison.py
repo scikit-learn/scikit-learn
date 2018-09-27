@@ -9,7 +9,7 @@ sufficient.
 """
 print(__doc__)
 
-# Authors: Sylvain Marié
+# Authors: Sylvain MARIE
 # License: BSD 3 clause
 
 from datetime import datetime

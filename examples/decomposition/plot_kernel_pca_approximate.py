@@ -11,7 +11,7 @@ from datetime import datetime
 
 print(__doc__)
 
-# Authors: Sylvain Marié
+# Authors: Sylvain MARIE
 # License: BSD 3 clause
 
 import numpy as np
