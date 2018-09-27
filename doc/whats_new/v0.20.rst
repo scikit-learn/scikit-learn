@@ -23,6 +23,11 @@ enhancements to features released in 0.20.0.
   those estimators as part of parallel parameter search or cross-validation.
   :issue:`12122` by :user:`Olivier Grisel <ogrisel>`.
 
+- |Fix| force the parallelism backend to :code:`threading` for
+  :class:`neighbors.KDTree` and :class:`neighbors.BallTree` in Python 2.7 to
+  avoid pickling errors caused by the serialization of their methods.
+  :issue:`12171` by :user:`Thomas Moreau <tomMoral>`
+
 .. _changes_0_20:
 
 Version 0.20.0
