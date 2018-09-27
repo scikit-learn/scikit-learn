@@ -610,7 +610,7 @@ def test_iterative_imputer_normal_posterior():
     ks_statistic, p_value = kstest((imputations-mu)/sigma, 'norm')
     # we want to fail to reject null hypothesis
     # null hypothesis: distributions are the same
-    assert ks_statistic < 0.1 or p_value > 0.1, \
+    assert ks_statistic < 0.15 or p_value > 0.1, \
         "The posterior does appear to be normal"
 
 
