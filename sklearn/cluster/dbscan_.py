@@ -146,7 +146,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
         # set the diagonal to explicit values, as a point is its own neighbor
         with ignore_warnings():
-            X.setdiag(X.diagonal()) # XXX: modifies X's internals in-place
+            X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
 
         X_mask = X.data <= eps
         masked_indices = X.indices.astype(np.intp, copy=False)[X_mask]
