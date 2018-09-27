@@ -12,20 +12,35 @@ Version 0.20.1
 This is a bug-fix release with some minor documentation improvements and
 enhancements to features released in 0.20.0.
 
+Changelog
+---------
+
+:mod:`sklearn.cluster`
+......................
+
 - |Efficiency| make :class:`cluster.MeanShift` no longer try to do nested
   parallelism as the overhead would hurt performance significantly when
   ``n_jobs > 1``.
   :issue:`12159` by :user:`Olivier Grisel <ogrisel>`.
 
+:mod:`sklearn.ensemble`
+.......................
+
 - |Fix| Fixed a bug mostly affecting :class:`ensemble.RandomForestClassifier`
   where ``class_weight='balanced_subsample'`` failed with more than 32 classes.
   :issue:`12165` by `Joel Nothman`_.
+
+:mod:`sklearn.linear_model`
+...........................
 
 - |Fix| :func:`linear_model.SGDClassifier` and variants
   with ``early_stopping=True`` would not use a consistent validation
   split in the multiclass case and this would cause a crash when using
   those estimators as part of parallel parameter search or cross-validation.
   :issue:`12122` by :user:`Olivier Grisel <ogrisel>`.
+
+:mod:`sklearn.neighbors`
+........................
 
 - |Fix| force the parallelism backend to :code:`threading` for
   :class:`neighbors.KDTree` and :class:`neighbors.BallTree` in Python 2.7 to
