@@ -5,7 +5,7 @@
 import numbers
 
 from .fixes import sp_version
-if sp_version < (0, 16):
+if sp_version < (0, 14):
     from scipy.stats.distributions import rv_frozen, rv_continuous
     from scipy.stats.distributions import (_norm_cdf, _norm_sf, _norm_pdf,
                                            _norm_logpdf, _norm_isf, _norm_ppf)
