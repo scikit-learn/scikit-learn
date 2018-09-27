@@ -595,7 +595,7 @@ def test_iterative_imputer_clip():
 def test_iterative_imputer_normal_posterior():
     rng = np.random.RandomState(0)
 
-    X = np.random.random((5, 5))
+    X = rng.random_sample((5, 5))
     X[0][0] = np.nan
 
     imputer = IterativeImputer(min_value=0,
