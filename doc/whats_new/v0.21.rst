@@ -17,7 +17,7 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- :class:`cluster.DBSCAN` (bug fix)
+- please add class and reason here (see version 0.20 what's new)
 
 Details are listed in the changelog below.
 
@@ -47,10 +47,6 @@ Support for Python 3.4 and below has been officially dropped.
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>` and
   :user:`Adrin Jalali <adrinjalali>`.
-
-- |Fix| Fixed a bug in :class:`cluster.DBSCAN` with precomputed sparse neighbors
-  graph, which would add explicitly zeros on the diagonal even when already
-  present. :issue:`12105` by `Tom Dupre la Tour`_.
 
 Multiple modules
 ................
