@@ -4,7 +4,6 @@ from ..base import BaseEstimator, clone
 from ..utils.validation import check_X_y, check_array, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils import safe_mask
-from ..base import is_classifier
 
 __all__ = ["SelfTrainingClassifier"]
 
@@ -13,13 +12,13 @@ __all__ = ["SelfTrainingClassifier"]
 # License: BSD 3 clause
 
 
-def _check_estimator(estimator):
+def _validate_estimator(estimator):
     """Make sure that an estimator implements the necessary methods."""
-    if not is_classifier(estimator):
-        raise ValueError("The base_estimator should be a classifier!")
+    if estimator is None:
+        raise ValueError("base_estimator cannot be None")
 
     if not hasattr(estimator, "predict_proba"):
-        raise ValueError("The base_estimator should implement predict_proba!")
+        raise ValueError("base_estimator should implement predict_proba!")
 
 
 class SelfTrainingClassifier(BaseEstimator):
@@ -112,7 +111,7 @@ class SelfTrainingClassifier(BaseEstimator):
         self: returns an instance of self.
         """
         X, y = check_X_y(X, y)
-        _check_estimator(self.base_estimator)
+        _validate_estimator(self.base_estimator)
         self.base_estimator_ = clone(self.base_estimator)
 
         if not 0 <= self.max_iter:

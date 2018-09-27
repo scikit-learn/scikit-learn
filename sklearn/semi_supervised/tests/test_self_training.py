@@ -12,9 +12,6 @@ from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris
 from sklearn.utils import check_random_state
-from sklearn.linear_model import Lasso
-from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
 
 # Author: Oliver Rausch <rauscho@ethz.ch>
 # License: BSD 3 clause
@@ -66,20 +63,11 @@ def test_classification():
             assert_array_equal(proba, proba1)
 
 
-def test_string_lists():
-    # Another test for string support
-    x = [[1, 2], [2, 3], [3, 4], [4, 5]]
-    y = ['a', 'b', 'c', 'd']
-    base_estimator = SVC(gamma="scale", probability=True)
-    self_training = SelfTrainingClassifier(base_estimator)
-    self_training.fit(x, y)
-
-
 def test_missing_predict_proba():
     # Check that an error is thrown if predict_proba is not implemented
     base_estimator = SVC(gamma="scale")
     self_training = SelfTrainingClassifier(base_estimator)
-    message = "The base_estimator should implement predict_proba!"
+    message = "base_estimator should implement predict_proba!"
     assert_raise_message(ValueError, message, self_training.fit, X_train,
                          y_train)
 
@@ -125,13 +113,6 @@ def test_notfitted():
     assert_raise_message(NotFittedError, msg, st.predict_proba, X_train)
 
 
-def test_fitted():
-    # Sanity check to see that no errors are thrown
-    st = SelfTrainingClassifier(KNeighborsClassifier())
-    st.fit(X_train, y_train_missing_labels)
-    st.predict(X_train)
-
-
 def test_y_labeled_iter():
     # Check that the amount of datapoints labeled in iteration 0 is equal to
     # the amount of labeled datapoints we passed.
@@ -170,8 +151,7 @@ def test_no_unlabeled():
     assert(np.where(st.y_labeled_iter_ != 0)[0].size == 0)
 
 
-def test_non_classifiers():
-    for est in [Lasso(), KMeans(), PCA(), [1, 2, 3], "I'm not a classifier"]:
-        st = SelfTrainingClassifier(est)
-        msg = "The base_estimator should be a classifier!"
-        assert_raise_message(ValueError, msg, st.fit, X_train, y_train)
+def test_none():
+    st = SelfTrainingClassifier(None)
+    msg = "base_estimator cannot be None"
+    assert_raise_message(ValueError, msg, st.fit, X_train, y_train)
