@@ -612,7 +612,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 if score[0] < score[1]:
                     evaluate_candidates([{'C': 0.1}])
         """
-        raise NotImplementedError()
+        raise NotImplementedError("_run_search not implemented.")
 
     def fit(self, X, y=None, groups=None, **fit_params):
         """Run fit with all sets of parameters.
