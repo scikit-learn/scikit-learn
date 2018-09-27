@@ -37,7 +37,7 @@ x_values = np.array([250, 500, 750, 1000])
 supervised_scores = np.empty((len(x_values), cv_folds))
 self_training_scores = np.empty_like(supervised_scores)
 
-clf = SVC(probability=True, gamma=0.001)
+clf = SVC(probability=True, gamma=0.001, random_state=42)
 self_training_clf = SelfTrainingClassifier(clf, max_iter=10, threshold=0.8)
 
 X, y = load_digits(return_X_y=True)
@@ -80,7 +80,7 @@ plt.errorbar(x_values, supervised_scores.mean(axis=1),
 plt.errorbar(x_values, self_training_scores.mean(axis=1),
              yerr=self_training_scores.std(axis=1),
              label='SelfTrainingClassifier using SVC', capsize=2)
-plt.legend()
+plt.legend(loc=4)
 plt.ylabel("Accuracy")
 plt.title("Comparison of classifiers on limited labeled data")
 plt.xlabel("Amount of labeled samples")

@@ -13,6 +13,7 @@ from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris
 from sklearn.utils import check_random_state
+from sklearn.preprocessing import LabelBinarizer
 
 # Author: Oliver Rausch <rauscho@ethz.ch>
 # License: BSD 3 clause
@@ -37,10 +38,15 @@ y_train_missing_labels_strings = y_train_missing_labels.copy()
 mapping = {0: 'A', 1: 'B', 2: 'C', -1: -1}
 y_train_missing_strings = np.vectorize(mapping.get)(y_train_missing_labels)
 
+lb = LabelBinarizer()
+y_train_missing_dummies = lb.fit_transform(y_train_missing_labels)
+
+
 
 def test_classification():
     # Check classification for various parameter settings.
     # Also assert that predictions for strings and numerical labels are equal.
+    # Also test for multioutput classification
     grid = ParameterGrid({"max_iter": [1, 50, 100],
                           "threshold": [0.0, 0.5, 0.9]})
 
