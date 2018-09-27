@@ -48,6 +48,7 @@ r_time = np.empty((len(n_compo_range), n_iter)) * np.nan
 # loop
 for j, n_components in enumerate(n_compo_range):
 
+    n_components = int(n_components)
     print("Performing kPCA with n_components = %i" % n_components)
 
     # A- reference (dense)
