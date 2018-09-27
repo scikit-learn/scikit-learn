@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns_message
 from sklearn.exceptions import NotFittedError
 
 from sklearn.semi_supervised import SelfTrainingClassifier
@@ -50,17 +51,17 @@ def test_classification():
                                random_state=0)]:
         for params in grid:
             st = SelfTrainingClassifier(base_estimator, **params)
-            st1 = SelfTrainingClassifier(base_estimator, **params)
+            st_string = SelfTrainingClassifier(base_estimator, **params)
             st.fit(X_train, y_train_missing_labels)
             pred = st.predict(X_test)
             proba = st.predict_proba(X_test)
 
-            st1.fit(X_train, y_train_missing_strings)
-            pred1 = st1.predict(X_test)
-            proba1 = st.predict_proba(X_test)
+            st_string.fit(X_train, y_train_missing_strings)
+            pred_string = st_string.predict(X_test)
+            proba_string = st_string.predict_proba(X_test)
 
-            assert_array_equal(np.vectorize(mapping.get)(pred), pred1)
-            assert_array_equal(proba, proba1)
+            assert_array_equal(np.vectorize(mapping.get)(pred), pred_string)
+            assert_array_equal(proba, proba_string)
 
 
 def test_missing_predict_proba():
@@ -144,7 +145,8 @@ def test_no_unlabeled():
     knn = KNeighborsClassifier()
     knn.fit(X_train, y_train)
     st = SelfTrainingClassifier(knn)
-    st.fit(X_train, y_train)
+    msg = "y contains no unlabeled samples"
+    assert_warns_message(RuntimeWarning, msg, st.fit, X_train, y_train)
     assert_array_equal(knn.predict(X_test), st.predict(X_test))
     # Assert that all samples were labeled in iteration 0 (since there were no
     # unlabeled samples).
@@ -154,4 +156,5 @@ def test_no_unlabeled():
 def test_none():
     st = SelfTrainingClassifier(None)
     msg = "base_estimator cannot be None"
-    assert_raise_message(ValueError, msg, st.fit, X_train, y_train)
+    assert_raise_message(ValueError, msg, st.fit, X_train,
+                         y_train_missing_labels)

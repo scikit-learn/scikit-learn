@@ -4,6 +4,7 @@ from ..base import BaseEstimator, clone
 from ..utils.validation import check_X_y, check_array, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils import safe_mask
+import warnings
 
 __all__ = ["SelfTrainingClassifier"]
 
@@ -124,6 +125,9 @@ class SelfTrainingClassifier(BaseEstimator):
             has_label = y != '-1'
         else:
             has_label = y != -1
+
+        if np.logical_and.reduce(has_label):
+            warnings.warn(RuntimeWarning("y contains no unlabeled samples"))
 
         self.y_labels_ = np.copy(y)
         self.y_labeled_iter_ = np.full_like(y, -1)
