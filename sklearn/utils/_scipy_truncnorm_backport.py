@@ -56,8 +56,8 @@ class truncnorm_gen(rv_continuous):
         a, b = (myclip_a - my_mean) / my_std, (myclip_b - my_mean) / my_std
     `truncnorm` takes :math:`a` and :math:`b` as shape parameters.
     """
-    def __init__(self, seed=None, **kwds):
-        super().__init__(**kwds)
+    def __init__(self, seed=None, name=None, **kwds):
+        super(rv_continuous, self).__init__(**kwds)
         self._random_state = check_random_state(seed)
 
     def _argcheck(self, a, b):
