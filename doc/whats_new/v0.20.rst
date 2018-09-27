@@ -116,11 +116,17 @@ cannot assure that this list is complete.)
 Known Major Bugs
 ----------------
 
-* :issue:`11924`: :class:`LogisticRegressionCV` with `solver='lbfgs'` and
-  `multi_class='multinomial'` may be non-deterministic or otherwise broken on
-  macOS. This appears to be the case on Travis CI servers, but has not been
-  confirmed on personal MacBooks! This issue has been present in previous
-  releases.
+* :issue:`11924`: :class:`linear_model.LogisticRegressionCV` with
+  `solver='lbfgs'` and `multi_class='multinomial'` may be non-deterministic or
+  otherwise broken on macOS. This appears to be the case on Travis CI servers,
+  but has not been confirmed on personal MacBooks! This issue has been present
+  in previous releases.
+
+* :issue:`9354`: :func:`metrics.pairwise.euclidean_distances` (which is used
+  several times throughout the library) gives results with poor precision,
+  which particularly affects its use with 32-bit float inputs. This became
+  more problematic in versions 0.18 and 0.19 when some algorithms were changed
+  to avoid casting 32-bit data into 64-bit.
 
 Changelog
 ---------
