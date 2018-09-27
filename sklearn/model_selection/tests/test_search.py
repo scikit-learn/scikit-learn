@@ -1678,6 +1678,25 @@ def test_custom_run_search():
                    "Attribute %s not equal" % attr
 
 
+def test__custom_fit_no_run_search():
+    class NoRunSearchSearchCV(BaseSearchCV):
+        def __init__(self, estimator, **kwargs):
+            super().__init__(estimator, **kwargs)
+
+        def fit(self, X, y=None, groups=None, **fit_params):
+            return self
+
+    ccv = NoRunSearchSearchCV(SVC()).fit(X, y)
+
+    class BadSearchCV(BaseSearchCV):
+        def __init__(self, estimator, **kwargs):
+            super().__init__(estimator, **kwargs)
+
+    with pytest.raises(NotImplementedError,
+                       match="_run_search not implemented."):
+        ccv = BadSearchCV(SVC()).fit(X, y)
+
+
 def test_deprecated_grid_search_iid():
     depr_message = ("The default of the `iid` parameter will change from True "
                     "to False in version 0.22")
