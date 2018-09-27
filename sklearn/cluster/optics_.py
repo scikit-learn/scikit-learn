@@ -308,14 +308,16 @@ class OPTICS(BaseEstimator, ClusterMixin):
         Noisy samples are given the label -1.
 
     reachability_ : array, shape (n_samples,)
-        Reachability distances per sample.
+        Reachability distances per sample, indexed by object order. Use
+        ``clust.reachability_[clust.ordering_]`` to access in cluster order.
 
     ordering_ : array, shape (n_samples,)
         The cluster ordered list of sample indices
 
     core_distances_ : array, shape (n_samples,)
-        Distance at which each sample becomes a core point.
-        Points which will never be core have a distance of inf.
+        Distance at which each sample becomes a core point, indexed by object
+        order. Points which will never be core have a distance of inf. Use
+        ``clust.core_distances_[clust.ordering_]`` to access in cluster order.
 
     See also
     --------
