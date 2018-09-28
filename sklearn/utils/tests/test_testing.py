@@ -8,6 +8,8 @@ import numpy as np
 
 from scipy import sparse
 
+import pytest
+
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.testing import (
@@ -209,6 +211,20 @@ def test_ignore_warning():
     assert_warns(DeprecationWarning, context_manager_no_user_warning)
     assert_warns(UserWarning, context_manager_no_deprecation_multiple_warning)
     assert_warns(DeprecationWarning, context_manager_no_user_multiple_warning)
+
+    # Check that passing warning class as first positional argument
+    warning_class = UserWarning
+    match = "'obj' should be a callable.+you should use 'category=UserWarning'"
+
+    with pytest.raises(ValueError, match=match):
+        silence_warnings_func = ignore_warnings(warning_class)(
+            _warning_function)
+        silence_warnings_func()
+
+    with pytest.raises(ValueError, match=match):
+        @ignore_warnings(warning_class)
+        def test():
+            pass
 
 
 class TestWarns(unittest.TestCase):

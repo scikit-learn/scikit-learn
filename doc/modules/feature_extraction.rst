@@ -380,6 +380,37 @@ last document::
   >>> X_2[:, feature_index]     # doctest: +ELLIPSIS
   array([0, 0, 0, 1]...)
 
+.. _stop_words:
+
+Using stop words
+................
+
+Stop words are words like "and", "the", "him", which are presumed to be
+uninformative in representing the content of a text, and which may be
+removed to avoid them being construed as signal for prediction.  Sometimes,
+however, similar words are useful for prediction, such as in classifying
+writing style or personality.
+
+There are several known issues in our provided 'english' stop word list. See
+[NQY18]_.
+
+Please take care in choosing a stop word list.
+Popular stop word lists may include words that are highly informative to
+some tasks, such as *computer*.
+
+You should also make sure that the stop word list has had the same
+preprocessing and tokenization applied as the one used in the vectorizer.
+The word *we've* is split into *we* and *ve* by CountVectorizer's default
+tokenizer, so if *we've* is in ``stop_words``, but *ve* is not, *ve* will
+be retained from *we've* in transformed text.  Our vectorizers will try to
+identify and warn about some kinds of inconsistencies.
+
+.. topic:: References
+
+    .. [NQY18] J. Nothman, H. Qin and R. Yurchak (2018).
+               `"Stop Word Lists in Free Open-source Software Packages"
+               <http://aclweb.org/anthology/W18-2502>`__.
+               In *Proc. Workshop for NLP Open Source Software*.
 
 .. _tfidf:
 
@@ -478,7 +509,7 @@ v{_2}^2 + \dots + v{_n}^2}}`
 For example, we can compute the tf-idf of the first term in the first
 document in the `counts` array as follows:
 
-:math:`n_{d, {\text{term1}}} = 6`
+:math:`n_{d} = 6`
 
 :math:`\text{df}(d, t)_{\text{term1}} = 6`
 
@@ -704,9 +735,9 @@ decide better::
   array([[1, 1, 1, 0, 1, 1, 1, 0],
          [1, 1, 0, 1, 1, 1, 0, 1]])
 
-In the above example, ``'char_wb`` analyzer is used, which creates n-grams
+In the above example, ``char_wb`` analyzer is used, which creates n-grams
 only from characters inside word boundaries (padded with space on each
-side). The ``'char'`` analyzer, alternatively, creates n-grams that
+side). The ``char`` analyzer, alternatively, creates n-grams that
 span across words::
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(5, 5))
@@ -888,7 +919,7 @@ concepts may not map one-to-one onto Lucene concepts.)
 
 To make the preprocessor, tokenizer and analyzers aware of the model
 parameters it is possible to derive from the class and override the
-``build_preprocessor``, ``build_tokenizer``` and ``build_analyzer``
+``build_preprocessor``, ``build_tokenizer`` and ``build_analyzer``
 factory methods instead of passing custom functions.
 
 Some tips and tricks:

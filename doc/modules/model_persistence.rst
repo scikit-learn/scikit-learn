@@ -35,7 +35,7 @@ persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html
   >>> y[0]
   0
 
-In the specific case of scikit-learn, it may be more interesting to use
+In the specific case of scikit-learn, it may be better to use
 joblib's replacement of pickle (``joblib.dump`` & ``joblib.load``),
 which is more efficient on objects that carry large numpy arrays internally as
 is often the case for fitted scikit-learn estimators, but can only pickle to the

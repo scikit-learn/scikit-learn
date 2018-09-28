@@ -98,13 +98,14 @@ Usage examples:
     >>> from sklearn.model_selection import cross_val_score
     >>> iris = datasets.load_iris()
     >>> X, y = iris.data, iris.target
-    >>> clf = svm.SVC(gamma='scale', probability=True, random_state=0)
-    >>> cross_val_score(clf, X, y, scoring='neg_log_loss') # doctest: +ELLIPSIS
-    array([-0.10..., -0.16..., -0.07...])
+    >>> clf = svm.SVC(gamma='scale', random_state=0)
+    >>> cross_val_score(clf, X, y, scoring='recall_macro',
+    ...                 cv=5)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
     >>> model = svm.SVC()
-    >>> cross_val_score(model, X, y, scoring='wrong_choice')
+    >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score', 'average_precision', 'balanced_accuracy', 'brier_score_loss', 'completeness_score', 'explained_variance', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'fowlkes_mallows_score', 'homogeneity_score', 'mutual_info_score', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_mean_squared_log_error', 'neg_median_absolute_error', 'normalized_mutual_info_score', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc', 'v_measure_score']
+    ValueError: 'wrong_choice' is not a valid scoring value. Use sorted(sklearn.metrics.SCORERS.keys()) to get valid options.
 
 .. note::
 
@@ -150,7 +151,8 @@ the :func:`fbeta_score` function::
     >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
     >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.svm import LinearSVC
-    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
+    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
+    ...                     scoring=ftwo_scorer, cv=5)
 
 The second use case is to build a completely custom scorer object
 from a simple python function using :func:`make_scorer`, which can
@@ -176,7 +178,7 @@ Here is an example of building custom scorers, and of using the
     >>> import numpy as np
     >>> def my_custom_loss_func(y_true, y_pred):
     ...     diff = np.abs(y_true - y_pred).max()
-    ...     return np.log(1 + diff)
+    ...     return np.log1p(diff)
     ...
     >>> # score will negate the return value of my_custom_loss_func,
     >>> # which will be np.log(2), 0.693, given the values for X
@@ -250,13 +252,14 @@ permitted and will require a wrapper to return a single metric::
     >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 1]
     >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
     ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
-    >>> cv_results = cross_validate(svm.fit(X, y), X, y, scoring=scoring)
+    >>> cv_results = cross_validate(svm.fit(X, y), X, y,
+    ...                             scoring=scoring, cv=5)
     >>> # Getting the test set true positive scores
-    >>> print(cv_results['test_tp'])          # doctest: +NORMALIZE_WHITESPACE
-    [16 14  9]
+    >>> print(cv_results['test_tp'])  # doctest: +NORMALIZE_WHITESPACE
+    [10  9  8  7  8]
     >>> # Getting the test set false negative scores
-    >>> print(cv_results['test_fn'])          # doctest: +NORMALIZE_WHITESPACE
-    [1 3 7]
+    >>> print(cv_results['test_fn'])  # doctest: +NORMALIZE_WHITESPACE
+    [0 1 2 3 2]
 
 .. _classification_metrics:
 
@@ -417,65 +420,67 @@ In the multilabel case with binary label indicators: ::
 Balanced accuracy score
 -----------------------
 
-The :func:`balanced_accuracy_score` function computes the
-`balanced accuracy <https://en.wikipedia.org/wiki/Accuracy_and_precision>`_, which
-avoids inflated performance estimates on imbalanced datasets. It is defined as the
-arithmetic mean of `sensitivity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
-(true positive rate) and `specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
-(true negative rate), or the average of `recall scores <https://en.wikipedia.org/wiki/Precision_and_recall>`_
-obtained on either class.
+The :func:`balanced_accuracy_score` function computes the `balanced accuracy
+<https://en.wikipedia.org/wiki/Accuracy_and_precision>`_, which avoids inflated
+performance estimates on imbalanced datasets. It is the macro-average of recall
+scores per class or, equivalently, raw accuracy where each sample is weighted
+according to the inverse prevalence of its true class.
+Thus for balanced datasets, the score is equal to accuracy.
 
-If the classifier performs equally well on either class, this term reduces to the
-conventional accuracy (i.e., the number of correct predictions divided by the total
-number of predictions). In contrast, if the conventional accuracy is above chance only
-because the classifier takes advantage of an imbalanced test set, then the balanced
-accuracy, as appropriate, will drop to 50%.
+In the binary case, balanced accuracy is equal to the arithmetic mean of
+`sensitivity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
+(true positive rate) and `specificity
+<https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_ (true negative
+rate), or the area under the ROC curve with binary predictions rather than
+scores.
 
-If :math:`\hat{y}_i\in\{0,1\}` is the predicted value of
-the :math:`i`-th sample and :math:`y_i\in\{0,1\}` is the corresponding true value,
-then the balanced accuracy is defined as
+If the classifier performs equally well on either class, this term reduces to
+the conventional accuracy (i.e., the number of correct predictions divided by
+the total number of predictions).
+
+In contrast, if the conventional accuracy is above chance only because the
+classifier takes advantage of an imbalanced test set, then the balanced
+accuracy, as appropriate, will drop to :math:`\frac{1}{\text{n\_classes}}`.
+
+The score ranges from 0 to 1, or when ``adjusted=True`` is used, it rescaled to
+the range :math:`\frac{1}{1 - \text{n\_classes}}` to 1, inclusive, with
+performance at random scoring 0.
+
+If :math:`y_i` is the true value of the :math:`i`-th sample, and :math:`w_i`
+is the corresponding sample weight, then we adjust the sample weight to:
 
 .. math::
 
-   \texttt{balanced-accuracy}(y, \hat{y}) = \frac{1}{2} \left(\frac{\sum_i 1(\hat{y}_i = 1 \land y_i = 1)}{\sum_i 1(y_i = 1)} + \frac{\sum_i 1(\hat{y}_i = 0 \land y_i = 0)}{\sum_i 1(y_i = 0)}\right)
+   \hat{w}_i = \frac{w_i}{\sum_j{1(y_j = y_i) w_j}}
 
 where :math:`1(x)` is the `indicator function <https://en.wikipedia.org/wiki/Indicator_function>`_.
+Given predicted :math:`\hat{y}_i` for sample :math:`i`, balanced accuracy is
+defined as:
 
-Under this definition, the balanced accuracy coincides with :func:`roc_auc_score`
-given binary ``y_true`` and ``y_pred``:
+.. math::
 
-  >>> import numpy as np
-  >>> from sklearn.metrics import balanced_accuracy_score, roc_auc_score
-  >>> y_true = [0, 1, 0, 0, 1, 0]
-  >>> y_pred = [0, 1, 0, 0, 0, 1]
-  >>> balanced_accuracy_score(y_true, y_pred)
-  0.625
-  >>> roc_auc_score(y_true, y_pred)
-  0.625
+   \texttt{balanced-accuracy}(y, \hat{y}, w) = \frac{1}{\sum{\hat{w}_i}} \sum_i 1(\hat{y}_i = y_i) \hat{w}_i
 
-(but in general, :func:`roc_auc_score` takes as its second argument non-binary scores).
+With ``adjusted=True``, balanced accuracy reports the relative increase from
+:math:`\texttt{balanced-accuracy}(y, \mathbf{0}, w) =
+\frac{1}{\text{n\_classes}}`.  In the binary case, this is also known as
+`*Youden's J statistic* <https://en.wikipedia.org/wiki/Youden%27s_J_statistic>`_,
+or *informedness*.
 
 .. note::
 
-    Currently this score function is only defined for binary classification problems, you
-    may need to wrap it by yourself if you want to use it for multilabel problems.
+    The multiclass definition here seems the most reasonable extension of the
+    metric used in binary classification, though there is no certain consensus
+    in the literature:
 
-    There is no clear consensus on the definition of a balanced accuracy for the
-    multiclass setting. Here are some definitions that can be found in the literature:
-
-    * Macro-average recall as described in [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_:
-      the recall for each class is computed independently and the average is taken over all classes.
-      In [Guyon2015]_, the macro-average recall is then adjusted to ensure that random predictions
-      have a score of :math:`0` while perfect predictions have a score of :math:`1`.
-      One can compute the macro-average recall using ``recall_score(average="macro")`` in :func:`recall_score`.
+    * Our definition: [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_, where
+      [Guyon2015]_ adopt the adjusted version to ensure that random predictions
+      have a score of :math:`0` and perfect predictions have a score of :math:`1`..
     * Class balanced accuracy as described in [Mosley2013]_: the minimum between the precision
       and the recall for each class is computed. Those values are then averaged over the total
       number of classes to get the balanced accuracy.
-    * Balanced Accuracy as described in [Urbanowicz2015]_: the average of sensitivity and selectivity
+    * Balanced Accuracy as described in [Urbanowicz2015]_: the average of sensitivity and specificity
       is computed for each class and then averaged over total number of classes.
-
-    Note that none of these different definitions are currently implemented within
-    the :func:`balanced_accuracy_score` function.
 
 .. topic:: References:
 
@@ -586,13 +591,15 @@ and inferred labels::
    >>> y_pred = [0, 0, 2, 1, 0]
    >>> target_names = ['class 0', 'class 1', 'class 2']
    >>> print(classification_report(y_true, y_pred, target_names=target_names))
-                precision    recall  f1-score   support
+                 precision    recall  f1-score   support
    <BLANKLINE>
-       class 0       0.67      1.00      0.80         2
-       class 1       0.00      0.00      0.00         1
-       class 2       1.00      0.50      0.67         2
+        class 0       0.67      1.00      0.80         2
+        class 1       0.00      0.00      0.00         1
+        class 2       1.00      0.50      0.67         2
    <BLANKLINE>
-   avg / total       0.67      0.60      0.59         5
+      micro avg       0.60      0.60      0.60         5
+      macro avg       0.56      0.50      0.49         5
+   weighted avg       0.67      0.60      0.59         5
    <BLANKLINE>
 
 .. topic:: Example:

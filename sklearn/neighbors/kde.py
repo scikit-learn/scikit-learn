@@ -121,7 +121,7 @@ class KernelDensity(BaseEstimator):
         X : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
-        sample_weight: array_like, shape (n_samples,), optional
+        sample_weight : array_like, shape (n_samples,), optional
             List of sample weights attached to the data X.
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)

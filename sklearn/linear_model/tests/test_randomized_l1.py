@@ -1,5 +1,6 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
+
 from tempfile import mkdtemp
 import shutil
 
@@ -15,8 +16,8 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
 
 from sklearn.linear_model.randomized_l1 import(lasso_stability_path,
-                                                RandomizedLasso,
-                                                RandomizedLogisticRegression)
+                                               RandomizedLasso,
+                                               RandomizedLogisticRegression)
 
 from sklearn.datasets import load_diabetes, load_iris
 from sklearn.feature_selection import f_regression, f_classif
@@ -56,7 +57,7 @@ def test_randomized_lasso_error_memory():
                           selection_threshold=selection_threshold,
                           memory=tempdir)
     assert_raises_regex(ValueError, "'memory' should either be a string or"
-                        " a sklearn.externals.joblib.Memory instance",
+                        " a sklearn.utils.Memory instance",
                         clf.fit, X, y)
 
 
@@ -111,6 +112,7 @@ def test_randomized_lasso():
     assert_raises(ValueError, clf.fit, X, y)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_randomized_lasso_precompute():
     # Check randomized lasso for different values of precompute
     n_resampling = 20

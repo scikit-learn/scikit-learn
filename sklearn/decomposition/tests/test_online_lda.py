@@ -30,7 +30,7 @@ def _build_sparse_mtx():
     # Create 3 topics and each topic has 3 distinct words.
     # (Each word only belongs to a single topic.)
     n_components = 3
-    block = n_components * np.ones((3, 3))
+    block = np.full((3, 3), n_components, dtype=np.int)
     blocks = [block] * n_components
     X = block_diag(*blocks)
     X = csr_matrix(X)
@@ -176,7 +176,7 @@ def test_invalid_params():
 
 def test_lda_negative_input():
     # test pass dense matrix with sparse negative input.
-    X = -np.ones((5, 10))
+    X = np.full((5, 10), -1.)
     lda = LatentDirichletAllocation()
     regex = r"^Negative values in data passed"
     assert_raises_regexp(ValueError, regex, lda.fit, X)

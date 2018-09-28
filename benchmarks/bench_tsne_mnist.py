@@ -15,7 +15,7 @@ import numpy as np
 import json
 import argparse
 
-from sklearn.externals.joblib import Memory
+from sklearn.utils import Memory
 from sklearn.datasets import fetch_mldata
 from sklearn.manifold import TSNE
 from sklearn.neighbors import NearestNeighbors

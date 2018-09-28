@@ -202,7 +202,7 @@ General Concepts
         We use deprecation to slowly violate our :term:`backwards
         compatibility` assurances, usually to to:
 
-        * change the the default value of a parameter; or
+        * change the default value of a parameter; or
         * remove a parameter, attribute, method, class, etc.
 
         We will ordinarily issue a warning when a deprecated element is used,
@@ -288,6 +288,13 @@ General Concepts
         * For determining some aspects of an estimator's expectations or
           support for some feature, we use :term:`estimator tags` instead of
           duck typing.
+
+    early stopping
+        This consists in stopping an iterative optimization method before the
+        convergence of the training loss, to avoid over-fitting. This is
+        generally done by monitoring the generalization score on a validation
+        set. When available, it is activated through the parameter
+        ``early_stopping`` or by setting a positive :term:`n_iter_no_change`.
 
     estimator instance
         We sometimes use this terminology to distinguish an :term:`estimator`
@@ -1376,6 +1383,8 @@ functions or non-estimator constructors.
         equal weight by giving each sample a weight inversely related
         to its class's prevalence in the training data:
         ``n_samples / (n_classes * np.bincount(y))``.
+        **Note** however that this rebalancing does not take the weight of
+        samples in each class into account.
 
         For multioutput classification, a list of dicts is used to specify
         weights for each output. For example, for four-class multilabel
@@ -1407,7 +1416,8 @@ functions or non-estimator constructors.
         - An iterable yielding train/test splits.
 
         With some exceptions (especially where not using cross validation at
-        all is an option), the default is 3-fold.
+        all is an option), the default is 3-fold and will change to 5-fold
+        in version 0.22.
 
         ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
 
@@ -1454,6 +1464,12 @@ functions or non-estimator constructors.
         input into. See :term:`components_` for the special case of affine
         projection.
 
+    ``n_iter_no_change``
+        Number of iterations with no improvement to wait before stopping the
+        iterative procedure. This is also known as a *patience* parameter. It
+        is typically used with :term:`early stopping` to avoid stopping too
+        early.
+
     ``n_jobs``
         This is used to specify how many concurrent processes/threads should be
         used for parallelized routines.  Scikit-learn uses one processor for
@@ -1463,8 +1479,15 @@ functions or non-estimator constructors.
 
         ``n_jobs`` is an int, specifying the maximum number of concurrently
         running jobs.  If set to -1, all CPUs are used. If 1 is given, no
-        parallel computing code is used at all.  For n_jobs below -1, (n_cpus +
-        1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one are used.
+        joblib level parallelism is used at all, which is useful for
+        debugging. Even with ``n_jobs = 1``, parallelism may occur due to
+        numerical processing libraries (see :ref:`FAQ <faq_mkl_threading>`).
+        For n_jobs below -1, (n_cpus + 1 + n_jobs) are used. Thus for
+        ``n_jobs = -2``, all CPUs but one are used.
+
+        ``n_jobs=None`` means *unset*; it will generally be interpreted as
+        ``n_jobs=1``, unless the current :class:`joblib.Parallel` backend
+        context specifies otherwise.
 
         The use of ``n_jobs``-based parallelism in estimators varies:
 
@@ -1472,7 +1495,7 @@ functions or non-estimator constructors.
           sometimes parallelism happens in prediction (e.g. in random forests).
         * Some parallelism uses a multi-threading backend by default, some
           a multi-processing backend.  It is possible to override the default
-          backend by using :func:`sklearn.externals.joblib.parallel.parallel_backend`.
+          backend by using :func:`sklearn.utils.parallel_backend`.
         * Whether parallel processing is helpful at improving runtime depends
           on many factors, and it's usually a good idea to experiment rather
           than assuming that increasing the number of jobs is always a good

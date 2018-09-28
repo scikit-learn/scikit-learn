@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_allclose
 
 from sklearn.utils.fixes import divide
 from sklearn.utils.fixes import MaskedArray
+from sklearn.utils.fixes import nanmedian
 from sklearn.utils.fixes import nanpercentile
 
 
@@ -29,6 +30,22 @@ def test_masked_array_obj_dtype_pickleable():
         marr_pickled = pickle.loads(pickle.dumps(marr))
         assert_array_equal(marr.data, marr_pickled.data)
         assert_array_equal(marr.mask, marr_pickled.mask)
+
+
+@pytest.mark.parametrize(
+    "axis, expected_median",
+    [(None, 4.0),
+     (0, np.array([1., 3.5, 3.5, 4., 7., np.nan])),
+     (1, np.array([1., 6.]))]
+)
+def test_nanmedian(axis, expected_median):
+    X = np.array([[1, 1, 1, 2, np.nan, np.nan],
+                  [np.nan, 6, 6, 6, 7, np.nan]])
+    median = nanmedian(X, axis=axis)
+    if axis is None:
+        assert median == pytest.approx(expected_median)
+    else:
+        assert_allclose(median, expected_median)
 
 
 @pytest.mark.parametrize(

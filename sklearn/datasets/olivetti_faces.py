@@ -1,6 +1,6 @@
 """Modified Olivetti faces dataset.
 
-The original database was available from
+The original database was available from (now defunct)
 
     http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
 
@@ -8,21 +8,12 @@ The version retrieved here comes in MATLAB format from the personal
 web page of Sam Roweis:
 
     http://www.cs.nyu.edu/~roweis/
-
-There are ten different images of each of 40 distinct subjects. For some
-subjects, the images were taken at different times, varying the lighting,
-facial expressions (open / closed eyes, smiling / not smiling) and facial
-details (glasses / no glasses). All the images were taken against a dark
-homogeneous background with the subjects in an upright, frontal position (with
-tolerance for some side movement).
-
-The original dataset consisted of 92 x 112, while the Roweis version
-consists of 64x64 images.
 """
+
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
 # License: BSD 3 clause
 
-from os.path import exists
+from os.path import dirname, exists, join
 from os import makedirs, remove
 
 import numpy as np
@@ -43,16 +34,21 @@ FACES = RemoteFileMetadata(
     checksum=('b612fb967f2dc77c9c62d3e1266e0c73'
               'd5fca46a4b8906c18e454d41af987794'))
 
-# Grab the module-level docstring to use as a description of the
-# dataset
-MODULE_DOCS = __doc__
-
 
 def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
                          download_if_missing=True):
-    """Loader for the Olivetti faces data-set from AT&T.
+    """Load the Olivetti faces data-set from AT&T (classification).
 
-    Read more in the :ref:`User Guide <olivetti_faces>`.
+    Download it if necessary.
+
+    =================   =====================
+    Classes                                40
+    Samples total                         400
+    Dimensionality                       4096
+    Features            real, between 0 and 1
+    =================   =====================
+
+    Read more in the :ref:`User Guide <olivetti_faces_dataset>`.
 
     Parameters
     ----------
@@ -91,20 +87,6 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
 
     DESCR : string
         Description of the modified Olivetti Faces Dataset.
-
-    Notes
-    ------
-
-    This dataset consists of 10 pictures each of 40 individuals. The original
-    database was available from (now defunct)
-
-        http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
-
-    The version retrieved here comes in MATLAB format from the personal
-    web page of Sam Roweis:
-
-        http://www.cs.nyu.edu/~roweis/
-
     """
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
@@ -140,7 +122,12 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         order = random_state.permutation(len(faces))
         faces = faces[order]
         target = target[order]
+
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'covtype.rst')) as rst_file:
+        fdescr = rst_file.read()
+
     return Bunch(data=faces.reshape(len(faces), -1),
                  images=faces,
                  target=target,
-                 DESCR=MODULE_DOCS)
+                 DESCR=fdescr)

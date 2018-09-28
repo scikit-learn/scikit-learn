@@ -74,7 +74,7 @@ def _split_node(node, threshold, branching_factor):
 
     farthest_idx = np.unravel_index(
         dist.argmax(), (n_clusters, n_clusters))
-    node1_dist, node2_dist = dist[[farthest_idx]]
+    node1_dist, node2_dist = dist[(farthest_idx,)]
 
     node1_closer = node1_dist < node2_dist
     for idx, subcluster in enumerate(node.subclusters_):
@@ -394,7 +394,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     >>> X = [[0, 1], [0.3, 1], [-0.3, 1], [0, -1], [0.3, -1], [-0.3, -1]]
     >>> brc = Birch(branching_factor=50, n_clusters=None, threshold=0.5,
     ... compute_labels=True)
-    >>> brc.fit(X)
+    >>> brc.fit(X) # doctest: +NORMALIZE_WHITESPACE
     Birch(branching_factor=50, compute_labels=True, copy=True, n_clusters=None,
        threshold=0.5)
     >>> brc.predict(X)
