@@ -1,3 +1,6 @@
+"""This module contains the _EstimatorPrettyPrinter class used in
+BaseEstimator.__repr__ for pretty-printing estimators"""
+
 from inspect import signature
 import pprint
 
@@ -16,7 +19,7 @@ class KeyValTupleParam(KeyValTuple):
     pass
 
 
-def changed_params(estimator):
+def _changed_params(estimator):
     """Return dict (param_name: value) of parameters that were given to
     estimator with non-default values."""
 
@@ -36,8 +39,13 @@ def changed_params(estimator):
 class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
     """Pretty Printer class for estimator objects.
 
-    This extends the pprint.PrettyPrinter class. Quick overview of
-    pprint.PrettyPrinter (see also
+    This extends the pprint.PrettyPrinter class, because:
+    - we need estimators to be printed with their parameters, e.g.
+      Estimator(param1=value1, ...) which is not supported by default.
+    - the 'compact' parameter of PrettyPrinter is ignored for dicts, which
+      may lead to very long representations that we want to avoid.
+
+    Quick overview of pprint.PrettyPrinter (see also
     https://stackoverflow.com/questions/49565047/pprint-with-hex-numbers):
 
     - the entry point is the _format() method which calls format() (overridden
@@ -54,7 +62,28 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
       rendering the nested objects of an object (e.g. the elements of a list)
 
     In the end, everything has to be implemented twice: in _safe_repr and in
-    the custom _pprint_TYPE methods.
+    the custom _pprint_TYPE methods. Unfortunately PrettyPrinter is really not
+    straightforward to extend (especially when we want a compact output), so
+    the code is a bit convoluted.
+
+    This class overrides:
+    - format() to support the changed_only parameter
+    - _safe_repr to support printing of estimators (for when they fit on a
+      single line)
+    - _format_dict_items so that dict are correctly 'compacted'
+
+    When estimators cannot be printed on a single line, the builtin _format()
+    will call _pprint_estimator() because it was registered to do so (see
+    _dispatch[BaseEstimator.__repr__] = _pprint_estimator).
+
+    both _format_dict_items() and _pprint_estimator() use the
+    _format_params_or_dict_items() method that will format parameters and
+    key-value pairs respecting the compact parameter. This method needs another
+    subroutine _pprint_key_val_tuple() used when a parameter or a key-value
+    pair is too long to fit on a single line. This subroutine is called in
+    _format() and is registered as well in the _dispatch dict (just like
+    _pprint_estimator). We had to create the two classes KeyValTuple and
+    KeyValTupleParam for this.
     """
 
     def __init__(self, indent=1, width=80, depth=None, stream=None, *,
@@ -76,7 +105,7 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
             indent += len(object.__class__.__name__)
 
         if self._changed_only:
-            params = changed_params(object)
+            params = _changed_params(object)
         else:
             params = object.get_params(deep=False)
 
@@ -248,7 +277,7 @@ def _safe_repr(object, context, maxlevels, level, changed_only=False):
         readable = True
         recursive = False
         if changed_only:
-            params = changed_params(object)
+            params = _changed_params(object)
         else:
             params = object.get_params(deep=False)
         components = []
