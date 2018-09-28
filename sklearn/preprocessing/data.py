@@ -801,6 +801,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 X += self.mean_
         return X
 
+    def _get_tags(self):
+        return _update_tags(super(StandardScaler, self),
+                            missing_values=True)
+
 
 class MaxAbsScaler(BaseEstimator, TransformerMixin):
     """Scale each feature by its maximum absolute value.
@@ -967,6 +971,10 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         else:
             X *= self.scale_
         return X
+
+    def _get_tags(self):
+        return _update_tags(super(MaxAbsScaler, self),
+                            missing_values=True)
 
 
 def maxabs_scale(X, axis=0, copy=True):
@@ -1223,6 +1231,9 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                 X += self.center_
         return X
 
+    def _get_tags(self):
+        return _update_tags(super(RobustScaler, self),
+                            missing_values=True)
 
 def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
                  quantile_range=(25.0, 75.0), copy=True):
@@ -2847,6 +2858,10 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                              .format(valid_methods, self.method))
 
         return X
+
+    def _get_tags(self):
+        return _update_tags(super(PowerTransformer, self),
+                            missing_values=True)
 
 
 def power_transform(X, method='box-cox', standardize=True, copy=True):
