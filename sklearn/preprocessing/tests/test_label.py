@@ -374,6 +374,22 @@ def test_multilabel_binarizer_given_classes():
     mlb = MultiLabelBinarizer(classes=[1, 3, 2])
     assert_array_equal(mlb.fit(inp).transform(inp), indicator_mat)
 
+def test_multilabel_binarizer_multiple_calls():
+    inp = [(2, 3), (1,), (1, 2)]
+    indicator_mat = np.array([[0, 1, 1],
+                              [1, 0, 0],
+                              [1, 0, 1]])
+
+    inp2 = [(1, 2), (1,), (2, 3)]
+    indicator_mat2 = np.array([[1, 0, 1],
+                               [1, 0, 0],
+                               [0, 1, 1]])
+
+    # first call
+    mlb = MultiLabelBinarizer(classes=[1, 3, 2])
+    assert_array_equal(mlb.fit_transform(inp), indicator_mat)
+    #second call change class
+    assert_array_equal(mlb.fit_transform(inp2), indicator_mat2)
 
 def test_multilabel_binarizer_same_length_sequence():
     # Ensure sequences of the same length are not interpreted as a 2-d array
