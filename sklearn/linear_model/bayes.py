@@ -204,7 +204,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         # Convergence loop of the bayesian ridge regression
         for iter_ in range(self.n_iter):
 
-            # Compute posterior mean and posterior covariance:
+            # Compute posterior mean and log det of posterior covariance:
             # posterior covariance is given by 1/alpha_ * scaled_sigma_ where
             # scaled_sigma_ = (lambda_/alpha_ * np.eye(n_features)
             #                  + np.dot(X.T, X))^-1
@@ -226,11 +226,6 @@ class BayesianRidge(LinearModel, RegressorMixin):
                                             dtype=np.array(lambda_).dtype)
                     logdet_sigma_[:n_samples] += alpha_ * eigen_vals_
                     logdet_sigma_ = - np.sum(np.log(logdet_sigma_))
-
-            # Preserve the alpha and lambda values that were used to
-            # calculate the final coefficients
-            self.alpha_ = alpha_
-            self.lambda_ = lambda_
 
             rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
             # Update alpha and lambda according to (MacKay, 1992)
@@ -263,8 +258,21 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self.n_iter_ = iter_ + 1
         self.scores_ = np.array(self.scores_)
 
-        # return posterior mean and posterior covariance
+        # return regularization parameters
+        self.alpha_ = alpha_
+        self.lambda_ = lambda_
+        # and corresponding posterior mean and posterior covariance
+        if n_samples > n_features:
+            coef_ = np.dot(Vh.T,
+                           Vh / (eigen_vals_ +
+                                 lambda_ / alpha_)[:, np.newaxis])
+            coef_ = np.dot(coef_, XT_y)
+        else:
+            coef_ = np.dot(X.T, np.dot(
+                U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
+            coef_ = np.dot(coef_, y)
         self.coef_ = coef_
+
         scaled_sigma_ = np.dot(Vh.T,
                                Vh / (eigen_vals_ +
                                      lambda_ / alpha_)[:, np.newaxis])
