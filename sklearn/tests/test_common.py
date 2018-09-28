@@ -27,6 +27,7 @@ import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
 
 from sklearn.linear_model.base import LinearClassifierMixin
+from sklearn.utils import IS_PYPY
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,
     set_checking_parameters,
@@ -121,10 +122,11 @@ def _tested_non_meta_estimators():
 
 
 def _generate_checks_per_estimator(check_generator, estimators):
-    for name, Estimator in estimators:
-        estimator = Estimator()
-        for check in check_generator(name, estimator):
-            yield name, Estimator, check
+    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
+        for name, Estimator in estimators:
+            estimator = Estimator()
+            for check in check_generator(name, estimator):
+                yield name, Estimator, check
 
 
 def _rename_partial(val):
@@ -160,6 +162,8 @@ def test_no_attributes_set_in_init(name, Estimator):
         check_no_attributes_set_in_init(name, estimator)
 
 
+@ignore_warnings(category=DeprecationWarning)
+# ignore deprecated open(.., 'U') in numpy distutils
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
     # 'configure' functions in the setup.pys in scikit-learn
@@ -215,6 +219,9 @@ def test_import_all_consistency():
     submods = [modname for _, modname, _ in pkgs]
     for modname in submods + ['sklearn']:
         if ".tests." in modname:
+            continue
+        if IS_PYPY and ('_svmlight_format' in modname or
+                        'feature_extraction._hashing' in modname):
             continue
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, '__all__', ()):

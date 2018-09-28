@@ -19,11 +19,11 @@ from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import check_random_state, check_array
 from ..utils import deprecated
+from ..utils.fixes import _Sequence as Sequence
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
 from ..model_selection import check_cv, cross_val_score
-from ..externals.joblib import Parallel, delayed
-import collections
+from ..utils import Parallel, delayed
 
 
 # Helper functions to compute the objective and dual objective functions
@@ -383,6 +383,9 @@ def graphical_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
     alphas : list of positive floats
         The list of regularization parameters, decreasing order.
 
+    cov_init : 2D array (n_features, n_features), optional
+        The initial guess for the covariance.
+
     X_test : 2D array, shape (n_test_samples, n_features), optional
         Optional test matrix to measure generalisation error.
 
@@ -494,6 +497,10 @@ class GraphicalLassoCV(GraphicalLasso):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     tol : positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped.
@@ -513,8 +520,11 @@ class GraphicalLassoCV(GraphicalLasso):
         than number of samples. Elsewhere prefer cd which is more numerically
         stable.
 
-    n_jobs : int, optional
-        number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : boolean, optional
         If verbose is True, the objective function and duality gap are
@@ -563,8 +573,8 @@ class GraphicalLassoCV(GraphicalLasso):
     be close to these missing values.
     """
 
-    def __init__(self, alphas=4, n_refinements=4, cv=None, tol=1e-4,
-                 enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=1,
+    def __init__(self, alphas=4, n_refinements=4, cv='warn', tol=1e-4,
+                 enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=None,
                  verbose=False, assume_centered=False):
         super(GraphicalLassoCV, self).__init__(
             mode=mode, tol=tol, verbose=verbose, enet_tol=enet_tol,
@@ -605,7 +615,7 @@ class GraphicalLassoCV(GraphicalLasso):
         n_alphas = self.alphas
         inner_verbose = max(0, self.verbose - 1)
 
-        if isinstance(n_alphas, collections.Sequence):
+        if isinstance(n_alphas, Sequence):
             alphas = self.alphas
             n_refinements = 1
         else:
@@ -681,7 +691,7 @@ class GraphicalLassoCV(GraphicalLasso):
                 alpha_1 = path[best_index - 1][0]
                 alpha_0 = path[best_index + 1][0]
 
-            if not isinstance(n_alphas, collections.Sequence):
+            if not isinstance(n_alphas, Sequence):
                 alphas = np.logspace(np.log10(alpha_1), np.log10(alpha_0),
                                      n_alphas + 2)
                 alphas = alphas[1:-1]
@@ -897,6 +907,10 @@ class GraphLassoCV(GraphicalLassoCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     tol : positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped.
@@ -916,8 +930,11 @@ class GraphLassoCV(GraphicalLassoCV):
         than number of samples. Elsewhere prefer cd which is more numerically
         stable.
 
-    n_jobs : int, optional
-        number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : boolean, optional
         If verbose is True, the objective function and duality gap are

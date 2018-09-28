@@ -1,3 +1,5 @@
+import pytest
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -185,6 +187,8 @@ def test_ovr_fit_predict_sparse():
         assert_array_equal(dec_pred, clf_sprs.predict(X_test).toarray())
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_ovr_always_present():
     # Test that ovr works with classes that are always present or absent.
     # Note: tests is the case where _ConstantPredictor is utilised
@@ -242,6 +246,8 @@ def test_ovr_multiclass():
         assert_array_equal(y_pred, [0, 0, 1])
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_ovr_binary():
     # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 0, 5], [0, 5, 0], [3, 0, 0], [0, 0, 6], [6, 0, 0]])
@@ -329,6 +335,8 @@ def test_ovr_multilabel_dataset():
                             decimal=2)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_ovr_multilabel_predict_proba():
     base_clf = MultinomialNB(alpha=1)
     for au in (False, True):
@@ -421,6 +429,8 @@ def test_ovr_single_label_decision_function():
                        clf.predict(X_test))
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_ovr_gridsearch():
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     Cs = [0.1, 0.5, 0.8]
@@ -597,6 +607,8 @@ def test_ovo_decision_function():
         assert_greater(len(np.unique(decisions[:, class_idx])), 146)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_ovo_gridsearch():
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     Cs = [0.1, 0.5, 0.8]
@@ -691,6 +703,8 @@ def test_ecoc_fit_predict():
     assert_equal(len(ecoc.estimators_), n_classes * 2)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_ecoc_gridsearch():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
                                 random_state=0)
@@ -741,6 +755,7 @@ def test_pairwise_attribute():
         assert_true(ovr_true._pairwise)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_pairwise_cross_val_score():
     clf_precomputed = svm.SVC(kernel='precomputed')
     clf_notprecomputed = svm.SVC(kernel='linear')

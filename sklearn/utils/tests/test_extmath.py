@@ -500,7 +500,7 @@ def test_incremental_variance_update_formulas():
 
     old_means = X1.mean(axis=0)
     old_variances = X1.var(axis=0)
-    old_sample_count = np.ones(X1.shape[1], dtype=np.int32) * X1.shape[0]
+    old_sample_count = np.full(X1.shape[1], X1.shape[0], dtype=np.int32)
     final_means, final_variances, final_count = \
         _incremental_mean_and_var(X2, old_means, old_variances,
                                   old_sample_count)
@@ -575,8 +575,8 @@ def test_incremental_variance_numerical_stability():
     n_samples = 10000
     x1 = np.array(1e8, dtype=np.float64)
     x2 = np.log(1e-5, dtype=np.float64)
-    A0 = x1 * np.ones((n_samples // 2, n_features), dtype=np.float64)
-    A1 = x2 * np.ones((n_samples // 2, n_features), dtype=np.float64)
+    A0 = np.full((n_samples // 2, n_features), x1, dtype=np.float64)
+    A1 = np.full((n_samples // 2, n_features), x2, dtype=np.float64)
     A = np.vstack((A0, A1))
 
     # Older versions of numpy have different precision
@@ -603,7 +603,7 @@ def test_incremental_variance_numerical_stability():
 
     # Robust implementation: <tol (177)
     mean, var = A0[0, :], np.zeros(n_features)
-    n = np.ones(n_features, dtype=np.int32) * (n_samples // 2)
+    n = np.full(n_features, n_samples // 2, dtype=np.int32)
     for i in range(A1.shape[0]):
         mean, var, n = \
             _incremental_mean_and_var(A1[i, :].reshape((1, A1.shape[1])),
@@ -630,8 +630,8 @@ def test_incremental_variance_ddof():
                 incremental_variances = batch.var(axis=0)
                 # Assign this twice so that the test logic is consistent
                 incremental_count = batch.shape[0]
-                sample_count = (np.ones(batch.shape[1], dtype=np.int32) *
-                                batch.shape[0])
+                sample_count = np.full(batch.shape[1], batch.shape[0],
+                                       dtype=np.int32)
             else:
                 result = _incremental_mean_and_var(
                     batch, incremental_means, incremental_variances,

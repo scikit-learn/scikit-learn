@@ -21,6 +21,7 @@ Wine recognition dataset
  		- Hue
  		- OD280/OD315 of diluted wines
  		- Proline
+
     - class:
             - class_0
             - class_1

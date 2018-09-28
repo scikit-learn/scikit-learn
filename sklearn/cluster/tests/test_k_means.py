@@ -68,7 +68,7 @@ def test_labels_assignment_and_inertia():
     # implementation
     rng = np.random.RandomState(42)
     noisy_centers = centers + rng.normal(size=centers.shape)
-    labels_gold = - np.ones(n_samples, dtype=np.int)
+    labels_gold = np.full(n_samples, -1, dtype=np.int)
     mindist = np.empty(n_samples)
     mindist.fill(np.infty)
     for center_id in range(n_clusters):
@@ -885,7 +885,7 @@ def test_sparse_validate_centers():
     # Test that a ValueError is raised for validate_center_shape
     classifier = KMeans(n_clusters=3, init=centers, n_init=1)
 
-    msg = "The shape of the initial centers \(\(4L?, 4L?\)\) " \
+    msg = r"The shape of the initial centers \(\(4L?, 4L?\)\) " \
           "does not match the number of clusters 3"
     assert_raises_regex(ValueError, msg, classifier.fit, X)
 
@@ -917,7 +917,8 @@ def _sort_centers(centers):
 def test_weighted_vs_repeated():
     # a sample weight of N should yield the same result as an N-fold
     # repetition of the sample
-    sample_weight = np.random.randint(1, 5, size=n_samples)
+    rng = np.random.RandomState(0)
+    sample_weight = rng.randint(1, 5, size=n_samples)
     X_repeat = np.repeat(X, sample_weight, axis=0)
     estimators = [KMeans(init="k-means++", n_clusters=n_clusters,
                          random_state=42),
@@ -968,7 +969,7 @@ def test_sample_weight_length():
     # check that an error is raised when passing sample weights
     # with an incompatible shape
     km = KMeans(n_clusters=n_clusters, random_state=42)
-    assert_raises_regex(ValueError, 'len\(sample_weight\)', km.fit, X,
+    assert_raises_regex(ValueError, r'len\(sample_weight\)', km.fit, X,
                         sample_weight=np.ones(2))
 
 
@@ -979,3 +980,11 @@ def test_check_sample_weight():
     assert_equal(_num_samples(X), _num_samples(checked_sample_weight))
     assert_almost_equal(checked_sample_weight.sum(), _num_samples(X))
     assert_equal(X.dtype, checked_sample_weight.dtype)
+
+
+def test_iter_attribute():
+    # Regression test on bad n_iter_ value. Previous bug n_iter_ was one off
+    # it's right value (#11340).
+    estimator = KMeans(algorithm="elkan", max_iter=1)
+    estimator.fit(np.random.rand(10, 10))
+    assert estimator.n_iter_ == 1

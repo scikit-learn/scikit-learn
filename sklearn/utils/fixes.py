@@ -199,7 +199,16 @@ else:
 
 
 def parallel_helper(obj, methodname, *args, **kwargs):
-    """Workaround for Python 2 limitations of pickling instance methods"""
+    """Workaround for Python 2 limitations of pickling instance methods
+
+    Parameters
+    ----------
+    obj
+    methodname
+    *args
+    **kwargs
+
+    """
     return getattr(obj, methodname)(*args, **kwargs)
 
 
@@ -282,6 +291,19 @@ else:
     from numpy import nanpercentile  # noqa
 
 
+if np_version < (1, 9):
+    def nanmedian(a, axis=None):
+        if axis is None:
+            data = a.reshape(-1)
+            return np.median(np.compress(~np.isnan(data), data))
+        else:
+            data = a.T if not axis else a
+            return np.array([np.median(np.compress(~np.isnan(row), row))
+                             for row in data])
+else:
+    from numpy import nanmedian  # noqa
+
+
 # Fix for behavior inconsistency on numpy.equal for object dtypes.
 # For numpy versions < 1.13, numpy.equal tests element-wise identity of objects
 # instead of equality. This fix returns the mask of NaNs in an array of
@@ -297,3 +319,16 @@ if np.array_equal(_nan_object_mask, np.array([True])):
 else:
     def _object_dtype_isnan(X):
         return np.frompyfunc(lambda x: x != x, 1, 1)(X).astype(bool)
+
+
+# To be removed once this fix is included in six
+try:
+    from collections.abc import Sequence as _Sequence  # noqa
+    from collections.abc import Iterable as _Iterable  # noqa
+    from collections.abc import Mapping as _Mapping  # noqa
+    from collections.abc import Sized as _Sized  # noqa
+except ImportError:  # python <3.3
+    from collections import Sequence as _Sequence  # noqa
+    from collections import Iterable as _Iterable  # noqa
+    from collections import Mapping as _Mapping  # noqa
+    from collections import Sized as _Sized  # noqa

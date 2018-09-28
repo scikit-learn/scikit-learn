@@ -465,7 +465,7 @@ class BaseDiscreteNB(BaseNB):
             self.class_log_prior_ = (np.log(self.class_count_) -
                                      np.log(self.class_count_.sum()))
         else:
-            self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
+            self.class_log_prior_ = np.full(n_classes, -np.log(n_classes))
 
     def _check_alpha(self):
         if np.min(self.alpha) < 0:

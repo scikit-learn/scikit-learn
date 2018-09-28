@@ -22,12 +22,21 @@ import os.path
 import numpy as np
 import scipy.sparse as sp
 
-from ._svmlight_format import _load_svmlight_file
 from .. import __version__
 from ..externals import six
 from ..externals.six import u, b
 from ..externals.six.moves import range, zip
-from ..utils import check_array
+from ..utils import check_array, IS_PYPY
+
+if not IS_PYPY:
+    from ._svmlight_format import _load_svmlight_file
+else:
+    def _load_svmlight_file(*args, **kwargs):
+        raise NotImplementedError(
+                'load_svmlight_file is currently not '
+                'compatible with PyPy (see '
+                'https://github.com/scikit-learn/scikit-learn/issues/11543 '
+                'for the status updates).')
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
@@ -132,7 +141,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     --------
     To use joblib.Memory to cache the svmlight file::
 
-        from sklearn.externals.joblib import Memory
+        from sklearn.utils import Memory
         from sklearn.datasets import load_svmlight_file
         mem = Memory("./mycache")
 
