@@ -5,37 +5,25 @@
 
 import numpy as np
 
-from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import SkipTest
 from sklearn.utils import check_random_state
 from sklearn.linear_model.bayes import BayesianRidge, ARDRegression
 from sklearn.linear_model import Ridge
 from sklearn import datasets
 
 
-def test_bayesian_on_diabetes():
-    # Test BayesianRidge on diabetes
-    raise SkipTest("test_bayesian_on_diabetes is broken")
+def test_bayesian_ridge_scores():
+    """Check scores attribute shape"""
     diabetes = datasets.load_diabetes()
     X, y = diabetes.data, diabetes.target
 
     clf = BayesianRidge(compute_score=True)
-
-    # Test with more samples than features
     clf.fit(X, y)
-    # Test that scores are increasing at each iteration
-    assert_array_equal(np.diff(clf.scores_) > 0, True)
 
-    # Test with more features than samples
-    X = X[:5, :]
-    y = y[:5]
-    clf.fit(X, y)
-    # Test that scores are increasing at each iteration
-    assert_array_equal(np.diff(clf.scores_) > 0, True)
+    assert clf.scores_.shape == (clf.n_iter_,)
 
 
 def test_bayesian_ridge_parameter():

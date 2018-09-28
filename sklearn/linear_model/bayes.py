@@ -21,9 +21,10 @@ from ..utils import check_X_y
 # BayesianRidge regression
 
 class BayesianRidge(LinearModel, RegressorMixin):
-    """Bayesian ridge regression
+    """Bayesian ridge regression.
 
-    Fit a Bayesian ridge model and optimize the regularization parameters
+    Fit a Bayesian ridge model. See the Notes section for details on this
+    implementation and the optimization of the regularization parameters
     lambda (precision of the weights) and alpha (precision of the noise).
 
     Read more in the :ref:`User Guide <bayesian_regression>`.
@@ -55,11 +56,11 @@ class BayesianRidge(LinearModel, RegressorMixin):
         Default is 1.e-6
 
     compute_score : boolean, optional
-        If True, compute the objective function at each step of the model.
-        Default is False
+        If True, compute the log marginal likelihood at each iteration of the
+        optimization. Default is False.
 
     fit_intercept : boolean, optional
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
         Default is True.
@@ -81,20 +82,24 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    coef_ : array, shape = (n_features)
-        Coefficients of the regression model (mean of distribution)
+    coef_ : array, shape = (n_features,)
+        Coefficients of the regression model (mean of distribution).
 
     alpha_ : float
-       estimated precision of the noise.
+       Estimated precision of the noise.
 
     lambda_ : float
-       estimated precision of the weights.
+       Estimated precision of the weights.
 
     sigma_ : array, shape = (n_features, n_features)
-        estimated variance-covariance matrix of the weights
+        Estimated variance-covariance matrix of the weights.
 
-    scores_ : float
-        if computed, value of the objective function (to be maximized)
+    scores_ : array, shape = (n_iter_,)
+        If computed_score, value of the log marginal likelihood (to be
+        maximized) at each iteration of the optimization.
+
+    n_iter_ : int
+        The actual number of iterations to reach the stopping criterion.
 
     Examples
     --------
@@ -110,18 +115,21 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     Notes
     -----
-    For an example, see :ref:`examples/linear_model/plot_bayesian_ridge.py
-    <sphx_glr_auto_examples_linear_model_plot_bayesian_ridge.py>`.
+    There exist several strategies to perform Bayesian ridge regression. This
+    implementation is based on the algorithm described in Appendix A of
+    (Tipping, 2001) where updates of the regularization parameters is done as
+    suggested in (MacKay, 1992). Note that according to A New
+    View of Automatic Relevance Determination (Wipf and Nagarajan, 2008) these
+    update rules do not guarantee that the marginal likelihood is increasing
+    between two consecutive iterations of the optimization.
 
     References
     ----------
     D. J. C. MacKay, Bayesian Interpolation, Computation and Neural Systems,
     Vol. 4, No. 3, 1992.
 
-    R. Salakhutdinov, Lecture notes on Statistical Machine Learning,
-    http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=15
-    Their beta is our ``self.alpha_``
-    Their alpha is our ``self.lambda_``
+    M. E. Tipping, Sparse Bayesian Learning and the Relevance Vector Machine,
+    Journal of Machine Learning Research, Vol. 1, 2001.
     """
 
     def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
@@ -206,14 +214,14 @@ class BayesianRidge(LinearModel, RegressorMixin):
                                Vh / (eigen_vals_ +
                                      lambda_ / alpha_)[:, np.newaxis])
                 coef_ = np.dot(coef_, XT_y)
-                if self.compute_score:  # compute covariance term of the score
+                if self.compute_score:
                     logdet_sigma_ = - np.sum(
                         np.log(lambda_ + alpha_ * eigen_vals_))
             else:
                 coef_ = np.dot(X.T, np.dot(
                     U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
                 coef_ = np.dot(coef_, y)
-                if self.compute_score:  # compute covariance term of the score
+                if self.compute_score:
                     logdet_sigma_ = np.full(n_features, lambda_,
                                             dtype=np.array(lambda_).dtype)
                     logdet_sigma_[:n_samples] += alpha_ * eigen_vals_
@@ -224,9 +232,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
             self.alpha_ = alpha_
             self.lambda_ = lambda_
 
-            # Update alpha and lambda
             rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
-            # gamma parameter defined in Bayesian Interpolation (MacKay, 1992)
+            # Update alpha and lambda according to (MacKay, 1992)
             gamma_ = np.sum((alpha_ * eigen_vals_) /
                             (lambda_ + alpha_ * eigen_vals_))
             lambda_ = ((gamma_ + 2 * lambda_1) /
@@ -252,6 +259,9 @@ class BayesianRidge(LinearModel, RegressorMixin):
                     print("Convergence after ", str(iter_), " iterations")
                 break
             coef_old_ = np.copy(coef_)
+
+        self.n_iter_ = iter_ + 1
+        self.scores_ = np.array(self.scores_)
 
         # return posterior mean and posterior covariance
         self.coef_ = coef_
