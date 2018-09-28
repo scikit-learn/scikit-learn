@@ -92,6 +92,12 @@ op.add_option("--use-hashing",
 op.add_option("--n-features", type=int, default=10000,
               help="Maximum number of features (dimensions)"
                    " to extract from text.")
+op.add_option("--no-remove",
+              action="store_false", dest="remove_extra", default=True,
+              help="Keep 'headers', 'footers', 'quotes'")
+op.add_option("--metric",
+              dest="metric", type="str", default="euclidean",
+              help="Specify the distance metric to use for KMeans.")
 op.add_option("--verbose",
               action="store_true", dest="verbose", default=False,
               help="Print progress reports inside k-means algorithm.")
@@ -126,7 +132,11 @@ categories = [
 print("Loading 20 newsgroups dataset for categories:")
 print(categories)
 
-dataset = fetch_20newsgroups(subset='all', categories=categories,
+remove = ()
+if opts.remove_extra:
+    remove = ('headers', 'footers', 'quotes')
+
+dataset = fetch_20newsgroups(subset='all', categories=categories, remove=remove,
                              shuffle=True, random_state=42)
 
 print("%d documents" % len(dataset.data))
@@ -186,10 +196,10 @@ if opts.n_components:
 
 if opts.minibatch:
     km = MiniBatchKMeans(n_clusters=true_k, init='k-means++', n_init=1,
-                         init_size=1000, batch_size=1000, verbose=opts.verbose)
+                         init_size=1000, batch_size=1000, verbose=opts.verbose, metric=opts.metric)
 else:
     km = KMeans(n_clusters=true_k, init='k-means++', max_iter=100, n_init=1,
-                verbose=opts.verbose)
+                verbose=opts.verbose, metric=opts.metric)
 
 print("Clustering sparse data with %s" % km)
 t0 = time()
