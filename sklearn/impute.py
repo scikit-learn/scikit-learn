@@ -637,5 +637,5 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         return self.fit(X, y).transform(X)
 
     def _get_tags(self):
-        return _update_tags(super(MICEImputer, self),
+        return _update_tags(super(MissingIndicator, self),
                             missing_values=True)
