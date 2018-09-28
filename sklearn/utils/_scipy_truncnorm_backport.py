@@ -40,9 +40,9 @@ def check_random_state(seed):
 
 
 class rv_frozen_patch(rv_frozen):
-    def rvs(self, size=None, **kwds):
+    def rvs(self, size=None, random_state=None, **kwds):
         kwds = self.kwds.copy()
-        kwds.update({'size': size})
+        kwds.update({'size': size, 'random_state': random_state})
         return self.dist.rvs(*self.args, **self.kwds)
 
 
