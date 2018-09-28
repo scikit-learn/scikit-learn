@@ -12,6 +12,7 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 
+from sklearn.externals.six import text_type
 from sklearn.externals.six.moves import zip
 from sklearn.utils import IS_PYPY, _IS_32BIT
 from sklearn.externals.joblib import hash, Memory
