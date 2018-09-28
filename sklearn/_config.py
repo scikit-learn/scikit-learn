@@ -36,6 +36,8 @@ def set_config(assume_finite=None, working_memory=None):
         to this number of MiB (per job when parallelised), often saving both
         computation time and memory on expensive operations that can be
         performed in chunks. Global default: 1024.
+
+    .. versionadded:: 0.19
     """
     if assume_finite is not None:
         _global_config['assume_finite'] = assume_finite
