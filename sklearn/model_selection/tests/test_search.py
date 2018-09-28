@@ -182,7 +182,6 @@ def test_parameter_grid():
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
-
 def test_grid_search():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
@@ -1686,7 +1685,8 @@ def test__custom_fit_no_run_search():
         def fit(self, X, y=None, groups=None, **fit_params):
             return self
 
-    ccv = NoRunSearchSearchCV(SVC(), cv=5).fit(X, y)
+    # this should not raise any exceptions
+    NoRunSearchSearchCV(SVC(), cv=5).fit(X, y)
 
     class BadSearchCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
@@ -1694,7 +1694,8 @@ def test__custom_fit_no_run_search():
 
     with pytest.raises(NotImplementedError,
                        match="_run_search not implemented."):
-        ccv = BadSearchCV(SVC(), cv=5).fit(X, y)
+        # this should raise a NotImplementedError
+        BadSearchCV(SVC(), cv=5).fit(X, y)
 
 
 def test_deprecated_grid_search_iid():
