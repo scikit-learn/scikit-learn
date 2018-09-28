@@ -5,6 +5,7 @@ from inspect import signature
 import pprint
 
 from .base import BaseEstimator
+from ._config import get_config
 
 
 # Dummy classes for correctly rendering key-value tuples from dicts or
@@ -87,12 +88,12 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
     """
 
     def __init__(self, indent=1, width=80, depth=None, stream=None, *,
-                 compact=False, indent_at_name=True, changed_only=False):
+                 compact=False, indent_at_name=True):
         super().__init__(indent, width, depth, stream, compact=compact)
         self._indent_at_name = indent_at_name
         if self._indent_at_name:
             self._indent_per_level = 1  # ignore indent param
-        self._changed_only = changed_only
+        self._changed_only = get_config()['print_changed_only']
 
     def format(self, object, context, maxlevels, level):
         return _safe_repr(object, context, maxlevels, level,

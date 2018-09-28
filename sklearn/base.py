@@ -226,7 +226,7 @@ class BaseEstimator(object):
     def __repr__(self):
         from ._pprint import _EstimatorPrettyPrinter
         pp = _EstimatorPrettyPrinter(compact=True, indent=1,
-                                     indent_at_name=True, changed_only=False)
+                                     indent_at_name=True)
         return '%s' % pp.pformat(self)
 
     def __getstate__(self):
