@@ -33,6 +33,8 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  min_max_axis)
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
+                                
+from ._csr_expansion import csr_expansion
 
 from ._encoders import OneHotEncoder
 
@@ -1443,11 +1445,12 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         ----------
         X : array-like or sparse matrix, shape [n_samples, n_features]
             The data to transform, row by row.
-            Sparse input should preferably be in CSC format.
+            Sparse input should preferably be in CSR format (for speed), but must be in
+            CSC format if the degree is 4 or higher.
 
         Returns
         -------
-        XP : np.ndarray or CSC sparse matrix, shape [n_samples, NP]
+        XP : np.ndarray or CSR/CSC sparse matrix, shape [n_samples, NP]
             The matrix of features, where NP is the number of polynomial
             features generated from the combination of inputs.
         """
@@ -1460,17 +1463,16 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             raise ValueError("X shape does not match training shape")
                     
         if sparse.isspmatrix_csr(X):
-          if self.degree != 2:
-            raise ValueError("Expansions on CSR matrices must be of degree=2")
+          if self.degree > 3:
+            raise ValueError("Expansions on CSR matrices must be of degree 2 or 3")
           to_stack = []
           if self.include_bias:
-            to_stack.append(np.ones(shape=(n_samples, 1)))
+            to_stack.append(np.ones(shape=(n_samples, 1), dtype=X.dtype))
           to_stack.append(X)
-          XP = csr_expansion_deg2(X.data, X.indices, X.indptr,
-                                  n_features, int(self.interaction_only))
-          assert sparse.isspmatrix_csr(XP)
-          to_stack.append(XP)
-          return sparse.hstack(to_stack, format='csr')
+          for deg in range(2, self.degree+1):
+            to_stack.append(csr_expansion(X.data, X.indices, X.indptr,
+                                          n_features, int(self.interaction_only), deg))
+          XP = sparse.hstack(to_stack, format='csr')
         else:
           combinations = self._combinations(n_features, self.degree,
                                             self.interaction_only,

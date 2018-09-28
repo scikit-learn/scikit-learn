@@ -164,17 +164,38 @@ def test_polynomial_feature_names():
                           (2, True, False, np.float64),
                           (3, False, False, np.float64),
                           (3, False, True, np.float64)])
-def test_polynomial_features_sparse_X(deg, include_bias, interaction_only,
-                                      dtype):
+def test_polynomial_features_csc_X(deg, include_bias, interaction_only, dtype):
     rng = np.random.RandomState(0)
     X = rng.randint(0, 2, (100, 2))
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = sparse.csc_matrix(X)
 
-    est = PolynomialFeatures(deg, include_bias=include_bias)
+    est = PolynomialFeatures(deg, include_bias=include_bias,
+                             interaction_only=interaction_only)
     Xt_sparse = est.fit_transform(X_sparse.astype(dtype))
     Xt_dense = est.fit_transform(X.astype(dtype))
 
     assert isinstance(Xt_sparse, sparse.csc_matrix)
+    assert Xt_sparse.dtype == Xt_dense.dtype
+    assert_array_almost_equal(Xt_sparse.A, Xt_dense)
+
+@pytest.mark.parametrize(['deg', 'include_bias', 'interaction_only', 'dtype'],
+                         [(1, True, False, int),
+                          (2, True, False, int),
+                          (2, True, False, np.float32),
+                          (2, True, False, np.float64),
+                          (3, False, False, np.float64),
+                          (3, False, True, np.float64)])
+def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 2, (100, 2))
+    X_sparse = sparse.csr_matrix(X)
+
+    est = PolynomialFeatures(deg, include_bias=include_bias,
+                             interaction_only=interaction_only)
+    Xt_sparse = est.fit_transform(X_sparse.astype(dtype))
+    Xt_dense = est.fit_transform(X.astype(dtype))
+
+    assert isinstance(Xt_sparse, sparse.csr_matrix)
     assert Xt_sparse.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_sparse.A, Xt_dense)
 
