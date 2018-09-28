@@ -48,7 +48,7 @@ def csr_expansion(ndarray[DATA_T, ndim=1] data,
     
     assert degree in (2, 3)
     
-    cdef INDEX_T total_nnz = 0, row_i, nnz_in_row, R
+    cdef INDEX_T total_nnz = 0, row_i, R
   
     # Count how many nonzero elements the expanded matrix will contain.
     for row_i in range(indptr.shape[0]-1):
@@ -56,7 +56,7 @@ def csr_expansion(ndarray[DATA_T, ndim=1] data,
       R = indptr[row_i + 1] - indptr[row_i]
       total_nnz += <INDEX_T>(round((R**3 + 3*R**2 + 2*R)/6 - interaction_only*R**2 \
                                     if degree == 3 else \
-                                    R**2/2 + R/2 - interaction_only*R))
+                                    (R**2 + R)/2 - interaction_only*R))
   
     # Make the arrays that will form the CSR matrix of the expansion.
     cdef ndarray[DATA_T, ndim=1] expanded_data = ndarray(shape=total_nnz,
@@ -71,7 +71,7 @@ def csr_expansion(ndarray[DATA_T, ndim=1] data,
       num_cols_in_row, expanded_column, expanded_dimensionality
     
     expanded_dimensionality = round((D**3 + 3*D**2 + 2*D)/6 - interaction_only*D**2 \
-                                    if degree == 3 else D**2/2 + D/2 - interaction_only*D)
+                                    if degree == 3 else (D**2 + D)/2 - interaction_only*D)
     
     #Calculate the augmented matrix and polynomial expansion features.
     expanded_indptr[0] = indptr[0]
@@ -87,10 +87,8 @@ def csr_expansion(ndarray[DATA_T, ndim=1] data,
             expanded_column = D*i - (i**2 + 3*i) / 2 - 1 + j \
                           if interaction_only else       \
                           D*i - (i**2 + i) / 2 + j
-            assert expanded_column >= 0
-            assert expanded_column < expanded_dimensionality
-            expanded_data[expanded_index] = data[k1] * data[k2]
             expanded_indices[expanded_index] = expanded_column
+            expanded_data[expanded_index] = data[k1] * data[k2]
             expanded_index += 1
             num_cols_in_row += 1
           else:
@@ -102,13 +100,10 @@ def csr_expansion(ndarray[DATA_T, ndim=1] data,
                                  if interaction_only else                                \
                                  (3*D**2*i - 3*D*i**2 + 6*D*j + i**3 - i - 3*j**2 - 3*j) \
                                  /6 + k
-              assert expanded_column >= 0
-              assert expanded_column < expanded_dimensionality
-              expanded_data[expanded_index] = data[k1] * data[k2]
               expanded_indices[expanded_index] = expanded_column
+              expanded_data[expanded_index] = data[k1] * data[k2] * data[k3]
               expanded_index += 1
               num_cols_in_row += 1
-              expanded_data[expanded_index] = data[k1] * data[k2] * data[k3]
     
       expanded_indptr[row_i+1] = expanded_indptr[row_i] + num_cols_in_row
       
