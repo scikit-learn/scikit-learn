@@ -23,6 +23,10 @@ Changelog
   ``n_jobs > 1``.
   :issue:`12159` by :user:`Olivier Grisel <ogrisel>`.
 
+- |Fix| Fixed a bug in :class:`cluster.DBSCAN` with precomputed sparse neighbors
+  graph, which would add explicitly zeros on the diagonal even when already
+  present. :issue:`12105` by `Tom Dupre la Tour`_.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -45,11 +49,7 @@ Changelog
 - |Fix| force the parallelism backend to :code:`threading` for
   :class:`neighbors.KDTree` and :class:`neighbors.BallTree` in Python 2.7 to
   avoid pickling errors caused by the serialization of their methods.
-  :issue:`12171` by :user:`Thomas Moreau <tomMoral>`
-
-- |Fix| Fixed a bug in :class:`cluster.DBSCAN` with precomputed sparse neighbors
-  graph, which would add explicitly zeros on the diagonal even when already
-  present. :issue:`12105` by `Tom Dupre la Tour`_.
+  :issue:`12171` by :user:`Thomas Moreau <tomMoral>`.
 
 .. _changes_0_20:
 
