@@ -23,6 +23,8 @@ def get_config():
 def set_config(assume_finite=None, working_memory=None):
     """Set global scikit-learn configuration
 
+    .. versionadded:: 0.19
+
     Parameters
     ----------
     assume_finite : bool, optional
@@ -37,7 +39,6 @@ def set_config(assume_finite=None, working_memory=None):
         computation time and memory on expensive operations that can be
         performed in chunks. Global default: 1024.
 
-    .. versionadded:: 0.19
     """
     if assume_finite is not None:
         _global_config['assume_finite'] = assume_finite
