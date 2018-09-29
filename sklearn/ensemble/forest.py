@@ -41,9 +41,7 @@ Single and multi-output problems are both handled.
 
 from __future__ import division
 
-from warnings import catch_warnings
-from warnings import simplefilter
-from warnings import warn
+from warnings import catch_warnings, simplefilter, warn
 import threading
 
 from abc import ABCMeta, abstractmethod
