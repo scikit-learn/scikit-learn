@@ -373,7 +373,10 @@ class LedoitWolf(EmpiricalCovariance):
     >>> n_samples, n_features = 4, 8
     >>> X_train = np.random.normal(size=(n_samples, n_features))
     >>> loglik_lw = lw.fit(X_train)
-    >>> print(lw.covariance_)
+    [[ 2.67835459e-03 -3.56430765e-02 -7.41347961e-04 -6.19028549e-02]
+    [-3.56430765e-02  4.74331856e-01  9.86572957e-03  8.23792413e-01]
+    [-7.41347961e-04  9.86572957e-03  2.05199416e-04  1.71342343e-02]
+    [-6.19028549e-02  8.23792413e-01  1.71342343e-02  1.43071550e+00]]
 
     Notes
     -----
