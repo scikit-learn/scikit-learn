@@ -54,11 +54,11 @@ for name, clf in classifiers.items():
         clf.fit(this_X, y_train)
 
         ax.plot(X_test, clf.predict(X_test), color='.5')
-        ax.scatter(this_X, y_train, s=3, c='.5', marker='o', zorder=10)
+        ax.scatter(this_X, y_train, s=3, color='.5', marker='o', zorder=10)
 
     clf.fit(X_train, y_train)
     ax.plot(X_test, clf.predict(X_test), linewidth=2, color='blue')
-    ax.scatter(X_train, y_train, s=30, c='r', marker='+', zorder=10)
+    ax.scatter(X_train, y_train, s=30, color='r', marker='+', zorder=10)
 
     ax.set_xticks(())
     ax.set_yticks(())
