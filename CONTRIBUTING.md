@@ -80,7 +80,7 @@ important rules before you submit a pull request:
 -  All public methods should have informative docstrings with sample
    usage presented as doctests when appropriate.
 
--  Please prefix the title of your pull request with `[MRG]` (Ready for
+-  Prefix the title of your pull request with `[MRG]` (Ready for
    Merge), if the contribution is complete and ready for a detailed review.
    Two core developers will review your code and change the prefix of the pull
    request to `[MRG + 1]` and `[MRG + 2]` on approval, making it eligible
@@ -119,8 +119,7 @@ important rules before you submit a pull request:
    scale in dimensionality: n_features is expected to be lower than
    100".
 
-You can also check for common programming errors with the following
-tools:
+You can also check for common programming errors with tools:
 
 -  Code with good unittest **coverage** (at least 80%), check with:
 
@@ -129,7 +128,7 @@ tools:
   $ pytest --cov sklearn path/to/tests_for_package
   ```
 
--  Make sure there are no flake8 warnings, check with:
+-  Check that there are no flake8 warnings:
 
   ```bash
   $ pip install flake8
@@ -144,14 +143,13 @@ Filing bugs
 -----------
 We use GitHub issues to track all bugs and feature requests; feel free to open an issue if you have found a bug or wish to see a feature implemented.
 
-It is recommended to check that your issue complies with the
-following rules before submitting:
+Check that your issue complies with the following rules:
 
--  Verify that your issue is not being currently addressed by other
+-  Your issue should not being currently addressed by other
    [issues](https://github.com/scikit-learn/scikit-learn/issues?q=)
    or [pull requests](https://github.com/scikit-learn/scikit-learn/pulls?q=).
 
--  If you are submitting an algorithm or feature request, please verify that the algorithm fulfills our
+-  If you are submitting an algorithm or feature request, verify that the algorithm fulfills our
    [new algorithm requirements](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms).
 
 -  Ensure all code snippets and error messages are formatted in
