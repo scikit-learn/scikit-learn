@@ -927,11 +927,15 @@ def check_transformer_data_not_an_array(name, transformer):
 def check_transformer_data_is_a_df(name, transformer):
     import pandas as pd
 
-    x = np.array([1, 1, 1, 1, 2, 2, 2, 2,
-                      1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('int'))
-    y = pd.DataFrame(x)
+    X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
+                      random_state=0, n_features=2, cluster_std=0.1)
+    X = StandardScaler().fit_transform(X)
+    X -= X.min() - .1
 
-    _check_transformer(name, transformer, x, y)
+    this_X = pd.DataFrame(X)
+    this_y = pd.DataFrame(np.asarray(y))
+
+    _check_transformer(name, transformer, this_X, this_y)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
