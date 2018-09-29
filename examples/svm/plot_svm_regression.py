@@ -35,11 +35,11 @@ y_poly = svr_poly.fit(X, y).predict(X)
 lw = 2
 
 plt.scatter(X[svr_rbf.support_], y[svr_rbf.support_], facecolor="none",
-            edgecolor="m", marker='8', label='rbf support vectors', s=40)
+            edgecolor="m", marker='8', label='rbf support vectors', s=50)
 plt.scatter(X[svr_lin.support_], y[svr_lin.support_], facecolor="none",
-            edgecolor="c", marker='^', label='linear support vectors', s=40)
+            edgecolor="c", marker='^', label='linear support vectors', s=50)
 plt.scatter(X[svr_poly.support_], y[svr_poly.support_], facecolor="none",
-            edgecolor="g", marker='s', label='poly support vectors', s=40)
+            edgecolor="g", marker='s', label='poly support vectors', s=50)
 
 plt.hold('on')
 plt.plot(X, y_rbf, color='m', lw=lw, label='RBF model')
