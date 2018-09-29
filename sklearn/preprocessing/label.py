@@ -6,7 +6,7 @@
 #          Hamzeh Alsalhi <ha258@cornell.edu>
 # License: BSD 3 clause
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import itertools
 import array
 import warnings
@@ -826,7 +826,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         if self.classes is None:
             classes = sorted(set(itertools.chain.from_iterable(y)))
         else:
-            classes = self.classes
+            classes = list(OrderedDict.fromkeys(self.classes))
         dtype = np.int if all(isinstance(c, int) for c in classes) else object
         self.classes_ = np.empty(len(classes), dtype=dtype)
         self.classes_[:] = classes
