@@ -34,16 +34,16 @@ y_poly = svr_poly.fit(X, y).predict(X)
 # look at the results
 lw = 2
 plt.scatter(X[svr_rbf.support_], y[svr_rbf.support_], facecolor="none",
-            edgecolor="k", marker='8', label='rbf support vectors', s=40)
+            edgecolor="m", marker='8', label='rbf support vectors', s=40)
 plt.scatter(X[svr_lin.support_], y[svr_lin.support_], facecolor="none",
-            edgecolor="k", marker='^', label='linear support vectors', s=40)
+            edgecolor="c", marker='^', label='linear support vectors', s=40)
 plt.scatter(X[svr_poly.support_], y[svr_poly.support_], facecolor="none",
-            edgecolor="k", marker='s', label='poly support vectors', s=40)
+            edgecolor="g", marker='s', label='poly support vectors', s=40)
 
 plt.hold('on')
-plt.plot(X, y_rbf, color='navy', lw=lw, label='RBF model')
+plt.plot(X, y_rbf, color='m', lw=lw, label='RBF model')
 plt.plot(X, y_lin, color='c', lw=lw, label='Linear model')
-plt.plot(X, y_poly, color='cornflowerblue', lw=lw, label='Polynomial model')
+plt.plot(X, y_poly, color='g', lw=lw, label='Polynomial model')
 plt.xlabel('data')
 plt.ylabel('target')
 plt.title('Support Vector Regression')
