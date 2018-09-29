@@ -168,6 +168,7 @@ def test_non_numpy_labels():
     assert_equal(
         silhouette_score(list(X), list(y)), silhouette_score(X, y))
 
+
 def assert_raises_on_only_one_label(func):
     """Assert message when there is only one label"""
     rng = np.random.RandomState(seed=0)
@@ -191,11 +192,11 @@ def test_calinski_harabasz_score():
 
     # Assert the value is 1. when all samples are equals
     assert_equal(1., calinski_harabasz_score(np.ones((10, 2)),
-                                            [0] * 5 + [1] * 5))
+                                             [0] * 5 + [1] * 5))
 
     # Assert the value is 0. when all the mean cluster are equal
     assert_equal(0., calinski_harabasz_score([[-1, -1], [1, 1]] * 10,
-                                            [0] * 10 + [1] * 10))
+                                             [0] * 10 + [1] * 10))
 
     # General case (with non numpy arrays)
     X = ([[0, 0], [1, 1]] * 5 + [[3, 3], [4, 4]] * 5 +
@@ -203,7 +204,7 @@ def test_calinski_harabasz_score():
     labels = [0] * 10 + [1] * 10 + [2] * 10 + [3] * 10
 
     pytest.approx(calinski_harabasz_score(X, labels),
-                        45 * (40 - 4) / (5 * (4 - 1)))
+                  45 * (40 - 4) / (5 * (4 - 1)))
 
 
 def test_davies_bouldin_score():

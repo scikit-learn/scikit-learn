@@ -237,7 +237,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     return np.nan_to_num(sil_samples)
 
 
-def calinski_harabasz_score(X, labels, normalize=True):
+def calinski_harabasz_score(X, labels):
     """Compute the Calinski and Harabasz score.
 
     It is also known as the Variance Ratio Criterion.
@@ -288,13 +288,14 @@ def calinski_harabasz_score(X, labels, normalize=True):
             extra_disp * (n_samples - n_labels) /
             (intra_disp * (n_labels - 1.)))
 
+
 @deprecated("Function 'calinski_harabaz_score' was renamed to "
             "'calinski_harabasz_score' "
             "in version 0.21 and will be removed in release 0.23. "
-            "Default behavior is changed from 'normalize=False' to "
-            "'normalize=True'")
+            "The keyword normalize is no longer supported.")
 def calinski_harabaz_score(X, labels, normalize=False):
-    return calinski_harabasz_score(X, labels, normalize)
+    return calinski_harabasz_score(X, labels)
+
 
 def davies_bouldin_score(X, labels):
     """Computes the Davies-Bouldin score.
@@ -350,4 +351,3 @@ def davies_bouldin_score(X, labels):
     score = (intra_dists[:, None] + intra_dists) / centroid_distances
     score[score == np.inf] = np.nan
     return np.mean(np.nanmax(score, axis=1))
-

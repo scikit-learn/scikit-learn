@@ -29,6 +29,6 @@ __all__ = ["adjusted_mutual_info_score", "normalized_mutual_info_score",
            "expected_mutual_information", "homogeneity_completeness_v_measure",
            "homogeneity_score", "mutual_info_score", "v_measure_score",
            "fowlkes_mallows_score", "entropy", "silhouette_samples",
-           "silhouette_score", "calinski_harabaz_score", "calinski_harabasz_score",
-           "davies_bouldin_score", "consensus_score"]
-
+           "silhouette_score", "calinski_harabaz_score",
+           "calinski_harabasz_score", "davies_bouldin_score",
+           "consensus_score"]

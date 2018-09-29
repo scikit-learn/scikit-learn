@@ -1495,7 +1495,6 @@ Utilities from joblib:
 Recently deprecated
 ===================
 
-
 To be removed in 0.22
 ---------------------
 
@@ -1513,6 +1512,7 @@ To be removed in 0.22
 
    covariance.graph_lasso
    datasets.fetch_mldata
+   metrics.calinski_harabaz_score
 
 
 To be removed in 0.21
