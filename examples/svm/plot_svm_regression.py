@@ -25,7 +25,7 @@ y[::5] += 3 * (0.5 - np.random.rand(8))
 # Fit regression model
 svr_rbf = SVR(kernel='rbf', C=100, gamma=0.1, epsilon=.1)
 svr_lin = SVR(kernel='linear', C=100)
-svr_poly = SVR(kernel='poly', C=100, degree=3, epsilon=.1, coef0=1)
+svr_poly = SVR(kernel='poly', C=100, degree=3, epsilon=.1, coef0=0)
 y_rbf = svr_rbf.fit(X, y).predict(X)
 y_lin = svr_lin.fit(X, y).predict(X)
 y_poly = svr_poly.fit(X, y).predict(X)
@@ -41,7 +41,6 @@ plt.scatter(X[svr_lin.support_], y[svr_lin.support_], facecolor="none",
 plt.scatter(X[svr_poly.support_], y[svr_poly.support_], facecolor="none",
             edgecolor="g", marker='s', label='poly support vectors', s=50)
 
-plt.hold('on')
 plt.plot(X, y_rbf, color='m', lw=lw, label='RBF model')
 plt.plot(X, y_lin, color='c', lw=lw, label='Linear model')
 plt.plot(X, y_poly, color='g', lw=lw, label='Polynomial model')
