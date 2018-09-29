@@ -864,7 +864,9 @@ The graphical model of LDA is a three-level Bayesian model:
 .. image:: ../images/lda_model_graph2.png
    :align: center
 
+
 Note on notations presented in the graphical model above:
+
   * The corpus is a collection of :math:`D` documents.
   * A document is a sequence of :math:`N` words.
   * There are :math:`K` topics in the corpus. This should be known and fixed. 
@@ -872,8 +874,9 @@ Note on notations presented in the graphical model above:
 
 
 The three levels of the Bayesian model are: 
+
   1. Generation of global hyperparameters :math:`\alpha` and :math:`\eta`, 
-    and global parameter :math:`\beta`.
+  and global parameter :math:`\beta`.
   2. Generation of document-level variable :math:`\theta`. 
   3. Generation of word-level variables :math:`z` and :math:`w`.
 
@@ -892,7 +895,7 @@ a corpus with :math:`D` documents and :math:`K` topics:
   This provides a distribution over the words. 
 
   2. For each document :math:`d \in D`, draw the topic proportions :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`, 
-  where :math:`\alpha` is a :math:`k`-vector with :math:`a_i > 0`. 
+  where :math:`\alpha` is a :math:`k`-vector with :math:`a_i > 0` 
 
   3. For each word :math:`i` in document :math:`d`:
 
