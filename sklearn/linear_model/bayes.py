@@ -228,15 +228,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
                     logdet_sigma_ = - np.sum(np.log(logdet_sigma_))
 
             rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
-            # Update alpha and lambda according to (MacKay, 1992)
-            gamma_ = np.sum((alpha_ * eigen_vals_) /
-                            (lambda_ + alpha_ * eigen_vals_))
-            lambda_ = ((gamma_ + 2 * lambda_1) /
-                       (np.sum(coef_ ** 2) + 2 * lambda_2))
-            alpha_ = ((n_samples - gamma_ + 2 * alpha_1) /
-                      (rmse_ + 2 * alpha_2))
-
-            # Compute the objective function
+            # Compute the log marginal likelihood
             if self.compute_score:
                 s = lambda_1 * log(lambda_) - lambda_2 * lambda_
                 s += alpha_1 * log(alpha_) - alpha_2 * alpha_
@@ -248,6 +240,14 @@ class BayesianRidge(LinearModel, RegressorMixin):
                             n_samples * log(2 * np.pi))
                 self.scores_.append(s)
 
+            # Update alpha and lambda according to (MacKay, 1992)
+            gamma_ = np.sum((alpha_ * eigen_vals_) /
+                            (lambda_ + alpha_ * eigen_vals_))
+            lambda_ = ((gamma_ + 2 * lambda_1) /
+                       (np.sum(coef_ ** 2) + 2 * lambda_2))
+            alpha_ = ((n_samples - gamma_ + 2 * alpha_1) /
+                      (rmse_ + 2 * alpha_2))
+
             # Check for convergence
             if iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
                 if verbose:
@@ -256,7 +256,6 @@ class BayesianRidge(LinearModel, RegressorMixin):
             coef_old_ = np.copy(coef_)
 
         self.n_iter_ = iter_ + 1
-        self.scores_ = np.array(self.scores_)
 
         # return regularization parameters
         self.alpha_ = alpha_
@@ -280,6 +279,20 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self.sigma_ = (1. / alpha_) * scaled_sigma_
 
         self._set_intercept(X_offset_, y_offset_, X_scale_)
+
+        # compute final log marginal likelihood
+        if self.compute_score:
+            s = lambda_1 * log(lambda_) - lambda_2 * lambda_
+            s += alpha_1 * log(alpha_) - alpha_2 * alpha_
+            s += 0.5 * (n_features * log(lambda_) +
+                        n_samples * log(alpha_) -
+                        alpha_ * rmse_ -
+                        lambda_ * np.sum(coef_ ** 2) +
+                        logdet_sigma_ -
+                        n_samples * log(2 * np.pi))
+            self.scores_.append(s)
+            self.scores_ = np.array(self.scores_)
+
         return self
 
     def predict(self, X, return_std=False):
