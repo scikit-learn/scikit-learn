@@ -861,19 +861,36 @@ discovering abstract topics from a collection of documents.
 
 The graphical model of LDA is a three-level Bayesian model:
 
-.. image:: ../images/lda_model_graph.png
+.. image:: ../images/lda_model_graph2.png
    :align: center
+
+Explanation of notations presented in the graphical model above:
+
+  * The corpus is a collection of :math:`D` documents.
+  * A document is a sequence of :math:`N` words.
+  * There are :math:`K` topics in the corpus. This should be known and fixed. 
+  * The boxes represent repeated sampling. 
+
+The three levels of the Bayesian model are: 
+  1. Generation of global hyperparameters :math:`\alpha` and :math:`\eta`, and global parameter :math:`\beta`.
+  2. Generation of document-level variable :math:`\theta`. 
+  3. Generation of word-level variables :math:`z` and :math:`w`.
+
+In the graphical model, each node is a random variable and has a role in the generative process. A shaded node indicates an observed variable and an unshaded node indicates a hidden (latent) variable. In this case, words in the corpus are the only data that 
+we observe. At a high level, the latent variables determine the random mixture of topics 
+in the corpus and the distribution of words in the documents. The goal of LDA is to use the observed words to infer the hidden topic structure. 
 
 When modeling text corpora, the model assumes the following generative process for
 a corpus with :math:`D` documents and :math:`K` topics:
 
-  1. For each topic :math:`k`, draw :math:`\beta_k \sim \mathrm{Dirichlet}(\eta),\: k =1...K`
+  1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words. 
 
-  2. For each document :math:`d`, draw :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha), \: d=1...D`
+  2. For each document :math:`d \in D`, draw the topic proportions :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`, where :math:`\alpha` is a :math:`k`-vector with 
+  :math:`a_i > 0`. 
 
   3. For each word :math:`i` in document :math:`d`:
 
-    a. Draw a topic index :math:`z_{di} \sim \mathrm{Multinomial}(\theta_d)`
+    a. Draw the topic assignment :math:`z_{di} \sim \mathrm{Multinomial}(\theta_d)`
     b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}(\beta_{z_{di}})`
 
 For parameter estimation, the posterior distribution is:
