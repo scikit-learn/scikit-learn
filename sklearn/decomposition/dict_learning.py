@@ -717,6 +717,21 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         Number of iterations run. Returned only if `return_n_iter` is
         set to `True`.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.decomposition import DictionaryLearning
+    >>> X = np.array([[0., 0., 1.],
+    ...     [1.,0.,0.],
+    ...     [2.,2.,2.],
+    ...     [2.,5.,4.]])
+    >>> pdico = DictionaryLearning(n_components=3, alpha=1)
+    >>> V = dico.fit(X).components_
+    >>> V
+    array([[-0.2981424 , -0.74535599, -0.59628479],
+           [ 0.57735027,  0.57735027,  0.57735027],
+           [ 0.29188578,  0.47004059,  0.83298531]])
+
     See also
     --------
     dict_learning
