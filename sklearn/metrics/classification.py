@@ -45,7 +45,7 @@ def _check_targets(y_true, y_pred):
     """Check that y_true and y_pred belong to the same classification task
 
     This converts multiclass or binary types to a common shape, and raises a
-    ValueError for a mix of multilabel and multiclass targets, a mix of
+    ValueError for infinite values, a mix of multilabel and multiclass targets, a mix of
     multilabel formats, for the presence of continuous-valued or multioutput
     targets, or for targets of different lengths.
 
@@ -69,6 +69,8 @@ def _check_targets(y_true, y_pred):
     y_pred : array or indicator matrix
     """
     check_consistent_length(y_true, y_pred)
+    assert_all_finite(y_true)
+    assert_all_finite(y_pred)
     type_true = type_of_target(y_true)
     type_pred = type_of_target(y_pred)
 

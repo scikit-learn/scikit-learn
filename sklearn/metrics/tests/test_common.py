@@ -14,6 +14,7 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import _num_samples
 from sklearn.utils.validation import check_random_state
+from sklearn.utils.validation import assert_all_finite
 from sklearn.utils import shuffle
 
 from sklearn.utils.testing import assert_allclose
@@ -699,10 +700,19 @@ def test_classification_inf_nan_input(metric):
     # Classification metrics all raise a mixed input exception
     for y_true, y_score in invalids:
         assert_raise_message(ValueError,
-                             "Classification metrics can't handle a mix "
-                             "of binary and continuous targets",
+                             "Input contains NaN, infinity or a value too large for dtype('float64').",
                              metric, y_true, y_score)
 
+invalids = [(['a', 'b', 'a'],[0.1, 0.2, 0.3])]
+
+@pytest.mark.parametrize('metric', CLASSIFICATION_METRICS.values())
+def test_classification_binary_continuous_input(metric):
+    # Classification metrics all raise a mixed input exception
+    for y_true, y_score in invalids:
+        assert_raise_message(ValueError,
+                             "Classification metrics can't handle a mix of binary "
+                         "and continuous targets",
+                             metric, y_true, y_score)
 
 @ignore_warnings
 def check_single_sample(name):
