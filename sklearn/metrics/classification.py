@@ -45,9 +45,9 @@ def _check_targets(y_true, y_pred):
     """Check that y_true and y_pred belong to the same classification task
 
     This converts multiclass or binary types to a common shape, and raises a
-    ValueError for infinite values, a mix of multilabel and multiclass targets, a mix of
-    multilabel formats, for the presence of continuous-valued or multioutput
-    targets, or for targets of different lengths.
+    ValueError for infinite values, a mix of multilabel and multiclass targets,
+    a mix of multilabel formats, for the presence of continuous-valued or
+    multioutput targets, or for targets of different lengths.
 
     Column vectors are squeezed to 1d, while multilabel formats are returned
     as CSR sparse label indicators.
