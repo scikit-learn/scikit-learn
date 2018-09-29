@@ -1141,6 +1141,12 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     Attributes
     ----------
 
+    classes_ : array or shape (n_classes, )
+        A list of class labels known to the classifier.
+        
+        In binary classification, one class is usually considered the 'positive' 
+        class. For example, in labels [-1, 1], 1 is the positive class. 
+
     coef_ : array, shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
