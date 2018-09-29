@@ -2092,7 +2092,7 @@ def check_estimators_pandas_dataframe(name, estimator_orig, X, y):
 
     import pandas as pd
     y_ = pd.Series(np.asarray(y))
-    X_ = pd.Dataframe(np.asarray(X))
+    X_ = pd.DataFrame(np.asarray(X))
 
     # fit
     estimator_1.fit(X_, y_)
