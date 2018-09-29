@@ -41,7 +41,8 @@ Single and multi-output problems are both handled.
 
 from __future__ import division
 
-import warnings
+from warnings import catch_warnings
+from warnings import simplefilter
 from warnings import warn
 import threading
 
@@ -112,8 +113,8 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         curr_sample_weight *= sample_counts
 
         if class_weight == 'subsample':
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', DeprecationWarning)
+            with catch_warnings():
+                simplefilter('ignore', DeprecationWarning)
                 curr_sample_weight *= compute_sample_weight('auto', y, indices)
         elif class_weight == 'balanced_subsample':
             curr_sample_weight *= compute_sample_weight('balanced', y, indices)
@@ -244,7 +245,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """
 
         if self.n_estimators == 'warn':
-            warnings.warn("The default value of n_estimators will change from "
+            warn("The default value of n_estimators will change from "
                           "10 in version 0.20 to 100 in 0.22.", FutureWarning)
             self.n_estimators = 10
 

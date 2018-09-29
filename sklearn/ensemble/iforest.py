@@ -5,7 +5,6 @@
 from __future__ import division
 
 import numpy as np
-import warnings
 from warnings import warn
 from sklearn.utils.fixes import euler_gamma
 
@@ -208,7 +207,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
         self : object
         """
         if self.contamination == "legacy":
-            warnings.warn('default contamination parameter 0.1 will change '
+            warn('default contamination parameter 0.1 will change '
                           'in version 0.22 to "auto". This will change the '
                           'predict method behavior.',
                           FutureWarning)
@@ -217,7 +216,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
             self._contamination = self.contamination
 
         if self.behaviour == 'old':
-            warnings.warn('behaviour="old" is deprecated and will be removed '
+            warn('behaviour="old" is deprecated and will be removed '
                           'in version 0.22. Please use behaviour="new", which '
                           'makes the decision_function change to match '
                           'other anomaly detection algorithm API.',
@@ -414,7 +413,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
         if self.behaviour != 'old':
             raise AttributeError("threshold_ attribute does not exist when "
                                  "behaviour != 'old'")
-        warnings.warn("threshold_ attribute is deprecated in 0.20 and will"
+        warn("threshold_ attribute is deprecated in 0.20 and will"
                       " be removed in 0.22.", DeprecationWarning)
         return self._threshold_
 
