@@ -368,6 +368,24 @@ def test_column_transformer_sparse_stacking():
     assert_array_equal(X_trans[:, 1:], np.eye(X_trans.shape[0]))
 
 
+def test_column_transformer_mixed_passthrough_sparse():
+    pd = pytest.importorskip('pandas')
+    df = pd.DataFrame([['a', 1, True],
+                       ['b', 2, False]],
+                      columns=['categorical', 'numerical', 'boolean'])
+
+    ct = make_column_transformer(
+        (['categorical'], OneHotEncoder()),
+        (['numerical', 'boolean'], 'passthrough'),
+        sparse_threshold=1.0
+    )
+
+    X_trans = ct.fit_transform(df)
+    assert X_trans.getformat() == 'csr'
+    assert_array_equal(X_trans.toarray(), np.array([[1, 0, 1, 1],
+                                                    [0, 1, 2, 0]]))
+
+
 def test_column_transformer_sparse_threshold():
     X_array = np.array([['a', 'b'], ['A', 'B']], dtype=object).T
     # above data has sparsity of 4 / 8 = 0.5

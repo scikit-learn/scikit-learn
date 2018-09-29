@@ -20,7 +20,7 @@ from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils.metaestimators import _BaseComposition
-from ..utils.validation import check_array, check_is_fitted
+from ..utils.validation import check_array, check_is_fitted, as_float_array
 
 
 __all__ = ['ColumnTransformer', 'make_column_transformer']
@@ -512,7 +512,8 @@ boolean mask array or callable
         Xs : List of numpy arrays, sparse arrays, or DataFrames
         """
         if self.sparse_output_:
-            return sparse.hstack(Xs).tocsr()
+            return sparse.hstack([as_float_array(X, force_all_finite=False)
+                                  for X in Xs]).tocsr()
         else:
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
             return np.hstack(Xs)
