@@ -553,6 +553,22 @@ class SVC(BaseSVC):
     intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
+    fit_status_ : int
+        0 if correctly fitted,
+        1 otherwise (will raise warning)
+
+     probA_, probB_ : array, shape = [n_class * (n_class-1) / 2]
+
+     If probability=True, the parameters learned in Platt scaling to
+        produce probability estimates from decision values. If
+        probability=False, an empty array. Platt scaling uses the logistic
+        function
+         ``1 / (1 + exp(decision_value * probA_ + probB_))``
+         where ``probA_`` and ``probB_`` are learned from the dataset. For more
+        information on the multiclass case and training procedure see section
+        8 of LIBSVM: A Library for Support Vector Machines (in References)
+        for more.
+
     Examples
     --------
     >>> import numpy as np
@@ -578,6 +594,11 @@ class SVC(BaseSVC):
         implemented using liblinear. Check the See also section of
         LinearSVC for more comparison element.
 
+    References
+    --------
+    [1] LIBSVM
+        A Library for Support Vector Machines
+        <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>
     """
 
     _impl = 'c_svc'
