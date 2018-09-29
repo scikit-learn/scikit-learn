@@ -875,7 +875,8 @@ Note on notations presented in the graphical model above:
 
 The three levels of the Bayesian model are: 
 
-  1. Generation of global hyperparameters :math:`\alpha` and :math:`\eta`, and global parameter :math:`\beta`.
+  1. Generation of global hyperparameters :math:`\alpha` and :math:`\eta`, 
+     and global parameter :math:`\beta`.
 
   2. Generation of document-level variable :math:`\theta`. 
 
@@ -892,11 +893,14 @@ structure.
 
 
 When modeling text corpora, the model assumes the following generative process for
-a corpus with :math:`D` documents and :math:`K` topics:
+a corpus with :math:`D` documents and :math:`K` topics, with :math:`K` corresponding 
+to :attr:`n_components` in the API:
 
-  1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words, i.e. the probability of a word appearing in topic :math:`k`. 
+  1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim \mathrm{Dirichlet}(\eta)`. 
+     This provides a distribution over the words, i.e. the probability of a word appearing 
+     in topic :math:`k`. :math:`\eta` corresponds to :attr:`topic_word_prior`. 
 
-  2. For each document :math:`d \in D`, draw the topic proportions :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`.
+  2. For each document :math:`d \in D`, draw the topic proportions :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha` corresponds to :attr:`doc_topic_prior`. 
 
   3. For each word :math:`i` in document :math:`d`:
 
