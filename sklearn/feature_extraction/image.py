@@ -499,6 +499,32 @@ class PatchExtractor(BaseEstimator):
              `n_patches` is either `n_samples * max_patches` or the total
              number of patches that can be extracted.
 
+        Examples
+        --------
+
+        >>> from sklearn.feature_extraction.image import PatchExtractor
+        >>> X = np.random.randint(10, size=(2, 2, 2))
+        >>> X
+        array([[[5, 0],
+                [9, 6]],
+
+              [[2, 0],
+                [5, 2]]])
+
+        >>> pe = PatchExtractor(patch_size=(2, 1))
+        >>> pe.fit(X)
+        >>> pe.transform(X)
+        array([[[ 5.],
+                [ 9.]],
+
+              [[ 0.],
+                [ 6.]],
+
+              [[ 2.],
+                [ 5.]],
+
+              [[ 0.],
+                [ 2.]]])
         """
         self.random_state = check_random_state(self.random_state)
         n_images, i_h, i_w = X.shape[:3]
