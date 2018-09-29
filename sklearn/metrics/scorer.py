@@ -183,7 +183,12 @@ class _ThresholdScorer(_BaseScorer):
                 y_pred = clf.predict_proba(X)
 
                 if y_type == "binary":
-                    y_pred = y_pred[:, 1]
+                    if y_pred.shape[1]==2:
+                        y_pred = y_pred[:, 1]
+                    else:
+                        raise ValueError('The output of the prediction is a vector, which is incompatible with a classifierself.'
+                        'Check that the estimator is a classifier and the number of classes in the dataset is 2 or more.')
+
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
