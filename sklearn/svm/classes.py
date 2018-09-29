@@ -565,8 +565,7 @@ class SVC(BaseSVC):
         ``1 / (1 + exp(decision_value * probA_ + probB_))``
         where ``probA_`` and ``probB_`` are learned from the dataset. For more
         information on the multiclass case and training procedure see section
-        8 of LIBSVM: A Library for Support Vector Machines (in References)
-        for more.
+        8 of LIBSVM: A Library for Support Vector Machines (in References).
 
     Examples
     --------
@@ -593,11 +592,14 @@ class SVC(BaseSVC):
         implemented using liblinear. Check the See also section of
         LinearSVC for more comparison element.
 
-    Notes
-    -----
-    **References:**
-    `LIBSVM: A Library for Support Vector Machines
-    <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`__
+    References
+    --------
+    [1] LIBSVM
+        A Library for Support Vector Machines
+        <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>
+    [2] "Probabilistic outputs for support vector machines and 
+        comparison to regularizedlikelihood methods.""
+        Platt (1999)
     """
 
     _impl = 'c_svc'
