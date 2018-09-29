@@ -173,6 +173,12 @@ def test_multi_output_classification_partial_fit_parallelism():
         # parallelism requires this to be the case for a sane implementation
         assert_false(est1 is est2)
 
+def test_predict_proba():
+    sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
+    multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
+    multi_target_linear.fit(X, y)
+    # check predict_proba passes
+    multi_target_linear.predict_proba(X)
 
 def test_multi_output_classification_partial_fit():
     # test if multi_target initializes correctly with base estimator and fit

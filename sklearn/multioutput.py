@@ -331,7 +331,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
             classes corresponds to that in the attribute `classes_`.
         """
         check_is_fitted(self, 'estimators_')
-        if not hasattr(self.estimator_[0], "predict_proba"):
+        if not hasattr(self.estimators_[0], "predict_proba"):
             raise ValueError("The base estimator should implement"
                              "predict_proba method")
 
