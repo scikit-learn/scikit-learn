@@ -1288,9 +1288,13 @@ class TfidfVectorizer(CountVectorizer):
 
     Equivalent to CountVectorizer followed by TfidfTransformer. 
 
-    CountVectorizer converts a collection of text documents to a matrix of token counts. 
+    CountVectorizer converts a collection of text documents to a matrix of 
+    token counts. 
 
-    TfidfTransformer then converts the count matrix from CountVectorizer to a normalized tf-idf representation. Tf is term frequency, and idf is inverse document frequency. This is a common way to calculate the count of a word relative to the appearance of a ducument. 
+    TfidfTransformer then converts the count matrix from CountVectorizer to a 
+    normalized tf-idf representation. Tf is term frequency, and idf is inverse 
+    document frequency. This is a common way to calculate the count of a word 
+    relative to the appearance of a ducument. 
 
     The formula that is used to compute the tf-idf of term t is
     tf-idf(d, t) = tf(t) * idf(d, t), and the idf is computed as
