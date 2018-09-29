@@ -1,9 +1,31 @@
-
-
 About us
 ========
 
-.. include:: ../AUTHORS.rst
+History
+-------
+
+This project was started in 2007 as a Google Summer of Code project by
+David Cournapeau. Later that year, Matthieu Brucher started work on
+this project as part of his thesis.
+
+In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and Vincent
+Michel of INRIA took leadership of the project and made the first public
+release, February the 1st 2010. Since then, several releases have appeared
+following a ~3 month cycle, and a thriving international community has
+been leading the development.
+
+Authors
+-------
+
+The following people have been core contributors to scikit-learn's development
+and maintenance:
+
+.. include:: authors.rst
+
+Please do not email the authors directly to ask for assistance or report issues.
+Instead, please see `What's the best way to ask questions about scikit-learn
+<http://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
+in the FAQ.
 
 .. seealso::
 
@@ -69,7 +91,7 @@ Funding
 
 `INRIA <https://www.inria.fr>`_ actively supports this project. It has
 provided funding for Fabian Pedregosa (2010-2012), Jaques Grobler
-(2012-2013) and Olivier Grisel (2013-2015) to work on this project
+(2012-2013) and Olivier Grisel (2013-2017) to work on this project
 full-time. It also hosts coding sprints and other events.
 
 .. image:: images/inria-logo.jpg
@@ -79,7 +101,7 @@ full-time. It also hosts coding sprints and other events.
 
 `Paris-Saclay Center for Data Science <http://www.datascience-paris-saclay.fr>`_
 funded one year for a developer to work on the project full-time
-(2014-2015).
+(2014-2015) and 50% of the time of Guillaume Lemaitre (2016-2017).
 
 .. image:: images/cds-logo.png
    :width: 200pt
@@ -96,9 +118,9 @@ Environment also funds several students to work on the project part-time.
    :target: http://cds.nyu.edu/mooresloan/
 
 
-`Télécom Paristech <http://www.telecom-paristech.com>`_ funds Manoj Kumar (2014),
-Tom Dupré la Tour (2015), Raghav RV (2015-2016) and Thierry Guillemot (2016) to
-work on scikit-learn.
+`Télécom Paristech <http://www.telecom-paristech.com>`_ funded Manoj Kumar (2014),
+Tom Dupré la Tour (2015), Raghav RV (2015-2017), Thierry Guillemot (2016-2017)
+and Albert Thomas (2017) to work on scikit-learn.
 
 .. image:: themes/scikit-learn/static/img/telecom.png
    :width: 100pt
@@ -106,12 +128,35 @@ work on scikit-learn.
    :target: http://www.telecom-paristech.fr/
 
 
-`Columbia University <http://columbia.edu>`_ funds Andreas Mueller since 2016.
+`Columbia University <http://columbia.edu>`_ funds Andreas Müller since 2016.
 
 .. image:: themes/scikit-learn/static/img/columbia.png
    :width: 100pt
    :align: center
    :target: http://www.columbia.edu/
+
+Andreas Müller also received a grant to improve scikit-learn from the `Alfred P. Sloan Foundation <https://sloan.org>`_ in 2017.
+
+.. image:: images/sloan_banner.png
+   :width: 200pt
+   :align: center
+   :target: https://sloan.org/
+
+`The University of Sydney <http://sydney.edu.au>`_ funds Joel Nothman since July 2017.
+
+.. image:: themes/scikit-learn/static/img/sydney-primary.jpeg
+   :width: 200pt
+   :align: center
+   :target: http://www.sydney.edu.au/
+
+`The Labex DigiCosme <https://digicosme.lri.fr>`_ funded Nicolas Goix (2015-2016),
+Tom Dupré la Tour (2015-2016 and 2017-2018), Mathurin Massias (2018-2019) to work part time
+on scikit-learn during their PhDs. It also funded a scikit-learn coding sprint in 2015.
+
+.. image:: themes/scikit-learn/static/img/digicosme.png
+   :width: 200pt
+   :align: center
+   :target: https://digicosme.lri.fr
 
 The following students were sponsored by `Google <https://developers.google.com/open-source/>`_
 to work on scikit-learn through the
@@ -208,7 +253,7 @@ The 2013 Paris international sprint
    :target: https://www.tinyclues.com/
 
 
-.. |afpy| image:: https://www.afpy.org/logo.png
+.. |afpy| image:: https://www.afpy.org/static/images/logo.svg
    :width: 120pt
    :target: https://www.afpy.org
 
@@ -221,7 +266,7 @@ The 2013 Paris international sprint
    :width: 120pt
    :target: http://www.frs-fnrs.be/
 
-.. figure:: http://sites.uclouvain.be/dysco/pmwiki/uploads/Main/dysco.gif
+.. figure:: images/dysco.png
    :width: 120pt
    :target: http://sites.uclouvain.be/dysco/
 

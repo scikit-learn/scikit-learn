@@ -11,7 +11,10 @@ import numbers
 from ..base import clone
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
-from ..utils import _get_n_jobs, check_random_state
+from ..utils import check_random_state
+from ..externals import six
+from ..externals.joblib import effective_n_jobs
+from abc import ABCMeta, abstractmethod
 
 MAX_RAND_SEED = np.iinfo(np.int32).max
 
@@ -29,8 +32,11 @@ def _set_random_states(estimator, random_state=None):
         Estimator with potential randomness managed by random_state
         parameters.
 
-    random_state : numpy.RandomState or int, optional
-        Random state used to generate integer values.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Notes
     -----
@@ -52,7 +58,8 @@ def _set_random_states(estimator, random_state=None):
         estimator.set_params(**to_set)
 
 
-class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
+class BaseEnsemble(six.with_metaclass(ABCMeta, BaseEstimator,
+                                      MetaEstimatorMixin)):
     """Base class for all ensemble classes.
 
     Warning: This class should not be used directly. Use derived classes
@@ -79,6 +86,7 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
         The collection of fitted base estimators.
     """
 
+    @abstractmethod
     def __init__(self, base_estimator, n_estimators=10,
                  estimator_params=tuple()):
         # Set parameters
@@ -143,11 +151,11 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
 def _partition_estimators(n_estimators, n_jobs):
     """Private function used to partition estimators between jobs."""
     # Compute the number of jobs
-    n_jobs = min(_get_n_jobs(n_jobs), n_estimators)
+    n_jobs = min(effective_n_jobs(n_jobs), n_estimators)
 
     # Partition estimators between jobs
-    n_estimators_per_job = (n_estimators // n_jobs) * np.ones(n_jobs,
-                                                              dtype=np.int)
+    n_estimators_per_job = np.full(n_jobs, n_estimators // n_jobs,
+                                   dtype=np.int)
     n_estimators_per_job[:n_estimators % n_jobs] += 1
     starts = np.cumsum(n_estimators_per_job)
 

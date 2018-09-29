@@ -1,8 +1,8 @@
 .. currentmodule:: sklearn
+.. include:: includes/big_toc_css.rst
+.. include:: whats_new/_contributors.rst
 
-
-===============
-Release history
+Release History
 ===============
 
 Version 0.19
@@ -5026,14 +5026,27 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Alyssa Batula: https://github.com/abatula
 
 .. _Srivatsan Ramesh: https://github.com/srivatsan-ramesh
+Release notes for current and recent releases are detailed on this page, with
+:ref:`previous releases <previous_releases_whats_new>` linked below.
 
-.. _Ron Weiss: http://www.ee.columbia.edu/~ronw
+**Tip:** `Subscribe to scikit-learn releases <https://libraries.io/pypi/scikit-learn>`__
+on libraries.io to be notified when new versions are released.
 
-.. _Kathleen Chen: https://github.com/kchen17
+.. include:: whats_new/v0.21.rst
+.. include:: whats_new/v0.20.rst
 
-.. _Vincent Pham: https://github.com/vincentpham1991
+.. _previous_releases_whats_new:
 
-.. _Denis Engemann: http://denis-engemann.de
-.. _Anish Shah: https://github.com/AnishShah
+Previous Releases
+=================
+.. toctree::
+    :maxdepth: 1
 
-.. _Neeraj Gangwar: http://neerajgangwar.in
+    Version 0.19 <whats_new/v0.19.rst>
+    Version 0.18 <whats_new/v0.18.rst>
+    Version 0.17 <whats_new/v0.17.rst>
+    Version 0.16 <whats_new/v0.16.rst>
+    Version 0.15 <whats_new/v0.15.rst>
+    Version 0.14 <whats_new/v0.14.rst>
+    Version 0.13 <whats_new/v0.13.rst>
+    Older Versions <whats_new/older_versions.rst>

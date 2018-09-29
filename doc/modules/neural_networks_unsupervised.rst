@@ -53,14 +53,14 @@ The graphical model of an RBM is a fully-connected bipartite graph.
 The nodes are random variables whose states depend on the state of the other
 nodes they are connected to. The model is therefore parameterized by the
 weights of the connections, as well as one intercept (bias) term for each
-visible and hidden unit, ommited from the image for simplicity.
+visible and hidden unit, omitted from the image for simplicity.
 
 The energy function measures the quality of a joint assignment:
 
 .. math:: 
 
-   E(\mathbf{v}, \mathbf{h}) = \sum_i \sum_j w_{ij}v_ih_j + \sum_i b_iv_i
-     + \sum_j c_jh_j
+   E(\mathbf{v}, \mathbf{h}) = -\sum_i \sum_j w_{ij}v_ih_j - \sum_i b_iv_i
+     - \sum_j c_jh_j
 
 In the formula above, :math:`\mathbf{b}` and :math:`\mathbf{c}` are the
 intercept vectors for the visible and hidden layers, respectively. The
@@ -135,7 +135,7 @@ negative gradient, however, is intractable. Its goal is to lower the energy of
 joint states that the model prefers, therefore making it stay true to the data.
 It can be approximated by Markov chain Monte Carlo using block Gibbs sampling by
 iteratively sampling each of :math:`v` and :math:`h` given the other, until the
-chain mixes. Samples generated in this way are sometimes refered as fantasy
+chain mixes. Samples generated in this way are sometimes referred as fantasy
 particles. This is inefficient and it is difficult to determine whether the
 Markov chain mixes.
 

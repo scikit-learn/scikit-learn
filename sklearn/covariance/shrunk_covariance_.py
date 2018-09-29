@@ -45,10 +45,9 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
 
     Notes
     -----
-    The regularized (shrunk) covariance is given by
+    The regularized (shrunk) covariance is given by:
 
-    (1 - shrinkage)*cov
-      + shrinkage*mu*np.identity(n_features)
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
 
@@ -73,18 +72,21 @@ class ShrunkCovariance(EmpiricalCovariance):
     store_precision : boolean, default True
         Specify if the estimated precision is stored
 
-    shrinkage : float, 0 <= shrinkage <= 1, default 0.1
-        Coefficient in the convex combination used for the computation
-        of the shrunk estimate.
-
     assume_centered : boolean, default False
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
         If False, data are centered before computation.
 
+    shrinkage : float, 0 <= shrinkage <= 1, default 0.1
+        Coefficient in the convex combination used for the computation
+        of the shrunk estimate.
+
     Attributes
     ----------
+    location_ : array-like, shape (n_features,)
+        Estimated location, i.e. the estimated mean.
+
     covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
@@ -96,12 +98,29 @@ class ShrunkCovariance(EmpiricalCovariance):
         Coefficient in the convex combination used for the computation
         of the shrunk estimate.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import ShrunkCovariance
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> real_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> np.random.seed(0)
+    >>> X = np.random.multivariate_normal(mean=[0, 0],
+    ...                                   cov=real_cov,
+    ...                                   size=500)
+    >>> cov = ShrunkCovariance().fit(X)
+    >>> cov.covariance_ # doctest: +ELLIPSIS
+    array([[0.7387..., 0.2536...],
+           [0.2536..., 0.4110...]])
+    >>> cov.location_
+    array([0.0622..., 0.0193...])
+
     Notes
     -----
-    The regularized covariance is given by
+    The regularized covariance is given by:
 
-    (1 - shrinkage)*cov
-      + shrinkage*mu*np.identity(n_features)
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
 
@@ -122,12 +141,12 @@ class ShrunkCovariance(EmpiricalCovariance):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : not used, present for API consistence purpose.
+        y
+            not used, present for API consistence purpose.
 
         Returns
         -------
         self : object
-            Returns self.
 
         """
         X = check_array(X)
@@ -157,7 +176,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     X : array-like, shape (n_samples, n_features)
         Data from which to compute the Ledoit-Wolf shrunk covariance shrinkage.
 
-    assume_centered : Boolean
+    assume_centered : bool
         If True, data are not centered before computation.
         Useful to work with data whose mean is significantly equal to
         zero but is not exactly zero.
@@ -176,8 +195,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     -----
     The regularized (shrunk) covariance is:
 
-    (1 - shrinkage)*cov
-      + shrinkage * mu * np.identity(n_features)
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
 
@@ -276,8 +294,7 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
     -----
     The regularized (shrunk) covariance is:
 
-    (1 - shrinkage)*cov
-      + shrinkage * mu * np.identity(n_features)
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
 
@@ -350,10 +367,9 @@ class LedoitWolf(EmpiricalCovariance):
 
     Notes
     -----
-    The regularised covariance is::
+    The regularised covariance is:
 
-        (1 - shrinkage)*cov
-                + shrinkage*mu*np.identity(n_features)
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
     and shrinkage is given by the Ledoit and Wolf formula (see References)
@@ -380,12 +396,12 @@ class LedoitWolf(EmpiricalCovariance):
         X : array-like, shape = [n_samples, n_features]
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
-        y : not used, present for API consistence purpose.
+        y
+            not used, present for API consistence purpose.
 
         Returns
         -------
         self : object
-            Returns self.
 
         """
         # Not calling the parent object to fit, to avoid computing the
@@ -433,15 +449,12 @@ def oas(X, assume_centered=False):
     -----
     The regularised (shrunk) covariance is:
 
-    (1 - shrinkage)*cov
-      + shrinkage * mu * np.identity(n_features)
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
 
-    The formula we used to implement the OAS
-    does not correspond to the one given in the article. It has been taken
-    from the MATLAB program available from the author's webpage
-    (http://tbayes.eecs.umich.edu/yilun/covestimation).
+    The formula we used to implement the OAS is slightly modified compared
+    to the one given in the article. See :class:`OAS` for more details.
 
     """
     X = np.asarray(X)
@@ -484,12 +497,10 @@ class OAS(EmpiricalCovariance):
     Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 
     The formula used here does not correspond to the one given in the
-    article. It has been taken from the Matlab program available from the
-    authors' webpage (http://tbayes.eecs.umich.edu/yilun/covestimation).
-    In the original article, formula (23) states that 2/p is multiplied by 
-    Trace(cov*cov) in both the numerator and denominator, this operation is omitted
-    in the author's MATLAB program because for a large p, the value of 2/p is so 
-    small that it doesn't affect the value of the estimator. 
+    article. In the original article, formula (23) states that 2/p is
+    multiplied by Trace(cov*cov) in both the numerator and denominator, but
+    this operation is omitted because for a large p, the value of 2/p is
+    so small that it doesn't affect the value of the estimator.
 
     Parameters
     ----------
@@ -517,10 +528,9 @@ class OAS(EmpiricalCovariance):
 
     Notes
     -----
-    The regularised covariance is::
+    The regularised covariance is:
 
-        (1 - shrinkage)*cov
-                + shrinkage*mu*np.identity(n_features)
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
     and shrinkage is given by the OAS formula (see References)
@@ -541,12 +551,12 @@ class OAS(EmpiricalCovariance):
         X : array-like, shape = [n_samples, n_features]
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
-        y : not used, present for API consistence purpose.
+        y
+            not used, present for API consistence purpose.
 
         Returns
         -------
         self : object
-            Returns self.
 
         """
         X = check_array(X)

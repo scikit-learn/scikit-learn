@@ -8,7 +8,7 @@ set -e
 
 if [[ "$COVERAGE" == "true" ]]; then
     # Need to run codecov from a git checkout, so we copy .coverage
-    # from TEST_DIR where nosetests has been run
+    # from TEST_DIR where pytest has been run
     cp $TEST_DIR/.coverage $TRAVIS_BUILD_DIR
     cd $TRAVIS_BUILD_DIR
     # Ignore codecov failures as the codecov server is not
