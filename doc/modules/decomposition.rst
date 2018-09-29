@@ -894,7 +894,7 @@ structure.
 When modeling text corpora, the model assumes the following generative process for
 a corpus with :math:`D` documents and :math:`K` topics:
 
-  1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words. 
+  1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words, i.e. the probability of a word appearing in topic :math:`k`. 
 
   2. For each document :math:`d \in D`, draw the topic proportions :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`.
 
