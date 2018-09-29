@@ -501,30 +501,42 @@ class PatchExtractor(BaseEstimator):
 
         Examples
         --------
-
+        >>> import scipy as sp
         >>> from sklearn.feature_extraction.image import PatchExtractor
-        >>> X = np.random.randint(10, size=(2, 2, 2))
-        >>> X
-        array([[[5, 0],
-                [9, 6]],
+        
+        >>> X = sp.misc.face()
+        >>> X.shape
+        (768, 1024, 3)
 
-              [[2, 0],
-                [5, 2]]])
+        >>> X[0]
+        array([[121, 112, 131],
+               [138, 129, 148],
+               [153, 144, 165],
+               ..., 
+               [119, 126,  74],
+               [131, 136,  82],
+               [139, 144,  90]], dtype=uint8)
 
-        >>> pe = PatchExtractor(patch_size=(2, 1))
+        >>> pe = PatchExtractor(patch_size=(1024, 2), random_state=1234)
         >>> pe.fit(X)
-        >>> pe.transform(X)
-        array([[[ 5.],
-                [ 9.]],
+        >>> X_transform = pe.transform(X)
+        >>> X_transform[0]
+        array([[ 121.,  112.],
+               [ 138.,  129.],
+               [ 153.,  144.],
+               ..., 
+               [ 119.,  126.],
+               [ 131.,  136.],
+               [ 139.,  144.]])
 
-              [[ 0.],
-                [ 6.]],
-
-              [[ 2.],
-                [ 5.]],
-
-              [[ 0.],
-                [ 2.]]])
+        >>> X_transform[1]
+        array([[ 112.,  131.],
+               [ 129.,  148.],
+               [ 144.,  165.],
+               ..., 
+               [ 126.,   74.],
+               [ 136.,   82.],
+               [ 144.,   90.]])
         """
         self.random_state = check_random_state(self.random_state)
         n_images, i_h, i_w = X.shape[:3]
