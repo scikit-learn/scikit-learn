@@ -11,9 +11,7 @@
 # The first row is all zeros. Tests we're making indptr correctly.
 
 cimport numpy as np
-cimport cython
 from scipy.sparse import csr_matrix
-from scipy.special import comb
 from numpy cimport ndarray
 
 ctypedef np.int32_t INDEX_T

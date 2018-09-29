@@ -1,9 +1,9 @@
-from sklearn.preprocessing import PolynomialFeatures
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sparse
-from time import time
+from sklearn.preprocessing import PolynomialFeatures
 from sys import argv
+from time import time
 
 if len(argv) < 2:
   print("Please specify where to save the resulting plot via the a command line param.")
