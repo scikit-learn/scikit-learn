@@ -869,7 +869,7 @@ Note on notations presented in the graphical model above:
 
   * The corpus is a collection of :math:`D` documents.
   * A document is a sequence of :math:`N` words.
-  * There are :math:`K` topics in the corpus. This should be known and fixed. 
+  * There are :math:`K` topics in the corpus. 
   * The boxes represent repeated sampling. 
 
 
@@ -897,7 +897,7 @@ a corpus with :math:`D` documents and :math:`K` topics:
   1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim \mathrm{Dirichlet}(\eta)`. 
   This provides a distribution over the words. 
 
-  2. For each document :math:`d \in D`, draw the topic proportions :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`, where :math:`\alpha` is a :math:`k`-vector with :math:`a_i > 0` 
+  2. For each document :math:`d \in D`, draw the topic proportions :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`.
 
   3. For each word :math:`i` in document :math:`d`:
 
