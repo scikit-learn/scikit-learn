@@ -725,12 +725,12 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     ...     [1.,0.,0.],
     ...     [2.,2.,2.],
     ...     [2.,5.,4.]])
-    >>> pdico = DictionaryLearning(n_components=3, alpha=1)
+    >>> dico = DictionaryLearning(n_components=3, alpha=1, random_state=1)
     >>> V = dico.fit(X).components_
     >>> V
     array([[-0.2981424 , -0.74535599, -0.59628479],
            [ 0.57735027,  0.57735027,  0.57735027],
-           [ 0.29188578,  0.47004059,  0.83298531]])
+           [ 0.03387612,  0.46770346, -0.88323603]])
 
     See also
     --------
