@@ -260,7 +260,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
             X.sort_indices()
 
         # Remap output
-        n_samples, self.n_features_ = X.shape
+        self.n_features_ = X.shape[1]
 
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
