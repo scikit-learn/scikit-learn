@@ -2081,7 +2081,7 @@ def check_regressor_pandas_dataframe(name, estimator_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimators_pandas_dataframe(name, estimator_orig, X, y):
     if name in CROSS_DECOMPOSITION:
-        raise SkipTest("Skipping check_estimators_data_not_an_array "
+        raise SkipTest("Skipping check_estimators_pandas_dataframe "
                        "for cross decomposition module as estimators "
                        "are not deterministic.")
     # separate estimators to control random seeds
