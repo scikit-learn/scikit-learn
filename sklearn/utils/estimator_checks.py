@@ -266,6 +266,7 @@ def _yield_all_checks(name, estimator):
     yield check_set_params
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
+    yield check_estimators_pandas_dataframe
 
 
 def check_estimator(Estimator):
@@ -2049,6 +2050,36 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y):
 
     y_ = NotAnArray(np.asarray(y))
     X_ = NotAnArray(np.asarray(X))
+
+    # fit
+    estimator_1.fit(X_, y_)
+    pred1 = estimator_1.predict(X_)
+    estimator_2.fit(X, y)
+    pred2 = estimator_2.predict(X)
+    assert_allclose(pred1, pred2, atol=1e-2, err_msg=name)
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_estimators_pandas_dataframe(name, estimator_orig):
+    if name in CROSS_DECOMPOSITION:
+        raise SkipTest("Skipping check_estimators_pandas_dataframe "
+                       "for cross decomposition module as estimators "
+                       "are not deterministic.")
+    # separate estimators to control random seeds
+    estimator_1 = clone(estimator_orig)
+    estimator_2 = clone(estimator_orig)
+    set_random_state(estimator_1)
+    set_random_state(estimator_2)
+    
+    import pandas as pd
+    
+    X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1]])
+    X = pairwise_estimator_convert_X(X, estimator_orig)
+    y = [1, 1, 1, 2, 2, 2]
+    y = multioutput_estimator_convert_y_2d(estimator_orig, y)
+
+    y_ = pd.Dataframe(np.asarray(y))
+    X_ = pd.Dataframe(np.asarray(X))
 
     # fit
     estimator_1.fit(X_, y_)
