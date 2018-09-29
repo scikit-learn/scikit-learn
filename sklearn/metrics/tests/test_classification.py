@@ -995,7 +995,10 @@ def test_multilabel_hamming_loss():
     assert_equal(hamming_loss(y1, np.zeros_like(y1), sample_weight=w), 2. / 3)
     # sp_hamming only works with 1-D arrays
     assert_equal(hamming_loss(y1[0], y2[0]), sp_hamming(y1[0], y2[0]))
-
+    assert_warns_message(DeprecationWarning,
+                         "labels parameter is deprecated in 0.20 and will"
+                         " be removed in 0.22.",
+                         hamming_loss, y1, y2, labels=[0, 1])
 
 def test_multilabel_jaccard_similarity_score():
     # Dense label indicator matrix format
