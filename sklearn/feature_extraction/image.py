@@ -503,7 +503,7 @@ class PatchExtractor(BaseEstimator):
         --------
         >>> import scipy as sp
         >>> from sklearn.feature_extraction.image import PatchExtractor
-        
+
         >>> X = sp.misc.face()
         >>> X.shape
         (768, 1024, 3)
@@ -512,7 +512,7 @@ class PatchExtractor(BaseEstimator):
         array([[121, 112, 131],
                [138, 129, 148],
                [153, 144, 165],
-               ..., 
+               ...,
                [119, 126,  74],
                [131, 136,  82],
                [139, 144,  90]], dtype=uint8)
@@ -524,7 +524,7 @@ class PatchExtractor(BaseEstimator):
         array([[ 121.,  112.],
                [ 138.,  129.],
                [ 153.,  144.],
-               ..., 
+               ...,
                [ 119.,  126.],
                [ 131.,  136.],
                [ 139.,  144.]])
@@ -533,7 +533,7 @@ class PatchExtractor(BaseEstimator):
         array([[ 112.,  131.],
                [ 129.,  148.],
                [ 144.,  165.],
-               ..., 
+               ...,
                [ 126.,   74.],
                [ 136.,   82.],
                [ 144.,   90.]])
