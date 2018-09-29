@@ -923,6 +923,16 @@ def check_transformer_data_not_an_array(name, transformer):
     this_y = NotAnArray(np.asarray(y))
     _check_transformer(name, transformer, this_X, this_y)
 
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_transformer_data_is_a_df(name, transformer):
+    import pandas as pd
+
+    x = np.array([1, 1, 1, 1, 2, 2, 2, 2,
+                      1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('int'))
+    y = pd.DataFrame(x)
+
+    _check_transformer(name, transformer, x, y)
+
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_transformers_unfitted(name, transformer):
