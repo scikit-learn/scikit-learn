@@ -1674,8 +1674,9 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
 
+
     if labels is not None:
-        raise Warning("Deprecation Warning: This module was deprecated in version 0.20 as input is always multilabel and the number of labels is identical to y_true.shape[1].")
+        warnings.warn("This module was deprecated in version 0.20 as input is always multilabel and the number of labels is identical to y_true.shape[1].", DeprecationWarning)
 
     if sample_weight is None:
         weight_average = 1.
