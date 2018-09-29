@@ -17,7 +17,7 @@ from ..externals import six
 
 class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
     """
-    Tranformer mixin that performs feature selection given a support mask
+    Transformer mixin that performs feature selection given a support mask
 
     This mixin provides a feature selector implementation with `transform` and
     `inverse_transform` functionality given an implementation of
@@ -72,7 +72,7 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, dtype=None, accept_sparse='csr')
         mask = self.get_support()
         if not mask.any():
             warn("No features were selected: either the data is"
@@ -111,7 +111,7 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
             return Xt
 
         support = self.get_support()
-        X = check_array(X)
+        X = check_array(X, dtype=None)
         if support.sum() != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
 

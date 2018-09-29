@@ -110,7 +110,7 @@ Alternatively, the probability of each class can be predicted, which is the
 fraction of training samples of the same class in a leaf::
 
     >>> clf.predict_proba([[2., 2.]])
-    array([[ 0.,  1.]])
+    array([[0., 1.]])
 
 :class:`DecisionTreeClassifier` is capable of both binary (where the
 labels are [-1, 1]) classification and multiclass (where the labels are
@@ -126,41 +126,35 @@ Using the Iris dataset, we can construct a tree as follows::
 
 Once trained, we can export the tree in `Graphviz
 <http://www.graphviz.org/>`_ format using the :func:`export_graphviz`
-exporter. Below is an example export of a tree trained on the entire
-iris dataset::
+exporter. If you use the `conda <http://conda.io>`_ package manager, the graphviz binaries  
+and the python package can be installed with 
 
-    >>> with open("iris.dot", 'w') as f:
-    ...     f = tree.export_graphviz(clf, out_file=f)
+    conda install python-graphviz
+   
+Alternatively binaries for graphviz can be downloaded from the graphviz project homepage,
+and the Python wrapper installed from pypi with `pip install graphviz`. 
 
-Then we can use Graphviz's ``dot`` tool to create a PDF file (or any other
-supported file type): ``dot -Tpdf iris.dot -o iris.pdf``.
+Below is an example graphviz export of the above tree trained on the entire
+iris dataset; the results are saved in an output file `iris.pdf`::
 
-::
 
-    >>> import os
-    >>> os.unlink('iris.dot')
-
-Alternatively, if we have Python module ``pydotplus`` installed, we can generate
-a PDF file (or any other supported file type) directly in Python::
-
-    >>> import pydotplus # doctest: +SKIP
+    >>> import graphviz # doctest: +SKIP
     >>> dot_data = tree.export_graphviz(clf, out_file=None) # doctest: +SKIP
-    >>> graph = pydotplus.graph_from_dot_data(dot_data) # doctest: +SKIP
-    >>> graph.write_pdf("iris.pdf") # doctest: +SKIP
+    >>> graph = graphviz.Source(dot_data) # doctest: +SKIP
+    >>> graph.render("iris") # doctest: +SKIP
 
 The :func:`export_graphviz` exporter also supports a variety of aesthetic
 options, including coloring nodes by their class (or value for regression) and
-using explicit variable and class names if desired. IPython notebooks can also
-render these plots inline using the `Image()` function::
+using explicit variable and class names if desired. Jupyter notebooks also
+render these plots inline automatically::
 
-    >>> from IPython.display import Image  # doctest: +SKIP
     >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
                              feature_names=iris.feature_names,  # doctest: +SKIP
                              class_names=iris.target_names,  # doctest: +SKIP
                              filled=True, rounded=True,  # doctest: +SKIP
                              special_characters=True)  # doctest: +SKIP
-    >>> graph = pydotplus.graph_from_dot_data(dot_data)  # doctest: +SKIP
-    >>> Image(graph.create_png())  # doctest: +SKIP
+    >>> graph = graphviz.Source(dot_data)  # doctest: +SKIP
+    >>> graph # doctest: +SKIP
 
 .. only:: html
 
@@ -171,17 +165,6 @@ render these plots inline using the `Image()` function::
 
     .. figure:: ../images/iris.pdf
        :align: center
-
-After being fitted, the model can then be used to predict the class of samples::
-
-    >>> clf.predict(iris.data[:1, :])
-    array([0])
-
-Alternatively, the probability of each class can be predicted, which is the
-fraction of training samples of the same class in a leaf::
-
-    >>> clf.predict_proba(iris.data[:1, :])
-    array([[ 1.,  0.,  0.]])
 
 .. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_001.png
    :target: ../auto_examples/tree/plot_iris.html
@@ -216,7 +199,7 @@ instead of integer values::
     >>> clf = tree.DecisionTreeRegressor()
     >>> clf = clf.fit(X, y)
     >>> clf.predict([[1, 1]])
-    array([ 0.5])
+    array([0.5])
 
 .. topic:: Examples:
 
@@ -336,15 +319,17 @@ Tips on practical use
     for each additional level the tree grows to.  Use ``max_depth`` to control
     the size of the tree to prevent overfitting.
 
-  * Use ``min_samples_split`` or ``min_samples_leaf`` to control the number of
-    samples at a leaf node.  A very small number will usually mean the tree
-    will overfit, whereas a large number will prevent the tree from learning
-    the data. Try ``min_samples_leaf=5`` as an initial value. If the sample size
-    varies greatly, a float number can be used as percentage in these two parameters.
-    The main difference between the two is that ``min_samples_leaf`` guarantees
-    a minimum number of samples in a leaf, while ``min_samples_split`` can
-    create arbitrary small leaves, though ``min_samples_split`` is more common
-    in the literature.
+  * Use ``min_samples_split`` or ``min_samples_leaf`` to ensure that multiple
+    samples inform every decision in the tree, by controlling which splits will
+    be considered. A very small number will usually mean the tree will overfit,
+    whereas a large number will prevent the tree from learning the data. Try
+    ``min_samples_leaf=5`` as an initial value. If the sample size varies
+    greatly, a float number can be used as percentage in these two parameters.
+    While ``min_samples_split`` can create arbitrarily small leaves,
+    ``min_samples_leaf`` guarantees that each leaf has a minimum size, avoiding
+    low-variance, over-fit leaf nodes in regression problems.  For
+    classification with few classes, ``min_samples_leaf=1`` is often the best
+    choice.
 
   * Balance your dataset before training to prevent the tree from being biased
     toward the classes that are dominant. Class balancing can be done by
@@ -480,19 +465,35 @@ and Misclassification
 
     H(X_m) = 1 - \max(p_{mk})
 
+where :math:`X_m` is the training data in node :math:`m`
+
 Regression criteria
 -------------------
 
 If the target is a continuous value, then for node :math:`m`,
-representing a region :math:`R_m` with :math:`N_m` observations, a common
-criterion to minimise is the Mean Squared Error
+representing a region :math:`R_m` with :math:`N_m` observations, common
+criteria to minimise as for determining locations for future
+splits are Mean Squared Error, which minimizes the L2 error
+using mean values at terminal nodes, and Mean Absolute Error, which 
+minimizes the L1 error using median values at terminal nodes. 
+
+Mean Squared Error:
 
 .. math::
 
-    c_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
+    \bar{y}_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
 
-    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - c_m)^2
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - \bar{y}_m)^2
 
+Mean Absolute Error:
+
+.. math::
+
+    \bar{y}_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
+
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - \bar{y}_m|
+
+where :math:`X_m` is the training data in node :math:`m`
 
 .. topic:: References:
 

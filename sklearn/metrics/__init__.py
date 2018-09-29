@@ -14,6 +14,7 @@ from .ranking import roc_auc_score
 from .ranking import roc_curve
 
 from .classification import accuracy_score
+from .classification import balanced_accuracy_score
 from .classification import classification_report
 from .classification import cohen_kappa_score
 from .classification import confusion_matrix
@@ -44,12 +45,14 @@ from .cluster import silhouette_samples
 from .cluster import silhouette_score
 from .cluster import calinski_harabaz_score
 from .cluster import v_measure_score
+from .cluster import davies_bouldin_score
 
 from .pairwise import euclidean_distances
 from .pairwise import pairwise_distances
 from .pairwise import pairwise_distances_argmin
 from .pairwise import pairwise_distances_argmin_min
 from .pairwise import pairwise_kernels
+from .pairwise import pairwise_distances_chunked
 
 from .regression import explained_variance_score
 from .regression import mean_absolute_error
@@ -58,6 +61,7 @@ from .regression import mean_squared_log_error
 from .regression import median_absolute_error
 from .regression import r2_score
 
+from .scorer import check_scoring
 from .scorer import make_scorer
 from .scorer import SCORERS
 from .scorer import get_scorer
@@ -68,16 +72,22 @@ __all__ = [
     'adjusted_rand_score',
     'auc',
     'average_precision_score',
+    'balanced_accuracy_score',
+    'calinski_harabaz_score',
+    'check_scoring',
     'classification_report',
     'cluster',
+    'cohen_kappa_score',
     'completeness_score',
     'confusion_matrix',
     'consensus_score',
     'coverage_error',
+    'davies_bouldin_score',
     'euclidean_distances',
     'explained_variance_score',
     'f1_score',
     'fbeta_score',
+    'fowlkes_mallows_score',
     'get_scorer',
     'hamming_loss',
     'hinge_loss',
@@ -99,6 +109,7 @@ __all__ = [
     'pairwise_distances_argmin',
     'pairwise_distances_argmin_min',
     'pairwise_distances_argmin_min',
+    'pairwise_distances_chunked',
     'pairwise_kernels',
     'precision_recall_curve',
     'precision_recall_fscore_support',

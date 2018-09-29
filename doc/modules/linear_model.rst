@@ -31,7 +31,7 @@ of squares between the observed responses in the dataset, and the
 responses predicted by the linear approximation. Mathematically it
 solves a problem of the form:
 
-.. math:: \underset{w}{min\,} {|| X w - y||_2}^2
+.. math:: \min_{w} {|| X w - y||_2}^2
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
    :target: ../auto_examples/linear_model/plot_ols.html
@@ -45,9 +45,11 @@ and will store the coefficients :math:`w` of the linear model in its
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
     >>> reg.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
+    ...                                       # doctest: +NORMALIZE_WHITESPACE
+    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=None,
+                     normalize=False)
     >>> reg.coef_
-    array([ 0.5,  0.5])
+    array([0.5, 0.5])
 
 However, coefficient estimates for Ordinary Least Squares rely on the
 independence of the model terms. When terms are correlated and the
@@ -83,7 +85,7 @@ of squares,
 
 .. math::
 
-   \underset{w}{min\,} {{|| X w - y||_2}^2 + \alpha {||w||_2}^2}
+   \min_{w} {{|| X w - y||_2}^2 + \alpha {||w||_2}^2}
 
 
 Here, :math:`\alpha \geq 0` is a complexity parameter that controls the amount
@@ -106,7 +108,7 @@ its ``coef_`` member::
     Ridge(alpha=0.5, copy_X=True, fit_intercept=True, max_iter=None,
           normalize=False, random_state=None, solver='auto', tol=0.001)
     >>> reg.coef_
-    array([ 0.34545455,  0.34545455])
+    array([0.34545455, 0.34545455])
     >>> reg.intercept_ #doctest: +ELLIPSIS
     0.13636...
 
@@ -114,7 +116,7 @@ its ``coef_`` member::
 .. topic:: Examples:
 
    * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
-   * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+   * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
 
 Ridge Complexity
@@ -138,9 +140,9 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 (GCV), an efficient form of leave-one-out cross-validation::
 
     >>> from sklearn import linear_model
-    >>> reg = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
+    >>> reg = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0], cv=3)
     >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
-    RidgeCV(alphas=[0.1, 1.0, 10.0], cv=None, fit_intercept=True, scoring=None,
+    RidgeCV(alphas=[0.1, 1.0, 10.0], cv=3, fit_intercept=True, scoring=None,
         normalize=False)
     >>> reg.alpha_                                      # doctest: +SKIP
     0.1
@@ -148,7 +150,7 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 .. topic:: References
 
     * "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
-      <http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
+      <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
       `course slides
       <http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
@@ -170,7 +172,7 @@ weights (see
 Mathematically, it consists of a linear model trained with :math:`\ell_1` prior
 as regularizer. The objective function to minimize is:
 
-.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
+.. math::  \min_{w} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
 
 The lasso estimate thus solves the minimization of the
 least-squares penalty with :math:`\alpha ||w||_1` added, where
@@ -188,7 +190,7 @@ for another implementation::
        normalize=False, positive=False, precompute=False, random_state=None,
        selection='cyclic', tol=0.0001, warm_start=False)
     >>> reg.predict([[1, 1]])
-    array([ 0.8])
+    array([0.8])
 
 Also useful for lower-level tasks is the function :func:`lasso_path` that
 computes the coefficients along the full path of possible values.
@@ -205,10 +207,19 @@ computes the coefficients along the full path of possible values.
       thus be used to perform feature selection, as detailed in
       :ref:`l1_feature_selection`.
 
-.. note:: **Randomized sparsity**
+The following two references explain the iterations
+used in the coordinate descent solver of scikit-learn, as well as
+the duality gap computation used for convergence control.
 
-      For feature selection or sparse recovery, it may be interesting to
-      use :ref:`randomized_l1`.
+.. topic:: References
+
+    * "Regularization Path For Generalized linear Models by Coordinate Descent",
+      Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
+      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`_).
+    * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
+      S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
+      in IEEE Journal of Selected Topics in Signal Processing, 2007
+      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`_)
 
 
 Setting regularization parameter
@@ -310,7 +321,7 @@ Mathematically, it consists of a linear model trained with a mixed
 :math:`\ell_1` :math:`\ell_2` prior as regularizer.
 The objective function to minimize is:
 
-.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro} ^ 2 + \alpha ||W||_{21}}
+.. math::  \min_{w} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro} ^ 2 + \alpha ||W||_{21}}
 
 where :math:`Fro` indicates the Frobenius norm:
 
@@ -346,7 +357,7 @@ The objective function to minimize is in this case
 
 .. math::
 
-    \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha \rho ||w||_1 +
+    \min_{w} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha \rho ||w||_1 +
     \frac{\alpha(1-\rho)}{2} ||w||_2 ^ 2}
 
 
@@ -363,7 +374,19 @@ The class :class:`ElasticNetCV` can be used to set the parameters
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py`
 
+The following two references explain the iterations
+used in the coordinate descent solver of scikit-learn, as well as
+the duality gap computation used for convergence control.
 
+.. topic:: References
+
+    * "Regularization Path For Generalized linear Models by Coordinate Descent",
+      Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
+      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`_).
+    * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
+      S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
+      in IEEE Journal of Selected Topics in Signal Processing, 2007
+      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`_)
 
 .. _multi_task_elastic_net:
 
@@ -381,7 +404,7 @@ The objective function to minimize is:
 
 .. math::
 
-    \underset{W}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro}^2 + \alpha \rho ||W||_{2 1} +
+    \min_{W} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro}^2 + \alpha \rho ||W||_{2 1} +
     \frac{\alpha(1-\rho)}{2} ||W||_{Fro}^2}
 
 The implementation in the class :class:`MultiTaskElasticNet` uses coordinate descent as
@@ -458,7 +481,7 @@ function of the norm of its coefficients.
         fit_path=True, max_iter=500, normalize=True, positive=False,
         precompute='auto', verbose=False)
    >>> reg.coef_    # doctest: +ELLIPSIS
-   array([ 0.717157...,  0.        ])
+   array([0.717157..., 0.        ])
 
 .. topic:: Examples:
 
@@ -501,14 +524,14 @@ Being a forward feature selection method like :ref:`least_angle_regression`,
 orthogonal matching pursuit can approximate the optimum solution vector with a
 fixed number of non-zero elements:
 
-.. math:: \text{arg\,min\,} ||y - X\gamma||_2^2 \text{ subject to } \
-    ||\gamma||_0 \leq n_{nonzero\_coefs}
+.. math::
+    \underset{\gamma}{\operatorname{arg\,min\,}}  ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{nonzero\_coefs}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
 
-.. math:: \text{arg\,min\,} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \
-    \leq \text{tol}
+.. math::
+    \underset{\gamma}{\operatorname{arg\,min\,}} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \leq \text{tol}
 
 
 OMP is based on a greedy algorithm that includes at each step the atom most
@@ -544,8 +567,8 @@ This can be done by introducing `uninformative priors
 <https://en.wikipedia.org/wiki/Non-informative_prior#Uninformative_priors>`__
 over the hyper parameters of the model.
 The :math:`\ell_{2}` regularization used in `Ridge Regression`_ is equivalent
-to finding a maximum a-postiori solution under a Gaussian prior over the
-parameters :math:`w` with precision :math:`\lambda^-1`.  Instead of setting
+to finding a maximum a posteriori estimation under a Gaussian prior over the
+parameters :math:`w` with precision :math:`\lambda^{-1}`.  Instead of setting
 `\lambda` manually, it is possible to treat it as a random variable to be
 estimated from the data.
 
@@ -587,7 +610,7 @@ regression problem as described above.
 The prior for the parameter :math:`w` is given by a spherical Gaussian:
 
 .. math:: p(w|\lambda) =
-    \mathcal{N}(w|0,\lambda^{-1}\bold{I_{p}})
+    \mathcal{N}(w|0,\lambda^{-1}\mathbf{I}_{p})
 
 The priors over :math:`\alpha` and :math:`\lambda` are chosen to be `gamma
 distributions <https://en.wikipedia.org/wiki/Gamma_distribution>`__, the
@@ -601,7 +624,7 @@ remaining hyperparameters are the parameters of the gamma priors over
 *non-informative*.  The parameters are estimated by maximizing the *marginal
 log likelihood*.
 
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`.
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_bayesian_ridge_001.png
@@ -624,13 +647,13 @@ Bayesian Ridge Regression is used for regression::
 After being fitted, the model can then be used to predict new values::
 
     >>> reg.predict ([[1, 0.]])
-    array([ 0.50000013])
+    array([0.50000013])
 
 
 The weights :math:`w` of the model can be access::
 
     >>> reg.coef_
-    array([ 0.49999993,  0.49999993])
+    array([0.49999993, 0.49999993])
 
 Due to the Bayesian framework, the weights found are slightly different to the
 ones found by :ref:`ordinary_least_squares`. However, Bayesian Ridge Regression
@@ -691,7 +714,7 @@ ARD is also known in the literature as *Sparse Bayesian Learning* and
 
     .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
 
-    .. [4] Tristan Fletcher: `Relevance Vector Machines explained <http://www.tristanfletcher.co.uk/RVM%20Explained.pdf>`_
+    .. [4] Tristan Fletcher: `Relevance Vector Machines explained <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.651.8603&rep=rep1&type=pdf>`_
 
 
 
@@ -713,15 +736,18 @@ regularization.
 As an optimization problem, binary class L2 penalized logistic regression
 minimizes the following cost function:
 
-.. math:: \underset{w, c}{min\,} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
+.. math:: \min_{w, c} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
 
 Similarly, L1 regularized logistic regression solves the following
 optimization problem
 
-.. math:: \underset{w, c}{min\,} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
+.. math:: \min_{w, c} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1).
+
+Note that, in this notation, it's assumed that the observation :math:`y_i` takes values in the set
+:math:`{-1, 1}` at trial :math:`i`.
 
 The solvers implemented in the class :class:`LogisticRegression`
-are "liblinear", "newton-cg", "lbfgs" and "sag":
+are "liblinear", "newton-cg", "lbfgs", "sag" and "saga":
 
 The solver "liblinear" uses a coordinate descent (CD) algorithm, and relies
 on the excellent C++ `LIBLINEAR library
@@ -739,25 +765,36 @@ The "lbfgs", "sag" and "newton-cg" solvers only support L2 penalization and
 are found to converge faster for some high dimensional data. Setting
 `multi_class` to "multinomial" with these solvers learns a true multinomial
 logistic regression model [5]_, which means that its probability estimates
-should be better calibrated than the default "one-vs-rest" setting. The
-"lbfgs", "sag" and "newton-cg"" solvers cannot optimize L1-penalized models,
-therefore the "multinomial" setting does not learn sparse models.
+should be better calibrated than the default "one-vs-rest" setting.
 
-The solver "sag" uses a Stochastic Average Gradient descent [6]_. It is faster
+The "sag" solver uses a Stochastic Average Gradient descent [6]_. It is faster
 than other solvers for large datasets, when both the number of samples and the
 number of features are large.
 
-In a nutshell, one may choose the solver with the following rules:
+The "saga" solver [7]_ is a variant of "sag" that also supports the
+non-smooth `penalty="l1"` option. This is therefore the solver of choice
+for sparse multinomial logistic regression.
 
-=================================  =============================
-Case                               Solver
-=================================  =============================
-Small dataset or L1 penalty        "liblinear"
-Multinomial loss or large dataset  "lbfgs", "sag" or "newton-cg"
-Very Large dataset                 "sag"
-=================================  =============================
+In a nutshell, the following table summarizes the solvers characteristics:
 
-For large dataset, you may also consider using :class:`SGDClassifier` with 'log' loss.
+============================   ===========  =======  ===========  =====  ======
+solver                         'liblinear'  'lbfgs'  'newton-cg'  'sag'  'saga'
+============================   ===========  =======  ===========  =====  ======
+Multinomial + L2 penalty       no           yes      yes          yes    yes
+OVR + L2 penalty               yes          yes      yes          yes    yes
+Multinomial + L1 penalty       no           no       no           no     yes
+OVR + L1 penalty               yes          no       no           no     yes
+============================   ===========  =======  ===========  =====  ======
+Penalize the intercept (bad)   yes          no       no           no     no
+Faster for large datasets      no           no       no           yes    yes
+Robust to unscaled datasets    yes          yes      yes          no     no
+============================   ===========  =======  ===========  =====  ======
+
+The "saga" solver is often the best choice. The "liblinear" solver is
+used by default for historical reasons.
+
+For large dataset, you may also consider using :class:`SGDClassifier`
+with 'log' loss.
 
 .. topic:: Examples:
 
@@ -766,6 +803,10 @@ For large dataset, you may also consider using :class:`SGDClassifier` with 'log'
   * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_20newsgroups.py`
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_mnist.py`
 
 .. _liblinear_differences:
 
@@ -788,13 +829,14 @@ For large dataset, you may also consider using :class:`SGDClassifier` with 'log'
    thus be used to perform feature selection, as detailed in
    :ref:`l1_feature_selection`.
 
-:class:`LogisticRegressionCV` implements Logistic Regression with builtin
-cross-validation to find out the optimal C parameter. "newton-cg", "sag" and
-"lbfgs" solvers are found to be faster for high-dimensional dense data, due to
-warm-starting. For the multiclass case, if `multi_class` option is set to
-"ovr", an optimal C is obtained for each class and if the `multi_class` option
-is set to "multinomial", an optimal C is obtained by minimizing the cross-
-entropy loss.
+:class:`LogisticRegressionCV` implements Logistic Regression with
+builtin cross-validation to find out the optimal C parameter.
+"newton-cg", "sag", "saga" and "lbfgs" solvers are found to be faster
+for high-dimensional dense data, due to warm-starting. For the
+multiclass case, if `multi_class` option is set to "ovr", an optimal C
+is obtained for each class and if the `multi_class` option is set to
+"multinomial", an optimal C is obtained by minimizing the cross-entropy
+loss.
 
 .. topic:: References:
 
@@ -802,13 +844,15 @@ entropy loss.
 
     .. [6] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <https://hal.inria.fr/hal-00860051/document>`_
 
+    .. [7] Aaron Defazio, Francis Bach, Simon Lacoste-Julien: `SAGA: A Fast Incremental Gradient Method With Support for Non-Strongly Convex Composite Objectives. <https://arxiv.org/abs/1407.0202>`_
+
 Stochastic Gradient Descent - SGD
 =================================
 
 Stochastic gradient descent is a simple yet very efficient approach
 to fit linear models. It is particularly useful when the number of samples
 (and the number of features) is very large.
-The ``partial_fit`` method allows only/out-of-core learning.
+The ``partial_fit`` method allows online/out-of-core learning.
 
 The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide
 functionality to fit linear models for classification and regression
@@ -826,8 +870,8 @@ while with ``loss="hinge"`` it fits a linear support vector machine (SVM).
 Perceptron
 ==========
 
-The :class:`Perceptron` is another simple algorithm suitable for large scale
-learning. By default:
+The :class:`Perceptron` is another simple classification algorithm suitable for
+large scale learning. By default:
 
     - It does not require a learning rate.
 
@@ -1010,7 +1054,7 @@ performance.
  * https://en.wikipedia.org/wiki/RANSAC
  * `"Random Sample Consensus: A Paradigm for Model Fitting with Applications to
    Image Analysis and Automated Cartography"
-   <http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf>`_
+   <https://www.sri.com/sites/default/files/publications/ransac-publication.pdf>`_
    Martin A. Fischler and Robert C. Bolles - SRI International (1981)
  * `"Performance Evaluation of RANSAC Family"
    <http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf>`_
@@ -1100,13 +1144,13 @@ The loss function that :class:`HuberRegressor` minimizes is given by
 
 .. math::
 
-  \underset{w, \sigma}{min\,} {\sum_{i=1}^n\left(\sigma + H_m\left(\frac{X_{i}w - y_{i}}{\sigma}\right)\sigma\right) + \alpha {||w||_2}^2}
+  \min_{w, \sigma} {\sum_{i=1}^n\left(\sigma + H_{\epsilon}\left(\frac{X_{i}w - y_{i}}{\sigma}\right)\sigma\right) + \alpha {||w||_2}^2}
 
 where
 
 .. math::
 
-  H_m(z) = \begin{cases}
+  H_{\epsilon}(z) = \begin{cases}
          z^2, & \text {if } |z| < \epsilon, \\
          2\epsilon|z| - \epsilon^2, & \text{otherwise}
   \end{cases}
@@ -1133,7 +1177,7 @@ in the following ways.
 
 .. topic:: References:
 
-    .. [#f1] Peter J. Huber, Elvezio M. Ronchetti: Robust Statistics, Concomitant scale estimates, pg 172
+  * Peter J. Huber, Elvezio M. Ronchetti: Robust Statistics, Concomitant scale estimates, pg 172
 
 Also, this estimator is different from the R implementation of Robust Regression
 (http://www.ats.ucla.edu/stat/r/dae/rreg.htm) because the R implementation does a weighted least
@@ -1200,9 +1244,9 @@ of a given degree.  It can be used as follows::
            [4, 5]])
     >>> poly = PolynomialFeatures(degree=2)
     >>> poly.fit_transform(X)
-    array([[  1.,   0.,   1.,   0.,   0.,   1.],
-           [  1.,   2.,   3.,   4.,   6.,   9.],
-           [  1.,   4.,   5.,  16.,  20.,  25.]])
+    array([[ 1.,  0.,  1.,  0.,  0.,  1.],
+           [ 1.,  2.,  3.,  4.,  6.,  9.],
+           [ 1.,  4.,  5., 16., 20., 25.]])
 
 The features of ``X`` have been transformed from :math:`[x_1, x_2]` to
 :math:`[1, x_1, x_2, x_1^2, x_1 x_2, x_2^2]`, and can now be used within
@@ -1252,7 +1296,8 @@ This way, we can solve the XOR problem with a linear classifier::
            [1, 0, 1, 0],
            [1, 1, 0, 0],
            [1, 1, 1, 1]])
-    >>> clf = Perceptron(fit_intercept=False, n_iter=10, shuffle=False).fit(X, y)
+    >>> clf = Perceptron(fit_intercept=False, max_iter=10, tol=None,
+    ...                  shuffle=False).fit(X, y)
 
 And the classifier "predictions" are perfect::
 

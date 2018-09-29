@@ -82,18 +82,55 @@ class ProjectionToHashMixin(object):
         return out.reshape(projected.shape[0], -1)
 
     def fit_transform(self, X, y=None):
+        """
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of predictors.
+        """
+
         self.fit(X)
         return self.transform(X)
 
-    def transform(self, X, y=None):
+    def transform(self, X):
+        """
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of predictors.
+        """
         return self._to_hash(super(ProjectionToHashMixin, self).transform(X))
 
 
 class GaussianRandomProjectionHash(ProjectionToHashMixin,
                                    GaussianRandomProjection):
-    """Use GaussianRandomProjection to produce a cosine LSH fingerprint"""
+    """Use GaussianRandomProjection to produce a cosine LSH fingerprint
+
+    Parameters
+    ----------
+
+    n_components : int or 'auto', optional (default = 32)
+        Dimensionality of the target projection space.
+
+        n_components can be automatically adjusted according to the
+        number of samples in the dataset and the bound given by the
+        Johnson-Lindenstrauss lemma. In that case the quality of the
+        embedding is controlled by the ``eps`` parameter.
+
+        It should be noted that Johnson-Lindenstrauss lemma can yield
+        very conservative estimated of the required number of components
+        as it makes no assumption on the structure of the dataset.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+    """
     def __init__(self,
-                 n_components=8,
+                 n_components=32,
                  random_state=None):
         super(GaussianRandomProjectionHash, self).__init__(
             n_components=n_components,
@@ -122,19 +159,17 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     points. Its value does not depend on the norm of the vector points but
     only on their relative angles.
 
-    Read more in the :ref:`User Guide <approximate_nearest_neighbors>`.
-
     Parameters
     ----------
 
     n_estimators : int (default = 10)
         Number of trees in the LSH Forest.
 
-    min_hash_match : int (default = 4)
-        lowest hash length to be searched when candidate selection is
-        performed for nearest neighbors.
+    radius : float, optinal (default = 1.0)
+        Radius from the data point to its neighbors. This is the parameter
+        space to use by default for the :meth:`radius_neighbors` queries.
 
-    n_candidates : int (default = 10)
+    n_candidates : int (default = 50)
         Minimum number of candidates evaluated per estimator, assuming enough
         items meet the `min_hash_match` constraint.
 
@@ -142,9 +177,9 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         Number of neighbors to be returned from query function when
         it is not provided to the :meth:`kneighbors` method.
 
-    radius : float, optinal (default = 1.0)
-        Radius from the data point to its neighbors. This is the parameter
-        space to use by default for the :meth`radius_neighbors` queries.
+    min_hash_match : int (default = 4)
+        lowest hash length to be searched when candidate selection is
+        performed for nearest neighbors.
 
     radius_cutoff_ratio : float, optional (default = 0.9)
         A value ranges from 0 to 1. Radius neighbors will be searched until
@@ -189,17 +224,18 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
       >>> X_train = [[5, 5, 2], [21, 5, 5], [1, 1, 1], [8, 9, 1], [6, 10, 2]]
       >>> X_test = [[9, 1, 6], [3, 1, 10], [7, 10, 3]]
-      >>> lshf = LSHForest(random_state=42)
-      >>> lshf.fit(X_train)  # doctest: +NORMALIZE_WHITESPACE
+      >>> lshf = LSHForest(random_state=42)  # doctest: +SKIP
+      >>> lshf.fit(X_train)  # doctest: +SKIP
       LSHForest(min_hash_match=4, n_candidates=50, n_estimators=10,
                 n_neighbors=5, radius=1.0, radius_cutoff_ratio=0.9,
                 random_state=42)
       >>> distances, indices = lshf.kneighbors(X_test, n_neighbors=2)
-      >>> distances                                        # doctest: +ELLIPSIS
-      array([[ 0.069...,  0.149...],
-             [ 0.229...,  0.481...],
-             [ 0.004...,  0.014...]])
-      >>> indices
+      ... # doctest: +SKIP
+      >>> distances                                        # doctest: +SKIP
+      array([[0.069..., 0.149...],
+             [0.229..., 0.481...],
+             [0.004..., 0.014...]])
+      >>> indices  # doctest: +SKIP
       array([[1, 2],
              [2, 0],
              [4, 0]])
@@ -216,6 +252,10 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         self.n_neighbors = n_neighbors
         self.min_hash_match = min_hash_match
         self.radius_cutoff_ratio = radius_cutoff_ratio
+
+        warnings.warn("LSHForest has poor performance and has been deprecated "
+                      "in 0.19. It will be removed in version 0.21.",
+                      DeprecationWarning)
 
     def _compute_distances(self, query, candidates):
         """Computes the cosine distance.
@@ -352,7 +392,6 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
 
         self._fit_X = check_array(X, accept_sparse='csr')
@@ -407,7 +446,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             List of n_features-dimensional data points.  Each row
             corresponds to a single query.
 
-        n_neighbors : int, opitonal (default = None)
+        n_neighbors : int, optional (default = None)
             Number of neighbors required. If not provided, this will
             return the number specified at the initialization.
 

@@ -2,9 +2,8 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
-from sys import version_info
-
 import numpy as np
+import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
 
@@ -13,7 +12,6 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
@@ -148,6 +146,7 @@ def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
     return X, y, X_test, y_test
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_lasso_cv():
     X, y, X_test, y_test = build_dataset()
     max_iter = 150
@@ -173,6 +172,24 @@ def test_lasso_cv():
 
     # test set
     assert_greater(clf.score(X_test, y_test), 0.99)
+
+
+def test_lasso_cv_with_some_model_selection():
+    from sklearn.pipeline import make_pipeline
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.model_selection import StratifiedKFold
+    from sklearn import datasets
+    from sklearn.linear_model import LassoCV
+
+    diabetes = datasets.load_diabetes()
+    X = diabetes.data
+    y = diabetes.target
+
+    pipe = make_pipeline(
+        StandardScaler(),
+        LassoCV(cv=StratifiedKFold(n_splits=5))
+    )
+    pipe.fit(X, y)
 
 
 def test_lasso_cv_positive_constraint():
@@ -216,6 +233,7 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
         decimal=1)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_enet_path():
     # We use a large number of samples and of informative features so that
     # the l1_ratio selected is more toward ridge than lasso
@@ -273,6 +291,7 @@ def test_enet_path():
     assert_almost_equal(clf1.alpha_, clf2.alpha_)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_path_parameters():
     X, y, _, _ = build_dataset()
     max_iter = 100
@@ -344,6 +363,7 @@ def test_enet_cv_positive_constraint():
     assert_true(min(enetcv_constrained.coef_) >= 0)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_uniform_targets():
     enet = ElasticNetCV(fit_intercept=True, n_alphas=3)
     m_enet = MultiTaskElasticNetCV(fit_intercept=True, n_alphas=3)
@@ -438,6 +458,7 @@ def test_multioutput_enetcv_error():
     assert_raises(ValueError, clf.fit, X, y)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_multitask_enet_and_lasso_cv():
     X, y, _, _ = build_dataset(n_features=50, n_targets=3)
     clf = MultiTaskElasticNetCV().fit(X, y)
@@ -464,6 +485,7 @@ def test_multitask_enet_and_lasso_cv():
     assert_equal(10, len(clf.alphas_))
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_1d_multioutput_enet_and_multitask_enet_cv():
     X, y, _, _ = build_dataset(n_features=10)
     y = y[:, np.newaxis]
@@ -477,6 +499,7 @@ def test_1d_multioutput_enet_and_multitask_enet_cv():
     assert_almost_equal(clf.intercept_, clf1.intercept_[0])
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_1d_multioutput_lasso_and_multitask_lasso_cv():
     X, y, _, _ = build_dataset(n_features=10)
     y = y[:, np.newaxis]
@@ -489,6 +512,7 @@ def test_1d_multioutput_lasso_and_multitask_lasso_cv():
     assert_almost_equal(clf.intercept_, clf1.intercept_[0])
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_sparse_input_dtype_enet_and_lassocv():
     X, y, _, _ = build_dataset(n_features=10)
     clf = ElasticNetCV(n_alphas=5)
@@ -506,6 +530,7 @@ def test_sparse_input_dtype_enet_and_lassocv():
     assert_almost_equal(clf.coef_, clf1.coef_, decimal=6)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_precompute_invalid_argument():
     X, y, _, _ = build_dataset()
     for clf in [ElasticNetCV(precompute="invalid"),
@@ -610,12 +635,20 @@ def test_random_descent():
 
 
 def test_enet_path_positive():
-    # Test that the coefs returned by positive=True in enet_path are positive
+    # Test positive parameter
 
-    X, y, _, _ = build_dataset(n_samples=50, n_features=50)
+    X, Y, _, _ = build_dataset(n_samples=50, n_features=50, n_targets=2)
+
+    # For mono output
+    # Test that the coefs returned by positive=True in enet_path are positive
     for path in [enet_path, lasso_path]:
-        pos_path_coef = path(X, y, positive=True)[1]
+        pos_path_coef = path(X, Y[:, 0], positive=True)[1]
         assert_true(np.all(pos_path_coef >= 0))
+
+    # For multi output, positive parameter is not allowed
+    # Test that an error is raised
+    for path in [enet_path, lasso_path]:
+        assert_raises(ValueError, path, X, Y, positive=True)
 
 
 def test_sparse_dense_descent_paths():
@@ -635,16 +668,39 @@ def test_check_input_false():
     clf = ElasticNet(selection='cyclic', tol=1e-8)
     # Check that no error is raised if data is provided in the right format
     clf.fit(X, y, check_input=False)
+    # With check_input=False, an exhaustive check is not made on y but its
+    # dtype is still cast in _preprocess_data to X's dtype. So the test should
+    # pass anyway
     X = check_array(X, order='F', dtype='float32')
-    clf.fit(X, y, check_input=True)
-    # Check that an error is raised if data is provided in the wrong dtype,
-    # because of check bypassing
-    assert_raises(ValueError, clf.fit, X, y, check_input=False)
-
+    clf.fit(X, y, check_input=False)
     # With no input checking, providing X in C order should result in false
     # computation
     X = check_array(X, order='C', dtype='float64')
     assert_raises(ValueError, clf.fit, X, y, check_input=False)
+
+
+@pytest.mark.parametrize("check_input", [True, False])
+def test_enet_copy_X_True(check_input):
+    X, y, _, _ = build_dataset()
+    X = X.copy(order='F')
+
+    original_X = X.copy()
+    enet = ElasticNet(copy_X=True)
+    enet.fit(X, y, check_input=check_input)
+
+    assert_array_equal(original_X, X)
+
+
+def test_enet_copy_X_False_check_input_False():
+    X, y, _, _ = build_dataset()
+    X = X.copy(order='F')
+
+    original_X = X.copy()
+    enet = ElasticNet(copy_X=False)
+    enet.fit(X, y, check_input=False)
+
+    # No copying, X is overwritten
+    assert_true(np.any(np.not_equal(original_X, X)))
 
 
 def test_overrided_gram_matrix():
@@ -659,17 +715,17 @@ def test_overrided_gram_matrix():
                          clf.fit, X, y)
 
 
-def test_lasso_non_float_y():
+@pytest.mark.parametrize('model', [ElasticNet, Lasso])
+def test_lasso_non_float_y(model):
     X = [[0, 0], [1, 1], [-1, -1]]
     y = [0, 1, 2]
     y_float = [0.0, 1.0, 2.0]
 
-    for model in [ElasticNet, Lasso]:
-        clf = model(fit_intercept=False)
-        clf.fit(X, y)
-        clf_float = model(fit_intercept=False)
-        clf_float.fit(X, y_float)
-        assert_array_equal(clf.coef_, clf_float.coef_)
+    clf = model(fit_intercept=False)
+    clf.fit(X, y)
+    clf_float = model(fit_intercept=False)
+    clf_float.fit(X, y_float)
+    assert_array_equal(clf.coef_, clf_float.coef_)
 
 
 def test_enet_float_precision():
@@ -756,3 +812,9 @@ def test_enet_l1_ratio():
         est.fit(X, y[:, None])
         est_desired.fit(X, y[:, None])
     assert_array_almost_equal(est.coef_, est_desired.coef_, decimal=5)
+
+
+def test_coef_shape_not_zero():
+    est_no_intercept = Lasso(fit_intercept=False)
+    est_no_intercept.fit(np.c_[np.ones(3)], np.ones(3))
+    assert est_no_intercept.coef_.shape == (1,)

@@ -24,16 +24,16 @@ from sklearn.datasets import make_circles
 n_samples = 200
 X, y = make_circles(n_samples=n_samples, shuffle=False)
 outer, inner = 0, 1
-labels = -np.ones(n_samples)
+labels = np.full(n_samples, -1.)
 labels[0] = outer
 labels[-1] = inner
 
-###############################################################################
+# #############################################################################
 # Learn with LabelSpreading
-label_spread = label_propagation.LabelSpreading(kernel='knn', alpha=1.0)
+label_spread = label_propagation.LabelSpreading(kernel='knn', alpha=0.8)
 label_spread.fit(X, labels)
 
-###############################################################################
+# #############################################################################
 # Plot output labels
 output_labels = label_spread.transduction_
 plt.figure(figsize=(8.5, 4))

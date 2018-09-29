@@ -8,16 +8,16 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
-from scipy.sparse import dia_matrix
-from scipy.sparse import issparse
+from scipy.linalg import norm
+from scipy.sparse import dia_matrix, issparse
+from scipy.sparse.linalg import eigsh, svds
 
 from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
 from ..externals import six
 from ..utils import check_random_state
-from ..utils.arpack import eigsh, svds
 
-from ..utils.extmath import (make_nonnegative, norm, randomized_svd,
+from ..utils.extmath import (make_nonnegative, randomized_svd,
                              safe_sparse_dot)
 
 from ..utils.validation import assert_all_finite, check_array
@@ -93,7 +93,7 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
     @abstractmethod
     def __init__(self, n_clusters=3, svd_method="randomized",
                  n_svd_vecs=None, mini_batch=False, init="k-means++",
-                 n_init=10, n_jobs=1, random_state=None):
+                 n_init=10, n_jobs=None, random_state=None):
         self.n_clusters = n_clusters
         self.svd_method = svd_method
         self.n_svd_vecs = n_svd_vecs
@@ -110,12 +110,14 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
                              " one of {1}.".format(self.svd_method,
                                                    legal_svd_methods))
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Creates a biclustering for X.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
+
+        y : Ignored
 
         """
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
@@ -202,7 +204,7 @@ class SpectralCoclustering(BaseSpectral):
         'randomized' or 'arpack'. If 'randomized', use
         :func:`sklearn.utils.extmath.randomized_svd`, which may be faster
         for large matrices. If 'arpack', use
-        :func:`sklearn.utils.arpack.svds`, which is more accurate, but
+        :func:`scipy.sparse.linalg.svds`, which is more accurate, but
         possibly slower in some cases.
 
     n_svd_vecs : int, optional, default: None
@@ -226,19 +228,19 @@ class SpectralCoclustering(BaseSpectral):
         chosen and the algorithm runs once. Otherwise, the algorithm
         is run for each initialization and the best solution chosen.
 
-    n_jobs : int, optional, default: 1
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
-    random_state : int seed, RandomState instance, or None (default)
-        A pseudo random number generator used by the K-Means
-        initialization.
+    random_state : int, RandomState instance or None (default)
+        Used for randomizing the singular value decomposition and the k-means
+        initialization. Use an int to make the randomness deterministic.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -255,6 +257,22 @@ class SpectralCoclustering(BaseSpectral):
     column_labels_ : array-like, shape (n_cols,)
         The bicluster label of each column.
 
+    Examples
+    --------
+    >>> from sklearn.cluster import SpectralCoclustering
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> clustering = SpectralCoclustering(n_clusters=2, random_state=0).fit(X)
+    >>> clustering.row_labels_
+    array([0, 1, 1, 0, 0, 0], dtype=int32)
+    >>> clustering.column_labels_
+    array([0, 0], dtype=int32)
+    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    SpectralCoclustering(init='k-means++', mini_batch=False, n_clusters=2,
+               n_init=10, n_jobs=None, n_svd_vecs=None, random_state=0,
+               svd_method='randomized')
+
     References
     ----------
 
@@ -265,7 +283,7 @@ class SpectralCoclustering(BaseSpectral):
     """
     def __init__(self, n_clusters=3, svd_method='randomized',
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
-                 n_init=10, n_jobs=1, random_state=None):
+                 n_init=10, n_jobs=None, random_state=None):
         super(SpectralCoclustering, self).__init__(n_clusters,
                                                    svd_method,
                                                    n_svd_vecs,
@@ -332,7 +350,7 @@ class SpectralBiclustering(BaseSpectral):
         'randomized' or 'arpack'. If 'randomized', uses
         `sklearn.utils.extmath.randomized_svd`, which may be faster
         for large matrices. If 'arpack', uses
-        `sklearn.utils.arpack.svds`, which is more accurate, but
+        `scipy.sparse.linalg.svds`, which is more accurate, but
         possibly slower in some cases.
 
     n_svd_vecs : int, optional, default: None
@@ -356,19 +374,19 @@ class SpectralBiclustering(BaseSpectral):
         chosen and the algorithm runs once. Otherwise, the algorithm
         is run for each initialization and the best solution chosen.
 
-    n_jobs : int, optional, default: 1
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
-    random_state : int seed, RandomState instance, or None (default)
-        A pseudo random number generator used by the K-Means
-        initialization.
+    random_state : int, RandomState instance or None (default)
+        Used for randomizing the singular value decomposition and the k-means
+        initialization. Use an int to make the randomness deterministic.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -385,6 +403,23 @@ class SpectralBiclustering(BaseSpectral):
     column_labels_ : array-like, shape (n_cols,)
         Column partition labels.
 
+    Examples
+    --------
+    >>> from sklearn.cluster import SpectralBiclustering
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> clustering = SpectralBiclustering(n_clusters=2, random_state=0).fit(X)
+    >>> clustering.row_labels_
+    array([1, 1, 1, 0, 0, 0], dtype=int32)
+    >>> clustering.column_labels_
+    array([0, 1], dtype=int32)
+    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    SpectralBiclustering(init='k-means++', method='bistochastic',
+               mini_batch=False, n_best=3, n_clusters=2, n_components=6,
+               n_init=10, n_jobs=None, n_svd_vecs=None, random_state=0,
+               svd_method='randomized')
+
     References
     ----------
 
@@ -396,7 +431,7 @@ class SpectralBiclustering(BaseSpectral):
     def __init__(self, n_clusters=3, method='bistochastic',
                  n_components=6, n_best=3, svd_method='randomized',
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
-                 n_init=10, n_jobs=1, random_state=None):
+                 n_init=10, n_jobs=None, random_state=None):
         super(SpectralBiclustering, self).__init__(n_clusters,
                                                    svd_method,
                                                    n_svd_vecs,

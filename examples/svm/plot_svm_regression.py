@@ -12,16 +12,16 @@ import numpy as np
 from sklearn.svm import SVR
 import matplotlib.pyplot as plt
 
-###############################################################################
+# #############################################################################
 # Generate sample data
 X = np.sort(5 * np.random.rand(40, 1), axis=0)
 y = np.sin(X).ravel()
 
-###############################################################################
+# #############################################################################
 # Add noise to targets
 y[::5] += 3 * (0.5 - np.random.rand(8))
 
-###############################################################################
+# #############################################################################
 # Fit regression model
 svr_rbf = SVR(kernel='rbf', C=100, gamma=0.1, epsilon=.1)
 svr_lin = SVR(kernel='linear', C=100)
@@ -30,9 +30,10 @@ y_rbf = svr_rbf.fit(X, y).predict(X)
 y_lin = svr_lin.fit(X, y).predict(X)
 y_poly = svr_poly.fit(X, y).predict(X)
 
-###############################################################################
-# look at the results
+# #############################################################################
+# Look at the results
 lw = 2
+
 plt.scatter(X[svr_rbf.support_], y[svr_rbf.support_], facecolor="none",
             edgecolor="m", marker='8', label='rbf support vectors', s=40)
 plt.scatter(X[svr_lin.support_], y[svr_lin.support_], facecolor="none",
