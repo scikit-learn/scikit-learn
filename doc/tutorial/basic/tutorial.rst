@@ -263,6 +263,24 @@ Conventions
 scikit-learn estimators follow certain rules to make their behavior more
 predictive.  These are described in more detail in the :ref:`glossary`.
 
+Preservation of Input Ordering
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``fit_transform`` and ``transform`` do not preserve the order of the input array::
+
+  >>> import numpy as np
+  >>> from sklearn.decomposition import PCA
+
+  >>> X = np.random.uniform(-1, 1, size=(10, 10))
+  >>> print(x.flags.c_contiguous)
+  >>> True
+
+  >>> X_transformed = PCA().fit_transform(x)
+  >>> print(X_transformed.flags.c_contiguous)
+  >>> False
+
+In this example, ``X`` is c_contiguous, while is ``X_transformed`` is not c_contiguous after transformation.
+
 Type casting
 ~~~~~~~~~~~~
 
