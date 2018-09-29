@@ -877,8 +877,11 @@ The three levels of the Bayesian model are:
 
   1. Generation of global hyperparameters :math:`\alpha` and :math:`\eta`, 
   and global parameter :math:`\beta`.
+
   2. Generation of document-level variable :math:`\theta`. 
+
   3. Generation of word-level variables :math:`z` and :math:`w`.
+
 
 In the graphical model, each node is a random variable and has a role in the 
 generative process. A shaded node indicates an observed variable and an unshaded 
@@ -887,6 +890,7 @@ the only data that we observe. The latent variables determine the random mixture
 of topics in the corpus and the distribution of words in the documents. 
 The goal of LDA is to use the observed words to infer the hidden topic 
 structure. 
+
 
 When modeling text corpora, the model assumes the following generative process for
 a corpus with :math:`D` documents and :math:`K` topics:
