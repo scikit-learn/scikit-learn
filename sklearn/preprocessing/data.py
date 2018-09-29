@@ -33,7 +33,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  min_max_axis)
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
-                                
+
 from ._csr_expansion import csr_expansion
 
 from ._encoders import OneHotEncoder
@@ -1445,8 +1445,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         ----------
         X : array-like or sparse matrix, shape [n_samples, n_features]
             The data to transform, row by row.
-            Sparse input should preferably be in CSR format (for speed), but must be in
-            CSC format if the degree is 4 or higher.
+            Sparse input should preferably be in CSR format (for speed),
+            but must be in CSC format if the degree is 4 or higher.
 
         Returns
         -------
@@ -1461,37 +1461,41 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
         if n_features != self.n_input_features_:
             raise ValueError("X shape does not match training shape")
-                    
+
         if sparse.isspmatrix_csr(X):
-          if self.degree > 3:
-            raise ValueError("Expansions on CSR matrices must be of degree 2 or 3")
-          to_stack = []
-          if self.include_bias:
-            to_stack.append(np.ones(shape=(n_samples, 1), dtype=X.dtype))
-          to_stack.append(X)
-          for deg in range(2, self.degree+1):
-            to_stack.append(csr_expansion(X.data, X.indices, X.indptr,
-                                          n_features, int(self.interaction_only), deg))
-          XP = sparse.hstack(to_stack, format='csr')
+            if self.degree > 3:
+                raise ValueError("Expansions on CSR matrices must be "
+                                 "of degree 2 or 3")
+            to_stack = []
+            if self.include_bias:
+                to_stack.append(np.ones(shape=(n_samples, 1), dtype=X.dtype))
+            to_stack.append(X)
+            for deg in range(2, self.degree+1):
+                to_stack.append(csr_expansion(X.data, X.indices, X.indptr,
+                                              n_features,
+                                              int(self.interaction_only), deg))
+            XP = sparse.hstack(to_stack, format='csr')
         else:
-          combinations = self._combinations(n_features, self.degree,
-                                            self.interaction_only,
-                                            self.include_bias)
-          if sparse.isspmatrix(X):
-              columns = []
-              for comb in combinations:
-                  if comb:
-                      out_col = 1
-                      for col_idx in comb:
-                          out_col = X[:, col_idx].multiply(out_col)
-                      columns.append(out_col)
-                  else:
-                      columns.append(sparse.csc_matrix(np.ones((X.shape[0], 1))))
-              XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
-          else:
-              XP = np.empty((n_samples, self.n_output_features_), dtype=X.dtype)
-              for i, comb in enumerate(combinations):
-                  XP[:, i] = X[:, comb].prod(1)
+            combinations = self._combinations(n_features, self.degree,
+                                              self.interaction_only,
+                                              self.include_bias)
+            if sparse.isspmatrix(X):
+                columns = []
+                for comb in combinations:
+                    if comb:
+                        out_col = 1
+                        for col_idx in comb:
+                            out_col = X[:, col_idx].multiply(out_col)
+                        columns.append(out_col)
+                    else:
+                        bias = sparse.csc_matrix(np.ones((X.shape[0], 1)))
+                        columns.append(bias)
+                XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
+            else:
+                XP = np.empty((n_samples, self.n_output_features_),
+                              dtype=X.dtype)
+                for i, comb in enumerate(combinations):
+                    XP[:, i] = X[:, comb].prod(1)
 
         return XP
 
