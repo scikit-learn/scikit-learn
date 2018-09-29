@@ -166,17 +166,6 @@ render these plots inline automatically::
     .. figure:: ../images/iris.pdf
        :align: center
 
-After being fitted, the model can then be used to predict the class of samples::
-
-    >>> clf.predict(iris.data[:1, :])
-    array([0])
-
-Alternatively, the probability of each class can be predicted, which is the
-fraction of training samples of the same class in a leaf::
-
-    >>> clf.predict_proba(iris.data[:1, :])
-    array([[1., 0., 0.]])
-
 .. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_001.png
    :target: ../auto_examples/tree/plot_iris.html
    :align: center

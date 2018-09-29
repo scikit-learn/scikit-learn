@@ -281,6 +281,17 @@ def test_cross_val_score():
                   error_score='raise')
 
 
+@pytest.mark.filterwarnings('ignore:You should specify a value for')  # 0.22
+def test_cross_validate_many_jobs():
+    # regression test for #12154: cv='warn' with n_jobs>1 trigger a copy of
+    # the parameters leading to a failure in check_cv due to cv is 'warn'
+    # instead of cv == 'warn'.
+    X, y = load_iris(return_X_y=True)
+    clf = SVC(gamma='auto')
+    grid = GridSearchCV(clf, param_grid={'C': [1, 10]})
+    cross_validate(grid, X, y, n_jobs=2)
+
+
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_cross_validate_invalid_scoring_param():
     X, y = make_classification(random_state=0)
@@ -1382,7 +1393,7 @@ def get_expected_predictions(X, y, cv, classes, est, method):
         est.fit(X[train], y[train])
         expected_predictions_ = func(X[test])
         # To avoid 2 dimensional indexing
-        if method is 'predict_proba':
+        if method == 'predict_proba':
             exp_pred_test = np.zeros((len(test), classes))
         else:
             exp_pred_test = np.full((len(test), classes),

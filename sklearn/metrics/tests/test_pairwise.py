@@ -178,6 +178,13 @@ def test_pairwise_precomputed(func):
     assert_true(isinstance(S, np.ndarray))
 
 
+def test_pairwise_precomputed_non_negative():
+    # Test non-negative values
+    assert_raises_regexp(ValueError, '.* non-negative values.*',
+                         pairwise_distances, np.full((5, 5), -1),
+                         metric='precomputed')
+
+
 def check_pairwise_parallel(func, metric, kwds):
     rng = np.random.RandomState(0)
     for make_data in (np.array, csr_matrix):

@@ -17,7 +17,7 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- please add class and reason here (see version 0.20 what's new)
+- :class:`cluster.DBSCAN` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -48,6 +48,7 @@ Support for Python 3.4 and below has been officially dropped.
   to set and that scales better, by :user:`Shane <espg>` and
   :user:`Adrin Jalali <adrinjalali>`.
 
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -56,6 +57,11 @@ Support for Python 3.4 and below has been officially dropped.
   which is slower but more precise numerically, particularly in 32 bit.
   Also added a global ``euclidean_distances_algorithm`` config parameter
   with the same effect.  :issue:`12136` by `Roman Yurchak`_.
+  
+- |Fix| Fixed a bug in :class:`cluster.DBSCAN` with precomputed sparse neighbors
+  graph, which would add explicitly zeros on the diagonal even when already
+  present. :issue:`12105` by `Tom Dupre la Tour`_.
+
 
 Multiple modules
 ................

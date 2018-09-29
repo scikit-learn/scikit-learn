@@ -25,6 +25,8 @@ def set_config(assume_finite=None, working_memory=None,
                euclidean_distance_algorithm=None):
     """Set global scikit-learn configuration
 
+    .. versionadded:: 0.19
+
     Parameters
     ----------
     assume_finite : bool, optional
