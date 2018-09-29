@@ -365,6 +365,16 @@ class LedoitWolf(EmpiricalCovariance):
         Coefficient in the convex combination used for the computation
         of the shrunk estimate.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import LedoitWolf
+    >>> np.random.seed(0)
+    >>> n_samples, n_features = 4, 8
+    >>> X_train = np.random.normal(size=(n_samples, n_features))
+    >>> loglik_lw = lw.fit(X_train)
+    >>> print(lw.covariance_)
+
     Notes
     -----
     The regularised covariance is:
