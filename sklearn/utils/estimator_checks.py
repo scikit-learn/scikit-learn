@@ -2091,7 +2091,11 @@ def check_estimators_pandas_dataframe(name, estimator_orig, X, y):
     set_random_state(estimator_2)
 
     import pandas as pd
-    y_ = pd.Series(np.asarray(y))
+    y_ = np.asarray(y)
+    if y_.ndim == 1:
+        y_ = pd.Series(y_)
+    else:
+        y_ = pd.DataFrame(y_)
     X_ = pd.DataFrame(np.asarray(X))
 
     # fit
