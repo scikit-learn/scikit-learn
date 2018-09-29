@@ -54,9 +54,8 @@ def csr_expansion(ndarray[DATA_T, ndim=1] data,
     for row_i in range(indptr.shape[0]-1):
       # R is the number of nonzero elements in this row.
       R = indptr[row_i + 1] - indptr[row_i]
-      total_nnz += <INDEX_T>(round((R**3 + 3*R**2 + 2*R)/6 - interaction_only*R**2 \
-                                    if degree == 3 else \
-                                    (R**2 + R)/2 - interaction_only*R))
+      total_nnz += (R**3 + 3*R**2 + 2*R) / 6 - interaction_only*R**2 \
+                   if degree == 3 else (R**2 + R)/2 - interaction_only*R
   
     # Make the arrays that will form the CSR matrix of the expansion.
     cdef ndarray[DATA_T, ndim=1] expanded_data = ndarray(shape=total_nnz,
@@ -70,8 +69,8 @@ def csr_expansion(ndarray[DATA_T, ndim=1] data,
     cdef INDEX_T expanded_index = 0, row_starts, row_ends, i, j, k, k1, k2, k3, \
       num_cols_in_row, expanded_column, expanded_dimensionality
     
-    expanded_dimensionality = round((D**3 + 3*D**2 + 2*D)/6 - interaction_only*D**2 \
-                                    if degree == 3 else (D**2 + D)/2 - interaction_only*D)
+    expanded_dimensionality = (D**3 + 3*D**2 + 2*D)/6 - interaction_only*D**2 \
+                              if degree == 3 else (D**2 + D)/2 - interaction_only*D
     
     #Calculate the augmented matrix and polynomial expansion features.
     expanded_indptr[0] = indptr[0]
@@ -95,11 +94,11 @@ def csr_expansion(ndarray[DATA_T, ndim=1] data,
             # degree == 3
             for k3 in range(k2 + interaction_only, row_ends):
               k = indices[k3]
-              expanded_column = (3*D**2*i - 3*D*i**2 - 12*D*i + 6*D*j - 6*D + i**3 +     \
-                                 6*i**2 + 11*i - 3*j**2 - 9*j) / 6 + k                   \
+              expanded_column = (3*D**2*i - 3*D*i**2 + i**3 + + 11*i - 3*j**2 - 9*j) / 6 \
+                                 + i**2 - 2*D*i + D*j - D + k                            \
                                  if interaction_only else                                \
-                                 (3*D**2*i - 3*D*i**2 + 6*D*j + i**3 - i - 3*j**2 - 3*j) \
-                                 /6 + k
+                                 (3*D**2*i - 3*D*i**2 + i**3 - i - 3*j**2 - 3*j) / 6     \
+                                 + D*j + k
               expanded_indices[expanded_index] = expanded_column
               expanded_data[expanded_index] = data[k1] * data[k2] * data[k3]
               expanded_index += 1
