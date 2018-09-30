@@ -34,7 +34,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
 
-from ._csr_expansion import csr_expansion
+from ._csr_expansion import _csr_expansion
 
 from ._encoders import OneHotEncoder
 
@@ -1448,6 +1448,13 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             Sparse input should preferably be in CSR format (for speed),
             but must be in CSC format if the degree is 4 or higher.
 
+            If the input matrix is in CSR format and the expansion is of
+            degree 2 or 3, the method described in the work "Leveraging
+            Sparsity to Speed Up Polynomial Feature Expansions of CSR
+            Matrices Using K-Simplex Numbers" by Andrew Nystrom and
+            John Hughes is used, which is much faster than the method
+            used on CSC input.
+
         Returns
         -------
         XP : np.ndarray or CSR/CSC sparse matrix, shape [n_samples, NP]
@@ -1464,16 +1471,17 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
         if sparse.isspmatrix_csr(X):
             if self.degree > 3:
-                raise ValueError("Expansions on CSR matrices must be "
-                                 "of degree 2 or 3")
+                return (self.transform(X.tocsc())).tocsr()
+
             to_stack = []
             if self.include_bias:
                 to_stack.append(np.ones(shape=(n_samples, 1), dtype=X.dtype))
             to_stack.append(X)
             for deg in range(2, self.degree+1):
-                to_stack.append(csr_expansion(X.data, X.indices, X.indptr,
-                                              n_features,
-                                              int(self.interaction_only), deg))
+                to_stack.append(_csr_expansion(X.data, X.indices, X.indptr,
+                                               n_features,
+                                               int(self.interaction_only),
+                                               deg))
             XP = sparse.hstack(to_stack, format='csr')
         else:
             combinations = self._combinations(n_features, self.degree,
