@@ -6,7 +6,7 @@ from sys import argv
 from time import time
 
 degree = 2
-trials = 1
+trials = 5
 num_rows = 100
 dimensionalities = [10, 20, 40]
 densities = [0.1, 0.4, 0.7, 1.0]
