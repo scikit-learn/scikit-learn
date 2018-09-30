@@ -580,11 +580,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self._check_is_fitted("classes_")
         return self.best_estimator_.classes_
 
-    @abstractmethod
     def _run_search(self, evaluate_candidates):
         """Repeatedly calls `evaluate_candidates` to conduct a search.
 
-        This method, implemented in sub-classes, makes it is possible to
+        This method, implemented in sub-classes, makes it possible to
         customize the the scheduling of evaluations: GridSearchCV and
         RandomizedSearchCV schedule evaluations for their whole parameter
         search space at once but other more sequential approaches are also
@@ -613,6 +612,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 if score[0] < score[1]:
                     evaluate_candidates([{'C': 0.1}])
         """
+        raise NotImplementedError("_run_search not implemented.")
 
     def fit(self, X, y=None, groups=None, **fit_params):
         """Run fit with all sets of parameters.
