@@ -1109,16 +1109,16 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
         if len(tp_bins):
             tp_sum = np.bincount(tp_bins, weights=tp_bins_weights,
-                              minlength=len(labels))
+                                 minlength=len(labels))
         else:
             # Pathological case
             true_sum = pred_sum = tp_sum = np.zeros(len(labels))
         if len(y_pred):
             pred_sum = np.bincount(y_pred, weights=sample_weight,
-                                minlength=len(labels))
+                                   minlength=len(labels))
         if len(y_true):
             true_sum = np.bincount(y_true, weights=sample_weight,
-                                minlength=len(labels))
+                                   minlength=len(labels))
 
         # Retain only selected labels
         indices = np.searchsorted(sorted_labels, labels[:n_labels])
