@@ -27,7 +27,7 @@ We use CircleCI to build the HTML documentation for every pull request. To
 access that documentation, instructions are provided in the :ref:`documentation
 section of the contributor guide <contribute_documentation>`. To save you a few
 clicks, we provide a `userscript
-<https://raw.githubusercontent.com/lesteve/userscripts/master/add-button-for-pr-circleci-doc.user.js>`_
+<https://raw.githubusercontent.com/lesteve/userscripts/master/add-button-for-pr-circleci-doc.user.js>`__
 that adds a button to every PR. After installing the userscript, navigate to
 any GitHub PR; a new button labeled "See CircleCI doc for this PR" should
 appear in the top-right area.
@@ -37,7 +37,7 @@ Folding and unfolding outdated diffs on pull requests
 
 GitHub hides discussions on PRs when the corresponding lines of code have been
 changed in the mean while. This `userscript
-<https://raw.githubusercontent.com/lesteve/userscripts/master/github-expand-all.user.js>`_
+<https://raw.githubusercontent.com/lesteve/userscripts/master/github-expand-all.user.js>`__
 provides a shortcut (Control-Alt-P at the time of writing but look at the code
 to be sure) to unfold all such hidden discussions at once, so you can catch up.
 
@@ -79,7 +79,7 @@ to select tests based on their name. For instance,::
 
 will run all :term:`common tests` for the ``LogisticRegression`` estimator.
 
-When a unit tests fail, the following tricks can make debugging easier:
+When a unit test fails, the following tricks can make debugging easier:
 
   1. The command line argument ``pytest -l`` instructs pytest to print the local
      variables when a failure occurs.
@@ -103,6 +103,11 @@ replies <https://github.com/settings/replies/>`_ for reviewing:
 ..
     Note that putting this content on a single line in a literal is the easiest way to make it copyable and wrapped on screen.
 
+Issue: Usage questions
+    ::
+
+        You're asking a usage question. The issue tracker is mainly for bugs and new features. For usage questions, it is recommended to try [Stack Overflow](https://stackoverflow.com/questions/tagged/scikit-learn) or [the Mailing List](https://mail.python.org/mailman/listinfo/scikit-learn).
+
 Issue: You're welcome to update the docs
     ::
 
@@ -116,15 +121,11 @@ Issue: Self-contained example for bug
 Issue: Software versions
     ::
 
-        To help diagnose your issue, could you please paste the output of:
+        To help diagnose your issue, please paste the output of:
         ```py
-        import platform; print(platform.platform())
-        import sys; print("Python", sys.version)
-        import numpy; print("NumPy", numpy.__version__)
-        import scipy; print("SciPy", scipy.__version__)
-        import sklearn; print("Scikit-Learn", sklearn.__version__)
+        import sklearn; sklearn.show_versions()
         ```
-        ? Thanks.
+        Thanks.
 
 Issue: Code blocks
     ::

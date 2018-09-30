@@ -11,11 +11,11 @@ import array
 import numpy as np
 from scipy import linalg
 import scipy.sparse as sp
-from collections import Iterable
 
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
+from ..utils.fixes import _Iterable as Iterable
 from ..utils.random import sample_without_replacement
 from ..externals import six
 map = six.moves.map
@@ -807,7 +807,7 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
                          "and cluster_std = {}".format(centers, cluster_std))
 
     if isinstance(cluster_std, numbers.Real):
-        cluster_std = np.ones(len(centers)) * cluster_std
+        cluster_std = np.full(len(centers), cluster_std)
 
     X = []
     y = []

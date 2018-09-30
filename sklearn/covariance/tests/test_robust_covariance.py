@@ -10,6 +10,7 @@ import numpy as np
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, MinCovDet
@@ -133,3 +134,35 @@ def test_mcd_support_covariance_is_zero():
            'increase support_fraction')
     for X in [X_1, X_2]:
         assert_raise_message(ValueError, msg, MinCovDet().fit, X)
+
+
+def test_mcd_increasing_det_warning():
+    # Check that a warning is raised if we observe increasing determinants
+    # during the c_step. In theory the sequence of determinants should be
+    # decreasing. Increasing determinants are likely due to ill-conditioned
+    # covariance matrices that result in poor precision matrices.
+
+    X = [[5.1, 3.5, 1.4, 0.2],
+         [4.9, 3.0, 1.4, 0.2],
+         [4.7, 3.2, 1.3, 0.2],
+         [4.6, 3.1, 1.5, 0.2],
+         [5.0, 3.6, 1.4, 0.2],
+         [4.6, 3.4, 1.4, 0.3],
+         [5.0, 3.4, 1.5, 0.2],
+         [4.4, 2.9, 1.4, 0.2],
+         [4.9, 3.1, 1.5, 0.1],
+         [5.4, 3.7, 1.5, 0.2],
+         [4.8, 3.4, 1.6, 0.2],
+         [4.8, 3.0, 1.4, 0.1],
+         [4.3, 3.0, 1.1, 0.1],
+         [5.1, 3.5, 1.4, 0.3],
+         [5.7, 3.8, 1.7, 0.3],
+         [5.4, 3.4, 1.7, 0.2],
+         [4.6, 3.6, 1.0, 0.2],
+         [5.0, 3.0, 1.6, 0.2],
+         [5.2, 3.5, 1.5, 0.2]]
+
+    mcd = MinCovDet(random_state=1)
+    assert_warns_message(RuntimeWarning,
+                         "Determinant has increased",
+                         mcd.fit, X)

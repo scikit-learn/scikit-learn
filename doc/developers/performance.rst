@@ -388,8 +388,7 @@ Checkout the official joblib documentation:
 
 .. _warm-restarts:
 
-A sample algorithmic trick: warm restarts for cross validation
+A sample algorithmic trick: warm restarts
 ==============================================================
 
-TODO: demonstrate the warm restart tricks for cross validation of linear
-regression with Coordinate Descent.
+See the glossary entry for `warm_start <http://scikit-learn.org/dev/glossary.html#term-warm-start>`_

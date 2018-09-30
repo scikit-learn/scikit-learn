@@ -437,7 +437,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         if (self.priors_ < 0).any():
             raise ValueError("priors must be non-negative")
-        if self.priors_.sum() != 1:
+        if not np.isclose(self.priors_.sum(), 1.0):
             warnings.warn("The priors do not sum to 1. Renormalizing",
                           UserWarning)
             self.priors_ = self.priors_ / self.priors_.sum()
@@ -567,6 +567,9 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         .. versionadded:: 0.17
 
+    store_covariances : boolean
+        Deprecated, use `store_covariance`.
+
     Attributes
     ----------
     covariance_ : list of array-like, shape = [n_features, n_features]
@@ -619,9 +622,9 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         self.tol = tol
 
     @property
-    @deprecated("Attribute covariances_ was deprecated in version"
+    @deprecated("Attribute ``covariances_`` was deprecated in version"
                 " 0.19 and will be removed in 0.21. Use "
-                "covariance_ instead")
+                "``covariance_`` instead")
     def covariances_(self):
         return self.covariance_
 

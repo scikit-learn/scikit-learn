@@ -285,7 +285,7 @@ def _samme_proba(estimator, n_classes, X):
     # Displace zero probabilities so the log is defined.
     # Also fix negative elements which may occur with
     # negative sample weights.
-    proba[proba < np.finfo(proba.dtype).eps] = np.finfo(proba.dtype).eps
+    np.clip(proba, np.finfo(proba.dtype).eps, None, out=proba)
     log_proba = np.log(proba)
 
     return (n_classes - 1) * (log_proba - (1. / n_classes)
@@ -517,7 +517,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # Also fix negative elements which may occur with
         # negative sample weights.
         proba = y_predict_proba  # alias for readability
-        proba[proba < np.finfo(proba.dtype).eps] = np.finfo(proba.dtype).eps
+        np.clip(proba, np.finfo(proba.dtype).eps, None, out=proba)
 
         # Boost weight using multi-class AdaBoost SAMME.R alg
         estimator_weight = (-1. * self.learning_rate

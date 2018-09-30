@@ -614,7 +614,7 @@ class TSNE(BaseEstimator):
         Using t-SNE. Journal of Machine Learning Research 9:2579-2605, 2008.
 
     [2] van der Maaten, L.J.P. t-Distributed Stochastic Neighbor Embedding
-        http://homepage.tudelft.nl/19j49/t-SNE.html
+        https://lvdmaaten.github.io/tsne/
 
     [3] L.J.P. van der Maaten. Accelerating t-SNE using Tree-Based Algorithms.
         Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
