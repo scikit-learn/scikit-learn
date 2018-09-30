@@ -82,7 +82,7 @@ def _load_coverage(F, header_length=6, dtype=np.int16):
 
     This will return a numpy array of the given dtype
     """
-    header = [F.readline() for i in range(header_length)]
+    header = [F.readline() for _ in range(header_length)]
     make_tuple = lambda t: (t.split()[0], float(t.split()[1]))
     header = dict([make_tuple(line) for line in header])
 

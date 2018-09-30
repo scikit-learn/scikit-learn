@@ -96,7 +96,6 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
         X, y = check_X_y(X, y, ['csr', 'csc'], y_numeric=True,
                          ensure_min_samples=2, estimator=self)
         X = as_float_array(X, copy=False)
-        n_samples, n_features = X.shape
 
         X, y, X_offset, y_offset, X_scale = \
             self._preprocess_data(X, y, self.fit_intercept, self.normalize)
@@ -644,7 +643,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
             X, y, mask=rng.rand(n_samples) < sample_fraction,
             weights=1. - scaling * rng.randint(0, 2, size=(n_features,)),
             eps=eps)
-        for k in range(n_resampling))
+        for _ in range(n_resampling))
 
     all_alphas = sorted(list(set(itertools.chain(*[p[0] for p in paths]))))
     # Take approximately n_grid values

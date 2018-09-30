@@ -281,7 +281,6 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
 
     itn = 0
     istop = 0
-    nstop = 0
     ctol = 0
     if conlim > 0:
         ctol = 1/conlim
