@@ -1266,7 +1266,7 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
                   'sokalsneath', 'sqeuclidean', 'yule', "wminkowski",
                   'masked_euclidean']
 
-_MASKED_METRICS = ['masked_euclidean']
+_NAN_METRICS = ['masked_euclidean']
 
 
 def _check_chunk_size(reduced, chunk_size):
@@ -1533,7 +1533,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
                          "Valid metrics are %s, or 'precomputed', or a "
                          "callable" % (metric, _VALID_METRICS))
 
-    if metric in _MASKED_METRICS or callable(metric):
+    if metric in _NAN_METRICS or callable(metric):
         missing_values = kwds.get("missing_values") if kwds.get(
             "missing_values") is not None else np.nan
 

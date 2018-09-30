@@ -18,7 +18,7 @@ from .utils.sparsefuncs import _get_median
 from .utils.validation import check_is_fitted
 from .utils.validation import FLOAT_DTYPES
 from .metrics import pairwise_distances
-from .metrics.pairwise import _MASKED_METRICS
+from .metrics.pairwise import _NAN_METRICS
 
 from .neighbors.base import _check_weights
 from .neighbors.base import _get_weights
@@ -812,7 +812,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         force_all_finite = False if self.missing_values in ["NaN",
                                                             np.nan] else True
         if not force_all_finite:
-            if self.metric not in _MASKED_METRICS and not callable(
+            if self.metric not in _NAN_METRICS and not callable(
                     self.metric):
                 raise ValueError(
                     "The selected metric does not support NaN values.")
