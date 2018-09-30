@@ -1,4 +1,4 @@
-from __future__ import division
+
 import numpy as np
 from scipy import sparse
 
@@ -10,7 +10,6 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.preprocessing.imputation import Imputer
-from sklearn.impute import KNNImputer
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
@@ -311,23 +310,14 @@ def test_imputation_pickle():
 @ignore_warnings
 def test_imputation_copy():
     # Test imputation with copy
-    X_orig = sparse_random_matrix(10, 10, density=0.75, random_state=0)
-    imputers = {Imputer: {"missing_values": 0, "strategy": "mean"},
-                KNNImputer: {"missing_values": 0}}
+    X_orig = sparse_random_matrix(5, 5, density=0.75, random_state=0)
 
     # copy=True, dense => copy
-    # copy=False, dense => no copy
-    for imputer_cls, params in imputers.items():
-        for copy in [True, False]:
-            X = X_orig.copy().toarray()
-            params["copy"] = copy
-            imputer = imputer_cls(**params)
-            Xt = imputer.fit(X).transform(X)
-            Xt[0, 0] = -1
-            if copy:
-                assert_false(np.all(X == Xt))
-            else:
-                assert_array_almost_equal(X, Xt)
+    X = X_orig.copy().toarray()
+    imputer = Imputer(missing_values=0, strategy="mean", copy=True)
+    Xt = imputer.fit(X).transform(X)
+    Xt[0, 0] = -1
+    assert_false(np.all(X == Xt))
 
     # copy=True, sparse csr => copy
     X = X_orig.copy()
