@@ -1290,10 +1290,10 @@ def check_clustering(name, clusterer_orig, readonly_memmap=False):
 
     # fit
     clusterer.fit(X)
+    pred = clusterer.labels_
     # with lists
     clusterer.fit(X.tolist())
 
-    pred = clusterer.labels_
     assert_equal(pred.shape, (n_samples,))
     assert_greater(adjusted_rand_score(pred, y), 0.4)
     # fit another time with ``fit_predict`` and compare results
