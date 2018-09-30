@@ -6,7 +6,7 @@
 #          Hamzeh Alsalhi <ha258@cornell.edu>
 # License: BSD 3 clause
 
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 import itertools
 import array
 import warnings
@@ -772,7 +772,8 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     classes : array-like of shape [n_classes] (optional)
-        Indicates an ordering for the class labels
+        Indicates an ordering for the class labels.
+        All entries should be unique (cannot contain duplicate classes).
 
     sparse_output : boolean (default: False),
         Set to true if output binary array is desired in CSR sparse format
@@ -806,6 +807,11 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, classes=None, sparse_output=False):
+        if classes is not None and len(set(classes)) < len(classes):
+            raise ValueError("The classes argument contains duplicate "
+                             "classes. Remove these duplicates before passing "
+                             "them to MultiLabelBinarizer.")
+
         self.classes = classes
         self.sparse_output = sparse_output
 
@@ -826,7 +832,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         if self.classes is None:
             classes = sorted(set(itertools.chain.from_iterable(y)))
         else:
-            classes = list(OrderedDict.fromkeys(self.classes))
+            classes = self.classes
         dtype = np.int if all(isinstance(c, int) for c in classes) else object
         self.classes_ = np.empty(len(classes), dtype=dtype)
         self.classes_[:] = classes
