@@ -8,7 +8,7 @@ from time import time
 degree = 2
 trials = 5
 num_rows = 100
-dimensionalities = [10, 20, 40]
+dimensionalities = [50, 100, 200, 400, 800]
 densities = [0.1, 0.4, 0.7, 1.0]
 colors = ['r', 'b', 'g', 'k']
 assert(len(colors) == len(densities))
