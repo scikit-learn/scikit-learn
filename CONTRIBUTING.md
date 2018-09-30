@@ -178,6 +178,14 @@ following rules before submitting:
    as your Python, scikit-learn, numpy, and scipy versions. This information
    can be found by running the following code snippet:
 
+   For scikit-learn >= 0.20:
+
+  ```python
+  import sklearn; sklearn.show_versions()
+  ```
+
+   For scikit-learn < 0.20:
+
   ```python
   import platform; print(platform.platform())
   import sys; print("Python", sys.version)
