@@ -998,7 +998,8 @@ def test_multilabel_hamming_loss():
     assert_warns_message(DeprecationWarning,
                          "This parameter was deprecated in version 0.21"
                          " and will be removed in version 0.23"
-                         " as the number of labels is identical to y_true.shape[1].",
+                         " as the number of labels is identical"
+                         " to y_true.shape[1].",
                          hamming_loss, y1, y2, labels=[0, 1])
 
 def test_multilabel_jaccard_similarity_score():
