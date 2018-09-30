@@ -188,6 +188,7 @@ def test_polynomial_features_csc_X(deg, include_bias, interaction_only, dtype):
 def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
     rng = np.random.RandomState(0)
     X = rng.randint(0, 2, (100, 2))
+    X_csr = sparse.csr_matrix(X)
 
     est = PolynomialFeatures(deg, include_bias=include_bias,
                              interaction_only=interaction_only)
@@ -210,41 +211,49 @@ def test_polynomial_features_csr_X_floats(deg, include_bias,
 
     est = PolynomialFeatures(deg, include_bias=include_bias,
                              interaction_only=interaction_only)
-    Xt_sparse = est.fit_transform(X_csr.astype(dtype))
-    Xt_dense = est.fit_transform(X.astype(dtype))
-
-    assert isinstance(Xt_sparse, sparse.csr_matrix)
-    assert Xt_sparse.dtype == Xt_dense.dtype
-    assert_array_almost_equal(Xt_sparse.A, Xt_dense)
-
-def test_polynomial_features_csr_X_zero_row(deg, include_bias,
-                                            interaction_only, dtype):
-    X_csr = sparse.random(1000, 10, 0.5, random_state=0).tocsr()
-    X_csr[zero_row_index, :] = 0.0
-    X = X_csr.toarray()
-
-    est = PolynomialFeatures(deg, include_bias=include_bias,
-                             interaction_only=interaction_only)
     Xt_csr = est.fit_transform(X_csr.astype(dtype))
     Xt_dense = est.fit_transform(X.astype(dtype))
 
-    assert isinstance(Xt_sparse, sparse.csr_matrix)
-    assert Xt_sparse.dtype == Xt_dense.dtype
-    assert_array_almost_equal(Xt_sparse.A, Xt_dense)
+    assert isinstance(Xt_csr, sparse.csr_matrix)
+    assert Xt_csr.dtype == Xt_dense.dtype
+    assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
-def test_polynomial_features_csr_X_degree_4(deg, include_bias,
-                                            interaction_only, dtype):
-    X_csr = sparse.random(1000, 10, 0.5, random_state=0).tocsr()
+@pytest.mark.parametrize(['zero_row_index', 'deg', 'interaction_only'],
+                         [(0, 2, True), (1, 2, True), (2, 2, True),
+                          (0, 3, True), (1, 3, True), (2, 3, True),
+                          (0, 2, False), (1, 2, False), (2, 2, False),
+                          (0, 3, False), (1, 3, False), (2, 3, False)])
+def test_polynomial_features_csr_X_zero_row(zero_row_index, deg, interaction_only):
+    X_csr = sparse.random(3, 10, 1.0, random_state=0).tocsr()
     X_csr[zero_row_index, :] = 0.0
     X = X_csr.toarray()
 
-    est = PolynomialFeatures(4, include_bias=False, interaction_only=False)
-    Xt_sparse = est.fit_transform(X_csr.astype(dtype))
-    Xt_dense = est.fit_transform(X.astype(dtype))
+    est = PolynomialFeatures(deg, include_bias=False,
+                             interaction_only=interaction_only)
+    Xt_csr = est.fit_transform(X_csr)
+    Xt_dense = est.fit_transform(X)
 
-    assert isinstance(Xt_sparse, sparse.csr_matrix)
-    assert Xt_sparse.dtype == Xt_dense.dtype
-    assert_array_almost_equal(Xt_sparse.A, Xt_dense)
+    assert isinstance(Xt_csr, sparse.csr_matrix)
+    assert Xt_csr.dtype == Xt_dense.dtype
+    assert_array_almost_equal(Xt_csr.A, Xt_dense)
+
+# This should always be one more than the highest degree supported by
+# _csr_expansion.
+@pytest.mark.parametrize(['include_bias', 'interaction_only'],
+                         [(True, True), (True, False),
+                          (False, True), (False, False)])
+def test_polynomial_features_csr_X_degree_4(include_bias, interaction_only):
+    X_csr = sparse.random(1000, 10, 0.5, random_state=0).tocsr()
+    X = X_csr.toarray()
+
+    est = PolynomialFeatures(4, include_bias=include_bias,
+                             interaction_only=interaction_only)
+    Xt_csr = est.fit_transform(X_csr)
+    Xt_dense = est.fit_transform(X)
+
+    assert isinstance(Xt_csr, sparse.csr_matrix)
+    assert Xt_csr.dtype == Xt_dense.dtype
+    assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
 def test_standard_scaler_1d():
     # Test scaling of dataset along single axis
