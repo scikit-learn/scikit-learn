@@ -1132,10 +1132,10 @@ multiclass data as if it were multilabel, as this is a transformation commonly
 applied to evaluate multiclass problems with binary classification metrics
 (such as precision, recall, etc.).
 
-When calculating class-wise multilabel confusion matrix :math:`MCM`, the
-count of true negatives for class :math:`i` is :math:`MCM_{i,0,0}`, false
-negatives is :math:`MCM_{i,1,0}`, true positives is :math:`MCM_{i,1,1}`
-and false positives is :math:`MCM_{i,0,1}`.
+When calculating class-wise multilabel confusion matrix :math:`C`, the
+count of true negatives for class :math:`i` is :math:`C_{i,0,0}`, false
+negatives is :math:`C_{i,1,0}`, true positives is :math:`C_{i,1,1}`
+and false positives is :math:`C_{i,0,1}`.
 
 Here is an example demonstrating the use of the
 :func:`multilabel_confusion_matrix` function with
@@ -1156,6 +1156,15 @@ Here is an example demonstrating the use of the
     <BLANKLINE>
            [[0, 1],
             [1, 0]]])
+
+Or a confusion matrix can be constructed for each sample's labels:
+
+    >>> multilabel_confusion_matrix(y_true, y_pred, samplewise=True)
+    array([[[1, 0],
+            [1, 1]],
+    <BLANKLINE>
+           [[1, 1],
+            [0, 1]]])
 
 Here is an example demonstrating the use of the
 :func:`multilabel_confusion_matrix` function with
@@ -1189,32 +1198,32 @@ Calculating
     >>> y_pred = np.array([[0, 1, 0],
     ...                    [0, 0, 1],
     ...                    [1, 1, 0]])
-    >>> MCM = multilabel_confusion_matrix(y_true, y_pred)
-    >>> TN = MCM[:, 0, 0]
-    >>> TP = MCM[:, 1, 1]
-    >>> FN = MCM[:, 1, 0]
-    >>> FP = MCM[:, 0, 1]
-    >>> TP / (TP + FN)
+    >>> mcm = multilabel_confusion_matrix(y_true, y_pred)
+    >>> tn = mcm[:, 0, 0]
+    >>> tp = mcm[:, 1, 1]
+    >>> fn = mcm[:, 1, 0]
+    >>> fp = mcm[:, 0, 1]
+    >>> tp / (tp + fn)
     array([1. , 0.5, 0. ])
 
 Calculating
 `specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`__
 (also called the true negative rate) for each class::
 
-    >>> TN / (TN + FP)
+    >>> tn / (tn + fp)
     array([1. , 0. , 0.5])
 
 Calculating `fall out <https://en.wikipedia.org/wiki/False_positive_rate>`__
 (also called the false positive rate) for each class::
 
-    >>> FP / (FP + TN)
+    >>> fp / (fp + tn)
     array([0. , 1. , 0.5])
 
 Calculating `miss rate
 <https://en.wikipedia.org/wiki/False_positives_and_false_negatives>`__
 (also called the false negative rate) for each class::
 
-    >>> FN / (FN + TP)
+    >>> fn / (fn + tp)
     array([0. , 0.5, 1. ])
 
 .. _roc_metrics:

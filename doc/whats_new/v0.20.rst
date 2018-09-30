@@ -623,11 +623,6 @@ Support for Python 3.3 has been officially dropped.
   When False and both inputs are sparse, will return a sparse matrix.
   :issue:`10999` by :user:`Taylor G Smith <tgsmith61591>`.
   
-- |Feature| Add :func:`metrics.multilabel_confusion_matrix`, which enables
-  the calculation of recall, specificity, fall out and miss rate,
-  and makes :func:`metrics.precision_recall_fscore_support` cleaner.
-  :issue:`11179` by :user:`Shangwu Yao <ShangwuYao>`.
-
 - |Efficiency| :func:`metrics.silhouette_score` and
   :func:`metrics.silhouette_samples` are more memory efficient and run
   faster. This avoids some reported freezes and MemoryErrors.

@@ -48,6 +48,15 @@ Support for Python 3.4 and below has been officially dropped.
   to set and that scales better, by :user:`Shane <espg>` and
   :user:`Adrin Jalali <adrinjalali>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| Add :func:`metrics.multilabel_confusion_matrix`, which enables
+  the calculation of recall, specificity, fall out and miss rate,
+  and makes :func:`metrics.precision_recall_fscore_support` cleaner.
+  :issue:`11179` by :user:`Shangwu Yao <ShangwuYao>`.
+
+
 Multiple modules
 ................
 
