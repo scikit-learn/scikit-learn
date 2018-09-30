@@ -12,6 +12,7 @@ import itertools
 import numpy as np
 import numpy.linalg as la
 from scipy import sparse, stats
+from scipy.sparse import random as sparse_random
 from distutils.version import LooseVersion
 import pytest
 
@@ -178,6 +179,7 @@ def test_polynomial_features_csc_X(deg, include_bias, interaction_only, dtype):
     assert Xt_csc.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csc.A, Xt_dense)
 
+
 @pytest.mark.parametrize(['deg', 'include_bias', 'interaction_only', 'dtype'],
                          [(1, True, False, int),
                           (2, True, False, int),
@@ -199,6 +201,7 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
+
 @pytest.mark.parametrize(['deg', 'include_bias', 'interaction_only', 'dtype'],
                          [(2, True, False, np.float32),
                           (2, True, False, np.float64),
@@ -206,7 +209,7 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
                           (3, False, True, np.float64)])
 def test_polynomial_features_csr_X_floats(deg, include_bias,
                                           interaction_only, dtype):
-    X_csr = sparse.random(1000, 10, 0.5, random_state=0).tocsr()
+    X_csr = sparse_random(1000, 10, 0.5, random_state=0).tocsr()
     X = X_csr.toarray()
 
     est = PolynomialFeatures(deg, include_bias=include_bias,
@@ -218,13 +221,15 @@ def test_polynomial_features_csr_X_floats(deg, include_bias,
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
+
 @pytest.mark.parametrize(['zero_row_index', 'deg', 'interaction_only'],
                          [(0, 2, True), (1, 2, True), (2, 2, True),
                           (0, 3, True), (1, 3, True), (2, 3, True),
                           (0, 2, False), (1, 2, False), (2, 2, False),
                           (0, 3, False), (1, 3, False), (2, 3, False)])
-def test_polynomial_features_csr_X_zero_row(zero_row_index, deg, interaction_only):
-    X_csr = sparse.random(3, 10, 1.0, random_state=0).tocsr()
+def test_polynomial_features_csr_X_zero_row(zero_row_index, deg,
+                                            interaction_only):
+    X_csr = sparse_random(3, 10, 1.0, random_state=0).tocsr()
     X_csr[zero_row_index, :] = 0.0
     X = X_csr.toarray()
 
@@ -237,13 +242,14 @@ def test_polynomial_features_csr_X_zero_row(zero_row_index, deg, interaction_onl
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
+
 # This should always be one more than the highest degree supported by
 # _csr_expansion.
 @pytest.mark.parametrize(['include_bias', 'interaction_only'],
                          [(True, True), (True, False),
                           (False, True), (False, False)])
 def test_polynomial_features_csr_X_degree_4(include_bias, interaction_only):
-    X_csr = sparse.random(1000, 10, 0.5, random_state=0).tocsr()
+    X_csr = sparse_random(1000, 10, 0.5, random_state=0).tocsr()
     X = X_csr.toarray()
 
     est = PolynomialFeatures(4, include_bias=include_bias,
@@ -254,6 +260,7 @@ def test_polynomial_features_csr_X_degree_4(include_bias, interaction_only):
     assert isinstance(Xt_csr, sparse.csr_matrix)
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
+
 
 def test_standard_scaler_1d():
     # Test scaling of dataset along single axis

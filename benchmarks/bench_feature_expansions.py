@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sparse
 from sklearn.preprocessing import PolynomialFeatures
-from sys import argv
 from time import time
 
 degree = 2
@@ -41,9 +40,9 @@ for trial in range(trials):
 # The CSC algorithm takes so long that it drastically overshadows dense and
 # CSR algorithm times, so don't include it in the dense / CSR plot. Instead,
 # compare it with the CSR method in the bottom plot.
-csc_linestyle = (0, (5, 10)) # loosely dashed
-csr_linestyle = (0, (3, 1, 1, 1, 1, 1)) # densely dashdotdotted
-dense_linestyle = (0, ()) # solid
+csc_linestyle = (0, (5, 10))  # loosely dashed
+csr_linestyle = (0, (3, 1, 1, 1, 1, 1))  # densely dashdotdotted
+dense_linestyle = (0, ())  # solid
 fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1, sharex=True, sharey=False)
 fig.add_subplot(111, frameon=False)
 for color, density in zip(colors, densities):
