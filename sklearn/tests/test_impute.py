@@ -1219,7 +1219,7 @@ def test_complete_features_weighted():
 
 
 @pytest.mark.parametrize("imputer_constructor",
-                         [SimpleImputer, KNNImputer])
+                         [SimpleImputer])
 @pytest.mark.parametrize(
     "imputer_missing_values, missing_value, err_msg",
     [("NaN", np.nan, "Input contains NaN"),

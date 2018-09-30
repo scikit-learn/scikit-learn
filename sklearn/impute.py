@@ -652,10 +652,9 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    missing_values : integer or "NaN", optional (default = "NaN")
+    missing_values : number, string, np.nan (default) or None
         The placeholder for the missing values. All occurrences of
-        `missing_values` will be imputed. For missing values encoded as
-        ``np.nan``, use the string value "NaN".
+        `missing_values` will be imputed.
 
     n_neighbors : int, optional (default = 5)
         Number of neighboring samples to use for imputation.
@@ -729,7 +728,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
            [8. , 8. , 7. ]])
     """
 
-    def __init__(self, missing_values="NaN", n_neighbors=5,
+    def __init__(self, missing_values=np.nan, n_neighbors=5,
                  weights="uniform", metric="masked_euclidean",
                  row_max_missing=0.5, col_max_missing=0.8, copy=True):
 
@@ -809,8 +808,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         """
 
         # Check data integrity and calling arguments
-        force_all_finite = False if self.missing_values in ["NaN",
-                                                            np.nan] else True
+        force_all_finite = not is_scalar_nan(self.missing_values)
         if not force_all_finite:
             if self.metric not in _NAN_METRICS and not callable(
                     self.metric):
@@ -825,7 +823,9 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             raise ValueError("+/- inf values are not allowed.")
 
         # Check if % missing in any column > col_max_missing
+        print(X, self.missing_values, type(self.missing_values))
         mask = _get_mask(X, self.missing_values)
+        print(mask)
         if np.any(mask.sum(axis=0) > (X.shape[0] * self.col_max_missing)):
             raise ValueError("Some column(s) have more than {}% missing values"
                              .format(self.col_max_missing * 100))
@@ -866,8 +866,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         """
 
         check_is_fitted(self, ["fitted_X_", "statistics_"])
-        force_all_finite = False if self.missing_values in ["NaN",
-                                                            np.nan] else True
+        force_all_finite = not is_scalar_nan(self.missing_values)
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                         force_all_finite=force_all_finite, copy=self.copy)
 
