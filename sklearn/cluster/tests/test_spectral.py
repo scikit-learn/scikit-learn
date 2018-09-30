@@ -30,7 +30,7 @@ except ImportError:
 
 
 @pytest.mark.parametrize('eigen_solver', ('arpack', 'lobpcg'))
-@pytest.mark.parametrize('assign_labels', ('kmeans', 'discretize'))
+@pytest.mark.parametrize('assign_labels', ('kmeans', 'discretize', 'clusterQR'))
 def test_spectral_clustering(eigen_solver, assign_labels):
     S = np.array([[1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
                   [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
