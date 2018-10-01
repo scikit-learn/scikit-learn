@@ -432,6 +432,7 @@ def fast_mcd(X, support_fraction=None,
         except MemoryError:
             # The above is too big. Let's try with something much small
             # (and less optimal)
+            n_best_tot = 10
             all_best_covariances = np.zeros((n_best_tot, n_features,
                                              n_features))
             n_best_sub = 2

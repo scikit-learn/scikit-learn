@@ -311,7 +311,7 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
                       "You may want to reshape your data array")
         n_features = X.size
     else:
-        n_samples, n_features = X.shape
+        _, n_features = X.shape
 
     # get Ledoit-Wolf shrinkage
     shrinkage = ledoit_wolf_shrinkage(
