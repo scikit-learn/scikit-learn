@@ -595,7 +595,7 @@ def test_iterative_imputer_clip():
 def test_iterative_imputer_normal_posterior():
     #  test that the values that are imputed using `sample_posterior=True`
     #  with boundaries (`min_value` and `max_value` are not None) are drawn
-    #  from a distribution that looks gaussian via the Kolmogorov–Smirnov test
+    #  from a distribution that looks gaussian via the Kolmogorov Smirnov test
     rng = np.random.RandomState(0)
 
     X = rng.random_sample((5, 5))
