@@ -47,7 +47,7 @@ Support for Python 3.4 and below has been officially dropped.
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>` and
   :user:`Adrin Jalali <adrinjalali>`.
-  
+
 - |Fix| Fixed a bug in :class:`cluster.DBSCAN` with precomputed sparse neighbors
   graph, which would add explicitly zeros on the diagonal even when already
   present. :issue:`12105` by `Tom Dupre la Tour`_.
