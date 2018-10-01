@@ -2116,11 +2116,6 @@ def check_parameters_default_constructible(name, Estimator):
                 assert_true(init_param.default is None)
                 continue
 
-            if (issubclass(Estimator, BaseSGD) and
-                    init_param.name in ['tol', 'max_iter']):
-                # To remove in 0.21, when they get their future default values
-                continue
-
             param_value = params[init_param.name]
             if isinstance(param_value, np.ndarray):
                 assert_array_equal(param_value, init_param.default)
