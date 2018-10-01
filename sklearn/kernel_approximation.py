@@ -619,7 +619,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
             if (self.gamma is not None or
                     self.coef0 is not None or
                     self.degree is not None):
-                raise ValueErrror("Don't pass gamma, coef0 or degree to "
-                                  "Nystroem if using a callable kernel.")
+                raise ValueError("Don't pass gamma, coef0 or degree to "
+                                 "Nystroem if using a callable kernel.")
 
         return params

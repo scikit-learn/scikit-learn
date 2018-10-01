@@ -116,7 +116,7 @@ def test_hasher_zeros():
 def test_hasher_alternate_sign():
     X = [list("Thequickbrownfoxjumped")]
 
-    Xt = FeatureHasher(alternate_sign=True, non_negative=False,
+    Xt = FeatureHasher(alternate_sign=True, 
                        input_type='string').fit_transform(X)
     assert Xt.data.min() < 0 and Xt.data.max() > 0
 
@@ -127,7 +127,7 @@ def test_hasher_alternate_sign():
     Xt = FeatureHasher(alternate_sign=False, 
                        input_type='string').fit_transform(X)
     assert Xt.data.min() > 0
-    Xt_2 = FeatureHasher(alternate_sign=False, non_negative=False,
+    Xt_2 = FeatureHasher(alternate_sign=False, 
                          input_type='string').fit_transform(X)
     # With initially positive features, the non_negative option should
     # have no impact when alternate_sign=False
@@ -138,7 +138,7 @@ def test_hasher_alternate_sign():
 def test_hash_collisions():
     X = [list("Thequickbrownfoxjumped")]
 
-    Xt = FeatureHasher(alternate_sign=True, non_negative=False,
+    Xt = FeatureHasher(alternate_sign=True, 
                        n_features=1, input_type='string').fit_transform(X)
     # check that some of the hashed tokens are added
     # with an opposite sign and cancel out
@@ -156,13 +156,13 @@ def test_hash_collisions():
 @ignore_warnings(category=DeprecationWarning)
 def test_hasher_negative():
     X = [{"foo": 2, "bar": -4, "baz": -1}.items()]
-    Xt = FeatureHasher(alternate_sign=False, non_negative=False,
+    Xt = FeatureHasher(alternate_sign=False, 
                        input_type="pair").fit_transform(X)
     assert_true(Xt.data.min() < 0 and Xt.data.max() > 0)
     Xt = FeatureHasher(alternate_sign=False, 
                        input_type="pair").fit_transform(X)
     assert_true(Xt.data.min() > 0)
-    Xt = FeatureHasher(alternate_sign=True, non_negative=False,
+    Xt = FeatureHasher(alternate_sign=True, 
                        input_type="pair").fit_transform(X)
     assert_true(Xt.data.min() < 0 and Xt.data.max() > 0)
     Xt = FeatureHasher(alternate_sign=True, 
