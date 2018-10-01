@@ -619,14 +619,15 @@ called *Bayesian Ridge Regression*, and is similar to the classical
 :class:`Ridge`.
 
 The parameters :math:`w`, :math:`\alpha` and :math:`\lambda` are estimated
-jointly during the fit of the model and the regularization parameters
-:math:`\alpha` and :math:`\lambda` are estimated by maximizing the
+jointly during the fit of the model, the regularization parameters
+:math:`\alpha` and :math:`\lambda` being estimated by maximizing the
 *log marginal likelihood*. The scikit-learn implementation
-is based on the algorithm described in Appendix A of [3]_ where updates of the
-parameters :math:`\alpha` and :math:`\lambda` is done as suggested in [2]_.
+is based on the algorithm described in Appendix A of (Tipping, 2001)
+where the update of the parameters :math:`\alpha` and :math:`\lambda` is done
+as suggested in (MacKay, 1992).
 
 The remaining hyperparameters are the parameters :math:`\alpha_1`,
-:math:`\alpha_2`, :math:`\lambda_1` and :math:`\lambda_2 of the gamma priors
+:math:`\alpha_2`, :math:`\lambda_1` and :math:`\lambda_2` of the gamma priors
 over :math:`\alpha` and :math:`\lambda`. These are usually chosen to be
 *non-informative*. By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
@@ -669,12 +670,11 @@ is more robust to ill-posed problem.
 
 .. topic:: References:
 
-    .. [1] Christopher M. Bishop: Pattern Recognition and Machine Learning, Section 3.3
+    * Section 3.3 in Christopher M. Bishop: Pattern Recognition and Machine Learning, 2006
 
-    .. [2] David J. C. MacKay: `Bayesian Interpolation
-    <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_
+    * David J. C. MacKay, `Bayesian Interpolation <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_, 1992.
 
-    .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
+    * Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
 
 
 Automatic Relevance Determination - ARD

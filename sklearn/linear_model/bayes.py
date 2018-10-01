@@ -121,7 +121,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
     -----
     There exist several strategies to perform Bayesian ridge regression. This
     implementation is based on the algorithm described in Appendix A of
-    (Tipping, 2001) where updates of the regularization parameters is done as
+    (Tipping, 2001) where updates of the regularization parameters are done as
     suggested in (MacKay, 1992). Note that according to A New
     View of Automatic Relevance Determination (Wipf and Nagarajan, 2008) these
     update rules do not guarantee that the marginal likelihood is increasing
