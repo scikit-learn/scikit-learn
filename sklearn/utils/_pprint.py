@@ -4,8 +4,8 @@ BaseEstimator.__repr__ for pretty-printing estimators"""
 from inspect import signature
 import pprint
 
-from .base import BaseEstimator
-from ._config import get_config
+from ..base import BaseEstimator
+from .._config import get_config
 
 
 # Dummy classes for correctly rendering key-value tuples from dicts or
