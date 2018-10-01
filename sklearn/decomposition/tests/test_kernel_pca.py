@@ -4,7 +4,7 @@ import pytest
 
 from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
                                    assert_equal, assert_not_equal,
-                                   assert_raises, ignore_warnings)
+                                   assert_raises)
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles

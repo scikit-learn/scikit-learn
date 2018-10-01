@@ -13,7 +13,6 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_less
 
@@ -683,7 +682,6 @@ def test_svd_solver_auto():
     pca_test = PCA(n_components=10, svd_solver='randomized', random_state=0)
     pca_test.fit(X)
     assert_array_almost_equal(pca.components_, pca_test.components_)
-
 
 
 @pytest.mark.parametrize('svd_solver', solver_list)

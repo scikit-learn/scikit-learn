@@ -19,7 +19,6 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
-from sklearn.utils.testing import assert_warns
 
 from sklearn.exceptions import NotFittedError
 from sklearn.externals.six.moves import xrange

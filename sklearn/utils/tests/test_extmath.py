@@ -23,11 +23,9 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.fixes import np_version
 
 from sklearn.utils.extmath import density
-from sklearn.utils.extmath import squared_norm
 from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
@@ -85,7 +83,6 @@ def test_random_weights():
 
     assert_array_equal(mode, mode_result)
     assert_array_almost_equal(score.ravel(), w[:, :5].sum(1))
-
 
 
 def check_randomized_svd_low_rank(dtype):
