@@ -795,12 +795,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         X : array-like or sparse matrix, [n_samples, n_features]
             Document word matrix.
 
-        doc_topic_distr : None or array, shape=(n_samples, n_components)
-            Document topic distribution.
-            This argument is deprecated and is currently being ignored.
-
-            .. deprecated:: 0.19
-
         sub_sampling : bool
             Do sub-sampling or not.
 

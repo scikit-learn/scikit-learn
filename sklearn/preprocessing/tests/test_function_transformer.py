@@ -50,9 +50,9 @@ def test_delegate_to_func():
     # reset the argument stores.
     args_store[:] = []  # python2 compatible inplace list clear.
     kwargs_store.clear()
-    FunctionTransformer(
-            _make_func(args_store, kwargs_store),
-            validate=False).transform(X)
+    transformed = FunctionTransformer(
+        _make_func(args_store, kwargs_store),
+        validate=False).transform(X)
 
     assert_array_equal(transformed, X,
                        err_msg='transform should have returned X unchanged')
