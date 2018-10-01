@@ -32,7 +32,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
     Parameters
     ----------
     n_iter : int, optional
-        Maximum number of iterations.  Default is 300.
+        Maximum number of iterations.  Default is 300. Should be greater than
+        or equal to 1.
 
     tol : float, optional
         Stop the algorithm if w has converged. Default is 1.e-3.
@@ -171,6 +172,11 @@ class BayesianRidge(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
+
+        if self.n_iter < 1:
+            raise ValueError('n_iter should be greater than or equal to 1.'
+                             ' Got {!r}.'.format(self.n_iter))
+
         X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
