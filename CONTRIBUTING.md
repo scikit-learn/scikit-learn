@@ -114,7 +114,7 @@ following rules before you submit a pull request:
    to other methods available in scikit-learn.
 
 -  Documentation and high-coverage tests are necessary for enhancements to be
-   accepted. Bug-fixes or new features should be provided with 
+   accepted. Bug-fixes or new features should be provided with
    [non-regression tests](https://en.wikipedia.org/wiki/Non-regression_testing).
    These tests verify the correct behavior of the fix or feature. In this
    manner, further modifications on the code base are granted to be consistent
@@ -179,11 +179,7 @@ following rules before submitting:
    can be found by running the following code snippet:
 
   ```python
-  import platform; print(platform.platform())
-  import sys; print("Python", sys.version)
-  import numpy; print("NumPy", numpy.__version__)
-  import scipy; print("SciPy", scipy.__version__)
-  import sklearn; print("Scikit-Learn", sklearn.__version__)
+  import sklearn; sklearn.show_versions()
   ```
 
 -  Please be specific about what estimators and/or functions are involved
