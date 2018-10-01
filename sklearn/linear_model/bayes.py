@@ -94,9 +94,12 @@ class BayesianRidge(LinearModel, RegressorMixin):
     sigma_ : array, shape = (n_features, n_features)
         Estimated variance-covariance matrix of the weights.
 
-    scores_ : array, shape = (n_iter_,)
-        If computed_score, value of the log marginal likelihood (to be
-        maximized) at each iteration of the optimization.
+    scores_ : array, shape = (n_iter_ + 1,)
+        If computed_score is True, value of the log marginal likelihood (to be
+        maximized) at each iteration of the optimization. The array starts
+        with the value of the log marginal likelihood obtained for the initial
+        values of alpha and lambda and ends with the value obtained for the
+        estimated alpha and lambda.
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
@@ -230,14 +233,9 @@ class BayesianRidge(LinearModel, RegressorMixin):
             rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
             # Compute the log marginal likelihood
             if self.compute_score:
-                s = lambda_1 * log(lambda_) - lambda_2 * lambda_
-                s += alpha_1 * log(alpha_) - alpha_2 * alpha_
-                s += 0.5 * (n_features * log(lambda_) +
-                            n_samples * log(alpha_) -
-                            alpha_ * rmse_ -
-                            lambda_ * np.sum(coef_ ** 2) +
-                            logdet_sigma_ -
-                            n_samples * log(2 * np.pi))
+                s = self._log_marginal_likelihood(n_samples, n_features,
+                                                  alpha_, lambda_,
+                                                  coef_, rmse_, logdet_sigma_)
                 self.scores_.append(s)
 
             # Update alpha and lambda according to (MacKay, 1992)
@@ -282,14 +280,9 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
         # compute final log marginal likelihood
         if self.compute_score:
-            s = lambda_1 * log(lambda_) - lambda_2 * lambda_
-            s += alpha_1 * log(alpha_) - alpha_2 * alpha_
-            s += 0.5 * (n_features * log(lambda_) +
-                        n_samples * log(alpha_) -
-                        alpha_ * rmse_ -
-                        lambda_ * np.sum(coef_ ** 2) +
-                        logdet_sigma_ -
-                        n_samples * log(2 * np.pi))
+            s = self._log_marginal_likelihood(n_samples, n_features,
+                                              alpha_, lambda_,
+                                              coef_, rmse_, logdet_sigma_)
             self.scores_.append(s)
             self.scores_ = np.array(self.scores_)
 
@@ -326,6 +319,50 @@ class BayesianRidge(LinearModel, RegressorMixin):
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1. / self.alpha_))
             return y_mean, y_std
+
+    def _log_marginal_likelihood(self, n_samples, n_features, alpha_,
+                                 lambda_, coef, rmse, logdet_sigma):
+        """Log marginal likelihood.
+
+        Parameters
+        ----------
+        n_samples : int
+            Number of samples.
+        n_features : int
+            Number of features.
+        alpha : float
+            Precision of the noise.
+        lambda_ : float
+            Precision of the weights.
+        coef : array, shape (n_features,)
+            Coefficients of the regression model (mean of distribution).
+        rmse : float
+            Value of the mean squared error obtained with coef.
+        logdet_sigma : float
+            Log of the determinant of sigma.
+
+        Returns
+        -------
+        score : float
+            Value of the log marginal likelihood.
+        """
+        alpha_1 = self.alpha_1
+        alpha_2 = self.alpha_2
+        lambda_1 = self.lambda_1
+        lambda_2 = self.lambda_2
+
+        score = lambda_1 * log(lambda_) - lambda_2 * lambda_
+        score += alpha_1 * log(alpha_) - alpha_2 * alpha_
+        score += 0.5 * (n_features * log(lambda_) +
+                        n_samples * log(alpha_) -
+                        alpha_ * rmse -
+                        lambda_ * np.sum(coef ** 2) +
+                        logdet_sigma -
+                        n_samples * log(2 * np.pi))
+
+        return score
+
+
 
 
 ###############################################################################

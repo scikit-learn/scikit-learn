@@ -23,7 +23,7 @@ def test_bayesian_ridge_scores():
     clf = BayesianRidge(compute_score=True)
     clf.fit(X, y)
 
-    assert clf.scores_.shape == (clf.n_iter_,)
+    assert clf.scores_.shape == (clf.n_iter_ + 1,)
 
 
 def test_bayesian_ridge_parameter():
