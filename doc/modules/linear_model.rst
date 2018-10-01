@@ -799,7 +799,7 @@ In a nutshell, the following table summarizes the penalties supported by each so
 | Robust to unscaled datasets  |       yes       |     yes     |       yes       |    no     |    no      |
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 
-The "saga" solver is often the best choice. The "liblinear" solver is
+The "saga" solver is often the best choice but requires scaling. The "liblinear" solver is
 used by default for historical reasons.
 
 For large dataset, you may also consider using :class:`SGDClassifier`
