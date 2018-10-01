@@ -18,7 +18,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..exceptions import ConvergenceWarning
 from ..externals import six
 from ..externals.six import moves
-from ..externals.six import string_types
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES

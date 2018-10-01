@@ -14,7 +14,6 @@ Link: https://github.com/blei-lab/onlineldavb
 import numpy as np
 import scipy.sparse as sp
 from scipy.special import gammaln
-import warnings
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,

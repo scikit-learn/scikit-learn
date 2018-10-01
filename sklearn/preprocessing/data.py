@@ -21,7 +21,6 @@ from scipy import optimize
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
-from ..externals.six import string_types
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var

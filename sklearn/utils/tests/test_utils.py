@@ -4,13 +4,10 @@ import warnings
 import pytest
 import numpy as np
 import scipy.sparse as sp
-from scipy.linalg import pinv2
-from scipy.sparse.csgraph import laplacian
 
 from sklearn.utils.testing import (assert_equal, assert_raises, assert_true,
-                                   assert_almost_equal, assert_array_equal,
+                                   assert_array_equal,
                                    SkipTest, assert_raises_regex,
-                                   assert_greater_equal, ignore_warnings,
                                    assert_warns_message, assert_no_warnings)
 from sklearn.utils import check_random_state
 from sklearn.utils import deprecated

@@ -15,7 +15,6 @@ from sklearn.base import BaseEstimator, RegressorMixin, clone
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_X_y, check_array
-from sklearn.utils.deprecation import deprecated
 from sklearn.exceptions import ConvergenceWarning
 
 

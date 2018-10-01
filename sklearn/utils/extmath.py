@@ -17,9 +17,8 @@ import warnings
 import numpy as np
 from scipy import linalg, sparse
 
-from . import check_random_state, deprecated
+from . import check_random_state
 from .fixes import np_version
-from .fixes import logsumexp as scipy_logsumexp
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms

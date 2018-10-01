@@ -12,7 +12,6 @@ Linear Discriminant Analysis and Quadratic Discriminant Analysis
 from __future__ import print_function
 import warnings
 import numpy as np
-from .utils import deprecated
 from scipy import linalg
 from .externals.six import string_types
 from .externals.six.moves import xrange

@@ -9,7 +9,6 @@ from scipy import linalg
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.covariance import (graph_lasso, GraphLasso, GraphLassoCV,
@@ -18,8 +17,6 @@ from sklearn.datasets.samples_generator import make_sparse_spd_matrix
 from sklearn.externals.six.moves import StringIO
 from sklearn.utils import check_random_state
 from sklearn import datasets
-
-from numpy.testing import assert_equal
 
 
 @ignore_warnings(category=DeprecationWarning)

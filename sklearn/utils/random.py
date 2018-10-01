@@ -8,9 +8,8 @@ import array
 
 from sklearn.utils import check_random_state
 from ._random import sample_without_replacement
-from .deprecation import deprecated
 
-__all__ = ['sample_without_replacement', 'choice']
+__all__ = ['sample_without_replacement']
 
 
 def random_choice_csc(n_samples, classes, class_probability=None,

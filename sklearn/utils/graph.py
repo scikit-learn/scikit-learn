@@ -11,10 +11,8 @@ sparse matrices.
 # License: BSD 3 clause
 
 from scipy import sparse
-from scipy.sparse import csgraph
 
 from .graph_shortest_path import graph_shortest_path  # noqa
-from .deprecation import deprecated
 
 
 ###############################################################################

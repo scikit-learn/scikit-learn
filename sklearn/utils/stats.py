@@ -1,8 +1,6 @@
 import numpy as np
-from scipy.stats import rankdata as scipy_rankdata
 
 from sklearn.utils.extmath import stable_cumsum
-from sklearn.utils.deprecation import deprecated
 
 
 def _weighted_percentile(array, sample_weight, percentile=50):
