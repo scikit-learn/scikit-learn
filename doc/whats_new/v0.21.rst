@@ -50,7 +50,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Fix| Fixed a bug in :class:`cluster.DBSCAN` with precomputed sparse neighbors
   graph, which would add explicitly zeros on the diagonal even when already
-  present. :issue:`10482` by `Tom Dupre la Tour`_.
+  present. :issue:`12105` by `Tom Dupre la Tour`_.
 
 
 :mod:`sklearn.manifold`

@@ -109,7 +109,7 @@ def test_dbscan_input_not_modified(use_sparse, metric):
     dbscan(X, metric=metric)
 
     if use_sparse:
-        assert_array_equal(X.A, X_copy.A)
+        assert_array_equal(X.toarray(), X_copy.toarray())
     else:
         assert_array_equal(X, X_copy)
 

@@ -18,13 +18,16 @@ source pypy-env/bin/activate
 python --version
 which python
 
-pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy==1.14.4 Cython pytest
+pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython pytest
 pip install "scipy>=1.1.0" sphinx numpydoc docutils
 
 ccache -M 512M
 export CCACHE_COMPRESS=1
 export PATH=/usr/lib/ccache:$PATH
+export LOKY_MAX_CPU_COUNT="2"
 
-pip install -e .
+pip install -vv -e . 
 
-make test
+python -m pytest sklearn/
+python -m pytest doc/sphinxext/
+python -m pytest $(find doc -name '*.rst' | sort)

@@ -32,7 +32,9 @@ def pytest_collection_modifyitems(config, items):
         skip_marker = pytest.mark.skip(
             reason='FeatureHasher is not compatible with PyPy')
         for item in items:
-            if item.name == 'sklearn.feature_extraction.hashing.FeatureHasher':
+            if item.name in (
+                    'sklearn.feature_extraction.hashing.FeatureHasher',
+                    'sklearn.feature_extraction.text.HashingVectorizer'):
                 item.add_marker(skip_marker)
 
     # Skip tests which require internet if the flag is provided

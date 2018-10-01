@@ -14,6 +14,7 @@ import warnings
 import numpy as np
 
 from ..utils import check_array
+from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.validation import check_is_fitted
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
@@ -30,9 +31,10 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
     """Perform OPTICS clustering from vector array
 
     OPTICS: Ordering Points To Identify the Clustering Structure
-    Equivalent to DBSCAN, finds core sample of high density and expands
+    Closely related to DBSCAN, finds core sample of high density and expands
     clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
-    neighborhood radius. Optimized for usage on large point datasets.
+    neighborhood radius. Better suited for usage on large point datasets than
+    the current sklearn implementation of DBSCAN.
 
     Read more in the :ref:`User Guide <optics>`.
 
@@ -182,9 +184,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
     """Estimate clustering structure from vector array
 
     OPTICS: Ordering Points To Identify the Clustering Structure
-    Equivalent to DBSCAN, finds core sample of high density and expands
+    Closely related to DBSCAN, finds core sample of high density and expands
     clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
-    neighborhood radius. Optimized for usage on large point datasets.
+    neighborhood radius. Better suited for usage on large point datasets than
+    the current sklearn implementation of DBSCAN.
 
     Read more in the :ref:`User Guide <optics>`.
 
@@ -305,14 +308,16 @@ class OPTICS(BaseEstimator, ClusterMixin):
         Noisy samples are given the label -1.
 
     reachability_ : array, shape (n_samples,)
-        Reachability distances per sample.
+        Reachability distances per sample, indexed by object order. Use
+        ``clust.reachability_[clust.ordering_]`` to access in cluster order.
 
     ordering_ : array, shape (n_samples,)
         The cluster ordered list of sample indices
 
     core_distances_ : array, shape (n_samples,)
-        Distance at which each sample becomes a core point.
-        Points which will never be core have a distance of inf.
+        Distance at which each sample becomes a core point, indexed by object
+        order. Points which will never be core have a distance of inf. Use
+        ``clust.core_distances_[clust.ordering_]`` to access in cluster order.
 
     See also
     --------
@@ -393,8 +398,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # Start all points as 'unprocessed' ##
         self.reachability_ = np.empty(n_samples)
         self.reachability_.fill(np.inf)
-        self.core_distances_ = np.empty(n_samples)
-        self.core_distances_.fill(np.nan)
         # Start all points as noise ##
         self.labels_ = np.full(n_samples, -1, dtype=int)
 
@@ -405,9 +408,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                                 n_jobs=self.n_jobs)
 
         nbrs.fit(X)
-        self.core_distances_[:] = nbrs.kneighbors(X,
-                                                  self.min_samples)[0][:, -1]
-
+        self.core_distances_ = self._compute_core_distances_(X, nbrs)
         self.ordering_ = self._calculate_optics_order(X, nbrs)
 
         indices_, self.labels_ = _extract_optics(self.ordering_,
@@ -422,6 +423,42 @@ class OPTICS(BaseEstimator, ClusterMixin):
         return self
 
     # OPTICS helper functions
+
+    def _compute_core_distances_(self, X, neighbors, working_memory=None):
+        """Compute the k-th nearest neighbor of each sample
+
+        Equivalent to neighbors.kneighbors(X, self.min_samples)[0][:, -1]
+        but with more memory efficiency.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples, n_features)
+            The data.
+        neighbors : NearestNeighbors instance
+            The fitted nearest neighbors estimator.
+        working_memory : int, optional
+            The sought maximum memory for temporary distance matrix chunks.
+            When None (default), the value of
+            ``sklearn.get_config()['working_memory']`` is used.
+
+        Returns
+        -------
+        core_distances : array, shape (n_samples,)
+            Distance at which each sample becomes a core point.
+            Points which will never be core have a distance of inf.
+        """
+        n_samples = len(X)
+        core_distances = np.empty(n_samples)
+        core_distances.fill(np.nan)
+
+        chunk_n_rows = get_chunk_n_rows(row_bytes=16 * self.min_samples,
+                                        max_n_rows=n_samples,
+                                        working_memory=working_memory)
+        slices = gen_batches(n_samples, chunk_n_rows)
+        for sl in slices:
+            core_distances[sl] = neighbors.kneighbors(
+                X[sl], self.min_samples)[0][:, -1]
+        return core_distances
 
     def _calculate_optics_order(self, X, nbrs):
         # Main OPTICS loop. Not parallelizable. The order that entries are
