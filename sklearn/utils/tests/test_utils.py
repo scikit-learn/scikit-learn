@@ -22,8 +22,6 @@ from sklearn.utils import shuffle
 from sklearn.utils import gen_even_slices
 from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
-from sklearn.utils.extmath import pinvh
-from sklearn.utils.arpack import eigsh
 from sklearn.utils.mocking import MockDataFrame
 from sklearn import config_context
 
