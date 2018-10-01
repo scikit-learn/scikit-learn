@@ -790,13 +790,14 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 loss = 'multinomial'
             else:
                 loss = 'log'
+            # alpha is for 2-norm, beta is for 1-norm
             if penalty == 'l1':
                 alpha = 0.
                 beta = 1. / C
             elif penalty == 'l2':
                 alpha = 1. / C
                 beta = 0.
-            else:  # elastic-net penalty (alpha is 2-norm, beta is 1-norm)
+            else:  # elastic-net penalty
                 alpha = (1. / C) * (1 - l1_ratio)
                 beta = (1. / C) * l1_ratio
 
@@ -1964,8 +1965,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 w = w[0]
 
             else:
-                # Take the best scores across every fold and the average of all
-                # coefficients corresponding to the best scores.
+                # Take the best scores accross every fold and the average of
+                # all coefficients corresponding to the best scores.
                 best_indices = np.argmax(scores, axis=1)
                 if self.multi_class == 'ovr':
                     w = np.mean([coefs_paths[i, best_indices[i], :]

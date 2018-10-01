@@ -80,7 +80,6 @@ def test_predict_2_classes():
                                          random_state=0), X_sp, Y1)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_error():
     # Test for appropriate exception on errors
@@ -1450,12 +1449,11 @@ def test_elastic_net_vs_l1_l2(C):
     X, y = make_classification(500, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    cv = StratifiedKFold(5, random_state=0)
     param_grid = {'l1_ratio': np.linspace(0, 1, 10)}
 
     enet_clf = LogisticRegression(penalty='elastic-net', C=C, solver='saga',
                                   random_state=0)
-    gs = GridSearchCV(enet_clf, param_grid, cv=cv, iid=False, refit=True)
+    gs = GridSearchCV(enet_clf, param_grid, cv=5, iid=False, refit=True)
 
     l1_clf = LogisticRegression(penalty='l1', C=C, solver='saga',
                                 random_state=0)
@@ -1469,8 +1467,9 @@ def test_elastic_net_vs_l1_l2(C):
     assert gs.score(X_test, y_test) >= l2_clf.score(X_test, y_test)
 
 
-def test_elastic_net_CV_grid_search():
-    # make sure ElasticNetCV gives same best params as GridSearchCV
+def test_LogisticRegressionCV_GridSearchCV_elastic_net():
+    # make sure LogisticRegressionCV gives same best params (l1 and C) as
+    # GridSearchCV when penalty is elastic-net
 
     X, y = make_classification(random_state=0)
     cv = StratifiedKFold(5, random_state=0)
@@ -1492,9 +1491,9 @@ def test_elastic_net_CV_grid_search():
     assert gs.best_params_['C'] == lrcv.C_[0]
 
 
-def test_elastic_net_CV_multiclass_multinomial():
-    # make sure ElasticNetCV gives same best params as GridSearchCV with
-    # multinomial=True.
+def test_LogisticRegressionCV_GridSearchCV_elastic_net_multinomial():
+    # make sure LogisticRegressionCV gives same best params (l1 and C) as
+    # GridSearchCV when penalty is elastic-net and multiclass is multinomial
 
     X, y = make_classification(n_samples=200, n_classes=3, n_informative=3,
                                random_state=0)
@@ -1518,12 +1517,13 @@ def test_elastic_net_CV_multiclass_multinomial():
     assert gs.best_params_['C'] == lrcv.C_[0]
 
 
-def test_elastic_net_CV_multiclass_ovr():
-    # make sure ElasticNetCV gives similar predictions as GridSearchCV in a
-    # multiclass setting with ovr. We can't compare best_params like in the
-    # previous test because LogisticRegressionCV with multi_class='ovr' will
-    # have one C and one l1_param for each class, while LogisticRegression will
-    # share the parameters over the *n_classes* classifiers.
+def test_LogisticRegressionCV_GridSearchCV_elastic_net_ovr():
+    # make sure LogisticRegressionCV gives same best params (l1 and C) as
+    # GridSearchCV when penalty is elastic-net and multiclass is ovr. We can't
+    # compare best_params like in the previous test because
+    # LogisticRegressionCV with multi_class='ovr' will have one C and one
+    # l1_param for each class, while LogisticRegression will share the
+    # parameters over the *n_classes* classifiers.
 
     X, y = make_classification(n_samples=200, n_classes=3, n_informative=3,
                                random_state=0)
@@ -1550,21 +1550,20 @@ def test_elastic_net_CV_multiclass_ovr():
 
 
 @pytest.mark.parametrize('multi_class', ('ovr', 'multinomial'))
-def test_ElasticNetCV_no_refit(multi_class):
-    # Test ElasticNetCV when refit is False
+def test_LogisticRegressionCV_no_refit(multi_class):
+    # Test LogisticRegressionCV when refit is False
 
     n_classes = 3
     n_features = 20
     X, y = make_classification(n_samples=200, n_classes=n_classes,
                                n_informative=n_classes, n_features=n_features,
                                random_state=0)
-    cv = StratifiedKFold(5, random_state=0)
 
     Cs = np.logspace(-4, 4, 3)
     l1_ratios = np.linspace(0, 1, 2)
 
     lrcv = LogisticRegressionCV(penalty='elastic-net', Cs=Cs, solver='saga',
-                                cv=cv, l1_ratios=l1_ratios, random_state=0,
+                                cv=5, l1_ratios=l1_ratios, random_state=0,
                                 multi_class=multi_class, refit=False)
     lrcv.fit(X, y)
     assert lrcv.C_.shape == (n_classes,)
