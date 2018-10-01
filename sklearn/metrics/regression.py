@@ -36,7 +36,8 @@ __ALL__ = [
     "mean_squared_log_error",
     "median_absolute_error",
     "r2_score",
-    "explained_variance_score"
+    "explained_variance_score",
+    "max_error"
 ]
 
 
@@ -573,3 +574,37 @@ def r2_score(y_true, y_pred, sample_weight=None,
         avg_weights = multioutput
 
     return np.average(output_scores, weights=avg_weights)
+
+
+def max_error(y_true, y_pred):
+    """
+    The Max-Error metric is the worst case error
+    between the predicted value and the true value.
+
+    Parameters
+    ----------
+    y_true : array-like of shape = (n_samples)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape = (n_samples)
+        Estimated target values.
+
+    Returns
+    -------
+    max_error : float
+        A positive floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import max_error
+    >>> y_true = [3.1, 2.4, 7.6, 1.9]
+    >>> y_pred = [4.1, 2.3, 7.4, 1.7]
+    >>> median_absolute_error(y_true, y_pred)
+    1.0
+    """
+    y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred,
+                                                   'uniform_average')
+    if y_type == 'continuous-multioutput':
+        raise ValueError("Multioutput not supported in max_error")
+    max_error = np.around(np.max(np.abs(y_true - y_pred)), decimals=3)
+    return max_error
