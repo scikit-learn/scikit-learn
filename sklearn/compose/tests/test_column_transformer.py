@@ -381,6 +381,7 @@ def test_column_transformer_mixed_passthrough_sparse():
     )
 
     # this shouldn't fail.
+    # See: https://github.com/scikit-learn/scikit-learn/issues/11912
     X_trans = ct.fit_transform(df)
     assert X_trans.getformat() == 'csr'
     assert_array_equal(X_trans.toarray(), np.array([[1, 0, 1, 1],
