@@ -581,6 +581,24 @@ class MinCovDet(EmpiricalCovariance):
         Mahalanobis distances of the training set (on which `fit` is called)
         observations.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import MinCovDet
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> real_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> np.random.seed(0)
+    >>> X = np.random.multivariate_normal(mean=[0, 0],
+    ...                                   cov=real_cov,
+    ...                                   size=500)
+    >>> cov = MinCovDet(random_state=0).fit(X)
+    >>> cov.covariance_ # doctest: +ELLIPSIS
+    array([[0.7411..., 0.2535...],
+           [0.2535..., 0.3053...]])
+    >>> cov.location_
+    array([0.0813... , 0.0427...])
+
     References
     ----------
 

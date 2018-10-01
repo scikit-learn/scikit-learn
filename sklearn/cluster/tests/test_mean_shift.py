@@ -101,6 +101,18 @@ def test_unfitted():
     assert_false(hasattr(ms, "labels_"))
 
 
+def test_cluster_intensity_tie():
+    X = np.array([[1, 1], [2, 1], [1, 0],
+                  [4, 7], [3, 5], [3, 6]])
+    c1 = MeanShift(bandwidth=2).fit(X)
+
+    X = np.array([[4, 7], [3, 5], [3, 6],
+                  [1, 1], [2, 1], [1, 0]])
+    c2 = MeanShift(bandwidth=2).fit(X)
+    assert_array_equal(c1.labels_, [1, 1, 1, 0, 0, 0])
+    assert_array_equal(c2.labels_, [0, 0, 0, 1, 1, 1])
+
+
 def test_bin_seeds():
     # Test the bin seeding technique which can be used in the mean shift
     # algorithm

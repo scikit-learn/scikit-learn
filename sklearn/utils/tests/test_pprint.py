@@ -21,9 +21,9 @@ def test_basic():
     lr = LogisticRegression()
     expected = """
 LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-                   intercept_scaling=1, max_iter=100, multi_class='ovr',
-                   n_jobs=1, penalty='l2', random_state=None,
-                   solver='liblinear', tol=0.0001, verbose=0, warm_start=False)"""
+                   intercept_scaling=1, max_iter=100, multi_class='warn',
+                   n_jobs=None, penalty='l2', random_state=None, solver='warn',
+                   tol=0.0001, verbose=0, warm_start=False)"""
 
     expected = expected[1:]  # remove first \n
     assert lr.__repr__() == expected
@@ -48,10 +48,10 @@ Pipeline(memory=None,
                 ('logisticregression',
                  LogisticRegression(C=999, class_weight=None, dual=False,
                                     fit_intercept=True, intercept_scaling=1,
-                                    max_iter=100, multi_class='ovr', n_jobs=1,
-                                    penalty='l2', random_state=None,
-                                    solver='liblinear', tol=0.0001, verbose=0,
-                                    warm_start=False))])"""
+                                    max_iter=100, multi_class='warn',
+                                    n_jobs=None, penalty='l2',
+                                    random_state=None, solver='warn',
+                                    tol=0.0001, verbose=0, warm_start=False))])"""
     expected = expected[1:]  # remove first \n
     assert pipeline.__repr__() == expected
 
@@ -66,11 +66,11 @@ RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estima
                                                                                                                      fit_intercept=True,
                                                                                                                      intercept_scaling=1,
                                                                                                                      max_iter=100,
-                                                                                                                     multi_class='ovr',
-                                                                                                                     n_jobs=1,
+                                                                                                                     multi_class='warn',
+                                                                                                                     n_jobs=None,
                                                                                                                      penalty='l2',
                                                                                                                      random_state=None,
-                                                                                                                     solver='liblinear',
+                                                                                                                     solver='warn',
                                                                                                                      tol=0.0001,
                                                                                                                      verbose=0,
                                                                                                                      warm_start=False),
@@ -87,6 +87,7 @@ RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estima
                                 n_features_to_select=None, step=1, verbose=0),
                   n_features_to_select=None, step=1, verbose=0),
     n_features_to_select=None, step=1, verbose=0)"""
+
     expected = expected[1:]  # remove first \n
     assert rfe.__repr__() == expected
 
@@ -105,12 +106,13 @@ GridSearchCV(cv=5, error_score='raise-deprecating',
                            gamma='auto_deprecated', kernel='rbf', max_iter=-1,
                            probability=False, random_state=None, shrinking=True,
                            tol=0.001, verbose=False),
-             fit_params=None, iid='warn', n_jobs=1,
+             fit_params=None, iid='warn', n_jobs=None,
              param_grid=[{'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001],
                           'kernel': ['rbf']},
                          {'C': [1, 10, 100, 1000], 'kernel': ['linear']}],
              pre_dispatch='2*n_jobs', refit=True, return_train_score='warn',
              scoring=None, verbose=0)"""
+
     expected = expected[1:]  # remove first \n
     assert gs.__repr__() == expected
 

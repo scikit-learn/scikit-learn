@@ -1,6 +1,8 @@
 """
 Testing Recursive feature elimination
 """
+from __future__ import division
+
 import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -227,6 +229,26 @@ def test_rfecv_verbose_output():
     verbose_output = sys.stdout
     verbose_output.seek(0)
     assert_greater(len(verbose_output.readline()), 0)
+
+
+def test_rfecv_grid_scores_size():
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = list(iris.target)   # regression test: list should be supported
+
+    # Non-regression test for varying combinations of step and
+    # min_features_to_select.
+    for step, min_features_to_select in [[2, 1], [2, 2], [3, 3]]:
+        rfecv = RFECV(estimator=MockClassifier(), step=step,
+                      min_features_to_select=min_features_to_select, cv=5)
+        rfecv.fit(X, y)
+
+        score_len = np.ceil(
+            (X.shape[1] - min_features_to_select) / step) + 1
+        assert len(rfecv.grid_scores_) == score_len
+        assert len(rfecv.ranking_) == X.shape[1]
+        assert rfecv.n_features_ >= min_features_to_select
 
 
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22

@@ -39,7 +39,7 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 
 
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
-                   n_jobs=1, verbose=0, fit_params=None,
+                   n_jobs=None, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score="warn",
                    return_estimator=False, error_score='raise-deprecating'):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
@@ -97,9 +97,11 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    n_jobs : integer, optional
-        The number of CPUs to use to do the computation. -1 means
-        'all CPUs'.
+    n_jobs : int or None, optional (default=None)
+        The number of CPUs to use to do the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : integer, optional
         The verbosity level.
@@ -272,7 +274,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
 
 
 def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
-                    n_jobs=1, verbose=0, fit_params=None,
+                    n_jobs=None, verbose=0, fit_params=None,
                     pre_dispatch='2*n_jobs', error_score='raise-deprecating'):
     """Evaluate a score by cross-validation
 
@@ -319,9 +321,11 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    n_jobs : integer, optional
-        The number of CPUs to use to do the computation. -1 means
-        'all CPUs'.
+    n_jobs : int or None, optional (default=None)
+        The number of CPUs to use to do the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : integer, optional
         The verbosity level.
@@ -646,9 +650,9 @@ def _multimetric_score(estimator, X_test, y_test, scorers):
     return scores
 
 
-def cross_val_predict(estimator, X, y=None, groups=None, cv='warn', n_jobs=1,
-                      verbose=0, fit_params=None, pre_dispatch='2*n_jobs',
-                      method='predict'):
+def cross_val_predict(estimator, X, y=None, groups=None, cv='warn',
+                      n_jobs=None, verbose=0, fit_params=None,
+                      pre_dispatch='2*n_jobs', method='predict'):
     """Generate cross-validated estimates for each input data point
 
     It is not appropriate to pass these predictions into an evaluation
@@ -692,9 +696,11 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv='warn', n_jobs=1,
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    n_jobs : integer, optional
-        The number of CPUs to use to do the computation. -1 means
-        'all CPUs'.
+    n_jobs : int or None, optional (default=None)
+        The number of CPUs to use to do the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : integer, optional
         The verbosity level.
@@ -927,7 +933,7 @@ def _index_param_value(X, v, indices):
 
 
 def permutation_test_score(estimator, X, y, groups=None, cv='warn',
-                           n_permutations=100, n_jobs=1, random_state=0,
+                           n_permutations=100, n_jobs=None, random_state=0,
                            verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
 
@@ -984,9 +990,11 @@ def permutation_test_score(estimator, X, y, groups=None, cv='warn',
     n_permutations : integer, optional
         Number of times to permute ``y``.
 
-    n_jobs : integer, optional
-        The number of CPUs to use to do the computation. -1 means
-        'all CPUs'.
+    n_jobs : int or None, optional (default=None)
+        The number of CPUs to use to do the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional (default=0)
         If int, random_state is the seed used by the random number generator;
@@ -1068,8 +1076,8 @@ def _shuffle(y, groups, random_state):
 
 def learning_curve(estimator, X, y, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv='warn',
-                   scoring=None, exploit_incremental_learning=False, n_jobs=1,
-                   pre_dispatch="all", verbose=0, shuffle=False,
+                   scoring=None, exploit_incremental_learning=False,
+                   n_jobs=None, pre_dispatch="all", verbose=0, shuffle=False,
                    random_state=None,  error_score='raise-deprecating'):
     """Learning curve.
 
@@ -1140,8 +1148,11 @@ def learning_curve(estimator, X, y, groups=None,
         If the estimator supports incremental learning, this will be
         used to speed up fitting for different training set sizes.
 
-    n_jobs : integer, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     pre_dispatch : integer or string, optional
         Number of predispatched jobs for parallel execution (default is
@@ -1323,7 +1334,7 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
 
 
 def validation_curve(estimator, X, y, param_name, param_range, groups=None,
-                     cv='warn', scoring=None, n_jobs=1, pre_dispatch="all",
+                     cv='warn', scoring=None, n_jobs=None, pre_dispatch="all",
                      verbose=0, error_score='raise-deprecating'):
     """Validation curve.
 
@@ -1384,8 +1395,11 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    n_jobs : integer, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     pre_dispatch : integer or string, optional
         Number of predispatched jobs for parallel execution (default is

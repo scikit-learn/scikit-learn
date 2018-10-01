@@ -292,7 +292,7 @@ Additional keywords are passed to the distance metric class.
 
 Attributes
 ----------
-data : np.ndarray
+data : memory view
     The training data
 
 Examples
@@ -486,7 +486,7 @@ cdef DTYPE_t _log_kernel_norm(DTYPE_t h, ITYPE_t d,
     elif kernel == EXPONENTIAL_KERNEL:
         factor = logSn(d - 1) + lgamma(d)
     elif kernel == LINEAR_KERNEL:
-        factor = logVn(d) - np.log1p(d)
+        factor = logVn(d) - log(d + 1.)
     elif kernel == COSINE_KERNEL:
         # this is derived from a chain rule integration
         factor = 0
@@ -1119,7 +1119,7 @@ cdef class BinaryTree:
         """
         reduce method used for pickling
         """
-        return (newObj, (BinaryTree,), self.__getstate__())
+        return (newObj, (type(self),), self.__getstate__())
 
     def __getstate__(self):
         """
@@ -1136,7 +1136,8 @@ cdef class BinaryTree:
                 int(self.n_leaves),
                 int(self.n_splits),
                 int(self.n_calls),
-                self.dist_metric)
+                self.dist_metric,
+                self.sample_weight)
 
     def __setstate__(self, state):
         """
@@ -1162,6 +1163,7 @@ cdef class BinaryTree:
         self.dist_metric = state[11]
         self.euclidean = (self.dist_metric.__class__.__name__
                           == 'EuclideanDistance')
+        self.sample_weight = state[12]
 
     def get_tree_stats(self):
         return (self.n_trims, self.n_leaves, self.n_splits)

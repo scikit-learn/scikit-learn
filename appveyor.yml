@@ -20,6 +20,7 @@ environment:
     - PYTHON: "C:\\Python37-x64"
       PYTHON_VERSION: "3.7.0"
       PYTHON_ARCH: "64"
+      CHECK_WARNINGS: "true"
 
     - PYTHON: "C:\\Python27"
       PYTHON_VERSION: "2.7.8"
@@ -72,7 +73,13 @@ test_script:
   # installed library.
   - mkdir "../empty_folder"
   - cd "../empty_folder"
-  - pytest --showlocals --durations=20 --pyargs sklearn
+  - ps: >-
+        if (Test-Path variable:global:CHECK_WARNINGS) {
+            $env:PYTEST_ARGS = "-Werror::DeprecationWarning -Werror::FutureWarning"
+        } else {
+            $env:PYTEST_ARGS = ""
+        }
+  - "pytest --showlocals --durations=20 %PYTEST_ARGS% --pyargs sklearn"
   # Move back to the project folder
   - cd "../scikit-learn"
 

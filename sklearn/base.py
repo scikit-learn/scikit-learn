@@ -343,9 +343,12 @@ class ClusterMixin(object):
         X : ndarray, shape (n_samples, n_features)
             Input data.
 
+        y : Ignored
+            not used, present for API consistency by convention.
+
         Returns
         -------
-        y : ndarray, shape (n_samples,)
+        labels : ndarray, shape (n_samples,)
             cluster labels
         """
         # non-optimized default implementation; override when a better
@@ -494,6 +497,9 @@ class OutlierMixin(object):
         ----------
         X : ndarray, shape (n_samples, n_features)
             Input data.
+
+        y : Ignored
+            not used, present for API consistency by convention.
 
         Returns
         -------

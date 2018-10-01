@@ -216,8 +216,8 @@ def get_scorer(scoring):
             scorer = SCORERS[scoring]
         except KeyError:
             raise ValueError('%r is not a valid scoring value. '
-                             'Valid options are %s'
-                             % (scoring, sorted(SCORERS.keys())))
+                             'Use sorted(sklearn.metrics.SCORERS.keys()) '
+                             'to get valid options.' % (scoring))
     else:
         scorer = scoring
     return scorer
