@@ -567,9 +567,6 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         .. versionadded:: 0.17
 
-    store_covariances : boolean
-        Deprecated, use `store_covariance`.
-
     Attributes
     ----------
     covariance_ : list of array-like, shape = [n_features, n_features]
@@ -602,8 +599,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     >>> clf.fit(X, y)
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     QuadraticDiscriminantAnalysis(priors=None, reg_param=0.0,
-                                  store_covariance=False,
-                                  store_covariances=None, tol=0.0001)
+                                  store_covariance=False, tol=0.0001)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -653,8 +649,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             self.priors_ = self.priors
 
         cov = None
-        store_covariance = self.store_covariance or self.store_covariances
-
+        store_covariance = self.store_covariance
         if store_covariance:
             cov = []
         means = []

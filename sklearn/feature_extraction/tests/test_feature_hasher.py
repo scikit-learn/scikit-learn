@@ -33,7 +33,7 @@ def test_feature_hasher_strings():
 
         it = (x for x in raw_X)                 # iterable
 
-        h = FeatureHasher(n_features, non_negative=True, input_type="string")
+        h = FeatureHasher(n_features, input_type="string")
         X = h.transform(it)
 
         assert_equal(X.shape[0], len(raw_X))
@@ -120,11 +120,11 @@ def test_hasher_alternate_sign():
                        input_type='string').fit_transform(X)
     assert Xt.data.min() < 0 and Xt.data.max() > 0
 
-    Xt = FeatureHasher(alternate_sign=True, non_negative=True,
+    Xt = FeatureHasher(alternate_sign=True, 
                        input_type='string').fit_transform(X)
     assert Xt.data.min() > 0
 
-    Xt = FeatureHasher(alternate_sign=False, non_negative=True,
+    Xt = FeatureHasher(alternate_sign=False, 
                        input_type='string').fit_transform(X)
     assert Xt.data.min() > 0
     Xt_2 = FeatureHasher(alternate_sign=False, non_negative=False,
@@ -144,11 +144,11 @@ def test_hash_collisions():
     # with an opposite sign and cancel out
     assert abs(Xt.data[0]) < len(X[0])
 
-    Xt = FeatureHasher(alternate_sign=True, non_negative=True,
+    Xt = FeatureHasher(alternate_sign=True, 
                        n_features=1, input_type='string').fit_transform(X)
     assert abs(Xt.data[0]) < len(X[0])
 
-    Xt = FeatureHasher(alternate_sign=False, non_negative=True,
+    Xt = FeatureHasher(alternate_sign=False, 
                        n_features=1, input_type='string').fit_transform(X)
     assert Xt.data[0] == len(X[0])
 
@@ -159,12 +159,12 @@ def test_hasher_negative():
     Xt = FeatureHasher(alternate_sign=False, non_negative=False,
                        input_type="pair").fit_transform(X)
     assert_true(Xt.data.min() < 0 and Xt.data.max() > 0)
-    Xt = FeatureHasher(alternate_sign=False, non_negative=True,
+    Xt = FeatureHasher(alternate_sign=False, 
                        input_type="pair").fit_transform(X)
     assert_true(Xt.data.min() > 0)
     Xt = FeatureHasher(alternate_sign=True, non_negative=False,
                        input_type="pair").fit_transform(X)
     assert_true(Xt.data.min() < 0 and Xt.data.max() > 0)
-    Xt = FeatureHasher(alternate_sign=True, non_negative=True,
+    Xt = FeatureHasher(alternate_sign=True, 
                        input_type="pair").fit_transform(X)
     assert_true(Xt.data.min() > 0)
