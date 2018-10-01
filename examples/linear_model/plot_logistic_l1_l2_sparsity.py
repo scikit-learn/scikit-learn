@@ -38,10 +38,10 @@ y = (y > 4).astype(np.int)
 
 
 # Set regularization parameter
-for i, C in enumerate((100, 1, 0.01)):
+for i, C in enumerate((1, 0.1, 0.01)):
     # turn down tolerance for short training time
-    clf_l1_LR = LogisticRegression(C=C, penalty='l1', tol=0.01)
-    clf_l2_LR = LogisticRegression(C=C, penalty='l2', tol=0.01)
+    clf_l1_LR = LogisticRegression(C=C, penalty='l1', tol=0.01, solver='saga')
+    clf_l2_LR = LogisticRegression(C=C, penalty='l2', tol=0.01, solver='saga')
     clf_EN_LR = LogisticRegression(C=C, l1_ratio=.3, penalty='elastic-net',
                                    solver='saga', tol=0.01)
     clf_l1_LR.fit(X, y)

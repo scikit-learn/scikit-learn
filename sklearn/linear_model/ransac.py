@@ -186,6 +186,18 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
         .. versionadded:: 0.19
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import RANSACRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(
+    ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
+    >>> reg = RANSACRegressor(random_state=0).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9885...
+    >>> reg.predict(X[:1,])
+    array([-31.9417...])
+
     References
     ----------
     .. [1] https://en.wikipedia.org/wiki/RANSAC

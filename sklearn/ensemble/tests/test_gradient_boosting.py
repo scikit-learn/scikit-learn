@@ -106,29 +106,17 @@ def test_classifier_parameter_checks():
     assert_raises(ValueError,
                   GradientBoostingClassifier(min_samples_split=1.1).fit, X, y)
 
-    with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
-        assert_raises(
-            ValueError,
-            GradientBoostingClassifier(min_samples_leaf=0).fit,
-            X, y
-        )
-    with pytest.warns(DeprecationWarning, match='min_samples_leaf'):
-        assert_raises(
-            ValueError,
-            GradientBoostingClassifier(min_samples_leaf=-1.0).fit,
-            X, y
-        )
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(min_samples_leaf=0).fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(min_samples_leaf=-1.0).fit, X, y)
 
-    with pytest.warns(DeprecationWarning, match='min_weight_fraction_leaf'):
-        assert_raises(ValueError,
-                      GradientBoostingClassifier(
-                          min_weight_fraction_leaf=-1.).fit,
-                      X, y)
-    with pytest.warns(DeprecationWarning, match='min_weight_fraction_leaf'):
-        assert_raises(ValueError,
-                      GradientBoostingClassifier(
-                          min_weight_fraction_leaf=0.6).fit,
-                      X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(min_weight_fraction_leaf=-1.).fit,
+                  X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(min_weight_fraction_leaf=0.6).fit,
+                  X, y)
 
     assert_raises(ValueError,
                   GradientBoostingClassifier(subsample=0.0).fit, X, y)
@@ -464,6 +452,7 @@ def test_max_feature_regression():
     assert_true(deviance < 0.5, "GB failed with deviance %.4f" % deviance)
 
 
+@pytest.mark.network
 def test_feature_importance_regression():
     """Test that Gini importance is calculated correctly.
 

@@ -85,26 +85,26 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                  splitter,
                  max_depth,
                  min_samples_split,
+                 min_samples_leaf,
                  min_weight_fraction_leaf,
                  max_features,
                  max_leaf_nodes,
                  random_state,
                  min_impurity_decrease,
                  min_impurity_split,
-                 min_samples_leaf='deprecated',
                  class_weight=None,
                  presort=False):
         self.criterion = criterion
         self.splitter = splitter
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.random_state = random_state
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
-        self.min_samples_leaf = min_samples_leaf
         self.class_weight = class_weight
         self.presort = presort
 
@@ -173,24 +173,18 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         max_leaf_nodes = (-1 if self.max_leaf_nodes is None
                           else self.max_leaf_nodes)
 
-        if self.min_samples_leaf != 'deprecated':
-            warnings.warn("'min_samples_leaf' is deprecated in 0.20 and "
-                          "will be fixed to a value of 1 in 0.22.",
-                          DeprecationWarning)
+        if isinstance(self.min_samples_leaf, (numbers.Integral, np.integer)):
+            if not 1 <= self.min_samples_leaf:
+                raise ValueError("min_samples_leaf must be at least 1 "
+                                 "or in (0, 0.5], got %s"
+                                 % self.min_samples_leaf)
             min_samples_leaf = self.min_samples_leaf
-        else:
-            min_samples_leaf = 1
-        if isinstance(min_samples_leaf, (numbers.Integral, np.integer)):
-            if not 1 <= min_samples_leaf:
-                raise ValueError("min_samples_leaf must be at least 1 "
-                                 "or in (0, 0.5], got %s"
-                                 % min_samples_leaf)
         else:  # float
-            if not 0. < min_samples_leaf <= 0.5:
+            if not 0. < self.min_samples_leaf <= 0.5:
                 raise ValueError("min_samples_leaf must be at least 1 "
                                  "or in (0, 0.5], got %s"
-                                 % min_samples_leaf)
-            min_samples_leaf = int(ceil(min_samples_leaf * n_samples))
+                                 % self.min_samples_leaf)
+            min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
         if isinstance(self.min_samples_split, (numbers.Integral, np.integer)):
             if not 2 <= self.min_samples_split:
@@ -240,15 +234,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
                              "number of samples=%d" % (len(y), n_samples))
-
-        if self.min_weight_fraction_leaf != 'deprecated':
-            warnings.warn("'min_weight_fraction_leaf' is deprecated in 0.20 "
-                          "and will be fixed to a value of 0 in 0.22.",
-                          DeprecationWarning)
-            min_weight_fraction_leaf = self.min_weight_fraction_leaf
-        else:
-            min_weight_fraction_leaf = 0
-        if not 0 <= min_weight_fraction_leaf <= 0.5:
+        if not 0 <= self.min_weight_fraction_leaf <= 0.5:
             raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
         if max_depth <= 0:
             raise ValueError("max_depth must be greater than zero. ")
@@ -283,10 +269,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # Set min_weight_leaf from min_weight_fraction_leaf
         if sample_weight is None:
-            min_weight_leaf = (min_weight_fraction_leaf *
+            min_weight_leaf = (self.min_weight_fraction_leaf *
                                n_samples)
         else:
-            min_weight_leaf = (min_weight_fraction_leaf *
+            min_weight_leaf = (self.min_weight_fraction_leaf *
                                np.sum(sample_weight))
 
         if self.min_impurity_split is not None:
@@ -553,8 +539,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
-        - If int, then consider ``min_samples_split`` as the minimum number.
-        - If float, then ``min_samples_split`` is a fraction and
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
@@ -562,29 +548,24 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
-        - If int, then consider ``min_samples_leaf`` as the minimum number.
-        - If float, then ``min_samples_leaf`` is a fraction and
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
            Added float values for fractions.
-        .. deprecated:: 0.20
-           The parameter ``min_samples_leaf`` is deprecated in version 0.20 and
-           will be fixed to a value of 1 in version 0.22. It was not effective
-           for regularization and empirically, 1 is the best value.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
-
-        .. deprecated:: 0.20
-           The parameter ``min_weight_fraction_leaf`` is deprecated in version
-           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
-           for regularization.
 
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
@@ -703,7 +684,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     Notes
     -----
     The default values for the parameters controlling the size of the trees
-    (e.g. ``max_depth``, ``min_samples_split``, etc.) lead to fully grown and
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
@@ -751,8 +732,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  splitter="best",
                  max_depth=None,
                  min_samples_split=2,
-                 min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf='deprecated',
+                 min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features=None,
                  random_state=None,
                  max_leaf_nodes=None,
@@ -930,8 +911,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
-        - If int, then consider ``min_samples_split`` as the minimum number.
-        - If float, then ``min_samples_split`` is a fraction and
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
@@ -939,29 +920,24 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
-        - If int, then consider ``min_samples_leaf`` as the minimum number.
-        - If float, then ``min_samples_leaf`` is a fraction and
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
            Added float values for fractions.
-        .. deprecated:: 0.20
-           The parameter ``min_samples_leaf`` is deprecated in version 0.20 and
-           will be fixed to a value of 1 in version 0.22. It was not effective
-           for regularization and empirically, 1 is the best value.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
-
-        .. deprecated:: 0.20
-           The parameter ``min_weight_fraction_leaf`` is deprecated in version
-           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
-           for regularization.
 
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
@@ -1051,7 +1027,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     Notes
     -----
     The default values for the parameters controlling the size of the trees
-    (e.g. ``max_depth``, ``min_samples_split``, etc.) lead to fully grown and
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
@@ -1099,8 +1075,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  splitter="best",
                  max_depth=None,
                  min_samples_split=2,
-                 min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf='deprecated',
+                 min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features=None,
                  random_state=None,
                  max_leaf_nodes=None,
@@ -1197,8 +1173,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
-        - If int, then consider ``min_samples_split`` as the minimum number.
-        - If float, then ``min_samples_split`` is a fraction and
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
@@ -1206,29 +1182,24 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
-        - If int, then consider ``min_samples_leaf`` as the minimum number.
-        - If float, then ``min_samples_leaf`` is a fraction and
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
            Added float values for fractions.
-        .. deprecated:: 0.20
-           The parameter ``min_samples_leaf`` is deprecated in version 0.20 and
-           will be fixed to a value of 1 in version 0.22. It was not effective
-           for regularization and empirically, 1 is the best value.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
-
-        .. deprecated:: 0.20
-           The parameter ``min_weight_fraction_leaf`` is deprecated in version
-           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
-           for regularization.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
@@ -1313,7 +1284,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     Notes
     -----
     The default values for the parameters controlling the size of the trees
-    (e.g. ``max_depth``, ``min_samples_split``, etc.) lead to fully grown and
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
@@ -1329,8 +1300,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  splitter="random",
                  max_depth=None,
                  min_samples_split=2,
-                 min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf='deprecated',
+                 min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features="auto",
                  random_state=None,
                  max_leaf_nodes=None,
@@ -1390,8 +1361,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
-        - If int, then consider ``min_samples_split`` as the minimum number.
-        - If float, then ``min_samples_split`` is a fraction and
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
@@ -1399,29 +1370,24 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
-        - If int, then consider ``min_samples_leaf`` as the minimum number.
-        - If float, then ``min_samples_leaf`` is a fraction and
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
            Added float values for fractions.
-        .. deprecated:: 0.20
-           The parameter ``min_samples_leaf`` is deprecated in version 0.20 and
-           will be fixed to a value of 1 in version 0.22. It was not effective
-           for regularization and empirically, 1 is the best value.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
-
-        .. deprecated:: 0.20
-           The parameter ``min_weight_fraction_leaf`` is deprecated in version
-           0.20. Its implementation, like ``min_samples_leaf``, is ineffective
-           for regularization.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
@@ -1486,7 +1452,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     Notes
     -----
     The default values for the parameters controlling the size of the trees
-    (e.g. ``max_depth``, ``min_samples_split``, etc.) lead to fully grown and
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
@@ -1502,8 +1468,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  splitter="random",
                  max_depth=None,
                  min_samples_split=2,
-                 min_samples_leaf='deprecated',
-                 min_weight_fraction_leaf='deprecated',
+                 min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features="auto",
                  random_state=None,
                  min_impurity_decrease=0.,

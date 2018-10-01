@@ -1368,6 +1368,17 @@ class LassoCV(LinearModelCV, RegressorMixin):
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import LassoCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(noise=4, random_state=0)
+    >>> reg = LassoCV(cv=5, random_state=0).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9993...
+    >>> reg.predict(X[:1,])
+    array([-78.4951...])
+
     Notes
     -----
     For an example, see
@@ -2234,6 +2245,19 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     n_iter_ : int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import MultiTaskLassoCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_targets=2, noise=4, random_state=0)
+    >>> reg = MultiTaskLassoCV(cv=5, random_state=0).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9994...
+    >>> reg.alpha_
+    0.5713...
+    >>> reg.predict(X[:1,])
+    array([[153.7971...,  94.9015...]])
 
     See also
     --------

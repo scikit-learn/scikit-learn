@@ -786,24 +786,35 @@ non-smooth `penalty="l1"`. This is therefore the solver of choice for sparse
 multinomial logistic regression. It is also the only solver that supports
 `penalty="elastic-net"`.
 
-In a nutshell, the following table summarizes the solvers characteristics:
+In a nutshell, the following table summarizes the penalties supported by
+each solver:
 
-============================   ===========  =======  ===========  =====  ======
-solver                         'liblinear'  'lbfgs'  'newton-cg'  'sag'  'saga'
-============================   ===========  =======  ===========  =====  ======
-Multinomial + L2 penalty       no           yes      yes          yes    yes
-OVR + L2 penalty               yes          yes      yes          yes    yes
-Multinomial + L1 penalty       no           no       no           no     yes
-OVR + L1 penalty               yes          no       no           no     yes
-Elastic Net penalty            no           no       no           no     yes
-============================   ===========  =======  ===========  =====  ======
-Penalize the intercept (bad)   yes          no       no           no     no
-Faster for large datasets      no           no       no           yes    yes
-Robust to unscaled datasets    yes          yes      yes          no     no
-============================   ===========  =======  ===========  =====  ======
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+|                              |                       **Solvers**                                        |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| **Penalties**                | **'liblinear'** | **'lbfgs'** | **'newton-cg'** | **'sag'** | **'saga'** |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| Multinomial + L2 penalty     |       no        |     yes     |       yes       |    yes    |    yes     |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| OVR + L2 penalty             |       yes       |     yes     |       yes       |    yes    |    yes     |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| Multinomial + L1 penalty     |       no        |     no      |       no        |    no     |    yes     |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| OVR + L1 penalty             |       yes       |     no      |       no        |    no     |    yes     |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| Elastic net                  |       no        |     no      |       no        |    no     |    yes     |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| **Behaviors**                |                                                                          |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| Penalize the intercept (bad) |       yes       |     no      |       no        |    no     |    no      |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| Faster for large datasets    |       no        |     no      |       no        |    yes    |    yes     |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| Robust to unscaled datasets  |       yes       |     yes     |       yes       |    no     |    no      |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
 
-The "saga" solver is often the best choice. The "liblinear" solver is
-used by default for historical reasons.
+The "saga" solver is often the best choice but requires scaling. The
+"liblinear" solver is used by default for historical reasons.
 
 For large dataset, you may also consider using :class:`SGDClassifier`
 with 'log' loss.

@@ -203,17 +203,13 @@ def test_predict_proba_on_toy_problem():
     assert_almost_equal(t21, eclf_res[2][1], decimal=1)
     assert_almost_equal(t31, eclf_res[3][1], decimal=1)
 
-    try:
+    with pytest.raises(
+            AttributeError,
+            match="predict_proba is not available when voting='hard'"):
         eclf = VotingClassifier(estimators=[
                                 ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                                 voting='hard')
         eclf.fit(X, y).predict_proba(X)
-
-    except AttributeError:
-        pass
-    else:
-        raise AssertionError('AttributeError for voting == "hard"'
-                             ' and with predict_proba not raised')
 
 
 def test_multilabel():

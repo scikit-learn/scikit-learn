@@ -1,7 +1,31 @@
 About us
 ========
 
-.. include:: ../AUTHORS.rst
+History
+-------
+
+This project was started in 2007 as a Google Summer of Code project by
+David Cournapeau. Later that year, Matthieu Brucher started work on
+this project as part of his thesis.
+
+In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and Vincent
+Michel of INRIA took leadership of the project and made the first public
+release, February the 1st 2010. Since then, several releases have appeared
+following a ~3 month cycle, and a thriving international community has
+been leading the development.
+
+Authors
+-------
+
+The following people have been core contributors to scikit-learn's development
+and maintenance:
+
+.. include:: authors.rst
+
+Please do not email the authors directly to ask for assistance or report issues.
+Instead, please see `What's the best way to ask questions about scikit-learn
+<http://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
+in the FAQ.
 
 .. seealso::
 

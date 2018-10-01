@@ -735,9 +735,9 @@ decide better::
   array([[1, 1, 1, 0, 1, 1, 1, 0],
          [1, 1, 0, 1, 1, 1, 0, 1]])
 
-In the above example, ``'char_wb`` analyzer is used, which creates n-grams
+In the above example, ``char_wb`` analyzer is used, which creates n-grams
 only from characters inside word boundaries (padded with space on each
-side). The ``'char'`` analyzer, alternatively, creates n-grams that
+side). The ``char`` analyzer, alternatively, creates n-grams that
 span across words::
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(5, 5))

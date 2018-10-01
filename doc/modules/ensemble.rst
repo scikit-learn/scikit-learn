@@ -218,7 +218,7 @@ setting ``oob_score=True``.
     The size of the model with the default parameters is :math:`O( M * N * log (N) )`,
     where :math:`M` is the number of trees and :math:`N` is the number of samples.
     In order to reduce the size of the model, you can change these parameters:
-    ``min_samples_split``, ``max_leaf_nodes`` and ``max_depth``.
+    ``min_samples_split``, ``max_leaf_nodes``, ``max_depth`` and ``min_samples_leaf``.
 
 Parallelization
 ---------------
@@ -393,7 +393,8 @@ The number of weak learners is controlled by the parameter ``n_estimators``. The
 the final combination. By default, weak learners are decision stumps. Different
 weak learners can be specified through the ``base_estimator`` parameter.
 The main parameters to tune to obtain good results are ``n_estimators`` and
-the complexity of the base estimators (e.g., its depth ``max_depth``).
+the complexity of the base estimators (e.g., its depth ``max_depth`` or
+minimum required number of samples to consider a split ``min_samples_split``).
 
 .. topic:: Examples:
 

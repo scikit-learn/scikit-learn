@@ -251,3 +251,11 @@ def test_compute_sample_weight_errors():
 
     # Incorrect length list for multi-output
     assert_raises(ValueError, compute_sample_weight, [{1: 2, 2: 1}], y_)
+
+
+def test_compute_sample_weight_more_than_32():
+    # Non-regression smoke test for #12146
+    y = np.arange(50)  # more than 32 distinct classes
+    indices = np.arange(50)  # use subsampling
+    weight = compute_sample_weight('balanced', y, indices=indices)
+    assert_array_almost_equal(weight, np.ones(y.shape[0]))

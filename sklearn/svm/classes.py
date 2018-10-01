@@ -841,9 +841,6 @@ class SVR(BaseLibSVM, RegressorMixin):
     intercept_ : array, shape = [1]
         Constants in decision function.
 
-    sample_weight : array-like, shape = [n_samples]
-            Individual weights for each sample
-
     Examples
     --------
     >>> from sklearn.svm import SVR
