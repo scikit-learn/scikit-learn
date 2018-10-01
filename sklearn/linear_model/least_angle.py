@@ -1185,13 +1185,6 @@ class LarsCV(Lars):
                   Xy=None, fit_path=True)
         return self
 
-    @property
-    @deprecated("Attribute alpha is deprecated in 0.19 and "
-                "will be removed in 0.21. See ``alpha_`` instead")
-    def alpha(self):
-        # impedance matching for the above Lars.fit (should not be documented)
-        return self.alpha_
-
 
 class LassoLarsCV(LarsCV):
     """Cross-validated Lasso, using the LARS algorithm

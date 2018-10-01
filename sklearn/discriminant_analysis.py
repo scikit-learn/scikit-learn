@@ -614,19 +614,11 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     """
 
     def __init__(self, priors=None, reg_param=0., store_covariance=False,
-                 tol=1.0e-4, store_covariances=None):
+                 tol=1.0e-4):
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = reg_param
-        self.store_covariances = store_covariances
         self.store_covariance = store_covariance
         self.tol = tol
-
-    @property
-    @deprecated("Attribute ``covariances_`` was deprecated in version"
-                " 0.19 and will be removed in 0.21. Use "
-                "``covariance_`` instead")
-    def covariances_(self):
-        return self.covariance_
 
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
@@ -662,10 +654,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         cov = None
         store_covariance = self.store_covariance or self.store_covariances
-        if self.store_covariances:
-            warnings.warn("'store_covariances' was renamed to store_covariance"
-                          " in version 0.19 and will be removed in 0.21.",
-                          DeprecationWarning)
+
         if store_covariance:
             cov = []
         means = []

@@ -316,20 +316,6 @@ def test_qda_store_covariance():
     )
 
 
-def test_qda_deprecation():
-    # Test the deprecation
-    clf = QuadraticDiscriminantAnalysis(store_covariances=True)
-    assert_warns_message(DeprecationWarning, "'store_covariances' was renamed"
-                         " to store_covariance in version 0.19 and will be "
-                         "removed in 0.21.", clf.fit, X, y)
-
-    # check that covariance_ (and covariances_ with warning) is stored
-    assert_warns_message(DeprecationWarning, "Attribute ``covariances_`` was "
-                         "deprecated in version 0.19 and will be removed "
-                         "in 0.21. Use ``covariance_`` instead", getattr, clf,
-                         'covariances_')
-
-
 def test_qda_regularization():
     # the default is reg_param=0. and will cause issues
     # when there is a constant variable

@@ -108,56 +108,6 @@ def test_safe_mask():
     assert_equal(X_csr[mask].shape[0], 3)
 
 
-@ignore_warnings  # Test deprecated backport to be removed in 0.21
-def test_pinvh_simple_real():
-    a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 10]], dtype=np.float64)
-    a = np.dot(a, a.T)
-    a_pinv = pinvh(a)
-    assert_almost_equal(np.dot(a, a_pinv), np.eye(3))
-
-
-@ignore_warnings  # Test deprecated backport to be removed in 0.21
-def test_pinvh_nonpositive():
-    a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float64)
-    a = np.dot(a, a.T)
-    u, s, vt = np.linalg.svd(a)
-    s[0] *= -1
-    a = np.dot(u * s, vt)  # a is now symmetric non-positive and singular
-    a_pinv = pinv2(a)
-    a_pinvh = pinvh(a)
-    assert_almost_equal(a_pinv, a_pinvh)
-
-
-@ignore_warnings  # Test deprecated backport to be removed in 0.21
-def test_pinvh_simple_complex():
-    a = (np.array([[1, 2, 3], [4, 5, 6], [7, 8, 10]])
-         + 1j * np.array([[10, 8, 7], [6, 5, 4], [3, 2, 1]]))
-    a = np.dot(a, a.conj().T)
-    a_pinv = pinvh(a)
-    assert_almost_equal(np.dot(a, a_pinv), np.eye(3))
-
-
-@ignore_warnings  # Test deprecated backport to be removed in 0.21
-def test_arpack_eigsh_initialization():
-    # Non-regression test that shows null-space computation is better with
-    # initialization of eigsh from [-1,1] instead of [0,1]
-    random_state = check_random_state(42)
-
-    A = random_state.rand(50, 50)
-    A = np.dot(A.T, A)  # create s.p.d. matrix
-    A = laplacian(A) + 1e-7 * np.identity(A.shape[0])
-    k = 5
-
-    # Test if eigsh is working correctly
-    # New initialization [-1,1] (as in original ARPACK)
-    # Was [0,1] before, with which this test could fail
-    v0 = random_state.uniform(-1, 1, A.shape[0])
-    w, _ = eigsh(A, k=k, sigma=0.0, v0=v0)
-
-    # Eigenvalues of s.p.d. matrix should be nonnegative, w[0] is smallest
-    assert_greater_equal(w[0], 0)
-
-
 def test_column_or_1d():
     EXAMPLES = [
         ("binary", ["spam", "egg", "spam"]),

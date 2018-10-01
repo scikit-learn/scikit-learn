@@ -88,18 +88,6 @@ def test_random_weights():
     assert_array_almost_equal(score.ravel(), w[:, :5].sum(1))
 
 
-@ignore_warnings  # Test deprecated backport to be removed in 0.21
-def test_logsumexp():
-    # Try to add some smallish numbers in logspace
-    x = np.array([1e-40] * 1000000)
-    logx = np.log(x)
-    assert_almost_equal(np.exp(logsumexp(logx)), x.sum())
-
-    X = np.vstack([x, x])
-    logX = np.vstack([logx, logx])
-    assert_array_almost_equal(np.exp(logsumexp(logX, axis=0)), X.sum(axis=0))
-    assert_array_almost_equal(np.exp(logsumexp(logX, axis=1)), X.sum(axis=1))
-
 
 def check_randomized_svd_low_rank(dtype):
     # Check that extmath.randomized_svd is consistent with linalg.svd
@@ -177,22 +165,6 @@ def check_randomized_svd_low_rank(dtype):
                          (np.int32, np.int64, np.float32, np.float64))
 def test_randomized_svd_low_rank_all_dtypes(dtype):
     check_randomized_svd_low_rank(dtype)
-
-
-@ignore_warnings  # extmath.norm is deprecated to be removed in 0.21
-def test_norm_squared_norm():
-    X = np.random.RandomState(42).randn(50, 63)
-    X *= 100        # check stability
-    X += 200
-
-    assert_almost_equal(np.linalg.norm(X.ravel()), norm(X))
-    assert_almost_equal(norm(X) ** 2, squared_norm(X), decimal=6)
-    assert_almost_equal(np.linalg.norm(X), np.sqrt(squared_norm(X)), decimal=6)
-    # Check the warning with an int array and np.dot potential overflow
-    assert_warns_message(
-                    UserWarning, 'Array type is integer, np.dot may '
-                    'overflow. Data should be float type to avoid this issue',
-                    squared_norm, X.astype(int))
 
 
 @pytest.mark.parametrize('dtype',

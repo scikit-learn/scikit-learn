@@ -718,24 +718,16 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
         return self
 
-    def transform(self, X, y='deprecated', copy=None):
+    def transform(self, X, copy=None):
         """Perform standardization by centering and scaling
 
         Parameters
         ----------
         X : array-like, shape [n_samples, n_features]
             The data used to scale along the features axis.
-        y : (ignored)
-            .. deprecated:: 0.19
-               This parameter will be removed in 0.21.
         copy : bool, optional (default: None)
             Copy the input X or not.
         """
-        if not isinstance(y, string_types) or y != 'deprecated':
-            warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
-
         check_is_fitted(self, 'scale_')
 
         copy = copy if copy is not None else self.copy
@@ -1655,7 +1647,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse='csr')
         return self
 
-    def transform(self, X, y='deprecated', copy=None):
+    def transform(self, X, copy=None):
         """Scale each non zero row of X to unit norm
 
         Parameters
@@ -1663,17 +1655,9 @@ class Normalizer(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape [n_samples, n_features]
             The data to normalize, row by row. scipy.sparse matrices should be
             in CSR format to avoid an un-necessary copy.
-        y : (ignored)
-            .. deprecated:: 0.19
-               This parameter will be removed in 0.21.
         copy : bool, optional (default: None)
             Copy the input X or not.
         """
-        if not isinstance(y, string_types) or y != 'deprecated':
-            warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
-
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr')
         return normalize(X, norm=self.norm, axis=1, copy=copy)
@@ -1794,7 +1778,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         check_array(X, accept_sparse='csr')
         return self
 
-    def transform(self, X, y='deprecated', copy=None):
+    def transform(self, X, copy=None):
         """Binarize each element of X
 
         Parameters
@@ -1803,17 +1787,10 @@ class Binarizer(BaseEstimator, TransformerMixin):
             The data to binarize, element by element.
             scipy.sparse matrices should be in CSR format to avoid an
             un-necessary copy.
-        y : (ignored)
-            .. deprecated:: 0.19
-               This parameter will be removed in 0.21.
+
         copy : bool
             Copy the input X or not.
         """
-        if not isinstance(y, string_types) or y != 'deprecated':
-            warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
-
         copy = copy if copy is not None else self.copy
         return binarize(X, threshold=self.threshold, copy=copy)
 
@@ -1872,16 +1849,14 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
         return self
 
-    def transform(self, K, y='deprecated', copy=True):
+    def transform(self, K, copy=True):
         """Center kernel matrix.
 
         Parameters
         ----------
         K : numpy array of shape [n_samples1, n_samples2]
             Kernel matrix.
-        y : (ignored)
-            .. deprecated:: 0.19
-               This parameter will be removed in 0.21.
+
         copy : boolean, optional, default True
             Set to False to perform inplace computation.
 
@@ -1889,11 +1864,6 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         K_new : numpy array of shape [n_samples1, n_samples2]
         """
-        if not isinstance(y, string_types) or y != 'deprecated':
-            warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
-
         check_is_fitted(self, 'K_fit_all_')
 
         K = check_array(K, copy=copy, dtype=FLOAT_DTYPES)
@@ -2903,17 +2873,3 @@ def power_transform(X, method='box-cox', standardize=True, copy=True):
     """
     pt = PowerTransformer(method=method, standardize=standardize, copy=copy)
     return pt.fit_transform(X)
-
-
-class CategoricalEncoder:
-    """
-    CategoricalEncoder briefly existed in 0.20dev. Its functionality
-    has been rolled into the OneHotEncoder and OrdinalEncoder.
-    This stub will be removed in version 0.21.
-    """
-
-    def __init__(*args, **kwargs):
-        raise RuntimeError(
-            "CategoricalEncoder briefly existed in 0.20dev. Its functionality "
-            "has been rolled into the OneHotEncoder and OrdinalEncoder. "
-            "This stub will be removed in version 0.21.")

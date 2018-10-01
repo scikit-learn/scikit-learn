@@ -158,18 +158,6 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.copy_X_train = copy_X_train
         self.random_state = random_state
 
-    @property
-    @deprecated("Attribute rng was deprecated in version 0.19 and "
-                "will be removed in 0.21.")
-    def rng(self):
-        return self._rng
-
-    @property
-    @deprecated("Attribute y_train_mean was deprecated in version 0.19 and "
-                "will be removed in 0.21.")
-    def y_train_mean(self):
-        return self._y_train_mean
-
     def fit(self, X, y):
         """Fit Gaussian process regression model.
 

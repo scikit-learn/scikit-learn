@@ -26,17 +26,6 @@ from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 
 
-@deprecated("sklearn.utils.extmath.norm was deprecated in version 0.19 "
-            "and will be removed in 0.21. Use scipy.linalg.norm instead.")
-def norm(x):
-    """Compute the Euclidean or Frobenius norm of x.
-
-    Returns the Euclidean norm when x is a vector, the Frobenius norm when x
-    is a matrix (2-d array). More precise than sqrt(squared_norm(x)).
-    """
-    return linalg.norm(x)
-
-
 def squared_norm(x):
     """Squared Euclidean or Frobenius norm of x.
 
@@ -117,12 +106,6 @@ def _impose_f_order(X):
         return check_array(X.T, copy=False, order='F'), True
     else:
         return check_array(X, copy=False, order='F'), False
-
-
-@deprecated("sklearn.utils.extmath.fast_dot was deprecated in version 0.19 "
-            "and will be removed in 0.21. Use the equivalent np.dot instead.")
-def fast_dot(a, b, out=None):
-    return np.dot(a, b, out)
 
 
 def density(w, **kwargs):
@@ -388,25 +371,6 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         return U[:, :n_components], s[:n_components], V[:n_components, :]
 
 
-@deprecated("sklearn.utils.extmath.logsumexp was deprecated in version 0.19 "
-            "and will be removed in 0.21. Use scipy.misc.logsumexp instead.")
-def logsumexp(arr, axis=0):
-    """Computes the sum of arr assuming arr is in the log domain.
-    Returns log(sum(exp(arr))) while minimizing the possibility of
-    over/underflow.
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.utils.extmath import logsumexp
-    >>> a = np.arange(10)
-    >>> np.log(np.sum(np.exp(a)))
-    9.458...
-    >>> logsumexp(a)  # doctest: +SKIP
-    9.458...
-    """
-    return scipy_logsumexp(arr, axis)
-
-
 def weighted_mode(a, w, axis=0):
     """Returns an array of the weighted modal (most common) value in a
 
@@ -478,12 +442,6 @@ def weighted_mode(a, w, axis=0):
         oldcounts = np.maximum(counts, oldcounts)
         oldmostfreq = mostfrequent
     return mostfrequent, oldcounts
-
-
-@deprecated("sklearn.utils.extmath.pinvh was deprecated in version 0.19 "
-            "and will be removed in 0.21. Use scipy.linalg.pinvh instead.")
-def pinvh(a, cond=None, rcond=None, lower=True):
-    return linalg.pinvh(a, cond, rcond, lower)
 
 
 def cartesian(arrays, out=None):

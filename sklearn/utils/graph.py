@@ -68,17 +68,3 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
             break
         level += 1
     return seen  # return all path lengths as dictionary
-
-
-@deprecated("sklearn.utils.graph.connected_components was deprecated in "
-            "version 0.19 and will be removed in 0.21. Use "
-            "scipy.sparse.csgraph.connected_components instead.")
-def connected_components(*args, **kwargs):
-    return csgraph.connected_components(*args, **kwargs)
-
-
-@deprecated("sklearn.utils.graph.graph_laplacian was deprecated in version "
-            "0.19 and will be removed in 0.21. Use "
-            "scipy.sparse.csgraph.laplacian instead.")
-def graph_laplacian(*args, **kwargs):
-    return csgraph.laplacian(*args, **kwargs)
