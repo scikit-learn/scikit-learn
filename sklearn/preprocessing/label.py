@@ -807,11 +807,6 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, classes=None, sparse_output=False):
-        if classes is not None and len(set(classes)) < len(classes):
-            raise ValueError("The classes argument contains duplicate "
-                             "classes. Remove these duplicates before passing "
-                             "them to MultiLabelBinarizer.")
-
         self.classes = classes
         self.sparse_output = sparse_output
 
@@ -831,6 +826,10 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         """
         if self.classes is None:
             classes = sorted(set(itertools.chain.from_iterable(y)))
+        elif len(set(self.classes)) < len(self.classes):
+            raise ValueError("The classes argument contains duplicate "
+                             "classes. Remove these duplicates before passing "
+                             "them to MultiLabelBinarizer.")
         else:
             classes = self.classes
         dtype = np.int if all(isinstance(c, int) for c in classes) else object
