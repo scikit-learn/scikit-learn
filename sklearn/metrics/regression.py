@@ -599,7 +599,7 @@ def max_error(y_true, y_pred):
     >>> from sklearn.metrics import max_error
     >>> y_true = [3.1, 2.4, 7.6, 1.9]
     >>> y_pred = [4.1, 2.3, 7.4, 1.7]
-    >>> median_absolute_error(y_true, y_pred)
+    >>> max_error(y_true, y_pred)
     1.0
     """
     y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred,
