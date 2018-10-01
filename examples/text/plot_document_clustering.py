@@ -136,8 +136,8 @@ remove = ()
 if opts.remove_extra:
     remove = ('headers', 'footers', 'quotes')
 
-dataset = fetch_20newsgroups(subset='all', categories=categories, remove=remove,
-                             shuffle=True, random_state=42)
+dataset = fetch_20newsgroups(subset='all', categories=categories,
+                             remove=remove, shuffle=True, random_state=42)
 
 print("%d documents" % len(dataset.data))
 print("%d categories" % len(dataset.target_names))
@@ -196,7 +196,8 @@ if opts.n_components:
 
 if opts.minibatch:
     km = MiniBatchKMeans(n_clusters=true_k, init='k-means++', n_init=1,
-                         init_size=1000, batch_size=1000, verbose=opts.verbose, metric=opts.metric)
+                         init_size=1000, batch_size=1000, verbose=opts.verbose,
+                         metric=opts.metric)
 else:
     km = KMeans(n_clusters=true_k, init='k-means++', max_iter=100, n_init=1,
                 verbose=opts.verbose, metric=opts.metric)

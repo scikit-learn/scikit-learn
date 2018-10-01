@@ -69,7 +69,8 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None,
     metric : string, default 'euclidean'
         metric to use for distance computation.
 
-        Valid values for metric are ['cosine', 'euclidean'].
+        Valid values for metric are:
+            ['euclidean', 'cosine']
 
     Notes
     -----
@@ -125,7 +126,8 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None,
         # Compute distances to center candidates
         if metric == 'euclidean':
             distance_to_candidates = euclidean_distances(
-                X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True)
+                X[candidate_ids], X, Y_norm_squared=x_squared_norms,
+                squared=True)
         else:
             distance_to_candidates = cosine_distances(X[candidate_ids], X)
 
@@ -288,7 +290,8 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
     metric : string, default 'euclidean'
         metric to use for distance computation.
 
-        Valid values for metric are ['cosine', 'euclidean'].
+        Valid values for metric are:
+            ['euclidean', 'cosine']
 
     Returns
     -------
@@ -375,13 +378,15 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         # the right result.
         algorithm = "full"
     if algorithm == "auto":
-        algorithm = "full" if sp.issparse(X) or metric != 'euclidean' else 'elkan'
+        algorithm = "full" if sp.issparse(
+            X) or metric != 'euclidean' else 'elkan'
     if algorithm == "full":
         kmeans_single = _kmeans_single_lloyd
     elif algorithm == "elkan":
         if metric != 'euclidean':
-            raise ValueError("Algorithm 'elkan' must use 'euclidean' metric, got"
-                             " %s" % str(metric))
+            raise ValueError(
+                "Algorithm 'elkan' must use 'euclidean' metric, got"
+                " %s" % str(metric))
         kmeans_single = _kmeans_single_elkan
     else:
         raise ValueError("Algorithm must be 'auto', 'full' or 'elkan', got"
@@ -536,7 +541,8 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
     metric : string, default 'euclidean'
         metric to use for distance computation.
 
-        Valid values for metric are ['cosine', 'euclidean'].
+        Valid values for metric are:
+            ['euclidean', 'cosine']
 
     Returns
     -------
@@ -643,7 +649,8 @@ def _labels_inertia_precompute_dense(X, sample_weight, x_squared_norms,
     metric : string, default 'euclidean'
         metric to use for distance computation.
 
-        Valid values for metric are ['cosine', 'euclidean'].
+        Valid values for metric are:
+            ['euclidean', 'cosine']
 
     Returns
     -------
@@ -661,7 +668,8 @@ def _labels_inertia_precompute_dense(X, sample_weight, x_squared_norms,
     # TODO: Once PR #7383 is merged use check_inputs=False in metric_kwargs.
     if metric == 'euclidean':
         labels, mindist = pairwise_distances_argmin_min(
-            X=X, Y=centers, metric='euclidean', metric_kwargs={'squared': True})
+            X=X, Y=centers,
+            metric='euclidean', metric_kwargs={'squared': True})
     else:
         labels, mindist = pairwise_distances_argmin_min(
             X=X, Y=centers, metric=metric)
@@ -707,7 +715,8 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers,
     metric : string, default 'euclidean'
         metric to use for distance computation.
 
-        Valid values for metric are ['cosine', 'euclidean'].
+        Valid values for metric are:
+            ['euclidean', 'cosine']
 
     Returns
     -------
@@ -780,7 +789,8 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     metric : string, default 'euclidean'
         metric to use for distance computation.
 
-        Valid values for metric are ['cosine', 'euclidean'].
+        Valid values for metric are:
+            ['euclidean', 'cosine']
 
     Returns
     -------
@@ -915,7 +925,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     metric : string, default 'euclidean'
         metric to use for distance computation.
 
-        Valid values for metric are ['cosine', 'euclidean'].
+        Valid values for metric are:
+            ['euclidean', 'cosine']
 
     Attributes
     ----------
@@ -1240,7 +1251,8 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
     metric : string, default 'euclidean'
         metric to use for distance computation.
 
-        Valid values for metric are ['cosine', 'euclidean'].
+        Valid values for metric are:
+            ['euclidean', 'cosine']
 
     verbose : bool, optional, default False
         Controls the verbosity.
@@ -1488,7 +1500,8 @@ class MiniBatchKMeans(KMeans):
     metric : string, default 'euclidean'
         metric to use for distance computation.
 
-        Valid values for metric are ['cosine', 'euclidean'].
+        Valid values for metric are:
+            ['euclidean', 'cosine']
 
     Attributes
     ----------
@@ -1740,7 +1753,8 @@ class MiniBatchKMeans(KMeans):
         metric : string, default 'euclidean'
             metric to use for distance computation.
 
-            Valid values for metric are ['cosine', 'euclidean'].
+            Valid values for metric are:
+                ['euclidean', 'cosine']
 
         Returns
         -------
@@ -1756,9 +1770,10 @@ class MiniBatchKMeans(KMeans):
         slices = gen_batches(X.shape[0], self.batch_size)
         if metric == 'euclidean':
             x_squared_norms = row_norms(X, squared=True)
-            results = [_labels_inertia(X[s], sample_weight[s], x_squared_norms[s],
-                                       self.cluster_centers_,
-                                       metric=metric) for s in slices]
+            results = [
+                _labels_inertia(X[s], sample_weight[s], x_squared_norms[s],
+                                self.cluster_centers_,
+                                metric=metric) for s in slices]
         else:
             results = [_labels_inertia(X[s], sample_weight[s], None,
                                        self.cluster_centers_,
@@ -1862,5 +1877,5 @@ class MiniBatchKMeans(KMeans):
         check_is_fitted(self)
 
         X = self._check_test_data(X)
-        return self._labels_inertia_minibatch(X, sample_weight, metric=self.metric)[0]
-
+        return self._labels_inertia_minibatch(X, sample_weight,
+                                              metric=self.metric)[0]
