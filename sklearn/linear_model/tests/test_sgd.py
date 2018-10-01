@@ -1315,30 +1315,6 @@ def test_tol_parameter():
     assert_equal(model_3.n_iter_, 3)
 
 
-def test_future_and_deprecation_warnings():
-    # Test that warnings are raised. Will be removed in 0.21
-
-    def init(max_iter=None, tol=None, n_iter=None, for_partial_fit=False):
-        sgd = SGDClassifier(max_iter=max_iter, tol=tol, n_iter=n_iter)
-        sgd._validate_params(for_partial_fit=for_partial_fit)
-
-    # When all default values are used
-    msg_future = "max_iter and tol parameters have been added in "
-    assert_warns_message(FutureWarning, msg_future, init)
-
-    # When n_iter is specified
-    msg_deprecation = "n_iter parameter is deprecated"
-    assert_warns_message(DeprecationWarning, msg_deprecation, init, 6, 0, 5)
-
-    # When n_iter=None, and at least one of tol and max_iter is specified
-    assert_no_warnings(init, 100, None, None)
-    assert_no_warnings(init, None, 1e-3, None)
-    assert_no_warnings(init, 100, 1e-3, None)
-
-    # Test that for_partial_fit will not throw warnings for max_iter or tol
-    assert_no_warnings(init, None, None, None, True)
-
-
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def test_tol_and_max_iter_default_values():
     # Test that the default values are correctly changed
