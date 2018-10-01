@@ -9,6 +9,7 @@ import warnings
 
 import numpy as np
 from scipy import sparse
+from collections import Counter
 
 from .. import get_config as _get_config
 from ..base import BaseEstimator, TransformerMixin
@@ -835,3 +836,46 @@ class OrdinalEncoder(_BaseEncoder):
             X_tr[:, i] = self.categories_[i][labels]
 
         return X_tr
+
+
+def _group_values_python(values, min_freq=0, group=None):
+    if min_freq and group:
+        raise ValueError
+    if min_freq:
+        freqs = {key: counts/len(values)
+                 for key, counts in Counter(values).items()}
+        low_freq_keys = (key for key, freq in freqs.items() if freq < min_freq)
+        # sorting ensures first element in group is always the same
+        group = np.array(sorted(set(low_freq_keys)), dtype=values.dtype)
+    if group is not None:
+        try:
+            values[np.isin(values, group)] = group[0]
+        except IndexError:
+            pass
+        return values, group
+    else:
+        return values, group
+
+
+def _group_values_numpy(values, min_freq=0, group=None):
+    if min_freq and group:
+        raise ValueError
+    if min_freq:
+        uniques, counts = np.unique(values, return_counts=True)
+        mask = (counts/len(values) < min_freq)
+        group = uniques[mask]
+    if group is not None:
+        try:
+            values[np.isin(values, group)] = group[0]
+        except IndexError:
+            pass
+        return values, group
+    else:
+        return values, None
+
+
+def _group_values(values, min_freq=0, group=None):
+    if values.dtype == object:
+        return _group_values_python(values, min_freq, group)
+    else:
+        return _group_values_numpy(values, min_freq, group)

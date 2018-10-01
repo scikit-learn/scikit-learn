@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
+from sklearn.preprocessing._encoders import _group_values
 
 
 def toarray(a):
@@ -613,3 +614,48 @@ def test_one_hot_encoder_warning():
 def test_categorical_encoder_stub():
     from sklearn.preprocessing import CategoricalEncoder
     assert_raises(RuntimeError, CategoricalEncoder, encoding='ordinal')
+
+
+@pytest.mark.parametrize(
+    "values, min_freq, exp_values, exp_group",
+    [(np.array([1, 2, 3, 3, 3], dtype='int64'),
+      0.3,
+      np.array([1, 1, 3, 3, 3], dtype='int64'),
+      np.array([1, 2])),
+     (np.array([1, 2, 3, 3, 3], dtype='int64'),
+      0.7,
+      np.array([1, 1, 1, 1, 1], dtype='int64'),
+      np.array([1, 2, 3])),
+     (np.array([1, 2, 3, 3, 3], dtype='int64'),
+      0.2,
+      np.array([1, 2, 3, 3, 3], dtype='int64'),
+      np.array([], dtype='int64')),
+     (np.array(['a', 'b', 'c', 'c', 'c'], dtype=object),
+      0.3,
+      np.array(['a', 'a', 'c', 'c', 'c'], dtype=object),
+      np.array(['a', 'b'])),
+     (np.array(['a', 'b', 'c', 'c', 'c'], dtype=object),
+      0.7,
+      np.array(['a', 'a', 'a', 'a', 'a'], dtype=object),
+      np.array(['a', 'b', 'c'])),
+     (np.array(['a', 'b', 'c', 'c', 'c'], dtype=object),
+      0.2,
+      np.array(['a', 'b', 'c', 'c', 'c'], dtype=object),
+      np.array([], dtype=object)),
+     (np.array(['a', 'b', 'c', 'c', 'c'], dtype=str),
+      0.3,
+      np.array(['a', 'a', 'c', 'c', 'c'], dtype=str),
+      np.array(['a', 'b'])),
+     (np.array(['a', 'b', 'c', 'c', 'c'], dtype=str),
+      0.7,
+      np.array(['a', 'a', 'a', 'a', 'a'], dtype=str),
+      np.array(['a', 'b', 'c'])),
+     (np.array(['a', 'b', 'c', 'c', 'c'], dtype=str),
+      0.2,
+      np.array(['a', 'b', 'c', 'c', 'c'], dtype=str),
+      np.array([], dtype=str))],
+    ids=(['int64']*3 + ['object']*3 + ['str']*3))
+def test_group_values_freq(values, min_freq, exp_values, exp_group):
+    values, group = _group_values(values, min_freq)
+    assert_array_equal(values, exp_values)
+    assert_array_equal(group, exp_group)
