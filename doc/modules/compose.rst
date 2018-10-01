@@ -76,13 +76,13 @@ filling in the names automatically::
 
 The estimators of a pipeline are stored as a list in the ``steps`` attribute::
 
-    >>> pipe.steps[0]
+    >>> pipe.steps[0]  # doctest: +NORMALIZE_WHITESPACE
     ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False))
 
 and as a ``dict`` in ``named_steps``::
 
-    >>> pipe.named_steps['reduce_dim']
+    >>> pipe.named_steps['reduce_dim']  # doctest: +NORMALIZE_WHITESPACE
     PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False)
 
