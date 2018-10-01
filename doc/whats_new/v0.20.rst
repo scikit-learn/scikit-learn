@@ -254,21 +254,10 @@ Support for Python 3.3 has been officially dropped.
   and will be used instead of mldata as it provides better service availability.
   :issue:`9908` by `Andreas Müller`_ and :user:`Jan N. van Rijn <janvanrijn>`.
 
-<<<<<<< HEAD
-- Decision Trees can now be plotted with matplotlib using
-  :func:`tree.export.plot_tree` without relying on  the ``dot`` library,
-  removing a hard-to-install dependency.
-  :issue:`8508` by `Andreas Müller`_.
-
-- An environment variable to use the site joblib instead of the vendored
-  one was added (:ref:`environment_variable`).
-  :issue:`11166`by `Gael Varoquaux`_
-=======
 - |Feature| In :func:`datasets.make_blobs`, one can now pass a list to the
   ``n_samples`` parameter to indicate the number of samples to generate per
   cluster. :issue:`8617` by :user:`Maskani Filali Mohamed <maskani-moh>` and
   :user:`Konstantinos Katrioplas <kkatrio>`.
->>>>>>> master
 
 - |Feature| Add ``filename`` attribute to :mod:`datasets` that have a CSV file.
   :issue:`9101` by :user:`alex-33 <alex-33>`
