@@ -369,8 +369,6 @@ class BayesianRidge(LinearModel, RegressorMixin):
         return score
 
 
-
-
 ###############################################################################
 # ARD (Automatic Relevance Determination) regression
 
