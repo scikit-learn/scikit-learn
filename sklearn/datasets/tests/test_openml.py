@@ -454,7 +454,18 @@ def test_decode_emotions(monkeypatch):
 
 @pytest.mark.parametrize('gzip_response', [True, False])
 def test_open_openml_url_cache(monkeypatch, gzip_response):
+    def _mock_urlopen_raise(request):
+        raise ValueError('This mechanism intends to test correct cache'
+                         'handling. As such, urlopen should never be '
+                         'accessed. URL: %s' % request.get_full_url())
+
     data_id = 61
+    data_name = 'iris'
+    data_version = 1
+    target_column = 'class'
+    expected_observations = 150
+    expected_features = 4
+    expected_missing = 0
 
     _monkey_patch_webbased_functions(
         monkeypatch, data_id, gzip_response)
@@ -468,6 +479,15 @@ def test_open_openml_url_cache(monkeypatch, gzip_response):
     # redownload, to utilize cache
     response2 = _open_openml_url(openml_path, test_directory)
     assert response1.read() == response2.read()
+
+    monkeypatch.setattr(sklearn.datasets.openml, 'urlopen',
+                        _mock_urlopen_raise)
+
+    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+                               expected_observations, expected_features,
+                               expected_missing,
+                               object, object, expect_sparse=False,
+                               compare_default_target=False)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
