@@ -46,11 +46,6 @@ run_tests() {
     set -x  # print executed commands to the terminal
 
     $TEST_CMD sklearn
-
-    # Going back to git checkout folder needed to test documentation
-    cd $OLDPWD
-
-    make test-doc
 }
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then
