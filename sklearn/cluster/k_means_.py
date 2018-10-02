@@ -357,15 +357,19 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
                 % n_init, RuntimeWarning, stacklevel=2)
             n_init = 1
 
-    if metric in ['cosine', 'euclidean']:
-        # subtract of mean of x for more accurate distance computations
-        if not sp.issparse(X):
-            X_mean = X.mean(axis=0)
-            # The copy was already done above
-            X -= X_mean
+    if metric not in ['euclidean', 'cosine']:
+        raise ValueError("the metric parameter for the k-means should "
+                         "be 'euclidean' or 'cosine', "
+                         "'%s' (type '%s') was passed." % (metric, type(init)))
 
-            if hasattr(init, '__array__'):
-                init -= X_mean
+    # subtract of mean of x for more accurate distance computations
+    if not sp.issparse(X):
+        X_mean = X.mean(axis=0)
+        # The copy was already done above
+        X -= X_mean
+
+        if hasattr(init, '__array__'):
+            init -= X_mean
 
     # precompute squared norms of data points
     x_squared_norms = None

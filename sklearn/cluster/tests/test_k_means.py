@@ -245,6 +245,13 @@ def test_k_means_precompute_distances_flag():
         km.fit(X)
 
 
+def test_k_means_metric_value():
+    # check that a warning is raised if the metric is not supported
+    km = KMeans(metric="wrong")
+    with pytest.raises(ValueError):
+        km.fit(X)
+
+
 def test_k_means_plus_plus_init_not_precomputed():
     km = KMeans(init="k-means++", n_clusters=n_clusters, random_state=42,
                 precompute_distances=False).fit(X)
