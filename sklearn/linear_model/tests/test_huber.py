@@ -158,7 +158,7 @@ def test_huber_and_sgd_same_results():
 
     sgdreg = SGDRegressor(
         alpha=0.0, loss="huber", shuffle=True, random_state=0, max_iter=10000,
-        fit_intercept=False, epsilon=1.35, tol=None)
+        fit_intercept=False, epsilon=1.35, tol=-np.inf)
     sgdreg.fit(X_scale, y_scale)
     assert_array_almost_equal(huber.coef_, sgdreg.coef_, 1)
 

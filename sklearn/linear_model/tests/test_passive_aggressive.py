@@ -262,7 +262,7 @@ def test_regressor_correctness(loss):
 
     for data in (X, X_csr):
         reg2 = PassiveAggressiveRegressor(
-            C=1.0, tol=None, loss=loss, fit_intercept=True, max_iter=2,
+            C=1.0, tol=-np.inf, loss=loss, fit_intercept=True, max_iter=2,
             shuffle=False)
         reg2.fit(data, y_bin)
 
