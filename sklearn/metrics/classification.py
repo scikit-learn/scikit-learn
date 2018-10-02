@@ -2042,7 +2042,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
 
 
 
-def specificity(y_true,ypred):
+def specificity(y_true,y_pred):
     """
     Parameters
     ----------
@@ -2068,5 +2068,5 @@ def specificity(y_true,ypred):
     if y_type not in ("binary"):
         raise ValueError("%s is not supported" % y_type)
     else:
-        tn, fp,_, _ = confusion_matrix(y_true,ypred).ravel()
+        tn, fp,_, _ = confusion_matrix(y_true,y_pred).ravel()
         return tn/float(tn+fp)
