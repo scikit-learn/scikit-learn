@@ -513,13 +513,15 @@ boolean mask array or callable
         """
         if self.sparse_output_:
             try:
-                return sparse.hstack([check_array(X,
-                                                  accept_sparse=True,
-                                                  force_all_finite=False)
-                                      for X in Xs]).tocsr()
+                converted_Xs = [check_array(X,
+                                            accept_sparse=True,
+                                            force_all_finite=False)
+                                for X in Xs]
             except ValueError:
                 raise ValueError("For a sparse output, all columns should"
                                  " be a numeric or convertible to a numeric.")
+
+            return sparse.hstack(converted_Xs).tocsr()
         else:
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
             return np.hstack(Xs)
