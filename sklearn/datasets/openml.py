@@ -78,9 +78,14 @@ def _open_openml_url(openml_path, data_home):
             pass
 
         try:
-            with open(local_path, 'wb') as fdst:
-                shutil.copyfileobj(fsrc, fdst)
-                fsrc.close()
+            if is_gzip(fsrc):
+                with open(local_path, 'wb') as fdst:
+                    shutil.copyfileobj(fsrc, fdst)
+                    fsrc.close()
+            else:
+                with gzip.GzipFile(local_path, 'wb') as fdst:
+                    shutil.copyfileobj(fsrc, fdst)
+                    fsrc.close()
         except Exception:
             os.unlink(local_path)
             raise

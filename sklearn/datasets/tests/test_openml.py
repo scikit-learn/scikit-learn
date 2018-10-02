@@ -459,7 +459,7 @@ def test_decode_emotions(monkeypatch):
 
 
 # XXX: should also test on gzip_response = False, of course
-@pytest.mark.parametrize('gzip_response', [True])
+@pytest.mark.parametrize('gzip_response', [True, False])
 def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
     data_id = 61
 
@@ -478,7 +478,7 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
 
 
 # XXX: should also test on gzip_response = False, of course
-@pytest.mark.parametrize('gzip_response', [True])
+@pytest.mark.parametrize('gzip_response', [True, False])
 def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
     def _mock_urlopen_raise(request):
         raise ValueError('This mechanism intends to test correct cache'
