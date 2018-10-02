@@ -80,6 +80,7 @@ def test_predict_2_classes():
                                          random_state=0), X_sp, Y1)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_error():
     # Test for appropriate exception on errors
