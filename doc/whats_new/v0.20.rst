@@ -245,6 +245,7 @@ Support for Python 3.3 has been officially dropped.
   respectively and will be removed in version 0.22.
   :issue:`9993` by :user:`Artiem Krinitsyn <artiemq>`
 
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -679,7 +680,7 @@ Support for Python 3.3 has been officially dropped.
 - |Feature| Add ``dense_output`` parameter to :func:`metrics.pairwise.linear_kernel`.
   When False and both inputs are sparse, will return a sparse matrix.
   :issue:`10999` by :user:`Taylor G Smith <tgsmith61591>`.
-  
+
 - |Efficiency| :func:`metrics.silhouette_score` and
   :func:`metrics.silhouette_samples` are more memory efficient and run
   faster. This avoids some reported freezes and MemoryErrors.
