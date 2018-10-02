@@ -784,7 +784,7 @@ number of features are large.
 The "saga" solver [7]_ is a variant of "sag" that also supports the
 non-smooth `penalty="l1"`. This is therefore the solver of choice for sparse
 multinomial logistic regression. It is also the only solver that supports
-`penalty="elastic-net"`.
+`penalty="elasticnet"`.
 
 In a nutshell, the following table summarizes the penalties supported by
 each solver:

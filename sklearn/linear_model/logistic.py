@@ -436,7 +436,7 @@ def _check_solver(solver, penalty, dual):
         raise ValueError("Logistic Regression supports only solvers in %s, got"
                          " %s." % (all_solvers, solver))
 
-    all_penalties = ['l1', 'l2', 'elastic-net']
+    all_penalties = ['l1', 'l2', 'elasticnet']
     if penalty not in all_penalties:
         raise ValueError("Logistic Regression supports only penalties in %s,"
                          " got %s." % (all_penalties, penalty))
@@ -448,8 +448,8 @@ def _check_solver(solver, penalty, dual):
         raise ValueError("Solver %s supports only "
                          "dual=False, got dual=%s" % (solver, dual))
 
-    if penalty == 'elastic-net' and solver != 'saga':
-        raise ValueError("Only 'saga' solver supports elastic-net penalty,"
+    if penalty == 'elasticnet' and solver != 'saga':
+        raise ValueError("Only 'saga' solver supports elasticnet penalty,"
                          " got solver={}.".format(solver))
     return solver
 
@@ -553,9 +553,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
-    penalty : str, 'l1', 'l2', or 'elastic-net'
+    penalty : str, 'l1', 'l2', or 'elasticnet'
         Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties. 'elastic-net' is
+        'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
         only supported by the 'saga' solver.
 
     intercept_scaling : float, default 1.
@@ -606,7 +606,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     l1_ratio : float or None, optional (default=None)
         The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
-        used if ``penalty='elastic-net'``. Setting ``l1_ratio=0`` is equivalent
+        used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
         to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
         to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
         combination of L1 and L2.
@@ -797,7 +797,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             elif penalty == 'l2':
                 alpha = 1. / C
                 beta = 0.
-            else:  # elastic-net penalty
+            else:  # elasticnet penalty
                 alpha = (1. / C) * (1 - l1_ratio)
                 beta = (1. / C) * l1_ratio
 
@@ -895,9 +895,9 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     solver : {'lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'}
         Decides which solver to use.
 
-    penalty : str, 'l1', 'l2', or 'elastic-net'
+    penalty : str, 'l1', 'l2', or 'elasticnet'
         Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties. 'elastic-net' is
+        'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
         only supported by the 'saga' solver.
 
     dual : bool
@@ -942,7 +942,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
     l1_ratio : float or None, optional (default=None)
         The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
-        used if ``penalty='elastic-net'``. Setting ``l1_ratio=0`` is equivalent
+        used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
         to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
         to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
         combination of L1 and L2.
@@ -1046,9 +1046,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     Parameters
     ----------
-    penalty : str, 'l1', 'l2', or 'elastic-net', default: 'l2'
+    penalty : str, 'l1', 'l2', or 'elasticnet', default: 'l2'
         Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties. 'elastic-net' is
+        'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
         only supported by the 'saga' solver.
 
         .. versionadded:: 0.19
@@ -1169,7 +1169,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     l1_ratio : float or None, optional (default=None)
         The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
-        used if ``penalty='elastic-net'`. Setting ``l1_ratio=0`` is equivalent
+        used if ``penalty='elasticnet'`. Setting ``l1_ratio=0`` is equivalent
         to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
         to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
         combination of L1 and L2.
@@ -1306,14 +1306,14 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if not isinstance(self.C, numbers.Number) or self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
-        if self.penalty == 'elastic-net':
+        if self.penalty == 'elasticnet':
             if (not isinstance(self.l1_ratio, numbers.Number) or
                     self.l1_ratio < 0 or self.l1_ratio > 1):
                         raise ValueError("l1_ratio must be between 0 and 1;"
                                          " got (l1_ratio=%r)" % self.l1_ratio)
         elif self.l1_ratio is not None:
             warnings.warn("l1_ratio parameter is only used when penalty is "
-                          "'elastic-net'. Got "
+                          "'elasticnet'. Got "
                           "(penalty={})".format(self.penalty))
             self.l1_ratio = None
         if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
@@ -1529,9 +1529,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
-    penalty : str, 'l1', 'l2', or 'elastic-net', default: 'l2'
+    penalty : str, 'l1', 'l2', or 'elasticnet', default: 'l2'
         Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties. 'elastic-net' is
+        'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
         only supported by the 'saga' solver.
 
     scoring : string, callable, or None
@@ -1636,7 +1636,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     l1_ratios : list of float or None, optional (default=None)
         The list of elastic net mixing parameter, with ``0 <= l1_ratio <= 1``.
-        Only used if ``penalty='elastic-net'``. A value of 0 is equivalent to
+        Only used if ``penalty='elasticnet'``. A value of 0 is equivalent to
         using ``penalty='l2'``, while 1 is equivalent to using
         ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a combination
         of L1 and L2.
@@ -1767,7 +1767,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
-        if self.penalty == 'elastic-net':
+        if self.penalty == 'elasticnet':
             if self.l1_ratios is None or len(self.l1_ratios) == 0 or any(
                     (not isinstance(l1_ratio, numbers.Number) or l1_ratio < 0
                      or l1_ratio > 1) for l1_ratio in self.l1_ratios):
@@ -1778,7 +1778,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         else:
             if self.l1_ratios is not None:
                 warnings.warn("l1_ratios parameter is only used when penalty "
-                              "is 'elastic-net'. Got (penalty={})".format(
+                              "is 'elasticnet'. Got (penalty={})".format(
                                   self.penalty))
 
             l1_ratios_ = [None]
