@@ -454,40 +454,42 @@ def test_decode_emotions(monkeypatch):
 
 @pytest.mark.parametrize('gzip_response', [True, False])
 def test_open_openml_url_cache(monkeypatch, gzip_response):
-    def _mock_urlopen_raise(request):
-        raise ValueError('This mechanism intends to test correct cache'
-                         'handling. As such, urlopen should never be '
-                         'accessed. URL: %s' % request.get_full_url())
-
     data_id = 61
-    data_name = 'iris'
-    data_version = 1
-    target_column = 'class'
-    expected_observations = 150
-    expected_features = 4
-    expected_missing = 0
 
     _monkey_patch_webbased_functions(
         monkeypatch, data_id, gzip_response)
     openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
-    test_directory = os.path.join(os.path.expanduser('~'), 'scikit_learn_data')
+    cache_directory = os.path.join(os.path.expanduser('~'), 'scikit_learn_data')
     # first fill the cache
-    response1 = _open_openml_url(openml_path, test_directory)
+    response1 = _open_openml_url(openml_path, cache_directory)
     # assert file exists
-    location = os.path.join(test_directory, 'openml.org', openml_path + '.gz')
+    location = os.path.join(cache_directory, 'openml.org', openml_path + '.gz')
     assert os.path.isfile(location)
     # redownload, to utilize cache
-    response2 = _open_openml_url(openml_path, test_directory)
+    response2 = _open_openml_url(openml_path, cache_directory)
     assert response1.read() == response2.read()
+
+
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_cache(monkeypatch, gzip_response):
+    def _mock_urlopen_raise(request):
+        raise ValueError('This mechanism intends to test correct cache'
+                         'handling. As such, urlopen should never be '
+                         'accessed. URL: %s' % request.get_full_url())
+    data_id = 2
+    cache_directory = os.path.join(os.path.expanduser('~'), 'scikit_learn_data')
+    _monkey_patch_webbased_functions(
+        monkeypatch, data_id, gzip_response)
+    X_f, y_f = fetch_openml(data_id=data_id, cache=True,
+                            data_home=cache_directory, return_X_y=True)
 
     monkeypatch.setattr(sklearn.datasets.openml, 'urlopen',
                         _mock_urlopen_raise)
 
-    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
-                               expected_observations, expected_features,
-                               expected_missing,
-                               object, object, expect_sparse=False,
-                               compare_default_target=False)
+    X_c, y_c = fetch_openml(data_id=data_id, cache=True,
+                            data_home=cache_directory, return_X_y=True)
+    np.testing.assert_array_equal(X_f, X_c)
+    np.testing.assert_array_equal(y_f, y_c)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
