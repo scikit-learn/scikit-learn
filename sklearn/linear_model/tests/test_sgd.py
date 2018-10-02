@@ -302,14 +302,14 @@ class CommonTest(object):
                             random_state=np.random.RandomState(seed),
                             validation_fraction=validation_fraction,
                             learning_rate='constant', eta0=0.01,
-                            tol=None, max_iter=max_iter, shuffle=shuffle)
+                            max_iter=max_iter, shuffle=shuffle, tol=0)
         clf1.fit(X, Y)
         assert clf1.n_iter_ == max_iter
 
         clf2 = self.factory(early_stopping=False,
                             random_state=np.random.RandomState(seed),
                             learning_rate='constant', eta0=0.01,
-                            tol=None, max_iter=max_iter, shuffle=shuffle)
+                            max_iter=max_iter, shuffle=shuffle, tol=0)
 
         if is_classifier(clf2):
             cv = StratifiedShuffleSplit(test_size=validation_fraction,
@@ -701,13 +701,14 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # Test if equal class weights approx. equals no class weights.
         X = [[1, 0], [1, 0], [0, 1], [0, 1]]
         y = [0, 0, 1, 1]
-        clf = self.factory(alpha=0.1, max_iter=1000, class_weight=None)
+        clf = self.factory(alpha=0.1, max_iter=1000, class_weight=None,
+                           tol=-np.inf)
         clf.fit(X, y)
 
         X = [[1, 0], [0, 1]]
         y = [0, 1]
         clf_weighted = self.factory(alpha=0.1, max_iter=1000,
-                                    class_weight={0: 0.5, 1: 0.5})
+                                    class_weight={0: .5, 1: .5}, tol=-np.inf)
         clf_weighted.fit(X, y)
 
         # should be similar up to some epsilon due to learning rate schedule
@@ -751,13 +752,13 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         rng.shuffle(idx)
         X = X[idx]
         y = y[idx]
-        clf = self.factory(alpha=0.0001, max_iter=1000,
+        clf = self.factory(alpha=0.0001, max_iter=1000, tol=-np.inf,
                            class_weight=None, shuffle=False).fit(X, y)
         f1 = metrics.f1_score(y, clf.predict(X), average='weighted')
         assert_almost_equal(f1, 0.96, decimal=1)
 
         # make the same prediction using balanced class_weight
-        clf_balanced = self.factory(alpha=0.0001, max_iter=1000,
+        clf_balanced = self.factory(alpha=0.0001, max_iter=1000, tol=-np.inf,
                                     class_weight="balanced",
                                     shuffle=False).fit(X, y)
         f1 = metrics.f1_score(y, clf_balanced.predict(X), average='weighted')
@@ -775,14 +776,15 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         y_imbalanced = np.concatenate([y] + [y_0] * 10)
 
         # fit a model on the imbalanced data without class weight info
-        clf = self.factory(max_iter=1000, class_weight=None, shuffle=False)
+        clf = self.factory(max_iter=1000, class_weight=None, shuffle=False,
+                           tol=-np.inf)
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
         assert_less(metrics.f1_score(y, y_pred, average='weighted'), 0.96)
 
         # fit a model with balanced class_weight enabled
         clf = self.factory(max_iter=1000, class_weight="balanced",
-                           shuffle=False)
+                           shuffle=False, tol=-np.inf)
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
         assert_greater(metrics.f1_score(y, y_pred, average='weighted'), 0.96)
