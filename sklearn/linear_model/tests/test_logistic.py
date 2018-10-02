@@ -28,6 +28,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
+from sklearn.linear_model import SGDClassifier
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import ChangedBehaviorWarning
@@ -1466,6 +1467,33 @@ def test_elastic_net_vs_l1_l2(C):
 
     assert gs.score(X_test, y_test) >= l1_clf.score(X_test, y_test)
     assert gs.score(X_test, y_test) >= l2_clf.score(X_test, y_test)
+
+
+@pytest.mark.parametrize('C', np.logspace(-3, 2, 4))
+@pytest.mark.parametrize('l1_ratio', [.5])
+def test_LogisticRegression_elastic_net_objective(C, l1_ratio):
+    # train a logistic regression with l2 (a) and elastic-net (b) penalties,
+    # and compute the elastic-net objective. That of a sould be greater than
+    # that of b.
+    X, y = make_classification(n_samples=10000, n_classes=2, n_features=20,
+                               n_informative=10, n_redundant=0,
+                               n_repeated=0, random_state=0)
+
+    lr_enet = LogisticRegression(penalty='elastic-net', solver='saga',
+                                 random_state=0, C=C, l1_ratio=l1_ratio)
+    lr_l2 = LogisticRegression(penalty='l2', solver='saga',
+                               random_state=0, C=C, l1_ratio=l1_ratio)
+    lr_enet.fit(X, y)
+    lr_l2.fit(X, y)
+
+    def enet_objective(lr):
+        obj = C * log_loss(y, lr.predict(X))
+        obj = 0
+        obj += l1_ratio * np.linalg.norm(lr.coef_, 1)
+        obj += ((1 - l1_ratio) / 2) * np.linalg.norm(lr.coef_, 2)
+        return obj
+
+    assert enet_objective(lr_enet) < enet_objective(lr_l2)
 
 
 def test_LogisticRegressionCV_GridSearchCV_elastic_net():
