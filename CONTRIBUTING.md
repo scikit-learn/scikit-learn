@@ -178,13 +178,21 @@ following rules before submitting:
    as your Python, scikit-learn, numpy, and scipy versions. This information
    can be found by running the following code snippet:
 
-  ```python
-  import platform; print(platform.platform())
-  import sys; print("Python", sys.version)
-  import numpy; print("NumPy", numpy.__version__)
-  import scipy; print("SciPy", scipy.__version__)
-  import sklearn; print("Scikit-Learn", sklearn.__version__)
-  ```
+   For scikit-learn >= 0.20:
+
+   ```python
+   import sklearn; sklearn.show_versions()
+   ```
+
+   For scikit-learn < 0.20:
+
+   ```python
+   import platform; print(platform.platform())
+   import sys; print("Python", sys.version)
+   import numpy; print("NumPy", numpy.__version__)
+   import scipy; print("SciPy", scipy.__version__)
+   import sklearn; print("Scikit-Learn", sklearn.__version__)
+   ```
 
 -  Please be specific about what estimators and/or functions are involved
    and the shape of the data, as appropriate; please include a
