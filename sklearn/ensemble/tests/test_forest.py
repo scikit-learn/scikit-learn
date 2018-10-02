@@ -1221,22 +1221,6 @@ def test_decision_path(name):
 
 
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
-def test_min_impurity_split():
-    # Test if min_impurity_split of base estimators is set
-    # Regression test for #8006
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    all_estimators = [RandomForestClassifier, RandomForestRegressor,
-                      ExtraTreesClassifier, ExtraTreesRegressor]
-
-    for Estimator in all_estimators:
-        est = Estimator(min_impurity_split=0.1)
-        est = assert_warns_message(DeprecationWarning, "min_impurity_decrease",
-                                   est.fit, X, y)
-        for tree in est.estimators_:
-            assert_equal(tree.min_impurity_split, 0.1)
-
-
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_min_impurity_decrease():
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     all_estimators = [RandomForestClassifier, RandomForestRegressor,
