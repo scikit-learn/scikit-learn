@@ -7,7 +7,6 @@ from sklearn.utils.testing import assert_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal, assert_true, assert_false
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns_message
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB

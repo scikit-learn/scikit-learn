@@ -12,7 +12,6 @@ classification estimators.
 # License: BSD 3 clause
 
 import numpy as np
-import warnings
 
 from ..base import ClassifierMixin
 from ..base import TransformerMixin
