@@ -2038,3 +2038,35 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     y_true = np.array(y_true == pos_label, int)
     y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+
+
+
+
+def specificity(y_true,ypred):
+    """
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        Ground truth (correct) target values.
+
+    y_pred : array, shape = [n_samples]
+        Estimated targets as returned by a classifier.
+        
+    Examples
+    --------
+    >>> from sklearn.metrics import binary_specificity
+    >>> y_true = [1, 0, 1, 1, 0, 1]
+    >>> y_pred = [0, 0, 1, 1, 0, 1]
+    >>> specificity (y_true, y_pred)
+        1.00
+        
+        
+        
+        
+    """
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    if y_type not in ("binary"):
+        raise ValueError("%s is not supported" % y_type)
+    else:
+        tn, fp,_, _ = confusion_matrix(y_true,ypred).ravel()
+        return tn/float(tn+fp)
