@@ -16,8 +16,6 @@ from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn import linear_model, datasets, metrics
@@ -112,8 +110,6 @@ class CommonTest(object):
         if "random_state" not in kwargs:
             kwargs["random_state"] = 42
 
-        if "tol" not in kwargs:
-            kwargs["tol"] = None
         if "max_iter" not in kwargs:
             kwargs["max_iter"] = 5
 
@@ -1313,35 +1309,6 @@ def test_tol_parameter():
     model_3 = SGDClassifier(max_iter=3, tol=1e-3, random_state=0)
     model_3 = assert_warns(ConvergenceWarning, model_3.fit, X, y)
     assert_equal(model_3.n_iter_, 3)
-
-
-@ignore_warnings(category=(DeprecationWarning, FutureWarning))
-def test_tol_and_max_iter_default_values():
-    # Test that the default values are correctly changed
-    est = SGDClassifier()
-    est._validate_params()
-    assert_equal(est._tol, None)
-    assert_equal(est._max_iter, 5)
-
-    est = SGDClassifier(n_iter=42)
-    est._validate_params()
-    assert_equal(est._tol, None)
-    assert_equal(est._max_iter, 42)
-
-    est = SGDClassifier(tol=1e-2)
-    est._validate_params()
-    assert_equal(est._tol, 1e-2)
-    assert_equal(est._max_iter, 1000)
-
-    est = SGDClassifier(max_iter=42)
-    est._validate_params()
-    assert_equal(est._tol, None)
-    assert_equal(est._max_iter, 42)
-
-    est = SGDClassifier(max_iter=42, tol=1e-2)
-    est._validate_params()
-    assert_equal(est._tol, 1e-2)
-    assert_equal(est._max_iter, 42)
 
 
 def _test_gradient_common(loss_function, cases):

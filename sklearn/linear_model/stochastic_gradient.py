@@ -25,7 +25,6 @@ from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
 from .sgd_fast import plain_sgd, average_sgd
 from ..utils import compute_class_weight
-from ..utils import deprecated
 from .sgd_fast import Hinge
 from .sgd_fast import SquaredHinge
 from .sgd_fast import Log
@@ -138,7 +137,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
 
         if self.loss not in self.loss_functions:
             raise ValueError("The loss %s is not supported. " % self.loss)
-        self.max_iter = max_iter
 
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``. """
@@ -1292,7 +1290,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                           validation_mask, self.early_stopping,
                           validation_score_cb,
                           int(self.n_iter_no_change),
-                          max_iter, tol,
+                          max_iter, self.tol,
                           int(self.fit_intercept),
                           int(self.verbose),
                           int(self.shuffle),
