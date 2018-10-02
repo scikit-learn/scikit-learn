@@ -595,7 +595,8 @@ def test_iterative_imputer_clip():
 def test_iterative_imputer_normal_posterior():
     #  test that the values that are imputed using `sample_posterior=True`
     #  with boundaries (`min_value` and `max_value` are not None) are drawn
-    #  from a distribution that looks gaussian via the Kolmogorov–Smirnov test
+    #  from a distribution that looks gaussian via the Kolmogorov Smirnov test
+    pytest.importorskip("scipy", minversion="0.17.0")
     rng = np.random.RandomState(0)
 
     X = rng.random_sample((5, 5))
@@ -613,7 +614,7 @@ def test_iterative_imputer_normal_posterior():
     ks_statistic, p_value = kstest((imputations - mu) / sigma, 'norm')
     # we want to fail to reject null hypothesis
     # null hypothesis: distributions are the same
-    assert ks_statistic < 0.1 or p_value > 0.1, \
+    assert ks_statistic < 0.15 or p_value > 0.1, \
         "The posterior does appear to be normal"
 
 
@@ -645,6 +646,7 @@ def test_iterative_imputer_missing_at_transform(strategy):
 
 
 def test_iterative_imputer_transform_stochasticity():
+    pytest.importorskip("scipy", minversion="0.17.0")
     rng1 = np.random.RandomState(0)
     rng2 = np.random.RandomState(1)
     n = 100
