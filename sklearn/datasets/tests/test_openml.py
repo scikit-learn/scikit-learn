@@ -12,7 +12,8 @@ import pytest
 from sklearn.datasets import fetch_openml
 from sklearn.datasets.openml import (_open_openml_url,
                                      _get_data_description_by_id,
-                                     _download_data_arff)
+                                     _download_data_arff,
+                                     _get_local_path)
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 from sklearn.externals.six import string_types
@@ -77,6 +78,8 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
                                    cache=False)
     assert int(data_by_name_id.details['id']) == data_id
 
+    # Please note that cache=False is crucial, as the monkey patched files are
+    # not consistent with reality
     fetch_openml(name=data_name, cache=False)
     # without specifying the version, there is no guarantee that the data id
     # will be the same
@@ -138,6 +141,9 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
 def _monkey_patch_webbased_functions(context,
                                      data_id,
                                      gzip_response):
+    # monkey patches the urlopen function. Important note: Do NOT use this
+    # in combination with a regular cache directory, as the files that are
+    # stored as cache should not be mixed up with real openml datasets
     url_prefix_data_description = "https://openml.org/api/v1/json/data/"
     url_prefix_data_features = "https://openml.org/api/v1/json/data/features/"
     url_prefix_download_data = "https://openml.org/data/v1/"
@@ -459,11 +465,12 @@ def test_open_openml_url_cache(monkeypatch, gzip_response):
     _monkey_patch_webbased_functions(
         monkeypatch, data_id, gzip_response)
     openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
-    cache_directory = os.path.join(os.path.expanduser('~'), 'scikit_learn_data')
+    cache_directory = os.path.join(os.path.expanduser('~'),
+                                   'scikit_learn_test_data')
     # first fill the cache
     response1 = _open_openml_url(openml_path, cache_directory)
     # assert file exists
-    location = os.path.join(cache_directory, 'openml.org', openml_path + '.gz')
+    location = _get_local_path(openml_path, cache_directory)
     assert os.path.isfile(location)
     # redownload, to utilize cache
     response2 = _open_openml_url(openml_path, cache_directory)
@@ -477,7 +484,8 @@ def test_fetch_openml_cache(monkeypatch, gzip_response):
                          'handling. As such, urlopen should never be '
                          'accessed. URL: %s' % request.get_full_url())
     data_id = 2
-    cache_directory = os.path.join(os.path.expanduser('~'), 'scikit_learn_data')
+    cache_directory = os.path.join(os.path.expanduser('~'),
+                                   'scikit_learn_test_data')
     _monkey_patch_webbased_functions(
         monkeypatch, data_id, gzip_response)
     X_f, y_f = fetch_openml(data_id=data_id, cache=True,
