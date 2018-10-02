@@ -34,7 +34,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
 
-from ._csr_expansion import _csr_expansion
+from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
 from ._encoders import OneHotEncoder
 
@@ -1478,10 +1478,11 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                 to_stack.append(np.ones(shape=(n_samples, 1), dtype=X.dtype))
             to_stack.append(X)
             for deg in range(2, self.degree+1):
-                to_stack.append(_csr_expansion(X.data, X.indices, X.indptr,
-                                               n_features,
-                                               int(self.interaction_only),
-                                               deg))
+                to_stack.append(
+                    _csr_polynomial_expansion(X.data, X.indices,
+                                              X.indptr, n_features,
+                                              int(self.interaction_only),
+                                              deg))
             XP = sparse.hstack(to_stack, format='csr')
         else:
             combinations = self._combinations(n_features, self.degree,

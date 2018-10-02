@@ -17,10 +17,11 @@ ctypedef fused DATA_T:
     np.int64_t
 
 
-def _csr_expansion(ndarray[DATA_T, ndim=1] data,
-                   ndarray[INDEX_T, ndim=1] indices,
-                   ndarray[INDEX_T, ndim=1] indptr,
-                   INDEX_T D, INDEX_T interaction_only, INDEX_T degree):
+def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
+                              ndarray[INDEX_T, ndim=1] indices,
+                              ndarray[INDEX_T, ndim=1] indptr,
+                              INDEX_T D, INDEX_T interaction_only,
+                              INDEX_T degree):
     """
     Perform a second-degree polynomial or interaction expansion on a scipy
     compressed sparse row (CSR) matrix. The method used only takes products of

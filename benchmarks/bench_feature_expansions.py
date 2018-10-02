@@ -7,9 +7,9 @@ from time import time
 degree = 2
 trials = 5
 num_rows = 100
-dimensionalities = [50, 100, 200, 400, 800]
-densities = [0.1, 0.4, 0.7, 1.0]
-colors = ['r', 'b', 'g', 'k']
+dimensionalities = np.array([50, 100, 150, 200])
+densities = np.array([0.01, 0.1, 1.0])
+colors = ['#d7191c', '#abdda4', '#2b83ba']
 assert(len(colors) == len(densities))
 csr_times = {d: np.zeros(len(dimensionalities)) for d in densities}
 csc_times = {d: np.zeros(len(dimensionalities)) for d in densities}
@@ -43,28 +43,19 @@ for trial in range(trials):
 csc_linestyle = (0, (5, 10))  # loosely dashed
 csr_linestyle = (0, (3, 1, 1, 1, 1, 1))  # densely dashdotdotted
 dense_linestyle = (0, ())  # solid
-fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1, sharex=True, sharey=False)
-fig.add_subplot(111, frameon=False)
 for color, density in zip(colors, densities):
-    ax0.plot(dimensionalities, csr_times[density] / trials,
-             label='csr, density=%s' % (density,),
-             linestyle=csr_linestyle)
-    ax0.plot(dimensionalities, dense_times[density] / trials,
-             label='dense, density=%s' % (density,),
-             linestyle=dense_linestyle)
-    ax0.legend()
-for color, density in zip(colors, densities):
-    ax1.plot(dimensionalities, csr_times[density] / trials,
-             label='csr, density=%s' % (density,),
-             linestyle=csr_linestyle)
-    ax1.plot(dimensionalities, csc_times[density] / trials,
-             label='csc, density=%s' % (density,),
-             linestyle=csc_linestyle)
-    ax1.legend()
+    plt.semilogy(dimensionalities, csr_times[density] / trials,
+                 label='csr, density=%s' % (density,),
+                 linestyle=csr_linestyle, color=color, alpha=0.7)
+    plt.semilogy(dimensionalities, dense_times[density] / trials,
+                 label='dense, density=%s' % (density,),
+                 linestyle=dense_linestyle, color=color, alpha=0.7)
+    plt.semilogy(dimensionalities, csc_times[density] / trials,
+                 label='csc, density=%s' % (density,),
+                 linestyle=csc_linestyle, color=color, alpha=0.7)
+plt.legend()
 plt.xlabel('Dimensionality')
 plt.ylabel('Average time (seconds) over %s trials' % (trials,), labelpad=20)
-plt.tick_params(labelcolor='none', top='off', bottom='off', left='off',
-                right='off')
-plt.title('Time to compute degree=%s polynomial features of a %s row matrix'
-          % (degree, num_rows,))
+plt.title('Logscale time to compute degree=%s polynomial features of a %s row '
+          'matrix' % (degree, num_rows,))
 plt.show()
