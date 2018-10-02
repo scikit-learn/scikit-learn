@@ -1323,7 +1323,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         all polynomial powers are zero (i.e. a column of ones - acts as an
         intercept term in a linear model).
 
-    order: str in {'C', 'F'}, default 'C'
+    order : str in {'C', 'F'}, default 'C'
         Order of output array in the dense case. 'F' order is faster to
         compute, but may slow down subsequent estimators.
 
