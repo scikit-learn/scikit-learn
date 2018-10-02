@@ -368,7 +368,7 @@ def test_column_transformer_sparse_stacking():
     assert_array_equal(X_trans[:, 1:], np.eye(X_trans.shape[0]))
 
 
-def test_column_transformer_mixed_passthrough_sparse():
+def test_column_transformer_mixed_cols_sparse():
     pd = pytest.importorskip('pandas')
     df = pd.DataFrame([['a', 1, True],
                        ['b', 2, False]],
@@ -380,12 +380,23 @@ def test_column_transformer_mixed_passthrough_sparse():
         sparse_threshold=1.0
     )
 
-    # this shouldn't fail.
+    # this shouldn't fail, since boolean can be coerced into a numeric
     # See: https://github.com/scikit-learn/scikit-learn/issues/11912
     X_trans = ct.fit_transform(df)
     assert X_trans.getformat() == 'csr'
     assert_array_equal(X_trans.toarray(), np.array([[1, 0, 1, 1],
                                                     [0, 1, 2, 0]]))
+
+    ct = make_column_transformer(
+        (['categorical'], OneHotEncoder()),
+        (['categorical'], 'passthrough'),
+        sparse_threshold=1.0
+    )
+    with pytest.raises(ValueError,
+                       match="For a sparse output, all columns should"):
+        # this fails since strings `a` and `b` cannot be
+        # coerced into a numeric.
+        ct.fit_transform(df)
 
 
 def test_column_transformer_sparse_threshold():
