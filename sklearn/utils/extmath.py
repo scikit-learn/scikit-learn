@@ -109,16 +109,6 @@ def fast_logdet(A):
     return ld
 
 
-def _impose_f_order(X):
-    """Helper Function"""
-    # important to access flags instead of calling np.isfortran,
-    # this catches corner cases.
-    if X.flags.c_contiguous:
-        return check_array(X.T, copy=False, order='F'), True
-    else:
-        return check_array(X, copy=False, order='F'), False
-
-
 @deprecated("sklearn.utils.extmath.fast_dot was deprecated in version 0.19 "
             "and will be removed in 0.21. Use the equivalent np.dot instead.")
 def fast_dot(a, b, out=None):
