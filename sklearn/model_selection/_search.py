@@ -39,7 +39,6 @@ from ..utils.fixes import _Iterable as Iterable
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
-from ..utils.deprecation import DeprecationDict
 from ..metrics.scorer import _check_multimetric_scoring
 from ..metrics.scorer import check_scoring
 
@@ -833,7 +832,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                    splits=True, rank=True,
                    weights=test_sample_counts if iid else None)
             if self.return_train_score:
-                prev_keys = set(results.keys())
                 _store('train_%s' % scorer_name, train_scores[scorer_name],
                        splits=True)
 
@@ -973,9 +971,6 @@ class GridSearchCV(BaseSearchCV):
     return_train_score : boolean, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
         scores.
-
-        Current default is ``'warn'``, which behaves as ``True`` in addition
-        to raising a warning when a training score is looked up.
         Computing training scores is used to get insights on how different
         parameter settings impact the overfitting/underfitting trade-off.
         However computing the scores on the training set can be computationally
@@ -1318,9 +1313,6 @@ class RandomizedSearchCV(BaseSearchCV):
     return_train_score : boolean, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
         scores.
-
-        Current default is ``'warn'``, which behaves as ``True`` in addition
-        to raising a warning when a training score is looked up.
         Computing training scores is used to get insights on how different
         parameter settings impact the overfitting/underfitting trade-off.
         However computing the scores on the training set can be computationally

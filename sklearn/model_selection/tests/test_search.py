@@ -7,7 +7,6 @@ import pickle
 import sys
 from types import GeneratorType
 import re
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -37,7 +36,6 @@ from scipy.stats import bernoulli, expon, uniform
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
@@ -1441,8 +1439,7 @@ def test_search_train_scores_set_to_false():
     y = [0, 0, 0, 1, 1, 1]
     clf = LinearSVC(random_state=0)
 
-    gs = GridSearchCV(clf, param_grid={'C': [0.1, 0.2]},
-                      return_train_score=False)
+    gs = GridSearchCV(clf, param_grid={'C': [0.1, 0.2]})
     gs.fit(X, y)
 
 

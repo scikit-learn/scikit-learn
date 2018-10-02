@@ -22,7 +22,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
@@ -412,7 +411,6 @@ def check_cross_validate_single_metric(clf, X, y, scores):
     for (return_train_score, dict_len) in ((True, 4), (False, 3)):
         # Single metric passed as a string
         if return_train_score:
-            # It must be True by default - deprecated
             mse_scores_dict = cross_validate(clf, X, y, cv=5,
                                              scoring='neg_mean_squared_error',
                                              return_train_score=True)
