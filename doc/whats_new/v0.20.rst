@@ -30,8 +30,8 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
-- |Fix| Fixed an issue in :class:`compose.ColumnTransformer` with stacking
-  columns of mixed types with sparse matrices.
+- |Fix| Fixed an issue in :class:`compose.ColumnTransformer` when stacking
+  columns with types not convertible to a numeric.
   :issue:`11912` by :user:`Adrin Jalali <adrinjalali>`.
 
 :mod:`sklearn.ensemble`
