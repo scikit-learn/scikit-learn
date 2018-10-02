@@ -520,8 +520,11 @@ class GraphicalLassoCV(GraphicalLasso):
         than number of samples. Elsewhere prefer cd which is more numerically
         stable.
 
-    n_jobs : int, optional
-        number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : boolean, optional
         If verbose is True, the objective function and duality gap are
@@ -571,7 +574,7 @@ class GraphicalLassoCV(GraphicalLasso):
     """
 
     def __init__(self, alphas=4, n_refinements=4, cv='warn', tol=1e-4,
-                 enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=1,
+                 enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=None,
                  verbose=False, assume_centered=False):
         super(GraphicalLassoCV, self).__init__(
             mode=mode, tol=tol, verbose=verbose, enet_tol=enet_tol,
@@ -927,8 +930,11 @@ class GraphLassoCV(GraphicalLassoCV):
         than number of samples. Elsewhere prefer cd which is more numerically
         stable.
 
-    n_jobs : int, optional
-        number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : boolean, optional
         If verbose is True, the objective function and duality gap are

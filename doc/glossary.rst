@@ -1479,8 +1479,15 @@ functions or non-estimator constructors.
 
         ``n_jobs`` is an int, specifying the maximum number of concurrently
         running jobs.  If set to -1, all CPUs are used. If 1 is given, no
-        parallel computing code is used at all.  For n_jobs below -1, (n_cpus +
-        1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one are used.
+        joblib level parallelism is used at all, which is useful for
+        debugging. Even with ``n_jobs = 1``, parallelism may occur due to
+        numerical processing libraries (see :ref:`FAQ <faq_mkl_threading>`).
+        For n_jobs below -1, (n_cpus + 1 + n_jobs) are used. Thus for
+        ``n_jobs = -2``, all CPUs but one are used.
+
+        ``n_jobs=None`` means *unset*; it will generally be interpreted as
+        ``n_jobs=1``, unless the current :class:`joblib.Parallel` backend
+        context specifies otherwise.
 
         The use of ``n_jobs``-based parallelism in estimators varies:
 

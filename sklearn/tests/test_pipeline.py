@@ -6,6 +6,7 @@ from tempfile import mkdtemp
 import shutil
 import time
 
+import pytest
 import numpy as np
 from scipy import sparse
 
@@ -234,6 +235,8 @@ def test_pipeline_init_tuple():
     pipe.score(X)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_pipeline_methods_anova():
     # Test the various methods of the pipeline (anova).
     iris = load_iris()
@@ -784,6 +787,8 @@ def test_feature_union_feature_names():
                          'get_feature_names', ft.get_feature_names)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classes_property():
     iris = load_iris()
     X = iris.data
@@ -827,7 +832,8 @@ def test_set_feature_union_steps():
     assert_equal(['mock__x5'], ft.get_feature_names())
 
 
-def test_set_feature_union_step_none():
+@pytest.mark.parametrize('drop', ['drop', None])
+def test_set_feature_union_step_drop(drop):
     mult2 = Mult(2)
     mult2.get_feature_names = lambda: ['x2']
     mult3 = Mult(3)
@@ -839,12 +845,12 @@ def test_set_feature_union_step_none():
     assert_array_equal([[2, 3]], ft.fit_transform(X))
     assert_equal(['m2__x2', 'm3__x3'], ft.get_feature_names())
 
-    ft.set_params(m2=None)
+    ft.set_params(m2=drop)
     assert_array_equal([[3]], ft.fit(X).transform(X))
     assert_array_equal([[3]], ft.fit_transform(X))
     assert_equal(['m3__x3'], ft.get_feature_names())
 
-    ft.set_params(m3=None)
+    ft.set_params(m3=drop)
     assert_array_equal([[]], ft.fit(X).transform(X))
     assert_array_equal([[]], ft.fit_transform(X))
     assert_equal([], ft.get_feature_names())
@@ -852,6 +858,12 @@ def test_set_feature_union_step_none():
     # check we can change back
     ft.set_params(m3=mult3)
     assert_array_equal([[3]], ft.fit(X).transform(X))
+
+    # Check 'drop' step at construction time
+    ft = FeatureUnion([('m2', drop), ('m3', mult3)])
+    assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert_array_equal([[3]], ft.fit_transform(X))
+    assert_equal(['m3__x3'], ft.get_feature_names())
 
 
 def test_step_name_validation():
@@ -887,6 +899,8 @@ def test_step_name_validation():
                                  [[1]], [1])
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_set_params_nested_pipeline():
     estimator = Pipeline([
         ('a', Pipeline([

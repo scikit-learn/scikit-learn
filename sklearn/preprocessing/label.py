@@ -772,7 +772,8 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     classes : array-like of shape [n_classes] (optional)
-        Indicates an ordering for the class labels
+        Indicates an ordering for the class labels.
+        All entries should be unique (cannot contain duplicate classes).
 
     sparse_output : boolean (default: False),
         Set to true if output binary array is desired in CSR sparse format
@@ -826,6 +827,10 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         self._cached_dict = None
         if self.classes is None:
             classes = sorted(set(itertools.chain.from_iterable(y)))
+        elif len(set(self.classes)) < len(self.classes):
+            raise ValueError("The classes argument contains duplicate "
+                             "classes. Remove these duplicates before passing "
+                             "them to MultiLabelBinarizer.")
         else:
             classes = self.classes
         dtype = np.int if all(isinstance(c, int) for c in classes) else object

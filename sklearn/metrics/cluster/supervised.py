@@ -767,14 +767,14 @@ def normalized_mutual_info_score(labels_true, labels_pred,
                                  average_method='warn'):
     """Normalized Mutual Information between two clusterings.
 
-    Normalized Mutual Information (NMI) is an normalization of the Mutual
+    Normalized Mutual Information (NMI) is a normalization of the Mutual
     Information (MI) score to scale the results between 0 (no mutual
     information) and 1 (perfect correlation). In this function, mutual
     information is normalized by some generalized mean of ``H(labels_true)``
     and ``H(labels_pred))``, defined by the `average_method`.
 
     This measure is not adjusted for chance. Therefore
-    :func:`adjusted_mustual_info_score` might be preferred.
+    :func:`adjusted_mutual_info_score` might be preferred.
 
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the

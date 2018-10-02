@@ -318,8 +318,8 @@ Refitting and updating parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Hyper-parameters of an estimator can be updated after it has been constructed
-via the :func:`sklearn.pipeline.Pipeline.set_params` method. Calling ``fit()``
-more than once will overwrite what was learned by any previous ``fit()``::
+via the :term:`set_params()<set_params>` method. Calling ``fit()`` more than
+once will overwrite what was learned by any previous ``fit()``::
 
   >>> import numpy as np
   >>> from sklearn.svm import SVC
@@ -346,9 +346,10 @@ more than once will overwrite what was learned by any previous ``fit()``::
   >>> clf.predict(X_test)
   array([1, 0, 1, 1, 0])
 
-Here, the default kernel ``rbf`` is first changed to ``linear`` after the
-estimator has been constructed via ``SVC()``, and changed back to ``rbf`` to
-refit the estimator and to make a second prediction.
+Here, the default kernel ``rbf`` is first changed to ``linear`` via
+:func:`SVC.set_params()<sklearn.svm.SVC.set_params>` after the estimator has
+been constructed, and changed back to ``rbf`` to refit the estimator and to
+make a second prediction.
 
 Multiclass vs. multilabel fitting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
