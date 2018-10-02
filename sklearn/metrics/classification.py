@@ -467,7 +467,6 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
 
         # calculate weighted counts
         true_and_pred = y_true.multiply(y_pred)
-        print(true_and_pred.dtype)
         tp_sum = count_nonzero(true_and_pred, axis=sum_axis,
                                sample_weight=sample_weight)
         pred_sum = count_nonzero(y_pred, axis=sum_axis,
