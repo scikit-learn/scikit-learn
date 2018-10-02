@@ -395,7 +395,7 @@ Tips on Practical Use
     
     :class:`LinearSVC` and :class`LinearSVR` are less sensitive to ``C`` when
     it becomes large, and prediction results stop improving after a certain 
-    threshold. In fact, large ``C`` values will take more time to train, 
+    threshold. Meanwhile, larger ``C`` values will take more time to train, 
     sometimes up to 10 times longer, as shown by Fan et al. (2008)
 
   * Support Vector Machine algorithms are not scale invariant, so **it
