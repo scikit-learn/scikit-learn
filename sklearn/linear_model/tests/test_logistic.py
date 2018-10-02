@@ -29,6 +29,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.linear_model import SGDClassifier
+from sklearn.preprocessing import scale
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import ChangedBehaviorWarning
@@ -1478,17 +1479,17 @@ def test_LogisticRegression_elastic_net_objective(C, l1_ratio):
     X, y = make_classification(n_samples=10000, n_classes=2, n_features=20,
                                n_informative=10, n_redundant=0,
                                n_repeated=0, random_state=0)
+    X = scale(X)
 
     lr_enet = LogisticRegression(penalty='elastic-net', solver='saga',
                                  random_state=0, C=C, l1_ratio=l1_ratio)
-    lr_l2 = LogisticRegression(penalty='l2', solver='saga',
-                               random_state=0, C=C, l1_ratio=l1_ratio)
+    lr_l2 = LogisticRegression(penalty='l2', solver='saga', random_state=0,
+                               C=C)
     lr_enet.fit(X, y)
     lr_l2.fit(X, y)
 
     def enet_objective(lr):
         obj = C * log_loss(y, lr.predict(X))
-        obj = 0
         obj += l1_ratio * np.linalg.norm(lr.coef_, 1)
         obj += ((1 - l1_ratio) / 2) * np.linalg.norm(lr.coef_, 2)
         return obj
