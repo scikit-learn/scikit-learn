@@ -20,8 +20,8 @@ ctypedef fused DATA_T:
 def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
                               ndarray[INDEX_T, ndim=1] indices,
                               ndarray[INDEX_T, ndim=1] indptr,
-                              INDEX_T D, INDEX_T interaction_only,
-                              INDEX_T degree):
+                              int has_sorted_indices, INDEX_T D,
+                              INDEX_T interaction_only, INDEX_T degree):
     """
     Perform a second-degree polynomial or interaction expansion on a scipy
     compressed sparse row (CSR) matrix. The method used only takes products of
@@ -39,6 +39,10 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
 
     indptr : nd-array
         The "indptr" attribute of the input CSR matrix.
+    
+    has_sorted_indices : bool
+        Whether the input CSR matrix has sorted indices, which is stored in
+        its has_sorted_indices attribute.
 
     D : int
         The dimensionality of the input CSR matrix.
@@ -56,6 +60,13 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
     """
 
     assert degree in (2, 3)
+
+    if degree == 2:
+        expanded_dimensionality = int((D**2 + D) / 2 - interaction_only*D)
+    else:
+        expanded_dimensionality = int((D**3 + 3*D**2 + 2*D) / 6 \
+                                      - interaction_only*D**2)
+    assert expanded_dimensionality > 0
 
     cdef INDEX_T total_nnz = 0, row_i, R
 
@@ -83,13 +94,7 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
 
     cdef INDEX_T expanded_index = 0, row_starts, row_ends, i, j, k, \
                  col_ptr_1, col_ptr_2, col_ptr_3, num_cols_in_row,  \
-                 expanded_column, expanded_dimensionality
-
-    if degree == 2:
-        expanded_dimensionality = (D**2 + D) / 2 - interaction_only*D
-    else:
-        expanded_dimensionality = (D**3 + 3*D**2 + 2*D) / 6 \
-                                  - interaction_only*D**2
+                 expanded_column
 
     expanded_indptr[0] = indptr[0]
     for row_i in range(indptr.shape[0]-1):
@@ -135,5 +140,8 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
     X_expanded.data = expanded_data
     X_expanded.indices = expanded_indices
     X_expanded.indptr = expanded_indptr
-    X_expanded._shape = (num_rows, expanded_dimensionality)
+    X_expanded._shape = (int(num_rows), int(expanded_dimensionality))
+    X_expanded.dtype = data.dtype
+    X_expanded.ndim = 2
+    X_expanded.has_sorted_indices = bool(has_sorted_indices)
     return X_expanded

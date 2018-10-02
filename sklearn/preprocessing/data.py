@@ -1472,17 +1472,19 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         if sparse.isspmatrix_csr(X):
             if self.degree > 3:
                 return (self.transform(X.tocsc())).tocsr()
-
+            D = X.shape[1]
             to_stack = []
             if self.include_bias:
                 to_stack.append(np.ones(shape=(n_samples, 1), dtype=X.dtype))
             to_stack.append(X)
             for deg in range(2, self.degree+1):
+                min_required_dim = deg - int(self.interaction_only) + 1
+                if X.shape[1] < min_required_dim:
+                    break
                 to_stack.append(
-                    _csr_polynomial_expansion(X.data, X.indices,
-                                              X.indptr, n_features,
-                                              int(self.interaction_only),
-                                              deg))
+                   _csr_polynomial_expansion(X.data, X.indices, X.indptr,
+                                             X.has_sorted_indices, X.shape[1],
+                                             int(self.interaction_only), deg))
             XP = sparse.hstack(to_stack, format='csr')
         else:
             combinations = self._combinations(n_features, self.degree,
