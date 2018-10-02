@@ -209,9 +209,12 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
     estimator : estimator object
         An estimator object implementing `fit` and `predict`.
 
-    n_jobs : int, optional, default=1
-        The number of jobs to run in parallel for `fit`. If -1,
-        then the number of jobs is set to the number of cores.
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to run in parallel for `fit`.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
         When individual estimators are fast to train or predict
         using `n_jobs>1` can result in slower performance due
         to the overhead of spawning processes.
@@ -295,13 +298,12 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
     estimator : estimator object
         An estimator object implementing `fit`, `score` and `predict_proba`.
 
-    n_jobs : int, optional, default=1
-        The number of jobs to use for the computation. If -1 all CPUs are used.
-        If 1 is given, no parallel computing code is used at all, which is
-        useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
-        used. Thus for n_jobs = -2, all CPUs but one are used.
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
         It does each target variable in y in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------

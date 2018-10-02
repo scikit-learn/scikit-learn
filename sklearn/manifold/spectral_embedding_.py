@@ -382,9 +382,11 @@ class SpectralEmbedding(BaseEstimator):
     n_neighbors : int, default : max(n_samples/10 , 1)
         Number of nearest neighbors for nearest_neighbors graph building.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -394,6 +396,18 @@ class SpectralEmbedding(BaseEstimator):
 
     affinity_matrix_ : array, shape = (n_samples, n_samples)
         Affinity_matrix constructed from samples or precomputed.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.manifold import SpectralEmbedding
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> embedding = SpectralEmbedding(n_components=2)
+    >>> X_transformed = embedding.fit_transform(X[:100])
+    >>> X_transformed.shape
+    (100, 2)
 
     References
     ----------

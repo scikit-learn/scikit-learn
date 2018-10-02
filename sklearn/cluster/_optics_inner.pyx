@@ -5,6 +5,13 @@ cimport cython
 ctypedef np.float64_t DTYPE_t
 ctypedef np.int_t DTYPE
 
+# as defined in PEP485 (python3.5)
+cdef inline isclose(double a, 
+                    double b,
+                    double rel_tol=1e-09,
+                    double abs_tol=0.0):
+    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 # Checks for smallest reachability distance
@@ -24,7 +31,7 @@ cpdef quick_scan(double[:] rdists, double[:] dists):
             rdist = rdists[i]
             dist = dists[i]
             idx = i
-        if rdists[i] == rdist:
+        elif isclose(rdists[i], rdist):
             if dists[i] < dist:
                 dist = dists[i]
                 idx = i

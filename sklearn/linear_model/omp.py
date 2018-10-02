@@ -583,6 +583,17 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     n_iter_ : int or array-like
         Number of active features across every target.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import OrthogonalMatchingPursuit
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(noise=4, random_state=0)
+    >>> reg = OrthogonalMatchingPursuit().fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9991...
+    >>> reg.predict(X[:1,])
+    array([-78.3854...])
+
     Notes
     -----
     Orthogonal matching pursuit was introduced in G. Mallat, Z. Zhang,
@@ -789,9 +800,11 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
@@ -811,6 +824,20 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
     n_iter_ : int or array-like
         Number of active features across every target for the model refit with
         the best hyperparameters got by cross-validating across all folds.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import OrthogonalMatchingPursuitCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_features=100, n_informative=10,
+    ...                        noise=4, random_state=0)
+    >>> reg = OrthogonalMatchingPursuitCV(cv=5).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9991...
+    >>> reg.n_nonzero_coefs_
+    10
+    >>> reg.predict(X[:1,])
+    array([-78.3854...])
 
     See also
     --------

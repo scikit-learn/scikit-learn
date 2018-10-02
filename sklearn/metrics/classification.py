@@ -139,9 +139,9 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     Returns
     -------
     score : float
-        If ``normalize == True``, return the correctly classified samples
-        (float), else it returns the number of correctly classified samples
-        (int).
+        If ``normalize == True``, return the fraction of correctly
+        classified samples (float), else returns the number of correctly
+        classified samples (int).
 
         The best performance is 1 with ``normalize == True`` and the number
         of samples with ``normalize == False``.
@@ -628,8 +628,9 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
         F1 = 2 * (precision * recall) / (precision + recall)
 
-    In the multi-class and multi-label case, this is the weighted average of
-    the F1 score of each class.
+    In the multi-class and multi-label case, this is the average of
+    the F1 score of each class with weighting depending on the ``average``
+    parameter.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
@@ -1401,6 +1402,13 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
     See also
     --------
     recall_score, roc_auc_score
+
+    Notes
+    -----
+    Some literature promotes alternative definitions of balanced accuracy. Our
+    definition is equivalent to :func:`accuracy_score` with class-balanced
+    sample weights, and shares desirable properties with the binary case.
+    See the :ref:`User Guide <balanced_accuracy_score>`.
 
     References
     ----------

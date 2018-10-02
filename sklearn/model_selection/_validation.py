@@ -97,9 +97,11 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    n_jobs : integer, optional
-        The number of CPUs to use to do the computation. -1 means
-        'all CPUs'.
+    n_jobs : int or None, optional (default=None)
+        The number of CPUs to use to do the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : integer, optional
         The verbosity level.
@@ -319,9 +321,11 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    n_jobs : integer, optional
-        The number of CPUs to use to do the computation. -1 means
-        'all CPUs'.
+    n_jobs : int or None, optional (default=None)
+        The number of CPUs to use to do the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : integer, optional
         The verbosity level.
@@ -692,9 +696,11 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv='warn',
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    n_jobs : integer, optional
-        The number of CPUs to use to do the computation. -1 means
-        'all CPUs'.
+    n_jobs : int or None, optional (default=None)
+        The number of CPUs to use to do the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : integer, optional
         The verbosity level.
@@ -984,9 +990,11 @@ def permutation_test_score(estimator, X, y, groups=None, cv='warn',
     n_permutations : integer, optional
         Number of times to permute ``y``.
 
-    n_jobs : integer, optional
-        The number of CPUs to use to do the computation. -1 means
-        'all CPUs'.
+    n_jobs : int or None, optional (default=None)
+        The number of CPUs to use to do the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional (default=0)
         If int, random_state is the seed used by the random number generator;
@@ -1140,8 +1148,11 @@ def learning_curve(estimator, X, y, groups=None,
         If the estimator supports incremental learning, this will be
         used to speed up fitting for different training set sizes.
 
-    n_jobs : integer, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     pre_dispatch : integer or string, optional
         Number of predispatched jobs for parallel execution (default is
@@ -1384,8 +1395,11 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    n_jobs : integer, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     pre_dispatch : integer or string, optional
         Number of predispatched jobs for parallel execution (default is

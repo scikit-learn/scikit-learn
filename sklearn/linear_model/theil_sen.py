@@ -249,9 +249,11 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         random number generator; If None, the random number generator is the
         RandomState instance used by `np.random`.
 
-    n_jobs : integer, optional, default 1
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs.
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : boolean, optional, default False
         Verbose mode when fitting the model.
@@ -273,6 +275,18 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
     n_subpopulation_ : int
         Number of combinations taken into account from 'n choose k', where n is
         the number of samples and k is the number of subsamples.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import TheilSenRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(
+    ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
+    >>> reg = TheilSenRegressor(random_state=0).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9884...
+    >>> reg.predict(X[:1,])
+    array([-31.5871...])
 
     References
     ----------

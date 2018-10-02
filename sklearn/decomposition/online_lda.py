@@ -215,9 +215,11 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Max number of iterations for updating document topic distribution in
         the E-step.
 
-    n_jobs : int, optional (default=1)
-        The number of jobs to use in the E-step. If -1, all CPUs are used. For
-        ``n_jobs`` below -1, (n_cpus + 1 + n_jobs) are used.
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to use in the E-step.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : int, optional (default=0)
         Verbosity level.
@@ -249,6 +251,22 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
     n_iter_ : int
         Number of passes over the dataset.
+
+    Examples
+    --------
+    >>> from sklearn.decomposition import LatentDirichletAllocation
+    >>> from sklearn.datasets import make_multilabel_classification
+    >>> # This produces a feature matrix of token counts, similar to what
+    >>> # CountVectorizer would produce on text.
+    >>> X, _ = make_multilabel_classification(random_state=0)
+    >>> lda = LatentDirichletAllocation(n_components=5,
+    ...     random_state=0)
+    >>> lda.fit(X) # doctest: +ELLIPSIS
+    LatentDirichletAllocation(...)
+    >>> # get topics for some given samples:
+    >>> lda.transform(X[-2:])
+    array([[0.00360392, 0.25499205, 0.0036211 , 0.64236448, 0.09541846],
+           [0.15297572, 0.00362644, 0.44412786, 0.39568399, 0.003586  ]])
 
     References
     ----------
