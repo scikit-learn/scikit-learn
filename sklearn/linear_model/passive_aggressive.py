@@ -135,7 +135,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     PassiveAggressiveClassifier(C=1.0, average=False, class_weight=None,
                   early_stopping=False, fit_intercept=True, loss='hinge',
                   max_iter=1000, n_iter_no_change=5, n_jobs=None,
-                  random_state=0, shuffle=True, tol=None,
+                  random_state=0, shuffle=True, tol=1e-3,
                   validation_fraction=0.1, verbose=0, warm_start=False)
     >>> print(clf.coef_)
     [[0.29509834 0.33711843 0.56127352 0.60105546]]
@@ -157,7 +157,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    def __init__(self, C=1.0, fit_intercept=True, max_iter=None, tol=None,
+    def __init__(self, C=1.0, fit_intercept=True, max_iter=1000, tol=1e-3,
                  early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, shuffle=True, verbose=0, loss="hinge",
                  n_jobs=None, random_state=None, warm_start=False,
@@ -363,7 +363,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     PassiveAggressiveRegressor(C=1.0, average=False, early_stopping=False,
                   epsilon=0.1, fit_intercept=True, loss='epsilon_insensitive',
                   max_iter=100, n_iter_no_change=5,
-                  random_state=0, shuffle=True, tol=None,
+                  random_state=0, shuffle=True, tol=1e-3,
                   validation_fraction=0.1, verbose=0, warm_start=False)
     >>> print(regr.coef_)
     [20.48736655 34.18818427 67.59122734 87.94731329]
@@ -384,7 +384,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    def __init__(self, C=1.0, fit_intercept=True, max_iter=None, tol=None,
+    def __init__(self, C=1.0, fit_intercept=True, max_iter=1000, tol=1e-3,
                  early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, shuffle=True, verbose=0,
                  loss="epsilon_insensitive", epsilon=DEFAULT_EPSILON,

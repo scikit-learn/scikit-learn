@@ -68,7 +68,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
     """Base class for SGD classification and regression."""
 
     def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
-                 l1_ratio=0.15, fit_intercept=True, max_iter=None, tol=None,
+                 l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=0.1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  early_stopping=False, validation_fraction=0.1,
@@ -443,7 +443,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
     @abstractmethod
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
-                 l1_ratio=0.15, fit_intercept=True, max_iter=None, tol=None,
+                 l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=None,
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, early_stopping=False,
@@ -1499,7 +1499,7 @@ class SGDRegressor(BaseSGDRegressor):
 
     """
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
-                 l1_ratio=0.15, fit_intercept=True, max_iter=None, tol=1e-3,
+                 l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
                  power_t=0.25, early_stopping=False, validation_fraction=0.1,
