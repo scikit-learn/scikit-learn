@@ -2054,7 +2054,7 @@ def specificity(y_true,ypred):
         
     Examples
     --------
-    >>> from sklearn.metrics import binary_specificity
+    >>> from sklearn.metrics import specificity
     >>> y_true = [1, 0, 1, 1, 0, 1]
     >>> y_pred = [0, 0, 1, 1, 0, 1]
     >>> specificity (y_true, y_pred)
