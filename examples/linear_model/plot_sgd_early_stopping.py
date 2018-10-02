@@ -47,7 +47,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn import linear_model
-from sklearn.datasets import fetch_mldata
+from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.utils.testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
@@ -56,9 +56,10 @@ from sklearn.utils import shuffle
 print(__doc__)
 
 
-def load_mnist(n_samples=None, class_0=0, class_1=8):
+def load_mnist(n_samples=None, class_0='0', class_1='8'):
     """Load MNIST, select two classes, shuffle and return only n_samples."""
-    mnist = fetch_mldata('MNIST original')
+    # Load data from http://openml.org/d/554
+    mnist = fetch_openml('mnist_784', version=1)
 
     # take only two classes for binary classification
     mask = np.logical_or(mnist.target == class_0, mnist.target == class_1)

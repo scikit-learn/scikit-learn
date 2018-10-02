@@ -32,37 +32,37 @@ the score of each chain in the ensemble (although this is not guaranteed
 with randomly ordered chains).
 """
 
-print(__doc__)
-
 # Author: Adam Kleczewski
 # License: BSD 3 clause
 
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import fetch_openml
 from sklearn.multioutput import ClassifierChain
 from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.metrics import jaccard_similarity_score
 from sklearn.linear_model import LogisticRegression
-from sklearn.datasets import fetch_mldata
 
-# Load a multi-label dataset
-yeast = fetch_mldata('yeast')
-X = yeast['data']
-Y = yeast['target'].transpose().toarray()
+print(__doc__)
+
+# Load a multi-label dataset from https://www.openml.org/d/40597
+X, Y = fetch_openml('yeast', version=4, return_X_y=True)
+Y = Y == 'TRUE'
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.2,
                                                     random_state=0)
 
 # Fit an independent logistic regression model for each class using the
 # OneVsRestClassifier wrapper.
-ovr = OneVsRestClassifier(LogisticRegression())
+base_lr = LogisticRegression(solver='lbfgs')
+ovr = OneVsRestClassifier(base_lr)
 ovr.fit(X_train, Y_train)
 Y_pred_ovr = ovr.predict(X_test)
 ovr_jaccard_score = jaccard_similarity_score(Y_test, Y_pred_ovr)
 
 # Fit an ensemble of logistic regression classifier chains and take the
 # take the average prediction of all the chains.
-chains = [ClassifierChain(LogisticRegression(), order='random', random_state=i)
+chains = [ClassifierChain(base_lr, order='random', random_state=i)
           for i in range(10)]
 for chain in chains:
     chain.fit(X_train, Y_train)

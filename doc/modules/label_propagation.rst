@@ -86,6 +86,7 @@ which can drastically reduce running times.
 
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_versus_svm_iris.py`
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_structure.py`
+  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits.py`
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits_active_learning.py`
 
 .. topic:: References
