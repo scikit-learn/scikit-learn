@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.sparse import csr_matrix
+import pytest
 
 from sklearn.utils.testing import assert_array_equal, assert_equal, assert_true
 from sklearn.utils.testing import assert_not_equal
@@ -244,3 +245,14 @@ def test_nystroem_callable():
              n_components=(n_samples - 1),
              kernel_params={'log': kernel_log}).fit(X)
     assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)
+
+    def linear_kernel(X, Y):
+        return np.dot(X, Y.T)
+
+    # if degree, gamma or coef0 is passed, we raise a warning
+    msg = "Don't pass gamma, coef0 or degree to Nystroem"
+    params = ({'gamma': 1}, {'coef0': 1}, {'degree': 2})
+    for param in params:
+        ny = Nystroem(kernel=linear_kernel, **param)
+        with pytest.raises(ValueError, match=msg):
+            ny.fit(X)
