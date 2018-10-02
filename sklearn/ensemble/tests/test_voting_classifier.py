@@ -454,13 +454,7 @@ def test_transform():
         voting='soft',
         flatten_transform=False).fit(X, y)
 
-    warn_msg = ("'flatten_transform' default value will be "
-                "changed to True in 0.21. "
-                "To silence this warning you may"
-                " explicitly set flatten_transform=False.")
-    res = assert_warns_message(DeprecationWarning, warn_msg,
-                               eclf1.transform, X)
-    assert_array_equal(res.shape, (3, 4, 2))
+    assert_array_equal(eclf1.transform(X).shape, (3, 4, 2))
     assert_array_equal(eclf2.transform(X).shape, (4, 6))
     assert_array_equal(eclf3.transform(X).shape, (3, 4, 2))
     assert_array_almost_equal(res.swapaxes(0, 1).reshape((4, 6)),
