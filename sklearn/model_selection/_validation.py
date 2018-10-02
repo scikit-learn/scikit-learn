@@ -380,7 +380,6 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
 
     cv_results = cross_validate(estimator=estimator, X=X, y=y, groups=groups,
                                 scoring={'score': scorer}, cv=cv,
-                                return_train_score=False,
                                 n_jobs=n_jobs, verbose=verbose,
                                 fit_params=fit_params,
                                 pre_dispatch=pre_dispatch,
