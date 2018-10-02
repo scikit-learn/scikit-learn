@@ -571,13 +571,6 @@ boolean mask array or callable
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
             return np.hstack(Xs)
 
-
-def _check_X(X):
-    """Use check_array only on lists and other non-array-likes / sparse"""
-    if hasattr(X, '__array__') or sparse.issparse(X):
-        return X
-    return check_array(X, force_all_finite='allow-nan', dtype=np.object)
-
     def inverse_transform(self, X):
         """Apply inverse transform
 
@@ -643,6 +636,13 @@ def _check_X(X):
             import pandas as pd
             return pd.DataFrame(inverse_Xs, columns=self._X_columns)
         return inverse_Xs
+
+
+def _check_X(X):
+    """Use check_array only on lists and other non-array-likes / sparse"""
+    if hasattr(X, '__array__') or sparse.issparse(X):
+        return X
+    return check_array(X, force_all_finite='allow-nan', dtype=np.object)
 
 
 def _check_key_type(key, superclass):
