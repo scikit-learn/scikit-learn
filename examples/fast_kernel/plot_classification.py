@@ -3,17 +3,16 @@
 Comparison of Fast Kernel (Eigenpro) and Support Vector(SVM)2
 =============================================================
 
-Both FKR and SVR learn their regression functions by solving a linear system of 
-equations in a space induced by a kernel function that can correspond to a nonlinear 
-space. However, FKR does not limit the complexity of the solution, enabling it to 
-run faster. Though contrived datasets may show problems with over-fitting, in real 
-datasets, overfitting does not reduce performance. Another difference between the two 
-is that, while SVR uses hinge-loss as it's error function, FKR uses square loss. 
+Both Fast Kernel (FK) and Support Vector Machines (SVM) are supervised learning
+kernel regression algorithms that operate using Stochastic Gradient Descent(SGD).
+SVM's paramaters provide more control over regularization. Another difference
+between the two is that, while SVR uses hinge-loss as it's error function, FKR
+uses square loss.
 
-This example demonstrates both methods on an image-recognizing task (mnist) and a binary 
-classification problem with many features described mostly by a few vectors. For large 
-datasets (over 1000 points), FKR is generally much faster, though there is significant
-overhead for smaller datasets.
+The next example demonstrates both methods on a binary classification problem
+with many features described mostly by a few vectors. Fast Kernel is quite
+effective in cases like these, which come about in most real world applications.
+Again, Fast Kernel demonstrates asymptotically superior speed without loss of accuracy.
 """
 print(__doc__)
 

@@ -5,9 +5,13 @@ Fast Kernel Machines for Regression and Classification (EigenPro)
 =================================================================
 
 
-Fast Kernel is a very efficient implementation of kernel regression using preconditioned Stochastic Gradient Descent (SGD). This is an implementation of "ridgeless" kernel regression. Regularization, when necessary, can be obtained by early stopping.
+Fast Kernel is a very efficient implementation of kernel regression using preconditioned
+Stochastic Gradient Descent (SGD). This is an implementation of "ridgeless" kernel
+regression. Regularization, when necessary, can be obtained by early stopping.
 
-Optimization parameters, such as step size, batch size, and the size of the preconditioning block are chosen automatically and optimally. (They can also be set up manually.) This results in a simple and user-friendly interface. 
+Optimization parameters, such as step size, batch size, and the size of the preconditioning
+block are chosen automatically and optimally. (They can also be set up manually.)
+This results in a simple and user-friendly interface.
 
 The following example shows the running time of Fast Kernel as compared to Support Vector Machines in recognizing
 images of numbers (mnist). As can be seen, Fast Kernel runs about 100 times faster than Support Vector on the largest
