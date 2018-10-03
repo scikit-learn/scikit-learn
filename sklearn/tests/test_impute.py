@@ -669,7 +669,7 @@ def test_knn_imputation_zero():
 
 
 def test_knn_imputation_zero_p2():
-    # Test with an imputable matrix and also compare with missing_values="NaN"
+    # Test with an imputable matrix and also compare with missing_values=np.NaN
     X_zero = np.array([
         [1, 0, 1, 1, 1.],
         [2, 2, 2, 2, 2],
@@ -695,7 +695,7 @@ def test_knn_imputation_zero_p2():
     imputer_zero = KNNImputer(missing_values=0, n_neighbors=2,
                               weights="uniform")
 
-    imputer_nan = KNNImputer(missing_values="NaN",
+    imputer_nan = KNNImputer(missing_values=np.nan,
                              n_neighbors=2,
                              weights="uniform")
 
@@ -1078,7 +1078,6 @@ def test_weight_distance():
     r1c3_imp = np.ma.average(col3_donor_values, weights=r1c3_nbor_wt)
     r2c3_imp = np.ma.average(col3_donor_values, weights=r2c3_nbor_wt)
 
-    print(r1c1_imp, r1c3_imp, r2c3_imp)
     X_imputed = np.array([
         [1,         0,          0,  1],
         [0,         r1c1_imp,   1,  r1c3_imp],
@@ -1114,7 +1113,7 @@ def test_metric_type():
 def test_callable_metric():
 
     # Define callable metric that returns the l1 norm:
-    def custom_callable(x, y, missing_values="NaN", squared=False):
+    def custom_callable(x, y, missing_values=np.nan, squared=False):
         x = np.ma.array(x, mask=np.isnan(x))
         y = np.ma.array(y, mask=np.isnan(y))
         dist = np.nansum(np.abs(x-y))

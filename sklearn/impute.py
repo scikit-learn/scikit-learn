@@ -808,7 +808,10 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         """
 
         # Check data integrity and calling arguments
-        force_all_finite = not is_scalar_nan(self.missing_values)
+        if not is_scalar_nan(self.missing_values):
+            force_all_finite = True
+        else:
+            force_all_finite = "allow-nan"
         if not force_all_finite:
             if self.metric not in _NAN_METRICS and not callable(
                     self.metric):
@@ -866,7 +869,10 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         """
 
         check_is_fitted(self, ["fitted_X_", "statistics_"])
-        force_all_finite = not is_scalar_nan(self.missing_values)
+        if not is_scalar_nan(self.missing_values):
+            force_all_finite = True
+        else:
+            force_all_finite = "allow-nan"
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                         force_all_finite=force_all_finite, copy=self.copy)
 
