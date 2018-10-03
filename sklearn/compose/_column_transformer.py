@@ -409,8 +409,10 @@ boolean mask array or callable
         # checks for overlap
         all_indices = set()
         input_indices = []
-        for name, trans, cols in self.transformers:
+        for name, trans, cols in self.transformers_:
             col_indices = _get_column_indices(X, cols)
+            if not col_indices:
+                continue
             col_indices_set = set(col_indices)
             if not all_indices.isdisjoint(col_indices_set):
                 self._invert_error = (
@@ -430,9 +432,6 @@ boolean mask array or callable
             self._invert_error = ("dropping columns is not supported. "
                                   "remainder drops columns")
             return
-
-        if remainder_indices is not None:
-            input_indices.append(remainder_indices)
 
         self._input_indices = input_indices
         self._n_features_in = X.shape[1]

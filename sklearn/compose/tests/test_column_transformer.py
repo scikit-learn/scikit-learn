@@ -182,7 +182,7 @@ def test_column_transformer_inverse_transform_with_remainder_drops():
     res = ct.fit_transform(X_array)
 
     error_msg = ("Unable to invert: dropping columns is not supported. "
-                 "remainder drops columns")
+                 "'remainder' drops columns")
     with pytest.raises(ValueError, match=error_msg):
         ct.inverse_transform(res)
 
