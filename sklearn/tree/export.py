@@ -76,9 +76,9 @@ SENTINEL = Sentinel()
 
 def plot_tree(decision_tree, max_depth=None, feature_names=None,
               class_names=None, label='all', filled=False,
-              leaves_parallel=False, impurity=True, node_ids=False,
+              impurity=True, node_ids=False,
               proportion=False, rotate=False, rounded=False,
-              special_characters=False, precision=3, ax=None, fontsize=None):
+              precision=3, ax=None, fontsize=None):
     """Plot a decision tree.
 
     The sample counts that are shown are weighted with any sample_weights that
@@ -120,9 +120,6 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
         classification, extremity of values for regression, or purity of node
         for multi-output.
 
-    leaves_parallel : bool, optional (default=False)
-        When set to ``True``, draw all leaf nodes at the bottom of the tree.
-
     impurity : bool, optional (default=True)
         When set to ``True``, show the impurity at each node.
 
@@ -139,10 +136,6 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     rounded : bool, optional (default=False)
         When set to ``True``, draw node boxes with rounded corners and use
         Helvetica fonts instead of Times-Roman.
-
-    special_characters : bool, optional (default=False)
-        When set to ``False``, ignore special characters for PostScript
-        compatibility.
 
     precision : int, optional (default=3)
         Number of digits of precision for floating point in the values of
@@ -177,31 +170,28 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     exporter = _MPLTreeExporter(
         max_depth=max_depth, feature_names=feature_names,
         class_names=class_names, label=label, filled=filled,
-        leaves_parallel=leaves_parallel, impurity=impurity, node_ids=node_ids,
+        impurity=impurity, node_ids=node_ids,
         proportion=proportion, rotate=rotate, rounded=rounded,
-        special_characters=special_characters, precision=precision,
-        fontsize=fontsize)
+        precision=precision, fontsize=fontsize)
     return exporter.export(decision_tree, ax=ax)
 
 
 class _BaseTreeExporter(object):
     def __init__(self, max_depth=None, feature_names=None,
                  class_names=None, label='all', filled=False,
-                 leaves_parallel=False, impurity=True, node_ids=False,
+                 impurity=True, node_ids=False,
                  proportion=False, rotate=False, rounded=False,
-                 special_characters=False, precision=3, fontsize=None):
+                 precision=3, fontsize=None):
         self.max_depth = max_depth
         self.feature_names = feature_names
         self.class_names = class_names
         self.label = label
         self.filled = filled
-        self.leaves_parallel = leaves_parallel
         self.impurity = impurity
         self.node_ids = node_ids
         self.proportion = proportion
         self.rotate = rotate
         self.rounded = rounded
-        self.special_characters = special_characters
         self.precision = precision
         self.fontsize = fontsize
 
@@ -368,11 +358,13 @@ class _DOTTreeExporter(_BaseTreeExporter):
         super(_DOTTreeExporter, self).__init__(
             max_depth=max_depth, feature_names=feature_names,
             class_names=class_names, label=label, filled=filled,
-            leaves_parallel=leaves_parallel, impurity=impurity,
+            impurity=impurity,
             node_ids=node_ids, proportion=proportion, rotate=rotate,
-            rounded=rounded, special_characters=special_characters,
+            rounded=rounded,
             precision=precision)
+        self.leaves_parallel = leaves_parallel
         self.out_file = out_file
+        self.special_characters = special_characters
 
         # PostScript compatibility for special characters
         if special_characters:
@@ -517,17 +509,15 @@ class _DOTTreeExporter(_BaseTreeExporter):
 class _MPLTreeExporter(_BaseTreeExporter):
     def __init__(self, max_depth=None, feature_names=None,
                  class_names=None, label='all', filled=False,
-                 leaves_parallel=False, impurity=True, node_ids=False,
+                 impurity=True, node_ids=False,
                  proportion=False, rotate=False, rounded=False,
-                 special_characters=False, precision=3, fontsize=None):
+                 precision=3, fontsize=None):
 
         super(_MPLTreeExporter, self).__init__(
             max_depth=max_depth, feature_names=feature_names,
             class_names=class_names, label=label, filled=filled,
-            leaves_parallel=leaves_parallel, impurity=impurity,
-            node_ids=node_ids, proportion=proportion, rotate=rotate,
-            rounded=rounded, special_characters=special_characters,
-            precision=precision)
+            impurity=impurity, node_ids=node_ids, proportion=proportion,
+            rotate=rotate, rounded=rounded, precision=precision)
         self.fontsize = fontsize
 
         # validate
