@@ -5,7 +5,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from time import time
 
 degree = 2
-trials = 1
+trials = 5
 num_rows = 100
 dimensionalities = np.array([25, 50, 100, 200])
 densities = np.array([0.01, 0.1, 1.0])
