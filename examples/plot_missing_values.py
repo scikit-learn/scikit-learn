@@ -74,19 +74,15 @@ def get_results(dataset):
                                          scoring='neg_mean_squared_error',
                                          cv=5)
 
-
     # Estimate the score after kNN-imputation of the missing values
-    knn_estimator = Pipeline(
-        [("knnimputer", KNNImputer(missing_values=0,
-                                   col_max_missing=0.99)),
-         ("forest", RandomForestRegressor(random_state=0, n_estimators=100))])
+    knn_estimator = make_pipeline(
+        [KNNImputer(missing_values=0, col_max_missing=0.99),
+         RandomForestRegressor(random_state=0, n_estimators=100)])
     knn_impute_scores = cross_val_score(knn_estimator, X_missing, y_missing,
                                         scoring='neg_mean_squared_error')
 
     return ((full_scores.mean(), full_scores.std()),
             (zero_impute_scores.mean(), zero_impute_scores.std()),
-            (mean_impute_scores.mean(), mean_impute_scores.std()),
-            (mice_impute_scores.mean(), mice_impute_scores.std()),
             (mean_impute_scores.mean(), mean_impute_scores.std()),
             (knn_impute_scores.mean(), knn_impute_scores.std()),
             )
