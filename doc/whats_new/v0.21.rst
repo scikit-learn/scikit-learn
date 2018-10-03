@@ -48,6 +48,10 @@ Support for Python 3.4 and below has been officially dropped.
   to set and that scales better, by :user:`Shane <espg>` and
   :user:`Adrin Jalali <adrinjalali>`.
 
+- |Fix| Fixed integer overflow in :func:`datasets.make_classification`
+  for values of ``n_informative`` parameter larger than 64.
+  :issue:10811 by :user:`Roman Feldbauer <VarIr>`.
+
 Multiple modules
 ................
 
