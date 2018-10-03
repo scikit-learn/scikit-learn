@@ -74,12 +74,13 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             if len(self._categories) != n_features:
                 raise ValueError("Shape mismatch: if n_values is an array,"
                                  " it has to be of shape (n_features,).")
-
+        self.groups_ = []
         self.categories_ = []
 
         for i in range(n_features):
             Xi = X[:, i]
             if self._categories == 'auto':
+                Xi, group = _group_values(Xi.copy(), min_freq=self.min_freq)
                 cats = _encode(Xi)
             else:
                 cats = np.array(self._categories[i], dtype=X.dtype)
@@ -89,6 +90,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
+            self.groups_.append(group)
             self.categories_.append(cats)
 
     def _transform(self, X, handle_unknown='error'):
@@ -100,6 +102,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
         for i in range(n_features):
             Xi = X[:, i]
+            Xi, _ = _group_values(Xi, group=self.groups_[i])
             diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
                                                      return_mask=True)
 
@@ -199,6 +202,9 @@ class OneHotEncoder(_BaseEncoder):
             0.20 and will be removed in 0.22.
             You can use the ``ColumnTransformer`` instead.
 
+    min_freq: float, default=0
+        group low frequent categories together
+
     Attributes
     ----------
     categories_ : list of arrays
@@ -273,13 +279,14 @@ class OneHotEncoder(_BaseEncoder):
 
     def __init__(self, n_values=None, categorical_features=None,
                  categories=None, sparse=True, dtype=np.float64,
-                 handle_unknown='error'):
+                 min_freq=0, handle_unknown='error'):
         self.categories = categories
         self.sparse = sparse
         self.dtype = dtype
         self.handle_unknown = handle_unknown
         self.n_values = n_values
         self.categorical_features = categorical_features
+        self.min_freq = min_freq
 
     # Deprecated attributes
 
@@ -760,9 +767,10 @@ class OrdinalEncoder(_BaseEncoder):
       between 0 and n_classes-1.
     """
 
-    def __init__(self, categories='auto', dtype=np.float64):
+    def __init__(self, categories='auto', dtype=np.float64, min_freq=0):
         self.categories = categories
         self.dtype = dtype
+        self.min_freq = min_freq
 
     def fit(self, X, y=None):
         """Fit the OrdinalEncoder to X.

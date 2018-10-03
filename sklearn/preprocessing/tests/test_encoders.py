@@ -516,6 +516,13 @@ def test_one_hot_encoder_raise_missing(X, handle_unknown):
     with pytest.raises(ValueError, match="Input contains NaN"):
         ohe.transform(X)
 
+def test_one_hot_encoder_min_freq_fit_not_inplace():
+    arr = np.array([[1, 1], [2, 3], [1, 2], [3, 2], [1, 4]])
+    expected = arr.copy()
+    enc = OneHotEncoder(min_freq=0.4, categories='auto')
+    enc.fit(arr)
+    assert_array_equal(arr, expected)
+
 
 @pytest.mark.parametrize("X", [
     [['abc', 2, 55], ['def', 1, 55]],
@@ -616,6 +623,14 @@ def test_categorical_encoder_stub():
     assert_raises(RuntimeError, CategoricalEncoder, encoding='ordinal')
 
 
+def test_ordinal_encoder_min_freq_fit_not_inplace():
+    arr = np.array([[1, 1], [2, 3], [1, 2], [3, 2], [1, 4]])
+    expected = arr.copy()
+    enc = OrdinalEncoder(min_freq=0.4)
+    enc.fit(arr)
+    assert_array_equal(arr, expected)
+
+
 @pytest.mark.parametrize(
     "values, min_freq, exp_values, exp_group",
     [(np.array([1, 2, 3, 3, 3], dtype='int64'),
@@ -630,6 +645,10 @@ def test_categorical_encoder_stub():
       0.2,
       np.array([1, 2, 3, 3, 3], dtype='int64'),
       np.array([], dtype='int64')),
+     (np.array([1, 2, 3, 3, 3], dtype='int64'),
+      0,
+      np.array([1, 2, 3, 3, 3], dtype='int64'),
+      None),
      (np.array(['a', 'b', 'c', 'c', 'c'], dtype=object),
       0.3,
       np.array(['a', 'a', 'c', 'c', 'c'], dtype=object),
@@ -642,6 +661,10 @@ def test_categorical_encoder_stub():
       0.2,
       np.array(['a', 'b', 'c', 'c', 'c'], dtype=object),
       np.array([], dtype=object)),
+     (np.array(['a', 'b', 'c', 'c', 'c'], dtype=object),
+      0,
+      np.array(['a', 'b', 'c', 'c', 'c'], dtype=object),
+      None),
      (np.array(['a', 'b', 'c', 'c', 'c'], dtype=str),
       0.3,
       np.array(['a', 'a', 'c', 'c', 'c'], dtype=str),
@@ -653,8 +676,12 @@ def test_categorical_encoder_stub():
      (np.array(['a', 'b', 'c', 'c', 'c'], dtype=str),
       0.2,
       np.array(['a', 'b', 'c', 'c', 'c'], dtype=str),
-      np.array([], dtype=str))],
-    ids=(['int64']*3 + ['object']*3 + ['str']*3))
+      np.array([], dtype=str)),
+     (np.array(['a', 'b', 'c', 'c', 'c'], dtype=str),
+      0,
+      np.array(['a', 'b', 'c', 'c', 'c'], dtype=str),
+      None)],
+    ids=(['int64']*4 + ['object']*4 + ['str']*4))
 def test_group_values_freq(values, min_freq, exp_values, exp_group):
     values, group = _group_values(values, min_freq)
     assert_array_equal(values, exp_values)
