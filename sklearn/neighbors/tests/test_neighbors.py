@@ -156,8 +156,8 @@ def test_masked_unsupervised_kneighbors():
     samples = csc_matrix([[0, 5, 5], [1, 0, nan], [4, 1, 1], [nan, 2, 3]])
     neigh = neighbors.NearestNeighbors(n_neighbors=2,
                                        metric="masked_euclidean")
-    msg = "kNN does not support sparse matrix with missing data"
-    assert_raise_message(ValueError, msg, neigh.fit, samples)
+    msg = "Metric 'masked_euclidean' not valid for sparse input.*"
+    assert_raises_regex(ValueError, msg, neigh.fit, samples)
 
 
 def test_unsupervised_inputs():

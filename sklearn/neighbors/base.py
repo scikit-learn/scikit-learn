@@ -46,7 +46,8 @@ VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
 
 VALID_METRICS_SPARSE = dict(ball_tree=[],
                             kd_tree=[],
-                            brute=PAIRWISE_DISTANCE_FUNCTIONS.keys())
+                            brute=(PAIRWISE_DISTANCE_FUNCTIONS.keys() -
+                                   {'masked_euclidean'}))
 
 
 def _check_weights(weights):
@@ -210,7 +211,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             return self
 
         X = check_array(X, accept_sparse='csr',
-                        force_all_finite=not allow_nans)
+                        force_all_finite='allow-nan' if allow_nans else False)
 
         n_samples = X.shape[0]
         if n_samples == 0:

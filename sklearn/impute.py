@@ -675,10 +675,10 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         Distance metric for searching neighbors. Possible values:
         - 'masked_euclidean'
         - [callable] : a user-defined function which conforms to the
-        definition of _pairwise_callable(X, Y, metric, **kwds). In other
-        words, the function accepts two arrays, X and Y, and a
-        ``missing_values`` keyword in **kwds and returns a scalar distance
-        value.
+          definition of _pairwise_callable(X, Y, metric, **kwds). In other
+          words, the function accepts two arrays, X and Y, and a
+          ``missing_values`` keyword in **kwds and returns a scalar distance
+          value.
 
     row_max_missing : float, optional (default = 0.5)
         The maximum fraction of columns (i.e. features) that can be missing
@@ -812,7 +812,6 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             force_all_finite = True
         else:
             force_all_finite = "allow-nan"
-        if not force_all_finite:
             if self.metric not in _NAN_METRICS and not callable(
                     self.metric):
                 raise ValueError(
@@ -821,14 +820,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                         force_all_finite=force_all_finite, copy=self.copy)
         self.weights = _check_weights(self.weights)
 
-        # Check for +/- inf
-        if np.any(np.isinf(X)):
-            raise ValueError("+/- inf values are not allowed.")
-
         # Check if % missing in any column > col_max_missing
-        print(X, self.missing_values, type(self.missing_values))
         mask = _get_mask(X, self.missing_values)
-        print(mask)
         if np.any(mask.sum(axis=0) > (X.shape[0] * self.col_max_missing)):
             raise ValueError("Some column(s) have more than {}% missing values"
                              .format(self.col_max_missing * 100))
@@ -875,11 +868,6 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             force_all_finite = "allow-nan"
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                         force_all_finite=force_all_finite, copy=self.copy)
-
-        # Check for +/- inf
-        if np.any(np.isinf(X)):
-            raise ValueError("+/- inf values are not allowed in data to be "
-                             "transformed.")
 
         # Get fitted data and ensure correct dimension
         n_rows_fit_X, n_cols_fit_X = self.fitted_X_.shape

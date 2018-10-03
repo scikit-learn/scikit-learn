@@ -21,7 +21,7 @@ from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
 from sklearn.metrics.pairwise import masked_euclidean_distances
 from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import KNeighborsRegressor
 
 
 def _check_statistics(X, X_true,
@@ -857,7 +857,7 @@ def test_default_with_invalid_input():
         [np.nan, 7, 0, 7, 8],
         [6, 6, 2, 5, 7],
     ])
-    msg = "+/- inf values are not allowed."
+    msg = "Input contains infinity"
     assert_raise_message(ValueError, msg, KNNImputer().fit, X)
 
     # Test with inf present in matrix passed in transform()
@@ -878,7 +878,7 @@ def test_default_with_invalid_input():
         [np.nan, 7, 0, 7, 8],
         [6, 6, 2, 5, 7],
     ])
-    msg = "+/- inf values are not allowed in data to be transformed."
+    msg = "Input contains infinity"
     assert_raise_message(ValueError, msg, KNNImputer().fit(X_fit).transform, X)
 
 
@@ -988,15 +988,9 @@ def test_weight_distance():
     ])
 
     # Test with "distance" weight
-    nn = NearestNeighbors(metric="masked_euclidean")
-    nn.fit(X)
-    # Get distance of "n_neighbors" neighbors of row 1
-    dist, index = nn.kneighbors()
-    dist = dist[1, :]
-    index = index[1, :]
-    weights = 1 / dist
-    values = X[index, 0]
-    imputed = np.dot(values, weights) / np.sum(weights)
+    nn = KNeighborsRegressor(metric="euclidean", weights="distance")
+    nn.fit(np.delete(X, 1, axis=0)[:, 1:], np.delete(X, 1, axis=0)[:, 0])
+    imputed = nn.predict(X[1:2, 1:])
 
     # Manual calculation
     X_imputed_distance1 = np.array([
