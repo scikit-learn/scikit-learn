@@ -47,7 +47,7 @@ for name, clf in classifiers.items():
     fig = plt.figure(fignum, figsize=(4, 3))
     plt.clf()
     plt.title(name)
-    ax = plt.axes([.12, .12, .8, .8])
+    ax = plt.axes([.10, .10, .8, .8])
 
     for _ in range(6):
         this_X = .1 * np.random.normal(size=(2, 1)) + X_train
