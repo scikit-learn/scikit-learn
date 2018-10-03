@@ -291,8 +291,9 @@ def calinski_harabasz_score(X, labels):
 
 @deprecated("Function 'calinski_harabaz_score' was renamed to "
             "'calinski_harabasz_score' "
-            "in version 0.21 and will be removed in release 0.23. ")
-def calinski_harabaz_score(X, labels):
+            "in version 0.21 and will be removed in release 0.23. "
+            "The keyword normalize is no longer supported.")
+def calinski_harabaz_score(X, labels, normalize=False):
     return calinski_harabasz_score(X, labels)
 
 

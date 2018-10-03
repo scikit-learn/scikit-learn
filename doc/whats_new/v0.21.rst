@@ -52,13 +52,6 @@ Support for Python 3.4 and below has been officially dropped.
   graph, which would add explicitly zeros on the diagonal even when already
   present. :issue:`12105` by `Tom Dupre la Tour`_.
 
-:mod:`sklearn.metrics`
-......................
-
-- |API| Corrected the spelling of Harabasz score from Harabaz to Harabasz.
-  :issue:`8657` by :user:`Mark Hannel <markhannel>`, 
-  :user:`Melissa Ferrari <mferrari3>` and :user:`Lisa Sarah Thomas <LisaThomas9>`.
-
 Multiple modules
 ................
 
