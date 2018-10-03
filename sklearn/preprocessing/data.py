@@ -1323,6 +1323,12 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         all polynomial powers are zero (i.e. a column of ones - acts as an
         intercept term in a linear model).
 
+    order : str in {'C', 'F'}, default 'C'
+        Order of output array in the dense case. 'F' order is faster to
+        compute, but may slow down subsequent estimators.
+
+        .. versionadded:: 0.21
+
     Examples
     --------
     >>> X = np.arange(6).reshape(3, 2)
@@ -1363,10 +1369,12 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
-    def __init__(self, degree=2, interaction_only=False, include_bias=True):
+    def __init__(self, degree=2, interaction_only=False, include_bias=True,
+                 order='C'):
         self.degree = degree
         self.interaction_only = interaction_only
         self.include_bias = include_bias
+        self.order = order
 
     @staticmethod
     def _combinations(n_features, degree, interaction_only, include_bias):
@@ -1454,7 +1462,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, ['n_input_features_', 'n_output_features_'])
 
-        X = check_array(X, dtype=FLOAT_DTYPES, accept_sparse='csc')
+        X = check_array(X, order='F', dtype=FLOAT_DTYPES, accept_sparse='csc')
         n_samples, n_features = X.shape
 
         if n_features != self.n_input_features_:
@@ -1475,7 +1483,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                     columns.append(sparse.csc_matrix(np.ones((X.shape[0], 1))))
             XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
         else:
-            XP = np.empty((n_samples, self.n_output_features_), dtype=X.dtype)
+            XP = np.empty((n_samples, self.n_output_features_), dtype=X.dtype,
+                          order=self.order)
             for i, comb in enumerate(combinations):
                 XP[:, i] = X[:, comb].prod(1)
 
