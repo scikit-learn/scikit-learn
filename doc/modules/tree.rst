@@ -453,7 +453,7 @@ Common measures of impurity are Gini
 
     H(X_m) = \sum_k p_{mk} (1 - p_{mk})
 
-Cross-Entropy
+Entropy
 
 .. math::
 

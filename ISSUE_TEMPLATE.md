@@ -43,6 +43,9 @@ it in the issue: https://gist.github.com
 #### Versions
 <!--
 Please run the following snippet and paste the output below.
+For scikit-learn >= 0.20:
+import sklearn; sklearn.show_versions()
+For scikit-learn < 0.20:
 import platform; print(platform.platform())
 import sys; print("Python", sys.version)
 import numpy; print("NumPy", numpy.__version__)
