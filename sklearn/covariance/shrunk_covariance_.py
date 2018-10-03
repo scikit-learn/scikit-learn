@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Covariance estimators using shrinkage.
 
@@ -374,6 +375,7 @@ class LedoitWolf(EmpiricalCovariance):
     >>> X = np.random.normal(size=(n_samples, n_features))
     >>> lw = LedoitWolf()
     >>> lw.fit(X)
+    LedoitWolf(assume_centered=False, block_size=1000, store_precision=True)
     >>> lw.covariance_
     array([[ 2.67835459e-03, -3.56430765e-02, -7.41347961e-04,
             -6.19028549e-02],
