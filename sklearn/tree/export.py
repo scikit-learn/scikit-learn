@@ -85,6 +85,10 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     might be present.
     This function requires matplotlib, and works best with matplotlib >= 1.5.
 
+    The visuaization is fit automatically to the size of the axis.
+    Use the ``figsize`` or ``dpi`` arguments of ``plt.figure``  to control
+    the size of the rendering.
+
     Read more in the :ref:`User Guide <tree>`.
 
     .. versionadded:: 0.20
@@ -166,7 +170,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     >>> iris = load_iris()
 
     >>> clf = clf.fit(iris.data, iris.target)
-    >>> tree.plot_tree(clf) # doctest: +SKIP
+    >>> tree.plot_tree(clf)
     [Text(251.5,345.217,'X[3] <= 0.8...
 
     """
