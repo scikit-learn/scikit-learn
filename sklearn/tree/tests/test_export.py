@@ -1,6 +1,7 @@
 """
 Testing for export functions of decision trees (sklearn.tree.export).
 """
+import pytest
 
 from re import finditer, search
 
@@ -9,7 +10,7 @@ from numpy.random import RandomState
 from sklearn.base import is_classifier
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.tree import export_graphviz
+from sklearn.tree import export_graphviz, plot_tree
 from sklearn.externals.six import StringIO
 from sklearn.utils.testing import (assert_in, assert_equal, assert_raises,
                                    assert_less_equal, assert_raises_regex,
@@ -308,3 +309,23 @@ def test_precision():
             for finding in finditer(r"<= \d+\.\d+", dot_data):
                 assert_equal(len(search(r"\.\d+", finding.group()).group()),
                              precision + 1)
+
+
+def test_plot_tree():
+    # mostly smoke tests
+    pytest.importorskip("matplotlib.pyplot")
+    # Check correctness of export_graphviz
+    clf = DecisionTreeClassifier(max_depth=3,
+                                 min_samples_split=2,
+                                 criterion="gini",
+                                 random_state=2)
+    clf.fit(X, y)
+
+    # Test export code
+    feature_names = ['first feat', 'sepal_width']
+    nodes = plot_tree(clf, feature_names=feature_names)
+    assert len(nodes) == 3
+    assert nodes[0].get_text() == ("first feat <= 0.0\nentropy = 0.5\n"
+                                   "samples = 6\nvalue = [3, 3]")
+    assert nodes[1].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [3, 0]"
+    assert nodes[2].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [0, 3]"
