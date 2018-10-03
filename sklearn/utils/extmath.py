@@ -483,7 +483,7 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     A = safe_sparse_dot(M, M.T)
     A = -(A.T+A)/2
-    lambdas, Q = lobpcg(A, Q, tol=lobpcg_tol, maxiter=n_iter)
+    lambdas, Q = lobpcg(A, Q, tol=lobpcg_tol, maxiter=n_iter, largest=False)
 
     # project M to the (k + p) dimensional space using the basis vectors
     # project M to the (k + p) dimensional space using the basis vectors
