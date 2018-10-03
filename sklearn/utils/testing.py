@@ -15,7 +15,6 @@ import inspect
 import pkgutil
 import warnings
 import sys
-import struct
 import functools
 
 import scipy as sp
@@ -47,7 +46,7 @@ import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
 from sklearn.utils.fixes import signature
-from sklearn.utils import deprecated, IS_PYPY
+from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
 
 
 additional_names_in_all = []
@@ -468,8 +467,12 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
                          " not a sparse matrix and an array.")
 
 
+@deprecated('deprecated in version 0.20 to be removed in version 0.22')
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):
     """Create a fake mldata data set.
+
+    .. deprecated:: 0.20
+        Will be removed in version 0.22
 
     Parameters
     ----------
@@ -508,12 +511,16 @@ def fake_mldata(columns_dict, dataname, matfile, ordering=None):
     scipy.io.savemat(matfile, datasets, oned_as='column')
 
 
+@deprecated('deprecated in version 0.20 to be removed in version 0.22')
 class mock_mldata_urlopen(object):
     """Object that mocks the urlopen function to fake requests to mldata.
 
     When requesting a dataset with a name that is in mock_datasets, this object
     creates a fake dataset in a StringIO object and returns it. Otherwise, it
     raises an HTTPError.
+
+    .. deprecated:: 0.20
+        Will be removed in version 0.22
 
     Parameters
     ----------
@@ -582,7 +589,8 @@ META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
                    "RFE", "RFECV", "BaseEnsemble", "ClassifierChain",
                    "RegressorChain"]
 # estimators that there is no way to default-construct sensibly
-OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
+OTHER = ["Pipeline", "FeatureUnion",
+         "GridSearchCV", "RandomizedSearchCV",
          "SelectFromModel", "ColumnTransformer"]
 
 # some strange ones
@@ -749,7 +757,7 @@ def if_matplotlib(func):
 try:
     import pytest
 
-    skip_if_32bit = pytest.mark.skipif(8 * struct.calcsize("P") == 32,
+    skip_if_32bit = pytest.mark.skipif(_IS_32BIT,
                                        reason='skipped on 32bit platforms')
     skip_travis = pytest.mark.skipif(os.environ.get('TRAVIS') == 'true',
                                      reason='skip on travis')
@@ -938,6 +946,9 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
         return incorrect
     # Don't check docstring for property-functions
     if inspect.isdatadescriptor(func):
+        return incorrect
+    # Don't check docstring for setup / teardown pytest functions
+    if func_name.split('.')[-1] in ('setup_module', 'teardown_module'):
         return incorrect
     # Dont check estimator_checks module
     if func_name.split('.')[2] == 'estimator_checks':

@@ -511,7 +511,7 @@ def test_standard_scaler_trasform_with_partial_fit():
         assert_array_almost_equal(X_sofar, right_input)
 
         zero = np.zeros(X.shape[1])
-        epsilon = np.nextafter(0, 1)
+        epsilon = np.finfo(float).eps
         assert_array_less(zero, scaler_incr.var_ + epsilon)  # as less or equal
         assert_array_less(zero, scaler_incr.scale_ + epsilon)
         # (i+1) because the Scaler has been already fitted

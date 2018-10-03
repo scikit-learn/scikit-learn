@@ -99,6 +99,8 @@ REGRESSION_METRICS = {
 CLASSIFICATION_METRICS = {
     "accuracy_score": accuracy_score,
     "balanced_accuracy_score": balanced_accuracy_score,
+    "adjusted_balanced_accuracy_score": partial(balanced_accuracy_score,
+                                                adjusted=True),
     "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
 
     # `confusion_matrix` returns absolute values and hence behaves unnormalized
@@ -246,7 +248,6 @@ METRIC_UNDEFINED_BINARY = {
 # Those metrics don't support multiclass inputs
 METRIC_UNDEFINED_MULTICLASS = {
     "brier_score_loss",
-    "balanced_accuracy_score",
 
     "roc_auc_score",
     "micro_roc_auc",
@@ -407,6 +408,7 @@ SYMMETRIC_METRICS = {
 # metric(y_true, y_pred) != metric(y_pred, y_true).
 NOT_SYMMETRIC_METRICS = {
     "balanced_accuracy_score",
+    "adjusted_balanced_accuracy_score",
     "explained_variance_score",
     "r2_score",
     "unnormalized_confusion_matrix",

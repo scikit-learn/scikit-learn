@@ -113,8 +113,10 @@ def test_label_propagation_closed_form():
     clf.fit(X, y)
     # adopting notation from Zhu et al 2002
     T_bar = clf._build_graph()
-    Tuu = T_bar[np.meshgrid(unlabelled_idx, unlabelled_idx, indexing='ij')]
-    Tul = T_bar[np.meshgrid(unlabelled_idx, labelled_idx, indexing='ij')]
+    Tuu = T_bar[tuple(np.meshgrid(unlabelled_idx, unlabelled_idx,
+                      indexing='ij'))]
+    Tul = T_bar[tuple(np.meshgrid(unlabelled_idx, labelled_idx,
+                                  indexing='ij'))]
     Y = Y[:, :-1]
     Y_l = Y[labelled_idx, :]
     Y_u = np.dot(np.dot(np.linalg.inv(np.eye(Tuu.shape[0]) - Tuu), Tul), Y_l)

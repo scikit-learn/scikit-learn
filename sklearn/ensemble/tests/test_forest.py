@@ -21,6 +21,10 @@ from scipy.sparse import coo_matrix
 
 import pytest
 
+from sklearn.utils import parallel_backend
+from sklearn.utils import register_parallel_backend
+from sklearn.externals.joblib.parallel import LokyBackend
+
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -1263,3 +1267,31 @@ def test_nestimators_future_warning(forest):
     # When n_estimators is a valid value not equal to the default
     est = forest(n_estimators=100)
     est = assert_no_warnings(est.fit, X, y)
+
+
+class MyBackend(LokyBackend):
+    def __init__(self, *args, **kwargs):
+        self.count = 0
+        super(MyBackend, self).__init__(*args, **kwargs)
+
+    def start_call(self):
+        self.count += 1
+        return super(MyBackend, self).start_call()
+
+
+register_parallel_backend('testing', MyBackend)
+
+
+def test_backend_respected():
+    clf = RandomForestClassifier(n_estimators=10, n_jobs=2)
+
+    with parallel_backend("testing") as (ba, _):
+        clf.fit(X, y)
+
+    assert ba.count > 0
+
+    # predict_proba requires shared memory. Ensure that's honored.
+    with parallel_backend("testing") as (ba, _):
+        clf.predict_proba(X)
+
+    assert ba.count == 0

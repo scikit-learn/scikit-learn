@@ -1,4 +1,8 @@
 """RCV1 dataset.
+
+The dataset page is available at
+
+    http://jmlr.csail.mit.edu/papers/volume5/lewis04a/
 """
 
 # Author: Tom Dupre la Tour
@@ -7,7 +11,7 @@
 import logging
 
 from os import remove
-from os.path import exists, join
+from os.path import dirname, exists, join
 from gzip import GzipFile
 
 import numpy as np
@@ -74,18 +78,20 @@ logger = logging.getLogger(__name__)
 
 def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
                random_state=None, shuffle=False, return_X_y=False):
-    """Load the RCV1 multilabel dataset, downloading it if necessary.
+    """Load the RCV1 multilabel dataset (classification).
+
+    Download it if necessary.
 
     Version: RCV1-v2, vectors, full sets, topics multilabels.
 
-    ==============     =====================
-    Classes                              103
-    Samples total                     804414
-    Dimensionality                     47236
-    Features           real, between 0 and 1
-    ==============     =====================
+    =================   =====================
+    Classes                               103
+    Samples total                      804414
+    Dimensionality                      47236
+    Features            real, between 0 and 1
+    =================   =====================
 
-    Read more in the :ref:`User Guide <datasets>`.
+    Read more in the :ref:`User Guide <rcv1_dataset>`.
 
     .. versionadded:: 0.17
 
@@ -143,13 +149,6 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.20
-
-    References
-    ----------
-    Lewis, D. D., Yang, Y., Rose, T. G., & Li, F. (2004). RCV1: A new
-    benchmark collection for text categorization research. The Journal of
-    Machine Learning Research, 5, 361-397.
-
     """
     N_SAMPLES = 804414
     N_FEATURES = 47236
@@ -265,11 +264,15 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     if shuffle:
         X, y, sample_id = shuffle_(X, y, sample_id, random_state=random_state)
 
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'rcv1.rst')) as rst_file:
+        fdescr = rst_file.read()
+
     if return_X_y:
         return X, y
 
     return Bunch(data=X, target=y, sample_id=sample_id,
-                 target_names=categories, DESCR=__doc__)
+                 target_names=categories, DESCR=fdescr)
 
 
 def _inverse_permutation(p):

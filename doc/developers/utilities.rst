@@ -175,8 +175,7 @@ Graph Routines
 Benchmarking
 ------------
 
-- :func:`bench.total_seconds` (back-ported from ``timedelta.total_seconds``
-  in Python 2.7).  Used in ``benchmarks/bench_glm.py``.
+- :func:`bench.total_seconds`:  Used in ``benchmarks/bench_glm.py``.
 
 
 Testing Functions

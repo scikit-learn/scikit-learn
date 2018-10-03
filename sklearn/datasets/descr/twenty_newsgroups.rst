@@ -1,4 +1,4 @@
-.. _20newsgroups:
+.. _20newsgroups_dataset:
 
 The 20 newsgroups text dataset
 ------------------------------
@@ -17,6 +17,15 @@ with custom parameters so as to extract feature vectors.
 The second one, :func:`sklearn.datasets.fetch_20newsgroups_vectorized`,
 returns ready-to-use features, i.e., it is not necessary to use a feature
 extractor.
+
+**Data Set Characteristics:**
+
+    =================   ==========
+    Classes                     20
+    Samples total            18846
+    Dimensionality               1
+    Features                  text
+    =================   ==========
 
 Usage
 ~~~~~
@@ -104,11 +113,11 @@ The extracted TF-IDF vectors are very sparse, with an average of 159 non-zero
 components by sample in a more than 30000-dimensional space
 (less than .5% non-zero features)::
 
-  >>> vectors.nnz / float(vectors.shape[0])
+  >>> vectors.nnz / float(vectors.shape[0])       # doctest: +ELLIPSIS
   159.01327...
 
-:func:`sklearn.datasets.fetch_20newsgroups_vectorized` is a function which returns
-ready-to-use tfidf features instead of file names.
+:func:`sklearn.datasets.fetch_20newsgroups_vectorized` is a function which 
+returns ready-to-use token counts features instead of file names.
 
 .. _`20 newsgroups website`: http://people.csail.mit.edu/jrennie/20Newsgroups/
 .. _`TF-IDF`: https://en.wikipedia.org/wiki/Tf-idf
@@ -135,7 +144,7 @@ which is fast to train and achieves a decent F-score::
   MultinomialNB(alpha=0.01, class_prior=None, fit_prior=True)
 
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
+  >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')  # doctest: +ELLIPSIS
   0.88213...
 
 (The example :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py` shuffles
@@ -157,6 +166,7 @@ Let's take a look at what the most informative features are:
   comp.graphics: edu in graphics it is for and of to the
   sci.space: edu it that is in and space to of the
   talk.religion.misc: not it you in is that and to of the
+
 
 You can now see many things that these features have overfit to:
 
@@ -185,7 +195,7 @@ blocks, and quotation blocks respectively.
   ...                                      categories=categories)
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(pred, newsgroups_test.target, average='macro')
+  >>> metrics.f1_score(pred, newsgroups_test.target, average='macro')  # doctest: +ELLIPSIS
   0.77310...
 
 This classifier lost over a lot of its F-score, just because we removed
@@ -202,7 +212,7 @@ It loses even more if we also strip this metadata from the training data:
 
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
+  >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')  # doctest: +ELLIPSIS
   0.76995...
 
 Some other classifiers cope better with this harder version of the task. Try

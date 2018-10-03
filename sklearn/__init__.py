@@ -44,7 +44,7 @@ warnings.filterwarnings('always', category=DeprecationWarning,
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.20.dev0'
+__version__ = '0.21.dev0'
 
 
 try:
@@ -62,6 +62,8 @@ if __SKLEARN_SETUP__:
 else:
     from . import __check_build
     from .base import clone
+    from .utils._show_versions import show_versions
+
     __check_build  # avoid flakes unused variable error
 
     __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
@@ -74,7 +76,8 @@ else:
                'preprocessing', 'random_projection', 'semi_supervised',
                'svm', 'tree', 'discriminant_analysis', 'impute', 'compose',
                # Non-modules:
-               'clone', 'get_config', 'set_config', 'config_context']
+               'clone', 'get_config', 'set_config', 'config_context',
+               'show_versions']
 
 
 def setup_module(module):

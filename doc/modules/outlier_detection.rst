@@ -8,9 +8,9 @@ Novelty and Outlier Detection
 
 Many applications require being able to decide whether a new observation
 belongs to the same distribution as existing observations (it is an
-`inlier`), or should be considered as different (it is an outlier).
+*inlier*), or should be considered as different (it is an *outlier*).
 Often, this ability is used to clean real data sets. Two important
-distinction must be made:
+distinctions must be made:
 
 :outlier detection:
   The training data contains outliers which are defined as observations that
@@ -35,7 +35,7 @@ a low density region of the training data, considered as normal in this
 context.
 
 The scikit-learn project provides a set of machine learning tools that
-can be used both for novelty or outliers detection. This strategy is
+can be used both for novelty or outlier detection. This strategy is
 implemented with objects learning in an unsupervised way from the data::
 
     estimator.fit(X_train)
@@ -76,6 +76,18 @@ not available.
   and not on the training samples as this would lead to wrong results.
   The scores of abnormality of the training samples are always accessible
   through the ``negative_outlier_factor_`` attribute.
+
+The behavior of :class:`neighbors.LocalOutlierFactor` is summarized in the
+following table.
+
+===================== ================================ =====================
+Method                Outlier detection                Novelty detection
+===================== ================================ =====================
+``fit_predict``       OK                               Not available
+``predict``           Not available                    Use only on new data
+``decision_function`` Not available                    Use only on new data
+``score_samples``     Use ``negative_outlier_factor_`` Use only on new data
+===================== ================================ =====================
 
 
 Overview of outlier detection methods
@@ -162,7 +174,7 @@ Outlier Detection
 
 Outlier detection is similar to novelty detection in the sense that
 the goal is to separate a core of regular observations from some
-polluting ones, called "outliers". Yet, in the case of outlier
+polluting ones, called *outliers*. Yet, in the case of outlier
 detection, we don't have a clean data set representing the population
 of regular observations that can be used to train any tool.
 
@@ -306,10 +318,10 @@ This strategy is illustrated below.
 .. topic:: Examples:
 
    * See :ref:`sphx_glr_auto_examples_neighbors_plot_lof_outlier_detection.py`
-   for an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
+     for an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
 
    * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` for a
-   comparison with other anomaly detection methods.
+     comparison with other anomaly detection methods.
 
 .. topic:: References:
 
@@ -341,19 +353,7 @@ Note that ``fit_predict`` is not available in this case.
   The scores of abnormality of the training samples are always accessible
   through the ``negative_outlier_factor_`` attribute.
 
-The behavior of LOF is summarized in the following table.
-
-====================  ================================  =====================
-Method                Outlier detection                 Novelty detection
-====================  ================================  =====================
-`fit_predict`         OK                                Not available
-`predict`             Not available                     Use only on test data
-`decision_function`   Not available                     Use only on test data
-`score_samples`       Use `negative_outlier_factor_`    Use only on test data
-====================  ================================  =====================
-
-
-This strategy is illustrated below.
+Novelty detection with Local Outlier Factor is illustrated below.
 
   .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
      :target: ../auto_examples/neighbors/sphx_glr_plot_lof_novelty_detection.html

@@ -342,7 +342,7 @@ and ``value`` is an estimator object::
     >>> estimators = [('linear_pca', PCA()), ('kernel_pca', KernelPCA())]
     >>> combined = FeatureUnion(estimators)
     >>> combined # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    FeatureUnion(n_jobs=1,
+    FeatureUnion(n_jobs=None,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
                                    ('kernel_pca', KernelPCA(alpha=1.0,...))],
                  transformer_weights=None)
@@ -353,13 +353,13 @@ Like pipelines, feature unions have a shorthand constructor called
 
 
 Like ``Pipeline``, individual steps may be replaced using ``set_params``,
-and ignored by setting to ``None``::
+and ignored by setting to ``'drop'``::
 
-    >>> combined.set_params(kernel_pca=None)
+    >>> combined.set_params(kernel_pca='drop')
     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    FeatureUnion(n_jobs=1,
+    FeatureUnion(n_jobs=None,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
-                                   ('kernel_pca', None)],
+                                   ('kernel_pca', 'drop')],
                  transformer_weights=None)
 
 .. topic:: Examples:
@@ -423,7 +423,8 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
   ...      remainder='drop')
 
   >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=1, remainder='drop', transformer_weights=None,
+  ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
+      transformer_weights=None,
       transformers=...)
 
   >>> column_trans.get_feature_names()
@@ -461,7 +462,7 @@ transformation::
   ...      ('title_bow', CountVectorizer(), 'title')],
   ...      remainder='passthrough')
 
-  >>> column_trans.fit_transform(X).toarray()
+  >>> column_trans.fit_transform(X)
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   array([[1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 5, 4],
          [1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 3, 5],
@@ -478,7 +479,7 @@ the transformation::
   ...      ('title_bow', CountVectorizer(), 'title')],
   ...      remainder=MinMaxScaler())
 
-  >>> column_trans.fit_transform(X)[:, -2:].toarray()
+  >>> column_trans.fit_transform(X)[:, -2:]
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   array([[1. , 0.5],
          [0. , 1. ],
@@ -495,7 +496,8 @@ above example would be::
   ...     ('city', CountVectorizer(analyzer=lambda x: [x])),
   ...     ('title', CountVectorizer()))
   >>> column_trans # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=1, remainder='drop', transformer_weights=None,
+  ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
+           transformer_weights=None,
            transformers=[('countvectorizer-1', ...)
 
 .. topic:: Examples:

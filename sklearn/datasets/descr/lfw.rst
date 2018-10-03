@@ -1,4 +1,4 @@
-.. _labeled_faces_in_the_wild:
+.. _labeled_faces_in_the_wild_dataset:
 
 The Labeled Faces in the Wild face recognition dataset
 ------------------------------------------------------
@@ -23,6 +23,14 @@ most popular model for Face Detection is called Viola-Jones and is
 implemented in the OpenCV library. The LFW faces were extracted by this
 face detector from various online websites.
 
+**Data Set Characteristics:**
+
+    =================   =======================
+    Classes                                5749
+    Samples total                         13233
+    Dimensionality                         5828
+    Features            real, between 0 and 255
+    =================   =======================
 
 Usage
 ~~~~~
