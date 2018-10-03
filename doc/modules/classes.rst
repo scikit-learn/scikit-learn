@@ -1495,6 +1495,16 @@ Utilities from joblib:
 Recently deprecated
 ===================
 
+To be removed in 0.23
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_function.rst
+
+   metrics.calinski_harabaz_score
+
+
 To be removed in 0.22
 ---------------------
 
