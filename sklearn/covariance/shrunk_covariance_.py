@@ -377,7 +377,7 @@ class LedoitWolf(EmpiricalCovariance):
     >>> np.random.seed(0)
     >>> X = np.random.multivariate_normal(mean=[0, 0],
     ...                                   cov=real_cov,
-    ...                                   size=500)
+    ...                                   size=50)
     >>> cov = LedoitWolf().fit(X)
     >>> cov.covariance_
     array([[0.4406..., 0.1616...],
