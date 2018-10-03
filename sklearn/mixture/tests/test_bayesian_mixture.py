@@ -432,7 +432,7 @@ def test_bayesian_mixture_fit_predict():
 
     for covar_type in COVARIANCE_TYPE:
         bgmm1 = BayesianGaussianMixture(n_components=n_components,
-                                        max_iter=100, random_state=rng,
+                                        max_iter=250, random_state=rng,
                                         tol=1e-3, reg_covar=0)
         bgmm1.covariance_type = covar_type
         bgmm2 = copy.deepcopy(bgmm1)
@@ -440,6 +440,7 @@ def test_bayesian_mixture_fit_predict():
 
         Y_pred1 = bgmm1.fit(X).predict(X)
         Y_pred2 = bgmm2.fit_predict(X)
+        assert bgmm1.converged_ and bgmm2.converged_
         assert_array_equal(Y_pred1, Y_pred2)
 
 
