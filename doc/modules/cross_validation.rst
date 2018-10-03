@@ -191,9 +191,9 @@ And for multiple metric evaluation, the return value is a dict with the
 following keys -
 ``['test_<scorer1_name>', 'test_<scorer2_name>', 'test_<scorer...>', 'fit_time', 'score_time']``
 
-``return_train_score`` is set to ``True`` by default. It adds train score keys
-for all the scorers. If train scores are not needed, this should be set to
-``False`` explicitly.
+``return_train_score`` is set to ``False`` by default to save computation time.
+To evaluate the scores on the training set as well you need to be set to
+``True``.
 
 You may also retain the estimator fitted on each training set by setting
 ``return_estimator=True``.
@@ -206,7 +206,7 @@ predefined scorer names::
     >>> scoring = ['precision_macro', 'recall_macro']
     >>> clf = svm.SVC(kernel='linear', C=1, random_state=0)
     >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring,
-    ...                         cv=5, return_train_score=False)
+    ...                         cv=5)
     >>> sorted(scores.keys())
     ['fit_time', 'score_time', 'test_precision_macro', 'test_recall_macro']
     >>> scores['test_recall_macro']                       # doctest: +ELLIPSIS
@@ -231,7 +231,7 @@ Here is an example of ``cross_validate`` using a single metric::
     ...                         scoring='precision_macro', cv=5,
     ...                         return_estimator=True)
     >>> sorted(scores.keys())
-    ['estimator', 'fit_time', 'score_time', 'test_score', 'train_score']
+    ['estimator', 'fit_time', 'score_time', 'test_score']
 
 
 Obtaining predictions by cross-validation
