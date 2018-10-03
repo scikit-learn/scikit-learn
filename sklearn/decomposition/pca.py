@@ -24,7 +24,7 @@ from ..externals import six
 from .base import _BasePCA
 from ..utils import check_random_state
 from ..utils import check_array
-from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
+from ..utils.extmath import fast_logdet, randomized_svd, svd_flip, lobpcg_svd
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 
@@ -159,7 +159,7 @@ class PCA(_BasePCA):
         improve the predictive accuracy of the downstream estimators by
         making their data respect some hard-wired assumptions.
 
-    svd_solver : string {'auto', 'full', 'arpack', 'randomized'}
+    svd_solver : string {'auto', 'full', 'arpack', 'randomized', 'lobpcg'}
         auto :
             the solver is selected by a default policy based on `X.shape` and
             `n_components`: if the input data is larger than 500x500 and the
@@ -185,7 +185,7 @@ class PCA(_BasePCA):
         .. versionadded:: 0.18.0
 
     iterated_power : int >= 0, or 'auto', (default 'auto')
-        Number of iterations for the power method computed by
+        Number of iterations of svd_solver = 'lobpcg' or for the power method computed by
         svd_solver == 'randomized'.
 
         .. versionadded:: 0.18.0
@@ -194,7 +194,7 @@ class PCA(_BasePCA):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``svd_solver`` == 'arpack' or 'randomized'.
+        by `np.random`. Used when ``svd_solver`` == 'arpack', 'lobpcg', or 'randomized'.
 
         .. versionadded:: 0.18.0
 
@@ -397,6 +397,7 @@ class PCA(_BasePCA):
                 self._fit_svd_solver = 'full'
             elif n_components >= 1 and n_components < .8 * min(X.shape):
                 self._fit_svd_solver = 'randomized'
+            # need to add 'lobpcg' here
             # This is also the case of n_components in (0,1)
             else:
                 self._fit_svd_solver = 'full'
@@ -404,7 +405,7 @@ class PCA(_BasePCA):
         # Call different fits for either full or truncated SVD
         if self._fit_svd_solver == 'full':
             return self._fit_full(X, n_components)
-        elif self._fit_svd_solver in ['arpack', 'randomized']:
+        elif self._fit_svd_solver in ['arpack', 'randomized', 'lobpcg']:
             return self._fit_truncated(X, n_components, self._fit_svd_solver)
         else:
             raise ValueError("Unrecognized svd_solver='{0}'"
@@ -474,7 +475,7 @@ class PCA(_BasePCA):
         return U, S, V
 
     def _fit_truncated(self, X, n_components, svd_solver):
-        """Fit the model by computing truncated SVD (by ARPACK or randomized)
+        """Fit the model by computing truncated SVD (by ARPACK, LOBPCG, or randomized)
         on X
         """
         n_samples, n_features = X.shape
@@ -520,6 +521,13 @@ class PCA(_BasePCA):
         elif svd_solver == 'randomized':
             # sign flipping is done inside
             U, S, V = randomized_svd(X, n_components=n_components,
+                                     n_iter=self.iterated_power,
+                                     flip_sign=True,
+                                     random_state=random_state)
+
+        elif svd_solver == 'lobpcg':
+            # sign flipping is done inside
+            U, S, V = lobpcg_svd(X, n_components=n_components,
                                      n_iter=self.iterated_power,
                                      flip_sign=True,
                                      random_state=random_state)
