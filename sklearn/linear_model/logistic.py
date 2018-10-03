@@ -1436,8 +1436,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
 class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                            LinearClassifierMixin):
-    """:term:`Cross-validated <cross-validation estimator>` Logistic Regression
-    (aka logit, MaxEnt) classifier.
+    """Logistic Regression CV (aka logit, MaxEnt) classifier.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     This class implements logistic regression using liblinear, newton-cg, sag
     of lbfgs optimizer. The newton-cg, sag and lbfgs solvers support only L2
