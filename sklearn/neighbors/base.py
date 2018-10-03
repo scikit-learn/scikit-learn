@@ -22,6 +22,7 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, gen_even_slices
+from ..metrics.pairwise import _NAN_METRICS
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..externals import six
@@ -163,6 +164,8 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def _fit(self, X):
         self._check_algorithm_metric()
+
+        allow_nans = self.metric in _NAN_METRICS or callable(self.metric)
         if self.metric_params is None:
             self.effective_metric_params_ = {}
         else:
@@ -206,7 +209,8 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_method = 'kd_tree'
             return self
 
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr',
+                        force_all_finite=not allow_nans)
 
         n_samples = X.shape[0]
         if n_samples == 0:
@@ -391,7 +395,10 @@ class KNeighborsMixin(object):
 
         if X is not None:
             query_is_train = False
-            X = check_array(X, accept_sparse='csr')
+            force_all_finite = (not callable(self.effective_metric_)
+                                and self.effective_metric_ not in _NAN_METRICS)
+            X = check_array(X, accept_sparse='csr',
+                            force_all_finite=force_all_finite)
         else:
             query_is_train = True
             X = self._fit_X
@@ -417,7 +424,9 @@ class KNeighborsMixin(object):
                                   return_distance=return_distance)
 
             # for efficiency, use squared euclidean distances
-            kwds = ({'squared': True} if self.effective_metric_ == 'euclidean'
+            kwds = ({'squared': True}
+                    if self.effective_metric_ in ('euclidean',
+                                                  'masked_euclidean')
                     else self.effective_metric_params_)
 
             result = pairwise_distances_chunked(

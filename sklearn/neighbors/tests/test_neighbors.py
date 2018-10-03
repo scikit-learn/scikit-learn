@@ -94,6 +94,72 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
             assert_array_almost_equal(results[i][1], results[i + 1][1])
 
 
+def test_masked_unsupervised_kneighbors():
+    # Test 1
+    X = np.array([[np.nan, 3., 7., np.nan],
+                  [6., 3., 7., 2.],
+                  [7., 3., 4., 4.],
+                  [2., 7., 7., 1.],
+                  [np.nan, 2., np.nan, 4.]], dtype=np.float32)
+
+    Y = np.array([[3., 1., 7., np.nan],
+                  [1., 3., 1., 6.],
+                  [np.nan, 1., np.nan, 5.],
+                  [3., 1., 3., 3.],
+                  [2., 3., 1., 9.]], dtype=np.float32)
+
+    neigh = neighbors.NearestNeighbors(2, metric="masked_euclidean")
+    neigh.fit(X)
+    X_neigh = neigh.kneighbors(n_neighbors=2, return_distance=False)
+    XY_neigh = neigh.kneighbors(Y, 2, return_distance=False)
+    # Expected outcome
+    N1 = np.array(
+        [[1, 4],
+            [0, 4],
+            [4, 1],
+            [0, 1],
+            [2, 0]])
+
+    N2 = np.array(
+        [[4, 0],
+            [4, 2],
+            [4, 2],
+            [4, 2],
+            [4, 2]])
+
+    assert_array_equal(X_neigh, N1)
+    assert_array_equal(XY_neigh, N2)
+
+    # Test 2
+    nan = float("nan")
+    samples = [[0, 5, 5], [1, 0, nan], [4, 1, 1], [nan, 2, 3]]
+    neigh = neighbors.NearestNeighbors(n_neighbors=2,
+                                       metric="masked_euclidean")
+    neigh.fit(samples)
+
+    X2_neigh = neigh.kneighbors(n_neighbors=2, return_distance=False)
+    XY2_neigh = neigh.kneighbors([[0, nan, 1]], 2, return_distance=False)
+
+    # Expected outcome
+    N3 = np.array(
+        [[3, 1],
+         [3, 2],
+         [3, 1],
+         [2, 1]])
+    N4 = np.array([[1, 3]])
+
+    assert_array_equal(X2_neigh, N3)
+    assert_array_equal(XY2_neigh, N4)
+
+    # Test 3
+    nan = float("nan")
+    samples = csc_matrix([[0, 5, 5], [1, 0, nan], [4, 1, 1], [nan, 2, 3]])
+    neigh = neighbors.NearestNeighbors(n_neighbors=2,
+                                       metric="masked_euclidean")
+    msg = "kNN does not support sparse matrix with missing data"
+    assert_raise_message(ValueError, msg, neigh.fit, samples)
+
+
 def test_unsupervised_inputs():
     # test the types of valid input into NearestNeighbors
     X = rng.random_sample((10, 3))
@@ -1068,6 +1134,9 @@ def test_valid_brute_metric_for_auto_algorithm():
             nb_p.kneighbors(DYX)
 
     for metric in VALID_METRICS_SPARSE['brute']:
+        # TODO: Remove after adding sparse support for masked_euclidean
+        if metric == "masked_euclidean":
+            continue
         if metric != 'precomputed' and metric not in require_params:
             nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                             metric=metric).fit(Xcsr)
