@@ -185,6 +185,26 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
 
 
 class _BaseTreeExporter(object):
+    def __init__(self, max_depth=None, feature_names=None,
+                 class_names=None, label='all', filled=False,
+                 leaves_parallel=False, impurity=True, node_ids=False,
+                 proportion=False, rotate=False, rounded=False,
+                 special_characters=False, precision=3, fontsize=None):
+        self.max_depth = max_depth
+        self.feature_names = feature_names
+        self.class_names = class_names
+        self.label = label
+        self.filled = filled
+        self.leaves_parallel = leaves_parallel
+        self.impurity = impurity
+        self.node_ids = node_ids
+        self.proportion = proportion
+        self.rotate = rotate
+        self.rounded = rounded
+        self.special_characters = special_characters
+        self.precision = precision
+        self.fontsize = fontsize
+
     def get_color(self, value):
         # Find the appropriate color & intensity for a node
         if self.colors['bounds'] is None:
@@ -344,20 +364,15 @@ class _DOTTreeExporter(_BaseTreeExporter):
                  filled=False, leaves_parallel=False, impurity=True,
                  node_ids=False, proportion=False, rotate=False, rounded=False,
                  special_characters=False, precision=3):
+
+        super(_DOTTreeExporter, self).__init__(
+            max_depth=max_depth, feature_names=feature_names,
+            class_names=class_names, label=label, filled=filled,
+            leaves_parallel=leaves_parallel, impurity=impurity,
+            node_ids=node_ids, proportion=proportion, rotate=rotate,
+            rounded=rounded, special_characters=special_characters,
+            precision=precision)
         self.out_file = out_file
-        self.max_depth = max_depth
-        self.feature_names = feature_names
-        self.class_names = class_names
-        self.label = label
-        self.filled = filled
-        self.leaves_parallel = leaves_parallel
-        self.impurity = impurity
-        self.node_ids = node_ids
-        self.proportion = proportion
-        self.rotate = rotate
-        self.rounded = rounded
-        self.special_characters = special_characters
-        self.precision = precision
 
         # PostScript compatibility for special characters
         if special_characters:
@@ -505,19 +520,14 @@ class _MPLTreeExporter(_BaseTreeExporter):
                  leaves_parallel=False, impurity=True, node_ids=False,
                  proportion=False, rotate=False, rounded=False,
                  special_characters=False, precision=3, fontsize=None):
-        self.max_depth = max_depth
-        self.feature_names = feature_names
-        self.class_names = class_names
-        self.label = label
-        self.filled = filled
-        self.leaves_parallel = leaves_parallel
-        self.impurity = impurity
-        self.node_ids = node_ids
-        self.proportion = proportion
-        self.rotate = rotate
-        self.rounded = rounded
-        self.special_characters = special_characters
-        self.precision = precision
+
+        super(_MPLTreeExporter, self).__init__(
+            max_depth=max_depth, feature_names=feature_names,
+            class_names=class_names, label=label, filled=filled,
+            leaves_parallel=leaves_parallel, impurity=impurity,
+            node_ids=node_ids, proportion=proportion, rotate=rotate,
+            rounded=rounded, special_characters=special_characters,
+            precision=precision)
         self.fontsize = fontsize
 
         # validate
