@@ -355,7 +355,7 @@ class LedoitWolf(EmpiricalCovariance):
     Attributes
     ----------
     location_ : array-like, shape (n_features,)
-        Estimated robust location
+        Estimated location, i.e. the estimated mean.
 
     covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix
