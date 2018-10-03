@@ -392,6 +392,11 @@ Tips on Practical Use
   * **Setting C**: ``C`` is ``1`` by default and it's a reasonable default
     choice.  If you have a lot of noisy observations you should decrease it.
     It corresponds to regularize more the estimation.
+    
+    :class:`LinearSVC` and :class`LinearSVR` are less sensitive to ``C`` when
+    it becomes large, and prediction results stop improving after a certain 
+    threshold. Meanwhile, larger ``C`` values will take more time to train, 
+    sometimes up to 10 times longer, as shown by Fan et al. (2008)
 
   * Support Vector Machine algorithms are not scale invariant, so **it
     is highly recommended to scale your data**. For example, scale each
@@ -433,6 +438,13 @@ Tips on Practical Use
     The ``C`` value that yields a "null" model (all weights equal to zero) can
     be calculated using :func:`l1_min_c`.
 
+
+.. topic:: References:
+
+ * Fan, Rong-En, et al.,
+   `"LIBLINEAR: A library for large linear classification."
+   <https://www.csie.ntu.edu.tw/~cjlin/papers/liblinear.pdf>`_,
+   Journal of machine learning research 9.Aug (2008): 1871-1874.
 
 .. _svm_kernels:
 
