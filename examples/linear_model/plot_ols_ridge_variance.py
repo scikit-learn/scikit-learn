@@ -66,6 +66,8 @@ for name, clf in classifiers.items():
     ax.set_xlabel('X')
     ax.set_ylabel('y')
     ax.set_xlim(0, 2)
+    ax.xaxis.set_label_coords(0.55, -0.08)
+    ax.yaxis.set_label_coords(-0.08, 0.55)
     fignum += 1
 
 plt.show()
