@@ -48,7 +48,7 @@ REGRESSION_SCORERS = ['explained_variance', 'r2',
                       'neg_mean_squared_log_error',
                       'neg_median_absolute_error', 'mean_absolute_error',
                       'mean_squared_error', 'median_absolute_error',
-                      'max_error_scorer']
+                      'max_error']
 
 CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
