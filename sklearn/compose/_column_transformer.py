@@ -513,6 +513,9 @@ boolean mask array or callable
         """
         if self.sparse_output_:
             try:
+                # since all columns should be numeric before stacking them
+                # in a sparse matrix, `check_array` is used for the
+                # dtype conversion if necessary.
                 converted_Xs = [check_array(X,
                                             accept_sparse=True,
                                             force_all_finite=False)
