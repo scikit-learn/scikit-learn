@@ -58,4 +58,4 @@ Multiple modules
 Changes to estimator checks
 ---------------------------
 
-These changes mo:tabstly affect library developers.
+These changes mostly affect library developers.
