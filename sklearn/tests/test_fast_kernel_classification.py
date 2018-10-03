@@ -2,7 +2,6 @@ import numpy as np
 
 from sklearn.datasets import make_classification
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.datasets import fetch_mldata
 from sklearn.fast_kernel_classification import FastKernelClassification
 
 np.random.seed(1)
@@ -12,8 +11,7 @@ X3, y3 = make_classification(n_redundant=18)
 X4, y4 = make_classification(shift=1, hypercube=False)
 
 X5, y5 = make_classification(n_features=200, n_repeated=50)
-X6, y6 = make_classification(flip_y=.1)
-
+X6, y6 = np.concatenate([X, X]), np.concatenate([y, 1-y])
 
 
 def test_fast_kernel_classification_gaussian():
@@ -54,6 +52,10 @@ def test_fast_kernel_classification_duplicate_data():
 
 
 def test_fast_kernel_classification_conflict_data():
-    FKR_prediction = FastKernelClassification(
-        kernel="gaussian", n_epoch=50, bandwidth=5, random_state=0).fit(X6, y6).predict(X6)
-    assert_array_almost_equal(FKR_prediction, y6)
+    try:
+        FKR_prediction = FastKernelClassification(
+            kernel="gaussian", n_epoch=5, bandwidth=5, random_state=0).fit(X6, y6).predict(X6)
+        assert_array_almost_equal(FKR_prediction, y6)
+        raise AssertionError("Predicted impossibly well")
+    except AssertionError:
+        return

@@ -10,8 +10,8 @@ X2, Y2 = make_regression(n_targets=30)
 X3, y3 = make_regression(n_features=10000)
 X4, y4 = make_regression(n_informative=1)
 X5, y5 = make_regression(n_samples=500, n_informative=500)
-X6, y6 = X5+X5+X5, y5+y5+y5
-X7, y7 = make_regression(noise=5)
+X6, y6 = np.concatenate([X,X]), np.concatenate([y,y])
+X7, y7 = X6, np.concatenate([y, y+2])
 
 def test_fast_kernel_regression_gaussian():
     FKR_prediction = FastKernelRegression(
@@ -57,6 +57,10 @@ def test_fast_kernel_regression_duplicate_data():
     assert_array_almost_equal(abs(FKR_prediction / y6), 1, decimal=2)
 
 def test_fast_kernel_regression_conflict_data():
-    FKR_prediction = FastKernelRegression(
-        kernel="gaussian", n_epoch=50, bandwidth=1, random_state=0).fit(X7, y7).predict(X7)
-    assert_array_almost_equal(abs(FKR_prediction / y7), 1, decimal=2)
+    try:
+        FKR_prediction = FastKernelRegression(
+            kernel="gaussian", n_epoch=5, bandwidth=1, random_state=0).fit(X7, y7).predict(X7)
+        assert_array_almost_equal(abs(FKR_prediction / y7), 1, decimal=1)
+        raise AssertionError("Predicted impossibly well")
+    except AssertionError:
+        return

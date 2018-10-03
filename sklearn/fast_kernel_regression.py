@@ -64,9 +64,12 @@ class FastKernelRegression(BaseEstimator, RegressorMixin):
             Additional parameters (keyword arguments) for kernel function
             passed as callable object.
 
-        random_state : int
-            The random seed to be used. This class uses np.random for number
-            generation.
+        random_state : int, RandomState instance or None, optional (default=None)
+            The seed of the pseudo random number generator to use when shuffling
+            the data.  If int, random_state is the seed used by the random number
+            generator; If RandomState instance, random_state is the random number
+            generator; If None, the random number generator is the RandomState
+            instance used by `np.random`.
 
        References
        ----------
@@ -142,7 +145,7 @@ class FastKernelRegression(BaseEstimator, RegressorMixin):
         distance = euclidean_distances(X, Y, squared=True, Y_norm_squared=Y_squared)
         bandwidth = np.float32(self.bandwidth)
         if self.kernel == "gaussian":
-            K = np.exp(-distance / (2 * (np.square(bandwidth))))
+            K = np.exp(-distance / (2 * np.square(bandwidth)))
         elif self.kernel == "laplace":
             d = np.maximum(distance, 0)
             K = np.exp(-np.sqrt(d) / bandwidth)
@@ -267,7 +270,6 @@ class FastKernelRegression(BaseEstimator, RegressorMixin):
         self.pinx_ = self.random_state_.choice(n, sample_size,
                                                replace=False).astype('int32')
         max_S, beta = self._setup(X[self.pinx_], n_components, n, mG, .9)
-
         # Calculate best batch size.
         if self.bs is "auto":
             self.bs_ = np.int32(beta / max_S + 1)
@@ -284,7 +286,6 @@ class FastKernelRegression(BaseEstimator, RegressorMixin):
         else:
             self.eta_ = 0.95 * 2 / max_S
         self.eta_ = np.float32(self.eta_)
-
         # Remember the shape of Y for predict() and ensure it's shape is 2-D.
         self.was_1D_ = False
         if len(Y.shape) == 1:
