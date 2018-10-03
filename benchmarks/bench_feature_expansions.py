@@ -5,9 +5,9 @@ from sklearn.preprocessing import PolynomialFeatures
 from time import time
 
 degree = 2
-trials = 5
+trials = 1
 num_rows = 100
-dimensionalities = np.array([50, 100, 150, 200])
+dimensionalities = np.array([25, 50, 100, 200])
 densities = np.array([0.01, 0.1, 1.0])
 colors = ['#d7191c', '#abdda4', '#2b83ba']
 assert(len(colors) == len(densities))
@@ -44,15 +44,15 @@ csc_linestyle = (0, (5, 10))  # loosely dashed
 csr_linestyle = (0, (3, 1, 1, 1, 1, 1))  # densely dashdotdotted
 dense_linestyle = (0, ())  # solid
 for color, density in zip(colors, densities):
-    plt.semilogy(dimensionalities, csr_times[density] / trials,
-                 label='csr, density=%s' % (density,),
-                 linestyle=csr_linestyle, color=color, alpha=0.7)
-    plt.semilogy(dimensionalities, dense_times[density] / trials,
-                 label='dense, density=%s' % (density,),
-                 linestyle=dense_linestyle, color=color, alpha=0.7)
-    plt.semilogy(dimensionalities, csc_times[density] / trials,
-                 label='csc, density=%s' % (density,),
-                 linestyle=csc_linestyle, color=color, alpha=0.7)
+    plt.loglog(dimensionalities, csr_times[density] / trials,
+               label='csr, density=%s' % (density,),
+               linestyle=csr_linestyle, color=color, alpha=0.7)
+    plt.loglog(dimensionalities, dense_times[density] / trials,
+               label='dense, density=%s' % (density,),
+               linestyle=dense_linestyle, color=color, alpha=0.7)
+    plt.loglog(dimensionalities, csc_times[density] / trials,
+               label='csc, density=%s' % (density,),
+               linestyle=csc_linestyle, color=color, alpha=0.7)
 plt.legend()
 plt.xlabel('Dimensionality')
 plt.ylabel('Average time (seconds) over %s trials' % (trials,), labelpad=20)
