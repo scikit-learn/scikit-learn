@@ -9,6 +9,7 @@ from copy import deepcopy
 from functools import partial
 
 import numpy as np
+import pandas as pd
 from scipy import sparse
 from scipy.stats import rankdata
 
@@ -270,22 +271,18 @@ def _yield_all_checks(name, estimator):
 
 def check_estimator(Estimator):
     """Check if estimator adheres to scikit-learn conventions.
-
     This estimator will run an extensive test-suite for input validation,
     shapes, etc.
     Additional tests for classifiers, regressors, clustering or transformers
     will be run if the Estimator class inherits from the corresponding mixin
     from sklearn.base.
-
     This test can be applied to classes or instances.
     Classes currently have some additional tests that related to construction,
     while passing instances allows the testing of multiple options.
-
     Parameters
     ----------
     estimator : estimator object or class
         Estimator to check. Estimator is a class object or instance.
-
     """
     if isinstance(Estimator, type):
         # got a class
@@ -389,7 +386,6 @@ def set_checking_parameters(estimator):
 
 class NotAnArray(object):
     """An object that is convertible to an array
-
     Parameters
     ----------
     data : array_like
@@ -405,12 +401,10 @@ class NotAnArray(object):
 
 def _is_pairwise(estimator):
     """Returns True if estimator has a _pairwise attribute set to True.
-
     Parameters
     ----------
     estimator : object
         Estimator object to test.
-
     Returns
     -------
     out : bool
@@ -421,12 +415,10 @@ def _is_pairwise(estimator):
 
 def _is_pairwise_metric(estimator):
     """Returns True if estimator accepts pairwise metric.
-
     Parameters
     ----------
     estimator : object
         Estimator object to test.
-
     Returns
     -------
     out : bool
@@ -449,12 +441,10 @@ def pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
 
 def _generate_sparse_matrix(X_csr):
     """Generate sparse matrices with {32,64}bit indices of diverse format
-
         Parameters
         ----------
         X_csr: CSR Matrix
             Input matrix in CSR format
-
         Returns
         -------
         out: iter(Matrices)
@@ -921,20 +911,6 @@ def check_transformer_data_not_an_array(name, transformer):
     X -= X.min() - .1
     this_X = NotAnArray(X)
     this_y = NotAnArray(np.asarray(y))
-    _check_transformer(name, transformer, this_X, this_y)
-
-@ignore_warnings(category=(DeprecationWarning, FutureWarning))
-def check_transformer_data_is_a_df(name, transformer):
-    import pandas as pd
-
-    X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
-                      random_state=0, n_features=2, cluster_std=0.1)
-    X = StandardScaler().fit_transform(X)
-    X -= X.min() - .1
-
-    this_X = pd.DataFrame(X)
-    this_y = pd.DataFrame(np.asarray(y))
-
     _check_transformer(name, transformer, this_X, this_y)
 
 
@@ -1599,7 +1575,6 @@ def check_estimators_fit_returns_self(name, estimator_orig,
 @ignore_warnings
 def check_estimators_unfitted(name, estimator_orig):
     """Check that predict raises an exception in an unfitted estimator.
-
     Unfitted estimators should raise either AttributeError or ValueError.
     The specific exception type NotFittedError inherits from both and can
     therefore be adequately raised for that purpose.
@@ -2061,8 +2036,25 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y):
     set_random_state(estimator_1)
     set_random_state(estimator_2)
 
+    
     y_ = NotAnArray(np.asarray(y))
     X_ = NotAnArray(np.asarray(X))
+
+
+    # fit
+    estimator_1.fit(X_, y_)
+    pred1 = estimator_1.predict(X_)
+    estimator_2.fit(X, y)
+    pred2 = estimator_2.predict(X)
+    assert_allclose(pred1, pred2, atol=1e-2, err_msg=name)
+
+
+    y_ = np.asarray(y)
+    if y_.ndim == 1:
+        y_ = pd.Series(y_)
+    else:
+        y_ = pd.DataFrame(y_)
+    X_ = pd.DataFrame(np.asarray(X))
 
     # fit
     estimator_1.fit(X_, y_)
