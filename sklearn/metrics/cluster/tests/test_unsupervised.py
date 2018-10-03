@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
+import warnings
 from scipy.sparse import csr_matrix
 
 from sklearn import datasets
@@ -9,6 +10,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_greater
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
@@ -168,6 +170,13 @@ def test_non_numpy_labels():
     assert_equal(
         silhouette_score(list(X), list(y)), silhouette_score(X, y))
 
+def test_nonzero_diag_silhouette_warning():
+    # Construct a nonzero-diagonal distance matrix
+    dists = pairwise_distances(np.array([[0.2, 0.1, 0.12, 1.34, 1.11, 1.6]]).transpose())
+    dists = np.diag(np.ones(6)) + dists
+    labels = [0,0,0,1,1,1]
+    
+    assert_warns(UserWarning, silhouette_samples, dists, labels, metric = 'precomputed')
 
 def assert_raises_on_only_one_label(func):
     """Assert message when there is only one label"""
