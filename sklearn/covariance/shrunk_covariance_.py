@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Covariance estimators using shrinkage.
 
@@ -355,6 +354,9 @@ class LedoitWolf(EmpiricalCovariance):
 
     Attributes
     ----------
+    location_ : array-like, shape (n_features,)
+        Estimated robust location
+
     covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
@@ -370,21 +372,18 @@ class LedoitWolf(EmpiricalCovariance):
     --------
     >>> import numpy as np
     >>> from sklearn.covariance import LedoitWolf
-    >>> n_samples, n_features = 2, 4
+    >>> real_cov = np.array([[.4, .2],
+    ...                      [.2, .8]])
     >>> np.random.seed(0)
-    >>> X = np.random.normal(size=(n_samples, n_features))
-    >>> lw = LedoitWolf()
-    >>> lw.fit(X)
-    LedoitWolf(assume_centered=False, block_size=1000, store_precision=True)
-    >>> lw.covariance_
-    array([[ 2.67835459e-03, -3.56430765e-02, -7.41347961e-04,
-            -6.19028549e-02],
-           [-3.56430765e-02, 4.74331856e-01, 9.86572957e-03,
-             8.23792413e-01],
-           [-7.41347961e-04, 9.86572957e-03, 2.05199416e-04,
-             1.71342343e-02],
-           [-6.19028549e-02, 8.23792413e-01, 1.71342343e-02,
-             1.43071550e+00]])
+    >>> X = np.random.multivariate_normal(mean=[0, 0],
+    ...                                   cov=real_cov,
+    ...                                   size=500)
+    >>> cov = LedoitWolf().fit(X)
+    >>> cov.covariance_
+    array([[0.4406..., 0.1616...],
+           [0.1616..., 0.8022...]])
+    >>> cov.location_
+    array([0.0595... , -0.0075...])
 
     Notes
     -----
