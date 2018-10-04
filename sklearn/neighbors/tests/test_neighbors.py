@@ -108,10 +108,11 @@ def test_masked_unsupervised_kneighbors():
                   [3., 1., 3., 3.],
                   [2., 3., 1., 9.]], dtype=np.float32)
 
-    neigh = neighbors.NearestNeighbors(2, metric="masked_euclidean")
+    neigh = neighbors.NearestNeighbors(n_neighbors=2,
+                                       metric="masked_euclidean")
     neigh.fit(X)
-    X_neigh = neigh.kneighbors(n_neighbors=2, return_distance=False)
-    XY_neigh = neigh.kneighbors(Y, 2, return_distance=False)
+    X_dist, X_neigh = neigh.kneighbors(return_distance=True)
+    XY_dist, XY_neigh = neigh.kneighbors(Y, return_distance=True)
     # Expected outcome
     N1 = np.array(
         [[1, 4],
@@ -129,6 +130,17 @@ def test_masked_unsupervised_kneighbors():
 
     assert_array_equal(X_neigh, N1)
     assert_array_equal(XY_neigh, N2)
+    for i in range(X.shape[0]):
+        assert_array_equal(X_dist[i:i+1],
+                           pairwise_distances(X[i:i+1], X[N1[i]],
+                                              metric='masked_euclidean'))
+    for i in range(Y.shape[0]):
+        assert_array_equal(XY_dist[i:i+1],
+                           pairwise_distances(Y[i:i+1], X[N2[i]],
+                                              metric='masked_euclidean'))
+
+    # smoke test of graph
+    neigh.kneighbors_graph(X)
 
     # Test 2
     nan = float("nan")
@@ -137,8 +149,8 @@ def test_masked_unsupervised_kneighbors():
                                        metric="masked_euclidean")
     neigh.fit(samples)
 
-    X2_neigh = neigh.kneighbors(n_neighbors=2, return_distance=False)
-    XY2_neigh = neigh.kneighbors([[0, nan, 1]], 2, return_distance=False)
+    X2_neigh = neigh.kneighbors(return_distance=False)
+    XY2_neigh = neigh.kneighbors([[0, nan, 1]], return_distance=False)
 
     # Expected outcome
     N3 = np.array(
@@ -158,6 +170,40 @@ def test_masked_unsupervised_kneighbors():
                                        metric="masked_euclidean")
     msg = "Metric 'masked_euclidean' not valid for sparse input.*"
     assert_raises_regex(ValueError, msg, neigh.fit, samples)
+
+
+def test_masked_unsupervised_radius_neighbors():
+    X = np.array([[np.nan, 3., 7., np.nan],
+                  [6., 3., 7., 2.],
+                  [7., 3., 4., 4.],
+                  [2., 7., 7., 1.],
+                  [np.nan, 2., np.nan, 4.]], dtype=np.float32)
+
+    Y = np.array([[3., 1., 7., np.nan],
+                  [1., 3., 1., 6.],
+                  [np.nan, 1., np.nan, 5.],
+                  [3., 1., 3., 3.],
+                  [2., 3., 1., 9.]], dtype=np.float32)
+
+    neigh = neighbors.NearestNeighbors(radius=4, metric="masked_euclidean")
+    neigh.fit(X)
+    X_dist, X_neigh = neigh.radius_neighbors(return_distance=True)
+    XY_dist, XY_neigh = neigh.radius_neighbors(Y, return_distance=True)
+    for i in range(X.shape[0]):
+        if len(X_neigh[i]) == 0:
+            continue
+        assert_array_equal(X_dist[i],
+                           pairwise_distances(X[i:i+1], X[X_neigh[i]],
+                                              metric='masked_euclidean')[0])
+    for i in range(Y.shape[0]):
+        if len(XY_neigh[i]) == 0:
+            continue
+        assert_array_equal(XY_dist[i],
+                           pairwise_distances(Y[i:i+1], X[XY_neigh[i]],
+                                              metric='masked_euclidean')[0])
+
+    # smoke test of graph
+    neigh.radius_neighbors_graph(X)
 
 
 def test_unsupervised_inputs():
