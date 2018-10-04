@@ -458,12 +458,14 @@ def test_scorer_sample_weight():
     X_train, X_test, y_train, y_test, y_ml_train, y_ml_test = split
 
     sample_weight = np.ones_like(y_test)
-    sample_weight[:10] = 2
+    sample_weight[:10] = 0
 
     # get sensible estimators for each metric
     estimator = _make_estimators(X_train, y_train, y_ml_train)
 
     for name, scorer in SCORERS.items():
+        if name == "max_error":
+            sample_weight[:10] = 2
         if name in MULTILABEL_ONLY_SCORERS:
             target = y_ml_test
         else:
