@@ -80,6 +80,10 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
     ...                                   cov=real_cov,
     ...                                   size=500)
     >>> cov = EllipticEnvelope(random_state=0).fit(X)
+    >>> # predict returns 1 for an inlier and -1 for an outlier
+    >>> cov.predict([[0, 0],
+    ...              [3, 3]])
+    array([ 1, -1])
     >>> cov.covariance_ # doctest: +ELLIPSIS
     array([[0.7411..., 0.2535...],
            [0.2535..., 0.3053...]])
