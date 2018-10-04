@@ -1443,7 +1443,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
         X = pairwise_estimator_convert_X(X, classifier_orig)
         set_random_state(classifier)
         # raises error on malformed input for fit
-    if not tags["no_validation"]:
+        if not tags["no_validation"]:
             with assert_raises(
                 ValueError,
                 msg="The classifier {} does not "
@@ -1522,7 +1522,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
             # check that probas for all classes sum to one
             assert_array_almost_equal(np.sum(y_prob, axis=1),
                                       np.ones(n_samples))
-                if not tags["no_validation"]:
+            if not tags["no_validation"]:
                 # raises error on malformed input for predict_proba
                 if _is_pairwise(classifier_orig):
                     with assert_raises(ValueError, msg="The classifier {} does not"

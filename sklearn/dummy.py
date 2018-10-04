@@ -357,7 +357,6 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
         return super(DummyClassifier, self).score(X, y, sample_weight)
 
 
-
 class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
     """
     DummyRegressor is a regressor that makes predictions using

@@ -246,7 +246,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble, MultiOutputMixin)):
 
         if self.n_estimators == 'warn':
             warn("The default value of n_estimators will change from "
-                          "10 in version 0.20 to 100 in 0.22.", FutureWarning)
+                 "10 in version 0.20 to 100 in 0.22.", FutureWarning)
             self.n_estimators = 10
 
         # Validate or convert input data
