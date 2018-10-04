@@ -130,14 +130,9 @@ def test_n_neighbors_datatype():
 
 
 def test_not_fitted_error_gets_raised():
-    expected_msg = "This NearestNeighbors instance is " \
-                   "not fitted yet. Call 'fit' with appropriate" \
-                   " arguments before using this method"
     neighbors_ = neighbors.NearestNeighbors()
-    assert_raises_regex(NotFittedError, expected_msg,
-                        neighbors_.kneighbors_graph([[1]]))
-    assert_raises_regex(NotFittedError, expected_msg,
-                        neighbors_.radius_neighbors_graph([[1]]))
+    assert_raises(NotFittedError, neighbors_.kneighbors_graph([[1]]))
+    assert_raises(NotFittedError, neighbors_.radius_neighbors_graph([[1]]))
 
 
 def test_precomputed(random_state=42):
