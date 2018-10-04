@@ -487,13 +487,15 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
     _monkey_patch_webbased_functions(
         monkeypatch, data_id, gzip_response)
     X_fetched, y_fetched = fetch_openml(data_id=data_id, cache=True,
-                            data_home=cache_directory, return_X_y=True)
+                                        data_home=cache_directory,
+                                        return_X_y=True)
 
     monkeypatch.setattr(sklearn.datasets.openml, 'urlopen',
                         _mock_urlopen_raise)
 
     X_cached, y_cached = fetch_openml(data_id=data_id, cache=True,
-                            data_home=cache_directory, return_X_y=True)
+                                      data_home=cache_directory,
+                                      return_X_y=True)
     np.testing.assert_array_equal(X_fetched, X_cached)
     np.testing.assert_array_equal(y_fetched, y_cached)
 
