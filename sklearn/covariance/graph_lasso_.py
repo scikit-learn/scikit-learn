@@ -346,13 +346,12 @@ class GraphicalLasso(EmpiricalCovariance):
     ...                                   cov=real_cov,
     ...                                   size=200)
     >>> cov = GraphicalLasso().fit(X)
-    >>> np.set_printoptions(precision=3, suppress=True)
-    >>> cov.covariance_
+    >>> np.around(cov.covariance_, decimals=3)
     array([[0.816, 0.049, 0.218, 0.019],
            [0.049, 0.364, 0.017, 0.034],
            [0.218, 0.017, 0.322, 0.093],
            [0.019, 0.034, 0.093, 0.69 ]])
-    >>> cov.location_
+    >>> np.around(cov.location_, decimals=3)
     array([0.073, 0.04 , 0.038, 0.143])
 
     See Also
@@ -602,13 +601,12 @@ class GraphicalLassoCV(GraphicalLasso):
     ...                                   cov=real_cov,
     ...                                   size=200)
     >>> cov = GraphicalLassoCV(cv=5).fit(X)
-    >>> np.set_printoptions(precision=3, suppress=True)
-    >>> cov.covariance_
+    >>> np.around(cov.covariance_, decimals=3)
     array([[0.816, 0.051, 0.22 , 0.017],
            [0.051, 0.364, 0.018, 0.036],
            [0.22 , 0.018, 0.322, 0.094],
            [0.017, 0.036, 0.094, 0.69 ]])
-    >>> cov.location_
+    >>> np.around(cov.location_, decimals=3)
     array([0.073, 0.04 , 0.038, 0.143])
 
     See Also
