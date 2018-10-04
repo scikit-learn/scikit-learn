@@ -323,7 +323,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
 
     def _get_tags(self):
         return _update_tags(super(DummyClassifier, self),
-                            no_validation=True, no_accuracy_assured=False)
+                            no_validation=True, no_accuracy_assured=True)
 
     def score(self, X, y, sample_weight=None):
         """Returns the mean accuracy on the given test data and labels.
