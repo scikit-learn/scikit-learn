@@ -101,7 +101,7 @@ Important links
 ~~~~~~~~~~~~~~~
 
 - Official source code repo: https://github.com/scikit-learn/scikit-learn
-- Download releases: https://pypi.python.org/pypi/scikit-learn
+- Download releases: https://pypi.org/project/scikit-learn/
 - Issue tracker: https://github.com/scikit-learn/scikit-learn/issues
 
 Source code
