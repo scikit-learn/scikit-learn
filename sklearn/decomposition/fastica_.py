@@ -232,7 +232,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         The mixing matrix can be obtained by::
 
             w = np.dot(W, K.T)
-            A = w.T * (w * w.T).I
+            A = w.T * (w * w.T).T
 
     S : array, shape (n_samples, n_components) | None
         Estimated source matrix
