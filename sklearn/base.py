@@ -21,7 +21,7 @@ _DEFAULT_TAGS = {
     'test_predictions': True,
     'input_validation': True,
     'multioutput': False,
-    "missing_values": False,
+    "allow_nan": False,
     'stateless': False,
     'multilabel': False,
     '_skip_test': False,

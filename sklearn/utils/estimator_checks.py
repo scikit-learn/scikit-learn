@@ -123,7 +123,7 @@ def _yield_non_meta_checks(name, estimator):
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
 
-    if (not tags["missing_values"] and tags["input_validation"]):
+    if (not tags["allow_nan"] and tags["input_validation"]):
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 

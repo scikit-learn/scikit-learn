@@ -412,7 +412,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     def _get_tags(self):
         return _update_tags(super(SimpleImputer, self),
-                            missing_values=True)
+                            allow_nan=True)
 
 
 class MissingIndicator(BaseEstimator, TransformerMixin):
@@ -638,4 +638,4 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
     def _get_tags(self):
         return _update_tags(super(MissingIndicator, self),
-                            missing_values=True)
+                            allow_nan=True)

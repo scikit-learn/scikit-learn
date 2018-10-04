@@ -407,7 +407,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     def _get_tags(self):
         return _update_tags(super(MinMaxScaler, self),
-                            missing_values=True)
+                            allow_nan=True)
 
 
 def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
@@ -803,7 +803,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     def _get_tags(self):
         return _update_tags(super(StandardScaler, self),
-                            missing_values=True)
+                            allow_nan=True)
 
 
 class MaxAbsScaler(BaseEstimator, TransformerMixin):
@@ -974,7 +974,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
 
     def _get_tags(self):
         return _update_tags(super(MaxAbsScaler, self),
-                            missing_values=True)
+                            allow_nan=True)
 
 
 def maxabs_scale(X, axis=0, copy=True):
@@ -1233,7 +1233,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     def _get_tags(self):
         return _update_tags(super(RobustScaler, self),
-                            missing_values=True)
+                            allow_nan=True)
 
 def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
                  quantile_range=(25.0, 75.0), copy=True):
@@ -2387,7 +2387,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     def _get_tags(self):
         return _update_tags(super(QuantileTransformer, self),
-                            missing_values=True)
+                            allow_nan=True)
 
 
 def quantile_transform(X, axis=0, n_quantiles=1000,
@@ -2870,7 +2870,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
     def _get_tags(self):
         return _update_tags(super(PowerTransformer, self),
-                            missing_values=True)
+                            allow_nan=True)
 
 
 def power_transform(X, method='box-cox', standardize=True, copy=True):
