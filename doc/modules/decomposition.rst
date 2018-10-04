@@ -167,7 +167,7 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 
     * `"Finding structure with randomness: Stochastic algorithms for
       constructing approximate matrix decompositions"
-      <http://arxiv.org/abs/0909.4061>`_
+      <https://arxiv.org/abs/0909.4061>`_
       Halko, et al., 2009
 
 

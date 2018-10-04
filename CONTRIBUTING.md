@@ -196,7 +196,7 @@ following rules before submitting:
 
 -  Please be specific about what estimators and/or functions are involved
    and the shape of the data, as appropriate; please include a
-   [reproducible](http://stackoverflow.com/help/mcve) code snippet
+   [reproducible](https://stackoverflow.com/help/mcve) code snippet
    or link to a [gist](https://gist.github.com). If an exception is raised,
    please provide the traceback.
 
@@ -230,8 +230,8 @@ be placed in ``_build/html/stable`` and are viewable in a web browser. See the
 
 For building the documentation, you will need
 [sphinx](http://sphinx.pocoo.org/),
-[matplotlib](http://matplotlib.org/), and
-[pillow](http://pillow.readthedocs.io/en/latest/).
+[matplotlib](https://matplotlib.org/), and
+[pillow](https://pillow.readthedocs.io/en/latest/).
 
 When you are writing documentation, it is important to keep a good
 compromise between mathematical and algorithmic details, and give
