@@ -16,7 +16,7 @@ from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
 from ..utils import check_array, check_random_state
-from ..base import BaseEstimator, _update_tags
+from ..base import BaseEstimator
 
 __all__ = ['PatchExtractor',
            'extract_patches_2d',
@@ -523,6 +523,5 @@ class PatchExtractor(BaseEstimator):
                 image, patch_size, self.max_patches, self.random_state)
         return patches
 
-    def _get_tags(self):
-        return _update_tags(super(PatchExtractor, self),
-                            input_types=["3darray"])
+    def _more_tags(self):
+        return {'X_types': ['3darray']}

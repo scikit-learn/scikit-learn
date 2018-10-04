@@ -24,7 +24,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin, _update_tags
+from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..preprocessing import normalize
@@ -633,9 +633,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                              alternate_sign=self.alternate_sign,
                              non_negative=self.non_negative)
 
-    def _get_tags(self):
-        return _update_tags(super(HashingVectorizer, self),
-                            input_types=["string"])
+    def _more_tags(self):
+        return {'X_types': ['string']}
 
 
 def _document_frequency(X):
@@ -1112,9 +1111,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         return [t for t, i in sorted(six.iteritems(self.vocabulary_),
                                      key=itemgetter(1))]
 
-    def _get_tags(self):
-        return _update_tags(super(CountVectorizer, self),
-                            input_types=["string"])
+    def _more_tags(self):
+        return {'X_types': ['string']}
 
 
 def _make_int_array():
@@ -1290,9 +1288,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         self._idf_diag = sp.spdiags(value, diags=0, m=n_features,
                                     n=n_features, format='csr')
 
-    def _get_tags(self):
-        return _update_tags(super(TfidfTransformer, self),
-                            input_types=["sparse"])
+    def _more_tags(self):
+        return {'X_types': 'sparse'}
 
 
 class TfidfVectorizer(CountVectorizer):
@@ -1623,6 +1620,5 @@ class TfidfVectorizer(CountVectorizer):
         X = super(TfidfVectorizer, self).transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
 
-    def _get_tags(self):
-        return _update_tags(super(TfidfVectorizer, self),
-                            input_types=["string"], _skip_test=True)
+    def _more_tags(self):
+        return {'X_types': ['string']}

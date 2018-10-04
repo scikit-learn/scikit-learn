@@ -12,9 +12,7 @@ from scipy import sparse
 from scipy import stats
 
 from .base import BaseEstimator, TransformerMixin
-from .base import clone, _update_tags
-from .preprocessing import normalize
-from .utils import check_array, check_random_state, safe_indexing
+from .utils import check_array
 from .utils.sparsefuncs import _get_median
 from .utils.validation import check_is_fitted
 from .utils.validation import FLOAT_DTYPES
@@ -410,9 +408,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         return X
 
-    def _get_tags(self):
-        return _update_tags(super(SimpleImputer, self),
-                            allow_nan=True)
+    def _more_tags(self):
+        return {'allow_nan': True}
 
 
 class MissingIndicator(BaseEstimator, TransformerMixin):
@@ -636,6 +633,5 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         """
         return self.fit(X, y).transform(X)
 
-    def _get_tags(self):
-        return _update_tags(super(MissingIndicator, self),
-                            allow_nan=True)
+    def _more_tags(self):
+        return {'allow_nan': True}

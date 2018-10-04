@@ -9,7 +9,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
-from .base import MultiOutputMixin, _update_tags
+from .base import MultiOutputMixin
 from .utils import check_random_state
 from .utils.validation import _num_samples
 from .utils.validation import check_array
@@ -321,9 +321,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
         else:
             return [np.log(p) for p in proba]
 
-    def _get_tags(self):
-        return _update_tags(super(DummyClassifier, self),
-                            no_validation=True, no_accuracy_assured=True)
+    def _more_tags(self):
+        return {'no_accuracy_assured': True, 'no_validation': True}
 
     def score(self, X, y, sample_weight=None):
         """Returns the mean accuracy on the given test data and labels.
@@ -517,9 +516,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
 
         return (y, y_std) if return_std else y
 
-    def _get_tags(self):
-        return _update_tags(super(DummyRegressor, self),
-                            no_accuracy_assured=True, no_validation=True)
+    def _more_tags(self):
+        return {'no_accuracy_assured': True, 'no_validation': True}
 
     def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction.

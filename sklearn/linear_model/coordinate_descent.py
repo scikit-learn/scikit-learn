@@ -13,7 +13,7 @@ import numpy as np
 from scipy import sparse
 
 from .base import LinearModel, _pre_fit
-from ..base import RegressorMixin, MultiOutputMixin, _update_tags
+from ..base import RegressorMixin, MultiOutputMixin
 from .base import _preprocess_data
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
@@ -1824,9 +1824,8 @@ class MultiTaskElasticNet(Lasso):
         # return self for chaining fit and predict calls
         return self
 
-    def _get_tags(self):
-        return _update_tags(super(MultiTaskElasticNet, self),
-                            multioutput_only=True)
+    def _more_tags(self):
+        return {'multioutput_only': True}
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
@@ -2137,9 +2136,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.random_state = random_state
         self.selection = selection
 
-    def _get_tags(self):
-        return _update_tags(super(MultiTaskElasticNetCV, self),
-                            multioutput_only=True)
+    def _more_tags(self):
+        return {'multioutput_only': True}
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
@@ -2300,6 +2298,5 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
             cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state,
             selection=selection)
 
-    def _get_tags(self):
-        return _update_tags(super(MultiTaskLassoCV, self),
-                            multioutput_only=True)
+    def _more_tags(self):
+        return {'multioutput_only': True}

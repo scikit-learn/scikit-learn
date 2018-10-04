@@ -6,7 +6,7 @@
 import numpy as np
 from scipy import interpolate
 from scipy.stats import spearmanr
-from .base import BaseEstimator, TransformerMixin, RegressorMixin, _update_tags
+from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import as_float_array, check_array, check_consistent_length
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 import warnings
@@ -390,6 +390,5 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         if hasattr(self, '_necessary_X_') and hasattr(self, '_necessary_y_'):
             self._build_f(self._necessary_X_, self._necessary_y_)
 
-    def _get_tags(self):
-        return _update_tags(super(IsotonicRegression, self),
-                            input_types=["1darray"])
+    def _more_tags(self):
+        return {'X_types': ['1darray']}

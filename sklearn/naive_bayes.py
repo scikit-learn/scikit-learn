@@ -22,7 +22,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy.sparse import issparse
 
-from .base import BaseEstimator, ClassifierMixin, _update_tags
+from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
@@ -441,6 +441,7 @@ class GaussianNB(BaseNB):
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
 
+
 _ALPHA_MIN = 1e-10
 
 
@@ -626,9 +627,8 @@ class BaseDiscreteNB(BaseNB):
     coef_ = property(_get_coef)
     intercept_ = property(_get_intercept)
 
-    def _get_tags(self):
-        return _update_tags(super(BaseDiscreteNB, self),
-                            no_accuracy_assured=True)
+    def _more_tags(self):
+        return {'no_accuracy_assured': True}
 
 
 class MultinomialNB(BaseDiscreteNB):

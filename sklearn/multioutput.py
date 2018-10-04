@@ -18,7 +18,7 @@ import numpy as np
 import scipy.sparse as sp
 from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
-from .base import RegressorMixin, ClassifierMixin, is_classifier, _update_tags
+from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.fixes import parallel_helper
@@ -196,9 +196,8 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
 
         return np.asarray(y).T
 
-    def _get_tags(self):
-        return _update_tags(super(MultiOutputEstimator, self),
-                            multioutput_only=True)
+    def _more_tags(self):
+        return {'multioutput_only': True}
 
 
 class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
@@ -371,9 +370,8 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         y_pred = self.predict(X)
         return np.mean(np.all(y == y_pred, axis=1))
 
-    def _get_tags(self):
-        return _update_tags(super(MultiOutputClassifier, self),
-                            _skip_test=True)
+    def _more_tags(self):
+        return {'multioutput_only': True}
 
 
 class _BaseChain(six.with_metaclass(ABCMeta, BaseEstimator)):
@@ -636,9 +634,9 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
 
         return Y_decision
 
-    def _get_tags(self):
-        return _update_tags(super(ClassifierChain, self),
-                            _skip_test=True)
+    def _more_tags(self):
+        return {'_skip_test': True}
+
 
 class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
     """A multi-label model that arranges regressions into a chain.

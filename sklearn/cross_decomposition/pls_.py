@@ -13,7 +13,7 @@ from scipy.linalg import pinv2, svd
 from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
-from ..base import MultiOutputMixin, _update_tags
+from ..base import MultiOutputMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
@@ -456,8 +456,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         """
         return self.fit(X, y).transform(X, y)
 
-    def _get_tags(self):
-        return _update_tags(super(_PLS, self), no_accuracy_assured=True)
+    def _more_tags(self):
+        return {'no_accuracy_assured': True}
 
 
 class PLSRegression(_PLS):

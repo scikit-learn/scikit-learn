@@ -8,7 +8,7 @@ import warnings
 from scipy import sparse
 
 from .base import KNeighborsMixin, RadiusNeighborsMixin
-from ..base import BaseEstimator, _update_tags
+from ..base import BaseEstimator
 from ..utils.validation import check_array
 from ..utils import check_random_state
 from ..metrics.pairwise import pairwise_distances
@@ -136,10 +136,8 @@ class GaussianRandomProjectionHash(ProjectionToHashMixin,
             n_components=n_components,
             random_state=random_state)
 
-    def _get_tags(self):
-        # likely to be removed and I have no idea what's happening
-        return _update_tags(super(GaussianRandomProjectionHash, self),
-                            _skip_test=True)
+    def _more_tags(self):
+        return {'_skip_test': True}
 
 
 def _array_of_arrays(list_of_arrays):

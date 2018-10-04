@@ -8,7 +8,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..utils import IS_PYPY
-from ..base import BaseEstimator, TransformerMixin, _update_tags
+from ..base import BaseEstimator, TransformerMixin
 
 if not IS_PYPY:
     from ._hashing import transform as _hashing_transform
@@ -179,6 +179,5 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             np.abs(X.data, X.data)
         return X
 
-    def _get_tags(self):
-        return _update_tags(super(FeatureHasher, self),
-                            input_types=[self.input_type])
+    def _more_tags(self):
+        return {'X_types': [self.input_type]}

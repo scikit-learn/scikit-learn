@@ -7,6 +7,7 @@ import copy
 import warnings
 from collections import defaultdict
 import struct
+import inspect
 
 import numpy as np
 from scipy import sparse
@@ -26,15 +27,6 @@ _DEFAULT_TAGS = {
     'multilabel': False,
     '_skip_test': False,
     'multioutput_only': False}
-
-
-def _update_tags(sup, **kwargs):
-    if hasattr(sup, "_get_tags"):
-        tags_old = sup._get_tags().copy()
-        tags_old.update(kwargs)
-        return tags_old
-    else:
-        return kwargs.copy()
 
 
 def _first_and_last_element(arr):
@@ -274,6 +266,15 @@ class BaseEstimator(object):
         except AttributeError:
             self.__dict__.update(state)
 
+    def _get_tags(self):
+        tags = _DEFAULT_TAGS.copy()
+        for base_class in inspect.getmro(self.__class__):
+            if (hasattr(base_class, '_more_tags')
+                    and base_class != self.__class__):
+                tags.update(base_class()._more_tags())
+        tags.update(getattr(self, '_more_tags', {}))
+        return tags
+
 
 class ClassifierMixin(object):
     """Mixin class for all classifiers in scikit-learn."""
@@ -305,10 +306,6 @@ class ClassifierMixin(object):
         """
         from .metrics import accuracy_score
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
-
-    def _get_tags(self):
-        return _update_tags(super(ClassifierMixin, self),
-                            is_classifier=True)
 
 
 class RegressorMixin(object):
@@ -350,10 +347,6 @@ class RegressorMixin(object):
         return r2_score(y, self.predict(X), sample_weight=sample_weight,
                         multioutput='variance_weighted')
 
-    def _get_tags(self):
-        return _update_tags(super(RegressorMixin, self),
-                            is_regressor=True)
-
 
 class ClusterMixin(object):
     """Mixin class for all cluster estimators in scikit-learn."""
@@ -379,9 +372,6 @@ class ClusterMixin(object):
         # method is possible for a given clustering algorithm
         self.fit(X)
         return self.labels_
-
-    def _get_tags(self):
-        return _update_tags(super(ClusterMixin, self), is_clusterer=True)
 
 
 class BiclusterMixin(object):
@@ -491,10 +481,6 @@ class TransformerMixin(object):
             # fit method of arity 2 (supervised transformation)
             return self.fit(X, y, **fit_params).transform(X)
 
-    def _get_tags(self):
-        return _update_tags(super(TransformerMixin, self),
-                            is_transformer=True)
-
 
 class DensityMixin(object):
     """Mixin class for all density estimators in scikit-learn."""
@@ -549,9 +535,8 @@ class MetaEstimatorMixin(object):
 
 class MultiOutputMixin(object):
     """Mixin to mark estimators that support multioutput."""
-    def _get_tags(self):
-        return _update_tags(super(MultiOutputMixin, self),
-                            multioutput=True)
+    def _more_tags(self):
+        return {'multioutput': True}
 
 
 def _is_32bit():
@@ -561,9 +546,8 @@ def _is_32bit():
 
 class _UnstableOn32BitMixin(object):
     """Mark estimators that are non-determinstic on 32bit."""
-    def _get_tags(self):
-        return _update_tags(super(_UnstableOn32BitMixin, self),
-                            non_deterministic=_is_32bit())
+    def _more_tags(self):
+        return {'non_deterministic': _is_32bit()}
 
 
 def is_classifier(estimator):
