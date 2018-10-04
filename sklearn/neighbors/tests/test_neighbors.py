@@ -130,9 +130,10 @@ def test_n_neighbors_datatype():
 
 
 def test_not_fitted_error_gets_raised():
+    X = [[1]]
     neighbors_ = neighbors.NearestNeighbors()
-    assert_raises(NotFittedError, neighbors_.kneighbors_graph([[1]]))
-    assert_raises(NotFittedError, neighbors_.radius_neighbors_graph([[1]]))
+    assert_raises(NotFittedError, neighbors_.kneighbors_graph, X)
+    assert_raises(NotFittedError, neighbors_.radius_neighbors_graph, X)
 
 
 def test_precomputed(random_state=42):
