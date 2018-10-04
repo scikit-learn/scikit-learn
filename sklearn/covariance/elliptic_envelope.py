@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-import scipy as sp
 import warnings
 from . import MinCovDet
 from ..utils.validation import check_is_fitted, check_array

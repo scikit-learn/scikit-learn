@@ -193,7 +193,11 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
             seeds = X
     n_samples, n_features = X.shape
     center_intensity_dict = {}
-    nbrs = NearestNeighbors(radius=bandwidth, n_jobs=n_jobs).fit(X)
+
+    # We use n_jobs=1 because this will be used in nested calls under
+    # parallel calls to _mean_shift_single_seed so there is no need for
+    # for further parallelism.
+    nbrs = NearestNeighbors(radius=bandwidth, n_jobs=1).fit(X)
 
     # execute iterations on all seeds in parallel
     all_res = Parallel(n_jobs=n_jobs)(
