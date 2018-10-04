@@ -253,9 +253,9 @@ def _yield_outliers_checks(name, estimator):
 
 def _yield_all_checks(name, estimator):
     tags = _safe_tags(estimator)
-    if "2darray" not in tags["input_types"]:
+    if "2darray" not in tags["X_types"]:
         warnings.warn("Can't test estimator {} which requires input "
-                      " of type {}".format(name, tags["input_types"]),
+                      " of type {}".format(name, tags["X_types"]),
                       SkipTestWarning)
         return
     if tags["_skip_test"]:

@@ -1621,4 +1621,4 @@ class TfidfVectorizer(CountVectorizer):
         return self._tfidf.transform(X, copy=False)
 
     def _more_tags(self):
-        return {'X_types': ['string']}
+        return {'X_types': ['string'], '_skip_test': True}

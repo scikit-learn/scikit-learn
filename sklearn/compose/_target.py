@@ -228,4 +228,4 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         return pred_trans
 
     def _more_tags(self):
-        return {'no_accuracy_assured': True}
+        return {'no_accuracy_assured': True, 'no_validation': True}

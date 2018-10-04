@@ -18,7 +18,7 @@ from . import __version__
 _DEFAULT_TAGS = {
     'non_deterministic': False,
     'requires_positive_data': False,
-    'input_types': ['2darray'],
+    'X_types': ['2darray'],
     'no_accuracy_assured': False,
     'no_validation': False,
     'multioutput': False,
@@ -271,8 +271,9 @@ class BaseEstimator(object):
         for base_class in inspect.getmro(self.__class__):
             if (hasattr(base_class, '_more_tags')
                     and base_class != self.__class__):
-                tags.update(base_class()._more_tags())
-        tags.update(getattr(self, '_more_tags', {}))
+                tags.update(base_class._more_tags(self))
+        if hasattr(self, '_more_tags'):
+            tags.update(self._more_tags())
         return tags
 
 
