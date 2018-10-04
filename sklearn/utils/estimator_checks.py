@@ -1021,7 +1021,7 @@ def _check_transformer(name, transformer_orig, X, y):
             X_pred2 = transformer.transform(X)
             X_pred3 = transformer.fit_transform(X, y=y_)
 
-        if not _safe_tags(transformer_orig, 'deterministic'):
+        if _safe_tags(transformer_orig, 'non_deterministic'):
             msg = name + ' is non deterministic'
             raise SkipTest(msg)
         if isinstance(X_pred, tuple) and isinstance(X_pred2, tuple):
@@ -1063,7 +1063,7 @@ def _check_transformer(name, transformer_orig, X, y):
 
 @ignore_warnings
 def check_pipeline_consistency(name, estimator_orig):
-    if not _safe_tags(estimator_orig, 'deterministic'):
+    if _safe_tags(estimator_orig, 'non_deterministic'):
         msg = name + ' is non deterministic'
         raise SkipTest(msg)
 
@@ -1339,7 +1339,7 @@ def check_clustering(name, clusterer_orig, readonly_memmap=False):
     pred = clusterer.labels_
     assert_equal(pred.shape, (n_samples,))
     assert_greater(adjusted_rand_score(pred, y), 0.4)
-    if not _safe_tags(clusterer, 'deterministic'):
+    if _safe_tags(clusterer, 'non_deterministic'):
         return
     set_random_state(clusterer)
     with warnings.catch_warnings(record=True):

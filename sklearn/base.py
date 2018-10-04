@@ -15,7 +15,7 @@ from .utils.fixes import signature
 from . import __version__
 
 _DEFAULT_TAGS = {
-    'deterministic': True,
+    'non_deterministic': False,
     'requires_positive_data': False,
     'input_types': ['2darray'],
     'test_predictions': True,
@@ -563,7 +563,7 @@ class _UnstableOn32BitMixin(object):
     """Mark estimators that are non-determinstic on 32bit."""
     def _get_tags(self):
         return _update_tags(super(_UnstableOn32BitMixin, self),
-                            deterministic=_is_32bit())
+                            non_deterministic=_is_32bit())
 
 
 def is_classifier(estimator):
