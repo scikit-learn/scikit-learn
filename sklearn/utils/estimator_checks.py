@@ -2024,37 +2024,6 @@ def check_estimators_overwrite_params(name, estimator_orig):
                      " the parameter %s from %s to %s during fit."
                      % (name, param_name, original_value, new_value))
 
-
-@ignore_warnings(category=(DeprecationWarning, FutureWarning))
-def check_no_fit_attributes_set_in_init(name, Estimator):
-    """Check that Estimator.__init__ doesn't set trailing-_ attributes."""
-    # this check works on classes, not instances
-    required_parameters = getattr(Estimator, "_required_parameters", [])
-    if len(required_parameters):
-        if required_parameters in ["base_estimator", "estimator"]:
-            if issubclass(Estimator, RegressorMixin):
-                estimator = Estimator(Ridge())
-            else:
-                estimator = Estimator(LinearDiscriminantAnalysis())
-        else:
-            raise SkipTest("Can't instantiate estimator {} which"
-                           " requires parameters {}".format(
-                               name, required_parameters))
-    estimator = Estimator()
-    for attr in dir(estimator):
-        if attr.endswith("_") and not attr.startswith("__"):
-            # This check is for properties, they can be listed in dir
-            # while at the same time have hasattr return False as long
-            # as the property getter raises an AttributeError
-            assert_false(
-                hasattr(estimator, attr),
-                "By convention, attributes ending with '_' are "
-                'estimated from data in scikit-learn. Consequently they '
-                'should not be initialized in the constructor of an '
-                'estimator but in the fit method. Attribute {!r} '
-                'was found in estimator {}'.format(attr, name))
-
-
 def check_no_attributes_set_in_init(name, estimator):
     """Check setting during init. """
 
