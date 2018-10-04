@@ -12,6 +12,27 @@ import itertools
 import numpy as np
 import numpy.linalg as la
 from scipy import sparse, stats
+
+try:
+    from scipy.sparse import random as sparse_random
+except:
+    # Helper function to create sparse random matrices.
+    # TODO: remove once scipy < 0.17 is no longer supported and just use
+    # scipy.sparse.random
+    def sparse_random(num_rows, num_cols, density, random_state=None):
+        np.random.seed(random_state)
+        X = np.random.random((num_rows, num_cols))
+        full = num_cols * (1 - density)
+        num_to_zero = int(full)
+        prob_to_increment = full - num_to_zero
+        for row in X:
+            increment = int(np.random.random() < prob_to_increment)
+            zero_out = np.random.choice(range(num_cols),
+                                        size=num_to_zero + increment,
+                                        replace=False)
+            row[zero_out] = 0
+        return sparse.csr_matrix(X)
+
 from distutils.version import LooseVersion
 import pytest
 
@@ -79,24 +100,6 @@ X_1row = X_2d[0, :].reshape(1, n_features)
 X_1col = X_2d[:, 0].reshape(n_samples, 1)
 X_list_1row = X_1row.tolist()
 X_list_1col = X_1col.tolist()
-
-
-# Helper function to create sparse random matrices.
-# TODO: remove skipif once scipy < 0.17 is no longer supported and just use
-# scipy.sparse.random
-def sparse_random(num_rows, num_cols, density, random_state=None):
-    np.random.seed(random_state)
-    X = np.random.random((num_rows, num_cols))
-    full = num_cols * (1 - density)
-    num_to_zero = int(full)
-    prob_to_increment = full - num_to_zero
-    for row in X:
-        increment = int(np.random.random() < prob_to_increment)
-        zero_out = np.random.choice(range(num_cols),
-                                    size=num_to_zero + increment,
-                                    replace=False)
-        row[zero_out] = 0
-    return sparse.csr_matrix(X)
 
 
 def toarray(a):
