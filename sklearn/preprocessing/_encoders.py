@@ -82,6 +82,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             if self._categories == 'auto':
                 Xi, group = _group_values(Xi.copy(), min_freq=self.min_freq)
                 cats = _encode(Xi)
+                self.groups_.append(group)
             else:
                 cats = np.array(self._categories[i], dtype=X.dtype)
                 if self.handle_unknown == 'error':
@@ -90,7 +91,6 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
-            self.groups_.append(group)
             self.categories_.append(cats)
 
     def _transform(self, X, handle_unknown='error'):
@@ -102,7 +102,10 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
         for i in range(n_features):
             Xi = X[:, i]
-            Xi, _ = _group_values(Xi, group=self.groups_[i])
+            try:
+                Xi, _ = _group_values(Xi, group=self.groups_[i])
+            except IndexError:
+                pass
             diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
                                                      return_mask=True)
 
