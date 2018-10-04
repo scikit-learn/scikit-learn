@@ -526,6 +526,7 @@ class KNeighborsMixin(object):
         --------
         NearestNeighbors.radius_neighbors_graph
         """
+        check_is_fitted(self, "_fit_method")
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
@@ -801,6 +802,7 @@ class RadiusNeighborsMixin(object):
         --------
         kneighbors_graph
         """
+        check_is_fitted(self, "_fit_method")
         if X is not None:
             X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
