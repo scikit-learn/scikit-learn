@@ -85,15 +85,14 @@ def test_all_estimator_no_base_class():
 
 @pytest.mark.parametrize(
         'name, Estimator',
-        all_estimators(include_meta_estimators=True)
+        all_estimators()
 )
 def test_parameters_default_constructible(name, Estimator):
     # Test that estimators are default-constructible
     check_parameters_default_constructible(name, Estimator)
-    #    yield check_no_fit_attributes_set_in_init, name, Estimator FIXME
 
 
-def _tested_non_meta_estimators():
+def _tested_estimators():
     for name, Estimator in all_estimators():
         if issubclass(Estimator, BiclusterMixin):
             continue
@@ -118,9 +117,6 @@ def _tested_non_meta_estimators():
         else:
             estimator = Estimator()
         """
-        # check this on class
-        # FIXME does this happen now?
-        # yield check_no_fit_attributes_set_in_init, name, Estimator
         yield name, Estimator
 
 
@@ -142,10 +138,10 @@ def _rename_partial(val):
 @pytest.mark.parametrize(
         "name, Estimator, check",
         _generate_checks_per_estimator(_yield_all_checks,
-                                       _tested_non_meta_estimators()),
+                                       _tested_estimators()),
         ids=_rename_partial
 )
-def test_non_meta_estimators(name, Estimator, check):
+def test_estimators(name, Estimator, check):
     # Common tests for non-meta estimators
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
                                    UserWarning, FutureWarning)):
@@ -155,9 +151,9 @@ def test_non_meta_estimators(name, Estimator, check):
 
 
 @pytest.mark.parametrize("name, Estimator",
-                         _tested_non_meta_estimators())
+                         _tested_estimators())
 def test_no_attributes_set_in_init(name, Estimator):
-    # input validation etc for non-meta estimators
+    # input validation etc for all estimators
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         estimator = Estimator()

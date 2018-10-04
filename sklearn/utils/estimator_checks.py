@@ -100,7 +100,7 @@ ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MissingIndicator',
              'PowerTransformer', 'QuantileTransformer']
 
 
-def _yield_non_meta_checks(name, estimator):
+def _yield_checks(name, estimator):
     tags = _safe_tags(estimator)
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
@@ -264,7 +264,7 @@ def _yield_all_checks(name, estimator):
                       SkipTestWarning)
         return
 
-    for check in _yield_non_meta_checks(name, estimator):
+    for check in _yield_checks(name, estimator):
         yield check
     if is_classifier(estimator):
         for check in _yield_classifier_checks(name, estimator):
@@ -2023,6 +2023,7 @@ def check_estimators_overwrite_params(name, estimator_orig):
                      "Estimator %s should not change or mutate "
                      " the parameter %s from %s to %s during fit."
                      % (name, param_name, original_value, new_value))
+
 
 def check_no_attributes_set_in_init(name, estimator):
     """Check setting during init. """
