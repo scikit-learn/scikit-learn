@@ -369,14 +369,13 @@ def test_column_transformer_sparse_stacking():
 
 
 def test_column_transformer_mixed_cols_sparse():
-    pd = pytest.importorskip('pandas')
-    df = pd.DataFrame([['a', 1, True],
-                       ['b', 2, False]],
-                      columns=['categorical', 'numerical', 'boolean'])
+    df = np.array([['a', 1, True],
+                   ['b', 2, False]],
+                  dtype='O')
 
     ct = make_column_transformer(
-        (['categorical'], OneHotEncoder()),
-        (['numerical', 'boolean'], 'passthrough'),
+        ([0], OneHotEncoder()),
+        ([1, 2], 'passthrough'),
         sparse_threshold=1.0
     )
 
@@ -388,8 +387,8 @@ def test_column_transformer_mixed_cols_sparse():
                                                     [0, 1, 2, 0]]))
 
     ct = make_column_transformer(
-        (['categorical'], OneHotEncoder()),
-        (['categorical'], 'passthrough'),
+        ([0], OneHotEncoder()),
+        ([0], 'passthrough'),
         sparse_threshold=1.0
     )
     with pytest.raises(ValueError,
