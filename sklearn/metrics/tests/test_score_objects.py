@@ -458,7 +458,7 @@ def test_scorer_sample_weight():
     X_train, X_test, y_train, y_test, y_ml_train, y_ml_test = split
 
     sample_weight = np.ones_like(y_test)
-    sample_weight[:10] = 0
+    sample_weight[:10] = 2
 
     # get sensible estimators for each metric
     estimator = _make_estimators(X_train, y_train, y_ml_train)
