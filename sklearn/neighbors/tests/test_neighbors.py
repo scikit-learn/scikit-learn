@@ -366,9 +366,6 @@ def test_radius_neighbors_classifier_when_no_neighbors():
                                    clf.predict(z1))
                 if outlier_label is None:
                     assert_raises(ValueError, clf.predict, z2)
-                elif False:
-                    assert_array_equal(np.array([1, outlier_label]),
-                                       clf.predict(z2))
 
 
 def test_radius_neighbors_classifier_outlier_labeling():

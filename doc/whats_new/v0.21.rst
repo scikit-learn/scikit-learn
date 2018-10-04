@@ -48,6 +48,14 @@ Support for Python 3.4 and below has been officially dropped.
   to set and that scales better, by :user:`Shane <espg>` and
   :user:`Adrin Jalali <adrinjalali>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Efficiency| |API| Speed improvement in :class:`preprocessing.PolynomialFeatures`,
+  in the dense case. Also added a new parameter ``order`` which controls output
+  order for further speed performances. :issue:`12251` by `Tom Dupre la Tour`_.
+
+
 Multiple modules
 ................
 

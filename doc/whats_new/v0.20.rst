@@ -12,14 +12,44 @@ Version 0.20.1
 This is a bug-fix release with some minor documentation improvements and
 enhancements to features released in 0.20.0.
 
+Changelog
+---------
+
+:mod:`sklearn.cluster`
+......................
+
 - |Efficiency| make :class:`cluster.MeanShift` no longer try to do nested
   parallelism as the overhead would hurt performance significantly when
   ``n_jobs > 1``.
   :issue:`12159` by :user:`Olivier Grisel <ogrisel>`.
 
+- |Fix| Fixed a bug in :class:`cluster.DBSCAN` with precomputed sparse neighbors
+  graph, which would add explicitly zeros on the diagonal even when already
+  present. :issue:`12105` by `Tom Dupre la Tour`_.
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixed an issue in :class:`compose.ColumnTransformer` when stacking
+  columns with types not convertible to a numeric.
+  :issue:`11912` by :user:`Adrin Jalali <adrinjalali>`.
+
+:mod:`sklearn.datasets`
+............................
+
+- |Fix| Fixed integer overflow in :func:`datasets.make_classification`
+  for values of ``n_informative`` parameter larger than 64.
+  :issue:10811 by :user:`Roman Feldbauer <VarIr>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
 - |Fix| Fixed a bug mostly affecting :class:`ensemble.RandomForestClassifier`
   where ``class_weight='balanced_subsample'`` failed with more than 32 classes.
   :issue:`12165` by `Joel Nothman`_.
+
+:mod:`sklearn.linear_model`
+...........................
 
 - |Fix| :func:`linear_model.SGDClassifier` and variants
   with ``early_stopping=True`` would not use a consistent validation
@@ -27,10 +57,13 @@ enhancements to features released in 0.20.0.
   those estimators as part of parallel parameter search or cross-validation.
   :issue:`12122` by :user:`Olivier Grisel <ogrisel>`.
 
+:mod:`sklearn.neighbors`
+........................
+
 - |Fix| force the parallelism backend to :code:`threading` for
   :class:`neighbors.KDTree` and :class:`neighbors.BallTree` in Python 2.7 to
   avoid pickling errors caused by the serialization of their methods.
-  :issue:`12171` by :user:`Thomas Moreau <tomMoral>`
+  :issue:`12171` by :user:`Thomas Moreau <tomMoral>`.
 
 .. _changes_0_20:
 
@@ -231,7 +264,7 @@ Support for Python 3.3 has been officially dropped.
 .......................
 
 - |MajorFeature| Added :func:`datasets.fetch_openml` to fetch datasets from
-  `OpenML <http://openml.org>`_. OpenML is a free, open data sharing platform
+  `OpenML <https://openml.org>`_. OpenML is a free, open data sharing platform
   and will be used instead of mldata as it provides better service availability.
   :issue:`9908` by `Andreas Müller`_ and :user:`Jan N. van Rijn <janvanrijn>`.
 
@@ -648,7 +681,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Feature| :func:`metrics.classification_report` now reports all applicable averages on
   the given data, including micro, macro and weighted average as well as samples
-  average for multilabel data. :issue:`11679` by :user:`Alexander Pacha <apacha>`. 
+  average for multilabel data. :issue:`11679` by :user:`Alexander Pacha <apacha>`.
 
 - |Feature| :func:`metrics.average_precision_score` now supports binary
   ``y_true`` other than ``{0, 1}`` or ``{-1, 1}`` through ``pos_label``
@@ -902,7 +935,7 @@ Support for Python 3.3 has been officially dropped.
   keyword arguments on to the pipeline's last estimator, enabling the use of
   parameters such as ``return_std`` in a pipeline with caution.
   :issue:`9304` by :user:`Breno Freitas <brenolf>`.
-  
+
 - |API| :class:`pipeline.FeatureUnion` now supports ``'drop'`` as a transformer
   to drop features. :issue:`11144` by :user:`thomasjpfan`.
 
@@ -1024,7 +1057,7 @@ Support for Python 3.3 has been officially dropped.
 - |API| The NaN marker for the missing values has been changed
   between the :class:`preprocessing.Imputer` and the
   :class:`impute.SimpleImputer`.
-  ``missing_values='NaN'`` should now be
+  ``missing_values='NaN'`` should now be
   ``missing_values=np.nan``. :issue:`11211` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 

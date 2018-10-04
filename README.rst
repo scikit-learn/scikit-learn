@@ -34,7 +34,8 @@ SciPy and distributed under the 3-Clause BSD license.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
-the `AUTHORS.rst <AUTHORS.rst>`_ file for a complete list of contributors.
+the `About us <http://scikit-learn.org/dev/about.html#authors>`_ page
+for a list of core contributors.
 
 It is currently maintained by a team of volunteers.
 
@@ -100,7 +101,7 @@ Important links
 ~~~~~~~~~~~~~~~
 
 - Official source code repo: https://github.com/scikit-learn/scikit-learn
-- Download releases: https://pypi.python.org/pypi/scikit-learn
+- Download releases: https://pypi.org/project/scikit-learn/
 - Issue tracker: https://github.com/scikit-learn/scikit-learn/issues
 
 Source code
@@ -143,7 +144,8 @@ Project History
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
-the  `AUTHORS.rst <AUTHORS.rst>`_ file for a complete list of contributors.
+the  `About us <http://scikit-learn.org/dev/about.html#authors>`_ page
+for a list of core contributors.
 
 The project is currently maintained by a team of volunteers.
 
@@ -165,7 +167,7 @@ Communication
 
 - Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
 - IRC channel: ``#scikit-learn`` at ``webchat.freenode.net``
-- Stack Overflow: http://stackoverflow.com/questions/tagged/scikit-learn
+- Stack Overflow: https://stackoverflow.com/questions/tagged/scikit-learn
 - Website: http://scikit-learn.org
 
 Citation

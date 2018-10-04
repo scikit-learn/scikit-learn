@@ -109,16 +109,6 @@ def fast_logdet(A):
     return ld
 
 
-def _impose_f_order(X):
-    """Helper Function"""
-    # important to access flags instead of calling np.isfortran,
-    # this catches corner cases.
-    if X.flags.c_contiguous:
-        return check_array(X.T, copy=False, order='F'), True
-    else:
-        return check_array(X, copy=False, order='F'), False
-
-
 @deprecated("sklearn.utils.extmath.fast_dot was deprecated in version 0.19 "
             "and will be removed in 0.21. Use the equivalent np.dot instead.")
 def fast_dot(a, b, out=None):
@@ -218,7 +208,7 @@ def randomized_range_finder(A, size, n_iter,
     Follows Algorithm 4.3 of
     Finding structure with randomness: Stochastic algorithms for constructing
     approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909) http://arxiv.org/pdf/0909.4061
+    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
 
     An implementation of a randomized algorithm for principal component
     analysis
@@ -331,7 +321,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     ----------
     * Finding structure with randomness: Stochastic algorithms for constructing
       approximate matrix decompositions
-      Halko, et al., 2009 http://arxiv.org/abs/arXiv:0909.4061
+      Halko, et al., 2009 https://arxiv.org/abs/0909.4061
 
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
@@ -661,7 +651,7 @@ def softmax(X, copy=True):
 def safe_min(X):
     """Returns the minimum value of a dense or a CSR/CSC matrix.
 
-    Adapated from http://stackoverflow.com/q/13426580
+    Adapated from https://stackoverflow.com/q/13426580
 
     Parameters
     ----------
