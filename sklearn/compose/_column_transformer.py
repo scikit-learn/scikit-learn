@@ -623,10 +623,7 @@ boolean mask array or callable
                 else:
                     inverse_Xs[:, indices] = inverse_X.toarray()
             else:
-                if inverse_X.ndim == 1:
-                    inverse_Xs[:, indices] = inverse_X[:, np.newaxis]
-                else:
-                    inverse_Xs[:, indices] = inverse_X
+                inverse_Xs[:, indices] = inverse_X
 
         if self._X_is_sparse:
             return inverse_Xs.tocsr()

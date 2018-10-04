@@ -408,26 +408,6 @@ def test_column_transformer_sparse_array():
         assert_allclose_dense_sparse(
             ct.inverse_transform(X_res_both), X_sparse)
 
-    class TransSparseToArray(BaseEstimator):
-        def fit(self, X, y=None):
-            return self
-
-        def transform(self, X, y=None):
-            return X.toarray()
-
-        def inverse_transform(self, X):
-            return sparse.csr_matrix(X)
-
-    X_res_both = X_sparse.toarray()
-    for col in [[0, 1], slice(0, 2)]:
-        ct = ColumnTransformer(
-            [('trans', TransSparseToArray(), col)], sparse_threshold=0.8)
-        assert_allclose_dense_sparse(ct.fit_transform(X_sparse), X_res_both)
-        assert_allclose_dense_sparse(ct.fit(X_sparse).transform(X_sparse),
-                                     X_res_both)
-        assert_allclose_dense_sparse(
-            ct.inverse_transform(X_res_both), X_sparse)
-
 
 def test_column_transformer_list():
     X_list = [
@@ -454,7 +434,7 @@ def test_column_transformer_list():
 def test_column_transformer_sparse_stacking():
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     col_trans = ColumnTransformer([('trans1', Trans(), [0]),
-                                   ('trans2', SparseMatrixTrans(), 1)],
+                                   ('trans2', SparseMatrixTrans(), [1])],
                                   sparse_threshold=0.8)
     col_trans.fit(X_array)
     X_trans = col_trans.transform(X_array)
@@ -466,7 +446,7 @@ def test_column_transformer_sparse_stacking():
     assert col_trans.transformers_[-1][0] != 'remainder'
 
     col_trans = ColumnTransformer([('trans1', Trans(), [0]),
-                                   ('trans2', SparseMatrixTrans(), 1)],
+                                   ('trans2', SparseMatrixTrans(), [1])],
                                   sparse_threshold=0.1)
     col_trans.fit(X_array)
     X_trans = col_trans.transform(X_array)
