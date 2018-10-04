@@ -454,7 +454,8 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
 # Standard regression scores
 explained_variance_scorer = make_scorer(explained_variance_score)
 r2_scorer = make_scorer(r2_score)
-max_error_scorer = make_scorer(max_error)
+max_error_scorer = make_scorer(max_error,
+                               greater_is_better=False)
 neg_mean_squared_error_scorer = make_scorer(mean_squared_error,
                                             greater_is_better=False)
 neg_mean_squared_log_error_scorer = make_scorer(mean_squared_log_error,

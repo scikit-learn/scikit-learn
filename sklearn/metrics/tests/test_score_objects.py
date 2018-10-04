@@ -464,8 +464,6 @@ def test_scorer_sample_weight():
     estimator = _make_estimators(X_train, y_train, y_ml_train)
 
     for name, scorer in SCORERS.items():
-        if name == "max_error":
-            sample_weight[:10] = 1.01
         if name in MULTILABEL_ONLY_SCORERS:
             target = y_ml_test
         else:

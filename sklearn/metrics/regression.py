@@ -576,10 +576,9 @@ def r2_score(y_true, y_pred, sample_weight=None,
     return np.average(output_scores, weights=avg_weights)
 
 
-def max_error(y_true, y_pred, sample_weight=None):
+def max_error(y_true, y_pred):
     """
-    The Max-Error metric is the worst case error
-    between the predicted value and the true value.
+    max_error metric calculates the maximum residual error.
 
     Parameters
     ----------
@@ -607,13 +606,7 @@ def max_error(y_true, y_pred, sample_weight=None):
     """
     y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred,
                                                    None)
-    check_consistent_length(y_true, y_pred, sample_weight)
+    check_consistent_length(y_true, y_pred)
     if y_type == 'continuous-multioutput':
         raise ValueError("Multioutput not supported in max_error")
-
-    if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
-        weight = sample_weight[:, np.newaxis]
-    else:
-        weight = 1.
-    return np.max(np.abs(weight * (y_true - y_pred)))
+    return np.max(np.abs(y_true - y_pred))
