@@ -379,11 +379,11 @@ class LedoitWolf(EmpiricalCovariance):
     ...                                   cov=real_cov,
     ...                                   size=50)
     >>> cov = LedoitWolf().fit(X)
-    >>> cov.covariance_
+    >>> cov.covariance_ # doctest: +ELLIPSIS
     array([[0.4406..., 0.1616...],
            [0.1616..., 0.8022...]])
     >>> cov.location_
-    array([0.0595... , -0.0075...])
+    array([ 0.0595... , -0.0075...])
 
     Notes
     -----
