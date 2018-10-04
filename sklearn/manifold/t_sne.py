@@ -6,7 +6,7 @@
 # This is the exact and Barnes-Hut t-SNE implementation. There are other
 # modifications of the algorithm:
 # * Fast Optimization for t-SNE:
-#   http://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
+#   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 from __future__ import division
 
 import warnings

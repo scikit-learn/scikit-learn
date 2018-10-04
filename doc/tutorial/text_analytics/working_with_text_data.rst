@@ -410,7 +410,7 @@ with computer graphics.
   optimizer for the same cost function based on the liblinear_ C++
   library.
 
-.. _liblinear: http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+.. _liblinear: https://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
 
 Parameter tuning using grid search

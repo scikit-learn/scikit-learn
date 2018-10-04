@@ -796,7 +796,7 @@ class ComplementNB(BaseDiscreteNB):
     Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
     Tackling the poor assumptions of naive bayes text classifiers. In ICML
     (Vol. 3, pp. 616-623).
-    http://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
+    https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,
