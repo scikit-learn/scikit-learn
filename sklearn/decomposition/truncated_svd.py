@@ -96,7 +96,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     0.249...
     >>> print(svd.singular_values_)  # doctest: +ELLIPSIS
     [2.5841... 2.5245... 2.3201... 2.1753... 2.0443...]
-    >>> # to test LOBPCG:
+    >>> # to test LOBPCG instead of randomized:
     >>> svd = TruncatedSVD(algorithm='lobpcg', n_components=5, n_iter=7, random_state=42)
     >>> svd.fit(X)
 
