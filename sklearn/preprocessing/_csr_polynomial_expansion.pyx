@@ -155,12 +155,5 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
 
             expanded_indptr[row_i+1] = expanded_indptr[row_i] + num_cols_in_row
 
-    X_expanded = csr_matrix([])
-    X_expanded.data = expanded_data
-    X_expanded.indices = expanded_indices
-    X_expanded.indptr = expanded_indptr
-    X_expanded._shape = (int(num_rows), int(expanded_dimensionality))
-    X_expanded.dtype = data.dtype
-    X_expanded.ndim = 2
-    X_expanded.has_sorted_indices = bool(has_sorted_indices)
-    return X_expanded
+    return csr_matrix((expanded_data, expanded_indices, expanded_indptr),
+                      shape=(num_rows, expanded_dimensionality))
