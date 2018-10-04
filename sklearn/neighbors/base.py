@@ -802,7 +802,7 @@ class RadiusNeighborsMixin(object):
         --------
         kneighbors_graph
         """
-        check_is_fitted(self, "_fit_method")
+        check_is_fitted(self, "_fit_X")
         if X is not None:
             X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
