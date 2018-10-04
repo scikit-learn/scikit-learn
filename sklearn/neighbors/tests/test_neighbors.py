@@ -9,6 +9,7 @@ import pytest
 from sklearn import metrics
 from sklearn import neighbors, datasets
 from sklearn.exceptions import DataConversionWarning
+from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
@@ -126,6 +127,17 @@ def test_n_neighbors_datatype():
                         neighbors_.kneighbors, X=X, n_neighbors=-3)
     assert_raises_regex(TypeError, expected_msg,
                         neighbors_.kneighbors, X=X, n_neighbors=3.)
+
+
+def test_not_fitted_error_gets_raised():
+    expected_msg = "This NearestNeighbors instance is " \
+                   "not fitted yet. Call 'fit' with appropriate" \
+                   " arguments before using this method"
+    neighbors_ = neighbors.NearestNeighbors()
+    assert_raises_regex(NotFittedError, expected_msg,
+                        neighbors_.kneighbors_graph([[1]]))
+    assert_raises_regex(NotFittedError, expected_msg,
+                        neighbors_.radius_neighbors_graph([[1]]))
 
 
 def test_precomputed(random_state=42):
