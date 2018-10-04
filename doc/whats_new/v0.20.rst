@@ -257,7 +257,7 @@ Support for Python 3.3 has been officially dropped.
 .......................
 
 - |MajorFeature| Added :func:`datasets.fetch_openml` to fetch datasets from
-  `OpenML <http://openml.org>`_. OpenML is a free, open data sharing platform
+  `OpenML <https://openml.org>`_. OpenML is a free, open data sharing platform
   and will be used instead of mldata as it provides better service availability.
   :issue:`9908` by `Andreas Müller`_ and :user:`Jan N. van Rijn <janvanrijn>`.
 

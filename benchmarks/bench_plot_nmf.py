@@ -96,7 +96,7 @@ def _nls_subproblem(X, W, H, tol, max_iter, alpha=0., l1_ratio=0.,
     ----------
     C.-J. Lin. Projected gradient methods for non-negative matrix
     factorization. Neural Computation, 19(2007), 2756-2779.
-    http://www.csie.ntu.edu.tw/~cjlin/nmf/
+    https://www.csie.ntu.edu.tw/~cjlin/nmf/
     """
     WtX = safe_sparse_dot(W.T, X)
     WtW = np.dot(W.T, W)
