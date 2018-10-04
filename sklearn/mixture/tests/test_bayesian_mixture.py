@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 
 from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.metrics import accuracy_score
 
 from sklearn.mixture.bayesian_mixture import _log_dirichlet_norm
 from sklearn.mixture.bayesian_mixture import _log_wishart_norm
@@ -440,8 +441,11 @@ def test_bayesian_mixture_fit_predict():
 
         Y_pred1 = bgmm1.fit(X).predict(X)
         Y_pred2 = bgmm2.fit_predict(X)
-        assert bgmm1.converged_ and bgmm2.converged_
-        assert_array_equal(Y_pred1, Y_pred2)
+        # can only expect prediction to agree if converged, see PR#12266
+        if bgmm1.converged_ and bgmm2.converged_:
+            assert_array_equal(Y_pred1, Y_pred2)
+        else:
+            assert_greater_equal(accuracy_score(Y_pred1, Y_pred2), 0.99)
 
 
 def test_bayesian_mixture_predict_predict_proba():
