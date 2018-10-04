@@ -21,17 +21,13 @@ except ImportError:
         # Helper function to create sparse random matrices.
         # TODO: remove once scipy < 0.17 is no longer supported and just use
         # scipy.sparse.random
+        # Note that this is not strictly equivalent to what scipy.sparse.random
+        # does as in our case the density is only correct in expectation but
+        # this is enough for our tests.
         rng = check_random_state(random_state)
-        X = rng.random((num_rows, num_cols))
-        full = num_cols * (1 - density)
-        num_to_zero = int(full)
-        prob_to_increment = full - num_to_zero
-        for row in X:
-            increment = int(rng.random() < prob_to_increment)
-            zero_out = rng.choice(range(num_cols),
-                                  size=num_to_zero + increment,
-                                  replace=False)
-            row[zero_out] = 0
+        X = rng.uniform(size=(num_rows, num_cols))
+        zero_mask = rng.uniform(size=(num_rows, num_cols)) > density
+        X[zero_mask] = 0
         return sparse.csr_matrix(X)
 
 
