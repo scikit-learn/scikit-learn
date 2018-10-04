@@ -588,9 +588,6 @@ def max_error(y_true, y_pred):
     y_pred : array-like of shape = (n_samples)
         Estimated target values.
 
-    sample_weight : array-like of shape = (n_samples), optional
-        Sample weights.
-
     Returns
     -------
     max_error : float
@@ -602,7 +599,7 @@ def max_error(y_true, y_pred):
     >>> y_true = [3, 2, 7, 1]
     >>> y_pred = [4, 2, 7, 1]
     >>> max_error(y_true, y_pred)
-    1.0
+    1
     """
     y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred,
                                                    None)
