@@ -105,7 +105,11 @@ def _encode(values, uniques=None, encode=False):
 
     """
     if values.dtype == object:
-        return _encode_python(values, uniques, encode)
+        try:
+            res = _encode_python(values, uniques, encode)
+        except TypeError:
+            raise TypeError("argument must be a string or number")
+        return res
     else:
         return _encode_numpy(values, uniques, encode)
 

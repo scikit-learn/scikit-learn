@@ -667,7 +667,7 @@ def check_dtype_object(name, estimator_orig):
             raise
 
     X[0, 0] = {'foo': 'bar'}
-    msg = "argument must be a string or a number"
+    msg = "argument must be a string.* number"
     assert_raises_regex(TypeError, msg, estimator.fit, X, y)
 
 
