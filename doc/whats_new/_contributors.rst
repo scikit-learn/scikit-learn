@@ -80,9 +80,7 @@
 
 .. _Joel Nothman: https://joelnothman.com/
 
-.. 
-    (TODO) this redirects to porn
-.. _Nicolas Trésegnie : http://nicolastr.com/
+.. _Nicolas Trésegnie: https://github.com/NicolasTr
 
 .. _Kemal Eren: http://www.kemaleren.com
 
