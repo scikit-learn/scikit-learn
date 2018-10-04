@@ -486,16 +486,16 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
     cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
     _monkey_patch_webbased_functions(
         monkeypatch, data_id, gzip_response)
-    X_f, y_f = fetch_openml(data_id=data_id, cache=True,
+    X_fetched, y_fetched = fetch_openml(data_id=data_id, cache=True,
                             data_home=cache_directory, return_X_y=True)
 
     monkeypatch.setattr(sklearn.datasets.openml, 'urlopen',
                         _mock_urlopen_raise)
 
-    X_c, y_c = fetch_openml(data_id=data_id, cache=True,
+    X_cached, y_cached = fetch_openml(data_id=data_id, cache=True,
                             data_home=cache_directory, return_X_y=True)
-    np.testing.assert_array_equal(X_f, X_c)
-    np.testing.assert_array_equal(y_f, y_c)
+    np.testing.assert_array_equal(X_fetched, X_cached)
+    np.testing.assert_array_equal(y_fetched, y_cached)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
