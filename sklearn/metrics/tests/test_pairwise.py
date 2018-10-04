@@ -582,8 +582,8 @@ def test_masked_euclidean_distances():
                   [np.nan, np.nan, 5., 4., 7.],
                   [np.nan, np.nan, np.nan, 4., 5.]])
 
-    D1 = masked_euclidean_distances(X, Y,  missing_values="NaN")
-    D2 = masked_euclidean_distances(X, Y, squared=True, missing_values="NaN")
+    D1 = masked_euclidean_distances(X, Y,  missing_values=np.nan)
+    D2 = masked_euclidean_distances(X, Y, squared=True, missing_values=np.nan)
 
     assert_array_almost_equal(D1**2, D2)
 
@@ -592,7 +592,7 @@ def test_masked_euclidean_distances():
         [[40., 48.33333331, 22.5],
          [25., 25., 45.],
          [5., 180., 80.]])
-    D4 = masked_euclidean_distances(X, Y, squared=True, missing_values="NaN")
+    D4 = masked_euclidean_distances(X, Y, squared=True, missing_values=np.nan)
 
     assert_array_almost_equal(D3, D4)
 
@@ -602,8 +602,8 @@ def test_masked_euclidean_distances():
         [[5.0/2.0 * ((7-3)**2 + (2-2)**2)]])
 
     # Check when Y = X is explicitly passed
-    D5 = masked_euclidean_distances(X, missing_values="NaN")
-    D6 = masked_euclidean_distances(X, X, missing_values="NaN")
+    D5 = masked_euclidean_distances(X, missing_values=np.nan)
+    D6 = masked_euclidean_distances(X, X, missing_values=np.nan)
     assert_array_almost_equal(D5, D6)
 
     # Check with missing_value = 1 while NaN is present

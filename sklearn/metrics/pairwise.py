@@ -23,6 +23,7 @@ from ..utils.validation import check_non_negative
 from ..utils import check_array
 from ..utils import gen_even_slices
 from ..utils import gen_batches, get_chunk_n_rows
+from ..utils import is_scalar_nan
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..utils import Parallel
@@ -288,7 +289,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
 
 
 def masked_euclidean_distances(X, Y=None, squared=False,
-                               missing_values="NaN", copy=True):
+                               missing_values=np.nan, copy=True):
     """Calculates euclidean distances in the presence of missing values
 
     Computes the euclidean distance between each pair of samples (rows) in X
@@ -315,7 +316,7 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     squared : boolean, optional
         Return squared Euclidean distances.
 
-    missing_values : "NaN" or integer, optional
+    missing_values : np.nan or integer, optional
         Representation of missing value
 
     copy : boolean, optional
@@ -352,9 +353,9 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     paired_distances : distances betweens pairs of elements of X and Y.
     """
 
-    # NOTE: force_all_finite=False allows not only NaN but also +/- inf
+    force_all_finite = 'allow-nan' if is_scalar_nan(missing_values) else True
     X, Y = check_pairwise_arrays(X, Y, accept_sparse=False,
-                                 force_all_finite=False, copy=copy)
+                                 force_all_finite=force_all_finite, copy=copy)
     if (np.any(np.isinf(X)) or
             (Y is not X and np.any(np.isinf(Y)))):
         raise ValueError(
@@ -370,13 +371,6 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     if np.any(mask_X.sum(axis=1) == X.shape[1])\
             or (Y is not X and np.any(mask_YT.sum(axis=0) == Y.shape[1])):
         raise ValueError("One or more rows only contain missing values.")
-
-    # else:
-    if missing_values not in ["NaN", np.nan] and (
-            np.any(np.isnan(X)) or (Y is not X and np.any(np.isnan(Y)))):
-        raise ValueError(
-            "NaN values present but missing_value = {0}".format(
-                missing_values))
 
     # Get mask of non-missing values set Y.T's missing to zero.
     # Further, casting the mask to int to be used in formula later.
