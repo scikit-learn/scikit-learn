@@ -1516,10 +1516,6 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                               dtype=X.dtype, order=self.order)
                 for i, comb in enumerate(combinations):
                     XP[:, i] = X[:, comb].prod(1)
-            XP = np.empty((n_samples, self.n_output_features_), dtype=X.dtype,
-                          order=self.order)
-            for i, comb in enumerate(combinations):
-                XP[:, i] = X[:, comb].prod(1)
 
         return XP
 
