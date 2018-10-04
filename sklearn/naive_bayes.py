@@ -628,7 +628,7 @@ class BaseDiscreteNB(BaseNB):
 
     def _get_tags(self):
         return _update_tags(super(BaseDiscreteNB, self),
-                            test_predictions=False)
+                             no_accuracy_assured=True)
 
 
 class MultinomialNB(BaseDiscreteNB):

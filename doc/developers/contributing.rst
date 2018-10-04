@@ -1393,14 +1393,14 @@ decide what tests to run and what input data is appropriate.
 
 The current set of estimator tags are:
 
-deterministic
-    whether the estimator is deterministic given a fixed ``random_state``
+non_deterministic
+    whether the estimator is not deterministic given a fixed ``random_state``
 
 requires_positive_data
     whether the estimator requires positive X.
 
-input_validation
-    whether the estimator does input-validation. This is only meant for stateless and dummy transformers!
+no_validation
+    whether the estimator skips input-validation. This is only meant for stateless and dummy transformers!
 
 multioutput
     whether a regressor supports multi-target outputs or a classifier supports multi-class multi-output.
@@ -1412,11 +1412,11 @@ stateless
     whether the estimator needs access to data for fitting. Even though
     an estimator is stateless, it might still need a call to ``fit`` for initialization.
 
-missing_values
-    whether the estimator supports data with missing values
+allow_nan
+    whether the estimator supports data with missing values encoded as np.NaN
 
-test_predictions
-    whether to test estimator for reasonable test set score.
+no_accuracy_assured
+    whether the estimator fails to provide a "reasonable" test-set score.
 
 multioutput_only
     whether estimator supports only multi-output classification or regression.

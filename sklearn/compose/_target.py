@@ -229,4 +229,4 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
 
     def _get_tags(self):
         return _update_tags(super(TransformedTargetRegressor, self),
-                            input_validation=False)
+                            no_validation=True)

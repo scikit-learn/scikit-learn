@@ -323,7 +323,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
 
     def _get_tags(self):
         return _update_tags(super(DummyClassifier, self),
-                            input_validation=False, test_predictions=False)
+                            no_validation=True, no_accuracy_assured=False)
+
     def score(self, X, y, sample_weight=None):
         """Returns the mean accuracy on the given test data and labels.
 
@@ -519,7 +520,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
 
     def _get_tags(self):
         return _update_tags(super(DummyRegressor, self),
-                            test_predictions=False, input_validation=False)
+                            no_accuracy_assured=True, no_validation=True)
+
     def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction.
 

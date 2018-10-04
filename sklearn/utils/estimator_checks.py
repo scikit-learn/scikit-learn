@@ -112,7 +112,7 @@ def _yield_non_meta_checks(name, estimator):
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
-    if tags["input_validation"]:
+    if not tags["no_validation"]:
         yield check_complex_data
         yield check_dtype_object
         yield check_estimators_empty_data_messages
@@ -123,7 +123,7 @@ def _yield_non_meta_checks(name, estimator):
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
 
-    if (not tags["allow_nan"] and tags["input_validation"]):
+    if (not tags["allow_nan"] and not tags["no_validation"]):
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 
@@ -151,7 +151,7 @@ def _yield_classifier_checks(name, classifier):
     yield check_classifiers_train
     yield partial(check_classifiers_train, readonly_memmap=True)
     yield check_classifiers_regression_target
-    if tags["input_validation"]:
+    if not tags["no_validation"]:
         yield check_supervised_y_no_nan
         yield check_supervised_y_2d
     yield check_estimators_unfitted
@@ -196,7 +196,7 @@ def _yield_regressor_checks(name, regressor):
     yield check_regressor_data_not_an_array
     yield check_estimators_partial_fit_n_features
     yield check_regressors_no_decision_function
-    if tags["input_validation"]:
+    if not tags["no_validation"]:
         yield check_supervised_y_2d
     yield check_supervised_y_no_nan
     if name != 'CCA':
@@ -797,7 +797,7 @@ def check_fit2d_predict1d(name, estimator_orig):
     set_random_state(estimator, 1)
     estimator.fit(X, y)
     tags = _safe_tags(estimator)
-    if not tags["input_validation"]:
+    if tags["no_validation"]:
         # FIXME this is a bit loose
         return
 
@@ -935,7 +935,7 @@ def check_fit1d(name, estimator_orig):
     y = X.astype(np.int)
     estimator = clone(estimator_orig)
     tags = _safe_tags(estimator)
-    if not tags["input_validation"]:
+    if tags["no_validation"]:
         # FIXME this is a bit loose
         return
     y = multioutput_estimator_convert_y_2d(estimator, y)
@@ -1443,7 +1443,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
         X = pairwise_estimator_convert_X(X, classifier_orig)
         set_random_state(classifier)
         # raises error on malformed input for fit
-        if tags["input_validation"]:
+    if not tags["no_validation"]:
             with assert_raises(
                 ValueError,
                 msg="The classifier {} does not "
@@ -1461,11 +1461,11 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
         y_pred = classifier.predict(X)
         assert_equal(y_pred.shape, (n_samples,))
         # training set performance
-        if tags["test_predictions"]:
+        if not tags['no_accuracy_assured']:
             assert_greater(accuracy_score(y, y_pred), 0.83)
 
         # raises error on malformed input for predict
-        if tags["input_validation"]:
+        if not tags["no_validation"]:
             if _is_pairwise(classifier):
                 with assert_raises(ValueError, msg="The classifier {} does not"
                                    " raise an error when shape of X"
@@ -1495,7 +1495,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
                     assert_array_equal(np.argmax(decision, axis=1), y_pred)
 
                 # raises error on malformed input for decision_function
-                if tags["input_validation"]:
+                if not tags["no_validation"]:
                     if _is_pairwise(classifier):
                         with assert_raises(ValueError, msg="The classifier {} does"
                                            " not raise an error when the  "
@@ -1522,7 +1522,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
             # check that probas for all classes sum to one
             assert_array_almost_equal(np.sum(y_prob, axis=1),
                                       np.ones(n_samples))
-            if tags["input_validation"]:
+                if not tags["no_validation"]:
                 # raises error on malformed input for predict_proba
                 if _is_pairwise(classifier_orig):
                     with assert_raises(ValueError, msg="The classifier {} does not"
@@ -1863,7 +1863,7 @@ def check_regressors_train(name, regressor_orig, readonly_memmap=False):
     # TODO: find out why PLS and CCA fail. RANSAC is random
     # and furthermore assumes the presence of outliers, hence
     # skipped
-    if _safe_tags(regressor, "test_predictions"):
+    if not _safe_tags(regressor, "no_accuracy_assured"):
         assert_greater(regressor.score(X, y_), 0.5)
 
 
@@ -2360,7 +2360,7 @@ def check_classifiers_regression_target(name, estimator_orig):
     X, y = boston.data, boston.target
     e = clone(estimator_orig)
     msg = 'Unknown label type: '
-    if _safe_tags(e, "input_validation"):
+    if not _safe_tags(e, "no_validation"):
         assert_raises_regex(ValueError, msg, e.fit, X, y)
 
 
