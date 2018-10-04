@@ -555,8 +555,8 @@ may benefit from discretization, because discretization can transform the datase
 of continuous attributes to one with only nominal attributes.
 
 One-hot encoded discretized features can make a model more expressive, while
-maintaining interpretability. Pre-processing with a discretizer can introduce
-nonlinearity to linear models, for instance.
+maintaining interpretability. For instance, pre-processing with a discretizer
+can introduce nonlinearity to linear models.
 
 K-bins discretization
 ---------------------
