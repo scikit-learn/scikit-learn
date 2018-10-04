@@ -481,8 +481,9 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
         # Ensure f32 is preserved as f32
         Q = Q.astype(M.dtype, copy=False)
 
-    A = safe_sparse_dot(M, M.T)
-    A = -(A.T+A)/2
+    A = - safe_sparse_dot(M, M.T)
+    # LOBPCG default option largest=True is currently broken, so we go the 
+    # smallest (negative) of the negative normal matrix A
     lambdas, Q = lobpcg(A, Q, tol=lobpcg_tol, maxiter=n_iter, largest=False)
 
     # project M to the (k + p) dimensional space using the basis vectors

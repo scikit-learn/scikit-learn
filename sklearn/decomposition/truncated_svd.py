@@ -12,7 +12,7 @@ from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
-from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
+from ..utils.extmath import randomized_svd, lobpcg_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
 
 __all__ = ["TruncatedSVD"]
@@ -31,8 +31,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     returned by the vectorizers in sklearn.feature_extraction.text. In that
     context, it is known as latent semantic analysis (LSA).
 
-    This estimator supports two algorithms: a fast randomized SVD solver, and
-    a "naive" algorithm that uses ARPACK as an eigensolver on (X * X.T) or
+    This estimator supports 3 algorithms: a fast randomized SVD solver, and
+    a "naive" algorithm that uses ARPACK or LOBPCG as an eigensolver on (X * X.T) or
     (X.T * X), whichever is more efficient.
 
     Read more in the :ref:`User Guide <LSA>`.
@@ -47,11 +47,11 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
 
     algorithm : string, default = "randomized"
         SVD solver to use. Either "arpack" for the ARPACK wrapper in SciPy
-        (scipy.sparse.linalg.svds), or "randomized" for the randomized
-        algorithm due to Halko (2009).
+        (scipy.sparse.linalg.svds), or "lobpcg" for LOBPCG (scipy.sparse.linalg.lobpcg),
+        or "randomized" for the randomized algorithm due to Halko (2009).
 
     n_iter : int, optional (default 5)
-        Number of iterations for randomized SVD solver. Not used by ARPACK.
+        Number of iterations for randomized or LOBPCG SVD solver. Not used by ARPACK.
         The default is larger than the default in `randomized_svd` to handle
         sparse matrices that may have large slowly decaying spectrum.
 
@@ -96,6 +96,9 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     0.249...
     >>> print(svd.singular_values_)  # doctest: +ELLIPSIS
     [2.5841... 2.5245... 2.3201... 2.1753... 2.0443...]
+    >>> # to test LOBPCG:
+    >>> svd = TruncatedSVD(algorithm='lobpcg', n_components=5, n_iter=7, random_state=42)
+    >>> svd.fit(X)
 
     See also
     --------
@@ -165,7 +168,15 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
             # conventions, so reverse its outputs.
             Sigma = Sigma[::-1]
             U, VT = svd_flip(U[:, ::-1], VT[::-1])
-
+        elif self.algorithm == "lobpcg":
+            k = self.n_components
+            n_features = X.shape[1]
+            if k >= n_features:
+                raise ValueError("n_components must be < n_features;"
+                                 " got %d >= %d" % (k, n_features))
+            U, Sigma, VT = lobpcg_svd(X, self.n_components,
+                                          n_iter=self.n_iter,
+                                          random_state=random_state)
         elif self.algorithm == "randomized":
             k = self.n_components
             n_features = X.shape[1]
