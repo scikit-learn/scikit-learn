@@ -526,7 +526,7 @@ class KNeighborsMixin(object):
         --------
         NearestNeighbors.radius_neighbors_graph
         """
-        check_is_fitted(self, "_fit_method")
+        check_is_fitted(self, "_fit_X")
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
@@ -665,7 +665,7 @@ class RadiusNeighborsMixin(object):
         For efficiency, `radius_neighbors` returns arrays of objects, where
         each object is a 1D array of indices or distances.
         """
-        check_is_fitted(self, "_fit_method")
+        check_is_fitted(self, "_fit_X")
 
         if X is not None:
             query_is_train = False
