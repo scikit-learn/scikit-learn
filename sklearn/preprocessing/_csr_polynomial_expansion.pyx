@@ -17,10 +17,40 @@ ctypedef fused DATA_T:
     np.int64_t
 
 
+cdef inline INDEX_T _deg2_column(INDEX_T d, INDEX_T i, INDEX_T j,
+                                 INDEX_T interaction_only) nogil:
+    """Compute the index of the column for a degree 2 expansion
+
+    d is the dimensionality of the input data, i and j are the indices
+    for the columns involved in the expansion.
+    """
+    if interaction_only:
+        return d * i - (i**2 + 3 * i) / 2 - 1 + j
+    else:
+        return d * i - (i**2 + i) / 2 + j
+
+
+cdef inline INDEX_T _deg3_column(INDEX_T d, INDEX_T i, INDEX_T j, INDEX_T k,
+                                 INDEX_T interaction_only) nogil:
+    """Compute the index of the column for a degree 3 expansion
+
+    d is the dimensionality of the input data, i, j and k are the indices
+    for the columns involved in the expansion.
+    """
+    if interaction_only:
+        return ((3 * d**2 * i - 3 * d * i**2 + i**3
+                 + 11 * i - 3 * j**2 - 9 * j) / 6
+                + i**2 - 2 * d * i + d * j - d + k)
+    else:
+        return ((3 * d**2 * i - 3 * d * i**2 + i ** 3 - i
+                 - 3 * j**2 - 3 * j) / 6
+                + d * j + k)
+
+
 def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
                               ndarray[INDEX_T, ndim=1] indices,
                               ndarray[INDEX_T, ndim=1] indptr,
-                              int has_sorted_indices, INDEX_T D,
+                              int has_sorted_indices, INDEX_T d,
                               INDEX_T interaction_only, INDEX_T degree):
     """
     Perform a second-degree polynomial or interaction expansion on a scipy
@@ -44,7 +74,7 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
         Whether the input CSR matrix has sorted indices, which is stored in
         its has_sorted_indices attribute.
 
-    D : int
+    d : int
         The dimensionality of the input CSR matrix.
 
     interaction_only : int
@@ -62,79 +92,68 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
     assert degree in (2, 3)
 
     if degree == 2:
-        expanded_dimensionality = int((D**2 + D) / 2 - interaction_only*D)
+        expanded_dimensionality = int((d**2 + d) / 2 - interaction_only*d)
     else:
-        expanded_dimensionality = int((D**3 + 3*D**2 + 2*D) / 6 \
-                                      - interaction_only*D**2)
+        expanded_dimensionality = int((d**3 + 3*d**2 + 2*d) / 6 \
+                                      - interaction_only*d**2)
     assert expanded_dimensionality > 0
 
-    cdef INDEX_T total_nnz = 0, row_i, R
+    cdef INDEX_T total_nnz = 0, row_i, nnz
 
     # Count how many nonzero elements the expanded matrix will contain.
     for row_i in range(indptr.shape[0]-1):
-        # R is the number of nonzero elements in this row.
-        R = indptr[row_i + 1] - indptr[row_i]
+        # nnz is the number of nonzero elements in this row.
+        nnz = indptr[row_i + 1] - indptr[row_i]
         if degree == 2:
-            total_nnz += (R**2 + R) / 2 - interaction_only*R
+            total_nnz += (nnz ** 2 + nnz) / 2 - interaction_only * nnz
         else:
-            total_nnz += (R**3 + 3*R**2 + 2*R) / 6 - interaction_only*R**2
+            total_nnz += ((nnz ** 3 + 3 * nnz ** 2 + 2 * nnz) / 6
+                          - interaction_only * nnz ** 2)
                      
 
     # Make the arrays that will form the CSR matrix of the expansion.
-    cdef ndarray[DATA_T, ndim=1] expanded_data = ndarray(shape=total_nnz,
-                                                         dtype=data.dtype,
-                                                         order='C')
-    cdef ndarray[INDEX_T, ndim=1] expanded_indices = ndarray(shape=total_nnz,
-                                                             dtype='int32',
-                                                             order='C')
+    cdef ndarray[DATA_T, ndim=1] expanded_data = ndarray(
+        shape=total_nnz, dtype=data.dtype)
+    cdef ndarray[INDEX_T, ndim=1] expanded_indices = ndarray(
+        shape=total_nnz, dtype=indices.dtype)
     cdef INDEX_T num_rows = indptr.shape[0] - 1
-    cdef ndarray[INDEX_T, ndim=1] expanded_indptr = ndarray(shape=num_rows+1,
-                                                              dtype='int32',
-                                                              order='C')
+    cdef ndarray[INDEX_T, ndim=1] expanded_indptr = ndarray(
+        shape=num_rows + 1, dtype=indptr.dtype)
 
     cdef INDEX_T expanded_index = 0, row_starts, row_ends, i, j, k, \
-                 col_ptr_1, col_ptr_2, col_ptr_3, num_cols_in_row,  \
+                 i_ptr, j_ptr, k_ptr, num_cols_in_row,  \
                  expanded_column
 
-    expanded_indptr[0] = indptr[0]
-    for row_i in range(indptr.shape[0]-1):
-        row_starts = indptr[row_i]
-        row_ends = indptr[row_i + 1]
-        num_cols_in_row = 0
-        for col_ptr_1 in range(row_starts, row_ends):
-            i = indices[col_ptr_1]
-            for col_ptr_2 in range(col_ptr_1 + interaction_only, row_ends):
-                j = indices[col_ptr_2]
-                if degree == 2:
-                    if interaction_only:
-                        expanded_column = D*i - (i**2 + 3*i) / 2 - 1 + j
-                    else:
-                        expanded_column = D*i - (i**2 + i) / 2 + j
-                    expanded_indices[expanded_index] = expanded_column
-                    expanded_data[expanded_index] = data[col_ptr_1] * \
-                                                    data[col_ptr_2]
-                    expanded_index += 1
-                    num_cols_in_row += 1
-                else:
-                    # degree == 3
-                    for col_ptr_3 in range(col_ptr_2 + interaction_only,
-                                           row_ends):
-                        k = indices[col_ptr_3]
-                        if interaction_only:
-                            expanded_column = (3*D**2*i - 3*D*i**2 + i**3
-                                               + 11*i - 3*j**2 - 9*j) / 6 \
-                                               + i**2 - 2*D*i + D*j - D + k
-                        else:
-                            expanded_column = (3*D**2*i - 3*D*i**2 + i**3 - i
-                                               - 3*j**2 - 3*j) / 6 + D*j + k
-                        expanded_indices[expanded_index] = expanded_column
-                        expanded_data[expanded_index] = data[col_ptr_1] * \
-                                                        data[col_ptr_2] * \
-                                                        data[col_ptr_3]
+    with nogil:
+        expanded_indptr[0] = indptr[0]
+        for row_i in range(indptr.shape[0]-1):
+            row_starts = indptr[row_i]
+            row_ends = indptr[row_i + 1]
+            num_cols_in_row = 0
+            for i_ptr in range(row_starts, row_ends):
+                i = indices[i_ptr]
+                for j_ptr in range(i_ptr + interaction_only, row_ends):
+                    j = indices[j_ptr]
+                    if degree == 2:
+                        col = _deg2_column(d, i, j, interaction_only)
+                        expanded_indices[expanded_index] = col
+                        expanded_data[expanded_index] = (
+                            data[i_ptr] * data[j_ptr])
                         expanded_index += 1
                         num_cols_in_row += 1
+                    else:
+                        # degree == 3
+                        for k_ptr in range(j_ptr + interaction_only,
+                                            row_ends):
+                            k = indices[k_ptr]
+                            col = _deg3_column(d, i, j, k, interaction_only)
+                            expanded_indices[expanded_index] = col
+                            expanded_data[expanded_index] = (
+                                data[i_ptr] * data[j_ptr] * data[k_ptr])
+                            expanded_index += 1
+                            num_cols_in_row += 1
 
-        expanded_indptr[row_i+1] = expanded_indptr[row_i] + num_cols_in_row
+            expanded_indptr[row_i+1] = expanded_indptr[row_i] + num_cols_in_row
 
     X_expanded = csr_matrix([])
     X_expanded.data = expanded_data
