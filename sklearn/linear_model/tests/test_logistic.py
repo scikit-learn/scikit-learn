@@ -1601,6 +1601,32 @@ def test_LogisticRegressionCV_no_refit(multi_class):
     assert lrcv.coef_.shape == (n_classes, n_features)
 
 
+def test_LogisticRegressionCV_elasticnet_attribute_shapes():
+    # Make sure the shapes of scores_ and coefs_paths_ attributes are correct
+    # when using elasticnet
+
+    n_classes = 3
+    n_features = 20
+    X, y = make_classification(n_samples=200, n_classes=n_classes,
+                               n_informative=n_classes, n_features=n_features,
+                               random_state=0)
+
+    Cs = np.logspace(-4, 4, 3)
+    l1_ratios = np.linspace(0, 1, 2)
+
+    n_folds = 2
+    lrcv = LogisticRegressionCV(penalty='elasticnet', Cs=Cs, solver='saga',
+                                cv=n_folds, l1_ratios=l1_ratios,
+                                random_state=0)
+    lrcv.fit(X, y)
+    coefs_paths = np.asarray(list(lrcv.coefs_paths_.values()))
+    assert coefs_paths.shape == (n_classes, n_folds, Cs.size *
+                                 l1_ratios.size, n_features + 1)
+    scores = np.asarray(list(lrcv.scores_.values()))
+    assert scores.shape == (n_classes, n_folds, Cs.size *
+                                 l1_ratios.size)
+
+
 @pytest.mark.parametrize('l1_ratio', (-1, 2, None, 'something_wrong'))
 def test_l1_ratio_param(l1_ratio):
 

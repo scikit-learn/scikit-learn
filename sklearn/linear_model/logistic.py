@@ -1655,12 +1655,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         If `fit_intercept` is set to False, the intercept is set to zero.
         `intercept_` is of shape(1,) when the problem is binary.
 
-    Cs_ : array
+    Cs_ : array, shape (len(Cs))
         Array of C i.e. inverse of regularization parameter values used
         for cross-validation.
 
-    l1_ratios_ : array
-        Array of l1_ratios used for cross-validation.
+    l1_ratios_ : array, shape (len(l1_ratios))
+        Array of l1_ratios used for cross-validation. If no l1_ratio is used
+        (i.e. penalty is not 'elasticnet'), this is set to ``[None]``
 
     coefs_paths_ : array, shape ``(n_folds, len(Cs_), n_features)`` or \
                    ``(n_folds, len(Cs_), n_features + 1)``
@@ -1669,9 +1670,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         after doing an OvR for the corresponding class as values.
         If the 'multi_class' option is set to 'multinomial', then
         the coefs_paths are the coefficients corresponding to each class.
-        Each dict value has shape ``(n_folds, len(Cs_), n_features)`` or
-        ``(n_folds, len(Cs_), n_features + 1)`` depending on whether the
-        intercept is fit or not.
+        Each dict value has shape ``(n_folds, len(Cs_) x len(l1_ratios_),
+        n_features)`` or ``(n_folds, len(Cs_) x len(l1_ratios_), n_features
+        + 1)`` depending on whether the intercept is fit or not.
 
     scores_ : dict
         dict with classes as the keys, and the values as the
@@ -1679,7 +1680,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         an OvR for the corresponding class. If the 'multi_class' option
         given is 'multinomial' then the same scores are repeated across
         all classes, since this is the multinomial class.
-        Each dict value has shape (n_folds, len(Cs))
+        Each dict value has shape (n_folds, len(Cs) x len(l1_ratios))
 
     C_ : array, shape (n_classes,) or (n_classes - 1,)
         Array of C that maps to the best scores across every class. If refit is
@@ -1873,7 +1874,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         # _log_reg_scoring_path will output different shapes depending on the
         # multi_class param, so we need to reshape the outputs accordingly.
         # After reshaping,
-        # - scores is of shape (n_classes X n_folds X n_features)
+        # - scores is of shape (n_classes X n_folds X n_Cs . n_l1_ratios)
         # - coefs_paths is of shape
         #  (n_classes X n_folds X n_Cs . n_l1_ratios X n_features)
         # - n_iter is of shape
