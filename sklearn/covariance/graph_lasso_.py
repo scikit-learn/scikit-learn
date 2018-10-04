@@ -321,6 +321,9 @@ class GraphicalLasso(EmpiricalCovariance):
 
     Attributes
     ----------
+    location_ : array-like, shape (n_features,)
+        Estimated location, i.e. the estimated mean.
+
     covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
@@ -333,29 +336,24 @@ class GraphicalLasso(EmpiricalCovariance):
     Examples
     --------
     >>> import numpy as np
-    >>> from scipy import linalg
-    >>> from sklearn.datasets import make_sparse_spd_matrix
-    >>> from sklearn.covariance import GraphicalLasso, log_likelihood
-    >>> n_samples = 100
-    >>> n_features = 10
-    >>> prec = make_sparse_spd_matrix(n_features, alpha=.98,
-    ...                               smallest_coef=.4,
-    ...                               largest_coef=.7,
-    ...                               random_state=0)
-    >>> cov = linalg.inv(prec)
-    >>> d = np.sqrt(np.diag(cov))
-    >>> cov /= d
-    >>> cov /= d[:, np.newaxis]
-    >>> prng = np.random.RandomState(0)
-    >>> X = prng.multivariate_normal(np.zeros(n_features), cov, size=n_samples)
-    >>> emp_cov = np.dot(X.T, X) / n_samples
-    >>> model = GraphicalLasso()
-    >>> loglik_est = -model.fit(X).score(X)
-    >>> loglik_real = -log_likelihood(emp_cov, prec)
-    >>> print("estimated negative log likelihood: %g" % loglik_est)
-    estimated negative log likelihood: 13.6322
-    >>> print("real negative log likelihood: %g" % loglik_real)
-    real negative log likelihood: 13.9519
+    >>> from sklearn.covariance import GraphicalLasso
+    >>> real_cov = np.array([[.8, 0., .2, 0.],
+    ...                      [0., .4, 0., 0.],
+    ...                      [.2, 0., .3, .1],
+    ...                      [0., 0., .1, .7]])
+    >>> np.random.seed(0)
+    >>> X = np.random.multivariate_normal(mean=[0, 0, 0, 0],
+    ...                                   cov=real_cov,
+    ...                                   size=200)
+    >>> cov = GraphicalLasso().fit(X)
+    >>> np.set_printoptions(precision=3, suppress=True)
+    >>> cov.covariance_
+    array([[0.816, 0.049, 0.218, 0.019],
+           [0.049, 0.364, 0.017, 0.034],
+           [0.218, 0.017, 0.322, 0.093],
+           [0.019, 0.034, 0.093, 0.69 ]])
+    >>> cov.location_
+    array([0.073, 0.04 , 0.038, 0.143])
 
     See Also
     --------
@@ -570,6 +568,9 @@ class GraphicalLassoCV(GraphicalLasso):
 
     Attributes
     ----------
+    location_ : array-like, shape (n_features,)
+        Estimated location, i.e. the estimated mean.
+
     covariance_ : numpy.ndarray, shape (n_features, n_features)
         Estimated covariance matrix.
 
@@ -591,29 +592,24 @@ class GraphicalLassoCV(GraphicalLasso):
     Examples
     --------
     >>> import numpy as np
-    >>> from scipy import linalg
-    >>> from sklearn.datasets import make_sparse_spd_matrix
-    >>> from sklearn.covariance import GraphicalLassoCV, log_likelihood
-    >>> n_samples = 100
-    >>> n_features = 10
-    >>> prec = make_sparse_spd_matrix(n_features, alpha=.98,
-    ...                               smallest_coef=.4,
-    ...                               largest_coef=.7,
-    ...                               random_state=0)
-    >>> cov = linalg.inv(prec)
-    >>> d = np.sqrt(np.diag(cov))
-    >>> cov /= d
-    >>> cov /= d[:, np.newaxis]
-    >>> prng = np.random.RandomState(0)
-    >>> X = prng.multivariate_normal(np.zeros(n_features), cov, size=n_samples)
-    >>> emp_cov = np.dot(X.T, X) / n_samples
-    >>> model = GraphicalLassoCV(cv=5)
-    >>> loglik_est = -model.fit(X).score(X)
-    >>> loglik_real = -log_likelihood(emp_cov, prec)
-    >>> print("estimated negative log likelihood: %g" % loglik_est)
-    estimated negative log likelihood: 13.8457
-    >>> print("real negative log likelihood: %g" % loglik_real)
-    real negative log likelihood: 13.9519
+    >>> from sklearn.covariance import GraphicalLassoCV
+    >>> real_cov = np.array([[.8, 0., .2, 0.],
+    ...                      [0., .4, 0., 0.],
+    ...                      [.2, 0., .3, .1],
+    ...                      [0., 0., .1, .7]])
+    >>> np.random.seed(0)
+    >>> X = np.random.multivariate_normal(mean=[0, 0, 0, 0],
+    ...                                   cov=real_cov,
+    ...                                   size=200)
+    >>> cov = GraphicalLassoCV(cv=5).fit(X)
+    >>> np.set_printoptions(precision=3, suppress=True)
+    >>> cov.covariance_
+    array([[0.816, 0.051, 0.22 , 0.017],
+           [0.051, 0.364, 0.018, 0.036],
+           [0.22 , 0.018, 0.322, 0.094],
+           [0.017, 0.036, 0.094, 0.69 ]])
+    >>> cov.location_
+    array([0.073, 0.04 , 0.038, 0.143])
 
     See Also
     --------
