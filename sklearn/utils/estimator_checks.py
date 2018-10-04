@@ -14,7 +14,7 @@ from scipy.stats import rankdata
 
 from sklearn.externals.six import text_type
 from sklearn.externals.six.moves import zip
-from sklearn.utils import IS_PYPY, _IS_32BIT
+from sklearn.utils import IS_PYPY
 from sklearn.externals.joblib import hash, Memory
 from sklearn.utils.testing import assert_raises, _get_args
 from sklearn.utils.testing import assert_raises_regex
@@ -1650,7 +1650,7 @@ def check_estimators_unfitted(name, estimator_orig):
             # some models can predict without fitting
             # like GaussianProcess regressors
             # in this case, we skip this test
-            pred = est.predict(X)
+            pred = estimator.predict(X)
             assert_equal(pred.shape[0], X.shape[0])
             can_predict = True
         except:

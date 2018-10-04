@@ -384,6 +384,7 @@ assert_greater = _dummy.assertGreater
 
 assert_allclose = np.testing.assert_allclose
 
+
 def assert_raise_message(exceptions, message, function, *args, **kwargs):
     """Helper function to test the message raised in an exception.
 
@@ -594,6 +595,12 @@ def all_estimators(include_meta_estimators=None,
 
     Parameters
     ----------
+    include_meta_estimators : boolean, default=False
+        Deprecated, ignored.
+
+    include_other : boolean, default=False
+        Deprecated, ignored.
+
     type_filter : string, list of string,  or None, default=None
         Which kind of estimators should be returned. If None, no filter is
         applied and all estimators are returned.  Possible values are
@@ -602,7 +609,7 @@ def all_estimators(include_meta_estimators=None,
         get the estimators that fit at least one of the types.
 
     include_dont_test : boolean, default=False
-        Whether to include "special" label estimator or test processors.
+        Deprecated, ignored.
 
     Returns
     -------
@@ -618,17 +625,18 @@ def all_estimators(include_meta_estimators=None,
         return True
 
     if include_other is not None:
-        warnings.warn("include_other was deprecated in version 0.19 and will"
-                      " be removed in 0.21", DeprecationWarning)
+        warnings.warn("include_other was deprecated in version 0.21,"
+                      " has no effect and will be removed in 0.23",
+                      DeprecationWarning)
 
     if include_dont_test is not None:
-        warnings.warn("include_dont_test was deprecated in version 0.19 and"
-                      " will be removed in 0.21",
+        warnings.warn("include_dont_test was deprecated in version 0.21,"
+                      " has no effect and will be removed in 0.23",
                       DeprecationWarning)
 
     if include_meta_estimators is not None:
-        warnings.warn("include_meta_estimators was deprecated in version 0.19 "
-                      "and will be removed in 0.21",
+        warnings.warn("include_meta_estimators was deprecated in version 0.21,"
+                      " has no effect and will be removed in 0.23",
                       DeprecationWarning)
 
     all_classes = []
