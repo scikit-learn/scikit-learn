@@ -28,7 +28,7 @@ class deprecated(object):
           to be added to the deprecation messages
     """
 
-    # Adapted from http://wiki.python.org/moin/PythonDecoratorLibrary,
+    # Adapted from https://wiki.python.org/moin/PythonDecoratorLibrary,
     # but with many changes.
 
     def __init__(self, extra=''):

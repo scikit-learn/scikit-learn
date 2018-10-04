@@ -40,7 +40,7 @@ this means trying to **replace any nested for loops by calls to equivalent
 Numpy array methods**. The goal is to avoid the CPU wasting time in the
 Python interpreter rather than crunching numbers to fit your statistical
 model. It's generally a good idea to consider NumPy and SciPy performance tips:
-http://scipy.github.io/old-wiki/pages/PerformanceTips
+https://scipy.github.io/old-wiki/pages/PerformanceTips
 
 Sometimes however an algorithm cannot be expressed efficiently in simple
 vectorized Numpy code. In this case, the recommended strategy is the

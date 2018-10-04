@@ -128,7 +128,7 @@ feedback:
 
 - The ideal bug report contains a **short reproducible code snippet**, this way
   anyone can try to reproduce the bug easily (see `this
-  <http://stackoverflow.com/help/mcve>`_ for more details). If your snippet is
+  <https://stackoverflow.com/help/mcve>`_ for more details). If your snippet is
   longer than around 50 lines, please link to a `gist
   <https://gist.github.com>`_ or a github repo.
 
@@ -354,7 +354,7 @@ and Cython optimizations.
    workflow, please pay a visit to the `Scipy Development Workflow
    <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
    and the `Astropy Workflow for Developers
-   <http://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
+   <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
 
 .. topic:: Continuous Integration (CI)
@@ -899,7 +899,7 @@ just remember that ``print`` is a function and
 integer division is written ``//``.
 String handling has been overhauled, though, as have parts of
 the Python standard library.
-The `six <http://pythonhosted.org/six/>`_ package helps with
+The `six <https://pythonhosted.org/six/>`_ package helps with
 cross-compatibility and is included in scikit-learn as
 ``sklearn.externals.six``.
 

@@ -719,7 +719,7 @@ from the ground truth label and a score given by the classifier
 by varying a decision threshold.
 
 The :func:`average_precision_score` function computes the
-`average precision <http://en.wikipedia.org/w/index.php?title=Information_retrieval&oldid=793358396#Average_precision>`_
+`average precision <https://en.wikipedia.org/w/index.php?title=Information_retrieval&oldid=793358396#Average_precision>`_
 (AP) from prediction scores. The value is between 0 and 1 and higher is better.
 AP is defined as
 

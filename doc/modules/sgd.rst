@@ -421,7 +421,7 @@ The model parameters can be accessed through the members ``coef_`` and
 
  * `"Towards Optimal One Pass Large Scale Learning with
    Averaged Stochastic Gradient Descent"
-   <http://arxiv.org/pdf/1107.2490v2.pdf>`_
+   <https://arxiv.org/pdf/1107.2490v2.pdf>`_
    Xu, Wei
 
 

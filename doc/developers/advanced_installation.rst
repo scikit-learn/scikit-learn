@@ -86,7 +86,7 @@ builds the extension in place and creates a link to the development directory
 .. note::
 
     This is fundamentally similar to using the command ``python setup.py develop``
-    (see `the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_).
+    (see `the setuptool docs <https://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_).
     It is however preferred to use pip.
 
 .. note::

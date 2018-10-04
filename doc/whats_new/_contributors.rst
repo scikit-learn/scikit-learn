@@ -84,7 +84,7 @@
 
 .. _Kemal Eren: http://www.kemaleren.com
 
-.. _Yann Dauphin: http://ynd.github.io/
+.. _Yann Dauphin: https://ynd.github.io/
 
 .. _Yannick Schwartz: https://team.inria.fr/parietal/schwarty/
 
@@ -120,7 +120,7 @@
 
 .. _Eric Martin: http://www.ericmart.in
 
-.. _Nicolas Goix: http://ngoix.github.io
+.. _Nicolas Goix: https://ngoix.github.io/
 
 .. _Sebastian Raschka: http://sebastianraschka.com
 

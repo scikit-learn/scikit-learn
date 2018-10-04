@@ -16,9 +16,9 @@ data and has specific optimizations for `numpy` arrays. It is
 
     **Download:**            http://pypi.python.org/pypi/joblib#downloads
 
-    **Source code:**         http://github.com/joblib/joblib
+    **Source code:**         https://github.com/joblib/joblib
 
-    **Report issues:**       http://github.com/joblib/joblib/issues
+    **Report issues:**       https://github.com/joblib/joblib/issues
     ==================== ===============================================
 
 
