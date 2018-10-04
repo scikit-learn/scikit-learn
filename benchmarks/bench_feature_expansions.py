@@ -5,12 +5,10 @@ from sklearn.preprocessing import PolynomialFeatures
 from time import time
 
 degree = 2
-trials = 5
-num_rows = 100
-dimensionalities = np.array([25, 50, 100, 200])
+trials = 3
+num_rows = 1000
+dimensionalities = np.array([6, 12, 25, 50])
 densities = np.array([0.01, 0.1, 1.0])
-colors = ['#d7191c', '#abdda4', '#2b83ba']
-assert(len(colors) == len(densities))
 csr_times = {d: np.zeros(len(dimensionalities)) for d in densities}
 csc_times = {d: np.zeros(len(dimensionalities)) for d in densities}
 dense_times = {d: np.zeros(len(dimensionalities)) for d in densities}
@@ -37,25 +35,27 @@ for trial in range(trials):
             transform.fit_transform(X_dense)
             dense_times[density][dim_index] += time() - t0
 
-# The CSC algorithm takes so long that it drastically overshadows dense and
-# CSR algorithm times, so don't include it in the dense / CSR plot. Instead,
-# compare it with the CSR method in the bottom plot.
 csc_linestyle = (0, (5, 10))  # loosely dashed
 csr_linestyle = (0, (3, 1, 1, 1, 1, 1))  # densely dashdotdotted
 dense_linestyle = (0, ())  # solid
-for color, density in zip(colors, densities):
-    plt.loglog(dimensionalities, csr_times[density] / trials,
-               label='csr, density=%s' % (density,),
-               linestyle=csr_linestyle, color=color, alpha=0.7)
-    plt.loglog(dimensionalities, dense_times[density] / trials,
-               label='dense, density=%s' % (density,),
-               linestyle=dense_linestyle, color=color, alpha=0.7)
-    plt.loglog(dimensionalities, csc_times[density] / trials,
-               label='csc, density=%s' % (density,),
-               linestyle=csc_linestyle, color=color, alpha=0.7)
-plt.legend()
-plt.xlabel('Dimensionality')
-plt.ylabel('Average time (seconds) over %s trials' % (trials,), labelpad=20)
-plt.title('Logscale time to compute degree=%s polynomial features of a %s row '
-          'matrix' % (degree, num_rows,))
+
+fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(8, 10))
+for density, ax in zip(densities, axes):
+
+    ax.loglog(dimensionalities, csr_times[density] / trials,
+              label='csr, density=%s' % (density,),
+              linestyle=csr_linestyle)
+    ax.loglog(dimensionalities, dense_times[density] / trials,
+              label='dense, density=%s' % (density,),
+              linestyle=dense_linestyle)
+    ax.loglog(dimensionalities, csc_times[density] / trials,
+              label='csc, density=%s' % (density,),
+              linestyle=csc_linestyle)
+    ax.set_title("density %0.2f, degree=%d, n_samples=%d" %
+                 (density, degree, num_rows))
+    ax.legend()
+    ax.set_xlabel('Dimensionality')
+    ax.set_ylabel('Time (seconds)')
+
+plt.tight_layout()
 plt.show()
