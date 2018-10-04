@@ -43,14 +43,11 @@ fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(8, 10))
 for density, ax in zip(densities, axes):
 
     ax.loglog(dimensionalities, csr_times[density] / trials,
-              label='csr, density=%s' % (density,),
-              linestyle=csr_linestyle)
+              label='csr', linestyle=csr_linestyle)
     ax.loglog(dimensionalities, dense_times[density] / trials,
-              label='dense, density=%s' % (density,),
-              linestyle=dense_linestyle)
+              label='dense', linestyle=dense_linestyle)
     ax.loglog(dimensionalities, csc_times[density] / trials,
-              label='csc, density=%s' % (density,),
-              linestyle=csc_linestyle)
+              label='csc', linestyle=csc_linestyle)
     ax.set_title("density %0.2f, degree=%d, n_samples=%d" %
                  (density, degree, num_rows))
     ax.legend()
