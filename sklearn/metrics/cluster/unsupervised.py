@@ -211,7 +211,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     """
     X, labels = check_X_y(X, labels, accept_sparse=['csc', 'csr'])
-    
+
     # Check and warn for diagonal entries in precomputed distance matrix
     if metric == 'precomputed':
         diag_indices = np.diag_indices(X.shape[0])
@@ -219,7 +219,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
             warnings.warn('The precomputed distance matrix contains non-zero '
                           'elements on the diagonal. This causes incorrect '
                           'calculation of silhouette scores.', UserWarning)
-    
+
     le = LabelEncoder()
     labels = le.fit_transform(labels)
     n_samples = len(labels)
