@@ -43,7 +43,7 @@ from sklearn.feature_selection import SelectKBest, chi2
 print(__doc__)
 
 pipe = Pipeline([
-     # the reduce_dim stage is populated by the param_grid
+    # the reduce_dim stage is populated by the param_grid
     ('reduce_dim', None),
     ('classify', LinearSVC())
 ])
