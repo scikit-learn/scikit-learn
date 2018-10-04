@@ -257,7 +257,7 @@ Domain specific packages
 - `scikit-image <https://scikit-image.org/>`_ Image processing and computer
   vision in python.
 
-- `Natural language toolkit (nltk) <http://www.nltk.org/>`_ Natural language
+- `Natural language toolkit (nltk) <https://www.nltk.org/>`_ Natural language
   processing and some machine learning.
 
 - `gensim <https://radimrehurek.com/gensim/>`_  A library for topic modelling,
@@ -265,12 +265,12 @@ Domain specific packages
 
 - `NiLearn <https://nilearn.github.io/>`_ Machine learning for neuro-imaging.
 
-- `AstroML <http://www.astroml.org/>`_  Machine learning for astronomy.
+- `AstroML <https://www.astroml.org/>`_  Machine learning for astronomy.
 
 - `MSMBuilder <http://msmbuilder.org/>`_  Machine learning for protein
   conformational dynamics time series.
 
-- `scikit-surprise <http://surpriselib.com>`_ A scikit for building and
+- `scikit-surprise <https://surpriselib.com/>`_ A scikit for building and
   evaluating recommender systems.
 
 Snippets and tidbits

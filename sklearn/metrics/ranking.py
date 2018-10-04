@@ -296,7 +296,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
            Letters, 2006, 27(8):861-874.
 
     .. [3] `Analyzing a portion of the ROC curve. McClish, 1989
-            <http://www.ncbi.nlm.nih.gov/pubmed/2668680>`_
+            <https://www.ncbi.nlm.nih.gov/pubmed/2668680>`_
 
     See also
     --------
