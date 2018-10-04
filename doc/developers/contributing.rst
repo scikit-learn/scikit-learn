@@ -1391,18 +1391,20 @@ estimator tags are a dictionary returned by the method ``_get_tags()``.  These
 tags are used by the common tests and the ``check_estimator`` function to
 decide what tests to run and what input data is appropriate.
 
+The default value of all tags is ``False``.
+
 The current set of estimator tags are:
 
 non_deterministic
     whether the estimator is not deterministic given a fixed ``random_state``
 
-requires_positive_data
+requires_positive_data - unused for now
     whether the estimator requires positive X.
 
 no_validation
     whether the estimator skips input-validation. This is only meant for stateless and dummy transformers!
 
-multioutput
+multioutput - unused for now
     whether a regressor supports multi-target outputs or a classifier supports multi-class multi-output.
 
 multilabel
