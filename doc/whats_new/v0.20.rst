@@ -101,6 +101,11 @@ Linear, kernelized and related models
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
 
+Manifolds
+
+- Add `normalize` parameter to
+  :class:`manifold/MDS` to return the normalized stress-1 value, see :issue:`10168`
+
 Bug fixes
 .........
 

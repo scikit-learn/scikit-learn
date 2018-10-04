@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal assert_allclose
 
 from sklearn.manifold import mds
 from sklearn.utils.testing import assert_raises
@@ -75,4 +75,4 @@ def test_normed_stress():
 
     # Normed stress should be the same for
     # values multiplied by some factor "k"
-    assert_array_almost_equal(stress1, stress2, decimal=2)
+    assert_allclose(stress1, stress2, decimal=2)
