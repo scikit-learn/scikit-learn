@@ -55,12 +55,13 @@ from .pairwise import pairwise_kernels
 from .pairwise import pairwise_distances_chunked
 
 from .regression import explained_variance_score
+from .regression import max_error
 from .regression import mean_absolute_error
 from .regression import mean_squared_error
 from .regression import mean_squared_log_error
 from .regression import median_absolute_error
 from .regression import r2_score
-from .regression import max_error
+
 
 from .scorer import check_scoring
 from .scorer import make_scorer

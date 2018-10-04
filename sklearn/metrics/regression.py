@@ -31,13 +31,13 @@ from ..externals.six import string_types
 
 
 __ALL__ = [
+    "max_error",
     "mean_absolute_error",
     "mean_squared_error",
     "mean_squared_log_error",
     "median_absolute_error",
     "r2_score",
-    "explained_variance_score",
-    "max_error"
+    "explained_variance_score"
 ]
 
 
@@ -576,7 +576,7 @@ def r2_score(y_true, y_pred, sample_weight=None,
     return np.average(output_scores, weights=avg_weights)
 
 
-def max_error(y_true, y_pred):
+def max_error(y_true, y_pred, sample_weight=None):
     """
     The Max-Error metric is the worst case error
     between the predicted value and the true value.
@@ -589,6 +589,9 @@ def max_error(y_true, y_pred):
     y_pred : array-like of shape = (n_samples)
         Estimated target values.
 
+    sample_weight : array-like of shape = (n_samples), optional
+        Sample weights.
+
     Returns
     -------
     max_error : float
@@ -597,14 +600,20 @@ def max_error(y_true, y_pred):
     Examples
     --------
     >>> from sklearn.metrics import max_error
-    >>> y_true = [3.1, 2.4, 7.6, 1.9]
-    >>> y_pred = [4.1, 2.3, 7.4, 1.7]
+    >>> y_true = [3, 2, 7, 1]
+    >>> y_pred = [4, 2, 7, 1]
     >>> max_error(y_true, y_pred)
     1.0
     """
     y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred,
-                                                   'uniform_average')
+                                                   None)
+    check_consistent_length(y_true, y_pred, sample_weight)
     if y_type == 'continuous-multioutput':
         raise ValueError("Multioutput not supported in max_error")
-    max_error = np.around(np.max(np.abs(y_true - y_pred)), decimals=3)
-    return max_error
+
+    if sample_weight is not None:
+        sample_weight = column_or_1d(sample_weight)
+        weight = sample_weight[:, np.newaxis]
+    else:
+        weight = 1.
+    return np.max(np.abs(weight * (y_true - y_pred)))
