@@ -15,7 +15,7 @@ from scipy import sparse, stats
 
 try:
     from scipy.sparse import random as sparse_random
-except:
+except ImportError:
     def sparse_random(num_rows, num_cols, density, random_state=None):
         # Helper function to create sparse random matrices.
         # TODO: remove once scipy < 0.17 is no longer supported and just use
