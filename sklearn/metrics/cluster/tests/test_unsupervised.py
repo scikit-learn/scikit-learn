@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
-import warnings
 from scipy.sparse import csr_matrix
 
 from sklearn import datasets
@@ -170,13 +169,17 @@ def test_non_numpy_labels():
     assert_equal(
         silhouette_score(list(X), list(y)), silhouette_score(X, y))
 
+
 def test_nonzero_diag_silhouette_warning():
     # Construct a nonzero-diagonal distance matrix
-    dists = pairwise_distances(np.array([[0.2, 0.1, 0.12, 1.34, 1.11, 1.6]]).transpose())
+    dists = pairwise_distances(
+        np.array([[0.2, 0.1, 0.12, 1.34, 1.11, 1.6]]).transpose())
     dists = np.diag(np.ones(6)) + dists
-    labels = [0,0,0,1,1,1]
-    
-    assert_warns(UserWarning, silhouette_samples, dists, labels, metric = 'precomputed')
+    labels = [0, 0, 0, 1, 1, 1]
+
+    assert_warns(UserWarning, silhouette_samples,
+                 dists, labels, metric='precomputed')
+
 
 def assert_raises_on_only_one_label(func):
     """Assert message when there is only one label"""
@@ -212,7 +215,7 @@ def test_calinski_harabaz_score():
          [[0, 4], [1, 3]] * 5 + [[3, 1], [4, 0]] * 5)
     labels = [0] * 10 + [1] * 10 + [2] * 10 + [3] * 10
     pytest.approx(calinski_harabaz_score(X, labels),
-                        45 * (40 - 4) / (5 * (4 - 1)))
+                  45 * (40 - 4) / (5 * (4 - 1)))
 
 
 def test_davies_bouldin_score():
