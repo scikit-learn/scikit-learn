@@ -425,14 +425,6 @@ boolean mask array or callable
             input_indices.append(col_indices)
             all_indices.update(col_indices_set)
 
-        # check remainder
-        remainder_indices = self._remainder.indices
-        if (remainder_indices is not None
-                and self._remainder.transformer == 'drop'):
-            self._invert_error = ("dropping columns is not supported. "
-                                  "remainder drops columns")
-            return
-
         self._input_indices = input_indices
         self._n_features_in = X.shape[1]
         self._X_columns = getattr(X, 'columns', None)
