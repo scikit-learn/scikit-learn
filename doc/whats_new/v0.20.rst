@@ -34,6 +34,13 @@ Changelog
   columns with types not convertible to a numeric.
   :issue:`11912` by :user:`Adrin Jalali <adrinjalali>`.
 
+:mod:`sklearn.datasets`
+............................
+
+- |Fix| Fixed integer overflow in :func:`datasets.make_classification`
+  for values of ``n_informative`` parameter larger than 64.
+  :issue:10811 by :user:`Roman Feldbauer <VarIr>`.
+
 :mod:`sklearn.ensemble`
 .......................
 

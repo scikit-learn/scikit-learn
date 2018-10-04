@@ -55,13 +55,6 @@ Support for Python 3.4 and below has been officially dropped.
   in the dense case. Also added a new parameter ``order`` which controls output
   order for further speed performances. :issue:`12251` by `Tom Dupre la Tour`_.
 
-:mod:`sklearn.datasets`
-............................
-
-- |Fix| Fixed integer overflow in :func:`datasets.make_classification`
-  for values of ``n_informative`` parameter larger than 64.
-  :issue:10811 by :user:`Roman Feldbauer <VarIr>`.
-
 
 Multiple modules
 ................
