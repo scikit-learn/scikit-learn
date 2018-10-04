@@ -1645,7 +1645,7 @@ def check_estimators_unfitted(name, estimator_orig):
             pred = estimator.predict(X)
             assert_equal(pred.shape[0], X.shape[0])
             can_predict = True
-        except:
+        except ValueError:
             pass
         if can_predict:
             raise SkipTest(
@@ -2124,7 +2124,7 @@ def check_parameters_default_constructible(name, Estimator):
                     estimator = Estimator(LinearDiscriminantAnalysis())
             else:
                 raise SkipTest("Can't instantiate estimator {} which"
-                               "requires parameters {}".format(
+                               " requires parameters {}".format(
                                    name, required_parameters))
         else:
             estimator = Estimator()
