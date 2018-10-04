@@ -1380,7 +1380,11 @@ for working with multiclass and multilabel problems.
 
 Estimator Tags
 --------------
-Scikit-learn introduced estimator tags in version 0.19.  These are annotations
+.. warning::
+
+    The estimator tags are experimental and the API is subject to change.
+
+Scikit-learn introduced estimator tags in version 0.21.  These are annotations
 of estimators that allow programmatic inspection of their capabilities, such as
 sparse matrix support, supported output types and supported methods.  The
 estimator tags are a dictionary returned by the method ``_get_tags()``.  These
@@ -1389,15 +1393,36 @@ decide what tests to run and what input data is appropriate.
 
 The current set of estimator tags are:
 
-input_validation - whether the estimator does input-validation. This is only meant for stateless and dummy transformers!
-multioutput - whether a regressor supports multi-target outputs or a classifier supports multi-class multi-output.
-multilabel -  whether the estimator supports multilabel output
-stateless - whether the estimator needs access to data for fitting. Even though
-an estimator is stateless, it might still need a call to ``fit`` for initialization.
-missing_values - whether the estimator supports data with missing values
-test_predictions - whether to test estimator for reasonable test set score.
-multioutput_only - whether estimator supports only multi-output classification or regression.
-_skip_test - whether to skip common tests entirely. Don't use this unless you have a *very good* reason.
+deterministic
+    whether the estimator is deterministic given a fixed ``random_state``
+
+requires_positive_data
+    whether the estimator requires positive X.
+
+input_validation
+    whether the estimator does input-validation. This is only meant for stateless and dummy transformers!
+
+multioutput
+    whether a regressor supports multi-target outputs or a classifier supports multi-class multi-output.
+
+multilabel
+    whether the estimator supports multilabel output
+
+stateless
+    whether the estimator needs access to data for fitting. Even though
+    an estimator is stateless, it might still need a call to ``fit`` for initialization.
+
+missing_values
+    whether the estimator supports data with missing values
+
+test_predictions
+    whether to test estimator for reasonable test set score.
+
+multioutput_only
+    whether estimator supports only multi-output classification or regression.
+
+_skip_test
+    whether to skip common tests entirely. Don't use this unless you have a *very good* reason.
 
 
 In addition to the tags, estimators are also need to declare any non-optional
