@@ -669,7 +669,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     """
     _required_parameters = ["transformer_list"]
 
-    def __init__(self, transformer_list, n_jobs=None, transformer_weights=None):
+    def __init__(self, transformer_list, n_jobs=None,
+                 transformer_weights=None):
         self.transformer_list = transformer_list
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights

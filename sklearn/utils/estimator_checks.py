@@ -1465,20 +1465,22 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
             assert_greater(accuracy_score(y, y_pred), 0.83)
 
         # raises error on malformed input for predict
+        msg_pairwise = (
+            "The classifier {} does not raise an error when shape of X in "
+            " {} is not equal to (n_test_samples, n_training_samples)")
+        msg = ("The classifier {} does not raise an error when the number of "
+               "features in {} is different from the number of features in "
+               "fit.")
+
         if not tags["no_validation"]:
             if _is_pairwise(classifier):
-                with assert_raises(ValueError, msg="The classifier {} does not"
-                                   " raise an error when shape of X"
-                                   "in predict is not equal to (n_test_samples"
-                                   ", n_training_samples)".format(name)):
+                with assert_raises(ValueError,
+                                   msg=msg_pairwise.format(name, "predict")):
                     classifier.predict(X.reshape(-1, 1))
             else:
-                with assert_raises(ValueError, msg="The classifier {} does not"
-                                   "raise an error when the number of features"
-                                   " in predict is different from the number of"
-                                   " features in fit.".format(name)):
+                with assert_raises(ValueError,
+                                   msg=msg.format(name, "predict")):
                     classifier.predict(X.T)
-
         if hasattr(classifier, "decision_function"):
             try:
                 # decision_function agrees with predict
@@ -1497,19 +1499,12 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
                 # raises error on malformed input for decision_function
                 if not tags["no_validation"]:
                     if _is_pairwise(classifier):
-                        with assert_raises(ValueError, msg="The classifier {} does"
-                                           " not raise an error when the  "
-                                           "shape of X in decision_function is "
-                                           "not equal to (n_test_samples, "
-                                           "n_training_samples) in fit."
-                                           .format(name)):
+                        with assert_raises(ValueError, msg=msg_pairwise.format(
+                                name, "decision_function")):
                             classifier.decision_function(X.reshape(-1, 1))
                     else:
-                        with assert_raises(ValueError, msg="The classifier {} does"
-                                           " not raise an error when the number "
-                                           "of features in decision_function is "
-                                           "different from the number of features"
-                                           " in fit.".format(name)):
+                        with assert_raises(ValueError, msg=msg.format(
+                                name, "decision_function")):
                             classifier.decision_function(X.T)
             except NotImplementedError:
                 pass
@@ -1525,18 +1520,12 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
             if not tags["no_validation"]:
                 # raises error on malformed input for predict_proba
                 if _is_pairwise(classifier_orig):
-                    with assert_raises(ValueError, msg="The classifier {} does not"
-                                       " raise an error when the shape of X"
-                                       "in predict_proba is not equal to "
-                                       "(n_test_samples, n_training_samples)."
-                                       .format(name)):
+                    with assert_raises(ValueError, msg=msg_pairwise.format(
+                            name, "predict_proba")):
                         classifier.predict_proba(X.reshape(-1, 1))
                 else:
-                    with assert_raises(ValueError, msg="The classifier {} does not"
-                                       " raise an error when the number of "
-                                       "features in predict_proba is different "
-                                       "from the number of features in fit."
-                                       .format(name)):
+                    with assert_raises(ValueError, msg=msg.format(
+                            name, "predict_proba")):
                         classifier.predict_proba(X.T)
             if hasattr(classifier, "predict_log_proba"):
                 # predict_log_proba is a transformation of predict_proba

@@ -30,7 +30,6 @@ from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import is_classifier
-from ..base import RegressorMixin
 from ..base import MultiOutputMixin
 from ..externals import six
 from ..utils import check_array
