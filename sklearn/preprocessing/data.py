@@ -1481,7 +1481,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
         if sparse.isspmatrix_csr(X):
             if self.degree > 3:
-                return (self.transform(X.tocsc())).tocsr()
+                return self.transform(X.tocsc()).tocsr()
             to_stack = []
             if self.include_bias:
                 to_stack.append(np.ones(shape=(n_samples, 1), dtype=X.dtype))
