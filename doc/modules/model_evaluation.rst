@@ -486,10 +486,10 @@ or *informedness*.
 
   .. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. Macià,
      B. Ray, M. Saeed, A.R. Statnikov, E. Viegas, `Design of the 2015 ChaLearn AutoML Challenge
-     <http://ieeexplore.ieee.org/document/7280767/>`_,
+     <https://ieeexplore.ieee.org/document/7280767>`_,
      IJCNN 2015.
   .. [Mosley2013] L. Mosley, `A balanced approach to the multi-class imbalance problem
-     <http://lib.dr.iastate.edu/etd/13537/>`_,
+     <https://lib.dr.iastate.edu/etd/13537/>`_,
      IJCV 2010.
   .. [Kelleher2015] John. D. Kelleher, Brian Mac Namee, Aoife D'Arcy, `Fundamentals of
      Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,

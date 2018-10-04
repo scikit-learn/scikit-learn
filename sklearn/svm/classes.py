@@ -145,7 +145,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     References
     ----------
     `LIBLINEAR: A Library for Large Linear Classification
-    <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`__
+    <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`__
 
     See also
     --------

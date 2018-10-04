@@ -53,7 +53,7 @@ Stephen Simmons, VP, Athena Research, JPMorgan
 
 .. image:: images/spotify.png
     :width: 120pt
-    :target: http://www.spotify.com
+    :target: https://www.spotify.com
 
 .. raw:: html
 
@@ -75,7 +75,7 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
 
    </span>
 
-`Inria <http://www.inria.fr>`_
+`Inria <https://www.inria.fr/>`_
 -------------------------------
 
 .. raw:: html
@@ -84,7 +84,7 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
 
 .. image:: images/inria.png
     :width: 120pt
-    :target: http://www.inria.fr
+    :target: https://www.inria.fr/
 
 .. raw:: html
 
@@ -96,7 +96,7 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
 
 At INRIA, we use scikit-learn to support leading-edge basic research in many
 teams: `Parietal <https://team.inria.fr/parietal/>`_ for neuroimaging, `Lear
-<http://lear.inrialpes.fr/>`_ for computer vision, `Visages
+<https://lear.inrialpes.fr/>`_ for computer vision, `Visages
 <https://team.inria.fr/visages/>`_ for medical image analysis, `Privatics
 <https://team.inria.fr/privatics>`_ for security. The project is a fantastic
 tool to address difficult applications of machine learning in an academic
@@ -221,7 +221,7 @@ Mark Ayzenshtat, VP, Augmented Intelligence
 
    </span>
 
-`Télécom ParisTech <http://www.telecom-paristech.fr>`_
+`Télécom ParisTech <https://www.telecom-paristech.fr/>`_
 --------------------------------------------------------
 
 .. raw:: html
@@ -230,7 +230,7 @@ Mark Ayzenshtat, VP, Augmented Intelligence
 
 .. image:: images/telecomparistech.jpg
     :width: 120pt
-    :target: https://www.telecom-paristech.fr
+    :target: https://www.telecom-paristech.fr/
 
 .. raw:: html
 
@@ -254,7 +254,7 @@ Alexandre Gramfort, Assistant Professor
    </span>
 
 
-`Booking.com <http://booking.com>`_
+`Booking.com <https://www.booking.com>`_
 -------------------------------------
 .. raw:: html
 
@@ -262,7 +262,7 @@ Alexandre Gramfort, Assistant Professor
 
 .. image:: images/booking.png
     :width: 120pt
-    :target: http://www.booking.com
+    :target: https://www.booking.com
 
 .. raw:: html
 
@@ -289,7 +289,7 @@ Melanie Mueller, Data Scientist
 
    </span>
 
-`AWeber <http://www.aweber.com>`_
+`AWeber <https://www.aweber.com/>`_
 ------------------------------------------
 
 .. raw:: html
@@ -298,7 +298,7 @@ Melanie Mueller, Data Scientist
 
 .. image:: images/aweber.png
     :width: 120pt
-    :target: http://www.aweber.com
+    :target: https://www.aweber.com/
 
 .. raw:: html
 
@@ -493,7 +493,7 @@ Vijay Ramesh, Software Engineer in Data/science at Change.org
 
    </span>
 
-`PHIMECA Engineering <http://www.phimeca.com/?lang=en>`_
+`PHIMECA Engineering <https://www.phimeca.com/?lang=en>`_
 ----------------------------------------------------------
 
 .. raw:: html
@@ -502,7 +502,7 @@ Vijay Ramesh, Software Engineer in Data/science at Change.org
 
 .. image:: images/phimeca.png
     :width: 120pt
-    :target: http://www.phimeca.com/?lang=en
+    :target: https://www.phimeca.com/?lang=en
 
 .. raw:: html
 
@@ -727,7 +727,7 @@ Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
 
 
 
-`Machinalis <http://www.machinalis.com>`_
+`Machinalis <https://www.machinalis.com/>`_
 -----------------------------------------
 
 .. raw:: html
@@ -736,7 +736,7 @@ Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
 
 .. image:: images/machinalis.png
     :width: 120pt
-    :target: http://www.machinalis.com
+    :target: https://www.machinalis.com/
 
 .. raw:: html
 
@@ -761,7 +761,7 @@ Scikit-learn in one word: Awesome.
 Rafael Carrascosa, Lead developer
 
 
-`solido <http://www.solidodesign.com/>`_
+`solido <https://www.solidodesign.com/>`_
 -----------------------------------------
 
 .. raw:: html
@@ -770,7 +770,7 @@ Rafael Carrascosa, Lead developer
 
 .. image:: images/solido_logo.png
     :width: 120pt
-    :target: http://www.solidodesign.com
+    :target: https://www.solidodesign.com/
 
 .. raw:: html
 
@@ -833,7 +833,7 @@ Thorsten Kranz, Data Scientist, Coma Soft AG.
   </span>
 
 
-`Dataiku <http://www.dataiku.com/>`_
+`Dataiku <https://www.dataiku.com/>`_
 -----------------------------------------
 
 .. raw:: html
@@ -842,7 +842,7 @@ Thorsten Kranz, Data Scientist, Coma Soft AG.
 
 .. image:: images/dataiku_logo.png
     :width: 120pt
-    :target: http://www.dataiku.com
+    :target: https://www.dataiku.com/
 
 .. raw:: html
 

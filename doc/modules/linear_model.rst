@@ -152,7 +152,7 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
     * "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
       <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
       `course slides
-      <http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
+      <https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
 
 .. _lasso:
@@ -751,7 +751,7 @@ are "liblinear", "newton-cg", "lbfgs", "sag" and "saga":
 
 The solver "liblinear" uses a coordinate descent (CD) algorithm, and relies
 on the excellent C++ `LIBLINEAR library
-<http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_, which is shipped with
+<https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_, which is shipped with
 scikit-learn. However, the CD algorithm implemented in liblinear cannot learn
 a true multinomial (multiclass) model; instead, the optimization problem is
 decomposed in a "one-vs-rest" fashion so separate binary classifiers are

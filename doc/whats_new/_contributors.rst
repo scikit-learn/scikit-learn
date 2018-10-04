@@ -32,11 +32,11 @@
 
 .. _James Bergstra: http://www-etud.iro.umontreal.ca/~bergstrj/
 
-.. _liblinear: http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+.. _liblinear: https://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
 .. _Yaroslav Halchenko: http://www.onerussian.com/
 
-.. _Vlad Niculae: http://vene.ro
+.. _Vlad Niculae: https://vene.ro/
 
 .. _Edouard Duchesnay: https://sites.google.com/site/duchesnay/home
 
@@ -48,7 +48,7 @@
 
 .. _Bertrand Thirion: https://team.inria.fr/parietal/bertrand-thirions-page
 
-.. _Andreas Müller: http://peekaboo-vision.blogspot.com
+.. _Andreas Müller: https://peekaboo-vision.blogspot.com/
 
 .. _Matthieu Perrot: http://brainvisa.info/biblio/lnao/en/Author/PERROT-M.html
 
@@ -56,7 +56,7 @@
 
 .. _Gilles Louppe: http://www.montefiore.ulg.ac.be/~glouppe/
 
-.. _INRIA: http://www.inria.fr
+.. _INRIA: https://www.inria.fr/
 
 .. _Parietal Team: http://parietal.saclay.inria.fr/
 
@@ -70,17 +70,17 @@
 
 .. _Scott White: https://twitter.com/scottblanc
 
-.. _David Marek: http://www.davidmarek.cz/
+.. _David Marek: https://davidmarek.cz/
 
 .. _Christian Osendorfer: https://osdf.github.io
 
 .. _Arnaud Joly: http://www.ajoly.org
 
-.. _Rob Zinkov: http://zinkov.com
+.. _Rob Zinkov: https://www.zinkov.com/
 
-.. _Joel Nothman: http://joelnothman.com
+.. _Joel Nothman: https://joelnothman.com/
 
-.. _Nicolas Trésegnie : http://nicolastr.com/
+.. _Nicolas Trésegnie: https://github.com/NicolasTr
 
 .. _Kemal Eren: http://www.kemaleren.com
 
@@ -88,7 +88,7 @@
 
 .. _Yannick Schwartz: https://team.inria.fr/parietal/schwarty/
 
-.. _Kyle Kastner: http://kastnerkyle.github.io
+.. _Kyle Kastner: https://kastnerkyle.github.io/
 
 .. _Daniel Nouri: http://danielnouri.org
 
@@ -100,7 +100,7 @@
 
 .. _Antony Lee: https://www.ocf.berkeley.edu/~antonyl/
 
-.. _Martin Billinger: http://tnsre.embs.org/author/martinbillinger
+.. _Martin Billinger: https://tnsre.embs.org/author/martinbillinger/
 
 .. _Matteo Visconti di Oleggio Castello: http://www.mvdoc.me
 
@@ -110,19 +110,19 @@
 
 .. _Will Dawson: http://www.dawsonresearch.com
 
-.. _Andrew Tulloch: http://tullo.ch/
+.. _Andrew Tulloch: https://tullo.ch/
 
-.. _Hanna Wallach: http://dirichlet.net/
+.. _Hanna Wallach: https://dirichlet.net/
 
 .. _Yan Yi: http://seowyanyi.org
 
-.. _Hervé Bredin: http://herve.niderb.fr/
+.. _Hervé Bredin: https://herve.niderb.fr/
 
 .. _Eric Martin: http://www.ericmart.in
 
 .. _Nicolas Goix: https://ngoix.github.io/
 
-.. _Sebastian Raschka: http://sebastianraschka.com
+.. _Sebastian Raschka: https://sebastianraschka.com/
 
 .. _Brian McFee: https://bmcfee.github.io
 
@@ -150,7 +150,7 @@
 
 .. _Srivatsan Ramesh: https://github.com/srivatsan-ramesh
 
-.. _Ron Weiss: http://www.ee.columbia.edu/~ronw
+.. _Ron Weiss: https://www.ee.columbia.edu/~ronw/
 
 .. _Kathleen Chen: https://github.com/kchen17
 

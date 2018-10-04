@@ -226,7 +226,7 @@ mailing list for more visibility.
 
 If any of the above seems like magic to you, then look up the `Git documentation
 <https://git-scm.com/documentation>`_ and the `Git development workflow
-<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
+<https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
 web.
 
 If some conflicts arise between your branch and the ``master`` branch, you need
@@ -352,7 +352,7 @@ and Cython optimizations.
 
    For two very well documented and more detailed guides on development
    workflow, please pay a visit to the `Scipy Development Workflow
-   <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
+   <https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
    and the `Astropy Workflow for Developers
    <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
