@@ -27,6 +27,13 @@ Changelog
   graph, which would add explicitly zeros on the diagonal even when already
   present. :issue:`12105` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixed an issue in :class:`compose.ColumnTransformer` when stacking
+  columns with types not convertible to a numeric.
+  :issue:`11912` by :user:`Adrin Jalali <adrinjalali>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
