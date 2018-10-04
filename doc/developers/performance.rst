@@ -250,7 +250,7 @@ Memory usage profiling
 ======================
 
 You can analyze in detail the memory usage of any Python code with the help of
-`memory_profiler <https://pypi.python.org/pypi/memory_profiler>`_. First,
+`memory_profiler <https://pypi.org/project/memory_profiler/>`_. First,
 install the latest version::
 
     $ pip install -U memory_profiler
@@ -344,7 +344,7 @@ Using yep and google-perftools
 
 Easy profiling without special compilation options use yep:
 
-- https://pypi.python.org/pypi/yep
+- https://pypi.org/project/yep/
 - http://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
 
 .. note::
