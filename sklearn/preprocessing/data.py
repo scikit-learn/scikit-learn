@@ -1472,7 +1472,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         check_is_fitted(self, ['n_input_features_', 'n_output_features_'])
 
         X = check_array(X, order='F', dtype=FLOAT_DTYPES,
-                        accept_sparse=('csc', 'csr'))
+                        accept_sparse=('csr', 'csc'))
 
         n_samples, n_features = X.shape
 
