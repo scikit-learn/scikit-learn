@@ -166,7 +166,6 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
     def _fit(self, X):
         self._check_algorithm_metric()
 
-        allow_nans = self.metric in _NAN_METRICS or callable(self.metric)
         if self.metric_params is None:
             self.effective_metric_params_ = {}
         else:
@@ -210,8 +209,9 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_method = 'kd_tree'
             return self
 
+        allow_nan = self.metric in _NAN_METRICS or callable(self.metric)
         X = check_array(X, accept_sparse='csr',
-                        force_all_finite='allow-nan' if allow_nans else False)
+                        force_all_finite='allow-nan' if allow_nan else True)
 
         n_samples = X.shape[0]
         if n_samples == 0:
