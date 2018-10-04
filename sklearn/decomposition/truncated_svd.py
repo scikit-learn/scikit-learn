@@ -96,9 +96,9 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     0.249...
     >>> print(svd.singular_values_)  # doctest: +ELLIPSIS
     [2.5841... 2.5245... 2.3201... 2.1753... 2.0443...]
-    >>> # to test LOBPCG instead of randomized:
-    >>> svd = TruncatedSVD(algorithm='lobpcg', n_components=5, n_iter=7, random_state=42)
-    >>> svd.fit(X)
+    ## to test LOBPCG instead of randomized:
+    # svd = TruncatedSVD(algorithm='lobpcg', n_components=5)
+    # svd.fit(X)
 
     See also
     --------
@@ -118,6 +118,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     class to data once, then keep the instance around to do transformations.
 
     """
+
     def __init__(self, n_components=2, algorithm="randomized", n_iter=5,
                  random_state=None, tol=0.):
         self.algorithm = algorithm
@@ -175,8 +176,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
                 raise ValueError("n_components must be < n_features;"
                                  " got %d >= %d" % (k, n_features))
             U, Sigma, VT = lobpcg_svd(X, self.n_components,
-                                          n_iter=self.n_iter,
-                                          random_state=random_state)
+                                      n_iter=self.n_iter,
+                                      random_state=random_state)
         elif self.algorithm == "randomized":
             k = self.n_components
             n_features = X.shape[1]

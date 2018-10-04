@@ -7,7 +7,7 @@
 #         Denis A. Engemann <denis-alexander.engemann@inria.fr>
 #         Michael Eickenberg <michael.eickenberg@inria.fr>
 #         Giorgio Patrini <giorgio.patrini@anu.edu.au>
-#
+#         Andrew Knyazev added lobpcg
 # License: BSD 3 clause
 
 from math import log, sqrt
@@ -15,7 +15,7 @@ import numbers
 
 import numpy as np
 from scipy import linalg
-from scipy.special import gammaln
+# from scipy.special import gammaln
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
 
@@ -356,7 +356,7 @@ class PCA(_BasePCA):
         X_new : array-like, shape (n_samples, n_components)
 
         """
-        U, S, V = self._fit(X)
+        U, S, _ = self._fit(X)
         U = U[:, :self.n_components_]
 
         if self.whiten:
@@ -528,9 +528,9 @@ class PCA(_BasePCA):
         elif svd_solver == 'lobpcg':
             # sign flipping is done inside
             U, S, V = lobpcg_svd(X, n_components=n_components,
-                                     n_iter=self.iterated_power,
-                                     flip_sign=True,
-                                     random_state=random_state)
+                                 n_iter=self.iterated_power,
+                                 flip_sign=True,
+                                 random_state=random_state)
 
         self.n_samples_, self.n_features_ = n_samples, n_features
         self.components_ = V

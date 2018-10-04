@@ -15,13 +15,14 @@ There are two options to assign labels:
 * with 'kmeans' spectral clustering will cluster samples in the embedding space
   using a kmeans algorithm
 * with 'clusterQR' will cluster samples in the embedding space
-  using a clusterQR algorithm, 
+  using a clusterQR algorithm,
 * whereas 'discrete' will iteratively search for the closest partition
   space to the embedding space.
 """
 print(__doc__)
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>, Brian Cheung
+# Andrew Knyazev added clusterQR
 # License: BSD 3 clause
 
 import time
@@ -63,7 +64,7 @@ N_REGIONS = 26
 # compute and visualize the resulting regions
 
 # if often helps the spectral clustering to compute a few extra eigenvectors
-N_REGIONS_PLUS = 3 
+N_REGIONS_PLUS = 3
 
 for assign_labels in ('kmeans', 'discretize', 'clusterQR'):
     t0 = time.time()

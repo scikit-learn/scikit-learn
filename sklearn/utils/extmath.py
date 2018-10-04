@@ -9,6 +9,7 @@ Extended math utilities.
 #          Stefan van der Walt
 #          Kyle Kastner
 #          Giorgio Patrini
+#          Andrew Knyazev added lobpcg
 # License: BSD 3 clause
 
 from __future__ import division
@@ -25,6 +26,7 @@ from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 from scipy.sparse.linalg import lobpcg
+
 
 @deprecated("sklearn.utils.extmath.norm was deprecated in version 0.19 "
             "and will be removed in 0.21. Use scipy.linalg.norm instead.")
@@ -241,7 +243,7 @@ def randomized_range_finder(A, size, n_iter,
 
     # Perform power iterations with Q to further 'imprint' the top
     # singular vectors of A in Q
-    for i in range(n_iter):
+    for _ in range(n_iter):
         if power_iteration_normalizer == 'none':
             Q = safe_sparse_dot(A, Q)
             Q = safe_sparse_dot(A.T, Q)
@@ -387,9 +389,10 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     else:
         return U[:, :n_components], s[:n_components], V[:n_components, :]
 
+
 def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
-                   transpose='auto', lobpcg_tol=None,
-                   flip_sign=True, random_state=0):
+               transpose='auto', lobpcg_tol=None,
+               flip_sign=True, random_state=0):
     """Computes a truncated SVD using LOBPCG mimicking the randomized SVD setup
 
     Parameters
@@ -436,14 +439,14 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
     Notes
     -----
     This algorithm finds a (usually very good) approximate truncated
-    singular value decomposition using LOBPCG with randomization to speed up 
+    singular value decomposition using LOBPCG with randomization to speed up
     the computations. It is particularly fast on large matrices on which
     you wish to extract only a small number of components. In order to
     obtain further speed up, `n_iter` can be set <=2 (at the cost of
-    loss of precision). Compared to 'ranomised', the 'lobpcg' option gives 
-    more accurate approximations, with the same n_iter, n_components, and 
-    n_oversamples, at the slightly increased costs, allows setting  
-    the tolerance, and can output the accuracy. 
+    loss of precision). Compared to 'ranomised', the 'lobpcg' option gives
+    more accurate approximations, with the same n_iter, n_components, and
+    n_oversamples, at the slightly increased costs, allows setting
+    the tolerance, and can output the accuracy.
 
     References
     ----------
@@ -475,16 +478,16 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
     if transpose:
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
-    
+
     Q = random_state.normal(size=(M.shape[0], n_random))
     if M.dtype.kind == 'f':
         # Ensure f32 is preserved as f32
         Q = Q.astype(M.dtype, copy=False)
 
     A = - safe_sparse_dot(M, M.T)
-    # LOBPCG default option largest=True is currently broken, so we go the 
+    # LOBPCG default option largest=True is currently broken, so we go the
     # smallest (negative) of the negative normal matrix A
-    lambdas, Q = lobpcg(A, Q, tol=lobpcg_tol, maxiter=n_iter, largest=False)
+    _, Q = lobpcg(A, Q, tol=lobpcg_tol, maxiter=n_iter, largest=False)
 
     # project M to the (k + p) dimensional space using the basis vectors
     # project M to the (k + p) dimensional space using the basis vectors
@@ -652,7 +655,7 @@ def cartesian(arrays, out=None):
     if out is None:
         out = np.empty_like(ix, dtype=dtype)
 
-    for n, arr in enumerate(arrays):
+    for n, _ in enumerate(arrays):
         out[:, n] = arrays[n][ix[:, n]]
 
     return out
