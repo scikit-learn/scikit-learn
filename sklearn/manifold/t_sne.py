@@ -618,7 +618,7 @@ class TSNE(BaseEstimator):
 
     [3] L.J.P. van der Maaten. Accelerating t-SNE using Tree-Based Algorithms.
         Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
-        http://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf
+        https://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf
     """
     # Control the number of exploration iterations with early_exaggeration on
     _EXPLORATION_N_ITER = 250

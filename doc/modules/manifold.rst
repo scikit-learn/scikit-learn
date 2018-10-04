@@ -611,7 +611,7 @@ the internal structure of the data.
     (2008)
 
   * `"t-Distributed Stochastic Neighbor Embedding"
-    <http://lvdmaaten.github.io/tsne/>`_
+    <https://lvdmaaten.github.io/tsne/>`_
     van der Maaten, L.J.P.
 
   * `"Accelerating t-SNE using Tree-Based Algorithms."

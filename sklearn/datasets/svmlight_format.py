@@ -179,7 +179,6 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id,
         actual_dtype, data, ind, indptr, labels, query = \
             _load_svmlight_file(f, dtype, multilabel, zero_based, query_id,
                                 offset, length)
-    # XXX remove closing when Python 2.7+/3.1+ required
     else:
         with closing(_gen_open(f)) as f:
             actual_dtype, data, ind, indptr, labels, query = \

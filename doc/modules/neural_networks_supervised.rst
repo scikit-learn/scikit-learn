@@ -196,7 +196,7 @@ Algorithms
 
 MLP trains using `Stochastic Gradient Descent
 <https://en.wikipedia.org/wiki/Stochastic_gradient_descent>`_,
-`Adam <http://arxiv.org/abs/1412.6980>`_, or
+`Adam <https://arxiv.org/abs/1412.6980>`_, or
 `L-BFGS <https://en.wikipedia.org/wiki/Limited-memory_BFGS>`__.
 Stochastic Gradient Descent (SGD) updates parameters using the gradient of the
 loss function with respect to a parameter that needs adaptation, i.e.
@@ -381,5 +381,5 @@ or want to do additional monitoring, using ``warm_start=True`` and
       of the Trade 1998.
 
     *  `"Adam: A method for stochastic optimization."
-       <http://arxiv.org/pdf/1412.6980v8.pdf>`_
+       <https://arxiv.org/pdf/1412.6980v8.pdf>`_
        Kingma, Diederik, and Jimmy Ba. arXiv preprint arXiv:1412.6980 (2014).
