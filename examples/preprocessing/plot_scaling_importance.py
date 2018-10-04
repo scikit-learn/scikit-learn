@@ -103,7 +103,8 @@ fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=FIG_SIZE)
 
 
 for l, c, m in zip(range(0, 3), ('blue', 'red', 'green'), ('^', 's', 'o')):
-    ax1.scatter(X_train_transformed[y_train == l, 0], X_train_transformed[y_train == l, 1],
+    ax1.scatter(X_train_transformed[y_train == l, 0],
+                X_train_transformed[y_train == l, 1],
                 color=c,
                 label='class %s' % l,
                 alpha=0.5,
@@ -111,7 +112,8 @@ for l, c, m in zip(range(0, 3), ('blue', 'red', 'green'), ('^', 's', 'o')):
                 )
 
 for l, c, m in zip(range(0, 3), ('blue', 'red', 'green'), ('^', 's', 'o')):
-    ax2.scatter(X_train_std_transformed[y_train == l, 0], X_train_std_transformed[y_train == l, 1],
+    ax2.scatter(X_train_std_transformed[y_train == l, 0],
+                X_train_std_transformed[y_train == l, 1],
                 color=c,
                 label='class %s' % l,
                 alpha=0.5,
