@@ -21,7 +21,7 @@ from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
-from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
 
 import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
@@ -30,6 +30,7 @@ from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils import IS_PYPY
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,
+    _safe_tags,
     set_checking_parameters,
     check_parameters_default_constructible,
     check_no_attributes_set_in_init,
@@ -98,6 +99,8 @@ def _tested_non_meta_estimators():
             continue
         if name.startswith("_"):
             continue
+        # FIXME _skip_test should be used here (if we could)
+
         required_parameters = getattr(Estimator, "_required_parameters", [])
         if len(required_parameters):
             continue
@@ -158,6 +161,12 @@ def test_no_attributes_set_in_init(name, Estimator):
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         estimator = Estimator()
+        tags = _safe_tags(estimator)
+        if tags['_skip_test']:
+            warnings.warn("Explicit SKIP via _skip_test tag for "
+                          "{}.".format(name),
+                          SkipTestWarning)
+            return
         # check this on class
         check_no_attributes_set_in_init(name, estimator)
 

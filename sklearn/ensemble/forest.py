@@ -51,6 +51,7 @@ from scipy.sparse import hstack as sparse_hstack
 
 
 from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
+from ..base import _update_tags
 from ..utils import Parallel, delayed
 from ..externals import six
 from ..metrics import r2_score
@@ -64,6 +65,7 @@ from .base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import parallel_helper
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
+
 
 __all__ = ["RandomForestClassifier",
            "RandomForestRegressor",
@@ -2016,3 +2018,8 @@ class RandomTreesEmbedding(BaseForest):
             Transformed dataset.
         """
         return self.one_hot_encoder_.transform(self.apply(X))
+
+    def _get_tags(self):
+        # FIXME see https://github.com/scikit-learn/scikit-learn/issues/1229
+        return _update_tags(super(RandomTreesEmbedding, self),
+                            _skip_test=True)

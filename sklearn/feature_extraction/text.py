@@ -1625,4 +1625,4 @@ class TfidfVectorizer(CountVectorizer):
 
     def _get_tags(self):
         return _update_tags(super(TfidfVectorizer, self),
-                            input_types=["string"])
+                            input_types=["string"], _skip_test=True)
