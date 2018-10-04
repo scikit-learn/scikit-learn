@@ -1246,7 +1246,9 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
 
 
 class LassoCV(LinearModelCV, RegressorMixin):
-    """Lasso linear model with iterative fitting along a regularization path
+    """Lasso linear model with iterative fitting along a regularization path.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     The best model is selected by cross-validation.
 
@@ -1411,9 +1413,9 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
-    """Elastic Net model with iterative fitting along a regularization path
+    """Elastic Net model with iterative fitting along a regularization path.
 
-    The best model is selected by cross-validation.
+    See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <elastic_net>`.
 
@@ -1823,7 +1825,7 @@ class MultiTaskElasticNet(Lasso):
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
-    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
+    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
 
     The optimization objective for Lasso is::
 
@@ -1943,6 +1945,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     """Multi-task L1/L2 ElasticNet with built-in cross-validation.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     The optimization objective for MultiTaskElasticNet is::
 
@@ -2130,7 +2134,9 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
-    """Multi-task L1/L2 Lasso with built-in cross-validation.
+    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     The optimization objective for MultiTaskLasso is::
 
