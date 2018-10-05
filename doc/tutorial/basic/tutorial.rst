@@ -398,8 +398,8 @@ is similarly possible for an instance to be assigned multiple labels::
   array([[1, 1, 0, 0, 0],
          [1, 0, 1, 0, 0],
          [0, 1, 0, 1, 0],
-         [1, 0, 1, 1, 0],
-         [0, 0, 1, 0, 0]])
+         [1, 0, 1, 0, 0],
+         [1, 0, 1, 0, 0]])
 
 In this case, the classifier is fit upon instances each assigned multiple labels.
 The :class:`MultiLabelBinarizer <sklearn.preprocessing.MultiLabelBinarizer>` is
