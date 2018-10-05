@@ -44,7 +44,7 @@ classifiers = dict(ols=linear_model.LinearRegression(),
 
 fignum = 1
 for name, clf in classifiers.items():
-    fig = plt.figure(fignum, figsize=(4, 3))
+    plt.figure(fignum, figsize=(4, 3))
     plt.clf()
     plt.title(name)
 
