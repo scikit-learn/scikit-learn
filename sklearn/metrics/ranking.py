@@ -396,11 +396,8 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
             # Hand & Till (2001) implementation
             return _average_multiclass_ovo_score(
                 _binary_roc_auc_score, y_true, y_score, average)
-        elif multiclass == "ovr" and average == "weighted":
-            # Provost & Domingos (2001) implementation
-            return _average_multiclass_ovr_score(
-                _binary_roc_auc_score, y_true, y_score, average)
         else:
+            # ovr is same as multi-label
             y_true = y_true.reshape((-1, 1))
             y_true_multilabel = LabelBinarizer().fit_transform(y_true)
             return _average_binary_score(
@@ -933,7 +930,7 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
             unique_inverse[y_true.indices[start:stop]],
             minlength=len(unique_scores))
         all_at_reversed_rank = np.bincount(unique_inverse,
-                                        minlength=len(unique_scores))
+                                           minlength=len(unique_scores))
         false_at_reversed_rank = all_at_reversed_rank - true_at_reversed_rank
 
         # if the scores are ordered, it's possible to count the number of

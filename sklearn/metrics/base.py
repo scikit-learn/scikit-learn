@@ -19,7 +19,6 @@ import numpy as np
 
 from ..utils import check_array, check_consistent_length
 from ..utils.multiclass import type_of_target
-from ..preprocessing import LabelBinarizer
 
 
 def _average_binary_score(binary_metric, y_true, y_score, average,
@@ -191,61 +190,3 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
 
     return (np.average(pair_scores, weights=prevalence)
             if average == "weighted" else np.average(pair_scores))
-
-
-def _average_multiclass_ovr_score(binary_metric, y_true, y_score, average):
-    """Uses the binary metric for one-vs-rest multi-class classification,
-    where the score is computed according to the Provost & Domingos (2001)
-    definition of the AUC in multi-class settings (when `average` parameter is
-    set to `weighted`).
-
-    For each class, the ROC curve is generated and the AUC computed.
-    The output is the average of the individual AUCs weighted by the prevalence
-    of the classes in the data.
-
-    Parameters
-    ----------
-    y_true : array, shape = [n_samples]
-        True multiclass labels.
-        Assumes labels have been recoded to 0 to n_classes.
-
-    y_score : array, shape = [n_samples, n_classes]
-        Target scores corresponding to probability estimates of a sample
-        belonging to a particular class.
-
-    average : 'macro' or 'weighted', default='macro'
-        ``'macro'``:
-            Calculate metrics for each label, and find their unweighted
-            mean. This does not take label imbalance into account. Classes
-            are assumed to be uniformly distributed.
-        ``'weighted'``:
-            Calculate metrics for each label, taking into account the
-            prevalence of the classes in the dataset.
-
-    binary_metric : callable, the binary metric function to use.
-        Accepts the following as input
-            y_true_target : array, shape = [n_samples_target]
-                Some sub-array of y_true for a pair of classes designated
-                positive and negative in the one-vs-one scheme.
-            y_score_target : array, shape = [n_samples_target]
-                Scores corresponding to the probability estimates
-                of a sample belonging to the designated positive class label
-
-    Returns
-    -------
-    score : float
-        Average of binary metric scores
-    """
-    n_classes = len(np.unique(y_true))
-    scores = np.zeros((n_classes,))
-
-    y_true_multilabel = LabelBinarizer().fit_transform(y_true)
-    prevalence = np.sum(y_true_multilabel, axis=0) / y_true_multilabel.shape[0]
-
-    for c in range(n_classes):
-        y_true_c = y_true_multilabel.take([c], axis=1).ravel()
-        y_score_c = y_score.take([c], axis=1).ravel()
-        scores[c] = binary_metric(y_true_c, y_score_c)
-
-    return (np.average(scores, weights=prevalence)
-            if average == "weighted" else np.average(scores))
