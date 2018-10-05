@@ -61,6 +61,9 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         Whether use and return normed stress value (Stress-1) instead of raw
         stress calculated by default.
 
+        .. versionadded:: 0.20
+        parameter *normalize* to return normed stress value.
+
     Returns
     -------
     X : ndarray, shape (n_samples, n_components)
