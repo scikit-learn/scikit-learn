@@ -106,7 +106,7 @@ development, it is an essential part of our toolkit. Recent uses are included
 in `digg’s new video recommender system
 <https://medium.com/i-data/the-digg-video-recommender-2f9ade7c4ba3>`_,
 and Poncho’s `dynamic heuristic subspace clustering
-<https://medium.com/@DiggData/scaling-poncho-using-data-ca24569d56fd>`_. 
+<https://medium.com/@DiggData/scaling-poncho-using-data-ca24569d56fd>`_.
 
 .. raw:: html
 
@@ -136,7 +136,7 @@ Gilad Lotan, Chief Data Scientist
 
 At Hugging Face we're using NLP and probabilistic models to generate
 conversational Artificial intelligences that are fun to chat with. Despite using
-deep neural nets for `a few <https://medium.com/huggingface/understanding-emotions-from-keras-to-pytorch-3ccb61d5a983>`_ 
+deep neural nets for `a few <https://medium.com/huggingface/understanding-emotions-from-keras-to-pytorch-3ccb61d5a983>`_
 of our `NLP tasks <https://huggingface.co/coref/>`_, scikit-learn is still the bread-and-butter of
 our daily machine learning routine. The ease of use and predictability of the
 interface, as well as the straightforward mathematical explanations that are
@@ -624,7 +624,7 @@ David Koh - Senior Data Scientist at OkCupid
 .. raw:: html
 
    </span>
-   
+
 
 `Lovely <https://livelovely.com/>`_
 -----------------------------------
@@ -815,13 +815,13 @@ Thorsten Kranz, Data Scientist, Coma Soft AG.
 
    </div>
 
-Our software, Data Science Studio (DSS), enables users to create data services 
-that combine `ETL <https://en.wikipedia.org/wiki/Extract,_transform,_load>`_ with 
-Machine Learning. Our Machine Learning module integrates 
-many scikit-learn algorithms. The scikit-learn library is a perfect integration 
-with DSS because it offers algorithms for virtually all business cases. Our goal 
-is to offer a transparent and flexible tool that makes it easier to optimize 
-time consuming aspects of building a data service, preparing data, and training 
+Our software, Data Science Studio (DSS), enables users to create data services
+that combine `ETL <https://en.wikipedia.org/wiki/Extract,_transform,_load>`_ with
+Machine Learning. Our Machine Learning module integrates
+many scikit-learn algorithms. The scikit-learn library is a perfect integration
+with DSS because it offers algorithms for virtually all business cases. Our goal
+is to offer a transparent and flexible tool that makes it easier to optimize
+time consuming aspects of building a data service, preparing data, and training
 machine learning algorithms on all types of data.
 
 
@@ -886,10 +886,10 @@ Christian Rammig, Head of Data Science, Otto Group
 
 
 At Zopa, the first ever Peer-to-Peer lending platform, we extensively use scikit-learn
-to run the business and optimize our users' experience. It powers our 
-Machine Learning models involved in credit risk, fraud risk, marketing, and pricing, 
+to run the business and optimize our users' experience. It powers our
+Machine Learning models involved in credit risk, fraud risk, marketing, and pricing,
 and has been used for originating at least 1 billion GBP worth of Zopa loans.
-It is very well documented, powerful, and simple to use. We are grateful for the 
+It is very well documented, powerful, and simple to use. We are grateful for the
 capabilities it has provided, and for allowing us to deliver on our mission of making
 money simple and fair.
 
@@ -902,4 +902,37 @@ Vlasios Vasileiou, Head of Data Science, Zopa
 .. raw:: html
 
   </span>
+
+`MARS <https://www.mars.com/global>`_
+------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/mars.png
+    :width: 120pt
+    :target: https://www.mars.com/global
+
+.. raw:: html
+
+    </div>
+
+Scikit-Learn is integral to the Machine Learning Ecosystem at Mars. Whether
+we're designing better recipes for petfood or closely analysing our cocoa
+supply chain, Scikit-Learn is used as a tool for rapidly prototyping ideas
+and taking them to production. This allows us to better understand and meet
+the needs of our consumers worldwide. Scikit-Learn's feature-rich toolset is
+easy to use and equips our associates with the capabilities they need to
+solve the business challenges they face every day.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Michael Fitzke Next Generation Technologies Sr Leader, Mars Inc.
+
+.. raw:: html
+
+   </span>
 
