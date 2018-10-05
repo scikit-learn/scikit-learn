@@ -736,6 +736,9 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
     y_converted : object
         The converted and validated y.
     """
+    if y is None:
+        raise ValueError("y cannot be None")
+
     X = check_array(X, accept_sparse=accept_sparse,
                     accept_large_sparse=accept_large_sparse,
                     dtype=dtype, order=order, copy=copy,

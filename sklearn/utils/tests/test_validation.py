@@ -760,3 +760,9 @@ def test_check_array_memmap(copy):
         X_checked = check_array(X_memmap, copy=copy)
         assert np.may_share_memory(X_memmap, X_checked) == (not copy)
         assert X_checked.flags['WRITEABLE'] == copy
+
+
+def test_check_X_y_informative_error():
+    X = np.ones((2, 2))
+    y = None
+    assert_raise_message(ValueError, "y cannot be None", check_X_y, X, y)
