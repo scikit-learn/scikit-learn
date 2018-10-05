@@ -599,7 +599,7 @@ def test_iterative_imputer_truncated_normal_posterior():
     pytest.importorskip("scipy", minversion="0.17.0")
     rng = np.random.RandomState(0)
 
-    X = rng.random_sample((5, 5))
+    X = rng.normal(size=(5, 5))
     X[0][0] = np.nan
 
     imputer = IterativeImputer(min_value=0,
@@ -610,14 +610,19 @@ def test_iterative_imputer_truncated_normal_posterior():
     imputer.fit_transform(X)
     # generate multiple imputations for the single missing value
     imputations = np.array([imputer.transform(X)[0][0] for _ in range(1000)])
+
+    assert all(imputations >= 0)
+    assert all(imputations <= 0.5)
+
     mu, sigma = imputations.mean(), imputations.std()
+    ks_statistic, p_value = kstest((imputations - mu) / sigma, 'norm')
+    if sigma == 0:
+        sigma += 1e-12
     ks_statistic, p_value = kstest((imputations - mu) / sigma, 'norm')
     # we want to fail to reject null hypothesis
     # null hypothesis: distributions are the same
-    assert ks_statistic < 0.15 or p_value > 0.1, \
+    assert ks_statistic < 0.2 or p_value > 0.1, \
         "The posterior does appear to be normal"
-    assert all(imputations >= 0)
-    assert all(imputations <= 0.5)
 
 
 @pytest.mark.parametrize(
