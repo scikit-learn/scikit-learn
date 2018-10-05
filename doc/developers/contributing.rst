@@ -1143,6 +1143,12 @@ data dependent. A tolerance stopping criterion ``tol`` is not directly
 data dependent (although the optimal value according to some scoring
 function probably is).
 
+When ``fit`` is called, any previous call to ``fit`` should be ignored. In
+general, calling ``estimator.fit(X1)`` and then ``estimator.fit(X2)`` should
+be the same as only calling ``estimator.fit(X2)``. However, this may not be
+true in practice when ``fit`` depends on some random process, see
+:term:`random_state`.
+
 Estimated Attributes
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -1151,10 +1157,8 @@ ending with trailing underscore, for example the coefficients of
 some regression estimator would be stored in a ``coef_`` attribute after
 ``fit`` has been called.
 
-The last-mentioned attributes are expected to be overridden when
-you call ``fit`` a second time, without taking any previous value into
-account. Also, **fit should be idempotent**: ``clf.fit(X).fit(X)`` should be
-equivalent to ``clf.fit(X)``.
+The estimated attributes are expected to be overridden when you call ``fit``
+a second time, without taking any previous value into account.
 
 Optional Arguments
 ^^^^^^^^^^^^^^^^^^
