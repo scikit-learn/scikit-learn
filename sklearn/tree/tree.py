@@ -108,6 +108,14 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.class_weight = class_weight
         self.presort = presort
 
+    def get_max_depth(self):
+        check_is_fitted(self, 'tree_')
+        return self.tree_.max_depth
+
+    def get_n_leaves(self):
+        check_is_fitted(self, 'tree_')
+        return self.tree_.n_leaves
+
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
 

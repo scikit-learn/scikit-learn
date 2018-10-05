@@ -574,6 +574,12 @@ cdef class Tree:
         def __get__(self):
             return self._get_node_ndarray()['right_child'][:self.node_count]
 
+    property n_leaves:
+        def __get__(self):
+            return np.sum(np.logical_and(
+                self.children_left == -1,
+                self.children_right == -1))
+
     property feature:
         def __get__(self):
             return self._get_node_ndarray()['feature'][:self.node_count]
