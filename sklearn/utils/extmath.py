@@ -391,7 +391,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
 
 def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
-               transpose='auto', lobpcg_tol=None,
+               transpose='auto', 
                flip_sign=True, random_state=0):
     """Computes a truncated SVD using LOBPCG mimicking the randomized SVD setup
 
@@ -485,9 +485,13 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
         Q = Q.astype(M.dtype, copy=False)
 
     A = - safe_sparse_dot(M, M.T)
-    # LOBPCG default option largest=True is currently broken, so we go the
-    # smallest (negative) of the negative normal matrix A
-    _, Q = lobpcg(A, Q, tol=lobpcg_tol, maxiter=n_iter, largest=False)
+    # 1. LOBPCG default option largest=True is currently broken, so we 
+    # go the smallest (negative) of the negative normal matrix A
+    # 2. In contrast to randomised, lobpcg allows setting up useful
+    # tol=lobpcg_tol but adding it below currently results in 
+    # Docstring Error:
+    # sklearn.cluster.spectral.discretize arg mismatch. 
+    _, Q = lobpcg(A, Q, maxiter=n_iter, largest=False)
 
     # project M to the (k + p) dimensional space using the basis vectors
     # project M to the (k + p) dimensional space using the basis vectors
