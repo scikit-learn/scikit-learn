@@ -222,7 +222,7 @@ allows you to set this configuration within a specified context::
 
   >>> import sklearn
   >>> with sklearn.config_context(assume_finite=True):
-  ...    pass  # do learning/prediction here with reduced validation
+  ...     pass  # do learning/prediction here with reduced validation
 
 Note that this will affect all uses of
 :func:`sklearn.utils.assert_all_finite` within the context.
@@ -463,7 +463,7 @@ memory to 128 MiB::
 
   >>> import sklearn
   >>> with sklearn.config_context(working_memory=128):
-  ...    pass  # do chunked work here
+  ...     pass  # do chunked work here
 
 An example of a chunked operation adhering to this setting is
 :func:`metric.pairwise_distances_chunked`, which facilitates computing

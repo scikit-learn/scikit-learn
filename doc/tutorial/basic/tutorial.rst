@@ -391,15 +391,15 @@ Note that the fourth and fifth instances returned all zeroes, indicating that
 they matched none of the three labels ``fit`` upon. With multilabel outputs, it
 is similarly possible for an instance to be assigned multiple labels::
 
-  >> from sklearn.preprocessing import MultiLabelBinarizer
-  >> y = [[0, 1], [0, 2], [1, 3], [0, 2, 3], [2, 4]]
-  >> y = MultiLabelBinarizer().fit_transform(y)
-  >> classif.fit(X, y).predict(X)
+  >>> from sklearn.preprocessing import MultiLabelBinarizer
+  >>> y = [[0, 1], [0, 2], [1, 3], [0, 2, 3], [2, 4]]
+  >>> y = MultiLabelBinarizer().fit_transform(y)
+  >>> classif.fit(X, y).predict(X)
   array([[1, 1, 0, 0, 0],
          [1, 0, 1, 0, 0],
          [0, 1, 0, 1, 0],
-         [1, 0, 1, 1, 0],
-         [0, 0, 1, 0, 1]])
+         [1, 0, 1, 0, 0],
+         [1, 0, 1, 0, 0]])
 
 In this case, the classifier is fit upon instances each assigned multiple labels.
 The :class:`MultiLabelBinarizer <sklearn.preprocessing.MultiLabelBinarizer>` is
