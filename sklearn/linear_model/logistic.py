@@ -1670,17 +1670,20 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         after doing an OvR for the corresponding class as values.
         If the 'multi_class' option is set to 'multinomial', then
         the coefs_paths are the coefficients corresponding to each class.
-        Each dict value has shape ``(n_folds, len(Cs_) x len(l1_ratios_),
-        n_features)`` or ``(n_folds, len(Cs_) x len(l1_ratios_), n_features
-        + 1)`` depending on whether the intercept is fit or not.
+        Each dict value has shape ``(n_folds, len(Cs_), n_features)`` or
+        ``(n_folds, len(Cs_), n_features + 1)`` depending on whether the
+        intercept is fit or not. If ``penalty='elasticnet'``, The shape is
+        ``(n_folds, len(Cs_), len(l1_ratios_), n_features)`` or
+        ``(n_folds, len(Cs_), len(l1_ratios_), len n_features + 1)``.
 
     scores_ : dict
         dict with classes as the keys, and the values as the
         grid of scores obtained during cross-validating each fold, after doing
         an OvR for the corresponding class. If the 'multi_class' option
         given is 'multinomial' then the same scores are repeated across
-        all classes, since this is the multinomial class.
-        Each dict value has shape (n_folds, len(Cs) x len(l1_ratios))
+        all classes, since this is the multinomial class. Each dict value
+        has shape ``(n_folds, len(Cs))`` or ``(n_folds, len(Cs),
+        len(l1_ratios))`` is ``penalty='elasticnet'``.
 
     C_ : array, shape (n_classes,) or (n_classes - 1,)
         Array of C that maps to the best scores across every class. If refit is
@@ -1996,6 +1999,15 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.C_ = np.asarray(self.C_)
         self.l1_ratio_ = np.asarray(self.l1_ratio_)
         self.l1_ratios_ = np.asarray(l1_ratios_)
+        # if elasticnet was used, add the l1_ratios dimension to coefs_path_
+        # and scores_ attributes
+        if self.l1_ratios is not None:
+            for cls, coefs_path in self.coefs_paths_.items():
+                self.coefs_paths_[cls] = coefs_path.reshape(
+                    (len(folds), self.Cs_.size, self.l1_ratios_.size, -1))
+            for cls, score in self.scores_.items():
+                self.scores_[cls] = score.reshape(
+                    (len(folds), self.Cs_.size, self.l1_ratios_.size))
 
         return self
 
