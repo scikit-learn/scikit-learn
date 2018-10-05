@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.testing import assert_array_almost_equal assert_allclose
+from numpy.testing import assert_array_almost_equal, assert_allclose
 
 from sklearn.manifold import mds
 from sklearn.utils.testing import assert_raises
