@@ -185,7 +185,7 @@ Here is an example of building custom scorers, and of using the
     >>> # and y defined below.
     >>> score = make_scorer(my_custom_loss_func, greater_is_better=False)
     >>> X = [[1], [1]]
-    >>> y  = [0, 1]
+    >>> y = [0, 1]
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
     >>> clf = clf.fit(X, y)
@@ -250,8 +250,8 @@ permitted and will require a wrapper to return a single metric::
     >>> def fp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 1]
     >>> def fn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 0]
     >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 1]
-    >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
-    ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
+    >>> scoring = {'tp': make_scorer(tp), 'tn': make_scorer(tn),
+    ...            'fp': make_scorer(fp), 'fn': make_scorer(fn)}
     >>> cv_results = cross_validate(svm.fit(X, y), X, y,
     ...                             scoring=scoring, cv=5)
     >>> # Getting the test set true positive scores
@@ -1297,7 +1297,7 @@ Here is a small example of usage of this function:::
     >>> y_pred = np.array([0, 1, 1, 0])
     >>> brier_score_loss(y_true, y_prob)
     0.055
-    >>> brier_score_loss(y_true, 1-y_prob, pos_label=0)
+    >>> brier_score_loss(y_true, 1 - y_prob, pos_label=0)
     0.055
     >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
     0.055
@@ -1776,7 +1776,7 @@ Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
   >>> clf = SVC(kernel='linear', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test) # doctest: +ELLIPSIS
   0.63...
-  >>> clf = DummyClassifier(strategy='most_frequent',random_state=0)
+  >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
   >>> clf.fit(X_train, y_train)
   DummyClassifier(constant=None, random_state=0, strategy='most_frequent')
   >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS

@@ -44,7 +44,7 @@ and will store the coefficients :math:`w` of the linear model in its
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
-    >>> reg.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
+    >>> reg.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
     ...                                       # doctest: +NORMALIZE_WHITESPACE
     LinearRegression(copy_X=True, fit_intercept=True, n_jobs=None,
                      normalize=False)
@@ -103,8 +103,8 @@ arrays X, y and will store the coefficients :math:`w` of the linear model in
 its ``coef_`` member::
 
     >>> from sklearn import linear_model
-    >>> reg = linear_model.Ridge (alpha = .5)
-    >>> reg.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1]) # doctest: +NORMALIZE_WHITESPACE
+    >>> reg = linear_model.Ridge(alpha=.5)
+    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1]) # doctest: +NORMALIZE_WHITESPACE
     Ridge(alpha=0.5, copy_X=True, fit_intercept=True, max_iter=None,
           normalize=False, random_state=None, solver='auto', tol=0.001)
     >>> reg.coef_
@@ -184,7 +184,7 @@ the algorithm to fit the coefficients. See :ref:`least_angle_regression`
 for another implementation::
 
     >>> from sklearn import linear_model
-    >>> reg = linear_model.Lasso(alpha = 0.1)
+    >>> reg = linear_model.Lasso(alpha=0.1)
     >>> reg.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
        normalize=False, positive=False, precompute=False, random_state=None,
@@ -646,7 +646,7 @@ Bayesian Ridge Regression is used for regression::
 
 After being fitted, the model can then be used to predict new values::
 
-    >>> reg.predict ([[1, 0.]])
+    >>> reg.predict([[1, 0.]])
     array([0.50000013])
 
 
