@@ -4,7 +4,7 @@ Contributing to scikit-learn
 
 **Note: This document is a 'getting started' summary for contributing code,
 documentation, testing, and filing issues.** Visit the [**Contributing
-page**](http://scikit-learn.org/stable/developers/contributing.html)
+page**](http://scikit-learn.org/dev/developers/contributing.html)
 for the full contributor's guide. Please read it carefully to help make
 the code review process go as smoothly as possible and maximize the
 likelihood of your contribution being merged.
@@ -168,7 +168,7 @@ following rules before submitting:
 
 -  If you are submitting an algorithm or feature request, please verify that
    the algorithm fulfills our
-   [new algorithm requirements](http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms).
+   [new algorithm requirements](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms).
 
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks.
@@ -178,17 +178,25 @@ following rules before submitting:
    as your Python, scikit-learn, numpy, and scipy versions. This information
    can be found by running the following code snippet:
 
-  ```python
-  import platform; print(platform.platform())
-  import sys; print("Python", sys.version)
-  import numpy; print("NumPy", numpy.__version__)
-  import scipy; print("SciPy", scipy.__version__)
-  import sklearn; print("Scikit-Learn", sklearn.__version__)
-  ```
+   For scikit-learn >= 0.20:
+
+   ```python
+   import sklearn; sklearn.show_versions()
+   ```
+
+   For scikit-learn < 0.20:
+
+   ```python
+   import platform; print(platform.platform())
+   import sys; print("Python", sys.version)
+   import numpy; print("NumPy", numpy.__version__)
+   import scipy; print("SciPy", scipy.__version__)
+   import sklearn; print("Scikit-Learn", sklearn.__version__)
+   ```
 
 -  Please be specific about what estimators and/or functions are involved
    and the shape of the data, as appropriate; please include a
-   [reproducible](http://stackoverflow.com/help/mcve) code snippet
+   [reproducible](https://stackoverflow.com/help/mcve) code snippet
    or link to a [gist](https://gist.github.com). If an exception is raised,
    please provide the traceback.
 
@@ -222,8 +230,8 @@ be placed in ``_build/html/stable`` and are viewable in a web browser. See the
 
 For building the documentation, you will need
 [sphinx](http://sphinx.pocoo.org/),
-[matplotlib](http://matplotlib.org/), and
-[pillow](http://pillow.readthedocs.io/en/latest/).
+[matplotlib](https://matplotlib.org/), and
+[pillow](https://pillow.readthedocs.io/en/latest/).
 
 When you are writing documentation, it is important to keep a good
 compromise between mathematical and algorithmic details, and give
@@ -235,6 +243,6 @@ illustrating it.
 Further Information
 -------------------
 
-Visit the [Contributing Code](http://scikit-learn.org/stable/developers/index.html#coding-guidelines)
+Visit the [Contributing Code](http://scikit-learn.org/stable/developers/contributing.html#coding-guidelines)
 section of the website for more information including conforming to the
 API spec and profiling contributed code.

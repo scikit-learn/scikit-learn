@@ -141,7 +141,7 @@ projection transformer::
 
   >>> import numpy as np
   >>> from sklearn import random_projection
-  >>> X = np.random.rand(100,10000)
+  >>> X = np.random.rand(100, 10000)
   >>> transformer = random_projection.SparseRandomProjection()
   >>> X_new = transformer.fit_transform(X)
   >>> X_new.shape
@@ -152,11 +152,11 @@ projection transformer::
 
  * D. Achlioptas. 2003.
    `Database-friendly random projections: Johnson-Lindenstrauss  with binary
-   coins <www.cs.ucsc.edu/~optas/papers/jl.pdf>`_.
+   coins <http://www.cs.ucsc.edu/~optas/papers/jl.pdf>`_.
    Journal of Computer and System Sciences 66 (2003) 671–687
 
  * Ping Li, Trevor J. Hastie, and Kenneth W. Church. 2006.
-   `Very sparse random projections. <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.62.585&rep=rep1&type=pdf>`_
+   `Very sparse random projections. <https://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf>`_
    In Proceedings of the 12th ACM SIGKDD international conference on
    Knowledge discovery and data mining (KDD '06). ACM, New York, NY, USA,
    287-296.

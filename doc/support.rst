@@ -24,7 +24,7 @@ User questions
 ==============
 
 - Some scikit-learn developers support users on StackOverflow using
-  the `[scikit-learn] <http://stackoverflow.com/questions/tagged/scikit-learn>`_
+  the `[scikit-learn] <https://stackoverflow.com/questions/tagged/scikit-learn>`_
   tag.
 
 - For general theoretical or methodological Machine Learning questions
@@ -82,7 +82,7 @@ Some developers like to hang out on channel ``#scikit-learn`` on
 ``irc.freenode.net``.
 
 If you do not have an IRC client or are behind a firewall this web
-client works fine: http://webchat.freenode.net
+client works fine: https://webchat.freenode.net
 
 
 .. _documentation_resources:
@@ -92,7 +92,7 @@ Documentation resources
 
 This documentation is relative to |release|. Documentation for
 other versions can be found `here
-<http://scikit-learn.org/dev/versions.html>`_.
+<http://scikit-learn.org/dev/versions.html>`__.
 
 Printable pdf documentation for old versions can be found `here
 <https://sourceforge.net/projects/scikit-learn/files/documentation/>`_.

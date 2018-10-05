@@ -85,12 +85,12 @@ used:
            [4, 3],
            [5, 4]]...)
     >>> distances
-    array([[ 0.        ,  1.        ],
-           [ 0.        ,  1.        ],
-           [ 0.        ,  1.41421356],
-           [ 0.        ,  1.        ],
-           [ 0.        ,  1.        ],
-           [ 0.        ,  1.41421356]])
+    array([[0.        , 1.        ],
+           [0.        , 1.        ],
+           [0.        , 1.41421356],
+           [0.        , 1.        ],
+           [0.        , 1.        ],
+           [0.        , 1.41421356]])
 
 Because the query set matches the training set, the nearest neighbor of each
 point is the point itself, at a distance of zero.
@@ -99,12 +99,12 @@ It is also possible to efficiently produce a sparse graph showing the
 connections between neighboring points:
 
     >>> nbrs.kneighbors_graph(X).toarray()
-    array([[ 1.,  1.,  0.,  0.,  0.,  0.],
-           [ 1.,  1.,  0.,  0.,  0.,  0.],
-           [ 0.,  1.,  1.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  1.,  1.,  0.],
-           [ 0.,  0.,  0.,  1.,  1.,  0.],
-           [ 0.,  0.,  0.,  0.,  1.,  1.]])
+    array([[1., 1., 0., 0., 0., 0.],
+           [1., 1., 0., 0., 0., 0.],
+           [0., 1., 1., 0., 0., 0.],
+           [0., 0., 0., 1., 1., 0.],
+           [0., 0., 0., 1., 1., 0.],
+           [0., 0., 0., 0., 1., 1.]])
 
 The dataset is structured such that points nearby in index order are nearby
 in parameter space, leading to an approximately block-diagonal matrix of

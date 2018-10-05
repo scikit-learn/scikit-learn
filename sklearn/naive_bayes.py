@@ -465,7 +465,7 @@ class BaseDiscreteNB(BaseNB):
             self.class_log_prior_ = (np.log(self.class_count_) -
                                      np.log(self.class_count_.sum()))
         else:
-            self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
+            self.class_log_prior_ = np.full(n_classes, -np.log(n_classes))
 
     def _check_alpha(self):
         if np.min(self.alpha) < 0:
@@ -796,7 +796,7 @@ class ComplementNB(BaseDiscreteNB):
     Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
     Tackling the poor assumptions of naive bayes text classifiers. In ICML
     (Vol. 3, pp. 616-623).
-    http://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
+    https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,

@@ -52,8 +52,8 @@ from .utils.multiclass import (_check_partial_fit_first_call,
                                _ovr_decision_function)
 from .utils.metaestimators import _safe_split, if_delegate_has_method
 
-from .externals.joblib import Parallel
-from .externals.joblib import delayed
+from .utils import Parallel
+from .utils import delayed
 from .externals.six.moves import zip as izip
 
 __all__ = [
@@ -157,11 +157,11 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         An estimator object implementing `fit` and one of `decision_function`
         or `predict_proba`.
 
-    n_jobs : int, optional, default: 1
-        The number of jobs to use for the computation. If -1 all CPUs are used.
-        If 1 is given, no parallel computing code is used at all, which is
-        useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
-        used. Thus for n_jobs = -2, all CPUs but one are used.
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to use for the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -176,7 +176,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     multilabel_ : boolean
         Whether a OneVsRestClassifier is a multilabel classifier.
     """
-    def __init__(self, estimator, n_jobs=1):
+    def __init__(self, estimator, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
@@ -197,7 +197,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self
         """
         # A sparse LabelBinarizer, with sparse_output=True, has been shown to
-        # outpreform or match a dense label binarizer in all cases and has also
+        # outperform or match a dense label binarizer in all cases and has also
         # resulted in less or equal memory consumption in the fit_ovr function
         # overall.
         self.label_binarizer_ = LabelBinarizer(sparse_output=True)
@@ -456,11 +456,11 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         An estimator object implementing `fit` and one of `decision_function`
         or `predict_proba`.
 
-    n_jobs : int, optional, default: 1
-        The number of jobs to use for the computation. If -1 all CPUs are used.
-        If 1 is given, no parallel computing code is used at all, which is
-        useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
-        used. Thus for n_jobs = -2, all CPUs but one are used.
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to use for the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -471,7 +471,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         Array containing labels.
     """
 
-    def __init__(self, estimator, n_jobs=1):
+    def __init__(self, estimator, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
@@ -662,11 +662,11 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         random_state is the random number generator; If None, the random number
         generator is the RandomState instance used by `np.random`.
 
-    n_jobs : int, optional, default: 1
-        The number of jobs to use for the computation. If -1 all CPUs are used.
-        If 1 is given, no parallel computing code is used at all, which is
-        useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
-        used. Thus for n_jobs = -2, all CPUs but one are used.
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to use for the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -698,7 +698,8 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
        2008.
     """
 
-    def __init__(self, estimator, code_size=1.5, random_state=None, n_jobs=1):
+    def __init__(self, estimator, code_size=1.5, random_state=None,
+                 n_jobs=None):
         self.estimator = estimator
         self.code_size = code_size
         self.random_state = random_state

@@ -1,8 +1,10 @@
 """Transformers for missing value imputation"""
 # Authors: Nicolas Tresegnie <nicolas.tresegnie@gmail.com>
+#          Sergey Feldman <sergeyfeldman@gmail.com>
 # License: BSD 3 clause
 
 import warnings
+import numbers
 
 import numpy as np
 import numpy.ma as ma
@@ -14,6 +16,8 @@ from .utils import check_array
 from .utils.sparsefuncs import _get_median
 from .utils.validation import check_is_fitted
 from .utils.validation import FLOAT_DTYPES
+from .utils.fixes import _object_dtype_isnan
+from .utils import is_scalar_nan
 
 from .externals import six
 
@@ -21,16 +25,35 @@ zip = six.moves.zip
 map = six.moves.map
 
 __all__ = [
+    'MissingIndicator',
     'SimpleImputer',
 ]
 
 
+def _check_inputs_dtype(X, missing_values):
+    if (X.dtype.kind in ("f", "i", "u") and
+            not isinstance(missing_values, numbers.Real)):
+        raise ValueError("'X' and 'missing_values' types are expected to be"
+                         " both numerical. Got X.dtype={} and "
+                         " type(missing_values)={}."
+                         .format(X.dtype, type(missing_values)))
+
+
 def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
-    if value_to_mask == "NaN" or np.isnan(value_to_mask):
-        return np.isnan(X)
+    if is_scalar_nan(value_to_mask):
+        if X.dtype.kind == "f":
+            return np.isnan(X)
+        elif X.dtype.kind in ("i", "u"):
+            # can't have NaNs in integer array.
+            return np.zeros(X.shape, dtype=bool)
+        else:
+            # np.isnan does not work on object dtypes.
+            return _object_dtype_isnan(X)
     else:
-        return X == value_to_mask
+        # X == value_to_mask with object dytpes does not always perform
+        # element-wise for old versions of numpy
+        return np.equal(X, value_to_mask)
 
 
 def _most_frequent(array, extra_value, n_repeat):
@@ -39,7 +62,13 @@ def _most_frequent(array, extra_value, n_repeat):
        of the array."""
     # Compute the most frequent value in array only
     if array.size > 0:
-        mode = stats.mode(array)
+        with warnings.catch_warnings():
+            # stats.mode raises a warning when input array contains objects due
+            # to incapacity to detect NaNs. Irrelevant here since input array
+            # has already been NaN-masked.
+            warnings.simplefilter("ignore", RuntimeWarning)
+            mode = stats.mode(array)
+
         most_frequent_value = mode[0][0]
         most_frequent_count = mode[1][0]
     else:
@@ -68,26 +97,30 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    missing_values : integer or "NaN", optional (default="NaN")
+    missing_values : number, string, np.nan (default) or None
         The placeholder for the missing values. All occurrences of
-        `missing_values` will be imputed. For missing values encoded as np.nan,
-        use the string value "NaN".
+        `missing_values` will be imputed.
 
     strategy : string, optional (default="mean")
         The imputation strategy.
 
         - If "mean", then replace missing values using the mean along
-          the axis.
+          each column. Can only be used with numeric data.
         - If "median", then replace missing values using the median along
-          the axis.
+          each column. Can only be used with numeric data.
         - If "most_frequent", then replace missing using the most frequent
-          value along the axis.
+          value along each column. Can be used with strings or numeric data.
+        - If "constant", then replace missing values with fill_value. Can be
+          used with strings or numeric data.
 
-    axis : integer, optional (default=0)
-        The axis along which to impute.
+        .. versionadded:: 0.20
+           strategy="constant" for fixed value imputation.
 
-        - If `axis=0`, then impute along columns.
-        - If `axis=1`, then impute along rows.
+    fill_value : string or numerical value, optional (default=None)
+        When strategy == "constant", fill_value is used to replace all
+        occurrences of missing_values.
+        If left to the default, fill_value will be 0 when imputing numerical
+        data and "missing_value" for strings or object data types.
 
     verbose : integer, optional (default=0)
         Controls the verbosity of the imputer.
@@ -98,30 +131,81 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         a new copy will always be made, even if `copy=False`:
 
         - If X is not an array of floating values;
-        - If X is sparse and `missing_values=0`;
-        - If `axis=0` and X is encoded as a CSR matrix;
-        - If `axis=1` and X is encoded as a CSC matrix.
+        - If X is encoded as a CSR matrix.
 
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
-        The imputation fill value for each feature if axis == 0.
+        The imputation fill value for each feature.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.impute import SimpleImputer
+    >>> imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
+    >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
+    ... # doctest: +NORMALIZE_WHITESPACE
+    SimpleImputer(copy=True, fill_value=None, missing_values=nan,
+           strategy='mean', verbose=0)
+    >>> X = [[np.nan, 2, 3], [4, np.nan, 6], [10, np.nan, 9]]
+    >>> print(imp_mean.transform(X))
+    ... # doctest: +NORMALIZE_WHITESPACE
+    [[ 7.   2.   3. ]
+     [ 4.   3.5  6. ]
+     [10.   3.5  9. ]]
 
     Notes
     -----
-    - When ``axis=0``, columns which only contained missing values at `fit`
-      are discarded upon `transform`.
-    - When ``axis=1``, an exception is raised if there are rows for which it is
-      not possible to fill in the missing values (e.g., because they only
-      contain missing values).
+    Columns which only contained missing values at `fit` are discarded upon
+    `transform` if strategy is not "constant".
+
     """
-    def __init__(self, missing_values="NaN", strategy="mean",
-                 axis=0, verbose=0, copy=True):
+    def __init__(self, missing_values=np.nan, strategy="mean",
+                 fill_value=None, verbose=0, copy=True):
         self.missing_values = missing_values
         self.strategy = strategy
-        self.axis = axis
+        self.fill_value = fill_value
         self.verbose = verbose
         self.copy = copy
+
+    def _validate_input(self, X):
+        allowed_strategies = ["mean", "median", "most_frequent", "constant"]
+        if self.strategy not in allowed_strategies:
+            raise ValueError("Can only use these strategies: {0} "
+                             " got strategy={1}".format(allowed_strategies,
+                                                        self.strategy))
+
+        if self.strategy in ("most_frequent", "constant"):
+            dtype = None
+        else:
+            dtype = FLOAT_DTYPES
+
+        if not is_scalar_nan(self.missing_values):
+            force_all_finite = True
+        else:
+            force_all_finite = "allow-nan"
+
+        try:
+            X = check_array(X, accept_sparse='csc', dtype=dtype,
+                            force_all_finite=force_all_finite, copy=self.copy)
+        except ValueError as ve:
+            if "could not convert" in str(ve):
+                raise ValueError("Cannot use {0} strategy with non-numeric "
+                                 "data. Received datatype :{1}."
+                                 "".format(self.strategy, X.dtype.kind))
+            else:
+                raise ve
+
+        _check_inputs_dtype(X, self.missing_values)
+        if X.dtype.kind not in ("i", "u", "f", "O"):
+            raise ValueError("SimpleImputer does not support data with dtype "
+                             "{0}. Please provide either a numeric array (with"
+                             " a floating point or integer dtype) or "
+                             "categorical data represented either as an array "
+                             "with integer dtype or an array of string values "
+                             "with an object dtype.".format(X.dtype))
+
+        return X
 
     def fit(self, X, y=None):
         """Fit the imputer on X.
@@ -136,130 +220,92 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         -------
         self : SimpleImputer
         """
-        # Check parameters
-        allowed_strategies = ["mean", "median", "most_frequent"]
-        if self.strategy not in allowed_strategies:
-            raise ValueError("Can only use these strategies: {0} "
-                             " got strategy={1}".format(allowed_strategies,
-                                                        self.strategy))
+        X = self._validate_input(X)
 
-        if self.axis not in [0, 1]:
-            raise ValueError("Can only impute missing values on axis 0 and 1, "
-                             " got axis={0}".format(self.axis))
+        # default fill_value is 0 for numerical input and "missing_value"
+        # otherwise
+        if self.fill_value is None:
+            if X.dtype.kind in ("i", "u", "f"):
+                fill_value = 0
+            else:
+                fill_value = "missing_value"
+        else:
+            fill_value = self.fill_value
 
-        # Since two different arrays can be provided in fit(X) and
-        # transform(X), the imputation data will be computed in transform()
-        # when the imputation is done per sample (i.e., when axis=1).
-        if self.axis == 0:
-            X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
-                            force_all_finite='allow-nan'
-                            if self.missing_values == 'NaN'
-                            or np.isnan(self.missing_values) else True)
+        # fill_value should be numerical in case of numerical input
+        if (self.strategy == "constant" and
+                X.dtype.kind in ("i", "u", "f") and
+                not isinstance(fill_value, numbers.Real)):
+            raise ValueError("'fill_value'={0} is invalid. Expected a "
+                             "numerical value when imputing numerical "
+                             "data".format(fill_value))
 
-            if sparse.issparse(X):
+        if sparse.issparse(X):
+            # missing_values = 0 not allowed with sparse data as it would
+            # force densification
+            if self.missing_values == 0:
+                raise ValueError("Imputation not possible when missing_values "
+                                 "== 0 and input is sparse. Provide a dense "
+                                 "array instead.")
+            else:
                 self.statistics_ = self._sparse_fit(X,
                                                     self.strategy,
                                                     self.missing_values,
-                                                    self.axis)
-            else:
-                self.statistics_ = self._dense_fit(X,
-                                                   self.strategy,
-                                                   self.missing_values,
-                                                   self.axis)
+                                                    fill_value)
+        else:
+            self.statistics_ = self._dense_fit(X,
+                                               self.strategy,
+                                               self.missing_values,
+                                               fill_value)
 
         return self
 
-    def _sparse_fit(self, X, strategy, missing_values, axis):
+    def _sparse_fit(self, X, strategy, missing_values, fill_value):
         """Fit the transformer on sparse data."""
-        # Imputation is done "by column", so if we want to do it
-        # by row we only need to convert the matrix to csr format.
-        if axis == 1:
-            X = X.tocsr()
+        mask_data = _get_mask(X.data, missing_values)
+        n_implicit_zeros = X.shape[0] - np.diff(X.indptr)
+
+        statistics = np.empty(X.shape[1])
+
+        if strategy == "constant":
+            # for constant strategy, self.statistcs_ is used to store
+            # fill_value in each column
+            statistics.fill(fill_value)
+
         else:
-            X = X.tocsc()
+            for i in range(X.shape[1]):
+                column = X.data[X.indptr[i]:X.indptr[i + 1]]
+                mask_column = mask_data[X.indptr[i]:X.indptr[i + 1]]
+                column = column[~mask_column]
 
-        # Count the zeros
-        if missing_values == 0:
-            n_zeros_axis = np.zeros(X.shape[not axis], dtype=int)
-        else:
-            n_zeros_axis = X.shape[axis] - np.diff(X.indptr)
+                # combine explicit and implicit zeros
+                mask_zeros = _get_mask(column, 0)
+                column = column[~mask_zeros]
+                n_explicit_zeros = mask_zeros.sum()
+                n_zeros = n_implicit_zeros[i] + n_explicit_zeros
 
-        # Mean
-        if strategy == "mean":
-            if missing_values != 0:
-                n_non_missing = n_zeros_axis
+                if strategy == "mean":
+                    s = column.size + n_zeros
+                    statistics[i] = np.nan if s == 0 else column.sum() / s
 
-                # Mask the missing elements
-                mask_missing_values = _get_mask(X.data, missing_values)
-                mask_valids = np.logical_not(mask_missing_values)
+                elif strategy == "median":
+                    statistics[i] = _get_median(column,
+                                                n_zeros)
 
-                # Sum only the valid elements
-                new_data = X.data.copy()
-                new_data[mask_missing_values] = 0
-                X = sparse.csc_matrix((new_data, X.indices, X.indptr),
-                                      copy=False)
-                sums = X.sum(axis=0)
+                elif strategy == "most_frequent":
+                    statistics[i] = _most_frequent(column,
+                                                   0,
+                                                   n_zeros)
+        return statistics
 
-                # Count the elements != 0
-                mask_non_zeros = sparse.csc_matrix(
-                    (mask_valids.astype(np.float64),
-                     X.indices,
-                     X.indptr), copy=False)
-                s = mask_non_zeros.sum(axis=0)
-                n_non_missing = np.add(n_non_missing, s)
-
-            else:
-                sums = X.sum(axis=axis)
-                n_non_missing = np.diff(X.indptr)
-
-            # Ignore the error, columns with a np.nan statistics_
-            # are not an error at this point. These columns will
-            # be removed in transform
-            with np.errstate(all="ignore"):
-                return np.ravel(sums) / np.ravel(n_non_missing)
-
-        # Median + Most frequent
-        else:
-            # Remove the missing values, for each column
-            columns_all = np.hsplit(X.data, X.indptr[1:-1])
-            mask_missing_values = _get_mask(X.data, missing_values)
-            mask_valids = np.hsplit(np.logical_not(mask_missing_values),
-                                    X.indptr[1:-1])
-
-            # astype necessary for bug in numpy.hsplit before v1.9
-            columns = [col[mask.astype(bool, copy=False)]
-                       for col, mask in zip(columns_all, mask_valids)]
-
-            # Median
-            if strategy == "median":
-                median = np.empty(len(columns))
-                for i, column in enumerate(columns):
-                    median[i] = _get_median(column, n_zeros_axis[i])
-
-                return median
-
-            # Most frequent
-            elif strategy == "most_frequent":
-                most_frequent = np.empty(len(columns))
-
-                for i, column in enumerate(columns):
-                    most_frequent[i] = _most_frequent(column,
-                                                      0,
-                                                      n_zeros_axis[i])
-
-                return most_frequent
-
-    def _dense_fit(self, X, strategy, missing_values, axis):
+    def _dense_fit(self, X, strategy, missing_values, fill_value):
         """Fit the transformer on dense data."""
-        X = check_array(X, force_all_finite='allow-nan'
-                        if self.missing_values == 'NaN'
-                        or np.isnan(self.missing_values) else True)
         mask = _get_mask(X, missing_values)
         masked_X = ma.masked_array(X, mask=mask)
 
         # Mean
         if strategy == "mean":
-            mean_masked = np.ma.mean(masked_X, axis=axis)
+            mean_masked = np.ma.mean(masked_X, axis=0)
             # Avoid the warning "Warning: converting a masked element to nan."
             mean = np.ma.getdata(mean_masked)
             mean[np.ma.getmask(mean_masked)] = np.nan
@@ -268,7 +314,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         # Median
         elif strategy == "median":
-            median_masked = np.ma.median(masked_X, axis=axis)
+            median_masked = np.ma.median(masked_X, axis=0)
             # Avoid the warning "Warning: converting a masked element to nan."
             median = np.ma.getdata(median_masked)
             median[np.ma.getmaskarray(median_masked)] = np.nan
@@ -283,11 +329,13 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             # See https://github.com/scipy/scipy/issues/2636
 
             # To be able access the elements by columns
-            if axis == 0:
-                X = X.transpose()
-                mask = mask.transpose()
+            X = X.transpose()
+            mask = mask.transpose()
 
-            most_frequent = np.empty(X.shape[0])
+            if X.dtype.kind == "O":
+                most_frequent = np.empty(X.shape[0], dtype=object)
+            else:
+                most_frequent = np.empty(X.shape[0])
 
             for i, (row, row_mask) in enumerate(zip(X[:], mask[:])):
                 row_mask = np.logical_not(row_mask).astype(np.bool)
@@ -296,85 +344,288 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
             return most_frequent
 
+        # Constant
+        elif strategy == "constant":
+            # for constant strategy, self.statistcs_ is used to store
+            # fill_value in each column
+            return np.full(X.shape[1], fill_value, dtype=X.dtype)
+
     def transform(self, X):
         """Impute all missing values in X.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data to complete.
         """
-        if self.axis == 0:
-            check_is_fitted(self, 'statistics_')
-            X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
-                            force_all_finite='allow-nan'
-                            if self.missing_values == 'NaN'
-                            or np.isnan(self.missing_values) else True,
-                            copy=self.copy)
-            statistics = self.statistics_
-            if X.shape[1] != statistics.shape[0]:
-                raise ValueError("X has %d features per sample, expected %d"
-                                 % (X.shape[1], self.statistics_.shape[0]))
+        check_is_fitted(self, 'statistics_')
 
-        # Since two different arrays can be provided in fit(X) and
-        # transform(X), the imputation data need to be recomputed
-        # when the imputation is done per sample
+        X = self._validate_input(X)
+
+        statistics = self.statistics_
+
+        if X.shape[1] != statistics.shape[0]:
+            raise ValueError("X has %d features per sample, expected %d"
+                             % (X.shape[1], self.statistics_.shape[0]))
+
+        # Delete the invalid columns if strategy is not constant
+        if self.strategy == "constant":
+            valid_statistics = statistics
         else:
-            X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
-                            force_all_finite='allow-nan'
-                            if self.missing_values == 'NaN'
-                            or np.isnan(self.missing_values) else True,
-                            copy=self.copy)
+            # same as np.isnan but also works for object dtypes
+            invalid_mask = _get_mask(statistics, np.nan)
+            valid_mask = np.logical_not(invalid_mask)
+            valid_statistics = statistics[valid_mask]
+            valid_statistics_indexes = np.flatnonzero(valid_mask)
 
-            if sparse.issparse(X):
-                statistics = self._sparse_fit(X,
-                                              self.strategy,
-                                              self.missing_values,
-                                              self.axis)
-
-            else:
-                statistics = self._dense_fit(X,
-                                             self.strategy,
-                                             self.missing_values,
-                                             self.axis)
-
-        # Delete the invalid rows/columns
-        invalid_mask = np.isnan(statistics)
-        valid_mask = np.logical_not(invalid_mask)
-        valid_statistics = statistics[valid_mask]
-        valid_statistics_indexes = np.flatnonzero(valid_mask)
-        missing = np.arange(X.shape[not self.axis])[invalid_mask]
-
-        if self.axis == 0 and invalid_mask.any():
-            if self.verbose:
-                warnings.warn("Deleting features without "
-                              "observed values: %s" % missing)
-            X = X[:, valid_statistics_indexes]
-        elif self.axis == 1 and invalid_mask.any():
-            raise ValueError("Some rows only contain "
-                             "missing values: %s" % missing)
+            if invalid_mask.any():
+                missing = np.arange(X.shape[1])[invalid_mask]
+                if self.verbose:
+                    warnings.warn("Deleting features without "
+                                  "observed values: %s" % missing)
+                X = X[:, valid_statistics_indexes]
 
         # Do actual imputation
-        if sparse.issparse(X) and self.missing_values != 0:
-            mask = _get_mask(X.data, self.missing_values)
-            indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
-                                np.diff(X.indptr))[mask]
-
-            X.data[mask] = valid_statistics[indexes].astype(X.dtype,
-                                                            copy=False)
-        else:
-            if sparse.issparse(X):
-                X = X.toarray()
-
-            mask = _get_mask(X, self.missing_values)
-            n_missing = np.sum(mask, axis=self.axis)
-            values = np.repeat(valid_statistics, n_missing)
-
-            if self.axis == 0:
-                coordinates = np.where(mask.transpose())[::-1]
+        if sparse.issparse(X):
+            if self.missing_values == 0:
+                raise ValueError("Imputation not possible when missing_values "
+                                 "== 0 and input is sparse. Provide a dense "
+                                 "array instead.")
             else:
-                coordinates = mask
+                mask = _get_mask(X.data, self.missing_values)
+                indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
+                                    np.diff(X.indptr))[mask]
+
+                X.data[mask] = valid_statistics[indexes].astype(X.dtype,
+                                                                copy=False)
+        else:
+            mask = _get_mask(X, self.missing_values)
+            n_missing = np.sum(mask, axis=0)
+            values = np.repeat(valid_statistics, n_missing)
+            coordinates = np.where(mask.transpose())[::-1]
 
             X[coordinates] = values
 
         return X
+
+
+class MissingIndicator(BaseEstimator, TransformerMixin):
+    """Binary indicators for missing values.
+
+    Parameters
+    ----------
+    missing_values : number, string, np.nan (default) or None
+        The placeholder for the missing values. All occurrences of
+        `missing_values` will be imputed.
+
+    features : str, optional
+        Whether the imputer mask should represent all or a subset of
+        features.
+
+        - If "missing-only" (default), the imputer mask will only represent
+          features containing missing values during fit time.
+        - If "all", the imputer mask will represent all features.
+
+    sparse : boolean or "auto", optional
+        Whether the imputer mask format should be sparse or dense.
+
+        - If "auto" (default), the imputer mask will be of same type as
+          input.
+        - If True, the imputer mask will be a sparse matrix.
+        - If False, the imputer mask will be a numpy array.
+
+    error_on_new : boolean, optional
+        If True (default), transform will raise an error when there are
+        features with missing values in transform that have no missing values
+        in fit This is applicable only when ``features="missing-only"``.
+
+    Attributes
+    ----------
+    features_ : ndarray, shape (n_missing_features,) or (n_features,)
+        The features indices which will be returned when calling ``transform``.
+        They are computed during ``fit``. For ``features='all'``, it is
+        to ``range(n_features)``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.impute import MissingIndicator
+    >>> X1 = np.array([[np.nan, 1, 3],
+    ...                [4, 0, np.nan],
+    ...                [8, 1, 0]])
+    >>> X2 = np.array([[5, 1, np.nan],
+    ...                [np.nan, 2, 3],
+    ...                [2, 4, 0]])
+    >>> indicator = MissingIndicator()
+    >>> indicator.fit(X1)
+    MissingIndicator(error_on_new=True, features='missing-only',
+             missing_values=nan, sparse='auto')
+    >>> X2_tr = indicator.transform(X2)
+    >>> X2_tr
+    array([[False,  True],
+           [ True, False],
+           [False, False]])
+
+    """
+
+    def __init__(self, missing_values=np.nan, features="missing-only",
+                 sparse="auto", error_on_new=True):
+        self.missing_values = missing_values
+        self.features = features
+        self.sparse = sparse
+        self.error_on_new = error_on_new
+
+    def _get_missing_features_info(self, X):
+        """Compute the imputer mask and the indices of the features
+        containing missing values.
+
+        Parameters
+        ----------
+        X : {ndarray or sparse matrix}, shape (n_samples, n_features)
+            The input data with missing values. Note that ``X`` has been
+            checked in ``fit`` and ``transform`` before to call this function.
+
+        Returns
+        -------
+        imputer_mask : {ndarray or sparse matrix}, shape \
+(n_samples, n_features) or (n_samples, n_features_with_missing)
+            The imputer mask of the original data.
+
+        features_with_missing : ndarray, shape (n_features_with_missing)
+            The features containing missing values.
+
+        """
+        if sparse.issparse(X) and self.missing_values != 0:
+            mask = _get_mask(X.data, self.missing_values)
+
+            # The imputer mask will be constructed with the same sparse format
+            # as X.
+            sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
+                                  else sparse.csc_matrix)
+            imputer_mask = sparse_constructor(
+                (mask, X.indices.copy(), X.indptr.copy()),
+                shape=X.shape, dtype=bool)
+
+            missing_values_mask = imputer_mask.copy()
+            missing_values_mask.eliminate_zeros()
+            features_with_missing = (
+                np.flatnonzero(np.diff(missing_values_mask.indptr))
+                if missing_values_mask.format == 'csc'
+                else np.unique(missing_values_mask.indices))
+
+            if self.sparse is False:
+                imputer_mask = imputer_mask.toarray()
+            elif imputer_mask.format == 'csr':
+                imputer_mask = imputer_mask.tocsc()
+        else:
+            if sparse.issparse(X):
+                # case of sparse matrix with 0 as missing values. Implicit and
+                # explicit zeros are considered as missing values.
+                X = X.toarray()
+            imputer_mask = _get_mask(X, self.missing_values)
+            features_with_missing = np.flatnonzero(imputer_mask.sum(axis=0))
+
+            if self.sparse is True:
+                imputer_mask = sparse.csc_matrix(imputer_mask)
+
+        return imputer_mask, features_with_missing
+
+    def fit(self, X, y=None):
+        """Fit the transformer on X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data, where ``n_samples`` is the number of samples and
+            ``n_features`` is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        if not is_scalar_nan(self.missing_values):
+            force_all_finite = True
+        else:
+            force_all_finite = "allow-nan"
+        X = check_array(X, accept_sparse=('csc', 'csr'),
+                        force_all_finite=force_all_finite)
+        _check_inputs_dtype(X, self.missing_values)
+
+        self._n_features = X.shape[1]
+
+        if self.features not in ('missing-only', 'all'):
+            raise ValueError("'features' has to be either 'missing-only' or "
+                             "'all'. Got {} instead.".format(self.features))
+
+        if not ((isinstance(self.sparse, six.string_types) and
+                self.sparse == "auto") or isinstance(self.sparse, bool)):
+            raise ValueError("'sparse' has to be a boolean or 'auto'. "
+                             "Got {!r} instead.".format(self.sparse))
+
+        self.features_ = (self._get_missing_features_info(X)[1]
+                          if self.features == 'missing-only'
+                          else np.arange(self._n_features))
+
+        return self
+
+    def transform(self, X):
+        """Generate missing values indicator for X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data to complete.
+
+        Returns
+        -------
+        Xt : {ndarray or sparse matrix}, shape (n_samples, n_features)
+            The missing indicator for input data. The data type of ``Xt``
+            will be boolean.
+
+        """
+        check_is_fitted(self, "features_")
+
+        if not is_scalar_nan(self.missing_values):
+            force_all_finite = True
+        else:
+            force_all_finite = "allow-nan"
+        X = check_array(X, accept_sparse=('csc', 'csr'),
+                        force_all_finite=force_all_finite)
+        _check_inputs_dtype(X, self.missing_values)
+
+        if X.shape[1] != self._n_features:
+            raise ValueError("X has a different number of features "
+                             "than during fitting.")
+
+        imputer_mask, features = self._get_missing_features_info(X)
+
+        if self.features == "missing-only":
+            features_diff_fit_trans = np.setdiff1d(features, self.features_)
+            if (self.error_on_new and features_diff_fit_trans.size > 0):
+                raise ValueError("The features {} have missing values "
+                                 "in transform but have no missing values "
+                                 "in fit.".format(features_diff_fit_trans))
+
+            if (self.features_.size > 0 and
+                    self.features_.size < self._n_features):
+                imputer_mask = imputer_mask[:, self.features_]
+
+        return imputer_mask
+
+    def fit_transform(self, X, y=None):
+        """Generate missing values indicator for X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data to complete.
+
+        Returns
+        -------
+        Xt : {ndarray or sparse matrix}, shape (n_samples, n_features)
+            The missing indicator for input data. The data type of ``Xt``
+            will be boolean.
+
+        """
+        return self.fit(X, y).transform(X)

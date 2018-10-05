@@ -65,6 +65,10 @@ def test_estimate_bandwidth_with_sparse_matrix():
 
 
 def test_parallel():
+    centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
+    X, _ = make_blobs(n_samples=50, n_features=2, centers=centers,
+                      cluster_std=0.4, shuffle=True, random_state=11)
+
     ms1 = MeanShift(n_jobs=2)
     ms1.fit(X)
 
@@ -95,6 +99,18 @@ def test_unfitted():
     ms = MeanShift()
     assert_false(hasattr(ms, "cluster_centers_"))
     assert_false(hasattr(ms, "labels_"))
+
+
+def test_cluster_intensity_tie():
+    X = np.array([[1, 1], [2, 1], [1, 0],
+                  [4, 7], [3, 5], [3, 6]])
+    c1 = MeanShift(bandwidth=2).fit(X)
+
+    X = np.array([[4, 7], [3, 5], [3, 6],
+                  [1, 1], [2, 1], [1, 0]])
+    c2 = MeanShift(bandwidth=2).fit(X)
+    assert_array_equal(c1.labels_, [1, 1, 1, 0, 0, 0])
+    assert_array_equal(c2.labels_, [0, 0, 0, 1, 1, 1])
 
 
 def test_bin_seeds():
