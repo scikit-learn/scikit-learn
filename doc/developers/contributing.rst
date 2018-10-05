@@ -1152,8 +1152,9 @@ some regression estimator would be stored in a ``coef_`` attribute after
 ``fit`` has been called.
 
 The last-mentioned attributes are expected to be overridden when
-you call ``fit`` a second time without taking any previous value into
-account: **fit should be idempotent**.
+you call ``fit`` a second time, without taking any previous value into
+account. Also, **fit should be idempotent**: ``clf.fit(X).fit(X)`` should be
+equivalent to ``clf.fit(X)``.
 
 Optional Arguments
 ^^^^^^^^^^^^^^^^^^
