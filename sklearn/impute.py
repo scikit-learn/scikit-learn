@@ -651,15 +651,19 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             good_sigmas = sigmas > 0
             imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
             imputed_values[~good_sigmas] = mus[~good_sigmas]
-            imputed_values[good_sigmas] = self.random_state_.normal(
-                loc=mus[good_sigmas], scale=sigmas[good_sigmas])
+            a = (self._min_value - mus) / sigmas
+            b = (self._max_value - mus) / sigmas
+            truncated_normal = stats.truncnorm(a=a,
+                                               b=b,
+                                               loc=mus[good_sigmas],
+                                               scale=sigmas[good_sigmas])
+            imputed_values[good_sigmas] = truncated_normal.rvs(
+                random_state=self.random_state_)
         else:
             imputed_values = predictor.predict(X_test)
-
-        # clip the values
-        imputed_values = np.clip(imputed_values,
-                                 self._min_value,
-                                 self._max_value)
+            imputed_values = np.clip(imputed_values,
+                                     self._min_value,
+                                     self._max_value)
 
         # update the feature
         X_filled[missing_row_mask, feat_idx] = imputed_values
@@ -869,8 +873,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         if hasattr(self._predictor, 'random_state'):
             self._predictor.random_state = self.random_state_
 
-        self._min_value = np.nan if self.min_value is None else self.min_value
-        self._max_value = np.nan if self.max_value is None else self.max_value
+        self._min_value = -np.inf if self.min_value is None else self.min_value
+        self._max_value = np.inf if self.max_value is None else self.max_value
 
         self.initial_imputer_ = None
         X, Xt, mask_missing_values = self._initial_imputation(X)

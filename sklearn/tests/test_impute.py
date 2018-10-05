@@ -4,6 +4,7 @@ import pytest
 
 import numpy as np
 from scipy import sparse
+from scipy.stats import kstest
 
 import io
 
@@ -591,6 +592,39 @@ def test_iterative_imputer_clip():
     assert_allclose(Xt[X != 0], X[X != 0])
 
 
+def test_iterative_imputer_truncated_normal_posterior():
+    #  test that the values that are imputed using `sample_posterior=True`
+    #  with boundaries (`min_value` and `max_value` are not None) are drawn
+    #  from a distribution that looks gaussian via the Kolmogorov Smirnov test
+    pytest.importorskip("scipy", minversion="0.17.0")
+    rng = np.random.RandomState(0)
+
+    X = rng.normal(size=(5, 5))
+    X[0][0] = np.nan
+
+    imputer = IterativeImputer(min_value=0,
+                               max_value=0.5,
+                               sample_posterior=True,
+                               random_state=rng)
+
+    imputer.fit_transform(X)
+    # generate multiple imputations for the single missing value
+    imputations = np.array([imputer.transform(X)[0][0] for _ in range(1000)])
+
+    assert all(imputations >= 0)
+    assert all(imputations <= 0.5)
+
+    mu, sigma = imputations.mean(), imputations.std()
+    ks_statistic, p_value = kstest((imputations - mu) / sigma, 'norm')
+    if sigma == 0:
+        sigma += 1e-12
+    ks_statistic, p_value = kstest((imputations - mu) / sigma, 'norm')
+    # we want to fail to reject null hypothesis
+    # null hypothesis: distributions are the same
+    assert ks_statistic < 0.2 or p_value > 0.1, \
+        "The posterior does appear to be normal"
+
+
 @pytest.mark.parametrize(
     "strategy",
     ["mean", "median", "most_frequent"]
@@ -619,6 +653,7 @@ def test_iterative_imputer_missing_at_transform(strategy):
 
 
 def test_iterative_imputer_transform_stochasticity():
+    pytest.importorskip("scipy", minversion="0.17.0")
     rng1 = np.random.RandomState(0)
     rng2 = np.random.RandomState(1)
     n = 100
@@ -760,6 +795,7 @@ def test_iterative_imputer_error_param():
     imputer = IterativeImputer(n_iter=-1)
     with pytest.raises(ValueError, match='should be a positive integer'):
         imputer.fit_transform(X)
+
 
 @pytest.mark.parametrize(
     "X_fit, X_trans, params, msg_err",
