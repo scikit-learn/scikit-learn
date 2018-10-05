@@ -210,8 +210,6 @@ def test_graphviz_toy():
                 'fillcolor="#e5813900"] ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
-
 
 def test_graphviz_errors():
     # Check for errors of export_graphviz
@@ -234,6 +232,11 @@ def test_graphviz_errors():
                "3 does not match number of features, 2")
     assert_raise_message(ValueError, message, export_graphviz, clf, None,
                          feature_names=["a", "b", "c"])
+
+    # Check error when argument is not an estimator
+    message = "is not an estimator instance"
+    assert_raise_message(TypeError, message,
+                         export_graphviz, clf.fit(X, y).tree_)
 
     # Check class_names error
     out = StringIO()
@@ -258,7 +261,7 @@ def test_friedman_mse_in_graphviz():
     for estimator in clf.estimators_:
         export_graphviz(estimator[0], out_file=dot_data)
 
-    for finding in finditer("\[.*?samples.*?\]", dot_data.getvalue()):
+    for finding in finditer(r"\[.*?samples.*?\]", dot_data.getvalue()):
         assert_in("friedman_mse", finding.group())
 
 
@@ -287,21 +290,21 @@ def test_precision():
             # therefore, only a less equal comparison will be done.
 
             # check value
-            for finding in finditer("value = \d+\.\d+", dot_data):
+            for finding in finditer(r"value = \d+\.\d+", dot_data):
                 assert_less_equal(
-                    len(search("\.\d+", finding.group()).group()),
+                    len(search(r"\.\d+", finding.group()).group()),
                     precision + 1)
             # check impurity
             if is_classifier(clf):
-                pattern = "gini = \d+\.\d+"
+                pattern = r"gini = \d+\.\d+"
             else:
-                pattern = "friedman_mse = \d+\.\d+"
+                pattern = r"friedman_mse = \d+\.\d+"
 
             # check impurity
             for finding in finditer(pattern, dot_data):
-                assert_equal(len(search("\.\d+", finding.group()).group()),
+                assert_equal(len(search(r"\.\d+", finding.group()).group()),
                              precision + 1)
             # check threshold
-            for finding in finditer("<= \d+\.\d+", dot_data):
-                assert_equal(len(search("\.\d+", finding.group()).group()),
+            for finding in finditer(r"<= \d+\.\d+", dot_data):
+                assert_equal(len(search(r"\.\d+", finding.group()).group()),
                              precision + 1)

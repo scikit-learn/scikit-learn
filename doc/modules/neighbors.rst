@@ -25,15 +25,15 @@ distance is the most common choice.
 Neighbors-based methods are known as *non-generalizing* machine
 learning methods, since they simply "remember" all of its training data
 (possibly transformed into a fast indexing structure such as a
-:ref:`Ball Tree <ball_tree>` or :ref:`KD Tree <kd_tree>`.).
+:ref:`Ball Tree <ball_tree>` or :ref:`KD Tree <kd_tree>`).
 
 Despite its simplicity, nearest neighbors has been successful in a
 large number of classification and regression problems, including
-handwritten digits or satellite image scenes. Being a non-parametric method,
+handwritten digits and satellite image scenes. Being a non-parametric method,
 it is often successful in classification situations where the decision
 boundary is very irregular.
 
-The classes in :mod:`sklearn.neighbors` can handle either Numpy arrays or
+The classes in :mod:`sklearn.neighbors` can handle either NumPy arrays or
 `scipy.sparse` matrices as input.  For dense matrices, a large number of
 possible distance metrics are supported.  For sparse matrices, arbitrary
 Minkowski metrics are supported for searches.
@@ -62,8 +62,8 @@ of each option, see `Nearest Neighbor Algorithms`_.
     .. warning::
 
         Regarding the Nearest Neighbors algorithms, if two
-        neighbors, neighbor :math:`k+1` and :math:`k`, have identical distances
-        but different labels, the results will depend on the ordering of the
+        neighbors :math:`k+1` and :math:`k` have identical distances
+        but different labels, the result will depend on the ordering of the
         training data.
 
 Finding the Nearest Neighbors
@@ -85,12 +85,12 @@ used:
            [4, 3],
            [5, 4]]...)
     >>> distances
-    array([[ 0.        ,  1.        ],
-           [ 0.        ,  1.        ],
-           [ 0.        ,  1.41421356],
-           [ 0.        ,  1.        ],
-           [ 0.        ,  1.        ],
-           [ 0.        ,  1.41421356]])
+    array([[0.        , 1.        ],
+           [0.        , 1.        ],
+           [0.        , 1.41421356],
+           [0.        , 1.        ],
+           [0.        , 1.        ],
+           [0.        , 1.41421356]])
 
 Because the query set matches the training set, the nearest neighbor of each
 point is the point itself, at a distance of zero.
@@ -99,14 +99,14 @@ It is also possible to efficiently produce a sparse graph showing the
 connections between neighboring points:
 
     >>> nbrs.kneighbors_graph(X).toarray()
-    array([[ 1.,  1.,  0.,  0.,  0.,  0.],
-           [ 1.,  1.,  0.,  0.,  0.,  0.],
-           [ 0.,  1.,  1.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  1.,  1.,  0.],
-           [ 0.,  0.,  0.,  1.,  1.,  0.],
-           [ 0.,  0.,  0.,  0.,  1.,  1.]])
+    array([[1., 1., 0., 0., 0., 0.],
+           [1., 1., 0., 0., 0., 0.],
+           [0., 1., 1., 0., 0., 0.],
+           [0., 0., 0., 1., 1., 0.],
+           [0., 0., 0., 1., 1., 0.],
+           [0., 0., 0., 0., 1., 1.]])
 
-Our dataset is structured such that points nearby in index order are nearby
+The dataset is structured such that points nearby in index order are nearby
 in parameter space, leading to an approximately block-diagonal matrix of
 K-nearest neighbors.  Such a sparse graph is useful in a variety of
 circumstances which make use of spatial relationships between points for
@@ -134,10 +134,10 @@ have the same interface; we'll show an example of using the KD Tree here:
            [5, 4]]...)
 
 Refer to the :class:`KDTree` and :class:`BallTree` class documentation
-for more information on the options available for neighbors searches,
-including specification of query strategies, of various distance metrics, etc.
-For a list of available metrics, see the documentation of the
-:class:`DistanceMetric` class.
+for more information on the options available for nearest neighbors searches,
+including specification of query strategies, distance metrics, etc. For a list 
+of available metrics, see the documentation of the :class:`DistanceMetric` 
+class.
 
 .. _classification:
 
@@ -160,10 +160,9 @@ training point, where :math:`r` is a floating-point value specified by
 the user.
 
 The :math:`k`-neighbors classification in :class:`KNeighborsClassifier`
-is the more commonly used of the two techniques.  The
-optimal choice of the value :math:`k` is highly data-dependent: in general
-a larger :math:`k` suppresses the effects of noise, but makes the
-classification boundaries less distinct.
+is the most commonly used technique. The optimal choice of the value :math:`k` 
+is highly data-dependent: in general a larger :math:`k` suppresses the effects 
+of noise, but makes the classification boundaries less distinct.
 
 In cases where the data is not uniformly sampled, radius-based neighbors
 classification in :class:`RadiusNeighborsClassifier` can be a better choice.
@@ -180,9 +179,7 @@ be accomplished through the ``weights`` keyword.  The default value,
 ``weights = 'uniform'``, assigns uniform weights to each neighbor.
 ``weights = 'distance'`` assigns weights proportional to the inverse of the
 distance from the query point.  Alternatively, a user-defined function of the
-distance can be supplied which is used to compute the weights.
-
-
+distance can be supplied to compute the weights.
 
 .. |classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_classification_001.png
    :target: ../auto_examples/neighbors/plot_classification.html
@@ -261,7 +258,7 @@ Brute Force
 -----------
 
 Fast computation of nearest neighbors is an active area of research in
-machine learning.  The most naive neighbor search implementation involves
+machine learning. The most naive neighbor search implementation involves
 the brute-force computation of distances between all pairs of points in the
 dataset: for :math:`N` samples in :math:`D` dimensions, this approach scales
 as :math:`O[D N^2]`.  Efficient brute-force neighbors searches can be very
@@ -286,7 +283,7 @@ The basic idea is that if point :math:`A` is very distant from point
 then we know that points :math:`A` and :math:`C`
 are very distant, *without having to explicitly calculate their distance*.
 In this way, the computational cost of a nearest neighbors search can be
-reduced to :math:`O[D N \log(N)]` or better.  This is a significant
+reduced to :math:`O[D N \log(N)]` or better. This is a significant
 improvement over brute-force for large :math:`N`.
 
 An early approach to taking advantage of this aggregate information was
@@ -297,7 +294,7 @@ structure which recursively partitions the parameter space along the data
 axes, dividing it into nested orthotropic regions into which data points
 are filed.  The construction of a KD tree is very fast: because partitioning
 is performed only along the data axes, no :math:`D`-dimensional distances
-need to be computed.  Once constructed, the nearest neighbor of a query
+need to be computed. Once constructed, the nearest neighbor of a query
 point can be determined with only :math:`O[\log(N)]` distance computations.
 Though the KD tree approach is very fast for low-dimensional (:math:`D < 20`)
 neighbors searches, it becomes inefficient as :math:`D` grows very large:
@@ -323,9 +320,8 @@ To address the inefficiencies of KD Trees in higher dimensions, the *ball tree*
 data structure was developed.  Where KD trees partition data along
 Cartesian axes, ball trees partition data in a series of nesting
 hyper-spheres.  This makes tree construction more costly than that of the
-KD tree, but
-results in a data structure which can be very efficient on highly-structured
-data, even in very high dimensions.
+KD tree, but results in a data structure which can be very efficient on 
+highly structured data, even in very high dimensions.
 
 A ball tree recursively divides the data into
 nodes defined by a centroid :math:`C` and radius :math:`r`, such that each

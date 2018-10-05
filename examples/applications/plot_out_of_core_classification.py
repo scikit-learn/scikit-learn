@@ -28,13 +28,13 @@ feeding them to the learner.
 # License: BSD 3 clause
 
 from __future__ import print_function
-
 from glob import glob
 import itertools
 import os.path
 import re
 import tarfile
 import time
+import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -53,7 +53,6 @@ from sklearn.naive_bayes import MultinomialNB
 def _not_in_sphinx():
     # Hack to detect whether we are running by the sphinx builder
     return '__file__' in globals()
-
 
 ###############################################################################
 # Reuters Dataset related routines
@@ -168,14 +167,14 @@ def stream_reuters_documents(data_path=None):
             total_sz_mb = '%.2f MB' % (size / 1e6)
             current_sz_mb = '%.2f MB' % ((blocknum * bs) / 1e6)
             if _not_in_sphinx():
-                print('\rdownloaded %s / %s' % (current_sz_mb, total_sz_mb),
-                      end='')
+                sys.stdout.write(
+                    '\rdownloaded %s / %s' % (current_sz_mb, total_sz_mb))
 
         archive_path = os.path.join(data_path, ARCHIVE_FILENAME)
         urlretrieve(DOWNLOAD_URL, filename=archive_path,
                     reporthook=progress)
         if _not_in_sphinx():
-            print('\r', end='')
+            sys.stdout.write('\r')
         print("untarring Reuters dataset...")
         tarfile.open(archive_path, 'r:gz').extractall(data_path)
         print("done.")

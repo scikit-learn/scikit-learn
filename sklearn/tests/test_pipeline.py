@@ -1,11 +1,12 @@
 """
 Test the pipeline module.
 """
-
+from distutils.version import LooseVersion
 from tempfile import mkdtemp
 import shutil
 import time
 
+import pytest
 import numpy as np
 from scipy import sparse
 
@@ -33,7 +34,8 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.externals.joblib import Memory
+from sklearn.utils import Memory
+from sklearn.utils._joblib import __version__ as joblib_version
 
 
 JUNK_FOOD_DOCS = (
@@ -144,6 +146,17 @@ class DummyTransf(Transf):
         return self
 
 
+class DummyEstimatorParams(BaseEstimator):
+    """Mock classifier that takes params on predict"""
+
+    def fit(self, X, y):
+        return self
+
+    def predict(self, X, got_attribute=False):
+        self.got_attribute = got_attribute
+        return self
+
+
 def test_pipeline_init():
     # Test the various init parameters of the pipeline.
     assert_raises(TypeError, Pipeline)
@@ -222,6 +235,8 @@ def test_pipeline_init_tuple():
     pipe.score(X)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_pipeline_methods_anova():
     # Test the various methods of the pipeline (anova).
     iris = load_iris()
@@ -307,7 +322,7 @@ def test_pipeline_methods_pca_svm():
     X = iris.data
     y = iris.target
     # Test with PCA + SVC
-    clf = SVC(probability=True, random_state=0)
+    clf = SVC(gamma='scale', probability=True, random_state=0)
     pca = PCA(svd_solver='full', n_components='mle', whiten=True)
     pipe = Pipeline([('pca', pca), ('svc', clf)])
     pipe.fit(X, y)
@@ -326,7 +341,8 @@ def test_pipeline_methods_preprocessing_svm():
     n_classes = len(np.unique(y))
     scaler = StandardScaler()
     pca = PCA(n_components=2, svd_solver='randomized', whiten=True)
-    clf = SVC(probability=True, random_state=0, decision_function_shape='ovr')
+    clf = SVC(gamma='scale', probability=True, random_state=0,
+              decision_function_shape='ovr')
 
     for preprocessing in [scaler, pca]:
         pipe = Pipeline([('preprocess', preprocessing), ('svc', clf)])
@@ -396,6 +412,16 @@ def test_fit_predict_with_intermediate_fit_params():
     assert_true(pipe.named_steps['transf'].fit_params['should_get_this'])
     assert_true(pipe.named_steps['clf'].successful)
     assert_false('should_succeed' in pipe.named_steps['transf'].fit_params)
+
+
+def test_predict_with_predict_params():
+    # tests that Pipeline passes predict_params to the final estimator
+    # when predict is invoked
+    pipe = Pipeline([('transf', Transf()), ('clf', DummyEstimatorParams())])
+    pipe.fit(None, None)
+    pipe.predict(X=None, got_attribute=True)
+
+    assert_true(pipe.named_steps['clf'].got_attribute)
 
 
 def test_feature_union():
@@ -761,6 +787,8 @@ def test_feature_union_feature_names():
                          'get_feature_names', ft.get_feature_names)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classes_property():
     iris = load_iris()
     X = iris.data
@@ -804,7 +832,8 @@ def test_set_feature_union_steps():
     assert_equal(['mock__x5'], ft.get_feature_names())
 
 
-def test_set_feature_union_step_none():
+@pytest.mark.parametrize('drop', ['drop', None])
+def test_set_feature_union_step_drop(drop):
     mult2 = Mult(2)
     mult2.get_feature_names = lambda: ['x2']
     mult3 = Mult(3)
@@ -816,12 +845,12 @@ def test_set_feature_union_step_none():
     assert_array_equal([[2, 3]], ft.fit_transform(X))
     assert_equal(['m2__x2', 'm3__x3'], ft.get_feature_names())
 
-    ft.set_params(m2=None)
+    ft.set_params(m2=drop)
     assert_array_equal([[3]], ft.fit(X).transform(X))
     assert_array_equal([[3]], ft.fit_transform(X))
     assert_equal(['m3__x3'], ft.get_feature_names())
 
-    ft.set_params(m3=None)
+    ft.set_params(m3=drop)
     assert_array_equal([[]], ft.fit(X).transform(X))
     assert_array_equal([[]], ft.fit_transform(X))
     assert_equal([], ft.get_feature_names())
@@ -829,6 +858,12 @@ def test_set_feature_union_step_none():
     # check we can change back
     ft.set_params(m3=mult3)
     assert_array_equal([[3]], ft.fit(X).transform(X))
+
+    # Check 'drop' step at construction time
+    ft = FeatureUnion([('m2', drop), ('m3', mult3)])
+    assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert_array_equal([[3]], ft.fit_transform(X))
+    assert_equal(['m3__x3'], ft.get_feature_names())
 
 
 def test_step_name_validation():
@@ -864,6 +899,8 @@ def test_step_name_validation():
                                  [[1]], [1])
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_set_params_nested_pipeline():
     estimator = Pipeline([
         ('a', Pipeline([
@@ -882,11 +919,11 @@ def test_pipeline_wrong_memory():
     y = iris.target
     # Define memory as an integer
     memory = 1
-    cached_pipe = Pipeline([('transf', DummyTransf()), ('svc', SVC())],
-                           memory=memory)
+    cached_pipe = Pipeline([('transf', DummyTransf()),
+                            ('svc', SVC())], memory=memory)
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
-                        "sklearn.externals.joblib.Memory."
+                        "sklearn.utils.Memory."
                         " Got memory='1' instead.", cached_pipe.fit, X, y)
 
 
@@ -909,7 +946,7 @@ def test_pipeline_with_cache_attribute():
                     memory=dummy)
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
-                        "sklearn.externals.joblib.Memory."
+                        "sklearn.utils.Memory."
                         " Got memory='{}' instead.".format(dummy), pipe.fit, X)
 
 
@@ -919,9 +956,13 @@ def test_pipeline_memory():
     y = iris.target
     cachedir = mkdtemp()
     try:
-        memory = Memory(cachedir=cachedir, verbose=10)
+        if LooseVersion(joblib_version) < LooseVersion('0.12'):
+            # Deal with change of API in joblib
+            memory = Memory(cachedir=cachedir, verbose=10)
+        else:
+            memory = Memory(location=cachedir, verbose=10)
         # Test with Transformer + SVC
-        clf = SVC(probability=True, random_state=0)
+        clf = SVC(gamma='scale', probability=True, random_state=0)
         transf = DummyTransf()
         pipe = Pipeline([('transf', clone(transf)), ('svc', clf)])
         cached_pipe = Pipeline([('transf', transf), ('svc', clf)],
@@ -955,7 +996,7 @@ def test_pipeline_memory():
         assert_equal(ts, cached_pipe.named_steps['transf'].timestamp_)
         # Create a new pipeline with cloned estimators
         # Check that even changing the name step does not affect the cache hit
-        clf_2 = SVC(probability=True, random_state=0)
+        clf_2 = SVC(gamma='scale', probability=True, random_state=0)
         transf_2 = DummyTransf()
         cached_pipe_2 = Pipeline([('transf_2', transf_2), ('svc', clf_2)],
                                  memory=memory)
@@ -977,7 +1018,11 @@ def test_pipeline_memory():
 
 def test_make_pipeline_memory():
     cachedir = mkdtemp()
-    memory = Memory(cachedir=cachedir)
+    if LooseVersion(joblib_version) < LooseVersion('0.12'):
+        # Deal with change of API in joblib
+        memory = Memory(cachedir=cachedir, verbose=10)
+    else:
+        memory = Memory(location=cachedir, verbose=10)
     pipeline = make_pipeline(DummyTransf(), SVC(), memory=memory)
     assert_true(pipeline.memory is memory)
     pipeline = make_pipeline(DummyTransf(), SVC())

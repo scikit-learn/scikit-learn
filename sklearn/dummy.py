@@ -10,6 +10,7 @@ import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .utils import check_random_state
+from .utils.validation import _num_samples
 from .utils.validation import check_array
 from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted
@@ -91,9 +92,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, object with finite length or shape}
+            Training data, requires length = n_samples
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             Target values.
@@ -104,14 +104,12 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        force_all_finite=False)
-
-        if self.strategy not in ("most_frequent", "stratified", "uniform",
-                                 "constant", "prior"):
-            raise ValueError("Unknown strategy type.")
+        allowed_strategies = ("most_frequent", "stratified", "uniform",
+                              "constant", "prior")
+        if self.strategy not in allowed_strategies:
+            raise ValueError("Unknown strategy type: %s, expected one of %s."
+                             % (self.strategy, allowed_strategies))
 
         if self.strategy == "uniform" and sp.issparse(y):
             y = y.toarray()
@@ -131,6 +129,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             y = np.reshape(y, (-1, 1))
 
         self.n_outputs_ = y.shape[1]
+
+        check_consistent_length(X, y, sample_weight)
 
         if self.strategy == "constant":
             if self.constant is None:
@@ -166,9 +166,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Input vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, object with finite length or shape}
+            Training data, requires length = n_samples
 
         Returns
         -------
@@ -177,11 +176,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         """
         check_is_fitted(self, 'classes_')
 
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        force_all_finite=False)
         # numpy random_state expects Python int and not long as size argument
         # under Windows
-        n_samples = int(X.shape[0])
+        n_samples = _num_samples(X)
         rs = check_random_state(self.random_state)
 
         n_classes_ = self.n_classes_
@@ -245,9 +242,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Input vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, object with finite length or shape}
+            Training data, requires length = n_samples
 
         Returns
         -------
@@ -258,11 +254,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         """
         check_is_fitted(self, 'classes_')
 
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        force_all_finite=False)
         # numpy random_state expects Python int and not long as size argument
         # under Windows
-        n_samples = int(X.shape[0])
+        n_samples = _num_samples(X)
         rs = check_random_state(self.random_state)
 
         n_classes_ = self.n_classes_
@@ -310,9 +304,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Input vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, object with finite length or shape}
+            Training data, requires length = n_samples
 
         Returns
         -------
@@ -326,6 +319,37 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             return np.log(proba)
         else:
             return [np.log(p) for p in proba]
+
+    def score(self, X, y, sample_weight=None):
+        """Returns the mean accuracy on the given test data and labels.
+
+        In multi-label classification, this is the subset accuracy
+        which is a harsh metric since you require for each sample that
+        each label set be correctly predicted.
+
+        Parameters
+        ----------
+        X : {array-like, None}
+            Test samples with shape = (n_samples, n_features) or
+            None. Passing None as test samples gives the same result
+            as passing real test samples, since DummyClassifier
+            operates independently of the sampled observations.
+
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+            True labels for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Mean accuracy of self.predict(X) wrt. y.
+
+        """
+        if X is None:
+            X = np.zeros(shape=(len(y), 1))
+        return super(DummyClassifier, self).score(X, y, sample_weight)
 
 
 class DummyRegressor(BaseEstimator, RegressorMixin):
@@ -382,9 +406,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, object with finite length or shape}
+            Training data, requires length = n_samples
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             Target values.
@@ -395,15 +418,11 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        force_all_finite=False)
-
-        if self.strategy not in ("mean", "median", "quantile", "constant"):
-            raise ValueError("Unknown strategy type: %s, expected "
-                             "'mean', 'median', 'quantile' or 'constant'"
-                             % self.strategy)
+        allowed_strategies = ("mean", "median", "quantile", "constant")
+        if self.strategy not in allowed_strategies:
+            raise ValueError("Unknown strategy type: %s, expected one of %s."
+                             % (self.strategy, allowed_strategies))
 
         y = check_array(y, ensure_2d=False)
         if len(y) == 0:
@@ -459,29 +478,74 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         self.constant_ = np.reshape(self.constant_, (1, -1))
         return self
 
-    def predict(self, X):
+    def predict(self, X, return_std=False):
         """
         Perform classification on test vectors X.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Input vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, object with finite length or shape}
+            Training data, requires length = n_samples
+
+        return_std : boolean, optional
+            Whether to return the standard deviation of posterior prediction.
+            All zeros in this case.
 
         Returns
         -------
         y : array, shape = [n_samples]  or [n_samples, n_outputs]
             Predicted target values for X.
+
+        y_std : array, shape = [n_samples]  or [n_samples, n_outputs]
+            Standard deviation of predictive distribution of query points.
         """
         check_is_fitted(self, "constant_")
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        force_all_finite=False)
-        n_samples = X.shape[0]
+        n_samples = _num_samples(X)
 
-        y = np.ones((n_samples, 1)) * self.constant_
+        y = np.full((n_samples, self.n_outputs_), self.constant_,
+                    dtype=np.array(self.constant_).dtype)
+        y_std = np.zeros((n_samples, self.n_outputs_))
 
         if self.n_outputs_ == 1 and not self.output_2d_:
             y = np.ravel(y)
+            y_std = np.ravel(y_std)
 
-        return y
+        return (y, y_std) if return_std else y
+
+    def score(self, X, y, sample_weight=None):
+        """Returns the coefficient of determination R^2 of the prediction.
+
+        The coefficient R^2 is defined as (1 - u/v), where u is the residual
+        sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
+        sum of squares ((y_true - y_true.mean()) ** 2).sum().
+        The best possible score is 1.0 and it can be negative (because the
+        model can be arbitrarily worse). A constant model that always
+        predicts the expected value of y, disregarding the input features,
+        would get a R^2 score of 0.0.
+
+        Parameters
+        ----------
+        X : {array-like, None}
+            Test samples with shape = (n_samples, n_features) or None.
+            For some estimators this may be a
+            precomputed kernel matrix instead, shape = (n_samples,
+            n_samples_fitted], where n_samples_fitted is the number of
+            samples used in the fitting for the estimator.
+            Passing None as test samples gives the same result
+            as passing real test samples, since DummyRegressor
+            operates independently of the sampled observations.
+
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+            True values for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            R^2 of self.predict(X) wrt. y.
+        """
+        if X is None:
+            X = np.zeros(shape=(len(y), 1))
+        return super(DummyRegressor, self).score(X, y, sample_weight)

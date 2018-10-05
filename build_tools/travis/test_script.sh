@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script is meant to be called by the "script" step defined in
-# .travis.yml. See http://docs.travis-ci.com/ for more details.
+# .travis.yml. See https://docs.travis-ci.com/ for more details.
 # The behavior of the script is controlled by environment variabled defined
 # in the .travis.yml in the top level folder of the project.
 
@@ -38,18 +38,19 @@ run_tests() {
     if [[ "$COVERAGE" == "true" ]]; then
         TEST_CMD="$TEST_CMD --cov sklearn"
     fi
+
+    if [[ -n "$CHECK_WARNINGS" ]]; then
+        TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
+    fi
+
+    set -x  # print executed commands to the terminal
+
     $TEST_CMD sklearn
 
     # Going back to git checkout folder needed to test documentation
     cd $OLDPWD
 
-    # Do not run doctests in scipy-dev-wheels build for now
-    # (broken by numpy 1.14.dev array repr/str formatting
-    # change even with np.set_printoptions(sign='legacy')).
-    # See https://github.com/numpy/numpy/issues/9804 for more details
-    if [[ "$DISTRIB" != "scipy-dev-wheels" ]]; then
-        make test-doc
-    fi
+    make test-doc
 }
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then

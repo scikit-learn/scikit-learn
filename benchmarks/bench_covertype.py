@@ -59,7 +59,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import zero_one_loss
-from sklearn.externals.joblib import Memory
+from sklearn.utils import Memory
 from sklearn.utils import check_array
 
 # Memoize the data extraction and memory map the resulting

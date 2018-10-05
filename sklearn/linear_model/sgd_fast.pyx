@@ -36,8 +36,10 @@ DEF ELASTICNET = 3
 DEF CONSTANT = 1
 DEF OPTIMAL = 2
 DEF INVSCALING = 3
-DEF PA1 = 4
-DEF PA2 = 5
+DEF ADAPTIVE = 4
+DEF PA1 = 5
+DEF PA2 = 6
+
 
 
 # ----------------------------------------
@@ -156,7 +158,7 @@ cdef class Hinge(Classification):
     cdef double loss(self, double p, double y) nogil:
         cdef double z = p * y
         if z <= self.threshold:
-            return (self.threshold - z)
+            return self.threshold - z
         return 0.0
 
     cdef double _dloss(self, double p, double y) nogil:
@@ -337,6 +339,9 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               double alpha, double C,
               double l1_ratio,
               SequentialDataset dataset,
+              np.ndarray[unsigned char, ndim=1, mode='c'] validation_mask,
+              bint early_stopping, validation_score_cb,
+              int n_iter_no_change,
               int max_iter, double tol, int fit_intercept,
               int verbose, bint shuffle, np.uint32_t seed,
               double weight_pos, double weight_neg,
@@ -365,10 +370,20 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
     dataset : SequentialDataset
         A concrete ``SequentialDataset`` object.
+    validation_mask : ndarray[unsigned char, ndim=1]
+        Equal to True on the validation set.
+    early_stopping : boolean
+        Whether to use a stopping criterion based on the validation set.
+    validation_score_cb : callable
+        A callable to compute a validation score given the current
+        coefficients and intercept values.
+        Used only if early_stopping is True.
+    n_iter_no_change : int
+        Number of iteration with no improvement to wait before stopping.
     max_iter : int
         The maximum number of iterations (epochs).
     tol: double
-        The tolerance for the stopping criterion
+        The tolerance for the stopping criterion.
     fit_intercept : int
         Whether or not to fit the intercept (1 or 0).
     verbose : int
@@ -386,8 +401,9 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         (1) constant, eta = eta0
         (2) optimal, eta = 1.0/(alpha * t).
         (3) inverse scaling, eta = eta0 / pow(t, power_t)
-        (4) Passive Agressive-I, eta = min(alpha, loss/norm(x))
-        (5) Passive Agressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
+        (4) adaptive decrease
+        (5) Passive Aggressive-I, eta = min(alpha, loss/norm(x))
+        (6) Passive Aggressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
     eta0 : double
         The initial learning rate.
     power_t : double
@@ -396,6 +412,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         Initial state of the learning rate. This value is equal to the
         iteration count except when the learning rate is set to `optimal`.
         Default: 1.0.
+    intercept_decay : double
+        The decay ratio of intercept, used in updating intercept.
 
     Returns
     -------
@@ -416,6 +434,10 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                                    alpha, C,
                                    l1_ratio,
                                    dataset,
+                                   validation_mask,
+                                   early_stopping,
+                                   validation_score_cb,
+                                   n_iter_no_change,
                                    max_iter, tol, fit_intercept,
                                    verbose, shuffle, seed,
                                    weight_pos, weight_neg,
@@ -436,6 +458,9 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 double alpha, double C,
                 double l1_ratio,
                 SequentialDataset dataset,
+                np.ndarray[unsigned char, ndim=1, mode='c'] validation_mask,
+                bint early_stopping, validation_score_cb,
+                int n_iter_no_change,
                 int max_iter, double tol, int fit_intercept,
                 int verbose, bint shuffle, np.uint32_t seed,
                 double weight_pos, double weight_neg,
@@ -469,6 +494,16 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
     dataset : SequentialDataset
         A concrete ``SequentialDataset`` object.
+    validation_mask : ndarray[unsigned char, ndim=1]
+        Equal to True on the validation set.
+    early_stopping : boolean
+        Whether to use a stopping criterion based on the validation set.
+    validation_score_cb : callable
+        A callable to compute a validation score given the current
+        coefficients and intercept values.
+        Used only if early_stopping is True.
+    n_iter_no_change : int
+        Number of iteration with no improvement to wait before stopping.
     max_iter : int
         The maximum number of iterations (epochs).
     tol: double
@@ -490,8 +525,9 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         (1) constant, eta = eta0
         (2) optimal, eta = 1.0/(alpha * t).
         (3) inverse scaling, eta = eta0 / pow(t, power_t)
-        (4) Passive Aggressive-I, eta = min(alpha, loss/norm(x))
-        (5) Passive Aggressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
+        (4) adaptive decrease
+        (5) Passive Aggressive-I, eta = min(alpha, loss/norm(x))
+        (6) Passive Aggressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
     eta0 : double
         The initial learning rate.
     power_t : double
@@ -526,6 +562,10 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                       alpha, C,
                       l1_ratio,
                       dataset,
+                      validation_mask,
+                      early_stopping,
+                      validation_score_cb,
+                      n_iter_no_change,
                       max_iter, tol, fit_intercept,
                       verbose, shuffle, seed,
                       weight_pos, weight_neg,
@@ -545,6 +585,9 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                double alpha, double C,
                double l1_ratio,
                SequentialDataset dataset,
+               np.ndarray[unsigned char, ndim=1, mode='c'] validation_mask,
+               bint early_stopping, validation_score_cb,
+               int n_iter_no_change,
                int max_iter, double tol, int fit_intercept,
                int verbose, bint shuffle, np.uint32_t seed,
                double weight_pos, double weight_neg,
@@ -565,13 +608,16 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double* ps_ptr = NULL
 
     # helper variables
+    cdef int no_improvement_count = 0
     cdef bint infinity = False
     cdef int xnnz
     cdef double eta = 0.0
     cdef double p = 0.0
     cdef double update = 0.0
     cdef double sumloss = 0.0
-    cdef double previous_loss = np.inf
+    cdef double score = 0.0
+    cdef double best_loss = INFINITY
+    cdef double best_score = -INFINITY
     cdef double y = 0.0
     cdef double sample_weight
     cdef double class_weight = 1.0
@@ -584,6 +630,9 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double MAX_DLOSS = 1e12
     cdef double max_change = 0.0
     cdef double max_weight = 0.0
+
+    cdef long long sample_index
+    cdef unsigned char [:] validation_mask_view = validation_mask
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
@@ -620,13 +669,19 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz,
                              &y, &sample_weight)
 
+                sample_index = dataset.index_data_ptr[dataset.current_index]
+                if validation_mask_view[sample_index]:
+                    # do not learn on the validation set
+                    continue
+
                 p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
                 if learning_rate == OPTIMAL:
                     eta = 1.0 / (alpha * (optimal_init + t - 1))
                 elif learning_rate == INVSCALING:
                     eta = eta0 / pow(t, power_t)
 
-                sumloss += loss.loss(p, y)
+                if verbose or not early_stopping:
+                    sumloss += loss.loss(p, y)
 
                 if y > 0.0:
                     class_weight = weight_pos
@@ -703,13 +758,36 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 infinity = True
                 break
 
-            if tol > -INFINITY and sumloss > previous_loss - tol * n_samples:
-                if verbose:
-                    with gil:
-                        print("Convergence after %d epochs took %.2f seconds"
-                              % (epoch + 1, time() - t_start))
-                break
-            previous_loss = sumloss
+            # evaluate the score on the validation set
+            if early_stopping:
+                with gil:
+                    score = validation_score_cb(weights, intercept)
+                if tol > -INFINITY and score < best_score + tol:
+                    no_improvement_count += 1
+                else:
+                    no_improvement_count = 0
+                if score > best_score:
+                    best_score = score
+            # or evaluate the loss on the training set
+            else:
+                if tol > -INFINITY and sumloss > best_loss - tol * n_samples:
+                    no_improvement_count += 1
+                else:
+                    no_improvement_count = 0
+                if sumloss < best_loss:
+                    best_loss = sumloss
+
+            # if there is no improvement several times in a row
+            if no_improvement_count >= n_iter_no_change:
+                if learning_rate == ADAPTIVE and eta > 1e-6:
+                    eta = eta / 5
+                    no_improvement_count = 0
+                else:
+                    if verbose:
+                        with gil:
+                            print("Convergence after %d epochs took %.2f "
+                                  "seconds" % (epoch + 1, time() - t_start))
+                    break
 
     if infinity:
         raise ValueError(("Floating-point under-/overflow occurred at epoch"

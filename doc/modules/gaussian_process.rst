@@ -413,9 +413,9 @@ kernel but with the hyperparameters set to ``theta``. An illustrative example:
     >>> from sklearn.gaussian_process.kernels import ConstantKernel, RBF
     >>> kernel = ConstantKernel(constant_value=1.0, constant_value_bounds=(0.0, 10.0)) * RBF(length_scale=0.5, length_scale_bounds=(0.0, 10.0)) + RBF(length_scale=2.0, length_scale_bounds=(0.0, 10.0))
     >>> for hyperparameter in kernel.hyperparameters: print(hyperparameter)
-    Hyperparameter(name='k1__k1__constant_value', value_type='numeric', bounds=array([[  0.,  10.]]), n_elements=1, fixed=False)
-    Hyperparameter(name='k1__k2__length_scale', value_type='numeric', bounds=array([[  0.,  10.]]), n_elements=1, fixed=False)
-    Hyperparameter(name='k2__length_scale', value_type='numeric', bounds=array([[  0.,  10.]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k1__k1__constant_value', value_type='numeric', bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k1__k2__length_scale', value_type='numeric', bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k2__length_scale', value_type='numeric', bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
     >>> params = kernel.get_params()
     >>> for key in sorted(params): print("%s : %s" % (key, params[key]))
     k1 : 1**2 * RBF(length_scale=0.5)
@@ -431,9 +431,9 @@ kernel but with the hyperparameters set to ``theta``. An illustrative example:
     >>> print(kernel.theta)  # Note: log-transformed
     [ 0.         -0.69314718  0.69314718]
     >>> print(kernel.bounds)  # Note: log-transformed
-    [[       -inf  2.30258509]
-     [       -inf  2.30258509]
-     [       -inf  2.30258509]]
+    [[      -inf 2.30258509]
+     [      -inf 2.30258509]
+     [      -inf 2.30258509]]
 
 
 All Gaussian process kernels are interoperable with :mod:`sklearn.metrics.pairwise`
@@ -553,7 +553,7 @@ The kernel is given by:
 .. math::
    k(x_i, x_j) = \left(1 + \frac{d(x_i, x_j)^2}{2\alpha l^2}\right)^{-\alpha}
 
-The prior and posterior of a GP resulting from an RBF kernel are shown in
+The prior and posterior of a GP resulting from a :class:`RationalQuadratic` kernel are shown in
 the following figure:
 
 .. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_prior_posterior_001.png
@@ -604,4 +604,3 @@ References
 .. [RW2006] Carl Eduard Rasmussen and Christopher K.I. Williams, "Gaussian Processes for Machine Learning", MIT Press 2006, Link to an official complete PDF version of the book `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ .
 
 .. currentmodule:: sklearn.gaussian_process
-

@@ -106,7 +106,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
             copy_X=True, fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06,
             n_iter=300, normalize=False, tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
-    array([ 1.])
+    array([1.])
 
     Notes
     -----
@@ -212,7 +212,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
                     U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
                 coef_ = np.dot(coef_, y)
                 if self.compute_score:
-                    logdet_sigma_ = lambda_ * np.ones(n_features)
+                    logdet_sigma_ = np.full(n_features, lambda_,
+                                            dtype=np.array(lambda_).dtype)
                     logdet_sigma_[:n_samples] += alpha_ * eigen_vals_
                     logdet_sigma_ = - np.sum(np.log(logdet_sigma_))
 
@@ -385,7 +386,7 @@ class ARDRegression(LinearModel, RegressorMixin):
             n_iter=300, normalize=False, threshold_lambda=10000.0, tol=0.001,
             verbose=False)
     >>> clf.predict([[1, 1]])
-    array([ 1.])
+    array([1.])
 
     Notes
     -----
@@ -469,9 +470,8 @@ class ARDRegression(LinearModel, RegressorMixin):
         self.scores_ = list()
         coef_old_ = None
 
-        # Iterative procedure of ARDRegression
-        for iter_ in range(self.n_iter):
-            # Compute mu and sigma (using Woodbury matrix identity)
+        # Compute sigma and mu (using Woodbury matrix identity)
+        def update_sigma(X, alpha_, lambda_, keep_lambda, n_samples):
             sigma_ = pinvh(np.eye(n_samples) / alpha_ +
                            np.dot(X[:, keep_lambda] *
                            np.reshape(1. / lambda_[keep_lambda], [1, -1]),
@@ -481,8 +481,17 @@ class ARDRegression(LinearModel, RegressorMixin):
             sigma_ = - np.dot(np.reshape(1. / lambda_[keep_lambda], [-1, 1]) *
                               X[:, keep_lambda].T, sigma_)
             sigma_.flat[::(sigma_.shape[1] + 1)] += 1. / lambda_[keep_lambda]
+            return sigma_
+
+        def update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_):
             coef_[keep_lambda] = alpha_ * np.dot(
                 sigma_, np.dot(X[:, keep_lambda].T, y))
+            return coef_
+
+        # Iterative procedure of ARDRegression
+        for iter_ in range(self.n_iter):
+            sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda, n_samples)
+            coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
 
             # Update alpha and lambda
             rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
@@ -512,6 +521,10 @@ class ARDRegression(LinearModel, RegressorMixin):
                     print("Converged after %s iterations" % iter_)
                 break
             coef_old_ = np.copy(coef_)
+
+        # update sigma and mu using updated parameters from the last iteration
+        sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda, n_samples)
+        coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
 
         self.coef_ = coef_
         self.alpha_ = alpha_

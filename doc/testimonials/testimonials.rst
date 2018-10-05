@@ -11,7 +11,7 @@ Who is using scikit-learn?
 
 .. to add a testimonials, just XXX
 
-`Spotify <http://www.spotify.com>`_
+`Spotify <https://www.spotify.com>`_
 ------------------------------------
 
 .. raw:: html
@@ -20,7 +20,7 @@ Who is using scikit-learn?
 
 .. image:: images/spotify.png
     :width: 120pt
-    :target: http://www.spotify.com
+    :target: https://www.spotify.com
 
 .. raw:: html
 
@@ -42,7 +42,7 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
 
    </span>
 
-`Inria <http://www.inria.fr>`_
+`Inria <https://www.inria.fr/>`_
 -------------------------------
 
 .. raw:: html
@@ -51,7 +51,7 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
 
 .. image:: images/inria.png
     :width: 120pt
-    :target: http://www.inria.fr
+    :target: https://www.inria.fr/
 
 .. raw:: html
 
@@ -63,7 +63,7 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
 
 At INRIA, we use scikit-learn to support leading-edge basic research in many
 teams: `Parietal <https://team.inria.fr/parietal/>`_ for neuroimaging, `Lear
-<http://lear.inrialpes.fr/>`_ for computer vision, `Visages
+<https://lear.inrialpes.fr/>`_ for computer vision, `Visages
 <https://team.inria.fr/visages/>`_ for medical image analysis, `Privatics
 <https://team.inria.fr/privatics>`_ for security. The project is a fantastic
 tool to address difficult applications of machine learning in an academic
@@ -104,15 +104,50 @@ digg and Scale Model. Consistently the betaworks data science team uses
 Scikit-learn for a variety of tasks. From exploratory analysis, to product
 development, it is an essential part of our toolkit. Recent uses are included
 in `digg’s new video recommender system
-<https://medium.com/i-data/the-digg-video-recommender-2f9ade7c4ba3#.g5kk2u89v>`_,
+<https://medium.com/i-data/the-digg-video-recommender-2f9ade7c4ba3>`_,
 and Poncho’s `dynamic heuristic subspace clustering
-<http://data.betaworks.com/a-data-driven-approach-to-verbalize-weather-forecasts-at-scale/>`_. 
+<https://medium.com/@DiggData/scaling-poncho-using-data-ca24569d56fd>`_. 
 
 .. raw:: html
 
    <span class="testimonial-author">
 
 Gilad Lotan, Chief Data Scientist
+
+.. raw:: html
+
+   </span>
+
+
+`Hugging Face <https://huggingface.co>`_
+----------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/huggingface.png
+    :width: 120pt
+    :target: https://huggingface.co
+
+.. raw:: html
+
+  </div>
+
+At Hugging Face we're using NLP and probabilistic models to generate
+conversational Artificial intelligences that are fun to chat with. Despite using
+deep neural nets for `a few <https://medium.com/huggingface/understanding-emotions-from-keras-to-pytorch-3ccb61d5a983>`_ 
+of our `NLP tasks <https://huggingface.co/coref/>`_, scikit-learn is still the bread-and-butter of
+our daily machine learning routine. The ease of use and predictability of the
+interface, as well as the straightforward mathematical explanations that are
+here when you need them, is the killer feature. We use a variety of scikit-learn
+models in production and they are also operationally very pleasant to work with.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Julien Chaumond, Chief Technology Officer
 
 .. raw:: html
 
@@ -153,7 +188,7 @@ Mark Ayzenshtat, VP, Augmented Intelligence
 
    </span>
 
-`Télécom ParisTech <http://www.telecom-paristech.fr>`_
+`Télécom ParisTech <https://www.telecom-paristech.fr/>`_
 --------------------------------------------------------
 
 .. raw:: html
@@ -162,7 +197,7 @@ Mark Ayzenshtat, VP, Augmented Intelligence
 
 .. image:: images/telecomparistech.jpg
     :width: 120pt
-    :target: https://www.telecom-paristech.fr
+    :target: https://www.telecom-paristech.fr/
 
 .. raw:: html
 
@@ -186,7 +221,7 @@ Alexandre Gramfort, Assistant Professor
    </span>
 
 
-`Booking.com <http://booking.com>`_
+`Booking.com <https://www.booking.com>`_
 -------------------------------------
 .. raw:: html
 
@@ -194,7 +229,7 @@ Alexandre Gramfort, Assistant Professor
 
 .. image:: images/booking.png
     :width: 120pt
-    :target: http://www.booking.com
+    :target: https://www.booking.com
 
 .. raw:: html
 
@@ -221,7 +256,7 @@ Melanie Mueller, Data Scientist
 
    </span>
 
-`AWeber <http://www.aweber.com>`_
+`AWeber <https://www.aweber.com/>`_
 ------------------------------------------
 
 .. raw:: html
@@ -230,7 +265,7 @@ Melanie Mueller, Data Scientist
 
 .. image:: images/aweber.png
     :width: 120pt
-    :target: http://www.aweber.com
+    :target: https://www.aweber.com/
 
 .. raw:: html
 
@@ -425,7 +460,7 @@ Vijay Ramesh, Software Engineer in Data/science at Change.org
 
    </span>
 
-`PHIMECA Engineering <http://www.phimeca.com/?lang=en>`_
+`PHIMECA Engineering <https://www.phimeca.com/?lang=en>`_
 ----------------------------------------------------------
 
 .. raw:: html
@@ -434,7 +469,7 @@ Vijay Ramesh, Software Engineer in Data/science at Change.org
 
 .. image:: images/phimeca.png
     :width: 120pt
-    :target: http://www.phimeca.com/?lang=en
+    :target: https://www.phimeca.com/?lang=en
 
 .. raw:: html
 
@@ -659,7 +694,7 @@ Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
 
 
 
-`Machinalis <http://www.machinalis.com>`_
+`Machinalis <https://www.machinalis.com/>`_
 -----------------------------------------
 
 .. raw:: html
@@ -668,7 +703,7 @@ Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
 
 .. image:: images/machinalis.png
     :width: 120pt
-    :target: http://www.machinalis.com
+    :target: https://www.machinalis.com/
 
 .. raw:: html
 
@@ -693,7 +728,7 @@ Scikit-learn in one word: Awesome.
 Rafael Carrascosa, Lead developer
 
 
-`solido <http://www.solidodesign.com/>`_
+`solido <https://www.solidodesign.com/>`_
 -----------------------------------------
 
 .. raw:: html
@@ -702,7 +737,7 @@ Rafael Carrascosa, Lead developer
 
 .. image:: images/solido_logo.png
     :width: 120pt
-    :target: http://www.solidodesign.com
+    :target: https://www.solidodesign.com/
 
 .. raw:: html
 
@@ -765,7 +800,7 @@ Thorsten Kranz, Data Scientist, Coma Soft AG.
   </span>
 
 
-`Dataiku <http://www.dataiku.com/>`_
+`Dataiku <https://www.dataiku.com/>`_
 -----------------------------------------
 
 .. raw:: html
@@ -774,7 +809,7 @@ Thorsten Kranz, Data Scientist, Coma Soft AG.
 
 .. image:: images/dataiku_logo.png
     :width: 120pt
-    :target: http://www.dataiku.com
+    :target: https://www.dataiku.com/
 
 .. raw:: html
 

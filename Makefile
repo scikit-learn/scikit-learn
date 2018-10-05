@@ -24,7 +24,7 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 test-code: in
-	$(PYTEST) --showlocals -v sklearn
+	$(PYTEST) --showlocals -v sklearn --durations=20
 test-sphinxext:
 	$(PYTEST) --showlocals -v doc/sphinxext/
 test-doc:
@@ -34,7 +34,7 @@ endif
 
 test-coverage:
 	rm -rf coverage .coverage
-	$(PYTEST) sklearn --show-locals -v --with-cov sklearn
+	$(PYTEST) sklearn --showlocals -v --cov=sklearn --cov-report=html:coverage
 
 test: test-code test-sphinxext test-doc
 

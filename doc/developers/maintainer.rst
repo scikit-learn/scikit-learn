@@ -1,22 +1,28 @@
 Maintainer / core-developer information
 ========================================
 
+Before a release
+----------------
+
+1. Update authors table::
+
+    $ cd build_tools; make authors; cd ..
+
+   and commit.
+
 Making a release
-------------------
+----------------
 For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-to-make-a-release
 
 
 1. Update docs:
 
-    - edit the doc/whats_new.rst file to add release title and commit
-      statistics. You can retrieve commit statistics with::
+   - Edit the doc/whats_new.rst file to add release title and commit
+     statistics. You can retrieve commit statistics with::
 
         $ git shortlog -ns 0.998..
 
-    - edit the doc/conf.py to increase the version number
-
-    - edit the doc/themes/scikit-learn/layout.html to change the 'News'
-      entry of the front page.
+   - Edit the doc/index.rst to change the 'News' entry of the front page.
 
 2. Update the version number in sklearn/__init__.py, the __version__
    variable
@@ -38,8 +44,8 @@ For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-t
        $ python setup.py sdist register upload
 
 
-5. Push the documentation to the website (see README in doc folder)
-
+5. Push the documentation to the website. Circle CI should do this
+   automatically for master and <N>.<N>.X branches.
 
 6. Build binaries using dedicated CI servers by updating the git submodule
    reference to the new scikit-learn tag of the release at:
@@ -55,6 +61,16 @@ For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-t
 
 
 7. FOR FINAL RELEASE: Update the release date in What's New
+
+The scikit-learn.org web site
+-----------------------------
+
+The scikit-learn web site (http://scikit-learn.org) is hosted at GitHub,
+but should rarely be updated manually by pushing to the
+https://github.com/scikit-learn/scikit-learn.github.io repository. Most
+updates can be made by pushing to master (for /dev) or a release branch
+like 0.99.X, from which Circle CI builds and uploads the documentation
+automatically.
 
 Travis Cron jobs
 ----------------
@@ -77,5 +93,5 @@ The definition of what gets run in the Cron job is done in the .travis.yml
 config file, exactly the same way as the other Travis jobs. We use a ``if: type
 = cron`` filter in order for the build to be run only in Cron jobs.
 
-The branch targetted by the Cron job and the frequency of the Cron job is set
+The branch targeted by the Cron job and the frequency of the Cron job is set
 via the web UI at https://www.travis-ci.org/scikit-learn/scikit-learn/settings.

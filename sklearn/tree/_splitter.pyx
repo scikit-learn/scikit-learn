@@ -481,9 +481,12 @@ cdef class BestSplitter(BaseDenseSplitter):
 
                             if current_proxy_improvement > best_proxy_improvement:
                                 best_proxy_improvement = current_proxy_improvement
-                                current.threshold = (Xf[p - 1] + Xf[p]) / 2.0
+                                # sum of halves is used to avoid infinite value
+                                current.threshold = Xf[p - 1] / 2.0 + Xf[p] / 2.0
 
-                                if current.threshold == Xf[p]:
+                                if ((current.threshold == Xf[p]) or
+                                    (current.threshold == INFINITY) or
+                                    (current.threshold == -INFINITY)):
                                     current.threshold = Xf[p - 1]
 
                                 best = current  # copy
@@ -535,6 +538,8 @@ cdef class BestSplitter(BaseDenseSplitter):
 # Sort n-element arrays pointed to by Xf and samples, simultaneously,
 # by the values in Xf. Algorithm: Introsort (Musser, SP&E, 1997).
 cdef inline void sort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
+    if n == 0:
+      return
     cdef int maxd = 2 * <int>log(n)
     introsort(Xf, samples, n, maxd)
 
@@ -1248,7 +1253,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         cdef bint is_samples_sorted = 0  # indicate is sorted_samples is
                                          # inititialized
 
-        # We assume implicitely that end_positive = end and
+        # We assume implicitly that end_positive = end and
         # start_negative = start
         cdef SIZE_t start_positive
         cdef SIZE_t end_negative
@@ -1380,9 +1385,12 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
 
                             if current_proxy_improvement > best_proxy_improvement:
                                 best_proxy_improvement = current_proxy_improvement
+                                # sum of halves used to avoid infinite values
+                                current.threshold = Xf[p_prev] / 2.0 + Xf[p] / 2.0
 
-                                current.threshold = (Xf[p_prev] + Xf[p]) / 2.0
-                                if current.threshold == Xf[p]:
+                                if ((current.threshold == Xf[p]) or
+                                    (current.threshold == INFINITY) or
+                                    (current.threshold == -INFINITY)):
                                     current.threshold = Xf[p_prev]
 
                                 best = current
@@ -1481,7 +1489,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         cdef bint is_samples_sorted = 0  # indicate that sorted_samples is
                                          # inititialized
 
-        # We assume implicitely that end_positive = end and
+        # We assume implicitly that end_positive = end and
         # start_negative = start
         cdef SIZE_t start_positive
         cdef SIZE_t end_negative

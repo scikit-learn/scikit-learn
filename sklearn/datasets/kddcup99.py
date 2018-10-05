@@ -13,7 +13,7 @@ import errno
 from gzip import GzipFile
 import logging
 import os
-from os.path import exists, join
+from os.path import dirname, exists, join
 
 import numpy as np
 
@@ -47,81 +47,19 @@ logger = logging.getLogger(__name__)
 
 def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
                    random_state=None,
-                   percent10=True, download_if_missing=True):
-    """Load and return the kddcup 99 dataset (classification).
+                   percent10=True, download_if_missing=True, return_X_y=False):
+    """Load the kddcup99 dataset (classification).
 
-    The KDD Cup '99 dataset was created by processing the tcpdump portions
-    of the 1998 DARPA Intrusion Detection System (IDS) Evaluation dataset,
-    created by MIT Lincoln Lab [1]. The artificial data was generated using
-    a closed network and hand-injected attacks to produce a large number of
-    different types of attack with normal activity in the background.
-    As the initial goal was to produce a large training set for supervised
-    learning algorithms, there is a large proportion (80.1%) of abnormal
-    data which is unrealistic in real world, and inappropriate for unsupervised
-    anomaly detection which aims at detecting 'abnormal' data, ie
+    Download it if necessary.
 
-    1) qualitatively different from normal data.
+    =================   ====================================
+    Classes                                               23
+    Samples total                                    4898431
+    Dimensionality                                        41
+    Features            discrete (int) or continuous (float)
+    =================   ====================================
 
-    2) in large minority among the observations.
-
-    We thus transform the KDD Data set into two different data sets: SA and SF.
-
-    - SA is obtained by simply selecting all the normal data, and a small
-      proportion of abnormal data to gives an anomaly proportion of 1%.
-
-    - SF is obtained as in [2]
-      by simply picking up the data whose attribute logged_in is positive, thus
-      focusing on the intrusion attack, which gives a proportion of 0.3% of
-      attack.
-
-    - http and smtp are two subsets of SF corresponding with third feature
-      equal to 'http' (resp. to 'smtp')
-
-
-    General KDD structure :
-
-    ================      ==========================================
-    Samples total         4898431
-    Dimensionality        41
-    Features              discrete (int) or continuous (float)
-    Targets               str, 'normal.' or name of the anomaly type
-    ================      ==========================================
-
-    SA structure :
-
-    ================      ==========================================
-    Samples total         976158
-    Dimensionality        41
-    Features              discrete (int) or continuous (float)
-    Targets               str, 'normal.' or name of the anomaly type
-    ================      ==========================================
-
-    SF structure :
-
-    ================      ==========================================
-    Samples total         699691
-    Dimensionality        4
-    Features              discrete (int) or continuous (float)
-    Targets               str, 'normal.' or name of the anomaly type
-    ================      ==========================================
-
-    http structure :
-
-    ================      ==========================================
-    Samples total         619052
-    Dimensionality        3
-    Features              discrete (int) or continuous (float)
-    Targets               str, 'normal.' or name of the anomaly type
-    ================      ==========================================
-
-    smtp structure :
-
-    ================      ==========================================
-    Samples total         95373
-    Dimensionality        3
-    Features              discrete (int) or continuous (float)
-    Targets               str, 'normal.' or name of the anomaly type
-    ================      ==========================================
+    Read more in the :ref:`User Guide <kddcup99_dataset>`.
 
     .. versionadded:: 0.18
 
@@ -139,14 +77,11 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        Random state for shuffling the dataset. If subset='SA', this random
-        state is also used to randomly select the small proportion of abnormal
-        samples.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset shuffling and for
+        selection of abnormal samples if `subset='SA'`. Pass an int for
+        reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     percent10 : bool, default=True
         Whether to load only 10 percent of the data.
@@ -155,26 +90,23 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
+    return_X_y : boolean, default=False.
+        If True, returns ``(data, target)`` instead of a Bunch object. See
+        below for more information about the `data` and `target` object.
+
+        .. versionadded:: 0.20
+
     Returns
     -------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
-        'data', the data to learn and 'target', the regression target for each
-        sample.
+         - 'data', the data to learn.
+         - 'target', the regression target for each sample.
+         - 'DESCR', a description of the dataset.
 
+    (data, target) : tuple if ``return_X_y`` is True
 
-    References
-    ----------
-    .. [1] Analysis and Results of the 1999 DARPA Off-Line Intrusion
-           Detection Evaluation Richard Lippmann, Joshua W. Haines,
-           David J. Fried, Jonathan Korba, Kumar Das
-
-    .. [2] K. Yamanishi, J.-I. Takeuchi, G. Williams, and P. Milne. Online
-           unsupervised outlier detection using finite mixtures with
-           discounting learning algorithms. In Proceedings of the sixth
-           ACM SIGKDD international conference on Knowledge discovery
-           and data mining, pages 320-324. ACM Press, 2000.
-
+        .. versionadded:: 0.20
     """
     data_home = get_data_home(data_home=data_home)
     kddcup99 = _fetch_brute_kddcup99(data_home=data_home,
@@ -230,12 +162,18 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
     if shuffle:
         data, target = shuffle_method(data, target, random_state=random_state)
 
-    return Bunch(data=data, target=target)
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'kddcup99.rst')) as rst_file:
+        fdescr = rst_file.read()
+
+    if return_X_y:
+        return data, target
+
+    return Bunch(data=data, target=target, DESCR=fdescr)
 
 
 def _fetch_brute_kddcup99(data_home=None,
-                          download_if_missing=True, random_state=None,
-                          percent10=True):
+                          download_if_missing=True, percent10=True):
 
     """Load the kddcup99 dataset, downloading it if necessary.
 
@@ -248,13 +186,6 @@ def _fetch_brute_kddcup99(data_home=None,
     download_if_missing : boolean, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        Random state for shuffling the dataset.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
 
     percent10 : bool, default=True
         Whether to load only 10 percent of the data.
@@ -374,7 +305,7 @@ def _fetch_brute_kddcup99(data_home=None,
         X = joblib.load(samples_path)
         y = joblib.load(targets_path)
 
-    return Bunch(data=X, target=y, DESCR=__doc__)
+    return Bunch(data=X, target=y)
 
 
 def _mkdirp(d):

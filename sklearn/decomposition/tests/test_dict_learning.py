@@ -1,3 +1,6 @@
+from __future__ import division
+import pytest
+
 import numpy as np
 import itertools
 
@@ -53,6 +56,40 @@ def test_dict_learning_overcomplete():
     n_components = 12
     dico = DictionaryLearning(n_components, random_state=0).fit(X)
     assert_true(dico.components_.shape == (n_components, n_features))
+
+
+# positive lars deprecated 0.22
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
+@pytest.mark.parametrize("transform_algorithm", [
+    "lasso_lars",
+    "lasso_cd",
+    "lars",
+    "threshold",
+])
+@pytest.mark.parametrize("positive_code", [
+    False,
+    True,
+])
+@pytest.mark.parametrize("positive_dict", [
+    False,
+    True,
+])
+def test_dict_learning_positivity(transform_algorithm,
+                                  positive_code,
+                                  positive_dict):
+    n_components = 5
+    dico = DictionaryLearning(
+        n_components, transform_algorithm=transform_algorithm, random_state=0,
+        positive_code=positive_code, positive_dict=positive_dict).fit(X)
+    code = dico.transform(X)
+    if positive_dict:
+        assert_true((dico.components_ >= 0).all())
+    else:
+        assert_true((dico.components_ < 0).any())
+    if positive_code:
+        assert_true((code >= 0).all())
+    else:
+        assert_true((code < 0).any())
 
 
 def test_dict_learning_reconstruction():
@@ -135,6 +172,55 @@ def test_dict_learning_online_shapes():
     assert_equal(np.dot(code, dictionary).shape, X.shape)
 
 
+# positive lars deprecated 0.22
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
+@pytest.mark.parametrize("transform_algorithm", [
+    "lasso_lars",
+    "lasso_cd",
+    "lars",
+    "threshold",
+])
+@pytest.mark.parametrize("positive_code", [
+    False,
+    True,
+])
+@pytest.mark.parametrize("positive_dict", [
+    False,
+    True,
+])
+def test_dict_learning_online_positivity(transform_algorithm,
+                                         positive_code,
+                                         positive_dict):
+    rng = np.random.RandomState(0)
+    n_components = 8
+
+    dico = MiniBatchDictionaryLearning(
+        n_components, transform_algorithm=transform_algorithm, random_state=0,
+        positive_code=positive_code, positive_dict=positive_dict).fit(X)
+    code = dico.transform(X)
+    if positive_dict:
+        assert_true((dico.components_ >= 0).all())
+    else:
+        assert_true((dico.components_ < 0).any())
+    if positive_code:
+        assert_true((code >= 0).all())
+    else:
+        assert_true((code < 0).any())
+
+    code, dictionary = dict_learning_online(X, n_components=n_components,
+                                            alpha=1, random_state=rng,
+                                            positive_dict=positive_dict,
+                                            positive_code=positive_code)
+    if positive_dict:
+        assert_true((dictionary >= 0).all())
+    else:
+        assert_true((dictionary < 0).any())
+    if positive_code:
+        assert_true((code >= 0).all())
+    else:
+        assert_true((code < 0).any())
+
+
 def test_dict_learning_online_verbosity():
     n_components = 5
     # test verbosity
@@ -183,6 +269,15 @@ def test_dict_learning_online_initialization():
     assert_array_equal(dico.components_, V)
 
 
+def test_dict_learning_online_readonly_initialization():
+    n_components = 12
+    rng = np.random.RandomState(0)
+    V = rng.randn(n_components, n_features)
+    V.setflags(write=False)
+    MiniBatchDictionaryLearning(n_components, n_iter=1, dict_init=V,
+                                random_state=0, shuffle=False).fit(X)
+
+
 def test_dict_learning_online_partial_fit():
     n_components = 12
     rng = np.random.RandomState(0)
@@ -213,6 +308,31 @@ def test_sparse_encode_shapes():
     for algo in ('lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'):
         code = sparse_encode(X, V, algorithm=algo)
         assert_equal(code.shape, (n_samples, n_components))
+
+
+# positive lars deprecated 0.22
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
+@pytest.mark.parametrize("positive", [
+    False,
+    True,
+])
+def test_sparse_encode_positivity(positive):
+    n_components = 12
+    rng = np.random.RandomState(0)
+    V = rng.randn(n_components, n_features)  # random init
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    for algo in ('lasso_lars', 'lasso_cd', 'lars', 'threshold'):
+        code = sparse_encode(X, V, algorithm=algo, positive=positive)
+        if positive:
+            assert_true((code >= 0).all())
+        else:
+            assert_true((code < 0).any())
+
+    try:
+        sparse_encode(X, V, algorithm='omp', positive=positive)
+    except ValueError:
+        if not positive:
+            raise
 
 
 def test_sparse_encode_input():
@@ -262,3 +382,22 @@ def test_sparse_coder_estimator():
                        transform_alpha=0.001).transform(X)
     assert_true(not np.all(code == 0))
     assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
+
+
+def test_sparse_coder_parallel_mmap():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/5956
+    # Test that SparseCoder does not error by passing reading only
+    # arrays to child processes
+
+    rng = np.random.RandomState(777)
+    n_components, n_features = 40, 64
+    init_dict = rng.rand(n_components, n_features)
+    # Ensure that `data` is >2M. Joblib memory maps arrays
+    # if they are larger than 1MB. The 4 accounts for float32
+    # data type
+    n_samples = int(2e6) // (4 * n_features)
+    data = np.random.rand(n_samples, n_features).astype(np.float32)
+
+    sc = SparseCoder(init_dict, transform_algorithm='omp', n_jobs=2)
+    sc.fit_transform(data)

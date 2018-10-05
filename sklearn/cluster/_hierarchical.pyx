@@ -190,7 +190,7 @@ def max_merge(IntFloatDict a, IntFloatDict b,
         The IntFloatDicts to merge
     mask : ndarray array of dtype integer and of dimension 1
         a mask for keys to ignore: if not mask[key] the corresponding key
-        is skipped in the output dictionnary
+        is skipped in the output dictionary
     n_a, n_b : float
         n_a and n_b are weights for a and b for the merge strategy.
         They are not used in the case of a max merge.
@@ -246,7 +246,7 @@ def average_merge(IntFloatDict a, IntFloatDict b,
         The IntFloatDicts to merge
     mask : ndarray array of dtype integer and of dimension 1
         a mask for keys to ignore: if not mask[key] the corresponding key
-        is skipped in the output dictionnary
+        is skipped in the output dictionary
     n_a, n_b : float
         n_a and n_b are weights for a and b for the merge strategy.
         They are used for a weighted mean.
@@ -332,3 +332,120 @@ cdef class WeightedEdge:
                                               self.weight,
                                               self.a, self.b)
 
+
+################################################################################
+# Efficient labelling/conversion of MSTs to single linkage hierarchies
+
+cdef class UnionFind(object):
+
+    cdef ITYPE_t next_label
+    cdef ITYPE_t[:] parent
+    cdef ITYPE_t[:] size
+
+    def __init__(self, N):
+        self.parent = np.full(2 * N - 1, -1., dtype=ITYPE, order='C')
+        self.next_label = N
+        self.size = np.hstack((np.ones(N, dtype=ITYPE),
+                               np.zeros(N - 1, dtype=ITYPE)))
+
+    @cython.boundscheck(False)
+    @cython.nonecheck(False)
+    cdef void union(self, ITYPE_t m, ITYPE_t n):
+        self.parent[m] = self.next_label
+        self.parent[n] = self.next_label
+        self.size[self.next_label] = self.size[m] + self.size[n]
+        self.next_label += 1
+
+        return
+
+    @cython.boundscheck(False)
+    @cython.nonecheck(False)
+    cdef ITYPE_t fast_find(self, ITYPE_t n):
+        cdef ITYPE_t p
+        p = n
+        # find the highest node in the linkage graph so far
+        while self.parent[n] != -1:
+            n = self.parent[n]
+        # provide a shortcut up to the highest node
+        while self.parent[p] != n:
+            p, self.parent[p] = self.parent[p], n
+        return n
+
+@cython.boundscheck(False)
+@cython.nonecheck(False)
+cpdef np.ndarray[DTYPE_t, ndim=2] _single_linkage_label(
+    np.ndarray[DTYPE_t, ndim=2] L):
+    """
+    Convert an linkage array or MST to a tree by labelling clusters at merges.
+    This is done by using a Union find structure to keep track of merges
+    efficiently. This is the private version of the function that assumes that
+    ``L`` has been properly validated. See ``single_linkage_label`` for the
+    user facing version of this function.
+
+    Parameters
+    ----------
+    L: array of shape (n_samples - 1, 3)
+        The linkage array or MST where each row specifies two samples
+        to be merged and a distance or weight at which the merge occurs. This
+         array is assumed to be sorted by the distance/weight.
+
+    Returns
+    -------
+    A tree in the format used by scipy.cluster.hierarchy.
+    """
+
+    cdef np.ndarray[DTYPE_t, ndim=2] result_arr
+    cdef DTYPE_t[:, ::1] result
+
+    cdef ITYPE_t left, left_cluster, right, right_cluster, index
+    cdef DTYPE_t delta
+
+    result_arr = np.zeros((L.shape[0], 4), dtype=DTYPE)
+    result = result_arr
+    U = UnionFind(L.shape[0] + 1)
+
+    for index in range(L.shape[0]):
+
+        left = <ITYPE_t> L[index, 0]
+        right = <ITYPE_t> L[index, 1]
+        delta = L[index, 2]
+
+        left_cluster = U.fast_find(left)
+        right_cluster = U.fast_find(right)
+
+        result[index][0] = left_cluster
+        result[index][1] = right_cluster
+        result[index][2] = delta
+        result[index][3] = U.size[left_cluster] + U.size[right_cluster]
+
+        U.union(left_cluster, right_cluster)
+
+    return result_arr
+
+
+def single_linkage_label(L):
+    """
+    Convert an linkage array or MST to a tree by labelling clusters at merges.
+    This is done by using a Union find structure to keep track of merges
+    efficiently.
+
+    Parameters
+    ----------
+    L: array of shape (n_samples - 1, 3)
+        The linkage array or MST where each row specifies two samples
+        to be merged and a distance or weight at which the merge occurs. This
+         array is assumed to be sorted by the distance/weight.
+
+    Returns
+    -------
+    A tree in the format used by scipy.cluster.hierarchy.
+    """
+    # Validate L
+    if L[:, :2].min() < 0 or L[:, :2].max() >= 2 * L.shape[0] + 1:
+        raise ValueError("Input MST array is not a validly formatted MST array")
+
+    is_sorted = lambda x: np.all(x[:-1] <= x[1:])
+    if not is_sorted(L[:, 2]):
+        raise ValueError("Input MST array must be sorted by weight")
+
+    return _single_linkage_label(L)

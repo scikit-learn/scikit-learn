@@ -45,9 +45,9 @@ def _check_reg_targets(y_true, y_pred, multioutput):
 
     Parameters
     ----------
-    y_true : array-like,
+    y_true : array-like
 
-    y_pred : array-like,
+    y_pred : array-like
 
     multioutput : array-like or string in ['raw_values', uniform_average',
         'variance_weighted'] or None
@@ -161,10 +161,10 @@ def mean_absolute_error(y_true, y_pred,
     >>> mean_absolute_error(y_true, y_pred)
     0.75
     >>> mean_absolute_error(y_true, y_pred, multioutput='raw_values')
-    array([ 0.5,  1. ])
+    array([0.5, 1. ])
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     ... # doctest: +ELLIPSIS
-    0.849...
+    0.85...
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
@@ -229,10 +229,10 @@ def mean_squared_error(y_true, y_pred,
     0.708...
     >>> mean_squared_error(y_true, y_pred, multioutput='raw_values')
     ... # doctest: +ELLIPSIS
-    array([ 0.416...,  1.        ])
+    array([0.41666667, 1.        ])
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     ... # doctest: +ELLIPSIS
-    0.824...
+    0.825...
 
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
@@ -300,7 +300,7 @@ def mean_squared_log_error(y_true, y_pred,
     0.044...
     >>> mean_squared_log_error(y_true, y_pred, multioutput='raw_values')
     ... # doctest: +ELLIPSIS
-    array([ 0.004...,  0.083...])
+    array([0.00462428, 0.08377444])
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
     ... # doctest: +ELLIPSIS
     0.060...
@@ -314,7 +314,7 @@ def mean_squared_log_error(y_true, y_pred,
         raise ValueError("Mean Squared Logarithmic Error cannot be used when "
                          "targets contain negative values.")
 
-    return mean_squared_error(np.log(y_true + 1), np.log(y_pred + 1),
+    return mean_squared_error(np.log1p(y_true), np.log1p(y_pred),
                               sample_weight, multioutput)
 
 
