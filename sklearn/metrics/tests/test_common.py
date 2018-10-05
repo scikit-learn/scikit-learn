@@ -252,9 +252,7 @@ METRIC_UNDEFINED_BINARY = {
 METRIC_UNDEFINED_MULTICLASS = {
     "brier_score_loss",
 
-    "roc_auc_score",
     "micro_roc_auc",
-    "weighted_roc_auc",
     "samples_roc_auc",
     "partial_roc_auc",
 

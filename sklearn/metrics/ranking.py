@@ -364,8 +364,9 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
                                   y_score.shape[1] > 2):
         # validation of the input y_score
         if not np.allclose(1, y_score.sum(axis=1)):
-            raise ValueError("Target scores should sum up to 1.0 for all"
-                             "samples.")
+            raise ValueError(
+                "Target scores need to be probabilities for multiclass "
+                "roc_auc, i.e. they should sum up to 1.0 over classes.")
 
         # do not support partial ROC computation for multiclass
         if max_fpr is not None and max_fpr != 1.:
