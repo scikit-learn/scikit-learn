@@ -35,8 +35,7 @@ from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import LabelBinarizer, label_binarize
 
-from .base import _average_binary_score, _average_multiclass_ovo_score, \
-                  _average_multiclass_ovr_score
+from .base import _average_binary_score, _average_multiclass_ovo_score
 
 
 def auc(x, y, reorder='deprecated'):
