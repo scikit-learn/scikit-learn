@@ -170,7 +170,7 @@ General Concepts
         :class:`~sklearn.preprocessing.OneHotEncoder` can be used to
         one-hot encode categorical features.
         See also :ref:`preprocessing_categorical_features` and the
-        `http://contrib.scikit-learn.org/categorical-encoding
+        `https://contrib.scikit-learn.org/categorical-encoding/
         <category_encoders>`_ package for tools related to encoding
         categorical features.
 

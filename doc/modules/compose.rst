@@ -380,7 +380,7 @@ ColumnTransformer for heterogeneous data
 Many datasets contain features of different types, say text, floats, and dates,
 where each type of feature requires separate preprocessing or feature
 extraction steps.  Often it is easiest to preprocess data before applying
-scikit-learn methods, for example using `pandas <http://pandas.pydata.org/>`__.
+scikit-learn methods, for example using `pandas <https://pandas.pydata.org/>`__.
 Processing your data before passing it to scikit-learn might be problematic for
 one of the following reasons:
 
@@ -395,7 +395,7 @@ transformations for different columns of the data, within a
 :class:`~sklearn.pipeline.Pipeline` that is safe from data leakage and that can
 be parametrized. :class:`~sklearn.compose.ColumnTransformer` works on
 arrays, sparse matrices, and
-`pandas DataFrames <http://pandas.pydata.org/pandas-docs/stable/>`__.
+`pandas DataFrames <https://pandas.pydata.org/pandas-docs/stable/>`__.
 
 To each column, a different transformation can be applied, such as
 preprocessing or a specific feature extraction method::

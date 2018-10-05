@@ -508,7 +508,7 @@ column is always zero.
 .. topic:: References:
 
  * Original Algorithm is detailed in the paper `Least Angle Regression
-   <http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
+   <https://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
    by Hastie et al.
 
 
@@ -547,7 +547,7 @@ previously chosen dictionary elements.
 
 .. topic:: References:
 
- * http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+ * https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
  * `Matching pursuits with time-frequency dictionaries
    <http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
@@ -710,7 +710,7 @@ ARD is also known in the literature as *Sparse Bayesian Learning* and
 
     .. [1] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 7.2.1
 
-    .. [2] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination <http://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
+    .. [2] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination <https://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
 
     .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
 
