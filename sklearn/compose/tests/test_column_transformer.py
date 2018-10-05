@@ -408,7 +408,7 @@ def test_column_transformer_sparse_threshold():
                                   sparse_threshold=0.2)
     res = col_trans.fit_transform(X_array)
     assert not sparse.issparse(res)
-    assert col_trans.sparse_output_
+    assert not col_trans.sparse_output_
 
     # mixed -> sparsity of (4 + 2) / 8 = 0.75
     for thres in [0.75001, 1]:
