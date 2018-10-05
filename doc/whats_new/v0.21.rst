@@ -63,7 +63,7 @@ Support for Python 3.4 and below has been officially dropped.
   on it, including :class:`tree.DecisionTreeClassifier`,
   :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
   and :class:`tree.ExtraTreeRegressor`.
-  :issue:`7613` by :user:`Adrin Jalali <adrinjalali>`.
+  :issue:`12300` by :user:`Adrin Jalali <adrinjalali>`.
 
 Multiple modules
 ................
