@@ -456,9 +456,7 @@ boolean mask array or callable
         Xs, transformers = zip(*result)
 
         # determine if concatenated output will be sparse or not
-        if all(sparse.issparse(X) for X in Xs):
-            self.sparse_output_ = True
-        elif any(sparse.issparse(X) for X in Xs):
+        if any(sparse.issparse(X) for X in Xs):
             nnz = sum(X.nnz if sparse.issparse(X) else X.size for X in Xs)
             total = sum(X.shape[0] * X.shape[1] if sparse.issparse(X)
                         else X.size for X in Xs)
