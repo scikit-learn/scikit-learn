@@ -66,7 +66,7 @@ def plot_gallery(title, images, n_col=n_col, n_row=n_row, cmap=plt.cm.gray):
 # problem, and whether the transformer uses the clustering API.
 estimators = [
     ('Eigenfaces - PCA using randomized SVD',
-     decomposition.PCA(n_components=n_components, svd_solver='lobpcg',
+     decomposition.PCA(n_components=n_components, svd_solver='randomized',
                        whiten=True),
      True),
 
