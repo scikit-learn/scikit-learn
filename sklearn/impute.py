@@ -658,7 +658,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                                                loc=mus[good_sigmas],
                                                scale=sigmas[good_sigmas])
             imputed_values[good_sigmas] = truncated_normal.rvs(
-                                               random_state=self.random_state_)
+                random_state=self.random_state_)
         else:
             imputed_values = predictor.predict(X_test)
             imputed_values = np.clip(imputed_values,

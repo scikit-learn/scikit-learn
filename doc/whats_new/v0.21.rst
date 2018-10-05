@@ -49,7 +49,7 @@ Support for Python 3.4 and below has been officially dropped.
   :user:`Sergey Feldman <sergeyf>`.
 
 - |Enhancement| :class:`impute.IterativeImputer` now samples from a truncated normal
-  distrubtion instead of a clipped normal distribution when ``sample_posterior=True``.
+  distribution instead of a clipped normal distribution when ``sample_posterior=True``.
   :issue:`12177` by :user:`Ben Lawson <benlawson>`.
 
 Multiple modules

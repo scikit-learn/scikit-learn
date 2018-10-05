@@ -592,7 +592,7 @@ def test_iterative_imputer_clip():
     assert_allclose(Xt[X != 0], X[X != 0])
 
 
-def test_iterative_imputer_normal_posterior():
+def test_iterative_imputer_truncated_normal_posterior():
     #  test that the values that are imputed using `sample_posterior=True`
     #  with boundaries (`min_value` and `max_value` are not None) are drawn
     #  from a distribution that looks gaussian via the Kolmogorov Smirnov test
@@ -616,6 +616,8 @@ def test_iterative_imputer_normal_posterior():
     # null hypothesis: distributions are the same
     assert ks_statistic < 0.15 or p_value > 0.1, \
         "The posterior does appear to be normal"
+    assert all(imputations >= 0)
+    assert all(imputations <= 0.5)
 
 
 @pytest.mark.parametrize(
