@@ -395,7 +395,8 @@ class MDS(BaseEstimator):
     """
     def __init__(self, n_components=2, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=None,
-                 random_state=None, dissimilarity="euclidean"):
+                 random_state=None, dissimilarity="euclidean",
+                 normalize=False):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
         self.metric = metric
@@ -405,10 +406,11 @@ class MDS(BaseEstimator):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.random_state = random_state
+        self.normalize = normalize
 
     @property
     def _pairwise(self):
-        return self.kernel == "precomputed"
+        return self.dissimilarity == "precomputed"
 
     def fit(self, X, y=None, init=None):
         """
@@ -467,6 +469,6 @@ class MDS(BaseEstimator):
             n_components=self.n_components, init=init, n_init=self.n_init,
             n_jobs=self.n_jobs, max_iter=self.max_iter, verbose=self.verbose,
             eps=self.eps, random_state=self.random_state,
-            return_n_iter=True)
+            return_n_iter=True, normalize=self.normalize)
 
         return self.embedding_
