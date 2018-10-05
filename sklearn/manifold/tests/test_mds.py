@@ -70,9 +70,9 @@ def test_normed_stress():
     # Calculate normed stress for matrix
     # and its multiplied copy
     k = 2
-    X1, stress1 = mds.smacof(sim, normalize=True)
-    X2, stress2 = mds.smacof(k * sim, normalize=True)
+    stress1 = mds.smacof(sim, normalize=True)[1]
+    stress2 = mds.smacof(k * sim, normalize=True)[1]
 
     # Normed stress should be the same for
     # values multiplied by some factor "k"
-    assert_allclose(stress1, stress2, decimal=2)
+    assert_allclose(stress1, stress2)
