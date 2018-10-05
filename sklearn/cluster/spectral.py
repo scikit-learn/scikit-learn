@@ -286,8 +286,8 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     if assign_labels not in ('kmeans', 'discretize', 'clusterQR'):
         raise ValueError(
             "The 'assign_labels' parameter should be "
-            "'kmeans', 'discretize', or  'clusterQR' but '%s' was given" %
-            assign_labels)
+            "'kmeans', 'discretize', or  'clusterQR' but '%s' was given"
+            % assign_labels)
 
     random_state = check_random_state(random_state)
     n_components = n_clusters if n_components is None else n_components
