@@ -37,7 +37,7 @@ Changelog
 :mod:`sklearn.datasets`
 ............................
 
-- |Fix| :func:`dataset.fetch_openml` to correctly use the local cache.
+- |Fix| :func:`datasets.fetch_openml` to correctly use the local cache.
   :issue:`12246` by :user:`Jan N. van Rijn <janvanrijn>`.
 
 - |Fix| Fixed integer overflow in :func:`datasets.make_classification`
