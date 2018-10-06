@@ -15,7 +15,7 @@ There are two options to assign labels:
 * with 'kmeans' spectral clustering will cluster samples in the embedding space
   using a kmeans algorithm
 * with 'clusterQR' will cluster samples in the embedding space
-  using a clusterQR algorithm,
+  using a clusterQR algorithm
 * whereas 'discrete' will iteratively search for the closest partition
   space to the embedding space.
 """
@@ -57,18 +57,19 @@ beta = 10
 eps = 1e-6
 graph.data = np.exp(-beta * graph.data / graph.data.std()) + eps
 
-# the actual number of regions in this example is 27: background and 26 coins
+# The actual number of regions in this example is 27: background and 26 coins
 N_REGIONS = 26
 
 #############################################################################
-# compute and visualize the resulting regions
+# Compute and visualize the resulting regions
 
-# if often helps the spectral clustering to compute a few extra eigenvectors
+# It often helps the spectral clustering to compute a few extra eigenvectors
 N_REGIONS_PLUS = 3
 
 for assign_labels in ('kmeans', 'discretize', 'clusterQR'):
     t0 = time.time()
-    labels = spectral_clustering(graph, n_clusters=N_REGIONS+N_REGIONS_PLUS,
+    labels = spectral_clustering(graph,
+                                 n_clusters=(N_REGIONS + N_REGIONS_PLUS),
                                  assign_labels=assign_labels, random_state=42)
     t1 = time.time()
     labels = labels.reshape(rescaled_coins.shape)

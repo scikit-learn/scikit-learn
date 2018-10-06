@@ -210,7 +210,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     Read more in the :ref:`User Guide <spectral_clustering>`.
 
     Parameters
-    -----------
+    ----------
     affinity : array-like or sparse matrix, shape: (n_samples, n_samples)
         The affinity matrix describing the relationship of the samples to
         embed. **Must be symmetric**.
