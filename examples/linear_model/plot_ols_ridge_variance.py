@@ -63,7 +63,7 @@ for name, clf in classifiers.items():
     plt.xlabel('X')
     plt.ylabel('y')
     plt.xlim(0, 2)
+    plt.tight_layout()
     fignum += 1
 
-plt.tight_layout()
 plt.show()
