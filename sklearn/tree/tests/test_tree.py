@@ -1234,7 +1234,7 @@ def test_max_leaf_nodes_max_depth():
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
         tree = est.tree_
-        assert_greater(tree.max_depth, 1)
+        assert_equal(tree.max_depth, 1)
 
 
 def test_arrays_persist():
