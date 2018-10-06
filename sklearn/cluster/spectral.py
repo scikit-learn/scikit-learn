@@ -42,7 +42,8 @@ def clusterQR(vectors):
 
     Notes
     -----
-    T.conj() allows the vectors to be complex-valued, just in case for future use
+    T.conj() allows the vectors to be complex-valued, 
+    just in case for future use
 
     """
 
