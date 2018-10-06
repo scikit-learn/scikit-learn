@@ -42,7 +42,6 @@ lb = LabelBinarizer()
 y_train_missing_dummies = lb.fit_transform(y_train_missing_labels)
 
 
-
 def test_classification():
     # Check classification for various parameter settings.
     # Also assert that predictions for strings and numerical labels are equal.
