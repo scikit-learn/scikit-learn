@@ -10,7 +10,7 @@ partly-homogeneous regions.
 This procedure (spectral clustering on an image) is an efficient
 approximate solution for finding normalized graph cuts.
 
-There are two options to assign labels:
+There are three options to assign labels:
 
 * with 'kmeans' spectral clustering will cluster samples in the embedding space
   using a kmeans algorithm
@@ -18,6 +18,7 @@ There are two options to assign labels:
   using a clusterQR algorithm
 * whereas 'discrete' will iteratively search for the closest partition
   space to the embedding space.
+
 """
 print(__doc__)
 
