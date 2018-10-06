@@ -207,7 +207,7 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     .. [Hubert1985] `L. Hubert and P. Arabie, Comparing Partitions,
       Journal of Classification 1985`
-      http://link.springer.com/article/10.1007%2FBF01908075
+      https://link.springer.com/article/10.1007%2FBF01908075
 
     .. [wk] https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
 
@@ -350,7 +350,7 @@ def homogeneity_score(labels_true, labels_pred):
 
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
-       <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
+       <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
     See also
     --------
@@ -424,7 +424,7 @@ def completeness_score(labels_true, labels_pred):
 
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
-       <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
+       <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
     See also
     --------
@@ -500,7 +500,7 @@ def v_measure_score(labels_true, labels_pred):
 
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
-       <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
+       <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
     See also
     --------

@@ -89,7 +89,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
-      http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+      https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
 
     Notes
     -----
@@ -273,7 +273,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
 
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
-      http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+      https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
 
     Notes
     ------
@@ -461,7 +461,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
-      http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+      https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
     """
 
     def __init__(self, n_clusters=8, eigen_solver=None, random_state=None,
