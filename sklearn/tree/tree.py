@@ -109,10 +109,15 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.presort = presort
 
     def get_max_depth(self):
+        """Returns the depth of the decision tree, i.e. the maximum
+        depth of its leaves.
+        """
         check_is_fitted(self, 'tree_')
         return self.tree_.max_depth
 
     def get_n_leaves(self):
+        """Returns the number of leaves of the decision tree.
+        """
         check_is_fitted(self, 'tree_')
         return self.tree_.n_leaves
 
