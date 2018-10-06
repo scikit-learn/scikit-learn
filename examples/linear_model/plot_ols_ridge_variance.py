@@ -65,4 +65,5 @@ for name, clf in classifiers.items():
     plt.xlim(0, 2)
     fignum += 1
 
+plt.tight_layout()
 plt.show()
