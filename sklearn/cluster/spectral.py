@@ -380,7 +380,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack eigen_solver.
 
-    assign_labels : {'kmeans', 'discretize'}, default: 'kmeans'
+    assign_labels : {'kmeans', 'discretize', 'clusterQR'}, default: 'kmeans'
         The strategy to use to assign labels in the embedding
         space. There are two ways to assign labels after the laplacian
         embedding. k-means can be applied and is a popular choice. But it can
