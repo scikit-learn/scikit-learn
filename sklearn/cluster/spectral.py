@@ -4,10 +4,13 @@
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
 #         Brian Cheung
 #         Wei LI <kuantkid@gmail.com>
+# Modified by Andrew Knyazev to add clusterQR
 # License: BSD 3 clause
 import warnings
 
 import numpy as np
+
+from scipy.linalg import qr, svd
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
@@ -16,6 +19,40 @@ from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph
 from ..manifold import spectral_embedding
 from .k_means_ import k_means
+
+
+def clusterQR(vectors):
+    """Search for a partition matrix (clustering) which is
+    closest to the eigenvector embedding.
+
+    Parameters
+    ----------
+    vectors : array-like, shape: (n_samples, n_clusters)
+        The embedding space of the samples.
+
+    Returns
+    -------
+    labels : array of integers, shape: n_samples
+        The labels of the clusters.
+
+    References
+    ----------
+    https://github.com/asdamle/QR-spectral-clustering
+    https://arxiv.org/abs/1708.07481
+
+    Notes
+    -----
+    T.conj() allows the vectors to be complex-valued, just in case for future use
+
+    """
+
+    k = vectors.shape[1]
+    piv = qr(vectors.T.conj(), pivoting=True)[2]
+    piv = piv[0:k]
+    Ut, Vt = svd(vectors[piv, :].T.conj())[0],\
+        svd(vectors[piv, :].T.conj())[2].T.conj()
+    vectors = abs(np.dot(vectors, np.dot(Ut, Vt.T.conj())))
+    return (vectors.argmax(axis=1)).T
 
 
 def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
@@ -42,7 +79,6 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
         Determines random number generation for rotation matrix initialization.
         Use an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
-
     Returns
     -------
     labels : array of integers, shape: n_samples
@@ -210,7 +246,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack eigen_solver.
 
-    assign_labels : {'kmeans', 'discretize'}, default: 'kmeans'
+    assign_labels : {'kmeans', 'discretize', 'clusterQR'}, default: 'kmeans'
         The strategy to use to assign labels in the embedding
         space.  There are two ways to assign labels after the laplacian
         embedding.  k-means can be applied and is a popular choice. But it can
@@ -247,10 +283,11 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     This algorithm solves the normalized cut for k=2: it is a
     normalized spectral clustering.
     """
-    if assign_labels not in ('kmeans', 'discretize'):
-        raise ValueError("The 'assign_labels' parameter should be "
-                         "'kmeans' or 'discretize', but '%s' was given"
-                         % assign_labels)
+    if assign_labels not in ('kmeans', 'discretize', 'clusterQR'):
+        raise ValueError(
+            "The 'assign_labels' parameter should be "
+            "'kmeans', 'discretize', or  'clusterQR' but '%s' was given"
+            % assign_labels)
 
     random_state = check_random_state(random_state)
     n_components = n_clusters if n_components is None else n_components
@@ -266,6 +303,8 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     if assign_labels == 'kmeans':
         _, labels, _ = k_means(maps, n_clusters, random_state=random_state,
                                n_init=n_init)
+    elif assign_labels == 'clusterQR':
+        labels = clusterQR(maps)
     else:
         labels = discretize(maps, random_state=random_state)
 
