@@ -524,7 +524,7 @@ cdef class Tree:
         great as `node_count`.
 
     max_depth : int
-        The maximal depth of the tree.
+        The depth of the tree, i.e. the maximum depth of its leaves.
 
     children_left : array of int, shape [node_count]
         children_left[i] holds the node id of the left child of node i.
