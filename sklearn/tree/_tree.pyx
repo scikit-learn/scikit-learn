@@ -450,7 +450,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             impurity = splitter.node_impurity()
 
         n_node_samples = end - start
-        is_leaf = (depth > self.max_depth or
+        is_leaf = (depth >= self.max_depth or
                    n_node_samples < self.min_samples_split or
                    n_node_samples < 2 * self.min_samples_leaf or
                    weighted_n_node_samples < 2 * self.min_weight_leaf or
