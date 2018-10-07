@@ -208,6 +208,7 @@ def test_project_and_cluster():
 
 
 def test_perfect_checkerboard():
+    # XXX test always skipped
     raise SkipTest("This test is failing on the buildbot, but cannot"
                    " reproduce. Temporarily disabling it until it can be"
                    " reproduced and  fixed.")

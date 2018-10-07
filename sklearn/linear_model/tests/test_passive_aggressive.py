@@ -2,6 +2,8 @@ from sklearn.utils.testing import assert_true
 import numpy as np
 import scipy.sparse as sp
 
+import pytest
+
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal, assert_array_equal
@@ -111,23 +113,22 @@ def test_classifier_refit():
     assert_array_equal(clf.classes_, iris.target_names)
 
 
-def test_classifier_correctness():
+@pytest.mark.parametrize('loss', ("hinge", "squared_hinge"))
+def test_classifier_correctness(loss):
     y_bin = y.copy()
     y_bin[y != 1] = -1
 
-    for loss in ("hinge", "squared_hinge"):
+    clf1 = MyPassiveAggressive(
+        C=1.0, loss=loss, fit_intercept=True, n_iter=2)
+    clf1.fit(X, y_bin)
 
-        clf1 = MyPassiveAggressive(
-            C=1.0, loss=loss, fit_intercept=True, n_iter=2)
-        clf1.fit(X, y_bin)
+    for data in (X, X_csr):
+        clf2 = PassiveAggressiveClassifier(
+            C=1.0, loss=loss, fit_intercept=True, max_iter=2,
+            shuffle=False, tol=None)
+        clf2.fit(data, y_bin)
 
-        for data in (X, X_csr):
-            clf2 = PassiveAggressiveClassifier(
-                C=1.0, loss=loss, fit_intercept=True, max_iter=2,
-                shuffle=False, tol=None)
-            clf2.fit(data, y_bin)
-
-            assert_array_almost_equal(clf1.w, clf2.coef_.ravel(), decimal=2)
+        assert_array_almost_equal(clf1.w, clf2.coef_.ravel(), decimal=2)
 
 
 def test_classifier_undefined_methods():
@@ -248,22 +249,24 @@ def test_regressor_partial_fit():
                 assert_true(hasattr(reg, 'standard_coef_'))
 
 
-def test_regressor_correctness():
+@pytest.mark.parametrize(
+        'loss',
+        ("epsilon_insensitive", "squared_epsilon_insensitive"))
+def test_regressor_correctness(loss):
     y_bin = y.copy()
     y_bin[y != 1] = -1
 
-    for loss in ("epsilon_insensitive", "squared_epsilon_insensitive"):
-        reg1 = MyPassiveAggressive(
-            C=1.0, loss=loss, fit_intercept=True, n_iter=2)
-        reg1.fit(X, y_bin)
+    reg1 = MyPassiveAggressive(
+        C=1.0, loss=loss, fit_intercept=True, n_iter=2)
+    reg1.fit(X, y_bin)
 
-        for data in (X, X_csr):
-            reg2 = PassiveAggressiveRegressor(
-                C=1.0, tol=None, loss=loss, fit_intercept=True, max_iter=2,
-                shuffle=False)
-            reg2.fit(data, y_bin)
+    for data in (X, X_csr):
+        reg2 = PassiveAggressiveRegressor(
+            C=1.0, tol=None, loss=loss, fit_intercept=True, max_iter=2,
+            shuffle=False)
+        reg2.fit(data, y_bin)
 
-            assert_array_almost_equal(reg1.w, reg2.coef_.ravel(), decimal=2)
+        assert_array_almost_equal(reg1.w, reg2.coef_.ravel(), decimal=2)
 
 
 def test_regressor_undefined_methods():

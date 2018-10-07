@@ -11,11 +11,11 @@ import array
 import numpy as np
 from scipy import linalg
 import scipy.sparse as sp
-from collections import Iterable
 
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
+from ..utils.fixes import _Iterable as Iterable
 from ..utils.random import sample_without_replacement
 from ..externals import six
 map = six.moves.map
@@ -160,7 +160,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         raise ValueError("Number of informative, redundant and repeated "
                          "features must sum to less than the number of total"
                          " features")
-    if 2 ** n_informative < n_classes * n_clusters_per_class:
+    # Use log2 to avoid overflow errors
+    if n_informative < np.log2(n_classes * n_clusters_per_class):
         raise ValueError("n_classes * n_clusters_per_class must"
                          " be smaller or equal 2 ** n_informative")
     if weights and len(weights) not in [n_classes, n_classes - 1]:
@@ -705,7 +706,7 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
     Parameters
     ----------
     n_samples : int or array-like, optional (default=100)
-        If int, it is the the total number of points equally divided among
+        If int, it is the total number of points equally divided among
         clusters.
         If array-like, each element of the sequence indicates
         the number of samples per cluster.
@@ -807,7 +808,7 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
                          "and cluster_std = {}".format(centers, cluster_std))
 
     if isinstance(cluster_std, numbers.Real):
-        cluster_std = np.ones(len(centers)) * cluster_std
+        cluster_std = np.full(len(centers), cluster_std)
 
     X = []
     y = []

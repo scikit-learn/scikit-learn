@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 from __future__ import division
-
 import pytest
 import numpy as np
 from scipy import sparse
@@ -230,7 +229,8 @@ def test_get_binary_score():
         _get_binary_score(rf_non_bin, X_non_binary)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_calibration():
     """Test calibration objects with isotonic and sigmoid"""
     n_samples = 100
@@ -306,6 +306,7 @@ def test_calibration():
         assert_raises(RuntimeError, clf_base_regressor.fit, X_train, y_train)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_sample_weight():
     n_samples = 100
     X, y = make_classification(n_samples=2 * n_samples, n_features=6,

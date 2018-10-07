@@ -211,6 +211,9 @@ def load_data(module_path, data_file_name):
 
     Parameters
     ----------
+    module_path : string
+        The module path.
+
     data_file_name : string
         Name of csv file to be loaded from
         module_path/data/data_file_name. For example 'wine_data.csv'.
@@ -261,7 +264,7 @@ def load_wine(return_X_y=False):
     Features            real, positive
     =================   ==============
 
-    Read more in the :ref:`User Guide <datasets>`.
+    Read more in the :ref:`User Guide <wine_dataset>`.
 
     Parameters
     ----------
@@ -336,7 +339,7 @@ def load_iris(return_X_y=False):
     Features            real, positive
     =================   ==============
 
-    Read more in the :ref:`User Guide <datasets>`.
+    Read more in the :ref:`User Guide <iris_dataset>`.
 
     Parameters
     ----------
@@ -359,6 +362,13 @@ def load_iris(return_X_y=False):
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
+
+    Notes
+    -----
+        .. versionchanged:: 0.20
+            Fixed two wrong data points according to Fisher's paper.
+            The new version is the same as in R, but not as in the UCI
+            Machine Learning Repository.
 
     Examples
     --------
@@ -403,6 +413,8 @@ def load_breast_cancer(return_X_y=False):
     Dimensionality                  30
     Features            real, positive
     =================   ==============
+
+    Read more in the :ref:`User Guide <breast_cancer_dataset>`.
 
     Parameters
     ----------
@@ -488,7 +500,7 @@ def load_digits(n_class=10, return_X_y=False):
     Features             integers 0-16
     =================   ==============
 
-    Read more in the :ref:`User Guide <datasets>`.
+    Read more in the :ref:`User Guide <digits_dataset>`.
 
     Parameters
     ----------
@@ -515,7 +527,7 @@ def load_digits(n_class=10, return_X_y=False):
         .. versionadded:: 0.18
 
     This is a copy of the test set of the UCI ML hand-written digits datasets
-    http://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
+    https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
 
     Examples
     --------
@@ -565,7 +577,7 @@ def load_diabetes(return_X_y=False):
     Targets             integer 25 - 346
     ==============      ==================
 
-    Read more in the :ref:`User Guide <datasets>`.
+    Read more in the :ref:`User Guide <diabetes_dataset>`.
 
     Parameters
     ----------
@@ -617,6 +629,8 @@ def load_linnerud(return_X_y=False):
     Features          integer
     Targets           integer
     ==============    ============================
+
+    Read more in the :ref:`User Guide <linnerrud_dataset>`.
 
     Parameters
     ----------
@@ -680,6 +694,8 @@ def load_boston(return_X_y=False):
     Targets             real 5. - 50.
     ==============     ==============
 
+    Read more in the :ref:`User Guide <boston_dataset>`.
+
     Parameters
     ----------
     return_X_y : boolean, default=False.
@@ -701,6 +717,8 @@ def load_boston(return_X_y=False):
 
         .. versionadded:: 0.18
 
+    Notes
+    -----
         .. versionchanged:: 0.20
             Fixed a wrong data point at [445, 0].
 
@@ -748,6 +766,8 @@ def load_sample_images():
 
     Loads both, ``china`` and ``flower``.
 
+    Read more in the :ref:`User Guide <sample_images>`.
+
     Returns
     -------
     data : Bunch
@@ -788,6 +808,8 @@ def load_sample_images():
 
 def load_sample_image(image_name):
     """Load the numpy array of a single sample image
+
+    Read more in the :ref:`User Guide <sample_images>`.
 
     Parameters
     -----------

@@ -3,13 +3,17 @@
 Plot classification probability
 ===============================
 
-Plot the classification probability for different classifiers. We use a 3
-class dataset, and we classify it with a Support Vector classifier, L1
-and L2 penalized logistic regression with either a One-Vs-Rest or multinomial
-setting, and Gaussian process classification.
+Plot the classification probability for different classifiers. We use a 3 class
+dataset, and we classify it with a Support Vector classifier, L1 and L2
+penalized logistic regression with either a One-Vs-Rest or multinomial setting,
+and Gaussian process classification.
 
-The logistic regression is not a multiclass classifier out of the box. As
-a result it can identify only the first class.
+Linear SVC is not a probabilistic classifier by default but it has a built-in
+calibration option enabled in this example (`probability=True`).
+
+The logistic regression with One-Vs-Rest is not a multiclass classifier out of
+the box. As a result it has more trouble in separating class 2 and 3 than the
+other estimators.
 """
 print(__doc__)
 
@@ -19,6 +23,7 @@ print(__doc__)
 import matplotlib.pyplot as plt
 import numpy as np
 
+from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.gaussian_process import GaussianProcessClassifier
@@ -31,19 +36,27 @@ y = iris.target
 
 n_features = X.shape[1]
 
-C = 1.0
+C = 10
 kernel = 1.0 * RBF([1.0, 1.0])  # for GPC
 
-# Create different classifiers. The logistic regression cannot do
-# multiclass out of the box.
-classifiers = {'L1 logistic': LogisticRegression(C=C, penalty='l1'),
-               'L2 logistic (OvR)': LogisticRegression(C=C, penalty='l2'),
-               'Linear SVC': SVC(kernel='linear', C=C, probability=True,
-                                 random_state=0),
-               'L2 logistic (Multinomial)': LogisticRegression(
-                C=C, solver='lbfgs', multi_class='multinomial'),
-               'GPC': GaussianProcessClassifier(kernel)
-               }
+# Create different classifiers.
+classifiers = {
+    'L1 logistic': LogisticRegression(C=C, penalty='l1',
+                                      solver='saga',
+                                      multi_class='multinomial',
+                                      max_iter=10000),
+    'L2 logistic (Multinomial)': LogisticRegression(C=C, penalty='l2',
+                                                    solver='saga',
+                                                    multi_class='multinomial',
+                                                    max_iter=10000),
+    'L2 logistic (OvR)': LogisticRegression(C=C, penalty='l2',
+                                            solver='saga',
+                                            multi_class='ovr',
+                                            max_iter=10000),
+    'Linear SVC': SVC(kernel='linear', C=C, probability=True,
+                      random_state=0),
+    'GPC': GaussianProcessClassifier(kernel)
+}
 
 n_classifiers = len(classifiers)
 
@@ -59,10 +72,10 @@ for index, (name, classifier) in enumerate(classifiers.items()):
     classifier.fit(X, y)
 
     y_pred = classifier.predict(X)
-    classif_rate = np.mean(y_pred.ravel() == y.ravel()) * 100
-    print("classif_rate for %s : %f " % (name, classif_rate))
+    accuracy = accuracy_score(y, y_pred)
+    print("Accuracy (train) for %s: %0.1f%% " % (name, accuracy * 100))
 
-    # View probabilities=
+    # View probabilities:
     probas = classifier.predict_proba(Xfull)
     n_classes = np.unique(y_pred).size
     for k in range(n_classes):
@@ -76,7 +89,7 @@ for index, (name, classifier) in enumerate(classifiers.items()):
         plt.yticks(())
         idx = (y_pred == k)
         if idx.any():
-            plt.scatter(X[idx, 0], X[idx, 1], marker='o', c='k')
+            plt.scatter(X[idx, 0], X[idx, 1], marker='o', c='w', edgecolor='k')
 
 ax = plt.axes([0.15, 0.04, 0.7, 0.05])
 plt.title("Probability")
