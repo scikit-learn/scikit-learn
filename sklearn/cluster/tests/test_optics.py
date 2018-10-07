@@ -88,15 +88,25 @@ def test_empty_extract():
 
 def test_bad_extract():
     # Test an extraction of eps too close to original eps
-    msg = "Specify an epsilon smaller than 0.015. Got 0.3."
+    msg = "Specify an epsilon smaller than 0.15. Got 0.3."
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(n_samples=750, centers=centers,
                                 cluster_std=0.4, random_state=0)
 
     # Compute OPTICS
-    clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10)
+    clust = OPTICS(max_eps=5.0 * 0.03, min_samples=10)
     clust2 = clust.fit(X)
     assert_raise_message(ValueError, msg, clust2.extract_dbscan, 0.3)
+
+
+def test_bad_reachability():
+    msg = "All reachability values are inf. Set a larger max_eps."
+    centers = [[1, 1], [-1, -1], [1, -1]]
+    X, labels_true = make_blobs(n_samples=750, centers=centers,
+                                cluster_std=0.4, random_state=0)
+
+    clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10)
+    assert_raise_message(ValueError, msg, clust.fit, X)
 
 
 def test_close_extract():

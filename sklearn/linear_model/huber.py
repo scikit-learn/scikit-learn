@@ -220,7 +220,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     .. [1] Peter J. Huber, Elvezio M. Ronchetti, Robust Statistics
            Concomitant scale estimates, pg 172
     .. [2] Art B. Owen (2006), A robust hybrid of lasso and ridge regression.
-           http://statweb.stanford.edu/~owen/reports/hhu.pdf
+           https://statweb.stanford.edu/~owen/reports/hhu.pdf
     """
 
     def __init__(self, epsilon=1.35, max_iter=100, alpha=0.0001,
