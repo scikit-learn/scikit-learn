@@ -43,14 +43,11 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.impute`
 .....................
 
-- |MajorFeature| Added :class:`impute.IterativeImputer`, which is a strategy for
-  imputing missing values by modeling each feature with missing values as a
-  function of other features in a round-robin fashion. :issue:`8478` by
-  :user:`Sergey Feldman <sergeyf>`.
-
-- |Enhancement| :class:`impute.IterativeImputer` now samples from a truncated normal
-  distribution instead of a clipped normal distribution when ``sample_posterior=True``.
-  :issue:`12177` by :user:`Ben Lawson <benlawson>`.
+- |MajorFeature| Added :class:`impute.IterativeImputer`, which is a strategy
+  for imputing missing values by modeling each feature with missing values as a
+  function of other features in a round-robin fashion. :issue:`8478` and
+  :issue:`12177` by :user:`Sergey Feldman <sergeyf>` :user:`Ben Lawson
+  <benlawson>`.
 
 :mod:`sklearn.cluster`
 ......................
