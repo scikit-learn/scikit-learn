@@ -2489,7 +2489,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     or other situations where normality is desired.
 
     Currently, PowerTransformer supports the Box-Cox transform and the
-    Yeo-Johson transform. The optimal parameter for stabilizing variance and
+    Yeo-Johnson transform. The optimal parameter for stabilizing variance and
     minimizing skewness is estimated through maximum likelihood.
 
     Box-Cox requires input data to be strictly positive, while Yeo-Johnson
@@ -2851,8 +2851,8 @@ def power_transform(X, method='yeo-johnson', standardize=True, copy=True):
     modeling issues related to heteroscedasticity (non-constant variance),
     or other situations where normality is desired.
 
-    Currently, PowerTransformer supports the Box-Cox transform and the
-    Yeo-Johson transform. The optimal parameter for stabilizing variance and
+    Currently, power_transform supports the Box-Cox transform and the
+    Yeo-Johnson transform. The optimal parameter for stabilizing variance and
     minimizing skewness is estimated through maximum likelihood.
 
     Box-Cox requires input data to be strictly positive, while Yeo-Johnson
@@ -2897,7 +2897,7 @@ def power_transform(X, method='yeo-johnson', standardize=True, copy=True):
         ``Transformer`` API (e.g. as part of a preprocessing
         :class:`sklearn.pipeline.Pipeline`).
 
-    QuantileTransformer : Maps data to a standard normal distribution with
+    quantile_transform : Maps data to a standard normal distribution with
         the parameter `output_distribution='normal'`.
 
     Notes
