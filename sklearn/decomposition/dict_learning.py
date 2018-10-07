@@ -1129,7 +1129,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     **References:**
 
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
-    for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
+    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
 
     See also
     --------
@@ -1317,7 +1317,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     **References:**
 
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
-    for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
+    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
 
     See also
     --------
