@@ -1198,8 +1198,8 @@ greater than a certain threshold.
 Quantile Regression
 ===================
 
-Quantile regression estimates median or other quantiles of :math:`y` conditional on :math:`X`,
-    while OLS estimates conditional mean.
+Quantile regression estimates median or other quantiles of :math:`y` conditional on :math:`X`, while OLS estimates
+conditional mean.
 
 The :class:`QuantileRegressor` applies linear loss to all samples. It is thus more radical than
 :class:`HuberRegressor`, that applies linear penalty to small fraction of outliers and quadratic loss
@@ -1236,8 +1236,10 @@ Another possible advantage of quantile regression over OLS is its robustness
 to outliers, because it is only sign of an error that influences estimated
 coefficients, not its absolute value.
 
-Quantile loss function can be used with models other than linear.
-:class:`GradientBoostingRegressor` also has an option to predict conditional quantiles.
+Quantile loss function can be used with models other than linear. For example,
+:class:`GradientBoostingRegressor` can predict conditional quantiles, if its parameter ``loss`` is set to ``"quantile"``
+and parameter ``alpha`` is set to the quantile that should be predicted. See the example in
+:ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
 
 Most implementations of quantile regression are based on linear programming problem.
 Use of L2 regularization makes the problem nonlinear, but use of non-differentiable absolute values

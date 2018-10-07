@@ -2,8 +2,7 @@
 # License: BSD 3 clause
 
 import numpy as np
-from sklearn.utils.testing import assert_almost_equal, \
-    assert_raises, assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose, assert_raises
 from sklearn.datasets import make_regression
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
 from sklearn.model_selection import cross_val_score
@@ -17,35 +16,35 @@ def test_quantile_toy_example():
     y = [1, 2, 11]
     # for 50% quantile w/o regularization, any slope in [1, 10] is okay
     model = QuantileRegressor(quantile=0.5, alpha=0).fit(X, y)
-    assert_almost_equal(model.intercept_, 1, 2)
+    assert_allclose(model.intercept_, 1, atol=1e-2)
     assert model.coef_[0] >= 1
     assert model.coef_[0] <= 10
 
     # if positive error costs more, the slope is maximal
     model = QuantileRegressor(quantile=0.51, alpha=0).fit(X, y)
-    assert_almost_equal(model.intercept_, 1, 2)
-    assert_almost_equal(model.coef_[0], 10, 2)
+    assert_allclose(model.intercept_, 1, atol=1e-2)
+    assert_allclose(model.coef_[0], 10, atol=1e-2)
 
     # if negative error costs more, the slope is minimal
     model = QuantileRegressor(quantile=0.49, alpha=0).fit(X, y)
-    assert_almost_equal(model.intercept_, 1, 2)
-    assert_almost_equal(model.coef_[0], 1, 2)
+    assert_allclose(model.intercept_, 1, atol=1e-2)
+    assert_allclose(model.coef_[0], 1, atol=1e-2)
 
     # for a small ridge penalty, the slope is also minimal
     model = QuantileRegressor(quantile=0.5, alpha=0.01).fit(X, y)
-    assert_almost_equal(model.intercept_, 1, 2)
-    assert_almost_equal(model.coef_[0], 1, 2)
+    assert_allclose(model.intercept_, 1, atol=1e-2)
+    assert_allclose(model.coef_[0], 1, atol=1e-2)
 
     # for a small lasso penalty, the slope is also minimal
     model = QuantileRegressor(quantile=0.5, alpha=0.01, l1_ratio=1).fit(X, y)
-    assert_almost_equal(model.intercept_, 1, 2)
-    assert_almost_equal(model.coef_[0], 1, 2)
+    assert_allclose(model.intercept_, 1, atol=1e-2)
+    assert_allclose(model.coef_[0], 1, atol=1e-2)
 
     # for a large ridge penalty, the model no longer minimizes MAE
     # (1.75, 0.25) minimizes c^2 + 0.5 (abs(1-b) + abs(2-b-c) + abs(11-b-c))
     model = QuantileRegressor(quantile=0.5, alpha=1).fit(X, y)
-    assert_almost_equal(model.intercept_, 1.75, 2)
-    assert_almost_equal(model.coef_[0], 0.25, 2)
+    assert_allclose(model.intercept_, 1.75, atol=1e-2)
+    assert_allclose(model.coef_[0], 0.25, atol=1e-2)
 
 
 def test_quantile_equals_huber_for_low_epsilon():
@@ -53,8 +52,8 @@ def test_quantile_equals_huber_for_low_epsilon():
                            noise=1.0)
     huber = HuberRegressor(epsilon=1+1e-4, alpha=1e-4).fit(X, y)
     quant = QuantileRegressor(alpha=1e-4).fit(X, y)
-    assert_almost_equal(huber.intercept_, quant.intercept_, 1)
-    assert_almost_equal(huber.coef_, quant.coef_, 1)
+    assert_allclose(huber.intercept_, quant.intercept_, atol=1e-1)
+    assert_allclose(huber.coef_, quant.coef_, atol=1e-1)
 
 
 def test_quantile_estimates_fraction():
@@ -64,7 +63,7 @@ def test_quantile_estimates_fraction():
     for q in [0.5, 0.9, 0.05]:
         quant = QuantileRegressor(quantile=q, alpha=0).fit(X, y)
         fraction_below = np.mean(y < quant.predict(X))
-        assert_almost_equal(fraction_below, q, 2)
+        assert_allclose(fraction_below, q, atol=1e-2)
 
 
 def test_quantile_is_approximately_sparse():
@@ -74,7 +73,7 @@ def test_quantile_is_approximately_sparse():
                            random_state=0, noise=1.0)
     q = QuantileRegressor(l1_ratio=1, alpha=0.1).fit(X, y)
     share_zeros = np.mean(np.abs(q.coef_) > 1e-1)
-    assert_almost_equal(share_zeros, 0.1, 2)
+    assert_allclose(share_zeros, 0.1, atol=1e-2)
 
 
 def test_quantile_without_intercept():
@@ -84,11 +83,11 @@ def test_quantile_without_intercept():
     # check that result is similar to Huber
     huber = HuberRegressor(epsilon=1 + 1e-4, alpha=1e-4, fit_intercept=False
                            ).fit(X, y)
-    assert_almost_equal(huber.intercept_, quant.intercept_, 1)
-    assert_almost_equal(huber.coef_, quant.coef_, 1)
+    assert_allclose(huber.intercept_, quant.intercept_, atol=1e-1)
+    assert_allclose(huber.coef_, quant.coef_, atol=1e-1)
     # check that we still predict fraction
     fraction_below = np.mean(y < quant.predict(X))
-    assert_almost_equal(fraction_below, 0.5, 1)
+    assert_allclose(fraction_below, 0.5, atol=1e-1)
 
 
 def test_quantile_sample_weight():
@@ -106,7 +105,7 @@ def test_quantile_sample_weight():
     assert fraction_below > 0.5
     weighted_fraction_below = np.sum((y < quant.predict(X)) * weight) \
         / np.sum(weight)
-    assert_almost_equal(weighted_fraction_below, 0.5, 2)
+    assert_allclose(weighted_fraction_below, 0.5, atol=1e-2)
 
 
 def test_quantile_incorrect_quantile():
@@ -123,13 +122,14 @@ def test_normalize():
     # test that normalization works ok if features have different scales
     X, y = make_regression(n_samples=1000, n_features=20, random_state=0,
                            noise=10.0)
-    X += np.random.normal(size=X.shape[1], scale=3)
-    X *= np.random.normal(size=X.shape[1], scale=3)
+    rng = np.random.RandomState(0)
+    X += rng.normal(size=X.shape[1], scale=3)
+    X *= rng.normal(size=X.shape[1], scale=3)
     y = y * 10 + 100
     model1 = QuantileRegressor(alpha=1e-6, normalize=False, max_iter=10000)
     model2 = QuantileRegressor(alpha=1e-6, normalize=True, max_iter=10000)
-    cvs1 = cross_val_score(model1, X, y).mean()
-    cvs2 = cross_val_score(model2, X, y).mean()
+    cvs1 = cross_val_score(model1, X, y, cv=3).mean()
+    cvs2 = cross_val_score(model2, X, y, cv=3).mean()
     assert cvs1 > 0.99
     assert cvs2 > 0.99
 
@@ -147,7 +147,7 @@ def test_quantile_warm_start():
 
     # SciPy performs the tol check after doing the coef updates, so
     # these would be almost same but not necessarily equal.
-    assert_array_almost_equal(warm.coef_, warm_coef, 1)
+    assert_allclose(warm.coef_, warm_coef, atol=1e-1)
     # assert a smaller number of iterations than the first fit
     assert sum(warm.total_iter_) < warm_iter
 

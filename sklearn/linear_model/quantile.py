@@ -13,17 +13,15 @@ from ..utils.extmath import safe_sparse_dot
 
 
 def _smooth_quantile_loss_and_gradient(
-        w, X, y, quantile, alpha, l1_ratio, sample_weight, gamma=0):
+        w, X, y, quantile, alpha, l1_ratio, fit_intercept,
+        sample_weight, gamma=0):
     """ Smooth approximation to quantile regression loss, gradient and hessian.
     Main loss and l1 penalty are both approximated by the same trick
     from Chen & Wei, 2005
     """
     _, n_features = X.shape
-    fit_intercept = (n_features + 1 == w.shape[0])
     if fit_intercept:
         intercept = w[-1]
-    else:
-        intercept = 0  # regardless of len(w)
     w = w[:n_features]
 
     # Discriminate positive, negative and small residuals
@@ -43,9 +41,9 @@ def _smooth_quantile_loss_and_gradient(
     loss = np.sum(regression_loss)
 
     if fit_intercept:
-        grad = np.zeros(n_features + 1)
+        grad = np.empty(n_features + 1)
     else:
-        grad = np.zeros(n_features + 0)
+        grad = np.empty(n_features + 0)
 
     # Gradient due to the regression error
     weighted_grad = (positive_error * quantile +
@@ -77,16 +75,17 @@ def _smooth_quantile_loss_and_gradient(
 
 
 class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
-    """Linear regression model that is robust to outliers.
+    """Linear regression model that predicts conditional quantiles
+    and is robust to outliers.
 
     The Quantile Regressor optimizes the skewed absolute loss
-     ``(y - X'w) (q - [y - X'w < 0])``, where q is the desired quantile.
+    ``(y - X'w) (q - [y - X'w < 0])``, where q is the desired quantile.
 
     Optimization is performed as a sequence of smooth optimization problems.
 
     Read more in the :ref:`User Guide <quantile_regression>`
 
-    .. versionadded:: 0.20
+    .. versionadded:: 0.21
 
     Parameters
     ----------
@@ -119,13 +118,13 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Whether or not to fit the intercept. This can be set to False
         if the data is already centered around the origin.
 
-    copy_X : boolean, optional, default True
-        If True, X will be copied; else, it may be overwritten.
-
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
+
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
 
     gamma : float, default 1e-2
         Starting value for smooth approximation.
@@ -137,14 +136,6 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         until ``xtol`` criterion is met,
         or until ``max_iter`` is exceeded.
 
-    gamma_decrease: float, default 0.1
-        The factor by which ``gamma`` is multiplied at each iteration.
-
-    n_gamma_decreases: int, default 10
-        Maximal number of iterations of approximation of the cost function.
-        At each iteration, ``gamma`` is multiplied by a factor
-        of ``gamma_decrease``
-
     gtol : float, default 1e-4
         The smooth optimizing iteration will stop when
         ``max{|proj g_i | i = 1, ..., n}`` <= ``gtol``
@@ -153,6 +144,14 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     xtol : float, default 1e-6
         Global optimization will stop when ``|w_{t-1} - w_t|`` < ``xtol``
         where w_t is result of t'th approximated optimization.
+
+    gamma_decrease : float, default 0.1
+        The factor by which ``gamma`` is multiplied at each iteration.
+
+    n_gamma_decreases : int, default 10
+        Maximal number of iterations of approximation of the cost function.
+        At each iteration, ``gamma`` is multiplied by a factor
+        of ``gamma_decrease``
 
     Attributes
     ----------
@@ -246,7 +245,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         # with different smoothing parameter
         total_iter = []
         loss_args = (X, y, self.quantile, self.alpha, self.l1_ratio,
-                     sample_weight)
+                     self.fit_intercept, sample_weight)
         for i in range(self.n_gamma_decreases):
             gamma = self.gamma * self.gamma_decrease ** i
             result = optimize.minimize(
