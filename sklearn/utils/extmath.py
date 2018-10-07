@@ -9,6 +9,7 @@ Extended math utilities.
 #          Stefan van der Walt
 #          Kyle Kastner
 #          Giorgio Patrini
+#          Andrew Knyazev added lobpcg
 # License: BSD 3 clause
 
 from __future__ import division
@@ -23,6 +24,7 @@ from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
+from scipy.sparse.linalg import lobpcg
 
 
 def squared_norm(x):
@@ -213,7 +215,7 @@ def randomized_range_finder(A, size, n_iter,
 
     # Perform power iterations with Q to further 'imprint' the top
     # singular vectors of A in Q
-    for i in range(n_iter):
+    for _ in range(n_iter):
         if power_iteration_normalizer == 'none':
             Q = safe_sparse_dot(A, Q)
             Q = safe_sparse_dot(A.T, Q)
@@ -360,6 +362,134 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         return U[:, :n_components], s[:n_components], V[:n_components, :]
 
 
+def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
+               transpose='auto',
+               flip_sign=True, random_state=0):
+    """Computes a truncated SVD using LOBPCG mimicking the randomized SVD setup
+
+    Parameters
+    ----------
+    M : ndarray or sparse matrix
+        Matrix to decompose
+
+    n_components : int
+        Number of singular values and vectors to extract.
+
+    n_oversamples : int (default is 10)
+        Additional number of random vectors to sample the range of M so as
+        to ensure proper conditioning. The total number of random vectors
+        used to find the range of M is n_components + n_oversamples. Smaller
+        number can improve speed but can negatively impact the quality of
+        approximation of singular vectors and singular values.
+
+    n_iter : int or 'auto' (default is 'auto')
+        Number of power iterations. It can be used to deal with very noisy
+        problems. When 'auto', it is set to 4, unless `n_components` is small
+        (< .1 * min(X.shape)) `n_iter` in which case is set to 7.
+        This improves precision with few components.
+
+    transpose : True, False or 'auto' (default)
+        Whether the algorithm should be applied to M.T instead of M. The
+        result should approximately be the same. The 'auto' mode will
+        trigger the transposition if M.shape[1] > M.shape[0] since this
+        implementation of randomized SVD tend to be a little faster in that
+        case.
+
+    flip_sign : boolean, (True by default)
+        The output of a singular value decomposition is only unique up to a
+        permutation of the signs of the singular vectors. If `flip_sign` is
+        set to `True`, the sign ambiguity is resolved by making the largest
+        loadings for each component in the left singular vectors positive.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
+
+    Notes
+    -----
+    This algorithm finds a (usually very good) approximate truncated
+    singular value decomposition using LOBPCG with randomization to speed up
+    the computations. It is particularly fast on large matrices on which
+    you wish to extract only a small number of components. In order to
+    obtain further speed up, `n_iter` can be set <=2 (at the cost of
+    loss of precision). Compared to 'ranomised', the 'lobpcg' option gives
+    more accurate approximations, with the same n_iter, n_components, and
+    n_oversamples, at the slightly increased costs, allows setting
+    the tolerance, and can output the accuracy.
+
+    References
+    ----------
+    * https://en.wikipedia.org/wiki/LOBPCG
+
+    * https://www.mathworks.com/matlabcentral/fileexchange/48-lobpcg-m
+
+    * Toward the Optimal Preconditioned Eigensolver: Locally Optimal
+      Block Preconditioned Conjugate Gradient Method, Andrew V. Knyazev
+      https://doi.org/10.1137%2FS1064827500366124
+    """
+    if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
+        warnings.warn("Calculating SVD of a {} is expensive. "
+                      "csr_matrix is more efficient.".format(
+                          type(M).__name__),
+                      sparse.SparseEfficiencyWarning)
+
+    random_state = check_random_state(random_state)
+    n_random = n_components + n_oversamples
+    n_samples, n_features = M.shape
+
+    if n_iter == 'auto':
+        # Checks if the number of iterations is explicitly specified
+        # Adjust n_iter. 7 was found a good compromise for PCA. See #5299
+        n_iter = 7 if n_components < .1 * min(M.shape) else 4
+
+    if transpose == 'auto':
+        transpose = n_samples < n_features
+    if transpose:
+        # this implementation is a bit faster with smaller shape[1]
+        M = M.T
+
+    Q = random_state.normal(size=(M.shape[0], n_random))
+    if M.dtype.kind == 'f':
+        # Ensure f32 is preserved as f32
+        Q = Q.astype(M.dtype, copy=False)
+
+    A = - safe_sparse_dot(M, M.T)
+    # 1. LOBPCG default option largest=True is currently broken, so we
+    # go the smallest (negative) of the negative normal matrix A
+    # 2. In contrast to randomised, lobpcg allows setting up useful
+    # tol=lobpcg_tol but adding it below currently results in
+    # Docstring Error:
+    # sklearn.cluster.spectral.discretize arg mismatch.
+    _, Q = lobpcg(A, Q, maxiter=n_iter, largest=False)
+
+    # project M to the (k + p) dimensional space using the basis vectors
+    # project M to the (k + p) dimensional space using the basis vectors
+    B = safe_sparse_dot(Q.T, M)
+
+    # compute the SVD on the thin matrix: (k + p) wide
+    Uhat, s, V = linalg.svd(B, full_matrices=False)
+
+    del B
+    U = np.dot(Q, Uhat)
+
+    if flip_sign:
+        if not transpose:
+            U, V = svd_flip(U, V)
+        else:
+            # In case of transpose u_based_decision=false
+            # to actually flip based on u and not v.
+            U, V = svd_flip(U, V, u_based_decision=False)
+
+    if transpose:
+        # transpose back the results according to the input convention
+        return V[:n_components, :].T, s[:n_components], U[:, :n_components].T
+    else:
+        return U[:, :n_components], s[:n_components], V[:n_components, :]
+
+
 def weighted_mode(a, w, axis=0):
     """Returns an array of the weighted modal (most common) value in a
 
@@ -476,7 +606,7 @@ def cartesian(arrays, out=None):
     if out is None:
         out = np.empty_like(ix, dtype=dtype)
 
-    for n, arr in enumerate(arrays):
+    for n, _ in enumerate(arrays):
         out[:, n] = arrays[n][ix[:, n]]
 
     return out

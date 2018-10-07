@@ -26,16 +26,22 @@ Xdense = X.A
 def test_algorithms():
     svd_a = TruncatedSVD(30, algorithm="arpack")
     svd_r = TruncatedSVD(30, algorithm="randomized", random_state=42)
+    svd_l = TruncatedSVD(30, algorithm="lobpcg", random_state=42)
 
     Xa = svd_a.fit_transform(X)[:, :6]
     Xr = svd_r.fit_transform(X)[:, :6]
+    Xl = svd_l.fit_transform(X)[:, :6]
     assert_array_almost_equal(Xa, Xr, decimal=5)
+    assert_array_almost_equal(Xa, Xl, decimal=5)
 
     comp_a = np.abs(svd_a.components_)
     comp_r = np.abs(svd_r.components_)
+    comp_l = np.abs(svd_l.components_)
     # All elements are equal, but some elements are more equal than others.
     assert_array_almost_equal(comp_a[:9], comp_r[:9])
     assert_array_almost_equal(comp_a[9:], comp_r[9:], decimal=2)
+    assert_array_almost_equal(comp_a[:9], comp_l[:9])
+    assert_array_almost_equal(comp_a[9:], comp_l[9:], decimal=2)
 
 
 def test_attributes():
@@ -45,7 +51,7 @@ def test_attributes():
         assert_equal(tsvd.components_.shape, (n_components, n_features))
 
 
-@pytest.mark.parametrize('algorithm', ("arpack", "randomized"))
+@pytest.mark.parametrize('algorithm', ("arpack", "randomized", "lobpcg"))
 def test_too_many_components(algorithm):
     for n_components in (n_features, n_features + 1):
         tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm)
@@ -62,7 +68,7 @@ def test_sparse_formats(fmt):
     assert_equal(Xtrans.shape, (n_samples, 11))
 
 
-@pytest.mark.parametrize('algo', ("arpack", "randomized"))
+@pytest.mark.parametrize('algo', ("arpack", "randomized", "lobpcg"))
 def test_inverse_transform(algo):
     # We need a lot of components for the reconstruction to be "almost
     # equal" in all positions. XXX Test means or sums instead?
@@ -83,47 +89,65 @@ def test_explained_variance():
     # Test sparse data
     svd_a_10_sp = TruncatedSVD(10, algorithm="arpack")
     svd_r_10_sp = TruncatedSVD(10, algorithm="randomized", random_state=42)
+    svd_l_10_sp = TruncatedSVD(10, algorithm="lobpcg", random_state=42)
     svd_a_20_sp = TruncatedSVD(20, algorithm="arpack")
     svd_r_20_sp = TruncatedSVD(20, algorithm="randomized", random_state=42)
+    svd_l_20_sp = TruncatedSVD(20, algorithm="lobpcg", random_state=42)
     X_trans_a_10_sp = svd_a_10_sp.fit_transform(X)
     X_trans_r_10_sp = svd_r_10_sp.fit_transform(X)
+    X_trans_l_10_sp = svd_l_10_sp.fit_transform(X)
     X_trans_a_20_sp = svd_a_20_sp.fit_transform(X)
     X_trans_r_20_sp = svd_r_20_sp.fit_transform(X)
+    X_trans_l_20_sp = svd_l_20_sp.fit_transform(X)
 
     # Test dense data
     svd_a_10_de = TruncatedSVD(10, algorithm="arpack")
     svd_r_10_de = TruncatedSVD(10, algorithm="randomized", random_state=42)
+    svd_l_10_de = TruncatedSVD(10, algorithm="lobpcg", random_state=42)
     svd_a_20_de = TruncatedSVD(20, algorithm="arpack")
     svd_r_20_de = TruncatedSVD(20, algorithm="randomized", random_state=42)
+    svd_l_20_de = TruncatedSVD(20, algorithm="lobpcg", random_state=42)
     X_trans_a_10_de = svd_a_10_de.fit_transform(X.toarray())
     X_trans_r_10_de = svd_r_10_de.fit_transform(X.toarray())
+    X_trans_l_10_de = svd_l_10_de.fit_transform(X.toarray())
     X_trans_a_20_de = svd_a_20_de.fit_transform(X.toarray())
     X_trans_r_20_de = svd_r_20_de.fit_transform(X.toarray())
+    X_trans_l_20_de = svd_l_20_de.fit_transform(X.toarray())
 
     # helper arrays for tests below
-    svds = (svd_a_10_sp, svd_r_10_sp, svd_a_20_sp, svd_r_20_sp, svd_a_10_de,
-            svd_r_10_de, svd_a_20_de, svd_r_20_de)
+    svds = (svd_a_10_sp, svd_r_10_sp, svd_l_10_sp,
+            svd_a_20_sp, svd_r_20_sp, svd_l_20_sp,
+            svd_a_10_de, svd_r_10_de, svd_l_10_de,
+            svd_a_20_de, svd_r_20_de, svd_l_20_de)
     svds_trans = (
         (svd_a_10_sp, X_trans_a_10_sp),
         (svd_r_10_sp, X_trans_r_10_sp),
+        (svd_l_10_sp, X_trans_l_10_sp),
         (svd_a_20_sp, X_trans_a_20_sp),
         (svd_r_20_sp, X_trans_r_20_sp),
+        (svd_l_20_sp, X_trans_l_20_sp),
         (svd_a_10_de, X_trans_a_10_de),
         (svd_r_10_de, X_trans_r_10_de),
+        (svd_l_10_de, X_trans_l_10_de),
         (svd_a_20_de, X_trans_a_20_de),
         (svd_r_20_de, X_trans_r_20_de),
+        (svd_l_20_de, X_trans_l_20_de),
     )
     svds_10_v_20 = (
         (svd_a_10_sp, svd_a_20_sp),
         (svd_r_10_sp, svd_r_20_sp),
+        (svd_l_10_sp, svd_l_20_sp),
         (svd_a_10_de, svd_a_20_de),
         (svd_r_10_de, svd_r_20_de),
+        (svd_l_10_de, svd_l_20_de),
     )
     svds_sparse_v_dense = (
         (svd_a_10_sp, svd_a_10_de),
         (svd_a_20_sp, svd_a_20_de),
         (svd_r_10_sp, svd_r_10_de),
         (svd_r_20_sp, svd_r_20_de),
+        (svd_l_10_sp, svd_l_10_de),
+        (svd_l_20_sp, svd_l_20_de),
     )
 
     # Assert the 1st component is equal
@@ -177,23 +201,31 @@ def test_singular_values():
 
     apca = TruncatedSVD(n_components=2, algorithm='arpack',
                         random_state=rng).fit(X)
-    rpca = TruncatedSVD(n_components=2, algorithm='arpack',
+    rpca = TruncatedSVD(n_components=2, algorithm='randomized',
+                        random_state=rng).fit(X)
+    lpca = TruncatedSVD(n_components=2, algorithm='lobpcg',
                         random_state=rng).fit(X)
     assert_array_almost_equal(apca.singular_values_, rpca.singular_values_, 12)
+    assert_array_almost_equal(apca.singular_values_, lpca.singular_values_, 12)
 
     # Compare to the Frobenius norm
     X_apca = apca.transform(X)
     X_rpca = rpca.transform(X)
+    X_lpca = lpca.transform(X)
     assert_array_almost_equal(np.sum(apca.singular_values_**2.0),
                               np.linalg.norm(X_apca, "fro")**2.0, 12)
     assert_array_almost_equal(np.sum(rpca.singular_values_**2.0),
                               np.linalg.norm(X_rpca, "fro")**2.0, 12)
+    assert_array_almost_equal(np.sum(lpca.singular_values_**2.0),
+                              np.linalg.norm(X_lpca, "fro")**2.0, 12)
 
     # Compare to the 2-norms of the score vectors
     assert_array_almost_equal(apca.singular_values_,
                               np.sqrt(np.sum(X_apca**2.0, axis=0)), 12)
     assert_array_almost_equal(rpca.singular_values_,
                               np.sqrt(np.sum(X_rpca**2.0, axis=0)), 12)
+    assert_array_almost_equal(lpca.singular_values_,
+                              np.sqrt(np.sum(X_lpca**2.0, axis=0)), 12)
 
     # Set the singular values and see what we get back
     rng = np.random.RandomState(0)
@@ -206,22 +238,31 @@ def test_singular_values():
                         random_state=rng)
     rpca = TruncatedSVD(n_components=3, algorithm='randomized',
                         random_state=rng)
+    lpca = TruncatedSVD(n_components=3, algorithm='lobpcg',
+                        random_state=rng)
     X_apca = apca.fit_transform(X)
     X_rpca = rpca.fit_transform(X)
+    X_lpca = rpca.fit_transform(X)
 
     X_apca /= np.sqrt(np.sum(X_apca**2.0, axis=0))
     X_rpca /= np.sqrt(np.sum(X_rpca**2.0, axis=0))
+    X_lpca /= np.sqrt(np.sum(X_lpca**2.0, axis=0))
     X_apca[:, 0] *= 3.142
     X_apca[:, 1] *= 2.718
     X_rpca[:, 0] *= 3.142
     X_rpca[:, 1] *= 2.718
+    X_lpca[:, 0] *= 3.142
+    X_lpca[:, 1] *= 2.718
 
     X_hat_apca = np.dot(X_apca, apca.components_)
     X_hat_rpca = np.dot(X_rpca, rpca.components_)
+    X_hat_lpca = np.dot(X_lpca, lpca.components_)
     apca.fit(X_hat_apca)
     rpca.fit(X_hat_rpca)
+    lpca.fit(X_hat_lpca)
     assert_array_almost_equal(apca.singular_values_, [3.142, 2.718, 1.0], 14)
     assert_array_almost_equal(rpca.singular_values_, [3.142, 2.718, 1.0], 14)
+    assert_array_almost_equal(lpca.singular_values_, [3.142, 2.718, 1.0], 14)
 
 
 def test_truncated_svd_eq_pca():

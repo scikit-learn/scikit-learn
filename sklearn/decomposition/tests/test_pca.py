@@ -22,7 +22,8 @@ from sklearn.decomposition.pca import _assess_dimension_
 from sklearn.decomposition.pca import _infer_dimension_
 
 iris = datasets.load_iris()
-solver_list = ['full', 'arpack', 'randomized', 'auto']
+solver_list = ['full', 'arpack', 'randomized', 'lobpcg',
+               'auto']
 
 
 def test_pca():
