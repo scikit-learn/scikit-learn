@@ -2844,9 +2844,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         return X
 
 
-def power_transform(X, method='box-cox', standardize=True, copy=True):
-    """Apply a power transform featurewise to make data more Gaussian-like.
-
+def power_transform(X, method='yeo-johnson', standardize=True, copy=True):
+    """
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for
     modeling issues related to heteroscedasticity (non-constant variance),
