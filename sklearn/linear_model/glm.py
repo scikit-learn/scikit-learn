@@ -6,17 +6,16 @@ Generalized Linear Models with Exponential Dispersion Family
 # some parts and tricks stolen from other sklearn files.
 # License: BSD 3 clause
 
-# TODO: Write more tests
-# TODO: Write examples and more docu
-# TODO: deal with option self.copy_X
+# TODO: Write examples
+# TODO: Make option self.copy_X more meaningfull than just for start values.
 # TODO: Should the option `normalize` be included (like other linear models)?
 #       So far, it is not included. User must pass a normalized X.
-# TODO: Add cross validation support
+# TODO: Add cross validation support?
 # TODO: Should GeneralizedLinearRegressor inherit from LinearModel?
 #       So far, it does not.
 # TODO: Include further classes in class.rst? ExponentialDispersionModel?
 #       TweedieDistribution?
-# TODO: Negative values in P1 are not allowed so far. They could be used to
+# TODO: Negative values in P1 are not allowed so far. They could be used
 #       for group lasso.
 
 # Design Decisions:
@@ -26,7 +25,7 @@ Generalized Linear Models with Exponential Dispersion Family
 #   regressor, Bernoulli/Binomial => classifier.
 #   Solution: GeneralizedLinearRegressor since this is the focus.
 # - Allow for finer control of penalty terms:
-#   L1: ||P1*w||_1 with P1*w a componentwise product, this allows to exclude
+#   L1: ||P1*w||_1 with P1*w as element-wise product, this allows to exclude
 #       factors from the L1 penalty.
 #   L2: w*P2*w with P2 a (demi-) positive definite matrix, e.g. P2 could be
 #   a 1st or 2nd order difference matrix (compare B-spline penalties and
@@ -322,7 +321,7 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
         mu : array, shape (n_samples,)
             Predicted mean.
 
-        phi : float
+        phi : float (default=1)
             Dispersion parameter.
 
         weights : array, shape (n_samples,) (default=1)
@@ -592,7 +591,7 @@ class TweedieDistribution(ExponentialDispersionModel):
 
     Parameters
     ----------
-    power : float
+    power : float (default=0)
             The variance power of the `unit_variance`
             :math:`v(\mu) = \mu^{power}`.
     """
@@ -779,22 +778,22 @@ def _irls_step(X, W, P2, z):
 
     Parameters
     ----------
-    X : numpy array or sparse matrix of shape (n_samples, n_features)
+    X : {numpy array, sparse matrix}, shape (n_samples, n_features)
         Training data (with intercept included if present)
 
-    W : numpy array of shape (n_samples,)
+    W : numpy array, shape (n_samples,)
 
-    P2 : numpy array or sparse matrix of shape (n_features, n_features)
-        The l2-penalty matrix or vector (=diagonal matrix)
+    P2 : {numpy array, sparse matrix}, shape (n_features, n_features)
+        The L2-penalty matrix or vector (=diagonal matrix)
 
-    z  : numpy array of shape (n_samples,)
+    z  : numpy array, shape (n_samples,)
         Working observations
 
     Returns
     -------
     coef: array, shape (X.shape[1])
     """
-    # TODO: scipy.linalg.solve is faster, but ordinary least squares uses
+    # TODO: scipy.linalg.solve seems faster, but ordinary least squares uses
     #       scipy.linalg.lstsq. What is more appropriate?
     n_samples, n_features = X.shape
     if sparse.issparse(X):
@@ -892,19 +891,20 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         is an L1 penalty.  For ``0 < l1_ratio < 1``, the penalty is a
         combination of L1 and L2.
 
-    P1 : None or array of shape (n_features*,), optional\
+    P1 : {None, array-like}, shape (n_features*,), optional\
             (default=None)
         With this array, you can exclude coefficients from the L1 penalty.
         Set the corresponding value to 1 (include) or 0 (exclude). The
-        default value ``None`` is the same as an array of ones.
+        default value ``None`` is the same as a 1d array of ones.
         Note that n_features* = X.shape[1] = length of coef_ (intercept
         always excluded from counting).
 
-    P2 : None or array of shape (n_features*, n_features*), optional\
-            (default=None)
+    P2 : {None, array-like, sparse matrix}, shape \
+            (n_features*, n_features*), optional (default=None)
         With this square matrix the L2 penalty is calculated as `w P2 w`.
         This gives a fine control over this penalty (Tikhonov
         regularization).
+        The default value ``None`` is the same as the idendity matrix.
         Note that n_features* = X.shape[1] = length of coef_ (intercept
         always excluded from counting). P2 must be positive semi-definite.
 
@@ -939,8 +939,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         - 'newton-cg', 'lbfgs'. Cannot deal with L1 penalties.
 
-        - 'cd' is the coordinate descent algorithm. It can deal with L1 and
-            L2 penalties.
+        - 'cd' is the coordinate descent algorithm. It can
+            deal with L1 as well as L2 penalties.
 
     max_iter : int, optional (default=100)
         The maximal number of iterations for solver algorithms.
@@ -958,8 +958,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         does not exit (first call to fit), option ``start_params`` sets the
         starting values for ``coef_`` and ``intercept_``.
 
-    start_params : {None, 'least_squares', 'zero'} or array of shape \
-            (n_features, ) or }, optional (default=None)
+    start_params : {None, 'least_squares', 'zero', array of shape \
+            (n_features, )}, optional (default=None)
         If an array of size n_features is supplied, use these as start values
         for ``coef_`` in the fit. If ``fit_intercept=True``, the first element
         is assumed to be the start value for the ``intercept_``.
@@ -979,7 +979,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : {int, RandomState instance, None}, optional (default=None)
         The seed of the pseudo random number generator that selects a random
         feature to be updated for solver 'cd' (coordinate descent).
         If int, random_state is the seed used by the random
@@ -1052,13 +1052,13 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : numpy array or sparse matrix of shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data.
 
-        y : numpy array of shape (n_samples,)
+        y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : array of shape (n_samples,) or None,\
+        sample_weight : {None, array-like}, shape (n_samples,),\
                 optinal (default=None)
             Individual weights w_i for each sample. Note that for an
             Exponential Dispersion Model (EDM), one has
@@ -1190,12 +1190,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         if self.P1 is None:
             P1 = np.ones(X.shape[1])
         else:
-            P1 = np.atleast_1d(np.copy(self.P1))
+            P1 = np.copy(np.atleast_1d(self.P1))
             if P1.dtype.kind not in ['b', 'i', 'u', 'f']:
                 raise ValueError("P1 must be a numeric value; "
                                  "got (dtype={0}).".format(P1.dtype))
             if (P1.ndim != 1) or (P1.shape[0] != X.shape[1]):
-                raise ValueError("P1 must be either None or an 1D array with "
+                raise ValueError("P1 must be either None or a 1d array with "
                                  "the length of X.shape[1]; "
                                  "got (P1.shape[0]={0}), "
                                  "needed (X.shape[1]={1})."
@@ -1324,6 +1324,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 coef = _irls_step(Xnew, W, P2, z)
             else:
                 # with L1 penalty, start with coef = 0
+                # TODO: Are there better options?
                 coef = np.zeros(n_features)
         elif isinstance(self.start_params, six.string_types):
             if self.start_params == 'zero':
@@ -1353,7 +1354,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         # 4. fit                                                              #
         #######################################################################
         # algorithms for optimiation
-        # TODO: Parallelize it
+        # TODO: Parallelize it?
         self.n_iter_ = 0
         converged = False
         # 4.1 IRLS ############################################################
@@ -1682,12 +1683,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : numpy array or sparse matrix, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        C : array, shape (n_samples)
+        C : array, shape (n_samples,)
             Returns predicted values of linear predictor.
         """
         check_is_fitted(self, "coef_")
@@ -1703,17 +1704,18 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : numpy array or sparse matrix, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Samples.
 
-        sample_weight : array of shape (n_samples,) or None , \
-             (default=None)
+        sample_weight : {None, array-like}, shape (n_samples,), optional \
+                (default=None)
 
         Returns
         -------
         C : array, shape (n_samples,)
             Returns predicted values times sample_weight.
         """
+        # TODO: Is copy=True necessary?
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         dtype='numeric', copy=True, ensure_2d=True,
                         allow_nd=False)
@@ -1729,14 +1731,14 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : numpy array or sparse matrix of shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data.
 
-        y : numpy array, shape (n_samples,)
+        y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : array of shape (n_samples,) or None,\
-                optinal (default=None)
+        sample_weight : {None, array-like}, shape (n_samples,), optional \
+                (default=None)
             Sample weights.
         """
         check_is_fitted(self, "coef_")
@@ -1782,13 +1784,14 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Test samples
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Test samples.
 
         y : array-like, shape (n_samples,)
-            True valeus for X.
+            True values of target.
 
-        sample_weight : array-like, shape = (n_samples,), optional
+        sample_weight : {None, array-like}, shape (n_samples,), optional \
+                (default=None)
             Sample weights.
 
         Returns
