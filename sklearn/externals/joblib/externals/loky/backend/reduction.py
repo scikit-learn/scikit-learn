@@ -78,7 +78,7 @@ class _LokyPickler(Pickler):
     # We override the pure Python pickler as its the only way to be able to
     # customize the dispatch table without side effects in Python 2.6
     # to 3.2. For Python 3.3+ leverage the new dispatch_table
-    # feature from http://bugs.python.org/issue14166 that makes it possible
+    # feature from https://bugs.python.org/issue14166 that makes it possible
     # to use the C implementation of the Pickler which is faster.
 
     if hasattr(Pickler, 'dispatch'):

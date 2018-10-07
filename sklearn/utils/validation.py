@@ -736,6 +736,9 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
     y_converted : object
         The converted and validated y.
     """
+    if y is None:
+        raise ValueError("y cannot be None")
+
     X = check_array(X, accept_sparse=accept_sparse,
                     accept_large_sparse=accept_large_sparse,
                     dtype=dtype, order=order, copy=copy,
@@ -954,6 +957,16 @@ def check_non_negative(X, whom):
     whom : string
         Who passed X to this function.
     """
-    X = X.data if sp.issparse(X) else X
-    if (X < 0).any():
+    # avoid X.min() on sparse matrix since it also sorts the indices
+    if sp.issparse(X):
+        if X.format in ['lil', 'dok']:
+            X = X.tocsr()
+        if X.data.size == 0:
+            X_min = 0
+        else:
+            X_min = X.data.min()
+    else:
+        X_min = X.min()
+
+    if X_min < 0:
         raise ValueError("Negative values in data passed to %s" % whom)
