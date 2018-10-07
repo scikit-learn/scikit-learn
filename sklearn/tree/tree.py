@@ -712,7 +712,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
            Learning", Springer, 2009.
 
     .. [4] L. Breiman, and A. Cutler, "Random Forests",
-           http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
+           https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
 
     Examples
     --------
@@ -1055,7 +1055,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
            Learning", Springer, 2009.
 
     .. [4] L. Breiman, and A. Cutler, "Random Forests",
-           http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
+           https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
 
     Examples
     --------

@@ -191,7 +191,7 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
     References
     ----------
     .. [1] `Wikipedia entry for the Average precision
-           <http://en.wikipedia.org/w/index.php?title=Information_retrieval&
+           <https://en.wikipedia.org/w/index.php?title=Information_retrieval&
            oldid=793358396#Average_precision>`_
 
     See also
@@ -296,7 +296,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
            Letters, 2006, 27(8):861-874.
 
     .. [3] `Analyzing a portion of the ROC curve. McClish, 1989
-            <http://www.ncbi.nlm.nih.gov/pubmed/2668680>`_
+            <https://www.ncbi.nlm.nih.gov/pubmed/2668680>`_
 
     See also
     --------

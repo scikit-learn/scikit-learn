@@ -7,7 +7,6 @@ import pickle
 import sys
 from types import GeneratorType
 import re
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -37,7 +36,6 @@ from scipy.stats import bernoulli, expon, uniform
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
@@ -237,57 +235,6 @@ def test_random_search_with_fit_params():
                                                   error_score='raise')
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-def test_grid_search_fit_params_deprecation():
-    # NOTE: Remove this test in v0.21
-
-    # Use of `fit_params` in the class constructor is deprecated,
-    # but will still work until v0.21.
-    X = np.arange(100).reshape(10, 10)
-    y = np.array([0] * 5 + [1] * 5)
-    clf = CheckingClassifier(expected_fit_params=['spam'])
-    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
-                               fit_params={'spam': np.ones(10)})
-    assert_warns(DeprecationWarning, grid_search.fit, X, y)
-
-
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
-def test_grid_search_fit_params_two_places():
-    # NOTE: Remove this test in v0.21
-
-    # If users try to input fit parameters in both
-    # the constructor (deprecated use) and the `fit`
-    # method, we'll ignore the values passed to the constructor.
-    X = np.arange(100).reshape(10, 10)
-    y = np.array([0] * 5 + [1] * 5)
-    clf = CheckingClassifier(expected_fit_params=['spam'])
-
-    # The "spam" array is too short and will raise an
-    # error in the CheckingClassifier if used.
-    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
-                               fit_params={'spam': np.ones(1)})
-
-    expected_warning = ('Ignoring fit_params passed as a constructor '
-                        'argument in favor of keyword arguments to '
-                        'the "fit" method.')
-    assert_warns_message(RuntimeWarning, expected_warning,
-                         grid_search.fit, X, y, spam=np.ones(10))
-
-    # Verify that `fit` prefers its own kwargs by giving valid
-    # kwargs in the constructor and invalid in the method call
-    with warnings.catch_warnings():
-        # JvR: As passing fit params to the constructor is deprecated, this
-        # unit test raises a warning (unit test can be removed after version
-        # 0.22)
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
-        grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
-                                   fit_params={'spam': np.ones(10)},
-                                   error_score='raise')
-        assert_raise_message(AssertionError, "Fit parameter spam has length 1",
-                             grid_search.fit, X, y, spam=np.ones(1))
-
-
 @ignore_warnings
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
@@ -372,44 +319,6 @@ def test_grid_search_groups():
         gs = GridSearchCV(clf, grid, cv=cv)
         # Should not raise an error
         gs.fit(X, y)
-
-
-def test_return_train_score_warn():
-    # Test that warnings are raised. Will be removed in 0.21
-
-    X = np.arange(100).reshape(10, 10)
-    y = np.array([0] * 5 + [1] * 5)
-    grid = {'C': [1, 2]}
-
-    estimators = [GridSearchCV(LinearSVC(random_state=0), grid,
-                               iid=False, cv=3),
-                  RandomizedSearchCV(LinearSVC(random_state=0), grid,
-                                     n_iter=2, iid=False, cv=3)]
-
-    result = {}
-    for estimator in estimators:
-        for val in [True, False, 'warn']:
-            estimator.set_params(return_train_score=val)
-            fit_func = ignore_warnings(estimator.fit,
-                                       category=ConvergenceWarning)
-            result[val] = assert_no_warnings(fit_func, X, y).cv_results_
-
-    train_keys = ['split0_train_score', 'split1_train_score',
-                  'split2_train_score', 'mean_train_score', 'std_train_score']
-    for key in train_keys:
-        msg = (
-            'You are accessing a training score ({!r}), '
-            'which will not be available by default '
-            'any more in 0.21. If you need training scores, '
-            'please set return_train_score=True').format(key)
-        train_score = assert_warns_message(FutureWarning, msg,
-                                           result['warn'].get, key)
-        assert np.allclose(train_score, result[True][key])
-        assert key not in result[False]
-
-    for key in result['warn']:
-        if key not in train_keys:
-            assert_no_warnings(result['warn'].get, key)
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
@@ -1530,8 +1439,7 @@ def test_search_train_scores_set_to_false():
     y = [0, 0, 0, 1, 1, 1]
     clf = LinearSVC(random_state=0)
 
-    gs = GridSearchCV(clf, param_grid={'C': [0.1, 0.2]},
-                      return_train_score=False)
+    gs = GridSearchCV(clf, param_grid={'C': [0.1, 0.2]})
     gs.fit(X, y)
 
 

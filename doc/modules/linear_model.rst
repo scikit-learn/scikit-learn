@@ -44,7 +44,7 @@ and will store the coefficients :math:`w` of the linear model in its
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
-    >>> reg.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
+    >>> reg.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
     ...                                       # doctest: +NORMALIZE_WHITESPACE
     LinearRegression(copy_X=True, fit_intercept=True, n_jobs=None,
                      normalize=False)
@@ -103,8 +103,8 @@ arrays X, y and will store the coefficients :math:`w` of the linear model in
 its ``coef_`` member::
 
     >>> from sklearn import linear_model
-    >>> reg = linear_model.Ridge (alpha = .5)
-    >>> reg.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1]) # doctest: +NORMALIZE_WHITESPACE
+    >>> reg = linear_model.Ridge(alpha=.5)
+    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1]) # doctest: +NORMALIZE_WHITESPACE
     Ridge(alpha=0.5, copy_X=True, fit_intercept=True, max_iter=None,
           normalize=False, random_state=None, solver='auto', tol=0.001)
     >>> reg.coef_
@@ -152,7 +152,7 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
     * "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
       <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
       `course slides
-      <http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
+      <https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
 
 .. _lasso:
@@ -184,7 +184,7 @@ the algorithm to fit the coefficients. See :ref:`least_angle_regression`
 for another implementation::
 
     >>> from sklearn import linear_model
-    >>> reg = linear_model.Lasso(alpha = 0.1)
+    >>> reg = linear_model.Lasso(alpha=0.1)
     >>> reg.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
        normalize=False, positive=False, precompute=False, random_state=None,
@@ -508,7 +508,7 @@ column is always zero.
 .. topic:: References:
 
  * Original Algorithm is detailed in the paper `Least Angle Regression
-   <http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
+   <https://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
    by Hastie et al.
 
 
@@ -547,7 +547,7 @@ previously chosen dictionary elements.
 
 .. topic:: References:
 
- * http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+ * https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
  * `Matching pursuits with time-frequency dictionaries
    <http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
@@ -646,7 +646,7 @@ Bayesian Ridge Regression is used for regression::
 
 After being fitted, the model can then be used to predict new values::
 
-    >>> reg.predict ([[1, 0.]])
+    >>> reg.predict([[1, 0.]])
     array([0.50000013])
 
 
@@ -710,7 +710,7 @@ ARD is also known in the literature as *Sparse Bayesian Learning* and
 
     .. [1] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 7.2.1
 
-    .. [2] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination <http://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
+    .. [2] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination <https://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
 
     .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
 
@@ -751,7 +751,7 @@ are "liblinear", "newton-cg", "lbfgs", "sag" and "saga":
 
 The solver "liblinear" uses a coordinate descent (CD) algorithm, and relies
 on the excellent C++ `LIBLINEAR library
-<http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_, which is shipped with
+<https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_, which is shipped with
 scikit-learn. However, the CD algorithm implemented in liblinear cannot learn
 a true multinomial (multiclass) model; instead, the optimization problem is
 decomposed in a "one-vs-rest" fashion so separate binary classifiers are
@@ -799,7 +799,7 @@ In a nutshell, the following table summarizes the penalties supported by each so
 | Robust to unscaled datasets  |       yes       |     yes     |       yes       |    no     |    no      |
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 
-The "saga" solver is often the best choice. The "liblinear" solver is
+The "saga" solver is often the best choice but requires scaling. The "liblinear" solver is
 used by default for historical reasons.
 
 For large dataset, you may also consider using :class:`SGDClassifier`

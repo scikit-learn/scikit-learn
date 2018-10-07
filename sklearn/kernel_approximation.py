@@ -72,7 +72,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     [1] "Weighted Sums of Random Kitchen Sinks: Replacing
     minimization with randomization in learning" by A. Rahimi and
     Benjamin Recht.
-    (http://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
+    (https://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
     """
 
     def __init__(self, gamma=1., n_components=100, random_state=None):

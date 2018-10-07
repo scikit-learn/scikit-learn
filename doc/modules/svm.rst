@@ -239,13 +239,13 @@ and use ``decision_function`` instead of ``predict_proba``.
 
  * Wu, Lin and Weng,
    `"Probability estimates for multi-class classification by pairwise coupling"
-   <http://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_,
+   <https://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_,
    JMLR 5:975-1005, 2004.
  
  
  * Platt
    `"Probabilistic outputs for SVMs and comparisons to regularized likelihood methods"
-   <http://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_.
+   <https://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_.
 
 Unbalanced problems
 --------------------
@@ -392,6 +392,11 @@ Tips on Practical Use
   * **Setting C**: ``C`` is ``1`` by default and it's a reasonable default
     choice.  If you have a lot of noisy observations you should decrease it.
     It corresponds to regularize more the estimation.
+    
+    :class:`LinearSVC` and :class`LinearSVR` are less sensitive to ``C`` when
+    it becomes large, and prediction results stop improving after a certain 
+    threshold. Meanwhile, larger ``C`` values will take more time to train, 
+    sometimes up to 10 times longer, as shown by Fan et al. (2008)
 
   * Support Vector Machine algorithms are not scale invariant, so **it
     is highly recommended to scale your data**. For example, scale each
@@ -433,6 +438,13 @@ Tips on Practical Use
     The ``C`` value that yields a "null" model (all weights equal to zero) can
     be calculated using :func:`l1_min_c`.
 
+
+.. topic:: References:
+
+ * Fan, Rong-En, et al.,
+   `"LIBLINEAR: A library for large linear classification."
+   <https://www.csie.ntu.edu.tw/~cjlin/papers/liblinear.pdf>`_,
+   Journal of machine learning research 9.Aug (2008): 1871-1874.
 
 .. _svm_kernels:
 
@@ -625,7 +637,7 @@ term :math:`\rho` :
 
 
  * `"Support-vector networks"
-   <http://link.springer.com/article/10.1007%2FBF00994018>`_,
+   <https://link.springer.com/article/10.1007%2FBF00994018>`_,
    C. Cortes, V. Vapnik - Machine Learning, 20, 273-297 (1995).
 
 
@@ -700,8 +712,8 @@ Implementation details
 Internally, we use `libsvm`_ and `liblinear`_ to handle all
 computations. These libraries are wrapped using C and Cython.
 
-.. _`libsvm`: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
-.. _`liblinear`: http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+.. _`libsvm`: https://www.csie.ntu.edu.tw/~cjlin/libsvm/
+.. _`liblinear`: https://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
 .. topic:: References:
 
@@ -709,9 +721,9 @@ computations. These libraries are wrapped using C and Cython.
   used, please refer to
 
     - `LIBSVM: A Library for Support Vector Machines
-      <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_.
+      <https://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_.
 
     - `LIBLINEAR -- A Library for Large Linear Classification
-      <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_.
+      <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_.
 
 
