@@ -606,8 +606,8 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     """
 
     # Extraction wrapper
-    # according to the paper (p. 5), for a small enough generative distance
-    # epsilong, there should be more than one INF.
+    # according to Ankerst M. et.al. 1999 (p. 5), for a small enough
+    # generative distance epsilong, there should be more than one INF.
     if np.all(np.isinf(reachability)):
         raise ValueError("All reachability values are inf. Set a larger"
                          " max_eps.")
