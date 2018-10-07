@@ -49,10 +49,10 @@ def _smooth_quantile_loss_and_gradient(
     weighted_grad = (positive_error * quantile +
                      small_error * linear_loss / (gamma if gamma != 0 else 1) +
                      negative_error * (quantile-1)) * sample_weight
-    grad[:n_features] -= safe_sparse_dot(weighted_grad, X)
+    grad[:n_features] = -safe_sparse_dot(weighted_grad, X)
 
     if fit_intercept:
-        grad[-1] -= np.sum(weighted_grad)
+        grad[-1] = -np.sum(weighted_grad)
 
     # Gradient and loss due to the ridge penalty
     grad[:n_features] += alpha * (1 - l1_ratio) * 2. * w
