@@ -226,9 +226,9 @@
                     <ul>
                     <li><em>About us</em> See <a href="about.html#people">authors</a> and <a href="developers/contributing.html">contributing</a></li>
                     <li><em>More Machine Learning</em> Find <a href="related_projects.html">related projects</a></li>
-                    <li><em>Questions?</em> See <a href="faq.html">FAQ</a> and <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a></li>
+                    <li><em>Questions?</em> See <a href="faq.html">FAQ</a> and <a href="https://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a></li>
                     <li><em>Mailing list:</em> <a href="https://mail.python.org/mailman/listinfo/scikit-learn">scikit-learn@python.org</a></li>
-                    <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>
+                    <li><em>IRC:</em> #scikit-learn @ <a href="https://webchat.freenode.net/">freenode</a></li>
                     </ul>
 
                     <form target="_top" id="paypal-form" method="post" action="https://www.paypal.com/cgi-bin/webscr">

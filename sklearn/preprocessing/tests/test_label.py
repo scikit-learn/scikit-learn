@@ -374,6 +374,12 @@ def test_multilabel_binarizer_given_classes():
     mlb = MultiLabelBinarizer(classes=[1, 3, 2])
     assert_array_equal(mlb.fit(inp).transform(inp), indicator_mat)
 
+    # ensure a ValueError is thrown if given duplicate classes
+    err_msg = "The classes argument contains duplicate classes. Remove " \
+              "these duplicates before passing them to MultiLabelBinarizer."
+    mlb = MultiLabelBinarizer(classes=[1, 3, 2, 3])
+    assert_raise_message(ValueError, err_msg, mlb.fit, inp)
+
 
 def test_multilabel_binarizer_same_length_sequence():
     # Ensure sequences of the same length are not interpreted as a 2-d array

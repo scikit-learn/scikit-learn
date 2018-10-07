@@ -50,8 +50,6 @@ from sklearn.metrics.pairwise import paired_manhattan_distances
 from sklearn.preprocessing import normalize
 from sklearn.exceptions import DataConversionWarning
 
-import pytest
-
 
 def test_pairwise_distances():
     # Test the pairwise_distance helper function.
@@ -176,6 +174,13 @@ def test_pairwise_precomputed(func):
     # Test converts list to array-like
     S = func([[1.]], metric='precomputed')
     assert_true(isinstance(S, np.ndarray))
+
+
+def test_pairwise_precomputed_non_negative():
+    # Test non-negative values
+    assert_raises_regexp(ValueError, '.* non-negative values.*',
+                         pairwise_distances, np.full((5, 5), -1),
+                         metric='precomputed')
 
 
 def check_pairwise_parallel(func, metric, kwds):

@@ -319,10 +319,12 @@ to work with, ``scikit-learn`` provides a :class:`~sklearn.pipeline.Pipeline` cl
 like a compound classifier::
 
   >>> from sklearn.pipeline import Pipeline
-  >>> text_clf = Pipeline([('vect', CountVectorizer()),
-  ...                      ('tfidf', TfidfTransformer()),
-  ...                      ('clf', MultinomialNB()),
+  >>> text_clf = Pipeline([
+  ...     ('vect', CountVectorizer()),
+  ...     ('tfidf', TfidfTransformer()),
+  ...     ('clf', MultinomialNB()),
   ... ])
+
 
 The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
 We will use them to perform grid search for suitable hyperparameters below. 
@@ -353,12 +355,14 @@ than naïve Bayes). We can change the learner by simply plugging a different
 classifier object into our pipeline::
 
   >>> from sklearn.linear_model import SGDClassifier
-  >>> text_clf = Pipeline([('vect', CountVectorizer()),
-  ...                      ('tfidf', TfidfTransformer()),
-  ...                      ('clf', SGDClassifier(loss='hinge', penalty='l2',
-  ...                                            alpha=1e-3, random_state=42,
-  ...                                            max_iter=5, tol=None)),
+  >>> text_clf = Pipeline([
+  ...     ('vect', CountVectorizer()),
+  ...     ('tfidf', TfidfTransformer()),
+  ...     ('clf', SGDClassifier(loss='hinge', penalty='l2',
+  ...                           alpha=1e-3, random_state=42,
+  ...                           max_iter=5, tol=None)),
   ... ])
+
   >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
   Pipeline(...)
   >>> predicted = text_clf.predict(docs_test)
@@ -410,7 +414,7 @@ with computer graphics.
   optimizer for the same cost function based on the liblinear_ C++
   library.
 
-.. _liblinear: http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+.. _liblinear: https://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
 
 Parameter tuning using grid search
@@ -430,10 +434,12 @@ on either words or bigrams, with or without idf, and with a penalty
 parameter of either 0.01 or 0.001 for the linear SVM::
 
   >>> from sklearn.model_selection import GridSearchCV
-  >>> parameters = {'vect__ngram_range': [(1, 1), (1, 2)],
-  ...               'tfidf__use_idf': (True, False),
-  ...               'clf__alpha': (1e-2, 1e-3),
+  >>> parameters = {
+  ...     'vect__ngram_range': [(1, 1), (1, 2)],
+  ...     'tfidf__use_idf': (True, False),
+  ...     'clf__alpha': (1e-2, 1e-3),
   ... }
+
 
 Obviously, such an exhaustive search can be expensive. If we have multiple
 CPU cores at our disposal, we can tell the grid searcher to try these eight

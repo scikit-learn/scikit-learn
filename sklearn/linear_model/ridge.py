@@ -894,7 +894,7 @@ class _RidgeGCV(LinearModel):
     References
     ----------
     http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
-    http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
+    https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
     def __init__(self, alphas=(0.1, 1.0, 10.0),
@@ -1170,6 +1170,8 @@ class _BaseRidgeCV(LinearModel):
 class RidgeCV(_BaseRidgeCV, RegressorMixin):
     """Ridge regression with built-in cross-validation.
 
+    See glossary entry for :term:`cross-validation estimator`.
+
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation.
 
@@ -1278,6 +1280,8 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
 class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation. Currently, only the n_features >
