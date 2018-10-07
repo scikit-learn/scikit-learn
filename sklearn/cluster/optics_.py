@@ -653,7 +653,13 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     """
 
     # Extraction wrapper
-    reachability = reachability / np.max(reachability[1:])
+    # according to Ankerst M. et.al. 1999 (p. 5), for a small enough
+    # generative distance epsilong, there should be more than one INF.
+    if np.all(np.isinf(reachability)):
+        raise ValueError("All reachability values are inf. Set a larger"
+                         " max_eps.")
+    normalization_factor = np.max(reachability[reachability < np.inf])
+    reachability = reachability / normalization_factor
     reachability_plot = reachability[ordering].tolist()
     root_node = _automatic_cluster(reachability_plot, ordering,
                                    maxima_ratio, rejection_ratio,
@@ -798,17 +804,17 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     avg_reach2 = np.mean(reachability_plot[node_2.start:(node_2.start
                                                          + check_value_2)])
 
-    if ((avg_reach1 / reachability_plot[s]) > maxima_ratio or
-            (avg_reach2 / reachability_plot[s]) > maxima_ratio):
+    if ((avg_reach1 / maxima_ratio) > reachability_plot[s] or
+            (avg_reach2 / maxima_ratio) > reachability_plot[s]):
 
-        if (avg_reach1 / reachability_plot[s]) < rejection_ratio:
+        if (avg_reach1 / rejection_ratio) < reachability_plot[s]:
             # reject node 2
             node_list.remove((node_2, local_max_2))
-        if (avg_reach2 / reachability_plot[s]) < rejection_ratio:
+        if (avg_reach2 / rejection_ratio) < reachability_plot[s]:
             # reject node 1
             node_list.remove((node_1, local_max_1))
-        if ((avg_reach1 / reachability_plot[s]) >= rejection_ratio and
-                (avg_reach2 / reachability_plot[s]) >= rejection_ratio):
+        if ((avg_reach1 / rejection_ratio) >= reachability_plot[s] and
+                (avg_reach2 / rejection_ratio) >= reachability_plot[s]):
             # since split_point is not significant,
             # ignore this split and continue (reject both child nodes)
             node.split_point = -1
