@@ -20,7 +20,7 @@ from ..exceptions import ConvergenceWarning
 from ..utils.validation import check_random_state, check_array
 from ..utils import deprecated
 from ..utils.fixes import _Sequence as Sequence
-from ..linear_model import lars_path
+from ..linear_model import lars_path_gram
 from ..linear_model import cd_fast
 from ..model_selection import check_cv, cross_val_score
 from ..utils import Parallel, delayed
@@ -228,8 +228,8 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                             check_random_state(None), False)
                     else:
                         # Use LARS
-                        _, _, coefs = lars_path(
-                            sub_covariance, row, Xy=row, Gram=sub_covariance,
+                        _, _, coefs = lars_path_gram(
+                            Xy=row, Gram=sub_covariance, n_samples=row.size,
                             alpha_min=alpha / (n_features - 1), copy_Gram=True,
                             eps=eps, method='lars', return_path=False)
                 # Update the precision matrix

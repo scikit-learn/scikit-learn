@@ -47,10 +47,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
 
     Parameters
     -----------
-    X : array, shape (n_samples, n_features)
+    X : None or array, shape (n_samples, n_features)
         Input data.
 
-    y : array, shape (n_samples)
+    y : None or array, shape (n_samples,)
         Input targets.
 
     Xy : array-like, shape (n_samples,) or (n_samples, n_targets), optional
