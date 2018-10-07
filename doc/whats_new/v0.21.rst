@@ -52,6 +52,14 @@ Support for Python 3.4 and below has been officially dropped.
   graph, which would add explicitly zeros on the diagonal even when already
   present. :issue:`12105` by `Tom Dupre la Tour`_.
 
+
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| A new regression metric: :class:`metrics.max_error`: a
+  metric that captures the max residual error, by :user:`Krishna Sangeeth <whiletruelearn>`.
+
+
 Multiple modules
 ................
 
