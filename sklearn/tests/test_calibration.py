@@ -35,7 +35,7 @@ def test_cutoff_prefit():
                                n_classes=2)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                        train_size=0.6,
+                                                        test_size=0.4,
                                                         random_state=42)
     lr = LogisticRegression().fit(X_train, y_train)
 
@@ -145,7 +145,7 @@ def test_cutoff_cv():
                                n_classes=2)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                        train_size=0.6,
+                                                        test_size=0.4,
                                                         random_state=42)
     lr = LogisticRegression().fit(X_train, y_train)
     clf_roc = CutoffClassifier(LogisticRegression(), strategy='roc', cv=3).fit(
@@ -177,7 +177,7 @@ def test_get_binary_score():
     X, y = make_classification(n_samples=200, n_features=6, random_state=42,
                                n_classes=2)
 
-    X_train, X_test, y_train, _ = train_test_split(X, y, train_size=0.6,
+    X_train, X_test, y_train, _ = train_test_split(X, y, test_size=0.4,
                                                    random_state=42)
     lr = LogisticRegression().fit(X_train, y_train)
     y_pred_proba = lr.predict_proba(X_test)
