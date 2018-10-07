@@ -185,8 +185,8 @@ class PCA(_BasePCA):
         .. versionadded:: 0.18.0
 
     iterated_power : int >= 0, or 'auto', (default 'auto')
-        Number of iterations of svd_solver = 'lobpcg' or for the power method computed by
-        svd_solver == 'randomized'.
+        Number of iterations of svd_solver = 'lobpcg' or for the power method
+        computed by svd_solver == 'randomized'.
 
         .. versionadded:: 0.18.0
 
@@ -194,7 +194,8 @@ class PCA(_BasePCA):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``svd_solver`` == 'arpack', 'lobpcg', or 'randomized'.
+        by `np.random` in
+        ``svd_solver`` == 'arpack', 'lobpcg', or 'randomized'.
 
         .. versionadded:: 0.18.0
 

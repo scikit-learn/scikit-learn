@@ -13,7 +13,8 @@ from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
-from ..utils.extmath import randomized_svd, lobpcg_svd, safe_sparse_dot, svd_flip
+from ..utils.extmath import randomized_svd, lobpcg_svd,\
+                            safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
 
 __all__ = ["TruncatedSVD"]
@@ -33,8 +34,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     context, it is known as latent semantic analysis (LSA).
 
     This estimator supports 3 algorithms: a fast randomized SVD solver, and
-    a "naive" algorithm that uses ARPACK or LOBPCG as an eigensolver on (X * X.T) or
-    (X.T * X), whichever is more efficient.
+    a "naive" algorithm that uses ARPACK or LOBPCG as an eigensolver 
+    on the normal matrix (X * X.T) or (X.T * X), whichever is more efficient.
 
     Read more in the :ref:`User Guide <LSA>`.
 
@@ -48,11 +49,13 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
 
     algorithm : string, default = "randomized"
         SVD solver to use. Either "arpack" for the ARPACK wrapper in SciPy
-        (scipy.sparse.linalg.svds), or "lobpcg" for LOBPCG (scipy.sparse.linalg.lobpcg),
-        or "randomized" for the randomized algorithm due to Halko (2009).
+        (scipy.sparse.linalg.svds), or
+        "lobpcg" for LOBPCG (scipy.sparse.linalg.lobpcg) Knyazev (2001), or 
+        "randomized" for the randomized algorithm due to Halko (2009).
 
     n_iter : int, optional (default 5)
-        Number of iterations for randomized or LOBPCG SVD solver. Not used by ARPACK.
+        Number of iterations for randomized or LOBPCG SVD solver.
+        Not used by ARPACK.
         The default is larger than the default in `randomized_svd` to handle
         sparse matrices that may have large slowly decaying spectrum.
 

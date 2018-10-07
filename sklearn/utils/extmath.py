@@ -24,7 +24,8 @@ from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from scipy.sparse.linalg import lobpcg
+from . import lobpcg
+# from scipy.sparse.linalg import lobpcg
 
 
 def squared_norm(x):
@@ -365,7 +366,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
                transpose='auto',
                flip_sign=True, random_state=0):
-    """Computes a truncated SVD using LOBPCG mimicking the randomized SVD setup
+    """Computes a truncated SVD using LOBPCG mimicking the randomized SVD
 
     Parameters
     ----------
