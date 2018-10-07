@@ -34,9 +34,9 @@ for quantile in quantiles:
     qr = QuantileRegressor(quantile=quantile, max_iter=10000, alpha=0)
     qr.fit(X, y)
     ax1.plot([0, 10], qr.predict([[0], [10]]))
-ax1.xlabel('x')
-ax1.ylabel('y')
-ax1.title('Quantiles of normal residuals with non-constant variance')
+ax1.set_xlabel('x')
+ax1.set_ylabel('y')
+ax1.set_title('Quantiles of normal residuals with non-constant variance')
 ax1.legend(quantiles)
 
 y = 20 + x * 0.5 + rng.pareto(10, size=x.shape[0])*10
@@ -46,9 +46,9 @@ for quantile in quantiles:
     qr = QuantileRegressor(quantile=quantile, max_iter=10000, alpha=0)
     qr.fit(X, y)
     ax2.plot([0, 10], qr.predict([[0], [10]]))
-ax2.xlabel('x')
-ax2.ylabel('y')
-ax2.title('Quantiles of asymmetrically distributed residuals')
+ax2.set_xlabel('x')
+ax2.set_ylabel('y')
+ax2.set_title('Quantiles of asymmetrically distributed residuals')
 ax2.legend(quantiles)
 
 plt.show()
@@ -71,8 +71,8 @@ for model_name, model in zip(names, models):
 print('\n# Cross-validated performance')
 for model_name, model in zip(names, models):
     print(model_name + ':')
-    mae = -cross_val_score(model, X, y,
+    mae = -cross_val_score(model, X, y, cv=3,
                            scoring='neg_mean_absolute_error').mean()
-    rmse = np.sqrt(-cross_val_score(model, X, y,
+    rmse = np.sqrt(-cross_val_score(model, X, y, cv=3,
                                     scoring='neg_mean_squared_error').mean())
     print('MAE={:.4}  RMSE={:.4}'.format(mae, rmse))

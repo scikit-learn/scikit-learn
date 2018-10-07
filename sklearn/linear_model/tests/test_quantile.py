@@ -1,13 +1,12 @@
 # Authors: David Dale dale.david@mail.ru
 # License: BSD 3 clause
 
+import pytest
 import numpy as np
 from sklearn.utils.testing import assert_allclose, assert_raises
 from sklearn.datasets import make_regression
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
 from sklearn.model_selection import cross_val_score
-
-import warnings
 
 
 def test_quantile_toy_example():
@@ -160,12 +159,12 @@ def test_quantile_convergence():
                            noise=1.0)
 
     # check that for small n_iter, warning is thrown
-    with warnings.catch_warnings(record=True) as w:
+    with pytest.warns(None) as record:
         QuantileRegressor(max_iter=1).fit(X, y)
-        assert len(w) == 1
-        assert 'QuantileRegressor did not converge' in str(w[-1].message)
+        assert len(record) == 1
+        assert 'QuantileRegressor did not converge' in str(record[-1].message)
 
     # check that for large n_iter, it is not thrown
-    with warnings.catch_warnings(record=True) as w:
+    with pytest.warns(None) as record:
         QuantileRegressor(max_iter=10000).fit(X, y)
-        assert len(w) == 0
+        assert len(record) == 0
