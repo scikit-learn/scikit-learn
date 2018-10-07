@@ -34,15 +34,14 @@ See :ref:`new_contributors` to get started.
 
 |
 
-Submitting a bug report
-=======================
 
 In case you experience issues using this package, do not hesitate to submit a
 ticket to the
-`Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
+`GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
 also welcome to post feature requests or pull requests.
 
 
+==================
 Ways to contribute
 ==================
 
@@ -59,63 +58,108 @@ investigating bugs, and :ref:`reviewing other developers' pull requests
 <code_review>` are very valuable contributions that decrease the burden on the
 project maintainers.
 
-Another way to contribute is to report issues you're facing, and give a "thumbs up"
-on issues that others reported and that are relevant to you.
-It also helps us if you spread the word: reference the project from your blog
-and articles, link to it from your website, or simply say "I use it":
+Another way to contribute is to report issues you're facing, and give a "thumbs
+up" on issues that others reported and that are relevant to you.  It also helps
+us if you spread the word: reference the project from your blog and articles,
+link to it from your website, or simply star to say "I use it":
 
 .. raw:: html
 
-   <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
+   <a class="github-button" href="https://github.com/scikit-learn/scikit-learn"
+   data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star
+   scikit-learn/scikit-learn on GitHub">Star</a>
+   <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+.. topic:: Contributing to related projects
+
+   Scikit-learn thrives in an ecosystem of several related projects, which also
+   may have relevant issues to work on, including smaller projects such as:
+
+   * `scikit-learn-contrib <https://github.com/search?q=org%3Ascikit-learn-contrib+is%3Aissue+is%3Aopen+sort%3Aupdated-desc&type=Issues>`__
+   * `joblib <https://github.com/joblib/joblib/issues>`__
+   * `sphinx-gallery <https://github.com/sphinx-gallery/sphinx-gallery/issues>`__
+   * `numpydoc <https://github.com/numpy/numpydoc/issues>`__
+   * `liac-arff <https://github.com/renatopp/liac-arff>`__
+
+   and larger projects:
+
+   * `numpy <https://github.com/numpy/numpy/issues>`__
+   * `scipy <https://github.com/scipy/scipy/issues>`__
+   * `matplotlib <https://github.com/matplotlib/matplotlib/issues>`__
+   * and so on.
+
+   Look for issues marked "help wanted" or similar.
+   Helping these projects may help Scikit-learn too.
+   See also :ref:`related_projects`.
 
 
-.. _git_repo:
+Submitting a bug report or a feature request
+============================================
 
-Retrieving the latest code
-==========================
+In case you experience issues using this package, do not hesitate to submit a
+ticket to the
+`Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
+also welcome to post feature requests or pull requests.
 
-We use `Git <https://git-scm.com/>`_ for version control and
-`GitHub <https://github.com/>`_ for hosting our main repository.
+It is recommended to check that your issue complies with the
+following rules before submitting:
 
-You can check out the latest sources with the command::
+-  Verify that your issue is not being currently addressed by other
+   `issues <https://github.com/scikit-learn/scikit-learn/issues?q=>`_
+   or `pull requests <https://github.com/scikit-learn/scikit-learn/pulls?q=>`_.
 
-    git clone git://github.com/scikit-learn/scikit-learn.git
+-  If you are submitting an algorithm or feature request, please verify that
+   the algorithm fulfills our
+   `new algorithm requirements
+   <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
 
-or if you have write privileges::
+-  If you are submitting a bug report, we strongly encourage you to follow the guidelines in 
+   :ref:`filing_bugs`.
 
-    git clone git@github.com:scikit-learn/scikit-learn.git
+.. _filing_bugs:
 
-If you run the development version, it is cumbersome to reinstall the
-package each time you update the sources. It is thus preferred that
-you add the scikit-learn directory to your ``PYTHONPATH`` and build the
-extension in place::
+How to make a good bug report
+-----------------------------
 
-    python setup.py build_ext --inplace
+When you submit an issue to `Github
+<https://github.com/scikit-learn/scikit-learn/issues>`__, please do your best to
+follow these guidelines! This will make it a lot easier to provide you with good
+feedback:
 
+- The ideal bug report contains a **short reproducible code snippet**, this way
+  anyone can try to reproduce the bug easily (see `this
+  <https://stackoverflow.com/help/mcve>`_ for more details). If your snippet is
+  longer than around 50 lines, please link to a `gist
+  <https://gist.github.com>`_ or a github repo.
 
-Another option is to install the package in editable mode if you change your
-code a lot and do not want to have to reinstall every time. This basically
-builds the extension in place and creates a link to the development directory
-(see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_)::
+- If not feasible to include a reproducible snippet, please be specific about
+  what **estimators and/or functions are involved and the shape of the data**.
 
-    pip install --editable .
+- If an exception is raised, please **provide the full traceback**.
 
-.. note::
+- Please include your **operating system type and version number**, as well as
+  your **Python, scikit-learn, numpy, and scipy versions**. This information
+  can be found by running the following code snippet::
 
-    This is fundamentally similar to using the command ``python setup.py develop`` (see `the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_). It is however preferred to use pip.
+    >>> import sklearn
+    >>> sklearn.show_versions()  # doctest: +SKIP
 
-.. note::
+  .. note::
 
-    If you decide to do an editable install you have to rerun::
+    This utility function is only available in scikit-learn v0.20+.
+    For previous versions, one has to explicitly run::
 
-        python setup.py build_ext --inplace
+     import platform; print(platform.platform())
+     import sys; print("Python", sys.version)
+     import numpy; print("NumPy", numpy.__version__)
+     import scipy; print("SciPy", scipy.__version__)
+     import sklearn; print("Scikit-Learn", sklearn.__version__)
 
-    every time the source code of a compiled extension is
-    changed (for instance when switching branches or pulling changes from upstream).
+- Please ensure all **code snippets and error messages are formatted in
+  appropriate code blocks**.  See `Creating and highlighting code blocks
+  <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_
+  for more details.
 
-On Unix-like systems, you can simply type ``make`` in the top-level folder to
-build in-place and launch all the tests. Have a look at the ``Makefile`` for
-additional utilities.
 
 
 Contributing code
@@ -182,7 +226,7 @@ mailing list for more visibility.
 
 If any of the above seems like magic to you, then look up the `Git documentation
 <https://git-scm.com/documentation>`_ and the `Git development workflow
-<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
+<https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
 web.
 
 If some conflicts arise between your branch and the ``master`` branch, you need
@@ -209,96 +253,86 @@ Contributing pull requests
 It is recommended to check that your contribution complies with the following
 rules before submitting a pull request:
 
-    * Follow the `coding-guidelines`_ (see below). To make sure that
-      your PR does not add PEP8 violations you can run
-      `./build_tools/travis/flake8_diff.sh` or `make flake8-diff` on a
-      Unix-like system.
+* Follow the `coding-guidelines`_ (see below). To make sure that
+  your PR does not add PEP8 violations you can run
+  `./build_tools/travis/flake8_diff.sh` or `make flake8-diff` on a
+  Unix-like system.
 
-    * When applicable, use the validation tools and other code in the
-      ``sklearn.utils`` submodule.  A list of utility routines available
-      for developers can be found in the :ref:`developers-utils` page.
+* When applicable, use the validation tools and other code in the
+  ``sklearn.utils`` submodule.  A list of utility routines available
+  for developers can be found in the :ref:`developers-utils` page.
 
-    * Give your pull request a helpful title that summarises what your
-      contribution does. In some cases "Fix <ISSUE TITLE>" is enough.
-      "Fix #<ISSUE NUMBER>" is not enough.
+* Give your pull request a helpful title that summarises what your
+  contribution does. In some cases "Fix <ISSUE TITLE>" is enough.
+  "Fix #<ISSUE NUMBER>" is not enough.
 
-    * Often pull requests resolve one or more other issues (or pull requests).
-      If merging your pull request means that some other issues/PRs should
-      be closed, you should `use keywords to create link to them
-      <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
-      (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
-      one is preceded by a keyword). Upon merging, those issues/PRs will
-      automatically be closed by GitHub. If your pull request is simply
-      related to some other issues/PRs, create a link to them without using
-      the keywords (e.g., ``See also #1234``).
-    
-    * All public methods should have informative docstrings with sample
-      usage presented as doctests when appropriate.
+* Often pull requests resolve one or more other issues (or pull requests).
+  If merging your pull request means that some other issues/PRs should
+  be closed, you should `use keywords to create link to them
+  <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
+  (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
+  one is preceded by a keyword). Upon merging, those issues/PRs will
+  automatically be closed by GitHub. If your pull request is simply
+  related to some other issues/PRs, create a link to them without using
+  the keywords (e.g., ``See also #1234``).
 
-    * Please prefix the title of your pull request with ``[MRG]`` if the
-      contribution is complete and should be subjected to a detailed review.
-      Two core developers will review your code and change the prefix of the pull
-      request to ``[MRG + 1]`` and ``[MRG + 2]`` on approval, making it eligible
-      for merging. An incomplete contribution -- where you expect to do more
-      work before receiving a full review -- should be prefixed ``[WIP]`` (to
-      indicate a work in progress) and changed to ``[MRG]`` when it matures.
-      WIPs may be useful to: indicate you are working on something to avoid
-      duplicated work, request broad review of functionality or API, or seek
-      collaborators. WIPs often benefit from the inclusion of a
-      `task list
-      <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_
-      in the PR description.
+* All public methods should have informative docstrings with sample
+  usage presented as doctests when appropriate.
 
-    * All other tests pass when everything is rebuilt from scratch. On
-      Unix-like systems, check with (from the toplevel source folder)::
+* Please prefix the title of your pull request with ``[MRG]`` if the
+  contribution is complete and should be subjected to a detailed review.
+  Two core developers will review your code and change the prefix of the pull
+  request to ``[MRG + 1]`` and ``[MRG + 2]`` on approval, making it eligible
+  for merging. An incomplete contribution -- where you expect to do more
+  work before receiving a full review -- should be prefixed ``[WIP]`` (to
+  indicate a work in progress) and changed to ``[MRG]`` when it matures.
+  WIPs may be useful to: indicate you are working on something to avoid
+  duplicated work, request broad review of functionality or API, or seek
+  collaborators. WIPs often benefit from the inclusion of a
+  `task list
+  <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_
+  in the PR description.
 
-        $ make
+* All other tests pass when everything is rebuilt from scratch. On
+  Unix-like systems, check with (from the toplevel source folder)::
 
-    * When adding additional functionality, provide at least one example script
-      in the ``examples/`` folder. Have a look at other examples for reference.
-      Examples should demonstrate why the new functionality is useful in
-      practice and, if possible, compare it to other methods available in
-      scikit-learn.
+    $ make
 
-    * Documentation and high-coverage tests are necessary for enhancements to be
-      accepted. Bug-fixes or new features should be provided with
-      `non-regression tests
-      <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
-      verify the correct behavior of the fix or feature. In this manner, further
-      modifications on the code base are granted to be consistent with the
-      desired behavior. For the case of bug fixes, at the time of the PR, the
-      non-regression tests should fail for the code base in the master branch
-      and pass for the PR code.
+* When adding additional functionality, provide at least one example script
+  in the ``examples/`` folder. Have a look at other examples for reference.
+  Examples should demonstrate why the new functionality is useful in
+  practice and, if possible, compare it to other methods available in
+  scikit-learn.
 
-    * At least one paragraph of narrative documentation with links to
-      references in the literature (with PDF links when possible) and
-      the example. For more details on writing and building the
-      documentation, see the :ref:`contribute_documentation` section.
+* Documentation and high-coverage tests are necessary for enhancements to be
+  accepted. Bug-fixes or new features should be provided with
+  `non-regression tests
+  <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
+  verify the correct behavior of the fix or feature. In this manner, further
+  modifications on the code base are granted to be consistent with the
+  desired behavior. For the case of bug fixes, at the time of the PR, the
+  non-regression tests should fail for the code base in the master branch
+  and pass for the PR code.
+
+* At least one paragraph of narrative documentation with links to
+  references in the literature (with PDF links when possible) and
+  the example. For more details on writing and building the
+  documentation, see the :ref:`contribute_documentation` section.
 
 You can also check for common programming errors with the following tools:
 
-    * Code with a good unittest coverage (at least 90%, better 100%), check
-      with::
+* Code with a good unittest coverage (at least 90%, better 100%), check
+  with::
 
-        $ pip install nose coverage
-        $ nosetests --with-coverage path/to/tests_for_package
+    $ pip install pytest pytest-cov
+    $ pytest --cov sklearn path/to/tests_for_package
 
-      see also :ref:`testing_coverage`
+  see also :ref:`testing_coverage`
 
-    * No pyflakes warnings, check with::
+* No flake8 warnings, check with::
 
-        $ pip install pyflakes
-        $ pyflakes path/to/module.py
-
-    * No PEP8 warnings, check with::
-
-        $ pip install pep8
-        $ pep8 path/to/module.py
-
-    * AutoPEP8 can help you fix some of the easy redundant errors::
-
-        $ pip install autopep8
-        $ autopep8 path/to/pep8.py
+    $ pip install flake8
+    $ flake8 path/to/module.py
 
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing
@@ -318,16 +352,16 @@ and Cython optimizations.
 
    For two very well documented and more detailed guides on development
    workflow, please pay a visit to the `Scipy Development Workflow
-   <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
+   <https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
    and the `Astropy Workflow for Developers
-   <http://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
+   <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
 
 .. topic:: Continuous Integration (CI)
 
    * Travis is used for testing on Linux platforms
    * Appveyor is used for testing on Windows platforms
-   * CircleCI is used to build the docs for viewing
+   * CircleCI is used to build the docs for viewing and for testing with PyPy on Linux
 
    Please note that if one of the following markers appear in the latest commit
    message, the following actions are taken.
@@ -335,52 +369,12 @@ and Cython optimizations.
      ====================== ===================
      Commit Message Marker  Action Taken by CI
      ---------------------- -------------------
+     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
      [ci skip]              CI is skipped completely
      [doc skip]             Docs are not built
      [doc quick]            Docs built, but excludes example gallery plots
      [doc build]            Docs built including example gallery plots
      ====================== ===================
-
-.. _filing_bugs:
-
-Filing Bugs
------------
-
-We use GitHub issues to track all bugs and feature requests; feel free to
-open an issue if you have found a bug or wish to see a feature implemented.
-
-It is recommended to check that your issue complies with the
-following rules before submitting:
-
--  Verify that your issue is not being currently addressed by other
-   `issues <https://github.com/scikit-learn/scikit-learn/issues?q=>`_
-   or `pull requests <https://github.com/scikit-learn/scikit-learn/pulls?q=>`_.
-
--  If you are submitting an algorithm or feature request, please verify that
-   the algorithm fulfills our
-   `new algorithm requirements
-   <http://scikit-learn.org/stable/faq.html#can-i-add-this-new-algorithm-that-i-or-someone-else-just-published>`_.
-
--  Please ensure all code snippets and error messages are formatted in
-   appropriate code blocks.
-   See `Creating and highlighting code blocks
-   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_.
-
--  Please include your operating system type and version number, as well
-   as your Python, scikit-learn, numpy, and scipy versions. This information
-   can be found by running the following code snippet::
-
-     import platform; print(platform.platform())
-     import sys; print("Python", sys.version)
-     import numpy; print("NumPy", numpy.__version__)
-     import scipy; print("SciPy", scipy.__version__)
-     import sklearn; print("Scikit-Learn", sklearn.__version__)
-
--  Please be specific about what estimators and/or functions are involved
-   and the shape of the data, as appropriate; please include a
-   `reproducible <http://stackoverflow.com/help/mcve>`_ code snippet
-   or link to a `gist <https://gist.github.com>`_. If an exception is raised,
-   please provide the traceback.
 
 .. _new_contributors:
 
@@ -417,7 +411,7 @@ underestimate how easy an issue is to solve!
     we use the help wanted tag to mark Pull Requests which have been abandoned
     by their original contributor and are available for someone to pick up where the original
     contributor left off. The list of issues with the help wanted tag can be found
-    `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_ .
+    `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`__ .
 
     Note that not all issues which need contributors will have this tag.
 
@@ -428,23 +422,61 @@ Documentation
 
 We are glad to accept any sort of documentation: function docstrings,
 reStructuredText documents (like this one), tutorials, etc. reStructuredText
-documents live in the source code repository under the doc/ directory.
-
+documents live in the source code repository under the ``doc/`` directory.
 You can edit the documentation using any text editor, and then generate the
-HTML output by typing ``make html`` from the doc/ directory. Alternatively,
-``make html-noplot`` can be used to quickly generate the documentation without
-the example gallery. The resulting HTML files will be placed in _build/html/
-and are viewable in a web browser. See the README file in the doc/ directory
-for more information.
+HTML output by building the documentation website.
 
-For building the documentation, you will need `sphinx
-<http://www.sphinx-doc.org/en/stable/>`_,
-`matplotlib <http://matplotlib.org>`_ and
-`pillow <http://pillow.readthedocs.io/en/latest/>`_.
+Building the documentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**When you are writing documentation**, it is important to keep a good
-compromise between mathematical and algorithmic details, and give
-intuition to the reader on what the algorithm does.
+Building the documentation requires installing some additional packages::
+
+    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image
+
+To build the documentation, you need to be in the ``doc`` folder::
+
+    cd doc
+
+It also requires having the version of scikit-learn installed that corresponds
+to the documentation, e.g.::
+
+    pip install --editable ..
+
+To generate the full web site, including the example gallery::
+
+    make html
+
+Generating the example gallery will run all our examples which takes a
+while. To save some time, you can use:
+
+- ``make html-noplot``: this will generate the documentation without the
+  example gallery. This is useful when changing a docstring for example.
+- ``EXAMPLES_PATTERN=your_regex_goes_here make html``: only the examples
+  matching ``your_regex_goes_here`` will be run. This is particularly
+  useful if you are modifying a few examples.
+
+That should create all the documentation in the ``_build/html/stable``
+directory.  Set the environment variable `NO_MATHJAX=1` if you intend to view
+the documentation in an offline setting.
+
+To build the PDF manual, run::
+
+    make latexpdf
+
+.. warning:: **Sphinx version**
+
+   While we do our best to have the documentation build under as many
+   versions of Sphinx as possible, the different versions tend to
+   behave slightly differently. To get the best results, you should
+   use the same version as the one we used on CircleCI. Look at this
+   `github search <https://github.com/search?utf8=%E2%9C%93&q=sphinx+repo%3Ascikit-learn%2Fscikit-learn+extension%3Ash+path%3Abuild_tools%2Fcircle&type=Code>`_
+   to know the exact version.
+
+Guidelines for writing documentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It is important to keep a good compromise between mathematical and algorithmic
+details, and give intuition to the reader on what the algorithm does.
 
 Basically, to elaborate on the above, it is best to always
 start with a small paragraph with a hand-waving explanation of what the
@@ -469,48 +501,43 @@ documentation with the maths makes it more friendly towards
 users that are just interested in what the feature will do, as
 opposed to how it works "under the hood".
 
-You may also be asked to show your changes when it's built. When you create
-a pull request or make changes in an existing one modifying the docs, CircleCI
-automatically builds them. Thus, you can easily view your changes in the built
-artifacts using the following URL:
-
-``http://scikit-learn.org/circle?{BUILD_NUMBER}``
-
-We attempt to assemble a more precise set of changed files in the
-documentation at:
-
-``http://scikit-learn.org/circle?{BUILD_NUMBER}/_changed.html``
-
-Note: When you visit the details page of the CircleCI tests, you can find your
-BUILD_NUMBER mentioned as 'build #' which is different from your pull request
-number, which is presented as 'pull/#'.
-
 Finally, follow the formatting rules below to make it consistently good:
 
-    * Add "See also" in docstrings for related classes/functions.
+* Add "See also" in docstrings for related classes/functions.
 
-    * "See also" in docstrings should be one line per reference,
-      with a colon and an explanation, for example::
+* "See also" in docstrings should be one line per reference,
+  with a colon and an explanation, for example::
 
-        See also
-        --------
-        SelectKBest : Select features based on the k highest scores.
-        SelectFpr : Select features based on a false positive rate test.
+    See also
+    --------
+    SelectKBest : Select features based on the k highest scores.
+    SelectFpr : Select features based on a false positive rate test.
 
-    * For unwritten formatting rules, try to follow existing good works:
+* For unwritten formatting rules, try to follow existing good works:
 
-        * For "References" in docstrings, see the Silhouette Coefficient
-          (:func:`sklearn.metrics.silhouette_score`).
+    * For "References" in docstrings, see the Silhouette Coefficient
+      (:func:`sklearn.metrics.silhouette_score`).
 
-.. warning:: **Sphinx version**
+Generated documentation on CircleCI
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   While we do our best to have the documentation build under as many
-   versions of Sphinx as possible, the different versions tend to
-   behave slightly differently. To get the best results, you should
-   use the same version as the one we used on CircleCI. Look at this
-   `github search <https://github.com/search?utf8=%E2%9C%93&q=sphinx+repo%3Ascikit-learn%2Fscikit-learn+extension%3Ash+path%3Abuild_tools%2Fcircle&type=Code>`_
-   to know the exact version.
+When you change the documentation in a pull request, CircleCI automatically
+builds it. To view the documentation generated by CircleCI:
 
+* navigate to the bottom of your pull request page to see the CI
+  statuses. You may need to click on "Show all checks" to see all the CI
+  statuses.
+* click on the CircleCI status with "python3" in the title.
+* add ``#artifacts`` at the end of the URL. Note: you need to wait for the
+  CircleCI build to finish before being able to look at the artifacts.
+* once the artifacts are visible, navigate to ``doc/_changed.html`` to see a
+  list of documentation pages that are likely to be affected by your pull
+  request. Navigate to ``doc/index.html`` to see the full generated html
+  documentation.
+
+If you often need to look at the documentation generated by CircleCI, e.g. when
+reviewing pull requests, you may find :ref:`this tip
+<viewing_rendered_html_documentation>` very handy.
 
 .. _testing_coverage:
 
@@ -519,13 +546,13 @@ Testing and improving test coverage
 
 High-quality `unit testing <https://en.wikipedia.org/wiki/Unit_testing>`_
 is a corner-stone of the scikit-learn development process. For this
-purpose, we use the `nose <http://nose.readthedocs.io/en/latest/>`_
+purpose, we use the `pytest <https://docs.pytest.org>`_
 package. The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
 different options of the code.
 
 The full scikit-learn tests can be run using 'make' in the root folder.
-Alternatively, running 'nosetests' in a folder will run all the tests of
+Alternatively, running 'pytest' in a folder will run all the tests of
 the corresponding subpackages.
 
 We expect code coverage of new features to be at least around 90%.
@@ -533,7 +560,7 @@ We expect code coverage of new features to be at least around 90%.
 .. note:: **Workflow to improve test coverage**
 
    To test code coverage, you need to install the `coverage
-   <https://pypi.python.org/pypi/coverage>`_ package in addition to nose.
+   <https://pypi.org/project/coverage/>`_ package in addition to pytest.
 
    1. Run 'make test-coverage'. The output lists for each file the line
       numbers that are not tested.
@@ -611,32 +638,32 @@ follow it.
 
 In addition, we add the following guidelines:
 
-    * Use underscores to separate words in non class names: ``n_samples``
-      rather than ``nsamples``.
+* Use underscores to separate words in non class names: ``n_samples``
+  rather than ``nsamples``.
 
-    * Avoid multiple statements on one line. Prefer a line return after
-      a control flow statement (``if``/``for``).
+* Avoid multiple statements on one line. Prefer a line return after
+  a control flow statement (``if``/``for``).
 
-    * Use relative imports for references inside scikit-learn.
+* Use relative imports for references inside scikit-learn.
 
-    * Unit tests are an exception to the previous rule;
-      they should use absolute imports, exactly as client code would.
-      A corollary is that, if ``sklearn.foo`` exports a class or function
-      that is implemented in ``sklearn.foo.bar.baz``,
-      the test should import it from ``sklearn.foo``.
+* Unit tests are an exception to the previous rule;
+  they should use absolute imports, exactly as client code would.
+  A corollary is that, if ``sklearn.foo`` exports a class or function
+  that is implemented in ``sklearn.foo.bar.baz``,
+  the test should import it from ``sklearn.foo``.
 
-    * **Please don't use** ``import *`` **in any case**. It is considered harmful
-      by the `official Python recommendations
-      <https://docs.python.org/2/howto/doanddont.html#from-module-import>`_.
-      It makes the code harder to read as the origin of symbols is no
-      longer explicitly referenced, but most important, it prevents
-      using a static analysis tool like `pyflakes
-      <https://divmod.readthedocs.io/en/latest/products/pyflakes.html>`_ to automatically
-      find bugs in scikit-learn.
+* **Please don't use** ``import *`` **in any case**. It is considered harmful
+  by the `official Python recommendations
+  <https://docs.python.org/2/howto/doanddont.html#from-module-import>`_.
+  It makes the code harder to read as the origin of symbols is no
+  longer explicitly referenced, but most important, it prevents
+  using a static analysis tool like `pyflakes
+  <https://divmod.readthedocs.io/en/latest/products/pyflakes.html>`_ to automatically
+  find bugs in scikit-learn.
 
-    * Use the `numpy docstring standard
-      <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_
-      in all your docstrings.
+* Use the `numpy docstring standard
+  <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_
+  in all your docstrings.
 
 
 A good example of code that we like can be found `here
@@ -680,7 +707,7 @@ Here's a simple example of code using some of the above guidelines::
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             array representing the data
         random_state : RandomState or an int seed (0 by default)
             A random number generator instance to define the state of the
@@ -688,7 +715,7 @@ Here's a simple example of code using some of the above guidelines::
 
         Returns
         -------
-        x : numpy array, shape = (n_features,)
+        x : numpy array, shape (n_features,)
             A random point selected from X
         """
         X = check_array(X)
@@ -732,6 +759,8 @@ when an estimator is ``fit`` twice to the same data,
 it should produce an identical model both times,
 hence the validation in ``fit``, not ``__init__``.
 
+.. _contributing_deprecation:
+
 Deprecation
 -----------
 
@@ -770,17 +799,35 @@ In the following example, k is deprecated and renamed to n_clusters::
 
     import warnings
 
-    def example_function(n_clusters=8, k=None):
-        if k is not None:
+    def example_function(n_clusters=8, k='not_used'):
+        if k != 'not_used':
             warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
                           "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
+
+When the change is in a class, we validate and raise warning in ``fit``::
+
+  import warnings
+
+  class ExampleEstimator(BaseEstimator):
+      def __init__(self, n_clusters=8, k='not_used'):
+          self.n_clusters = n_clusters
+          self.k = k
+
+      def fit(self, X, y):
+          if k != 'not_used':
+              warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
+                            "will be removed in 0.15.", DeprecationWarning)
+              self._n_clusters = k
+          else:
+              self._n_clusters = self.n_clusters
 
 As in these examples, the warning message should always give both the
 version in which the deprecation happened and the version in which the
 old behavior will be removed. If the deprecation happened in version
 0.x-dev, the message should say deprecation occurred in version 0.x and
-the removal will be in 0.(x+2). For example, if the deprecation happened
+the removal will be in 0.(x+2), so that users will have enough time to
+adapt their code to the new behaviour. For example, if the deprecation happened
 in version 0.18-dev, the message should say it happened in version 0.18
 and the old behavior will be removed in version 0.20.
 
@@ -791,6 +838,51 @@ same information as the deprecation warning as explained above. Use the
   .. deprecated:: 0.13
      ``k`` was renamed to ``n_clusters`` in version 0.13 and will be removed
      in 0.15.
+
+What's more, a deprecation requires a test which ensures that the warning is
+raised in relevant cases but not in other cases. The warning should be caught
+in all other tests (using e.g., ``@pytest.mark.filterwarnings``),
+and there should be no warning in the examples.
+
+
+Change the default value of a parameter
+---------------------------------------
+
+If the default value of a parameter needs to be changed, please replace the
+default value with a specific value (e.g., ``warn``) and raise
+``FutureWarning`` when users are using the default value. In the following
+example, we change the default value of ``n_clusters`` from 5 to 10
+(current version is 0.20)::
+
+    import warnings
+
+    def example_function(n_clusters='warn'):
+        if n_clusters == 'warn':
+            warnings.warn("The default value of n_clusters will change from "
+                          "5 to 10 in 0.22.", FutureWarning)
+            n_clusters = 5
+
+When the change is in a class, we validate and raise warning in ``fit``::
+
+  import warnings
+
+  class ExampleEstimator:
+      def __init__(self, n_clusters='warn'):
+          self.n_clusters = n_clusters
+
+      def fit(self, X, y):
+          if self.n_clusters == 'warn':
+            warnings.warn("The default value of n_clusters will change from "
+                          "5 to 10 in 0.22.", FutureWarning)
+            self._n_clusters = 5
+
+Similar to deprecations, the warning message should always give both the
+version in which the change happened and the version in which the old behavior
+will be removed. The docstring needs to be updated accordingly. We need a test
+which ensures that the warning is raised in relevant cases but not in other
+cases. The warning should be caught in all other tests
+(using e.g., ``@pytest.mark.filterwarnings``), and there should be no warning
+in the examples.
 
 
 .. currentmodule:: sklearn
@@ -807,7 +899,7 @@ just remember that ``print`` is a function and
 integer division is written ``//``.
 String handling has been overhauled, though, as have parts of
 the Python standard library.
-The `six <http://pythonhosted.org/six/>`_ package helps with
+The `six <https://pythonhosted.org/six/>`_ package helps with
 cross-compatibility and is included in scikit-learn as
 ``sklearn.externals.six``.
 
@@ -845,7 +937,7 @@ from high-level questions to a more detailed check-list.
   the tests validate that the code is correct, i.e. doing what the
   documentation says it does? If the change is a bug-fix, is a
   non-regression test included? Look at `this
-  <https://jeffknupp.com/blog/2013/12/09/improve-your-python-understanding-unit-testing>`_
+  <https://jeffknupp.com/blog/2013/12/09/improve-your-python-understanding-unit-testing>`__
   to get started with testing in Python.
 
 - Do the tests pass in the continuous integration build? If
@@ -871,6 +963,9 @@ from high-level questions to a more detailed check-list.
   :ref:`contribute_documentation` section for more details), and are the plots
   instructive?
 
+:ref:`saved_replies` includes some frequent comments that reviewers may make.
+
+.. _api_overview:
 
 APIs of scikit-learn objects
 ============================
@@ -879,6 +974,9 @@ To have a uniform API, we try to have a common basic API for all the
 objects. In addition, to avoid the proliferation of framework code, we
 try to adopt simple conventions and limit to a minimum the number of
 methods an object must implement.
+
+Elements of the scikit-learn API are described more definitively in the
+:ref:`glossary`.
 
 Different objects
 -----------------
@@ -890,41 +988,41 @@ multiple interfaces):
 
     The base object, implements a ``fit`` method to learn from data, either::
 
-      estimator = obj.fit(data, targets)
+      estimator = estimator.fit(data, targets)
 
     or::
 
-      estimator = obj.fit(data)
+      estimator = estimator.fit(data)
 
 :Predictor:
 
     For supervised learning, or some unsupervised problems, implements::
 
-      prediction = obj.predict(data)
+      prediction = predictor.predict(data)
 
     Classification algorithms usually also offer a way to quantify certainty
     of a prediction, either using ``decision_function`` or ``predict_proba``::
 
-      probability = obj.predict_proba(data)
+      probability = predictor.predict_proba(data)
 
 :Transformer:
 
     For filtering or modifying the data, in a supervised or unsupervised
     way, implements::
 
-      new_data = obj.transform(data)
+      new_data = transformer.transform(data)
 
     When fitting and transforming can be performed much more efficiently
     together than separately, implements::
 
-      new_data = obj.fit_transform(data)
+      new_data = transformer.fit_transform(data)
 
 :Model:
 
     A model that can give a `goodness of fit <https://en.wikipedia.org/wiki/Goodness_of_fit>`_
     measure or a likelihood of unseen data, implements (higher is better)::
 
-      score = obj.score(data)
+      score = model.score(data)
 
 Estimators
 ----------
@@ -1011,11 +1109,9 @@ the predict method.
 ============= ======================================================
 Parameters
 ============= ======================================================
-X             array-like, with shape = [N, D], where N is the number
-              of samples and D is the number of features.
+X             array-like, shape (n_samples, n_features)
 
-y             array, with shape = [N], where N is the number of
-              samples.
+y             array, shape (n_samples,)
 
 kwargs        optional data-dependent parameters.
 ============= ======================================================
@@ -1099,11 +1195,11 @@ the correct interface more easily.
     * directory structures and scripts to compile documentation and example
       galleries
     * scripts to manage continuous integration (testing on Linux and Windows)
-    * instructions from getting started to publishing on `PyPi <https://pypi.python.org/pypi>`_
+    * instructions from getting started to publishing on `PyPi <https://pypi.org/>`_
 
 .. topic:: ``BaseEstimator`` and mixins:
 
-    We tend to use use "duck typing", so building an estimator which follows
+    We tend to use "duck typing", so building an estimator which follows
     the API suffices for compatibility, without needing to inherit from or
     even import any scikit-learn classes.
 
@@ -1113,7 +1209,7 @@ the correct interface more easily.
     and optionally the mixin classes in ``sklearn.base``.
     For example, below is a custom classifier, with more examples included
     in the scikit-learn-contrib
-    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`_.
+    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`__.
 
       >>> import numpy as np
       >>> from sklearn.base import BaseEstimator, ClassifierMixin
@@ -1238,7 +1334,9 @@ is implemented using the ``_estimator_type`` attribute, which takes a string val
 It should be ``"classifier"`` for classifiers and ``"regressor"`` for
 regressors and ``"clusterer"`` for clustering methods, to work as expected.
 Inheriting from ``ClassifierMixin``, ``RegressorMixin`` or ``ClusterMixin``
-will set the attribute automatically.
+will set the attribute automatically.  When a meta-estimator needs to distinguish
+among estimator types, instead of checking ``_estimator_type`` directly, helpers
+like :func:`base.is_classifier` should be used.
 
 Working notes
 -------------

@@ -56,7 +56,7 @@ from sklearn.externals import joblib
 PY3_OR_LATER = sys.version_info[0] >= 3
 
 # The original data can be found at:
-# http://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
+# https://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
 SAMPLES = RemoteFileMetadata(
     filename='samples.zip',
     url='https://ndownloader.figshare.com/files/5976075',
@@ -64,7 +64,7 @@ SAMPLES = RemoteFileMetadata(
               '3c098f7f85955e89d321ee8efe37ac28'))
 
 # The original data can be found at:
-# http://biodiversityinformatics.amnh.org/open_source/maxent/coverages.zip
+# https://biodiversityinformatics.amnh.org/open_source/maxent/coverages.zip
 COVERAGES = RemoteFileMetadata(
     filename='coverages.zip',
     url='https://ndownloader.figshare.com/files/5976078',
@@ -170,14 +170,14 @@ def fetch_species_distributions(data_home=None,
         The latitude/longitude values for the grid are discussed below.
         Missing data is represented by the value -9999.
 
-    train : record array, shape = (1623,)
+    train : record array, shape = (1624,)
         The training points for the data.  Each point has three fields:
 
         - train['species'] is the species name
         - train['dd long'] is the longitude, in degrees
         - train['dd lat'] is the latitude, in degrees
 
-    test : record array, shape = (619,)
+    test : record array, shape = (620,)
         The test points for the data.  Same format as the training data.
 
     Nx, Ny : integers

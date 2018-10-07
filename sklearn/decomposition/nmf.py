@@ -34,12 +34,25 @@ def norm(x):
     """Dot product-based Euclidean norm implementation
 
     See: http://fseoane.net/blog/2011/computing-the-vector-norm/
+
+    Parameters
+    ----------
+    x : array-like
+        Vector for which to compute the norm
     """
     return sqrt(squared_norm(x))
 
 
 def trace_dot(X, Y):
-    """Trace of np.dot(X, Y.T)."""
+    """Trace of np.dot(X, Y.T).
+
+    Parameters
+    ----------
+    X : array-like
+        First matrix
+    Y : array-like
+        Second matrix
+    """
     return np.dot(X.ravel(), Y.ravel())
 
 
@@ -114,8 +127,9 @@ def _beta_divergence(X, W, H, beta, square_root=False):
         X_data = X.ravel()
 
     # do not affect the zeros: here 0 ** (-1) = 0 and not infinity
-    WH_data = WH_data[X_data != 0]
-    X_data = X_data[X_data != 0]
+    indices = X_data > EPSILON
+    WH_data = WH_data[indices]
+    X_data = X_data[indices]
 
     # used to avoid division by zero
     WH_data[WH_data == 0] = EPSILON
@@ -466,7 +480,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
 
     References
     ----------
-    Cichocki, Andrzej, and P. H. A. N. Anh-Huy. "Fast local algorithms for
+    Cichocki, Andrzej, and Phan, Anh-Huy. "Fast local algorithms for
     large scale nonnegative matrix and tensor factorizations."
     IEICE transactions on fundamentals of electronics, communications and
     computer sciences 92.3: 708-721, 2009.
@@ -822,7 +836,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
                                verbose=0, shuffle=False):
-    """Compute Non-negative Matrix Factorization (NMF)
+    r"""Compute Non-negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
@@ -866,7 +880,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     init :  None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
-        Default: 'nndsvd' if n_components < n_features, otherwise random.
+        Default: 'random'.
         Valid options:
 
         - 'random': non-negative random matrices, scaled with:
@@ -890,7 +904,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     solver : 'cd' | 'mu'
         Numerical solver to use:
-        'cd' is a Coordinate Descent solver.
+        'cd' is a Coordinate Descent solver that uses Fast Hierarchical
+            Alternating Least Squares (Fast HALS).
         'mu' is a Multiplicative Update solver.
 
         .. versionadded:: 0.17
@@ -957,8 +972,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     >>> import numpy as np
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from sklearn.decomposition import non_negative_factorization
-    >>> W, H, n_iter = non_negative_factorization(X, n_components=2, \
-        init='random', random_state=0)
+    >>> W, H, n_iter = non_negative_factorization(X, n_components=2,
+    ... init='random', random_state=0)
 
     References
     ----------
@@ -1003,7 +1018,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         # 'mu' solver should not be initialized by zeros
         if solver == 'mu':
             avg = np.sqrt(X.mean() / n_components)
-            W = avg * np.ones((n_samples, n_components))
+            W = np.full((n_samples, n_components), avg)
         else:
             W = np.zeros((n_samples, n_components))
     else:
@@ -1038,7 +1053,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
 
 class NMF(BaseEstimator, TransformerMixin):
-    """Non-Negative Matrix Factorization (NMF)
+    r"""Non-Negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for

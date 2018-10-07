@@ -20,5 +20,4 @@ User Guide
    model_selection.rst
    data_transforms.rst
    Dataset loading utilities <datasets/index.rst>
-   modules/scaling_strategies.rst
-   modules/computational_performance.rst
+   modules/computing.rst

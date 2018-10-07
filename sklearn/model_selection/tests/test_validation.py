@@ -7,8 +7,12 @@ import tempfile
 import os
 from time import sleep
 
+import pytest
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
+from sklearn.exceptions import FitFailedWarning
+
+from sklearn.model_selection.tests.test_search import FailingClassifier
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
@@ -18,7 +22,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
@@ -40,6 +43,7 @@ from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import learning_curve
 from sklearn.model_selection import validation_curve
 from sklearn.model_selection._validation import _check_is_permutation
+from sklearn.model_selection._validation import _fit_and_score
 
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
@@ -60,7 +64,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
 
-from sklearn.preprocessing import Imputer
+from sklearn.impute import SimpleImputer
+
 from sklearn.preprocessing import LabelEncoder
 from sklearn.pipeline import Pipeline
 
@@ -233,6 +238,7 @@ y2 = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 3])
 P_sparse = coo_matrix(np.eye(5))
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_cross_val_score():
     clf = MockClassifier()
 
@@ -270,9 +276,22 @@ def test_cross_val_score():
     scores = cross_val_score(clf, X_3d, y2)
 
     clf = MockClassifier(allow_nd=False)
-    assert_raises(ValueError, cross_val_score, clf, X_3d, y2)
+    assert_raises(ValueError, cross_val_score, clf, X_3d, y2,
+                  error_score='raise')
 
 
+@pytest.mark.filterwarnings('ignore:You should specify a value for')  # 0.22
+def test_cross_validate_many_jobs():
+    # regression test for #12154: cv='warn' with n_jobs>1 trigger a copy of
+    # the parameters leading to a failure in check_cv due to cv is 'warn'
+    # instead of cv == 'warn'.
+    X, y = load_iris(return_X_y=True)
+    clf = SVC(gamma='auto')
+    grid = GridSearchCV(clf, param_grid={'C': [1, 10]})
+    cross_validate(grid, X, y, n_jobs=2)
+
+
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_cross_validate_invalid_scoring_param():
     X, y = make_classification(random_state=0)
     estimator = MockClassifier()
@@ -333,10 +352,10 @@ def test_cross_validate_invalid_scoring_param():
 
     # Multiclass Scorers that return multiple values are not supported yet
     assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(), X, y,
+                        cross_validate, SVC(gamma='scale'), X, y,
                         scoring=multivalued_scorer)
     assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(), X, y,
+                        cross_validate, SVC(gamma='scale'), X, y,
                         scoring={"foo": multivalued_scorer})
 
     assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
@@ -363,57 +382,38 @@ def test_cross_validate():
         test_mse_scores = []
         train_r2_scores = []
         test_r2_scores = []
+        fitted_estimators = []
         for train, test in cv.split(X, y):
             est = clone(reg).fit(X[train], y[train])
             train_mse_scores.append(mse_scorer(est, X[train], y[train]))
             train_r2_scores.append(r2_scorer(est, X[train], y[train]))
             test_mse_scores.append(mse_scorer(est, X[test], y[test]))
             test_r2_scores.append(r2_scorer(est, X[test], y[test]))
+            fitted_estimators.append(est)
 
         train_mse_scores = np.array(train_mse_scores)
         test_mse_scores = np.array(test_mse_scores)
         train_r2_scores = np.array(train_r2_scores)
         test_r2_scores = np.array(test_r2_scores)
+        fitted_estimators = np.array(fitted_estimators)
 
         scores = (train_mse_scores, test_mse_scores, train_r2_scores,
-                  test_r2_scores)
+                  test_r2_scores, fitted_estimators)
 
-        yield check_cross_validate_single_metric, est, X, y, scores
-        yield check_cross_validate_multi_metric, est, X, y, scores
-
-
-def test_cross_validate_return_train_score_warn():
-    # Test that warnings are raised. Will be removed in 0.21
-
-    X, y = make_classification(random_state=0)
-    estimator = MockClassifier()
-
-    result = {}
-    for val in [False, True, 'warn']:
-        result[val] = assert_no_warnings(cross_validate, estimator, X, y,
-                                         return_train_score=val)
-
-    msg = (
-        'You are accessing a training score ({!r}), '
-        'which will not be available by default '
-        'any more in 0.21. If you need training scores, '
-        'please set return_train_score=True').format('train_score')
-    train_score = assert_warns_message(FutureWarning, msg,
-                                       result['warn'].get, 'train_score')
-    assert np.allclose(train_score, result[True]['train_score'])
-    assert 'train_score' not in result[False]
+        check_cross_validate_single_metric(est, X, y, scores)
+        check_cross_validate_multi_metric(est, X, y, scores)
 
 
 def check_cross_validate_single_metric(clf, X, y, scores):
     (train_mse_scores, test_mse_scores, train_r2_scores,
-     test_r2_scores) = scores
+     test_r2_scores, fitted_estimators) = scores
     # Test single metric evaluation when scoring is string or singleton list
     for (return_train_score, dict_len) in ((True, 4), (False, 3)):
         # Single metric passed as a string
         if return_train_score:
-            # It must be True by default
             mse_scores_dict = cross_validate(clf, X, y, cv=5,
-                                             scoring='neg_mean_squared_error')
+                                             scoring='neg_mean_squared_error',
+                                             return_train_score=True)
             assert_array_almost_equal(mse_scores_dict['train_score'],
                                       train_mse_scores)
         else:
@@ -427,10 +427,11 @@ def check_cross_validate_single_metric(clf, X, y, scores):
 
         # Single metric passed as a list
         if return_train_score:
-            # It must be True by default
-            r2_scores_dict = cross_validate(clf, X, y, cv=5, scoring=['r2'])
+            # It must be True by default - deprecated
+            r2_scores_dict = cross_validate(clf, X, y, cv=5, scoring=['r2'],
+                                            return_train_score=True)
             assert_array_almost_equal(r2_scores_dict['train_r2'],
-                                      train_r2_scores)
+                                      train_r2_scores, True)
         else:
             r2_scores_dict = cross_validate(clf, X, y, cv=5, scoring=['r2'],
                                             return_train_score=False)
@@ -438,11 +439,19 @@ def check_cross_validate_single_metric(clf, X, y, scores):
         assert_equal(len(r2_scores_dict), dict_len)
         assert_array_almost_equal(r2_scores_dict['test_r2'], test_r2_scores)
 
+    # Test return_estimator option
+    mse_scores_dict = cross_validate(clf, X, y, cv=5,
+                                     scoring='neg_mean_squared_error',
+                                     return_estimator=True)
+    for k, est in enumerate(mse_scores_dict['estimator']):
+        assert_almost_equal(est.coef_, fitted_estimators[k].coef_)
+        assert_almost_equal(est.intercept_, fitted_estimators[k].intercept_)
+
 
 def check_cross_validate_multi_metric(clf, X, y, scores):
     # Test multimetric evaluation when scoring is a list / dict
     (train_mse_scores, test_mse_scores, train_r2_scores,
-     test_r2_scores) = scores
+     test_r2_scores, fitted_estimators) = scores
     all_scoring = (('r2', 'neg_mean_squared_error'),
                    {'r2': make_scorer(r2_score),
                     'neg_mean_squared_error': 'neg_mean_squared_error'})
@@ -455,8 +464,9 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
     for return_train_score in (True, False):
         for scoring in all_scoring:
             if return_train_score:
-                # return_train_score must be True by default
-                cv_results = cross_validate(clf, X, y, cv=5, scoring=scoring)
+                # return_train_score must be True by default - deprecated
+                cv_results = cross_validate(clf, X, y, cv=5, scoring=scoring,
+                                            return_train_score=True)
                 assert_array_almost_equal(cv_results['train_r2'],
                                           train_r2_scores)
                 assert_array_almost_equal(
@@ -487,6 +497,7 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
             assert np.all(cv_results['score_time'] < 10)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_cross_val_score_predict_groups():
     # Check if ValueError (when groups is None) propagates to cross_val_score
     # and cross_val_predict
@@ -506,6 +517,8 @@ def test_cross_val_score_predict_groups():
                              cross_val_predict, estimator=clf, X=X, y=y, cv=cv)
 
 
+@pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_cross_val_score_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -543,6 +556,7 @@ def test_cross_val_score_mask():
     assert_array_equal(scores_indices, scores_masks)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_cross_val_score_precomputed():
     # test for svm with precomputed kernel
     svm = SVC(kernel="precomputed")
@@ -555,7 +569,7 @@ def test_cross_val_score_precomputed():
     assert_array_almost_equal(score_precomputed, score_linear)
 
     # test with callable
-    svm = SVC(kernel=lambda x, y: np.dot(x, y.T))
+    svm = SVC(gamma='scale', kernel=lambda x, y: np.dot(x, y.T))
     score_callable = cross_val_score(svm, X, y)
     assert_array_almost_equal(score_precomputed, score_callable)
 
@@ -569,6 +583,7 @@ def test_cross_val_score_precomputed():
                   linear_kernel.tolist(), y)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_cross_val_score_fit_params():
     clf = MockClassifier()
     n_samples = X.shape[0]
@@ -591,7 +606,7 @@ def test_cross_val_score_fit_params():
         assert_equal(clf.dummy_obj, DUMMY_OBJ)
 
     fit_params = {'sample_weight': np.ones(n_samples),
-                  'class_prior': np.ones(n_classes) / n_classes,
+                  'class_prior': np.full(n_classes, 1. / n_classes),
                   'sparse_sample_weight': W_sparse,
                   'sparse_param': P_sparse,
                   'dummy_int': DUMMY_INT,
@@ -727,7 +742,7 @@ def test_permutation_test_score_allow_nans():
     X[2, :] = np.nan
     y = np.repeat([0, 1], X.shape[0] / 2)
     p = Pipeline([
-        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('imputer', SimpleImputer(strategy='mean', missing_values=np.nan)),
         ('classifier', MockClassifier()),
     ])
     permutation_test_score(p, X, y, cv=5)
@@ -739,7 +754,7 @@ def test_cross_val_score_allow_nans():
     X[2, :] = np.nan
     y = np.repeat([0, 1], X.shape[0] / 2)
     p = Pipeline([
-        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('imputer', SimpleImputer(strategy='mean', missing_values=np.nan)),
         ('classifier', MockClassifier()),
     ])
     cross_val_score(p, X, y, cv=5)
@@ -762,6 +777,9 @@ def test_cross_val_score_multilabel():
     assert_almost_equal(score_samples, [1, 1 / 2, 3 / 4, 1 / 2, 1 / 4])
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_cross_val_predict():
     boston = load_boston()
     X, y = boston.data, boston.target
@@ -811,6 +829,9 @@ def test_cross_val_predict():
                          X, y, method='predict_proba', cv=KFold(2))
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_cross_val_predict_decision_function_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
@@ -850,13 +871,16 @@ def test_cross_val_predict_decision_function_shape():
     ind = np.argsort(y)
     X, y = X[ind], y[ind]
     assert_raises_regex(ValueError,
-                        'Output shape \(599L?, 21L?\) of decision_function '
-                        'does not match number of classes \(7\) in fold. '
+                        r'Output shape \(599L?, 21L?\) of decision_function '
+                        r'does not match number of classes \(7\) in fold. '
                         'Irregular decision_function .*',
                         cross_val_predict, est, X, y,
                         cv=KFold(n_splits=3), method='decision_function')
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_cross_val_predict_predict_proba_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
@@ -871,6 +895,9 @@ def test_cross_val_predict_predict_proba_shape():
     assert_equal(preds.shape, (150, 3))
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_cross_val_predict_predict_log_proba_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
@@ -885,6 +912,9 @@ def test_cross_val_predict_predict_log_proba_shape():
     assert_equal(preds.shape, (150, 3))
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_cross_val_predict_input_types():
     iris = load_iris()
     X, y = iris.data, iris.target
@@ -930,6 +960,9 @@ def test_cross_val_predict_input_types():
     assert_array_equal(predictions.shape, (150,))
 
 
+@pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+# python3.7 deprecation warnings in pandas via matplotlib :-/
 def test_cross_val_predict_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -947,6 +980,7 @@ def test_cross_val_predict_pandas():
         cross_val_predict(clf, X_df, y_ser)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_cross_val_score_sparse_fit_params():
     iris = load_iris()
     X, y = iris.data, iris.target
@@ -1155,7 +1189,8 @@ def test_learning_curve_with_shuffle():
     assert_array_almost_equal(test_scores_batch.mean(axis=1),
                               np.array([0.36111111, 0.25, 0.25]))
     assert_raises(ValueError, learning_curve, estimator, X, y, cv=cv, n_jobs=1,
-                  train_sizes=np.linspace(0.3, 1.0, 3), groups=groups)
+                  train_sizes=np.linspace(0.3, 1.0, 3), groups=groups,
+                  error_score='raise')
 
     train_sizes_inc, train_scores_inc, test_scores_inc = learning_curve(
         estimator, X, y, cv=cv, n_jobs=1, train_sizes=np.linspace(0.3, 1.0, 3),
@@ -1298,10 +1333,15 @@ def check_cross_val_predict_with_method(est):
         assert_array_equal(predictions, predictions_ystr)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_cross_val_predict_with_method():
     check_cross_val_predict_with_method(LogisticRegression())
 
 
+@pytest.mark.filterwarnings('ignore: max_iter and tol parameters')
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_cross_val_predict_method_checking():
     # Regression test for issue #9639. Tests that cross_val_predict does not
     # check estimator methods (e.g. predict_proba) before fitting
@@ -1309,6 +1349,10 @@ def test_cross_val_predict_method_checking():
     check_cross_val_predict_with_method(est)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_gridsearchcv_cross_val_predict_with_method():
     est = GridSearchCV(LogisticRegression(random_state=42),
                        {'C': [0.1, 1]},
@@ -1325,7 +1369,7 @@ def get_expected_predictions(X, y, cv, classes, est, method):
         est.fit(X[train], y[train])
         expected_predictions_ = func(X[test])
         # To avoid 2 dimensional indexing
-        if method is 'predict_proba':
+        if method == 'predict_proba':
             exp_pred_test = np.zeros((len(test), classes))
         else:
             exp_pred_test = np.full((len(test), classes),
@@ -1336,10 +1380,13 @@ def get_expected_predictions(X, y, cv, classes, est, method):
     return expected_predictions
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_cross_val_predict_class_subset():
 
     X = np.arange(200).reshape(100, 2)
-    y = np.array([x//10 for x in range(100)])
+    y = np.array([x // 10 for x in range(100)])
     classes = 10
 
     kfold3 = KFold(n_splits=3)
@@ -1377,6 +1424,7 @@ def test_cross_val_predict_class_subset():
         assert_array_almost_equal(expected_predictions, predictions)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_score_memmap():
     # Ensure a scalar score of memmap type is accepted
     iris = load_iris()
@@ -1404,6 +1452,8 @@ def test_score_memmap():
                 sleep(1.)
 
 
+@pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_permutation_test_score_pandas():
     # check permutation_test_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -1421,3 +1471,65 @@ def test_permutation_test_score_pandas():
         check_series = lambda x: isinstance(x, TargetType)
         clf = CheckingClassifier(check_X=check_df, check_y=check_series)
         permutation_test_score(clf, X_df, y_ser)
+
+
+def test_fit_and_score():
+    # Create a failing classifier to deliberately fail
+    failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
+    # dummy X data
+    X = np.arange(1, 10)
+    y = np.ones(9)
+    fit_and_score_args = [failing_clf, X, None, dict(), None, None, 0,
+                          None, None]
+    # passing error score to trigger the warning message
+    fit_and_score_kwargs = {'error_score': 0}
+    # check if the warning message type is as expected
+    assert_warns(FitFailedWarning, _fit_and_score, *fit_and_score_args,
+                 **fit_and_score_kwargs)
+    # since we're using FailingClassfier, our error will be the following
+    error_message = "ValueError: Failing classifier failed as required"
+    # the warning message we're expecting to see
+    warning_message = ("Estimator fit failed. The score on this train-test "
+                       "partition for these parameters will be set to %f. "
+                       "Details: \n%s" % (fit_and_score_kwargs['error_score'],
+                                          error_message))
+    # check if the same warning is triggered
+    assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
+                         *fit_and_score_args, **fit_and_score_kwargs)
+
+    # check if warning was raised, with default error_score argument
+    warning_message = ("From version 0.22, errors during fit will result "
+                       "in a cross validation score of NaN by default. Use "
+                       "error_score='raise' if you want an exception "
+                       "raised or error_score=np.nan to adopt the "
+                       "behavior from version 0.22.")
+    with pytest.raises(ValueError):
+        assert_warns_message(FutureWarning, warning_message, _fit_and_score,
+                             *fit_and_score_args)
+
+    fit_and_score_kwargs = {'error_score': 'raise'}
+    # check if exception was raised, with default error_score='raise'
+    assert_raise_message(ValueError, "Failing classifier failed as required",
+                         _fit_and_score, *fit_and_score_args,
+                         **fit_and_score_kwargs)
+
+    # check that functions upstream pass error_score param to _fit_and_score
+    error_message = ("error_score must be the string 'raise' or a"
+                     " numeric value. (Hint: if using 'raise', please"
+                     " make sure that it has been spelled correctly.)")
+
+    assert_raise_message(ValueError, error_message, cross_validate,
+                         failing_clf, X, cv=3, error_score='unvalid-string')
+
+    assert_raise_message(ValueError, error_message, cross_val_score,
+                         failing_clf, X, cv=3, error_score='unvalid-string')
+
+    assert_raise_message(ValueError, error_message, learning_curve,
+                         failing_clf, X, y, cv=3, error_score='unvalid-string')
+
+    assert_raise_message(ValueError, error_message, validation_curve,
+                         failing_clf, X, y, 'parameter',
+                         [FailingClassifier.FAILING_PARAMETER], cv=3,
+                         error_score='unvalid-string')
+
+    assert_equal(failing_clf.score(), 0.)  # FailingClassifier coverage

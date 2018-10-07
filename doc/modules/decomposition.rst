@@ -167,7 +167,7 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 
     * `"Finding structure with randomness: Stochastic algorithms for
       constructing approximate matrix decompositions"
-      <http://arxiv.org/abs/0909.4061>`_
+      <https://arxiv.org/abs/0909.4061>`_
       Halko, et al., 2009
 
 
@@ -246,7 +246,7 @@ problem solved is a PCA problem (dictionary learning) with an
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_2^2+\alpha||V||_1 \\
-                \text{subject to\,} & ||U_k||_2 = 1 \text{ for all }
+                \text{subject to } & ||U_k||_2 = 1 \text{ for all }
                 0 \leq k < n_{components}
 
 
@@ -270,10 +270,10 @@ factorization, while larger values shrink many coefficients to zero.
 .. topic:: References:
 
   .. [Mrl09] `"Online Dictionary Learning for Sparse Coding"
-     <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
+     <https://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
      J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
   .. [Jen09] `"Structured Sparse Principal Component Analysis"
-     <www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
+     <https://www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
      R. Jenatton, G. Obozinski, F. Bach, 2009
 
 
@@ -289,7 +289,7 @@ where :math:`k` is a user-specified parameter.
 When truncated SVD is applied to term-document matrices
 (as returned by ``CountVectorizer`` or ``TfidfVectorizer``),
 this transformation is known as
-`latent semantic analysis <http://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
+`latent semantic analysis <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
 (LSA), because it transforms such matrices
 to a "semantic" space of low dimensionality.
 In particular, LSA is known to combat the effects of synonymy and polysemy
@@ -347,14 +347,14 @@ compensating for LSA's erroneous assumptions about textual data.
 
 .. topic:: Examples:
 
-   * :ref:`sphx_glr_auto_examples_text_document_clustering.py`
+   * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`
 
 .. topic:: References:
 
   * Christopher D. Manning, Prabhakar Raghavan and Hinrich Schütze (2008),
     *Introduction to Information Retrieval*, Cambridge University Press,
     chapter 18: `Matrix decompositions & latent semantic indexing
-    <http://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
+    <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
 
 
 .. _DictionaryLearning:
@@ -417,10 +417,10 @@ Generic dictionary learning
 
 Dictionary learning (:class:`DictionaryLearning`) is a matrix factorization
 problem that amounts to finding a (usually overcomplete) dictionary that will
-perform good at sparsely encoding the fitted data.
+perform well at sparsely encoding the fitted data.
 
 Representing data as sparse combinations of atoms from an overcomplete
-dictionary is suggested to be the way the mammal primary visual cortex works.
+dictionary is suggested to be the way the mammalian primary visual cortex works.
 Consequently, dictionary learning applied on image patches has been shown to
 give good results in image processing tasks such as image completion,
 inpainting and denoising, as well as for supervised recognition tasks.
@@ -432,7 +432,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_2^2+\alpha||U||_1 \\
-                \text{subject to\,} & ||V_k||_2 = 1 \text{ for all }
+                \text{subject to } & ||V_k||_2 = 1 \text{ for all }
                 0 \leq k < n_{\mathrm{atoms}}
 
 
@@ -450,6 +450,32 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 After using such a procedure to fit the dictionary, the transform is simply a
 sparse coding step that shares the same implementation with all dictionary
 learning objects (see :ref:`SparseCoder`).
+
+It is also possible to constrain the dictionary and/or code to be positive to
+match constraints that may be present in the data. Below are the faces with
+different positivity constraints applied. Red indicates negative values, blue
+indicates positive values, and white represents zeros.
+
+
+.. |dict_img_pos1| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_011.png
+    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :scale: 60%
+
+.. |dict_img_pos2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_012.png
+    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :scale: 60%
+
+.. |dict_img_pos3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_013.png
+    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :scale: 60%
+
+.. |dict_img_pos4| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_014.png
+    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :scale: 60%
+
+.. centered:: |dict_img_pos1| |dict_img_pos2|
+.. centered:: |dict_img_pos3| |dict_img_pos4|
+
 
 The following image shows how a dictionary learned from 4x4 pixel image patches
 extracted from part of the image of a raccoon face looks like.
@@ -469,7 +495,7 @@ extracted from part of the image of a raccoon face looks like.
 .. topic:: References:
 
   * `"Online dictionary learning for sparse coding"
-    <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
+    <https://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
 
 .. _MiniBatchDictionaryLearning:
@@ -578,7 +604,7 @@ about these components (e.g. whether they are orthogonal):
 
 .. centered:: |pca_img3| |fa_img3|
 
-The main advantage for Factor Analysis (over :class:`PCA` is that
+The main advantage for Factor Analysis over :class:`PCA` is that
 it can model the variance in every direction of the input space independently
 (heteroscedastic noise):
 
@@ -763,7 +789,7 @@ defined by :
     :scale: 75%
 
 Note that this definition is not valid if :math:`\beta \in (0; 1)`, yet it can
-be continously extended to the definitions of :math:`d_{KL}` and :math:`d_{IS}`
+be continuously extended to the definitions of :math:`d_{KL}` and :math:`d_{IS}`
 respectively.
 
 :class:`NMF` implements two solvers, using Coordinate Descent ('cd') [5]_, and
@@ -802,7 +828,7 @@ stored components::
 .. topic:: References:
 
     .. [1] `"Learning the parts of objects by non-negative matrix factorization"
-      <http://www.columbia.edu/~jwp2128/Teaching/W4721/papers/nmf_nature.pdf>`_
+      <http://www.columbia.edu/~jwp2128/Teaching/E4903/papers/nmf_nature.pdf>`_
       D. Lee, S. Seung, 1999
 
     .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
@@ -817,10 +843,10 @@ stored components::
     .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
       factorizations."
       <http://www.bsp.brain.riken.jp/publications/2009/Cichocki-Phan-IEICE_col.pdf>`_
-      A. Cichocki, P. Anh-Huy, 2009
+      A. Cichocki, A. Phan, 2009
 
     .. [6] `"Algorithms for nonnegative matrix factorization with the beta-divergence"
-      <http://http://arxiv.org/pdf/1010.1763v3.pdf>`_
+      <https://arxiv.org/pdf/1010.1763.pdf>`_
       C. Fevotte, J. Idier, 2011
 
 
@@ -848,7 +874,7 @@ a corpus with :math:`D` documents and :math:`K` topics:
   3. For each word :math:`i` in document :math:`d`:
 
     a. Draw a topic index :math:`z_{di} \sim \mathrm{Multinomial}(\theta_d)`
-    b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}(beta_{z_{di}}.)`
+    b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}(\beta_{z_{di}})`
 
 For parameter estimation, the posterior distribution is:
 
@@ -895,11 +921,11 @@ when data can be fetched sequentially.
 .. topic:: References:
 
     * `"Latent Dirichlet Allocation"
-      <https://www.cs.princeton.edu/~blei/papers/BleiNgJordan2003.pdf>`_
+      <http://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf>`_
       D. Blei, A. Ng, M. Jordan, 2003
 
     * `"Online Learning for Latent Dirichlet Allocation”
-      <https://www.cs.princeton.edu/~blei/papers/HoffmanBleiBach2010b.pdf>`_
+      <https://papers.nips.cc/paper/3902-online-learning-for-latent-dirichlet-allocation.pdf>`_
       M. Hoffman, D. Blei, F. Bach, 2010
 
     * `"Stochastic Variational Inference"

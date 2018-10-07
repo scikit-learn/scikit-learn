@@ -1,7 +1,6 @@
 from __future__ import division
 
 import numpy as np
-from numpy.testing import run_module_suite
 from scipy.sparse import csr_matrix
 
 from sklearn.utils import check_random_state
@@ -200,7 +199,3 @@ def test_mutual_info_options():
         assert_array_equal(mi_3, mi_4)
 
     assert_false(np.allclose(mi_1, mi_3))
-
-
-if __name__ == '__main__':
-    run_module_suite()
