@@ -338,7 +338,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     Read more in the :ref:`User Guide <spectral_clustering>`.
 
     Parameters
-    -----------
+    ----------
     n_clusters : integer, optional
         The dimension of the projection subspace.
 
