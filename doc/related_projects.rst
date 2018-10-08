@@ -244,7 +244,7 @@ Other packages useful for data analysis and machine learning.
 - `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
   organize, log and reproduce experiments
 
-- `Seaborn <http://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
+- `Seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
   matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
 
 - `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning

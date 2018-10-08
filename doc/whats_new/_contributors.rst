@@ -52,7 +52,7 @@
 
 .. _Matthieu Perrot: http://brainvisa.info/biblio/lnao/en/Author/PERROT-M.html
 
-.. _Jake Vanderplas: http://staff.washington.edu/jakevdp/
+.. _Jake Vanderplas: https://staff.washington.edu/jakevdp/
 
 .. _Gilles Louppe: http://www.montefiore.ulg.ac.be/~glouppe/
 
@@ -64,7 +64,7 @@
 
 .. _Brian Holt: http://personal.ee.surrey.ac.uk/Personal/B.Holt
 
-.. _Satrajit Ghosh: http://www.mit.edu/~satra/
+.. _Satrajit Ghosh: https://www.mit.edu/~satra/
 
 .. _Robert Layton: https://twitter.com/robertlayton
 

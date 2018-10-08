@@ -947,7 +947,7 @@ class RandomForestClassifier(ForestClassifier):
     --------
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.datasets import make_classification
-    >>>
+
     >>> X, y = make_classification(n_samples=1000, n_features=4,
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
@@ -1199,7 +1199,7 @@ class RandomForestRegressor(ForestRegressor):
     --------
     >>> from sklearn.ensemble import RandomForestRegressor
     >>> from sklearn.datasets import make_regression
-    >>>
+
     >>> X, y = make_regression(n_features=4, n_informative=2,
     ...                        random_state=0, shuffle=False)
     >>> regr = RandomForestRegressor(max_depth=2, random_state=0,
