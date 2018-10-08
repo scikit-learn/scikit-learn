@@ -185,7 +185,7 @@ Here is an example of building custom scorers, and of using the
     >>> # and y defined below.
     >>> score = make_scorer(my_custom_loss_func, greater_is_better=False)
     >>> X = [[1], [1]]
-    >>> y  = [0, 1]
+    >>> y = [0, 1]
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
     >>> clf = clf.fit(X, y)
@@ -250,8 +250,8 @@ permitted and will require a wrapper to return a single metric::
     >>> def fp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 1]
     >>> def fn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 0]
     >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 1]
-    >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
-    ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
+    >>> scoring = {'tp': make_scorer(tp), 'tn': make_scorer(tn),
+    ...            'fp': make_scorer(fp), 'fn': make_scorer(fn)}
     >>> cv_results = cross_validate(svm.fit(X, y), X, y,
     ...                             scoring=scoring, cv=5)
     >>> # Getting the test set true positive scores
@@ -486,10 +486,10 @@ or *informedness*.
 
   .. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. Macià,
      B. Ray, M. Saeed, A.R. Statnikov, E. Viegas, `Design of the 2015 ChaLearn AutoML Challenge
-     <http://ieeexplore.ieee.org/document/7280767/>`_,
+     <https://ieeexplore.ieee.org/document/7280767>`_,
      IJCNN 2015.
   .. [Mosley2013] L. Mosley, `A balanced approach to the multi-class imbalance problem
-     <http://lib.dr.iastate.edu/etd/13537/>`_,
+     <https://lib.dr.iastate.edu/etd/13537/>`_,
      IJCV 2010.
   .. [Kelleher2015] John. D. Kelleher, Brian Mac Namee, Aoife D'Arcy, `Fundamentals of
      Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
@@ -719,7 +719,7 @@ from the ground truth label and a score given by the classifier
 by varying a decision threshold.
 
 The :func:`average_precision_score` function computes the
-`average precision <http://en.wikipedia.org/w/index.php?title=Information_retrieval&oldid=793358396#Average_precision>`_
+`average precision <https://en.wikipedia.org/w/index.php?title=Information_retrieval&oldid=793358396#Average_precision>`_
 (AP) from prediction scores. The value is between 0 and 1 and higher is better.
 AP is defined as
 
@@ -775,7 +775,7 @@ binary classification and multilabel indicator format.
 .. topic:: References:
 
   .. [Manning2008] C.D. Manning, P. Raghavan, H. Schütze, `Introduction to Information Retrieval
-     <http://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html>`_,
+     <https://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html>`_,
      2008.
   .. [Everingham2010] M. Everingham, L. Van Gool, C.K.I. Williams, J. Winn, A. Zisserman,
      `The Pascal Visual Object Classes (VOC) Challenge
@@ -785,7 +785,7 @@ binary classification and multilabel indicator format.
      <http://www.machinelearning.org/proceedings/icml2006/030_The_Relationship_Bet.pdf>`_,
      ICML 2006.
   .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
-     <http://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
+     <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
      NIPS 2015.
 
 
@@ -1297,7 +1297,7 @@ Here is a small example of usage of this function:::
     >>> y_pred = np.array([0, 1, 1, 0])
     >>> brier_score_loss(y_true, y_prob)
     0.055
-    >>> brier_score_loss(y_true, 1-y_prob, pos_label=0)
+    >>> brier_score_loss(y_true, 1 - y_prob, pos_label=0)
     0.055
     >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
     0.055
@@ -1776,7 +1776,7 @@ Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
   >>> clf = SVC(kernel='linear', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test) # doctest: +ELLIPSIS
   0.63...
-  >>> clf = DummyClassifier(strategy='most_frequent',random_state=0)
+  >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
   >>> clf.fit(X_train, y_train)
   DummyClassifier(constant=None, random_state=0, strategy='most_frequent')
   >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS

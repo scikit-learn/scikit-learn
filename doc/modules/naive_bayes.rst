@@ -72,7 +72,7 @@ it is known to be a bad estimator, so the probability outputs from
 .. topic:: References:
 
  * H. Zhang (2004). `The optimality of Naive Bayes.
-   <http://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
+   <https://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
    Proc. FLAIRS.
 
 .. _gaussian_naive_bayes:
@@ -175,7 +175,7 @@ match.
 
  * Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
    `Tackling the poor assumptions of naive bayes text classifiers.
-   <http://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
+   <https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
    In ICML (Vol. 3, pp. 616-623).
 
 .. _bernoulli_naive_bayes:

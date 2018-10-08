@@ -19,6 +19,7 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 
 from ..utils.validation import _num_samples
+from ..utils.validation import check_non_negative
 from ..utils import check_array
 from ..utils import gen_even_slices
 from ..utils import gen_batches, get_chunk_n_rows
@@ -742,7 +743,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     gamma : float, default None
         if None, defaults to 1.0 / n_features
 
-    coef0 : int, default 1
+    coef0 : float, default 1
 
     Returns
     -------
@@ -776,7 +777,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     gamma : float, default None
         If None, defaults to 1.0 / n_features
 
-    coef0 : int, default 1
+    coef0 : float, default 1
 
     Returns
     -------
@@ -946,7 +947,7 @@ def additive_chi2_kernel(X, Y=None):
       Local features and kernels for classification of texture and object
       categories: A comprehensive study
       International Journal of Computer Vision 2007
-      http://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
+      https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
 
 
     See also
@@ -1004,7 +1005,7 @@ def chi2_kernel(X, Y=None, gamma=1.):
       Local features and kernels for classification of texture and object
       categories: A comprehensive study
       International Journal of Computer Vision 2007
-      http://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
+      https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
 
     See also
     --------
@@ -1381,6 +1382,10 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(X, Y, precomputed=True)
+
+        whom = ("`pairwise_distances`. Precomputed distance "
+                " need to have non-negative values.")
+        check_non_negative(X, whom=whom)
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]

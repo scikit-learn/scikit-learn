@@ -47,7 +47,7 @@ def test_make_rng():
 
 def test_deprecated():
     # Test whether the deprecated decorator issues appropriate warnings
-    # Copied almost verbatim from http://docs.python.org/library/warnings.html
+    # Copied almost verbatim from https://docs.python.org/library/warnings.html
 
     # First a function...
     with warnings.catch_warnings(record=True) as w:

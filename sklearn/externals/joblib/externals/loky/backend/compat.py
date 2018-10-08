@@ -9,10 +9,10 @@ import sys
 
 if sys.version_info[:2] >= (3, 3):
     import queue
-    from _pickle import PicklingError
 else:
     import Queue as queue
-    from pickle import PicklingError
+
+from pickle import PicklingError
 
 if sys.version_info >= (3, 4):
     from multiprocessing.process import BaseProcess

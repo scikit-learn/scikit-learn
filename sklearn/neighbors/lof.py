@@ -82,7 +82,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         See the documentation for scipy.spatial.distance for details on these
         metrics:
-        http://docs.scipy.org/doc/scipy/reference/spatial.distance.html
+        https://docs.scipy.org/doc/scipy/reference/spatial.distance.html
 
     p : integer, optional (default=2)
         Parameter for the Minkowski metric from
@@ -171,6 +171,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. to the training samples.
 
+        y : Ignored
+            not used, present for API consistency by convention.
+
         Returns
         -------
         is_inlier : array, shape (n_samples,)
@@ -218,6 +221,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         X : {array-like, sparse matrix, BallTree, KDTree}
             Training data. If array or matrix, shape [n_samples, n_features],
             or [n_samples, n_samples] if metric='precomputed'.
+
+        y : Ignored
+            not used, present for API consistency by convention.
 
         Returns
         -------

@@ -27,7 +27,7 @@ ctypedef np.float64_t DOUBLE
 
 def csr_row_norms(X):
     """L2 norm of each row in CSR matrix X."""
-    if X.dtype != np.float32:
+    if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
     return _csr_row_norms(X.data, X.shape, X.indices, X.indptr)
 
@@ -72,7 +72,7 @@ def csr_mean_variance_axis0(X):
         Feature-wise variances
 
     """
-    if X.dtype != np.float32:
+    if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
     means, variances, _ =  _csr_mean_variance_axis0(X.data, X.shape[0],
                                                     X.shape[1], X.indices)
@@ -152,7 +152,7 @@ def csc_mean_variance_axis0(X):
         Feature-wise variances
 
     """
-    if X.dtype != np.float32:
+    if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
     means, variances, _ = _csc_mean_variance_axis0(X.data, X.shape[0],
                                                    X.shape[1], X.indices,
@@ -260,7 +260,7 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n):
     `utils.extmath._batch_mean_variance_update`.
 
     """
-    if X.dtype != np.float32:
+    if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
     return _incr_mean_variance_axis0(X.data, X.shape[0], X.shape[1], X.indices,
                                      X.indptr, X.format, last_mean, last_var,
