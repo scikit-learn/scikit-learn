@@ -1531,20 +1531,23 @@ function::
     ... # doctest: +ELLIPSIS
     0.990...
 
-
+.. _max_error:
 
 Max error
 -------------------
 
-The :func:`max_error` function computes the  maximum `residual error <https://en.wikipedia.org/wiki/Errors_and_residuals`_,
-a metric that captures the worst case error between the predicted value and the true value.
-In a perfectly fitted single output regression model, `max_error` would be `0` on the training set
-and though this would be highly unlikely in the real world, this metric shows the extent of error that the
-model had when it was fitted.
+The :func:`max_error` function computes the  maximum `residual error
+<https://en.wikipedia.org/wiki/Errors_and_residuals>`_ ,a metric
+that captures the worst case error between the predicted value and
+the true value. In a perfectly fitted single output regression
+model, `max_error` would be `0` on the training set and though this
+would be highly unlikely in the real world, this metric shows the
+extent of error that the model had when it was fitted.
 
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
-and :math:`y_i` is the corresponding true value, then the max error is defined as
+and :math:`y_i` is the corresponding true value, then the max error is
+defined as
 
 .. math::
 

@@ -580,6 +580,8 @@ def max_error(y_true, y_pred):
     """
     max_error metric calculates the maximum residual error.
 
+    Read more in the :ref:`User Guide <max_error>`.
+
     Parameters
     ----------
     y_true : array-like of shape = (n_samples)
