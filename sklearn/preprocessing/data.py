@@ -2544,8 +2544,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    NaNs are treated as missing values: disregarded in fit, and maintained in
-    transform.
+    NaNs are treated as missing values: disregarded in ``fit``, and maintained
+    in ``transform``.
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
@@ -2844,7 +2844,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         return X
 
 
-def power_transform(X, method='yeo-johnson', standardize=True, copy=True):
+def power_transform(X, method='warn', standardize=True, copy=True):
     """
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for
@@ -2866,9 +2866,9 @@ def power_transform(X, method='yeo-johnson', standardize=True, copy=True):
     Parameters
     ----------
     X : array-like, shape (n_samples, n_features)
-        The data used to estimate the optimal transformation parameters.
+        The data to be transformed using a power transformation.
 
-    method : str, (default='yeo-johnson')
+    method : str, (default='warn')
         The power transform method. Available methods are:
 
         - 'yeo-johnson' [1]_, works with positive and negative values
@@ -2881,15 +2881,20 @@ def power_transform(X, method='yeo-johnson', standardize=True, copy=True):
     copy : boolean, optional, default=True
         Set to False to perform inplace computation during transformation.
 
+    Returns
+    -------
+        X_trans : array-like, shape (n_samples, n_features)
+            The transformed data.
+
     Examples
     --------
     >>> import numpy as np
     >>> from sklearn.preprocessing import power_transform
     >>> data = [[1, 2], [3, 2], [4, 5]]
-    >>> print(power_transform(data))
-    [[-1.31616039 -0.70710678]
-     [ 0.20998268 -0.70710678]
-     [ 1.1061777   1.41421356]]
+    >>> print(power_transform(data, method='box-cox'))  # doctest: +ELLIPSIS
+    [[-1.332... -0.707...]
+     [ 0.256... -0.707...]
+     [ 1.076...  1.414...]]
 
     See also
     --------
@@ -2902,8 +2907,8 @@ def power_transform(X, method='yeo-johnson', standardize=True, copy=True):
 
     Notes
     -----
-    NaNs are treated as missing values: disregarded in fit, and maintained in
-    transform.
+    NaNs are treated as missing values: disregarded in ``fit``, and maintained
+    in ``transform``.
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
@@ -2919,7 +2924,13 @@ def power_transform(X, method='yeo-johnson', standardize=True, copy=True):
     .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
            of the Royal Statistical Society B, 26, 211-252 (1964).
     """
-
+    if method == 'warn':
+        warnings.warn("The default value of 'method' will change from "
+                      "'box-cox' to 'yeo-johnson' in version 0.23. Set "
+                      "the 'method' argument explicitly to silence this "
+                      "warning in the meantime.",
+                      FutureWarning)
+        method = 'box-cox'
     pt = PowerTransformer(method=method, standardize=standardize, copy=copy)
     return pt.fit_transform(X)
 
