@@ -3,11 +3,12 @@ from numpy.testing import assert_approx_equal
 
 from sklearn.utils.testing import (assert_equal, assert_array_almost_equal,
                                    assert_array_equal, assert_true,
-                                   assert_raise_message)
+                                   assert_raise_message, assert_warns)
 from sklearn.datasets import load_linnerud
 from sklearn.cross_decomposition import pls_, CCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
+from sklearn.exceptions import ConvergenceWarning
 
 
 def test_pls():
@@ -258,6 +259,15 @@ def test_pls():
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     check_ortho(pls_ca.x_scores_, "x scores are not orthogonal")
     check_ortho(pls_ca.y_scores_, "y scores are not orthogonal")
+
+
+def test_convergence_fail():
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+    pls_bynipals = pls_.PLSCanonical(n_components=X.shape[1],
+                                     max_iter=2, tol=1e-10)
+    assert_warns(ConvergenceWarning, pls_bynipals.fit, X, Y)
 
 
 def test_PLSSVD():

@@ -172,7 +172,8 @@ class BayesianGaussianMixture(BaseMixture):
     warm_start : bool, default to False.
         If 'warm_start' is True, the solution of the last fitting is used as
         initialization for the next call of fit(). This can speed up
-        convergence when fit is called several time on similar problems.
+        convergence when fit is called several times on similar problems.
+        See :term:`the Glossary <warm_start>`.
 
     verbose : int, default to 0.
         Enable verbose output. If 1 then it prints the current
@@ -293,7 +294,7 @@ class BayesianGaussianMixture(BaseMixture):
 
     .. [1] `Bishop, Christopher M. (2006). "Pattern recognition and machine
        learning". Vol. 4 No. 4. New York: Springer.
-       <http://www.springer.com/kr/book/9780387310732>`_
+       <https://www.springer.com/kr/book/9780387310732>`_
 
     .. [2] `Hagai Attias. (2000). "A Variational Bayesian Framework for
        Graphical Models". In Advances in Neural Information Processing
@@ -302,7 +303,7 @@ class BayesianGaussianMixture(BaseMixture):
 
     .. [3] `Blei, David M. and Michael I. Jordan. (2006). "Variational
        inference for Dirichlet process mixtures". Bayesian analysis 1.1
-       <http://www.cs.princeton.edu/courses/archive/fall11/cos597C/reading/BleiJordan2005.pdf>`_
+       <https://www.cs.princeton.edu/courses/archive/fall11/cos597C/reading/BleiJordan2005.pdf>`_
     """
 
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,

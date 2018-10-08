@@ -13,15 +13,9 @@ import os
 import shutil
 import tempfile
 import numpy as np
+from functools import partial
 from sklearn.externals import six
-try:
-    try:
-        from scipy.misc import imsave
-    except ImportError:
-        from scipy.misc.pilutil import imsave
-except ImportError:
-    imsave = None
-
+from sklearn.externals._pilutil import pillow_installed, imsave
 from sklearn.datasets import fetch_lfw_pairs
 from sklearn.datasets import fetch_lfw_people
 
@@ -29,6 +23,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_raises
+from sklearn.datasets.tests.test_common import check_return_X_y
 
 
 SCIKIT_LEARN_DATA = tempfile.mkdtemp(prefix="scikit_learn_lfw_test_")
@@ -48,7 +43,7 @@ FAKE_NAMES = [
 
 def setup_module():
     """Test fixture run once and common to all tests of this module"""
-    if imsave is None:
+    if not pillow_installed:
         raise SkipTest("PIL not installed.")
 
     if not os.path.exists(LFW_HOME):
@@ -145,6 +140,13 @@ def test_load_fake_lfw_people():
     assert_array_equal(lfw_people.target_names,
                        ['Abdelatif Smith', 'Abhati Kepler', 'Camara Alvaro',
                         'Chen Dupont', 'John Lee', 'Lin Bauman', 'Onur Lopez'])
+
+    # test return_X_y option
+    fetch_func = partial(fetch_lfw_people, data_home=SCIKIT_LEARN_DATA,
+                         resize=None,
+                         slice_=None, color=True,
+                         download_if_missing=False)
+    check_return_X_y(lfw_people, fetch_func)
 
 
 def test_load_fake_lfw_people_too_restrictive():

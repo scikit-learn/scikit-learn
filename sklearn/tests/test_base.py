@@ -24,7 +24,6 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
-from sklearn.utils import deprecated
 
 from sklearn.base import TransformerMixin
 from sklearn.utils.mocking import MockDataFrame
@@ -132,6 +131,9 @@ def test_clone_buggy():
     varg_est = VargEstimator()
     assert_raises(RuntimeError, clone, varg_est)
 
+    est = ModifyInitParams()
+    assert_raises(RuntimeError, clone, est)
+
 
 def test_clone_empty_array():
     # Regression test for cloning estimators with empty arrays
@@ -150,16 +152,6 @@ def test_clone_nan():
     clf2 = clone(clf)
 
     assert_true(clf.empty is clf2.empty)
-
-
-def test_clone_copy_init_params():
-    # test for deprecation warning when copying or casting an init parameter
-    est = ModifyInitParams()
-    message = ("Estimator ModifyInitParams modifies parameters in __init__. "
-               "This behavior is deprecated as of 0.18 and support "
-               "for this behavior will be removed in 0.20.")
-
-    assert_warns_message(DeprecationWarning, message, clone, est)
 
 
 def test_clone_sparse_matrices():
@@ -226,6 +218,32 @@ def test_set_params():
     # bad_pipeline = Pipeline([("bad", NoEstimator())])
     # assert_raises(AttributeError, bad_pipeline.set_params,
     #               bad__stupid_param=True)
+
+
+def test_set_params_passes_all_parameters():
+    # Make sure all parameters are passed together to set_params
+    # of nested estimator. Regression test for #9944
+
+    class TestDecisionTree(DecisionTreeClassifier):
+        def set_params(self, **kwargs):
+            super(TestDecisionTree, self).set_params(**kwargs)
+            # expected_kwargs is in test scope
+            assert kwargs == expected_kwargs
+            return self
+
+    expected_kwargs = {'max_depth': 5, 'min_samples_leaf': 2}
+    for est in [Pipeline([('estimator', TestDecisionTree())]),
+                GridSearchCV(TestDecisionTree(), {})]:
+        est.set_params(estimator__max_depth=5,
+                       estimator__min_samples_leaf=2)
+
+
+def test_set_params_updates_valid_params():
+    # Check that set_params tries to set SVC().C, not
+    # DecisionTreeClassifier().C
+    gscv = GridSearchCV(DecisionTreeClassifier(), {})
+    gscv.set_params(estimator=SVC(), estimator__C=42.0)
+    assert gscv.estimator.C == 42.0
 
 
 def test_score_sample_weight():

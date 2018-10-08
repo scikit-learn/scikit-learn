@@ -79,9 +79,10 @@ def plot_confusion_matrix(cm, classes,
                  horizontalalignment="center",
                  color="white" if cm[i, j] > thresh else "black")
 
-    plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
+    plt.tight_layout()
+
 
 # Compute confusion matrix
 cnf_matrix = confusion_matrix(y_test, y_pred)

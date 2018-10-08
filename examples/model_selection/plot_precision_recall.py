@@ -137,13 +137,17 @@ print('Average precision-recall score: {0:0.2f}'.format(
 # ................................
 from sklearn.metrics import precision_recall_curve
 import matplotlib.pyplot as plt
+from sklearn.utils.fixes import signature
 
 precision, recall, _ = precision_recall_curve(y_test, y_score)
 
+# In matplotlib < 1.5, plt.fill_between does not have a 'step' argument
+step_kwargs = ({'step': 'post'}
+               if 'step' in signature(plt.fill_between).parameters
+               else {})
 plt.step(recall, precision, color='b', alpha=0.2,
          where='post')
-plt.fill_between(recall, precision, step='post', alpha=0.2,
-                 color='b')
+plt.fill_between(recall, precision, alpha=0.2, color='b', **step_kwargs)
 
 plt.xlabel('Recall')
 plt.ylabel('Precision')
@@ -212,8 +216,8 @@ print('Average precision score, micro-averaged over all classes: {0:0.2f}'
 plt.figure()
 plt.step(recall['micro'], precision['micro'], color='b', alpha=0.2,
          where='post')
-plt.fill_between(recall["micro"], precision["micro"], step='post', alpha=0.2,
-                 color='b')
+plt.fill_between(recall["micro"], precision["micro"], alpha=0.2, color='b',
+                 **step_kwargs)
 
 plt.xlabel('Recall')
 plt.ylabel('Precision')

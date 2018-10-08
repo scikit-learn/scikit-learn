@@ -1,7 +1,11 @@
 import warnings
 
+from distutils.version import LooseVersion
+
 import numpy as np
 from scipy import linalg
+
+import pytest
 
 from sklearn.model_selection import train_test_split
 from sklearn.utils.testing import assert_equal
@@ -76,7 +80,6 @@ def test_simple_precomputed():
 
 def test_all_precomputed():
     # Test that lars_path with precomputed Gram and Xy gives the right answer
-    X, y = diabetes.data, diabetes.target
     G = np.dot(X.T, X)
     Xy = np.dot(X.T, y)
     for method in 'lar', 'lasso':
@@ -86,16 +89,22 @@ def test_all_precomputed():
             assert_array_almost_equal(expected, got)
 
 
+@pytest.mark.filterwarnings('ignore: `rcond` parameter will change')
+# numpy deprecation
 def test_lars_lstsq():
     # Test that Lars gives least square solution at the end
     # of the path
     X1 = 3 * diabetes.data  # use un-normalized dataset
     clf = linear_model.LassoLars(alpha=0.)
     clf.fit(X1, y)
-    coef_lstsq = np.linalg.lstsq(X1, y)[0]
+    # Avoid FutureWarning about default value change when numpy >= 1.14
+    rcond = None if LooseVersion(np.__version__) >= '1.14' else -1
+    coef_lstsq = np.linalg.lstsq(X1, y, rcond=rcond)[0]
     assert_array_almost_equal(clf.coef_, coef_lstsq)
 
 
+@pytest.mark.filterwarnings('ignore:`rcond` parameter will change')
+# numpy deprecation
 def test_lasso_gives_lstsq_solution():
     # Test that Lars Lasso gives least square solution at the end
     # of the path
@@ -172,18 +181,20 @@ def test_no_path_all_precomputed():
     assert_true(alpha_ == alphas_[-1])
 
 
-def test_lars_precompute():
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.parametrize(
+        'classifier',
+        [linear_model.Lars, linear_model.LarsCV, linear_model.LassoLarsIC])
+def test_lars_precompute(classifier):
     # Check for different values of precompute
-    X, y = diabetes.data, diabetes.target
     G = np.dot(X.T, X)
-    for classifier in [linear_model.Lars, linear_model.LarsCV,
-                       linear_model.LassoLarsIC]:
-        clf = classifier(precompute=G)
-        output_1 = ignore_warnings(clf.fit)(X, y).coef_
-        for precompute in [True, False, 'auto', None]:
-            clf = classifier(precompute=precompute)
-            output_2 = clf.fit(X, y).coef_
-            assert_array_almost_equal(output_1, output_2, decimal=8)
+
+    clf = classifier(precompute=G)
+    output_1 = ignore_warnings(clf.fit)(X, y).coef_
+    for precompute in [True, False, 'auto', None]:
+        clf = classifier(precompute=precompute)
+        output_2 = clf.fit(X, y).coef_
+        assert_array_almost_equal(output_1, output_2, decimal=8)
 
 
 def test_singular_matrix():
@@ -406,6 +417,7 @@ def test_multitarget():
             assert_array_almost_equal(Y_pred[:, k], y_pred)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_lars_cv():
     # Test the LassoLarsCV object by checking that the optimal alpha
     # increases as the number of samples increases.
@@ -422,6 +434,7 @@ def test_lars_cv():
     assert_false(hasattr(lars_cv, 'n_nonzero_coefs'))
 
 
+@pytest.mark.filterwarnings('ignore::FutureWarning')
 def test_lars_cv_max_iter():
     with warnings.catch_warnings(record=True) as w:
         X = diabetes.data
@@ -469,6 +482,7 @@ def test_lars_path_readonly_data():
         _lars_path_residues(X_train, y_train, X_test, y_test, copy=False)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_lars_path_positive_constraint():
     # this is the main test for the positive parameter on the lars_path method
     # the estimator classes just make use of this function
@@ -478,31 +492,40 @@ def test_lars_path_positive_constraint():
     # ensure that we get negative coefficients when positive=False
     # and all positive when positive=True
     # for method 'lar' (default) and lasso
-    for method in ['lar', 'lasso']:
-        alpha, active, coefs = \
-            linear_model.lars_path(diabetes['data'], diabetes['target'],
-                                   return_path=True, method=method,
-                                   positive=False)
-        assert_true(coefs.min() < 0)
 
-        alpha, active, coefs = \
-            linear_model.lars_path(diabetes['data'], diabetes['target'],
-                                   return_path=True, method=method,
-                                   positive=True)
-        assert_true(coefs.min() >= 0)
+    # Once deprecation of LAR + positive option is done use these:
+    # assert_raises(ValueError, linear_model.lars_path, diabetes['data'],
+    #               diabetes['target'], method='lar', positive=True)
+
+    with pytest.warns(DeprecationWarning, match="broken"):
+        linear_model.lars_path(diabetes['data'], diabetes['target'],
+                               return_path=True, method='lar',
+                               positive=True)
+
+    method = 'lasso'
+    alpha, active, coefs = \
+        linear_model.lars_path(diabetes['data'], diabetes['target'],
+                               return_path=True, method=method,
+                               positive=False)
+    assert_true(coefs.min() < 0)
+
+    alpha, active, coefs = \
+        linear_model.lars_path(diabetes['data'], diabetes['target'],
+                               return_path=True, method=method,
+                               positive=True)
+    assert_true(coefs.min() >= 0)
 
 
 # now we gonna test the positive option for all estimator classes
 
 default_parameter = {'fit_intercept': False}
 
-estimator_parameter_map = {'Lars': {'n_nonzero_coefs': 5},
-                           'LassoLars': {'alpha': 0.1},
-                           'LarsCV': {},
+estimator_parameter_map = {'LassoLars': {'alpha': 0.1},
                            'LassoLarsCV': {},
                            'LassoLarsIC': {}}
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_estimatorclasses_positive_constraint():
     # testing the transmissibility for the positive option of all estimator
     # classes in this same function here

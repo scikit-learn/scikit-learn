@@ -1,6 +1,9 @@
 """
 Testing Recursive feature elimination
 """
+from __future__ import division
+
+import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
@@ -11,6 +14,7 @@ from sklearn.metrics import zero_one_loss
 from sklearn.svm import SVC, SVR
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GroupKFold
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
@@ -166,6 +170,11 @@ def test_rfecv():
                   scoring=test_scorer)
     rfecv.fit(X, y)
     assert_array_equal(rfecv.grid_scores_, np.ones(len(rfecv.grid_scores_)))
+    # In the event of cross validation score ties, the expected behavior of
+    # RFECV is to return the FEWEST features that maximize the CV score.
+    # Because test_scorer always returns 1.0 in this example, RFECV should
+    # reduce the dimensionality to a single feature (i.e. n_features_ = 1)
+    assert_equal(rfecv.n_features_, 1)
 
     # Same as the first two tests, but with step=2
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=2, cv=5)
@@ -222,6 +231,27 @@ def test_rfecv_verbose_output():
     assert_greater(len(verbose_output.readline()), 0)
 
 
+def test_rfecv_grid_scores_size():
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = list(iris.target)   # regression test: list should be supported
+
+    # Non-regression test for varying combinations of step and
+    # min_features_to_select.
+    for step, min_features_to_select in [[2, 1], [2, 2], [3, 3]]:
+        rfecv = RFECV(estimator=MockClassifier(), step=step,
+                      min_features_to_select=min_features_to_select, cv=5)
+        rfecv.fit(X, y)
+
+        score_len = np.ceil(
+            (X.shape[1] - min_features_to_select) / step) + 1
+        assert len(rfecv.grid_scores_) == score_len
+        assert len(rfecv.ranking_) == X.shape[1]
+        assert rfecv.n_features_ >= min_features_to_select
+
+
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel='linear'))
     assert_equal(rfe._estimator_type, "classifier")
@@ -313,6 +343,7 @@ def test_number_of_subsets_of_features():
                      formula2(n_features, n_features_to_select, step))
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_rfe_cv_n_jobs():
     generator = check_random_state(0)
     iris = load_iris()
@@ -328,3 +359,22 @@ def test_rfe_cv_n_jobs():
     rfecv.fit(X, y)
     assert_array_almost_equal(rfecv.ranking_, rfecv_ranking)
     assert_array_almost_equal(rfecv.grid_scores_, rfecv_grid_scores)
+
+
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
+def test_rfe_cv_groups():
+    generator = check_random_state(0)
+    iris = load_iris()
+    number_groups = 4
+    groups = np.floor(np.linspace(0, number_groups, len(iris.target)))
+    X = iris.data
+    y = (iris.target > 0).astype(int)
+
+    est_groups = RFECV(
+        estimator=RandomForestClassifier(random_state=generator),
+        step=1,
+        scoring='accuracy',
+        cv=GroupKFold(n_splits=2)
+    )
+    est_groups.fit(X, y, groups=groups)
+    assert est_groups.n_features_ > 0

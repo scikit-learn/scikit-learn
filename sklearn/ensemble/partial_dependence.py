@@ -10,7 +10,7 @@ import numpy as np
 from scipy.stats.mstats import mquantiles
 
 from ..utils.extmath import cartesian
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import map, range, zip
 from ..utils import check_array
@@ -165,7 +165,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
 
 def plot_partial_dependence(gbrt, X, features, feature_names=None,
                             label=None, n_cols=3, grid_resolution=100,
-                            percentiles=(0.05, 0.95), n_jobs=1,
+                            percentiles=(0.05, 0.95), n_jobs=None,
                             verbose=0, ax=None, line_kw=None,
                             contour_kw=None, **fig_kw):
     """Partial dependence plots for ``features``.
@@ -198,14 +198,15 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         Only if gbrt is a multi-class model. Must be in ``gbrt.classes_``.
     n_cols : int
         The number of columns in the grid plot (default: 3).
+    grid_resolution : int, default=100
+        The number of equally spaced points on the axes.
     percentiles : (low, high), default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the PDP axes.
-    grid_resolution : int, default=100
-        The number of equally spaced points on the axes.
-    n_jobs : int
-        The number of CPUs to use to compute the PDs. -1 means 'all CPUs'.
-        Defaults to 1.
+    n_jobs : int or None, optional (default=None)
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
     verbose : int
         Verbose output during PD computations. Defaults to 0.
     ax : Matplotlib axis object, default None
@@ -216,7 +217,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     contour_kw : dict
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For two-way partial dependence plots.
-    fig_kw : dict
+    **fig_kw : dict
         Dict with keywords passed to the figure() call.
         Note that all keywords not recognized above will be automatically
         included here.

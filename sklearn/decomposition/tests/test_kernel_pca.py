@@ -1,9 +1,10 @@
 import numpy as np
 import scipy.sparse as sp
+import pytest
 
 from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
                                    assert_equal, assert_not_equal,
-                                   assert_raises)
+                                   assert_raises, ignore_warnings)
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
@@ -172,6 +173,7 @@ def test_kernel_pca_invalid_kernel():
     assert_raises(ValueError, kpca.fit, X_fit)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_gridsearch_pipeline():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model.
@@ -186,6 +188,7 @@ def test_gridsearch_pipeline():
     assert_equal(grid_search.best_score_, 1)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_gridsearch_pipeline_precomputed():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model using a precomputed kernel.

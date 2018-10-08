@@ -30,6 +30,7 @@ Kernel:
 
 Examples
 --------
+>>> import numpy as np
 >>> from sklearn import datasets
 >>> from sklearn.semi_supervised import LabelPropagation
 >>> label_prop_model = LabelPropagation()
@@ -60,6 +61,7 @@ from abc import ABCMeta, abstractmethod
 import warnings
 import numpy as np
 from scipy import sparse
+from scipy.sparse import csgraph
 
 from ..base import BaseEstimator, ClassifierMixin
 from ..externals import six
@@ -99,13 +101,15 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         Convergence tolerance: threshold to consider the system at steady
         state
 
-    n_jobs : int, optional (default = 1)
+   n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
-                 alpha=1, max_iter=30, tol=1e-3, n_jobs=1):
+                 alpha=1, max_iter=30, tol=1e-3, n_jobs=None):
 
         self.max_iter = max_iter
         self.tol = tol
@@ -332,9 +336,11 @@ class LabelPropagation(BaseLabelPropagation):
         Convergence tolerance: threshold to consider the system at steady
         state
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -355,6 +361,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn import datasets
     >>> from sklearn.semi_supervised import LabelPropagation
     >>> label_prop_model = LabelPropagation()
@@ -381,7 +388,7 @@ class LabelPropagation(BaseLabelPropagation):
     _variant = 'propagation'
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
-                 alpha=None, max_iter=1000, tol=1e-3, n_jobs=1):
+                 alpha=None, max_iter=1000, tol=1e-3, n_jobs=None):
         super(LabelPropagation, self).__init__(
             kernel=kernel, gamma=gamma, n_neighbors=n_neighbors, alpha=alpha,
             max_iter=max_iter, tol=tol, n_jobs=n_jobs)
@@ -449,9 +456,11 @@ class LabelSpreading(BaseLabelPropagation):
       Convergence tolerance: threshold to consider the system at steady
       state
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -472,6 +481,7 @@ class LabelSpreading(BaseLabelPropagation):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn import datasets
     >>> from sklearn.semi_supervised import LabelSpreading
     >>> label_prop_model = LabelSpreading()
@@ -498,7 +508,7 @@ class LabelSpreading(BaseLabelPropagation):
     _variant = 'spreading'
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7, alpha=0.2,
-                 max_iter=30, tol=1e-3, n_jobs=1):
+                 max_iter=30, tol=1e-3, n_jobs=None):
 
         # this one has different base parameters
         super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,
@@ -514,7 +524,7 @@ class LabelSpreading(BaseLabelPropagation):
             self.nn_fit = None
         n_samples = self.X_.shape[0]
         affinity_matrix = self._get_kernel(self.X_)
-        laplacian = sparse.csgraph.laplacian(affinity_matrix, normed=True)
+        laplacian = csgraph.laplacian(affinity_matrix, normed=True)
         laplacian = -laplacian
         if sparse.isspmatrix(laplacian):
             diag_mask = (laplacian.row == laplacian.col)

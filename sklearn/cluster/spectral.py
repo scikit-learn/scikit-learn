@@ -38,11 +38,10 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
         Maximum number of iterations to attempt in rotation and partition
         matrix search if machine precision convergence is not reached
 
-    random_state : int, RandomState instance or None, optional, default: None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for rotation matrix initialization.
+        Use an int to make the randomness deterministic.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -54,7 +53,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
-      http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+      https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
 
     Notes
     -----
@@ -195,13 +194,12 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
 
-    random_state : int, RandomState instance or None, optional, default: None
+    random_state : int, RandomState instance or None (default)
         A pseudo random number generator used for the initialization of the
         lobpcg eigen vectors decomposition when eigen_solver == 'amg' and by
-        the K-Means initialization. If int, random_state is the seed used by
-        the random number generator; If RandomState instance, random_state is
-        the random number generator; If None, the random number generator is
-        the RandomState instance used by `np.random`.
+        the K-Means initialization. Use an int to make the randomness
+        deterministic.
+        See :term:`Glossary <random_state>`.
 
     n_init : int, optional, default: 10
         Number of time the k-means algorithm will be run with different
@@ -239,7 +237,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
 
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
-      http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+      https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
 
     Notes
     ------
@@ -256,6 +254,10 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
 
     random_state = check_random_state(random_state)
     n_components = n_clusters if n_components is None else n_components
+
+    # The first eigen vector is constant only for fully connected graphs
+    # and should be kept for spectral clustering (drop_first = False)
+    # See spectral_embedding documentation.
     maps = spectral_embedding(affinity, n_components=n_components,
                               eigen_solver=eigen_solver,
                               random_state=random_state,
@@ -305,13 +307,12 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
 
-    random_state : int, RandomState instance or None, optional, default: None
+    random_state : int, RandomState instance or None (default)
         A pseudo random number generator used for the initialization of the
         lobpcg eigen vectors decomposition when eigen_solver == 'amg' and by
-        the K-Means initialization.  If int, random_state is the seed used by
-        the random number generator; If RandomState instance, random_state is
-        the random number generator; If None, the random number generator is
-        the RandomState instance used by `np.random`.
+        the K-Means initialization. Use an int to make the randomness
+        deterministic.
+        See :term:`Glossary <random_state>`.
 
     n_init : int, optional, default: 10
         Number of time the k-means algorithm will be run with different
@@ -357,9 +358,11 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Parameters (keyword arguments) and values for kernel passed as
         callable object. Ignored by other kernels.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -369,6 +372,23 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     labels_ :
         Labels of each point
+
+    Examples
+    --------
+    >>> from sklearn.cluster import SpectralClustering
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> clustering = SpectralClustering(n_clusters=2,
+    ...         assign_labels="discretize",
+    ...         random_state=0).fit(X)
+    >>> clustering.labels_
+    array([1, 1, 1, 0, 0, 0])
+    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    SpectralClustering(affinity='rbf', assign_labels='discretize', coef0=1,
+              degree=3, eigen_solver=None, eigen_tol=0.0, gamma=1.0,
+              kernel_params=None, n_clusters=2, n_init=10, n_jobs=None,
+              n_neighbors=10, random_state=0)
 
     Notes
     -----
@@ -402,13 +422,13 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
-      http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+      https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
     """
 
     def __init__(self, n_clusters=8, eigen_solver=None, random_state=None,
                  n_init=10, gamma=1., affinity='rbf', n_neighbors=10,
                  eigen_tol=0.0, assign_labels='kmeans', degree=3, coef0=1,
-                 kernel_params=None, n_jobs=1):
+                 kernel_params=None, n_jobs=None):
         self.n_clusters = n_clusters
         self.eigen_solver = eigen_solver
         self.random_state = random_state

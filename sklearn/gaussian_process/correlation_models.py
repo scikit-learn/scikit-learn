@@ -14,7 +14,7 @@ from ..utils import deprecated
 
 
 @deprecated("The function absolute_exponential of correlation_models is "
-            "deprecated in version 0.20 and will be removed in 0.22.")
+            "deprecated in version 0.19.1 and will be removed in 0.22.")
 def absolute_exponential(theta, d):
     """
     Absolute exponential autocorrelation model.
@@ -58,7 +58,7 @@ def absolute_exponential(theta, d):
 
 
 @deprecated("The function squared_exponential of correlation_models is "
-            "deprecated in version 0.20 and will be removed in 0.22.")
+            "deprecated in version 0.19.1 and will be removed in 0.22.")
 def squared_exponential(theta, d):
     """
     Squared exponential correlation model (Radial Basis Function).
@@ -103,7 +103,7 @@ def squared_exponential(theta, d):
 
 
 @deprecated("The function generalized_exponential of correlation_models is "
-            "deprecated in version 0.20 and will be removed in 0.22.")
+            "deprecated in version 0.19.1 and will be removed in 0.22.")
 def generalized_exponential(theta, d):
     """
     Generalized exponential correlation model.
@@ -155,7 +155,7 @@ def generalized_exponential(theta, d):
 
 
 @deprecated("The function pure_nugget of correlation_models is "
-            "deprecated in version 0.20 and will be removed in 0.22.")
+            "deprecated in version 0.19.1 and will be removed in 0.22.")
 def pure_nugget(theta, d):
     """
     Spatial independence correlation model (pure nugget).
@@ -194,7 +194,7 @@ def pure_nugget(theta, d):
 
 
 @deprecated("The function cubic of correlation_models is "
-            "deprecated in version 0.20 and will be removed in 0.22.")
+            "deprecated in version 0.19.1 and will be removed in 0.22.")
 def cubic(theta, d):
     """
     Cubic correlation model::
@@ -238,7 +238,7 @@ def cubic(theta, d):
     else:
         td = np.abs(d) * theta.reshape(1, n_features)
 
-    td[td > 1.] = 1.
+    np.clip(td, None, 1., out=td)
     ss = 1. - td ** 2. * (3. - 2. * td)
     r = np.prod(ss, 1)
 
@@ -246,7 +246,7 @@ def cubic(theta, d):
 
 
 @deprecated("The function linear of correlation_models is "
-            "deprecated in version 0.20 and will be removed in 0.22.")
+            "deprecated in version 0.19.1 and will be removed in 0.22.")
 def linear(theta, d):
     """
     Linear correlation model::
@@ -290,7 +290,7 @@ def linear(theta, d):
     else:
         td = np.abs(d) * theta.reshape(1, n_features)
 
-    td[td > 1.] = 1.
+    np.clip(td, None, 1., out=td)
     ss = 1. - td
     r = np.prod(ss, 1)
 
