@@ -250,12 +250,11 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         -------
         feature_importances_ : array
         """
-        individual_coefs_ = np.array(individual_coefs_)
 
         if norm_type == "l1":
-            non_negative_coefs_ = abs(individual_coefs_)
+            non_negative_coefs_ = abs(coef)
         elif norm_type == "l2":
-            non_negative_coefs_ = individual_coefs_ ** 2
+            non_negative_coefs_ = coef ** 2
         else:
             raise ValueError(
                 "Invalid norm_type supplied for converting"
@@ -288,7 +287,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             norm = self.estimator_weights_.sum()
 
             if hasattr(self.estimators_[0], "feature_importances_"):
-                individual_feature_importances_ = [
+                estimator_feature_importances_ = [
                     clf.feature_importances_ for clf in self.estimators_]
             elif hasattr(self.estimators_[0], "coef_"):
                 estimators_coefs_ = np.array(
