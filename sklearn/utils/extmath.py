@@ -24,7 +24,7 @@ from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from . import lobpcg
+from .lobpcg import lobpcg
 # from scipy.sparse.linalg import lobpcg
 
 

@@ -11,6 +11,7 @@ Authors: Robert Cimrman, Andrew Knyazev
 
 Examples in tests directory contributed by Nils Wagner.
 """
+import numpy as np
 
 from numpy.testing import assert_allclose
 from scipy._lib.six import xrange

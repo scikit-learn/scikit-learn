@@ -34,7 +34,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     context, it is known as latent semantic analysis (LSA).
 
     This estimator supports 3 algorithms: a fast randomized SVD solver, and
-    a "naive" algorithm that uses ARPACK or LOBPCG as an eigensolver 
+    a "naive" algorithm that uses ARPACK or LOBPCG as an eigensolver
     on the normal matrix (X * X.T) or (X.T * X), whichever is more efficient.
 
     Read more in the :ref:`User Guide <LSA>`.
@@ -50,7 +50,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     algorithm : string, default = "randomized"
         SVD solver to use. Either "arpack" for the ARPACK wrapper in SciPy
         (scipy.sparse.linalg.svds), or
-        "lobpcg" for LOBPCG (scipy.sparse.linalg.lobpcg) Knyazev (2001), or 
+        "lobpcg" for LOBPCG (scipy.sparse.linalg.lobpcg) Knyazev (2001), or
         "randomized" for the randomized algorithm due to Halko (2009).
 
     n_iter : int, optional (default 5)
