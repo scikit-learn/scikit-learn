@@ -15,7 +15,6 @@ import inspect
 import pkgutil
 import warnings
 import sys
-import struct
 import functools
 
 import scipy as sp
@@ -47,7 +46,7 @@ import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
 from sklearn.utils.fixes import signature
-from sklearn.utils import deprecated, IS_PYPY
+from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
 
 
 additional_names_in_all = []
@@ -758,7 +757,7 @@ def if_matplotlib(func):
 try:
     import pytest
 
-    skip_if_32bit = pytest.mark.skipif(8 * struct.calcsize("P") == 32,
+    skip_if_32bit = pytest.mark.skipif(_IS_32BIT,
                                        reason='skipped on 32bit platforms')
     skip_travis = pytest.mark.skipif(os.environ.get('TRAVIS') == 'true',
                                      reason='skip on travis')

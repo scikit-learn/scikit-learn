@@ -948,6 +948,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             copy if the given data is not C-contiguous.
 
         y : Ignored
+            not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
@@ -979,6 +980,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             New data to transform.
 
         y : Ignored
+            not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
@@ -1002,6 +1004,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             New data to transform.
 
         y : Ignored
+            not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
@@ -1081,6 +1084,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             New data.
 
         y : Ignored
+            not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
@@ -1443,7 +1447,7 @@ class MiniBatchKMeans(KMeans):
 
     Notes
     -----
-    See http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
+    See https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
 
     """
 
@@ -1473,6 +1477,7 @@ class MiniBatchKMeans(KMeans):
             if the given data is not C-contiguous.
 
         y : Ignored
+            not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
@@ -1654,6 +1659,7 @@ class MiniBatchKMeans(KMeans):
             X will be copied if it is not C-contiguous.
 
         y : Ignored
+            not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations

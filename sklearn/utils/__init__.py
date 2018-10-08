@@ -8,6 +8,7 @@ from contextlib import contextmanager
 import time as _time
 import numbers
 import platform
+import struct
 
 import numpy as np
 from scipy.sparse import issparse
@@ -39,6 +40,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "register_parallel_backend", "hash", "effective_n_jobs"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
+_IS_32BIT = 8 * struct.calcsize("P") == 32
 
 
 class Bunch(dict):

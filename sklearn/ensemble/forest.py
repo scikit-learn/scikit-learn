@@ -41,8 +41,7 @@ Single and multi-output problems are both handled.
 
 from __future__ import division
 
-import warnings
-from warnings import warn
+from warnings import catch_warnings, simplefilter, warn
 import threading
 
 from abc import ABCMeta, abstractmethod
@@ -112,8 +111,8 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         curr_sample_weight *= sample_counts
 
         if class_weight == 'subsample':
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', DeprecationWarning)
+            with catch_warnings():
+                simplefilter('ignore', DeprecationWarning)
                 curr_sample_weight *= compute_sample_weight('auto', y, indices)
         elif class_weight == 'balanced_subsample':
             curr_sample_weight *= compute_sample_weight('balanced', y, indices)
@@ -244,7 +243,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """
 
         if self.n_estimators == 'warn':
-            warnings.warn("The default value of n_estimators will change from "
+            warn("The default value of n_estimators will change from "
                           "10 in version 0.20 to 100 in 0.22.", FutureWarning)
             self.n_estimators = 10
 
@@ -259,7 +258,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
             X.sort_indices()
 
         # Remap output
-        n_samples, self.n_features_ = X.shape
+        self.n_features_ = X.shape[1]
 
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
@@ -793,7 +792,11 @@ class RandomForestClassifier(ForestClassifier):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -944,7 +947,7 @@ class RandomForestClassifier(ForestClassifier):
     --------
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.datasets import make_classification
-    >>>
+
     >>> X, y = make_classification(n_samples=1000, n_features=4,
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
@@ -1078,7 +1081,11 @@ class RandomForestRegressor(ForestRegressor):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -1192,7 +1199,7 @@ class RandomForestRegressor(ForestRegressor):
     --------
     >>> from sklearn.ensemble import RandomForestRegressor
     >>> from sklearn.datasets import make_regression
-    >>>
+
     >>> X, y = make_regression(n_features=4, n_informative=2,
     ...                        random_state=0, shuffle=False)
     >>> regr = RandomForestRegressor(max_depth=2, random_state=0,
@@ -1323,7 +1330,11 @@ class ExtraTreesClassifier(ForestClassifier):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -1579,7 +1590,11 @@ class ExtraTreesRegressor(ForestRegressor):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -1791,7 +1806,11 @@ class RandomTreesEmbedding(BaseForest):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
