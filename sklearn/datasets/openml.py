@@ -566,7 +566,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     arff_data = arff['data']
     nominal_attributes = {k: v for k, v in arff['attributes']
-                          if isinstance(v, list) and k in data_columns}
+                          if isinstance(v, list) and
+                          k in data_columns + target_column}
 
     X, y = _convert_arff_data(arff_data, col_slice_x, col_slice_y)
 
