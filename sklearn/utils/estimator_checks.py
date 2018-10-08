@@ -25,6 +25,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils.testing import assert_warns_message
@@ -266,6 +267,7 @@ def _yield_all_checks(name, estimator):
     yield check_set_params
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
+    yield check_fit_idempotent
 
 
 def check_estimator(Estimator):
@@ -2345,3 +2347,60 @@ def check_outliers_fit_predict(name, estimator_orig):
         for contamination in [-0.5, 2.3]:
             estimator.set_params(contamination=contamination)
             assert_raises(ValueError, estimator.fit_predict, X)
+
+
+def check_fit_idempotent(name, estimator_orig):
+    # Check that est.fit(X) is the same as est.fit(X).fit(X). Ideally we would
+    # check that the estimated parameters during training (e.g. coefs_) are
+    # the same, but having a universal comparison function for those
+    # attributes is difficult and full of edge cases. So instead we check that
+    # predict(), predict_proba(), decision_function() and transform() return
+    # the same results.
+
+    est = clone(estimator_orig)
+
+    np.random.seed(0)
+    X = np.random.normal(loc=100, size=(100, 2))
+    if is_regressor(estimator_orig):
+        y = np.random.normal(size=100)
+    else:
+        y = np.random.randint(low=0, high=2, size=100)
+    if est.__class__.__name__.startswith('MultiTask'):
+        y = np.stack([y, y], axis=1)
+
+    X_train, X_test, y_train, _ = train_test_split(X, y)
+
+    if 'random_state' in est.get_params().keys():
+        est.set_params(random_state=0)
+    if 'warm_start' in est.get_params().keys():
+        est.set_params(warm_start=False)
+
+    est.fit(X_train, y_train)
+
+    if hasattr(est, 'predict'):
+        pred_1 = est.predict(X_test)
+    if hasattr(est, 'predict_proba'):
+        pred_proba_1 = est.predict_proba(X_test)
+    if hasattr(est, 'decision_function'):
+        decision_1 = est.decision_function(X_test)
+    if hasattr(est, 'transform'):
+        transform_1 = est.transform(X_test)
+
+    # Fit again
+    est.fit(X_train, y_train)
+
+    if hasattr(est, 'predict'):
+        pred_2 = est.predict(X_test)
+        assert_array_almost_equal(pred_1, pred_2)
+    if hasattr(est, 'predict_proba'):
+        pred_proba_2 = est.predict_proba(X_test)
+        assert_array_almost_equal(pred_proba_1, pred_proba_2)
+    if hasattr(est, 'decision_function'):
+        decision_2 = est.decision_function(X_test)
+        assert_array_almost_equal(decision_1, decision_2)
+    if hasattr(est, 'transform'):
+        transform_2 = est.transform(X_test)
+        if sparse.issparse(transform_1):
+            transform_1 = transform_1.toarray()
+            transform_2 = transform_2.toarray()
+        assert np.allclose(transform_1, transform_2)
