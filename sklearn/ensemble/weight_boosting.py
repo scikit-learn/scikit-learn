@@ -294,7 +294,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 estimators_coefs_ = np.array(
                     [clf.coef_ for clf in self.estimators_])
                 estimator_feature_importances_ = self._coef_to_feature_importances_(
-                    coef=estimators_coefs_
+                    coef=estimators_coefs_,
                     norm_type=norm_type
                 )
             else:
