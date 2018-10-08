@@ -40,13 +40,6 @@ Support for Python 3.4 and below has been officially dropped.
 - An entry goes here
 - An entry goes here
 
-:mod:`sklearn.preprocessing`
-............................
-
-- |Efficiency| Make :class:`preprocessing.MultiLabelBinarizer` to cache class mappings instead 
-  of calculating it every time on the fly.
-  :issue:`12116` by :user:`Ekaterina Krivich <kiote>` and `Joel Nothman`_.
-
 :mod:`sklearn.cluster`
 ......................
 
@@ -58,6 +51,13 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| Fixed a bug in :class:`cluster.DBSCAN` with precomputed sparse neighbors
   graph, which would add explicitly zeros on the diagonal even when already
   present. :issue:`12105` by `Tom Dupre la Tour`_.
+  
+:mod:`sklearn.preprocessing`
+............................
+
+- |Efficiency| Make :class:`preprocessing.MultiLabelBinarizer` to cache class mappings instead 
+  of calculating it every time on the fly.
+  :issue:`12116` by :user:`Ekaterina Krivich <kiote>` and `Joel Nothman`_.
 
 Multiple modules
 ................
