@@ -287,12 +287,12 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             norm = self.estimator_weights_.sum()
 
             if hasattr(self.estimators_[0], "feature_importances_"):
-                estimator_feature_importances_ = [
+                ests_feature_importances_ = [
                     clf.feature_importances_ for clf in self.estimators_]
             elif hasattr(self.estimators_[0], "coef_"):
                 estimators_coefs_ = np.array(
                     [clf.coef_ for clf in self.estimators_])
-                estimator_feature_importances_ = self._coef_to_feature_importances_(
+                ests_feature_importances_ = self._coef_to_feature_importances_(
                     coef=estimators_coefs_,
                     norm_type=norm_type
                 )
@@ -302,7 +302,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             return (sum(weight * feature_importances_
                         for weight, feature_importances_ in zip(
                             self.estimator_weights_,
-                            estimator_feature_importances_)) / norm)
+                            ests_feature_importances_)) / norm)
 
         except AttributeError:
             raise AttributeError(
