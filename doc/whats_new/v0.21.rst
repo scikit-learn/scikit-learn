@@ -47,9 +47,13 @@ Support for Python 3.4 and below has been officially dropped.
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>` and
   :user:`Adrin Jalali <adrinjalali>`.
-
+  
 :mod:`sklearn.preprocessing`
 ............................
+
+- |Efficiency| Make :class:`preprocessing.MultiLabelBinarizer` to cache class mappings instead 
+  of calculating it every time on the fly.
+  :issue:`12116` by :user:`Ekaterina Krivich <kiote>` and `Joel Nothman`_.
 
 - |Efficiency| |API| Speed improvement in :class:`preprocessing.PolynomialFeatures`,
   in the dense case. Also added a new parameter ``order`` which controls output
