@@ -234,10 +234,47 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             else:
                 yield r2_score(y, y_pred, sample_weight=sample_weight)
 
-    @property
-    def feature_importances_(self):
+    @staticmethod
+    def _coef_to_feature_importances_(coef, norm_type):
+        """Returns feature_importances_ by normalising coef
+
+        Parameters
+        ----------
+        coef : ndarray
+
+        norm_type: str
+            The kind of norm that should be used make data non-negative.
+            Accepted values: "l1" (absolute values), "l2" (squared values)
+
+        Returns
+        -------
+        feature_importances_ : array
+        """
+        individual_coefs_ = np.array(individual_coefs_)
+
+        if norm_type == "l1":
+            non_negative_coefs_ = abs(individual_coefs_)
+        elif norm_type == "l2":
+            non_negative_coefs_ = individual_coefs_ ** 2
+        else:
+            raise ValueError(
+                "Invalid norm_type supplied for converting"
+                "coef_ to feature_importances_. Use either"
+                "`l1` or `l2` norm"
+            )
+        norm = non_negative_coefs_.sum()
+
+        return non_negative_coefs_ / norm
+
+    def get_feature_importances_(self, norm_type="l2"):
         """Return the feature importances (the higher, the more important the
            feature).
+
+        Parameters
+        ----------
+        norm_type : string
+            The kind of norm that should be used make data non-negative.
+            Accepted values: "l1" (absolute values), "l2" (squared values)
 
         Returns
         -------
@@ -249,15 +286,33 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         try:
             norm = self.estimator_weights_.sum()
-            return (sum(weight * clf.feature_importances_ for weight, clf
-                    in zip(self.estimator_weights_, self.estimators_))
-                    / norm)
+
+            if hasattr(self.estimators_[0], "feature_importances_"):
+                individual_feature_importances_ = [
+                    clf.feature_importances_ for clf in self.estimators_]
+            elif hasattr(self.estimators_[0], "coef_"):
+                estimators_coefs_ = np.array(
+                    [clf.coef_ for clf in self.estimators_])
+                estimator_feature_importances_ = self._coef_to_feature_importances_(
+                    coef=estimators_coefs_
+                    norm_type=norm_type
+                )
+            else:
+                raise AttributeError
+
+            return (sum(weight * feature_importances_
+                        for weight, feature_importances_ in zip(
+                            self.estimator_weights_,
+                            estimator_feature_importances_)) / norm)
 
         except AttributeError:
             raise AttributeError(
                 "Unable to compute feature importances "
-                "since base_estimator does not have a "
-                "feature_importances_ attribute")
+                "since base_estimator have neither a "
+                "feature_importances_ attribute nor a "
+                "coef_ attribute")
+
+    feature_importances_ = property(get_feature_importances_)
 
     def _validate_X_predict(self, X):
         """Ensure that X is in the proper format"""
@@ -369,6 +424,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     .. [2] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
 
     """
+
     def __init__(self,
                  base_estimator=None,
                  n_estimators=50,
@@ -915,6 +971,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     .. [2] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
 
     """
+
     def __init__(self,
                  base_estimator=None,
                  n_estimators=50,
