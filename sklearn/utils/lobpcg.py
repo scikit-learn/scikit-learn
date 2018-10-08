@@ -12,11 +12,6 @@ Authors: Robert Cimrman, Andrew Knyazev
 Examples in tests directory contributed by Nils Wagner.
 """
 
-# from __future__ import division, print_function, absolute_import
-
-# import sys
-
-import numpy as np
 from numpy.testing import assert_allclose
 from scipy._lib.six import xrange
 from scipy.linalg import inv, eigh, cho_factor, cho_solve, cholesky
@@ -480,12 +475,6 @@ def lobpcg(A, X,
             gramB = np.bmat([[ident0, xbw],
                               [xbw.T.conj(), ident]])
 
-#        _assert_symmetric(gramA) # does not work in float32
-#        _assert_symmetric(gramB)
-#        gramA = (gramA.T.conj()+gramA)/2
-#        gramB = (gramB.T.conj()+gramB)/2 + 
-#                1e-4*np.eye(gramB.shape[0], dtype=gramB.dtype)
-
         if verbosityLevel > 10:
             save(gramA, 'gramA')
             save(gramB, 'gramB')
@@ -498,9 +487,6 @@ def lobpcg(A, X,
         else:
             ii = np.argsort(_lambda)[: sizeX]
 
-        # ii = np.argsort(_lambda)[: sizeX]
-        # if largest:
-        #     ii = ii[::-1]
         if verbosityLevel > 10:
             print(ii)
             print(_lambda)
