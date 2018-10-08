@@ -188,10 +188,9 @@ boolean mask array or callable
 
     @_transformers.setter
     def _transformers(self, value):
-        self.transformers = [(name, trans, col)
-                             for ((name, trans),
-                                  (_, _,
-                                   col)) in zip(value, self.transformers)]
+        self.transformers = [
+            (name, trans, col) for ((name, trans), (_, _, col))
+            in zip(value, self.transformers)]
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -249,8 +248,7 @@ boolean mask array or callable
                 # skip in case of 'drop'
                 if trans == 'passthrough':
                     trans = FunctionTransformer(
-                        validate=False,
-                        accept_sparse=True,
+                        validate=False, accept_sparse=True,
                         check_inverse=False)
                 elif trans == 'drop':
                     continue
@@ -272,12 +270,12 @@ boolean mask array or callable
         for t in transformers:
             if t in ('drop', 'passthrough'):
                 continue
-            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform"))
-                    or not hasattr(t, "transform")):
-                raise TypeError(
-                    "All estimators should implement fit and "
-                    "transform, or can be 'drop' or 'passthrough' "
-                    "specifiers. '%s' (type %s) doesn't." % (t, type(t)))
+            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
+                    hasattr(t, "transform")):
+                raise TypeError("All estimators should implement fit and "
+                                "transform, or can be 'drop' or 'passthrough' "
+                                "specifiers. '%s' (type %s) doesn't." %
+                                (t, type(t)))
 
     def _validate_column_callables(self, X):
         """
@@ -323,8 +321,8 @@ boolean mask array or callable
 
         """
         # Use Bunch object to improve autocomplete
-        return Bunch(**dict([(name, trans)
-                             for name, trans, _ in self.transformers_]))
+        return Bunch(**dict([(name, trans) for name, trans, _
+                             in self.transformers_]))
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -345,10 +343,10 @@ boolean mask array or callable
                     "a 'passthrough' transformer.")
             elif not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s (type %s) does not "
-                                     "provide get_feature_names." %
-                                     (str(name), type(trans).__name__))
-            feature_names.extend(
-                [name + "__" + f for f in trans.get_feature_names()])
+                                     "provide get_feature_names."
+                                     % (str(name), type(trans).__name__))
+            feature_names.extend([name + "__" + f for f in
+                                  trans.get_feature_names()])
         return feature_names
 
     def _update_fitted_transformers(self, transformers):
@@ -484,9 +482,8 @@ boolean mask array or callable
             self.sparse_output_ = True
         elif any(sparse.issparse(X) for X in Xs):
             nnz = sum(X.nnz if sparse.issparse(X) else X.size for X in Xs)
-            total = sum(
-                X.shape[0] * X.shape[1] if sparse.issparse(X) else X.size
-                for X in Xs)
+            total = sum(X.shape[0] * X.shape[1] if sparse.issparse(X)
+                        else X.size for X in Xs)
             density = nnz / total
             self.sparse_output_ = density < self.sparse_threshold
         else:
@@ -580,8 +577,8 @@ def _check_key_type(key, superclass):
     if isinstance(key, superclass):
         return True
     if isinstance(key, slice):
-        return (isinstance(key.start, (superclass, type(None)))
-                and isinstance(key.stop, (superclass, type(None))))
+        return (isinstance(key.start, (superclass, type(None))) and
+                isinstance(key.stop, (superclass, type(None))))
     if isinstance(key, list):
         return all(isinstance(x, superclass) for x in key)
     if hasattr(key, 'dtype'):
@@ -794,8 +791,8 @@ def make_column_transformer(*transformers, **kwargs):
     remainder = kwargs.pop('remainder', 'drop')
     sparse_threshold = kwargs.pop('sparse_threshold', 0.3)
     if kwargs:
-        raise TypeError('Unknown keyword arguments: "{}"'.format(
-            list(kwargs.keys())[0]))
+        raise TypeError('Unknown keyword arguments: "{}"'
+                        .format(list(kwargs.keys())[0]))
     transformer_list = _get_transformer_list(transformers)
     return ColumnTransformer(transformer_list, n_jobs=n_jobs,
                              remainder=remainder,
