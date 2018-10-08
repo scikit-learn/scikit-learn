@@ -1147,7 +1147,11 @@ When ``fit`` is called, any previous call to ``fit`` should be ignored. In
 general, calling ``estimator.fit(X1)`` and then ``estimator.fit(X2)`` should
 be the same as only calling ``estimator.fit(X2)``. However, this may not be
 true in practice when ``fit`` depends on some random process, see
-:term:`random_state`.
+:term:`random_state`. Another exception to this rule is when the
+hyper-parameter ``warm_start`` is set to ``True`` for estimators that
+support it. ``warm_start=True`` means that the previous state of the
+trainable parameters of the estimator are reused instead of using the
+default initialization strategy.
 
 Estimated Attributes
 ^^^^^^^^^^^^^^^^^^^^
@@ -1158,7 +1162,7 @@ some regression estimator would be stored in a ``coef_`` attribute after
 ``fit`` has been called.
 
 The estimated attributes are expected to be overridden when you call ``fit``
-a second time, without taking any previous value into account.
+a second time.
 
 Optional Arguments
 ^^^^^^^^^^^^^^^^^^
