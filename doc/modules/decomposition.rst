@@ -861,7 +861,7 @@ discovering abstract topics from a collection of documents.
 
 The graphical model of LDA is a three-level Bayesian model:
 
-.. image:: ../images/lda_model_graph2.png
+.. image:: ../images/lda_model_graph.png
    :align: center
 
 
