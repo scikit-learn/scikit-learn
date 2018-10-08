@@ -38,13 +38,14 @@ Support for Python 3.4 and below has been officially dropped.
     should end with: :issue:`123456` by :user:`Joe Bloggs <joeongithub>`.
 
 - An entry goes here
+- An entry goes here
 
 :mod:`sklearn.preprocessing`
-......................
+............................
 
-- |Efficiency| make :class:`preprocessing.MultiLabelBinarizer` to cache class mappings instead 
-  of calculating it every time on the fly
-  :issue:`11680` by :user:`Ekaterina Krivich <kiote>`, `Joel Nothman`.
+- |Efficiency| Make :class:`preprocessing.MultiLabelBinarizer` to cache class mappings instead 
+  of calculating it every time on the fly.
+  :issue:`12116` by :user:`Ekaterina Krivich <kiote>` and `Joel Nothman`_.
 
 :mod:`sklearn.cluster`
 ......................
