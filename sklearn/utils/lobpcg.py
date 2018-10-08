@@ -11,31 +11,16 @@ Locally Optimal Block Preconditioned Conjugate Gradient Method (LOBPCG)
 
 import numpy as np
 
-from numpy.testing import assert_allclose
-from scipy._lib.six import xrange
 from scipy.linalg import inv, eigh, cho_factor, cho_solve, cholesky
 from scipy.sparse.linalg import aslinearoperator, LinearOperator
 
 __all__ = ['lobpcg']
 
 
-def pause():
-    # Used only when verbosity level > 10.
-    input()
-
-
 def save(ar, fileName):
     # Used only when verbosity level > 10.
     from numpy import savetxt
     savetxt(fileName, ar, precision=8)
-
-
-def _assert_symmetric(M, rtol=1e-5, atol=1e-8):
-    assert_allclose(M.T.conj(), M, rtol=rtol, atol=atol)
-
-
-##
-# 21.05.2007, c
 
 
 def as2d(ar):
@@ -271,8 +256,6 @@ def lobpcg(A, X,
         raise ValueError('expected rank-2 array for argument X')
 
     n, sizeX = blockVectorX.shape
-    if sizeX > n:
-        raise ValueError('X column dimension exceeds the row dimension')
 
     A = _makeOperator(A, (n, n))
     B = _makeOperator(B, (n, n))
@@ -336,8 +319,7 @@ def lobpcg(A, X,
         try:
             # gramYBY is a Cholesky factor from now on...
             gramYBY = cho_factor(gramYBY)
-        # E722 do not use bare except
-        except:
+        except linearlyDependentConstraints:
             raise ValueError('cannot handle linearly dependent constraints')
 
         _applyConstraints(blockVectorX, gramYBY, blockVectorBY, blockVectorY)
@@ -383,7 +365,9 @@ def lobpcg(A, X,
     blockVectorAP = None
     blockVectorBP = None
 
-    for iterationNumber in xrange(maxIterations):
+    iterationNumber = -1
+    while iterationNumber < maxIterations:
+        iterationNumber += 1
         if verbosityLevel > 0:
             print('iteration %d' % iterationNumber)
 
@@ -505,9 +489,7 @@ def lobpcg(A, X,
 
         if verbosityLevel > 10:
             print(eigBlockVector)
-            pause()
 
-        ##
         # Compute Ritz vectors.
         if iterationNumber > 0:
             eigBlockVectorX = eigBlockVector[:sizeX]
@@ -534,7 +516,6 @@ def lobpcg(A, X,
             print(pp)
             print(app)
             print(bpp)
-            pause()
 
         blockVectorX = np.dot(blockVectorX, eigBlockVectorX) + pp
         blockVectorAX = np.dot(blockVectorAX, eigBlockVectorX) + app

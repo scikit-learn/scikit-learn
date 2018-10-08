@@ -176,11 +176,14 @@ class PCA(_BasePCA):
             0 < n_components < min(X.shape)
         randomized :
             run randomized SVD by the method of Halko et al.
+        lobpcg :
+            run lobpcg_svd by LOBPCG of Knyazev 2001
 
         .. versionadded:: 0.18.0
 
     tol : float >= 0, optional (default .0)
-        Tolerance for singular values computed by svd_solver == 'arpack'.
+        Tolerance for singular values computed by svd_solver == 'arpack'
+        For svd_solver == 'lobpcg', tol must be reasonable, not .0!
 
         .. versionadded:: 0.18.0
 
@@ -269,6 +272,8 @@ class PCA(_BasePCA):
     `Martinsson, P. G., Rokhlin, V., and Tygert, M. (2011).
     "A randomized algorithm for the decomposition of matrices".
     Applied and Computational Harmonic Analysis, 30(1), 47-68.`
+
+    For svd_solver == 'lobpcg', see: lobpcg_svd
 
 
     Examples

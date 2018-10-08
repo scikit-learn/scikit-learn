@@ -612,8 +612,9 @@ def test_pca_score_with_different_solvers():
     digits = datasets.load_digits()
     X_digits = digits.data
 
+    # the PCA default tol=.0 may break lobpcg_svd
     pca_dict = {svd_solver: PCA(n_components=30, svd_solver=svd_solver,
-                                random_state=0)
+                                random_state=0, tol=1e-4)
                 for svd_solver in solver_list}
 
     for pca in pca_dict.values():
@@ -629,6 +630,8 @@ def test_pca_score_with_different_solvers():
                   for svd_solver, pca in pca_dict.items()}
     assert_almost_equal(score_dict['full'], score_dict['arpack'])
     assert_almost_equal(score_dict['full'], score_dict['randomized'],
+                        decimal=3)
+    assert_almost_equal(score_dict['full'], score_dict['lobpcg'],
                         decimal=3)
 
 
@@ -714,9 +717,10 @@ def check_pca_float_dtype_preservation(svd_solver):
     X_64 = np.random.RandomState(0).rand(1000, 4).astype(np.float64)
     X_32 = X_64.astype(np.float32)
 
+    # the PCA default tol=.0 may break lobpcg_svd
     pca_64 = PCA(n_components=3, svd_solver=svd_solver,
-                 random_state=0).fit(X_64)
-    pca_32 = PCA(n_components=3, svd_solver=svd_solver,
+                 random_state=0, tol=1-10).fit(X_64)
+    pca_32 = PCA(n_components=3, tol=1-5, svd_solver=svd_solver,
                  random_state=0).fit(X_32)
 
     assert pca_64.components_.dtype == np.float64
@@ -734,10 +738,11 @@ def check_pca_int_dtype_upcast_to_double(svd_solver):
     X_i64 = X_i64.astype(np.int64)
     X_i32 = X_i64.astype(np.int32)
 
+    # the PCA default tol=.0 may break lobpcg_svd
     pca_64 = PCA(n_components=3, svd_solver=svd_solver,
-                 random_state=0).fit(X_i64)
+                 random_state=0, tol=1-10).fit(X_i64)
     pca_32 = PCA(n_components=3, svd_solver=svd_solver,
-                 random_state=0).fit(X_i32)
+                 random_state=0, tol=1-5).fit(X_i32)
 
     assert pca_64.components_.dtype == np.float64
     assert pca_32.components_.dtype == np.float64
