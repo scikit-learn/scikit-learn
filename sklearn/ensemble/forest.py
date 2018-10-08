@@ -1766,8 +1766,6 @@ class ExtraTreesRegressor(ForestRegressor):
 
 
 class RandomTreesEmbedding(BaseForest):
-    criterion = 'mse'
-    max_features = 1
     """An ensemble of totally random trees.
 
     An unsupervised transformation of a dataset to a high-dimensional
@@ -1897,6 +1895,9 @@ class RandomTreesEmbedding(BaseForest):
            NIPS 2007
 
     """
+
+    criterion = 'mse'
+    max_features = 1
 
     def __init__(self,
                  n_estimators='warn',
