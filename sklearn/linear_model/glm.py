@@ -866,13 +866,13 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     TODO: Estimation of the dispersion parameter phi.
 
-    If your target `y` is a ratio, you should also provide appropriate weights
-    `w`. As an example, consider Poission distributed counts `z` (integers) and
-    weights `w`=exposure (time, money, persons years, ...), then you fit
+    If the target `y` is a ratio, appropriate weights `w` should be provided.
+    As an example, consider Poission distributed counts `z` (integers) and
+    weights `w`=exposure (time, money, persons years, ...). Then you fit
     `y = z/w`, i.e. ``GeneralizedLinearModel(family='Poisson').fit(X, y,
-    sample_weight=w)``. You need the weights for the right mean, consider:
-    :math:`\bar(y) = \frac{\sum_i w_i y_i}{\sum_i w_i}`.
-    In this case one might say that y has a 'scaled' Poisson distributions.
+    sample_weight=w)``. The weights are necessary for the right mean, consider:
+    :math:`\\bar(y) = \\frac{\\sum_i w_i y_i}{\\sum_i w_i}`.
+    In this case one might say that 'y' has a 'scaled' Poisson distributions.
     The same holds for other distributions.
 
     Parameters
@@ -891,7 +891,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         is an L1 penalty.  For ``0 < l1_ratio < 1``, the penalty is a
         combination of L1 and L2.
 
-    P1 : {None, array-like}, shape (n_features*,), optional\
+    P1 : {None, array-like}, shape (n_features*,), optional \
             (default=None)
         With this array, you can exclude coefficients from the L1 penalty.
         Set the corresponding value to 1 (include) or 0 (exclude). The
