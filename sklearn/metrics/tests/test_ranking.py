@@ -137,7 +137,7 @@ def _average_precision_slow(y_true, y_score):
     References
     ----------
     .. [1] `Wikipedia entry for the Average precision
-       <http://en.wikipedia.org/wiki/Average_precision>`_
+       <https://en.wikipedia.org/wiki/Average_precision>`_
     """
     precision, recall, threshold = precision_recall_curve(y_true, y_score)
     precision = list(reversed(precision))

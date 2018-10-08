@@ -167,7 +167,7 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 
     * `"Finding structure with randomness: Stochastic algorithms for
       constructing approximate matrix decompositions"
-      <http://arxiv.org/abs/0909.4061>`_
+      <https://arxiv.org/abs/0909.4061>`_
       Halko, et al., 2009
 
 
@@ -270,10 +270,10 @@ factorization, while larger values shrink many coefficients to zero.
 .. topic:: References:
 
   .. [Mrl09] `"Online Dictionary Learning for Sparse Coding"
-     <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
+     <https://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
      J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
   .. [Jen09] `"Structured Sparse Principal Component Analysis"
-     <www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
+     <https://www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
      R. Jenatton, G. Obozinski, F. Bach, 2009
 
 
@@ -289,7 +289,7 @@ where :math:`k` is a user-specified parameter.
 When truncated SVD is applied to term-document matrices
 (as returned by ``CountVectorizer`` or ``TfidfVectorizer``),
 this transformation is known as
-`latent semantic analysis <http://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
+`latent semantic analysis <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
 (LSA), because it transforms such matrices
 to a "semantic" space of low dimensionality.
 In particular, LSA is known to combat the effects of synonymy and polysemy
@@ -354,7 +354,7 @@ compensating for LSA's erroneous assumptions about textual data.
   * Christopher D. Manning, Prabhakar Raghavan and Hinrich Schütze (2008),
     *Introduction to Information Retrieval*, Cambridge University Press,
     chapter 18: `Matrix decompositions & latent semantic indexing
-    <http://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
+    <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
 
 
 .. _DictionaryLearning:
@@ -495,7 +495,7 @@ extracted from part of the image of a raccoon face looks like.
 .. topic:: References:
 
   * `"Online dictionary learning for sparse coding"
-    <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
+    <https://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
 
 .. _MiniBatchDictionaryLearning:
