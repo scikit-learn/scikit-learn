@@ -363,7 +363,7 @@ and ignored by setting to ``'drop'``::
     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     FeatureUnion(n_jobs=None,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
-                                   ('kernel_pca', None)],
+                                   ('kernel_pca', 'drop')],
                  transformer_weights=None, verbose=False)
 
 .. topic:: Examples:
