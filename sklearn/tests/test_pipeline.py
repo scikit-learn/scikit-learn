@@ -1054,7 +1054,8 @@ def test_verbose(est, method, pattern, capsys):
         func = getattr(est, method)
     except AttributeError:
         return
-    # XXX: getattr(Pipeline(...), 'fit_transform') is always True
+    # XXX: skips test when method is `fit_transform` and when the last step is
+    # `FitParamT` since `FitParamT` does not define a `transform` method
     if (method == 'fit_transform' and hasattr(est, 'steps') and
             type(est.steps[-1][1]).__name__ == 'FitParamT'):
         return
