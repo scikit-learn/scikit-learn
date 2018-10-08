@@ -532,7 +532,6 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         raise TypeError("Did not recognize type of target_column"
                         "Should be six.string_type, list or None. Got: "
                         "{}".format(type(target_column)))
-
     data_columns = _valid_data_column_names(features_list,
                                             target_column)
 
@@ -563,7 +562,6 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     # obtain the data
     arff = _download_data_arff(data_description['file_id'], return_sparse,
                                data_home)
-
     arff_data = arff['data']
     nominal_attributes = {k: v for k, v in arff['attributes']
                           if isinstance(v, list) and
