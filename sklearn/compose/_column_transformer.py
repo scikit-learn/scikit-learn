@@ -23,7 +23,9 @@ from ..utils import Bunch
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 
+
 __all__ = ['ColumnTransformer', 'make_column_transformer']
+
 
 _ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
                      "Try to specify the column selection as a list of one "

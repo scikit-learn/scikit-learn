@@ -173,9 +173,9 @@ class Pipeline(_BaseComposition):
 
         # We allow last estimator to be None as an identity transformation
         if estimator is not None and not hasattr(estimator, "fit"):
-            raise TypeError(
-                "Last step of Pipeline should implement fit. "
-                "'%s' (type %s) doesn't" % (estimator, type(estimator)))
+            raise TypeError("Last step of Pipeline should implement fit. "
+                            "'%s' (type %s) doesn't"
+                            % (estimator, type(estimator)))
 
     @property
     def _estimator_type(self):
@@ -212,8 +212,8 @@ class Pipeline(_BaseComposition):
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
-        fit_params_steps = dict(
-            (name, {}) for name, step in self.steps if step is not None)
+        fit_params_steps = dict((name, {}) for name, step in self.steps
+                                if step is not None)
         for pname, pval in six.iteritems(fit_params):
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
@@ -753,11 +753,11 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         for t in transformers:
             if t is None or t == 'drop':
                 continue
-            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform"))
-                    or not hasattr(t, "transform")):
-                raise TypeError(
-                    "All estimators should implement fit and "
-                    "transform. '%s' (type %s) doesn't" % (t, type(t)))
+            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
+                    hasattr(t, "transform")):
+                raise TypeError("All estimators should implement fit and "
+                                "transform. '%s' (type %s) doesn't" %
+                                (t, type(t)))
 
     def _iter(self):
         """
@@ -781,10 +781,10 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         for name, trans, weight in self._iter():
             if not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s (type %s) does not "
-                                     "provide get_feature_names." %
-                                     (str(name), type(trans).__name__))
-            feature_names.extend(
-                [name + "__" + f for f in trans.get_feature_names()])
+                                     "provide get_feature_names."
+                                     % (str(name), type(trans).__name__))
+            feature_names.extend([name + "__" + f for f in
+                                  trans.get_feature_names()])
         return feature_names
 
     def fit(self, X, y=None):
