@@ -61,7 +61,7 @@ for name, clf in classifiers.items():
     ax.set_ylim((0, 1.6))
     ax.set_xlabel('X')
     ax.set_ylabel('y')
-    
+
     fig.tight_layout()
 
 plt.show()
