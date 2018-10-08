@@ -14,7 +14,7 @@ Examples in tests directory contributed by Nils Wagner.
 
 # from __future__ import division, print_function, absolute_import
 
-import sys
+# import sys
 
 import numpy as np
 from numpy.testing import assert_allclose
@@ -109,10 +109,10 @@ def _b_orthonormalize(B, blockVectorV, blockVectorBV=None, retInvR=False):
 
 
 def lobpcg(A, X,
-            B=None, M=None, Y=None,
-            tol=None, maxiter=20,
-            largest=True, verbosityLevel=0,
-            retLambdaHistory=False, retResidualNormsHistory=False):
+           B=None, M=None, Y=None,
+           tol=None, maxiter=20,
+           largest=True, verbosityLevel=0,
+           retLambdaHistory=False, retResidualNormsHistory=False):
     """Locally Optimal Block Preconditioned Conjugate Gradient Method (LOBPCG)
 
     LOBPCG is a preconditioned eigensolver for large symmetric positive
@@ -238,7 +238,7 @@ def lobpcg(A, X,
         One can try to vary ``m`` to make this better.
 
     2.  How well conditioned the problem is. This can be changed by proper
-        preconditioning. 
+        preconditioning.
 
     *Acknowledgements*
 
@@ -280,9 +280,9 @@ def lobpcg(A, X,
     if sizeX > n:
         raise ValueError('X column dimension exceeds the row dimension')
 
-    A = _makeOperator(A, (n,n))
-    B = _makeOperator(B, (n,n))
-    M = _makeOperator(M, (n,n))
+    A = _makeOperator(A, (n, n))
+    B = _makeOperator(B, (n, n))
+    M = _makeOperator(M, (n, n))
 
     if (n - sizeY) < (5 * sizeX):
         # warn('The problem size is small compared to the block size.' \
@@ -290,7 +290,7 @@ def lobpcg(A, X,
 
         if blockVectorY is not None:
             raise NotImplementedError('The dense eigensolver '
-                    'does not support constraints.')
+                                      'does not support constraints.')
 
         # Define the closed range of indices of eigenvalues to return.
         if largest:
@@ -342,6 +342,7 @@ def lobpcg(A, X,
         try:
             # gramYBY is a Cholesky factor from now on...
             gramYBY = cho_factor(gramYBY)
+        # E722 do not use bare except
         except:
             raise ValueError('cannot handle linearly dependent constraints')
 
@@ -357,14 +358,14 @@ def lobpcg(A, X,
     gramXAX = np.dot(blockVectorX.T.conj(), blockVectorAX)
 
     _lambda, eigBlockVector = eigh(gramXAX, check_finite=False)
-    
+
     if largest:
         ii = np.argsort(-_lambda)[:sizeX]
     else:
         ii = np.argsort(_lambda)[:sizeX]
     _lambda = _lambda[ii]
 
-    eigBlockVector = np.asarray(eigBlockVector[:,ii])
+    eigBlockVector = np.asarray(eigBlockVector[:, ii])
     blockVectorX = np.dot(blockVectorX, eigBlockVector)
     blockVectorAX = np.dot(blockVectorAX, eigBlockVector)
     if B is not None:
@@ -392,7 +393,7 @@ def lobpcg(A, X,
         if verbosityLevel > 0:
             print('iteration %d' % iterationNumber)
 
-        aux = blockVectorBX * _lambda[np.newaxis,:]
+        aux = blockVectorBX * _lambda[np.newaxis, :]
         blockVectorR = blockVectorAX - aux
 
         aux = np.sum(blockVectorR.conjugate() * blockVectorR, 0)
@@ -420,12 +421,12 @@ def lobpcg(A, X,
         if verbosityLevel > 10:
             print(eigBlockVector)
 
-        activeBlockVectorR = as2d(blockVectorR[:,activeMask])
+        activeBlockVectorR = as2d(blockVectorR[:, activeMask])
 
         if iterationNumber > 0:
-            activeBlockVectorP = as2d(blockVectorP[:,activeMask])
-            activeBlockVectorAP = as2d(blockVectorAP[:,activeMask])
-            activeBlockVectorBP = as2d(blockVectorBP[:,activeMask])
+            activeBlockVectorP = as2d(blockVectorP[:, activeMask])
+            activeBlockVectorAP = as2d(blockVectorAP[:, activeMask])
+            activeBlockVectorBP = as2d(blockVectorBP[:, activeMask])
 
         if M is not None:
             # Apply preconditioner T to the active residuals.
@@ -467,12 +468,12 @@ def lobpcg(A, X,
             wbp = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorBP)
 
             gramA = np.bmat([[np.diag(_lambda), xaw, xap],
-                              [xaw.T.conj(), waw, wap],
-                              [xap.T.conj(), wap.T.conj(), pap]])
+                            [xaw.T.conj(), waw, wap],
+                            [xap.T.conj(), wap.T.conj(), pap]])
 
             gramB = np.bmat([[ident0, xbw, xbp],
-                              [xbw.T.conj(), ident, wbp],
-                              [xbp.T.conj(), wbp.T.conj(), ident]])
+                            [xbw.T.conj(), ident, wbp],
+                            [xbp.T.conj(), wbp.T.conj(), ident]])
         else:
             gramA = np.bmat([[np.diag(_lambda), xaw],
                               [xaw.T.conj(), waw]])
@@ -482,7 +483,8 @@ def lobpcg(A, X,
 #        _assert_symmetric(gramA) # does not work in float32
 #        _assert_symmetric(gramB)
 #        gramA = (gramA.T.conj()+gramA)/2
-#        gramB = (gramB.T.conj()+gramB)/2 + 1e-4*np.eye(gramB.shape[0], dtype=gramB.dtype)
+#        gramB = (gramB.T.conj()+gramB)/2 + 
+#                1e-4*np.eye(gramB.shape[0], dtype=gramB.dtype)
 
         if verbosityLevel > 10:
             save(gramA, 'gramA')
@@ -492,11 +494,11 @@ def lobpcg(A, X,
         _lambda, eigBlockVector = eigh(gramA, gramB, check_finite=False)
 
         if largest:
-            ii = np.argsort(-_lambda)[:sizeX]
+            ii = np.argsort(-_lambda)[: sizeX]
         else:
-            ii = np.argsort(_lambda)[:sizeX]
+            ii = np.argsort(_lambda)[: sizeX]
 
-        # ii = np.argsort(_lambda)[:sizeX]
+        # ii = np.argsort(_lambda)[: sizeX]
         # if largest:
         #     ii = ii[::-1]
         if verbosityLevel > 10:
@@ -504,17 +506,17 @@ def lobpcg(A, X,
             print(_lambda)
 
         _lambda = _lambda[ii]
-        eigBlockVector = eigBlockVector[:,ii]
+        eigBlockVector = eigBlockVector[:, ii]
 
         lambdaHistory.append(_lambda)
 
         if verbosityLevel > 10:
             print('lambda:', _lambda)
-##         # Normalize eigenvectors!
-##         aux = np.sum( eigBlockVector.conjugate() * eigBlockVector, 0 )
-##         eigVecNorms = np.sqrt( aux )
-##         eigBlockVector = eigBlockVector / eigVecNorms[np.newaxis,:]
-#        eigBlockVector, aux = _b_orthonormalize( B, eigBlockVector )
+#         # Normalize eigenvectors!
+#         aux = np.sum( eigBlockVector.conjugate() * eigBlockVector, 0 )
+#         eigVecNorms = np.sqrt( aux )
+#         eigBlockVector = eigBlockVector / eigVecNorms[np.newaxis, :]
+#         eigBlockVector, aux = _b_orthonormalize( B, eigBlockVector )
 
         if verbosityLevel > 10:
             print(eigBlockVector)
@@ -555,7 +557,7 @@ def lobpcg(A, X,
 
         blockVectorP, blockVectorAP, blockVectorBP = pp, app, bpp
 
-    aux = blockVectorBX * _lambda[np.newaxis,:]
+    aux = blockVectorBX * _lambda[np.newaxis, :]
     blockVectorR = blockVectorAX - aux
 
     aux = np.sum(blockVectorR.conjugate() * blockVectorR, 0)
