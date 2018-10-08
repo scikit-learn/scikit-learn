@@ -401,7 +401,7 @@ boolean mask array or callable
         ``fitted=True`` ensures the fitted transformers are used.
         """
         transformers = list(
-            self._iter(X=X, fitted=fitted, replace_strings=True))
+            self._iter(fitted=fitted, replace_strings=True))
         try:
             return Parallel(n_jobs=self.n_jobs)(
                 delayed(func)(
