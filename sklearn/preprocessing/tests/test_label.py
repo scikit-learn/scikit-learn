@@ -605,3 +605,37 @@ def test_encode_util(values, expected):
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
     _, encoded = _encode(values, uniques, encode=True)
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
+
+
+@pytest.mark.parametrize(
+        "values, expected",
+        [(np.array([2, 1, np.nan, 1, np.nan], dtype='float64'),
+          np.array([1, 2, np.nan], dtype='float64')),
+         (np.array(['b', 'a', np.nan, 'a', np.nan], dtype=object),
+          np.array(['a', 'b', np.nan], dtype=object))],
+        ids=['float64', 'object'])
+def test_encode_util_encode_missing(values, expected):
+    uniques = _encode(values, encode_missing=True)
+    assert_array_equal(uniques, expected)
+    uniques, encoded = _encode(values, encode=True, encode_missing=True)
+    assert_array_equal(uniques, expected)
+    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
+    _, encoded = _encode(values, uniques, encode=True, encode_missing=True)
+    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
+
+
+@pytest.mark.parametrize(
+        "values, expected",
+        [(np.array([2, 1, np.nan, 1, np.nan], dtype='float64'),
+          np.array([1, 2], dtype='float64')),
+         (np.array(['b', 'a', np.nan, 'a', np.nan], dtype=object),
+          np.array(['a', 'b'], dtype=object))],
+        ids=['float64', 'object'])
+def test_encode_util_passthrough_missing(values, expected):
+    uniques = _encode(values, encode_missing=False)
+    assert_array_equal(uniques, expected)
+    uniques, encoded = _encode(values, encode=True, encode_missing=False)
+    assert_array_equal(uniques, expected)
+    assert_array_equal(encoded, np.array([1, 0, -1, 0, -1]))
+    _, encoded = _encode(values, uniques, encode=True, encode_missing=False)
+    assert_array_equal(encoded, np.array([1, 0, -1, 0, -1]))

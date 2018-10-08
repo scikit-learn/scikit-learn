@@ -597,10 +597,44 @@ def test_ordinal_encoder_specified_categories(X, X2, cats, cat_dtype):
     with pytest.raises(ValueError, match="Found unknown categories"):
         enc.fit(X2)
 
+        
+@pytest.mark.parametrize("X", [
+    [['abc', 2, 55], ['def', 1, 55], [np.nan, np.nan, np.nan]],
+    np.array([[10, 2, 55], [20, 1, 55], [np.nan, np.nan, np.nan]]),
+    np.array([['a', 'B', 'cat'],
+              ['b', 'A', 'cat'],
+              [np.nan, np.nan, np.nan]], dtype=object)
+    ], ids=['mixed', 'numeric', 'object'])
+def test_ordinal_encoder_handle_missing(X):
+    enc = OrdinalEncoder(encode_missing=True)
+    exp = np.array([[0, 1, 0],
+                    [1, 0, 0],
+                    [2, 2, 1]], dtype='float64')
+    assert_array_equal(enc.fit_transform(X), exp)
+    enc = OrdinalEncoder(encode_missing=False)
+    exp = np.array([[0, 1, 0],
+                    [1, 0, 0],
+                    [np.nan, np.nan, np.nan]], dtype='float64')
+    assert_array_equal(enc.fit_transform(X), exp)
+
 
 def test_ordinal_encoder_inverse():
     X = [['abc', 2, 55], ['def', 1, 55]]
     enc = OrdinalEncoder()
+    X_tr = enc.fit_transform(X)
+    exp = np.array(X, dtype=object)
+    assert_array_equal(enc.inverse_transform(X_tr), exp)
+
+    # test inverse transform with missing-passthrough
+    X = [['abc', 2, 55], ['def', 1, 55], [np.nan, np.nan, np.nan]]
+    enc = OrdinalEncoder(encode_missing=False)
+    X_tr = enc.fit_transform(X)
+    exp = np.array(X, dtype=object)
+    assert_array_equal(enc.inverse_transform(X_tr), exp)
+
+    # test inverse transform with missing-separate
+    X = [['abc', 2, 55], ['def', 1, 55], [np.nan, np.nan, np.nan]]
+    enc = OrdinalEncoder(encode_missing=True)
     X_tr = enc.fit_transform(X)
     exp = np.array(X, dtype=object)
     assert_array_equal(enc.inverse_transform(X_tr), exp)
@@ -614,22 +648,7 @@ def test_ordinal_encoder_inverse():
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
                                np.array([['a', np.nan]], dtype=object).T],
                          ids=['numeric', 'object'])
-def test_ordinal_encoder_raise_missing(X):
-    ohe = OrdinalEncoder()
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit(X)
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit_transform(X)
-
-    ohe.fit(X[:1, :])
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.transform(X)
-
-
-def test_encoder_dtypes():
+def test_encoder_dtypes(X):
     # check that dtypes are preserved when determining categories
     enc = OneHotEncoder(categories='auto')
     exp = np.array([[1., 0., 1., 0.], [0., 1., 0., 1.]], dtype='float64')

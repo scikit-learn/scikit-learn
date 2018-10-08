@@ -11,6 +11,7 @@ import numpy as np
 from scipy import sparse
 
 from .. import get_config as _get_config
+from .. import set_config as _set_config
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..utils import check_array
@@ -36,7 +37,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
     """
 
-    def _check_X(self, X):
+    def _check_X(self, X, force_all_finite=False):
         """
         Perform custom check_array:
         - convert list of strings to object dtype
@@ -44,21 +45,23 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
           not do that)
 
         """
-        X_temp = check_array(X, dtype=None)
+        X_temp = check_array(X, force_all_finite=False, dtype=None)
         if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
-            X = check_array(X, dtype=np.object)
+            X = check_array(X, force_all_finite=False, dtype=np.object)
         else:
             X = X_temp
 
-        if X.dtype == np.dtype('object'):
-            if not _get_config()['assume_finite']:
-                if _object_dtype_isnan(X).any():
-                    raise ValueError("Input contains NaN")
+        if not force_all_finite:
+            if X.dtype == np.dtype('object'):
+                if not _get_config()['assume_finite']:
+                    if _object_dtype_isnan(X).any():
+                        raise ValueError("Input contains NaN")
 
         return X
 
-    def _fit(self, X, handle_unknown='error'):
-        X = self._check_X(X)
+    def _fit(self, X, handle_unknown='error', encode_missing=False,
+             force_all_finite=False):
+        X = self._check_X(X, force_all_finite=force_all_finite)
 
         n_samples, n_features = X.shape
 
@@ -77,7 +80,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         for i in range(n_features):
             Xi = X[:, i]
             if self._categories == 'auto':
-                cats = _encode(Xi)
+                cats = _encode(Xi, encode_missing=encode_missing)
             else:
                 cats = np.array(self._categories[i], dtype=X.dtype)
                 if handle_unknown == 'error':
@@ -88,7 +91,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                         raise ValueError(msg)
             self.categories_.append(cats)
 
-    def _transform(self, X, handle_unknown='error'):
+    def _transform(self, X, handle_unknown='error', encode_missing=False):
         X = self._check_X(X)
 
         _, n_features = X.shape
@@ -119,7 +122,8 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                         Xi = Xi.copy()
 
                     Xi[~valid_mask] = self.categories_[i][0]
-            _, encoded = _encode(Xi, self.categories_[i], encode=True)
+            _, encoded = _encode(Xi, self.categories_[i], encode=True,
+                                 encode_missing=encode_missing)
             X_int[:, i] = encoded
 
         return X_int, X_mask
@@ -735,6 +739,13 @@ class OrdinalEncoder(_BaseEncoder):
     dtype : number type, default np.float64
         Desired dtype of output.
 
+    encode_missing : boolean, default False
+        How to represent NaN's
+
+        - False : Do not categorize missing values and return
+          transformed data with NaN's
+        - True : Categorize missing values sorted last
+
     Attributes
     ----------
     categories_ : list of arrays
@@ -752,7 +763,8 @@ class OrdinalEncoder(_BaseEncoder):
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
     ... # doctest: +ELLIPSIS
-    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>)
+    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
+           encode_missing=False)
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> enc.transform([['Female', 3], ['Male', 1]])
@@ -771,9 +783,11 @@ class OrdinalEncoder(_BaseEncoder):
       between 0 and n_classes-1.
     """
 
-    def __init__(self, categories='auto', dtype=np.float64):
+    def __init__(self, categories='auto', dtype=np.float64,
+                 encode_missing=False):
         self.categories = categories
         self.dtype = dtype
+        self.encode_missing = encode_missing
 
     def fit(self, X, y=None):
         """Fit the OrdinalEncoder to X.
@@ -790,8 +804,9 @@ class OrdinalEncoder(_BaseEncoder):
         """
         # base classes uses _categories to deal with deprecations in
         # OneHoteEncoder: can be removed once deprecations are removed
+
         self._categories = self.categories
-        self._fit(X)
+        self._fit(X, encode_missing=self.encode_missing, force_all_finite=True)
 
         return self
 
@@ -809,8 +824,15 @@ class OrdinalEncoder(_BaseEncoder):
             Transformed input.
 
         """
-        X_int, _ = self._transform(X)
-        return X_int.astype(self.dtype, copy=False)
+
+        X_int, _ = self._transform(X, encode_missing=self._encode_missing)
+
+        transformed = X_int.astype(self.dtype, copy=False)
+
+        if not self._encode_missing:
+            transformed[transformed == -1] = np.nan
+
+        return transformed
 
     def inverse_transform(self, X):
         """Convert the data back to the original representation.
@@ -829,6 +851,11 @@ class OrdinalEncoder(_BaseEncoder):
         check_is_fitted(self, 'categories_')
         X = check_array(X, accept_sparse='csr')
 
+        # create missing mask
+        if not self._encode_missing:
+            missing_mask = np.isnan(X)
+            X[missing_mask] = -1
+
         n_samples, _ = X.shape
         n_features = len(self.categories_)
 
@@ -845,5 +872,9 @@ class OrdinalEncoder(_BaseEncoder):
         for i in range(n_features):
             labels = X[:, i].astype('int64')
             X_tr[:, i] = self.categories_[i][labels]
+
+        # recombine missing values
+        if not self._encode_missing:
+            X_tr[missing_mask] = np.nan
 
         return X_tr
