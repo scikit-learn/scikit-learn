@@ -213,7 +213,7 @@ def test_get_binary_score():
         _get_binary_score(lr, X_test, method='foo')
 
     # classifier that does not have a decision_function
-    rf = RandomForestClassifier().fit(X_train, y_train)
+    rf = RandomForestClassifier(n_estimators=10).fit(X_train, y_train)
     y_pred_proba_rf = rf.predict_proba(X_test)
     assert_array_equal(
         y_pred_proba_rf[:, 1],
@@ -225,7 +225,8 @@ def test_get_binary_score():
         n_informative=4
     )
 
-    rf_non_bin = RandomForestClassifier().fit(X_non_binary, y_non_binary)
+    rf_non_bin = RandomForestClassifier(n_estimators=10).fit(X_non_binary,
+                                                             y_non_binary)
     with pytest.raises(ValueError):
         _get_binary_score(rf_non_bin, X_non_binary)
 
