@@ -370,6 +370,10 @@ def _verify_target_data_type(features_dict, target_columns):
 
 
 def _valid_data_column_names(features_list, target_columns):
+    # logic for determining on which columns can be learned. Note that from the
+    # OpenML guide follows that columns that have the `is_row_identifier` or
+    # `is_ignore` flag, these can not be learned on. Also target columns are
+    # excluded.
     valid_data_column_names = []
     for feature in features_list:
         if (feature['name'] not in target_columns
