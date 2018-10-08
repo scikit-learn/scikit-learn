@@ -1538,8 +1538,8 @@ Max error
 
 The :func:`max_error` function computes the  maximum `residual error <https://en.wikipedia.org/wiki/Errors_and_residuals`_,
 a metric that captures the worst case error between the predicted value and the true value.
-In a perfectly fitted single output regression model, `max_error` would be `0` and though this
-would be highly unlikely in the real world, this metric shows the extent of error that the
+In a perfectly fitted single output regression model, `max_error` would be `0` on the training set
+and though this would be highly unlikely in the real world, this metric shows the extent of error that the
 model had when it was fitted.
 
 
@@ -1554,9 +1554,9 @@ Here is a small example of usage of the :func:`max_error` function::
 
   >>> from sklearn.metrics import max_error
   >>> y_true = [3, 2, 7, 1]
-  >>> y_pred = [4, 2, 7, 1]
+  >>> y_pred = [9, 2, 7, 1]
   >>> max_error(y_true, y_pred)
-  1
+  6
 
 The :func:`max_error` does not support multioutput.
 
