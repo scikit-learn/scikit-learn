@@ -2369,6 +2369,9 @@ def check_fit_idempotent(name, estimator_orig):
         y = np.stack([y, y], axis=1)
 
     X_train, X_test, y_train, _ = train_test_split(X, y)
+    # some estimators expect a square matrix
+    X_train = pairwise_estimator_convert_X(X_train, est)
+    X_test = pairwise_estimator_convert_X(X_train, est)
 
     if 'random_state' in est.get_params().keys():
         est.set_params(random_state=0)
