@@ -1,16 +1,14 @@
 """
-Pure SciPy implementation of Locally Optimal Block Preconditioned Conjugate
-Gradient Method (LOBPCG), see
-https://bitbucket.org/joseroman/blopex
-
-The original code is at scipy\sparse\linalg\eigen\lobpcg\lobpcg.py
-
-License: BSD
-
-Authors: Robert Cimrman, Andrew Knyazev
-
-Examples in tests directory contributed by Nils Wagner.
+Locally Optimal Block Preconditioned Conjugate Gradient Method (LOBPCG)
 """
+
+# sk-learn copy of scipy\sparse\linalg\eigen\lobpcg\lobpcg.py
+
+# Author: Robert Cimrman,
+#         Andrew Knyazev
+# Examples in tests directory contributed by Nils Wagner.
+# License: BSD
+
 import numpy as np
 
 from numpy.testing import assert_allclose
@@ -472,9 +470,9 @@ def lobpcg(A, X,
                             [xbp.T.conj(), wbp.T.conj(), ident]])
         else:
             gramA = np.bmat([[np.diag(_lambda), xaw],
-                              [xaw.T.conj(), waw]])
+                            [xaw.T.conj(), waw]])
             gramB = np.bmat([[ident0, xbw],
-                              [xbw.T.conj(), ident]])
+                            [xbw.T.conj(), ident]])
 
         if verbosityLevel > 10:
             save(gramA, 'gramA')

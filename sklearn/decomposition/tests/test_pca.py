@@ -357,7 +357,8 @@ def test_pca_validation(solver):
     # parameter raise errors
     X = np.array([[0, 1, 0], [1, 0, 0]])
     smallest_d = 2  # The smallest dimension
-    lower_limit = {'randomized': 1, 'arpack': 1, 'full': 0, 'auto': 0}
+    lower_limit = {'randomized': 1, 'arpack': 1, 'lobpcg': 1,
+                   'full': 0, 'auto': 0}
 
     # We conduct the same test on X.T so that it is invariant to axis.
     for data in [X, X.T]:
