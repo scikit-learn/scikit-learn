@@ -140,6 +140,18 @@ def test_remove_zero_eig():
     assert_equal(Xt.shape, (3, 0))
 
 
+def test_leave_zero_eig():
+    """This test checks that fit().transform() returns the same result than
+    fit_transform() in case of non-removed zero eigenvalue"""
+    X_fit = np.array([[1, 1], [0, 0]])
+
+    k = KernelPCA(n_components=2, remove_zero_eig=False,
+                  eigen_solver="dense")
+    A = k.fit(X_fit).transform(X_fit)
+    B = k.fit_transform(X_fit)
+    assert_array_almost_equal(np.abs(A), np.abs(B))
+
+
 def test_kernel_pca_precomputed():
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
