@@ -26,26 +26,30 @@ labeled points and a large amount of unlabeled points.
    Semi-supervised algorithms need to make assumptions about the distribution
    of the dataset in order to achieve performance gains. See `here
    <https://en.wikipedia.org/wiki/Semi-supervised_learning#Assumptions_used>`_
-   for more.
+   for more details.
 
 .. _self_training:
 
 Self Training
-=================
+=============
 
-This self-training implementation is based on Yarowsky's [1]_ algorithm. It provides
-a method to iteratively label a dataset for which initially only a few labels
-were available.
+This self-training implementation is based on Yarowsky's [1]_ algorithm.
+Using this algorithm, a given supervised classifier can function as a
+semi-supervised classifier, allowing it to learn from unlabeled data.
 
-:class:`SelfTrainingClassifier` can be called with a decision threshold, a 
-maximum number of iterations and any classifier that implements ``predict_proba``.
-
-In each iteration, the classifier predicts labels for the unlabeled samples
+:class:`SelfTrainingClassifier` can be called with any classifier that implements
+``predict_proba``, passed as the parameter ``base_classifier``.
+In each iteration, the ``base_classifier`` predicts labels for the unlabeled samples
 and adds them to the labeled dataset if the classifier's confidence 
-is above the specified threshold. The labels used for the final fitting as well
+is above the ``threshold`` (an optional parameter). The labels used for the final fitting as well
 as the iteration in which each sample was labeled are available as class
-attributes. The ``max_iter`` parameter specifies how many times the loop is executed
+attributes. The optional ``max_iter`` parameter specifies how many times the loop is executed
 at most.
+
+The ``max_iter`` parameter may be set to ``None``, causing the
+algorithm to iterate until all samples have labels. However, in practice, this
+can cause the fitting to never terminate, as the ``base_classifier`` may never
+produce confident predictions for certain samples.
 
 .. topic:: Examples
 
@@ -53,7 +57,7 @@ at most.
 
 .. topic:: References
 
-    [1] David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
+..  [1] David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
     supervised methods. In Proceedings of the 33rd annual meeting on
     Association for Computational Linguistics (ACL '95). Association for
     Computational Linguistics, Stroudsburg, PA, USA, 189-196. DOI:

@@ -39,7 +39,7 @@ class SelfTrainingClassifier(BaseEstimator):
         Threshold above which predictions are added to the labeled dataset.
         Should be in [0, 1).
 
-    max_iter : int or None, optional (default=10)
+    max_iter : int or ``None``, optional (default=10)
         Maximum number of iterations allowed. Should be greater than or equal
         to 0. If it is ``None``, the classifier will continue to predict labels
         until all unlabeled samples have been labeled. In this case, be aware
@@ -50,10 +50,10 @@ class SelfTrainingClassifier(BaseEstimator):
     base_classifier_ : estimator object
         The fitted estimator.
 
-    y_labeled_ : array, shape = (n_samples,)
+    y_labeled_ : array, shape=(n_samples,)
         The labels used for the final fit of the classifier.
 
-    y_labeled_iter_ : array, shape = (n_samples,)
+    y_labeled_iter_ : array, shape=(n_samples,)
         The iteration in which each sample was labeled. When a sample has
         iteration 0, the sample was already labeled in the given dataset. When
         a sample has iteration -1, the sample was not labeled in any iteration.
@@ -176,12 +176,12 @@ class SelfTrainingClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like, shape=(n_samples, n_features)
             array representing the data
 
         Returns
         -------
-        y : array-like, shape = (n_samples,)
+        y : array-like, shape=(n_samples,)
             array with predicted labels
         """
         check_is_fitted(self, 'y_labeled_iter_')
@@ -193,12 +193,12 @@ class SelfTrainingClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like, shape=(n_samples, n_features)
             array representing the data
 
         Returns
         -------
-        y : array-like, shape = (n_samples, n_features)
+        y : array-like, shape=(n_samples, n_features)
             array with prediction probabilities
         """
         check_is_fitted(self, 'y_labeled_iter_')
@@ -210,12 +210,12 @@ class SelfTrainingClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like, shape=(n_samples, n_features)
             array representing the data
 
         Returns
         -------
-        y : array-like, shape = (n_samples, n_features)
+        y : array-like, shape=(n_samples, n_features)
             result of the decision function of the base_classifier
         """
         check_is_fitted(self, 'y_labeled_iter_')
@@ -227,12 +227,12 @@ class SelfTrainingClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like, shape=(n_samples, n_features)
             array representing the data
 
         Returns
         -------
-        y : array-like, shape = (n_samples, n_features)
+        y : array-like, shape=(n_samples, n_features)
             array with log prediction probabilities
         """
         check_is_fitted(self, 'y_labeled_iter_')
@@ -244,10 +244,10 @@ class SelfTrainingClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like, shape=(n_samples, n_features)
             array representing the data
 
-        y : array-like, shape = (n_samples,)
+        y : array-like, shape=(n_samples,)
             array representing the labels
 
         Returns
