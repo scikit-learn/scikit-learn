@@ -33,11 +33,15 @@ from ..externals import six
 from ..externals.six.moves import zip
 from ..externals.six.moves import xrange as range
 from .forest import BaseForest
-from ..feature_selection.from_model import _get_feature_importances
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree.tree import BaseDecisionTree
 from ..tree._tree import DTYPE
-from ..utils import check_array, check_X_y, check_random_state
+from ..utils import (
+    check_array,
+    check_X_y,
+    check_random_state,
+    get_feature_importances
+)
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
 from sklearn.utils.validation import has_fit_parameter, check_is_fitted
@@ -236,12 +240,13 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 yield r2_score(y, y_pred, sample_weight=sample_weight)
 
     def get_feature_importances_(self, norm_order=2):
-        """Return the feature importances (the higher, the more important the
-           feature).
+        """Return the feature importances.
+
+         The higher the value, the more important the feature.
 
         Parameters
         ----------
-        norm_order: {non-zero int, inf, -inf, "fro"}, optional
+        norm_order : {non-zero int, inf, -inf, "fro"}, optional
             Same as `numpy.linalg.norm`'s norm_order parameter
 
         Returns
@@ -255,7 +260,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         try:
             norm = self.estimator_weights_.sum()
             estimator_feature_importances_ = [
-                _get_feature_importances(estimator, norm_order)
+                get_feature_importances(estimator, norm_order)
                 for estimator in self.estimators_]
 
             return (sum(weight * feature_importances_

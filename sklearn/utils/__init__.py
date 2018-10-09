@@ -599,3 +599,39 @@ def is_scalar_nan(x):
     # Redondant np.floating is needed because numbers can't match np.float32
     # in python 2.
     return bool(isinstance(x, (numbers.Real, np.floating)) and np.isnan(x))
+
+
+def get_feature_importances(estimator, norm_order=1):
+    """Retrieve or aggregate feature importances from estimator.
+
+    Parameters
+    ----------
+    estimator : any estimator object with either `feature_importances_`
+        attribute or `coef_` attribute
+
+    norm_order : {non-zero int, inf, -inf, "fro"}, optional
+        Same as `numpy.linalg.norm`'s norm_order parameter
+
+    Returns
+    -------
+    importances : A 1d array, shape: [n_features]
+    """
+    importances = getattr(estimator, "feature_importances_", None)
+
+    coef_ = getattr(estimator, "coef_", None)
+    if importances is None and coef_ is not None:
+        if estimator.coef_.ndim == 1:
+            importances = np.abs(coef_)
+
+        else:
+            importances = np.linalg.norm(coef_, axis=0,
+                                         ord=norm_order)
+
+    elif importances is None:
+        raise ValueError(
+            "The underlying estimator %s has no `coef_` or "
+            "`feature_importances_` attribute. Either pass a fitted estimator"
+            " to SelectFromModel or call fit before calling transform."
+            % estimator.__class__.__name__)
+
+    return importances
