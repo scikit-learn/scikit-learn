@@ -28,6 +28,10 @@ def _validate_estimator(estimator):
 class SelfTrainingClassifier(BaseEstimator):
     """Self-training classifier
 
+    This class allows a given supervised classifier to function as a
+    semi-supervised classifier, allowing it to learn from unlabeled data. It
+    does this by iteratively predicting labels for the unlabeled data.
+
     Read more in the :ref:`User Guide <self_training>`.
 
     Parameters
