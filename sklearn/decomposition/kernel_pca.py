@@ -322,11 +322,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         # Compute centered gram matrix between X and training data X_fit_
         K = self._centerer.transform(self._get_kernel(X, self.X_fit_))
 
-        # scale eigenvectors
-        scaled_alphas = self.alphas_ / np.sqrt(self.lambdas_)
-
-        # properly take null-space into account for the dot product
-        scaled_alphas[:, self.lambdas_ == 0] = 0
+        # scale eigenvectors (properly account for null-space for dot product)
+        nz = np.flatnonzero(self.lambdas_)
+        scaled_alphas = np.zeros(self.alphas_.shape)
+        scaled_alphas[:, nz] = self.alphas_[:, nz] / np.sqrt(self.lambdas_[nz])
 
         # Project by doing a scalar product between K and the scaled eigenvects
         return np.dot(K, scaled_alphas)
