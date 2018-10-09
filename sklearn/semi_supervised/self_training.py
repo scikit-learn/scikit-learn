@@ -28,6 +28,8 @@ def _validate_estimator(estimator):
 class SelfTrainingClassifier(BaseEstimator):
     """Self-training classifier
 
+    Read more in the :ref:`User Guide <self_training>`.
+
     Parameters
     ----------
     base_classifier : estimator object
