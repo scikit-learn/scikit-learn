@@ -5,7 +5,7 @@ real-valued features.
 
 The dataset page is available from UCI Machine Learning Repository
 
-    http://archive.ics.uci.edu/ml/datasets/Covertype
+    https://archive.ics.uci.edu/ml/datasets/Covertype
 
 Courtesy of Jock A. Blackard and Colorado State University.
 """
@@ -31,7 +31,7 @@ from ..externals import joblib
 from ..utils import check_random_state
 
 # The original data can be found in:
-# http://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz
+# https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz
 ARCHIVE = RemoteFileMetadata(
     filename='covtype.data.gz',
     url='https://ndownloader.figshare.com/files/5976039',

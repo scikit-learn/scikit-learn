@@ -41,13 +41,12 @@ jobs:
       # Test examples run with minimal dependencies
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 2
-      - NUMPY_VERSION: 1.8.2
-      # XXX: plot_gpc_xor.py fails with scipy 0.13.3
-      - SCIPY_VERSION: 0.14
-      - MATPLOTLIB_VERSION: 1.3
-      - SCIKIT_IMAGE_VERSION: 0.9.3
-      - PANDAS_VERSION: 0.13.1
+      - PYTHON_VERSION: "2"
+      - NUMPY_VERSION: "1.10"
+      - SCIPY_VERSION: "0.16"
+      - MATPLOTLIB_VERSION: "1.4"
+      - SCIKIT_IMAGE_VERSION: "0.11"
+      - PANDAS_VERSION: "0.17.1"
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh

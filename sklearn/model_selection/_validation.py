@@ -22,7 +22,6 @@ import scipy.sparse as sp
 
 from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, safe_indexing
-from ..utils.deprecation import DeprecationDict
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..utils import Parallel, delayed
@@ -40,7 +39,7 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
                    n_jobs=None, verbose=0, fit_params=None,
-                   pre_dispatch='2*n_jobs', return_train_score="warn",
+                   pre_dispatch='2*n_jobs', return_train_score=False,
                    return_estimator=False, error_score='raise-deprecating'):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
@@ -126,12 +125,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    return_train_score : boolean, optional
+    return_train_score : boolean, default=False
         Whether to include train scores.
-
-        Current default is ``'warn'``, which behaves as ``True`` in addition
-        to raising a warning when a training score is looked up.
-        That default will be changed to ``False`` in 0.21.
         Computing training scores is used to get insights on how different
         parameter settings impact the overfitting/underfitting trade-off.
         However computing the scores on the training set can be computationally
@@ -191,8 +186,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
 
     Single metric evaluation using ``cross_validate``
 
-    >>> cv_results = cross_validate(lasso, X, y, cv=3,
-    ...                             return_train_score=False)
+    >>> cv_results = cross_validate(lasso, X, y, cv=3)
     >>> sorted(cv_results.keys())                         # doctest: +ELLIPSIS
     ['fit_time', 'score_time', 'test_score']
     >>> cv_results['test_score']    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -248,8 +242,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
     test_scores, fit_times, score_times = zipped_scores
     test_scores = _aggregate_score_dicts(test_scores)
 
-    # TODO: replace by a dict in 0.21
-    ret = DeprecationDict() if return_train_score == 'warn' else {}
+    ret = {}
     ret['fit_time'] = np.array(fit_times)
     ret['score_time'] = np.array(score_times)
 
@@ -261,14 +254,6 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
         if return_train_score:
             key = 'train_%s' % name
             ret[key] = np.array(train_scores[name])
-            if return_train_score == 'warn':
-                message = (
-                    'You are accessing a training score ({!r}), '
-                    'which will not be available by default '
-                    'any more in 0.21. If you need training scores, '
-                    'please set return_train_score=True').format(key)
-                # warn on key access
-                ret.add_warning(key, message, FutureWarning)
 
     return ret
 
@@ -395,7 +380,6 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
 
     cv_results = cross_validate(estimator=estimator, X=X, y=y, groups=groups,
                                 scoring={'score': scorer}, cv=cv,
-                                return_train_score=False,
                                 n_jobs=n_jobs, verbose=verbose,
                                 fit_params=fit_params,
                                 pre_dispatch=pre_dispatch,

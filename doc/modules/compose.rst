@@ -380,7 +380,7 @@ ColumnTransformer for heterogeneous data
 Many datasets contain features of different types, say text, floats, and dates,
 where each type of feature requires separate preprocessing or feature
 extraction steps.  Often it is easiest to preprocess data before applying
-scikit-learn methods, for example using `pandas <http://pandas.pydata.org/>`__.
+scikit-learn methods, for example using `pandas <https://pandas.pydata.org/>`__.
 Processing your data before passing it to scikit-learn might be problematic for
 one of the following reasons:
 
@@ -395,7 +395,7 @@ transformations for different columns of the data, within a
 :class:`~sklearn.pipeline.Pipeline` that is safe from data leakage and that can
 be parametrized. :class:`~sklearn.compose.ColumnTransformer` works on
 arrays, sparse matrices, and
-`pandas DataFrames <http://pandas.pydata.org/pandas-docs/stable/>`__.
+`pandas DataFrames <https://pandas.pydata.org/pandas-docs/stable/>`__.
 
 To each column, a different transformation can be applied, such as
 preprocessing or a specific feature extraction method::
@@ -420,7 +420,7 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
   >>> column_trans = ColumnTransformer(
   ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
   ...      ('title_bow', CountVectorizer(), 'title')],
-  ...      remainder='drop')
+  ...     remainder='drop')
 
   >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
@@ -460,7 +460,7 @@ transformation::
   >>> column_trans = ColumnTransformer(
   ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
   ...      ('title_bow', CountVectorizer(), 'title')],
-  ...      remainder='passthrough')
+  ...     remainder='passthrough')
 
   >>> column_trans.fit_transform(X)
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
@@ -477,7 +477,7 @@ the transformation::
   >>> column_trans = ColumnTransformer(
   ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
   ...      ('title_bow', CountVectorizer(), 'title')],
-  ...      remainder=MinMaxScaler())
+  ...     remainder=MinMaxScaler())
 
   >>> column_trans.fit_transform(X)[:, -2:]
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS

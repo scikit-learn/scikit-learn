@@ -489,7 +489,7 @@ def test_logistic_sigmoid():
 
 def test_incremental_variance_update_formulas():
     # Test Youngs and Cramer incremental variance formulas.
-    # Doggie data from http://www.mathsisfun.com/data/standard-deviation.html
+    # Doggie data from https://www.mathsisfun.com/data/standard-deviation.html
     A = np.array([[600, 470, 170, 430, 300],
                   [600, 470, 170, 430, 300],
                   [600, 470, 170, 430, 300],

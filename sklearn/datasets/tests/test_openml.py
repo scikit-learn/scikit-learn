@@ -12,7 +12,8 @@ import pytest
 from sklearn.datasets import fetch_openml
 from sklearn.datasets.openml import (_open_openml_url,
                                      _get_data_description_by_id,
-                                     _download_data_arff)
+                                     _download_data_arff,
+                                     _get_local_path)
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 from sklearn.externals.six import string_types
@@ -77,6 +78,8 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
                                    cache=False)
     assert int(data_by_name_id.details['id']) == data_id
 
+    # Please note that cache=False is crucial, as the monkey patched files are
+    # not consistent with reality
     fetch_openml(name=data_name, cache=False)
     # without specifying the version, there is no guarantee that the data id
     # will be the same
@@ -138,6 +141,9 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
 def _monkey_patch_webbased_functions(context,
                                      data_id,
                                      gzip_response):
+    # monkey patches the urlopen function. Important note: Do NOT use this
+    # in combination with a regular cache directory, as the files that are
+    # stored as cache should not be mixed up with real openml datasets
     url_prefix_data_description = "https://openml.org/api/v1/json/data/"
     url_prefix_data_features = "https://openml.org/api/v1/json/data/features/"
     url_prefix_download_data = "https://openml.org/data/v1/"
@@ -405,6 +411,25 @@ def test_fetch_openml_australian(monkeypatch, gzip_response):
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_adultcensus(monkeypatch, gzip_response):
+    # Check because of the numeric row attribute (issue #12329)
+    data_id = 1119
+    data_name = 'adult-census'
+    data_version = 1
+    target_column = 'class'
+    # Not all original instances included for space reasons
+    expected_observations = 10
+    expected_features = 14
+    expected_missing = 0
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
+    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+                               expected_observations, expected_features,
+                               expected_missing,
+                               np.float64, object, expect_sparse=False,
+                               compare_default_target=True)
+
+
+@pytest.mark.parametrize('gzip_response', [True, False])
 def test_fetch_openml_miceprotein(monkeypatch, gzip_response):
     # JvR: very important check, as this dataset defined several row ids
     # and ignore attributes. Note that data_features json has 82 attributes,
@@ -453,21 +478,45 @@ def test_decode_emotions(monkeypatch):
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
-def test_open_openml_url_cache(monkeypatch, gzip_response):
+def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
     data_id = 61
 
     _monkey_patch_webbased_functions(
         monkeypatch, data_id, gzip_response)
     openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
-    test_directory = os.path.join(os.path.expanduser('~'), 'scikit_learn_data')
+    cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
     # first fill the cache
-    response1 = _open_openml_url(openml_path, test_directory)
+    response1 = _open_openml_url(openml_path, cache_directory)
     # assert file exists
-    location = os.path.join(test_directory, 'openml.org', openml_path + '.gz')
+    location = _get_local_path(openml_path, cache_directory)
     assert os.path.isfile(location)
     # redownload, to utilize cache
-    response2 = _open_openml_url(openml_path, test_directory)
+    response2 = _open_openml_url(openml_path, cache_directory)
     assert response1.read() == response2.read()
+
+
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
+    def _mock_urlopen_raise(request):
+        raise ValueError('This mechanism intends to test correct cache'
+                         'handling. As such, urlopen should never be '
+                         'accessed. URL: %s' % request.get_full_url())
+    data_id = 2
+    cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
+    _monkey_patch_webbased_functions(
+        monkeypatch, data_id, gzip_response)
+    X_fetched, y_fetched = fetch_openml(data_id=data_id, cache=True,
+                                        data_home=cache_directory,
+                                        return_X_y=True)
+
+    monkeypatch.setattr(sklearn.datasets.openml, 'urlopen',
+                        _mock_urlopen_raise)
+
+    X_cached, y_cached = fetch_openml(data_id=data_id, cache=True,
+                                      data_home=cache_directory,
+                                      return_X_y=True)
+    np.testing.assert_array_equal(X_fetched, X_cached)
+    np.testing.assert_array_equal(y_fetched, y_cached)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
