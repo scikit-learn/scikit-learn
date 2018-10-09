@@ -47,7 +47,15 @@ Support for Python 3.4 and below has been officially dropped.
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>` and
   :user:`Adrin Jalali <adrinjalali>`.
-  
+
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |MajorFeature| Added :class:`semi_supervised.SelfTrainingClassifier`, a 
+  meta-classifier that allows any supervised classifier to function as a 
+  semi_supervised classifier that can learn from unlabeled data. :issue:`1243`
+  by `Oliver Rausch`_ and `Patrice Becker`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -58,7 +66,6 @@ Support for Python 3.4 and below has been officially dropped.
 - |Efficiency| |API| Speed improvement in :class:`preprocessing.PolynomialFeatures`,
   in the dense case. Also added a new parameter ``order`` which controls output
   order for further speed performances. :issue:`12251` by `Tom Dupre la Tour`_.
-
 
 Multiple modules
 ................
