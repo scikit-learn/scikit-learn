@@ -69,10 +69,6 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
 
     indptr : nd-array
         The "indptr" attribute of the input CSR matrix.
-    
-    has_sorted_indices : bool
-        Whether the input CSR matrix has sorted indices, which is stored in
-        its has_sorted_indices attribute.
 
     d : int
         The dimensionality of the input CSR matrix.
