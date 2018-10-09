@@ -30,43 +30,16 @@ X_train, X_test, y_train, y_test = train_test_split(iris.data,
                                                     iris.target,
                                                     random_state=rng)
 
-limit = 50
+n_missing_samples = 50
 
 y_train_missing_labels = y_train.copy()
-y_train_missing_labels[limit:] = -1
+y_train_missing_labels[n_missing_samples:] = -1
 y_train_missing_labels_strings = y_train_missing_labels.copy()
 mapping = {0: 'A', 1: 'B', 2: 'C', -1: -1}
 y_train_missing_strings = np.vectorize(mapping.get)(y_train_missing_labels)
 
 lb = LabelBinarizer()
 y_train_missing_dummies = lb.fit_transform(y_train_missing_labels)
-
-
-def test_classification():
-    # Check classification for various parameter settings.
-    # Also assert that predictions for strings and numerical labels are equal.
-    # Also test for multioutput classification
-    grid = ParameterGrid({"max_iter": [1, 50, 100],
-                          "threshold": [0.0, 0.5, 0.9]})
-
-    for base_classifier in [DummyClassifier(random_state=0),
-                            DecisionTreeClassifier(random_state=0),
-                            KNeighborsClassifier(),
-                            SVC(gamma="scale", probability=True,
-                                random_state=0)]:
-        for params in grid:
-            st = SelfTrainingClassifier(base_classifier, **params)
-            st_string = SelfTrainingClassifier(base_classifier, **params)
-            st.fit(X_train, y_train_missing_labels)
-            pred = st.predict(X_test)
-            proba = st.predict_proba(X_test)
-
-            st_string.fit(X_train, y_train_missing_strings)
-            pred_string = st_string.predict(X_test)
-            proba_string = st_string.predict_proba(X_test)
-
-            assert_array_equal(np.vectorize(mapping.get)(pred), pred_string)
-            assert_array_equal(proba, proba_string)
 
 
 def test_missing_predict_proba():
@@ -78,12 +51,11 @@ def test_missing_predict_proba():
                          y_train)
 
 
-def test_none_iter():
-    # Test None iterations
-    base_classifier = SVC(gamma="scale", probability=True)
-    st = SelfTrainingClassifier(base_classifier, max_iter=None)
-    st.fit(X_train, y_train)
-    st.predict(X_test)
+def test_none_classifier():
+    st = SelfTrainingClassifier(None)
+    msg = "base_classifier cannot be None"
+    assert_raise_message(ValueError, msg, st.fit, X_train,
+                         y_train_missing_labels)
 
 
 def test_invalid_params():
@@ -103,17 +75,55 @@ def test_invalid_params():
         assert_raise_message(ValueError, message, st.fit, X_train, y_train)
 
 
-def test_single_iteration():
-    # Check classification for single iteration.
-    # Fitting a SelfTrainingClassifier with one iteration and 100 unlabeled
-    # datapoints should give the same results as fitting a normal classifier
-    # with only 50 labeled datapoints.
+def test_classification():
+    # Check classification for various parameter settings.
+    # Also assert that predictions for strings and numerical labels are equal.
+    # Also test for multioutput classification
+    grid = ParameterGrid({"max_iter": [1, 50, 100],
+                          "threshold": [0.0, 0.5, 0.9]})
+
+    for base_classifier in [DummyClassifier(random_state=0),
+                            DecisionTreeClassifier(random_state=0),
+                            KNeighborsClassifier(),
+                            SVC(gamma="scale", probability=True,
+                                random_state=0)]:
+        for params in grid:
+            st = SelfTrainingClassifier(base_classifier, **params)
+            st.fit(X_train, y_train_missing_labels)
+            pred = st.predict(X_test)
+            proba = st.predict_proba(X_test)
+
+            st_string = SelfTrainingClassifier(base_classifier, **params)
+            st_string.fit(X_train, y_train_missing_strings)
+            pred_string = st_string.predict(X_test)
+            proba_string = st_string.predict_proba(X_test)
+
+            assert_array_equal(np.vectorize(mapping.get)(pred), pred_string)
+            assert_array_equal(proba, proba_string)
+
+
+def test_none_iter():
+    # Test None iterations
+    st = SelfTrainingClassifier(KNeighborsClassifier(), threshold=.55,
+                                max_iter=None)
+    st.fit(X_train, y_train_missing_labels)
+
+    # Check that the all samples were labeled after a 'reasonable' number of
+    # iterations.
+    assert st.n_iter_ < 10
+
+
+def test_zero_iterations():
+    # Check classification for zero iterations.
+    # Fitting a SelfTrainingClassifier with zero iterations should give the
+    # same results as fitting a supervised classifier.
 
     clf1 = SelfTrainingClassifier(KNeighborsClassifier(),
                                   max_iter=0).fit(X_train,
                                                   y_train_missing_labels)
 
-    clf2 = KNeighborsClassifier().fit(X_train[:limit], y_train[:limit])
+    clf2 = KNeighborsClassifier().fit(
+        X_train[:n_missing_samples], y_train[:n_missing_samples])
 
     assert_array_equal(clf1.predict(X_test), clf2.predict(X_test))
 
@@ -127,20 +137,6 @@ def test_notfitted():
     assert_raise_message(NotFittedError, msg, st.predict_proba, X_train)
 
 
-def test_y_labeled_iter():
-    # Check that the amount of datapoints labeled in iteration 0 is equal to
-    # the amount of labeled datapoints we passed.
-    for m in range(1, 5):
-        st = SelfTrainingClassifier(KNeighborsClassifier(), max_iter=m)
-        st.fit(X_train, y_train_missing_labels)
-        amount_iter_0 = len(st.y_labeled_iter_[st.y_labeled_iter_ == 0])
-        assert(amount_iter_0 == 50)
-        # Check that the max of the iterations is less than the total amount of
-        # iterations
-        assert(np.max(st.y_labeled_iter_) <= m)
-        assert(np.max(st.y_labeled_iter_) <= st.n_iter_)
-
-
 def test_prefitted_throws_error():
     # Test that passing a pre-fitted classifier and calling predict throws an
     # error
@@ -150,6 +146,19 @@ def test_prefitted_throws_error():
     msg = ("This SelfTrainingClassifier instance is not fitted yet. Call "
            "\'fit\' with appropriate arguments before using this method.")
     assert_raise_message(NotFittedError, msg, st.predict, X_train)
+
+
+def test_y_labeled_iter():
+    # Check that the amount of datapoints labeled in iteration 0 is equal to
+    # the amount of labeled datapoints we passed.
+    for max_iter in range(1, 5):
+        st = SelfTrainingClassifier(KNeighborsClassifier(), max_iter=max_iter)
+        st.fit(X_train, y_train_missing_labels)
+        amount_iter_0 = len(st.y_labeled_iter_[st.y_labeled_iter_ == 0])
+        assert amount_iter_0 == n_missing_samples
+        # Check that the max of the iterations is less than the total amount of
+        # iterations
+        assert np.max(st.y_labeled_iter_) <= st.n_iter_ <= max_iter
 
 
 def test_no_unlabeled():
@@ -163,11 +172,4 @@ def test_no_unlabeled():
     assert_array_equal(knn.predict(X_test), st.predict(X_test))
     # Assert that all samples were labeled in iteration 0 (since there were no
     # unlabeled samples).
-    assert(np.where(st.y_labeled_iter_ != 0)[0].size == 0)
-
-
-def test_none():
-    st = SelfTrainingClassifier(None)
-    msg = "base_classifier cannot be None"
-    assert_raise_message(ValueError, msg, st.fit, X_train,
-                         y_train_missing_labels)
+    assert np.all(st.y_labeled_iter_ == 0)

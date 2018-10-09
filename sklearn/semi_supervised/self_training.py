@@ -39,11 +39,11 @@ class SelfTrainingClassifier(BaseEstimator):
         Threshold above which predictions are added to the labeled dataset.
         Should be in [0, 1).
 
-    max_iter : integer, optional (default=20)
+    max_iter : int or None, optional (default=10)
         Maximum number of iterations allowed. Should be greater than or equal
-        to 0. If it is None, the classifier will continue to predict labels
-        until all unlabeled samples have been labeled. Note that if it is None,
-        the fit may never terminate.
+        to 0. If it is ``None``, the classifier will continue to predict labels
+        until all unlabeled samples have been labeled. In this case, be aware
+        that the fit may never terminate.
 
     Attributes
     ----------
