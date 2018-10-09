@@ -16,10 +16,13 @@ __all__ = ["SelfTrainingClassifier"]
 def _validate_estimator(estimator):
     """Make sure that an estimator implements the necessary methods."""
     if estimator is None:
-        raise ValueError("base_estimator cannot be None")
+        raise ValueError("base_classifier cannot be None!")
 
     if not hasattr(estimator, "predict_proba"):
-        raise ValueError("base_estimator should implement predict_proba!")
+        name = type(estimator).__name__
+        msg = "base_classifier ({}) should implement predict_proba!"
+        msg = msg.format(name)
+        raise ValueError(msg)
 
 
 class SelfTrainingClassifier(BaseEstimator):
@@ -27,22 +30,22 @@ class SelfTrainingClassifier(BaseEstimator):
 
     Parameters
     ----------
-    base_estimator : estimator object
+    base_classifier : estimator object
         An estimator object implementing ``fit`` and ``predict_proba``.
         Invoking the ``fit`` method will fit a clone of the passed estimator,
-        which will be stored in the ``self.base_estimator_`` attribute.
+        which will be stored in the ``self.base_classifier_`` attribute.
 
-    threshold : float
+    threshold : float, optional (default=0.75)
         Threshold above which predictions are added to the labeled dataset.
         Should be in [0, 1).
 
-    max_iter : integer
+    max_iter : integer, optional (default=20)
         Maximum number of iterations allowed. Should be greater than or equal
         to 0.
 
     Attributes
     ----------
-    base_estimator_ : estimator object
+    base_classifier_ : estimator object
         The fitted estimator.
 
     y_labeled_ : array, shape = (n_samples,)
@@ -54,7 +57,7 @@ class SelfTrainingClassifier(BaseEstimator):
         a sample has iteration -1, the sample was not labeled in any iteration.
 
     n_iter_ : int
-        The amount of iterations the classifier during fitting.
+        The amount of iterations the classifier used during fitting.
 
 
     Examples
@@ -63,14 +66,13 @@ class SelfTrainingClassifier(BaseEstimator):
     >>> from sklearn import datasets
     >>> from sklearn.semi_supervised import SelfTrainingClassifier
     >>> from sklearn.svm import SVC
+    >>> rng = np.random.RandomState(42)
+    >>> iris = datasets.load_iris()
+    >>> random_unlabeled_points = rng.rand(iris.target.shape[0]) < 0.3
+    >>> iris.target[random_unlabeled_points] = -1
     >>> svc = SVC(probability=True, gamma="auto")
     >>> self_training_model = SelfTrainingClassifier(svc)
-    >>> iris = datasets.load_iris()
-    >>> rng = np.random.RandomState(42)
-    >>> random_unlabeled_points = rng.rand(len(iris.target)) < 0.3
-    >>> labels = np.copy(iris.target)
-    >>> labels[random_unlabeled_points] = -1
-    >>> self_training_model.fit(iris.data, labels)
+    >>> self_training_model.fit(iris.data, iris.target)
     ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     SelfTrainingClassifier(...)
 
@@ -85,18 +87,18 @@ class SelfTrainingClassifier(BaseEstimator):
     _estimator_type = "classifier"
 
     def __init__(self,
-                 base_estimator,
+                 base_classifier,
                  threshold=0.75,
-                 max_iter=100):
-        self.base_estimator = base_estimator
+                 max_iter=10):
+        self.base_classifier = base_classifier
         self.threshold = threshold
         self.max_iter = max_iter
 
     def fit(self, X, y):
         """
         Fits this ``SelfTrainingClassifier`` to dataset, using the
-        base_estimator passed. The fitted base_estimator is stored as
-        ``self.base_estimator_``.
+        base_classifier passed. The fitted base_classifier is stored as
+        ``self.base_classifier_``.
 
         Parameters
         ----------
@@ -109,24 +111,27 @@ class SelfTrainingClassifier(BaseEstimator):
 
         Returns
         -------
-        self: returns an instance of self.
+        self : object
+            returns an instance of self.
         """
         X, y = check_X_y(X, y)
-        _validate_estimator(self.base_estimator)
-        self.base_estimator_ = clone(self.base_estimator)
+        _validate_estimator(self.base_classifier)
+        self.base_classifier_ = clone(self.base_classifier)
 
-        if not 0 <= self.max_iter:
-            raise ValueError("max_iter must be >= 0")
+        if self.max_iter < 0:
+            msg = "max_iter must be >= 0, got {}".format(self.max_iter)
+            raise ValueError(msg)
 
         if not 0 <= self.threshold < 1:
-            raise ValueError("threshold must be in [0,1)")
+            msg = "threshold must be in [0,1), got {}".format(self.threshold)
+            raise ValueError(msg)
 
         if y.dtype.kind == 'U' or y.dtype.kind == 'S':
             has_label = y != '-1'
         else:
             has_label = y != -1
 
-        if np.logical_and.reduce(has_label):
+        if np.all(has_label):
             warnings.warn(RuntimeWarning("y contains no unlabeled samples"))
 
         self.y_labels_ = np.copy(y)
@@ -134,16 +139,16 @@ class SelfTrainingClassifier(BaseEstimator):
         self.y_labeled_iter_[has_label] = 0
 
         self.n_iter_ = 0
-        while np.sum(has_label) < len(X) and self.n_iter_ < self.max_iter:
+        while not np.all(has_label) and self.n_iter_ < self.max_iter:
             self.n_iter_ += 1
-            self.base_estimator_.fit(X[safe_mask(X, has_label)],
-                                     self.y_labels_[safe_mask(self.y_labels_,
-                                                              has_label)])
+            self.base_classifier_.fit(
+                X[safe_mask(X, has_label)],
+                self.y_labels_[safe_mask(self.y_labels_, has_label)])
 
             # Predict on the unlabeled samples
-            prob = self.base_estimator_.predict_proba(X[safe_mask(X,
-                                                                  ~has_label)])
-            pred = self.base_estimator_.classes_[np.argmax(prob, axis=1)]
+            prob = self.base_classifier_.predict_proba(
+                X[safe_mask(X, ~has_label)])
+            pred = self.base_classifier_.classes_[np.argmax(prob, axis=1)]
             max_proba = np.max(prob, axis=1)
 
             # Select samples where confidence is above the threshold
@@ -156,14 +161,15 @@ class SelfTrainingClassifier(BaseEstimator):
             has_label[new_labels_idx] = True
             self.y_labeled_iter_[new_labels_idx] = self.n_iter_
 
-        self.base_estimator_.fit(X[safe_mask(X, has_label)],
-                                 self.y_labels_[safe_mask(self.y_labels_,
-                                                          has_label)])
+        self.base_classifier_.fit(
+            X[safe_mask(X, has_label)],
+            self.y_labels_[safe_mask(self.y_labels_, has_label)])
+        self.classes_ = self.base_classifier_.classes_
         return self
 
-    @if_delegate_has_method(delegate='base_estimator')
+    @if_delegate_has_method(delegate='base_classifier')
     def predict(self, X):
-        """Predict on a dataset.
+        """Predict the classes of X.
 
         Parameters
         ----------
@@ -172,12 +178,12 @@ class SelfTrainingClassifier(BaseEstimator):
 
         Returns
         -------
-        y : array-like, shape = (n_samples, 1)
+        y : array-like, shape = (n_samples,)
             array with predicted labels
         """
         check_is_fitted(self, 'y_labeled_iter_')
         X = check_array(X)
-        return self.base_estimator_.predict(X)
+        return self.base_classifier_.predict(X)
 
     def predict_proba(self, X):
         """Predict probability for each possible outcome.
@@ -193,11 +199,11 @@ class SelfTrainingClassifier(BaseEstimator):
             array with prediction probabilities
         """
         check_is_fitted(self, 'y_labeled_iter_')
-        return self.base_estimator_.predict_proba(X)
+        return self.base_classifier_.predict_proba(X)
 
-    @if_delegate_has_method(delegate='base_estimator')
+    @if_delegate_has_method(delegate='base_classifier')
     def decision_function(self, X):
-        """Calls decision function of the base_estimator
+        """Calls decision function of the base_classifier
 
         Parameters
         ----------
@@ -207,12 +213,12 @@ class SelfTrainingClassifier(BaseEstimator):
         Returns
         -------
         y : array-like, shape = (n_samples, n_features)
-            result of the decision function of the base_estimator
+            result of the decision function of the base_classifier
         """
         check_is_fitted(self, 'y_labeled_iter_')
-        return self.base_estimator_.decision_function(X)
+        return self.base_classifier_.decision_function(X)
 
-    @if_delegate_has_method(delegate='base_estimator')
+    @if_delegate_has_method(delegate='base_classifier')
     def predict_log_proba(self, X):
         """Predict log probability for each possible outcome.
 
@@ -227,11 +233,11 @@ class SelfTrainingClassifier(BaseEstimator):
             array with log prediction probabilities
         """
         check_is_fitted(self, 'y_labeled_iter_')
-        return self.base_estimator_.predict_log_proba(X)
+        return self.base_classifier_.predict_log_proba(X)
 
-    @if_delegate_has_method(delegate='base_estimator')
+    @if_delegate_has_method(delegate='base_classifier')
     def score(self, X, y):
-        """Calls score on the base_estimator
+        """Calls score on the base_classifier
 
         Parameters
         ----------
@@ -244,7 +250,7 @@ class SelfTrainingClassifier(BaseEstimator):
         Returns
         -------
         score : float
-            result of calling score on the base_estimator
+            result of calling score on the base_classifier
         """
         check_is_fitted(self, 'y_labeled_iter_')
-        return self.base_estimator_.score(X, y)
+        return self.base_classifier_.score(X, y)

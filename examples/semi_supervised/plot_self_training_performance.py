@@ -40,7 +40,7 @@ X, y = load_digits(return_X_y=True)
 X, y = shuffle(X, y, random_state=42)
 y_true = y.copy()
 
-for i in range(x_values.shape[0]-1, -1, -1):
+for i in range(x_values.shape[0] - 1, -1, -1):
     n_labeled_samples = x_values[i]
     y[n_labeled_samples:] = -1
 

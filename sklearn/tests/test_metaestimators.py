@@ -64,6 +64,7 @@ def test_metaestimator_delegation():
 
     class SubEstimator(BaseEstimator):
         def __init__(self, param=1, hidden_method=None):
+            self.classes_ = []
             self.param = param
             self.hidden_method = hidden_method
 

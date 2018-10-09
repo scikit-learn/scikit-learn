@@ -49,14 +49,14 @@ def test_classification():
     grid = ParameterGrid({"max_iter": [1, 50, 100],
                           "threshold": [0.0, 0.5, 0.9]})
 
-    for base_estimator in [DummyClassifier(random_state=0),
-                           DecisionTreeClassifier(random_state=0),
-                           KNeighborsClassifier(),
-                           SVC(gamma="scale", probability=True,
-                               random_state=0)]:
+    for base_classifier in [DummyClassifier(random_state=0),
+                            DecisionTreeClassifier(random_state=0),
+                            KNeighborsClassifier(),
+                            SVC(gamma="scale", probability=True,
+                                random_state=0)]:
         for params in grid:
-            st = SelfTrainingClassifier(base_estimator, **params)
-            st_string = SelfTrainingClassifier(base_estimator, **params)
+            st = SelfTrainingClassifier(base_classifier, **params)
+            st_string = SelfTrainingClassifier(base_classifier, **params)
             st.fit(X_train, y_train_missing_labels)
             pred = st.predict(X_test)
             proba = st.predict_proba(X_test)
@@ -71,9 +71,9 @@ def test_classification():
 
 def test_missing_predict_proba():
     # Check that an error is thrown if predict_proba is not implemented
-    base_estimator = SVC(gamma="scale")
-    self_training = SelfTrainingClassifier(base_estimator)
-    message = "base_estimator should implement predict_proba!"
+    base_classifier = SVC(gamma="scale")
+    self_training = SelfTrainingClassifier(base_classifier)
+    message = "base_classifier (SVC) should implement predict_proba!"
     assert_raise_message(ValueError, message, self_training.fit, X_train,
                          y_train)
 
@@ -81,16 +81,16 @@ def test_missing_predict_proba():
 def test_invalid_params():
     # Test negative iterations
     grid = ParameterGrid({"max_iter": [-1, -100, -10]})
-    base_estimator = SVC(gamma="scale", probability=True)
+    base_classifier = SVC(gamma="scale", probability=True)
     for params in grid:
-        st = SelfTrainingClassifier(base_estimator, **params)
+        st = SelfTrainingClassifier(base_classifier, **params)
         message = "max_iter must be >= 0"
         assert_raise_message(ValueError, message, st.fit, X_train, y_train)
 
     grid = ParameterGrid({"threshold": [1.0, -2, 10]})
-    base_estimator = SVC(gamma="scale", probability=True)
+    base_classifier = SVC(gamma="scale", probability=True)
     for params in grid:
-        st = SelfTrainingClassifier(base_estimator, **params)
+        st = SelfTrainingClassifier(base_classifier, **params)
         message = "threshold must be in [0,1)"
         assert_raise_message(ValueError, message, st.fit, X_train, y_train)
 
@@ -134,7 +134,7 @@ def test_y_labeled_iter():
 
 
 def test_prefitted_throws_error():
-    # Test that passing a pre-fitted estimator and calling predict throws an
+    # Test that passing a pre-fitted classifier and calling predict throws an
     # error
     knn = KNeighborsClassifier()
     knn.fit(X_train, y_train)
@@ -160,6 +160,6 @@ def test_no_unlabeled():
 
 def test_none():
     st = SelfTrainingClassifier(None)
-    msg = "base_estimator cannot be None"
+    msg = "base_classifier cannot be None"
     assert_raise_message(ValueError, msg, st.fit, X_train,
                          y_train_missing_labels)
