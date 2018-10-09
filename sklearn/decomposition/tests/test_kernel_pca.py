@@ -4,7 +4,7 @@ import pytest
 
 from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
                                    assert_equal, assert_not_equal,
-                                   assert_raises, ignore_warnings)
+                                   assert_raises, assert_no_warnings)
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
@@ -145,11 +145,17 @@ def test_leave_zero_eig():
     fit_transform() in case of non-removed zero eigenvalue"""
     X_fit = np.array([[1, 1], [0, 0]])
 
-    k = KernelPCA(n_components=2, remove_zero_eig=False,
-                  eigen_solver="dense")
-    A = k.fit(X_fit).transform(X_fit)
-    B = k.fit_transform(X_fit)
-    assert_array_almost_equal(np.abs(A), np.abs(B))
+    # Assert that even with all np warnings on, there is no div by zero warning
+    with np.errstate(all='warn'):
+        k = KernelPCA(n_components=2, remove_zero_eig=False,
+                      eigen_solver="dense")
+        # Fit, then transform
+        A = assert_no_warnings(assert_no_warnings(k.fit, X_fit)
+                               .transform, X_fit)
+        # Do both at once
+        B = assert_no_warnings(k.fit_transform, X_fit)
+        # Compare
+        assert_array_almost_equal(np.abs(A), np.abs(B))
 
 
 def test_kernel_pca_precomputed():
