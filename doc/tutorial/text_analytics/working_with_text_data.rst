@@ -319,10 +319,12 @@ to work with, ``scikit-learn`` provides a :class:`~sklearn.pipeline.Pipeline` cl
 like a compound classifier::
 
   >>> from sklearn.pipeline import Pipeline
-  >>> text_clf = Pipeline([('vect', CountVectorizer()),
-  ...                      ('tfidf', TfidfTransformer()),
-  ...                      ('clf', MultinomialNB()),
+  >>> text_clf = Pipeline([
+  ...     ('vect', CountVectorizer()),
+  ...     ('tfidf', TfidfTransformer()),
+  ...     ('clf', MultinomialNB()),
   ... ])
+
 
 The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
 We will use them to perform grid search for suitable hyperparameters below. 
@@ -353,12 +355,14 @@ than naïve Bayes). We can change the learner by simply plugging a different
 classifier object into our pipeline::
 
   >>> from sklearn.linear_model import SGDClassifier
-  >>> text_clf = Pipeline([('vect', CountVectorizer()),
-  ...                      ('tfidf', TfidfTransformer()),
-  ...                      ('clf', SGDClassifier(loss='hinge', penalty='l2',
-  ...                                            alpha=1e-3, random_state=42,
-  ...                                            max_iter=5, tol=None)),
+  >>> text_clf = Pipeline([
+  ...     ('vect', CountVectorizer()),
+  ...     ('tfidf', TfidfTransformer()),
+  ...     ('clf', SGDClassifier(loss='hinge', penalty='l2',
+  ...                           alpha=1e-3, random_state=42,
+  ...                           max_iter=5, tol=None)),
   ... ])
+
   >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
   Pipeline(...)
   >>> predicted = text_clf.predict(docs_test)
@@ -379,7 +383,9 @@ utilities for more detailed performance analysis of the results::
                  sci.med       0.94      0.90      0.92       396
   soc.religion.christian       0.90      0.95      0.93       398
   <BLANKLINE>
-             avg / total       0.92      0.91      0.91      1502
+               micro avg       0.91      0.91      0.91      1502
+               macro avg       0.92      0.91      0.91      1502
+            weighted avg       0.92      0.91      0.91      1502
   <BLANKLINE>
 
   >>> metrics.confusion_matrix(twenty_test.target, predicted)
@@ -408,7 +414,7 @@ with computer graphics.
   optimizer for the same cost function based on the liblinear_ C++
   library.
 
-.. _liblinear: http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+.. _liblinear: https://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
 
 Parameter tuning using grid search
@@ -428,10 +434,12 @@ on either words or bigrams, with or without idf, and with a penalty
 parameter of either 0.01 or 0.001 for the linear SVM::
 
   >>> from sklearn.model_selection import GridSearchCV
-  >>> parameters = {'vect__ngram_range': [(1, 1), (1, 2)],
-  ...               'tfidf__use_idf': (True, False),
-  ...               'clf__alpha': (1e-2, 1e-3),
+  >>> parameters = {
+  ...     'vect__ngram_range': [(1, 1), (1, 2)],
+  ...     'tfidf__use_idf': (True, False),
+  ...     'clf__alpha': (1e-2, 1e-3),
   ... }
+
 
 Obviously, such an exhaustive search can be expensive. If we have multiple
 CPU cores at our disposal, we can tell the grid searcher to try these eight
@@ -439,7 +447,7 @@ parameter combinations in parallel with the ``n_jobs`` parameter. If we give
 this parameter a value of ``-1``, grid search will detect how many cores
 are installed and use them all::
 
-  >>> gs_clf = GridSearchCV(text_clf, parameters, n_jobs=-1)
+  >>> gs_clf = GridSearchCV(text_clf, parameters, cv=5, iid=False, n_jobs=-1)
 
 The grid search instance behaves like a normal ``scikit-learn``
 model. Let's perform the search on a smaller subset of the training data
@@ -463,7 +471,7 @@ mean score and the parameters setting corresponding to that score::
   ...
   clf__alpha: 0.001
   tfidf__use_idf: True
-  vect__ngram_range: (1, 1)
+  vect__ngram_range: (1, 2)
 
 A more detailed summary of the search is available at ``gs_clf.cv_results_``.
 

@@ -40,8 +40,17 @@ def norm(x):
 def squared_norm(x):
     """Squared Euclidean or Frobenius norm of x.
 
-    Returns the Euclidean norm when x is a vector, the Frobenius norm when x
-    is a matrix (2-d array). Faster than norm(x) ** 2.
+    Faster than norm(x) ** 2.
+
+    Parameters
+    ----------
+    x : array_like
+
+    Returns
+    -------
+    float
+        The Euclidean norm when x is a vector, the Frobenius norm when x
+        is a matrix (2-d array).
     """
     x = np.ravel(x, order='K')
     if np.issubdtype(x.dtype, np.integer):
@@ -58,6 +67,18 @@ def row_norms(X, squared=False):
     matrices and does not create an X.shape-sized temporary.
 
     Performs no input validation.
+
+    Parameters
+    ----------
+    X : array_like
+        The input array
+    squared : bool, optional (default = False)
+        If True, return squared norms.
+
+    Returns
+    -------
+    array_like
+        The row-wise (squared) Euclidean norm of X.
     """
     if sparse.issparse(X):
         if not isinstance(X, sparse.csr_matrix):
@@ -76,21 +97,16 @@ def fast_logdet(A):
 
     Equivalent to : np.log(nl.det(A)) but more robust.
     It returns -Inf if det(A) is non positive or is not defined.
+
+    Parameters
+    ----------
+    A : array_like
+        The matrix
     """
     sign, ld = np.linalg.slogdet(A)
     if not sign > 0:
         return -np.inf
     return ld
-
-
-def _impose_f_order(X):
-    """Helper Function"""
-    # important to access flags instead of calling np.isfortran,
-    # this catches corner cases.
-    if X.flags.c_contiguous:
-        return check_array(X.T, copy=False, order='F'), True
-    else:
-        return check_array(X, copy=False, order='F'), False
 
 
 @deprecated("sklearn.utils.extmath.fast_dot was deprecated in version 0.19 "
@@ -102,7 +118,15 @@ def fast_dot(a, b, out=None):
 def density(w, **kwargs):
     """Compute density of a sparse vector
 
-    Return a value between 0 and 1
+    Parameters
+    ----------
+    w : array_like
+        The sparse vector
+
+    Returns
+    -------
+    float
+        The density of w, between 0 and 1
     """
     if hasattr(w, "toarray"):
         d = float(w.nnz) / (w.shape[0] * w.shape[1])
@@ -184,7 +208,7 @@ def randomized_range_finder(A, size, n_iter,
     Follows Algorithm 4.3 of
     Finding structure with randomness: Stochastic algorithms for constructing
     approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909) http://arxiv.org/pdf/0909.4061
+    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
 
     An implementation of a randomized algorithm for principal component
     analysis
@@ -297,7 +321,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     ----------
     * Finding structure with randomness: Stochastic algorithms for constructing
       approximate matrix decompositions
-      Halko, et al., 2009 http://arxiv.org/abs/arXiv:0909.4061
+      Halko, et al., 2009 https://arxiv.org/abs/0909.4061
 
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
@@ -367,7 +391,7 @@ def logsumexp(arr, axis=0):
     >>> a = np.arange(10)
     >>> np.log(np.sum(np.exp(a)))
     9.458...
-    >>> logsumexp(a)
+    >>> logsumexp(a)  # doctest: +SKIP
     9.458...
     """
     return scipy_logsumexp(arr, axis)
@@ -428,7 +452,7 @@ def weighted_mode(a, w, axis=0):
         w = np.asarray(w)
 
     if a.shape != w.shape:
-        w = np.zeros(a.shape, dtype=w.dtype) + w
+        w = np.full(a.shape, w, dtype=w.dtype)
 
     scores = np.unique(np.ravel(a))       # get ALL unique values
     testshape = list(a.shape)
@@ -509,7 +533,12 @@ def svd_flip(u, v, u_based_decision=True):
 
     Parameters
     ----------
-    u, v : ndarray
+    u : ndarray
+        u and v are the output of `linalg.svd` or
+        `sklearn.utils.extmath.randomized_svd`, with matching inner dimensions
+        so one can compute `np.dot(u * s, v)`.
+
+    v : ndarray
         u and v are the output of `linalg.svd` or
         `sklearn.utils.extmath.randomized_svd`, with matching inner dimensions
         so one can compute `np.dot(u * s, v)`.
@@ -622,8 +651,17 @@ def softmax(X, copy=True):
 def safe_min(X):
     """Returns the minimum value of a dense or a CSR/CSC matrix.
 
-    Adapated from http://stackoverflow.com/q/13426580
+    Adapated from https://stackoverflow.com/q/13426580
 
+    Parameters
+    ----------
+    X : array_like
+        The input array or sparse matrix
+
+    Returns
+    -------
+    Float
+        The min value of X
     """
     if sparse.issparse(X):
         if len(X.data) == 0:
@@ -635,7 +673,25 @@ def safe_min(X):
 
 
 def make_nonnegative(X, min_value=0):
-    """Ensure `X.min()` >= `min_value`."""
+    """Ensure `X.min()` >= `min_value`.
+
+    Parameters
+    ----------
+    X : array_like
+        The matrix to make non-negative
+    min_value : float
+        The threshold value
+
+    Returns
+    -------
+    array_like
+        The thresholded array
+
+    Raises
+    ------
+    ValueError
+        When X is sparse
+    """
     min_ = safe_min(X)
     if min_ < min_value:
         if sparse.issparse(X):

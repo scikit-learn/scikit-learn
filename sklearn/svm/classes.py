@@ -116,16 +116,15 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     >>> from sklearn.svm import LinearSVC
     >>> from sklearn.datasets import make_classification
     >>> X, y = make_classification(n_features=4, random_state=0)
-    >>> clf = LinearSVC(random_state=0)
+    >>> clf = LinearSVC(random_state=0, tol=1e-5)
     >>> clf.fit(X, y)
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
          intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-         multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
-         verbose=0)
+         multi_class='ovr', penalty='l2', random_state=0, tol=1e-05, verbose=0)
     >>> print(clf.coef_)
-    [[0.08551385 0.39414796 0.49847831 0.37513797]]
+    [[0.085... 0.394... 0.498... 0.375...]]
     >>> print(clf.intercept_)
-    [0.28418066]
+    [0.284...]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
@@ -146,7 +145,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     References
     ----------
     `LIBLINEAR: A Library for Large Linear Classification
-    <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`__
+    <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`__
 
     See also
     --------
@@ -329,17 +328,17 @@ class LinearSVR(LinearModel, RegressorMixin):
     >>> from sklearn.svm import LinearSVR
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_features=4, random_state=0)
-    >>> regr = LinearSVR(random_state=0)
+    >>> regr = LinearSVR(random_state=0, tol=1e-5)
     >>> regr.fit(X, y)
     LinearSVR(C=1.0, dual=True, epsilon=0.0, fit_intercept=True,
          intercept_scaling=1.0, loss='epsilon_insensitive', max_iter=1000,
-         random_state=0, tol=0.0001, verbose=0)
+         random_state=0, tol=1e-05, verbose=0)
     >>> print(regr.coef_)
-    [16.35750999 26.91499923 42.30652207 60.47843124]
+    [16.35... 26.91... 42.30... 60.47...]
     >>> print(regr.intercept_)
-    [-4.29756543]
+    [-4.29...]
     >>> print(regr.predict([[0, 0, 0, 0]]))
-    [-4.29756543]
+    [-4.29...]
 
     See also
     --------
@@ -544,7 +543,7 @@ class SVC(BaseSVC):
         non-trivial. See the section about multi-class classification in the
         SVM section of the User Guide for details.
 
-    coef_ : array, shape = [n_class-1, n_features]
+    coef_ : array, shape = [n_class * (n_class-1) / 2, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
@@ -708,7 +707,7 @@ class NuSVC(BaseSVC):
         non-trivial. See the section about multi-class classification in
         the SVM section of the User Guide for details.
 
-    coef_ : array, shape = [n_class-1, n_features]
+    coef_ : array, shape = [n_class * (n_class-1) / 2, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
@@ -841,9 +840,6 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     intercept_ : array, shape = [1]
         Constants in decision function.
-
-    sample_weight : array-like, shape = [n_samples]
-            Individual weights for each sample
 
     Examples
     --------
@@ -1010,7 +1006,7 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
 
     The implementation is based on libsvm.
 
-    Read more in the :ref:`User Guide <svm_outlier_detection>`.
+    Read more in the :ref:`User Guide <outlier_detection>`.
 
     Parameters
     ----------
@@ -1122,6 +1118,9 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         sample_weight : array-like, shape (n_samples,)
             Per-sample weights. Rescale C per sample. Higher weights
             force the classifier to put more emphasis on these points.
+
+        y : Ignored
+            not used, present for API consistency by convention.
 
         Returns
         -------

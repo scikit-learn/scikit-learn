@@ -775,6 +775,25 @@ class PLSSVD(BaseEstimator, TransformerMixin):
     y_scores_ : array, [n_samples, n_components]
         Y scores.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cross_decomposition import PLSSVD
+    >>> X = np.array([[0., 0., 1.],
+    ...     [1.,0.,0.],
+    ...     [2.,2.,2.],
+    ...     [2.,5.,4.]])
+    >>> Y = np.array([[0.1, -0.2],
+    ...     [0.9, 1.1],
+    ...     [6.2, 5.9],
+    ...     [11.9, 12.3]])
+    >>> plsca = PLSSVD(n_components=2)
+    >>> plsca.fit(X, Y)
+    PLSSVD(copy=True, n_components=2, scale=True)
+    >>> X_c, Y_c = plsca.transform(X, Y)
+    >>> X_c.shape, Y_c.shape
+    ((4, 2), (4, 2))
+
     See also
     --------
     PLSCanonical

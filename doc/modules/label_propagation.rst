@@ -124,6 +124,7 @@ which can drastically reduce running times.
 
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_versus_svm_iris.py`
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_structure.py`
+  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits.py`
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits_active_learning.py`
 
 .. topic:: References
@@ -133,5 +134,5 @@ which can drastically reduce running times.
 
     [3] Olivier Delalleau, Yoshua Bengio, Nicolas Le Roux. Efficient
     Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
-    http://research.microsoft.com/en-us/people/nicolasl/efficient_ssl.pdf
+    https://research.microsoft.com/en-us/people/nicolasl/efficient_ssl.pdf
 

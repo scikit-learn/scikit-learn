@@ -99,6 +99,8 @@ REGRESSION_METRICS = {
 CLASSIFICATION_METRICS = {
     "accuracy_score": accuracy_score,
     "balanced_accuracy_score": balanced_accuracy_score,
+    "adjusted_balanced_accuracy_score": partial(balanced_accuracy_score,
+                                                adjusted=True),
     "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
 
     # `confusion_matrix` returns absolute values and hence behaves unnormalized
@@ -198,22 +200,20 @@ THRESHOLDED_METRICS = {
 
     "brier_score_loss": brier_score_loss,
 
-    "roc_auc_score": roc_auc_score,
+    "roc_auc_score": roc_auc_score,  # default: average="macro"
     "weighted_roc_auc": partial(roc_auc_score, average="weighted"),
     "samples_roc_auc": partial(roc_auc_score, average="samples"),
     "micro_roc_auc": partial(roc_auc_score, average="micro"),
-    "macro_roc_auc": partial(roc_auc_score, average="macro"),
     "partial_roc_auc": partial(roc_auc_score, max_fpr=0.5),
 
-    "average_precision_score": average_precision_score,
+    "average_precision_score":
+    average_precision_score,  # default: average="macro"
     "weighted_average_precision_score":
     partial(average_precision_score, average="weighted"),
     "samples_average_precision_score":
     partial(average_precision_score, average="samples"),
     "micro_average_precision_score":
     partial(average_precision_score, average="micro"),
-    "macro_average_precision_score":
-    partial(average_precision_score, average="macro"),
     "label_ranking_average_precision_score":
     label_ranking_average_precision_score,
 }
@@ -241,13 +241,6 @@ METRIC_UNDEFINED_BINARY = {
     "samples_precision_score",
     "samples_recall_score",
     "coverage_error",
-
-    "average_precision_score",
-    "weighted_average_precision_score",
-    "micro_average_precision_score",
-    "macro_average_precision_score",
-    "samples_average_precision_score",
-
     "label_ranking_loss",
     "label_ranking_average_precision_score",
 }
@@ -255,14 +248,17 @@ METRIC_UNDEFINED_BINARY = {
 # Those metrics don't support multiclass inputs
 METRIC_UNDEFINED_MULTICLASS = {
     "brier_score_loss",
-    "balanced_accuracy_score",
 
     "roc_auc_score",
     "micro_roc_auc",
     "weighted_roc_auc",
-    "macro_roc_auc",
     "samples_roc_auc",
     "partial_roc_auc",
+
+    "average_precision_score",
+    "weighted_average_precision_score",
+    "micro_average_precision_score",
+    "samples_average_precision_score",
 
     # with default average='binary', multiclass is prohibited
     "precision_score",
@@ -298,6 +294,11 @@ METRICS_WITH_POS_LABEL = {
     "brier_score_loss",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
+
+    "average_precision_score",
+    "weighted_average_precision_score",
+    "micro_average_precision_score",
+    "samples_average_precision_score",
 
     # pos_label support deprecated; to be removed in 0.18:
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
@@ -348,11 +349,10 @@ THRESHOLDED_MULTILABEL_METRICS = {
     "unnormalized_log_loss",
 
     "roc_auc_score", "weighted_roc_auc", "samples_roc_auc",
-    "micro_roc_auc", "macro_roc_auc", "partial_roc_auc",
+    "micro_roc_auc", "partial_roc_auc",
 
     "average_precision_score", "weighted_average_precision_score",
     "samples_average_precision_score", "micro_average_precision_score",
-    "macro_average_precision_score",
 
     "coverage_error", "label_ranking_loss",
     "label_ranking_average_precision_score",
@@ -408,6 +408,7 @@ SYMMETRIC_METRICS = {
 # metric(y_true, y_pred) != metric(y_pred, y_true).
 NOT_SYMMETRIC_METRICS = {
     "balanced_accuracy_score",
+    "adjusted_balanced_accuracy_score",
     "explained_variance_score",
     "r2_score",
     "unnormalized_confusion_matrix",
@@ -667,7 +668,7 @@ def test_thresholded_invariance_string_vs_numbers_labels(name):
                                err_msg="{0} failed string vs number "
                                        "invariance test".format(name))
 
-            measure_with_strobj = metric(y1_str.astype('O'), y2)
+            measure_with_strobj = metric_str(y1_str.astype('O'), y2)
             assert_array_equal(measure_with_number, measure_with_strobj,
                                err_msg="{0} failed string object vs number "
                                        "invariance test".format(name))

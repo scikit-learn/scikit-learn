@@ -17,7 +17,6 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_warns_message
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
@@ -250,6 +249,7 @@ def test_check_scoring_and_check_multimetric_scoring():
                              scoring=scoring)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_check_scoring_gridsearchcv():
     # test that check_scoring works on GridSearchCV and pipeline.
     # slightly redundant non-regression test.
@@ -333,6 +333,8 @@ def test_regression_scorers():
     assert_almost_equal(score1, score2)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_thresholded_scorers():
     # Test scorers that take thresholds.
     X, y = make_blobs(random_state=0, centers=2)
@@ -413,6 +415,8 @@ def test_thresholded_scorers_multilabel_indicator_data():
     assert_almost_equal(score1, score2)
 
 
+@pytest.mark.filterwarnings("ignore:the behavior of ")
+# AMI and NMI changes for 0.22
 def test_supervised_cluster_scorers():
     # Test clustering scorers against gold standard labeling.
     X, y = make_blobs(random_state=0, centers=2)
@@ -501,6 +505,8 @@ def test_scorer_memmap_input(name):
     check_scorer_memmap(name)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_scoring_is_not_metric():
     assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
                          LogisticRegression(), f1_score)

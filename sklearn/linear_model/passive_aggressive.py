@@ -45,15 +45,15 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default=5
-        Number of iterations with no improvement to wait before early stopping.
-
-        .. versionadded:: 0.20
-
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True.
+
+        .. versionadded:: 0.20
+
+    n_iter_no_change : int, default=5
+        Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
 
@@ -68,10 +68,12 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         hinge: equivalent to PA-I in the reference paper.
         squared_hinge: equivalent to PA-II in the reference paper.
 
-    n_jobs : integer, optional
+    n_jobs : int or None, optional (default=None)
         The number of CPUs to use to do the OVA (One Versus All, for
-        multi-class problems) computation. -1 means 'all CPUs'. Defaults
-        to 1.
+        multi-class problems) computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional, default=None
         The seed of the pseudo random number generator to use when shuffling
@@ -135,19 +137,19 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     --------
     >>> from sklearn.linear_model import PassiveAggressiveClassifier
     >>> from sklearn.datasets import make_classification
-    >>>
+
     >>> X, y = make_classification(n_features=4, random_state=0)
-    >>> clf = PassiveAggressiveClassifier(random_state=0)
+    >>> clf = PassiveAggressiveClassifier(max_iter=1000, random_state=0)
     >>> clf.fit(X, y)
     PassiveAggressiveClassifier(C=1.0, average=False, class_weight=None,
                   early_stopping=False, fit_intercept=True, loss='hinge',
-                  max_iter=None, n_iter=None, n_iter_no_change=5, n_jobs=1,
+                  max_iter=1000, n_iter=None, n_iter_no_change=5, n_jobs=None,
                   random_state=0, shuffle=True, tol=None,
                   validation_fraction=0.1, verbose=0, warm_start=False)
     >>> print(clf.coef_)
-    [[0.49324685 1.0552176  1.49519589 1.33798314]]
+    [[0.29509834 0.33711843 0.56127352 0.60105546]]
     >>> print(clf.intercept_)
-    [2.18438388]
+    [2.54153383]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
@@ -167,7 +169,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     def __init__(self, C=1.0, fit_intercept=True, max_iter=None, tol=None,
                  early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, shuffle=True, verbose=0, loss="hinge",
-                 n_jobs=1, random_state=None, warm_start=False,
+                 n_jobs=None, random_state=None, warm_start=False,
                  class_weight=None, average=False, n_iter=None):
         super(PassiveAggressiveClassifier, self).__init__(
             penalty=None,
@@ -297,15 +299,15 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default=5
-        Number of iterations with no improvement to wait before early stopping.
-
-        .. versionadded:: 0.20
-
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True.
+
+        .. versionadded:: 0.20
+
+    n_iter_no_change : int, default=5
+        Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
 
@@ -373,13 +375,13 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     --------
     >>> from sklearn.linear_model import PassiveAggressiveRegressor
     >>> from sklearn.datasets import make_regression
-    >>>
+
     >>> X, y = make_regression(n_features=4, random_state=0)
-    >>> regr = PassiveAggressiveRegressor(random_state=0)
+    >>> regr = PassiveAggressiveRegressor(max_iter=100, random_state=0)
     >>> regr.fit(X, y)
     PassiveAggressiveRegressor(C=1.0, average=False, early_stopping=False,
                   epsilon=0.1, fit_intercept=True, loss='epsilon_insensitive',
-                  max_iter=None, n_iter=None, n_iter_no_change=5,
+                  max_iter=100, n_iter=None, n_iter_no_change=5,
                   random_state=0, shuffle=True, tol=None,
                   validation_fraction=0.1, verbose=0, warm_start=False)
     >>> print(regr.coef_)

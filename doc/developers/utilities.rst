@@ -45,7 +45,7 @@ should be used when applicable.
 
 - :func:`validation.check_memory` checks that input is ``joblib.Memory``-like,
   which means that it can be converted into a
-  ``sklearn.externals.joblib.Memory`` instance (typically a str denoting
+  ``sklearn.utils.Memory`` instance (typically a str denoting
   the ``cachedir``) or has the same interface.
 
 If your code relies on a random number generator, it should never use
@@ -175,8 +175,7 @@ Graph Routines
 Benchmarking
 ------------
 
-- :func:`bench.total_seconds` (back-ported from ``timedelta.total_seconds``
-  in Python 2.7).  Used in ``benchmarks/bench_glm.py``.
+- :func:`bench.total_seconds`:  Used in ``benchmarks/bench_glm.py``.
 
 
 Testing Functions

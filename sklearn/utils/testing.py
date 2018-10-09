@@ -15,7 +15,6 @@ import inspect
 import pkgutil
 import warnings
 import sys
-import struct
 import functools
 
 import scipy as sp
@@ -47,7 +46,7 @@ import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
 from sklearn.utils.fixes import signature
-from sklearn.utils import deprecated
+from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
 
 
 additional_names_in_all = []
@@ -233,6 +232,12 @@ def assert_warns_div0(func, *args, **kw):
     """Assume that numpy's warning for divide by zero is raised
 
     Handles the case of platforms that do not support warning on divide by zero
+
+    Parameters
+    ----------
+    func
+    *args
+    **kw
     """
 
     with np.errstate(divide='warn', invalid='warn'):
@@ -248,6 +253,13 @@ def assert_warns_div0(func, *args, **kw):
 
 # To remove when we support numpy 1.7
 def assert_no_warnings(func, *args, **kw):
+    """
+    Parameters
+    ----------
+    func
+    *args
+    **kw
+    """
     # very important to avoid uncontrolled state propagation
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
@@ -275,6 +287,8 @@ def ignore_warnings(obj=None, category=Warning):
 
     Parameters
     ----------
+    obj : callable or None
+        callable where you want to ignore the warnings.
     category : warning class, defaults to Warning.
         The category to filter. If Warning, all categories will be muted.
 
@@ -290,7 +304,17 @@ def ignore_warnings(obj=None, category=Warning):
     >>> ignore_warnings(nasty_warn)()
     42
     """
-    if callable(obj):
+    if isinstance(obj, type) and issubclass(obj, Warning):
+        # Avoid common pitfall of passing category as the first positional
+        # argument which result in the test not being run
+        warning_name = obj.__name__
+        raise ValueError(
+            "'obj' should be a callable where you want to ignore warnings. "
+            "You passed a warning class instead: 'obj={warning_name}'. "
+            "If you want to pass a warning class to ignore_warnings, "
+            "you should use 'category={warning_name}'".format(
+                warning_name=warning_name))
+    elif callable(obj):
         return _IgnoreWarnings(category=category)(obj)
     else:
         return _IgnoreWarnings(category=category)
@@ -443,8 +467,12 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
                          " not a sparse matrix and an array.")
 
 
+@deprecated('deprecated in version 0.20 to be removed in version 0.22')
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):
     """Create a fake mldata data set.
+
+    .. deprecated:: 0.20
+        Will be removed in version 0.22
 
     Parameters
     ----------
@@ -483,12 +511,16 @@ def fake_mldata(columns_dict, dataname, matfile, ordering=None):
     scipy.io.savemat(matfile, datasets, oned_as='column')
 
 
+@deprecated('deprecated in version 0.20 to be removed in version 0.22')
 class mock_mldata_urlopen(object):
     """Object that mocks the urlopen function to fake requests to mldata.
 
     When requesting a dataset with a name that is in mock_datasets, this object
     creates a fake dataset in a StringIO object and returns it. Otherwise, it
     raises an HTTPError.
+
+    .. deprecated:: 0.20
+        Will be removed in version 0.22
 
     Parameters
     ----------
@@ -503,6 +535,12 @@ class mock_mldata_urlopen(object):
         self.mock_datasets = mock_datasets
 
     def __call__(self, urlname):
+        """
+        Parameters
+        ----------
+        urlname : string
+            The url
+        """
         dataset_name = urlname.split('/')[-1]
         if dataset_name in self.mock_datasets:
             resource_name = '_' + dataset_name
@@ -523,6 +561,16 @@ class mock_mldata_urlopen(object):
 
 
 def install_mldata_mock(mock_datasets):
+    """
+    Parameters
+    ----------
+    mock_datasets : dict
+        A dictionary of {dataset_name: data_dict}, or
+        {dataset_name: (data_dict, ordering). `data_dict` itself is a
+        dictionary of {column_name: data_array}, and `ordering` is a list of
+        column_names to determine the ordering in the data set (see
+        :func:`fake_mldata` for details).
+    """
     # Lazy import to avoid mutually recursive imports
     from sklearn import datasets
     datasets.mldata.urlopen = mock_mldata_urlopen(mock_datasets)
@@ -541,7 +589,8 @@ META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
                    "RFE", "RFECV", "BaseEnsemble", "ClassifierChain",
                    "RegressorChain", "SelfTrainingClassifier"]
 # estimators that there is no way to default-construct sensibly
-OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
+OTHER = ["Pipeline", "FeatureUnion",
+         "GridSearchCV", "RandomizedSearchCV",
          "SelectFromModel", "ColumnTransformer"]
 
 # some strange ones
@@ -585,15 +634,15 @@ def all_estimators(include_meta_estimators=False,
         not be default-constructed sensibly. These are currently
         Pipeline, FeatureUnion and GridSearchCV
 
-    include_dont_test : boolean, default=False
-        Whether to include "special" label estimator or test processors.
-
     type_filter : string, list of string,  or None, default=None
         Which kind of estimators should be returned. If None, no filter is
         applied and all estimators are returned.  Possible values are
         'classifier', 'regressor', 'cluster' and 'transformer' to get
         estimators only of these specific types, or a list of these to
         get the estimators that fit at least one of the types.
+
+    include_dont_test : boolean, default=False
+        Whether to include "special" label estimator or test processors.
 
     Returns
     -------
@@ -613,7 +662,10 @@ def all_estimators(include_meta_estimators=False,
     path = sklearn.__path__
     for importer, modname, ispkg in pkgutil.walk_packages(
             path=path, prefix='sklearn.', onerror=lambda x: None):
-        if (".tests." in modname):
+        if ".tests." in modname:
+            continue
+        if IS_PYPY and ('_svmlight_format' in modname or
+                        'feature_extraction._hashing' in modname):
             continue
         module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
@@ -665,13 +717,28 @@ def all_estimators(include_meta_estimators=False,
 
 def set_random_state(estimator, random_state=0):
     """Set random state of an estimator if it has the `random_state` param.
+
+    Parameters
+    ----------
+    estimator : object
+        The estimator
+    random_state : int, RandomState instance or None, optional, default=0
+        Pseudo random number generator state.  If int, random_state is the seed
+        used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
     """
     if "random_state" in estimator.get_params():
         estimator.set_params(random_state=random_state)
 
 
 def if_matplotlib(func):
-    """Test decorator that skips test if matplotlib not installed."""
+    """Test decorator that skips test if matplotlib not installed.
+
+    Parameters
+    ----------
+    func
+    """
     @wraps(func)
     def run_test(*args, **kwargs):
         try:
@@ -690,10 +757,12 @@ def if_matplotlib(func):
 try:
     import pytest
 
-    skip_if_32bit = pytest.mark.skipif(8 * struct.calcsize("P") == 32,
+    skip_if_32bit = pytest.mark.skipif(_IS_32BIT,
                                        reason='skipped on 32bit platforms')
     skip_travis = pytest.mark.skipif(os.environ.get('TRAVIS') == 'true',
                                      reason='skip on travis')
+    fails_if_pypy = pytest.mark.xfail(IS_PYPY, raises=NotImplementedError,
+                                      reason='not compatible with PyPy')
 
     #  Decorator for tests involving both BLAS calls and multiprocessing.
     #
@@ -758,6 +827,12 @@ def _delete_folder(folder_path, warn=False):
 
 
 class TempMemmap(object):
+    """
+    Parameters
+    ----------
+    data
+    mmap_mode
+    """
     def __init__(self, data, mmap_mode='r'):
         self.mmap_mode = mmap_mode
         self.data = data
@@ -772,6 +847,13 @@ class TempMemmap(object):
 
 
 def create_memmap_backed_data(data, mmap_mode='r', return_folder=False):
+    """
+    Parameters
+    ----------
+    data
+    mmap_mode
+    return_folder
+    """
     temp_folder = tempfile.mkdtemp(prefix='sklearn_testing_')
     atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
     filename = op.join(temp_folder, 'data.pkl')
@@ -864,6 +946,12 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
         return incorrect
     # Don't check docstring for property-functions
     if inspect.isdatadescriptor(func):
+        return incorrect
+    # Don't check docstring for setup / teardown pytest functions
+    if func_name.split('.')[-1] in ('setup_module', 'teardown_module'):
+        return incorrect
+    # Dont check estimator_checks module
+    if func_name.split('.')[2] == 'estimator_checks':
         return incorrect
     args = list(filter(lambda x: x not in ignore, _get_args(func)))
     # drop self

@@ -130,8 +130,8 @@ def plot_lda_cov(lda, splot):
 
 
 def plot_qda_cov(qda, splot):
-    plot_ellipse(splot, qda.means_[0], qda.covariances_[0], 'red')
-    plot_ellipse(splot, qda.means_[1], qda.covariances_[1], 'blue')
+    plot_ellipse(splot, qda.means_[0], qda.covariance_[0], 'red')
+    plot_ellipse(splot, qda.means_[1], qda.covariance_[1], 'blue')
 
 for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
     # Linear Discriminant Analysis

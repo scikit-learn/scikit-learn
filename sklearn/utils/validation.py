@@ -24,8 +24,8 @@ from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
-from ..externals.joblib import Memory
-
+from ..utils._joblib import Memory
+from ..utils._joblib import __version__ as joblib_version
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -183,7 +183,7 @@ def check_memory(memory):
     """Check that ``memory`` is joblib.Memory-like.
 
     joblib.Memory-like means that ``memory`` can be converted into a
-    sklearn.externals.joblib.Memory instance (typically a str denoting the
+    sklearn.utils.Memory instance (typically a str denoting the
     ``cachedir``) or has the same interface (has a ``cache`` method).
 
     Parameters
@@ -201,10 +201,13 @@ def check_memory(memory):
     """
 
     if memory is None or isinstance(memory, six.string_types):
-        memory = Memory(cachedir=memory, verbose=0)
+        if LooseVersion(joblib_version) < '0.12':
+            memory = Memory(cachedir=memory, verbose=0)
+        else:
+            memory = Memory(location=memory, verbose=0)
     elif not hasattr(memory, 'cache'):
         raise ValueError("'memory' should be None, a string or have the same"
-                         " interface as sklearn.externals.joblib.Memory."
+                         " interface as sklearn.utils.Memory."
                          " Got memory='{}' instead.".format(memory))
     return memory
 
@@ -546,10 +549,12 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         # in the future np.flexible dtypes will be handled like object dtypes
         if dtype_numeric and np.issubdtype(array.dtype, np.flexible):
             warnings.warn(
-                "Beginning in version 0.22, arrays of strings will be "
-                "interpreted as decimal numbers if parameter 'dtype' is "
-                "'numeric'. It is recommended that you convert the array to "
-                "type np.float64 before passing it to check_array.",
+                "Beginning in version 0.22, arrays of bytes/strings will be "
+                "converted to decimal numbers if dtype='numeric'. "
+                "It is recommended that you convert the array to "
+                "a float dtype before using it in scikit-learn, "
+                "for example by using "
+                "your_array = your_array.astype(np.float64).",
                 FutureWarning)
 
         # make sure we actually converted to numeric:
@@ -731,6 +736,9 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
     y_converted : object
         The converted and validated y.
     """
+    if y is None:
+        raise ValueError("y cannot be None")
+
     X = check_array(X, accept_sparse=accept_sparse,
                     accept_large_sparse=accept_large_sparse,
                     dtype=dtype, order=order, copy=copy,
@@ -812,7 +820,7 @@ def has_fit_parameter(estimator, parameter):
     estimator : object
         An estimator to inspect.
 
-    parameter: str
+    parameter : str
         The searched parameter.
 
     Returns
@@ -949,6 +957,16 @@ def check_non_negative(X, whom):
     whom : string
         Who passed X to this function.
     """
-    X = X.data if sp.issparse(X) else X
-    if (X < 0).any():
+    # avoid X.min() on sparse matrix since it also sorts the indices
+    if sp.issparse(X):
+        if X.format in ['lil', 'dok']:
+            X = X.tocsr()
+        if X.data.size == 0:
+            X_min = 0
+        else:
+            X_min = X.data.min()
+    else:
+        X_min = X.min()
+
+    if X_min < 0:
         raise ValueError("Negative values in data passed to %s" % whom)

@@ -16,6 +16,8 @@ is performed in order to stay on the same order of magnitude.
 """
 print(__doc__)
 
+from distutils.version import LooseVersion
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -64,6 +66,8 @@ y[np.logical_not(first_quarter)] = -1.
 estimators = [('OMP', 'omp', None, 15, 'navy'),
               ('Lasso', 'lasso_cd', 2, None, 'turquoise'), ]
 lw = 2
+# Avoid FutureWarning about default value change when numpy >= 1.14
+lstsq_rcond = None if LooseVersion(np.__version__) >= '1.14' else -1
 
 plt.figure(figsize=(13, 6))
 for subplot, (D, title) in enumerate(zip((D_fixed, D_multi),
@@ -88,7 +92,7 @@ for subplot, (D, title) in enumerate(zip((D_fixed, D_multi),
                         transform_alpha=20)
     x = coder.transform(y.reshape(1, -1))
     _, idx = np.where(x != 0)
-    x[0, idx], _, _, _ = np.linalg.lstsq(D[idx, :].T, y)
+    x[0, idx], _, _, _ = np.linalg.lstsq(D[idx, :].T, y, rcond=lstsq_rcond)
     x = np.ravel(np.dot(x, D))
     squared_error = np.sum((y - x) ** 2)
     plt.plot(x, color='darkorange', lw=lw,
