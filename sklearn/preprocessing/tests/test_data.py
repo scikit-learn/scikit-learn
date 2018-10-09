@@ -291,6 +291,30 @@ def test_polynomial_features_csr_X_degree_4(include_bias, interaction_only):
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
 
+@pytest.mark.parametrize(['deg', 'dim', 'interaction_only'],
+                         [(2, 1, True),
+                          (2, 2, True),
+                          (3, 1, True),
+                          (3, 2, True),
+                          (3, 3, True),
+                          (2, 1, False),
+                          (2, 2, False),
+                          (3, 1, False),
+                          (3, 2, False),
+                          (3, 3, False)])
+def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
+    X_csr = sparse_random(1000, dim, 0.5, random_state=0).tocsr()
+    X = X_csr.toarray()
+
+    est = PolynomialFeatures(deg, interaction_only=interaction_only)
+    Xt_csr = est.fit_transform(X_csr)
+    Xt_dense = est.fit_transform(X)
+
+    assert isinstance(Xt_csr, sparse.csr_matrix)
+    assert Xt_csr.dtype == Xt_dense.dtype
+    assert_array_almost_equal(Xt_csr.A, Xt_dense)
+
+
 def test_standard_scaler_1d():
     # Test scaling of dataset along single axis
     for X in [X_1row, X_1col, X_list_1row, X_list_1row]:

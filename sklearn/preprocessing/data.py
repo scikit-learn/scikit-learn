@@ -1487,13 +1487,13 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                 to_stack.append(np.ones(shape=(n_samples, 1), dtype=X.dtype))
             to_stack.append(X)
             for deg in range(2, self.degree+1):
-                min_required_dim = deg + int(self.interaction_only) - 1
-                if X.shape[1] < min_required_dim:
+                Xp_next = _csr_polynomial_expansion(X.data, X.indices,
+                                                    X.indptr, X.shape[1],
+                                                    self.interaction_only,
+                                                    deg)
+                if Xp_next is None:
                     break
-                to_stack.append(
-                   _csr_polynomial_expansion(X.data, X.indices, X.indptr,
-                                             X.has_sorted_indices, X.shape[1],
-                                             int(self.interaction_only), deg))
+                to_stack.append(Xp_next)
             XP = sparse.hstack(to_stack, format='csr')
         else:
             combinations = self._combinations(n_features, self.degree,

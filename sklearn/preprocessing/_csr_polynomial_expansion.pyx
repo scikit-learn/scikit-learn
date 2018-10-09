@@ -50,8 +50,8 @@ cdef inline INDEX_T _deg3_column(INDEX_T d, INDEX_T i, INDEX_T j, INDEX_T k,
 def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
                               ndarray[INDEX_T, ndim=1] indices,
                               ndarray[INDEX_T, ndim=1] indptr,
-                              int has_sorted_indices, INDEX_T d,
-                              INDEX_T interaction_only, INDEX_T degree):
+                              INDEX_T d, INDEX_T interaction_only,
+                              INDEX_T degree):
     """
     Perform a second-degree polynomial or interaction expansion on a scipy
     compressed sparse row (CSR) matrix. The method used only takes products of
@@ -94,8 +94,10 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
     if degree == 2:
         expanded_dimensionality = int((d**2 + d) / 2 - interaction_only*d)
     else:
-        expanded_dimensionality = int((d**3 + 3*d**2 + 2*d) / 6 \
+        expanded_dimensionality = int((d**3 + 3*d**2 + 2*d) / 6
                                       - interaction_only*d**2)
+    if expanded_dimensionality == 0:
+        return None
     assert expanded_dimensionality > 0
 
     cdef INDEX_T total_nnz = 0, row_i, nnz
@@ -109,7 +111,6 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
         else:
             total_nnz += ((nnz ** 3 + 3 * nnz ** 2 + 2 * nnz) / 6
                           - interaction_only * nnz ** 2)
-                     
 
     # Make the arrays that will form the CSR matrix of the expansion.
     cdef ndarray[DATA_T, ndim=1] expanded_data = ndarray(
