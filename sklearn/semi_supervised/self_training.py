@@ -38,7 +38,9 @@ class SelfTrainingClassifier(BaseEstimator):
         which will be stored in the ``self.base_classifier_`` attribute.
 
     threshold : float, optional (default=0.75)
-        Threshold above which predictions are added to the labeled dataset.
+        The decision threshold. If the ``base_classifier`` makes a prediction
+        with a ``predict_proba`` above this threshold, it will be added to the
+        labeled dataset.
         Should be in [0, 1).
 
     max_iter : int or ``None``, optional (default=10)
