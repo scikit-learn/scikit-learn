@@ -241,7 +241,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         Parameters
         ----------
-        norm_order : {non-zero int, inf, -inf, ‘fro’}, optional
+        norm_order: {non-zero int, inf, -inf, "fro"}, optional
             Same as `numpy.linalg.norm`'s norm_order parameter
 
         Returns
