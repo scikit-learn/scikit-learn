@@ -2,7 +2,7 @@
 ===================================================
 Self-training: Comparing performance
 ===================================================
-This example demonstrates the performance of the SelfTrainingClassifier.
+This example illustrates the performance of the SelfTrainingClassifier.
 
 The digits dataset is loaded, and a SVC classifier is created. Then, a
 SelfTrainingClassifier is initialised, using the same SVC as its
@@ -14,10 +14,6 @@ is trained using only the labeled data points.
 
 The graph shows that the SelfTrainingClassifier outperforms the normal SVC
 when only few labeled data points are available.
-
-This example extends the
-:ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`
-example.
 """
 # Authors: Oliver Rausch    <rauscho@ethz.ch>
 #          Patrice Becker   <beckerp@ethz.ch>
@@ -32,9 +28,9 @@ from sklearn.datasets import load_digits
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import accuracy_score
 
-cv_folds = 8
+n_splits = 8
 x_values = np.array([250, 500, 750, 1000])
-supervised_scores = np.empty((len(x_values), cv_folds))
+supervised_scores = np.empty((x_values.shape[0], n_splits))
 self_training_scores = np.empty_like(supervised_scores)
 
 clf = SVC(probability=True, gamma=0.001, random_state=42)
@@ -44,14 +40,13 @@ X, y = load_digits(return_X_y=True)
 X, y = shuffle(X, y, random_state=42)
 y_true = y.copy()
 
-for i in range(3, -1, -1):
-    lim = x_values[i]
-    y[lim:] = -1
+for i in range(x_values.shape[0]-1, -1, -1):
+    n_labeled_samples = x_values[i]
+    y[n_labeled_samples:] = -1
 
     # Perform manual cross validation
-    skfolds = StratifiedKFold(n_splits=cv_folds, random_state=42)
-    j = 0
-    for train_index, test_index in skfolds.split(X, y):
+    skfolds = StratifiedKFold(n_splits=n_splits, random_state=42)
+    for fold, (train_index, test_index) in enumerate(skfolds.split(X, y)):
         X_train = X[train_index]
         y_train = y[train_index]
         X_test = X[test_index]
@@ -61,16 +56,15 @@ for i in range(3, -1, -1):
         X_train_filtered = X_train[y_train != -1]
         y_train_filtered = y_train[y_train != -1]
 
-        # Train the supervised SVC using only data that has labels
+        # Train the supervised SVC using only labeled samples
         clf.fit(X_train_filtered, y_train_filtered)
         y_pred = clf.predict(X_test)
-        supervised_scores[i, j] = accuracy_score(y_test_true, y_pred)
+        supervised_scores[i, fold] = accuracy_score(y_test_true, y_pred)
 
         # Train the semi-supervised SVC using all available data (in the fold)
         self_training_clf.fit(X_train, y_train)
         y_pred = self_training_clf.predict(X_test)
-        self_training_scores[i, j] = accuracy_score(y_test_true, y_pred)
-        j = j + 1
+        self_training_scores[i, fold] = accuracy_score(y_test_true, y_pred)
 
 # Plot the results
 plt.figure(1)
