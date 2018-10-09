@@ -40,6 +40,9 @@ Changelog
 - |Fix| :func:`datasets.fetch_openml` to correctly use the local cache.
   :issue:`12246` by :user:`Jan N. van Rijn <janvanrijn>`.
 
+- |Fix| :func:`datasets.fetch_openml` to correctly handle ignore attributes and
+  row id attributes. :issue:`12330` by :user:`Jan N. van Rijn <janvanrijn>`.
+
 - |Fix| Fixed integer overflow in :func:`datasets.make_classification`
   for values of ``n_informative`` parameter larger than 64.
   :issue:`10811` by :user:`Roman Feldbauer <VarIr>`.
