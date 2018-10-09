@@ -610,6 +610,7 @@ def test_pca_score3():
 
 def test_pca_score_with_different_solvers():
     digits = datasets.load_digits()
+    # digits.data.shape is (1797, 64): LOBPCG fails
     X_digits = digits.data
 
     # the PCA default tol=.0 may break lobpcg_svd

@@ -90,7 +90,7 @@ def _b_orthonormalize(B, blockVectorV, blockVectorBV=None, retInvR=False):
 def lobpcg(A, X,
            B=None, M=None, Y=None,
            tol=None, maxiter=20,
-           largest=True, verbosityLevel=0,
+           largest=True, verbosityLevel=1,
            retLambdaHistory=False, retResidualNormsHistory=False):
     """Locally Optimal Block Preconditioned Conjugate Gradient Method (LOBPCG)
 
@@ -261,29 +261,6 @@ def lobpcg(A, X,
     B = _makeOperator(B, (n, n))
     M = _makeOperator(M, (n, n))
 
-    if (n - sizeY) < (5 * sizeX):
-        # warn('The problem size is small compared to the block size.' \
-        #        ' Using dense eigensolver instead of LOBPCG.')
-
-        if blockVectorY is not None:
-            raise NotImplementedError('The dense eigensolver '
-                                      'does not support constraints.')
-
-        # Define the closed range of indices of eigenvalues to return.
-        if largest:
-            eigvals = (n - sizeX, n-1)
-        else:
-            eigvals = (0, sizeX-1)
-
-        A_dense = A(np.eye(n))
-        B_dense = None if B is None else B(np.eye(n))
-        return eigh(A_dense, B_dense, eigvals=eigvals, check_finite=False)
-
-    if residualTolerance is None:
-        residualTolerance = np.sqrt(1e-15) * n
-
-    maxIterations = min(n, maxIterations)
-
     if verbosityLevel:
         aux = "Solving "
         if B is None:
@@ -305,7 +282,29 @@ def lobpcg(A, X,
                 aux += "%d constraint\n\n" % sizeY
         print(aux)
 
-    ##
+    if (n - sizeY) < (5 * sizeX):
+        # warn('The problem size is small compared to the block size.' \
+        #        ' Using dense eigensolver instead of LOBPCG.')
+
+        sizeX = min(sizeX, n)
+
+        if blockVectorY is not None:
+            raise NotImplementedError('The dense eigensolver '
+                                      'does not support constraints.')
+
+        # Define the closed range of indices of eigenvalues to return.
+        if largest:
+            eigvals = (n - sizeX, n-1)
+        else:
+            eigvals = (0, sizeX-1)
+
+        A_dense = A(np.eye(n))
+        B_dense = None if B is None else B(np.eye(n))
+        return eigh(A_dense, B_dense, eigvals=eigvals, check_finite=False)
+
+    if residualTolerance is None:
+        residualTolerance = np.sqrt(1e-15) * n
+
     # Apply constraints to X.
     if blockVectorY is not None:
 

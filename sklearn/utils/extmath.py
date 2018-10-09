@@ -447,9 +447,9 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
         n_iter = 7 if n_components < .1 * min(M.shape) else 4
 
     if transpose == 'auto':
-        transpose = n_samples < n_features
+        # in randomized: n_samples < n_features , unsure why
+        transpose = n_samples > n_features
     if transpose:
-        # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
     Q = random_state.normal(size=(M.shape[0], n_random))
