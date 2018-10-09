@@ -42,7 +42,7 @@ Changelog
 
 - |Fix| Fixed integer overflow in :func:`datasets.make_classification`
   for values of ``n_informative`` parameter larger than 64.
-  :issue:10811 by :user:`Roman Feldbauer <VarIr>`.
+  :issue:`10811` by :user:`Roman Feldbauer <VarIr>`.
 
 :mod:`sklearn.ensemble`
 .......................
