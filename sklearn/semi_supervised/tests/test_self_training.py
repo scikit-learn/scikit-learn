@@ -78,13 +78,21 @@ def test_missing_predict_proba():
                          y_train)
 
 
+def test_none_iter():
+    # Test None iterations
+    base_classifier = SVC(gamma="scale", probability=True)
+    st = SelfTrainingClassifier(base_classifier, max_iter=None)
+    st.fit(X_train, y_train)
+    st.predict(X_test)
+
+
 def test_invalid_params():
     # Test negative iterations
     grid = ParameterGrid({"max_iter": [-1, -100, -10]})
     base_classifier = SVC(gamma="scale", probability=True)
     for params in grid:
         st = SelfTrainingClassifier(base_classifier, **params)
-        message = "max_iter must be >= 0"
+        message = "max_iter must be >= 0 or None, got"
         assert_raise_message(ValueError, message, st.fit, X_train, y_train)
 
     grid = ParameterGrid({"threshold": [1.0, -2, 10]})

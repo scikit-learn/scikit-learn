@@ -41,7 +41,9 @@ class SelfTrainingClassifier(BaseEstimator):
 
     max_iter : integer, optional (default=20)
         Maximum number of iterations allowed. Should be greater than or equal
-        to 0.
+        to 0. If it is None, the classifier will continue to predict labels
+        until all unlabeled samples have been labeled. Note that if it is None,
+        the fit may never terminate.
 
     Attributes
     ----------
@@ -118,8 +120,8 @@ class SelfTrainingClassifier(BaseEstimator):
         _validate_estimator(self.base_classifier)
         self.base_classifier_ = clone(self.base_classifier)
 
-        if self.max_iter < 0:
-            msg = "max_iter must be >= 0, got {}".format(self.max_iter)
+        if self.max_iter is not None and self.max_iter < 0:
+            msg = "max_iter must be >= 0 or None, got {}".format(self.max_iter)
             raise ValueError(msg)
 
         if not 0 <= self.threshold < 1:
@@ -139,7 +141,8 @@ class SelfTrainingClassifier(BaseEstimator):
         self.y_labeled_iter_[has_label] = 0
 
         self.n_iter_ = 0
-        while not np.all(has_label) and self.n_iter_ < self.max_iter:
+        while not np.all(has_label) and (self.max_iter is None or
+                                         self.n_iter_ < self.max_iter):
             self.n_iter_ += 1
             self.base_classifier_.fit(
                 X[safe_mask(X, has_label)],
@@ -244,7 +247,7 @@ class SelfTrainingClassifier(BaseEstimator):
         X : array-like, shape = (n_samples, n_features)
             array representing the data
 
-        y : array-like, shape = (n_samples, 1)
+        y : array-like, shape = (n_samples,)
             array representing the labels
 
         Returns
