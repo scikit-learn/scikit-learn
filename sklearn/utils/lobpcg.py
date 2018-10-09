@@ -11,7 +11,7 @@ Locally Optimal Block Preconditioned Conjugate Gradient Method (LOBPCG)
 
 import numpy as np
 
-from scipy.linalg import inv, eigh, cho_factor, cho_solve, cholesky
+from scipy.linalg import inv, eigh, cho_factor, cho_solve, cholesky, LinAlgError
 from scipy.sparse.linalg import aslinearoperator, LinearOperator
 
 __all__ = ['lobpcg']
@@ -19,8 +19,7 @@ __all__ = ['lobpcg']
 
 def save(ar, fileName):
     # Used only when verbosity level > 10.
-    from numpy import savetxt
-    savetxt(fileName, ar, precision=8)
+    np.savetxt(fileName, ar, precision=8)
 
 
 def as2d(ar):
@@ -318,7 +317,7 @@ def lobpcg(A, X,
         try:
             # gramYBY is a Cholesky factor from now on...
             gramYBY = cho_factor(gramYBY)
-        except linearlyDependentConstraints:
+        except LinAlgError:
             raise ValueError('cannot handle linearly dependent constraints')
 
         _applyConstraints(blockVectorX, gramYBY, blockVectorBY, blockVectorY)
