@@ -58,7 +58,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 :mod:`sklearn.tree`
 ...................
-- |Feature| ``get_n_leaves()`` and ``get_max_depth()`` have been added to
+- |Feature| ``get_n_leaves()`` and ``get_depth()`` have been added to
   :class:`tree.BaseDecisionTree` and consequently all estimators based
   on it, including :class:`tree.DecisionTreeClassifier`,
   :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
