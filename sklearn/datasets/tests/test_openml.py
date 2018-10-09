@@ -412,7 +412,7 @@ def test_fetch_openml_australian(monkeypatch, gzip_response):
 
 @pytest.mark.parametrize('gzip_response', [True, False])
 def test_fetch_openml_adultcensus(monkeypatch, gzip_response):
-    # Check because of the numeric row attribute
+    # Check because of the numeric row attribute (issue #12329)
     data_id = 1119
     data_name = 'adult-census'
     data_version = 1

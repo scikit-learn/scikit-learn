@@ -568,7 +568,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                                data_home)
     arff_data = arff['data']
     # nominal attributes is a dict mapping from the attribute name to the
-    # possible values. Includes also the target column
+    # possible values. Includes also the target column (which will be popped
+    # off below, before it will be packed in the Bunch object)
     nominal_attributes = {k: v for k, v in arff['attributes']
                           if isinstance(v, list) and
                           k in data_columns + target_column}
