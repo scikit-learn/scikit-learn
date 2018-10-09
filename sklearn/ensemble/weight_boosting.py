@@ -33,6 +33,7 @@ from ..externals import six
 from ..externals.six.moves import zip
 from ..externals.six.moves import xrange as range
 from .forest import BaseForest
+from ..feature_selection.from_model import _get_feature_importances
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree.tree import BaseDecisionTree
 from ..tree._tree import DTYPE
@@ -234,46 +235,14 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             else:
                 yield r2_score(y, y_pred, sample_weight=sample_weight)
 
-    @staticmethod
-    def _coef_to_feature_importances_(coef, norm_type):
-        """Returns feature_importances_ by normalising coef
-
-        Parameters
-        ----------
-        coef : ndarray
-
-        norm_type: str
-            The kind of norm that should be used make data non-negative.
-            Accepted values: "l1" (absolute values), "l2" (squared values)
-
-        Returns
-        -------
-        feature_importances_ : array
-        """
-
-        if norm_type == "l1":
-            non_negative_coefs_ = abs(coef)
-        elif norm_type == "l2":
-            non_negative_coefs_ = coef ** 2
-        else:
-            raise ValueError(
-                "Invalid norm_type supplied for converting"
-                "coef_ to feature_importances_. Use either"
-                "`l1` or `l2` norm"
-            )
-        norm = non_negative_coefs_.sum()
-
-        return non_negative_coefs_ / norm
-
-    def get_feature_importances_(self, norm_type="l2"):
+    def get_feature_importances_(self, norm_order=2):
         """Return the feature importances (the higher, the more important the
            feature).
 
         Parameters
         ----------
-        norm_type : string
-            The kind of norm that should be used make data non-negative.
-            Accepted values: "l1" (absolute values), "l2" (squared values)
+        norm_order : {non-zero int, inf, -inf, ‘fro’}, optional
+            Same as `numpy.linalg.norm`'s norm_order parameter
 
         Returns
         -------
@@ -285,29 +254,19 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         try:
             norm = self.estimator_weights_.sum()
-
-            if hasattr(self.estimators_[0], "feature_importances_"):
-                ests_feature_importances_ = [
-                    clf.feature_importances_ for clf in self.estimators_]
-            elif hasattr(self.estimators_[0], "coef_"):
-                estimators_coefs_ = np.array(
-                    [clf.coef_ for clf in self.estimators_])
-                ests_feature_importances_ = self._coef_to_feature_importances_(
-                    coef=estimators_coefs_,
-                    norm_type=norm_type
-                )
-            else:
-                raise AttributeError
+            estimator_feature_importances_ = [
+                _get_feature_importances(estimator, norm_order)
+                for estimator in self.estimators_]
 
             return (sum(weight * feature_importances_
                         for weight, feature_importances_ in zip(
                             self.estimator_weights_,
-                            ests_feature_importances_)) / norm)
+                            estimator_feature_importances_)) / norm)
 
-        except AttributeError:
+        except ValueError:
             raise AttributeError(
                 "Unable to compute feature importances "
-                "since base_estimator have neither a "
+                "since base_estimator neither has a "
                 "feature_importances_ attribute nor a "
                 "coef_ attribute")
 
