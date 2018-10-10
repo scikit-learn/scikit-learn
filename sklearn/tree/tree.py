@@ -111,7 +111,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
     def get_depth(self):
         """Returns the depth of the decision tree.
 
-        The depth of a tree is defined as the maximum depth of its leaves.
+        The depth of a tree is the maximum distance between the root
+        and any leaf.
         """
         check_is_fitted(self, 'tree_')
         return self.tree_.max_depth
