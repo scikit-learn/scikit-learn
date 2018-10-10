@@ -2031,7 +2031,10 @@ def test_power_transformer_1d():
         pt = PowerTransformer(method='box-cox', standardize=standardize)
 
         X_trans = pt.fit_transform(X)
-        X_trans_func = power_transform(X, standardize=standardize)
+        X_trans_func = power_transform(
+            X, method='box-cox',
+            standardize=standardize
+        )
 
         X_expected, lambda_expected = stats.boxcox(X.flatten())
 
@@ -2055,7 +2058,10 @@ def test_power_transformer_2d():
         pt = PowerTransformer(method='box-cox', standardize=standardize)
 
         X_trans_class = pt.fit_transform(X)
-        X_trans_func = power_transform(X, standardize=standardize)
+        X_trans_func = power_transform(
+            X, method='box-cox',
+            standardize=standardize
+        )
 
         for X_trans in [X_trans_class, X_trans_func]:
             for j in range(X_trans.shape[1]):
@@ -2278,3 +2284,21 @@ def test_power_transformer_copy_False(method, standardize):
 
     X_inv_trans = pt.inverse_transform(X_trans)
     assert X_trans is X_inv_trans
+
+
+def test_power_transform_default_method():
+    X = np.abs(X_2d)
+
+    future_warning_message = (
+        "The default value of 'method' "
+        "will change from 'box-cox'"
+    )
+    assert_warns_message(FutureWarning, future_warning_message,
+                         power_transform, X)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        X_trans_default = power_transform(X)
+
+    X_trans_boxcox = power_transform(X, method='box-cox')
+    assert_array_equal(X_trans_boxcox, X_trans_default)
