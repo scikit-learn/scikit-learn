@@ -191,7 +191,7 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
     References
     ----------
     .. [1] `Wikipedia entry for the Average precision
-           <http://en.wikipedia.org/w/index.php?title=Information_retrieval&
+           <https://en.wikipedia.org/w/index.php?title=Information_retrieval&
            oldid=793358396#Average_precision>`_
 
     See also
@@ -230,6 +230,11 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
         raise ValueError("Parameter pos_label is fixed to 1 for "
                          "multilabel-indicator y_true. Do not set "
                          "pos_label or set pos_label to 1.")
+    elif y_type == "binary":
+        present_labels = np.unique(y_true)
+        if len(present_labels) == 2 and pos_label not in present_labels:
+            raise ValueError("pos_label=%r is invalid. Set it to a label in "
+                             "y_true." % pos_label)
     average_precision = partial(_binary_uninterpolated_average_precision,
                                 pos_label=pos_label)
     return _average_binary_score(average_precision, y_true, y_score,
@@ -296,7 +301,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
            Letters, 2006, 27(8):861-874.
 
     .. [3] `Analyzing a portion of the ROC curve. McClish, 1989
-            <http://www.ncbi.nlm.nih.gov/pubmed/2668680>`_
+            <https://www.ncbi.nlm.nih.gov/pubmed/2668680>`_
 
     See also
     --------

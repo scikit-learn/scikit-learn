@@ -9,7 +9,6 @@ import numpy as np
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns_message
@@ -165,10 +164,11 @@ def test_mini_batch_correct_shapes(norm_comp):
     assert_equal(U.shape, (12, 13))
 
 
+# XXX: test always skipped
+@pytest.mark.skipif(True, reason="skipping mini_batch_fit_transform.")
 @pytest.mark.filterwarnings("ignore:normalize_components")
 @pytest.mark.parametrize("norm_comp", [False, True])
 def test_mini_batch_fit_transform(norm_comp):
-    raise SkipTest("skipping mini_batch_fit_transform.")
     alpha = 1
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array

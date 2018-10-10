@@ -421,7 +421,11 @@ class OneHotEncoder(_BaseEncoder):
         dtype = getattr(X, 'dtype', None)
         X = check_array(X, dtype=np.int)
         if np.any(X < 0):
-            raise ValueError("X needs to contain only non-negative integers.")
+            raise ValueError("OneHotEncoder in legacy mode cannot handle "
+                             "categories encoded as negative integers. "
+                             "Please set categories='auto' explicitly to "
+                             "be able to use arbitrary integer values as "
+                             "category identifiers.")
         n_samples, n_features = X.shape
         if (isinstance(self.n_values, six.string_types) and
                 self.n_values == 'auto'):
@@ -504,7 +508,11 @@ class OneHotEncoder(_BaseEncoder):
         """Assumes X contains only categorical features."""
         X = check_array(X, dtype=np.int)
         if np.any(X < 0):
-            raise ValueError("X needs to contain only non-negative integers.")
+            raise ValueError("OneHotEncoder in legacy mode cannot handle "
+                             "categories encoded as negative integers. "
+                             "Please set categories='auto' explicitly to "
+                             "be able to use arbitrary integer values as "
+                             "category identifiers.")
         n_samples, n_features = X.shape
 
         indices = self._feature_indices_
