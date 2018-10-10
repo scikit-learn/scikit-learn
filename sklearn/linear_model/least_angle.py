@@ -135,7 +135,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     References
     ----------
     .. [1] "Least Angle Regression", Effron et al.
-           http://statweb.stanford.edu/~tibs/ftp/lars.pdf
+           https://statweb.stanford.edu/~tibs/ftp/lars.pdf
 
     .. [2] `Wikipedia entry on the Least-angle regression
            <https://en.wikipedia.org/wiki/Least-angle_regression>`_

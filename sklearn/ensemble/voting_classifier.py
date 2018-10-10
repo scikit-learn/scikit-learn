@@ -120,7 +120,6 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     [1 1 1 2 2 2]
     >>> print(eclf3.transform(X).shape)
     (6, 6)
-    >>>
     """
     _required_parameters = ['estimators']
 
