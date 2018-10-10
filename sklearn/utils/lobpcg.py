@@ -49,7 +49,7 @@ def as2d(ar):
         return aux
 
 
-def _makeOperator(operatorInput, expectedShape):
+def _makeOperator(operatorInput, expectedShape, dtype=None):
     """Takes a dense numpy array or a sparse matrix or
     a function and makes an operator performing matrix * blockvector
     products.
@@ -63,7 +63,8 @@ def _makeOperator(operatorInput, expectedShape):
     if operatorInput is None:
         def ident(x):
             return x
-        operator = LinearOperator(expectedShape, ident, matmat=ident)
+        operator = LinearOperator(expectedShape, ident, matmat=ident,
+                                  dtype=dtype)
     else:
         operator = aslinearoperator(operatorInput)
 
@@ -301,8 +302,8 @@ def lobpcg(A, X,
         print(aux)
 
     A = _makeOperator(A, (n, n))
-    B = _makeOperator(B, (n, n))
-    M = _makeOperator(M, (n, n))
+    B = _makeOperator(B, (n, n), dtype=A.dtype if B is None else B.dtype)
+    M = _makeOperator(M, (n, n), dtype=A.dtype if M is None else M.dtype)
 
     if (n - sizeY) < (5 * sizeX):
         # warn('The problem size is small compared to the block size.' \
@@ -320,8 +321,8 @@ def lobpcg(A, X,
         else:
             eigvals = (0, sizeX-1)
 
-        A_dense = A(np.eye(n))
-        B_dense = None if B is None else B(np.eye(n))
+        A_dense = A(np.eye(n, dtype=A.dtype))
+        B_dense = None if B is None else B(np.eye(n, dtype=B.dtype))
 
         vals, vecs = eigh(A_dense, B_dense, eigvals=eigvals, check_finite=False)
         if largest:
