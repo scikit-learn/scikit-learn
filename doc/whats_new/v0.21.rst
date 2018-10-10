@@ -56,10 +56,10 @@ Support for Python 3.4 and below has been officially dropped.
 ......................
 
 - |Fix| Fixed a bug in :class:`sklearn.neighbors` calling functions
-  :func: `NearestNeighbors.kneighbors`,
-  :func: `NearestNeighbors.radius_neighbors`,
-  :func: `NearestNeighbors.kneighbors_graph`,
-  :func: `NearestNeighbors.radius_neighbors_graph`
+  :func:`NearestNeighbors.kneighbors`,
+  :func:`NearestNeighbors.radius_neighbors`,
+  :func:`NearestNeighbors.kneighbors_graph`,
+  :func:`NearestNeighbors.radius_neighbors_graph`
   without first fitting should raise `NotFittedError`.
   :issue:`12279` by :user:`Krishna Sangeeth <whiletruelearn>`.
 
