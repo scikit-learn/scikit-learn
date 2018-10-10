@@ -21,6 +21,20 @@ def save(ar, fileName):
     # Used only when verbosity level > 10.
     np.savetxt(fileName, ar, precision=8)
 
+def _report_nonhermitian(M, a, b, name):
+    """
+    Report if `M` is not a hermitian matrix given the tolerances `a`, `b`.
+    """
+    from scipy.linalg import norm
+
+    md = M - M.T.conj()
+
+    nmd = norm(md, 1)
+    tol = max(np.spacing(10**a), (10**b)*norm(M, 1))
+    if nmd > tol:
+        print('matrix %s is not enough Hermitian for a=%d, b=%d:'
+              % (name, a, b))
+        print('condition: %.e < %e' % (nmd, tol))
 
 def as2d(ar):
     """
@@ -85,6 +99,15 @@ def _b_orthonormalize(B, blockVectorV, blockVectorBV=None, retInvR=False):
     else:
         return blockVectorV, blockVectorBV
 
+def _get_indx(_lambda, num, largest):
+    """Get `num` indices into `_lambda` depending on `largest` option."""
+    ii = np.argsort(_lambda)
+    if largest:
+        ii = ii[:-num-1:-1]
+    else:
+        ii = ii[:num]
+
+    return ii
 
 def lobpcg(A, X,
            B=None, M=None, Y=None,
@@ -299,7 +322,14 @@ def lobpcg(A, X,
 
         A_dense = A(np.eye(n))
         B_dense = None if B is None else B(np.eye(n))
-        return eigh(A_dense, B_dense, eigvals=eigvals, check_finite=False)
+
+        vals, vecs = eigh(A_dense, B_dense, eigvals=eigvals, check_finite=False)
+        if largest:
+            # Reverse order to be compatible with eigs() in 'LM' mode.
+            vals = vals[::-1]
+            vecs = vecs[:, ::-1]
+
+        return vals, vecs
 
     if residualTolerance is None:
         residualTolerance = np.sqrt(1e-15) * n
@@ -332,11 +362,7 @@ def lobpcg(A, X,
     gramXAX = np.dot(blockVectorX.T.conj(), blockVectorAX)
 
     _lambda, eigBlockVector = eigh(gramXAX, check_finite=False)
-
-    if largest:
-        ii = np.argsort(-_lambda)[:sizeX]
-    else:
-        ii = np.argsort(_lambda)[:sizeX]
+    ii = _get_indx(_lambda, sizeX, largest)
     _lambda = _lambda[ii]
 
     eigBlockVector = np.asarray(eigBlockVector[:, ii])
@@ -456,17 +482,17 @@ def lobpcg(A, X,
             gramB = np.bmat([[ident0, xbw],
                             [xbw.T.conj(), ident]])
 
+        if verbosityLevel > 0:
+            _report_nonhermitian(gramA, 3, -1, 'gramA')
+            _report_nonhermitian(gramB, 3, -1, 'gramB')
+
         if verbosityLevel > 10:
             save(gramA, 'gramA')
             save(gramB, 'gramB')
 
         # Solve the generalized eigenvalue problem.
         _lambda, eigBlockVector = eigh(gramA, gramB, check_finite=False)
-
-        if largest:
-            ii = np.argsort(-_lambda)[: sizeX]
-        else:
-            ii = np.argsort(_lambda)[: sizeX]
+        ii = _get_indx(_lambda, sizeX, largest)
 
         if verbosityLevel > 10:
             print(ii)
