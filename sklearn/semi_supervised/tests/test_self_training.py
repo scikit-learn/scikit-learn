@@ -13,6 +13,7 @@ from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.metrics import accuracy_score
 
 # Author: Oliver Rausch <rauscho@ethz.ch>
 # License: BSD 3 clause
@@ -24,10 +25,10 @@ X_train, X_test, y_train, y_test = train_test_split(iris.data,
                                                     iris.target,
                                                     random_state=0)
 
-n_missing_samples = 50
+n_labeled_samples = 50
 
 y_train_missing_labels = y_train.copy()
-y_train_missing_labels[n_missing_samples:] = -1
+y_train_missing_labels[n_labeled_samples:] = -1
 y_train_missing_labels_strings = y_train_missing_labels.copy()
 mapping = {0: 'A', 1: 'B', 2: 'C', -1: -1}
 y_train_missing_strings = np.vectorize(mapping.get)(y_train_missing_labels)
@@ -95,6 +96,20 @@ def test_classification(base_classifier, max_iter, threshold):
     assert_array_equal(proba, proba_string)
 
 
+def test_sanity_classification():
+    base_classifier = SVC(gamma="scale", probability=True)
+    base_classifier.fit(X_train[n_labeled_samples:],
+                        y_train[n_labeled_samples:])
+
+    st = SelfTrainingClassifier(base_classifier)
+    st.fit(X_train, y_train_missing_labels)
+
+    score_supervised = accuracy_score(base_classifier.predict(X_test), y_test)
+    score_self_training = accuracy_score(st.predict(X_test), y_test)
+
+    assert(score_self_training > score_supervised)
+
+
 def test_none_iter():
     # Check that the all samples were labeled after a 'reasonable' number of
     # iterations.
@@ -115,7 +130,7 @@ def test_zero_iterations():
                                                   y_train_missing_labels)
 
     clf2 = KNeighborsClassifier().fit(
-        X_train[:n_missing_samples], y_train[:n_missing_samples])
+        X_train[:n_labeled_samples], y_train[:n_labeled_samples])
 
     assert_array_equal(clf1.predict(X_test), clf2.predict(X_test))
 
@@ -124,7 +139,7 @@ def test_notfitted():
     # Test that predicting without training throws an error
     st = SelfTrainingClassifier(KNeighborsClassifier())
     msg = ("This SelfTrainingClassifier instance is not fitted yet. Call "
-           "\'fit\' with appropriate arguments before using this method.")
+           "'fit' with appropriate arguments before using this method.")
     assert_raise_message(NotFittedError, msg, st.predict, X_train)
     assert_raise_message(NotFittedError, msg, st.predict_proba, X_train)
 
@@ -136,7 +151,7 @@ def test_prefitted_throws_error():
     knn.fit(X_train, y_train)
     st = SelfTrainingClassifier(knn)
     msg = ("This SelfTrainingClassifier instance is not fitted yet. Call "
-           "\'fit\' with appropriate arguments before using this method.")
+           "'fit' with appropriate arguments before using this method.")
     assert_raise_message(NotFittedError, msg, st.predict, X_train)
 
 
@@ -147,7 +162,7 @@ def test_y_labeled_iter(max_iter):
     st = SelfTrainingClassifier(KNeighborsClassifier(), max_iter=max_iter)
     st.fit(X_train, y_train_missing_labels)
     amount_iter_0 = len(st.y_labeled_iter_[st.y_labeled_iter_ == 0])
-    assert amount_iter_0 == n_missing_samples
+    assert amount_iter_0 == n_labeled_samples
     # Check that the max of the iterations is less than the total amount of
     # iterations
     assert np.max(st.y_labeled_iter_) <= st.n_iter_ <= max_iter
