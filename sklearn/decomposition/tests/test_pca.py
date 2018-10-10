@@ -255,9 +255,9 @@ def test_explained_variance():
 
     lpca = PCA(n_components=2, svd_solver='lobpcg', random_state=42).fit(X)
     assert_array_almost_equal(pca.explained_variance_,
-                              rpca.explained_variance_, 1)
+                              lpca.explained_variance_, 1)
     assert_array_almost_equal(pca.explained_variance_ratio_,
-                              rpca.explained_variance_ratio_, 1)
+                              lpca.explained_variance_ratio_, 1)
 
     # compare to empirical variances
     expected_result = np.linalg.eig(np.cov(X, rowvar=False))[0]
