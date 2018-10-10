@@ -338,7 +338,7 @@ def lobpcg(A, X,
 
         return vals, vecs
 
-    if (residualTolerance is None) or (residualTolerance =< 0.0):
+    if (residualTolerance is None) or (residualTolerance <= 0.0):
         residualTolerance = np.sqrt(1e-15) * n
 
     # Apply constraints to X.
