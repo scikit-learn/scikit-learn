@@ -50,7 +50,7 @@ Videos
     section :ref:`stat_learn_tut_index`.
 
 - `Statistical Learning for Text Classification with scikit-learn and NLTK
-  <http://www.pyvideo.org/video/417/pycon-2011--statistical-machine-learning-for-text>`_
+  <https://pyvideo.org/video/417/pycon-2011--statistical-machine-learning-for-text>`_
   (and `slides <https://www.slideshare.net/ogrisel/statistical-machine-learning-for-text-classification-with-scikitlearn-and-nltk>`_)
   by `Olivier Grisel`_ at PyCon 2011
 
@@ -74,5 +74,5 @@ Videos
 
 
 .. _Gael Varoquaux: http://gael-varoquaux.info
-.. _Jake Vanderplas: http://staff.washington.edu/jakevdp
+.. _Jake Vanderplas: https://staff.washington.edu/jakevdp
 .. _Olivier Grisel: https://twitter.com/ogrisel

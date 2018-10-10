@@ -72,7 +72,7 @@ it is known to be a bad estimator, so the probability outputs from
 .. topic:: References:
 
  * H. Zhang (2004). `The optimality of Naive Bayes.
-   <http://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
+   <https://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
    Proc. FLAIRS.
 
 .. _gaussian_naive_bayes:

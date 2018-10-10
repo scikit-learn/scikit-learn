@@ -152,10 +152,10 @@ explore the space more thoroughly.
 .. topic:: References:
 
     * `"A fast learning algorithm for deep belief nets"
-      <http://www.cs.toronto.edu/~hinton/absps/fastnc.pdf>`_
+      <https://www.cs.toronto.edu/~hinton/absps/fastnc.pdf>`_
       G. Hinton, S. Osindero, Y.-W. Teh, 2006
 
     * `"Training Restricted Boltzmann Machines using Approximations to
       the Likelihood Gradient"
-      <http://www.cs.toronto.edu/~tijmen/pcd/pcd.pdf>`_
+      <https://www.cs.toronto.edu/~tijmen/pcd/pcd.pdf>`_
       T. Tieleman, 2008

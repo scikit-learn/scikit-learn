@@ -775,7 +775,7 @@ Trent McConaghy, founder, Solido Design Automation Inc.
 
 .. image:: images/infonea.jpg
     :width: 120pt
-    :target: http://www.infonea.com/en
+    :target: http://www.infonea.com/en/
 
 .. raw:: html
 

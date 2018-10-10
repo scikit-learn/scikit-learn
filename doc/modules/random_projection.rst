@@ -22,7 +22,7 @@ technique for distance based method.
 .. topic:: References:
 
  * Sanjoy Dasgupta. 2000.
-   `Experiments with random projection. <http://cseweb.ucsd.edu/~dasgupta/papers/randomf.pdf>`_
+   `Experiments with random projection. <https://cseweb.ucsd.edu/~dasgupta/papers/randomf.pdf>`_
    In Proceedings of the Sixteenth conference on Uncertainty in artificial
    intelligence (UAI'00), Craig Boutilier and Moisés Goldszmidt (Eds.). Morgan
    Kaufmann Publishers Inc., San Francisco, CA, USA, 143-151.

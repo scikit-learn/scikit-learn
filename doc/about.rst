@@ -99,14 +99,14 @@ full-time. It also hosts coding sprints and other events.
    :align: center
    :target: https://www.inria.fr
 
-`Paris-Saclay Center for Data Science <http://www.datascience-paris-saclay.fr>`_
+`Paris-Saclay Center for Data Science <https://www.datascience-paris-saclay.fr/>`_
 funded one year for a developer to work on the project full-time
 (2014-2015) and 50% of the time of Guillaume Lemaitre (2016-2017).
 
 .. image:: images/cds-logo.png
    :width: 200pt
    :align: center
-   :target: http://www.datascience-paris-saclay.fr
+   :target: https://www.datascience-paris-saclay.fr/
 
 `NYU Moore-Sloan Data Science Environment <https://cds.nyu.edu/mooresloan/>`_
 funded Andreas Mueller (2014-2016) to work on this project. The Moore-Sloan Data Science
@@ -118,14 +118,14 @@ Environment also funds several students to work on the project part-time.
    :target: https://cds.nyu.edu/mooresloan/
 
 
-`Télécom Paristech <http://www.telecom-paristech.com>`_ funded Manoj Kumar (2014),
+`Télécom Paristech <https://www.telecom-paristech.fr/>`_ funded Manoj Kumar (2014),
 Tom Dupré la Tour (2015), Raghav RV (2015-2017), Thierry Guillemot (2016-2017)
 and Albert Thomas (2017) to work on scikit-learn.
 
 .. image:: themes/scikit-learn/static/img/telecom.png
    :width: 100pt
    :align: center
-   :target: http://www.telecom-paristech.fr/
+   :target: https://www.telecom-paristech.fr/
 
 
 `Columbia University <https://columbia.edu/>`_ funds Andreas Müller since 2016.
