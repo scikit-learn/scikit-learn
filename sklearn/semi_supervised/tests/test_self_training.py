@@ -12,23 +12,17 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris
-from sklearn.utils import check_random_state
 from sklearn.preprocessing import LabelBinarizer
 
 # Author: Oliver Rausch <rauscho@ethz.ch>
 # License: BSD 3 clause
 
 
-rng = check_random_state(0)
-
 # load the iris dataset and randomly permute it
 iris = load_iris()
-perm = rng.permutation(iris.target.size)
-iris.data = iris.data[perm]
-iris.target = iris.target[perm]
 X_train, X_test, y_train, y_test = train_test_split(iris.data,
                                                     iris.target,
-                                                    random_state=rng)
+                                                    random_state=0)
 
 n_missing_samples = 50
 
@@ -102,13 +96,12 @@ def test_classification(base_classifier, max_iter, threshold):
 
 
 def test_none_iter():
-    # Test None iterations
+    # Check that the all samples were labeled after a 'reasonable' number of
+    # iterations.
     st = SelfTrainingClassifier(KNeighborsClassifier(), threshold=.55,
                                 max_iter=None)
     st.fit(X_train, y_train_missing_labels)
 
-    # Check that the all samples were labeled after a 'reasonable' number of
-    # iterations.
     assert st.n_iter_ < 10
 
 

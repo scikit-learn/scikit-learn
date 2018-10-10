@@ -39,7 +39,7 @@ class SelfTrainingClassifier(BaseEstimator):
     base_classifier : estimator object
         An estimator object implementing ``fit`` and ``predict_proba``.
         Invoking the ``fit`` method will fit a clone of the passed estimator,
-        which will be stored in the ``self.base_classifier_`` attribute.
+        which will be stored in the ``base_classifier_`` attribute.
 
     threshold : float, optional (default=0.75)
         The decision threshold. If the ``base_classifier`` makes a prediction
@@ -58,7 +58,7 @@ class SelfTrainingClassifier(BaseEstimator):
     base_classifier_ : estimator object
         The fitted estimator.
 
-    y_labeled_ : array, shape=(n_samples,)
+    y_labels_ : array, shape=(n_samples,)
         The labels used for the final fit of the classifier.
 
     y_labeled_iter_ : array, shape=(n_samples,)
@@ -163,12 +163,12 @@ class SelfTrainingClassifier(BaseEstimator):
             max_proba = np.max(prob, axis=1)
 
             # Select samples where confidence is above the threshold
-            confident_labels = max_proba > self.threshold
+            confident_labels_mask = max_proba > self.threshold
 
-            new_labels_idx = np.flatnonzero(~has_label)[confident_labels]
+            new_labels_idx = np.flatnonzero(~has_label)[confident_labels_mask]
 
             # Add newly labeled confident predictions to the dataset
-            self.y_labels_[new_labels_idx] = pred[confident_labels]
+            self.y_labels_[new_labels_idx] = pred[confident_labels_mask]
             has_label[new_labels_idx] = True
             self.y_labeled_iter_[new_labels_idx] = self.n_iter_
 

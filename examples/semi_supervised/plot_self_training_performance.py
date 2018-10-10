@@ -4,16 +4,17 @@ Self-training: Comparing performance
 ===================================================
 This example illustrates the performance of the SelfTrainingClassifier.
 
-The digits dataset is loaded, and a SVC classifier is created. Then, a
-SelfTrainingClassifier is initialised, using the same SVC as its
+The digits dataset is loaded, and two identical SVC classifiers are created.
+Then, a SelfTrainingClassifier is initialised, using one of the SVCs as its
 base estimator.
 
 The dataset contains 1797 data points, and the SelfTrainingClassifier is
-trained using all 1797 data points, of which some are unlabeled. The normal SVC
-is trained using only the labeled data points.
+trained using all 1797 data points, of which some are unlabeled. The supervised
+SVC is trained using only the labeled data points.
 
-The graph shows that the SelfTrainingClassifier outperforms the normal SVC
-when only few labeled data points are available.
+The graph shows that the SelfTrainingClassifier outperforms the normal SVC when
+only few labeled data points are available. The accuracy is averaged over
+8-fold cross validation.
 """
 # Authors: Oliver Rausch    <rauscho@ethz.ch>
 #          Patrice Becker   <beckerp@ethz.ch>
@@ -34,13 +35,16 @@ supervised_scores = np.empty((x_values.shape[0], n_splits))
 self_training_scores = np.empty_like(supervised_scores)
 
 clf = SVC(probability=True, gamma=0.001, random_state=42)
-self_training_clf = SelfTrainingClassifier(clf, max_iter=10, threshold=0.8)
+base_classifier = SVC(probability=True, gamma=0.001, random_state=42)
+self_training_clf = SelfTrainingClassifier(base_classifier,
+                                           max_iter=10,
+                                           threshold=0.8)
 
 X, y = load_digits(return_X_y=True)
 X, y = shuffle(X, y, random_state=42)
 y_true = y.copy()
 
-for i in range(x_values.shape[0] - 1, -1, -1):
+for i in reversed(range(0, x_values.shape[0])):
     n_labeled_samples = x_values[i]
     y[n_labeled_samples:] = -1
 
@@ -53,11 +57,12 @@ for i in range(x_values.shape[0] - 1, -1, -1):
         y_test = y[test_index]
         y_test_true = y_true[test_index]
 
-        X_train_filtered = X_train[y_train != -1]
-        y_train_filtered = y_train[y_train != -1]
+        # Extract the labeled samples
+        X_train_labeled = X_train[y_train != -1]
+        y_train_labeled = y_train[y_train != -1]
 
         # Train the supervised SVC using only labeled samples
-        clf.fit(X_train_filtered, y_train_filtered)
+        clf.fit(X_train_labeled, y_train_labeled)
         y_pred = clf.predict(X_test)
         supervised_scores[i, fold] = accuracy_score(y_test_true, y_pred)
 
