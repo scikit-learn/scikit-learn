@@ -11,7 +11,8 @@ Locally Optimal Block Preconditioned Conjugate Gradient Method (LOBPCG)
 
 import numpy as np
 
-from scipy.linalg import inv, eigh, cho_factor, cho_solve, cholesky, LinAlgError
+from scipy.linalg import (inv, eigh, cho_factor, cho_solve, cholesky,
+                          LinAlgError)
 from scipy.sparse.linalg import aslinearoperator, LinearOperator
 
 __all__ = ['lobpcg']
@@ -324,7 +325,8 @@ def lobpcg(A, X,
         A_dense = A(np.eye(n, dtype=A.dtype))
         B_dense = None if B is None else B(np.eye(n, dtype=B.dtype))
 
-        vals, vecs = eigh(A_dense, B_dense, eigvals=eigvals, check_finite=False)
+        vals, vecs = eigh(A_dense, B_dense, eigvals=eigvals,
+                          check_finite=False)
         if largest:
             # Reverse order to be compatible with eigs() in 'LM' mode.
             vals = vals[::-1]
