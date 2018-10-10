@@ -213,7 +213,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     if metric == 'precomputed':
         diag_indices = np.diag_indices(X.shape[0])
         X[diag_indices] = 0
-    
+
     le = LabelEncoder()
     labels = le.fit_transform(labels)
     n_samples = len(labels)
