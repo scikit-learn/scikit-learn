@@ -455,15 +455,16 @@ def trustworthiness(X, X_embedded, n_neighbors=5,
                       "parameter instead.", DeprecationWarning)
         metric = 'precomputed'
     dist_X = pairwise_distances(X, metric=metric)
-    dist_X += np.diag(np.full(dist_X.shape[0], np.inf))
+    if metric == 'precomputed':
+        dist_X = dist_X.copy()
+    np.fill_diagonal(dist_X, np.inf)
     ind_X = np.argsort(dist_X, axis=1)
     # `ind_X[i]` is the index of sorted distances between i and other samples
     ind_X_embedded = NearestNeighbors(n_neighbors).fit(X_embedded).kneighbors(
         return_distance=False)
 
-    # We build an inverted index of neighbors in the input space: For sample
-    #  i, we define `inverted_index[i]` as the inverted index of sorted
-    # distances:
+    # We build an inverted index of neighbors in the input space: For sample i,
+    # we define `inverted_index[i]` as the inverted index of sorted distances:
     # inverted_index[i][ind_X[i]] = np.arange(1, n_sample + 1)
     n_samples = X.shape[0]
     inverted_index = np.zeros((n_samples, n_samples), dtype=int)
