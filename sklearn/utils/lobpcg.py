@@ -55,14 +55,7 @@ def as2d(ar):
 def _makeOperator(operatorInput, expectedShape, dtype=None):
     """Takes a dense numpy array or a sparse matrix or
     a function and makes an operator performing matrix * blockvector
-    products.
-
-    Examples
-    --------
-    >>> A = _makeOperator( arrayA, (n, n) )
-    >>> vectorB = A( vectorX )
-
-    """
+    products."""
     if operatorInput is None:
         def ident(x):
             return x
@@ -209,7 +202,7 @@ def lobpcg(A, X,
 
     >>> eigs, vecs = lobpcg(A, X, Y=Y, M=M, largest=False)
     >>> eigs
-    array([ 4.,  5.,  6.])
+    array([4., 5., 6.])
 
     Note that the vectors passed in Y are the eigenvectors of the 3 smallest
     eigenvalues. The results returned are orthogonal to those.
