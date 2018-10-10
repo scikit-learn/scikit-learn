@@ -256,10 +256,6 @@ def lobpcg(A, X,
 
     n, sizeX = blockVectorX.shape
 
-    A = _makeOperator(A, (n, n))
-    B = _makeOperator(B, (n, n))
-    M = _makeOperator(M, (n, n))
-
     if verbosityLevel:
         aux = "Solving "
         if B is None:
@@ -280,6 +276,10 @@ def lobpcg(A, X,
             else:
                 aux += "%d constraint\n\n" % sizeY
         print(aux)
+
+    A = _makeOperator(A, (n, n))
+    B = _makeOperator(B, (n, n))
+    M = _makeOperator(M, (n, n))
 
     if (n - sizeY) < (5 * sizeX):
         # warn('The problem size is small compared to the block size.' \
