@@ -10,11 +10,13 @@ if _os.environ.get('SKLEARN_SITE_JOBLIB', False):
         _warnings.simplefilter("ignore")
         # joblib imports may raise DeprecationWarning on certain Python
         # versions
+        import joblib  # noqa
         from joblib import __all__
         from joblib import *  # noqa
         from joblib import __version__
         from joblib import logger
 else:
+    from ..externals import joblib  # noqa
     from ..externals.joblib import __all__   # noqa
     from ..externals.joblib import *  # noqa
     from ..externals.joblib import __version__  # noqa

@@ -25,7 +25,7 @@ import pytest
 from sklearn.utils import _joblib
 from sklearn.utils import parallel_backend
 from sklearn.utils import register_parallel_backend
-from sklearn.externals.joblib.parallel import LokyBackend
+from sklearn.utils._joblib import joblib
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -1272,7 +1272,7 @@ def test_nestimators_future_warning(forest):
     est = assert_no_warnings(est.fit, X, y)
 
 
-class MyBackend(LokyBackend):
+class MyBackend(joblib._parallel_backends.LokyBackend):
     def __init__(self, *args, **kwargs):
         self.count = 0
         super(MyBackend, self).__init__(*args, **kwargs)
