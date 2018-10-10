@@ -24,6 +24,7 @@ from libc.string cimport memcpy
 from libc.string cimport memset
 
 import numpy as np
+import warnings
 cimport numpy as np
 np.import_array()
 
@@ -455,6 +456,16 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                    n_node_samples < 2 * self.min_samples_leaf or
                    weighted_n_node_samples < 2 * self.min_weight_leaf or
                    impurity <= min_impurity_split)
+
+        if (depth >= self.max_depth and
+            not (n_node_samples < self.min_samples_split or
+                 n_node_samples < 2 * self.min_samples_leaf or
+                 weighted_n_node_samples < 2 * self.min_weight_leaf or
+                 impurity <= min_impurity_split)):
+            with gil:
+                warnings.warn("Due to a bugfix in v0.21 the maximum depth of a"
+                              " tree now does not pass the given max_depth!",
+                              UserWarning)
 
         if not is_leaf:
             splitter.node_split(impurity, &split, &n_constant_features)
