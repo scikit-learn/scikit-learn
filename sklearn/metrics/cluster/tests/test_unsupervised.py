@@ -179,7 +179,8 @@ def test_nonzero_diag_silhouette():
 
     # Test silhouette samples
     sample_scores = silhouette_samples(dists, labels, metric='precomputed')
-    diag_sample_scores = silhouette_samples(diag_dists, labels, metric='precomputed')
+    diag_sample_scores = silhouette_samples(
+        diag_dists, labels, metric='precomputed')
     assert_array_equal(sample_scores, diag_sample_scores)
 
     # Test silhoutte score
