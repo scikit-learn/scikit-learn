@@ -33,23 +33,23 @@ labeled points and a large amount of unlabeled points.
 Self Training
 =============
 
-This self-training implementation is based on Yarowsky's [1]_ algorithm.
-Using this algorithm, a given supervised classifier can function as a
-semi-supervised classifier, allowing it to learn from unlabeled data.
+This self-training implementation is based on Yarowsky's [1]_ algorithm. Using
+this algorithm, a given supervised classifier can function as a semi-supervised
+classifier, allowing it to learn from unlabeled data.
 
-:class:`SelfTrainingClassifier` can be called with any classifier that implements
-``predict_proba``, passed as the parameter ``base_classifier``.
-In each iteration, the ``base_classifier`` predicts labels for the unlabeled samples
-and adds them to the labeled dataset if the classifier's confidence 
-is above the ``threshold`` (an optional parameter). The labels used for the final fitting as well
-as the iteration in which each sample was labeled are available as class
-attributes. The optional ``max_iter`` parameter specifies how many times the loop is executed
-at most.
+:class:`SelfTrainingClassifier` can be called with any classifier that
+implements ``predict_proba``, passed as the parameter ``base_classifier``. In
+each iteration, the ``base_classifier`` predicts labels for the unlabeled
+samples and adds them to the labeled dataset if the classifier's confidence is
+above the ``threshold`` (an optional parameter). The labels used for the final
+fitting as well as the iteration in which each sample was labeled are available
+as attributes. The optional ``max_iter`` parameter specifies how many times the
+loop is executed at most.
 
-The ``max_iter`` parameter may be set to ``None``, causing the
-algorithm to iterate until all samples have labels. However, in practice, this
-can cause the fitting to never terminate, as the ``base_classifier`` may never
-produce confident predictions for certain samples.
+The ``max_iter`` parameter may be set to ``None``, causing the algorithm to
+iterate until all samples have labels. However, in practice, this can cause the
+fitting to never terminate, as the ``base_classifier`` may never produce
+confident predictions for certain samples.
 
 .. topic:: Examples
 
