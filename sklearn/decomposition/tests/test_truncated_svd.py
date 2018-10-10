@@ -243,7 +243,7 @@ def test_singular_values():
                         random_state=rng)
     X_apca = apca.fit_transform(X)
     X_rpca = rpca.fit_transform(X)
-    X_lpca = rpca.fit_transform(X)
+    X_lpca = lpca.fit_transform(X)
 
     X_apca /= np.sqrt(np.sum(X_apca**2.0, axis=0))
     X_rpca /= np.sqrt(np.sum(X_rpca**2.0, axis=0))
