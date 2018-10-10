@@ -464,7 +464,7 @@ def trustworthiness(X, X_embedded, n_neighbors=5,
     # We build an inverted index of neighbors in the input space: For sample
     #  i, we define `inverted_index[i]` as the inverted index of sorted
     # distances:
-    # inverted_index[i][ind_X[i]] = np.arange(1, n_sample)
+    # inverted_index[i][ind_X[i]] = np.arange(1, n_sample + 1)
     n_samples = X.shape[0]
     inverted_index = np.zeros((n_samples, n_samples), dtype=int)
     ordered_indices = np.arange(n_samples + 1)
