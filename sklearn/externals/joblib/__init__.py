@@ -12,13 +12,13 @@ data and has specific optimizations for `numpy` arrays. It is
 
 
     ==================== ===============================================
-    **Documentation:**       http://pythonhosted.org/joblib
+    **Documentation:**       https://joblib.readthedocs.io
 
-    **Download:**            http://pypi.python.org/pypi/joblib#downloads
+    **Download:**            https://pypi.org/project/joblib/#files
 
-    **Source code:**         http://github.com/joblib/joblib
+    **Source code:**         https://github.com/joblib/joblib
 
-    **Report issues:**       http://github.com/joblib/joblib/issues
+    **Report issues:**       https://github.com/joblib/joblib/issues
     ==================== ===============================================
 
 
@@ -106,7 +106,7 @@ Main features
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.12.2'
+__version__ = '0.12.5'
 
 
 from .memory import Memory, MemorizedResult, register_store_backend

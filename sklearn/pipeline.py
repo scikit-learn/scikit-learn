@@ -630,7 +630,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     Parameters of the transformers may be set using its name and the parameter
     name separated by a '__'. A transformer may be replaced entirely by
     setting the parameter with its name to another transformer,
-    or removed by setting to ``None``.
+    or removed by setting to 'drop' or ``None``.
 
     Read more in the :ref:`User Guide <feature_union>`.
 
@@ -709,7 +709,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
         # validate estimators
         for t in transformers:
-            if t is None:
+            if t is None or t == 'drop':
                 continue
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
                     hasattr(t, "transform")):
@@ -719,12 +719,13 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     def _iter(self):
         """
-        Generate (name, trans, weight) tuples excluding None transformers
+        Generate (name, trans, weight) tuples excluding None and
+        'drop' transformers.
         """
         get_weight = (self.transformer_weights or {}).get
         return ((name, trans, get_weight(name))
                 for name, trans in self.transformer_list
-                if trans is not None)
+                if trans is not None and trans != 'drop')
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -830,10 +831,9 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
-        self.transformer_list[:] = [
-            (name, None if old is None else next(transformers))
-            for name, old in self.transformer_list
-        ]
+        self.transformer_list[:] = [(name, old if old is None or old == 'drop'
+                                     else next(transformers))
+                                    for name, old in self.transformer_list]
 
 
 def make_union(*transformers, **kwargs):

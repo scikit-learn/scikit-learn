@@ -259,7 +259,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> from sklearn.preprocessing import MinMaxScaler
-    >>>
+
     >>> data = [[-1, 2], [-0.5, 6], [0, 10], [1, 18]]
     >>> scaler = MinMaxScaler()
     >>> print(scaler.fit(data))
@@ -1323,6 +1323,12 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         all polynomial powers are zero (i.e. a column of ones - acts as an
         intercept term in a linear model).
 
+    order : str in {'C', 'F'}, default 'C'
+        Order of output array in the dense case. 'F' order is faster to
+        compute, but may slow down subsequent estimators.
+
+        .. versionadded:: 0.21
+
     Examples
     --------
     >>> X = np.arange(6).reshape(3, 2)
@@ -1363,10 +1369,12 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
-    def __init__(self, degree=2, interaction_only=False, include_bias=True):
+    def __init__(self, degree=2, interaction_only=False, include_bias=True,
+                 order='C'):
         self.degree = degree
         self.interaction_only = interaction_only
         self.include_bias = include_bias
+        self.order = order
 
     @staticmethod
     def _combinations(n_features, degree, interaction_only, include_bias):
@@ -1454,7 +1462,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, ['n_input_features_', 'n_output_features_'])
 
-        X = check_array(X, dtype=FLOAT_DTYPES, accept_sparse='csc')
+        X = check_array(X, order='F', dtype=FLOAT_DTYPES, accept_sparse='csc')
         n_samples, n_features = X.shape
 
         if n_features != self.n_input_features_:
@@ -1475,7 +1483,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                     columns.append(sparse.csc_matrix(np.ones((X.shape[0], 1))))
             XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
         else:
-            XP = np.empty((n_samples, self.n_output_features_), dtype=X.dtype)
+            XP = np.empty((n_samples, self.n_output_features_), dtype=X.dtype,
+                          order=self.order)
             for i, comb in enumerate(combinations):
                 XP[:, i] = X[:, comb].prod(1)
 
@@ -2480,7 +2489,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     or other situations where normality is desired.
 
     Currently, PowerTransformer supports the Box-Cox transform and the
-    Yeo-Johson transform. The optimal parameter for stabilizing variance and
+    Yeo-Johnson transform. The optimal parameter for stabilizing variance and
     minimizing skewness is estimated through maximum likelihood.
 
     Box-Cox requires input data to be strictly positive, while Yeo-Johnson
@@ -2535,8 +2544,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    NaNs are treated as missing values: disregarded in fit, and maintained in
-    transform.
+    NaNs are treated as missing values: disregarded in ``fit``, and maintained
+    in ``transform``.
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
@@ -2835,18 +2844,19 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         return X
 
 
-def power_transform(X, method='box-cox', standardize=True, copy=True):
-    """Apply a power transform featurewise to make data more Gaussian-like.
-
+def power_transform(X, method='warn', standardize=True, copy=True):
+    """
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for
     modeling issues related to heteroscedasticity (non-constant variance),
     or other situations where normality is desired.
 
-    Currently, power_transform() supports the Box-Cox transform. Box-Cox
-    requires input data to be strictly positive. The optimal parameter
-    for stabilizing variance and minimizing skewness is estimated
-    through maximum likelihood.
+    Currently, power_transform supports the Box-Cox transform and the
+    Yeo-Johnson transform. The optimal parameter for stabilizing variance and
+    minimizing skewness is estimated through maximum likelihood.
+
+    Box-Cox requires input data to be strictly positive, while Yeo-Johnson
+    supports both positive or negative data.
 
     By default, zero-mean, unit-variance normalization is applied to the
     transformed data.
@@ -2858,39 +2868,51 @@ def power_transform(X, method='box-cox', standardize=True, copy=True):
     X : array-like, shape (n_samples, n_features)
         The data to be transformed using a power transformation.
 
-    method : str, (default='box-cox')
-        The power transform method. Currently, 'box-cox' (Box-Cox transform)
-        is the only option available.
+    method : str
+        The power transform method. Available methods are:
+
+        - 'yeo-johnson' [1]_, works with positive and negative values
+        - 'box-cox' [2]_, only works with strictly positive values
+
+        The default method will be changed from 'box-cox' to 'yeo-johnson'
+        in version 0.23. To suppress the FutureWarning, explicitly set the
+        parameter.
 
     standardize : boolean, default=True
         Set to True to apply zero-mean, unit-variance normalization to the
         transformed output.
 
     copy : boolean, optional, default=True
-        Set to False to perform inplace computation.
+        Set to False to perform inplace computation during transformation.
+
+    Returns
+    -------
+    X_trans : array-like, shape (n_samples, n_features)
+        The transformed data.
 
     Examples
     --------
     >>> import numpy as np
     >>> from sklearn.preprocessing import power_transform
     >>> data = [[1, 2], [3, 2], [4, 5]]
-    >>> print(power_transform(data))  # doctest: +ELLIPSIS
+    >>> print(power_transform(data, method='box-cox'))  # doctest: +ELLIPSIS
     [[-1.332... -0.707...]
      [ 0.256... -0.707...]
      [ 1.076...  1.414...]]
 
     See also
     --------
-    PowerTransformer: Performs power transformation using the ``Transformer``
-        API (as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+    PowerTransformer : Equivalent transformation with the
+        ``Transformer`` API (e.g. as part of a preprocessing
+        :class:`sklearn.pipeline.Pipeline`).
 
     quantile_transform : Maps data to a standard normal distribution with
         the parameter `output_distribution='normal'`.
 
     Notes
     -----
-    NaNs are treated as missing values: disregarded to compute the statistics,
-    and maintained during the data transformation.
+    NaNs are treated as missing values: disregarded in ``fit``, and maintained
+    in ``transform``.
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
@@ -2898,9 +2920,21 @@ def power_transform(X, method='box-cox', standardize=True, copy=True):
 
     References
     ----------
-    G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal of the
-    Royal Statistical Society B, 26, 211-252 (1964).
+
+    .. [1] I.K. Yeo and R.A. Johnson, "A new family of power transformations to
+           improve normality or symmetry." Biometrika, 87(4), pp.954-959,
+           (2000).
+
+    .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
+           of the Royal Statistical Society B, 26, 211-252 (1964).
     """
+    if method == 'warn':
+        warnings.warn("The default value of 'method' will change from "
+                      "'box-cox' to 'yeo-johnson' in version 0.23. Set "
+                      "the 'method' argument explicitly to silence this "
+                      "warning in the meantime.",
+                      FutureWarning)
+        method = 'box-cox'
     pt = PowerTransformer(method=method, standardize=standardize, copy=copy)
     return pt.fit_transform(X)
 

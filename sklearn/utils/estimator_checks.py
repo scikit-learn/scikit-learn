@@ -6,7 +6,6 @@ import sys
 import traceback
 import pickle
 from copy import deepcopy
-import struct
 from functools import partial
 
 import numpy as np
@@ -14,7 +13,7 @@ from scipy import sparse
 from scipy.stats import rankdata
 
 from sklearn.externals.six.moves import zip
-from sklearn.utils import IS_PYPY
+from sklearn.utils import IS_PYPY, _IS_32BIT
 from sklearn.utils._joblib import hash, Memory
 from sklearn.utils.testing import assert_raises, _get_args
 from sklearn.utils.testing import assert_raises_regex
@@ -402,11 +401,6 @@ class NotAnArray(object):
 
     def __array__(self, dtype=None):
         return self.data
-
-
-def _is_32bit():
-    """Detect if process is 32bit Python."""
-    return struct.calcsize('P') * 8 == 32
 
 
 def _is_pairwise(estimator):
@@ -943,7 +937,7 @@ def check_transformers_unfitted(name, transformer):
 
 
 def _check_transformer(name, transformer_orig, X, y):
-    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _is_32bit():
+    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _IS_32BIT:
         # Those transformers yield non-deterministic output when executed on
         # a 32bit Python. The same transformers are stable on 64bit Python.
         # FIXME: try to isolate a minimalistic reproduction case only depending
@@ -1021,7 +1015,7 @@ def _check_transformer(name, transformer_orig, X, y):
 
 @ignore_warnings
 def check_pipeline_consistency(name, estimator_orig):
-    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _is_32bit():
+    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _IS_32BIT:
         # Those transformers yield non-deterministic output when executed on
         # a 32bit Python. The same transformers are stable on 64bit Python.
         # FIXME: try to isolate a minimalistic reproduction case only depending
@@ -1545,7 +1539,7 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
     y_scores = estimator.score_samples(X)
     assert y_scores.shape == (n_samples,)
     y_dec = y_scores - estimator.offset_
-    assert_array_equal(y_dec, decision)
+    assert_allclose(y_dec, decision)
 
     # raises error on malformed input for score_samples
     assert_raises(ValueError, estimator.score_samples, X.T)

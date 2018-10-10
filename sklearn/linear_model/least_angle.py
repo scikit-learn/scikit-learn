@@ -135,7 +135,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     References
     ----------
     .. [1] "Least Angle Regression", Effron et al.
-           http://statweb.stanford.edu/~tibs/ftp/lars.pdf
+           https://statweb.stanford.edu/~tibs/ftp/lars.pdf
 
     .. [2] `Wikipedia entry on the Least-angle regression
            <https://en.wikipedia.org/wiki/Least-angle_regression>`_
@@ -970,7 +970,9 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
 
 class LarsCV(Lars):
-    """Cross-validated Least Angle Regression model
+    """Cross-validated Least Angle Regression model.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -1069,6 +1071,19 @@ class LarsCV(Lars):
 
     n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import LarsCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_samples=200, noise=4.0, random_state=0)
+    >>> reg = LarsCV(cv=5).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9996...
+    >>> reg.alpha_
+    0.0254...
+    >>> reg.predict(X[:1,])
+    array([154.0842...])
 
     See also
     --------
@@ -1181,7 +1196,9 @@ class LarsCV(Lars):
 
 
 class LassoLarsCV(LarsCV):
-    """Cross-validated Lasso, using the LARS algorithm
+    """Cross-validated Lasso, using the LARS algorithm.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     The optimization objective for Lasso is::
 
@@ -1289,6 +1306,19 @@ class LassoLarsCV(LarsCV):
 
     n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import LassoLarsCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(noise=4.0, random_state=0)
+    >>> reg = LassoLarsCV(cv=5).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9992...
+    >>> reg.alpha_
+    0.0484...
+    >>> reg.predict(X[:1,])
+    array([-77.8723...])
 
     Notes
     -----

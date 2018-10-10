@@ -7,10 +7,10 @@ from warnings import warn
 
 try:
     # Python 3+
-    from urllib.request import urlopen
+    from urllib.request import urlopen, Request
 except ImportError:
     # Python 2
-    from urllib2 import urlopen
+    from urllib2 import urlopen, Request
 
 
 import numpy as np
@@ -18,7 +18,7 @@ import scipy.sparse
 
 from sklearn.externals import _arff
 from .base import get_data_home
-from ..externals.six import string_types, PY2
+from ..externals.six import string_types, PY2, BytesIO
 from ..externals.six.moves.urllib.error import HTTPError
 from ..utils import Bunch
 
@@ -29,6 +29,10 @@ _SEARCH_NAME = "api/v1/json/data/list/data_name/{}/limit/2"
 _DATA_INFO = "api/v1/json/data/{}"
 _DATA_FEATURES = "api/v1/json/data/features/{}"
 _DATA_FILE = "data/v1/download/{}"
+
+
+def _get_local_path(openml_path, data_home):
+    return os.path.join(data_home, 'openml.org', openml_path + ".gz")
 
 
 def _open_openml_url(openml_path, data_home):
@@ -50,10 +54,23 @@ def _open_openml_url(openml_path, data_home):
     result : stream
         A stream to the OpenML resource
     """
+    def is_gzip(_fsrc):
+        return _fsrc.info().get('Content-Encoding', '') == 'gzip'
+
+    req = Request(_OPENML_PREFIX + openml_path)
+    req.add_header('Accept-encoding', 'gzip')
+
     if data_home is None:
-        return urlopen(_OPENML_PREFIX + openml_path)
-    local_path = os.path.join(data_home, 'openml.org', openml_path + ".gz")
+        fsrc = urlopen(req)
+        if is_gzip(fsrc):
+            if PY2:
+                fsrc = BytesIO(fsrc.read())
+            return gzip.GzipFile(fileobj=fsrc, mode='rb')
+        return fsrc
+
+    local_path = _get_local_path(openml_path, data_home)
     if not os.path.exists(local_path):
+        fsrc = urlopen(req)
         try:
             os.makedirs(os.path.dirname(local_path))
         except OSError:
@@ -61,14 +78,20 @@ def _open_openml_url(openml_path, data_home):
             pass
 
         try:
-            with gzip.GzipFile(local_path, 'wb') as fdst:
-                fsrc = urlopen(_OPENML_PREFIX + openml_path)
-                shutil.copyfileobj(fsrc, fdst)
-                fsrc.close()
+            if is_gzip(fsrc):
+                with open(local_path, 'wb') as fdst:
+                    shutil.copyfileobj(fsrc, fdst)
+                    fsrc.close()
+            else:
+                with gzip.GzipFile(local_path, 'wb') as fdst:
+                    shutil.copyfileobj(fsrc, fdst)
+                    fsrc.close()
         except Exception:
             os.unlink(local_path)
             raise
-    # XXX: unnecessary decompression on first access
+
+    # XXX: First time, decompression will not be necessary (by using fsrc), but
+    # it will happen nonetheless
     return gzip.GzipFile(local_path, 'rb')
 
 
@@ -308,7 +331,7 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
         return_type = _arff.DENSE
 
     if PY2:
-        arff_file = _arff.load(response, encode_nominal=encode_nominal,
+        arff_file = _arff.load(response.read(), encode_nominal=encode_nominal,
                                return_type=return_type, )
     else:
         arff_file = _arff.loads(response.read().decode('utf-8'),
@@ -346,6 +369,20 @@ def _verify_target_data_type(features_dict, target_columns):
                          'categorical.')
 
 
+def _valid_data_column_names(features_list, target_columns):
+    # logic for determining on which columns can be learned. Note that from the
+    # OpenML guide follows that columns that have the `is_row_identifier` or
+    # `is_ignore` flag, these can not be learned on. Also target columns are
+    # excluded.
+    valid_data_column_names = []
+    for feature in features_list:
+        if (feature['name'] not in target_columns
+                and feature['is_ignore'] != 'true'
+                and feature['is_row_identifier'] != 'true'):
+            valid_data_column_names.append(feature['name'])
+    return valid_data_column_names
+
+
 def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                  target_column='default-target', cache=True, return_X_y=False):
     """Fetch dataset from openml by name or dataset id.
@@ -355,6 +392,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     versions of the 'iris' dataset). Please give either name or data_id
     (not both). In case a name is given, a version can also be
     provided.
+
+    Read more in the :ref:`User Guide <openml>`.
 
     .. note:: EXPERIMENTAL
 
@@ -497,10 +536,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         raise TypeError("Did not recognize type of target_column"
                         "Should be six.string_type, list or None. Got: "
                         "{}".format(type(target_column)))
-    data_columns = [feature['name'] for feature in features_list
-                    if (feature['name'] not in target_column and
-                        feature['is_ignore'] != 'true' and
-                        feature['is_row_identifier'] != 'true')]
+    data_columns = _valid_data_column_names(features_list,
+                                            target_column)
 
     # prepare which columns and data types should be returned for the X and y
     features_dict = {feature['name']: feature for feature in features_list}
@@ -530,13 +567,13 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     arff = _download_data_arff(data_description['file_id'], return_sparse,
                                data_home)
     arff_data = arff['data']
+    # nominal attributes is a dict mapping from the attribute name to the
+    # possible values. Includes also the target column (which will be popped
+    # off below, before it will be packed in the Bunch object)
     nominal_attributes = {k: v for k, v in arff['attributes']
-                          if isinstance(v, list)}
-    for feature in features_list:
-        if 'true' in (feature['is_row_identifier'],
-                      feature['is_ignore']) and (feature['name'] not in
-                                                 target_column):
-            del nominal_attributes[feature['name']]
+                          if isinstance(v, list) and
+                          k in data_columns + target_column}
+
     X, y = _convert_arff_data(arff_data, col_slice_x, col_slice_y)
 
     is_classification = {col_name in nominal_attributes

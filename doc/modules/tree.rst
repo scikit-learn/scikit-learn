@@ -125,8 +125,8 @@ Using the Iris dataset, we can construct a tree as follows::
     >>> clf = clf.fit(iris.data, iris.target)
 
 Once trained, we can export the tree in `Graphviz
-<http://www.graphviz.org/>`_ format using the :func:`export_graphviz`
-exporter. If you use the `conda <http://conda.io>`_ package manager, the graphviz binaries  
+<https://www.graphviz.org/>`_ format using the :func:`export_graphviz`
+exporter. If you use the `conda <https://conda.io/>`_ package manager, the graphviz binaries  
 and the python package can be installed with 
 
     conda install python-graphviz
@@ -149,10 +149,10 @@ using explicit variable and class names if desired. Jupyter notebooks also
 render these plots inline automatically::
 
     >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
-                             feature_names=iris.feature_names,  # doctest: +SKIP
-                             class_names=iris.target_names,  # doctest: +SKIP
-                             filled=True, rounded=True,  # doctest: +SKIP
-                             special_characters=True)  # doctest: +SKIP
+    ...                      feature_names=iris.feature_names,  # doctest: +SKIP
+    ...                      class_names=iris.target_names,  # doctest: +SKIP
+    ...                      filled=True, rounded=True,  # doctest: +SKIP
+    ...                      special_characters=True)  # doctest: +SKIP
     >>> graph = graphviz.Source(dot_data)  # doctest: +SKIP
     >>> graph # doctest: +SKIP
 
@@ -165,17 +165,6 @@ render these plots inline automatically::
 
     .. figure:: ../images/iris.pdf
        :align: center
-
-After being fitted, the model can then be used to predict the class of samples::
-
-    >>> clf.predict(iris.data[:1, :])
-    array([0])
-
-Alternatively, the probability of each class can be predicted, which is the
-fraction of training samples of the same class in a leaf::
-
-    >>> clf.predict_proba(iris.data[:1, :])
-    array([[1., 0., 0.]])
 
 .. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_001.png
    :target: ../auto_examples/tree/plot_iris.html
@@ -330,15 +319,17 @@ Tips on practical use
     for each additional level the tree grows to.  Use ``max_depth`` to control
     the size of the tree to prevent overfitting.
 
-  * Use ``min_samples_split`` or ``min_samples_leaf`` to control the number of
-    samples at a leaf node.  A very small number will usually mean the tree
-    will overfit, whereas a large number will prevent the tree from learning
-    the data. Try ``min_samples_leaf=5`` as an initial value. If the sample size
-    varies greatly, a float number can be used as percentage in these two parameters.
-    The main difference between the two is that ``min_samples_leaf`` guarantees
-    a minimum number of samples in a leaf, while ``min_samples_split`` can
-    create arbitrary small leaves, though ``min_samples_split`` is more common
-    in the literature.
+  * Use ``min_samples_split`` or ``min_samples_leaf`` to ensure that multiple
+    samples inform every decision in the tree, by controlling which splits will
+    be considered. A very small number will usually mean the tree will overfit,
+    whereas a large number will prevent the tree from learning the data. Try
+    ``min_samples_leaf=5`` as an initial value. If the sample size varies
+    greatly, a float number can be used as percentage in these two parameters.
+    While ``min_samples_split`` can create arbitrarily small leaves,
+    ``min_samples_leaf`` guarantees that each leaf has a minimum size, avoiding
+    low-variance, over-fit leaf nodes in regression problems.  For
+    classification with few classes, ``min_samples_leaf=1`` is often the best
+    choice.
 
   * Balance your dataset before training to prevent the tree from being biased
     toward the classes that are dominant. Class balancing can be done by
@@ -462,7 +453,7 @@ Common measures of impurity are Gini
 
     H(X_m) = \sum_k p_{mk} (1 - p_{mk})
 
-Cross-Entropy
+Entropy
 
 .. math::
 

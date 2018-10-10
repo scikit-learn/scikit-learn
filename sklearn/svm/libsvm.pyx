@@ -14,7 +14,7 @@ to run out of memory a MemoryError will be raised. In practice this is
 not very helpful since hight changes are malloc fails inside svm.cpp,
 where no sort of memory checks are done.
 
-[1] http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+[1] https://www.csie.ntu.edu.tw/~cjlin/libsvm/
 
 Notes
 -----

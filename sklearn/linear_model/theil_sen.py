@@ -276,6 +276,18 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         Number of combinations taken into account from 'n choose k', where n is
         the number of samples and k is the number of subsamples.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import TheilSenRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(
+    ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
+    >>> reg = TheilSenRegressor(random_state=0).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9884...
+    >>> reg.predict(X[:1,])
+    array([-31.5871...])
+
     References
     ----------
     - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009

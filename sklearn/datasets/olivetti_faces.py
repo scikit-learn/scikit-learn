@@ -2,12 +2,12 @@
 
 The original database was available from (now defunct)
 
-    http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
+    https://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
 
 The version retrieved here comes in MATLAB format from the personal
 web page of Sam Roweis:
 
-    http://www.cs.nyu.edu/~roweis/
+    https://cs.nyu.edu/~roweis/
 """
 
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
@@ -27,7 +27,7 @@ from ..utils import check_random_state, Bunch
 from ..externals import joblib
 
 # The original data can be found at:
-# http://cs.nyu.edu/~roweis/data/olivettifaces.mat
+# https://cs.nyu.edu/~roweis/data/olivettifaces.mat
 FACES = RemoteFileMetadata(
     filename='olivettifaces.mat',
     url='https://ndownloader.figshare.com/files/5976027',

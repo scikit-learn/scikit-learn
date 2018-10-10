@@ -34,7 +34,8 @@ SciPy and distributed under the 3-Clause BSD license.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
-the `AUTHORS.rst <AUTHORS.rst>`_ file for a complete list of contributors.
+the `About us <http://scikit-learn.org/dev/about.html#authors>`_ page
+for a list of core contributors.
 
 It is currently maintained by a team of volunteers.
 
@@ -56,8 +57,8 @@ scikit-learn requires:
 **Scikit-learn 0.20 is the last version to support Python2.7.**
 Scikit-learn 0.21 and later will require Python 3.5 or newer.
 
-For running the examples Matplotlib >= 1.3.1 is required. A few examples
-require scikit-image >= 0.9.3 and a few examples require pandas >= 0.13.1.
+For running the examples Matplotlib >= 1.4 is required. A few examples
+require scikit-image >= 0.11.3 and a few examples require pandas >= 0.17.1.
 
 scikit-learn also uses CBLAS, the C interface to the Basic Linear Algebra
 Subprograms library. scikit-learn comes with a reference implementation, but
@@ -100,7 +101,7 @@ Important links
 ~~~~~~~~~~~~~~~
 
 - Official source code repo: https://github.com/scikit-learn/scikit-learn
-- Download releases: https://pypi.python.org/pypi/scikit-learn
+- Download releases: https://pypi.org/project/scikit-learn/
 - Issue tracker: https://github.com/scikit-learn/scikit-learn/issues
 
 Source code
@@ -120,7 +121,7 @@ Testing
 ~~~~~~~
 
 After installation, you can launch the test suite from outside the
-source directory (you will need to have the ``pytest`` package installed)::
+source directory (you will need to have ``pytest`` >= 3.3.0 installed)::
 
     pytest sklearn
 
@@ -143,7 +144,8 @@ Project History
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
-the  `AUTHORS.rst <AUTHORS.rst>`_ file for a complete list of contributors.
+the  `About us <http://scikit-learn.org/dev/about.html#authors>`_ page
+for a list of core contributors.
 
 The project is currently maintained by a team of volunteers.
 
@@ -165,7 +167,7 @@ Communication
 
 - Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
 - IRC channel: ``#scikit-learn`` at ``webchat.freenode.net``
-- Stack Overflow: http://stackoverflow.com/questions/tagged/scikit-learn
+- Stack Overflow: https://stackoverflow.com/questions/tagged/scikit-learn
 - Website: http://scikit-learn.org
 
 Citation
