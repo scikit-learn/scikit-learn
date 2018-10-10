@@ -51,6 +51,13 @@ Changelog
   avoid pickling errors caused by the serialization of their methods.
   :issue:`12171` by :user:`Thomas Moreau <tomMoral>`.
 
+:mod:`sklearn.metrics`
+........................
+
+- |Fix| Fixed a bug in :func:`metrics.silhouette_score` where diagonal entries
+  of a precomputed distance matrix affected the final score.
+  :issue:`12258` by `Stephen Tierney`.
+
 .. _changes_0_20:
 
 Version 0.20.0

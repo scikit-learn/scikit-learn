@@ -9,7 +9,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_greater
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
@@ -170,15 +169,23 @@ def test_non_numpy_labels():
         silhouette_score(list(X), list(y)), silhouette_score(X, y))
 
 
-def test_nonzero_diag_silhouette_warning():
-    # Construct a nonzero-diagonal distance matrix
+def test_nonzero_diag_silhouette():
+    # Construct a zero-diagonal matrix
     dists = pairwise_distances(
         np.array([[0.2, 0.1, 0.12, 1.34, 1.11, 1.6]]).transpose())
-    dists = np.diag(np.ones(6)) + dists
+    # Construct a nonzero-diagonal distance matrix
+    diag_dists = np.diag(np.ones(6)) + dists
     labels = [0, 0, 0, 1, 1, 1]
 
-    assert_warns(UserWarning, silhouette_samples,
-                 dists, labels, metric='precomputed')
+    # Test silhouette samples
+    sample_scores = silhouette_samples(dists, labels, metric='precomputed')
+    diag_sample_scores = silhouette_samples(diag_dists, labels, metric='precomputed')
+    assert_array_equal(sample_scores, diag_sample_scores)
+
+    # Test silhoutte score
+    score = silhouette_score(dists, labels, metric='precomputed')
+    diag_score = silhouette_score(diag_dists, labels, metric='precomputed')
+    assert_equal(score, diag_score)
 
 
 def assert_raises_on_only_one_label(func):
