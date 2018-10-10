@@ -10,7 +10,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.datasets import make_blobs
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.externals import joblib
+from sklearn.utils import joblib
 
 
 def compute_kernel_slow(Y, X, kernel, h):

@@ -41,11 +41,11 @@ from .base import load_files
 from .base import _pkl_filepath
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
-from ..utils import check_random_state, Bunch
-from ..utils import deprecated
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
-from ..externals import joblib
+from ..utils import joblib
+from ..utils import deprecated
+from ..utils import check_random_state, Bunch
 
 logger = logging.getLogger(__name__)
 

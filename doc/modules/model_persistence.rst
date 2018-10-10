@@ -41,7 +41,7 @@ which is more efficient on objects that carry large numpy arrays internally as
 is often the case for fitted scikit-learn estimators, but can only pickle to the
 disk and not to a string::
 
-  >>> from sklearn.externals import joblib
+  >>> from sklearn.utils import joblib
   >>> joblib.dump(clf, 'filename.joblib') # doctest: +SKIP
 
 Later you can load back the pickled model (possibly in another Python process)

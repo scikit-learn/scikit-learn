@@ -10,18 +10,19 @@ from scipy.sparse import issparse
 import warnings
 
 from .murmurhash import murmurhash3_32
+from .class_weight import compute_class_weight, compute_sample_weight
+from ._joblib import cpu_count, Parallel, Memory, delayed, hash
+from ._joblib import parallel_backend, register_parallel_backend
+from ._joblib import effective_n_jobs, joblib
+from ._joblib import __version__ as joblib_version
+from ..exceptions import DataConversionWarning
+from .fixes import _Sequence as Sequence
+from .deprecation import deprecated
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
                          check_symmetric)
-from .class_weight import compute_class_weight, compute_sample_weight
-from ._joblib import cpu_count, Parallel, Memory, delayed, hash
-from ._joblib import parallel_backend, register_parallel_backend
-from ._joblib import effective_n_jobs, joblib
-from ..exceptions import DataConversionWarning
-from ..utils.fixes import _Sequence as Sequence
-from .deprecation import deprecated
 from .. import get_config
 
 __all__ = ["murmurhash3_32", "as_float_array",
@@ -32,8 +33,8 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_consistent_length", "check_X_y", 'indexable',
            "check_symmetric", "indices_to_mask", "deprecated",
            "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
-           "register_parallel_backend", "hash", "effective_n_jobs",
-           "resample", "shuffle"]
+           "register_parallel_backend", "hash", "effective_n_jobs", "joblib",
+           "joblib_version", "resample", "shuffle"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32

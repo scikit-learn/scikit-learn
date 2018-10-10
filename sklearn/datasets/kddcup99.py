@@ -21,8 +21,9 @@ import numpy as np
 from .base import _fetch_remote
 from .base import get_data_home
 from .base import RemoteFileMetadata
+from ..externals import six
 from ..utils import Bunch
-from ..externals import joblib, six
+from ..utils import joblib
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
 

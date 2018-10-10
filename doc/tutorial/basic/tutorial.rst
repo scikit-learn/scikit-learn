@@ -238,7 +238,7 @@ joblib's replacement for pickle (``joblib.dump`` & ``joblib.load``),
 which is more efficient on big data but it can only pickle to the disk
 and not to a string::
 
-  >>> from sklearn.externals import joblib
+  >>> from sklearn.utils import joblib
   >>> joblib.dump(clf, 'filename.joblib') # doctest: +SKIP
 
 Later, you can reload the pickled model (possibly in another Python process)

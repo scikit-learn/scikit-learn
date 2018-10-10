@@ -22,7 +22,7 @@ from .base import _pkl_filepath
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils.fixes import makedirs
-from ..externals import joblib
+from ..utils import joblib
 from .svmlight_format import load_svmlight_files
 from ..utils import shuffle as shuffle_
 from ..utils import Bunch

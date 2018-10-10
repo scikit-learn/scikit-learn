@@ -20,7 +20,7 @@ from .base import get_data_home, _fetch_remote, RemoteFileMetadata
 from ..utils import deprecated
 from ..utils import Bunch
 from ..utils import Memory
-from ..utils._joblib import __version__ as joblib_version
+from ..utils import joblib_version
 from ..externals.six import b
 
 logger = logging.getLogger(__name__)

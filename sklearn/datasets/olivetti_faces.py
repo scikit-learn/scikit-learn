@@ -24,7 +24,7 @@ from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from .base import _pkl_filepath
 from ..utils import check_random_state, Bunch
-from ..externals import joblib
+from ..utils import joblib
 
 # The original data can be found at:
 # https://cs.nyu.edu/~roweis/data/olivettifaces.mat
