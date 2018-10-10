@@ -52,7 +52,7 @@ References
 ----------
 (1) Finding structure with randomness: Stochastic algorithms for constructing
     approximate matrix decompositions
-    Halko, et al., 2009 http://arxiv.org/abs/arXiv:0909.4061
+    Halko, et al., 2009 https://arxiv.org/abs/0909.4061
 
 (2) A randomized algorithm for the decomposition of matrices
     Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
@@ -106,7 +106,7 @@ enable_spectral_norm = False
 MAX_MEMORY = np.int(2e9)
 
 # The following datasets can be dowloaded manually from:
-# CIFAR 10: http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
+# CIFAR 10: https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
 # SVHN: http://ufldl.stanford.edu/housenumbers/train_32x32.mat
 CIFAR_FOLDER = "./cifar-10-batches-py/"
 SVHN_FOLDER = "./SVHN/"

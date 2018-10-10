@@ -101,7 +101,7 @@ Important links
 ~~~~~~~~~~~~~~~
 
 - Official source code repo: https://github.com/scikit-learn/scikit-learn
-- Download releases: https://pypi.python.org/pypi/scikit-learn
+- Download releases: https://pypi.org/project/scikit-learn/
 - Issue tracker: https://github.com/scikit-learn/scikit-learn/issues
 
 Source code
@@ -167,7 +167,7 @@ Communication
 
 - Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
 - IRC channel: ``#scikit-learn`` at ``webchat.freenode.net``
-- Stack Overflow: http://stackoverflow.com/questions/tagged/scikit-learn
+- Stack Overflow: https://stackoverflow.com/questions/tagged/scikit-learn
 - Website: http://scikit-learn.org
 
 Citation

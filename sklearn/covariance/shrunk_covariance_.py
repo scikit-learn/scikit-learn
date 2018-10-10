@@ -354,6 +354,9 @@ class LedoitWolf(EmpiricalCovariance):
 
     Attributes
     ----------
+    location_ : array-like, shape (n_features,)
+        Estimated location, i.e. the estimated mean.
+
     covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
@@ -364,6 +367,23 @@ class LedoitWolf(EmpiricalCovariance):
     shrinkage_ : float, 0 <= shrinkage <= 1
         Coefficient in the convex combination used for the computation
         of the shrunk estimate.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import LedoitWolf
+    >>> real_cov = np.array([[.4, .2],
+    ...                      [.2, .8]])
+    >>> np.random.seed(0)
+    >>> X = np.random.multivariate_normal(mean=[0, 0],
+    ...                                   cov=real_cov,
+    ...                                   size=50)
+    >>> cov = LedoitWolf().fit(X)
+    >>> cov.covariance_ # doctest: +ELLIPSIS
+    array([[0.4406..., 0.1616...],
+           [0.1616..., 0.8022...]])
+    >>> cov.location_
+    array([ 0.0595... , -0.0075...])
 
     Notes
     -----
