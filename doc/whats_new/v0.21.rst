@@ -51,10 +51,11 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.metrics`
 ......................
 
-- |Feature| Add :func:`metrics.multilabel_confusion_matrix`, which enables
-  the calculation of recall, specificity, fall out and miss rate,
-  and makes :func:`metrics.precision_recall_fscore_support` cleaner.
-  :issue:`11179` by :user:`Shangwu Yao <ShangwuYao>`.
+- |Feature| Add :func:`metrics.multilabel_confusion_matrix`, which calculates a
+  confusion matrix with true positive, false positive, false negative and true
+  negative counts for each class. This facilitates the calculation of set-wise
+  metrics such as recall, specificity, fall out and miss rate.
+  :issue:`11179` by :user:`Shangwu Yao <ShangwuYao>` and `Joel Nothman`_.
 
 Multiple modules
 ................
