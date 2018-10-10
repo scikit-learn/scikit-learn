@@ -411,7 +411,7 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
 
     if y_true.ndim == 1:
         if samplewise:
-            raise ValueError("Samplewise confusion is not useful outside of "
+            raise ValueError("Samplewise metrics are not available outside of "
                              "multilabel classification.")
 
         le = LabelEncoder()
