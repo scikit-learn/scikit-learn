@@ -2366,7 +2366,7 @@ def check_fit_idempotent(name, estimator_orig):
     else:
         y = np.random.randint(low=0, high=2, size=100)
     if est.__class__.__name__.startswith('MultiTask'):
-        y = np.stack([y, y], axis=1)
+        y = np.column_stack([y, y])
 
     X_train, X_test, y_train, _ = train_test_split(X, y)
     # some estimators expect a square matrix
@@ -2406,4 +2406,4 @@ def check_fit_idempotent(name, estimator_orig):
         if sparse.issparse(transform_1):
             transform_1 = transform_1.toarray()
             transform_2 = transform_2.toarray()
-        assert np.allclose(transform_1, transform_2)
+        assert_array_almost_equal(transform_1, transform_2)
