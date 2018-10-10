@@ -135,8 +135,9 @@ Once trained, you can plot the tree with the plot_tree function::
    :align: center
 
 We can also export the tree in `Graphviz
-<http://www.graphviz.org/>`_ format using the :func:`export_graphviz`
-exporter. If you use the `conda <http://conda.io>`_ package manager, the graphviz binaries  
+<https://www.graphviz.org/>`_ format using the :func:`export_graphviz`
+exporter. If you use the `conda <https://conda.io>`_ package manager, the graphviz binaries  
+
 and the python package can be installed with 
 
     conda install python-graphviz
@@ -159,10 +160,10 @@ using explicit variable and class names if desired. Jupyter notebooks also
 render these plots inline automatically::
 
     >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
-                             feature_names=iris.feature_names,  # doctest: +SKIP
-                             class_names=iris.target_names,  # doctest: +SKIP
-                             filled=True, rounded=True,  # doctest: +SKIP
-                             special_characters=True)  # doctest: +SKIP
+    ...                      feature_names=iris.feature_names,  # doctest: +SKIP
+    ...                      class_names=iris.target_names,  # doctest: +SKIP
+    ...                      filled=True, rounded=True,  # doctest: +SKIP
+    ...                      special_characters=True)  # doctest: +SKIP
     >>> graph = graphviz.Source(dot_data)  # doctest: +SKIP
     >>> graph # doctest: +SKIP
 
@@ -463,7 +464,7 @@ Common measures of impurity are Gini
 
     H(X_m) = \sum_k p_{mk} (1 - p_{mk})
 
-Cross-Entropy
+Entropy
 
 .. math::
 
