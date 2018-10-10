@@ -2868,11 +2868,15 @@ def power_transform(X, method='warn', standardize=True, copy=True):
     X : array-like, shape (n_samples, n_features)
         The data to be transformed using a power transformation.
 
-    method : str, (default='warn')
+    method : str
         The power transform method. Available methods are:
 
         - 'yeo-johnson' [1]_, works with positive and negative values
         - 'box-cox' [2]_, only works with strictly positive values
+
+        The default method will be changed from 'box-cox' to 'yeo-johnson'
+        in version 0.23. To suppress the FutureWarning, explicitly set the
+        parameter.
 
     standardize : boolean, default=True
         Set to True to apply zero-mean, unit-variance normalization to the
@@ -2883,8 +2887,8 @@ def power_transform(X, method='warn', standardize=True, copy=True):
 
     Returns
     -------
-        X_trans : array-like, shape (n_samples, n_features)
-            The transformed data.
+    X_trans : array-like, shape (n_samples, n_features)
+        The transformed data.
 
     Examples
     --------
