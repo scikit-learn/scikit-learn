@@ -253,6 +253,12 @@ def test_explained_variance():
     assert_array_almost_equal(pca.explained_variance_ratio_,
                               rpca.explained_variance_ratio_, 1)
 
+    lpca = PCA(n_components=2, svd_solver='lobpcg', random_state=42).fit(X)
+    assert_array_almost_equal(pca.explained_variance_,
+                              rpca.explained_variance_, 1)
+    assert_array_almost_equal(pca.explained_variance_ratio_,
+                              rpca.explained_variance_ratio_, 1)
+
     # compare to empirical variances
     expected_result = np.linalg.eig(np.cov(X, rowvar=False))[0]
     expected_result = sorted(expected_result, reverse=True)[:2]
@@ -274,17 +280,29 @@ def test_explained_variance():
     assert_array_almost_equal(rpca.explained_variance_,
                               expected_result, decimal=1)
 
+    X_lpca = lpca.transform(X)
+    assert_array_almost_equal(lpca.explained_variance_,
+                              np.var(X_lpca, ddof=1, axis=0),
+                              decimal=1)
+    assert_array_almost_equal(lpca.explained_variance_,
+                              expected_result, decimal=1)
+
     # Same with correlated data
     X = datasets.make_classification(n_samples, n_features,
                                      n_informative=n_features-2,
                                      random_state=rng)[0]
 
     pca = PCA(n_components=2).fit(X)
+
     rpca = PCA(n_components=2, svd_solver='randomized',
                random_state=rng).fit(X)
     assert_array_almost_equal(pca.explained_variance_ratio_,
                               rpca.explained_variance_ratio_, 5)
 
+    lpca = PCA(n_components=2, svd_solver='lobpcg',
+               random_state=rng).fit(X)
+    assert_array_almost_equal(pca.explained_variance_ratio_,
+                              lpca.explained_variance_ratio_, 5)
 
 def test_singular_values():
     # Check that the PCA output has the correct singular values
