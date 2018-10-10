@@ -529,6 +529,54 @@ def test_randomized_pca_inverse():
     assert_less(relative_max_delta, 1e-5)
 
 
+def test_lobpcg_pca_check_projection():
+    # Test that the projection by lobpcg PCA on dense data is correct
+    rng = np.random.RandomState(0)
+    n, p = 100, 3
+    X = rng.randn(n, p) * .1
+    X[:10] += np.array([3, 4, 5])
+    Xt = 0.1 * rng.randn(1, p) + np.array([3, 4, 5])
+
+    Yt = PCA(n_components=2, svd_solver='lobpcg',
+             random_state=0).fit(X).transform(Xt)
+    Yt /= np.sqrt((Yt ** 2).sum())
+
+    assert_almost_equal(np.abs(Yt[0][0]), 1., 1)
+
+
+def test_lobpcg_pca_check_list():
+    # Test that the projection by lobpcg PCA on list data is correct
+    X = [[1.0, 0.0], [0.0, 1.0]]
+    X_transformed = PCA(n_components=1, svd_solver='lobpcg',
+                        random_state=0).fit(X).transform(X)
+    assert_equal(X_transformed.shape, (2, 1))
+    assert_almost_equal(X_transformed.mean(), 0.00, 2)
+    assert_almost_equal(X_transformed.std(), 0.71, 2)
+
+
+def test_lobpcg_pca_inverse():
+    # Test that lobpcg PCA is inversible on dense data
+    rng = np.random.RandomState(0)
+    n, p = 50, 3
+    X = rng.randn(n, p)  # spherical data
+    X[:, 1] *= .00001  # make middle component relatively small
+    X += [5, 4, 3]  # make a large mean
+
+    # same check that we can find the original data from the transformed signal
+    # (since the data is almost of rank n_components)
+    pca = PCA(n_components=2, svd_solver='lobpcg', random_state=0).fit(X)
+    Y = pca.transform(X)
+    Y_inverse = pca.inverse_transform(Y)
+    assert_almost_equal(X, Y_inverse, decimal=2)
+
+    # same as above with whitening (approximate reconstruction)
+    pca = PCA(n_components=2, whiten=True, svd_solver='lobpcg',
+              random_state=0).fit(X)
+    Y = pca.transform(X)
+    Y_inverse = pca.inverse_transform(Y)
+    relative_max_delta = (np.abs(X - Y_inverse) / np.abs(X).mean()).max()
+    assert_less(relative_max_delta, 1e-5)
+
 def test_n_components_mle():
     # Ensure that n_components == 'mle' doesn't raise error for auto/full
     # svd_solver and raises error for arpack/randomized svd_solver
