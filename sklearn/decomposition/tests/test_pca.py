@@ -577,6 +577,7 @@ def test_lobpcg_pca_inverse():
     relative_max_delta = (np.abs(X - Y_inverse) / np.abs(X).mean()).max()
     assert_less(relative_max_delta, 1e-5)
 
+
 def test_n_components_mle():
     # Ensure that n_components == 'mle' doesn't raise error for auto/full
     # svd_solver and raises error for arpack/randomized svd_solver
@@ -723,12 +724,10 @@ def test_pca_score3():
 
 def test_pca_score_with_different_solvers():
     digits = datasets.load_digits()
-    # digits.data.shape is (1797, 64): LOBPCG fails
     X_digits = digits.data
 
-    # the PCA default tol=.0 may break lobpcg_svd
     pca_dict = {svd_solver: PCA(n_components=30, svd_solver=svd_solver,
-                                random_state=0, tol=1e-4)
+                                random_state=0)
                 for svd_solver in solver_list}
 
     for pca in pca_dict.values():
