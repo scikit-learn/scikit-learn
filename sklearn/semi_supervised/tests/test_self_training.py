@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns_message
@@ -6,7 +7,6 @@ from sklearn.exceptions import NotFittedError
 
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.dummy import DummyClassifier
-from sklearn.model_selection import ParameterGrid
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
@@ -58,48 +58,47 @@ def test_none_classifier():
                          y_train_missing_labels)
 
 
-def test_invalid_params():
+@pytest.mark.parametrize("max_iter, threshold",
+                         [(-1, 1.0), (-100, -2), (-10, 10)])
+def test_invalid_params(max_iter, threshold):
     # Test negative iterations
-    grid = ParameterGrid({"max_iter": [-1, -100, -10]})
     base_classifier = SVC(gamma="scale", probability=True)
-    for params in grid:
-        st = SelfTrainingClassifier(base_classifier, **params)
-        message = "max_iter must be >= 0 or None, got"
-        assert_raise_message(ValueError, message, st.fit, X_train, y_train)
+    st = SelfTrainingClassifier(base_classifier, max_iter=max_iter)
+    message = "max_iter must be >= 0 or None, got"
+    assert_raise_message(ValueError, message, st.fit, X_train, y_train)
 
-    grid = ParameterGrid({"threshold": [1.0, -2, 10]})
     base_classifier = SVC(gamma="scale", probability=True)
-    for params in grid:
-        st = SelfTrainingClassifier(base_classifier, **params)
-        message = "threshold must be in [0,1)"
-        assert_raise_message(ValueError, message, st.fit, X_train, y_train)
+    st = SelfTrainingClassifier(base_classifier, threshold=threshold)
+    message = "threshold must be in [0,1)"
+    assert_raise_message(ValueError, message, st.fit, X_train, y_train)
 
 
-def test_classification():
+@pytest.mark.parametrize("base_classifier",
+                         [DummyClassifier(random_state=0),
+                          DecisionTreeClassifier(random_state=0),
+                          KNeighborsClassifier(),
+                          SVC(gamma="scale", probability=True,
+                              random_state=0)])
+@pytest.mark.parametrize("max_iter", [1, 50, 100])
+@pytest.mark.parametrize("threshold", [0.0, 0.5, 0.9])
+def test_classification(base_classifier, max_iter, threshold):
     # Check classification for various parameter settings.
     # Also assert that predictions for strings and numerical labels are equal.
     # Also test for multioutput classification
-    grid = ParameterGrid({"max_iter": [1, 50, 100],
-                          "threshold": [0.0, 0.5, 0.9]})
+    st = SelfTrainingClassifier(base_classifier, max_iter=max_iter,
+                                threshold=threshold)
+    st.fit(X_train, y_train_missing_labels)
+    pred = st.predict(X_test)
+    proba = st.predict_proba(X_test)
 
-    for base_classifier in [DummyClassifier(random_state=0),
-                            DecisionTreeClassifier(random_state=0),
-                            KNeighborsClassifier(),
-                            SVC(gamma="scale", probability=True,
-                                random_state=0)]:
-        for params in grid:
-            st = SelfTrainingClassifier(base_classifier, **params)
-            st.fit(X_train, y_train_missing_labels)
-            pred = st.predict(X_test)
-            proba = st.predict_proba(X_test)
+    st_string = SelfTrainingClassifier(base_classifier, max_iter=max_iter,
+                                       threshold=threshold)
+    st_string.fit(X_train, y_train_missing_strings)
+    pred_string = st_string.predict(X_test)
+    proba_string = st_string.predict_proba(X_test)
 
-            st_string = SelfTrainingClassifier(base_classifier, **params)
-            st_string.fit(X_train, y_train_missing_strings)
-            pred_string = st_string.predict(X_test)
-            proba_string = st_string.predict_proba(X_test)
-
-            assert_array_equal(np.vectorize(mapping.get)(pred), pred_string)
-            assert_array_equal(proba, proba_string)
+    assert_array_equal(np.vectorize(mapping.get)(pred), pred_string)
+    assert_array_equal(proba, proba_string)
 
 
 def test_none_iter():
@@ -148,17 +147,17 @@ def test_prefitted_throws_error():
     assert_raise_message(NotFittedError, msg, st.predict, X_train)
 
 
-def test_y_labeled_iter():
+@pytest.mark.parametrize("max_iter", range(1, 5))
+def test_y_labeled_iter(max_iter):
     # Check that the amount of datapoints labeled in iteration 0 is equal to
     # the amount of labeled datapoints we passed.
-    for max_iter in range(1, 5):
-        st = SelfTrainingClassifier(KNeighborsClassifier(), max_iter=max_iter)
-        st.fit(X_train, y_train_missing_labels)
-        amount_iter_0 = len(st.y_labeled_iter_[st.y_labeled_iter_ == 0])
-        assert amount_iter_0 == n_missing_samples
-        # Check that the max of the iterations is less than the total amount of
-        # iterations
-        assert np.max(st.y_labeled_iter_) <= st.n_iter_ <= max_iter
+    st = SelfTrainingClassifier(KNeighborsClassifier(), max_iter=max_iter)
+    st.fit(X_train, y_train_missing_labels)
+    amount_iter_0 = len(st.y_labeled_iter_[st.y_labeled_iter_ == 0])
+    assert amount_iter_0 == n_missing_samples
+    # Check that the max of the iterations is less than the total amount of
+    # iterations
+    assert np.max(st.y_labeled_iter_) <= st.n_iter_ <= max_iter
 
 
 def test_no_unlabeled():
