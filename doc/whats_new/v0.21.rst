@@ -66,7 +66,7 @@ Support for Python 3.4 and below has been officially dropped.
   instead of an `np.where` lookup to find the rank of neighbors in the input
   space. This improves trustworthiness in particular when computed with
   lots of neighbors and/or small datasets.
-  :issue:`9906` by :user:`William de Vazelhes <wdevazelhes>`.
+  :issue:`9907` by :user:`William de Vazelhes <wdevazelhes>`.
 
 Multiple modules
 ................
