@@ -60,6 +60,15 @@ Support for Python 3.4 and below has been officially dropped.
   order for further speed performances. :issue:`12251` by `Tom Dupre la Tour`_.
 
 
+:mod:`sklearn.tree`
+...................
+- |Feature| ``get_n_leaves()`` and ``get_depth()`` have been added to
+  :class:`tree.BaseDecisionTree` and consequently all estimators based
+  on it, including :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
+  and :class:`tree.ExtraTreeRegressor`.
+  :issue:`12300` by :user:`Adrin Jalali <adrinjalali>`.
+
 Multiple modules
 ................
 
