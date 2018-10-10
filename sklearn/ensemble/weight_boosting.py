@@ -40,7 +40,7 @@ from ..utils import (
     check_array,
     check_X_y,
     check_random_state,
-    get_feature_importances
+    _get_feature_importances
 )
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
@@ -260,7 +260,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         try:
             norm = self.estimator_weights_.sum()
             estimator_feature_importances_ = [
-                get_feature_importances(estimator, norm_order)
+                _get_feature_importances(estimator, norm_order)
                 for estimator in self.estimators_]
 
             return (sum(weight * feature_importances_

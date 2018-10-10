@@ -9,7 +9,7 @@ from ..base import BaseEstimator, clone, MetaEstimatorMixin
 from ..externals import six
 
 from ..exceptions import NotFittedError
-from ..utils import get_feature_importances
+from ..utils import _get_feature_importances
 from ..utils.metaestimators import if_delegate_has_method
 
 
@@ -129,7 +129,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
             raise ValueError('Either fit the model before transform or set'
                              ' "prefit=True" while passing the fitted'
                              ' estimator to the constructor.')
-        scores = get_feature_importances(estimator, self.norm_order)
+        scores = _get_feature_importances(estimator, self.norm_order)
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         if self.max_features is not None:
             mask = np.zeros_like(scores, dtype=bool)
@@ -178,7 +178,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
 
     @property
     def threshold_(self):
-        scores = get_feature_importances(self.estimator_, self.norm_order)
+        scores = _get_feature_importances(self.estimator_, self.norm_order)
         return _calculate_threshold(self.estimator, scores, self.threshold)
 
     @if_delegate_has_method('estimator')

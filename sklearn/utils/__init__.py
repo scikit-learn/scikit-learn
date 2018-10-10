@@ -601,7 +601,7 @@ def is_scalar_nan(x):
     return bool(isinstance(x, (numbers.Real, np.floating)) and np.isnan(x))
 
 
-def get_feature_importances(estimator, norm_order=1):
+def _get_feature_importances(estimator, norm_order=1):
     """Retrieve or aggregate feature importances from estimator.
 
     Parameters
