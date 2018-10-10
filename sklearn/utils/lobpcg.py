@@ -22,6 +22,7 @@ def save(ar, fileName):
     # Used only when verbosity level > 10.
     np.savetxt(fileName, ar, precision=8)
 
+
 def _report_nonhermitian(M, a, b, name):
     """
     Report if `M` is not a hermitian matrix given the tolerances `a`, `b`.
@@ -36,6 +37,7 @@ def _report_nonhermitian(M, a, b, name):
         print('matrix %s is not enough Hermitian for a=%d, b=%d:'
               % (name, a, b))
         print('condition: %.e < %e' % (nmd, tol))
+
 
 def as2d(ar):
     """
@@ -101,6 +103,7 @@ def _b_orthonormalize(B, blockVectorV, blockVectorBV=None, retInvR=False):
     else:
         return blockVectorV, blockVectorBV
 
+
 def _get_indx(_lambda, num, largest):
     """Get `num` indices into `_lambda` depending on `largest` option."""
     ii = np.argsort(_lambda)
@@ -110,6 +113,7 @@ def _get_indx(_lambda, num, largest):
         ii = ii[:num]
 
     return ii
+
 
 def lobpcg(A, X,
            B=None, M=None, Y=None,
