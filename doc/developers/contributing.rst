@@ -517,6 +517,10 @@ Finally, follow the formatting rules below to make it consistently good:
 
     * For "References" in docstrings, see the Silhouette Coefficient
       (:func:`sklearn.metrics.silhouette_score`).
+    * For specifying parameter default values and including a minimal
+      working example in the "Examples" section see the LinearSVC
+      (:class:`sklearn.svm.LinearSVC`)
+
 
 Generated documentation on CircleCI
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
