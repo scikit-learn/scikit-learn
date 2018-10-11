@@ -1530,6 +1530,12 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     else:
         labels = np.asarray(labels)
 
+    # labelled micro average
+    label_micro_average = False
+    if y_type.startswith('multiclass') and \
+       (not labels_given or (len(labels) == len(target_names))):
+        label_micro_average = True
+
     if target_names is not None and len(labels) != len(target_names):
         if labels_given:
             warnings.warn(
@@ -1577,8 +1583,12 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     # compute all applicable averages
     for average in average_options:
-        line_heading = average + ' avg'
-        # compute averages with specified averaging method
+        if average.startswith('micro') and label_micro_average:
+            line_heading = average + ' avg (accuracy)'
+        else:
+            line_heading = average + 'avg'
+
+            # compute averages with specified averaging method
         avg_p, avg_r, avg_f1, _ = precision_recall_fscore_support(
             y_true, y_pred, labels=labels,
             average=average, sample_weight=sample_weight)
