@@ -85,11 +85,11 @@ boolean mask array or callable
         estimator must support `fit` and `transform`.
 
     sparse_threshold : float, default = 0.3
-        If the transformed output contains sparse matrices, it will be stacked
-        as a sparse matrix if the density is lower than this value. Use
-        ``sparse_threshold=0`` to always return dense.  When the transformed
-        output consists of all dense data, the stacked result will be dense,
-        and this keyword will be ignored.
+        If the output of the different transfromers contains sparse matrices,
+        these will be stacked as a sparse matrix if the overall density is
+        lower than this value. Use ``sparse_threshold=0`` to always return
+        dense.  When the transformed output consists of all dense data, the
+        stacked result will be dense, and this keyword will be ignored.
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
