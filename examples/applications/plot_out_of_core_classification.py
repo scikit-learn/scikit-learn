@@ -385,8 +385,11 @@ def autolabel(rectangles):
         ax.text(rect.get_x() + rect.get_width() / 2.,
                 1.05 * height, '%.4f' % height,
                 ha='center', va='bottom')
+        plt.setp(plt.xticks()[1], rotation=30)
+
 
 autolabel(rectangles)
+plt.tight_layout()
 plt.show()
 
 # Plot prediction times
@@ -412,4 +415,5 @@ ax.set_ylim((0, ymax))
 ax.set_ylabel('runtime (s)')
 ax.set_title('Prediction Times (%d instances)' % n_test_documents)
 autolabel(rectangles)
+plt.tight_layout()
 plt.show()
