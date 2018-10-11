@@ -55,13 +55,14 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.neighbors`
 ......................
 
-- |Fix| Fixed a bug in :class:`sklearn.neighbors` calling functions
-  :func:`NearestNeighbors.kneighbors`,
-  :func:`NearestNeighbors.radius_neighbors`,
-  :func:`NearestNeighbors.kneighbors_graph`,
-  :func:`NearestNeighbors.radius_neighbors_graph`
-  without first fitting should raise `NotFittedError`.
-  :issue:`12279` by :user:`Krishna Sangeeth <whiletruelearn>`.
+- |Fix| Fixed a bug in :class:`neighbors.NearestNeighbors` calling functions
+  :func:`kneighbors <neighbors.NearestNeighbors.kneighbors>`,
+  :func:`radius_neighbors <neighbors.NearestNeighbors.radius_neighbors>`,
+  :func:`kneighbors_graph <neighbors.NearestNeighbors.kneighbors_graph>`, and
+  :func:`radius_neighbors_graph
+  <neighbors.NearestNeighbors.radius_neighbors_graph>` without first fitting
+  should raise ``NotFittedError``. :issue:`12279` by :user:`Krishna Sangeeth
+  <whiletruelearn>`.
 
 Multiple modules
 ................
