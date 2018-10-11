@@ -137,16 +137,6 @@ def lobpcg(A, X,
         n-by-sizeY matrix of constraints, sizeY < n
         The iterations will be performed in the B-orthogonal complement
         of the column-space of Y. Y must be full rank.
-
-    Returns
-    -------
-    w : array
-        Array of k eigenvalues
-    v : array
-        An array of k eigenvectors.  V has the same shape as X.
-
-    Other Parameters
-    ----------------
     tol : scalar, optional
         Solver tolerance (stopping criterion)
         by default: tol=n*sqrt(eps)
@@ -161,6 +151,17 @@ def lobpcg(A, X,
         whether to return eigenvalue history
     retResidualNormsHistory : boolean, optional
         whether to return history of residual norms
+
+    Returns
+    -------
+    w : array
+        Array of k eigenvalues
+    v : array
+        An array of k eigenvectors.  V has the same shape as X.
+    lambdas : list of arrays, optional
+        The eigenvalue history, if `retLambdaHistory` is True.
+    rnorms : list of arrays, optional
+        The history of residual norms, if `retResidualNormsHistory` is True.
 
     Examples
     --------
