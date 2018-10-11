@@ -69,6 +69,15 @@ Support for Python 3.4 and below has been officially dropped.
   and :class:`tree.ExtraTreeRegressor`.
   :issue:`12300` by :user:`Adrin Jalali <adrinjalali>`.
 
+- |Fix| Fixed an issue with :class:`tree.BaseDecisionTree`
+  and consequently all estimators based
+  on it, including :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
+  and :class:`tree.ExtraTreeRegressor`, where they used to exceed the given
+  ``max_depth`` by 1 while expanding the tree if ``max_leaf_nodes`` and
+  ``max_depth`` were both specified by the user.
+
+
 Multiple modules
 ................
 
