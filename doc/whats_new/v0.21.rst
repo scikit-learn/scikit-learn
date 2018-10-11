@@ -76,6 +76,16 @@ Support for Python 3.4 and below has been officially dropped.
   and :class:`tree.ExtraTreeRegressor`, where they used to exceed the given
   ``max_depth`` by 1 while expanding the tree if ``max_leaf_nodes`` and
   ``max_depth`` were both specified by the user.
+  :pr:`12344` by :user:`Adrin Jalali <adrinjalali>`.
+
+
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| Added the :func:`metrics.max_error` metric and a corresponding
+  ``'max_error'`` scorer for single output regression.
+  :issue:`12232` by :user:`Krishna Sangeeth <whiletruelearn>`.
+
 
 
 Multiple modules
