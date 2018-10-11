@@ -1588,7 +1588,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         else:
             line_heading = average + 'avg'
 
-            # compute averages with specified averaging method
+        # compute averages with specified averaging method
         avg_p, avg_r, avg_f1, _ = precision_recall_fscore_support(
             y_true, y_pred, labels=labels,
             average=average, sample_weight=sample_weight)
