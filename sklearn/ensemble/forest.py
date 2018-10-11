@@ -2018,7 +2018,3 @@ class RandomTreesEmbedding(BaseForest):
             Transformed dataset.
         """
         return self.one_hot_encoder_.transform(self.apply(X))
-
-    def _more_tags(self):
-        # FIXME see https://github.com/scikit-learn/scikit-learn/issues/1229
-        return {'_skip_test': True}
