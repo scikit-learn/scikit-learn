@@ -73,7 +73,7 @@ color_map = {-1: (1, 1, 1), 0: (0, 0, .9), 1: (1, 0, 0), 2: (.8, .6, 0)}
 for i, (clf, y_train) in enumerate((ls30, ls50, ls100, st30, st50, rbf_svc)):
     # Plot the decision boundary. For that, we will assign a color to each
     # point in the mesh [x_min, x_max]x[y_min, y_max].
-    plt.subplot(2, 3, i + 1)
+    plt.subplot(3, 2, i + 1)
     Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 
     # Put the result into a color plot
