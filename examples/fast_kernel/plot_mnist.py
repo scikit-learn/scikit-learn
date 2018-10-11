@@ -1,17 +1,15 @@
 """
 ============================================================
-Comparison of Fast Kernel (Eigenpro) and Support Vector(SVM)
+Comparison of Fast Kernel Machine (EigenPro) and SVC, part 1
 ============================================================
-Both Fast Kernel (FK) and Support Vector Machines (SVM) are supervised learning
-kernel regression algorithms that operate using Stochastic Gradient Descent(SGD).
-SVM's paramaters provide more control over regularization. Another difference
-between the two is that, while SVR uses hinge-loss as it's error function, FKR
-uses square loss.
-
-The following example shows the running time of Fast Kernel as compared to
-Support Vector Machines in recognizing images of numbers (mnist). As can be seen,
-Fast Kernel runs about 100 times faster than Support Vector on the largest
-60,000 sample data set. However, on smaller datasets, this difference is less defined.
+Here we train a Fast Kernel Machine (EigenPro) and a Support Vector Classifier (SVC)
+on subsets of MNIST of various sizes. Note that we halt the training of EigenPro
+in two epochs.
+We then repeat the same experiments on subsets of MNIST with added label noises.
+Specifically, we randomly reset the label (0-9) of 20% samples.
+Experimental results on the original MNIST
+demonstrate great advantages of EigenPro over SVC in training time.
+For MNIST with added label noise, EigenPro shows even larger gain over SVC.
 """
 print(__doc__)
 
@@ -24,7 +22,7 @@ from time import time
 
 rng = np.random.RandomState(1)
 # Generate sample data from mnist
-mnist = fetch_mldata('MNIST original', data_home="skmnist")
+mnist = fetch_mldata('MNIST original')
 mnist.data = mnist.data / 255.
 
 p = np.random.permutation(60000)
@@ -47,7 +45,7 @@ svc_fit_times = []
 svc_pred_times = []
 svc_err = []
 
-train_sizes = [500, 1000, 2000]#, 5000, 10000, 60000]
+train_sizes = [500, 1000, 2000]
 # Fit models to data
 for train_size in train_sizes:
     for name, estimator in [("FastKernel", FastKernelClassification(n_epoch=2, bandwidth=5,random_state=rng)),

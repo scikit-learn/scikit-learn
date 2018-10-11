@@ -1,18 +1,15 @@
 """
-=============================================================
-Comparison of Fast Kernel (Eigenpro) and Support Vector(SVM)2
-=============================================================
+============================================================
+Comparison of Fast Kernel Machine (Eigenpro) and SVC, part 2
+============================================================
 
-Both Fast Kernel (FK) and Support Vector Machines (SVM) are supervised learning
-kernel regression algorithms that operate using Stochastic Gradient Descent(SGD).
-SVM's paramaters provide more control over regularization. Another difference
-between the two is that, while SVR uses hinge-loss as it's error function, FKR
-uses square loss.
-
-The next example demonstrates both methods on a binary classification problem
-with many features described mostly by a few vectors. Fast Kernel is quite
-effective in cases like these, which come about in most real world applications.
-Again, Fast Kernel demonstrates asymptotically superior speed without loss of accuracy.
+Here we train a Fast Kernel Machine (EigenPro) and a Support Vector Classifier (SVC)
+on subsets of a synthetic dataset.
+Features of this dataset are sampled from two independent Gaussian distributions.
+Note that we halt the training for EigenPro in two epochs.
+Experimental results
+demonstrate that EigenPro achieves high test accuracy, competitive to that of SVC,
+while completes training in significant less time.
 """
 print(__doc__)
 
@@ -46,14 +43,13 @@ svc_fit_times = []
 svc_pred_times = []
 svc_err = []
 
-train_sizes = [5000, 10000, 20000]  # , 40000, 80000]
+train_sizes = [5000, 10000, 20000]
 
 # Fit models to data
 for train_size in train_sizes:
     for name, estimator in [("FastKernel", FastKernelClassification(n_epoch=2, bandwidth=10,
                                                                     random_state=1)),
-                            ("SupportVector", SVC(C=1, gamma=1 / (2 * 10 * 10), random_state=1))]:
-        # ("KernelRidge", KernelRidge(alpha=.001, kernel='rbf',gamma=1/(2*5*5)))]:
+                            ("SupportVector", SVC(C=1, gamma=1. / (2 * 10 * 10), random_state=1))]:
         stime = time()
         estimator.fit(x_train[:train_size], y_train[:train_size])
         fit_t = time() - stime
@@ -64,7 +60,6 @@ for train_size in train_sizes:
 
         err = 100. * np.sum(y_pred_test != y_test) / len(y_test)
         print("Test Error: " + str(err))
-        # print("Train Error: " + str(100. * np.sum(estimator.predict(x_train) != y_train) / len(y_train)))
         if name == "FastKernel":
             fkc_fit_times.append(fit_t)
             fkc_pred_times.append(pred_t)

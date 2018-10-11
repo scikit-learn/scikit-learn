@@ -1,47 +1,55 @@
 .. _fast_kernel:
 
-=================================================================
-Fast Kernel Machines for Regression and Classification (EigenPro)
-=================================================================
+================================================================
+Fast Kernel Machine (EigenPro) for Regression and Classification
+================================================================
 
+.. currentmodule:: sklearn.fast_kernel
 
-Fast Kernel is a very efficient implementation of kernel regression using preconditioned
-Stochastic Gradient Descent (SGD). This is an implementation of "ridgeless" kernel
-regression. Regularization, when necessary, can be obtained by early stopping.
+Fast Kernel Machine is a very efficient implementation of kernel regression/classification
+using *EigenPro iteration* [MB17]_,
+an optimization method based on preconditioned stochastic gradient descent.
+It essentially implements a "ridgeless" kernel regression.
+Regularization, when necessary, can be achieved by early stopping.
 
 Optimization parameters, such as step size, batch size, and the size of the preconditioning
 block are chosen automatically and optimally. (They can also be set up manually.)
 This results in a simple and user-friendly interface.
 
-The following example shows the running time of Fast Kernel as compared to Support Vector Machines in recognizing
-images of numbers (mnist). As can be seen, Fast Kernel runs about 100 times faster than Support Vector on the largest
-60,000 sample data set. However, on smaller datasets, this difference is less defined.
+The figure below compares the Fast Kernel Classifier (EigenPro) and the Support Vector Classifier (:class:`SVC`) 
+on MNIST digits classification task.
+We see that EigenPro and SVC give competitive and similar accuracy on test set.
+Notably, on the full MNIST training and testing using EigenPro are
+approximately 100 times faster than that using SVC.
 
-.. figure:: ../images/fast_kernel_mnist_accuracy.png
+.. |mnist_acc| image:: ../images/fast_kernel_mnist_accuracy.png
     :target: ../auto_examples/fast_kernel/plot_mnist.html
-    :align: center
-    :scale: 50 %
+    :scale: 50
 
-.. figure:: ../images/fast_kernel_mnist_time.png
+.. |mnist_time| image:: ../images/fast_kernel_mnist_time.png
     :target: ../auto_examples/fast_kernel/plot_mnist.html
-    :align: center
-    :scale: 50%
+    :scale: 50
 
-The next example demonstrates both methods on a binary classification problem with many features described mostly
-by a few vectors. Fast Kernel is quite effective in cases like these, which come about in most real world applications.
-Again, Fast Kernel demonstrates asymptotically superior speed without loss of accuracy.
+.. centered:: |mnist_acc| |mnist_time|
 
-.. figure:: ../images/fast_kernel_classification_times.png
+
+The next figure compares EigenPro and SVC on a binary classification problem with synthetic features.
+Again, EigenPro demonstrates nearly 100 times acceleration on training and testing without loss of accuracy.
+
+.. |synth_acc| image:: ../images/fast_kernel_classification_accuracy.png
     :target: ../auto_examples/fast_kernel/plot_classification.html
-    :align: center
-    :scale: 90%
+    :scale: 50
 
-.. figure:: ../images/fast_kernel_classification_accuracy.png
+.. |synth_time| image:: ../images/fast_kernel_classification_times.png
     :target: ../auto_examples/fast_kernel/plot_classification.html
-    :align: center
-    :scale: 50%
+    :scale: 50
+
+.. centered:: |synth_acc| |synth_time|
 
 
 .. topic:: References:
 
-    .. [BMM18] Mikhail Belkin, Siyuan Ma, and Soumik Mandal. To understand deep learning we need to understand kernel learning. arXiv preprint arXiv:1802.01396, 2018.
+    .. [MB17] Siyuan Ma and Mikhail Belkin,
+       `"Diving into the shallows: a computational perspective on large-scale shallow learning"
+       <https://arxiv.org/abs/1703.10622>`_,
+       Advances in Neural Information Processing Systems, 2017.
