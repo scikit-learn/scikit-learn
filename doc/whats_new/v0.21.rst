@@ -18,6 +18,10 @@ occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
 - please add class and reason here (see version 0.20 what's new)
+- :class:`tree.DecisionTreeClassifier` (bug fix)
+- :class:`tree.DecisionTreeRegressor` (bug fix)
+- :class:`tree.ExtraTreeClassifier` (bug fix)
+- :class:`tree.ExtraTreeRegressor` (bug fix)
 
 Details are listed in the changelog below.
 
