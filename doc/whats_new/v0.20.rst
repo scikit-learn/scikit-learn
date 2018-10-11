@@ -71,6 +71,15 @@ Changelog
   avoid pickling errors caused by the serialization of their methods.
   :issue:`12171` by :user:`Thomas Moreau <tomMoral>`.
 
+:mod:`sklearn.preprocessing`
+........................
+
+- |API| The default value of the :code:`method` argument in
+  :func:`preprocessing.power_transform` will be changed from :code:`box-cox`
+  to :code:`yeo-johnson` to match :class:`preprocessing.PowerTransformer`
+  in version 0.23. A FutureWarning is raised when the default value is used.
+  :issue:`12317` by :user:`Eric Chang <chang>`.
+
 .. _changes_0_20:
 
 Version 0.20.0
