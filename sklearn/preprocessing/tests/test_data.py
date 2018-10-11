@@ -240,6 +240,8 @@ def test_standard_scaler_dtype():
         scaler = StandardScaler()
         X_scaled = scaler.fit(X).transform(X, copy=True)
         assert_equal(X.dtype, X_scaled.dtype)
+        assert_equal(scaler.mean_.dtype, np.float64)
+        assert_equal(scaler.scale_.dtype, np.float64)
 
 
 def test_scale_1d():
