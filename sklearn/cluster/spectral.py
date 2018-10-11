@@ -80,6 +80,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
         Determines random number generation for rotation matrix initialization.
         Use an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
+
     Returns
     -------
     labels : array of integers, shape: n_samples
