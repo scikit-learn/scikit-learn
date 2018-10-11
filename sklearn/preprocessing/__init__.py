@@ -22,24 +22,29 @@ from .data import maxabs_scale
 from .data import minmax_scale
 from .data import quantile_transform
 from .data import power_transform
-from .data import OneHotEncoder
 from .data import PowerTransformer
-from .data import CategoricalEncoder
 from .data import PolynomialFeatures
+
+from ._encoders import OneHotEncoder
+from ._encoders import OrdinalEncoder
 
 from .label import label_binarize
 from .label import LabelBinarizer
 from .label import LabelEncoder
 from .label import MultiLabelBinarizer
 
-from ._target import TransformedTargetRegressor
+from ._discretization import KBinsDiscretizer
+
 from .imputation import Imputer
 
+# stub, remove in version 0.21
+from .data import CategoricalEncoder  # noqa
 
 __all__ = [
     'Binarizer',
     'FunctionTransformer',
     'Imputer',
+    'KBinsDiscretizer',
     'KernelCenterer',
     'LabelBinarizer',
     'LabelEncoder',
@@ -49,11 +54,10 @@ __all__ = [
     'QuantileTransformer',
     'Normalizer',
     'OneHotEncoder',
-    'CategoricalEncoder',
+    'OrdinalEncoder',
     'PowerTransformer',
     'RobustScaler',
     'StandardScaler',
-    'TransformedTargetRegressor',
     'add_dummy_feature',
     'PolynomialFeatures',
     'binarize',

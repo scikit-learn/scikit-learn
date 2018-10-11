@@ -34,12 +34,25 @@ def norm(x):
     """Dot product-based Euclidean norm implementation
 
     See: http://fseoane.net/blog/2011/computing-the-vector-norm/
+
+    Parameters
+    ----------
+    x : array-like
+        Vector for which to compute the norm
     """
     return sqrt(squared_norm(x))
 
 
 def trace_dot(X, Y):
-    """Trace of np.dot(X, Y.T)."""
+    """Trace of np.dot(X, Y.T).
+
+    Parameters
+    ----------
+    X : array-like
+        First matrix
+    Y : array-like
+        Second matrix
+    """
     return np.dot(X.ravel(), Y.ravel())
 
 
@@ -467,7 +480,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
 
     References
     ----------
-    Cichocki, Andrzej, and P. H. A. N. Anh-Huy. "Fast local algorithms for
+    Cichocki, Andrzej, and Phan, Anh-Huy. "Fast local algorithms for
     large scale nonnegative matrix and tensor factorizations."
     IEICE transactions on fundamentals of electronics, communications and
     computer sciences 92.3: 708-721, 2009.
@@ -867,7 +880,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     init :  None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
-        Default: 'nndsvd' if n_components < n_features, otherwise random.
+        Default: 'random'.
         Valid options:
 
         - 'random': non-negative random matrices, scaled with:
@@ -891,7 +904,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     solver : 'cd' | 'mu'
         Numerical solver to use:
-        'cd' is a Coordinate Descent solver.
+        'cd' is a Coordinate Descent solver that uses Fast Hierarchical
+            Alternating Least Squares (Fast HALS).
         'mu' is a Multiplicative Update solver.
 
         .. versionadded:: 0.17
@@ -1004,7 +1018,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         # 'mu' solver should not be initialized by zeros
         if solver == 'mu':
             avg = np.sqrt(X.mean() / n_components)
-            W = avg * np.ones((n_samples, n_components))
+            W = np.full((n_samples, n_components), avg)
         else:
             W = np.zeros((n_samples, n_components))
     else:

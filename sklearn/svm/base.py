@@ -14,7 +14,7 @@ from ..utils import check_array, check_consistent_length, check_random_state
 from ..utils import column_or_1d, check_X_y
 from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_large_sparse
 from ..utils.multiclass import check_classification_targets
 from ..externals import six
 from ..exceptions import ConvergenceWarning
@@ -144,7 +144,9 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
 
-        X, y = check_X_y(X, y, dtype=np.float64, order='C', accept_sparse='csr')
+        X, y = check_X_y(X, y, dtype=np.float64,
+                         order='C', accept_sparse='csr',
+                         accept_large_sparse=False)
         y = self._validate_targets(y)
 
         sample_weight = np.asarray([]
@@ -168,7 +170,32 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                              "boolean masks (use `indices=True` in CV)."
                              % (sample_weight.shape, X.shape))
 
-        if self.gamma == 'auto':
+        if self.gamma in ('scale', 'auto_deprecated'):
+            if sparse:
+                # std = sqrt(E[X^2] - E[X]^2)
+                X_std = np.sqrt((X.multiply(X)).mean() - (X.mean())**2)
+            else:
+                X_std = X.std()
+            if self.gamma == 'scale':
+                if X_std != 0:
+                    self._gamma = 1.0 / (X.shape[1] * X_std)
+                else:
+                    self._gamma = 1.0
+            else:
+                kernel_uses_gamma = (not callable(self.kernel) and self.kernel
+                                     not in ('linear', 'precomputed'))
+                if kernel_uses_gamma and not np.isclose(X_std, 1.0):
+                    # NOTE: when deprecation ends we need to remove explicitly
+                    # setting `gamma` in examples (also in tests). See
+                    # https://github.com/scikit-learn/scikit-learn/pull/10331
+                    # for the examples/tests that need to be reverted.
+                    warnings.warn("The default value of gamma will change "
+                                  "from 'auto' to 'scale' in version 0.22 to "
+                                  "account better for unscaled features. Set "
+                                  "gamma explicitly to 'auto' or 'scale' to "
+                                  "avoid this warning.", FutureWarning)
+                self._gamma = 1.0 / X.shape[1]
+        elif self.gamma == 'auto':
             self._gamma = 1.0 / X.shape[1]
         else:
             self._gamma = self.gamma
@@ -188,7 +215,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.shape_fit_ = X.shape
 
         # In binary case, we need to flip the sign of coef, intercept and
-        # decision function. Use self._intercept_ and self._dual_coef_ internally.
+        # decision function. Use self._intercept_ and self._dual_coef_
+        # internally.
         self._intercept_ = self.intercept_.copy()
         self._dual_coef_ = self.dual_coef_
         if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
@@ -302,7 +330,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         n_samples, n_features = X.shape
         X = self._compute_kernel(X)
         if X.ndim == 1:
-            X = check_array(X, order='C')
+            X = check_array(X, order='C', accept_large_sparse=False)
 
         kernel = self.kernel
         if callable(self.kernel):
@@ -386,7 +414,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return dec_func
 
     def _dense_decision_function(self, X):
-        X = check_array(X, dtype=np.float64, order="C")
+        X = check_array(X, dtype=np.float64, order="C",
+                        accept_large_sparse=False)
 
         kernel = self.kernel
         if callable(kernel):
@@ -425,7 +454,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     def _validate_for_predict(self, X):
         check_is_fitted(self, 'support_')
 
-        X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C")
+        X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C",
+                        accept_large_sparse=False)
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
         if self._sparse:
@@ -741,7 +771,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
                    random_state=None, multi_class='ovr',
                    loss='logistic_regression', epsilon=0.1,
                    sample_weight=None):
-    """Used by Logistic Regression (and CV) and LinearSVC.
+    """Used by Logistic Regression (and CV) and LinearSVC/LinearSVR.
 
     Preprocessing is done in this function before supplying it to liblinear.
 
@@ -864,8 +894,13 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     libsvm_sparse.set_verbosity_wrap(verbose)
     liblinear.set_verbosity_wrap(verbose)
 
+    # Liblinear doesn't support 64bit sparse matrix indices yet
+    if sp.issparse(X):
+        _check_large_sparse(X)
+
     # LibLinear wants targets as doubles, even for classification
     y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
+    y_ind = np.require(y_ind, requirements="W")
     if sample_weight is None:
         sample_weight = np.ones(X.shape[0])
     else:
@@ -882,7 +917,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     # on 32-bit platforms, we can't get to the UINT_MAX limit that
     # srand supports
     n_iter_ = max(n_iter_)
-    if n_iter_ >= max_iter and verbose > 0:
+    if n_iter_ >= max_iter:
         warnings.warn("Liblinear failed to converge, increase "
                       "the number of iterations.", ConvergenceWarning)
 

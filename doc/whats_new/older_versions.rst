@@ -1273,7 +1273,7 @@ Examples
 
 - new examples using some of the mlcomp datasets:
   ``sphx_glr_auto_examples_mlcomp_sparse_document_classification.py`` (since removed) and
-  :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+  :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
 - Many more examples. `See here
   <http://scikit-learn.org/stable/auto_examples/index.html>`_

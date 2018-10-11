@@ -182,10 +182,11 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         or 'cube'.
         You can also provide your own function. It should return a tuple
         containing the value of the function, and of its derivative, in the
-        point. Example:
+        point. The derivative should be averaged along its last dimension.
+        Example:
 
         def my_g(x):
-            return x ** 3, 3 * x ** 2
+            return x ** 3, np.mean(3 * x ** 2, axis=-1)
 
     fun_args : dictionary, optional
         Arguments to send to the functional form.
@@ -442,6 +443,17 @@ class FastICA(BaseEstimator, TransformerMixin):
         maximum number of iterations run across all components. Else
         they are just the number of iterations taken to converge.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import FastICA
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = FastICA(n_components=7,
+    ...         random_state=0)
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> X_transformed.shape
+    (1797, 7)
+
     Notes
     -----
     Implementation based on
@@ -454,6 +466,9 @@ class FastICA(BaseEstimator, TransformerMixin):
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
                  w_init=None, random_state=None):
         super(FastICA, self).__init__()
+        if max_iter < 1:
+            raise ValueError("max_iter should be greater than 1, got "
+                             "(max_iter={})".format(max_iter))
         self.n_components = n_components
         self.algorithm = algorithm
         self.whiten = whiten
