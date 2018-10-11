@@ -1,7 +1,7 @@
 """
-=====================================================================
+===============================================================================
 Decision boundary of semi-supervised classifiers versus SVM on the Iris dataset
-=====================================================================
+===============================================================================
 
 Comparison for the decision boundary generated on the iris dataset
 between Label Propagation, Self-training and SVM.
