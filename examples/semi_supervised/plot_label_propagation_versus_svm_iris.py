@@ -1,15 +1,15 @@
 """
 =====================================================================
-Decision boundary of label propagation versus SVM on the Iris dataset
+Decision boundary of semi-supervised classifiers versus SVM on the Iris dataset
 =====================================================================
 
-Comparison for decision boundary generated on iris dataset
-between Label Propagation and SVM.
+Comparison for the decision boundary generated on the iris dataset
+between Label Propagation, Self-training and SVM.
 
-This demonstrates Label Propagation learning a good boundary
+This demonstrates Label Propagation and Self-training learning good boundaries
 even with a small amount of labeled data.
 
-Note that SelfTraining with 100% of the data is ommitted as it is functionally
+Note that Self-training with 100% of the data is omitted as it is functionally
 identical to training the SVC on 100% of the data.
 
 """
@@ -42,17 +42,20 @@ y_50[rng.rand(len(y)) < 0.5] = -1
 # we create an instance of SVM and fit out data. We do not scale our
 # data since we want to plot the support vectors
 ls30 = (label_propagation.LabelSpreading().fit(X, y_30),
-        y_30)
+        y_30, 'Label Spreading 30% data')
 ls50 = (label_propagation.LabelSpreading().fit(X, y_50),
-        y_50)
-ls100 = (label_propagation.LabelSpreading().fit(X, y), y)
+        y_50, 'Label Spreading 50% data')
+ls100 = (label_propagation.LabelSpreading().fit(X, y),
+         y, 'Label Spreading 100% data')
 
 # the base classifier for self-training is identical to the SVC
 base_classifier = svm.SVC(kernel='rbf', gamma=.5, probability=True)
-st30 = (SelfTrainingClassifier(base_classifier).fit(X, y_30), y_30)
-st50 = (SelfTrainingClassifier(base_classifier).fit(X, y_50), y_50)
+st30 = (SelfTrainingClassifier(base_classifier).fit(X, y_30),
+        y_30, 'Self-training 30% data')
+st50 = (SelfTrainingClassifier(base_classifier).fit(X, y_50),
+        y_50, 'Self-training 50% data')
 
-rbf_svc = (svm.SVC(kernel='rbf', gamma=.5).fit(X, y), y)
+rbf_svc = (svm.SVC(kernel='rbf', gamma=.5).fit(X, y), y, 'SVC with rbf kernel')
 
 # create a mesh to plot in
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
@@ -60,17 +63,10 @@ y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
                      np.arange(y_min, y_max, h))
 
-# title for the plots
-titles = ['Label Spreading 30% data',
-          'Label Spreading 50% data',
-          'Label Spreading 100% data',
-          'Self-training 30% data',
-          'Self-training 50% data',
-          'SVC with rbf kernel']
-
 color_map = {-1: (1, 1, 1), 0: (0, 0, .9), 1: (1, 0, 0), 2: (.8, .6, 0)}
 
-for i, (clf, y_train) in enumerate((ls30, ls50, ls100, st30, st50, rbf_svc)):
+classifiers = (ls30, st30, ls50, st50, ls100, rbf_svc)
+for i, (clf, y_train, title) in enumerate(classifiers):
     # Plot the decision boundary. For that, we will assign a color to each
     # point in the mesh [x_min, x_max]x[y_min, y_max].
     plt.subplot(3, 2, i + 1)
@@ -85,7 +81,7 @@ for i, (clf, y_train) in enumerate((ls30, ls50, ls100, st30, st50, rbf_svc)):
     colors = [color_map[y] for y in y_train]
     plt.scatter(X[:, 0], X[:, 1], c=colors, edgecolors='black')
 
-    plt.title(titles[i])
+    plt.title(title)
 
 plt.suptitle("Unlabeled points are colored white", y=0.1)
 plt.show()
