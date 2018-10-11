@@ -1536,7 +1536,7 @@ function::
 Max error
 -------------------
 
-The :func:`max_error` function computes the  maximum `residual error
+The :func:`max_error` function computes the maximum `residual error
 <https://en.wikipedia.org/wiki/Errors_and_residuals>`_ , a metric
 that captures the worst case error between the predicted value and
 the true value. In a perfectly fitted single output regression

@@ -57,7 +57,8 @@ Support for Python 3.4 and below has been officially dropped.
 ......................
 
 - |Feature| A new regression metric: :class:`metrics.max_error`: a
-  metric that captures the max residual error.
+  metric that captures the maximum residual error and a corresponding
+  ``'max_error'`` scorer for single output regression .
   :issue:`12232` by :user:`Krishna Sangeeth <whiletruelearn>`.
 
 
