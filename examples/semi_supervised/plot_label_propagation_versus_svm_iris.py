@@ -9,6 +9,9 @@ between Label Propagation and SVM.
 This demonstrates Label Propagation learning a good boundary
 even with a small amount of labeled data.
 
+Note that SelfTraining with 100% of the data is ommitted as it is functionally
+identical to training the SVC on 100% of the data.
+
 """
 print(__doc__)
 
@@ -20,6 +23,7 @@ import matplotlib.pyplot as plt
 from sklearn import datasets
 from sklearn import svm
 from sklearn.semi_supervised import label_propagation
+from sklearn.semi_supervised import SelfTrainingClassifier
 
 rng = np.random.RandomState(0)
 
@@ -42,6 +46,12 @@ ls30 = (label_propagation.LabelSpreading().fit(X, y_30),
 ls50 = (label_propagation.LabelSpreading().fit(X, y_50),
         y_50)
 ls100 = (label_propagation.LabelSpreading().fit(X, y), y)
+
+# the base classifier for self-training is identical to the SVC
+base_classifier = svm.SVC(kernel='rbf', gamma=.5, probability=True)
+st30 = (SelfTrainingClassifier(base_classifier).fit(X, y_30), y_30)
+st50 = (SelfTrainingClassifier(base_classifier).fit(X, y_50), y_50)
+
 rbf_svc = (svm.SVC(kernel='rbf', gamma=.5).fit(X, y), y)
 
 # create a mesh to plot in
@@ -54,14 +64,16 @@ xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
 titles = ['Label Spreading 30% data',
           'Label Spreading 50% data',
           'Label Spreading 100% data',
+          'Self-training 30% data',
+          'Self-training 50% data',
           'SVC with rbf kernel']
 
 color_map = {-1: (1, 1, 1), 0: (0, 0, .9), 1: (1, 0, 0), 2: (.8, .6, 0)}
 
-for i, (clf, y_train) in enumerate((ls30, ls50, ls100, rbf_svc)):
+for i, (clf, y_train) in enumerate((ls30, ls50, ls100, st30, st50, rbf_svc)):
     # Plot the decision boundary. For that, we will assign a color to each
     # point in the mesh [x_min, x_max]x[y_min, y_max].
-    plt.subplot(2, 2, i + 1)
+    plt.subplot(2, 3, i + 1)
     Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 
     # Put the result into a color plot
