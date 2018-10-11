@@ -146,16 +146,23 @@ def test_leave_zero_eig():
     X_fit = np.array([[1, 1], [0, 0]])
 
     # Assert that even with all np warnings on, there is no div by zero warning
-    with np.errstate(all='warn'):
-        k = KernelPCA(n_components=2, remove_zero_eig=False,
-                      eigen_solver="dense")
-        # Fit, then transform
-        A = assert_no_warnings(assert_no_warnings(k.fit, X_fit)
-                               .transform, X_fit)
-        # Do both at once
-        B = assert_no_warnings(k.fit_transform, X_fit)
-        # Compare
-        assert_array_almost_equal(np.abs(A), np.abs(B))
+    with pytest.warns(None) as record:
+        with np.errstate(all='warn'):
+            k = KernelPCA(n_components=2, remove_zero_eig=False,
+                          eigen_solver="dense")
+            # Fit, then transform
+            A = k.fit(X_fit).transform(X_fit)
+            # Do both at once
+            B = k.fit_transform(X_fit)
+            # Compare
+            assert_array_almost_equal(np.abs(A), np.abs(B))
+
+    for w in record:
+        # There might be warnings about the kernel being badly conditioned,
+        # but there should not be warnings about division by zero.
+        # (Numpy division by zero warning can have many message variants, but
+        # at least we know that it is a RuntimeWarning so lets check only this)
+        assert w.category is not RuntimeWarning
 
 
 def test_kernel_pca_precomputed():
