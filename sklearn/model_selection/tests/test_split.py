@@ -49,7 +49,6 @@ from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.linear_model import Ridge
 
 from sklearn.model_selection._split import _validate_shuffle_split
-from sklearn.model_selection._split import _CVIterableWrapper
 from sklearn.model_selection._split import _build_repr
 from sklearn.model_selection._split import CV_WARNING
 from sklearn.model_selection._split import NSPLIT_WARNING

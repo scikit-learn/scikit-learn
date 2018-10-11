@@ -66,19 +66,6 @@ def test_predict_proba():
                                   np.array([[0.5, 0.5]]))
 
 
-def test_alpha_deprecation():
-    X, y = make_classification(n_samples=100)
-    y[::3] = -1
-
-    lp_default = label_propagation.LabelPropagation(kernel='rbf', gamma=0.1)
-    lp_default_y = lp_default.fit(X, y).transduction_
-
-    lp_0 = label_propagation.LabelPropagation(alpha=0, kernel='rbf', gamma=0.1)
-    lp_0_y = assert_warns(DeprecationWarning, lp_0.fit, X, y).transduction_
-
-    assert_array_equal(lp_default_y, lp_0_y)
-
-
 def test_label_spreading_closed_form():
     n_classes = 2
     X, y = make_classification(n_classes=n_classes, n_samples=200,

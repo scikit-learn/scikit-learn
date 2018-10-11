@@ -6,7 +6,6 @@
 from __future__ import division
 
 import warnings
-import re
 import itertools
 
 import numpy as np
