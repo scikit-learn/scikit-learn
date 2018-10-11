@@ -56,7 +56,7 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.metrics`
 ......................
 
-- |Feature| Added the :func:`metrics.max_error` and a corresponding
+- |Feature| Added the :func:`metrics.max_error` metric and a corresponding
   ``'max_error'`` scorer for single output regression.
   :issue:`12232` by :user:`Krishna Sangeeth <whiletruelearn>`.
 
