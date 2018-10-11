@@ -3,7 +3,6 @@ import warnings
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.testing import assert_allclose_dense_sparse
-from ..externals.six import string_types
 
 
 def _identity(X):
