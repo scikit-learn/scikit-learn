@@ -238,10 +238,10 @@ def test_standard_scaler_dtype():
     for dtype in [np.float16, np.float32, np.float64]:
         X = rng.randn(n_samples, n_features).astype(dtype)
         scaler = StandardScaler()
-        X_scaled = scaler.fit(X).transform(X, copy=True)
-        assert_equal(X.dtype, X_scaled.dtype)
-        assert_equal(scaler.mean_.dtype, np.float64)
-        assert_equal(scaler.scale_.dtype, np.float64)
+        X_scaled = scaler.fit(X).transform(X)
+        assert X.dtype == X_scaled.dtype
+        assert scaler.mean_.dtype == np.float64
+        assert scaler.scale_.dtype == np.float64
 
 
 def test_scale_1d():
