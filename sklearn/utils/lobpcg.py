@@ -18,7 +18,7 @@ from scipy.sparse.linalg import aslinearoperator, LinearOperator
 __all__ = ['lobpcg']
 
 
-def save(ar, fileName):
+def _save(ar, fileName):
     # Used only when verbosity level > 10.
     np.savetxt(fileName, ar, precision=8)
 
@@ -39,7 +39,7 @@ def _report_nonhermitian(M, a, b, name):
         print('condition: %.e < %e' % (nmd, tol))
 
 
-def as2d(ar):
+def _as2d(ar):
     """
     If the input array is 2D return it, if it is 1D, append a dimension,
     making it a column vector.
@@ -423,12 +423,12 @@ def lobpcg(A, X,
         if verbosityLevel > 10:
             print(eigBlockVector)
 
-        activeBlockVectorR = as2d(blockVectorR[:, activeMask])
+        activeBlockVectorR = _as2d(blockVectorR[:, activeMask])
 
         if iterationNumber > 0:
-            activeBlockVectorP = as2d(blockVectorP[:, activeMask])
-            activeBlockVectorAP = as2d(blockVectorAP[:, activeMask])
-            activeBlockVectorBP = as2d(blockVectorBP[:, activeMask])
+            activeBlockVectorP = _as2d(blockVectorP[:, activeMask])
+            activeBlockVectorAP = _as2d(blockVectorAP[:, activeMask])
+            activeBlockVectorBP = _as2d(blockVectorBP[:, activeMask])
 
         if M is not None:
             # Apply preconditioner T to the active residuals.
@@ -487,8 +487,8 @@ def lobpcg(A, X,
             _report_nonhermitian(gramB, 3, -1, 'gramB')
 
         if verbosityLevel > 10:
-            save(gramA, 'gramA')
-            save(gramB, 'gramB')
+            _save(gramA, 'gramA')
+            _save(gramB, 'gramB')
 
         # Solve the generalized eigenvalue problem.
         _lambda, eigBlockVector = eigh(gramA, gramB, check_finite=False)
