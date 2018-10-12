@@ -32,7 +32,7 @@ def _report_nonhermitian(M, a, b, name):
     md = M - M.T.conj()
 
     nmd = norm(md, 1)
-    tol = max(np.spacing(10**a), (10**b)*norm(M, 1))
+    tol = np.spacing(max(10**a, (10**b)*norm(M, 1)))
     if nmd > tol:
         print('matrix %s is not enough Hermitian for a=%d, b=%d:'
               % (name, a, b))
