@@ -541,7 +541,7 @@ def test_ordinal_encoder(X):
      np.array([['a', 'd']], dtype=object).T,
      [np.array(['a', 'b', 'c'])], np.object_),
     ], ids=['object', 'numeric', 'object-string-cat'])
-def test_one_hot_encoder_specified_categories(X, X2, cats, cat_dtype):
+def test_ordinal_encoder_specified_categories(X, X2, cats, cat_dtype):
     enc = OrdinalEncoder(categories=cats)
     exp = np.array([[0.], [1.]])
     assert_array_equal(enc.fit_transform(X), exp)
