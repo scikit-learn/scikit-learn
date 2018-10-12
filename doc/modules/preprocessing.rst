@@ -554,6 +554,10 @@ features into discrete values. Certain datasets with continuous features
 may benefit from discretization, because discretization can transform the dataset
 of continuous attributes to one with only nominal attributes.
 
+One-hot encoded discretized features can make a model more expressive, while
+maintaining interpretability. For instance, pre-processing with a discretizer
+can introduce nonlinearity to linear models.
+
 K-bins discretization
 ---------------------
 

@@ -55,11 +55,13 @@ from .pairwise import pairwise_kernels
 from .pairwise import pairwise_distances_chunked
 
 from .regression import explained_variance_score
+from .regression import max_error
 from .regression import mean_absolute_error
 from .regression import mean_squared_error
 from .regression import mean_squared_log_error
 from .regression import median_absolute_error
 from .regression import r2_score
+
 
 from .scorer import check_scoring
 from .scorer import make_scorer
@@ -99,6 +101,7 @@ __all__ = [
     'log_loss',
     'make_scorer',
     'matthews_corrcoef',
+    'max_error',
     'mean_absolute_error',
     'mean_squared_error',
     'mean_squared_log_error',

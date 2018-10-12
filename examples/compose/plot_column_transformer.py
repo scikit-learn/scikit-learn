@@ -89,7 +89,7 @@ pipeline = Pipeline([
     # Extract the subject & body
     ('subjectbody', SubjectBodyExtractor()),
 
-    # Use C toolumnTransformer to combine the features from subject and body
+    # Use ColumnTransformer to combine the features from subject and body
     ('union', ColumnTransformer(
         [
             # Pulling features from the post's subject line (first column)

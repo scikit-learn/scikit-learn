@@ -21,7 +21,7 @@ from sklearn.cluster.bicluster import _scale_normalize
 from sklearn.cluster.bicluster import _bistochastic_normalize
 from sklearn.cluster.bicluster import _log_normalize
 
-from sklearn.metrics import consensus_score
+from sklearn.metrics import (consensus_score, v_measure_score)
 
 from sklearn.datasets import make_biclusters, make_checkerboard
 
@@ -204,10 +204,11 @@ def test_project_and_cluster():
     for mat in (data, csr_matrix(data)):
         labels = model._project_and_cluster(data, vectors,
                                             n_clusters=2)
-        assert_array_equal(labels, [0, 0, 1, 1])
+        assert_almost_equal(v_measure_score(labels, [0, 0, 1, 1]), 1.0)
 
 
 def test_perfect_checkerboard():
+    # XXX test always skipped
     raise SkipTest("This test is failing on the buildbot, but cannot"
                    " reproduce. Temporarily disabling it until it can be"
                    " reproduced and  fixed.")

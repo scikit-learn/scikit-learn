@@ -11,6 +11,7 @@ from abc import ABCMeta, abstractmethod
 
 from ..utils import Parallel, delayed
 
+from ..base import clone, is_classifier
 from .base import LinearClassifierMixin, SparseCoefMixin
 from .base import make_dataset
 from ..base import BaseEstimator, RegressorMixin
@@ -20,7 +21,7 @@ from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 from ..externals import six
-from ..model_selection import train_test_split
+from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
 from .sgd_fast import plain_sgd, average_sgd
 from ..utils import compute_class_weight
@@ -41,6 +42,26 @@ PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 
 DEFAULT_EPSILON = 0.1
 # Default value of ``epsilon`` parameter.
+
+
+class _ValidationScoreCallback(object):
+    """Callback for early stopping based on validation score"""
+
+    def __init__(self, estimator, X_val, y_val, sample_weight_val,
+                 classes=None):
+        self.estimator = clone(estimator)
+        self.estimator.t_ = 1  # to pass check_is_fitted
+        if classes is not None:
+            self.estimator.classes_ = classes
+        self.X_val = X_val
+        self.y_val = y_val
+        self.sample_weight_val = sample_weight_val
+
+    def __call__(self, coef, intercept):
+        est = self.estimator
+        est.coef_ = coef.reshape(1, -1)
+        est.intercept_ = np.atleast_1d(intercept)
+        return est.score(self.X_val, self.y_val, self.sample_weight_val)
 
 
 class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
@@ -248,71 +269,52 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                                                dtype=np.float64,
                                                order="C")
 
-    def _make_validation_split(self, X, y, sample_weight):
+    def _make_validation_split(self, y):
         """Split the dataset between training set and validation set.
 
         Parameters
         ----------
-        X : {array, sparse matrix}, shape (n_samples, n_features)
-            Training data.
-
         y : array, shape (n_samples, )
             Target values.
-
-        sample_weight : array, shape (n_samples, )
-            Weights applied to individual samples.
 
         Returns
         -------
         validation_mask : array, shape (n_samples, )
             Equal to 1 on the validation set, 0 on the training set.
         """
-        n_samples = X.shape[0]
+        n_samples = y.shape[0]
         validation_mask = np.zeros(n_samples, dtype=np.uint8)
         if not self.early_stopping:
             # use the full set for training, with an empty validation set
             return validation_mask
 
-        tmp = train_test_split(X, y, np.arange(n_samples), sample_weight,
-                               test_size=self.validation_fraction,
-                               random_state=self.random_state)
-        X_train, X_val, y_train, y_val = tmp[:4]
-        idx_train, idx_val, sample_weight_train, sample_weight_val = tmp[4:8]
-        if X_train.shape[0] == 0 or X_val.shape[0] == 0:
+        if is_classifier(self):
+            splitter_type = StratifiedShuffleSplit
+        else:
+            splitter_type = ShuffleSplit
+        cv = splitter_type(test_size=self.validation_fraction,
+                           random_state=self.random_state)
+        idx_train, idx_val = next(cv.split(np.zeros(shape=(y.shape[0], 1)), y))
+        if idx_train.shape[0] == 0 or idx_val.shape[0] == 0:
             raise ValueError(
                 "Splitting %d samples into a train set and a validation set "
                 "with validation_fraction=%r led to an empty set (%d and %d "
                 "samples). Please either change validation_fraction, increase "
                 "number of samples, or disable early_stopping."
-                % (n_samples, self.validation_fraction, X_train.shape[0],
-                   X_val.shape[0]))
+                % (n_samples, self.validation_fraction, idx_train.shape[0],
+                   idx_val.shape[0]))
 
-        self._X_val = X_val
-        self._y_val = y_val
-        self._sample_weight_val = sample_weight_val
         validation_mask[idx_val] = 1
         return validation_mask
 
-    def _delete_validation_split(self):
-        if self.early_stopping:
-            del self._X_val
-            del self._y_val
-            del self._sample_weight_val
+    def _make_validation_score_cb(self, validation_mask, X, y, sample_weight,
+                                  classes=None):
+        if not self.early_stopping:
+            return None
 
-    def _validation_score(self, coef, intercept):
-        """Compute the score on the validation set. Used for early stopping."""
-        # store attributes
-        old_coefs, old_intercept = self.coef_, self.intercept_
-
-        # replace them with current coefficients for scoring
-        self.coef_ = coef.reshape(1, -1)
-        self.intercept_ = np.atleast_1d(intercept)
-        score = self.score(self._X_val, self._y_val, self._sample_weight_val)
-
-        # restore old attributes
-        self.coef_, self.intercept_ = old_coefs, old_intercept
-
-        return score
+        return _ValidationScoreCallback(
+            self, X[validation_mask], y[validation_mask],
+            sample_weight[validation_mask], classes=classes)
 
 
 def _prepare_fit_binary(est, y, i):
@@ -348,7 +350,7 @@ def _prepare_fit_binary(est, y, i):
 
 
 def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
-               pos_weight, neg_weight, sample_weight):
+               pos_weight, neg_weight, sample_weight, validation_mask=None):
     """Fit a single binary classifier.
 
     The i'th class is considered the "positive" class.
@@ -388,6 +390,10 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
 
     sample_weight : numpy array of shape [n_samples, ]
         The weight of each sample
+
+    validation_mask : numpy array of shape [n_samples, ] or None
+        Precomputed validation mask in case _fit_binary is called in the
+        context of a one-vs-rest reduction.
     """
     # if average is not true, average_coef, and average_intercept will be
     # unused
@@ -399,7 +405,11 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     penalty_type = est._get_penalty_type(est.penalty)
     learning_rate_type = est._get_learning_rate_type(learning_rate)
 
-    validation_mask = est._make_validation_split(X, y, sample_weight)
+    if validation_mask is None:
+        validation_mask = est._make_validation_split(y_i)
+    classes = np.array([-1, 1], dtype=y_i.dtype)
+    validation_score_cb = est._make_validation_score_cb(
+        validation_mask, X, y_i, sample_weight, classes=classes)
 
     # XXX should have random_state_!
     random_state = check_random_state(est.random_state)
@@ -412,8 +422,8 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     if not est.average:
         result = plain_sgd(coef, intercept, est.loss_function_,
                            penalty_type, alpha, C, est.l1_ratio,
-                           dataset, validation_mask, est.early_stopping, est,
-                           int(est.n_iter_no_change),
+                           dataset, validation_mask, est.early_stopping,
+                           validation_score_cb, int(est.n_iter_no_change),
                            max_iter, tol, int(est.fit_intercept),
                            int(est.verbose), int(est.shuffle), seed,
                            pos_weight, neg_weight,
@@ -426,8 +436,8 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
                                   average_intercept, est.loss_function_,
                                   penalty_type, alpha, C, est.l1_ratio,
                                   dataset, validation_mask, est.early_stopping,
-                                  est, int(est.n_iter_no_change),
-                                  max_iter, tol,
+                                  validation_score_cb,
+                                  int(est.n_iter_no_change), max_iter, tol,
                                   int(est.fit_intercept), int(est.verbose),
                                   int(est.shuffle), seed, pos_weight,
                                   neg_weight, learning_rate_type, est.eta0,
@@ -441,7 +451,6 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
 
         result = standard_coef, standard_intercept, n_iter_
 
-    est._delete_validation_split()
     return result
 
 
@@ -610,14 +619,19 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         """Fit a multi-class classifier by combining binary classifiers
 
         Each binary classifier predicts one class versus all others. This
-        strategy is called OVA: One Versus All.
+        strategy is called OvA (One versus All) or OvR (One versus Rest).
         """
+        # Precompute the validation split using the multiclass labels
+        # to ensure proper balancing of the classes.
+        validation_mask = self._make_validation_split(y)
+
         # Use joblib to fit OvA in parallel.
         result = Parallel(n_jobs=self.n_jobs, prefer="threads",
                           verbose=self.verbose)(
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
                                 max_iter, self._expanded_class_weight[i],
-                                1., sample_weight)
+                                1., sample_weight,
+                                validation_mask=validation_mask)
             for i in range(len(self.classes_)))
 
         # take the maximum of n_iter_ over every binary fit
@@ -845,7 +859,7 @@ class SGDClassifier(BaseSGDClassifier):
         The exponent for inverse scaling learning rate [default 0.5].
 
     early_stopping : bool, default=False
-        Whether to use early stopping to terminate training when validation.
+        Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
         a fraction of training data as validation and terminate training when
         validation score is not improving by at least tol for
@@ -1115,8 +1129,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
         if getattr(self, "coef_", None) is None:
-            self._allocate_parameter_mem(1, n_features,
-                                         coef_init, intercept_init)
+            self._allocate_parameter_mem(1, n_features, coef_init,
+                                         intercept_init)
         elif n_features != self.coef_.shape[-1]:
             raise ValueError("Number of features %d does not match previous "
                              "data %d." % (n_features, self.coef_.shape[-1]))
@@ -1124,9 +1138,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             self.average_coef_ = np.zeros(n_features,
                                           dtype=np.float64,
                                           order="C")
-            self.average_intercept_ = np.zeros(1,
-                                               dtype=np.float64,
-                                               order="C")
+            self.average_intercept_ = np.zeros(1, dtype=np.float64, order="C")
 
         self._fit_regressor(X, y, alpha, C, loss, learning_rate,
                             sample_weight, max_iter)
@@ -1269,7 +1281,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         if not hasattr(self, "t_"):
             self.t_ = 1.0
 
-        validation_mask = self._make_validation_split(X, y, sample_weight)
+        validation_mask = self._make_validation_split(y)
+        validation_score_cb = self._make_validation_score_cb(
+            validation_mask, X, y, sample_weight)
 
         random_state = check_random_state(self.random_state)
         # numpy mtrand expects a C long which is a signed 32 bit integer under
@@ -1290,7 +1304,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                             alpha, C,
                             self.l1_ratio,
                             dataset,
-                            validation_mask, self.early_stopping, self,
+                            validation_mask, self.early_stopping,
+                            validation_score_cb,
                             int(self.n_iter_no_change),
                             max_iter, tol,
                             int(self.fit_intercept),
@@ -1322,7 +1337,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                           alpha, C,
                           self.l1_ratio,
                           dataset,
-                          validation_mask, self.early_stopping, self,
+                          validation_mask, self.early_stopping,
+                          validation_score_cb,
                           int(self.n_iter_no_change),
                           max_iter, tol,
                           int(self.fit_intercept),
@@ -1336,8 +1352,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
             self.t_ += self.n_iter_ * X.shape[0]
             self.intercept_ = np.atleast_1d(self.intercept_)
-
-        self._delete_validation_split()
 
 
 class SGDRegressor(BaseSGDRegressor):
@@ -1454,7 +1468,7 @@ class SGDRegressor(BaseSGDRegressor):
         The exponent for inverse scaling learning rate [default 0.5].
 
     early_stopping : bool, default=False
-        Whether to use early stopping to terminate training when validation.
+        Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
         a fraction of training data as validation and terminate training when
         validation score is not improving by at least tol for

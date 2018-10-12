@@ -137,7 +137,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     --------
     >>> from sklearn.linear_model import PassiveAggressiveClassifier
     >>> from sklearn.datasets import make_classification
-    >>>
+
     >>> X, y = make_classification(n_features=4, random_state=0)
     >>> clf = PassiveAggressiveClassifier(max_iter=1000, random_state=0)
     >>> clf.fit(X, y)
@@ -375,7 +375,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     --------
     >>> from sklearn.linear_model import PassiveAggressiveRegressor
     >>> from sklearn.datasets import make_regression
-    >>>
+
     >>> X, y = make_regression(n_features=4, random_state=0)
     >>> regr = PassiveAggressiveRegressor(max_iter=100, random_state=0)
     >>> regr.fit(X, y)

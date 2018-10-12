@@ -31,6 +31,7 @@ from ..externals.six import string_types
 
 
 __ALL__ = [
+    "max_error",
     "mean_absolute_error",
     "mean_squared_error",
     "mean_squared_log_error",
@@ -573,3 +574,37 @@ def r2_score(y_true, y_pred, sample_weight=None,
         avg_weights = multioutput
 
     return np.average(output_scores, weights=avg_weights)
+
+
+def max_error(y_true, y_pred):
+    """
+    max_error metric calculates the maximum residual error.
+
+    Read more in the :ref:`User Guide <max_error>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape = (n_samples)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape = (n_samples)
+        Estimated target values.
+
+    Returns
+    -------
+    max_error : float
+        A positive floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import max_error
+    >>> y_true = [3, 2, 7, 1]
+    >>> y_pred = [4, 2, 7, 1]
+    >>> max_error(y_true, y_pred)
+    1
+    """
+    y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None)
+    check_consistent_length(y_true, y_pred)
+    if y_type == 'continuous-multioutput':
+        raise ValueError("Multioutput not supported in max_error")
+    return np.max(np.abs(y_true - y_pred))

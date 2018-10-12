@@ -70,11 +70,6 @@ from sklearn.datasets import fetch_openml
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \
     import RBF, WhiteKernel, RationalQuadratic, ExpSineSquared
-try:
-    from urllib.request import urlopen
-except ImportError:
-    # Python 2
-    from urllib2 import urlopen
 
 print(__doc__)
 

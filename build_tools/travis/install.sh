@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script is meant to be called by the "install" step defined in
-# .travis.yml. See http://docs.travis-ci.com/ for more details.
+# .travis.yml. See https://docs.travis-ci.com/ for more details.
 # The behavior of the script is controlled by environment variabled defined
 # in the .travis.yml in the top level folder of the project.
 
@@ -84,11 +84,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
-    # FIXME: Importing scipy.sparse with numpy 1.8.2 and scipy 0.13.3 produces
-    # a deprecation warning and the test suite fails on such warnings.
-    # To test these numpy/scipy versions, we use pytest<3.8 as it has
-    # a known limitation/bug of not capturing warnings during test collection.
-    pip install pytest==3.7.4 pytest-cov cython==$CYTHON_VERSION
+    pip install pytest pytest-cov cython==$CYTHON_VERSION
 
 elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     make_conda python=3.7
