@@ -4,9 +4,9 @@ Decision boundary of semi-supervised classifiers versus SVM on the Iris dataset
 ===============================================================================
 
 A comparison for the decision boundaries generated on the iris dataset
-by Label Propagation, Self-training and SVM.
+by Label Spreading, Self-training and SVM.
 
-This example demonstrates that Label Propagation and Self-training can learn
+This example demonstrates that Label Spreading and Self-training can learn
 good boundaries even when small amounts of labeled data are available.
 
 Note that Self-training with 100% of the data is omitted as it is functionally
