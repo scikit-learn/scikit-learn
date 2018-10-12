@@ -1491,21 +1491,18 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
               ...
             }
 
-        The reported averages include micro average (averaging the
-        total true positives, false negatives and false positives), macro
-        average (averaging the unweighted mean per label), weighted average
-        (averaging the support-weighted mean per label) and sample average
-        (only for multilabel classification). See also
-        :func:`precision_recall_fscore_support` for more details on averages.
+        The reported averages include macro average (averaging the unweighted
+        mean per label), weighted average (averaging the support-weighted mean
+        per label), sample average (only for multilabel classification) and
+        micro average (averaging the total true positives, false negatives and
+        false positives) it is only shown for multi-label or multi-class
+        with a subset of classes because it is accuracy otherwise.
+        See also:func:`precision_recall_fscore_support` for more details
+        on averages
 
         Note that in binary classification, recall of the positive class
         is also known as "sensitivity"; recall of the negative class is
         "specificity".
-
-        Show micro-average for multi-class classification is confusing,
-        because  for precision, recall and f1-score always be the same
-        value, all of wich being the same accuracy. So in the report,
-        the micro-average is ignored.
 
     Examples
     --------
@@ -1520,10 +1517,25 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
          class 1       0.00      0.00      0.00         1
          class 2       1.00      0.67      0.80         3
     <BLANKLINE>
-       micro avg       0.60      0.60      0.60         5
        macro avg       0.50      0.56      0.49         5
     weighted avg       0.70      0.60      0.61         5
     <BLANKLINE>
+    >>> y_true = [1, 1, 1, 1]
+    >>> y_pred = [1, 1, 0, 0]
+    >>> print(classification_report(y_true, y_pred, labels=[1, 2, 3]))
+                  precision    recall  f1-score   support
+    <BLANKLINE>
+               0       1.00      1.00      1.00         1
+               1       1.00      1.00      1.00         1
+               2       0.00      0.00      0.00         1
+               3       0.00      0.00      0.00         1
+    <BLANKLINE>
+       micro avg       1.00      0.50      0.67         4
+       macro avg       0.50      0.50      0.50         4
+    weighted avg       0.50      0.50      0.50         4
+     samples avg       1.00      0.50      0.67         4
+
+
     """
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
@@ -1591,7 +1603,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
             continue
             # line_heading = average + ' avg (accuracy)'
         else:
-            line_heading = average + 'avg'
+            line_heading = average + ' avg'
 
         # compute averages with specified averaging method
         avg_p, avg_r, avg_f1, _ = precision_recall_fscore_support(
