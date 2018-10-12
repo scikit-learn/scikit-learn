@@ -14,6 +14,7 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_squared_log_error
 from sklearn.metrics import median_absolute_error
+from sklearn.metrics import max_error
 from sklearn.metrics import r2_score
 
 from sklearn.metrics.regression import _check_reg_targets
@@ -29,6 +30,7 @@ def test_regression_metrics(n_samples=50):
                                            np.log(1 + y_pred)))
     assert_almost_equal(mean_absolute_error(y_true, y_pred), 1.)
     assert_almost_equal(median_absolute_error(y_true, y_pred), 1.)
+    assert_almost_equal(max_error(y_true, y_pred), 1.)
     assert_almost_equal(r2_score(y_true, y_pred),  0.995, 2)
     assert_almost_equal(explained_variance_score(y_true, y_pred), 1.)
 
@@ -59,6 +61,7 @@ def test_regression_metrics_at_limits():
     assert_almost_equal(mean_squared_log_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(mean_absolute_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(median_absolute_error([0.], [0.]), 0.00, 2)
+    assert_almost_equal(max_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(explained_variance_score([0.], [0.]), 1.00, 2)
     assert_almost_equal(r2_score([0., 1], [0., 1]), 1.00, 2)
     assert_raises_regex(ValueError, "Mean Squared Logarithmic Error cannot be "
