@@ -26,10 +26,10 @@ normally distributed which is the case with, for example, estimates of the mean
 and regression coefficients. Other parameters, such as correlation
 coefficients need transformation to suit the assumption of normality.
 If it is not possible to approximate a normal distribution, it is better to use
-robust summary measures such as medians or ranges instead of using Rubin’s
+robust summary measures such as medians or ranges instead of using Rubin's
 pooling rules. This applies to an estimate like explained variance.
 
-In sum, Rubin’s pooling rules are as follows. The overall point estimate after
+In sum, Rubin's pooling rules are as follows. The overall point estimate after
 multiple imputation (denoted by Qbar) is the average of all the m point
 estimates. The variance of the overall point estimate is a combination of
 so-called within imputation variance (Ubar) and between imputation
