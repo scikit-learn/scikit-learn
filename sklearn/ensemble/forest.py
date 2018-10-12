@@ -41,8 +41,7 @@ Single and multi-output problems are both handled.
 
 from __future__ import division
 
-import warnings
-from warnings import warn
+from warnings import catch_warnings, simplefilter, warn
 import threading
 
 from abc import ABCMeta, abstractmethod
@@ -112,8 +111,8 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         curr_sample_weight *= sample_counts
 
         if class_weight == 'subsample':
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', DeprecationWarning)
+            with catch_warnings():
+                simplefilter('ignore', DeprecationWarning)
                 curr_sample_weight *= compute_sample_weight('auto', y, indices)
         elif class_weight == 'balanced_subsample':
             curr_sample_weight *= compute_sample_weight('balanced', y, indices)
@@ -244,7 +243,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """
 
         if self.n_estimators == 'warn':
-            warnings.warn("The default value of n_estimators will change from "
+            warn("The default value of n_estimators will change from "
                           "10 in version 0.20 to 100 in 0.22.", FutureWarning)
             self.n_estimators = 10
 
@@ -259,7 +258,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
             X.sort_indices()
 
         # Remap output
-        n_samples, self.n_features_ = X.shape
+        self.n_features_ = X.shape[1]
 
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
@@ -948,7 +947,7 @@ class RandomForestClassifier(ForestClassifier):
     --------
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.datasets import make_classification
-    >>>
+
     >>> X, y = make_classification(n_samples=1000, n_features=4,
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
@@ -1200,7 +1199,7 @@ class RandomForestRegressor(ForestRegressor):
     --------
     >>> from sklearn.ensemble import RandomForestRegressor
     >>> from sklearn.datasets import make_regression
-    >>>
+
     >>> X, y = make_regression(n_features=4, n_informative=2,
     ...                        random_state=0, shuffle=False)
     >>> regr = RandomForestRegressor(max_depth=2, random_state=0,
@@ -1897,6 +1896,9 @@ class RandomTreesEmbedding(BaseForest):
 
     """
 
+    criterion = 'mse'
+    max_features = 1
+
     def __init__(self,
                  n_estimators='warn',
                  max_depth=5,
@@ -1926,12 +1928,10 @@ class RandomTreesEmbedding(BaseForest):
             verbose=verbose,
             warm_start=warm_start)
 
-        self.criterion = 'mse'
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
-        self.max_features = 1
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split

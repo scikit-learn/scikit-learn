@@ -8,7 +8,7 @@ Compare the effect of different scalers on data with outliers
 
 Feature 0 (median income in a block) and feature 5 (number of households) of
 the `California housing dataset
-<http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.html>`_ have very
+<https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.html>`_ have very
 different scales and contain some very large outliers. These two
 characteristics lead to difficulties to visualize the data and, more
 importantly, they can degrade the predictive performance of many machine

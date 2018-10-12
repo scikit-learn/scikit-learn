@@ -393,7 +393,7 @@ class OneHotEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_feature]
+        X : array-like, shape [n_samples, n_features]
             The data to determine the categories of each feature.
 
         Returns
@@ -421,7 +421,11 @@ class OneHotEncoder(_BaseEncoder):
         dtype = getattr(X, 'dtype', None)
         X = check_array(X, dtype=np.int)
         if np.any(X < 0):
-            raise ValueError("X needs to contain only non-negative integers.")
+            raise ValueError("OneHotEncoder in legacy mode cannot handle "
+                             "categories encoded as negative integers. "
+                             "Please set categories='auto' explicitly to "
+                             "be able to use arbitrary integer values as "
+                             "category identifiers.")
         n_samples, n_features = X.shape
         if (isinstance(self.n_values, six.string_types) and
                 self.n_values == 'auto'):
@@ -474,13 +478,17 @@ class OneHotEncoder(_BaseEncoder):
     def fit_transform(self, X, y=None):
         """Fit OneHotEncoder to X, then transform X.
 
-        Equivalent to self.fit(X).transform(X), but more convenient and more
-        efficient. See fit for the parameters, transform for the return value.
+        Equivalent to fit(X).transform(X) but more convenient.
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_feature]
-            Input array of type int.
+        X : array-like, shape [n_samples, n_features]
+            The data to encode.
+
+        Returns
+        -------
+        X_out : sparse matrix if sparse=True else a 2-d array
+            Transformed input.
         """
         if self.handle_unknown not in ('error', 'ignore'):
             msg = ("handle_unknown should be either 'error' or 'ignore', "
@@ -500,7 +508,11 @@ class OneHotEncoder(_BaseEncoder):
         """Assumes X contains only categorical features."""
         X = check_array(X, dtype=np.int)
         if np.any(X < 0):
-            raise ValueError("X needs to contain only non-negative integers.")
+            raise ValueError("OneHotEncoder in legacy mode cannot handle "
+                             "categories encoded as negative integers. "
+                             "Please set categories='auto' explicitly to "
+                             "be able to use arbitrary integer values as "
+                             "category identifiers.")
         n_samples, n_features = X.shape
 
         indices = self._feature_indices_

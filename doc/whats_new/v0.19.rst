@@ -756,7 +756,7 @@ Metrics
 - :func:`metrics.average_precision_score` no longer linearly
   interpolates between operating points, and instead weighs precisions
   by the change in recall since the last operating point, as per the
-  `Wikipedia entry <http://en.wikipedia.org/wiki/Average_precision>`_.
+  `Wikipedia entry <https://en.wikipedia.org/wiki/Average_precision>`_.
   (`#7356 <https://github.com/scikit-learn/scikit-learn/pull/7356>`_). By
   :user:`Nick Dingwall <ndingwall>` and `Gael Varoquaux`_.
 
@@ -811,7 +811,7 @@ Miscellaneous
   Python 2. :issue:`9284` by :user:`Sebastin Santy <SebastinSanty>`.
 
 - Several minor issues were fixed with thanks to the alerts of
-  [lgtm.com](http://lgtm.com). :issue:`9278` by :user:`Jean Helie <jhelie>`,
+  [lgtm.com](https://lgtm.com/). :issue:`9278` by :user:`Jean Helie <jhelie>`,
   among others.
 
 API changes summary
