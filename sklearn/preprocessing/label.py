@@ -151,7 +151,7 @@ def _encode_check_unknown(values, uniques, return_mask=False):
         unique_values = np.unique(values)
         diff = list(np.setdiff1d(unique_values, uniques, assume_unique=True))
         if return_mask:
-            if diff:
+            if len(diff) > 0:
                 valid_mask = np.in1d(values, uniques)
             else:
                 valid_mask = np.ones(len(values), dtype=bool)
