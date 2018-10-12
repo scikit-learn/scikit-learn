@@ -1203,7 +1203,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     ----------
 
     LIBLINEAR -- A Library for Large Linear Classification
-        http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+        https://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
     SAG -- Mark Schmidt, Nicolas Le Roux, and Francis Bach
         Minimizing Finite Sums with the Stochastic Average Gradient
@@ -1217,7 +1217,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     Hsiang-Fu Yu, Fang-Lan Huang, Chih-Jen Lin (2011). Dual coordinate descent
         methods for logistic regression and maximum entropy models.
         Machine Learning 85(1-2):41-75.
-        http://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
+        https://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
@@ -1249,7 +1249,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_targets)
+        y : array-like, shape (n_samples,)
             Target vector relative to X.
 
         sample_weight : array-like, shape (n_samples,) optional
@@ -1437,6 +1437,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                            LinearClassifierMixin):
     """Logistic Regression CV (aka logit, MaxEnt) classifier.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     This class implements logistic regression using liblinear, newton-cg, sag
     of lbfgs optimizer. The newton-cg, sag and lbfgs solvers support only L2
@@ -1686,7 +1688,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_targets)
+        y : array-like, shape (n_samples,)
             Target vector relative to X.
 
         sample_weight : array-like, shape (n_samples,) optional

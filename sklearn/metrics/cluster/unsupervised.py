@@ -100,7 +100,7 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     .. [1] `Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
        Interpretation and Validation of Cluster Analysis". Computational
        and Applied Mathematics 20: 53-65.
-       <http://www.sciencedirect.com/science/article/pii/0377042787901257>`_
+       <https://www.sciencedirect.com/science/article/pii/0377042787901257>`_
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
            <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
@@ -203,7 +203,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     .. [1] `Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
        Interpretation and Validation of Cluster Analysis". Computational
        and Applied Mathematics 20: 53-65.
-       <http://www.sciencedirect.com/science/article/pii/0377042787901257>`_
+       <https://www.sciencedirect.com/science/article/pii/0377042787901257>`_
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
        <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
@@ -264,7 +264,7 @@ def calinski_harabaz_score(X, labels):
     ----------
     .. [1] `T. Calinski and J. Harabasz, 1974. "A dendrite method for cluster
        analysis". Communications in Statistics
-       <http://www.tandfonline.com/doi/abs/10.1080/03610927408827101>`_
+       <https://www.tandfonline.com/doi/abs/10.1080/03610927408827101>`_
     """
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()
@@ -314,7 +314,7 @@ def davies_bouldin_score(X, labels):
     ----------
     .. [1] Davies, David L.; Bouldin, Donald W. (1979).
        `"A Cluster Separation Measure"
-       <http://ieeexplore.ieee.org/document/4766909>`__.
+       <https://ieeexplore.ieee.org/document/4766909>`__.
        IEEE Transactions on Pattern Analysis and Machine Intelligence.
        PAMI-1 (2): 224-227
     """

@@ -8,7 +8,7 @@ def total_seconds(delta):
     helper function to emulate function total_seconds,
     introduced in python2.7
 
-    http://docs.python.org/library/datetime.html\
+    https://docs.python.org/library/datetime.html\
 #datetime.timedelta.total_seconds
 
     Parameters

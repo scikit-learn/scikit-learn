@@ -12,7 +12,6 @@ Linear Discriminant Analysis and Quadratic Discriminant Analysis
 from __future__ import print_function
 import warnings
 import numpy as np
-from .utils import deprecated
 from scipy import linalg
 from .externals.six import string_types
 from .externals.six.moves import xrange
@@ -567,9 +566,6 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         .. versionadded:: 0.17
 
-    store_covariances : boolean
-        Deprecated, use `store_covariance`.
-
     Attributes
     ----------
     covariance_ : list of array-like, shape = [n_features, n_features]
@@ -602,8 +598,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     >>> clf.fit(X, y)
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     QuadraticDiscriminantAnalysis(priors=None, reg_param=0.0,
-                                  store_covariance=False,
-                                  store_covariances=None, tol=0.0001)
+                                  store_covariance=False, tol=0.0001)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -614,19 +609,11 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     """
 
     def __init__(self, priors=None, reg_param=0., store_covariance=False,
-                 tol=1.0e-4, store_covariances=None):
+                 tol=1.0e-4):
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = reg_param
-        self.store_covariances = store_covariances
         self.store_covariance = store_covariance
         self.tol = tol
-
-    @property
-    @deprecated("Attribute ``covariances_`` was deprecated in version"
-                " 0.19 and will be removed in 0.21. Use "
-                "``covariance_`` instead")
-    def covariances_(self):
-        return self.covariance_
 
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
@@ -661,11 +648,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             self.priors_ = self.priors
 
         cov = None
-        store_covariance = self.store_covariance or self.store_covariances
-        if self.store_covariances:
-            warnings.warn("'store_covariances' was renamed to store_covariance"
-                          " in version 0.19 and will be removed in 0.21.",
-                          DeprecationWarning)
+        store_covariance = self.store_covariance
         if store_covariance:
             cov = []
         means = []

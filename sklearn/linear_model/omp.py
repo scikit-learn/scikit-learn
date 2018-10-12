@@ -340,7 +340,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
-    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+    https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
     X = check_array(X, order='F', copy=copy_X)
@@ -479,7 +479,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
-    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+    https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
     Gram = check_array(Gram, order='F', copy=copy_Gram)
@@ -604,7 +604,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
-    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+    https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     See also
     --------
@@ -754,7 +754,9 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
 
 
 class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
-    """Cross-validated Orthogonal Matching Pursuit model (OMP)
+    """Cross-validated Orthogonal Matching Pursuit model (OMP).
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <omp>`.
 
