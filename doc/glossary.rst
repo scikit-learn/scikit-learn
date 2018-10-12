@@ -170,7 +170,7 @@ General Concepts
         :class:`~sklearn.preprocessing.OneHotEncoder` can be used to
         one-hot encode categorical features.
         See also :ref:`preprocessing_categorical_features` and the
-        `http://contrib.scikit-learn.org/categorical-encoding
+        `https://contrib.scikit-learn.org/categorical-encoding/
         <category_encoders>`_ package for tools related to encoding
         categorical features.
 
@@ -202,7 +202,7 @@ General Concepts
         We use deprecation to slowly violate our :term:`backwards
         compatibility` assurances, usually to to:
 
-        * change the the default value of a parameter; or
+        * change the default value of a parameter; or
         * remove a parameter, attribute, method, class, etc.
 
         We will ordinarily issue a warning when a deprecated element is used,
@@ -225,7 +225,7 @@ General Concepts
         accessible as the object's ``__doc__`` attribute.
 
         We try to adhere to `PEP257
-        <http://www.python.org/dev/peps/pep-0257/>`_, and follow `NumpyDoc
+        <https://www.python.org/dev/peps/pep-0257/>`_, and follow `NumpyDoc
         conventions <numpydoc.readthedocs.io/en/latest/format.html>`_.
 
     double underscore
@@ -288,6 +288,13 @@ General Concepts
         * For determining some aspects of an estimator's expectations or
           support for some feature, we use :term:`estimator tags` instead of
           duck typing.
+
+    early stopping
+        This consists in stopping an iterative optimization method before the
+        convergence of the training loss, to avoid over-fitting. This is
+        generally done by monitoring the generalization score on a validation
+        set. When available, it is activated through the parameter
+        ``early_stopping`` or by setting a positive :term:`n_iter_no_change`.
 
     estimator instance
         We sometimes use this terminology to distinguish an :term:`estimator`
@@ -454,10 +461,11 @@ General Concepts
         and/or :term:`transform` methods.
 
     joblib
-        A Python library (http://joblib.readthedocs.io) used in Scikit-learn to
+        A Python library (https://joblib.readthedocs.io) used in Scikit-learn to
         facilite simple parallelism and caching.  Joblib is oriented towards
         efficiently working with numpy arrays, such as through use of
-        :term:`memory mapping`.
+        :term:`memory mapping`. See :ref:`parallelism` for more
+        information.
 
     label indicator matrix
     multilabel indicator matrix
@@ -612,7 +620,7 @@ General Concepts
         structures.
 
     pd
-        A shorthand for `Pandas <http://pandas.pydata.org>`_ due to the
+        A shorthand for `Pandas <https://pandas.pydata.org>`_ due to the
         conventional import statement::
 
             import pandas as pd
@@ -665,7 +673,7 @@ General Concepts
         A venue for publishing Scikit-learn-compatible libraries that are
         broadly authorized by the core developers and the contrib community,
         but not maintained by the core developer team.
-        See http://scikit-learn-contrib.github.io.
+        See https://scikit-learn-contrib.github.io.
 
     semi-supervised
     semi-supervised learning
@@ -946,6 +954,22 @@ such as:
         Note that unlike estimators, these do not have :term:`fit` methods
         and do not provide :term:`set_params` or :term:`get_params`.
         Parameter validation may be performed in ``__init__``.
+
+    cross-validation estimator
+        An estimator that has built-in cross-validation capabilities to
+        automatically select the best hyper-parameters (see the :ref:`User
+        Guide <grid_search>`). Some example of cross-validation estimators
+        are :class:`ElasticNetCV <linear_model.ElasticNetCV>` and
+        :class:`LogisticRegressionCV <linear_model.LogisticRegressionCV>`.
+        Cross-validation estimators are named `EstimatorCV` and tend to be
+        roughly equivalent to `GridSearchCV(Estimator(), ...)`. The
+        advantage of using a cross-validation estimator over the canonical
+        `Estimator` class along with :ref:`grid search <grid_search>` is
+        that they can take advantage of warm-starting by reusing precomputed
+        results in the previous steps of the cross-validation process. This
+        generally leads to speed improvements. An exception is the
+        :class:`RidgeCV <linear_model.RidgeCV>` class, which can instead
+        perform efficient Leave-One-Out CV.
 
     scorer
         A non-estimator callable object which evaluates an estimator on given
@@ -1375,6 +1399,8 @@ functions or non-estimator constructors.
         equal weight by giving each sample a weight inversely related
         to its class's prevalence in the training data:
         ``n_samples / (n_classes * np.bincount(y))``.
+        **Note** however that this rebalancing does not take the weight of
+        samples in each class into account.
 
         For multioutput classification, a list of dicts is used to specify
         weights for each output. For example, for four-class multilabel
@@ -1406,7 +1432,8 @@ functions or non-estimator constructors.
         - An iterable yielding train/test splits.
 
         With some exceptions (especially where not using cross validation at
-        all is an option), the default is 3-fold.
+        all is an option), the default is 3-fold and will change to 5-fold
+        in version 0.22.
 
         ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
 
@@ -1453,6 +1480,12 @@ functions or non-estimator constructors.
         input into. See :term:`components_` for the special case of affine
         projection.
 
+    ``n_iter_no_change``
+        Number of iterations with no improvement to wait before stopping the
+        iterative procedure. This is also known as a *patience* parameter. It
+        is typically used with :term:`early stopping` to avoid stopping too
+        early.
+
     ``n_jobs``
         This is used to specify how many concurrent processes/threads should be
         used for parallelized routines.  Scikit-learn uses one processor for
@@ -1462,8 +1495,15 @@ functions or non-estimator constructors.
 
         ``n_jobs`` is an int, specifying the maximum number of concurrently
         running jobs.  If set to -1, all CPUs are used. If 1 is given, no
-        parallel computing code is used at all.  For n_jobs below -1, (n_cpus +
-        1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one are used.
+        joblib level parallelism is used at all, which is useful for
+        debugging. Even with ``n_jobs = 1``, parallelism may occur due to
+        numerical processing libraries (see :ref:`FAQ <faq_mkl_threading>`).
+        For n_jobs below -1, (n_cpus + 1 + n_jobs) are used. Thus for
+        ``n_jobs = -2``, all CPUs but one are used.
+
+        ``n_jobs=None`` means *unset*; it will generally be interpreted as
+        ``n_jobs=1``, unless the current :class:`joblib.Parallel` backend
+        context specifies otherwise.
 
         The use of ``n_jobs``-based parallelism in estimators varies:
 
@@ -1471,7 +1511,7 @@ functions or non-estimator constructors.
           sometimes parallelism happens in prediction (e.g. in random forests).
         * Some parallelism uses a multi-threading backend by default, some
           a multi-processing backend.  It is possible to override the default
-          backend by using :func:`sklearn.externals.joblib.parallel.parallel_backend`.
+          backend by using :func:`sklearn.utils.parallel_backend`.
         * Whether parallel processing is helpful at improving runtime depends
           on many factors, and it's usually a good idea to experiment rather
           than assuming that increasing the number of jobs is always a good
@@ -1507,7 +1547,7 @@ functions or non-estimator constructors.
             worthwhile checking that your results are stable across a
             number of different distinct random seeds. Popular integer
             random seeds are 0 and `42
-            <http://en.wikipedia.org/wiki/Answer_to_the_Ultimate_Question_of_Life%2C_the_Universe%2C_and_Everything>`_.
+            <https://en.wikipedia.org/wiki/Answer_to_the_Ultimate_Question_of_Life%2C_the_Universe%2C_and_Everything>`_.
 
         A :class:`numpy.random.RandomState` instance
             Use the provided random state, only affecting other users

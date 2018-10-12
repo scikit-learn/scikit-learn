@@ -58,6 +58,8 @@ def test_dict_learning_overcomplete():
     assert_true(dico.components_.shape == (n_components, n_features))
 
 
+# positive lars deprecated 0.22
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 @pytest.mark.parametrize("transform_algorithm", [
     "lasso_lars",
     "lasso_cd",
@@ -170,6 +172,8 @@ def test_dict_learning_online_shapes():
     assert_equal(np.dot(code, dictionary).shape, X.shape)
 
 
+# positive lars deprecated 0.22
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 @pytest.mark.parametrize("transform_algorithm", [
     "lasso_lars",
     "lasso_cd",
@@ -306,6 +310,8 @@ def test_sparse_encode_shapes():
         assert_equal(code.shape, (n_samples, n_components))
 
 
+# positive lars deprecated 0.22
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 @pytest.mark.parametrize("positive", [
     False,
     True,

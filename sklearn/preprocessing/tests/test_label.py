@@ -1,5 +1,7 @@
 import numpy as np
 
+import pytest
+
 from scipy.sparse import issparse
 from scipy.sparse import coo_matrix
 from scipy.sparse import csc_matrix
@@ -24,6 +26,7 @@ from sklearn.preprocessing.label import label_binarize
 
 from sklearn.preprocessing.label import _inverse_binarize_thresholding
 from sklearn.preprocessing.label import _inverse_binarize_multiclass
+from sklearn.preprocessing.label import _encode
 
 from sklearn import datasets
 
@@ -169,8 +172,33 @@ def test_label_binarizer_errors():
                   [1, 2, 3])
 
 
-def test_label_encoder():
-    # Test LabelEncoder's transform and inverse_transform methods
+@pytest.mark.parametrize(
+        "values, classes, unknown",
+        [(np.array([2, 1, 3, 1, 3], dtype='int64'),
+          np.array([1, 2, 3], dtype='int64'), np.array([4], dtype='int64')),
+         (np.array(['b', 'a', 'c', 'a', 'c'], dtype=object),
+          np.array(['a', 'b', 'c'], dtype=object),
+          np.array(['d'], dtype=object)),
+         (np.array(['b', 'a', 'c', 'a', 'c']),
+          np.array(['a', 'b', 'c']), np.array(['d']))],
+        ids=['int64', 'object', 'str'])
+def test_label_encoder(values, classes, unknown):
+    # Test LabelEncoder's transform, fit_transform and
+    # inverse_transform methods
+    le = LabelEncoder()
+    le.fit(values)
+    assert_array_equal(le.classes_, classes)
+    assert_array_equal(le.transform(values), [1, 0, 2, 0, 2])
+    assert_array_equal(le.inverse_transform([1, 0, 2, 0, 2]), values)
+    le = LabelEncoder()
+    ret = le.fit_transform(values)
+    assert_array_equal(ret, [1, 0, 2, 0, 2])
+
+    with pytest.raises(ValueError, match="unseen labels"):
+        le.transform(unknown)
+
+
+def test_label_encoder_negative_ints():
     le = LabelEncoder()
     le.fit([1, 1, 4, 5, -1, 0])
     assert_array_equal(le.classes_, [-1, 0, 1, 4, 5])
@@ -180,20 +208,13 @@ def test_label_encoder():
                        [0, 1, 4, 4, 5, -1, -1])
     assert_raises(ValueError, le.transform, [0, 6])
 
-    le.fit(["apple", "orange"])
+
+@pytest.mark.parametrize("dtype", ['str', 'object'])
+def test_label_encoder_str_bad_shape(dtype):
+    le = LabelEncoder()
+    le.fit(np.array(["apple", "orange"], dtype=dtype))
     msg = "bad input shape"
     assert_raise_message(ValueError, msg, le.transform, "apple")
-
-
-def test_label_encoder_fit_transform():
-    # Test fit_transform
-    le = LabelEncoder()
-    ret = le.fit_transform([1, 1, 4, 5, -1, 0])
-    assert_array_equal(ret, [2, 2, 3, 4, 0, 1])
-
-    le = LabelEncoder()
-    ret = le.fit_transform(["paris", "paris", "tokyo", "amsterdam"])
-    assert_array_equal(ret, [1, 1, 2, 0])
 
 
 def test_label_encoder_errors():
@@ -214,9 +235,15 @@ def test_label_encoder_errors():
     assert_raise_message(ValueError, msg, le.inverse_transform, "")
 
 
-def test_label_encoder_empty_array():
+@pytest.mark.parametrize(
+        "values",
+        [np.array([2, 1, 3, 1, 3], dtype='int64'),
+         np.array(['b', 'a', 'c', 'a', 'c'], dtype=object),
+         np.array(['b', 'a', 'c', 'a', 'c'])],
+        ids=['int64', 'object', 'str'])
+def test_label_encoder_empty_array(values):
     le = LabelEncoder()
-    le.fit(np.array(["1", "2", "1", "2", "2"]))
+    le.fit(values)
     # test empty transform
     transformed = le.transform([])
     assert_array_equal(np.array([]), transformed)
@@ -346,6 +373,30 @@ def test_multilabel_binarizer_given_classes():
     inp = iter(inp)
     mlb = MultiLabelBinarizer(classes=[1, 3, 2])
     assert_array_equal(mlb.fit(inp).transform(inp), indicator_mat)
+
+    # ensure a ValueError is thrown if given duplicate classes
+    err_msg = "The classes argument contains duplicate classes. Remove " \
+              "these duplicates before passing them to MultiLabelBinarizer."
+    mlb = MultiLabelBinarizer(classes=[1, 3, 2, 3])
+    assert_raise_message(ValueError, err_msg, mlb.fit, inp)
+
+
+def test_multilabel_binarizer_multiple_calls():
+    inp = [(2, 3), (1,), (1, 2)]
+    indicator_mat = np.array([[0, 1, 1],
+                              [1, 0, 0],
+                              [1, 0, 1]])
+
+    indicator_mat2 = np.array([[0, 1, 1],
+                               [1, 0, 0],
+                               [1, 1, 0]])
+
+    # first call
+    mlb = MultiLabelBinarizer(classes=[1, 3, 2])
+    assert_array_equal(mlb.fit_transform(inp), indicator_mat)
+    # second call change class
+    mlb.classes = [1, 2, 3]
+    assert_array_equal(mlb.fit_transform(inp), indicator_mat2)
 
 
 def test_multilabel_binarizer_same_length_sequence():
@@ -536,3 +587,22 @@ def test_inverse_binarize_multiclass():
                                                    [0, 0, 0]]),
                                        np.arange(3))
     assert_array_equal(got, np.array([1, 1, 0]))
+
+
+@pytest.mark.parametrize(
+        "values, expected",
+        [(np.array([2, 1, 3, 1, 3], dtype='int64'),
+          np.array([1, 2, 3], dtype='int64')),
+         (np.array(['b', 'a', 'c', 'a', 'c'], dtype=object),
+          np.array(['a', 'b', 'c'], dtype=object)),
+         (np.array(['b', 'a', 'c', 'a', 'c']),
+          np.array(['a', 'b', 'c']))],
+        ids=['int64', 'object', 'str'])
+def test_encode_util(values, expected):
+    uniques = _encode(values)
+    assert_array_equal(uniques, expected)
+    uniques, encoded = _encode(values, encode=True)
+    assert_array_equal(uniques, expected)
+    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
+    _, encoded = _encode(values, uniques, encode=True)
+    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))

@@ -121,7 +121,7 @@ class KernelDensity(BaseEstimator):
         X : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
-        sample_weight: array_like, shape (n_samples,), optional
+        sample_weight : array_like, shape (n_samples,), optional
             List of sample weights attached to the data X.
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
@@ -159,7 +159,9 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         density : ndarray, shape (n_samples,)
-            The array of log(density) evaluations.
+            The array of log(density) evaluations. These are normalized to be
+            probability densities, so values will be low for high-dimensional
+            data.
         """
         # The returned density is normalized to the number of points.
         # For it to be a probability, we must scale it.  For this reason
@@ -177,7 +179,7 @@ class KernelDensity(BaseEstimator):
         return log_density
 
     def score(self, X, y=None):
-        """Compute the total log probability under the model.
+        """Compute the total log probability density under the model.
 
         Parameters
         ----------
@@ -188,7 +190,9 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         logprob : float
-            Total log-likelihood of the data in X.
+            Total log-likelihood of the data in X. This is normalized to be a
+            probability density, so the value will be low for high-dimensional
+            data.
         """
         return np.sum(self.score_samples(X))
 

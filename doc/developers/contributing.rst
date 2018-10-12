@@ -34,6 +34,14 @@ See :ref:`new_contributors` to get started.
 
 |
 
+
+In case you experience issues using this package, do not hesitate to submit a
+ticket to the
+`GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
+also welcome to post feature requests or pull requests.
+
+
+==================
 Ways to contribute
 ==================
 
@@ -71,6 +79,7 @@ link to it from your website, or simply star to say "I use it":
    * `joblib <https://github.com/joblib/joblib/issues>`__
    * `sphinx-gallery <https://github.com/sphinx-gallery/sphinx-gallery/issues>`__
    * `numpydoc <https://github.com/numpy/numpydoc/issues>`__
+   * `liac-arff <https://github.com/renatopp/liac-arff>`__
 
    and larger projects:
 
@@ -119,7 +128,7 @@ feedback:
 
 - The ideal bug report contains a **short reproducible code snippet**, this way
   anyone can try to reproduce the bug easily (see `this
-  <http://stackoverflow.com/help/mcve>`_ for more details). If your snippet is
+  <https://stackoverflow.com/help/mcve>`_ for more details). If your snippet is
   longer than around 50 lines, please link to a `gist
   <https://gist.github.com>`_ or a github repo.
 
@@ -132,6 +141,14 @@ feedback:
   your **Python, scikit-learn, numpy, and scipy versions**. This information
   can be found by running the following code snippet::
 
+    >>> import sklearn
+    >>> sklearn.show_versions()  # doctest: +SKIP
+
+  .. note::
+
+    This utility function is only available in scikit-learn v0.20+.
+    For previous versions, one has to explicitly run::
+
      import platform; print(platform.platform())
      import sys; print("Python", sys.version)
      import numpy; print("NumPy", numpy.__version__)
@@ -143,54 +160,6 @@ feedback:
   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_
   for more details.
 
-
-.. _git_repo:
-
-Retrieving the latest code
-==========================
-
-We use `Git <https://git-scm.com/>`_ for version control and
-`GitHub <https://github.com/>`_ for hosting our main repository.
-
-You can check out the latest sources with the command::
-
-    git clone git://github.com/scikit-learn/scikit-learn.git
-
-or if you have write privileges::
-
-    git clone git@github.com:scikit-learn/scikit-learn.git
-
-If you run the development version, it is cumbersome to reinstall the
-package each time you update the sources. It is thus preferred that
-you add the scikit-learn directory to your ``PYTHONPATH`` and build the
-extension in place::
-
-    python setup.py build_ext --inplace
-
-
-Another option is to install the package in editable mode if you change your
-code a lot and do not want to have to reinstall every time. This basically
-builds the extension in place and creates a link to the development directory
-(see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_)::
-
-    pip install --editable .
-
-.. note::
-
-    This is fundamentally similar to using the command ``python setup.py develop`` (see `the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_). It is however preferred to use pip.
-
-.. note::
-
-    If you decide to do an editable install you have to rerun::
-
-        python setup.py build_ext --inplace
-
-    every time the source code of a compiled extension is
-    changed (for instance when switching branches or pulling changes from upstream).
-
-On Unix-like systems, you can simply type ``make`` in the top-level folder to
-build in-place and launch all the tests. Have a look at the ``Makefile`` for
-additional utilities.
 
 
 Contributing code
@@ -257,7 +226,7 @@ mailing list for more visibility.
 
 If any of the above seems like magic to you, then look up the `Git documentation
 <https://git-scm.com/documentation>`_ and the `Git development workflow
-<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
+<https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
 web.
 
 If some conflicts arise between your branch and the ``master`` branch, you need
@@ -383,16 +352,16 @@ and Cython optimizations.
 
    For two very well documented and more detailed guides on development
    workflow, please pay a visit to the `Scipy Development Workflow
-   <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
+   <https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
    and the `Astropy Workflow for Developers
-   <http://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
+   <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
 
 .. topic:: Continuous Integration (CI)
 
    * Travis is used for testing on Linux platforms
    * Appveyor is used for testing on Windows platforms
-   * CircleCI is used to build the docs for viewing
+   * CircleCI is used to build the docs for viewing and for testing with PyPy on Linux
 
    Please note that if one of the following markers appear in the latest commit
    message, the following actions are taken.
@@ -400,6 +369,7 @@ and Cython optimizations.
      ====================== ===================
      Commit Message Marker  Action Taken by CI
      ---------------------- -------------------
+     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
      [ci skip]              CI is skipped completely
      [doc skip]             Docs are not built
      [doc quick]            Docs built, but excludes example gallery plots
@@ -590,7 +560,7 @@ We expect code coverage of new features to be at least around 90%.
 .. note:: **Workflow to improve test coverage**
 
    To test code coverage, you need to install the `coverage
-   <https://pypi.python.org/pypi/coverage>`_ package in addition to pytest.
+   <https://pypi.org/project/coverage/>`_ package in addition to pytest.
 
    1. Run 'make test-coverage'. The output lists for each file the line
       numbers that are not tested.
@@ -737,7 +707,7 @@ Here's a simple example of code using some of the above guidelines::
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             array representing the data
         random_state : RandomState or an int seed (0 by default)
             A random number generator instance to define the state of the
@@ -745,7 +715,7 @@ Here's a simple example of code using some of the above guidelines::
 
         Returns
         -------
-        x : numpy array, shape = (n_features,)
+        x : numpy array, shape (n_features,)
             A random point selected from X
         """
         X = check_array(X)
@@ -829,17 +799,35 @@ In the following example, k is deprecated and renamed to n_clusters::
 
     import warnings
 
-    def example_function(n_clusters=8, k=None):
-        if k is not None:
+    def example_function(n_clusters=8, k='not_used'):
+        if k != 'not_used':
             warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
                           "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
+
+When the change is in a class, we validate and raise warning in ``fit``::
+
+  import warnings
+
+  class ExampleEstimator(BaseEstimator):
+      def __init__(self, n_clusters=8, k='not_used'):
+          self.n_clusters = n_clusters
+          self.k = k
+
+      def fit(self, X, y):
+          if k != 'not_used':
+              warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
+                            "will be removed in 0.15.", DeprecationWarning)
+              self._n_clusters = k
+          else:
+              self._n_clusters = self.n_clusters
 
 As in these examples, the warning message should always give both the
 version in which the deprecation happened and the version in which the
 old behavior will be removed. If the deprecation happened in version
 0.x-dev, the message should say deprecation occurred in version 0.x and
-the removal will be in 0.(x+2). For example, if the deprecation happened
+the removal will be in 0.(x+2), so that users will have enough time to
+adapt their code to the new behaviour. For example, if the deprecation happened
 in version 0.18-dev, the message should say it happened in version 0.18
 and the old behavior will be removed in version 0.20.
 
@@ -850,6 +838,51 @@ same information as the deprecation warning as explained above. Use the
   .. deprecated:: 0.13
      ``k`` was renamed to ``n_clusters`` in version 0.13 and will be removed
      in 0.15.
+
+What's more, a deprecation requires a test which ensures that the warning is
+raised in relevant cases but not in other cases. The warning should be caught
+in all other tests (using e.g., ``@pytest.mark.filterwarnings``),
+and there should be no warning in the examples.
+
+
+Change the default value of a parameter
+---------------------------------------
+
+If the default value of a parameter needs to be changed, please replace the
+default value with a specific value (e.g., ``warn``) and raise
+``FutureWarning`` when users are using the default value. In the following
+example, we change the default value of ``n_clusters`` from 5 to 10
+(current version is 0.20)::
+
+    import warnings
+
+    def example_function(n_clusters='warn'):
+        if n_clusters == 'warn':
+            warnings.warn("The default value of n_clusters will change from "
+                          "5 to 10 in 0.22.", FutureWarning)
+            n_clusters = 5
+
+When the change is in a class, we validate and raise warning in ``fit``::
+
+  import warnings
+
+  class ExampleEstimator:
+      def __init__(self, n_clusters='warn'):
+          self.n_clusters = n_clusters
+
+      def fit(self, X, y):
+          if self.n_clusters == 'warn':
+            warnings.warn("The default value of n_clusters will change from "
+                          "5 to 10 in 0.22.", FutureWarning)
+            self._n_clusters = 5
+
+Similar to deprecations, the warning message should always give both the
+version in which the change happened and the version in which the old behavior
+will be removed. The docstring needs to be updated accordingly. We need a test
+which ensures that the warning is raised in relevant cases but not in other
+cases. The warning should be caught in all other tests
+(using e.g., ``@pytest.mark.filterwarnings``), and there should be no warning
+in the examples.
 
 
 .. currentmodule:: sklearn
@@ -866,7 +899,7 @@ just remember that ``print`` is a function and
 integer division is written ``//``.
 String handling has been overhauled, though, as have parts of
 the Python standard library.
-The `six <http://pythonhosted.org/six/>`_ package helps with
+The `six <https://pythonhosted.org/six/>`_ package helps with
 cross-compatibility and is included in scikit-learn as
 ``sklearn.externals.six``.
 
@@ -955,41 +988,41 @@ multiple interfaces):
 
     The base object, implements a ``fit`` method to learn from data, either::
 
-      estimator = obj.fit(data, targets)
+      estimator = estimator.fit(data, targets)
 
     or::
 
-      estimator = obj.fit(data)
+      estimator = estimator.fit(data)
 
 :Predictor:
 
     For supervised learning, or some unsupervised problems, implements::
 
-      prediction = obj.predict(data)
+      prediction = predictor.predict(data)
 
     Classification algorithms usually also offer a way to quantify certainty
     of a prediction, either using ``decision_function`` or ``predict_proba``::
 
-      probability = obj.predict_proba(data)
+      probability = predictor.predict_proba(data)
 
 :Transformer:
 
     For filtering or modifying the data, in a supervised or unsupervised
     way, implements::
 
-      new_data = obj.transform(data)
+      new_data = transformer.transform(data)
 
     When fitting and transforming can be performed much more efficiently
     together than separately, implements::
 
-      new_data = obj.fit_transform(data)
+      new_data = transformer.fit_transform(data)
 
 :Model:
 
     A model that can give a `goodness of fit <https://en.wikipedia.org/wiki/Goodness_of_fit>`_
     measure or a likelihood of unseen data, implements (higher is better)::
 
-      score = obj.score(data)
+      score = model.score(data)
 
 Estimators
 ----------
@@ -1076,11 +1109,9 @@ the predict method.
 ============= ======================================================
 Parameters
 ============= ======================================================
-X             array-like, with shape = [N, D], where N is the number
-              of samples and D is the number of features.
+X             array-like, shape (n_samples, n_features)
 
-y             array, with shape = [N], where N is the number of
-              samples.
+y             array, shape (n_samples,)
 
 kwargs        optional data-dependent parameters.
 ============= ======================================================
@@ -1164,7 +1195,7 @@ the correct interface more easily.
     * directory structures and scripts to compile documentation and example
       galleries
     * scripts to manage continuous integration (testing on Linux and Windows)
-    * instructions from getting started to publishing on `PyPi <https://pypi.python.org/pypi>`_
+    * instructions from getting started to publishing on `PyPi <https://pypi.org/>`_
 
 .. topic:: ``BaseEstimator`` and mixins:
 

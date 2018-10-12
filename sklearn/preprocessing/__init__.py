@@ -33,15 +33,16 @@ from .label import LabelBinarizer
 from .label import LabelEncoder
 from .label import MultiLabelBinarizer
 
+from ._discretization import KBinsDiscretizer
+
 from .imputation import Imputer
 
-# stub, remove in version 0.21
-from .data import CategoricalEncoder  # noqa
 
 __all__ = [
     'Binarizer',
     'FunctionTransformer',
     'Imputer',
+    'KBinsDiscretizer',
     'KernelCenterer',
     'LabelBinarizer',
     'LabelEncoder',

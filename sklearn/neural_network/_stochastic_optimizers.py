@@ -140,21 +140,21 @@ class SGDOptimizer(BaseOptimizer):
                                   (time_step + 1) ** self.power_t)
 
     def trigger_stopping(self, msg, verbose):
-        if self.lr_schedule == 'adaptive':
-            if self.learning_rate > 1e-6:
-                self.learning_rate /= 5.
-                if verbose:
-                    print(msg + " Setting learning rate to %f" %
-                          self.learning_rate)
-                return False
-            else:
-                if verbose:
-                    print(msg + " Learning rate too small. Stopping.")
-                return True
-        else:
+        if self.lr_schedule != 'adaptive':
             if verbose:
                 print(msg + " Stopping.")
             return True
+
+        if self.learning_rate <= 1e-6:
+            if verbose:
+                print(msg + " Learning rate too small. Stopping.")
+            return True
+
+        self.learning_rate /= 5.
+        if verbose:
+            print(msg + " Setting learning rate to %f" %
+                  self.learning_rate)
+        return False
 
     def _get_updates(self, grads):
         """Get the values used to update params with given gradients

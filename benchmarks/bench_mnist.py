@@ -41,7 +41,7 @@ from sklearn.datasets import get_data_home
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.dummy import DummyClassifier
-from sklearn.externals.joblib import Memory
+from sklearn.utils import Memory
 from sklearn.kernel_approximation import Nystroem
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.metrics import zero_one_loss

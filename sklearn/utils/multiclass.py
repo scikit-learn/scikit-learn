@@ -7,7 +7,6 @@ Multi-class / multi-label utility function
 
 """
 from __future__ import division
-from collections import Sequence
 from itertools import chain
 
 from scipy.sparse import issparse
@@ -18,8 +17,8 @@ from scipy.sparse import lil_matrix
 import numpy as np
 
 from ..externals.six import string_types
+from ..utils.fixes import _Sequence as Sequence
 from .validation import check_array
-
 
 
 def _unique_multiclass(y):

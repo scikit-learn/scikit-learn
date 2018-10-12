@@ -152,7 +152,7 @@ Enhancements
   By `Hanna Wallach`_ and `Andreas Müller`_.
 
 - Add ``class_weight`` parameter to automatically weight samples by class
-  frequency for :class:`linear_model.PassiveAgressiveClassifier`. By
+  frequency for :class:`linear_model.PassiveAggressiveClassifier`. By
   `Trevor Stephens`_.
 
 - Added backlinks from the API reference pages to the user guide. By

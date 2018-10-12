@@ -21,6 +21,7 @@ Wine recognition dataset
  		- Hue
  		- OD280/OD315 of diluted wines
  		- Proline
+
     - class:
             - class_0
             - class_1
@@ -70,7 +71,7 @@ Via Brigata Salerno, 16147 Genoa, Italy.
 Citation:
 
 Lichman, M. (2013). UCI Machine Learning Repository
-[http://archive.ics.uci.edu/ml]. Irvine, CA: University of California,
+[https://archive.ics.uci.edu/ml]. Irvine, CA: University of California,
 School of Information and Computer Science. 
 
 .. topic:: References

@@ -7,6 +7,7 @@ Several basic tests for hierarchical clustering procedures
 # License: BSD 3 clause
 from tempfile import mkdtemp
 import shutil
+import pytest
 from functools import partial
 
 import numpy as np
@@ -35,21 +36,6 @@ from sklearn.utils.fast_dict import IntFloatDict
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.datasets import make_moons, make_circles
-
-
-def test_deprecation_of_n_components_in_linkage_tree():
-    rng = np.random.RandomState(0)
-    X = rng.randn(50, 100)
-    # Test for warning of deprecation of n_components in linkage_tree
-    children, n_nodes, n_leaves, parent = assert_warns(DeprecationWarning,
-                                                       linkage_tree,
-                                                       X.T,
-                                                       n_components=10)
-    children_t, n_nodes_t, n_leaves_t, parent_t = linkage_tree(X.T)
-    assert_array_equal(children, children_t)
-    assert_equal(n_nodes, n_nodes_t)
-    assert_equal(n_leaves, n_leaves_t)
-    assert_equal(parent, parent_t)
 
 
 def test_linkage_misc():
@@ -142,6 +128,8 @@ def test_agglomerative_clustering_wrong_arg_memory():
     assert_raises(ValueError, clustering.fit, X)
 
 
+@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
+                            "change in version 0.22")
 def test_agglomerative_clustering():
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering.
@@ -250,6 +238,8 @@ def test_ward_agglomeration():
     assert_raises(ValueError, agglo.fit, X[:0])
 
 
+@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
+                            "change in version 0.22")
 def test_single_linkage_clustering():
     # Check that we get the correct result in two emblematic cases
     moons, moon_labels = make_moons(noise=0.05, random_state=42)
@@ -311,6 +301,8 @@ def test_scikit_vs_scipy():
     assert_raises(ValueError, _hc_cut, n_leaves + 1, children, n_leaves)
 
 
+@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
+                            "change in version 0.22")
 def test_identical_points():
     # Ensure identical points are handled correctly when using mst with
     # a sparse connectivity matrix
@@ -499,7 +491,7 @@ def test_int_float_dict():
         assert d[key] == value
 
     other_keys = np.arange(50).astype(np.intp)[::2]
-    other_values = 0.5 * np.ones(50)[::2]
+    other_values = np.full(50, 0.5)[::2]
     other = IntFloatDict(other_keys, other_values)
     # Complete smoke test
     max_merge(d, other, mask=np.ones(100, dtype=np.intp), n_a=1, n_b=1)

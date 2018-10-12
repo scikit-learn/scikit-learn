@@ -84,6 +84,7 @@ Scoring                           Function                                      
 
 **Regression**
 'explained_variance'              :func:`metrics.explained_variance_score`
+'max_error'                       :func:`metrics.max_error`
 'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
 'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
 'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
@@ -98,13 +99,14 @@ Usage examples:
     >>> from sklearn.model_selection import cross_val_score
     >>> iris = datasets.load_iris()
     >>> X, y = iris.data, iris.target
-    >>> clf = svm.SVC(gamma='scale', probability=True, random_state=0)
-    >>> cross_val_score(clf, X, y, scoring='neg_log_loss') # doctest: +ELLIPSIS
-    array([-0.10..., -0.16..., -0.07...])
+    >>> clf = svm.SVC(gamma='scale', random_state=0)
+    >>> cross_val_score(clf, X, y, scoring='recall_macro',
+    ...                 cv=5)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
     >>> model = svm.SVC()
-    >>> cross_val_score(model, X, y, scoring='wrong_choice')
+    >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score', 'average_precision', 'balanced_accuracy', 'brier_score_loss', 'completeness_score', 'explained_variance', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'fowlkes_mallows_score', 'homogeneity_score', 'mutual_info_score', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_mean_squared_log_error', 'neg_median_absolute_error', 'normalized_mutual_info_score', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc', 'v_measure_score']
+    ValueError: 'wrong_choice' is not a valid scoring value. Use sorted(sklearn.metrics.SCORERS.keys()) to get valid options.
 
 .. note::
 
@@ -150,7 +152,8 @@ the :func:`fbeta_score` function::
     >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
     >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.svm import LinearSVC
-    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
+    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
+    ...                     scoring=ftwo_scorer, cv=5)
 
 The second use case is to build a completely custom scorer object
 from a simple python function using :func:`make_scorer`, which can
@@ -176,14 +179,14 @@ Here is an example of building custom scorers, and of using the
     >>> import numpy as np
     >>> def my_custom_loss_func(y_true, y_pred):
     ...     diff = np.abs(y_true - y_pred).max()
-    ...     return np.log(1 + diff)
+    ...     return np.log1p(diff)
     ...
     >>> # score will negate the return value of my_custom_loss_func,
     >>> # which will be np.log(2), 0.693, given the values for X
     >>> # and y defined below.
     >>> score = make_scorer(my_custom_loss_func, greater_is_better=False)
     >>> X = [[1], [1]]
-    >>> y  = [0, 1]
+    >>> y = [0, 1]
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
     >>> clf = clf.fit(X, y)
@@ -248,15 +251,16 @@ permitted and will require a wrapper to return a single metric::
     >>> def fp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 1]
     >>> def fn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 0]
     >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 1]
-    >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
-    ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
-    >>> cv_results = cross_validate(svm.fit(X, y), X, y, scoring=scoring)
+    >>> scoring = {'tp': make_scorer(tp), 'tn': make_scorer(tn),
+    ...            'fp': make_scorer(fp), 'fn': make_scorer(fn)}
+    >>> cv_results = cross_validate(svm.fit(X, y), X, y,
+    ...                             scoring=scoring, cv=5)
     >>> # Getting the test set true positive scores
-    >>> print(cv_results['test_tp'])          # doctest: +NORMALIZE_WHITESPACE
-    [16 14  9]
+    >>> print(cv_results['test_tp'])  # doctest: +NORMALIZE_WHITESPACE
+    [10  9  8  7  8]
     >>> # Getting the test set false negative scores
-    >>> print(cv_results['test_fn'])          # doctest: +NORMALIZE_WHITESPACE
-    [1 3 7]
+    >>> print(cv_results['test_fn'])  # doctest: +NORMALIZE_WHITESPACE
+    [0 1 2 3 2]
 
 .. _classification_metrics:
 
@@ -417,74 +421,76 @@ In the multilabel case with binary label indicators: ::
 Balanced accuracy score
 -----------------------
 
-The :func:`balanced_accuracy_score` function computes the
-`balanced accuracy <https://en.wikipedia.org/wiki/Accuracy_and_precision>`_, which
-avoids inflated performance estimates on imbalanced datasets. It is defined as the
-arithmetic mean of `sensitivity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
-(true positive rate) and `specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
-(true negative rate), or the average of `recall scores <https://en.wikipedia.org/wiki/Precision_and_recall>`_
-obtained on either class.
+The :func:`balanced_accuracy_score` function computes the `balanced accuracy
+<https://en.wikipedia.org/wiki/Accuracy_and_precision>`_, which avoids inflated
+performance estimates on imbalanced datasets. It is the macro-average of recall
+scores per class or, equivalently, raw accuracy where each sample is weighted
+according to the inverse prevalence of its true class.
+Thus for balanced datasets, the score is equal to accuracy.
 
-If the classifier performs equally well on either class, this term reduces to the
-conventional accuracy (i.e., the number of correct predictions divided by the total
-number of predictions). In contrast, if the conventional accuracy is above chance only
-because the classifier takes advantage of an imbalanced test set, then the balanced
-accuracy, as appropriate, will drop to 50%.
+In the binary case, balanced accuracy is equal to the arithmetic mean of
+`sensitivity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
+(true positive rate) and `specificity
+<https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_ (true negative
+rate), or the area under the ROC curve with binary predictions rather than
+scores.
 
-If :math:`\hat{y}_i\in\{0,1\}` is the predicted value of
-the :math:`i`-th sample and :math:`y_i\in\{0,1\}` is the corresponding true value,
-then the balanced accuracy is defined as
+If the classifier performs equally well on either class, this term reduces to
+the conventional accuracy (i.e., the number of correct predictions divided by
+the total number of predictions).
+
+In contrast, if the conventional accuracy is above chance only because the
+classifier takes advantage of an imbalanced test set, then the balanced
+accuracy, as appropriate, will drop to :math:`\frac{1}{\text{n\_classes}}`.
+
+The score ranges from 0 to 1, or when ``adjusted=True`` is used, it rescaled to
+the range :math:`\frac{1}{1 - \text{n\_classes}}` to 1, inclusive, with
+performance at random scoring 0.
+
+If :math:`y_i` is the true value of the :math:`i`-th sample, and :math:`w_i`
+is the corresponding sample weight, then we adjust the sample weight to:
 
 .. math::
 
-   \texttt{balanced-accuracy}(y, \hat{y}) = \frac{1}{2} \left(\frac{\sum_i 1(\hat{y}_i = 1 \land y_i = 1)}{\sum_i 1(y_i = 1)} + \frac{\sum_i 1(\hat{y}_i = 0 \land y_i = 0)}{\sum_i 1(y_i = 0)}\right)
+   \hat{w}_i = \frac{w_i}{\sum_j{1(y_j = y_i) w_j}}
 
 where :math:`1(x)` is the `indicator function <https://en.wikipedia.org/wiki/Indicator_function>`_.
+Given predicted :math:`\hat{y}_i` for sample :math:`i`, balanced accuracy is
+defined as:
 
-Under this definition, the balanced accuracy coincides with :func:`roc_auc_score`
-given binary ``y_true`` and ``y_pred``:
+.. math::
 
-  >>> import numpy as np
-  >>> from sklearn.metrics import balanced_accuracy_score, roc_auc_score
-  >>> y_true = [0, 1, 0, 0, 1, 0]
-  >>> y_pred = [0, 1, 0, 0, 0, 1]
-  >>> balanced_accuracy_score(y_true, y_pred)
-  0.625
-  >>> roc_auc_score(y_true, y_pred)
-  0.625
+   \texttt{balanced-accuracy}(y, \hat{y}, w) = \frac{1}{\sum{\hat{w}_i}} \sum_i 1(\hat{y}_i = y_i) \hat{w}_i
 
-(but in general, :func:`roc_auc_score` takes as its second argument non-binary scores).
+With ``adjusted=True``, balanced accuracy reports the relative increase from
+:math:`\texttt{balanced-accuracy}(y, \mathbf{0}, w) =
+\frac{1}{\text{n\_classes}}`.  In the binary case, this is also known as
+`*Youden's J statistic* <https://en.wikipedia.org/wiki/Youden%27s_J_statistic>`_,
+or *informedness*.
 
 .. note::
 
-    Currently this score function is only defined for binary classification problems, you
-    may need to wrap it by yourself if you want to use it for multilabel problems.
+    The multiclass definition here seems the most reasonable extension of the
+    metric used in binary classification, though there is no certain consensus
+    in the literature:
 
-    There is no clear consensus on the definition of a balanced accuracy for the
-    multiclass setting. Here are some definitions that can be found in the literature:
-
-    * Macro-average recall as described in [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_:
-      the recall for each class is computed independently and the average is taken over all classes.
-      In [Guyon2015]_, the macro-average recall is then adjusted to ensure that random predictions
-      have a score of :math:`0` while perfect predictions have a score of :math:`1`.
-      One can compute the macro-average recall using ``recall_score(average="macro")`` in :func:`recall_score`.
+    * Our definition: [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_, where
+      [Guyon2015]_ adopt the adjusted version to ensure that random predictions
+      have a score of :math:`0` and perfect predictions have a score of :math:`1`..
     * Class balanced accuracy as described in [Mosley2013]_: the minimum between the precision
       and the recall for each class is computed. Those values are then averaged over the total
       number of classes to get the balanced accuracy.
-    * Balanced Accuracy as described in [Urbanowicz2015]_: the average of sensitivity and selectivity
+    * Balanced Accuracy as described in [Urbanowicz2015]_: the average of sensitivity and specificity
       is computed for each class and then averaged over total number of classes.
-
-    Note that none of these different definitions are currently implemented within
-    the :func:`balanced_accuracy_score` function.
 
 .. topic:: References:
 
   .. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. Macià,
      B. Ray, M. Saeed, A.R. Statnikov, E. Viegas, `Design of the 2015 ChaLearn AutoML Challenge
-     <http://ieeexplore.ieee.org/document/7280767/>`_,
+     <https://ieeexplore.ieee.org/document/7280767>`_,
      IJCNN 2015.
   .. [Mosley2013] L. Mosley, `A balanced approach to the multi-class imbalance problem
-     <http://lib.dr.iastate.edu/etd/13537/>`_,
+     <https://lib.dr.iastate.edu/etd/13537/>`_,
      IJCV 2010.
   .. [Kelleher2015] John. D. Kelleher, Brian Mac Namee, Aoife D'Arcy, `Fundamentals of
      Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
@@ -586,13 +592,15 @@ and inferred labels::
    >>> y_pred = [0, 0, 2, 1, 0]
    >>> target_names = ['class 0', 'class 1', 'class 2']
    >>> print(classification_report(y_true, y_pred, target_names=target_names))
-                precision    recall  f1-score   support
+                 precision    recall  f1-score   support
    <BLANKLINE>
-       class 0       0.67      1.00      0.80         2
-       class 1       0.00      0.00      0.00         1
-       class 2       1.00      0.50      0.67         2
+        class 0       0.67      1.00      0.80         2
+        class 1       0.00      0.00      0.00         1
+        class 2       1.00      0.50      0.67         2
    <BLANKLINE>
-   avg / total       0.67      0.60      0.59         5
+      micro avg       0.60      0.60      0.60         5
+      macro avg       0.56      0.50      0.49         5
+   weighted avg       0.67      0.60      0.59         5
    <BLANKLINE>
 
 .. topic:: Example:
@@ -712,7 +720,7 @@ from the ground truth label and a score given by the classifier
 by varying a decision threshold.
 
 The :func:`average_precision_score` function computes the
-`average precision <http://en.wikipedia.org/w/index.php?title=Information_retrieval&oldid=793358396#Average_precision>`_
+`average precision <https://en.wikipedia.org/w/index.php?title=Information_retrieval&oldid=793358396#Average_precision>`_
 (AP) from prediction scores. The value is between 0 and 1 and higher is better.
 AP is defined as
 
@@ -768,7 +776,7 @@ binary classification and multilabel indicator format.
 .. topic:: References:
 
   .. [Manning2008] C.D. Manning, P. Raghavan, H. Schütze, `Introduction to Information Retrieval
-     <http://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html>`_,
+     <https://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html>`_,
      2008.
   .. [Everingham2010] M. Everingham, L. Van Gool, C.K.I. Williams, J. Winn, A. Zisserman,
      `The Pascal Visual Object Classes (VOC) Challenge
@@ -778,7 +786,7 @@ binary classification and multilabel indicator format.
      <http://www.machinelearning.org/proceedings/icml2006/030_The_Relationship_Bet.pdf>`_,
      ICML 2006.
   .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
-     <http://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
+     <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
      NIPS 2015.
 
 
@@ -1290,7 +1298,7 @@ Here is a small example of usage of this function:::
     >>> y_pred = np.array([0, 1, 1, 0])
     >>> brier_score_loss(y_true, y_prob)
     0.055
-    >>> brier_score_loss(y_true, 1-y_prob, pos_label=0)
+    >>> brier_score_loss(y_true, 1 - y_prob, pos_label=0)
     0.055
     >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
     0.055
@@ -1522,6 +1530,38 @@ function::
     >>> explained_variance_score(y_true, y_pred, multioutput=[0.3, 0.7])
     ... # doctest: +ELLIPSIS
     0.990...
+
+.. _max_error:
+
+Max error
+-------------------
+
+The :func:`max_error` function computes the maximum `residual error
+<https://en.wikipedia.org/wiki/Errors_and_residuals>`_ , a metric
+that captures the worst case error between the predicted value and
+the true value. In a perfectly fitted single output regression
+model, ``max_error`` would be ``0`` on the training set and though this
+would be highly unlikely in the real world, this metric shows the
+extent of error that the model had when it was fitted.
+
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
+and :math:`y_i` is the corresponding true value, then the max error is
+defined as
+
+.. math::
+
+  \text{Max Error}(y, \hat{y}) = max(| y_i - \hat{y}_i |)
+
+Here is a small example of usage of the :func:`max_error` function::
+
+  >>> from sklearn.metrics import max_error
+  >>> y_true = [3, 2, 7, 1]
+  >>> y_pred = [9, 2, 7, 1]
+  >>> max_error(y_true, y_pred)
+  6
+
+The :func:`max_error` does not support multioutput.
 
 .. _mean_absolute_error:
 
@@ -1769,7 +1809,7 @@ Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
   >>> clf = SVC(kernel='linear', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test) # doctest: +ELLIPSIS
   0.63...
-  >>> clf = DummyClassifier(strategy='most_frequent',random_state=0)
+  >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
   >>> clf.fit(X_train, y_train)
   DummyClassifier(constant=None, random_state=0, strategy='most_frequent')
   >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS

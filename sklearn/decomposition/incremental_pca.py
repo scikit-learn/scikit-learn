@@ -100,19 +100,33 @@ class IncrementalPCA(_BasePCA):
         The number of samples processed by the estimator. Will be reset on
         new calls to fit, but increments across ``partial_fit`` calls.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import IncrementalPCA
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = IncrementalPCA(n_components=7, batch_size=200)
+    >>> # either partially fit on smaller batches of data
+    >>> transformer.partial_fit(X[:100, :])
+    IncrementalPCA(batch_size=200, copy=True, n_components=7, whiten=False)
+    >>> # or let the fit function itself divide the data into batches
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> X_transformed.shape
+    (1797, 7)
+
     Notes
     -----
     Implements the incremental PCA model from:
     `D. Ross, J. Lim, R. Lin, M. Yang, Incremental Learning for Robust Visual
     Tracking, International Journal of Computer Vision, Volume 77, Issue 1-3,
     pp. 125-141, May 2008.`
-    See http://www.cs.toronto.edu/~dross/ivt/RossLimLinYang_ijcv.pdf
+    See https://www.cs.toronto.edu/~dross/ivt/RossLimLinYang_ijcv.pdf
 
     This model is an extension of the Sequential Karhunen-Loeve Transform from:
     `A. Levy and M. Lindenbaum, Sequential Karhunen-Loeve Basis Extraction and
     its Application to Images, IEEE Transactions on Image Processing, Volume 9,
     Number 8, pp. 1371-1374, August 2000.`
-    See http://www.cs.technion.ac.il/~mic/doc/skl-ip.pdf
+    See https://www.cs.technion.ac.il/~mic/doc/skl-ip.pdf
 
     We have specifically abstained from an optimization used by authors of both
     papers, a QR decomposition used in specific situations to reduce the
