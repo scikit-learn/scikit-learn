@@ -1531,10 +1531,9 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         labels = np.asarray(labels)
 
     # labelled micro average
-    label_micro_average = False
-    if y_type.startswith('multiclass') and \
-       (not labels_given or (len(labels) == len(target_names))):
-        label_micro_average = True
+    micro_is_accuracy = ((y_type == 'multiclass' or y_type == 'binary') and
+                         (not labels_given or
+                          (set(labels) == set(unique_labels(y_true, y_pred)))))
 
     if target_names is not None and len(labels) != len(target_names):
         if labels_given:
@@ -1583,7 +1582,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     # compute all applicable averages
     for average in average_options:
-        if average.startswith('micro') and label_micro_average:
+        if average.startswith('micro') and micro_is_accuracy:
             line_heading = average + ' avg (accuracy)'
         else:
             line_heading = average + 'avg'
