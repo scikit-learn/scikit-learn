@@ -714,7 +714,7 @@ def test_full_vs_elkan():
     km1.fit(X)
     km2.fit(X)
 
-    homogeneity_score(km1.predict(X), km2.predict(X)) == 1.0
+    assert homogeneity_score(km1.predict(X), km2.predict(X)) == 1.0
 
 
 def test_n_init():
