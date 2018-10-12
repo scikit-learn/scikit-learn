@@ -111,7 +111,7 @@ def _get_indx(_lambda, num, largest):
 def lobpcg(A, X,
            B=None, M=None, Y=None,
            tol=None, maxiter=20,
-           largest=True, verbosityLevel=1,
+           largest=True, verbosityLevel=0,
            retLambdaHistory=False, retResidualNormsHistory=False):
     """Locally Optimal Block Preconditioned Conjugate Gradient Method (LOBPCG)
 
