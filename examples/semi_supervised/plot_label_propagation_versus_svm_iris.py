@@ -3,11 +3,11 @@
 Decision boundary of semi-supervised classifiers versus SVM on the Iris dataset
 ===============================================================================
 
-Comparison for the decision boundary generated on the iris dataset
-between Label Propagation, Self-training and SVM.
+A comparison for the decision boundaries generated on the iris dataset
+by Label Propagation, Self-training and SVM.
 
-This demonstrates Label Propagation and Self-training learning good boundaries
-even with a small amount of labeled data.
+This example demonstrates that Label Propagation and Self-training can learn
+good boundaries even when small amounts of labeled data are available.
 
 Note that Self-training with 100% of the data is omitted as it is functionally
 identical to training the SVC on 100% of the data.
@@ -15,14 +15,15 @@ identical to training the SVC on 100% of the data.
 """
 print(__doc__)
 
-# Authors: Clay Woolam <clay@woolam.org>
+# Authors: Clay Woolam   <clay@woolam.org>
+#        : Oliver Rausch <rauscho@ethz.ch>
 # License: BSD
 
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
-from sklearn import svm
-from sklearn.semi_supervised import label_propagation
+from sklearn.svm import SVC
+from sklearn.semi_supervised import LabelSpreading
 from sklearn.semi_supervised import SelfTrainingClassifier
 
 rng = np.random.RandomState(0)
@@ -41,21 +42,18 @@ y_50 = np.copy(y)
 y_50[rng.rand(len(y)) < 0.5] = -1
 # we create an instance of SVM and fit out data. We do not scale our
 # data since we want to plot the support vectors
-ls30 = (label_propagation.LabelSpreading().fit(X, y_30),
-        y_30, 'Label Spreading 30% data')
-ls50 = (label_propagation.LabelSpreading().fit(X, y_50),
-        y_50, 'Label Spreading 50% data')
-ls100 = (label_propagation.LabelSpreading().fit(X, y),
-         y, 'Label Spreading 100% data')
+ls30 = (LabelSpreading().fit(X, y_30), y_30, 'Label Spreading 30% data')
+ls50 = (LabelSpreading().fit(X, y_50), y_50, 'Label Spreading 50% data')
+ls100 = (LabelSpreading().fit(X, y), y, 'Label Spreading 100% data')
 
 # the base classifier for self-training is identical to the SVC
-base_classifier = svm.SVC(kernel='rbf', gamma=.5, probability=True)
+base_classifier = SVC(kernel='rbf', gamma=.5, probability=True)
 st30 = (SelfTrainingClassifier(base_classifier).fit(X, y_30),
         y_30, 'Self-training 30% data')
 st50 = (SelfTrainingClassifier(base_classifier).fit(X, y_50),
         y_50, 'Self-training 50% data')
 
-rbf_svc = (svm.SVC(kernel='rbf', gamma=.5).fit(X, y), y, 'SVC with rbf kernel')
+rbf_svc = (SVC(kernel='rbf', gamma=.5).fit(X, y), y, 'SVC with rbf kernel')
 
 # create a mesh to plot in
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
