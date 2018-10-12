@@ -601,13 +601,13 @@ boolean mask array or callable
 
         if not Xs:
             # All transformers are None
-            return np.zeros((X.shape[0], 0))
+            return np.zeros((len(X), 0))
 
         if self._X_is_sparse:
-            inverse_Xs = sparse.lil_matrix((Xs[0].shape[0],
+            inverse_Xs = sparse.lil_matrix((len(Xs[0]),
                                             self._n_features_in))
         else:
-            inverse_Xs = np.empty((Xs[0].shape[0], self._n_features_in))
+            inverse_Xs = np.empty((len(Xs[0]), self._n_features_in))
         for indices, inverse_X in zip(self._input_indices, Xs):
             if sparse.issparse(inverse_X):
                 if self._X_is_sparse:
