@@ -598,16 +598,21 @@ boolean mask array or callable
             delayed(_inverse_transform_one)(
                 trans, X_sel, weight)
             for trans, X_sel, weight in inv_transformers)
+            
+        if hasattr(X, 'shape'):
+            X_length = X.shape[0]
+        else:
+            X_length = len(X)
 
         if not Xs:
             # All transformers are None
-            return np.zeros((len(X), 0))
+            return np.zeros((X_length, 0))
 
         if self._X_is_sparse:
-            inverse_Xs = sparse.lil_matrix((len(Xs[0]),
+            inverse_Xs = sparse.lil_matrix((X_length,
                                             self._n_features_in))
         else:
-            inverse_Xs = np.empty((len(Xs[0]), self._n_features_in))
+            inverse_Xs = np.empty((X_length, self._n_features_in))
         for indices, inverse_X in zip(self._input_indices, Xs):
             if sparse.issparse(inverse_X):
                 if self._X_is_sparse:
