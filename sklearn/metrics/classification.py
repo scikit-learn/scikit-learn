@@ -1583,7 +1583,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     # compute all applicable averages
     for average in average_options:
         if average.startswith('micro') and micro_is_accuracy:
-            line_heading = average + ' avg (accuracy)'
+            continue
+            # line_heading = average + ' avg (accuracy)'
         else:
             line_heading = average + 'avg'
 
