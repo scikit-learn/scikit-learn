@@ -181,12 +181,6 @@ def _check_fitted_model(km):
                          % km.n_clusters, km.fit, [[0., 1.]])
 
 
-def test_k_means_plus_plus_init():
-    km = KMeans(init="k-means++", n_clusters=n_clusters,
-                random_state=42).fit(X)
-    _check_fitted_model(km)
-
-
 def test_k_means_new_centers():
     # Explore the part of the code where a new center is reassigned
     X = np.array([[0, 0, 1, 1],
@@ -229,24 +223,6 @@ def test_k_means_precompute_distances_flag():
     assert_raises(ValueError, km.fit, X)
 
 
-def test_k_means_plus_plus_init_sparse():
-    km = KMeans(init="k-means++", n_clusters=n_clusters, random_state=42)
-    km.fit(X_csr)
-    _check_fitted_model(km)
-
-
-def test_k_means_random_init():
-    km = KMeans(init="random", n_clusters=n_clusters, random_state=42)
-    km.fit(X)
-    _check_fitted_model(km)
-
-
-def test_k_means_random_init_sparse():
-    km = KMeans(init="random", n_clusters=n_clusters, random_state=42)
-    km.fit(X_csr)
-    _check_fitted_model(km)
-
-
 def test_k_means_plus_plus_init_not_precomputed():
     km = KMeans(init="k-means++", n_clusters=n_clusters, random_state=42,
                 precompute_distances=False).fit(X)
@@ -259,10 +235,12 @@ def test_k_means_random_init_not_precomputed():
     _check_fitted_model(km)
 
 
-def test_k_means_perfect_init():
-    km = KMeans(init=centers.copy(), n_clusters=n_clusters, random_state=42,
-                n_init=1)
-    km.fit(X)
+@pytest.mark.parametrize('representation', ['dense', 'sparse'])
+@pytest.mark.parametrize('init', ['random', 'k-means++', centers.copy()])
+def test_k_means_init(representation, init):
+    data = {'dense': X, 'sparse': X_csr}[representation]
+    km = KMeans(init=init, n_clusters=n_clusters, random_state=42, n_init=1)
+    km.fit(data)
     _check_fitted_model(km)
 
 
@@ -315,13 +293,6 @@ def test_k_means_fortran_aligned_data():
     assert_array_equal(km.labels_, labels)
 
 
-def test_mb_k_means_plus_plus_init_dense_array():
-    mb_k_means = MiniBatchKMeans(init="k-means++", n_clusters=n_clusters,
-                                 random_state=42)
-    mb_k_means.fit(X)
-    _check_fitted_model(mb_k_means)
-
-
 def test_mb_kmeans_verbose():
     mb_k_means = MiniBatchKMeans(init="k-means++", n_clusters=n_clusters,
                                  random_state=42, verbose=1)
@@ -333,38 +304,11 @@ def test_mb_kmeans_verbose():
         sys.stdout = old_stdout
 
 
-def test_mb_k_means_plus_plus_init_sparse_matrix():
-    mb_k_means = MiniBatchKMeans(init="k-means++", n_clusters=n_clusters,
-                                 random_state=42)
-    mb_k_means.fit(X_csr)
-    _check_fitted_model(mb_k_means)
-
-
 def test_minibatch_init_with_large_k():
     mb_k_means = MiniBatchKMeans(init='k-means++', init_size=10, n_clusters=20)
     # Check that a warning is raised, as the number clusters is larger
     # than the init_size
     assert_warns(RuntimeWarning, mb_k_means.fit, X)
-
-
-def test_minibatch_k_means_random_init_dense_array():
-    # increase n_init to make random init stable enough
-    mb_k_means = MiniBatchKMeans(init="random", n_clusters=n_clusters,
-                                 random_state=42, n_init=10).fit(X)
-    _check_fitted_model(mb_k_means)
-
-
-def test_minibatch_k_means_random_init_sparse_csr():
-    # increase n_init to make random init stable enough
-    mb_k_means = MiniBatchKMeans(init="random", n_clusters=n_clusters,
-                                 random_state=42, n_init=10).fit(X_csr)
-    _check_fitted_model(mb_k_means)
-
-
-def test_minibatch_k_means_perfect_init_dense_array():
-    mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                 random_state=42, n_init=1).fit(X)
-    _check_fitted_model(mb_k_means)
 
 
 def test_minibatch_k_means_init_multiple_runs_with_explicit_centers():
@@ -373,9 +317,13 @@ def test_minibatch_k_means_init_multiple_runs_with_explicit_centers():
     assert_warns(RuntimeWarning, mb_k_means.fit, X)
 
 
-def test_minibatch_k_means_perfect_init_sparse_csr():
-    mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                 random_state=42, n_init=1).fit(X_csr)
+@pytest.mark.parametrize('representation', ['dense', 'sparse'])
+@pytest.mark.parametrize('init', ["random", 'k-means++', centers.copy()])
+def test_minibatch_k_means_init(representation, init):
+    data = {'dense': X, 'sparse': X_csr}[representation]
+    mb_k_means = MiniBatchKMeans(init=init, n_clusters=n_clusters,
+                                 random_state=42, n_init=10)
+    mb_k_means.fit(data)
     _check_fitted_model(mb_k_means)
 
 
