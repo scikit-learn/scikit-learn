@@ -17,7 +17,9 @@ from sklearn.utils.testing import assert_allclose_dense_sparse
 
 from sklearn.base import BaseEstimator
 from sklearn.externals import six
-from sklearn.compose import ColumnTransformer, make_column_transformer
+from sklearn.compose import (
+    ColumnTransformer, make_column_transformer, make_select_dtypes
+)
 from sklearn.exceptions import NotFittedError, DataConversionWarning
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
 from sklearn.feature_extraction import DictVectorizer
@@ -989,3 +991,58 @@ def test_column_transformer_callable_specifier():
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first)
     assert callable(ct.transformers[0][2])
     assert ct.transformers_[0][2] == ['first']
+
+
+def test_column_transformer_with_select_dtypes():
+    pd = pytest.importorskip('pandas')
+
+    X_df = pd.DataFrame({
+        'first': np.array([0, 1, 2], dtype=np.int),
+        'second': np.array([0.0, 1.0, 2.0], dtype=np.float),
+        'third': ["one", "two", "three"],
+    })
+
+    # select numbers
+    X_numbers = X_df[['first', 'second']].values
+    ct = ColumnTransformer([(
+        'trans1', Trans(), make_select_dtypes(include=[np.number]))])
+    assert_array_equal(ct.fit_transform(X_df), X_numbers)
+    assert_array_equal(ct.fit(X_df).transform(X_df), X_numbers)
+
+    ct = ColumnTransformer([(
+        'trans1', Trans(), make_select_dtypes(exclude=[np.object]))])
+    assert_array_equal(ct.fit_transform(X_df), X_numbers)
+    assert_array_equal(ct.fit(X_df).transform(X_df), X_numbers)
+
+    ct = ColumnTransformer([(
+        'trans1', Trans(), make_select_dtypes(include=[np.int, np.float]))])
+    assert_array_equal(ct.fit_transform(X_df), X_numbers)
+    assert_array_equal(ct.fit(X_df).transform(X_df), X_numbers)
+
+    # select object
+    X_objects = X_df[['third']].values
+    ct = ColumnTransformer([(
+        'trans1', Trans(), make_select_dtypes(include=[np.object]))])
+    assert_array_equal(ct.fit_transform(X_df), X_objects)
+    assert_array_equal(ct.fit(X_df).transform(X_df), X_objects)
+
+    # select float
+    X_float = X_df[['second']].values
+    ct = ColumnTransformer([(
+        'trans1', Trans(), make_select_dtypes(include=[np.float]))])
+    assert_array_equal(ct.fit_transform(X_df), X_float)
+    assert_array_equal(ct.fit(X_df).transform(X_df), X_float)
+
+    # select int
+    X_int = X_df[['first']].values
+    ct = ColumnTransformer([(
+        'trans1', Trans(), make_select_dtypes(include=[np.int]))])
+    assert_array_equal(ct.fit_transform(X_df), X_int)
+    assert_array_equal(ct.fit(X_df).transform(X_df), X_int)
+
+    # select everything
+    X_all = X_df.values
+    ct = ColumnTransformer([(
+        'trans1', Trans(), make_select_dtypes(include=[np.number, np.object]))])
+    assert_array_equal(ct.fit_transform(X_df), X_all)
+    assert_array_equal(ct.fit(X_df).transform(X_df), X_all)

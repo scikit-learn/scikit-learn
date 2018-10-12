@@ -23,7 +23,9 @@ from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 
 
-__all__ = ['ColumnTransformer', 'make_column_transformer']
+__all__ = [
+    'ColumnTransformer', 'make_column_transformer', 'make_select_dtypes'
+]
 
 
 _ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
@@ -775,3 +777,47 @@ def make_column_transformer(*transformers, **kwargs):
     return ColumnTransformer(transformer_list, n_jobs=n_jobs,
                              remainder=remainder,
                              sparse_threshold=sparse_threshold)
+
+
+def make_select_dtypes(include=None, exclude=None):
+    """Creates a column selector callable which can be passed to
+    `make_column_transformer` or `ColumnTransformer` to select columns based
+    on type. Uses :meth:`pandas.DataFrame.select_dtypes` on the first row to 
+    select columns.
+
+    Parameters
+    ----------
+    include: list of column dtypes to include, default None
+
+    exclude: list of column dtypes to exclude, default None
+
+    Returns
+    -------
+    callable
+
+    Examples
+    --------
+    >>> from sklearn.compose import ColumnTransformer, make_select_dtypes
+    >>> from sklearn.preprocessing import Normalizer, OneHotEncoder
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> df = pd.DataFrame({
+    ...      'a': [0, 2],
+    ...      'b': [-2.0, 2.0],
+    ...      'c': ['one', 'two']
+    ... })
+    >>> norm = Normalizer(norm='l1')
+    >>> ohe = OneHotEncoder()
+    >>> ct = ColumnTransformer(
+    ...     [("norm", norm, make_select_dtypes([np.number])),
+    ...      ("ohe", ohe, make_select_dtypes([np.object]))])
+    >>> ct.fit_transform(df)    # doctest: +NORMALIZE_WHITESPACE
+    array([[ 0., -1.,  1.,  0.],
+           [0.5, 0.5,  0.,  1 ]])
+
+    """
+    def select_dtypes(df):
+        return (df.iloc[:1].select_dtypes(
+            include=include, exclude=exclude
+        ).columns)
+    return select_dtypes

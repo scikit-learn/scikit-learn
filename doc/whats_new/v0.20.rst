@@ -34,6 +34,10 @@ Changelog
   columns with types not convertible to a numeric.
   :issue:`11912` by :user:`Adrin Jalali <adrinjalali>`.
 
+- |Feature|  Adds :func:`compose.make_select_dtypes` which is used with
+  :class:`compose.ColumnTransformer` to select columns based on data types.
+  :issue:`12303` by :user:`Thomas Fan <thomasjpfan>`.
+
 :mod:`sklearn.datasets`
 ............................
 
