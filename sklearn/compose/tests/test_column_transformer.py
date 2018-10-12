@@ -1043,6 +1043,7 @@ def test_column_transformer_with_select_dtypes():
     # select everything
     X_all = X_df.values
     ct = ColumnTransformer([(
-        'trans1', Trans(), make_select_dtypes(include=[np.number, np.object]))])
+        'trans1', Trans(),
+        make_select_dtypes(include=[np.number, np.object]))])
     assert_array_equal(ct.fit_transform(X_df), X_all)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_all)

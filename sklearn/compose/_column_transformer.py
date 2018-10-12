@@ -782,7 +782,7 @@ def make_column_transformer(*transformers, **kwargs):
 def make_select_dtypes(include=None, exclude=None):
     """Creates a column selector callable which can be passed to
     `make_column_transformer` or `ColumnTransformer` to select columns based
-    on type. Uses :meth:`pandas.DataFrame.select_dtypes` on the first row to 
+    on type. Uses :meth:`pandas.DataFrame.select_dtypes` on the first row to
     select columns.
 
     Parameters
