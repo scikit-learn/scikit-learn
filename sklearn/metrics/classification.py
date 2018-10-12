@@ -1502,6 +1502,11 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         is also known as "sensitivity"; recall of the negative class is
         "specificity".
 
+        Show micro-average for multi-class classification is confusing,
+        because  for precision, recall and f1-score always be the same
+        value, all of wich being the same accuracy. So in the report,
+        the micro-average is ignored.
+
     Examples
     --------
     >>> from sklearn.metrics import classification_report
