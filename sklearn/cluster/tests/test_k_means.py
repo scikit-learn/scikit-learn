@@ -235,10 +235,9 @@ def test_k_means_random_init_not_precomputed():
     _check_fitted_model(km)
 
 
-@pytest.mark.parametrize('representation', ['dense', 'sparse'])
+@pytest.mark.parametrize('data', [X, X_csr], ids=['dense', 'sparse'])
 @pytest.mark.parametrize('init', ['random', 'k-means++', centers.copy()])
-def test_k_means_init(representation, init):
-    data = {'dense': X, 'sparse': X_csr}[representation]
+def test_k_means_init(data, init):
     km = KMeans(init=init, n_clusters=n_clusters, random_state=42, n_init=1)
     km.fit(data)
     _check_fitted_model(km)
@@ -317,10 +316,9 @@ def test_minibatch_k_means_init_multiple_runs_with_explicit_centers():
     assert_warns(RuntimeWarning, mb_k_means.fit, X)
 
 
-@pytest.mark.parametrize('representation', ['dense', 'sparse'])
+@pytest.mark.parametrize('data', [X, X_csr], ids=['dense', 'sparse'])
 @pytest.mark.parametrize('init', ["random", 'k-means++', centers.copy()])
-def test_minibatch_k_means_init(representation, init):
-    data = {'dense': X, 'sparse': X_csr}[representation]
+def test_minibatch_k_means_init(data, init):
     mb_k_means = MiniBatchKMeans(init=init, n_clusters=n_clusters,
                                  random_state=42, n_init=10)
     mb_k_means.fit(data)
@@ -545,10 +543,9 @@ def test_score(algo):
     assert_greater(s2, s1)
 
 
-@pytest.mark.parametrize('representation', ['dense', 'sparse'])
+@pytest.mark.parametrize('data', [X, X_csr], ids=['dense', 'sparse'])
 @pytest.mark.parametrize('init', ['random', 'k-means++', centers.copy()])
-def test_predict_minibatch(representation, init):
-    data = {'dense': X, 'sparse': X_csr}[representation]
+def test_predict_minibatch(data, init):
     mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, init=init,
                                  n_init=10, random_state=0).fit(data)
 
