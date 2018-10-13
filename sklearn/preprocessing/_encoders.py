@@ -145,7 +145,7 @@ class OneHotEncoder(_BaseEncoder):
 
     Parameters
     ----------
-    categories : 'auto' or a list of lists/arrays of values.
+    categories : 'auto' or a list of lists/arrays of values, default='auto'.
         Categories (unique values) per feature:
 
         - 'auto' : Determine categories automatically from the training data.
@@ -162,7 +162,7 @@ class OneHotEncoder(_BaseEncoder):
     dtype : number type, default=np.float
         Desired dtype of output.
 
-    handle_unknown : 'error' (default) or 'ignore'
+    handle_unknown : 'error' or 'ignore', default='error'.
         Whether to raise an error or ignore if an unknown categorical feature
         is present during transform (default is to raise). When this parameter
         is set to 'ignore' and an unknown category is encountered during
@@ -170,7 +170,7 @@ class OneHotEncoder(_BaseEncoder):
         will be all zeros. In the inverse transform, an unknown category
         will be denoted as None.
 
-    n_values : 'auto', int or array of ints
+    n_values : 'auto', int or array of ints, default='auto'
         Number of values per feature.
 
         - 'auto' : determine value range from training data.
@@ -184,10 +184,10 @@ class OneHotEncoder(_BaseEncoder):
             The `n_values` keyword was deprecated in version 0.20 and will
             be removed in 0.22. Use `categories` instead.
 
-    categorical_features : "all" or array of indices or mask
+    categorical_features : 'all' or array of indices or mask, default='all'
         Specify what features are treated as categorical.
 
-        - 'all' (default): All features are treated as categorical.
+        - 'all': All features are treated as categorical.
         - array of indices: Array of categorical feature indices.
         - mask: Array of length n_features and with dtype=bool.
 
