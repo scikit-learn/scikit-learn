@@ -795,26 +795,6 @@ def make_select_dtypes(include=None, exclude=None):
     -------
     callable
 
-    Examples
-    --------
-    >>> from sklearn.compose import ColumnTransformer, make_select_dtypes
-    >>> from sklearn.preprocessing import Normalizer, OneHotEncoder
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> df = pd.DataFrame({
-    ...      'a': [0, 2],
-    ...      'b': [-2.0, 2.0],
-    ...      'c': ['one', 'two']
-    ... })
-    >>> norm = Normalizer(norm='l1')
-    >>> ohe = OneHotEncoder()
-    >>> ct = ColumnTransformer(
-    ...     [("norm", norm, make_select_dtypes([np.number])),
-    ...      ("ohe", ohe, make_select_dtypes([np.object]))])
-    >>> ct.fit_transform(df)    # doctest: +NORMALIZE_WHITESPACE
-    array([[ 0., -1.,  1.,  0.],
-           [0.5, 0.5,  0.,  1 ]])
-
     """
     def select_dtypes(df):
         return (df.iloc[:1].select_dtypes(
