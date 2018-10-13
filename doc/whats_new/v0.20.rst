@@ -79,6 +79,8 @@ Changelog
   to :code:`yeo-johnson` to match :class:`preprocessing.PowerTransformer`
   in version 0.23. A FutureWarning is raised when the default value is used.
   :issue:`12317` by :user:`Eric Chang <chang>`.
+- |Fix| Fixed bug in :class:`preprocessing.OrdinalEncoder` when passing
+  manually specified categories. :issue:`12365` by `Joris Van den Bossche`_.
 
 .. _changes_0_20:
 
