@@ -428,6 +428,7 @@ boolean mask array or callable
         self._input_indices = input_indices
         self._n_features_in = X.shape[1]
         self._X_columns = getattr(X, 'columns', None)
+        self._X_dtypes = getattr(X, 'dtypes', None)
         self._X_is_sparse = sparse.issparse(X)
         self._invert_error = ""
         self._output_indices = []
@@ -611,14 +612,14 @@ boolean mask array or callable
         if self._X_is_sparse:
             inverse_Xs = sparse.lil_matrix((X_length,
                                             self._n_features_in))
-        else:
-            inverse_Xs = np.empty((X_length, self._n_features_in))
+            for indices, inverse_X in zip(self._input_indices, Xs):
+                inverse_Xs[:, indices] = inverse_X
+            return inverse_Xs.tocsr()
+
+        inverse_Xs = np.empty((X_length, self._n_features_in))
         for indices, inverse_X in zip(self._input_indices, Xs):
             if sparse.issparse(inverse_X):
-                if self._X_is_sparse:
-                    inverse_Xs[:, indices] = inverse_X
-                else:
-                    inverse_Xs[:, indices] = inverse_X.toarray()
+                inverse_Xs[:, indices] = inverse_X.toarray()
             else:
                 inverse_Xs[:, indices] = inverse_X
 

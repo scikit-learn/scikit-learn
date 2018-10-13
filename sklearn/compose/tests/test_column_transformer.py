@@ -20,8 +20,11 @@ from sklearn.base import BaseEstimator
 from sklearn.externals import six
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.exceptions import NotFittedError, DataConversionWarning
-from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
+from sklearn.preprocessing import (
+    StandardScaler, Normalizer, OneHotEncoder, MinMaxScaler
+)
 from sklearn.feature_extraction import DictVectorizer
+from sklearn.feature_extraction.text import CountVectorizer
 
 
 class Trans(BaseEstimator):
@@ -1052,3 +1055,25 @@ def test_column_transformer_callable_specifier():
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first)
     assert callable(ct.transformers[0][2])
     assert ct.transformers_[0][2] == ['first']
+
+
+def test_column_transformer_inverse_with_strings():
+    pd = pytest.importorskip('pandas')
+
+    df = pd.DataFrame({
+        'city': ['London', 'London', 'Paris', 'Sallisaw'],
+        'title': ["His Last Bow", "How Watson Learned the Trick",
+                  "A Moveable Feast", "The Grapes of Wrath"],
+        'expert_rating': [5, 3, 4, 5],
+        'user_rating': [4, 5, 4, 3]
+    })
+
+    column_trans = ColumnTransformer(
+        [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+         ('title_bow', CountVectorizer(), 'title')],
+        remainder=MinMaxScaler())
+
+    result = column_trans.fit_transform(df)
+    df_inverse = column_trans.inverse_transform(result) 
+
+    pd.util.testing.assert_frame_equal(df, df_inverse)
