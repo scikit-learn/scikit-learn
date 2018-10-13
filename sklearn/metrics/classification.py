@@ -1520,22 +1520,19 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
        macro avg       0.50      0.56      0.49         5
     weighted avg       0.70      0.60      0.61         5
     <BLANKLINE>
-    >>> y_true = [1, 1, 1, 1]
-    >>> y_pred = [1, 1, 0, 0]
+    >>> y_pred = [1, 1, 0]
+    >>> y_true = [1, 1, 1]
     >>> print(classification_report(y_true, y_pred, labels=[1, 2, 3]))
                   precision    recall  f1-score   support
     <BLANKLINE>
-               0       1.00      1.00      1.00         1
-               1       1.00      1.00      1.00         1
-               2       0.00      0.00      0.00         1
-               3       0.00      0.00      0.00         1
+               1       1.00      0.67      0.80         3
+               2       0.00      0.00      0.00         0
+               3       0.00      0.00      0.00         0
     <BLANKLINE>
-       micro avg       1.00      0.50      0.67         4
-       macro avg       0.50      0.50      0.50         4
-    weighted avg       0.50      0.50      0.50         4
-     samples avg       1.00      0.50      0.67         4
-
-
+       micro avg       1.00      0.67      0.80         3
+       macro avg       0.33      0.22      0.27         3
+    weighted avg       1.00      0.67      0.80         3
+    <BLANKLINE>
     """
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
