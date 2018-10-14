@@ -14,7 +14,6 @@ from sklearn import svm
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import label_binarize
 from sklearn.utils.validation import check_random_state
-from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import assert_raises, clean_warning_registry
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal

@@ -45,8 +45,43 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |MajorFeature| A new clustering algorithm: :class:`cluster.OPTICS`: an
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
-  to set and that scales better, by :user:`Shane <espg>` and
-  :user:`Adrin Jalali <adrinjalali>`.
+  to set and that scales better, by :user:`Shane <espg>`,
+  :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
+  
+:mod:`sklearn.preprocessing`
+............................
+
+- |Efficiency| Make :class:`preprocessing.MultiLabelBinarizer` to cache class mappings instead 
+  of calculating it every time on the fly.
+  :issue:`12116` by :user:`Ekaterina Krivich <kiote>` and `Joel Nothman`_.
+
+- |Efficiency| |API| Speed improvement in :class:`preprocessing.PolynomialFeatures`,
+  in the dense case. Also added a new parameter ``order`` which controls output
+  order for further speed performances. :issue:`12251` by `Tom Dupre la Tour`_.
+
+
+:mod:`sklearn.tree`
+...................
+- Decision Trees can now be plotted with matplotlib using
+  :func:`tree.export.plot_tree` without relying on  the ``dot`` library,
+  removing a hard-to-install dependency.
+  :issue:`8508` by `Andreas Müller`_.
+
+- |Feature| ``get_n_leaves()`` and ``get_depth()`` have been added to
+  :class:`tree.BaseDecisionTree` and consequently all estimators based
+  on it, including :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
+  and :class:`tree.ExtraTreeRegressor`.
+  :issue:`12300` by :user:`Adrin Jalali <adrinjalali>`.
+
+
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| Added the :func:`metrics.max_error` metric and a corresponding
+  ``'max_error'`` scorer for single output regression.
+  :issue:`12232` by :user:`Krishna Sangeeth <whiletruelearn>`.
+
 
 :mod:`sklearn.metrics`
 ......................

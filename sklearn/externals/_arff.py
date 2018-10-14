@@ -73,7 +73,7 @@ description part at the beginning of the file. The declarations ``@RELATION``,
 ``@ATTRIBUTE``, and ``@DATA`` are all case insensitive and obligatory.
 
 For more information and details about the ARFF file description, consult
-http://www.cs.waikato.ac.nz/~ml/weka/arff.html
+https://www.cs.waikato.ac.nz/~ml/weka/arff.html
 
 
 ARFF Files in Python
@@ -128,7 +128,7 @@ This module provides several features, including:
 
 - Read and write ARFF files using python built-in structures, such dictionaries
   and lists;
-- Supports `scipy.sparse.coo <http://docs.scipy
+- Supports `scipy.sparse.coo <https://docs.scipy
   .org/doc/scipy/reference/generated/scipy.sparse.coo_matrix.html#scipy.sparse.coo_matrix>`_
   and lists of dictionaries as used by SVMLight
 - Supports the following attribute types: NUMERIC, REAL, INTEGER, STRING, and
@@ -139,7 +139,7 @@ This module provides several features, including:
 - Supports missing values and names with spaces;
 - Supports unicode values and names;
 - Fully compatible with Python 2.7+, Python 3.3+, pypy and pypy3;
-- Under `MIT License <http://opensource.org/licenses/MIT>`_
+- Under `MIT License <https://opensource.org/licenses/MIT>`_
 
 '''
 __author__ = 'Renato de Pontes Pereira, Matthias Feurer, Joel Nothman'

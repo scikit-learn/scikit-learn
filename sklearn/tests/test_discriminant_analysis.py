@@ -9,7 +9,6 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
 
@@ -314,20 +313,6 @@ def test_qda_store_covariance():
         clf.covariance_[1],
         np.array([[0.33333333, -0.33333333], [-0.33333333, 0.66666667]])
     )
-
-
-def test_qda_deprecation():
-    # Test the deprecation
-    clf = QuadraticDiscriminantAnalysis(store_covariances=True)
-    assert_warns_message(DeprecationWarning, "'store_covariances' was renamed"
-                         " to store_covariance in version 0.19 and will be "
-                         "removed in 0.21.", clf.fit, X, y)
-
-    # check that covariance_ (and covariances_ with warning) is stored
-    assert_warns_message(DeprecationWarning, "Attribute ``covariances_`` was "
-                         "deprecated in version 0.19 and will be removed "
-                         "in 0.21. Use ``covariance_`` instead", getattr, clf,
-                         'covariances_')
 
 
 def test_qda_regularization():
