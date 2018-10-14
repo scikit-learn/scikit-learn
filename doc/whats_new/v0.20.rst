@@ -34,6 +34,10 @@ Changelog
   columns with types not convertible to a numeric.
   :issue:`11912` by :user:`Adrin Jalali <adrinjalali>`.
 
+- |API| :class:`compose.ColumnTransformer` now applies the ``sparse_threshold``
+  even if all transformation results are sparse. :issue:`12304` by `Andreas
+  Müller`_.
+
 :mod:`sklearn.datasets`
 ............................
 
