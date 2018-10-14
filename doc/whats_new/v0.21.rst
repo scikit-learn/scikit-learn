@@ -45,8 +45,8 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |MajorFeature| A new clustering algorithm: :class:`cluster.OPTICS`: an
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
-  to set and that scales better, by :user:`Shane <espg>` and
-  :user:`Adrin Jalali <adrinjalali>`.
+  to set and that scales better, by :user:`Shane <espg>`,
+  :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
 
 :mod:`sklearn.semi_supervised`
 ..............................
@@ -69,12 +69,26 @@ Support for Python 3.4 and below has been officially dropped.
 
 :mod:`sklearn.tree`
 ...................
+- Decision Trees can now be plotted with matplotlib using
+  :func:`tree.export.plot_tree` without relying on  the ``dot`` library,
+  removing a hard-to-install dependency.
+  :issue:`8508` by `Andreas Müller`_.
+
 - |Feature| ``get_n_leaves()`` and ``get_depth()`` have been added to
   :class:`tree.BaseDecisionTree` and consequently all estimators based
   on it, including :class:`tree.DecisionTreeClassifier`,
   :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
   and :class:`tree.ExtraTreeRegressor`.
   :issue:`12300` by :user:`Adrin Jalali <adrinjalali>`.
+
+
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| Added the :func:`metrics.max_error` metric and a corresponding
+  ``'max_error'`` scorer for single output regression.
+  :issue:`12232` by :user:`Krishna Sangeeth <whiletruelearn>`.
+
 
 Multiple modules
 ................

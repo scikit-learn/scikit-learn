@@ -865,6 +865,7 @@ details.
    :template: function.rst
 
    metrics.explained_variance_score
+   metrics.max_error
    metrics.mean_absolute_error
    metrics.mean_squared_error
    metrics.mean_squared_log_error
@@ -1514,22 +1515,3 @@ To be removed in 0.22
 
    covariance.graph_lasso
    datasets.fetch_mldata
-
-
-To be removed in 0.21
----------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   linear_model.RandomizedLasso
-   linear_model.RandomizedLogisticRegression
-   neighbors.LSHForest
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   datasets.load_mlcomp
-   linear_model.lasso_stability_path
