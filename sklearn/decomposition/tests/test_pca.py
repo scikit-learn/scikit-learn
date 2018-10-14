@@ -108,7 +108,7 @@ def test_pca_randomized_solver():
         pca = PCA(n_components=n_comp, svd_solver='randomized', random_state=0)
 
         X_r = pca.fit(X).transform(X)
-        np.testing.assert_equal(X_r.shape[1], n_comp)
+        assert X_r.shape[1] == n_comp
 
         X_r2 = pca.fit_transform(X)
         assert_array_almost_equal(X_r, X_r2)
@@ -145,7 +145,7 @@ def test_pca_lobpcg_solver():
         pca = PCA(n_components=n_comp, svd_solver='lobpcg', random_state=0)
 
         X_r = pca.fit(X).transform(X)
-        np.testing.assert_equal(X_r.shape[1], n_comp)
+        assert X_r.shape[1] == n_comp
 
         X_r2 = pca.fit_transform(X)
         assert_array_almost_equal(X_r, X_r2)

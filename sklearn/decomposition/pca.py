@@ -7,7 +7,7 @@
 #         Denis A. Engemann <denis-alexander.engemann@inria.fr>
 #         Michael Eickenberg <michael.eickenberg@inria.fr>
 #         Giorgio Patrini <giorgio.patrini@anu.edu.au>
-#         Andrew Knyazev added lobpcg
+#         Andrew Knyazev <andrew.knyazev@ucdenver.edu>
 # License: BSD 3 clause
 
 from math import log, sqrt
@@ -177,7 +177,8 @@ class PCA(_BasePCA):
         randomized :
             run randomized SVD by the method of Halko et al.
         lobpcg :
-            run lobpcg_svd by LOBPCG of Knyazev 2001
+            run Locally Optimal Block Preconditioned Conjugate Gradient
+            (LOBPCG) by Knyazev 2001 for a normal matrix of the smallest size.
 
         .. versionadded:: 0.18.0
 
@@ -198,7 +199,7 @@ class PCA(_BasePCA):
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random` in
-        ``svd_solver`` == 'arpack', 'lobpcg', or 'randomized'.
+        ``svd_solver`` == 'arpack', 'randomized', or 'lobpcg'.
 
         .. versionadded:: 0.18.0
 
@@ -273,7 +274,10 @@ class PCA(_BasePCA):
     "A randomized algorithm for the decomposition of matrices".
     Applied and Computational Harmonic Analysis, 30(1), 47-68.`
 
-    For svd_solver == 'lobpcg', see: lobpcg_svd
+    For svd_solver == 'lobpcg', see: :func:`utils.extmath.lobpcg_svd`
+    `Andrew V. Knyazev (2001). "Toward the Optimal Preconditioned Eigensolver:
+    Locally Optimal Block Preconditioned Conjugate Gradient Method". SINUM.`
+    See https://doi.org/10.1137%2FS1064827500366124
 
 
     Examples
@@ -481,8 +485,8 @@ class PCA(_BasePCA):
         return U, S, V
 
     def _fit_truncated(self, X, n_components, svd_solver):
-        """Fit the model by computing truncated SVD (by ARPACK, LOBPCG, or randomized)
-        on X
+        """Fit the model by computing truncated SVD
+        (by ARPACK, randomized, or LOBPCG) on X
         """
         n_samples, n_features = X.shape
 

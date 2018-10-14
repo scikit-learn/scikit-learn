@@ -9,7 +9,7 @@ Extended math utilities.
 #          Stefan van der Walt
 #          Kyle Kastner
 #          Giorgio Patrini
-#          Andrew Knyazev added lobpcg
+#          Andrew Knyazev
 # License: BSD 3 clause
 
 from __future__ import division
@@ -25,7 +25,6 @@ from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 from .lobpcg import lobpcg
-# from scipy.sparse.linalg import lobpcg
 
 
 def squared_norm(x):
@@ -236,7 +235,12 @@ def randomized_range_finder(A, size, n_iter,
 def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
                    power_iteration_normalizer='auto', transpose='auto',
                    flip_sign=True, random_state=0):
-    """Computes a truncated randomized SVD
+    """Computes a truncated randomized SVD, i.e. finds a approximate
+    truncated singular value decomposition using randomization to speed up
+    computations. It is particularly fast on large matrices to extract only
+    a small number of components. It can be quite accurate using even a small
+    number of iterations, if the seeking singular vectors are well
+    approximated by random vectors used to initialize the power iterations.
 
     Parameters
     ----------
@@ -295,12 +299,8 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     Notes
     -----
-    This algorithm finds a (usually very good) approximate truncated
-    singular value decomposition using randomization to speed up the
-    computations. It is particularly fast on large matrices on which
-    you wish to extract only a small number of components. In order to
-    obtain further speed up, `n_iter` can be set <=2 (at the cost of
-    loss of precision).
+    In order to obtain further speed up, `n_iter` can be set <=2 
+    (at the cost of loss of precision).
 
     References
     ----------
@@ -364,9 +364,12 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
 
 def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
-               transpose='auto',
-               flip_sign=True, random_state=0):
-    """Computes a truncated SVD using LOBPCG mimicking the randomized SVD
+               transpose='auto', flip_sign=True, random_state=0):
+    """Computes a truncated SVD using LOBPCG to accelerate the randomized SVD.
+    Compared to 'randomised', the 'lobpcg' option gives more accurate
+    approximations, with the same n_iter, n_components, and n_oversamples,
+    at the slightly increased costs, allows setting the tolerance, and can
+    output the accuracy.
 
     Parameters
     ----------
@@ -411,25 +414,14 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     Notes
     -----
-    This algorithm finds a (usually very good) approximate truncated
-    singular value decomposition using LOBPCG with randomization to speed up
-    the computations. It is particularly fast on large matrices on which
-    you wish to extract only a small number of components. In order to
-    obtain further speed up, `n_iter` can be set <=2 (at the cost of
-    loss of precision). Compared to 'ranomised', the 'lobpcg' option gives
-    more accurate approximations, with the same n_iter, n_components, and
-    n_oversamples, at the slightly increased costs, allows setting
-    the tolerance, and can output the accuracy.
+    LOBPCG solver may become numerically unstable if the requested tolerance
+    is unreasonably small and the maximal number of iterations is large.  
 
     References
     ----------
-    * https://en.wikipedia.org/wiki/LOBPCG
-
-    * https://www.mathworks.com/matlabcentral/fileexchange/48-lobpcg-m
-
-    * Toward the Optimal Preconditioned Eigensolver: Locally Optimal
-      Block Preconditioned Conjugate Gradient Method, Andrew V. Knyazev
-      https://doi.org/10.1137%2FS1064827500366124
+    Toward the Optimal Preconditioned Eigensolver: Locally Optimal Block 
+    Preconditioned Conjugate Gradient Method, Andrew V. Knyazev (2001)
+    https://doi.org/10.1137%2FS1064827500366124
     """
     if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
         warnings.warn("Calculating SVD of a {} is expensive. "

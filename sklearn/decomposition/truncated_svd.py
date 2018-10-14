@@ -4,7 +4,7 @@
 # Author: Lars Buitinck
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Michael Becker <mike@beckerfuffle.com>
-#         Andrew Knyazev added lobpcg
+#         Andrew Knyazev <andrew.knyazev@ucdenver.edu>
 # License: 3-clause BSD.
 
 import numpy as np
@@ -13,8 +13,8 @@ from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
-from ..utils.extmath import randomized_svd, lobpcg_svd,\
-                            safe_sparse_dot, svd_flip
+from ..utils.extmath import randomized_svd, lobpcg_svd
+from ..utils.extmath import safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
 
 __all__ = ["TruncatedSVD"]
@@ -33,9 +33,10 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     returned by the vectorizers in sklearn.feature_extraction.text. In that
     context, it is known as latent semantic analysis (LSA).
 
-    This estimator supports 3 algorithms: a fast randomized SVD solver, and
-    a "naive" algorithm that uses ARPACK or LOBPCG as an eigensolver
-    on the normal matrix (X * X.T) or (X.T * X), whichever is more efficient.
+    This estimator supports 3 algorithms: ARPACK (Lanczos), randomized
+    (block power), and LOBPCG (block conjugate gradient type) iterations, used
+    within a "naive" approach that reduces SVD to the eigenproblem for
+    the normal matrix (X * X.T) or (X.T * X), whichever has a smaller size.
 
     Read more in the :ref:`User Guide <LSA>`.
 
