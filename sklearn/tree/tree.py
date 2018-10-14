@@ -62,12 +62,10 @@ CRITERIA_REG = {"mse": _criterion.MSE, "friedman_mse": _criterion.FriedmanMSE,
                 "mae": _criterion.MAE}
 
 DENSE_SPLITTERS = {"best": _splitter.BestSplitter,
-                   "random": _splitter.RandomSplitter,
-                   "best2": _splitter.BestSplitter2}
+                   "random": _splitter.RandomSplitter}
 
 SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
-                    "random": _splitter.RandomSparseSplitter,
-                    "best2": _splitter.BestSparseSplitter2}
+                    "random": _splitter.RandomSparseSplitter}
 
 
 # =============================================================================
