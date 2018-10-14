@@ -82,7 +82,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                 cats = _encode(Xi)
             else:
                 cats = np.array(self._categories[i], dtype=X.dtype)
-                if self.handle_unknown == 'error':
+                if handle_unknown == 'error':
                     diff = _encode_check_unknown(Xi, cats)
                     if diff:
                         msg = ("Found unknown categories {0} in column {1}"

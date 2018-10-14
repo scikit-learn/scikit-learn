@@ -50,20 +50,17 @@ def test_delegate_to_func():
     # reset the argument stores.
     args_store[:] = []  # python2 compatible inplace list clear.
     kwargs_store.clear()
-    y = object()
-    transformed = assert_warns_message(
-        DeprecationWarning, "pass_y is deprecated",
-        FunctionTransformer(
-            _make_func(args_store, kwargs_store),
-            pass_y=True, validate=False).transform, X, y)
+    transformed = FunctionTransformer(
+        _make_func(args_store, kwargs_store),
+        validate=False).transform(X)
 
     assert_array_equal(transformed, X,
                        err_msg='transform should have returned X unchanged')
 
-    # The function should have received X and y.
+    # The function should have received X
     assert_equal(
         args_store,
-        [X, y],
+        [X],
         'Incorrect positional arguments passed to func: {args}'.format(
             args=args_store,
         ),

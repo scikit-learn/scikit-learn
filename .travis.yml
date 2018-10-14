@@ -62,7 +62,10 @@ matrix:
        if: type = cron OR commit_message =~ /\[scipy-dev\]/
 
 install: source build_tools/travis/install.sh
-script: bash build_tools/travis/test_script.sh
+script: 
+  - bash build_tools/travis/test_script.sh
+  - bash build_tools/travis/test_docs.sh
+  - bash build_tools/travis/test_pytest_soft_dependency.sh
 after_success: source build_tools/travis/after_success.sh
 notifications:
   webhooks:

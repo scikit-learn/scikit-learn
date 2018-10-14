@@ -89,7 +89,7 @@ def as_float_array(X, copy=True, force_all_finite=True):
 
         - True: Force all values of X to be finite.
         - False: accept both np.inf and np.nan in X.
-        - 'allow-nan':  accept  only  np.nan  values in  X.  Values  cannot  be
+        - 'allow-nan': accept only np.nan values in X. Values cannot be
           infinite.
 
         .. versionadded:: 0.20
@@ -287,7 +287,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
 
         - True: Force all values of X to be finite.
         - False: accept both np.inf and np.nan in X.
-        - 'allow-nan':  accept  only  np.nan  values in  X.  Values  cannot  be
+        - 'allow-nan': accept only np.nan values in X. Values cannot be
           infinite.
 
         .. versionadded:: 0.20
@@ -361,9 +361,9 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
 
     """Input validation on an array, list, sparse matrix or similar.
 
-    By default, the input is converted to an at least 2D numpy array.
-    If the dtype of the array is object, attempt converting to float,
-    raising on failure.
+    By default, the input is checked to be a non-empty 2D array containing
+    only finite values. If the dtype of the array is object, attempt
+    converting to float, raising on failure.
 
     Parameters
     ----------
@@ -407,22 +407,22 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         be triggered by a conversion.
 
     force_all_finite : boolean or 'allow-nan', (default=True)
-        Whether to raise an error on np.inf and np.nan in X. The possibilities
-        are:
+        Whether to raise an error on np.inf and np.nan in array. The
+        possibilities are:
 
-        - True: Force all values of X to be finite.
-        - False: accept both np.inf and np.nan in X.
-        - 'allow-nan':  accept  only  np.nan  values in  X.  Values  cannot  be
-          infinite.
+        - True: Force all values of array to be finite.
+        - False: accept both np.inf and np.nan in array.
+        - 'allow-nan': accept only np.nan values in array. Values cannot
+          be infinite.
 
         .. versionadded:: 0.20
            ``force_all_finite`` accepts the string ``'allow-nan'``.
 
     ensure_2d : boolean (default=True)
-        Whether to raise a value error if X is not 2d.
+        Whether to raise a value error if array is not 2D.
 
     allow_nd : boolean (default=False)
-        Whether to allow X.ndim > 2.
+        Whether to allow array.ndim > 2.
 
     ensure_min_samples : int (default=1)
         Make sure that the array has a minimum number of samples in its first
@@ -444,8 +444,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
 
     Returns
     -------
-    X_converted : object
-        The converted and validated X.
+    array_converted : object
+        The converted and validated array.
 
     """
     # accept_sparse 'None' deprecation check
@@ -635,10 +635,11 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
               warn_on_dtype=False, estimator=None):
     """Input validation for standard estimators.
 
-    Checks X and y for consistent length, enforces X 2d and y 1d.
-    Standard input checks are only applied to y, such as checking that y
+    Checks X and y for consistent length, enforces X to be 2D and y 1D. By
+    default, X is checked to be non-empty and containing only finite values.
+    Standard input checks are also applied to y, such as checking that y
     does not have np.nan or np.inf targets. For multi-label y, set
-    multi_output=True to allow 2d and sparse y.  If the dtype of X is
+    multi_output=True to allow 2D and sparse y. If the dtype of X is
     object, attempt converting to float, raising on failure.
 
     Parameters
@@ -688,20 +689,20 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
 
         - True: Force all values of X to be finite.
         - False: accept both np.inf and np.nan in X.
-        - 'allow-nan':  accept  only  np.nan  values in  X.  Values  cannot  be
+        - 'allow-nan': accept only np.nan values in X. Values cannot be
           infinite.
 
         .. versionadded:: 0.20
            ``force_all_finite`` accepts the string ``'allow-nan'``.
 
     ensure_2d : boolean (default=True)
-        Whether to make X at least 2d.
+        Whether to raise a value error if X is not 2D.
 
     allow_nd : boolean (default=False)
         Whether to allow X.ndim > 2.
 
     multi_output : boolean (default=False)
-        Whether to allow 2-d y (array or sparse matrix). If false, y will be
+        Whether to allow 2D y (array or sparse matrix). If false, y will be
         validated as a vector. y cannot have np.nan or np.inf values if
         multi_output=True.
 
@@ -736,6 +737,9 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
     y_converted : object
         The converted and validated y.
     """
+    if y is None:
+        raise ValueError("y cannot be None")
+
     X = check_array(X, accept_sparse=accept_sparse,
                     accept_large_sparse=accept_large_sparse,
                     dtype=dtype, order=order, copy=copy,

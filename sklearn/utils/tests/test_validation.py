@@ -780,3 +780,9 @@ def test_check_non_negative(retype):
     A[0, 0] = -1
     X = retype(A)
     assert_raises_regex(ValueError, "Negative ", check_non_negative, X, "")
+
+
+def test_check_X_y_informative_error():
+    X = np.ones((2, 2))
+    y = None
+    assert_raise_message(ValueError, "y cannot be None", check_X_y, X, y)
