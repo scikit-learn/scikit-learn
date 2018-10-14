@@ -299,7 +299,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     Notes
     -----
-    In order to obtain further speed up, `n_iter` can be set <=2 
+    In order to obtain further speed up, `n_iter` can be set <=2
     (at the cost of loss of precision).
 
     References
@@ -415,11 +415,11 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
     Notes
     -----
     LOBPCG solver may become numerically unstable if the requested tolerance
-    is unreasonably small and the maximal number of iterations is large.  
+    is unreasonably small and the maximal number of iterations is large.
 
     References
     ----------
-    Toward the Optimal Preconditioned Eigensolver: Locally Optimal Block 
+    Toward the Optimal Preconditioned Eigensolver: Locally Optimal Block
     Preconditioned Conjugate Gradient Method, Andrew V. Knyazev (2001)
     https://doi.org/10.1137%2FS1064827500366124
     """
