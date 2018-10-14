@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import fails_if_pypy
+from sklearn.utils.fixes import sp_version, _astype_copy_false
 
 import sklearn
 from sklearn.datasets import (load_svmlight_file, load_svmlight_files,
