@@ -35,11 +35,15 @@ def set_config(assume_finite=None, working_memory=None,
         False, validation for finiteness will be performed,
         avoiding error.  Global default: False.
 
+        .. versionadded:: 0.19
+
     working_memory : int, optional
         If set, scikit-learn will attempt to limit the size of temporary arrays
         to this number of MiB (per job when parallelised), often saving both
         computation time and memory on expensive operations that can be
         performed in chunks. Global default: 1024.
+        
+        .. versionadded:: 0.20
 
     euclidean_distance_algorithm : {str, None}
         Method of computing the euclidean distances: "exact" uses

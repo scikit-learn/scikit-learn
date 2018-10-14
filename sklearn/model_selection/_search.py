@@ -13,7 +13,7 @@ from __future__ import division
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 from functools import partial, reduce
 from itertools import product
 import operator
@@ -39,7 +39,6 @@ from ..utils.fixes import _Iterable as Iterable
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
-from ..utils.deprecation import DeprecationDict
 from ..metrics.scorer import _check_multimetric_scoring
 from ..metrics.scorer import check_scoring
 
@@ -383,29 +382,6 @@ def _check_param_grid(param_grid):
                                  "to be a non-empty sequence.".format(name))
 
 
-# XXX Remove in 0.20
-class _CVScoreTuple (namedtuple('_CVScoreTuple',
-                                ('parameters',
-                                 'mean_validation_score',
-                                 'cv_validation_scores'))):
-    # A raw namedtuple is very memory efficient as it packs the attributes
-    # in a struct to get rid of the __dict__ of attributes in particular it
-    # does not copy the string for the keys on each instance.
-    # By deriving a namedtuple class just to introduce the __repr__ method we
-    # would also reintroduce the __dict__ on the instance. By telling the
-    # Python interpreter that this subclass uses static __slots__ instead of
-    # dynamic attributes. Furthermore we don't need any additional slot in the
-    # subclass so we set __slots__ to the empty tuple.
-    __slots__ = ()
-
-    def __repr__(self):
-        """Simple custom repr to summarize the main info"""
-        return "mean: {0:.5f}, std: {1:.5f}, params: {2}".format(
-            self.mean_validation_score,
-            np.std(self.cv_validation_scores),
-            self.parameters)
-
-
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       MetaEstimatorMixin)):
     """Abstract base class for hyper parameter search with cross-validation.
@@ -635,18 +611,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
         """
-
-        if self.fit_params is not None:
-            warnings.warn('"fit_params" as a constructor argument was '
-                          'deprecated in version 0.19 and will be removed '
-                          'in version 0.21. Pass fit parameters to the '
-                          '"fit" method instead.', DeprecationWarning)
-            if fit_params:
-                warnings.warn('Ignoring fit_params passed as a constructor '
-                              'argument in favor of keyword arguments to '
-                              'the "fit" method.', RuntimeWarning)
-            else:
-                fit_params = self.fit_params
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
@@ -768,9 +732,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         if self.return_train_score:
             train_scores = _aggregate_score_dicts(train_score_dicts)
 
-        # TODO: replace by a dict in 0.21
-        results = (DeprecationDict() if self.return_train_score == 'warn'
-                   else {})
+        results = {}
 
         def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
@@ -847,18 +809,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                    splits=True, rank=True,
                    weights=test_sample_counts if iid else None)
             if self.return_train_score:
-                prev_keys = set(results.keys())
                 _store('train_%s' % scorer_name, train_scores[scorer_name],
                        splits=True)
-                if self.return_train_score == 'warn':
-                    for key in set(results.keys()) - prev_keys:
-                        message = (
-                            'You are accessing a training score ({!r}), '
-                            'which will not be available by default '
-                            'any more in 0.21. If you need training scores, '
-                            'please set return_train_score=True').format(key)
-                        # warn on key access
-                        results.add_warning(key, message, FutureWarning)
 
         return results
 
@@ -907,14 +859,6 @@ class GridSearchCV(BaseSearchCV):
 
         If None, the estimator's default scorer (if available) is used.
 
-    fit_params : dict, optional
-        Parameters to pass to the fit method.
-
-        .. deprecated:: 0.19
-           ``fit_params`` as a constructor argument was deprecated in version
-           0.19 and will be removed in version 0.21. Pass fit parameters to
-           the ``fit`` method instead.
-
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -944,7 +888,7 @@ class GridSearchCV(BaseSearchCV):
         identically distributed across the folds, and the loss minimized is
         the total loss per sample, and not the mean loss across the folds. If
         False, return the average score across folds. Default is True, but
-        will change to False in version 0.21, to correspond to the standard
+        will change to False in version 0.22, to correspond to the standard
         definition of cross-validation.
 
         .. versionchanged:: 0.20
@@ -1001,13 +945,9 @@ class GridSearchCV(BaseSearchCV):
         step, which will always raise the error. Default is 'raise' but from
         version 0.22 it will change to np.nan.
 
-    return_train_score : boolean, optional
+    return_train_score : boolean, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
         scores.
-
-        Current default is ``'warn'``, which behaves as ``True`` in addition
-        to raising a warning when a training score is looked up.
-        That default will be changed to ``False`` in 0.21.
         Computing training scores is used to get insights on how different
         parameter settings impact the overfitting/underfitting trade-off.
         However computing the scores on the training set can be computationally
@@ -1031,17 +971,16 @@ class GridSearchCV(BaseSearchCV):
                          kernel='rbf', max_iter=-1, probability=False,
                          random_state=None, shrinking=True, tol=...,
                          verbose=False),
-           fit_params=None, iid=..., n_jobs=None,
+           iid=..., n_jobs=None,
            param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
            scoring=..., verbose=...)
     >>> sorted(clf.cv_results_.keys())
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ['mean_fit_time', 'mean_score_time', 'mean_test_score',...
-     'mean_train_score', 'param_C', 'param_kernel', 'params',...
+     'param_C', 'param_kernel', 'params',...
      'rank_test_score', 'split0_test_score',...
-     'split0_train_score', 'split1_test_score', 'split1_train_score',...
-     'split2_test_score', 'split2_train_score',...
-     'std_fit_time', 'std_score_time', 'std_test_score', 'std_train_score'...]
+     'split2_test_score', ...
+     'std_fit_time', 'std_score_time', 'std_test_score']
 
     Attributes
     ----------
@@ -1174,12 +1113,12 @@ class GridSearchCV(BaseSearchCV):
 
     """
 
-    def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
+    def __init__(self, estimator, param_grid, scoring=None,
                  n_jobs=None, iid='warn', refit=True, cv='warn', verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise-deprecating',
-                 return_train_score="warn"):
+                 return_train_score=False):
         super(GridSearchCV, self).__init__(
-            estimator=estimator, scoring=scoring, fit_params=fit_params,
+            estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
             return_train_score=return_train_score)
@@ -1254,14 +1193,6 @@ class RandomizedSearchCV(BaseSearchCV):
 
         If None, the estimator's default scorer (if available) is used.
 
-    fit_params : dict, optional
-        Parameters to pass to the fit method.
-
-        .. deprecated:: 0.19
-           ``fit_params`` as a constructor argument was deprecated in version
-           0.19 and will be removed in version 0.21. Pass fit parameters to
-           the ``fit`` method instead.
-
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -1291,7 +1222,7 @@ class RandomizedSearchCV(BaseSearchCV):
         identically distributed across the folds, and the loss minimized is
         the total loss per sample, and not the mean loss across the folds. If
         False, return the average score across folds. Default is True, but
-        will change to False in version 0.21, to correspond to the standard
+        will change to False in version 0.22, to correspond to the standard
         definition of cross-validation.
 
         .. versionchanged:: 0.20
@@ -1356,13 +1287,9 @@ class RandomizedSearchCV(BaseSearchCV):
         step, which will always raise the error. Default is 'raise' but from
         version 0.22 it will change to np.nan.
 
-    return_train_score : boolean, optional
+    return_train_score : boolean, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
         scores.
-
-        Current default is ``'warn'``, which behaves as ``True`` in addition
-        to raising a warning when a training score is looked up.
-        That default will be changed to ``False`` in 0.21.
         Computing training scores is used to get insights on how different
         parameter settings impact the overfitting/underfitting trade-off.
         However computing the scores on the training set can be computationally
@@ -1495,15 +1422,15 @@ class RandomizedSearchCV(BaseSearchCV):
     """
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
-                 fit_params=None, n_jobs=None, iid='warn', refit=True,
+                 n_jobs=None, iid='warn', refit=True,
                  cv='warn', verbose=0, pre_dispatch='2*n_jobs',
                  random_state=None, error_score='raise-deprecating',
-                 return_train_score="warn"):
+                 return_train_score=False):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
         super(RandomizedSearchCV, self).__init__(
-            estimator=estimator, scoring=scoring, fit_params=fit_params,
+            estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
             return_train_score=return_train_score)

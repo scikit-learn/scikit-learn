@@ -530,7 +530,7 @@ format usable by scikit-learn:
 For some miscellaneous data such as images, videos, and audio, you may wish to
 refer to:
 
-* `skimage.io <http://scikit-image.org/docs/dev/api/skimage.io.html>`_ or
+* `skimage.io <https://scikit-image.org/docs/dev/api/skimage.io.html>`_ or
   `Imageio <https://imageio.readthedocs.io/en/latest/userapi.html>`_ 
   for loading images and videos into numpy arrays
 * `scipy.io.wavfile.read 
