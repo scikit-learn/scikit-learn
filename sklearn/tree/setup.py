@@ -31,7 +31,7 @@ def configuration(parent_package="", top_path=None):
                          extra_compile_args=["-O3"])
 
     config.add_subpackage("tests")
-    
+    config.add_data_files('_criterion.pxd')
     return config
 
 if __name__ == "__main__":
