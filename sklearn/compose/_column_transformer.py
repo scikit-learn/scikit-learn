@@ -24,7 +24,7 @@ from ..utils.validation import check_array, check_is_fitted
 
 
 __all__ = [
-    'ColumnTransformer', 'make_column_transformer', 'make_select_dtypes'
+    'ColumnTransformer', 'make_column_transformer', 'make_select_columns'
 ]
 
 
@@ -776,17 +776,21 @@ def make_column_transformer(*transformers, **kwargs):
                              sparse_threshold=sparse_threshold)
 
 
-def make_select_dtypes(include=None, exclude=None):
+def make_select_columns(pattern=None, dtype_include=None, dtype_exclude=None):
     """Creates a column selector callable which can be passed to
     `make_column_transformer` or `ColumnTransformer` to select columns based
-    on type. Uses :meth:`pandas.DataFrame.select_dtypes` on the first row to
+    on data type or a pattern. Data type selection is done using
+    :meth:`pandas.DataFrame.select_dtypes` on the first row to
     select columns.
 
     Parameters
     ----------
-    include: list of column dtypes to include, default None
+    pattern: str, default None
+        regular expression used to select columns
 
-    exclude: list of column dtypes to exclude, default None
+    dtype_include: list of column dtypes to include, default None
+
+    dtype_exclude: list of column dtypes to exclude, default None
 
     Returns
     -------
@@ -794,7 +798,13 @@ def make_select_dtypes(include=None, exclude=None):
 
     """
     def select_dtypes(df):
-        return (df.iloc[:1].select_dtypes(
-            include=include, exclude=exclude
-        ).columns)
+        if dtype_include is not None or dtype_exclude is not None:
+            cols = (df.iloc[:1].select_dtypes(
+                include=dtype_include, exclude=dtype_exclude
+            ).columns)
+        else:
+            cols = df.columns
+        if pattern is not None:
+            return cols[cols.str.contains(pattern)]
+        return cols
     return select_dtypes

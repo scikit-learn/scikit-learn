@@ -38,7 +38,7 @@ Changelog
   even if all transformation results are sparse. :issue:`12304` by `Andreas
   Müller`_.
 
-- |Feature|  Adds :func:`compose.make_select_dtypes` which is used with
+- |Feature|  Adds :func:`compose.make_select_columns` which is used with
   :class:`compose.ColumnTransformer` to select columns based on data types.
   :issue:`12303` by :user:`Thomas Fan <thomasjpfan>`.
 
