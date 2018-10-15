@@ -357,6 +357,12 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         """
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
+        
+        if n_samples <= n_classes:
+            raise ValueError("The number of samples must be more than "
+                             "the number of classes. Currently, "
+                             "you have {} samples and {} classes."
+                             ".format(n_samples, n_classes))
 
         self.means_ = _class_means(X, y)
         if self.store_covariance:
