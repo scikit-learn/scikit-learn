@@ -448,14 +448,6 @@ def test_count_nonzero():
     assert (count_nonzero(X_csr, axis=0, sample_weight=sample_weight).dtype ==
             count_nonzero(X_csr, axis=1, sample_weight=sample_weight).dtype)
 
-    # Check dtypes with large sparse matrices too
-    X_csr.indices = X_csr.indices.astype(np.int64)
-    X_csr.indptr = X_csr.indptr.astype(np.int64)
-    assert (count_nonzero(X_csr, axis=0).dtype ==
-            count_nonzero(X_csr, axis=1).dtype)
-    assert (count_nonzero(X_csr, axis=0, sample_weight=sample_weight).dtype ==
-            count_nonzero(X_csr, axis=1, sample_weight=sample_weight).dtype)
-
 
 def test_csc_row_median():
     # Test csc_row_median actually calculates the median.
