@@ -2375,7 +2375,7 @@ def check_fit_idempotent(name, estimator_orig):
     X_train, X_test, y_train, _ = train_test_split(X, y)
     # some estimators expect a square matrix
     X_train = pairwise_estimator_convert_X(X_train, estimator)
-    X_test = pairwise_estimator_convert_X(X_train, estimator)
+    X_test = pairwise_estimator_convert_X(X_test, estimator)
 
     # Fit for the first time
     estimator.fit(X_train, y_train)
