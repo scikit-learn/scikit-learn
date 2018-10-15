@@ -395,6 +395,8 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
 
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    if sample_weight is not None:
+        sample_weight = column_or_1d(sample_weight)
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):

@@ -476,7 +476,7 @@ def test_multilabel_confusion_matrix_errors():
     assert_raise_message(ValueError, "inconsistent numbers of samples",
                          multilabel_confusion_matrix,
                          y_true, y_pred, sample_weight=[1, 2])
-    assert_raise_message(ValueError, "could not be broadcast",
+    assert_raise_message(ValueError, "bad input shape",
                          multilabel_confusion_matrix,
                          y_true, y_pred,
                          sample_weight=[[1, 2, 3],
