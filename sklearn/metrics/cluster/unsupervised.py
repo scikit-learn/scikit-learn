@@ -131,6 +131,8 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     label_freqs : array
         distribution of cluster labels in ``labels``
     """
+    # Copy the data so that we don't change the original
+    D_chunk = D_chunk.copy()
     # set diagonal distances to zero in case they are not zero
     diag_indices = np.diag_indices(D_chunk.shape[1])
     D_chunk[diag_indices] = 0

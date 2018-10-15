@@ -169,7 +169,25 @@ def test_non_numpy_labels():
         silhouette_score(list(X), list(y)), silhouette_score(X, y))
 
 
-def test_nonzero_diag_silhouette():
+def test_silhouette_modifies_dist():
+    # Construct a zero-diagonal matrix
+    dists = pairwise_distances(
+        np.array([[0.2, 0.1, 0.12, 1.34, 1.11, 1.6]]).transpose())
+    # Construct a nonzero-diagonal distance matrix
+    diag_dists = np.diag(np.ones(6)) + dists
+    labels = [0, 0, 0, 1, 1, 1]
+
+    # Test that original data is unchanged
+    dists_truth = dists.copy()
+    _ = silhouette_samples(dists, labels, metric='precomputed')
+    assert_array_equal(dists, dists_truth)
+
+    diag_dists_truth = diag_dists.copy()
+    _ = silhouette_samples(diag_dists, labels, metric='precomputed')
+    assert_array_equal(diag_dists, diag_dists_truth)
+
+
+def test_silhouette_nonzero_diag():
     # Construct a zero-diagonal matrix
     dists = pairwise_distances(
         np.array([[0.2, 0.1, 0.12, 1.34, 1.11, 1.6]]).transpose())
