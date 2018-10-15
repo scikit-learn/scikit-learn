@@ -951,10 +951,10 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     if func_name.split('.')[2] == 'estimator_checks':
         return incorrect
     # Get the arguments from the function signature
-    args = list(filter(lambda x: x not in ignore, _get_args(func)))
+    param_signature = list(filter(lambda x: x not in ignore, _get_args(func)))
     # drop self
-    if len(args) > 0 and args[0] == 'self':
-        args.remove('self')
+    if len(param_signature) > 0 and param_signature[0] == 'self':
+        param_signature.remove('self')
 
     # Analize function's docstring
     if doc is None:
@@ -967,7 +967,7 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
         if len(w):
             raise RuntimeError('Error for %s:\n%s' % (func_name, w[0]))
 
-    param_names = []
+    param_docs = []
     for name, type_definition, param_doc in doc['Parameters']:
         # Type hints are empty only if parameter name ended with :
         if not type_definition.strip():
@@ -983,39 +983,48 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
         # Create a list of parameters to compare with the parameters gotten
         # from the func signature
         if '*' not in name:
-            param_names.append(name.split(':')[0].strip('` '))
+            param_docs.append(name.split(':')[0].strip('` '))
+
+    # If one of the docstring's parameters had an error then return that
+    # incorrect message
+    if len(incorrect) > 0:
+        return incorrect
 
     # Remove the parameters that should be ignored from list
-    param_names = list(filter(lambda x: x not in ignore, param_names))
+    param_docs = list(filter(lambda x: x not in ignore, param_docs))
 
-    param_doc, param_func = set(param_names), set(args)
-    complete_params = param_func & param_doc
+    message = []
+    for i in range(min(len(param_docs), len(param_signature))):
+        if param_signature[i] != param_docs[i]:
+            message += ["At index %s diff: %r != %r" % (i, param_signature[i],
+                                                        param_docs[i])]
+            break
+    if len(param_signature) > len(param_docs):
+        message += ["Parameters in function signature have more items,"
+                    " first extra item: %s" % param_signature[len(param_docs)]]
 
-    if (len(complete_params) != len(args) or len(complete_params) !=
-            len(param_names)):
-        missing_from_func = param_doc.difference(param_func)
-        missing_func = [x for x in param_names if x in missing_from_func]
-        missing_from_doc = param_func.difference(param_doc)
-        missing_doc = [x for x in args if x in missing_from_doc]
+    elif len(param_signature) < len(param_docs):
+        message += ["Parameters in function docstring have more items,"
+                    " first extra item: %s" % param_docs[len(param_signature)]]
 
-        message = "There's a difference in the number of parameters in " \
-                  + func_name + "'s signature and its docstring.\n"
-        if missing_doc:
-            message += 'Parameters defined in the function signature and not' \
-                       + ' defined in its docstring: {}\n'.format(missing_doc)
-        if missing_func:
-            message += 'Parameters defined in the function docstring and not' \
-                       + ' defined in its signature: {}\n'.format(missing_func)
-        incorrect += [message]
-    else:
-        message = None
-        for doc_param, func_param in zip(param_names, args):
-            if doc_param != func_param:
-                message = "There's a difference in the order of the" \
-                          + " parameters in " + func_name + "'s signature" \
-                          + " and its docstring.\nAccording to the function" \
-                          + " signature the parameter in this place of the" \
-                          + " docstring should be: \"" + func_param + "\"" \
-                          + " but instead is \"" + doc_param + "\""
-                incorrect += [message]
-    return incorrect
+    # If there wasn't any difference in the parameters themselves between
+    # docstring and signature including having the same length then return
+    # empty list
+    if len(message) == 0:
+        return []
+
+    import difflib
+    import pprint
+
+    param_docs_formatted = pprint.pformat(param_docs).splitlines()
+    param_signature_formatted = pprint.pformat(param_signature).splitlines()
+
+    message += ["Full diff:"]
+
+    message.extend(
+        line.strip() for line in difflib.ndiff(param_signature_formatted,
+                                               param_docs_formatted)
+    )
+
+    incorrect.extend(message)
+    return '\n'.join(incorrect)

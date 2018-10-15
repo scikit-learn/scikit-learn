@@ -323,6 +323,27 @@ def f_bad_order(b, a):
     return c
 
 
+def f_too_many_param_docstring(a, b):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+    b : int
+        Parameter b
+    c : int
+        Parameter c
+
+    Returns
+    -------
+    d : list
+        Parameter c
+    """
+    d = a + b
+    return d
+
+
 def f_missing(a, b):
     """Function f
 
@@ -482,73 +503,70 @@ def test_check_docstring_parameters():
         ])
 
     messages = [
-            [
-                "There's a difference in the order of the parameters in"
-                + " sklearn.utils.tests.test_testing.f_bad_order's signature"
-                + " and its docstring.\nAccording to the function signature"
-                + " the parameter in this place of the docstring should be:"
-                + " \"b\" but instead is \"a\"",
+            "At index 0 diff: 'b' != 'a'\n"
+            + "Full diff:\n"
+            + "- ['b', 'a']\n"
+            + "+ ['a', 'b']",
 
-                "There's a difference in the order of the parameters in"
-                + " sklearn.utils.tests.test_testing.f_bad_order's signature"
-                + " and its docstring.\nAccording to the function signature"
-                + " the parameter in this place of the docstring should be:"
-                + " \"a\" but instead is \"b\""
-            ],
+            "Parameters in function docstring have more items, first extra"
+            + " item: c\n"
+            + "Full diff:\n"
+            + "- ['a', 'b']\n"
+            + "+ ['a', 'b', 'c']\n"
+            + "?          +++++",
 
-            "There's a difference in the number of parameters in"
-            + " sklearn.utils.tests.test_testing.f_missing's signature and its"
-            + " docstring.\nParameters defined in the function signature and"
-            + " not defined in its docstring: ['b']\n",
+            "Parameters in function signature have more items, first extra"
+            + " item: b\n"
+            + "Full diff:\n"
+            + "- ['a', 'b']\n"
+            + "+ ['a']",
 
-            "There's a difference in the number of parameters in"
-            + " sklearn.utils.tests.test_testing.f_missing's signature and its"
-            + " docstring.\nParameters defined in the function signature and"
-            + " not defined in its docstring: ['X', 'y']\n",
+            "Parameters in function signature have more items, first extra"
+            + " item: X\n"
+            + "Full diff:\n"
+            + "- ['X', 'y']\n"
+            + "+ []",
 
-            "There's a difference in the number of parameters in"
-            + " sklearn.utils.tests.test_testing.predict's signature and its"
+            "At index 0 diff: 'X' != 'y'\n"
+            + "Full diff:\n"
+            + "- ['X']\n"
+            + "?   ^\n"
+            + "+ ['y']\n"
+            + "?   ^",
 
-            + " docstring.\nParameters defined in the function signature and"
-            + " not defined in its docstring: ['X']\nParameters defined in the"
-            + " function docstring and not defined in its signature: ['y']\n",
+            "Parameters in function signature have more items, first extra"
+            + " item: X\n"
+            + "Full diff:\n"
+            + "- ['X']\n"
+            + "+ []",
 
-            "There's a difference in the number of parameters in"
-            + " sklearn.utils.tests.test_testing.predict_proba's signature and"
-            + " its docstring.\nParameters defined in the function signature"
-            + " and not defined in its docstring: ['X']\n",
+            "Parameters in function signature have more items, first extra"
+            + " item: X\n"
+            + "Full diff:\n"
+            + "- ['X']\n"
+            + "+ []",
 
-            "There's a difference in the number of parameters in"
-            + " sklearn.utils.tests.test_testing.score's signature and its"
-            + " docstring.\nParameters defined in the function signature and"
-            + " not defined in its docstring: ['X']\n",
+            "Parameters in function signature have more items, first extra"
+            + " item: X\n"
+            + "Full diff:\n"
+            + "- ['X', 'y']\n"
+            + "+ []",
 
-            "There's a difference in the number of parameters in"
-            + " sklearn.utils.tests.test_testing.fit's signature and its"
-            + " docstring.\nParameters defined in the function signature and"
-            + " not defined in its docstring: ['X', 'y']\n",
             ]
 
     mock_meta = MockMetaEstimator(delegate=MockEst())
 
-    for mess, f in zip(messages,
-                       [f_bad_order,
-                        f_missing,
-                        Klass.f_missing,
-                        mock_meta.predict,
-                        mock_meta.predict_proba,
-                        mock_meta.score,
-                        mock_meta.fit]):
+    for msg, f in zip(messages,
+                      [f_bad_order,
+                       f_too_many_param_docstring,
+                       f_missing,
+                       Klass.f_missing,
+                       mock_meta.predict,
+                       mock_meta.predict_proba,
+                       mock_meta.score,
+                       mock_meta.fit]):
         incorrect = check_docstring_parameters(f)
-        if isinstance(mess, list):
-            for i, _ in enumerate(mess):
-                assert len(incorrect[i]) >= 1
-                assert mess[i] in incorrect[i], '\n"%s"\n not in \n"%s"' \
-                    % (mess[i], incorrect[i])
-        else:
-            assert len(incorrect) >= 1
-            assert mess in incorrect[0], '\n"%s"\n not in \n"%s"' \
-                % (mess, incorrect[i])
+        assert msg == incorrect, ('\n"%s"\n not in \n"%s"' % (msg, incorrect))
 
 
 class RegistrationCounter(object):
