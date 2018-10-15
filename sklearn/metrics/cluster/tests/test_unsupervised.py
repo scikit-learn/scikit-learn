@@ -179,11 +179,11 @@ def test_silhouette_modifies_dist():
 
     # Test that original data is unchanged
     dists_truth = dists.copy()
-    _ = silhouette_samples(dists, labels, metric='precomputed')
+    silhouette_samples(dists, labels, metric='precomputed')
     assert_array_equal(dists, dists_truth)
 
     diag_dists_truth = diag_dists.copy()
-    _ = silhouette_samples(diag_dists, labels, metric='precomputed')
+    silhouette_samples(diag_dists, labels, metric='precomputed')
     assert_array_equal(diag_dists, diag_dists_truth)
 
 
