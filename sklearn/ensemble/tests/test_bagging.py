@@ -886,6 +886,8 @@ def test_bagging_classifier_with_missing_inputs():
     assert_raises(ValueError, bagging_classifier.fit, X, y)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_bagging_small_max_features():
     # Check that Bagging estimator can accept low fractional max_features
 
