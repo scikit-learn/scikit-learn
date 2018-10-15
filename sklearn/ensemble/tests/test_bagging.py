@@ -892,5 +892,6 @@ def test_bagging_small_max_features():
     X = np.array([[1, 2], [3, 4]])
     y = np.array([1, 0])
 
-    bagging = BaggingClassifier(LogisticRegression(), max_features=0.3, random_state=1)
+    bagging = BaggingClassifier(LogisticRegression(),
+                                max_features=0.3, random_state=1)
     bagging.fit(X, y)
