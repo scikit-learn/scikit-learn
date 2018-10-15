@@ -2359,7 +2359,6 @@ def check_fit_idempotent(name, estimator_orig):
     check_methods = ["predict", "transform", "decision_function",
                      "predict_proba"]
     rng = np.random.RandomState(0)
-    rng.randint(100)
 
     estimator = clone(estimator_orig)
     set_random_state(estimator)
