@@ -1,6 +1,7 @@
 """
 Testing for export functions of decision trees (sklearn.tree.export).
 """
+import pytest
 
 from re import finditer, search
 
@@ -9,7 +10,7 @@ from numpy.random import RandomState
 from sklearn.base import is_classifier
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.tree import export_graphviz
+from sklearn.tree import export_graphviz, plot_tree
 from sklearn.externals.six import StringIO
 from sklearn.utils.testing import (assert_in, assert_equal, assert_raises,
                                    assert_less_equal, assert_raises_regex,
@@ -92,13 +93,13 @@ def test_graphviz_toy():
                 'fontname=helvetica] ;\n' \
                 'edge [fontname=helvetica] ;\n' \
                 '0 [label=<X<SUB>0</SUB> &le; 0.0<br/>samples = 100.0%<br/>' \
-                'value = [0.5, 0.5]>, fillcolor="#e5813900"] ;\n' \
+                'value = [0.5, 0.5]>, fillcolor="#ffffff"] ;\n' \
                 '1 [label=<samples = 50.0%<br/>value = [1.0, 0.0]>, ' \
-                'fillcolor="#e58139ff"] ;\n' \
+                'fillcolor="#e58139"] ;\n' \
                 '0 -> 1 [labeldistance=2.5, labelangle=45, ' \
                 'headlabel="True"] ;\n' \
                 '2 [label=<samples = 50.0%<br/>value = [0.0, 1.0]>, ' \
-                'fillcolor="#399de5ff"] ;\n' \
+                'fillcolor="#399de5"] ;\n' \
                 '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
                 'headlabel="False"] ;\n' \
                 '}'
@@ -126,7 +127,7 @@ def test_graphviz_toy():
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled", color="black"] ;\n' \
                 '0 [label="node #0\\nX[0] <= 0.0\\ngini = 0.5\\n' \
-                'samples = 6\\nvalue = [3, 3]", fillcolor="#e5813900"] ;\n' \
+                'samples = 6\\nvalue = [3, 3]", fillcolor="#ffffff"] ;\n' \
                 '1 [label="(...)", fillcolor="#C0C0C0"] ;\n' \
                 '0 -> 1 ;\n' \
                 '2 [label="(...)", fillcolor="#C0C0C0"] ;\n' \
@@ -148,21 +149,21 @@ def test_graphviz_toy():
                 'node [shape=box, style="filled", color="black"] ;\n' \
                 '0 [label="X[0] <= 0.0\\nsamples = 6\\n' \
                 'value = [[3.0, 1.5, 0.0]\\n' \
-                '[3.0, 1.0, 0.5]]", fillcolor="#e5813900"] ;\n' \
+                '[3.0, 1.0, 0.5]]", fillcolor="#ffffff"] ;\n' \
                 '1 [label="samples = 3\\nvalue = [[3, 0, 0]\\n' \
-                '[3, 0, 0]]", fillcolor="#e58139ff"] ;\n' \
+                '[3, 0, 0]]", fillcolor="#e58139"] ;\n' \
                 '0 -> 1 [labeldistance=2.5, labelangle=45, ' \
                 'headlabel="True"] ;\n' \
                 '2 [label="X[0] <= 1.5\\nsamples = 3\\n' \
                 'value = [[0.0, 1.5, 0.0]\\n' \
-                '[0.0, 1.0, 0.5]]", fillcolor="#e5813986"] ;\n' \
+                '[0.0, 1.0, 0.5]]", fillcolor="#f1bd97"] ;\n' \
                 '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
                 'headlabel="False"] ;\n' \
                 '3 [label="samples = 2\\nvalue = [[0, 1, 0]\\n' \
-                '[0, 1, 0]]", fillcolor="#e58139ff"] ;\n' \
+                '[0, 1, 0]]", fillcolor="#e58139"] ;\n' \
                 '2 -> 3 ;\n' \
                 '4 [label="samples = 1\\nvalue = [[0.0, 0.5, 0.0]\\n' \
-                '[0.0, 0.0, 0.5]]", fillcolor="#e58139ff"] ;\n' \
+                '[0.0, 0.0, 0.5]]", fillcolor="#e58139"] ;\n' \
                 '2 -> 4 ;\n' \
                 '}'
 
@@ -184,13 +185,13 @@ def test_graphviz_toy():
                 'edge [fontname=helvetica] ;\n' \
                 'rankdir=LR ;\n' \
                 '0 [label="X[0] <= 0.0\\nmse = 1.0\\nsamples = 6\\n' \
-                'value = 0.0", fillcolor="#e5813980"] ;\n' \
+                'value = 0.0", fillcolor="#f2c09c"] ;\n' \
                 '1 [label="mse = 0.0\\nsamples = 3\\nvalue = -1.0", ' \
-                'fillcolor="#e5813900"] ;\n' \
+                'fillcolor="#ffffff"] ;\n' \
                 '0 -> 1 [labeldistance=2.5, labelangle=-45, ' \
                 'headlabel="True"] ;\n' \
                 '2 [label="mse = 0.0\\nsamples = 3\\nvalue = 1.0", ' \
-                'fillcolor="#e58139ff"] ;\n' \
+                'fillcolor="#e58139"] ;\n' \
                 '0 -> 2 [labeldistance=2.5, labelangle=45, ' \
                 'headlabel="False"] ;\n' \
                 '{rank=same ; 0} ;\n' \
@@ -207,7 +208,7 @@ def test_graphviz_toy():
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled", color="black"] ;\n' \
                 '0 [label="gini = 0.0\\nsamples = 6\\nvalue = 6.0", ' \
-                'fillcolor="#e5813900"] ;\n' \
+                'fillcolor="#ffffff"] ;\n' \
                 '}'
 
 
@@ -308,3 +309,23 @@ def test_precision():
             for finding in finditer(r"<= \d+\.\d+", dot_data):
                 assert_equal(len(search(r"\.\d+", finding.group()).group()),
                              precision + 1)
+
+
+def test_plot_tree():
+    # mostly smoke tests
+    pytest.importorskip("matplotlib.pyplot")
+    # Check correctness of export_graphviz
+    clf = DecisionTreeClassifier(max_depth=3,
+                                 min_samples_split=2,
+                                 criterion="gini",
+                                 random_state=2)
+    clf.fit(X, y)
+
+    # Test export code
+    feature_names = ['first feat', 'sepal_width']
+    nodes = plot_tree(clf, feature_names=feature_names)
+    assert len(nodes) == 3
+    assert nodes[0].get_text() == ("first feat <= 0.0\nentropy = 0.5\n"
+                                   "samples = 6\nvalue = [3, 3]")
+    assert nodes[1].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [3, 0]"
+    assert nodes[2].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [0, 3]"
