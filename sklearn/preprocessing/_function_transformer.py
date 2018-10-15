@@ -143,7 +143,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Input array.
 
- 
+
 
         Returns
         -------
@@ -160,7 +160,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Input array.
 
-  
+
 
         Returns
         -------
