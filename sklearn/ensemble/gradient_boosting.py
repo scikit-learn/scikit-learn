@@ -72,6 +72,10 @@ from ..exceptions import NotFittedError
 class QuantileEstimator:
     """An estimator predicting the alpha-quantile of the training targets.
 
+    This estimator constantly predicts the alpha quantile of the target labels
+    of the training set. The prediction is independent of the X values in the
+    training set and those passed to the :func:`predict` function.
+
     Parameters
     ----------
     alpha : float
@@ -125,7 +129,12 @@ class QuantileEstimator:
 @deprecated("MeanEstimator is deprecated in version "
             "0.21 and will be removed in version 0.23.")
 class MeanEstimator:
-    """An estimator predicting the mean of the training targets."""
+    """An estimator predicting the mean of the training targets.
+
+    This estimator constantly predicts the mean of the target labels of the
+    training set. The prediction is independent of the X values in the training
+    set and those passed to the :func:`predict` function.
+    """
     def fit(self, X, y, sample_weight=None):
         """Fit the estimator.
 
@@ -168,7 +177,12 @@ class MeanEstimator:
 @deprecated("LogOddsEstimator is deprecated in version "
             "0.21 and will be removed in version 0.23.")
 class LogOddsEstimator:
-    """An estimator predicting the log odds ratio."""
+    """An estimator predicting the log odds ratio.
+
+    This estimator takes only the binary target labels of the training set into
+    account. The prediction is independent of the X values in the training set
+    and those passed to the :func:`predict` function.
+    """
     scale = 1.0
 
     def fit(self, X, y, sample_weight=None):
@@ -220,15 +234,28 @@ class LogOddsEstimator:
 @deprecated("ScaledLogOddsEstimator is deprecated in version "
             "0.21 and will be removed in version 0.23.")
 class ScaledLogOddsEstimator(LogOddsEstimator):
-    """Log odds ratio scaled by 0.5 -- for exponential loss. """
+    """Log odds ratio scaled by 0.5 -- for exponential loss.
+
+    This estimator takes only the binary target labels of the training set into
+    account. The prediction is independent of the X values in the training set
+    and those passed to the :func:`predict` function.
+
+    It is like :class:`LogOddsEstimator` but takes the log of the *square* of
+    the odds ratio.
+    """
     scale = 0.5
 
 
 @deprecated("PriorProbablityEstimator is deprecated in version "
             "0.21 and will be removed in version 0.23.")
 class PriorProbabilityEstimator:
-    """An estimator predicting the probability of each
-    class in the training data.
+    """An estimator predicting
+    the probability of each class in the training data.
+
+    This estimator takes only the target labels of the training set into
+    account. It predicts constantly the probabilities of the labels in the
+    training set. The prediction is independent of the X values in the training
+    set and those passed to the :func:`predict` function.
     """
     def fit(self, X, y, sample_weight=None):
         """Fit the estimator.
@@ -272,13 +299,7 @@ class PriorProbabilityEstimator:
 @deprecated("Using ZeroEstimator is deprecated in version "
             "0.21 and will be removed in version 0.23.")
 class ZeroEstimator:
-    """An estimator that simply predicts zero.
-
-    .. deprecated:: 0.21
-        Using ``ZeroEstimator`` or ``init='zero'`` is deprecated in version
-        0.21 and will be removed in version 0.23.
-
-    """
+    """An estimator that simply predicts zero."""
 
     def fit(self, X, y, sample_weight=None):
         """Fit the estimator.
