@@ -64,7 +64,7 @@ scikit-learn also uses CBLAS, the C interface to the Basic Linear Algebra
 Subprograms library. scikit-learn comes with a reference implementation, but
 the system CBLAS will be detected by the build system and used if present.
 CBLAS exists in many implementations; see `Linear algebra libraries
-<http://scikit-learn.org/stable/modules/computational_performance.html#linear-algebra-libraries>`_
+<http://scikit-learn.org/stable/modules/computing#linear-algebra-libraries>`_
 for known issues.
 
 User installation
