@@ -548,6 +548,9 @@ class TSNE(BaseEstimator):
         the distance between them. The default is "euclidean" which is
         interpreted as squared euclidean distance.
 
+    metric_params : dictionary, optional (default: {})
+        Keyword arguments of distance metric to use
+
     init : string or numpy array, optional (default: "random")
         Initialization of embedding. Possible options are 'random', 'pca',
         and a numpy array of shape (n_samples, n_components).
@@ -628,8 +631,8 @@ class TSNE(BaseEstimator):
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=12.0, learning_rate=200.0, n_iter=1000,
                  n_iter_without_progress=300, min_grad_norm=1e-7,
-                 metric="euclidean", init="random", verbose=0,
-                 random_state=None, method='barnes_hut', angle=0.5):
+                 metric="euclidean", metric_params = {}, init="random",
+                 verbose=0, random_state=None, method='barnes_hut', angle=0.5):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -638,6 +641,7 @@ class TSNE(BaseEstimator):
         self.n_iter_without_progress = n_iter_without_progress
         self.min_grad_norm = min_grad_norm
         self.metric = metric
+        self.metric_params = metric_params
         self.init = init
         self.verbose = verbose
         self.random_state = random_state
@@ -720,9 +724,11 @@ class TSNE(BaseEstimator):
 
                 if self.metric == "euclidean":
                     distances = pairwise_distances(X, metric=self.metric,
-                                                   squared=True)
+                                                   squared=True,
+                                                   **self.metric_params)
                 else:
-                    distances = pairwise_distances(X, metric=self.metric)
+                    distances = pairwise_distances(X, metric=self.metric,
+                                                   **self.metric_params)
 
                 if np.any(distances < 0):
                     raise ValueError("All distances should be positive, the "
@@ -747,7 +753,8 @@ class TSNE(BaseEstimator):
 
             # Find the nearest neighbors for every point
             knn = NearestNeighbors(algorithm='auto', n_neighbors=k,
-                                   metric=self.metric)
+                                   metric=self.metric,
+                                   metric_params=self.metric_params)
             t0 = time()
             knn.fit(X)
             duration = time() - t0
