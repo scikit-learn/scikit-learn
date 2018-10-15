@@ -311,7 +311,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         if isinstance(self.max_features, (numbers.Integral, np.integer)):
             max_features = self.max_features
         else:  # float
-            max_features = int(self.max_features * self.n_features_)
+            max_features = max(1, int(self.max_features * self.n_features_))
 
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
