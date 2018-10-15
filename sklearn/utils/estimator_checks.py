@@ -25,7 +25,6 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils.testing import assert_warns_message
@@ -2357,53 +2356,40 @@ def check_fit_idempotent(name, estimator_orig):
     # predict(), predict_proba(), decision_function() and transform() return
     # the same results.
 
-    est = clone(estimator_orig)
+    check_methods = ["predict", "transform", "decision_function",
+                     "predict_proba"]
+    rng = np.random.RandomState(0)
+    rng.randint(100)
 
-    np.random.seed(0)
-    X = np.random.normal(loc=100, size=(100, 2))
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    if 'warm_start' in estimator.get_params().keys():
+        estimator.set_params(warm_start=False)
+
+    n_samples = 100
+    X = rng.normal(loc=100, size=(n_samples, 2))
     if is_regressor(estimator_orig):
-        y = np.random.normal(size=100)
+        y = rng.normal(size=n_samples)
     else:
-        y = np.random.randint(low=0, high=2, size=100)
-    if est.__class__.__name__.startswith('MultiTask'):
-        y = np.column_stack([y, y])
-
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     X_train, X_test, y_train, _ = train_test_split(X, y)
     # some estimators expect a square matrix
-    X_train = pairwise_estimator_convert_X(X_train, est)
-    X_test = pairwise_estimator_convert_X(X_train, est)
+    X_train = pairwise_estimator_convert_X(X_train, estimator)
+    X_test = pairwise_estimator_convert_X(X_train, estimator)
 
-    if 'random_state' in est.get_params().keys():
-        est.set_params(random_state=0)
-    if 'warm_start' in est.get_params().keys():
-        est.set_params(warm_start=False)
+    # Fit for the first time
+    estimator.fit(X_train, y_train)
 
-    est.fit(X_train, y_train)
-
-    if hasattr(est, 'predict'):
-        pred_1 = est.predict(X_test)
-    if hasattr(est, 'predict_proba'):
-        pred_proba_1 = est.predict_proba(X_test)
-    if hasattr(est, 'decision_function'):
-        decision_1 = est.decision_function(X_test)
-    if hasattr(est, 'transform'):
-        transform_1 = est.transform(X_test)
+    result = dict()
+    for method in check_methods:
+        if hasattr(estimator, method):
+            result[method] = getattr(estimator, method)(X_test)
 
     # Fit again
-    est.fit(X_train, y_train)
+    estimator.fit(X_train, y_train)
 
-    if hasattr(est, 'predict'):
-        pred_2 = est.predict(X_test)
-        assert_array_almost_equal(pred_1, pred_2)
-    if hasattr(est, 'predict_proba'):
-        pred_proba_2 = est.predict_proba(X_test)
-        assert_array_almost_equal(pred_proba_1, pred_proba_2)
-    if hasattr(est, 'decision_function'):
-        decision_2 = est.decision_function(X_test)
-        assert_array_almost_equal(decision_1, decision_2)
-    if hasattr(est, 'transform'):
-        transform_2 = est.transform(X_test)
-        if sparse.issparse(transform_1):
-            transform_1 = transform_1.toarray()
-            transform_2 = transform_2.toarray()
-        assert_array_almost_equal(transform_1, transform_2)
+    for method in check_methods:
+        if hasattr(estimator, method):
+            new_result = getattr(estimator, method)(X_test)
+            assert_allclose_dense_sparse(result[method], new_result)
