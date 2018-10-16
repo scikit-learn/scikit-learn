@@ -14,6 +14,8 @@ import os
 import errno
 import sys
 
+from distutils.version import LooseVersion
+
 import numpy as np
 import scipy.sparse as sp
 import scipy
@@ -332,3 +334,21 @@ except ImportError:  # python <3.3
     from collections import Iterable as _Iterable  # noqa
     from collections import Mapping as _Mapping  # noqa
     from collections import Sized as _Sized  # noqa
+
+
+def _joblib_parallel_backend(backend):
+    """Set joblib.Parallel backend in a compatible way for 0.11 and 0.12+"""
+    from . import _joblib
+    if backend not in ['threads', 'processes']:
+        raise NotImplementedError('backend=%s is not supported'
+                                  % backend)
+    if _joblib.__version__ >= LooseVersion('0.12.0'):
+        if backend == 'threads':
+            return {'prefer': 'threads'}
+        elif backend == 'processes':
+            return {'prefer': 'processes'}
+    else:
+        if backend == 'threads':
+            return {'backend': 'threading'}
+        elif backend == 'processes':
+            return {'backend': 'multiprocessing'}
