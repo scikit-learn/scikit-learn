@@ -2372,7 +2372,8 @@ def check_fit_idempotent(name, estimator_orig):
     else:
         y = rng.randint(low=0, high=2, size=n_samples)
     y = multioutput_estimator_convert_y_2d(estimator, y)
-    X_train, X_test, y_train, _ = train_test_split(X, y)
+    X_train, X_test, y_train, _ = train_test_split(X, y, train_size=.5,
+                                                   random_state=rng)
     # some estimators expect a square matrix
     X_train = pairwise_estimator_convert_X(X_train, estimator)
     X_test = pairwise_estimator_convert_X(X_test, estimator)
