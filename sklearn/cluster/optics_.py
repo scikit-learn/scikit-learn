@@ -29,13 +29,15 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
            significant_min=.003, min_cluster_size=.005,
            min_maxima_ratio=0.001, algorithm='ball_tree',
            leaf_size=30, n_jobs=None):
-    """Perform OPTICS clustering from vector array
+    """Estimate clustering structure from vector array
 
     OPTICS: Ordering Points To Identify the Clustering Structure
     Closely related to DBSCAN, finds core sample of high density and expands
-    clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
-    neighborhood radius. Better suited for usage on large point datasets than
-    the current sklearn implementation of DBSCAN.
+    clusters from them [1]_. Unlike DBSCAN, keeps cluster hierarchy for a
+    variable neighborhood radius. Better suited for usage on large point
+    datasets than the current sklearn implementation of DBSCAN.
+
+    Clusters are then extracted using a DBSCAN like method [1]_, or SQLNK [2]_.
 
     Read more in the :ref:`User Guide <optics>`.
 
@@ -167,10 +169,11 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
     Returns
     -------
     core_sample_indices_ : array, shape (n_core_samples,)
-        The indices of the core samples.
+        Indices of core samples.
 
     labels_ : array, shape (n_samples,)
-        The estimated labels.
+        Cluster labels for each point in the dataset given to fit().
+        Noisy samples are given the label -1.
 
     See also
     --------
@@ -182,14 +185,18 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
 
     References
     ----------
-    [1] Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel,
-    and Jörg Sander. "OPTICS: ordering points to identify the clustering
-    structure." ACM SIGMOD Record 28, no. 2 (1999): 49-60.
+    .. [1] Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel,
+       and Jörg Sander. "OPTICS: ordering points to identify the clustering
+       structure." ACM SIGMOD Record 28, no. 2 (1999): 49-60.
 
-    [2] Sander, Jörg, Xuejie Qin, Zhiyong Lu, Nan Niu, and Alex Kovarsky.
-    "Automatic extraction of clusters from hierarchical clustering
-    representations." In Advances in Knowledge Discovery and Data
-    Mining, pp. 75-87. Springer Berlin Heidelberg, 2003.
+    .. [2] Sander, Jörg, Xuejie Qin, Zhiyong Lu, Nan Niu, and Alex Kovarsky.
+       "Automatic extraction of clusters from hierarchical clustering
+       representations." In Advances in Knowledge Discovery and Data
+       Mining, pp. 75-87. Springer Berlin Heidelberg, 2003.
+
+    .. [3] Schubert, Erich, Michael Gertz.
+       "Improving the Cluster Structure Extracted from OPTICS Plots." Proc. of
+       the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
     """
 
     clust = OPTICS(min_samples, max_eps, metric, p, metric_params,
@@ -206,9 +213,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     OPTICS: Ordering Points To Identify the Clustering Structure
     Closely related to DBSCAN, finds core sample of high density and expands
-    clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
-    neighborhood radius. Better suited for usage on large point datasets than
-    the current sklearn implementation of DBSCAN.
+    clusters from them [1]_. Unlike DBSCAN, keeps cluster hierarchy for a
+    variable neighborhood radius. Better suited for usage on large point
+    datasets than the current sklearn implementation of DBSCAN.
+
+    Clusters are then extracted using a DBSCAN like method [1]_, or SQLNK [2]_.
 
     Read more in the :ref:`User Guide <optics>`.
 
@@ -368,18 +377,18 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     References
     ----------
-    [1] Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel,
-    and Jörg Sander. "OPTICS: ordering points to identify the clustering
-    structure." ACM SIGMOD Record 28, no. 2 (1999): 49-60.
+    .. [1] Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel,
+       and Jörg Sander. "OPTICS: ordering points to identify the clustering
+       structure." ACM SIGMOD Record 28, no. 2 (1999): 49-60.
 
-    [2] Sander, Jörg, Xuejie Qin, Zhiyong Lu, Nan Niu, and Alex Kovarsky.
-    "Automatic extraction of clusters from hierarchical clustering
-    representations." In Advances in Knowledge Discovery and Data
-    Mining, pp. 75-87. Springer Berlin Heidelberg, 2003.
+    .. [2] Sander, Jörg, Xuejie Qin, Zhiyong Lu, Nan Niu, and Alex Kovarsky.
+       "Automatic extraction of clusters from hierarchical clustering
+       representations." In Advances in Knowledge Discovery and Data
+       Mining, pp. 75-87. Springer Berlin Heidelberg, 2003.
 
-    [3] Schubert, Erich, Michael Gertz.
-    "Improving the Cluster Structure Extracted from OPTICS Plots." Proc. of
-    the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
+    .. [3] Schubert, Erich, Michael Gertz.
+       "Improving the Cluster Structure Extracted from OPTICS Plots." Proc. of
+       the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
     """
 
     def __init__(self, min_samples=5, max_eps=np.inf, metric='euclidean',
