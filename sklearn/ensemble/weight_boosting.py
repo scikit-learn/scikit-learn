@@ -59,6 +59,8 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     instead.
     """
 
+    norm_order = 2  # same as <numpy.linalg.norm>'s `ard` parameter
+
     @abstractmethod
     def __init__(self,
                  base_estimator=None,
@@ -239,15 +241,11 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             else:
                 yield r2_score(y, y_pred, sample_weight=sample_weight)
 
-    def get_feature_importances_(self, norm_order=2):
+    @property
+    def feature_importances_(self):
         """Return the feature importances.
 
          The higher the value, the more important the feature.
-
-        Parameters
-        ----------
-        norm_order : {non-zero int, inf, -inf, "fro"}, optional
-            Same as `numpy.linalg.norm`'s norm_order parameter
 
         Returns
         -------
@@ -260,7 +258,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         try:
             norm = self.estimator_weights_.sum()
             estimator_feature_importances_ = [
-                _get_feature_importances(estimator, norm_order)
+                _get_feature_importances(estimator, self.norm_order)
                 for estimator in self.estimators_]
 
             return (sum(weight * feature_importances_
@@ -274,8 +272,6 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 "since base_estimator neither has a "
                 "feature_importances_ attribute nor a "
                 "coef_ attribute")
-
-    feature_importances_ = property(get_feature_importances_)
 
     def _validate_X_predict(self, X):
         """Ensure that X is in the proper format"""
