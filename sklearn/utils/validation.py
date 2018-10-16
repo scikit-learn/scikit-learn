@@ -18,13 +18,14 @@ from distutils.version import LooseVersion
 
 from numpy.core.numeric import ComplexWarning
 
-from . import Memory, joblib_version
+from ..externals import six
 from .fixes import signature
 from .. import get_config as _get_config
-from ..externals import six
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
+from . import Memory
+from ._joblib import __version__ as joblib_version
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 

@@ -43,8 +43,8 @@ from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
-from ..utils import joblib
 from ..utils import deprecated
+from ..utils import dump, load
 from ..utils import check_random_state, Bunch
 
 logger = logging.getLogger(__name__)
@@ -403,12 +403,12 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
                                    download_if_missing=download_if_missing)
 
     if os.path.exists(target_file):
-        X_train, X_test = joblib.load(target_file)
+        X_train, X_test = load(target_file)
     else:
         vectorizer = CountVectorizer(dtype=np.int16)
         X_train = vectorizer.fit_transform(data_train.data).tocsr()
         X_test = vectorizer.transform(data_test.data).tocsr()
-        joblib.dump((X_train, X_test), target_file, compress=9)
+        dump((X_train, X_test), target_file, compress=9)
 
     # the data is stored as int16 for compactness
     # but normalize needs floats
