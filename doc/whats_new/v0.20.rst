@@ -90,7 +90,7 @@ Changelog
 
 - |Fix| Fixed a regression in v0.20.0 where
   :func:`feature_extraction.text.CountVectorizer` and other text vectorizers
-  could error during stop word validation with custom preprocessors
+  could error during stop words validation with custom preprocessors
   or tokenizers. :issue:`12393` by `Roman Yurchak`_.
 
 :mod:`sklearn.linear_model`
