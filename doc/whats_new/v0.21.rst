@@ -18,22 +18,8 @@ occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
 - please add class and reason here (see version 0.20 what's new)
-- :class:`ensemble.AdaBoostClassifier` (bug fix)
-- :class:`ensemble.AdaBoostRegressor` (bug fix)
-- :class:`ensemble.BaggingClassifier` (bug fix)
-- :class:`ensemble.BaggingRegressor` (bug fix)
-- :class:`ensemble.ExtraTreesClassifier` (bug fix)
-- :class:`ensemble.ExtraTreesRegressor` (bug fix)
-- :class:`ensemble.GradientBoostingClassifier` (bug fix)
-- :class:`ensemble.GradientBoostingRegressor` (bug fix)
-- :class:`ensemble.IsolationForest` (bug fix)
-- :class:`ensemble.RandomForestClassifier` (bug fix)
-- :class:`ensemble.RandomForestRegressor` (bug fix)
-- :class:`ensemble.RandomTreesEmbedding` (bug fix)
-- :class:`tree.DecisionTreeClassifier` (bug fix)
-- :class:`tree.DecisionTreeRegressor` (bug fix)
-- :class:`tree.ExtraTreeClassifier` (bug fix)
-- :class:`tree.ExtraTreeRegressor` (bug fix)
+- Decision trees and derived ensembles when both `max_depth` and
+  `max_leaf_nodes` are set. (bug fix)
 
 Details are listed in the changelog below.
 
