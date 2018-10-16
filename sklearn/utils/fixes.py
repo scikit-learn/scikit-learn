@@ -13,6 +13,7 @@ at which the fixe is no longer needed.
 import os
 import errno
 import sys
+import warnings
 
 from distutils.version import LooseVersion
 
@@ -336,19 +337,22 @@ except ImportError:  # python <3.3
     from collections import Sized as _Sized  # noqa
 
 
-def _joblib_parallel_backend(backend):
-    """Set joblib.Parallel backend in a compatible way for 0.11 and 0.12+"""
+def _joblib_parallel_args(prefer=None, require=None):
+    """Set joblib.Parallel arguments in a compatible way for 0.11 and 0.12+"""
     from . import _joblib
-    if backend not in ['threads', 'processes']:
-        raise NotImplementedError('backend=%s is not supported'
-                                  % backend)
+    if prefer not in ['threads', 'processes', None]:
+        raise NotImplementedError('prefer=%s is not supported'
+                                  % prefer)
+    args = {}
     if _joblib.__version__ >= LooseVersion('0.12.0'):
-        if backend == 'threads':
-            return {'prefer': 'threads'}
-        elif backend == 'processes':
-            return {'prefer': 'processes'}
+        if prefer is not None:
+            args['prefer'] = prefer
+        if require is not None:
+            args['require'] = require
     else:
-        if backend == 'threads':
-            return {'backend': 'threading'}
-        elif backend == 'processes':
-            return {'backend': 'multiprocessing'}
+        if prefer is not None:
+            args['backend'] = {'threads': 'threading',
+                               'processes': 'multiprocessing'}[prefer]
+        if require is 'sharedmem':
+            args['backend'] = 'threading'
+    return args
