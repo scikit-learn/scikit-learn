@@ -6,6 +6,7 @@
 #          Lars Buitinck
 #          Alexandre Gramfort
 #          Nicolas Tresegnie
+#          Sylvain Marie
 # License: BSD 3 clause
 
 import warnings

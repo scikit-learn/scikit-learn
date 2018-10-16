@@ -1,6 +1,7 @@
 """Kernel Principal Components Analysis"""
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
+#         Sylvain Marie <sylvain.marie@schneider-electric.com>
 # License: BSD 3 clause
 
 import numpy as np
