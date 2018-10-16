@@ -815,7 +815,7 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
     spacing : int, optional (default=3)
         Number of spaces between edges. The higher it is, the wider the result.
 
-    Sample output:
+    Sample output :
 
     ```
     |---petal width (cm) <= 0.80
