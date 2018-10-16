@@ -787,6 +787,25 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
                  max_depth=10, show_value=False, show_class=False, spacing=3):
     """Build a text report showing the rules of a decision tree.
 
+    Sample output
+
+    ```
+    |---petal width (cm) <= 0.80
+    |   | (class: setosa)
+    |   |---* value: [ 50.   0.   0.]
+    |   |   | (class: setosa)
+    |---petal width (cm) >  0.80
+    |   | (class: setosa)
+    |   |---petal width (cm) <= 1.75
+    |   |   | (class: versicolor)
+    |   |   |---* value: [  0.  49.   5.]
+    |   |   |   | (class: versicolor)
+    |   |---petal width (cm) >  1.75
+    |   |   | (class: versicolor)
+    |   |   |---* value: [  0.   1.  45.]
+    |   |   |   | (class: virginica)
+    ```
+
     Parameters
     ----------
     decision_tree : decision tree
@@ -814,25 +833,6 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
 
     spacing : int, optional (default=3)
         Number of spaces between edges. The higher it is, the wider the result.
-
-    Sample output
-
-    ```
-    |---petal width (cm) <= 0.80
-    |   | (class: setosa)
-    |   |---* value: [ 50.   0.   0.]
-    |   |   | (class: setosa)
-    |---petal width (cm) >  0.80
-    |   | (class: setosa)
-    |   |---petal width (cm) <= 1.75
-    |   |   | (class: versicolor)
-    |   |   |---* value: [  0.  49.   5.]
-    |   |   |   | (class: versicolor)
-    |   |---petal width (cm) >  1.75
-    |   |   | (class: versicolor)
-    |   |   |---* value: [  0.   1.  45.]
-    |   |   |   | (class: virginica)
-    ```
 
     Returns
     -------
