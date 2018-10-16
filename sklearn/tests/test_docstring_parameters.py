@@ -122,9 +122,10 @@ def test_docstring_parameters():
             if (not any(d in name_ for d in _DOCSTRING_IGNORES) and
                     not _is_deprecated(func)):
                 incorrect += check_docstring_parameters(func)
-    msg = '\n' + '\n'.join(sorted(list(set(incorrect))))
+
+    msg = '\n'.join(incorrect)
     if len(incorrect) > 0:
-        raise AssertionError("Docstring Error: " + msg)
+        raise AssertionError("Docstring Error:\n" + msg)
 
 
 @ignore_warnings(category=DeprecationWarning)

@@ -1027,4 +1027,8 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     )
 
     incorrect.extend(message)
-    return '\n'.join(incorrect)
+
+    # Prepend function name
+    incorrect = ['In :' + str(func)] + incorrect
+
+    return incorrect
