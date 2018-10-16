@@ -400,7 +400,7 @@ def safe_sqr(X, copy=True):
     return X
 
 
-def gen_batches(n, batch_size, allow_smaller_final_batch=False):
+def gen_batches(n, batch_size, larger_final_batch=False):
     """Generator to create slices containing batch_size elements, from 0 to n.
 
     The last slice may contain less than batch_size elements, when batch_size
@@ -411,8 +411,8 @@ def gen_batches(n, batch_size, allow_smaller_final_batch=False):
     n : int
     batch_size : int
         Number of element in each batch
-    allow_smaller_final_batch : bool
-        Whether to ignore final batch if it is smaller
+    larger_final_batch : bool
+        Whether to combine two last batches to avoid a small final batch.
 
     Yields
     ------
@@ -431,9 +431,11 @@ def gen_batches(n, batch_size, allow_smaller_final_batch=False):
     start = 0
     for _ in range(int(n // batch_size)):
         end = start + batch_size
+        if larger_final_batch and end + batch_size > n:
+            continue
         yield slice(start, end)
         start = end
-    if start < n and allow_smaller_final_batch:
+    if start < n:
         yield slice(start, n)
 
 
