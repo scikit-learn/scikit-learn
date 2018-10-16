@@ -815,13 +815,13 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
         A list of length n_features containing the feature names.
         If None generic names will be used ("feature_0", "feature_1", ...).
 
-    max_depth : int, optional (default=10)
-        Only the first max_depth levels of the tree are printed.
-
     class_names : list of strings, bool or None, optional (default=None)
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification, not supported for multi-output.
         Ignored if show_class is False.
+
+    max_depth : int, optional (default=10)
+        Only the first max_depth levels of the tree are printed.
 
     show_value : bool, optional (default=False)
         If True the value of each internal node is printed.
