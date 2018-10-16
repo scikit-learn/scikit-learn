@@ -55,12 +55,11 @@ Support for Python 3.4 and below has been officially dropped.
   of calculating it every time on the fly.
   :issue:`12116` by :user:`Ekaterina Krivich <kiote>` and `Joel Nothman`_.
 
-- |Feature| |Efficiency| :class:`preprocessing.PolynomialFeatures` now supports
-  compressed sparse row (CSR) matrices as input for degrees 2 and 3. This is
-  typically much faster than the dense case as it scales with matrix density and
-  expansion degree (on the order of density^degree), and is much, much faster
-  than the compressed sparse column (CSC) case. :issue:`12197` by
-  :user:`Andrew Nystrom <awnystrom>`.
+- |Efficiency| :class:`preprocessing.PolynomialFeatures` now supports compressed
+  sparse row (CSR) matrices as input for degrees 2 and 3. This is typically much
+  faster than the dense case as it scales with matrix density and expansion degree
+  (on the order of density^degree), and is much, much faster than the compressed
+  sparse column (CSC) case. :issue:`12197` by :user:`Andrew Nystrom <awnystrom>`.
 
 - |Efficiency| |API| Speed improvement in :class:`preprocessing.PolynomialFeatures`,
   in the dense case. Also added a new parameter ``order`` which controls output
