@@ -23,10 +23,8 @@ The goal is to compare different predictors to see which one is best for
 the `IterativeImputer` when using a ``RandomForestRegressor`` estimator on the
 Boston dataset.
 
-For the Boston dataset, the ``HuberRegressor`` produces results that are on
-average superior to even having the full dataset. We also see that using other
-predictors results in an imputer that is worse than using ``SimpleImputer``
-with the ``mean`` strategy.
+For the Boston dataset and this particular pattern of missing values we see
+that ``RandomForestRegressor`` and produces the best results.
 """
 print(__doc__)
 
@@ -42,6 +40,8 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score
 
+N_SPLITS = 5
+
 rng = np.random.RandomState(0)
 
 X_full, y_full = load_boston(return_X_y=True)
@@ -49,37 +49,31 @@ n_samples = X_full.shape[0]
 n_features = X_full.shape[1]
 
 # Estimate the score on the entire dataset, with no missing values
+mses = np.zeros((8, N_SPLITS))
 rf_estimator = RandomForestRegressor(random_state=0, n_estimators=100)
-full_scores = cross_val_score(rf_estimator, X_full, y_full,
-                              scoring='neg_mean_squared_error',
-                              cv=5)
-mses_boston = [-full_scores.mean()]
-stds_boston = [full_scores.std()]
+mses[0, :] = cross_val_score(rf_estimator, X_full, y_full,
+                             scoring='neg_mean_squared_error',
+                             cv=N_SPLITS)
 
-# Add missing values in 75% of the lines
+
+# Add a single missing value in 75% of the lines
+X_missing = X_full.copy()
+y_missing = y_full.copy()
 missing_rate = 0.75
 n_missing_samples = int(np.floor(n_samples * missing_rate))
-missing_samples = np.hstack((np.zeros(n_samples - n_missing_samples,
-                                      dtype=np.bool),
-                             np.ones(n_missing_samples,
-                                     dtype=np.bool)))
-rng.shuffle(missing_samples)
-missing_features = rng.randint(0, n_features, n_missing_samples)
-X_missing = X_full.copy()
-X_missing[np.where(missing_samples)[0], missing_features] = np.nan
-y_missing = y_full.copy()
+missing_samples = rng.choice(n_samples, n_missing_samples, replace=False)
+missing_features = rng.choice(n_features, n_missing_samples, replace=True)
+X_missing[missing_samples, missing_features] = np.nan
 
 # Estimate the score after imputation (mean strategy) of the missing values
-for strategy in ['mean', 'median']:
+for i, strategy in enumerate(['mean', 'median']):
     estimator = make_pipeline(
         SimpleImputer(missing_values=np.nan, strategy=strategy),
         rf_estimator
     )
-    mean_impute_scores = cross_val_score(estimator, X_missing, y_missing,
-                                         scoring='neg_mean_squared_error',
-                                         cv=5)
-    mses_boston.append(-mean_impute_scores.mean())
-    stds_boston.append(mean_impute_scores.std())
+    mses[i + 1, :] = cross_val_score(estimator, X_missing, y_missing,
+                                     scoring='neg_mean_squared_error',
+                                     cv=N_SPLITS)
 
 # Estimate the score after iterative imputation of the missing values
 # with different predictors
@@ -94,16 +88,14 @@ predictors = [
     KNeighborsRegressor(n_neighbors=15)
 ]
 
-for predictor in predictors:
+for i, predictor in enumerate(predictors):
     estimator = make_pipeline(
         IterativeImputer(random_state=0, predictor=predictor),
         rf_estimator
     )
-    pred_scores = cross_val_score(estimator, X_missing, y_missing,
-                                  scoring='neg_mean_squared_error',
-                                  cv=5)
-    mses_boston.append(-pred_scores.mean())
-    stds_boston.append(pred_scores.std())
+    mses[i + 3, :] = cross_val_score(estimator, X_missing, y_missing,
+                                     scoring='neg_mean_squared_error',
+                                     cv=N_SPLITS)
 
 # Plot the results
 x_labels = ['Full Data',
@@ -117,12 +109,18 @@ x_labels = ['Full Data',
 
 # plot boston results
 fig, ax = plt.subplots(figsize=(14, 6))
-for i, j in enumerate(np.arange(len(mses_boston))):
-    ax.barh(j, mses_boston[j], xerr=stds_boston[j], alpha=0.6, align='center')
+for i, j in enumerate(np.arange(mses.shape[0])):
+    ax.barh(
+        j,
+        -np.mean(mses[j, :]),
+        xerr=np.std(mses[j, :]),
+        alpha=0.6,
+        align='center'
+    )
 
 ax.set_title('Boston Data Regression MSE With Different Imputation Methods')
-ax.set_xlabel('MSE')
-ax.set_yticks(np.arange(len(mses_boston)))
+ax.set_xlabel('MSE (smaller is better)')
+ax.set_yticks(np.arange(mses.shape[0]))
 ax.invert_yaxis()
 ax.set_yticklabels(x_labels)
 plt.tight_layout(pad=1)

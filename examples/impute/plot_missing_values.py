@@ -32,7 +32,7 @@ from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)
 
-CV_SPLIT_NUM = 5
+N_SPLITS = 5
 REGRESSOR = RandomForestRegressor(random_state=0, n_estimators=100)
 
 
@@ -42,7 +42,7 @@ def get_scores_for_imputer(imputer, X_missing, y_missing):
         REGRESSOR)
     impute_scores = cross_val_score(estimator, X_missing, y_missing,
                                     scoring='neg_mean_squared_error',
-                                    cv=CV_SPLIT_NUM)
+                                    cv=N_SPLITS)
     return impute_scores
 
 
@@ -54,7 +54,7 @@ def get_results(dataset):
     # Estimate the score on the entire dataset, with no missing values
     full_scores = cross_val_score(REGRESSOR, X_full, y_full,
                                   scoring='neg_mean_squared_error',
-                                  cv=CV_SPLIT_NUM)
+                                  cv=N_SPLITS)
 
     # Add missing values in 75% of the lines
     missing_rate = 0.75
