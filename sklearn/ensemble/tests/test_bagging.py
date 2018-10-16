@@ -430,7 +430,7 @@ def test_error():
                   BaggingClassifier(base, max_features=2.0).fit, X, y)
     assert_raises(ValueError,
                   BaggingClassifier(base, max_features=5).fit, X, y)
-    assert_raises(TypeError,
+    assert_raises(ValueError,
                   BaggingClassifier(base, max_features="foobar").fit, X, y)
 
     # Test support of decision_function
