@@ -89,12 +89,10 @@ Changelog
 :mod:`sklearn.utils`
 ........................
 
-- |Fix| Use float64 for mean accumulator in
-  :func:`utils.extmath._incremental_mean_and_var` to avoid floating point
-  precision issues when using float32 datasets. Affects
-  :class:`preprocessing.StandardScaler` and
-  :class:`decomposition.IncrementalPCA`.
-  :issue:`12333` by :user:`bauks <bauks>`.
+- |Fix| Use float64 for mean accumulator to avoid floating point
+  precision issues in :class:`preprocessing.StandardScaler` and
+  :class:`decomposition.IncrementalPCA` when using float32 datasets.
+  :issue:`12338` by :user:`bauks <bauks>`.
 
 .. _changes_0_20:
 
