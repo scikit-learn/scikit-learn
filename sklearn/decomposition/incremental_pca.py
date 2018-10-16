@@ -196,7 +196,8 @@ class IncrementalPCA(_BasePCA):
         else:
             self.batch_size_ = self.batch_size
 
-        for batch in gen_batches(n_samples, self.batch_size_):
+        for batch in gen_batches(n_samples, self.batch_size_,
+                                 larger_final_batch=True):
             self.partial_fit(X[batch], check_input=False)
 
         return self
