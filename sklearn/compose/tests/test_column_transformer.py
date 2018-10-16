@@ -536,11 +536,11 @@ def test_make_column_transformer():
 def test_make_column_transformer_kwargs():
     scaler = StandardScaler()
     norm = Normalizer()
-    ct = make_column_transformer(('first', scaler), (['second'], norm),
+    ct = make_column_transformer((scaler, 'first'), (norm, ['second']),
                                  n_jobs=3, remainder='drop',
                                  sparse_threshold=0.5)
     assert_equal(ct.transformers, make_column_transformer(
-        ('first', scaler), (['second'], norm)).transformers)
+        (scaler, 'first'), (norm, ['second'])).transformers)
     assert_equal(ct.n_jobs, 3)
     assert_equal(ct.remainder, 'drop')
     assert_equal(ct.sparse_threshold, 0.5)
@@ -548,7 +548,7 @@ def test_make_column_transformer_kwargs():
     assert_raise_message(
         TypeError,
         'Unknown keyword arguments: "transformer_weights"',
-        make_column_transformer, ('first', scaler), (['second'], norm),
+        make_column_transformer, (scaler, 'first'), (norm, ['second']),
         transformer_weights={'pca': 10, 'Transf': 1}
     )
 
@@ -557,7 +557,7 @@ def test_make_column_transformer_remainder_transformer():
     scaler = StandardScaler()
     norm = Normalizer()
     remainder = StandardScaler()
-    ct = make_column_transformer(('first', scaler), (['second'], norm),
+    ct = make_column_transformer((scaler, 'first'), (norm, ['second']),
                                  remainder=remainder)
     assert ct.remainder == remainder
 
@@ -767,7 +767,7 @@ def test_column_transformer_remainder():
         "or estimator.", ct.fit_transform, X_array)
 
     # check default for make_column_transformer
-    ct = make_column_transformer(([0], Trans()))
+    ct = make_column_transformer((Trans(), [0]))
     assert ct.remainder == 'drop'
 
 
