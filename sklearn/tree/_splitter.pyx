@@ -1432,7 +1432,6 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         return 0
 
 
-
 cdef class RandomSparseSplitter(BaseSparseSplitter):
     """Splitter for finding a random split, using the sparse data."""
 
