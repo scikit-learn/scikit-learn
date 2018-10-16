@@ -7,6 +7,8 @@ Here are implemented estimators that are resistant to outliers.
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
 #
 # License: BSD 3 clause
+from __future__ import division
+
 import warnings
 import numbers
 import numpy as np
@@ -55,15 +57,15 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
     verbose : boolean, optional
         Verbose mode.
 
+    cov_computation_method : callable, default empirical_covariance
+        The function which will be used to compute the covariance.
+        Must return shape (n_features, n_features)
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-
-    cov_computation_method : callable, default empirical_covariance
-        The function which will be used to compute the covariance.
-        Must return shape (n_features, n_features)
 
     Returns
     -------
@@ -161,8 +163,12 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
         results = location, covariance, det, support, dist
     elif det > previous_det:
         # determinant has increased (should not happen)
-        warnings.warn("Warning! det > previous_det (%.15f > %.15f)"
-                      % (det, previous_det), RuntimeWarning)
+        warnings.warn("Determinant has increased; this should not happen: "
+                      "log(det) > log(previous_det) (%.15f > %.15f). "
+                      "You may want to try with a higher value of "
+                      "support_fraction (current value: %.3f)."
+                      % (det, previous_det, n_support / n_samples),
+                      RuntimeWarning)
         results = previous_location, previous_covariance, \
             previous_det, previous_support, previous_dist
 
@@ -190,7 +196,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
 
     Starting from a random support, the pure data set is found by the
     c_step procedure introduced by Rousseeuw and Van Driessen in
-    [Rouseeuw1999]_.
+    [RV]_.
 
     Parameters
     ----------
@@ -199,9 +205,6 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
 
     n_support : int, [(n + p + 1)/2] < n_support < n
         The number of samples the pure data set must contain.
-
-    select : int, int > 0
-        Number of best candidates results to return.
 
     n_trials : int, nb_trials > 0 or 2-tuple
         Number of different initial sets of observations from which to
@@ -214,22 +217,25 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         - n_trials[1]: array-like, shape (n_trials, n_features, n_features)
           is the list of `n_trials` initial covariances estimates
 
+    select : int, int > 0
+        Number of best candidates results to return.
+
     n_iter : int, nb_iter > 0
         Maximum number of iterations for the c_step procedure.
         (2 is enough to be close to the final solution. "Never" exceeds 20).
+
+    verbose : boolean, default False
+        Control the output verbosity.
+
+    cov_computation_method : callable, default empirical_covariance
+        The function which will be used to compute the covariance.
+        Must return shape (n_features, n_features)
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-
-    cov_computation_method : callable, default empirical_covariance
-        The function which will be used to compute the covariance.
-        Must return shape (n_features, n_features)
-
-    verbose : boolean, default False
-        Control the output verbosity.
 
     See Also
     ---------
@@ -250,7 +256,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
 
     References
     ----------
-    .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance Determinant
+    .. [RV] A Fast Algorithm for the Minimum Covariance Determinant
         Estimator, 1999, American Statistical Association and the American
         Society for Quality, TECHNOMETRICS
 
@@ -339,13 +345,13 @@ def fast_mcd(X, support_fraction=None,
     such computation levels.
 
     Note that only raw estimates are returned. If one is interested in
-    the correction and reweighting steps described in [Rouseeuw1999]_,
+    the correction and reweighting steps described in [RouseeuwVan]_,
     see the MinCovDet object.
 
     References
     ----------
 
-    .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance
+    .. [RouseeuwVan] A Fast Algorithm for the Minimum Covariance
         Determinant Estimator, 1999, American Statistical Association
         and the American Society for Quality, TECHNOMETRICS
 
@@ -405,7 +411,7 @@ def fast_mcd(X, support_fraction=None,
             # get precision matrix in an optimized way
             precision = linalg.pinvh(covariance)
             dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
-# Starting FastMCD algorithm for p-dimensional case
+    # Starting FastMCD algorithm for p-dimensional case
     if (n_samples > 500) and (n_features > 1):
         # 1. Find candidate supports on subsets
         # a. split the set in subsets of size ~ 300
@@ -523,7 +529,7 @@ class MinCovDet(EmpiricalCovariance):
     store_precision : bool
         Specify if the estimated precision is stored.
 
-    assume_centered : Boolean
+    assume_centered : bool
         If True, the support of the robust location and the covariance
         estimates is computed, and a covariance estimate is recomputed from
         it, without centering the data.
@@ -575,15 +581,33 @@ class MinCovDet(EmpiricalCovariance):
         Mahalanobis distances of the training set (on which `fit` is called)
         observations.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import MinCovDet
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> real_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> np.random.seed(0)
+    >>> X = np.random.multivariate_normal(mean=[0, 0],
+    ...                                   cov=real_cov,
+    ...                                   size=500)
+    >>> cov = MinCovDet(random_state=0).fit(X)
+    >>> cov.covariance_ # doctest: +ELLIPSIS
+    array([[0.7411..., 0.2535...],
+           [0.2535..., 0.3053...]])
+    >>> cov.location_
+    array([0.0813... , 0.0427...])
+
     References
     ----------
 
     .. [Rouseeuw1984] `P. J. Rousseeuw. Least median of squares regression.
         J. Am Stat Ass, 79:871, 1984.`
-    .. [Rouseeuw1999] `A Fast Algorithm for the Minimum Covariance Determinant
+    .. [Rousseeuw] `A Fast Algorithm for the Minimum Covariance Determinant
         Estimator, 1999, American Statistical Association and the American
         Society for Quality, TECHNOMETRICS`
-    .. [Butler1993] `R. W. Butler, P. L. Davies and M. Jhun,
+    .. [ButlerDavies] `R. W. Butler, P. L. Davies and M. Jhun,
         Asymptotics For The Minimum Covariance Determinant Estimator,
         The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400`
 
@@ -606,12 +630,12 @@ class MinCovDet(EmpiricalCovariance):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : not used, present for API consistence purpose.
+        y
+            not used, present for API consistence purpose.
 
         Returns
         -------
         self : object
-            Returns self.
 
         """
         X = check_array(X, ensure_min_samples=2, estimator='MinCovDet')
@@ -650,7 +674,7 @@ class MinCovDet(EmpiricalCovariance):
         """Apply a correction to raw Minimum Covariance Determinant estimates.
 
         Correction using the empirical correction factor suggested
-        by Rousseeuw and Van Driessen in [Rouseeuw1984]_.
+        by Rousseeuw and Van Driessen in [RVD]_.
 
         Parameters
         ----------
@@ -659,12 +683,27 @@ class MinCovDet(EmpiricalCovariance):
             The data set must be the one which was used to compute
             the raw estimates.
 
+        References
+        ----------
+
+        .. [RVD] `A Fast Algorithm for the Minimum Covariance
+            Determinant Estimator, 1999, American Statistical Association
+            and the American Society for Quality, TECHNOMETRICS`
+
         Returns
         -------
         covariance_corrected : array-like, shape (n_features, n_features)
             Corrected robust covariance estimate.
 
         """
+
+        # Check that the covariance of the support data is not equal to 0.
+        # Otherwise self.dist_ = 0 and thus correction = 0.
+        n_samples = len(self.dist_)
+        n_support = np.sum(self.support_)
+        if n_support < n_samples and np.allclose(self.raw_covariance_, 0):
+            raise ValueError('The covariance matrix of the support data '
+                             'is equal to 0, try to increase support_fraction')
         correction = np.median(self.dist_) / chi2(data.shape[1]).isf(0.5)
         covariance_corrected = self.raw_covariance_ * correction
         self.dist_ /= correction
@@ -675,7 +714,8 @@ class MinCovDet(EmpiricalCovariance):
 
         Re-weight observations using Rousseeuw's method (equivalent to
         deleting outlying observations from the data set before
-        computing location and covariance estimates). [Rouseeuw1984]_
+        computing location and covariance estimates) described
+        in [RVDriessen]_.
 
         Parameters
         ----------
@@ -683,6 +723,13 @@ class MinCovDet(EmpiricalCovariance):
             The data matrix, with p features and n samples.
             The data set must be the one which was used to compute
             the raw estimates.
+
+        References
+        ----------
+
+        .. [RVDriessen] `A Fast Algorithm for the Minimum Covariance
+            Determinant Estimator, 1999, American Statistical Association
+            and the American Society for Quality, TECHNOMETRICS`
 
         Returns
         -------

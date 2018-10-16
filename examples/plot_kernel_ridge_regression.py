@@ -104,7 +104,6 @@ plt.scatter(X[sv_ind], y[sv_ind], c='r', s=50, label='SVR support vectors',
             zorder=2, edgecolors=(0, 0, 0))
 plt.scatter(X[:100], y[:100], c='k', label='data', zorder=1,
             edgecolors=(0, 0, 0))
-plt.hold('on')
 plt.plot(X_plot, y_svr, c='r',
          label='SVR (fit: %.3fs, predict: %.3fs)' % (svr_fit, svr_predict))
 plt.plot(X_plot, y_kr, c='g',
@@ -121,7 +120,7 @@ plt.figure()
 X = 5 * rng.rand(10000, 1)
 y = np.sin(X).ravel()
 y[::5] += 3 * (0.5 - rng.rand(X.shape[0] // 5))
-sizes = np.logspace(1, 4, 7, dtype=np.int)
+sizes = np.logspace(1, 4, 7).astype(np.int)
 for name, estimator in {"KRR": KernelRidge(kernel='rbf', alpha=0.1,
                                            gamma=10),
                         "SVR": SVR(kernel='rbf', C=1e1, gamma=10)}.items():

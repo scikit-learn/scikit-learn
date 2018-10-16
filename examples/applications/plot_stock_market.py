@@ -59,65 +59,34 @@ is to position the labels minimizing overlap. For this we use an
 heuristic based on the direction of the nearest neighbor along each
 axis.
 """
-print(__doc__)
+from __future__ import print_function
 
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD 3 clause
 
+import sys
 from datetime import datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-from six.moves.urllib.request import urlopen
-from six.moves.urllib.parse import urlencode
+
+import pandas as pd
+
 from sklearn import cluster, covariance, manifold
+
+print(__doc__)
 
 
 # #############################################################################
 # Retrieve the data from Internet
 
-
-def quotes_historical_google(symbol, date1, date2):
-    """Get the historical data from Google finance.
-
-    Parameters
-    ----------
-    symbol : str
-        Ticker symbol to query for, for example ``"DELL"``.
-    date1 : datetime.datetime
-        Start date.
-    date2 : datetime.datetime
-        End date.
-
-    Returns
-    -------
-    X : array
-        The columns are ``date`` -- datetime, ``open``, ``high``,
-        ``low``, ``close`` and ``volume`` of type float.
-    """
-    params = urlencode({
-        'q': symbol,
-        'startdate': date1.strftime('%b %d, %Y'),
-        'enddate': date2.strftime('%b %d, %Y'),
-        'output': 'csv'
-    })
-    url = 'http://www.google.com/finance/historical?' + params
-    response = urlopen(url)
-    dtype = {
-        'names': ['date', 'open', 'high', 'low', 'close', 'volume'],
-        'formats': ['object', 'f4', 'f4', 'f4', 'f4', 'f4']
-    }
-    converters = {0: lambda s: datetime.strptime(s.decode(), '%d-%b-%y')}
-    return np.genfromtxt(response, delimiter=',', skip_header=1,
-                         dtype=dtype, converters=converters,
-                         missing_values='-', filling_values=-1)
-
-
-# Choose a time period reasonably calm (not too long ago so that we get
-# high-tech firms, and before the 2008 crash)
-d1 = datetime(2003, 1, 1)
-d2 = datetime(2008, 1, 1)
+# The data is from 2003 - 2008. This is reasonably calm: (not too long ago so
+# that we get high-tech firms, and before the 2008 crash). This kind of
+# historical data can be obtained for from APIs like the quandl.com and
+# alphavantage.co ones.
+start_date = datetime(2003, 1, 1).date()
+end_date = datetime(2008, 1, 1).date()
 
 symbol_dict = {
     'TOT': 'Total',
@@ -177,11 +146,16 @@ symbol_dict = {
     'CAT': 'Caterpillar',
     'DD': 'DuPont de Nemours'}
 
-symbols, names = np.array(list(symbol_dict.items())).T
 
-quotes = [
-    quotes_historical_google(symbol, d1, d2) for symbol in symbols
-]
+symbols, names = np.array(sorted(symbol_dict.items())).T
+
+quotes = []
+
+for symbol in symbols:
+    print('Fetching quote history for %r' % symbol, file=sys.stderr)
+    url = ('https://raw.githubusercontent.com/scikit-learn/examples-data/'
+           'master/financial-data/{}.csv')
+    quotes.append(pd.read_csv(url.format(symbol)))
 
 close_prices = np.vstack([q['close'] for q in quotes])
 open_prices = np.vstack([q['open'] for q in quotes])
@@ -192,7 +166,7 @@ variation = close_prices - open_prices
 
 # #############################################################################
 # Learn a graphical structure from the correlations
-edge_model = covariance.GraphLassoCV()
+edge_model = covariance.GraphicalLassoCV(cv=5)
 
 # standardize the time series: using correlations rather than covariance
 # is more efficient for structure recovery
@@ -237,7 +211,7 @@ non_zero = (np.abs(np.triu(partial_correlations, k=1)) > 0.02)
 
 # Plot the nodes using the coordinates of our embedding
 plt.scatter(embedding[0], embedding[1], s=100 * d ** 2, c=labels,
-            cmap=plt.cm.spectral)
+            cmap=plt.cm.nipy_spectral)
 
 # Plot the edges
 start_idx, end_idx = np.where(non_zero)
@@ -280,7 +254,7 @@ for index, (name, label, (x, y)) in enumerate(
              horizontalalignment=horizontalalignment,
              verticalalignment=verticalalignment,
              bbox=dict(facecolor='w',
-                       edgecolor=plt.cm.spectral(label / float(n_labels)),
+                       edgecolor=plt.cm.nipy_spectral(label / float(n_labels)),
                        alpha=.6))
 
 plt.xlim(embedding[0].min() - .15 * embedding[0].ptp(),

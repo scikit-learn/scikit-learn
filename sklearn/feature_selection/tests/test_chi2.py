@@ -51,7 +51,7 @@ def test_chi2():
     # == doesn't work on scipy.sparse matrices
     Xtrans = Xtrans.toarray()
     Xtrans2 = mkchi2(k=2).fit_transform(Xsp, y).toarray()
-    assert_array_equal(Xtrans, Xtrans2)
+    assert_array_almost_equal(Xtrans, Xtrans2)
 
 
 def test_chi2_coo():

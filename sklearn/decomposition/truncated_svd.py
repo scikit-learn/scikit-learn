@@ -91,26 +91,25 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     TruncatedSVD(algorithm='randomized', n_components=5, n_iter=7,
             random_state=42, tol=0.0)
     >>> print(svd.explained_variance_ratio_)  # doctest: +ELLIPSIS
-    [ 0.0606... 0.0584... 0.0497... 0.0434... 0.0372...]
+    [0.0606... 0.0584... 0.0497... 0.0434... 0.0372...]
     >>> print(svd.explained_variance_ratio_.sum())  # doctest: +ELLIPSIS
     0.249...
     >>> print(svd.singular_values_)  # doctest: +ELLIPSIS
-    [ 2.5841... 2.5245... 2.3201... 2.1753... 2.0443...]
+    [2.5841... 2.5245... 2.3201... 2.1753... 2.0443...]
 
     See also
     --------
     PCA
-    RandomizedPCA
 
     References
     ----------
     Finding structure with randomness: Stochastic algorithms for constructing
     approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909) http://arxiv.org/pdf/0909.4061
+    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
 
     Notes
     -----
-    SVD suffers from a problem called "sign indeterminancy", which means the
+    SVD suffers from a problem called "sign indeterminacy", which means the
     sign of the ``components_`` and the output from transform depend on the
     algorithm and random state. To work around this, fit instances of this
     class to data once, then keep the instance around to do transformations.
@@ -132,6 +131,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data.
 
+        y : Ignored
+
         Returns
         -------
         self : object
@@ -147,6 +148,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data.
+
+        y : Ignored
 
         Returns
         -------

@@ -9,6 +9,7 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.semi_supervised import label_propagation
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.datasets import make_classification
+from sklearn.exceptions import ConvergenceWarning
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
@@ -65,19 +66,6 @@ def test_predict_proba():
                                   np.array([[0.5, 0.5]]))
 
 
-def test_alpha_deprecation():
-    X, y = make_classification(n_samples=100)
-    y[::3] = -1
-
-    lp_default = label_propagation.LabelPropagation(kernel='rbf', gamma=0.1)
-    lp_default_y = assert_no_warnings(lp_default.fit, X, y).transduction_
-
-    lp_0 = label_propagation.LabelPropagation(alpha=0, kernel='rbf', gamma=0.1)
-    lp_0_y = assert_warns(DeprecationWarning, lp_0.fit, X, y).transduction_
-
-    assert_array_equal(lp_default_y, lp_0_y)
-
-
 def test_label_spreading_closed_form():
     n_classes = 2
     X, y = make_classification(n_classes=n_classes, n_samples=200,
@@ -108,11 +96,14 @@ def test_label_propagation_closed_form():
     labelled_idx = (Y[:, (-1,)] == 0).nonzero()[0]
 
     clf = label_propagation.LabelPropagation(max_iter=10000,
-                                             gamma=0.1).fit(X, y)
+                                             gamma=0.1)
+    clf.fit(X, y)
     # adopting notation from Zhu et al 2002
     T_bar = clf._build_graph()
-    Tuu = T_bar[np.meshgrid(unlabelled_idx, unlabelled_idx, indexing='ij')]
-    Tul = T_bar[np.meshgrid(unlabelled_idx, labelled_idx, indexing='ij')]
+    Tuu = T_bar[tuple(np.meshgrid(unlabelled_idx, unlabelled_idx,
+                      indexing='ij'))]
+    Tul = T_bar[tuple(np.meshgrid(unlabelled_idx, labelled_idx,
+                                  indexing='ij'))]
     Y = Y[:, :-1]
     Y_l = Y[labelled_idx, :]
     Y_u = np.dot(np.dot(np.linalg.inv(np.eye(Tuu.shape[0]) - Tuu), Tul), Y_l)
@@ -145,3 +136,22 @@ def test_convergence_speed():
     # this should converge quickly:
     assert mdl.n_iter_ < 10
     assert_array_equal(mdl.predict(X), [0, 1, 1])
+
+
+def test_convergence_warning():
+    # This is a non-regression test for #5774
+    X = np.array([[1., 0.], [0., 1.], [1., 2.5]])
+    y = np.array([0, 1, -1])
+    mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=1)
+    assert_warns(ConvergenceWarning, mdl.fit, X, y)
+    assert_equal(mdl.n_iter_, mdl.max_iter)
+
+    mdl = label_propagation.LabelPropagation(kernel='rbf', max_iter=1)
+    assert_warns(ConvergenceWarning, mdl.fit, X, y)
+    assert_equal(mdl.n_iter_, mdl.max_iter)
+
+    mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=500)
+    assert_no_warnings(mdl.fit, X, y)
+
+    mdl = label_propagation.LabelPropagation(kernel='rbf', max_iter=500)
+    assert_no_warnings(mdl.fit, X, y)

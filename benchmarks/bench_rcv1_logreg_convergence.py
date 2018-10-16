@@ -8,7 +8,7 @@ import numpy as np
 import gc
 import time
 
-from sklearn.externals.joblib import Memory
+from sklearn.utils import Memory
 from sklearn.linear_model import (LogisticRegression, SGDClassifier)
 from sklearn.datasets import fetch_rcv1
 from sklearn.linear_model.sag import get_auto_step_size

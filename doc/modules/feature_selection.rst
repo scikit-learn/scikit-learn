@@ -123,10 +123,11 @@ Given an external estimator that assigns weights to features (e.g., the
 coefficients of a linear model), recursive feature elimination (:class:`RFE`)
 is to select features by recursively considering smaller and smaller sets of
 features.  First, the estimator is trained on the initial set of features and
-weights are assigned to each one of them. Then, features whose absolute weights
-are the smallest are pruned from the current set features. That procedure is
-recursively repeated on the pruned set until the desired number of features to
-select is eventually reached.
+the importance of each feature is obtained either through a ``coef_`` attribute
+or through a ``feature_importances_`` attribute. Then, the least important
+features are pruned from current set of features.That procedure is recursively
+repeated on the pruned set until the desired number of features to select is
+eventually reached.
 
 :class:`RFECV` performs RFE in a cross-validation loop to find the optimal
 number of features.
@@ -197,7 +198,7 @@ alpha parameter, the fewer features selected.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`: Comparison
+    * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`: Comparison
       of different algorithms for document classification including L1-based
       feature selection.
 
@@ -225,7 +226,7 @@ alpha parameter, the fewer features selected.
 
    **Reference** Richard G. Baraniuk "Compressive Sensing", IEEE Signal
    Processing Magazine [120] July 2007
-   http://dsp.rice.edu/sites/dsp.rice.edu/files/cs/baraniukCSlecture07.pdf
+   http://users.isr.ist.utl.pt/~aguiar/CS_notes.pdf
 
 
 Tree-based feature selection
@@ -244,7 +245,7 @@ meta-transformer)::
   >>> X, y = iris.data, iris.target
   >>> X.shape
   (150, 4)
-  >>> clf = ExtraTreesClassifier()
+  >>> clf = ExtraTreesClassifier(n_estimators=50)
   >>> clf = clf.fit(X, y)
   >>> clf.feature_importances_  # doctest: +SKIP
   array([ 0.04...,  0.05...,  0.4...,  0.4...])

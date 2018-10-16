@@ -50,8 +50,9 @@ def f_oneway(*args):
 
     Parameters
     ----------
-    sample1, sample2, ... : array_like, sparse matrices
-        The sample measurements should be given as arguments.
+    *args : array_like, sparse matrices
+        sample1, sample2... The sample measurements should be given as
+        arguments.
 
     Returns
     -------
@@ -231,7 +232,7 @@ def f_regression(X, y, center=True):
     """Univariate linear regression tests.
 
     Linear model for testing the individual effect of each of many regressors.
-    This is a scoring function to be used in a feature seletion procedure, not
+    This is a scoring function to be used in a feature selection procedure, not
     a free standing feature selection procedure.
 
     This is done in 2 steps:
@@ -336,7 +337,6 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
 
@@ -389,6 +389,17 @@ class SelectPercentile(_BaseFilter):
     pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores, None if `score_func` returned only scores.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.feature_selection import SelectPercentile, chi2
+    >>> X, y = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> X_new = SelectPercentile(chi2, percentile=10).fit_transform(X, y)
+    >>> X_new.shape
+    (1797, 7)
+
     Notes
     -----
     Ties between features with equal scores will be broken in an unspecified
@@ -427,10 +438,9 @@ class SelectPercentile(_BaseFilter):
             return np.zeros(len(self.scores_), dtype=np.bool)
 
         scores = _clean_nans(self.scores_)
-        treshold = stats.scoreatpercentile(scores,
-                                           100 - self.percentile)
-        mask = scores > treshold
-        ties = np.where(scores == treshold)[0]
+        threshold = np.percentile(scores, 100 - self.percentile)
+        mask = scores > threshold
+        ties = np.where(scores == threshold)[0]
         if len(ties):
             max_feats = int(len(scores) * self.percentile / 100)
             kept_ties = ties[:max_feats - mask.sum()]
@@ -463,6 +473,17 @@ class SelectKBest(_BaseFilter):
     pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores, None if `score_func` returned only scores.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.feature_selection import SelectKBest, chi2
+    >>> X, y = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> X_new = SelectKBest(chi2, k=20).fit_transform(X, y)
+    >>> X_new.shape
+    (1797, 20)
+
     Notes
     -----
     Ties between features with equal scores will be broken in an unspecified
@@ -488,9 +509,9 @@ class SelectKBest(_BaseFilter):
 
     def _check_params(self, X, y):
         if not (self.k == "all" or 0 <= self.k <= X.shape[1]):
-            raise ValueError("k should be >=0, <= n_features; got %r."
+            raise ValueError("k should be >=0, <= n_features = %d; got %r. "
                              "Use k='all' to return all features."
-                             % self.k)
+                             % (X.shape[1], self.k))
 
     def _get_support_mask(self):
         check_is_fitted(self, 'scores_')
@@ -536,6 +557,17 @@ class SelectFpr(_BaseFilter):
     pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import SelectFpr, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> X_new = SelectFpr(chi2, alpha=0.01).fit_transform(X, y)
+    >>> X_new.shape
+    (569, 16)
+
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
@@ -579,6 +611,16 @@ class SelectFdr(_BaseFilter):
     alpha : float, optional
         The highest uncorrected p-value for features to keep.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import SelectFdr, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> X_new = SelectFdr(chi2, alpha=0.01).fit_transform(X, y)
+    >>> X_new.shape
+    (569, 16)
 
     Attributes
     ----------
@@ -637,6 +679,17 @@ class SelectFwe(_BaseFilter):
 
     alpha : float, optional
         The highest uncorrected p-value for features to keep.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import SelectFwe, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> X_new = SelectFwe(chi2, alpha=0.01).fit_transform(X, y)
+    >>> X_new.shape
+    (569, 15)
 
     Attributes
     ----------
@@ -699,6 +752,18 @@ class GenericUnivariateSelect(_BaseFilter):
 
     pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores, None if `score_func` returned scores only.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import GenericUnivariateSelect, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> transformer = GenericUnivariateSelect(chi2, 'k_best', param=20)
+    >>> X_new = transformer.fit_transform(X, y)
+    >>> X_new.shape
+    (569, 20)
 
     See also
     --------

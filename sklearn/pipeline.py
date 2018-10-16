@@ -15,15 +15,15 @@ import numpy as np
 from scipy import sparse
 
 from .base import clone, TransformerMixin
-from .externals.joblib import Parallel, delayed, Memory
+from .utils import Parallel, delayed
 from .externals import six
-from .utils import tosequence
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch
+from .utils.validation import check_memory
 
 from .utils.metaestimators import _BaseComposition
 
-__all__ = ['Pipeline', 'FeatureUnion']
+__all__ = ['Pipeline', 'FeatureUnion', 'make_pipeline', 'make_union']
 
 
 class Pipeline(_BaseComposition):
@@ -52,8 +52,7 @@ class Pipeline(_BaseComposition):
         chained, in the order in which they are chained, with the last object
         an estimator.
 
-    memory : Instance of sklearn.external.joblib.Memory or string, optional \
-            (default=None)
+    memory : None, str or object with the joblib.Memory interface, optional
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to
         the caching directory. Enabling caching triggers a clone of
@@ -68,6 +67,11 @@ class Pipeline(_BaseComposition):
     named_steps : bunch object, a dictionary with attribute access
         Read-only attribute to access any step parameter by user given name.
         Keys are step names and values are steps parameters.
+
+    See also
+    --------
+    sklearn.pipeline.make_pipeline : convenience function for simplified
+        pipeline construction.
 
     Examples
     --------
@@ -93,26 +97,25 @@ class Pipeline(_BaseComposition):
                     ('svc', SVC(...))])
     >>> prediction = anova_svm.predict(X)
     >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
-    0.829...
+    0.83
     >>> # getting the selected features chosen by anova_filter
     >>> anova_svm.named_steps['anova'].get_support()
     ... # doctest: +NORMALIZE_WHITESPACE
     array([False, False,  True,  True, False, False, True,  True, False,
            True,  False,  True,  True, False, True,  False, True, True,
-           False, False], dtype=bool)
+           False, False])
     >>> # Another way to get selected features chosen by anova_filter
     >>> anova_svm.named_steps.anova.get_support()
     ... # doctest: +NORMALIZE_WHITESPACE
     array([False, False,  True,  True, False, False, True,  True, False,
            True,  False,  True,  True, False, True,  False, True, True,
-           False, False], dtype=bool)
+           False, False])
     """
 
     # BaseEstimator interface
 
     def __init__(self, steps, memory=None):
-        # shallow copy of steps
-        self.steps = tosequence(steps)
+        self.steps = steps
         self._validate_steps()
         self.memory = memory
 
@@ -185,18 +188,11 @@ class Pipeline(_BaseComposition):
     # Estimator interface
 
     def _fit(self, X, y=None, **fit_params):
+        # shallow copy of steps - this should really be steps_
+        self.steps = list(self.steps)
         self._validate_steps()
         # Setup the memory
-        memory = self.memory
-        if memory is None:
-            memory = Memory(cachedir=None, verbose=0)
-        elif isinstance(memory, six.string_types):
-            memory = Memory(cachedir=memory, verbose=0)
-        elif not isinstance(memory, Memory):
-            raise ValueError("'memory' should either be a string or"
-                             " a sklearn.externals.joblib.Memory"
-                             " instance, got 'memory={!r}' instead.".format(
-                                 type(memory)))
+        memory = check_memory(self.memory)
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
@@ -210,15 +206,27 @@ class Pipeline(_BaseComposition):
             if transformer is None:
                 pass
             else:
-                if memory.cachedir is None:
-                    # we do not clone when caching is disabled to preserve
-                    # backward compatibility
-                    cloned_transformer = transformer
+                if hasattr(memory, 'location'):
+                    # joblib >= 0.12
+                    if memory.location is None:
+                        # we do not clone when caching is disabled to
+                        # preserve backward compatibility
+                        cloned_transformer = transformer
+                    else:
+                        cloned_transformer = clone(transformer)
+                elif hasattr(memory, 'cachedir'):
+                    # joblib < 0.11
+                    if memory.cachedir is None:
+                        # we do not clone when caching is disabled to
+                        # preserve backward compatibility
+                        cloned_transformer = transformer
+                    else:
+                        cloned_transformer = clone(transformer)
                 else:
                     cloned_transformer = clone(transformer)
                 # Fit or load from cache the current transfomer
                 Xt, fitted_transformer = fit_transform_one_cached(
-                    cloned_transformer, None, Xt, y,
+                    cloned_transformer, Xt, y, None,
                     **fit_params_steps[name])
                 # Replace the transformer of the step with the fitted
                 # transformer. This is necessary when loading the transformer
@@ -296,7 +304,7 @@ class Pipeline(_BaseComposition):
             return last_step.fit(Xt, y, **fit_params).transform(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def predict(self, X):
+    def predict(self, X, **predict_params):
         """Apply transforms to the data, and predict with the final estimator
 
         Parameters
@@ -304,6 +312,14 @@ class Pipeline(_BaseComposition):
         X : iterable
             Data to predict on. Must fulfill input requirements of first step
             of the pipeline.
+
+        **predict_params : dict of string -> object
+            Parameters to the ``predict`` called at the end of all
+            transformations in the pipeline. Note that while this may be
+            used to return uncertainties from some models with return_std
+            or return_cov, uncertainties that are generated by the
+            transformations in the pipeline are not propagated to the
+            final estimator.
 
         Returns
         -------
@@ -313,7 +329,7 @@ class Pipeline(_BaseComposition):
         for name, transform in self.steps[:-1]:
             if transform is not None:
                 Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict(Xt)
+        return self.steps[-1][-1].predict(Xt, **predict_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def fit_predict(self, X, y=None, **fit_params):
@@ -423,6 +439,7 @@ class Pipeline(_BaseComposition):
         Xt : array-like, shape = [n_samples, n_transformed_features]
         """
         # _final_estimator is None or has transform, otherwise attribute error
+        # XXX: Handling the None case means we can't use if_delegate_has_method
         if self._final_estimator is not None:
             self._final_estimator.transform
         return self._transform
@@ -453,6 +470,7 @@ class Pipeline(_BaseComposition):
         Xt : array-like, shape = [n_samples, n_features]
         """
         # raise AttributeError if necessary for hasattr behaviour
+        # XXX: Handling the None case means we can't use if_delegate_has_method
         for name, transform in self.steps:
             if transform is not None:
                 transform.inverse_transform
@@ -536,10 +554,9 @@ def make_pipeline(*steps, **kwargs):
 
     Parameters
     ----------
-    *steps : list of estimators,
+    *steps : list of estimators.
 
-    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
-            (default=None)
+    memory : None, str or object with the joblib.Memory interface, optional
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to
         the caching directory. Enabling caching triggers a clone of
@@ -548,6 +565,11 @@ def make_pipeline(*steps, **kwargs):
         directly. Use the attribute ``named_steps`` or ``steps`` to
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
+
+    See also
+    --------
+    sklearn.pipeline.Pipeline : Class for creating a pipeline of
+        transforms with a final estimator.
 
     Examples
     --------
@@ -558,7 +580,8 @@ def make_pipeline(*steps, **kwargs):
     Pipeline(memory=None,
              steps=[('standardscaler',
                      StandardScaler(copy=True, with_mean=True, with_std=True)),
-                    ('gaussiannb', GaussianNB(priors=None))])
+                    ('gaussiannb',
+                     GaussianNB(priors=None, var_smoothing=1e-09))])
 
     Returns
     -------
@@ -571,11 +594,14 @@ def make_pipeline(*steps, **kwargs):
     return Pipeline(_name_estimators(steps), memory=memory)
 
 
-def _fit_one_transformer(transformer, X, y):
+# weight and fit_params are not used but it allows _fit_one_transformer,
+# _transform_one and _fit_transform_one to have the same signature to
+#  factorize the code in ColumnTransformer
+def _fit_one_transformer(transformer, X, y, weight=None, **fit_params):
     return transformer.fit(X, y)
 
 
-def _transform_one(transformer, weight, X):
+def _transform_one(transformer, X, y, weight, **fit_params):
     res = transformer.transform(X)
     # if we have a weight for this transformer, multiply output
     if weight is None:
@@ -583,8 +609,7 @@ def _transform_one(transformer, weight, X):
     return res * weight
 
 
-def _fit_transform_one(transformer, weight, X, y,
-                       **fit_params):
+def _fit_transform_one(transformer, X, y, weight, **fit_params):
     if hasattr(transformer, 'fit_transform'):
         res = transformer.fit_transform(X, y, **fit_params)
     else:
@@ -605,7 +630,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     Parameters of the transformers may be set using its name and the parameter
     name separated by a '__'. A transformer may be replaced entirely by
     setting the parameter with its name to another transformer,
-    or removed by setting to ``None``.
+    or removed by setting to 'drop' or ``None``.
 
     Read more in the :ref:`User Guide <feature_union>`.
 
@@ -615,16 +640,35 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         List of transformer objects to be applied to the data. The first
         half of each tuple is the name of the transformer.
 
-    n_jobs : int, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     transformer_weights : dict, optional
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
 
+    See also
+    --------
+    sklearn.pipeline.make_union : convenience function for simplified
+        feature union construction.
+
+    Examples
+    --------
+    >>> from sklearn.pipeline import FeatureUnion
+    >>> from sklearn.decomposition import PCA, TruncatedSVD
+    >>> union = FeatureUnion([("pca", PCA(n_components=1)),
+    ...                       ("svd", TruncatedSVD(n_components=2))])
+    >>> X = [[0., 1., 3], [2., 2., 5]]
+    >>> union.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    array([[ 1.5       ,  3.0...,  0.8...],
+           [-1.5       ,  5.7..., -0.4...]])
     """
-    def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
-        self.transformer_list = tosequence(transformer_list)
+    def __init__(self, transformer_list, n_jobs=None,
+                 transformer_weights=None):
+        self.transformer_list = transformer_list
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self._validate_transformers()
@@ -665,7 +709,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
         # validate estimators
         for t in transformers:
-            if t is None:
+            if t is None or t == 'drop':
                 continue
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
                     hasattr(t, "transform")):
@@ -674,12 +718,14 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
                                 (t, type(t)))
 
     def _iter(self):
-        """Generate (name, est, weight) tuples excluding None transformers
+        """
+        Generate (name, trans, weight) tuples excluding None and
+        'drop' transformers.
         """
         get_weight = (self.transformer_weights or {}).get
         return ((name, trans, get_weight(name))
                 for name, trans in self.transformer_list
-                if trans is not None)
+                if trans is not None and trans != 'drop')
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -715,6 +761,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         self : FeatureUnion
             This estimator
         """
+        self.transformer_list = list(self.transformer_list)
         self._validate_transformers()
         transformers = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_one_transformer)(trans, X, y)
@@ -741,7 +788,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         """
         self._validate_transformers()
         result = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_transform_one)(trans, weight, X, y,
+            delayed(_fit_transform_one)(trans, X, y, weight,
                                         **fit_params)
             for name, trans, weight in self._iter())
 
@@ -771,7 +818,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             sum of n_components (output dimension) over transformers.
         """
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, weight, X)
+            delayed(_transform_one)(trans, X, None, weight)
             for name, trans, weight in self._iter())
         if not Xs:
             # All transformers are None
@@ -784,10 +831,9 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
-        self.transformer_list[:] = [
-            (name, None if old is None else next(transformers))
-            for name, old in self.transformer_list
-        ]
+        self.transformer_list[:] = [(name, old if old is None or old == 'drop'
+                                     else next(transformers))
+                                    for name, old in self.transformer_list]
 
 
 def make_union(*transformers, **kwargs):
@@ -801,19 +847,27 @@ def make_union(*transformers, **kwargs):
     ----------
     *transformers : list of estimators
 
-    n_jobs : int, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Returns
     -------
     f : FeatureUnion
+
+    See also
+    --------
+    sklearn.pipeline.FeatureUnion : Class for concatenating the results
+        of multiple transformer objects.
 
     Examples
     --------
     >>> from sklearn.decomposition import PCA, TruncatedSVD
     >>> from sklearn.pipeline import make_union
     >>> make_union(PCA(), TruncatedSVD())    # doctest: +NORMALIZE_WHITESPACE
-    FeatureUnion(n_jobs=1,
+    FeatureUnion(n_jobs=None,
            transformer_list=[('pca',
                               PCA(copy=True, iterated_power='auto',
                                   n_components=None, random_state=None,
@@ -824,7 +878,7 @@ def make_union(*transformers, **kwargs):
                               random_state=None, tol=0.0))],
            transformer_weights=None)
     """
-    n_jobs = kwargs.pop('n_jobs', 1)
+    n_jobs = kwargs.pop('n_jobs', None)
     if kwargs:
         # We do not currently support `transformer_weights` as we may want to
         # change its type spec in make_union

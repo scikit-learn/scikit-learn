@@ -1,7 +1,7 @@
 """Test the split module"""
 from __future__ import division
 import warnings
-
+import pytest
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 from scipy import stats
@@ -23,6 +23,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.validation import _num_samples
 from sklearn.utils.mocking import MockDataFrame
 
@@ -48,8 +49,9 @@ from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.linear_model import Ridge
 
 from sklearn.model_selection._split import _validate_shuffle_split
-from sklearn.model_selection._split import _CVIterableWrapper
 from sklearn.model_selection._split import _build_repr
+from sklearn.model_selection._split import CV_WARNING
+from sklearn.model_selection._split import NSPLIT_WARNING
 
 from sklearn.datasets import load_digits
 from sklearn.datasets import make_classification
@@ -197,6 +199,34 @@ def test_cross_validator_with_default_params():
                          loo.get_n_splits, None, y, groups)
     assert_raise_message(ValueError, msg,
                          lpo.get_n_splits, None, y, groups)
+
+
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+def test_2d_y():
+    # smoke test for 2d y and multi-label
+    n_samples = 30
+    rng = np.random.RandomState(1)
+    X = rng.randint(0, 3, size=(n_samples, 2))
+    y = rng.randint(0, 3, size=(n_samples,))
+    y_2d = y.reshape(-1, 1)
+    y_multilabel = rng.randint(0, 2, size=(n_samples, 3))
+    groups = rng.randint(0, 3, size=(n_samples,))
+    splitters = [LeaveOneOut(), LeavePOut(p=2), KFold(), StratifiedKFold(),
+                 RepeatedKFold(), RepeatedStratifiedKFold(),
+                 ShuffleSplit(), StratifiedShuffleSplit(test_size=.5),
+                 GroupShuffleSplit(), LeaveOneGroupOut(),
+                 LeavePGroupsOut(n_groups=2), GroupKFold(), TimeSeriesSplit(),
+                 PredefinedSplit(test_fold=groups)]
+    for splitter in splitters:
+        list(splitter.split(X, y, groups))
+        list(splitter.split(X, y_2d, groups))
+        try:
+            list(splitter.split(X, y_multilabel, groups))
+        except ValueError as e:
+            allowed_target_types = ('binary', 'multiclass')
+            msg = "Supported target types are: {}. Got 'multilabel".format(
+                allowed_target_types)
+            assert msg in str(e)
 
 
 def check_valid_split(train, test, n_samples=None):
@@ -446,16 +476,15 @@ def test_shuffle_kfold_stratifiedkfold_reproducibility():
 
     for cv in (kf, skf):
         for data in zip((X, X2), (y, y2)):
-            # Test if the two splits are different
-            # numpy's assert_equal properly compares nested lists
-            try:
-                np.testing.assert_array_equal(list(cv.split(*data)),
-                                              list(cv.split(*data)))
-            except AssertionError:
-                pass
-            else:
-                raise AssertionError("The splits for data, %s, are same even "
-                                     "when random state is not set" % data)
+            # Test if the two splits are different cv
+            for (_, test_a), (_, test_b) in zip(cv.split(*data),
+                                                cv.split(*data)):
+                # cv.split(...) returns an array of tuples, each tuple
+                # consisting of an array with train indices and test indices
+                with pytest.raises(AssertionError,
+                                   message="The splits for data, are same even"
+                                           " when random state is not set"):
+                    np.testing.assert_array_equal(test_a, test_b)
 
 
 def test_shuffle_stratifiedkfold():
@@ -699,9 +728,32 @@ def test_stratified_shuffle_split_multilabel():
         assert_equal(expected_ratio, np.mean(y_test[:, 0]))
 
 
+def test_stratified_shuffle_split_multilabel_many_labels():
+    # fix in PR #9922: for multilabel data with > 1000 labels, str(row)
+    # truncates with an ellipsis for elements in positions 4 through
+    # len(row) - 4, so labels were not being correctly split using the powerset
+    # method for transforming a multilabel problem to a multiclass one; this
+    # test checks that this problem is fixed.
+    row_with_many_zeros = [1, 0, 1] + [0] * 1000 + [1, 0, 1]
+    row_with_many_ones = [1, 0, 1] + [1] * 1000 + [1, 0, 1]
+    y = np.array([row_with_many_zeros] * 10 + [row_with_many_ones] * 100)
+    X = np.ones_like(y)
+
+    sss = StratifiedShuffleSplit(n_splits=1, test_size=0.5, random_state=0)
+    train, test = next(sss.split(X=X, y=y))
+    y_train = y[train]
+    y_test = y[test]
+
+    # correct stratification of entire rows
+    # (by design, here y[:, 4] uniquely determines the entire row of y)
+    expected_ratio = np.mean(y[:, 4])
+    assert_equal(expected_ratio, np.mean(y_train[:, 4]))
+    assert_equal(expected_ratio, np.mean(y_test[:, 4]))
+
+
 def test_predefinedsplit_with_kfold_split():
     # Check that PredefinedSplit can reproduce a split generated by Kfold.
-    folds = -1 * np.ones(10)
+    folds = np.full(10, -1.)
     kf_train = []
     kf_test = []
     for i, (train_ind, test_ind) in enumerate(KFold(5, shuffle=True).split(X)):
@@ -724,7 +776,7 @@ def test_group_shuffle_split():
     for groups_i in test_groups:
         X = y = np.ones(len(groups_i))
         n_splits = 6
-        test_size = 1./3
+        test_size = 1. / 3
         slo = GroupShuffleSplit(n_splits, test_size=test_size, random_state=0)
 
         # Make sure the repr works
@@ -845,20 +897,22 @@ def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
     assert_raise_message(ValueError, "Found array with 0 sample(s)", next,
                          LeaveOneGroupOut().split(X, y, groups))
     X = y = groups = np.ones(1)
-    msg = ("The groups parameter contains fewer than 2 unique groups ([ 1.]). "
-           "LeaveOneGroupOut expects at least 2.")
+    msg = ("The groups parameter contains fewer than 2 unique groups ({}). "
+           "LeaveOneGroupOut expects at least 2.").format(groups)
     assert_raise_message(ValueError, msg, next,
                          LeaveOneGroupOut().split(X, y, groups))
     X = y = groups = np.ones(1)
     msg = ("The groups parameter contains fewer than (or equal to) n_groups "
-           "(3) numbers of unique groups ([ 1.]). LeavePGroupsOut expects "
-           "that at least n_groups + 1 (4) unique groups be present")
+           "(3) numbers of unique groups ({}). LeavePGroupsOut expects "
+           "that at least n_groups + 1 (4) unique groups "
+           "be present").format(groups)
     assert_raise_message(ValueError, msg, next,
                          LeavePGroupsOut(n_groups=3).split(X, y, groups))
     X = y = groups = np.arange(3)
     msg = ("The groups parameter contains fewer than (or equal to) n_groups "
-           "(3) numbers of unique groups ([0 1 2]). LeavePGroupsOut expects "
-           "that at least n_groups + 1 (4) unique groups be present")
+           "(3) numbers of unique groups ({}). LeavePGroupsOut expects "
+           "that at least n_groups + 1 (4) unique groups "
+           "be present").format(groups)
     assert_raise_message(ValueError, msg, next,
                          LeavePGroupsOut(n_groups=3).split(X, y, groups))
 
@@ -952,7 +1006,12 @@ def test_repeated_stratified_kfold_determinstic_split():
 
 def test_train_test_split_errors():
     assert_raises(ValueError, train_test_split)
-    assert_raises(ValueError, train_test_split, range(3), train_size=1.1)
+    with warnings.catch_warnings():
+        # JvR: Currently, a future warning is raised if test_size is not
+        # given. As that is the point of this test, ignore the future warning
+        warnings.filterwarnings("ignore", category=FutureWarning)
+        assert_raises(ValueError, train_test_split, range(3), train_size=1.1)
+
     assert_raises(ValueError, train_test_split, range(3), test_size=0.6,
                   train_size=0.6)
     assert_raises(ValueError, train_test_split, range(3),
@@ -1138,6 +1197,15 @@ def test_check_cv():
     cv = check_cv(3, y_multiclass, classifier=True)
     np.testing.assert_equal(list(StratifiedKFold(3).split(X, y_multiclass)),
                             list(cv.split(X, y_multiclass)))
+    # also works with 2d multiclass
+    y_multiclass_2d = y_multiclass.reshape(-1, 1)
+    cv = check_cv(3, y_multiclass_2d, classifier=True)
+    np.testing.assert_equal(list(StratifiedKFold(3).split(X, y_multiclass_2d)),
+                            list(cv.split(X, y_multiclass_2d)))
+
+    assert_false(np.all(
+        next(StratifiedKFold(3).split(X, y_multiclass_2d))[0] ==
+        next(KFold(3).split(X, y_multiclass_2d))[0]))
 
     X = np.ones(5)
     y_multilabel = np.array([[0, 0, 0, 0], [0, 1, 1, 0], [0, 0, 0, 1],
@@ -1149,36 +1217,10 @@ def test_check_cv():
     cv = check_cv(3, y_multioutput, classifier=True)
     np.testing.assert_equal(list(KFold(3).split(X)), list(cv.split(X)))
 
-    # Check if the old style classes are wrapped to have a split method
-    X = np.ones(9)
-    y_multiclass = np.array([0, 1, 0, 1, 2, 1, 2, 0, 2])
-    cv1 = check_cv(3, y_multiclass, classifier=True)
-
-    with warnings.catch_warnings(record=True):
-        from sklearn.cross_validation import StratifiedKFold as OldSKF
-
-    cv2 = check_cv(OldSKF(y_multiclass, n_folds=3))
-    np.testing.assert_equal(list(cv1.split(X, y_multiclass)),
-                            list(cv2.split()))
-
     assert_raises(ValueError, check_cv, cv="lolo")
 
 
 def test_cv_iterable_wrapper():
-    y_multiclass = np.array([0, 1, 0, 1, 2, 1, 2, 0, 2])
-
-    with warnings.catch_warnings(record=True):
-        from sklearn.cross_validation import StratifiedKFold as OldSKF
-
-    cv = OldSKF(y_multiclass, n_folds=3)
-    wrapped_old_skf = _CVIterableWrapper(cv)
-
-    # Check if split works correctly
-    np.testing.assert_equal(list(cv), list(wrapped_old_skf.split()))
-
-    # Check if get_n_splits works correctly
-    assert_equal(len(cv), wrapped_old_skf.get_n_splits())
-
     kf_iter = KFold(n_splits=5).split(X, y)
     kf_iter_wrapped = check_cv(kf_iter)
     # Since the wrapped iterable is enlisted and stored,
@@ -1356,6 +1398,7 @@ def test_time_series_max_train_size():
     _check_time_series_max_train_size(splits, check_splits, max_train_size=2)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_nested_cv():
     # Test if nested cross validation works with different combinations of cv
     rng = np.random.RandomState(0)
@@ -1368,7 +1411,7 @@ def test_nested_cv():
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
         gs = GridSearchCV(Ridge(), param_grid={'alpha': [1, .1]},
-                          cv=inner_cv)
+                          cv=inner_cv, error_score='raise', iid=False)
         cross_val_score(gs, X=X, y=y, groups=groups, cv=outer_cv,
                         fit_params={'groups': groups})
 
@@ -1379,6 +1422,26 @@ def test_train_test_default_warning():
     assert_warns(FutureWarning, StratifiedShuffleSplit, train_size=0.75)
     assert_warns(FutureWarning, train_test_split, range(3),
                  train_size=0.75)
+
+
+def test_nsplit_default_warn():
+    # Test that warnings are raised. Will be removed in 0.22
+    assert_warns_message(FutureWarning, NSPLIT_WARNING, KFold)
+    assert_warns_message(FutureWarning, NSPLIT_WARNING, GroupKFold)
+    assert_warns_message(FutureWarning, NSPLIT_WARNING, StratifiedKFold)
+    assert_warns_message(FutureWarning, NSPLIT_WARNING, TimeSeriesSplit)
+
+    assert_no_warnings(KFold, n_splits=5)
+    assert_no_warnings(GroupKFold, n_splits=5)
+    assert_no_warnings(StratifiedKFold, n_splits=5)
+    assert_no_warnings(TimeSeriesSplit, n_splits=5)
+
+
+def test_check_cv_default_warn():
+    # Test that warnings are raised. Will be removed in 0.22
+    assert_warns_message(FutureWarning, CV_WARNING, check_cv)
+    assert_warns_message(FutureWarning, CV_WARNING, check_cv, None)
+    assert_no_warnings(check_cv, cv=5)
 
 
 def test_build_repr():

@@ -75,10 +75,10 @@ n_features]`` holding the training samples, and an array y of class labels
     >>> from sklearn import svm
     >>> X = [[0, 0], [1, 1]]
     >>> y = [0, 1]
-    >>> clf = svm.SVC()
+    >>> clf = svm.SVC(gamma='scale')
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
+        decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
         max_iter=-1, probability=False, random_state=None, shrinking=True,
         tol=0.001, verbose=False)
 
@@ -94,8 +94,8 @@ can be found in members ``support_vectors_``, ``support_`` and
 
     >>> # get support vectors
     >>> clf.support_vectors_
-    array([[ 0.,  0.],
-           [ 1.,  1.]])
+    array([[0., 0.],
+           [1., 1.]])
     >>> # get indices of support vectors
     >>> clf.support_ # doctest: +ELLIPSIS
     array([0, 1]...)
@@ -119,10 +119,10 @@ n_classes)``::
 
     >>> X = [[0], [1], [2], [3]]
     >>> Y = [0, 1, 2, 3]
-    >>> clf = svm.SVC(decision_function_shape='ovo')
+    >>> clf = svm.SVC(gamma='scale', decision_function_shape='ovo')
     >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovo', degree=3, gamma='auto', kernel='rbf',
+        decision_function_shape='ovo', degree=3, gamma='scale', kernel='rbf',
         max_iter=-1, probability=False, random_state=None, shrinking=True,
         tol=0.001, verbose=False)
     >>> dec = clf.decision_function([[1]])
@@ -164,11 +164,12 @@ Each row of the coefficients corresponds to one of the ``n_class`` many
 order of the "one" class.
 
 In the case of "one-vs-one" :class:`SVC`, the layout of the attributes
-is a little more involved. In the case of having a linear kernel,
-The layout of ``coef_`` and ``intercept_`` is similar to the one
-described for :class:`LinearSVC` described above, except that the shape of
-``coef_`` is ``[n_class * (n_class - 1) / 2, n_features]``, corresponding to as
-many binary classifiers. The order for classes
+is a little more involved. In the case of having a linear kernel, the
+attributes ``coef_`` and ``intercept_`` have the shape
+``[n_class * (n_class - 1) / 2, n_features]`` and
+``[n_class * (n_class - 1) / 2]`` respectively. This is similar to the
+layout for :class:`LinearSVC` described above, with each row now corresponding
+to a binary classifier. The order for classes
 0 to n is "0 vs 1", "0 vs 2" , ... "0 vs n", "1 vs 2", "1 vs 3", "1 vs n", . .
 . "n-1 vs n".
 
@@ -212,13 +213,12 @@ Then ``dual_coef_`` looks like this:
 Scores and probabilities
 ------------------------
 
-The :class:`SVC` method ``decision_function`` gives per-class scores 
-for each sample (or a single score per sample in the binary case).
-When the constructor option ``probability`` is set to ``True``,
-class membership probability estimates
-(from the methods ``predict_proba`` and ``predict_log_proba``) are enabled.
-In the binary case, the probabilities are calibrated using Platt scaling:
-logistic regression on the SVM's scores,
+The ``decision_function`` method of :class:`SVC` and :class:`NuSVC` gives
+per-class scores for each sample (or a single score per sample in the binary
+case). When the constructor option ``probability`` is set to ``True``,
+class membership probability estimates (from the methods ``predict_proba`` and
+``predict_log_proba``) are enabled. In the binary case, the probabilities are
+calibrated using Platt scaling: logistic regression on the SVM's scores,
 fit by an additional cross-validation on the training data.
 In the multiclass case, this is extended as per Wu et al. (2004).
 
@@ -239,13 +239,13 @@ and use ``decision_function`` instead of ``predict_proba``.
 
  * Wu, Lin and Weng,
    `"Probability estimates for multi-class classification by pairwise coupling"
-   <http://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_,
+   <https://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_,
    JMLR 5:975-1005, 2004.
  
  
  * Platt
    `"Probabilistic outputs for SVMs and comparisons to regularized likelihood methods"
-   <http://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`.
+   <https://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_.
 
 Unbalanced problems
 --------------------
@@ -319,10 +319,11 @@ floating point values instead of integer values::
     >>> y = [0.5, 2.5]
     >>> clf = svm.SVR()
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma='auto',
-        kernel='rbf', max_iter=-1, shrinking=True, tol=0.001, verbose=False)
+    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1,
+        gamma='auto_deprecated', kernel='rbf', max_iter=-1, shrinking=True,
+        tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
-    array([ 1.5])
+    array([1.5])
 
 
 .. topic:: Examples:
@@ -336,27 +337,10 @@ floating point values instead of integer values::
 Density estimation, novelty detection
 =======================================
 
-One-class SVM is used for novelty detection, that is, given a set of
-samples, it will detect the soft boundary of that set so as to
-classify new points as belonging to that set or not. The class that
-implements this is called :class:`OneClassSVM`.
+The class :class:`OneClassSVM` implements a One-Class SVM which is used in
+outlier detection. 
 
-In this case, as it is a type of unsupervised learning, the fit method
-will only take as input an array X, as there are no class labels.
-
-See, section :ref:`outlier_detection` for more details on this usage.
-
-.. figure:: ../auto_examples/svm/images/sphx_glr_plot_oneclass_001.png
-   :target: ../auto_examples/svm/plot_oneclass.html
-   :align: center
-   :scale: 75
-
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_svm_plot_oneclass.py`
- * :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
-
+See :ref:`outlier_detection` for the description and usage of OneClassSVM.
 
 Complexity
 ==========
@@ -399,7 +383,7 @@ Tips on Practical Use
     function can be configured to be almost the same as the :class:`LinearSVC`
     model.
 
-  * **Kernel cache size**: For :class:`SVC`, :class:`SVR`, :class:`nuSVC` and
+  * **Kernel cache size**: For :class:`SVC`, :class:`SVR`, :class:`NuSVC` and
     :class:`NuSVR`, the size of the kernel cache has a strong impact on run
     times for larger problems.  If you have enough RAM available, it is
     recommended to set ``cache_size`` to a higher value than the default of
@@ -408,6 +392,11 @@ Tips on Practical Use
   * **Setting C**: ``C`` is ``1`` by default and it's a reasonable default
     choice.  If you have a lot of noisy observations you should decrease it.
     It corresponds to regularize more the estimation.
+    
+    :class:`LinearSVC` and :class`LinearSVR` are less sensitive to ``C`` when
+    it becomes large, and prediction results stop improving after a certain 
+    threshold. Meanwhile, larger ``C`` values will take more time to train, 
+    sometimes up to 10 times longer, as shown by Fan et al. (2008)
 
   * Support Vector Machine algorithms are not scale invariant, so **it
     is highly recommended to scale your data**. For example, scale each
@@ -423,10 +412,24 @@ Tips on Practical Use
     positive and few negative), set ``class_weight='balanced'`` and/or try
     different penalty parameters ``C``.
 
-  * The underlying :class:`LinearSVC` implementation uses a random
-    number generator to select features when fitting the model. It is
-    thus not uncommon, to have slightly different results for the same
-    input data. If that happens, try with a smaller tol parameter.
+  * **Randomness of the underlying implementations**: The underlying 
+    implementations of :class:`SVC` and :class:`NuSVC` use a random number
+    generator only to shuffle the data for probability estimation (when
+    ``probability`` is set to ``True``). This randomness can be controlled
+    with the ``random_state`` parameter. If ``probability`` is set to ``False``
+    these estimators are not random and ``random_state`` has no effect on the
+    results. The underlying :class:`OneClassSVM` implementation is similar to
+    the ones of :class:`SVC` and :class:`NuSVC`. As no probability estimation
+    is provided for :class:`OneClassSVM`, it is not random.
+
+    The underlying :class:`LinearSVC` implementation uses a random number
+    generator to select features when fitting the model with a dual coordinate
+    descent (i.e when ``dual`` is set to ``True``). It is thus not uncommon,
+    to have slightly different results for the same input data. If that
+    happens, try with a smaller tol parameter. This randomness can also be
+    controlled with the ``random_state`` parameter. When ``dual`` is
+    set to ``False`` the underlying implementation of :class:`LinearSVC` is
+    not random and ``random_state`` has no effect on the results.
 
   * Using L1 penalization as provided by ``LinearSVC(loss='l2', penalty='l1',
     dual=False)`` yields a sparse solution, i.e. only a subset of feature
@@ -435,6 +438,13 @@ Tips on Practical Use
     The ``C`` value that yields a "null" model (all weights equal to zero) can
     be calculated using :func:`l1_min_c`.
 
+
+.. topic:: References:
+
+ * Fan, Rong-En, et al.,
+   `"LIBLINEAR: A library for large linear classification."
+   <https://www.csie.ntu.edu.tw/~cjlin/papers/liblinear.pdf>`_,
+   Journal of machine learning research 9.Aug (2008): 1871-1874.
 
 .. _svm_kernels:
 
@@ -521,7 +531,7 @@ test vectors must be provided.
     >>> gram = np.dot(X, X.T)
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='auto',
+        decision_function_shape='ovr', degree=3, gamma='auto_deprecated',
         kernel='precomputed', max_iter=-1, probability=False,
         random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> # predict on training examples
@@ -627,7 +637,7 @@ term :math:`\rho` :
 
 
  * `"Support-vector networks"
-   <http://link.springer.com/article/10.1007%2FBF00994018>`_,
+   <https://link.springer.com/article/10.1007%2FBF00994018>`_,
    C. Cortes, V. Vapnik - Machine Learning, 20, 273-297 (1995).
 
 
@@ -640,7 +650,7 @@ support vectors and training errors. The parameter :math:`\nu \in (0,
 1]` is an upper bound on the fraction of training errors and a lower
 bound of the fraction of support vectors.
 
-It can be shown that the :math:`\nu`-SVC formulation is a reparametrization
+It can be shown that the :math:`\nu`-SVC formulation is a reparameterization
 of the :math:`C`-SVC and therefore mathematically equivalent.
 
 
@@ -702,8 +712,8 @@ Implementation details
 Internally, we use `libsvm`_ and `liblinear`_ to handle all
 computations. These libraries are wrapped using C and Cython.
 
-.. _`libsvm`: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
-.. _`liblinear`: http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+.. _`libsvm`: https://www.csie.ntu.edu.tw/~cjlin/libsvm/
+.. _`liblinear`: https://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
 .. topic:: References:
 
@@ -711,9 +721,9 @@ computations. These libraries are wrapped using C and Cython.
   used, please refer to
 
     - `LIBSVM: A Library for Support Vector Machines
-      <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_.
+      <https://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_.
 
     - `LIBLINEAR -- A Library for Large Linear Classification
-      <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_.
+      <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_.
 
 

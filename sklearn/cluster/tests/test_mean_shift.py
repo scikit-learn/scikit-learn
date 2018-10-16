@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message
 
 from sklearn.cluster import MeanShift
@@ -31,6 +32,13 @@ def test_estimate_bandwidth():
     # Test estimate_bandwidth
     bandwidth = estimate_bandwidth(X, n_samples=200)
     assert_true(0.9 <= bandwidth <= 1.5)
+
+
+def test_estimate_bandwidth_1sample():
+    # Test estimate_bandwidth when n_samples=1 and quantile<1, so that
+    # n_neighbors is set to 1.
+    bandwidth = estimate_bandwidth(X, n_samples=1, quantile=0.3)
+    assert_equal(bandwidth, 0.)
 
 
 def test_mean_shift():
@@ -57,13 +65,17 @@ def test_estimate_bandwidth_with_sparse_matrix():
 
 
 def test_parallel():
+    centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
+    X, _ = make_blobs(n_samples=50, n_features=2, centers=centers,
+                      cluster_std=0.4, shuffle=True, random_state=11)
+
     ms1 = MeanShift(n_jobs=2)
     ms1.fit(X)
 
     ms2 = MeanShift()
     ms2.fit(X)
 
-    assert_array_equal(ms1.cluster_centers_, ms2.cluster_centers_)
+    assert_array_almost_equal(ms1.cluster_centers_, ms2.cluster_centers_)
     assert_array_equal(ms1.labels_, ms2.labels_)
 
 
@@ -87,6 +99,18 @@ def test_unfitted():
     ms = MeanShift()
     assert_false(hasattr(ms, "cluster_centers_"))
     assert_false(hasattr(ms, "labels_"))
+
+
+def test_cluster_intensity_tie():
+    X = np.array([[1, 1], [2, 1], [1, 0],
+                  [4, 7], [3, 5], [3, 6]])
+    c1 = MeanShift(bandwidth=2).fit(X)
+
+    X = np.array([[4, 7], [3, 5], [3, 6],
+                  [1, 1], [2, 1], [1, 0]])
+    c2 = MeanShift(bandwidth=2).fit(X)
+    assert_array_equal(c1.labels_, [1, 1, 1, 0, 0, 0])
+    assert_array_equal(c2.labels_, [0, 0, 0, 1, 1, 1])
 
 
 def test_bin_seeds():
@@ -114,7 +138,7 @@ def test_bin_seeds():
     # we bail and use the whole data here.
     with warnings.catch_warnings(record=True):
         test_bins = get_bin_seeds(X, 0.01, 1)
-    assert_array_equal(test_bins, X)
+    assert_array_almost_equal(test_bins, X)
 
     # tight clusters around [0, 0] and [1, 1], only get two bins
     X, _ = make_blobs(n_samples=100, n_features=2, centers=[[0, 0], [1, 1]],

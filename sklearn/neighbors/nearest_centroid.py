@@ -89,7 +89,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vector, where n_samples in the number of samples and
+            Training vector, where n_samples is the number of samples and
             n_features is the number of features.
             Note that centroid shrinking cannot be used with sparse matrices.
         y : array, shape = [n_samples]
@@ -115,7 +115,8 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         self.classes_ = classes = le.classes_
         n_classes = classes.size
         if n_classes < 2:
-            raise ValueError('y has less than 2 classes')
+            raise ValueError('The number of classes has to be greater than'
+                             ' one; got %d class' % (n_classes))
 
         # Mask mapping each class to its members.
         self.centroids_ = np.empty((n_classes, n_features), dtype=np.float64)
@@ -147,7 +148,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             dataset_centroid_ = np.mean(X, axis=0)
 
             # m parameter for determining deviation
-            m = np.sqrt((1. / nk) + (1. / n_samples))
+            m = np.sqrt((1. / nk) - (1. / n_samples))
             # Calculate deviation using the standard deviation of centroids.
             variance = (X - self.centroids_[y_ind]) ** 2
             variance = variance.sum(axis=0)
@@ -160,7 +161,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             # it becomes zero.
             signs = np.sign(deviation)
             deviation = (np.abs(deviation) - self.shrink_threshold)
-            deviation[deviation < 0] = 0
+            np.clip(deviation, 0, None, out=deviation)
             deviation *= signs
             # Now adjust the centroids using the deviation
             msd = ms * deviation

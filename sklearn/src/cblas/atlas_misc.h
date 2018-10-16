@@ -184,7 +184,7 @@
 #elif defined(QCPLX)
    #define TYPE ATL_QTYPE
    #define PRE e
-   #deffine UPR q
+   #define UPR q
    #define PREU E
    #define PATL ATL_e
    #define PATLU ATL_q

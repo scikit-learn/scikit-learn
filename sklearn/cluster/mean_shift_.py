@@ -24,12 +24,12 @@ from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
-from ..externals.joblib import Parallel
-from ..externals.joblib import delayed
+from ..utils import Parallel
+from ..utils import delayed
 
 
 def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
-                       n_jobs=1):
+                       n_jobs=None):
     """Estimate the bandwidth to use with the mean-shift algorithm.
 
     That this function takes time at least quadratic in n_samples. For large
@@ -47,15 +47,17 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
     n_samples : int, optional
         The number of samples to use. If not given, all samples are used.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        The generator used to randomly select the samples from input points
+        for bandwidth estimation. Use an int to make the randomness
+        deterministic.
+        See :term:`Glossary <random_state>`.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Returns
     -------
@@ -68,7 +70,10 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
     if n_samples is not None:
         idx = random_state.permutation(X.shape[0])[:n_samples]
         X = X[idx]
-    nbrs = NearestNeighbors(n_neighbors=int(X.shape[0] * quantile),
+    n_neighbors = int(X.shape[0] * quantile)
+    if n_neighbors < 1:  # cannot fit NearestNeighbors with n_neighbors = 0
+        n_neighbors = 1
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors,
                             n_jobs=n_jobs)
     nbrs.fit(X)
 
@@ -104,7 +109,7 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
 
 def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                min_bin_freq=1, cluster_all=True, max_iter=300,
-               n_jobs=1):
+               n_jobs=None):
     """Perform mean shift clustering of data using a flat kernel.
 
     Read more in the :ref:`User Guide <mean_shift>`.
@@ -149,14 +154,13 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         Maximum number of iterations, per seed point before the clustering
         operation terminates (for that seed point), if has not converged yet.
 
-    n_jobs : int
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
         .. versionadded:: 0.17
            Parallel Execution using *n_jobs*.
@@ -189,7 +193,11 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
             seeds = X
     n_samples, n_features = X.shape
     center_intensity_dict = {}
-    nbrs = NearestNeighbors(radius=bandwidth, n_jobs=n_jobs).fit(X)
+
+    # We use n_jobs=1 because this will be used in nested calls under
+    # parallel calls to _mean_shift_single_seed so there is no need for
+    # for further parallelism.
+    nbrs = NearestNeighbors(radius=bandwidth, n_jobs=1).fit(X)
 
     # execute iterations on all seeds in parallel
     all_res = Parallel(n_jobs=n_jobs)(
@@ -211,8 +219,10 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     # If the distance between two kernels is less than the bandwidth,
     # then we have to remove one because it is a duplicate. Remove the
     # one with fewer points.
+
     sorted_by_intensity = sorted(center_intensity_dict.items(),
-                                 key=lambda tup: tup[1], reverse=True)
+                                 key=lambda tup: (tup[1], tup[0]),
+                                 reverse=True)
     sorted_centers = np.array([tup[0] for tup in sorted_by_intensity])
     unique = np.ones(len(sorted_centers), dtype=np.bool)
     nbrs = NearestNeighbors(radius=bandwidth,
@@ -331,14 +341,13 @@ class MeanShift(BaseEstimator, ClusterMixin):
         not within any kernel. Orphans are assigned to the nearest kernel.
         If false, then orphans are given cluster label -1.
 
-    n_jobs : int
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -347,6 +356,21 @@ class MeanShift(BaseEstimator, ClusterMixin):
 
     labels_ :
         Labels of each point.
+
+    Examples
+    --------
+    >>> from sklearn.cluster import MeanShift
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> clustering = MeanShift(bandwidth=2).fit(X)
+    >>> clustering.labels_
+    array([1, 1, 1, 0, 0, 0])
+    >>> clustering.predict([[0, 0], [5, 5]])
+    array([1, 0])
+    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    MeanShift(bandwidth=2, bin_seeding=False, cluster_all=True, min_bin_freq=1,
+         n_jobs=None, seeds=None)
 
     Notes
     -----
@@ -374,7 +398,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
 
     """
     def __init__(self, bandwidth=None, seeds=None, bin_seeding=False,
-                 min_bin_freq=1, cluster_all=True, n_jobs=1):
+                 min_bin_freq=1, cluster_all=True, n_jobs=None):
         self.bandwidth = bandwidth
         self.seeds = seeds
         self.bin_seeding = bin_seeding
@@ -389,6 +413,9 @@ class MeanShift(BaseEstimator, ClusterMixin):
         -----------
         X : array-like, shape=[n_samples, n_features]
             Samples to cluster.
+
+        y : Ignored
+
         """
         X = check_array(X)
         self.cluster_centers_, self.labels_ = \

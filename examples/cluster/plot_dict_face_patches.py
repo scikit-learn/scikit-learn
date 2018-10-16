@@ -41,7 +41,6 @@ kmeans = MiniBatchKMeans(n_clusters=81, random_state=rng, verbose=True)
 patch_size = (20, 20)
 
 buffer = []
-index = 1
 t0 = time.time()
 
 # The online learning part: cycle over the whole dataset 6 times

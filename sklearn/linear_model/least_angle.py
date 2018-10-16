@@ -20,10 +20,10 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import arrayfuncs, as_float_array, check_X_y, deprecated
+from ..utils import arrayfuncs, as_float_array, check_X_y
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..externals.six.moves import xrange
 from ..externals.six import string_types
 
@@ -98,12 +98,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     positive : boolean (default=False)
         Restrict coefficients to be >= 0.
-        When using this option together with method 'lasso' the model
+        This option is only allowed with method 'lasso'. Note that the model
         coefficients will not converge to the ordinary-least-squares solution
-        for small values of alpha (neither will they when using method 'lar'
-        ..). Only coefficients up to the smallest alpha value
-        (``alphas_[alphas_ > 0.].min()`` when fit_path=True) reached by the
-        stepwise Lars-Lasso algorithm are typically in congruence with the
+        for small values of alpha. Only coefficients up to the smallest alpha
+        value (``alphas_[alphas_ > 0.].min()`` when fit_path=True) reached by
+        the stepwise Lars-Lasso algorithm are typically in congruence with the
         solution of the coordinate descent lasso_path function.
 
     Returns
@@ -136,7 +135,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     References
     ----------
     .. [1] "Least Angle Regression", Effron et al.
-           http://statweb.stanford.edu/~tibs/ftp/lars.pdf
+           https://statweb.stanford.edu/~tibs/ftp/lars.pdf
 
     .. [2] `Wikipedia entry on the Least-angle regression
            <https://en.wikipedia.org/wiki/Least-angle_regression>`_
@@ -145,6 +144,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
 
     """
+    if method == 'lar' and positive:
+        warnings.warn('positive option is broken for Least'
+                      ' Angle Regression (LAR). Use method="lasso".'
+                      ' This option will be removed in version 0.22.',
+                      DeprecationWarning)
 
     n_features = X.shape[1]
     n_samples = y.size
@@ -165,13 +169,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     # will hold the cholesky factorization. Only lower part is
     # referenced.
-    # We are initializing this to "zeros" and not empty, because
-    # it is passed to scipy linalg functions and thus if it has NaNs,
-    # even if they are in the upper part that it not used, we
-    # get errors raised.
-    # Once we support only scipy > 0.12 we can use check_finite=False and
-    # go back to "empty"
-    L = np.zeros((max_features, max_features), dtype=X.dtype)
+    L = np.empty((max_features, max_features), dtype=X.dtype)
     swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (X,))
     solve_cholesky, = get_lapack_funcs(('potrs',), (X,))
 
@@ -414,8 +412,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 alphas[-add_features:] = 0
             coef = coefs[n_iter]
             prev_coef = coefs[n_iter - 1]
-            alpha = alphas[n_iter, np.newaxis]
-            prev_alpha = alphas[n_iter - 1, np.newaxis]
         else:
             # mimic the effect of incrementing n_iter on the array references
             prev_coef = coef
@@ -547,6 +543,10 @@ class Lars(LinearModel, RegressorMixin):
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
 
+        .. deprecated:: 0.20
+
+            The option is broken and deprecated. It will be removed in v0.22.
+
     Attributes
     ----------
     alphas_ : array, shape (n_alphas + 1,) | list of n_targets such arrays
@@ -606,7 +606,8 @@ class Lars(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.fit_path = fit_path
 
-    def _get_gram(self, precompute, X, y):
+    @staticmethod
+    def _get_gram(precompute, X, y):
         if (not hasattr(precompute, '__array__')) and (
                 (precompute is True) or
                 (precompute == 'auto' and X.shape[0] > X.shape[1]) or
@@ -619,10 +620,8 @@ class Lars(LinearModel, RegressorMixin):
         """Auxiliary method to fit the model using X, y as training data"""
         n_features = X.shape[1]
 
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(X, y,
-                                                        self.fit_intercept,
-                                                        self.normalize,
-                                                        self.copy_X)
+        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+            X, y, self.fit_intercept, self.normalize, self.copy_X)
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -826,6 +825,7 @@ class LassoLars(Lars):
     Lasso
     LassoCV
     LassoLarsCV
+    LassoLarsIC
     sklearn.decomposition.sparse_encode
 
     """
@@ -970,7 +970,9 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
 
 class LarsCV(Lars):
-    """Cross-validated Least Angle Regression model
+    """Cross-validated Least Angle Regression model.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -1014,13 +1016,19 @@ class LarsCV(Lars):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     max_n_alphas : integer, optional
         The maximum number of points on the path used to compute the
         residuals in the cross-validation
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     eps : float, optional
         The machine-precision regularization in the computation of the
@@ -1034,6 +1042,8 @@ class LarsCV(Lars):
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
 
+        .. deprecated:: 0.20
+            The option is broken and deprecated. It will be removed in v0.22.
 
     Attributes
     ----------
@@ -1062,6 +1072,19 @@ class LarsCV(Lars):
     n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import LarsCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_samples=200, noise=4.0, random_state=0)
+    >>> reg = LarsCV(cv=5).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9996...
+    >>> reg.alpha_
+    0.0254...
+    >>> reg.predict(X[:1,])
+    array([154.0842...])
+
     See also
     --------
     lars_path, LassoLars, LassoLarsCV
@@ -1070,8 +1093,8 @@ class LarsCV(Lars):
     method = 'lar'
 
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
-                 normalize=True, precompute='auto', cv=None,
-                 max_n_alphas=1000, n_jobs=1, eps=np.finfo(np.float).eps,
+                 normalize=True, precompute='auto', cv='warn',
+                 max_n_alphas=1000, n_jobs=None, eps=np.finfo(np.float).eps,
                  copy_X=True, positive=False):
         self.max_iter = max_iter
         self.cv = cv
@@ -1164,22 +1187,11 @@ class LarsCV(Lars):
                   Xy=None, fit_path=True)
         return self
 
-    @property
-    @deprecated("Attribute alpha is deprecated in 0.19 and "
-                "will be removed in 0.21. See ``alpha_`` instead")
-    def alpha(self):
-        # impedance matching for the above Lars.fit (should not be documented)
-        return self.alpha_
-
-    @property
-    @deprecated("Attribute ``cv_mse_path_`` is deprecated in 0.18 and "
-                "will be removed in 0.20. Use ``mse_path_`` instead")
-    def cv_mse_path_(self):
-        return self.mse_path_
-
 
 class LassoLarsCV(LarsCV):
-    """Cross-validated Lasso, using the LARS algorithm
+    """Cross-validated Lasso, using the LARS algorithm.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     The optimization objective for Lasso is::
 
@@ -1227,13 +1239,19 @@ class LassoLarsCV(LarsCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     max_n_alphas : integer, optional
         The maximum number of points on the path used to compute the
         residuals in the cross-validation
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     eps : float, optional
         The machine-precision regularization in the computation of the
@@ -1282,6 +1300,19 @@ class LassoLarsCV(LarsCV):
     n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import LassoLarsCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(noise=4.0, random_state=0)
+    >>> reg = LassoLarsCV(cv=5).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9992...
+    >>> reg.alpha_
+    0.0484...
+    >>> reg.predict(X[:1,])
+    array([-77.8723...])
+
     Notes
     -----
 
@@ -1302,8 +1333,8 @@ class LassoLarsCV(LarsCV):
     method = 'lasso'
 
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
-                 normalize=True, precompute='auto', cv=None,
-                 max_n_alphas=1000, n_jobs=1, eps=np.finfo(np.float).eps,
+                 normalize=True, precompute='auto', cv='warn',
+                 max_n_alphas=1000, n_jobs=None, eps=np.finfo(np.float).eps,
                  copy_X=True, positive=False):
         self.fit_intercept = fit_intercept
         self.verbose = verbose

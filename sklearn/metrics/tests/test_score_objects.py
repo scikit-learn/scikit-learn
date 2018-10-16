@@ -6,6 +6,8 @@ import numbers
 
 import numpy as np
 
+import pytest
+
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -15,7 +17,6 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_warns_message
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
@@ -29,7 +30,6 @@ from sklearn.metrics import make_scorer, get_scorer, SCORERS
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
-from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.datasets import make_blobs
@@ -42,16 +42,19 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.externals import joblib
 
 
-REGRESSION_SCORERS = ['r2', 'neg_mean_absolute_error',
-                      'neg_mean_squared_error', 'neg_mean_squared_log_error',
+REGRESSION_SCORERS = ['explained_variance', 'r2',
+                      'neg_mean_absolute_error', 'neg_mean_squared_error',
+                      'neg_mean_squared_log_error',
                       'neg_median_absolute_error', 'mean_absolute_error',
-                      'mean_squared_error', 'median_absolute_error']
+                      'mean_squared_error', 'median_absolute_error',
+                      'max_error']
 
-CLF_SCORERS = ['accuracy', 'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
+CLF_SCORERS = ['accuracy', 'balanced_accuracy',
+               'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
                'roc_auc', 'average_precision', 'precision',
                'precision_weighted', 'precision_macro', 'precision_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
-               'neg_log_loss', 'log_loss']
+               'neg_log_loss', 'log_loss', 'brier_score_loss']
 
 # All supervised cluster scorers (They behave like classification metric)
 CLUSTER_SCORERS = ["adjusted_rand_score",
@@ -68,7 +71,7 @@ MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples']
 
 def _make_estimators(X_train, y_train, y_ml_train):
     # Make estimators that make sense to test various scoring methods
-    sensible_regr = DummyRegressor(strategy='median')
+    sensible_regr = DecisionTreeRegressor(random_state=0)
     sensible_regr.fit(X_train, y_train)
     sensible_clf = DecisionTreeClassifier(random_state=0)
     sensible_clf.fit(X_train, y_train)
@@ -247,6 +250,7 @@ def test_check_scoring_and_check_multimetric_scoring():
                              scoring=scoring)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_check_scoring_gridsearchcv():
     # test that check_scoring works on GridSearchCV and pipeline.
     # slightly redundant non-regression test.
@@ -330,6 +334,8 @@ def test_regression_scorers():
     assert_almost_equal(score1, score2)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_thresholded_scorers():
     # Test scorers that take thresholds.
     X, y = make_blobs(random_state=0, centers=2)
@@ -410,6 +416,8 @@ def test_thresholded_scorers_multilabel_indicator_data():
     assert_almost_equal(score1, score2)
 
 
+@pytest.mark.filterwarnings("ignore:the behavior of ")
+# AMI and NMI changes for 0.22
 def test_supervised_cluster_scorers():
     # Test clustering scorers against gold standard labeling.
     X, y = make_blobs(random_state=0, centers=2)
@@ -490,33 +498,16 @@ def check_scorer_memmap(scorer_name):
     assert isinstance(score, numbers.Number), scorer_name
 
 
-def test_scorer_memmap_input():
+@pytest.mark.parametrize('name', SCORERS)
+def test_scorer_memmap_input(name):
     # Non-regression test for #6147: some score functions would
     # return singleton memmap when computed on memmap data instead of scalar
     # float values.
-    for name in SCORERS.keys():
-        yield check_scorer_memmap, name
+    check_scorer_memmap(name)
 
 
-def test_deprecated_names():
-    X, y = make_blobs(random_state=0, centers=2)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = LogisticRegression(random_state=0)
-    clf.fit(X_train, y_train)
-
-    for name in ('mean_absolute_error', 'mean_squared_error',
-                 'median_absolute_error', 'log_loss'):
-        warning_msg = "Scoring method %s was renamed to" % name
-        for scorer in (get_scorer(name), SCORERS[name]):
-            assert_warns_message(DeprecationWarning,
-                                 warning_msg,
-                                 scorer, clf, X, y)
-
-        assert_warns_message(DeprecationWarning,
-                             warning_msg,
-                             cross_val_score, clf, X, y, scoring=name)
-
-
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_scoring_is_not_metric():
     assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
                          LogisticRegression(), f1_score)

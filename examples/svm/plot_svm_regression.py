@@ -34,7 +34,6 @@ y_poly = svr_poly.fit(X, y).predict(X)
 # Look at the results
 lw = 2
 plt.scatter(X, y, color='darkorange', label='data')
-plt.hold('on')
 plt.plot(X, y_rbf, color='navy', lw=lw, label='RBF model')
 plt.plot(X, y_lin, color='c', lw=lw, label='Linear model')
 plt.plot(X, y_poly, color='cornflowerblue', lw=lw, label='Polynomial model')

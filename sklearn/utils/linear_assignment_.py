@@ -29,7 +29,7 @@ def linear_assignment(X):
 
     Returns
     -------
-    indices : array,
+    indices : array
         The pairs of (row, col) indices in the original array giving
         the original ordering.
 
@@ -91,16 +91,6 @@ class _HungarianState(object):
         self.Z0_c = 0
         self.path = np.zeros((n + m, 2), dtype=int)
         self.marked = np.zeros((n, m), dtype=int)
-
-    def _find_prime_in_row(self, row):
-        """
-        Find the first prime element in the specified row. Returns
-        the column index, or -1 if no starred element was found.
-        """
-        col = np.argmax(self.marked[row] == 2)
-        if self.marked[row, col] != 2:
-            col = -1
-        return col
 
     def _clear_covers(self):
         """Clear all covered matrix cells"""

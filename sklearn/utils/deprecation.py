@@ -1,7 +1,8 @@
 import sys
 import warnings
+import functools
 
-__all__ = ["deprecated", ]
+__all__ = ["deprecated"]
 
 
 class deprecated(object):
@@ -27,7 +28,7 @@ class deprecated(object):
           to be added to the deprecation messages
     """
 
-    # Adapted from http://wiki.python.org/moin/PythonDecoratorLibrary,
+    # Adapted from https://wiki.python.org/moin/PythonDecoratorLibrary,
     # but with many changes.
 
     def __init__(self, extra=''):
@@ -71,13 +72,15 @@ class deprecated(object):
         if self.extra:
             msg += "; %s" % self.extra
 
+        @functools.wraps(fun)
         def wrapped(*args, **kwargs):
             warnings.warn(msg, category=DeprecationWarning)
             return fun(*args, **kwargs)
 
-        wrapped.__name__ = fun.__name__
-        wrapped.__dict__ = fun.__dict__
-        wrapped.__doc__ = self._update_doc(fun.__doc__)
+        wrapped.__doc__ = self._update_doc(wrapped.__doc__)
+        # Add a reference to the wrapped function so that we can introspect
+        # on function arguments in Python 2 (already works in Python 3)
+        wrapped.__wrapped__ = fun
 
         return wrapped
 

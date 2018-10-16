@@ -30,12 +30,13 @@ Kernel:
 
 Examples
 --------
+>>> import numpy as np
 >>> from sklearn import datasets
 >>> from sklearn.semi_supervised import LabelPropagation
 >>> label_prop_model = LabelPropagation()
 >>> iris = datasets.load_iris()
->>> random_unlabeled_points = np.where(np.random.randint(0, 2,
-...        size=len(iris.target)))
+>>> rng = np.random.RandomState(42)
+>>> random_unlabeled_points = rng.rand(len(iris.target)) < 0.3
 >>> labels = np.copy(iris.target)
 >>> labels[random_unlabeled_points] = -1
 >>> label_prop_model.fit(iris.data, labels)
@@ -53,12 +54,14 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 """
 
 # Authors: Clay Woolam <clay@woolam.org>
+#          Utkarsh Upadhyay <mail@musicallyut.in>
 # License: BSD
 from abc import ABCMeta, abstractmethod
 
 import warnings
 import numpy as np
 from scipy import sparse
+from scipy.sparse import csgraph
 
 from ..base import BaseEstimator, ClassifierMixin
 from ..externals import six
@@ -67,13 +70,7 @@ from ..neighbors.unsupervised import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_X_y, check_is_fitted, check_array
-
-
-# Helper functions
-
-def _not_converged(y_truth, y_prediction, tol=1e-3):
-    """basic convergence check"""
-    return np.abs(y_truth - y_prediction).sum() > tol
+from ..exceptions import ConvergenceWarning
 
 
 class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
@@ -97,20 +94,22 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
     alpha : float
         Clamping factor
 
-    max_iter : float
+    max_iter : integer
         Change maximum number of iterations allowed
 
     tol : float
         Convergence tolerance: threshold to consider the system at steady
         state
 
-    n_jobs : int, optional (default = 1)
+   n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
-                 alpha=1, max_iter=30, tol=1e-3, n_jobs=1):
+                 alpha=1, max_iter=30, tol=1e-3, n_jobs=None):
 
         self.max_iter = max_iter
         self.tol = tol
@@ -264,12 +263,14 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
         l_previous = np.zeros((self.X_.shape[0], n_classes))
 
-        remaining_iter = self.max_iter
         unlabeled = unlabeled[:, np.newaxis]
         if sparse.isspmatrix(graph_matrix):
             graph_matrix = graph_matrix.tocsr()
-        while (_not_converged(self.label_distributions_, l_previous, self.tol)
-               and remaining_iter > 1):
+
+        for self.n_iter_ in range(self.max_iter):
+            if np.abs(self.label_distributions_ - l_previous).sum() < self.tol:
+                break
+
             l_previous = self.label_distributions_
             self.label_distributions_ = safe_sparse_dot(
                 graph_matrix, self.label_distributions_)
@@ -285,7 +286,12 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                 # clamp
                 self.label_distributions_ = np.multiply(
                     alpha, self.label_distributions_) + y_static
-            remaining_iter -= 1
+        else:
+            warnings.warn(
+                'max_iter=%d was reached without convergence.' % self.max_iter,
+                category=ConvergenceWarning
+            )
+            self.n_iter_ += 1
 
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
         self.label_distributions_ /= normalizer
@@ -294,7 +300,6 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         transduction = self.classes_[np.argmax(self.label_distributions_,
                                                axis=1)]
         self.transduction_ = transduction.ravel()
-        self.n_iter_ = self.max_iter - remaining_iter
         return self
 
 
@@ -317,23 +322,18 @@ class LabelPropagation(BaseLabelPropagation):
     n_neighbors : integer > 0
         Parameter for knn kernel
 
-    alpha : float
-        Clamping factor.
-
-        .. deprecated:: 0.19
-            This parameter will be removed in 0.21.
-            'alpha' is fixed to zero in 'LabelPropagation'.
-
-    max_iter : float
+    max_iter : integer
         Change maximum number of iterations allowed
 
     tol : float
         Convergence tolerance: threshold to consider the system at steady
         state
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -354,12 +354,13 @@ class LabelPropagation(BaseLabelPropagation):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn import datasets
     >>> from sklearn.semi_supervised import LabelPropagation
     >>> label_prop_model = LabelPropagation()
     >>> iris = datasets.load_iris()
-    >>> random_unlabeled_points = np.where(np.random.randint(0, 2,
-    ...    size=len(iris.target)))
+    >>> rng = np.random.RandomState(42)
+    >>> random_unlabeled_points = rng.rand(len(iris.target)) < 0.3
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
@@ -380,10 +381,10 @@ class LabelPropagation(BaseLabelPropagation):
     _variant = 'propagation'
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
-                 alpha=None, max_iter=30, tol=1e-3, n_jobs=1):
+                 max_iter=1000, tol=1e-3, n_jobs=None):
         super(LabelPropagation, self).__init__(
-            kernel=kernel, gamma=gamma, n_neighbors=n_neighbors, alpha=alpha,
-            max_iter=max_iter, tol=tol, n_jobs=n_jobs)
+            kernel=kernel, gamma=gamma, n_neighbors=n_neighbors,
+            max_iter=max_iter, tol=tol, n_jobs=n_jobs, alpha=None)
 
     def _build_graph(self):
         """Matrix representing a fully connected graph between each sample
@@ -402,12 +403,6 @@ class LabelPropagation(BaseLabelPropagation):
         return affinity_matrix
 
     def fit(self, X, y):
-        if self.alpha is not None:
-            warnings.warn(
-                "alpha is deprecated since 0.19 and will be removed in 0.21.",
-                DeprecationWarning
-            )
-            self.alpha = None
         return super(LabelPropagation, self).fit(X, y)
 
 
@@ -441,16 +436,18 @@ class LabelSpreading(BaseLabelPropagation):
       alpha=0 means keeping the initial label information; alpha=1 means
       replacing all initial information.
 
-    max_iter : float
+    max_iter : integer
       maximum number of iterations allowed
 
     tol : float
       Convergence tolerance: threshold to consider the system at steady
       state
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -471,12 +468,13 @@ class LabelSpreading(BaseLabelPropagation):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn import datasets
     >>> from sklearn.semi_supervised import LabelSpreading
     >>> label_prop_model = LabelSpreading()
     >>> iris = datasets.load_iris()
-    >>> random_unlabeled_points = np.where(np.random.randint(0, 2,
-    ...    size=len(iris.target)))
+    >>> rng = np.random.RandomState(42)
+    >>> random_unlabeled_points = rng.rand(len(iris.target)) < 0.3
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
@@ -497,7 +495,7 @@ class LabelSpreading(BaseLabelPropagation):
     _variant = 'spreading'
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7, alpha=0.2,
-                 max_iter=30, tol=1e-3, n_jobs=1):
+                 max_iter=30, tol=1e-3, n_jobs=None):
 
         # this one has different base parameters
         super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,
@@ -513,7 +511,7 @@ class LabelSpreading(BaseLabelPropagation):
             self.nn_fit = None
         n_samples = self.X_.shape[0]
         affinity_matrix = self._get_kernel(self.X_)
-        laplacian = sparse.csgraph.laplacian(affinity_matrix, normed=True)
+        laplacian = csgraph.laplacian(affinity_matrix, normed=True)
         laplacian = -laplacian
         if sparse.isspmatrix(laplacian):
             diag_mask = (laplacian.row == laplacian.col)

@@ -34,6 +34,8 @@ extensions = [
     'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
     'numpydoc',
     'sphinx.ext.linkcode', 'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.imgconverter',
     'sphinx_gallery.gen_gallery',
     'sphinx_issues',
 ]
@@ -43,13 +45,15 @@ extensions = [
 numpydoc_class_members_toctree = False
 
 
-# pngmath / imgmath compatibility layer for different sphinx versions
-import sphinx
-from distutils.version import LooseVersion
-if LooseVersion(sphinx.__version__) < LooseVersion('1.4'):
-    extensions.append('sphinx.ext.pngmath')
-else:
+# For maths, use mathjax by default and svg if NO_MATHJAX env variable is set
+# (useful for viewing the doc offline)
+if os.environ.get('NO_MATHJAX'):
     extensions.append('sphinx.ext.imgmath')
+    imgmath_image_format = 'svg'
+else:
+    extensions.append('sphinx.ext.mathjax')
+    mathjax_path = ('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/'
+                    'MathJax.js?config=TeX-AMS_SVG')
 
 
 autodoc_default_flags = ['members', 'inherited-members']
@@ -66,15 +70,12 @@ source_suffix = '.rst'
 # The encoding of source files.
 #source_encoding = 'utf-8'
 
-# Generate the plots for the gallery
-plot_gallery = True
-
 # The master toctree document.
 master_doc = 'index'
 
 # General information about the project.
 project = u('scikit-learn')
-copyright = u('2007 - 2017, scikit-learn developers (BSD License)')
+copyright = u('2007 - 2018, scikit-learn developers (BSD License)')
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -96,16 +97,13 @@ release = sklearn.__version__
 # Else, today_fmt is used as the format for a strftime call.
 #today_fmt = '%B %d, %Y'
 
-# List of documents that shouldn't be included in the build.
-#unused_docs = []
-
-# List of directories, relative to source directory, that shouldn't be
-# searched for source files.
-exclude_trees = ['_build', 'templates', 'includes']
+# List of patterns, relative to source directory, that match files and
+# directories to ignore when looking for source files.
+exclude_patterns = ['_build', 'templates', 'includes', 'themes']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
-#default_role = None
+default_role = 'any'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
@@ -167,10 +165,6 @@ html_static_path = ['images']
 # using the given strftime format.
 #html_last_updated_fmt = '%b %d, %Y'
 
-# If true, SmartyPants will be used to convert quotes and dashes to
-# typographically correct entities.
-#html_use_smartypants = True
-
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
 
@@ -203,12 +197,19 @@ htmlhelp_basename = 'scikit-learndoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
+latex_elements = {
+    # The paper size ('letterpaper' or 'a4paper').
+    # 'papersize': 'letterpaper',
 
-# The paper size ('letter' or 'a4').
-#latex_paper_size = 'letter'
+    # The font size ('10pt', '11pt' or '12pt').
+    # 'pointsize': '10pt',
 
-# The font size ('10pt', '11pt' or '12pt').
-#latex_font_size = '10pt'
+    # Additional stuff for the LaTeX preamble.
+    'preamble': r"""
+        \usepackage{amsmath}\usepackage{amsfonts}\usepackage{bm}
+        \usepackage{morefloats}\usepackage{enumitem} \setlistdepth{10}
+        """
+}
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass
@@ -220,33 +221,30 @@ latex_documents = [('index', 'user_guide.tex', u('scikit-learn user guide'),
 # the title page.
 latex_logo = "logos/scikit-learn-logo.png"
 
-# For "manual" documents, if this is true, then toplevel headings are parts,
-# not chapters.
-#latex_use_parts = False
-
-# Additional stuff for the LaTeX preamble.
-latex_preamble = r"""
-\usepackage{amsmath}\usepackage{amsfonts}\usepackage{bm}\usepackage{morefloats}
-\usepackage{enumitem} \setlistdepth{10}
-"""
-
 # Documents to append as an appendix to all manuals.
-#latex_appendices = []
+# latex_appendices = []
 
 # If false, no module index is generated.
 latex_domain_indices = False
 
 trim_doctests_flags = True
 
+# intersphinx configuration
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/{.major}'.format(
+        sys.version_info), None),
+    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
+    'matplotlib': ('https://matplotlib.org/', None),
+    'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
+    'joblib': ('https://joblib.readthedocs.io/en/latest/', None),
+}
 
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
     'backreferences_dir': os.path.join('modules', 'generated'),
     'reference_url': {
-        'sklearn': None,
-        'matplotlib': 'http://matplotlib.org',
-        'numpy': 'http://docs.scipy.org/doc/numpy-1.8.1',
-        'scipy': 'http://docs.scipy.org/doc/scipy-0.13.3/reference'}
+        'sklearn': None}
 }
 
 
@@ -285,6 +283,7 @@ issues_user_uri = 'https://github.com/{user}'
 def setup(app):
     # to hide/show the prompt in code examples:
     app.add_javascript('js/copybutton.js')
+    app.add_javascript('js/extra.js')
     app.connect('build-finished', make_carousel_thumbs)
 
 

@@ -21,8 +21,8 @@ with different biases per method:
 * RandomForestClassifier shows the opposite behavior: the histograms show
   peaks at approx. 0.2 and 0.9 probability, while probabilities close to 0 or 1
   are very rare. An explanation for this is given by Niculescu-Mizil and Caruana
-  [1]: "Methods such as bagging and random forests that average predictions from
-  a base set of models can have difficulty making predictions near 0 and 1
+  [1]_: "Methods such as bagging and random forests that average predictions
+  from a base set of models can have difficulty making predictions near 0 and 1
   because variance in the underlying base models will bias predictions that
   should be near zero or one away from these values. Because predictions are
   restricted to the interval [0,1], errors caused by variance tend to be one-
@@ -39,7 +39,7 @@ with different biases per method:
 
 * Support Vector Classification (SVC) shows an even more sigmoid curve as
   the  RandomForestClassifier, which is typical for maximum-margin methods
-  (compare Niculescu-Mizil and Caruana [1]), which focus on hard samples
+  (compare Niculescu-Mizil and Caruana [1]_), which focus on hard samples
   that are close to the decision boundary (the support vectors).
 
 .. topic:: References:
@@ -75,7 +75,7 @@ y_train = y[:train_samples]
 y_test = y[train_samples:]
 
 # Create classifiers
-lr = LogisticRegression()
+lr = LogisticRegression(solver='lbfgs')
 gnb = GaussianNB()
 svc = LinearSVC(C=1.0)
 rfc = RandomForestClassifier(n_estimators=100)

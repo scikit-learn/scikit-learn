@@ -26,7 +26,6 @@ import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from scipy.stats import scoreatpercentile
 from sklearn.datasets.samples_generator import make_regression
 from sklearn.ensemble.forest import RandomForestRegressor
 from sklearn.linear_model.ridge import Ridge
@@ -50,7 +49,7 @@ def atomic_benchmark_estimator(estimator, X_test, verbose=False):
         estimator.predict(instance)
         runtimes[i] = time.time() - start
     if verbose:
-        print("atomic_benchmark runtimes:", min(runtimes), scoreatpercentile(
+        print("atomic_benchmark runtimes:", min(runtimes), np.percentile(
             runtimes, 50), max(runtimes))
     return runtimes
 
@@ -65,7 +64,7 @@ def bulk_benchmark_estimator(estimator, X_test, n_bulk_repeats, verbose):
         runtimes[i] = time.time() - start
     runtimes = np.array(list(map(lambda x: x / float(n_instances), runtimes)))
     if verbose:
-        print("bulk_benchmark runtimes:", min(runtimes), scoreatpercentile(
+        print("bulk_benchmark runtimes:", min(runtimes), np.percentile(
             runtimes, 50), max(runtimes))
     return runtimes
 
@@ -102,7 +101,7 @@ def generate_dataset(n_train, n_test, n_features, noise=0.1, verbose=False):
 
     random_seed = 13
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, train_size=n_train, random_state=random_seed)
+        X, y, train_size=n_train, test_size=n_test, random_state=random_seed)
     X_train, y_train = shuffle(X_train, y_train, random_state=random_seed)
 
     X_scaler = StandardScaler()
@@ -207,8 +206,8 @@ def n_feature_influence(estimators, n_train, n_test, n_features, percentile):
             estimator.fit(X_train, y_train)
             gc.collect()
             runtimes = bulk_benchmark_estimator(estimator, X_test, 30, False)
-            percentiles[cls_name][n] = 1e6 * scoreatpercentile(runtimes,
-                                                               percentile)
+            percentiles[cls_name][n] = 1e6 * np.percentile(runtimes,
+                                                           percentile)
     return percentiles
 
 
@@ -280,11 +279,12 @@ configuration = {
     'estimators': [
         {'name': 'Linear Model',
          'instance': SGDRegressor(penalty='elasticnet', alpha=0.01,
-                                  l1_ratio=0.25, fit_intercept=True),
+                                  l1_ratio=0.25, fit_intercept=True,
+                                  tol=1e-4),
          'complexity_label': 'non-zero coefficients',
          'complexity_computer': lambda clf: np.count_nonzero(clf.coef_)},
         {'name': 'RandomForest',
-         'instance': RandomForestRegressor(),
+         'instance': RandomForestRegressor(n_estimators=100),
          'complexity_label': 'estimators',
          'complexity_computer': lambda clf: clf.n_estimators},
         {'name': 'SVR',

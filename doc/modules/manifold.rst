@@ -343,7 +343,7 @@ The overall complexity of spectral embedding is
 
    * `"Laplacian Eigenmaps for Dimensionality Reduction
      and Data Representation"
-     <http://web.cse.ohio-state.edu/~mbelkin/papers/LEM_NC_03.pdf>`_
+     <https://web.cse.ohio-state.edu/~mbelkin/papers/LEM_NC_03.pdf>`_
      M. Belkin, P. Niyogi, Neural Computation, June 2003; 15 (6):1373-1396
 
 
@@ -461,15 +461,15 @@ order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
 .. topic:: References:
 
   * `"Modern Multidimensional Scaling - Theory and Applications"
-    <http://www.springer.com/fr/book/9780387251509>`_
+    <https://www.springer.com/fr/book/9780387251509>`_
     Borg, I.; Groenen P. Springer Series in Statistics (1997)
 
   * `"Nonmetric multidimensional scaling: a numerical method"
-    <http://link.springer.com/article/10.1007%2FBF02289694>`_
+    <https://link.springer.com/article/10.1007%2FBF02289694>`_
     Kruskal, J. Psychometrika, 29 (1964)
 
   * `"Multidimensional scaling by optimizing goodness of fit to a nonmetric hypothesis"
-    <http://link.springer.com/article/10.1007%2FBF02289565>`_
+    <https://link.springer.com/article/10.1007%2FBF02289565>`_
     Kruskal, J. Psychometrika, 29, (1964)
 
 .. _t_sne:
@@ -533,7 +533,7 @@ the quality of the resulting embedding:
 * maximum number of iterations
 * angle (not used in the exact method)
 
-The perplexity is defined as :math:`k=2^(S)` where :math:`S` is the Shannon
+The perplexity is defined as :math:`k=2^{(S)}` where :math:`S` is the Shannon
 entropy of the conditional probability distribution. The perplexity of a
 :math:`k`-sided die is :math:`k`, so that :math:`k` is effectively the number of
 nearest neighbors t-SNE considers when generating the conditional probabilities.
@@ -558,10 +558,10 @@ descent will get stuck in a bad local minimum. If it is too high the KL
 divergence will increase during optimization. More tips can be found in
 Laurens van der Maaten's FAQ (see references). The last parameter, angle,
 is a tradeoff between performance and accuracy. Larger angles imply that we
-can approximate larger regions by a single point,leading to better speed
+can approximate larger regions by a single point, leading to better speed
 but less accurate results.
 
-`"How to Use t-SNE Effectively" <http://distill.pub/2016/misread-tsne/>`_
+`"How to Use t-SNE Effectively" <https://distill.pub/2016/misread-tsne/>`_
 provides a good discussion of the effects of the various parameters, as well
 as interactive plots to explore the effects of different parameters.
 
@@ -598,8 +598,8 @@ where label regions largely overlap. This is a strong clue that this data can
 be well separated by non linear methods that focus on the local structure (e.g.
 an SVM with a Gaussian RBF kernel). However, failing to visualize well
 separated homogeneously labeled groups with t-SNE in 2D does not necessarily
-implie that the data cannot be correctly classified by a supervised model. It
-might be the case that 2 dimensions are not enough low to accurately represents
+imply that the data cannot be correctly classified by a supervised model. It
+might be the case that 2 dimensions are not low enough to accurately represents
 the internal structure of the data.
 
 
@@ -611,7 +611,7 @@ the internal structure of the data.
     (2008)
 
   * `"t-Distributed Stochastic Neighbor Embedding"
-    <http://lvdmaaten.github.io/tsne/>`_
+    <https://lvdmaaten.github.io/tsne/>`_
     van der Maaten, L.J.P.
 
   * `"Accelerating t-SNE using Tree-Based Algorithms."

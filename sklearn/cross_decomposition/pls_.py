@@ -16,6 +16,7 @@ from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..exceptions import ConvergenceWarning
 from ..externals import six
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
@@ -74,7 +75,8 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
         if np.dot(x_weights_diff.T, x_weights_diff) < tol or Y.shape[1] == 1:
             break
         if ite == max_iter:
-            warnings.warn('Maximum number of iterations reached')
+            warnings.warn('Maximum number of iterations reached',
+                          ConvergenceWarning)
             break
         x_weights_old = x_weights
         ite += 1
@@ -153,7 +155,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter : an integer, the maximum number of iterations (default 500)
+    max_iter : int (default 500)
+        The maximum number of iterations
         of the NIPALS inner loop (used only if algorithm="nipals")
 
     tol : non-negative real, default 1e-06
@@ -245,7 +248,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
         # copy since this will contains the residuals (deflated) matrices
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float64, copy=self.copy)
+        X = check_array(X, dtype=np.float64, copy=self.copy,
+                        ensure_min_samples=2)
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
@@ -771,6 +775,25 @@ class PLSSVD(BaseEstimator, TransformerMixin):
     y_scores_ : array, [n_samples, n_components]
         Y scores.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cross_decomposition import PLSSVD
+    >>> X = np.array([[0., 0., 1.],
+    ...     [1.,0.,0.],
+    ...     [2.,2.,2.],
+    ...     [2.,5.,4.]])
+    >>> Y = np.array([[0.1, -0.2],
+    ...     [0.9, 1.1],
+    ...     [6.2, 5.9],
+    ...     [11.9, 12.3]])
+    >>> plsca = PLSSVD(n_components=2)
+    >>> plsca.fit(X, Y)
+    PLSSVD(copy=True, n_components=2, scale=True)
+    >>> X_c, Y_c = plsca.transform(X, Y)
+    >>> X_c.shape, Y_c.shape
+    ((4, 2), (4, 2))
+
     See also
     --------
     PLSCanonical
@@ -797,7 +820,8 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         """
         # copy since this will contains the centered data
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float64, copy=self.copy)
+        X = check_array(X, dtype=np.float64, copy=self.copy,
+                        ensure_min_samples=2)
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
