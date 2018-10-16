@@ -374,8 +374,8 @@ def test_column_transformer_mixed_cols_sparse():
                   dtype='O')
 
     ct = make_column_transformer(
-        ([0], OneHotEncoder()),
-        ([1, 2], 'passthrough'),
+        (OneHotEncoder(), [0]),
+        ('passthrough', [1, 2]),
         sparse_threshold=1.0
     )
 
@@ -387,8 +387,8 @@ def test_column_transformer_mixed_cols_sparse():
                                                     [0, 1, 2, 0]]))
 
     ct = make_column_transformer(
-        ([0], OneHotEncoder()),
-        ([0], 'passthrough'),
+        (OneHotEncoder(), [0]),
+        ('passthrough', [0]),
         sparse_threshold=1.0
     )
     with pytest.raises(ValueError,
@@ -517,11 +517,20 @@ def test_column_transformer_invalid_transformer():
 def test_make_column_transformer():
     scaler = StandardScaler()
     norm = Normalizer()
-    ct = make_column_transformer(('first', scaler), (['second'], norm))
+    ct = make_column_transformer((scaler, 'first'), (norm, ['second']))
     names, transformers, columns = zip(*ct.transformers)
     assert_equal(names, ("standardscaler", "normalizer"))
     assert_equal(transformers, (scaler, norm))
     assert_equal(columns, ('first', ['second']))
+
+    # XXX remove in v0.22
+    with pytest.warns(DeprecationWarning,
+                      match='make_column_transformer arguments should be '):
+        make_column_transformer(('first', scaler))
+
+    with pytest.warns(DeprecationWarning,
+                      match='make_column_transformer arguments should be '):
+        make_column_transformer(('first', 'drop'))
 
 
 def test_make_column_transformer_kwargs():
