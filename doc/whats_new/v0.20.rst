@@ -86,6 +86,14 @@ Changelog
 - |Fix| Fixed bug in :class:`preprocessing.OrdinalEncoder` when passing
   manually specified categories. :issue:`12365` by `Joris Van den Bossche`_.
 
+:mod:`sklearn.utils`
+........................
+
+- |Fix| Use float64 for mean accumulator to avoid floating point
+  precision issues in :class:`preprocessing.StandardScaler` and
+  :class:`decomposition.IncrementalPCA` when using float32 datasets.
+  :issue:`12338` by :user:`bauks <bauks>`.
+
 .. _changes_0_20:
 
 Version 0.20.0
