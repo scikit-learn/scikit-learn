@@ -13,7 +13,6 @@ at which the fixe is no longer needed.
 import os
 import errno
 import sys
-import warnings
 
 from distutils.version import LooseVersion
 
