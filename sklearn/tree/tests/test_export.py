@@ -335,46 +335,46 @@ def test_export_ascii():
 
     expected_report = """\
 |---feature_1 <= 0.00
-|   |---* (value: [ 3.  0.])
+|   |---* (value: [3.0, 0.0])
 |---feature_1 >  0.00
-|   |---* (value: [ 0.  3.])
+|   |---* (value: [0.0, 3.0])
 """
     assert_equal(export_ascii(clf), expected_report)
 
     expected_report = """\
 |---feature_1 <= 0.00
-|   | (value: [ 3.  3.])
-|   |---* (value: [ 3.  0.])
+|   | (value: [3.0, 3.0])
+|   |---* (value: [3.0, 0.0])
 |---feature_1 >  0.00
-|   | (value: [ 3.  3.])
-|   |---* (value: [ 0.  3.])
+|   | (value: [3.0, 3.0])
+|   |---* (value: [0.0, 3.0])
 """
     assert_equal(export_ascii(clf, show_value=True), expected_report)
 
     expected_report = """\
 |---b <= 0.00
-|   |---* (value: [ 3.  0.])
+|   |---* (value: [3.0, 0.0])
 |---b >  0.00
-|   |---* (value: [ 0.  3.])
+|   |---* (value: [0.0, 3.0])
 """
     assert_equal(export_ascii(clf, ['a', 'b']), expected_report)
 
     expected_report = """\
 |-feature_1 <= 0.00
-| |-* (value: [ 3.  0.])
+| |-* (value: [3.0, 0.0])
 |-feature_1 >  0.00
-| |-* (value: [ 0.  3.])
+| |-* (value: [0.0, 3.0])
 """
     assert_equal(export_ascii(clf, spacing=1), expected_report)
 
     expected_report = """\
 |---feature_1 <= 0.00
 |   | (class: c1)
-|   |---* (value: [ 3.  0.])
+|   |---* (value: [3.0, 0.0])
 |   |   | (class: c1)
 |---feature_1 >  0.00
 |   | (class: c1)
-|   |---* (value: [ 0.  3.])
+|   |---* (value: [0.0, 3.0])
 |   |   | (class: c2)
 """
     assert_equal(export_ascii(clf, class_names=['c1', 'c2'],
@@ -385,9 +385,9 @@ def test_export_ascii():
     clf.fit(X, y)
     expected_report = """\
 |---feature_1 <= 0.00
-|   |---* (value: [-1.])
+|   |---* (value: [-1.0])
 |---feature_1 >  0.00
-|   |---* (value: [ 1.])
+|   |---* (value: [1.0])
 """
     assert_equal(export_ascii(clf), expected_report)
 

@@ -889,7 +889,8 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
 
             info_string = ""
             if show_value:
-                info_string += value_string.format(info_indent, '|', value)
+                info_string += value_string.format(info_indent, '|',
+                                                   str(value.tolist()))
             if show_class:
                 info_string += class_string.format(info_indent,
                                                    class_name)
@@ -912,7 +913,8 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
                                    depth+1)
             else:  # leaf
                 # value always meaningful for classification and regression
-                export_ascii.report += value_string.format(indent, '*', value)
+                export_ascii.report += value_string.format(indent, '*',
+                                                           str(value.tolist()))
                 if show_class:
                     export_ascii.report += class_string.format(info_indent,
                                                                class_name)
