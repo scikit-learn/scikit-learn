@@ -11,6 +11,7 @@ from __future__ import division
 from itertools import chain
 
 import numpy as np
+import warnings
 from scipy import sparse
 
 from ..base import clone, TransformerMixin
@@ -686,8 +687,22 @@ def _get_transformer_list(estimators):
     Construct (name, trans, column) tuples from list
 
     """
-    transformers = [trans[1] for trans in estimators]
-    columns = [trans[0] for trans in estimators]
+    _estimators = []
+    for tup in estimators:
+        if (hasattr(tup[1], 'fit') or
+                (tup[1] in ('drop', 'passthrough')
+                 and tup[0] not in ('drop', 'passthrough'))):
+            warnings.warn('make_column_transformer arguments should be '
+                          '(transformer, columns), whereas '
+                          '(columns, transformer) was passed; '
+                          'its support is deprecated and will be removed in '
+                          'version 0.22.', DeprecationWarning)
+            _estimators.append((tup[1], tup[0]))
+        else:
+            _estimators.append(tup)
+
+    transformers = [trans[0] for trans in _estimators]
+    columns = [trans[1] for trans in _estimators]
     names = [trans[0] for trans in _name_estimators(transformers)]
 
     transformer_list = list(zip(names, transformers, columns))
@@ -747,8 +762,8 @@ def make_column_transformer(*transformers, **kwargs):
     >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
     >>> from sklearn.compose import make_column_transformer
     >>> make_column_transformer(
-    ...     (['numerical_column'], StandardScaler()),
-    ...     (['categorical_column'], OneHotEncoder()))
+    ...     (StandardScaler(), ['numerical_column']),
+    ...     (OneHotEncoder(), ['categorical_column']))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
              transformer_weights=None,
