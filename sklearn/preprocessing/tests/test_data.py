@@ -230,6 +230,20 @@ def test_standard_scaler_1d():
     assert_equal(scaler.n_samples_seen_, X.shape[0])
 
 
+def test_standard_scaler_dtype():
+    # Ensure scaling does not affect dtype
+    rng = np.random.RandomState(0)
+    n_samples = 10
+    n_features = 3
+    for dtype in [np.float16, np.float32, np.float64]:
+        X = rng.randn(n_samples, n_features).astype(dtype)
+        scaler = StandardScaler()
+        X_scaled = scaler.fit(X).transform(X)
+        assert X.dtype == X_scaled.dtype
+        assert scaler.mean_.dtype == np.float64
+        assert scaler.scale_.dtype == np.float64
+
+
 def test_scale_1d():
     # 1-d inputs
     X_list = [1., 3., 5., 0.]
