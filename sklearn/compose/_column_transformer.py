@@ -687,22 +687,22 @@ def _get_transformer_list(estimators):
     Construct (name, trans, column) tuples from list
 
     """
-    _estimators = []
-    for tup in estimators:
-        if (hasattr(tup[1], 'fit') or
-                (tup[1] in ('drop', 'passthrough')
-                 and tup[0] not in ('drop', 'passthrough'))):
-            warnings.warn('make_column_transformer arguments should be '
-                          '(transformer, columns), whereas '
-                          '(columns, transformer) was passed; '
-                          'its support is deprecated and will be removed in '
-                          'version 0.22.', DeprecationWarning)
-            _estimators.append((tup[1], tup[0]))
-        else:
-            _estimators.append(tup)
+    # check the first tuple in estimators, swap all if it
+    # follows the (columns, transformer) order.
+    # remove in v0.22
+    trans_ix, cols_ix = 0, 1
+    if (hasattr(estimators[0][1], 'fit') or
+            (estimators[0][1] in ('drop', 'passthrough')
+             and estimators[0][0] not in ('drop', 'passthrough'))):
+        warnings.warn('make_column_transformer arguments should be '
+                      '(transformer, columns), whereas '
+                      '(columns, transformer) was passed; '
+                      'its support is deprecated and will be removed in '
+                      'version 0.22.', DeprecationWarning)
+        trans_ix, cols_ix = 1, 0
 
-    transformers = [trans[0] for trans in _estimators]
-    columns = [trans[1] for trans in _estimators]
+    transformers = [trans[trans_ix] for trans in estimators]
+    columns = [trans[cols_ix] for trans in estimators]
     names = [trans[0] for trans in _name_estimators(transformers)]
 
     transformer_list = list(zip(names, transformers, columns))
