@@ -785,7 +785,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
 
 def export_ascii(decision_tree, feature_names=None, class_names=None,
                  max_depth=10, show_value=False, show_class=False, spacing=3):
-    """Build a text report showing the rules a decision tree.
+    """Build a text report showing the rules of a decision tree.
 
     Parameters
     ----------

@@ -311,7 +311,6 @@ def test_precision():
                              precision + 1)
 
 
-<<<<<<< HEAD
 def test_export_ascii_errors():
     clf = DecisionTreeClassifier(max_depth=2, random_state=0)
     clf.fit(X, y)
@@ -336,46 +335,46 @@ def test_export_ascii():
 
     expected_report = """\
 |---feature_1 <= 0.00
-|   |---* (value: [ 3.  0.])
+|   |---* (value: [3. 0.])
 |---feature_1 >  0.00
-|   |---* (value: [ 0.  3.])
+|   |---* (value: [0. 3.])
 """
     assert_equal(export_ascii(clf), expected_report)
 
     expected_report = """\
 |---feature_1 <= 0.00
-|   | (value: [ 3.  3.])
-|   |---* (value: [ 3.  0.])
+|   | (value: [3. 3.])
+|   |---* (value: [3. 0.])
 |---feature_1 >  0.00
-|   | (value: [ 3.  3.])
-|   |---* (value: [ 0.  3.])
+|   | (value: [3. 3.])
+|   |---* (value: [0. 3.])
 """
     assert_equal(export_ascii(clf, show_value=True), expected_report)
 
     expected_report = """\
 |---b <= 0.00
-|   |---* (value: [ 3.  0.])
+|   |---* (value: [3. 0.])
 |---b >  0.00
-|   |---* (value: [ 0.  3.])
+|   |---* (value: [0. 3.])
 """
     assert_equal(export_ascii(clf, ['a', 'b']), expected_report)
 
     expected_report = """\
 |-feature_1 <= 0.00
-| |-* (value: [ 3.  0.])
+| |-* (value: [3. 0.])
 |-feature_1 >  0.00
-| |-* (value: [ 0.  3.])
+| |-* (value: [0. 3.])
 """
     assert_equal(export_ascii(clf, spacing=1), expected_report)
 
     expected_report = """\
 |---feature_1 <= 0.00
 |   | (class: c1)
-|   |---* (value: [ 3.  0.])
+|   |---* (value: [3. 0.])
 |   |   | (class: c1)
 |---feature_1 >  0.00
 |   | (class: c1)
-|   |---* (value: [ 0.  3.])
+|   |---* (value: [0. 3.])
 |   |   | (class: c2)
 """
     assert_equal(export_ascii(clf, class_names=['c1', 'c2'],
@@ -388,7 +387,7 @@ def test_export_ascii():
 |---feature_1 <= 0.00
 |   |---* (value: [-1.])
 |---feature_1 >  0.00
-|   |---* (value: [ 1.])
+|   |---* (value: [1.])
 """
     assert_equal(export_ascii(clf), expected_report)
 
@@ -397,7 +396,8 @@ def test_export_ascii():
 |---feature_1 >  0.00
 """
     assert_equal(export_ascii(clf, max_depth=1), expected_report)
-=======
+
+
 def test_plot_tree():
     # mostly smoke tests
     pytest.importorskip("matplotlib.pyplot")
@@ -416,4 +416,3 @@ def test_plot_tree():
                                    "samples = 6\nvalue = [3, 3]")
     assert nodes[1].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [3, 0]"
     assert nodes[2].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [0, 3]"
->>>>>>> master
