@@ -20,6 +20,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
+from ..exceptions import ChangedBehaviorWarning
 from ..externals import six
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
@@ -166,6 +167,19 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                 # Before 0.19, default was n_iter=5
             max_iter = 5
         else:
+            if self.tol is None:
+                # max_iter was set, but tol wasn't. The docs / warning do not
+                # specify this case. In 0.20 tol would stay being None which
+                # is equivalent to -inf, but it will be changed to 1e-3 in
+                # 0.21. We warn users that the behaviour (and potentially
+                # their results) will change.
+                warnings.warn(
+                    "max_iter and tol parameters have been added in %s in "
+                    "0.19. If max_iter is set but tol is left unset, the "
+                    "default value for tol in 0.19 and 0.20 will be None "
+                    "but will change in 0.21 to 1e-3. Specify tol to "
+                    "silence this warning." % type(self).__name__,
+                    ChangedBehaviorWarning)
             max_iter = self.max_iter if self.max_iter is not None else 1000
         self._max_iter = max_iter
 

@@ -26,6 +26,7 @@ from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import sgd_fast
 from sklearn.model_selection import RandomizedSearchCV
@@ -1330,8 +1331,12 @@ def test_future_and_deprecation_warnings():
     msg_deprecation = "n_iter parameter is deprecated"
     assert_warns_message(DeprecationWarning, msg_deprecation, init, 6, 0, 5)
 
-    # When n_iter=None, and at least one of tol and max_iter is specified
-    assert_no_warnings(init, 100, None, None)
+    # When n_iter=None and max_iter is specified but tol=None
+    msg_changed = "If max_iter is set but tol is left unset"
+    assert_warns_message(ChangedBehaviorWarning, msg_changed, init, 100,
+                         None, None)
+
+    # When n_iter=None and tol is specified
     assert_no_warnings(init, None, 1e-3, None)
     assert_no_warnings(init, 100, 1e-3, None)
 
