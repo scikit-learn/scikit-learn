@@ -956,7 +956,7 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     if len(param_signature) > 0 and param_signature[0] == 'self':
         param_signature.remove('self')
 
-    # Analize function's docstring
+    # Analyze function's docstring
     if doc is None:
         with warnings.catch_warnings(record=True) as w:
             try:
@@ -1029,6 +1029,6 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     incorrect.extend(message)
 
     # Prepend function name
-    incorrect = ['In :' + str(func)] + incorrect
+    incorrect = ['In : ' + str(func)] + incorrect
 
     return incorrect
