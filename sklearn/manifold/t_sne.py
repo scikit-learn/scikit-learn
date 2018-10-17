@@ -549,7 +549,7 @@ class TSNE(BaseEstimator):
         interpreted as squared euclidean distance.
 
     metric_params : dictionary, optional (default: None)
-        Keyword arguments of distance metric to use
+        Keyword arguments of distance metric to use.
 
     init : string or numpy array, optional (default: "random")
         Initialization of embedding. Possible options are 'random', 'pca',
