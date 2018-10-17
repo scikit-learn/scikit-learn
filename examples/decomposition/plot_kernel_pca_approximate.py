@@ -6,6 +6,30 @@ Kernel PCA Approximation
 This example shows that using a limited number of components in Kernel PCA can
 lead to a good approximation while being much faster to execute for large
 datasets.
+
+Description:
+------------
+2000 Random data samples are generated similarly to the "Kernel PCA" example
+(the circles). A KernelPCA model is fit on that data with a reduced number of
+principal components, varying from 4 to 1999. For each value, data is
+transformed and inverse-transformed.
+
+Original data is displayed in top left corner. Then subsequent plots in the
+top row show approximations of this data made by KernelPCA transform + inverse
+transform, for various number of components. The bottom row shows the data
+samples projected along the first two principal components for each case.
+
+What you can observe:
+---------------------
+When `n_components` is around 100 or more, the approximation is almost
+identical to the full KernelPCA using 2000 components, while execution is much
+faster (execution times are included in the plot titles)
+
+Going further:
+--------------
+You can have a look at the other examples of this series,
+"Kernel PCA Solvers comparison benchmark 1/2", comparing execution times in
+more details.
 """
 from datetime import datetime
 
@@ -33,7 +57,7 @@ X, y = make_circles(n_samples=n_samples, factor=.3, noise=.05)
 grid_size = 5
 n_components_range = [np.floor(np.exp((x / grid_size) * np.log(n_samples)))
                       for x in range(1, grid_size + 1)]
-plt.figure(figsize=(15, 20))
+plt.figure(figsize=(30, 20))
 
 # top left: original
 nb_cols = 1 + len(n_components_range)
