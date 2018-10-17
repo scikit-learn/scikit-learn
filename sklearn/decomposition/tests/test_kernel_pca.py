@@ -9,7 +9,8 @@ from sklearn.exceptions import KernelWarning
 from sklearn.utils.validation import check_kernel_eigenvalues
 from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
                                    assert_equal, assert_not_equal,
-                                   assert_raises, assert_warns)
+                                   assert_raises, assert_warns,
+                                   assert_no_warnings)
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
@@ -373,8 +374,11 @@ def test_errors_and_warnings():
          [0, 4e-12]]
     # check that the inner method works
     assert_warns(KernelWarning,
-                 lambda: check_kernel_eigenvalues((K[0][0], K[1][1])))
+                 lambda: check_kernel_eigenvalues((K[0][0], K[1][1]),
+                                                  warn_on_zeros=True))
 
+    # This is actually a normal behaviour when the number of samples is big,
+    # so no special warning should be raised in this case
     for solver in solvers_except_arpack:
         # Note: arpack detects this case and raises an error already
         kpca = KernelPCA(kernel="precomputed", eigen_solver=solver,
@@ -382,7 +386,7 @@ def test_errors_and_warnings():
         kpca._centerer = IdentityKernelTransformer()
         K = kpca._get_kernel(K)
         # note: we can not test 'fit' because _centerer would be replaced
-        assert_warns(KernelWarning, lambda: kpca._fit_transform(K))
+        assert_no_warnings(lambda: kpca._fit_transform(K))
 
 
 def test_kernel_pca_time_and_equivalence():
