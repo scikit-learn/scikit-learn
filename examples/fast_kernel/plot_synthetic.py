@@ -10,7 +10,7 @@ independent Gaussian distributions. We halt the training
 for EigenPro in two epochs. Experimental results
 demonstrate that EigenPro achieves high test accuracy,
 competitive to that of SVC, while completes training in
-significant less time.
+significant less time (8 times speedup).
 """
 print(__doc__)
 
@@ -109,5 +109,5 @@ ax.set_xticks(train_sizes)
 ax.set_xticklabels(train_size_labels)
 ax.set_xticks([], minor=True)
 ax.set_xlabel('train size')
-ax.set_ylabel('classification error')
+ax.set_ylabel('classification error %')
 plt.tight_layout()

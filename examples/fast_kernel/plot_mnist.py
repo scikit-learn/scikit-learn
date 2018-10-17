@@ -5,7 +5,7 @@ Comparison of Fast Kernel Classifier (EigenPro) and SVC on MNIST
 Here we train a Fast Kernel Classifier (EigenPro) and a Support 
 Vector Classifier (SVC) on subsets of MNIST of various sizes.
 We halt the training of EigenPro in two epochs.
-Experimental results on MNIST demonstrate more than 7 times
+Experimental results on MNIST demonstrate more than 3 times
 speedup of EigenPro over SVC in training time. EigenPro also
 shows consistently lower classification error on test set.
 """
@@ -102,5 +102,5 @@ ax.set_xticks(train_sizes)
 ax.set_xticklabels(train_size_labels)
 ax.set_xticks([], minor=True)
 ax.set_xlabel('train size')
-ax.set_ylabel('classification error')
+ax.set_ylabel('classification error %')
 plt.tight_layout()

@@ -20,7 +20,7 @@ The figure below compares the Fast Kernel Classifier (EigenPro) and the Support 
 Classifier (:class:`SVC`) on MNIST digits classification task.
 We see that EigenPro and SVC give competitive and similar accuracy on test set.
 Notably, on the full MNIST training and testing using EigenPro are
-approximately 10 times faster than that using SVC.
+approximately 3 times and 6 times faster than that using SVC, respectively.
 
 .. |mnist| image:: ../images/fast_kernel_mnist.png
     :target: ../auto_examples/fast_kernel/plot_mnist.html
@@ -31,7 +31,7 @@ approximately 10 times faster than that using SVC.
 We then repeat the same experiments on MNIST with added label noise.
 Specifically, we randomly reset the label (0-9) of 20% samples.
 On this noisy MNIST training and testing using EigenPro are
-approximately 10 times faster than that using SVC.
+up to 20 times faster than that using SVC.
 
 .. |mnist_noisy| image:: ../images/fast_kernel_noisy_mnist.png
     :target: ../auto_examples/fast_kernel/plot_noisy_mnist.html
@@ -41,7 +41,7 @@ approximately 10 times faster than that using SVC.
 
 
 The next figure compares EigenPro and SVC on a binary classification problem with synthetic features.
-Again, EigenPro demonstrates nearly 100 times acceleration on training and testing without loss of accuracy.
+Again, EigenPro demonstrates nearly 8 times acceleration on training and testing without loss of accuracy.
 
 .. |synthetic| image:: ../images/fast_kernel_synthetic.png
     :target: ../auto_examples/fast_kernel/plot_synthetic.html
