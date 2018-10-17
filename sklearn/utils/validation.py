@@ -974,7 +974,7 @@ def check_non_negative(X, whom):
         raise ValueError("Negative values in data passed to %s" % whom)
 
 
-def check_kernel_eigenvalues(lambdas):
+def check_kernel_eigenvalues(lambdas, warn_on_zeros=False):
     """Checks that the provided array of kernel eigenvalues for numerical or
     conditioning issues and returns a fixed validated version.
 
@@ -995,8 +995,8 @@ def check_kernel_eigenvalues(lambdas):
 
      - that the eigenvalues are well conditioned. That means, that the
      eigenvalues are all greater than the maximum eigenvalue divided by 1e12.
-     If this check fails, it raises a KernelWarning and all the eigenvalues
-     that are too small are set to zero.
+     If this check fails and `warn_on_zeros=True`, it raises a KernelWarning.
+     All the eigenvalues that are too small are then set to zero.
 
     Note: the returned array is converted to numpy array.
 
@@ -1032,6 +1032,12 @@ def check_kernel_eigenvalues(lambdas):
     ----------
     lambdas : array-like
         Array of eigenvalues to check / fix.
+
+    warn_on_zeros : boolean (default: False)
+        When this is set to `True`, a `KernelWarning` will be raised when there
+        are extremely small eigenvalues. Otherwise no warning will be raised.
+        Note that in both cases, extremely small eigenvalues will be set to
+        zero.
 
     Returns
     -------
@@ -1076,10 +1082,11 @@ def check_kernel_eigenvalues(lambdas):
     max_conditioning = 1e12  # Max allowed conditioning (ratio big/small)
     too_small_lambdas = lambdas < max_eig / max_conditioning
     if too_small_lambdas.any():
-        warnings.warn("The kernel is badly conditioned: the largest "
-                      "eigenvalue is more than %.2E times the smallest. "
-                      "Small eigenvalues will be replaced "
-                      "by 0" % max_conditioning, KernelWarning)
+        if warn_on_zeros:
+            warnings.warn("The kernel is badly conditioned: the largest "
+                          "eigenvalue is more than %.2E times the smallest. "
+                          "Small eigenvalues will be replaced "
+                          "by 0" % max_conditioning, KernelWarning)
         lambdas[too_small_lambdas] = 0
 
     return lambdas
