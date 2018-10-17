@@ -7,7 +7,7 @@ Here we train a Fast Kernel Machine (EigenPro) and a
 Support Vector Classifier (SVC) on subsets of a synthetic
 dataset. Features of this dataset are sampled from two
 independent Gaussian distributions. We halt the training
-for EigenPro in two epochs. Experimental results
+for EigenPro in 3 epochs. Experimental results
 demonstrate that EigenPro achieves high test accuracy,
 competitive to that of SVC, while completes training in
 significant less time (8 times speedup).
@@ -51,7 +51,7 @@ train_sizes = [2000, 5000, 10000]
 
 for train_size in train_sizes:
     for name, estimator in [
-        ("FastKernel", FKC_EigenPro(n_epoch=2, bandwidth=10,random_state=rng)),
+        ("FastKernel", FKC_EigenPro(n_epoch=3, bandwidth=10,random_state=rng)),
         ("SupportVector", SVC(C=5, gamma=1./(2 * 10 * 10)))]:
         stime = time()
         estimator.fit(x_train[:train_size], y_train[:train_size])
