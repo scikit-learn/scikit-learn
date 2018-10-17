@@ -193,7 +193,9 @@ def test_polynomial_feature_array_order():
                           (2, True, False, np.float32),
                           (2, True, False, np.float64),
                           (3, False, False, np.float64),
-                          (3, False, True, np.float64)])
+                          (3, False, True, np.float64),
+                          (4, False, False, np.float64),
+                          (4, False, True, np.float64)])
 def test_polynomial_features_csc_X(deg, include_bias, interaction_only, dtype):
     rng = np.random.RandomState(0)
     X = rng.randint(0, 2, (100, 2))
