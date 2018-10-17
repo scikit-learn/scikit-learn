@@ -355,6 +355,9 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         y : array-like, shape (n_samples,) or (n_samples, n_targets)
             Target values.
         """
+        n_samples, n_features = X.shape
+        n_classes = len(self.classes_)
+
         self.means_ = _class_means(X, y)
         if self.store_covariance:
             self.covariance_ = _class_cov(X, y, self.priors_)
