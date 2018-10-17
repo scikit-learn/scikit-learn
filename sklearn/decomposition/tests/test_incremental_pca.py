@@ -1,4 +1,5 @@
 """Tests for Incremental PCA."""
+import pytest
 import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal
@@ -182,9 +183,14 @@ def test_incremental_pca_batch_rank():
     n_features = 20
     X = rng.randn(n_samples, n_features)
     all_components = []
-    batch_sizes = np.arange(10, 40, 3)
+    batch_sizes = np.arange(20, 40, 3)
     for batch_size in batch_sizes:
-        ipca = IncrementalPCA(n_components=None, batch_size=batch_size).fit(X)
+        try:
+            ipca = IncrementalPCA(n_components=20, batch_size=batch_size)
+            ipca.fit(X)
+        except ValueError as e:
+            if "less or equal to the batch number of samples" in str(e):
+                pytest.fail(str(e))
         all_components.append(ipca.components_)
 
     for i, j in zip(all_components[:-1], all_components[1:]):
