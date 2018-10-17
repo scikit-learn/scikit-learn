@@ -36,6 +36,7 @@ from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
+from ..exceptions import ChangedBehaviorWarning
 
 from ._criterion import Criterion
 from ._splitter import Splitter
@@ -291,15 +292,23 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                np.sum(sample_weight))
 
         if self.min_impurity_split is not None:
-            warnings.warn("The min_impurity_split parameter is deprecated and"
-                          " will be removed in version 0.21. "
-                          "Use the min_impurity_decrease parameter instead.",
-                          DeprecationWarning)
+            if self.min_impurity_split != float('-inf'):
+                warnings.warn(
+                    "The min_impurity_split parameter is deprecated and"
+                    " will be removed in version 0.21. "
+                    "Use the min_impurity_decrease parameter instead.",
+                    DeprecationWarning)
             min_impurity_split = self.min_impurity_split
         else:
+            warnings.warn("The min_impurity_split parameter is deprecated and "
+                          "will be removed in version 0.21. However it still "
+                          "defaults to 1e-7 if it is not set. To silence this "
+                          "warning and get the future behavior from 0.21, "
+                          "set it to float('-inf').",
+                          ChangedBehaviorWarning)
             min_impurity_split = 1e-7
 
-        if min_impurity_split < 0.:
+        if min_impurity_split < 0. and min_impurity_split != float('-inf'):
             raise ValueError("min_impurity_split must be greater than "
                              "or equal to 0")
 
