@@ -175,6 +175,22 @@ def test_incremental_pca_batch_values():
         assert_almost_equal(i, j, decimal=1)
 
 
+def test_incremental_pca_batch_rank():
+    # Test that sample size in each batch is always larger or equal to dim of X
+    rng = np.random.RandomState(1999)
+    n_samples = 100
+    n_features = 20
+    X = rng.randn(n_samples, n_features)
+    all_components = []
+    batch_sizes = np.arange(10, 40, 3)
+    for batch_size in batch_sizes:
+        ipca = IncrementalPCA(n_components=None, batch_size=batch_size).fit(X)
+        all_components.append(ipca.components_)
+
+    for i, j in zip(all_components[:-1], all_components[1:]):
+        assert_almost_equal(i, j, decimal=1)
+
+
 def test_incremental_pca_partial_fit():
     # Test that fit and partial_fit get equivalent results.
     rng = np.random.RandomState(1999)
