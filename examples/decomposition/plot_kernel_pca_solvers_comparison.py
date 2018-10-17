@@ -3,9 +3,40 @@
 Kernel PCA Solvers comparison benchmark
 =======================================
 
-This example shows that the various solvers provided in Kernel PCA can help
-drastically improve its execution speed when an approximate solution is
-sufficient.
+This example shows that the approximate solvers provided in Kernel PCA can help
+drastically improve its execution speed when an approximate solution (small
+`n_components`) is acceptable. In many real-world datasets a few hundreds of
+principal components are indeed sufficient enough to capture the underlying
+distribution.
+
+Description:
+------------
+A fixed number of training (default: 2000) and test (default: 1000) samples is
+generated.
+
+KernelPCA models are trained on the training set with an increasing number of
+principal components, between 1 and `max_n_compo` (default: 1999), with
+`n_compo_grid_size` positions (default: 10). For each value of `n_components`
+to try, KernelPCA models are trained for the various possible `eigen_solver`
+values. The execution times are displayed in a plot at the end of the
+experiment.
+
+What you can observe:
+---------------------
+When the number of requested principal components is small, the dense solver
+takes more time to complete, while the randomized method returns similar
+results shorter execution times.
+
+Going further:
+--------------
+You can adjust `max_n_compo` and `n_compo_grid_size` if you wish to explore a
+different range of values for `n_components`.
+
+You can also set `arpack_all=True` to activate arpack solver for large number
+of components (this takes more time).
+
+Finally you can have a look at the second example of this series,
+"Kernel PCA Solvers comparison benchmark 2"
 """
 print(__doc__)
 
@@ -22,21 +53,26 @@ from sklearn.decomposition import KernelPCA
 from sklearn.datasets import make_circles
 
 
-# 1- Generate random data
+# 1- Design the Experiment
+# ------------------------
+n_train, n_test = 2000, 1000            # the sample sizes to use
+max_n_compo = 1999                      # max n_compo to try
+n_compo_grid_size = 5                   # nb of positions in the grid to try
+# generate the grid
+n_compo_range = [np.round(np.exp((x / (n_compo_grid_size - 1))
+                                 * np.log(max_n_compo)))
+                 for x in range(0, n_compo_grid_size)]
+
+n_iter = 3          # the number of times each experiment will be repeated
+arpack_all = False  # set to True if you wish to run arpack for all n_compo
+
+
+# 2- Generate random data
 # -----------------------
 np.random.seed(0)
-n_train, n_test, n_features = 2000, 1000, 2
+n_features = 2
 X, y = make_circles(n_samples=(n_train + n_test), factor=.3, noise=.05)
 X_train, X_test = X[:n_train, :], X[n_train:, :]
-
-
-# 2- Design the Experiment
-# ------------------------
-n_compo_to_try = 10
-n_compo_range = [np.floor(np.exp((x / n_compo_to_try) * np.log(n_train)))
-                 for x in range(0, n_compo_to_try + 1)]
-n_iter = 3
-arpack_all = False  # set this flag to True if you wish to run arpack for all
 
 
 # 3- Benchmark
@@ -52,6 +88,7 @@ for j, n_components in enumerate(n_compo_range):
     print("Performing kPCA with n_components = %i" % n_components)
 
     # A- reference (dense)
+    print("  - dense solver")
     for i in range(n_iter):
         start_time = datetime.now()
         ref_pred = KernelPCA(n_components, eigen_solver="dense") \
@@ -60,6 +97,7 @@ for j, n_components in enumerate(n_compo_range):
 
     # B- arpack
     if arpack_all or n_components < 100:
+        print("  - arpack solver")
         for i in range(n_iter):
             start_time = datetime.now()
             a_pred = KernelPCA(n_components, eigen_solver="arpack") \
@@ -69,6 +107,7 @@ for j, n_components in enumerate(n_compo_range):
             a_time[j, i] = (datetime.now() - start_time).total_seconds()
 
     # C- randomized
+    print("  - randomized solver")
     for i in range(n_iter):
         start_time = datetime.now()
         r_pred = KernelPCA(n_components, eigen_solver="randomized") \
