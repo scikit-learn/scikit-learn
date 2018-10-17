@@ -1495,7 +1495,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                     break
                 to_stack.append(Xp_next)
             XP = sparse.hstack(to_stack, format='csr')
-        else if sparse.isspmatrix_csc(X) and self.degree < 4:
+        elif sparse.isspmatrix_csc(X) and self.degree < 4:
             return self.transform(X.tocsr()).tocsc()
         else:
             combinations = self._combinations(n_features, self.degree,
