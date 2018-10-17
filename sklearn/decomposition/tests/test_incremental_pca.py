@@ -1,5 +1,4 @@
 """Tests for Incremental PCA."""
-import pytest
 import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal
