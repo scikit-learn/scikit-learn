@@ -852,3 +852,36 @@ def test_tsne_with_different_distance_metrics():
             metric='precomputed', n_components=n_components_embedding,
             random_state=0).fit_transform(dist_func(X))
         assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
+
+
+def test_tsne_with_mahalanobis_distance():
+    """Make sure if it fixes the proposes issue (#11793)"""
+    random_state = check_random_state(0)
+    n_features = 10
+    n_embedding = 3
+    n_samples = 500
+    X = random_state.randn(n_samples, n_features).astype(np.float32)
+
+    # 1. raises error here (original issue)
+    tsne = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
+                n_components=n_embedding, random_state=0, metric='mahalanobis')
+    ref = "Must provide either V or VI for Mahalanobis distance"
+    assert_raises_regexp(ValueError, ref, tsne.fit_transform, X)
+
+    # 2. error fix: provide distance metric parameters in a dictionary
+    # it now provides the embedding results in correct shape
+    tsne = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
+                n_components=n_embedding, random_state=0, metric='mahalanobis',
+                metric_params={'V': np.cov(X.T)})
+    assert_equal((n_samples, n_embedding), tsne.fit_transform(X).shape)
+
+    # 3. check for correct answer
+    precomputed_X = squareform(pdist(X, metric='mahalanobis'), checks=True)
+    ref = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
+               n_components=n_embedding, random_state=0,
+               metric='precomputed').fit_transform(precomputed_X)
+
+    now = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
+               n_components=n_embedding, random_state=0, metric='mahalanobis',
+               metric_params={'V': np.cov(X.T)}).fit_transform(X)
+    assert_array_equal(ref, now)
