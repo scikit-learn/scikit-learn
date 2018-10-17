@@ -51,8 +51,8 @@ Changelog
   for values of ``n_informative`` parameter larger than 64.
   :issue:`10811` by :user:`Roman Feldbauer <VarIr>`.
 
-  :mod:`sklearn.decomposition`
-  ............................
+:mod:`sklearn.decomposition`
+............................
 - |Fix| :class:`decomposition.IncrementalPCA` to use larger final batch
   combining last two batches and prevent insufficient sample size for SVD.
   :issue:`12234` by :user:`Ming Li <minggli>`.
