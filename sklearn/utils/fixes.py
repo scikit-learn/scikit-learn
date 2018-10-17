@@ -352,6 +352,6 @@ def _joblib_parallel_args(prefer=None, require=None):
         if prefer is not None:
             args['backend'] = {'threads': 'threading',
                                'processes': 'multiprocessing'}[prefer]
-        if require is 'sharedmem':
+        if require == 'sharedmem':
             args['backend'] = 'threading'
     return args
