@@ -141,7 +141,7 @@ plt.legend(loc='upper left')
 # customize axes
 ax = plt.gca()
 ax.set_xscale('log')
-ax.set_xlim(0, max(n_compo_range) * 1.1)
+ax.set_xlim(1, max(n_compo_range) * 1.1)
 ax.set_ylabel("Execution time (s)")
 ax.set_xlabel("n_components")
 
