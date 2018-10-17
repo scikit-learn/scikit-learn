@@ -185,12 +185,7 @@ def test_incremental_pca_batch_rank():
     all_components = []
     batch_sizes = np.arange(20, 40, 3)
     for batch_size in batch_sizes:
-        try:
-            ipca = IncrementalPCA(n_components=20, batch_size=batch_size)
-            ipca.fit(X)
-        except ValueError as e:
-            if "less or equal to the batch number of samples" in str(e):
-                pytest.fail(str(e))
+        ipca = IncrementalPCA(n_components=20, batch_size=batch_size).fit(X)
         all_components.append(ipca.components_)
 
     for i, j in zip(all_components[:-1], all_components[1:]):
