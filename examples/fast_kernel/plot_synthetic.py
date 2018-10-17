@@ -1,13 +1,16 @@
 """
-================================================================
-Comparison of Fast Kernel Classifier (EigenPro) and SVC on MNIST
-================================================================
-Here we train a Fast Kernel Classifier (EigenPro) and a Support 
-Vector Classifier (SVC) on subsets of MNIST of various sizes.
-We halt the training of EigenPro in two epochs.
-Experimental results on MNIST demonstrate more than 7 times
-speedup of EigenPro over SVC in training time. EigenPro also
-shows consistently lower classification error on test set.
+=======================================================
+Comparison of Fast Kernel Machine (Eigenpro) and SVC on
+synthetic dataset
+=======================================================
+Here we train a Fast Kernel Machine (EigenPro) and a
+Support Vector Classifier (SVC) on subsets of a synthetic
+dataset. Features of this dataset are sampled from two
+independent Gaussian distributions. We halt the training
+for EigenPro in two epochs. Experimental results
+demonstrate that EigenPro achieves high test accuracy,
+competitive to that of SVC, while completes training in
+significant less time.
 """
 print(__doc__)
 
@@ -16,22 +19,27 @@ import matplotlib.pyplot as plt
 import numpy as np
 from time import time
 
+from sklearn.datasets import make_classification
 from sklearn.fast_kernel import FKC_EigenPro
 from sklearn.svm import SVC
-from sklearn.datasets import fetch_mldata
 
 rng = np.random.RandomState(1)
-# Generate sample data from mnist
-mnist = fetch_mldata('MNIST original')
-mnist.data = mnist.data / 255.
 
-p = np.random.permutation(60000)
-x_train = mnist.data[p][:60000]
-y_train = np.int32(mnist.target[p][:60000])
-x_test = mnist.data[60000:]
-y_test = np.int32(mnist.target[60000:])
+centers = np.zeros((2, 50))
+centers[0][0] = 2
+max_size = 10000
+test_size = 10000
 
-# Run tests comparing fkc to svc
+# Get data for testing
+x, y = make_classification(n_samples=max_size+test_size,
+                           n_features=200,
+                           n_informative=10,
+                           random_state=rng)
+x_train = x[:max_size]
+y_train = y[:max_size]
+x_test = x[max_size:]
+y_test = y[max_size:]
+
 fkc_fit_times = []
 fkc_pred_times = []
 fkc_err = []
@@ -39,13 +47,12 @@ svc_fit_times = []
 svc_pred_times = []
 svc_err = []
 
-train_sizes = [500, 1000, 2000]
+train_sizes = [2000, 5000, 10000]
 
-# Fit models to data
 for train_size in train_sizes:
     for name, estimator in [
-        ("FastKernel", FKC_EigenPro(n_epoch=2, bandwidth=5,random_state=rng)),
-        ("SupportVector", SVC(C=5, gamma=1./(2 * 5 * 5)))]:
+        ("FastKernel", FKC_EigenPro(n_epoch=2, bandwidth=10,random_state=rng)),
+        ("SupportVector", SVC(C=5, gamma=1./(2 * 10 * 10)))]:
         stime = time()
         estimator.fit(x_train[:train_size], y_train[:train_size])
         fit_t = time() - stime
@@ -67,7 +74,7 @@ for train_size in train_sizes:
               (name, train_size, fit_t + pred_t))
 
 
-# Graph time
+# Plot train/test time and classification error
 train_size_labels = [str(s) for s in train_sizes]
 fig = plt.figure(num=None, figsize=(6, 4), dpi=160)
 ax = plt.subplot2grid((2, 2), (0, 0), rowspan=2, fig=fig)

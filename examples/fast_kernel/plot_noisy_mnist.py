@@ -1,24 +1,26 @@
 """
 ================================================================
 Comparison of Fast Kernel Classifier (EigenPro) and SVC on MNIST
+with added label noise
 ================================================================
-Here we train a Fast Kernel Classifier (EigenPro) and a Support 
-Vector Classifier (SVC) on subsets of MNIST of various sizes.
-We halt the training of EigenPro in two epochs.
-Experimental results on MNIST demonstrate more than 7 times
-speedup of EigenPro over SVC in training time. EigenPro also
-shows consistently lower classification error on test set.
+Here we train a Fast Kernel Machine (EigenPro) and a Support
+Vector Classifier (SVC) on subsets of MNIST with added label
+noises. Specifically, we randomly reset the label (0-9) of 20%
+samples. We halt the training of EigenPro in two epochs.
+Experimental results on this dataset demonstrate more than 7 times
+speedup of EigenPro over SVC in training time.
+EigenPro also shows consistently lower classification error on
+test set.
 """
-print(__doc__)
 
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from time import time
 
+from sklearn.datasets import fetch_mldata
 from sklearn.fast_kernel import FKC_EigenPro
 from sklearn.svm import SVC
-from sklearn.datasets import fetch_mldata
 
 rng = np.random.RandomState(1)
 # Generate sample data from mnist
@@ -30,6 +32,12 @@ x_train = mnist.data[p][:60000]
 y_train = np.int32(mnist.target[p][:60000])
 x_test = mnist.data[60000:]
 y_test = np.int32(mnist.target[60000:])
+
+# randomize 20% of labels
+p = np.random.choice(len(y_train), np.int32(len(y_train)*.2), False)
+y_train[p] = np.random.choice(10, np.int32(len(y_train)*.2))
+p = np.random.choice(len(y_test), np.int32(len(y_test) * .2), False)
+y_test[p] = np.random.choice(10, np.int32(len(y_test) * .2))
 
 # Run tests comparing fkc to svc
 fkc_fit_times = []

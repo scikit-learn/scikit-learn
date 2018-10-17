@@ -16,35 +16,38 @@ Optimization parameters, such as step size, batch size, and the size of the prec
 block are chosen automatically and optimally. (They can also be set up manually.)
 This results in a simple and user-friendly interface.
 
-The figure below compares the Fast Kernel Classifier (EigenPro) and the Support Vector Classifier (:class:`SVC`) 
-on MNIST digits classification task.
+The figure below compares the Fast Kernel Classifier (EigenPro) and the Support Vector
+Classifier (:class:`SVC`) on MNIST digits classification task.
 We see that EigenPro and SVC give competitive and similar accuracy on test set.
 Notably, on the full MNIST training and testing using EigenPro are
-approximately 100 times faster than that using SVC.
+approximately 10 times faster than that using SVC.
 
-.. |mnist_acc| image:: ../images/fast_kernel_mnist_accuracy.png
+.. |mnist| image:: ../images/fast_kernel_mnist.png
     :target: ../auto_examples/fast_kernel/plot_mnist.html
-    :scale: 50
+    :scale: 70
 
-.. |mnist_time| image:: ../images/fast_kernel_mnist_time.png
-    :target: ../auto_examples/fast_kernel/plot_mnist.html
-    :scale: 50
+.. centered:: |mnist|
 
-.. centered:: |mnist_acc| |mnist_time|
+We then repeat the same experiments on MNIST with added label noise.
+Specifically, we randomly reset the label (0-9) of 20% samples.
+On this noisy MNIST training and testing using EigenPro are
+approximately 10 times faster than that using SVC.
+
+.. |mnist_noisy| image:: ../images/fast_kernel_noisy_mnist.png
+    :target: ../auto_examples/fast_kernel/plot_noisy_mnist.html
+    :scale: 70
+
+.. centered:: |mnist_noisy|
 
 
 The next figure compares EigenPro and SVC on a binary classification problem with synthetic features.
 Again, EigenPro demonstrates nearly 100 times acceleration on training and testing without loss of accuracy.
 
-.. |synth_acc| image:: ../images/fast_kernel_classification_accuracy.png
-    :target: ../auto_examples/fast_kernel/plot_classification.html
-    :scale: 50
+.. |synthetic| image:: ../images/fast_kernel_synthetic.png
+    :target: ../auto_examples/fast_kernel/plot_synthetic.html
+    :scale: 70
 
-.. |synth_time| image:: ../images/fast_kernel_classification_times.png
-    :target: ../auto_examples/fast_kernel/plot_classification.html
-    :scale: 50
-
-.. centered:: |synth_acc| |synth_time|
+.. centered:: |synthetic|
 
 
 .. topic:: References:

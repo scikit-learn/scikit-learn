@@ -66,8 +66,7 @@ else:
 
     __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
                'datasets', 'decomposition', 'dummy', 'ensemble', 'exceptions',
-               'externals', 'fast_kernel_classification',
-               'fast_kernel_regression', 'feature_extraction',
+               'externals', 'fast_kernel', 'feature_extraction',
                'feature_selection', 'gaussian_process', 'isotonic',
                'kernel_approximation', 'kernel_ridge', 'linear_model',
                'manifold', 'metrics', 'mixture', 'model_selection',
