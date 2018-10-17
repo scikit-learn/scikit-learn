@@ -10,7 +10,7 @@ Testing for the forest module (sklearn.ensemble.forest).
 
 import pickle
 from collections import defaultdict
-from disutils import LooseVersion
+from distutils import LooseVersion
 import itertools
 from itertools import combinations
 from itertools import product
