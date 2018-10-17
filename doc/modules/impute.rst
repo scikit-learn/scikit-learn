@@ -122,7 +122,7 @@ as a way to build a composite estimator that supports imputation.
 See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
 
 Flexibility of IterativeImputer
-===============================
+-------------------------------
 
 There are many well-established imputation packages in the R data science
 ecosystem: Amelia, mi, mice, missForest, etc. missForest is popular, and turns
@@ -136,7 +136,7 @@ See :ref:`sphx_glr_auto_examples_plot_iterative_imputer_variants_comparison.py`.
 .. _multiple_imputation:
 
 Multiple vs. Single Imputation
-==============================
+------------------------------
 
 In the statistics community, it is common practice to perform multiple imputations,
 generating, for example, ``m`` separate imputations for a single feature matrix.
