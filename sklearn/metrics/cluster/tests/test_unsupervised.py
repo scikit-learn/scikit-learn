@@ -173,8 +173,11 @@ def test_silhouette_modifies_dist():
     # Construct a zero-diagonal matrix
     dists = pairwise_distances(
         np.array([[0.2, 0.1, 0.12, 1.34, 1.11, 1.6]]).transpose())
+    
     # Construct a nonzero-diagonal distance matrix
-    diag_dists = np.diag(np.ones(6)) + dists
+    diag_dists = dists.copy()
+    np.fill_diagonal(diag_dists, 1)
+
     labels = [0, 0, 0, 1, 1, 1]
 
     # Test that original data is unchanged
@@ -191,8 +194,11 @@ def test_silhouette_nonzero_diag():
     # Construct a zero-diagonal matrix
     dists = pairwise_distances(
         np.array([[0.2, 0.1, 0.12, 1.34, 1.11, 1.6]]).transpose())
+    
     # Construct a nonzero-diagonal distance matrix
-    diag_dists = np.diag(np.ones(6)) + dists
+    diag_dists = dists.copy()
+    np.fill_diagonal(diag_dists, 1)
+    
     labels = [0, 0, 0, 1, 1, 1]
 
     # Test silhouette samples
