@@ -202,7 +202,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     """Transforms features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
-    that it is in the given range on the training set, i.e. between
+    that it is in the given range on the training set, e.g. between
     zero and one.
 
     The transformation is given by::
