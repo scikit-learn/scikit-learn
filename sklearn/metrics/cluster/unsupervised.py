@@ -288,7 +288,7 @@ def calinski_harabaz_score(X, labels):
             (intra_disp * (n_labels - 1.)))
 
 
-def davies_bouldin_score(X, labels, pairwise_distances_func = pairwise_distances):
+def davies_bouldin_score(X, labels, pairwise_distances_func=pairwise_distances):
     """Computes the Davies-Bouldin score.
 
     The score is defined as the ratio of within-cluster distances to

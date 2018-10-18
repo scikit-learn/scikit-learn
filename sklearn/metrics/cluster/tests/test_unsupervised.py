@@ -203,7 +203,7 @@ def test_calinski_harabaz_score():
          [[0, 4], [1, 3]] * 5 + [[3, 1], [4, 0]] * 5)
     labels = [0] * 10 + [1] * 10 + [2] * 10 + [3] * 10
     pytest.approx(calinski_harabaz_score(X, labels),
-                        45 * (40 - 4) / (5 * (4 - 1)))
+                  45 * (40 - 4) / (5 * (4 - 1)))
 
 
 def test_davies_bouldin_score():
@@ -229,12 +229,15 @@ def test_davies_bouldin_score():
     labels = [0, 0, 1, 2]
     pytest.approx(davies_bouldin_score(X, labels), (5. / 4) / 3)
 
+
 def pairwise_distances_nonzero_diag(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
+    # Intercept pairwise distances and corrupt the diagonal entries
     dists = pairwise_distances(X, Y, metric, n_jobs, **kwds)
-    
+
     if len(np.squeeze(dists).shape) > 1:
-        np.fill_diagonal(dists, np.ones(len(np.diag(dists))))
+        np.fill_diagonal(dists, 1)
     return dists
+
 
 def test_davies_bouldin_nonzero_diag():
     # Tests the
@@ -244,6 +247,7 @@ def test_davies_bouldin_nonzero_diag():
 
     original_score = davies_bouldin_score(X, y)
 
-    nonzero_diag_score = davies_bouldin_score(X, y, pairwise_distances_func = pairwise_distances_nonzero_diag)
+    nonzero_diag_score = davies_bouldin_score(
+        X, y, pairwise_distances_func=pairwise_distances_nonzero_diag)
 
     assert_equal(original_score, nonzero_diag_score)
