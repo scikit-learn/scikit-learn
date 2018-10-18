@@ -355,7 +355,7 @@ def test_covariance():
 
 
 @pytest.mark.parametrize("solver", ['svd, lsqr', 'eigen'])
-def test_raises_value_error_on_same_number_of_classes_and_samples():
+def test_raises_value_error_on_same_number_of_classes_and_samples(solver):
     """
     Tests that if the number of samples equals the number
     of classes, a ValueError is raised.
