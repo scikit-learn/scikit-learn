@@ -222,8 +222,9 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         # corresponding batch size is bounded by the subsample size and the
         # memory size.
         max_bs = min(max(n_subsamples / 5, mG), n_subsamples)
-        # TODO: Was n_components = max(np.sum(np.power(1 / S, alpha) < max_bs) - 1, 2)
         n_components = np.sum(np.power(1 / S, alpha) < max_bs) - 1
+        if n_components < 2:
+            n_components = max(S.shape[0]-1, 2)
 
         self.V_ = V[:, :n_components]
         scale = np.power(S[0] / S[n_components], alpha)
