@@ -354,6 +354,7 @@ def test_covariance():
     assert_almost_equal(c_s, c_s.T)
 
 
+@pytest.mark.parametrize("solver", ['svd, lsqr', 'eigen'])
 def test_raises_value_error_on_same_number_of_classes_and_samples():
     """
     Tests that if the number of samples equals the number
@@ -361,6 +362,6 @@ def test_raises_value_error_on_same_number_of_classes_and_samples():
     """
     X = np.array([[0.5, 0.6], [0.6, 0.5]])
     y = np.array(["a", "b"])
-    clf = LinearDiscriminantAnalysis()
+    clf = LinearDiscriminantAnalysis(solver=solver)
     with pytest.raises(ValueError, match="The number of samples must be more"):
         clf.fit(X, y)
