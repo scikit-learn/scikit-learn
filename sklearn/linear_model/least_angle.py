@@ -20,7 +20,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import arrayfuncs, as_float_array, check_X_y, deprecated
+from ..utils import arrayfuncs, as_float_array, check_X_y
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..utils import Parallel, delayed
@@ -135,7 +135,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     References
     ----------
     .. [1] "Least Angle Regression", Effron et al.
-           http://statweb.stanford.edu/~tibs/ftp/lars.pdf
+           https://statweb.stanford.edu/~tibs/ftp/lars.pdf
 
     .. [2] `Wikipedia entry on the Least-angle regression
            <https://en.wikipedia.org/wiki/Least-angle_regression>`_
@@ -1186,13 +1186,6 @@ class LarsCV(Lars):
         self._fit(X, y, max_iter=self.max_iter, alpha=best_alpha,
                   Xy=None, fit_path=True)
         return self
-
-    @property
-    @deprecated("Attribute alpha is deprecated in 0.19 and "
-                "will be removed in 0.21. See ``alpha_`` instead")
-    def alpha(self):
-        # impedance matching for the above Lars.fit (should not be documented)
-        return self.alpha_
 
 
 class LassoLarsCV(LarsCV):

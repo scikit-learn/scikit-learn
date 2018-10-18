@@ -369,6 +369,20 @@ def _verify_target_data_type(features_dict, target_columns):
                          'categorical.')
 
 
+def _valid_data_column_names(features_list, target_columns):
+    # logic for determining on which columns can be learned. Note that from the
+    # OpenML guide follows that columns that have the `is_row_identifier` or
+    # `is_ignore` flag, these can not be learned on. Also target columns are
+    # excluded.
+    valid_data_column_names = []
+    for feature in features_list:
+        if (feature['name'] not in target_columns
+                and feature['is_ignore'] != 'true'
+                and feature['is_row_identifier'] != 'true'):
+            valid_data_column_names.append(feature['name'])
+    return valid_data_column_names
+
+
 def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                  target_column='default-target', cache=True, return_X_y=False):
     """Fetch dataset from openml by name or dataset id.
@@ -522,10 +536,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         raise TypeError("Did not recognize type of target_column"
                         "Should be six.string_type, list or None. Got: "
                         "{}".format(type(target_column)))
-    data_columns = [feature['name'] for feature in features_list
-                    if (feature['name'] not in target_column and
-                        feature['is_ignore'] != 'true' and
-                        feature['is_row_identifier'] != 'true')]
+    data_columns = _valid_data_column_names(features_list,
+                                            target_column)
 
     # prepare which columns and data types should be returned for the X and y
     features_dict = {feature['name']: feature for feature in features_list}
@@ -555,13 +567,13 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     arff = _download_data_arff(data_description['file_id'], return_sparse,
                                data_home)
     arff_data = arff['data']
+    # nominal attributes is a dict mapping from the attribute name to the
+    # possible values. Includes also the target column (which will be popped
+    # off below, before it will be packed in the Bunch object)
     nominal_attributes = {k: v for k, v in arff['attributes']
-                          if isinstance(v, list)}
-    for feature in features_list:
-        if 'true' in (feature['is_row_identifier'],
-                      feature['is_ignore']) and (feature['name'] not in
-                                                 target_column):
-            del nominal_attributes[feature['name']]
+                          if isinstance(v, list) and
+                          k in data_columns + target_column}
+
     X, y = _convert_arff_data(arff_data, col_slice_x, col_slice_y)
 
     is_classification = {col_name in nominal_attributes
