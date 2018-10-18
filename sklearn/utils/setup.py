@@ -9,7 +9,6 @@ def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
 
     config = Configuration('utils', parent_package, top_path)
-    config.add_subpackage('sparsetools')
 
     cblas_libs, blas_info = get_blas_info()
     cblas_compile_args = blas_info.pop('extra_compile_args', [])

@@ -34,15 +34,22 @@ Changelog
   columns with types not convertible to a numeric.
   :issue:`11912` by :user:`Adrin Jalali <adrinjalali>`.
 
+- |API| :class:`compose.ColumnTransformer` now applies the ``sparse_threshold``
+  even if all transformation results are sparse. :issue:`12304` by `Andreas
+  Müller`_.
+
 :mod:`sklearn.datasets`
 ............................
 
 - |Fix| :func:`datasets.fetch_openml` to correctly use the local cache.
   :issue:`12246` by :user:`Jan N. van Rijn <janvanrijn>`.
 
+- |Fix| :func:`datasets.fetch_openml` to correctly handle ignore attributes and
+  row id attributes. :issue:`12330` by :user:`Jan N. van Rijn <janvanrijn>`.
+
 - |Fix| Fixed integer overflow in :func:`datasets.make_classification`
   for values of ``n_informative`` parameter larger than 64.
-  :issue:10811 by :user:`Roman Feldbauer <VarIr>`.
+  :issue:`10811` by :user:`Roman Feldbauer <VarIr>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -67,6 +74,25 @@ Changelog
   :class:`neighbors.KDTree` and :class:`neighbors.BallTree` in Python 2.7 to
   avoid pickling errors caused by the serialization of their methods.
   :issue:`12171` by :user:`Thomas Moreau <tomMoral>`.
+
+:mod:`sklearn.preprocessing`
+........................
+
+- |API| The default value of the :code:`method` argument in
+  :func:`preprocessing.power_transform` will be changed from :code:`box-cox`
+  to :code:`yeo-johnson` to match :class:`preprocessing.PowerTransformer`
+  in version 0.23. A FutureWarning is raised when the default value is used.
+  :issue:`12317` by :user:`Eric Chang <chang>`.
+- |Fix| Fixed bug in :class:`preprocessing.OrdinalEncoder` when passing
+  manually specified categories. :issue:`12365` by `Joris Van den Bossche`_.
+
+:mod:`sklearn.utils`
+........................
+
+- |Fix| Use float64 for mean accumulator to avoid floating point
+  precision issues in :class:`preprocessing.StandardScaler` and
+  :class:`decomposition.IncrementalPCA` when using float32 datasets.
+  :issue:`12338` by :user:`bauks <bauks>`.
 
 .. _changes_0_20:
 
