@@ -411,8 +411,8 @@ def gen_batches(n, batch_size, min_batch_size=0):
     n : int
     batch_size : int
         Number of element in each batch
-    larger_final_batch : bool
-        Whether to combine two last batches to avoid a small final batch.
+    min_batch_size : int
+        Minimum size to produce in the final batch.
 
     Yields
     ------
