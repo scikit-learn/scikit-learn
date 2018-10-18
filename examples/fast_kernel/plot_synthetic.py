@@ -52,7 +52,7 @@ train_sizes = [2000, 5000, 10000]
 for train_size in train_sizes:
     for name, estimator in [
         ("FastKernel", FKC_EigenPro(n_epoch=3, bandwidth=10,random_state=rng)),
-        ("SupportVector", SVC(C=5, gamma=1./(2 * 10 * 10)))]:
+            ("SupportVector", SVC(C=5, gamma=1./(2 * 10 * 10)))]:
         stime = time()
         estimator.fit(x_train[:train_size], y_train[:train_size])
         fit_t = time() - stime
@@ -73,11 +73,12 @@ for train_size in train_sizes:
         print("%s Classification with %i training samples in %0.2f seconds." %
               (name, train_size, fit_t + pred_t))
 
-
-# Plot train/test time and classification error
-train_size_labels = [str(s) for s in train_sizes]
+# set up grid for figures
 fig = plt.figure(num=None, figsize=(6, 4), dpi=160)
 ax = plt.subplot2grid((2, 2), (0, 0), rowspan=2, fig=fig)
+train_size_labels = [str(s) for s in train_sizes]
+
+# Graph fit(train) time
 ax.plot(train_sizes, svc_fit_times, 'o--', color='g', label='SVC')
 ax.plot(train_sizes, fkc_fit_times, 'o-', color='r', label='FKC (EigenPro)')
 ax.set_xscale('log')
@@ -91,6 +92,7 @@ ax.set_xticklabels(train_size_labels)
 ax.set_xticks([], minor=True)
 ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
 
+# Graph prediction(test) time
 ax = plt.subplot2grid((2, 2), (0, 1), rowspan=1, fig=fig)
 ax.plot(train_sizes, fkc_pred_times, 'o-', color='r')
 ax.plot(train_sizes, svc_pred_times, 'o--', color='g')
@@ -101,6 +103,7 @@ ax.set_title('Test set')
 ax.set_xticks([])
 ax.set_xticks([], minor=True)
 
+# Graph training error
 ax = plt.subplot2grid((2, 2), (1, 1), rowspan=1, fig=fig)
 ax.plot(train_sizes, fkc_err, 'o-', color='r')
 ax.plot(train_sizes, svc_err, 'o-', color='g')
