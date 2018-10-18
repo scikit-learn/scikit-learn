@@ -1,8 +1,17 @@
 Maintainer / core-developer information
 ========================================
 
+Before a release
+----------------
+
+1. Update authors table::
+
+    $ cd build_tools; make authors; cd ..
+
+   and commit.
+
 Making a release
-------------------
+----------------
 For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-to-make-a-release
 
 

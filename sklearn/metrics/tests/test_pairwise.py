@@ -17,7 +17,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
 
@@ -49,8 +48,6 @@ from sklearn.metrics.pairwise import paired_euclidean_distances
 from sklearn.metrics.pairwise import paired_manhattan_distances
 from sklearn.preprocessing import normalize
 from sklearn.exceptions import DataConversionWarning
-
-import pytest
 
 
 def test_pairwise_distances():
@@ -84,10 +81,6 @@ def test_pairwise_distances():
     assert_equal(S.shape[0], X.shape[0])
     assert_equal(S.shape[1], Y.shape[0])
     assert_array_almost_equal(S, S2)
-    # Using size_threshold argument should raise
-    # a deprecation warning
-    assert_warns(DeprecationWarning,
-                 manhattan_distances, X, Y, size_threshold=10)
     # Test cosine as a string metric versus cosine callable
     # The string "cosine" uses sklearn.metric,
     # while the function cosine is scipy.spatial
@@ -176,6 +169,13 @@ def test_pairwise_precomputed(func):
     # Test converts list to array-like
     S = func([[1.]], metric='precomputed')
     assert_true(isinstance(S, np.ndarray))
+
+
+def test_pairwise_precomputed_non_negative():
+    # Test non-negative values
+    assert_raises_regexp(ValueError, '.* non-negative values.*',
+                         pairwise_distances, np.full((5, 5), -1),
+                         metric='precomputed')
 
 
 def check_pairwise_parallel(func, metric, kwds):

@@ -574,7 +574,7 @@ def test_error():
 
 def test_min_samples_split():
     """Test min_samples_split parameter"""
-    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -607,7 +607,7 @@ def test_min_samples_split():
 
 def test_min_samples_leaf():
     # Test if leaves contain more than leaf_count training examples
-    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -792,7 +792,7 @@ def test_min_impurity_split():
     # test if min_impurity_split creates leaves with impurity
     # [0, min_impurity_split) when min_samples_leaf = 1 and
     # min_samples_split = 2.
-    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -1215,8 +1215,7 @@ def test_max_leaf_nodes():
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
-        tree = est.tree_
-        assert_equal((tree.children_left == TREE_LEAF).sum(), k + 1)
+        assert_equal(est.get_n_leaves(), k + 1)
 
         # max_leaf_nodes in (0, 1) should raise ValueError
         est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
@@ -1233,8 +1232,7 @@ def test_max_leaf_nodes_max_depth():
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
-        tree = est.tree_
-        assert_greater(tree.max_depth, 1)
+        assert_greater(est.get_depth(), 1)
 
 
 def test_arrays_persist():

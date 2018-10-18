@@ -18,7 +18,7 @@ from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.base import BaseEstimator
 from sklearn.externals import six
 from sklearn.compose import ColumnTransformer, make_column_transformer
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import NotFittedError, DataConversionWarning
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
 from sklearn.feature_extraction import DictVectorizer
 
@@ -251,6 +251,51 @@ def test_column_transformer_dataframe():
     assert_array_equal(ct.transformers_[-1][2], [1])
 
 
+@pytest.mark.parametrize("pandas", [True, False], ids=['pandas', 'numpy'])
+@pytest.mark.parametrize("column", [[], np.array([False, False])],
+                         ids=['list', 'bool'])
+def test_column_transformer_empty_columns(pandas, column):
+    # test case that ensures that the column transformer does also work when
+    # a given transformer doesn't have any columns to work on
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    X_res_both = X_array
+
+    if pandas:
+        pd = pytest.importorskip('pandas')
+        X = pd.DataFrame(X_array, columns=['first', 'second'])
+    else:
+        X = X_array
+
+    ct = ColumnTransformer([('trans1', Trans(), [0, 1]),
+                            ('trans2', Trans(), column)])
+    assert_array_equal(ct.fit_transform(X), X_res_both)
+    assert_array_equal(ct.fit(X).transform(X), X_res_both)
+    assert len(ct.transformers_) == 2
+    assert isinstance(ct.transformers_[1][1], Trans)
+
+    ct = ColumnTransformer([('trans1', Trans(), column),
+                            ('trans2', Trans(), [0, 1])])
+    assert_array_equal(ct.fit_transform(X), X_res_both)
+    assert_array_equal(ct.fit(X).transform(X), X_res_both)
+    assert len(ct.transformers_) == 2
+    assert isinstance(ct.transformers_[0][1], Trans)
+
+    ct = ColumnTransformer([('trans', Trans(), column)],
+                           remainder='passthrough')
+    assert_array_equal(ct.fit_transform(X), X_res_both)
+    assert_array_equal(ct.fit(X).transform(X), X_res_both)
+    assert len(ct.transformers_) == 2  # including remainder
+    assert isinstance(ct.transformers_[0][1], Trans)
+
+    fixture = np.array([[], [], []])
+    ct = ColumnTransformer([('trans', Trans(), column)],
+                           remainder='drop')
+    assert_array_equal(ct.fit_transform(X), fixture)
+    assert_array_equal(ct.fit(X).transform(X), fixture)
+    assert len(ct.transformers_) == 2  # including remainder
+    assert isinstance(ct.transformers_[0][1], Trans)
+
+
 def test_column_transformer_sparse_array():
     X_sparse = sparse.eye(3, 2).tocsr()
 
@@ -278,6 +323,28 @@ def test_column_transformer_sparse_array():
                                      X_res_both)
 
 
+def test_column_transformer_list():
+    X_list = [
+        [1, float('nan'), 'a'],
+        [0, 0, 'b']
+    ]
+    expected_result = np.array([
+        [1, float('nan'), 1, 0],
+        [-1, 0, 0, 1],
+    ])
+
+    ct = ColumnTransformer([
+        ('numerical', StandardScaler(), [0, 1]),
+        ('categorical', OneHotEncoder(), [2]),
+    ])
+
+    with pytest.warns(DataConversionWarning):
+        # TODO: this warning is not very useful in this case, would be good
+        # to get rid of it
+        assert_array_equal(ct.fit_transform(X_list), expected_result)
+        assert_array_equal(ct.fit(X_list).transform(X_list), expected_result)
+
+
 def test_column_transformer_sparse_stacking():
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     col_trans = ColumnTransformer([('trans1', Trans(), [0]),
@@ -301,17 +368,47 @@ def test_column_transformer_sparse_stacking():
     assert_array_equal(X_trans[:, 1:], np.eye(X_trans.shape[0]))
 
 
+def test_column_transformer_mixed_cols_sparse():
+    df = np.array([['a', 1, True],
+                   ['b', 2, False]],
+                  dtype='O')
+
+    ct = make_column_transformer(
+        ([0], OneHotEncoder()),
+        ([1, 2], 'passthrough'),
+        sparse_threshold=1.0
+    )
+
+    # this shouldn't fail, since boolean can be coerced into a numeric
+    # See: https://github.com/scikit-learn/scikit-learn/issues/11912
+    X_trans = ct.fit_transform(df)
+    assert X_trans.getformat() == 'csr'
+    assert_array_equal(X_trans.toarray(), np.array([[1, 0, 1, 1],
+                                                    [0, 1, 2, 0]]))
+
+    ct = make_column_transformer(
+        ([0], OneHotEncoder()),
+        ([0], 'passthrough'),
+        sparse_threshold=1.0
+    )
+    with pytest.raises(ValueError,
+                       match="For a sparse output, all columns should"):
+        # this fails since strings `a` and `b` cannot be
+        # coerced into a numeric.
+        ct.fit_transform(df)
+
+
 def test_column_transformer_sparse_threshold():
     X_array = np.array([['a', 'b'], ['A', 'B']], dtype=object).T
     # above data has sparsity of 4 / 8 = 0.5
 
-    # if all sparse, keep sparse (even if above threshold)
+    # apply threshold even if all sparse
     col_trans = ColumnTransformer([('trans1', OneHotEncoder(), [0]),
                                    ('trans2', OneHotEncoder(), [1])],
                                   sparse_threshold=0.2)
     res = col_trans.fit_transform(X_array)
-    assert sparse.issparse(res)
-    assert col_trans.sparse_output_
+    assert not sparse.issparse(res)
+    assert not col_trans.sparse_output_
 
     # mixed -> sparsity of (4 + 2) / 8 = 0.75
     for thres in [0.75001, 1]:
@@ -431,11 +528,13 @@ def test_make_column_transformer_kwargs():
     scaler = StandardScaler()
     norm = Normalizer()
     ct = make_column_transformer(('first', scaler), (['second'], norm),
-                                 n_jobs=3, remainder='drop')
+                                 n_jobs=3, remainder='drop',
+                                 sparse_threshold=0.5)
     assert_equal(ct.transformers, make_column_transformer(
         ('first', scaler), (['second'], norm)).transformers)
     assert_equal(ct.n_jobs, 3)
     assert_equal(ct.remainder, 'drop')
+    assert_equal(ct.sparse_threshold, 0.5)
     # invalid keyword parameters should raise an error message
     assert_raise_message(
         TypeError,
@@ -458,7 +557,7 @@ def test_column_transformer_get_set_params():
     ct = ColumnTransformer([('trans1', StandardScaler(), [0]),
                             ('trans2', StandardScaler(), [1])])
 
-    exp = {'n_jobs': 1,
+    exp = {'n_jobs': None,
            'remainder': 'drop',
            'sparse_threshold': 0.3,
            'trans1': ct.transformers[0][1],
@@ -478,7 +577,7 @@ def test_column_transformer_get_set_params():
     assert_false(ct.get_params()['trans1__with_mean'])
 
     ct.set_params(trans1='passthrough')
-    exp = {'n_jobs': 1,
+    exp = {'n_jobs': None,
            'remainder': 'drop',
            'sparse_threshold': 0.3,
            'trans1': 'passthrough',
@@ -662,6 +761,7 @@ def test_column_transformer_remainder():
     ct = make_column_transformer(([0], Trans()))
     assert ct.remainder == 'drop'
 
+
 @pytest.mark.parametrize("key", [[0], np.array([0]), slice(0, 1),
                                  np.array([True, False])])
 def test_column_transformer_remainder_numpy(key):
@@ -806,7 +906,7 @@ def test_column_transformer_get_set_params_with_remainder():
     ct = ColumnTransformer([('trans1', StandardScaler(), [0])],
                            remainder=StandardScaler())
 
-    exp = {'n_jobs': 1,
+    exp = {'n_jobs': None,
            'remainder': ct.remainder,
            'remainder__copy': True,
            'remainder__with_mean': True,
@@ -825,7 +925,7 @@ def test_column_transformer_get_set_params_with_remainder():
     assert not ct.get_params()['remainder__with_std']
 
     ct.set_params(trans1='passthrough')
-    exp = {'n_jobs': 1,
+    exp = {'n_jobs': None,
            'remainder': ct.remainder,
            'remainder__copy': True,
            'remainder__with_mean': True,
@@ -872,6 +972,8 @@ def test_column_transformer_callable_specifier():
                            remainder='drop')
     assert_array_equal(ct.fit_transform(X_array), X_res_first)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_first)
+    assert callable(ct.transformers[0][2])
+    assert ct.transformers_[0][2] == [0]
 
     pd = pytest.importorskip('pandas')
     X_df = pd.DataFrame(X_array, columns=['first', 'second'])
@@ -885,3 +987,5 @@ def test_column_transformer_callable_specifier():
                            remainder='drop')
     assert_array_equal(ct.fit_transform(X_df), X_res_first)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first)
+    assert callable(ct.transformers[0][2])
+    assert ct.transformers_[0][2] == ['first']

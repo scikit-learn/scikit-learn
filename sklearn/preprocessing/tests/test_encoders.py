@@ -497,6 +497,25 @@ def test_one_hot_encoder_feature_names_unicode():
     assert_array_equal([u'n👍me_c❤t1', u'n👍me_dat2'], feature_names)
 
 
+@pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
+                               np.array([['a', np.nan]], dtype=object).T],
+                         ids=['numeric', 'object'])
+@pytest.mark.parametrize("handle_unknown", ['error', 'ignore'])
+def test_one_hot_encoder_raise_missing(X, handle_unknown):
+    ohe = OneHotEncoder(categories='auto', handle_unknown=handle_unknown)
+
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        ohe.fit(X)
+
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        ohe.fit_transform(X)
+
+    ohe.fit(X[:1, :])
+
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        ohe.transform(X)
+
+
 @pytest.mark.parametrize("X", [
     [['abc', 2, 55], ['def', 1, 55]],
     np.array([[10, 2, 55], [20, 1, 55]]),
@@ -511,6 +530,34 @@ def test_ordinal_encoder(X):
     assert_array_equal(enc.fit_transform(X), exp)
 
 
+@pytest.mark.parametrize("X, X2, cats, cat_dtype", [
+    (np.array([['a', 'b']], dtype=object).T,
+     np.array([['a', 'd']], dtype=object).T,
+     [['a', 'b', 'c']], np.object_),
+    (np.array([[1, 2]], dtype='int64').T,
+     np.array([[1, 4]], dtype='int64').T,
+     [[1, 2, 3]], np.int64),
+    (np.array([['a', 'b']], dtype=object).T,
+     np.array([['a', 'd']], dtype=object).T,
+     [np.array(['a', 'b', 'c'])], np.object_),
+    ], ids=['object', 'numeric', 'object-string-cat'])
+def test_ordinal_encoder_specified_categories(X, X2, cats, cat_dtype):
+    enc = OrdinalEncoder(categories=cats)
+    exp = np.array([[0.], [1.]])
+    assert_array_equal(enc.fit_transform(X), exp)
+    assert list(enc.categories[0]) == list(cats[0])
+    assert enc.categories_[0].tolist() == list(cats[0])
+    # manually specified categories should have same dtype as
+    # the data when coerced from lists
+    assert enc.categories_[0].dtype == cat_dtype
+
+    # when specifying categories manually, unknown categories should already
+    # raise when fitting
+    enc = OrdinalEncoder(categories=cats)
+    with pytest.raises(ValueError, match="Found unknown categories"):
+        enc.fit(X2)
+
+
 def test_ordinal_encoder_inverse():
     X = [['abc', 2, 55], ['def', 1, 55]]
     enc = OrdinalEncoder()
@@ -522,6 +569,24 @@ def test_ordinal_encoder_inverse():
     X_tr = np.array([[0, 1, 1, 2], [1, 0, 1, 0]])
     msg = re.escape('Shape of the passed X data is not correct')
     assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
+
+
+@pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
+                               np.array([['a', np.nan]], dtype=object).T],
+                         ids=['numeric', 'object'])
+def test_ordinal_encoder_raise_missing(X):
+    ohe = OrdinalEncoder()
+
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        ohe.fit(X)
+
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        ohe.fit_transform(X)
+
+    ohe.fit(X[:1, :])
+
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        ohe.transform(X)
 
 
 def test_encoder_dtypes():
@@ -571,8 +636,3 @@ def test_one_hot_encoder_warning():
     enc = OneHotEncoder()
     X = [['Male', 1], ['Female', 3]]
     np.testing.assert_no_warnings(enc.fit_transform, X)
-
-
-def test_categorical_encoder_stub():
-    from sklearn.preprocessing import CategoricalEncoder
-    assert_raises(RuntimeError, CategoricalEncoder, encoding='ordinal')

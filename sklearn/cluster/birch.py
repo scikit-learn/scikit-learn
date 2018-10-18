@@ -74,7 +74,7 @@ def _split_node(node, threshold, branching_factor):
 
     farthest_idx = np.unravel_index(
         dist.argmax(), (n_clusters, n_clusters))
-    node1_dist, node2_dist = dist[[farthest_idx]]
+    node1_dist, node2_dist = dist[(farthest_idx,)]
 
     node1_closer = node1_dist < node2_dist
     for idx, subcluster in enumerate(node.subclusters_):
@@ -404,7 +404,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     ----------
     * Tian Zhang, Raghu Ramakrishnan, Maron Livny
       BIRCH: An efficient data clustering method for large databases.
-      http://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
+      https://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
 
     * Roberto Perdisci
       JBirch - Java implementation of BIRCH clustering algorithm

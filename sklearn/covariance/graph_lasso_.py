@@ -467,7 +467,9 @@ def graphical_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 
 
 class GraphicalLassoCV(GraphicalLasso):
-    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
+    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
@@ -520,8 +522,11 @@ class GraphicalLassoCV(GraphicalLasso):
         than number of samples. Elsewhere prefer cd which is more numerically
         stable.
 
-    n_jobs : int, optional
-        number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : boolean, optional
         If verbose is True, the objective function and duality gap are
@@ -571,7 +576,7 @@ class GraphicalLassoCV(GraphicalLasso):
     """
 
     def __init__(self, alphas=4, n_refinements=4, cv='warn', tol=1e-4,
-                 enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=1,
+                 enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=None,
                  verbose=False, assume_centered=False):
         super(GraphicalLassoCV, self).__init__(
             mode=mode, tol=tol, verbose=verbose, enet_tol=enet_tol,
@@ -580,12 +585,6 @@ class GraphicalLassoCV(GraphicalLasso):
         self.n_refinements = n_refinements
         self.cv = cv
         self.n_jobs = n_jobs
-
-    @property
-    @deprecated("Attribute grid_scores was deprecated in version 0.19 and "
-                "will be removed in 0.21. Use ``grid_scores_`` instead")
-    def grid_scores(self):
-        return self.grid_scores_
 
     def fit(self, X, y=None):
         """Fits the GraphicalLasso covariance model to X.
@@ -872,7 +871,9 @@ class GraphLasso(GraphicalLasso):
 @deprecated("The 'GraphLassoCV' was renamed to 'GraphicalLassoCV' "
             "in version 0.20 and will be removed in 0.22.")
 class GraphLassoCV(GraphicalLassoCV):
-    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
+    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     This class implements the Graphical Lasso algorithm.
 
@@ -927,8 +928,11 @@ class GraphLassoCV(GraphicalLassoCV):
         than number of samples. Elsewhere prefer cd which is more numerically
         stable.
 
-    n_jobs : int, optional
-        number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : boolean, optional
         If verbose is True, the objective function and duality gap are

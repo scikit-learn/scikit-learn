@@ -779,6 +779,15 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.linear_model import RidgeClassifier
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> clf = RidgeClassifier().fit(X, y)
+    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    0.9595...
+
     See also
     --------
     Ridge : Ridge regression
@@ -885,7 +894,7 @@ class _RidgeGCV(LinearModel):
     References
     ----------
     http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
-    http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
+    https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
     def __init__(self, alphas=(0.1, 1.0, 10.0),
@@ -1161,6 +1170,8 @@ class _BaseRidgeCV(LinearModel):
 class RidgeCV(_BaseRidgeCV, RegressorMixin):
     """Ridge regression with built-in cross-validation.
 
+    See glossary entry for :term:`cross-validation estimator`.
+
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation.
 
@@ -1249,6 +1260,15 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     alpha_ : float
         Estimated regularization parameter.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_diabetes
+    >>> from sklearn.linear_model import RidgeCV
+    >>> X, y = load_diabetes(return_X_y=True)
+    >>> clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
+    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    0.5166...
+
     See also
     --------
     Ridge : Ridge regression
@@ -1260,6 +1280,8 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
 class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation. Currently, only the n_features >
@@ -1338,6 +1360,15 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     alpha_ : float
         Estimated regularization parameter
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.linear_model import RidgeClassifierCV
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> clf = RidgeClassifierCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
+    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    0.9630...
 
     See also
     --------

@@ -58,7 +58,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
            l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
-           n_iter=None, n_iter_no_change=5, n_jobs=1, penalty='l2',
+           n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
            power_t=0.5, random_state=None, shuffle=True, tol=None,
            validation_fraction=0.1, verbose=0, warm_start=False)
     >>> clf.score(X_features, y)
@@ -72,7 +72,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     [1] "Weighted Sums of Random Kitchen Sinks: Replacing
     minimization with randomization in learning" by A. Rahimi and
     Benjamin Recht.
-    (http://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
+    (https://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
     """
 
     def __init__(self, gamma=1., n_components=100, random_state=None):
@@ -167,7 +167,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
            l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=10,
-           n_iter=None, n_iter_no_change=5, n_jobs=1, penalty='l2',
+           n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
            power_t=0.5, random_state=None, shuffle=True, tol=None,
            validation_fraction=0.1, verbose=0, warm_start=False)
     >>> clf.score(X_features, y)
@@ -273,6 +273,25 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         Gives the number of (complex) sampling points.
     sample_interval : float, optional
         Sampling interval. Must be specified when sample_steps not in {1,2,3}.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.linear_model import SGDClassifier
+    >>> from sklearn.kernel_approximation import AdditiveChi2Sampler
+    >>> X, y = load_digits(return_X_y=True)
+    >>> chi2sampler = AdditiveChi2Sampler(sample_steps=2)
+    >>> X_transformed = chi2sampler.fit_transform(X, y)
+    >>> clf = SGDClassifier(max_iter=5, random_state=0)
+    >>> clf.fit(X_transformed, y)
+    SGDClassifier(alpha=0.0001, average=False, class_weight=None,
+           early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
+           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
+           n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
+           power_t=0.5, random_state=0, shuffle=True, tol=None,
+           validation_fraction=0.1, verbose=0, warm_start=False)
+    >>> clf.score(X_transformed, y) # doctest: +ELLIPSIS
+    0.9543...
 
     Notes
     -----
@@ -600,10 +619,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
             if (self.gamma is not None or
                     self.coef0 is not None or
                     self.degree is not None):
-                warnings.warn(
-                    "Passing gamma, coef0 or degree to Nystroem when using a"
-                    " callable kernel is deprecated in version 0.19 and will"
-                    " raise an error in 0.21, as they are ignored. Use "
-                    "kernel_params instead.", DeprecationWarning)
+                raise ValueError("Don't pass gamma, coef0 or degree to "
+                                 "Nystroem if using a callable kernel.")
 
         return params

@@ -40,6 +40,7 @@ from sklearn.metrics import jaccard_similarity_score
 from sklearn.metrics import label_ranking_average_precision_score
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import log_loss
+from sklearn.metrics import max_error
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
@@ -89,6 +90,7 @@ from sklearn.metrics.base import _average_binary_score
 #
 
 REGRESSION_METRICS = {
+    "max_error": max_error,
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
     "median_absolute_error": median_absolute_error,
@@ -99,6 +101,8 @@ REGRESSION_METRICS = {
 CLASSIFICATION_METRICS = {
     "accuracy_score": accuracy_score,
     "balanced_accuracy_score": balanced_accuracy_score,
+    "adjusted_balanced_accuracy_score": partial(balanced_accuracy_score,
+                                                adjusted=True),
     "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
 
     # `confusion_matrix` returns absolute values and hence behaves unnormalized
@@ -246,7 +250,6 @@ METRIC_UNDEFINED_BINARY = {
 # Those metrics don't support multiclass inputs
 METRIC_UNDEFINED_MULTICLASS = {
     "brier_score_loss",
-    "balanced_accuracy_score",
 
     "roc_auc_score",
     "micro_roc_auc",
@@ -398,7 +401,7 @@ SYMMETRIC_METRICS = {
     "micro_precision_score", "micro_recall_score",
 
     "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
-    "median_absolute_error",
+    "median_absolute_error", "max_error",
 
     "cohen_kappa_score",
 }
@@ -407,6 +410,7 @@ SYMMETRIC_METRICS = {
 # metric(y_true, y_pred) != metric(y_pred, y_true).
 NOT_SYMMETRIC_METRICS = {
     "balanced_accuracy_score",
+    "adjusted_balanced_accuracy_score",
     "explained_variance_score",
     "r2_score",
     "unnormalized_confusion_matrix",
@@ -427,6 +431,7 @@ NOT_SYMMETRIC_METRICS = {
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = {
     "median_absolute_error",
+    "max_error"
 }
 
 

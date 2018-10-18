@@ -48,6 +48,7 @@ Functions
    config_context
    get_config
    set_config
+   show_versions
 
 .. _calibration_ref:
 
@@ -256,8 +257,8 @@ Loaders
    datasets.fetch_kddcup99
    datasets.fetch_lfw_pairs
    datasets.fetch_lfw_people
-   datasets.fetch_mldata
    datasets.fetch_olivetti_faces
+   datasets.fetch_openml
    datasets.fetch_rcv1
    datasets.fetch_species_distributions
    datasets.get_data_home
@@ -864,6 +865,7 @@ details.
    :template: function.rst
 
    metrics.explained_variance_score
+   metrics.max_error
    metrics.mean_absolute_error
    metrics.mean_squared_error
    metrics.mean_squared_log_error
@@ -1511,22 +1513,4 @@ To be removed in 0.22
    :template: deprecated_function.rst
 
    covariance.graph_lasso
-
-
-To be removed in 0.21
----------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   linear_model.RandomizedLasso
-   linear_model.RandomizedLogisticRegression
-   neighbors.LSHForest
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   datasets.load_mlcomp
-   linear_model.lasso_stability_path
+   datasets.fetch_mldata

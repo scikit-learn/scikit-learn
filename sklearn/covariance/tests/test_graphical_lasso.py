@@ -8,7 +8,6 @@ import pytest
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_warns_message
 
 from sklearn.covariance import (graphical_lasso, GraphicalLasso,
                                 GraphicalLassoCV, empirical_covariance)
@@ -16,9 +15,6 @@ from sklearn.datasets.samples_generator import make_sparse_spd_matrix
 from sklearn.externals.six.moves import StringIO
 from sklearn.utils import check_random_state
 from sklearn import datasets
-from sklearn.utils.fixes import PY3_OR_LATER
-
-from numpy.testing import assert_equal
 
 
 def test_graphical_lasso(random_state=0):
@@ -137,25 +133,3 @@ def test_graphical_lasso_cv(random_state=1):
 
     # Smoke test with specified alphas
     GraphicalLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1).fit(X)
-
-
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
-@pytest.mark.skipif(not PY3_OR_LATER,
-                    reason='On Python 2 DeprecationWarning is not issued for some unkown reason.')
-def test_deprecated_grid_scores(random_state=1):
-    dim = 5
-    n_samples = 6
-    random_state = check_random_state(random_state)
-    prec = make_sparse_spd_matrix(dim, alpha=.96,
-                                  random_state=random_state)
-    cov = linalg.inv(prec)
-    X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
-    graphical_lasso = GraphicalLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1)
-    graphical_lasso.fit(X)
-
-    depr_message = ("Attribute grid_scores was deprecated in version "
-                    "0.19 and will be removed in 0.21. Use "
-                    "``grid_scores_`` instead")
-
-    with pytest.warns(DeprecationWarning, match=depr_message):
-        assert_equal(graphical_lasso.grid_scores, graphical_lasso.grid_scores_)

@@ -7,7 +7,6 @@ import pickle
 import sys
 from types import GeneratorType
 import re
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -26,6 +25,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import ignore_warnings
@@ -36,7 +36,6 @@ from scipy.stats import bernoulli, expon, uniform
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
@@ -54,6 +53,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
+from sklearn.model_selection._search import BaseSearchCV
 
 from sklearn.model_selection._validation import FitFailedWarning
 
@@ -131,13 +131,13 @@ def assert_grid_iter_equals_getitem(grid):
 
 @pytest.mark.parametrize(
     "input, error_type, error_message",
-    [(0, TypeError, 'Parameter grid is not a dict or a list (0)'),
-     ([{'foo': [0]}, 0], TypeError, 'Parameter grid is not a dict (0)'),
+    [(0, TypeError, r'Parameter grid is not a dict or a list \(0\)'),
+     ([{'foo': [0]}, 0], TypeError, r'Parameter grid is not a dict \(0\)'),
      ({'foo': 0}, TypeError, "Parameter grid value is not iterable "
-      "(key='foo', value=0)")]
+      r"\(key='foo', value=0\)")]
 )
 def test_validate_parameter_grid_input(input, error_type, error_message):
-    with pytest.raises(error_type, message=error_message):
+    with pytest.raises(error_type, match=error_message):
         ParameterGrid(input)
 
 
@@ -180,7 +180,6 @@ def test_parameter_grid():
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
-
 def test_grid_search():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
@@ -234,57 +233,6 @@ def test_grid_search_with_fit_params():
 def test_random_search_with_fit_params():
     check_hyperparameter_searcher_with_fit_params(RandomizedSearchCV, n_iter=1,
                                                   error_score='raise')
-
-
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-def test_grid_search_fit_params_deprecation():
-    # NOTE: Remove this test in v0.21
-
-    # Use of `fit_params` in the class constructor is deprecated,
-    # but will still work until v0.21.
-    X = np.arange(100).reshape(10, 10)
-    y = np.array([0] * 5 + [1] * 5)
-    clf = CheckingClassifier(expected_fit_params=['spam'])
-    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
-                               fit_params={'spam': np.ones(10)})
-    assert_warns(DeprecationWarning, grid_search.fit, X, y)
-
-
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
-def test_grid_search_fit_params_two_places():
-    # NOTE: Remove this test in v0.21
-
-    # If users try to input fit parameters in both
-    # the constructor (deprecated use) and the `fit`
-    # method, we'll ignore the values passed to the constructor.
-    X = np.arange(100).reshape(10, 10)
-    y = np.array([0] * 5 + [1] * 5)
-    clf = CheckingClassifier(expected_fit_params=['spam'])
-
-    # The "spam" array is too short and will raise an
-    # error in the CheckingClassifier if used.
-    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
-                               fit_params={'spam': np.ones(1)})
-
-    expected_warning = ('Ignoring fit_params passed as a constructor '
-                        'argument in favor of keyword arguments to '
-                        'the "fit" method.')
-    assert_warns_message(RuntimeWarning, expected_warning,
-                         grid_search.fit, X, y, spam=np.ones(10))
-
-    # Verify that `fit` prefers its own kwargs by giving valid
-    # kwargs in the constructor and invalid in the method call
-    with warnings.catch_warnings():
-        # JvR: As passing fit params to the constructor is deprecated, this
-        # unit test raises a warning (unit test can be removed after version
-        # 0.22)
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
-        grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
-                                   fit_params={'spam': np.ones(10)},
-                                   error_score='raise')
-        assert_raise_message(AssertionError, "Fit parameter spam has length 1",
-                             grid_search.fit, X, y, spam=np.ones(1))
 
 
 @ignore_warnings
@@ -371,44 +319,6 @@ def test_grid_search_groups():
         gs = GridSearchCV(clf, grid, cv=cv)
         # Should not raise an error
         gs.fit(X, y)
-
-
-def test_return_train_score_warn():
-    # Test that warnings are raised. Will be removed in 0.21
-
-    X = np.arange(100).reshape(10, 10)
-    y = np.array([0] * 5 + [1] * 5)
-    grid = {'C': [1, 2]}
-
-    estimators = [GridSearchCV(LinearSVC(random_state=0), grid,
-                               iid=False, cv=3),
-                  RandomizedSearchCV(LinearSVC(random_state=0), grid,
-                                     n_iter=2, iid=False, cv=3)]
-
-    result = {}
-    for estimator in estimators:
-        for val in [True, False, 'warn']:
-            estimator.set_params(return_train_score=val)
-            fit_func = ignore_warnings(estimator.fit,
-                                       category=ConvergenceWarning)
-            result[val] = assert_no_warnings(fit_func, X, y).cv_results_
-
-    train_keys = ['split0_train_score', 'split1_train_score',
-                  'split2_train_score', 'mean_train_score', 'std_train_score']
-    for key in train_keys:
-        msg = (
-            'You are accessing a training score ({!r}), '
-            'which will not be available by default '
-            'any more in 0.21. If you need training scores, '
-            'please set return_train_score=True').format(key)
-        train_score = assert_warns_message(FutureWarning, msg,
-                                           result['warn'].get, key)
-        assert np.allclose(train_score, result[True][key])
-        assert key not in result[False]
-
-    for key in result['warn']:
-        if key not in train_keys:
-            assert_no_warnings(result['warn'].get, key)
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
@@ -936,8 +846,8 @@ def test_random_search_cv_results():
         check_cv_results_array_types(search, param_keys, score_keys)
         check_cv_results_keys(cv_results, param_keys, score_keys, n_cand)
         # For random_search, all the param array vals should be unmasked
-        assert_false(any(cv_results['param_C'].mask) or
-                     any(cv_results['param_gamma'].mask))
+        assert_false(any(np.ma.getmaskarray(cv_results['param_C'])) or
+                     any(np.ma.getmaskarray(cv_results['param_gamma'])))
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -1385,6 +1295,9 @@ class FailingClassifier(BaseEstimator):
     def predict(self, X):
         return np.zeros(X.shape[0])
 
+    def score(self, X=None, Y=None):
+        return 0.
+
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_failing_classifier():
@@ -1526,8 +1439,7 @@ def test_search_train_scores_set_to_false():
     y = [0, 0, 0, 1, 1, 1]
     clf = LinearSVC(random_state=0)
 
-    gs = GridSearchCV(clf, param_grid={'C': [0.1, 0.2]},
-                      return_train_score=False)
+    gs = GridSearchCV(clf, param_grid={'C': [0.1, 0.2]})
     gs.fit(X, y)
 
 
@@ -1622,6 +1534,76 @@ def test_transform_inverse_transform_round_trip():
     grid_search.fit(X, y)
     X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
     assert_array_equal(X, X_round_trip)
+
+
+def test_custom_run_search():
+    def check_results(results, gscv):
+        exp_results = gscv.cv_results_
+        assert sorted(results.keys()) == sorted(exp_results)
+        for k in results:
+            if not k.endswith('_time'):
+                # XXX: results['params'] is a list :|
+                results[k] = np.asanyarray(results[k])
+                if results[k].dtype.kind == 'O':
+                    assert_array_equal(exp_results[k], results[k],
+                                       err_msg='Checking ' + k)
+                else:
+                    assert_allclose(exp_results[k], results[k],
+                                    err_msg='Checking ' + k)
+
+    def fit_grid(param_grid):
+        return GridSearchCV(clf, param_grid, cv=5,
+                            return_train_score=True).fit(X, y)
+
+    class CustomSearchCV(BaseSearchCV):
+        def __init__(self, estimator, **kwargs):
+            super(CustomSearchCV, self).__init__(estimator, **kwargs)
+
+        def _run_search(self, evaluate):
+            results = evaluate([{'max_depth': 1}, {'max_depth': 2}])
+            check_results(results, fit_grid({'max_depth': [1, 2]}))
+            results = evaluate([{'min_samples_split': 5},
+                                {'min_samples_split': 10}])
+            check_results(results, fit_grid([{'max_depth': [1, 2]},
+                                             {'min_samples_split': [5, 10]}]))
+
+    # Using regressor to make sure each score differs
+    clf = DecisionTreeRegressor(random_state=0)
+    X, y = make_classification(n_samples=100, n_informative=4,
+                               random_state=0)
+    mycv = CustomSearchCV(clf, cv=5, return_train_score=True).fit(X, y)
+    gscv = fit_grid([{'max_depth': [1, 2]},
+                     {'min_samples_split': [5, 10]}])
+
+    results = mycv.cv_results_
+    check_results(results, gscv)
+    for attr in dir(gscv):
+        if attr[0].islower() and attr[-1:] == '_' and \
+           attr not in {'cv_results_', 'best_estimator_',
+                        'refit_time_'}:
+            assert getattr(gscv, attr) == getattr(mycv, attr), \
+                   "Attribute %s not equal" % attr
+
+
+def test__custom_fit_no_run_search():
+    class NoRunSearchSearchCV(BaseSearchCV):
+        def __init__(self, estimator, **kwargs):
+            super(NoRunSearchSearchCV, self).__init__(estimator, **kwargs)
+
+        def fit(self, X, y=None, groups=None, **fit_params):
+            return self
+
+    # this should not raise any exceptions
+    NoRunSearchSearchCV(SVC(), cv=5).fit(X, y)
+
+    class BadSearchCV(BaseSearchCV):
+        def __init__(self, estimator, **kwargs):
+            super(BadSearchCV, self).__init__(estimator, **kwargs)
+
+    with pytest.raises(NotImplementedError,
+                       match="_run_search not implemented."):
+        # this should raise a NotImplementedError
+        BadSearchCV(SVC(), cv=5).fit(X, y)
 
 
 def test_deprecated_grid_search_iid():

@@ -63,7 +63,7 @@ is equivalent to :func:`linear_kernel`, only slower.)
 
     * C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
       Information Retrieval. Cambridge University Press.
-      http://nlp.stanford.edu/IR-book/html/htmledition/the-vector-space-model-for-scoring-1.html
+      https://nlp.stanford.edu/IR-book/html/htmledition/the-vector-space-model-for-scoring-1.html
 
 .. _linear_kernel:
 
@@ -149,7 +149,7 @@ Manhattan distance between the input vectors.
 
 It has proven useful in ML applied to noiseless data.
 See e.g. `Machine learning for quantum mechanics in a nutshell
-<http://onlinelibrary.wiley.com/doi/10.1002/qua.24954/abstract/>`_.
+<https://onlinelibrary.wiley.com/doi/10.1002/qua.24954/abstract/>`_.
 
 .. _chi2_kernel:
 
@@ -200,5 +200,5 @@ The chi squared kernel is most commonly used on histograms (bags) of visual word
       Local features and kernels for classification of texture and object
       categories: A comprehensive study
       International Journal of Computer Vision 2007
-      http://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
+      https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
 

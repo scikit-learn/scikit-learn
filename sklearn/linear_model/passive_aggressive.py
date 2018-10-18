@@ -68,10 +68,12 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         hinge: equivalent to PA-I in the reference paper.
         squared_hinge: equivalent to PA-II in the reference paper.
 
-    n_jobs : integer, optional
+    n_jobs : int or None, optional (default=None)
         The number of CPUs to use to do the OVA (One Versus All, for
-        multi-class problems) computation. -1 means 'all CPUs'. Defaults
-        to 1.
+        multi-class problems) computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional, default=None
         The seed of the pseudo random number generator to use when shuffling
@@ -135,13 +137,13 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     --------
     >>> from sklearn.linear_model import PassiveAggressiveClassifier
     >>> from sklearn.datasets import make_classification
-    >>>
+
     >>> X, y = make_classification(n_features=4, random_state=0)
     >>> clf = PassiveAggressiveClassifier(max_iter=1000, random_state=0)
     >>> clf.fit(X, y)
     PassiveAggressiveClassifier(C=1.0, average=False, class_weight=None,
                   early_stopping=False, fit_intercept=True, loss='hinge',
-                  max_iter=1000, n_iter=None, n_iter_no_change=5, n_jobs=1,
+                  max_iter=1000, n_iter=None, n_iter_no_change=5, n_jobs=None,
                   random_state=0, shuffle=True, tol=None,
                   validation_fraction=0.1, verbose=0, warm_start=False)
     >>> print(clf.coef_)
@@ -167,7 +169,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     def __init__(self, C=1.0, fit_intercept=True, max_iter=None, tol=None,
                  early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, shuffle=True, verbose=0, loss="hinge",
-                 n_jobs=1, random_state=None, warm_start=False,
+                 n_jobs=None, random_state=None, warm_start=False,
                  class_weight=None, average=False, n_iter=None):
         super(PassiveAggressiveClassifier, self).__init__(
             penalty=None,
@@ -373,7 +375,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     --------
     >>> from sklearn.linear_model import PassiveAggressiveRegressor
     >>> from sklearn.datasets import make_regression
-    >>>
+
     >>> X, y = make_regression(n_features=4, random_state=0)
     >>> regr = PassiveAggressiveRegressor(max_iter=100, random_state=0)
     >>> regr.fit(X, y)
