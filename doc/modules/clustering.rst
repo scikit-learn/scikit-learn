@@ -286,7 +286,7 @@ small, as shown in the example and cited reference.
 .. topic:: References:
 
  * `"Web Scale K-Means clustering"
-   <http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf>`_
+   <https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf>`_
    D. Sculley, *Proceedings of the 19th international conference on World
    wide web* (2010)
 
@@ -445,7 +445,7 @@ works well for a small number of clusters but is not advised when using
 many clusters.
 
 For two clusters, it solves a convex relaxation of the `normalised
-cuts <http://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
+cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
 the similarity graph: cutting the graph in two so that the weight of the
 edges cut is small compared to the weights of the edges inside each
 cluster. This criteria is especially interesting when working on images:
@@ -1008,7 +1008,7 @@ the user is advised
 
  * Tian Zhang, Raghu Ramakrishnan, Maron Livny
    BIRCH: An efficient data clustering method for large databases.
-   http://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
+   https://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
 
  * Roberto Perdisci
    JBirch - Java implementation of BIRCH clustering algorithm
@@ -1144,7 +1144,7 @@ random labelings by defining the adjusted Rand index as follows:
 .. topic:: References
 
  * `Comparing Partitions
-   <http://link.springer.com/article/10.1007%2FBF01908075>`_
+   <https://link.springer.com/article/10.1007%2FBF01908075>`_
    L. Hubert and P. Arabie, Journal of Classification 1985
 
  * `Wikipedia entry for the adjusted Rand index
@@ -1483,7 +1483,7 @@ mean of homogeneity and completeness**:
 .. topic:: References
 
  * `V-Measure: A conditional entropy-based external cluster evaluation
-   measure <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
+   measure <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
 
  .. [B2011] `Identication and Characterization of Events in Social Media

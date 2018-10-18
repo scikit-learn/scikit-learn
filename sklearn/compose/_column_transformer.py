@@ -85,12 +85,11 @@ boolean mask array or callable
         estimator must support `fit` and `transform`.
 
     sparse_threshold : float, default = 0.3
-        If the transformed output consists of a mix of sparse and dense data,
-        it will be stacked as a sparse matrix if the density is lower than this
-        value. Use ``sparse_threshold=0`` to always return dense.
-        When the transformed output consists of all sparse or all dense data,
-        the stacked result will be sparse or dense, respectively, and this
-        keyword will be ignored.
+        If the output of the different transfromers contains sparse matrices,
+        these will be stacked as a sparse matrix if the overall density is
+        lower than this value. Use ``sparse_threshold=0`` to always return
+        dense.  When the transformed output consists of all dense data, the
+        stacked result will be dense, and this keyword will be ignored.
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
@@ -456,9 +455,7 @@ boolean mask array or callable
         Xs, transformers = zip(*result)
 
         # determine if concatenated output will be sparse or not
-        if all(sparse.issparse(X) for X in Xs):
-            self.sparse_output_ = True
-        elif any(sparse.issparse(X) for X in Xs):
+        if any(sparse.issparse(X) for X in Xs):
             nnz = sum(X.nnz if sparse.issparse(X) else X.size for X in Xs)
             total = sum(X.shape[0] * X.shape[1] if sparse.issparse(X)
                         else X.size for X in Xs)
@@ -512,7 +509,19 @@ boolean mask array or callable
         Xs : List of numpy arrays, sparse arrays, or DataFrames
         """
         if self.sparse_output_:
-            return sparse.hstack(Xs).tocsr()
+            try:
+                # since all columns should be numeric before stacking them
+                # in a sparse matrix, `check_array` is used for the
+                # dtype conversion if necessary.
+                converted_Xs = [check_array(X,
+                                            accept_sparse=True,
+                                            force_all_finite=False)
+                                for X in Xs]
+            except ValueError:
+                raise ValueError("For a sparse output, all columns should"
+                                 " be a numeric or convertible to a numeric.")
+
+            return sparse.hstack(converted_Xs).tocsr()
         else:
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
             return np.hstack(Xs)

@@ -1447,7 +1447,7 @@ class MiniBatchKMeans(KMeans):
 
     Notes
     -----
-    See http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
+    See https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
 
     """
 

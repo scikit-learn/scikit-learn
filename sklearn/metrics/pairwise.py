@@ -443,8 +443,7 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
                                          batch_size=batch_size)[0]
 
 
-def manhattan_distances(X, Y=None, sum_over_features=True,
-                        size_threshold=None):
+def manhattan_distances(X, Y=None, sum_over_features=True):
     """ Compute the L1 distances between the vectors in X and Y.
 
     With sum_over_features equal to False it returns the componentwise
@@ -464,9 +463,6 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
         If True the function returns the pairwise distance matrix
         else it returns the componentwise L1 pairwise-distances.
         Not supported for sparse matrix inputs.
-
-    size_threshold : int, default=5e8
-        Unused parameter.
 
     Returns
     -------
@@ -497,10 +493,6 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     array([[1., 1.],
            [1., 1.]])
     """
-    if size_threshold is not None:
-        warnings.warn('Use of the "size_threshold" is deprecated '
-                      'in 0.19 and it will be removed version '
-                      '0.21 of scikit-learn', DeprecationWarning)
     X, Y = check_pairwise_arrays(X, Y)
 
     if issparse(X) or issparse(Y):
@@ -947,7 +939,7 @@ def additive_chi2_kernel(X, Y=None):
       Local features and kernels for classification of texture and object
       categories: A comprehensive study
       International Journal of Computer Vision 2007
-      http://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
+      https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
 
 
     See also
@@ -1005,7 +997,7 @@ def chi2_kernel(X, Y=None, gamma=1.):
       Local features and kernels for classification of texture and object
       categories: A comprehensive study
       International Journal of Computer Vision 2007
-      http://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
+      https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
 
     See also
     --------

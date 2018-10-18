@@ -56,7 +56,7 @@ from sklearn.externals import joblib
 PY3_OR_LATER = sys.version_info[0] >= 3
 
 # The original data can be found at:
-# http://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
+# https://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
 SAMPLES = RemoteFileMetadata(
     filename='samples.zip',
     url='https://ndownloader.figshare.com/files/5976075',
@@ -64,7 +64,7 @@ SAMPLES = RemoteFileMetadata(
               '3c098f7f85955e89d321ee8efe37ac28'))
 
 # The original data can be found at:
-# http://biodiversityinformatics.amnh.org/open_source/maxent/coverages.zip
+# https://biodiversityinformatics.amnh.org/open_source/maxent/coverages.zip
 COVERAGES = RemoteFileMetadata(
     filename='coverages.zip',
     url='https://ndownloader.figshare.com/files/5976078',

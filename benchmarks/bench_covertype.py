@@ -34,10 +34,10 @@ The same task has been used in a number of papers including:
    S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
 
  * `"Training Linear SVMs in Linear Time"
-   <www.cs.cornell.edu/People/tj/publications/joachims_06a.pdf>`_
+   <https://www.cs.cornell.edu/people/tj/publications/joachims_06a.pdf>`_
    T. Joachims - In SIGKDD '06
 
-[1] http://archive.ics.uci.edu/ml/datasets/Covertype
+[1] https://archive.ics.uci.edu/ml/datasets/Covertype
 
 """
 from __future__ import division, print_function

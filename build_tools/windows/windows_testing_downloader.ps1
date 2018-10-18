@@ -27,7 +27,7 @@ param (
 
 function DisableInternetExplorerESC {
     # Disables InternetExplorerESC to enable easier manual downloads of testing packages.
-    # http://stackoverflow.com/questions/9368305/disable-ie-security-on-windows-server-via-powershell
+    # https://stackoverflow.com/questions/9368305/disable-ie-security-on-windows-server-via-powershell
     $AdminKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
     $UserKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}"
     Set-ItemProperty -Path $AdminKey -Name "IsInstalled" -Value 0
@@ -153,7 +153,7 @@ function InstallGit {
 }
 
 function ReadAndUpdateFromRegistry {
-    # http://stackoverflow.com/questions/14381650/how-to-update-windows-powershell-session-environment-variables-from-registry
+    # https://stackoverflow.com/questions/14381650/how-to-update-windows-powershell-session-environment-variables-from-registry
     foreach($level in "Machine","User") {
     [Environment]::GetEnvironmentVariables($level).GetEnumerator() | % {
        # For Path variables, append the new values, if they're not already in there
