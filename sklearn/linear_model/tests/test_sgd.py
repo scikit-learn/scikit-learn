@@ -31,6 +31,11 @@ from sklearn.linear_model import sgd_fast
 from sklearn.model_selection import RandomizedSearchCV
 
 
+# 0.23. warning about tol not having its correct default value.
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:max_iter and tol parameters have been")
+
+
 class SparseSGDClassifier(SGDClassifier):
 
     def fit(self, X, y, *args, **kw):
