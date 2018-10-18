@@ -10,20 +10,20 @@ from sklearn.utils.estimator_checks import check_estimator
 # check_estimator(FKC_EigenPro)
 
 np.random.seed(1)
-#           Tests for Fast Kernel Classification
+# Tests for Fast Kernel Classification
 
 
 def test_fast_kernel_regression_gaussian():
-    X, y = make_regression()
+    X, y = make_regression(n_features=100)
     FKR_prediction = FKR_EigenPro(
-        kernel="gaussian", n_epoch=50, bandwidth=1, random_state=0).fit(X, y).predict(X)
+        kernel="gaussian", n_epoch=50, bandwidth=10, random_state=0).fit(X, y).predict(X)
     assert_array_almost_equal(abs(FKR_prediction / y), 1, decimal=2)
 
 
 def test_fast_kernel_regression_laplace():
-    X, y = make_regression()
+    X, y = make_regression(n_samples=200, n_features=100)
     FKR_prediction = FKR_EigenPro(
-        kernel="laplace", n_epoch=50, bandwidth=1, random_state=0).fit(X, y).predict(X)
+        kernel="laplace", n_epoch=50, bandwidth=20, random_state=0).fit(X, y).predict(X)
     assert_array_almost_equal(abs(FKR_prediction / y), 1, decimal=2)
 
 
@@ -35,9 +35,9 @@ def test_fast_kernel_regression_cauchy():
 
 
 def test_fast_kernel_regression_2d():
-    X, Y = make_regression(n_targets=30)
+    X, Y = make_regression(n_features=100, n_targets=30)
     FKR_prediction = FKR_EigenPro(
-        kernel="gaussian", n_epoch=50, bandwidth=1, random_state=0).fit(X,Y).predict(X)
+        kernel="gaussian", n_epoch=50, bandwidth=10, random_state=0).fit(X,Y).predict(X)
     assert_array_almost_equal(abs(FKR_prediction / Y), 1, decimal=2)
 
 
@@ -49,16 +49,16 @@ def test_fast_kernel_regression_many_features():
 
 
 def test_fast_kernel_regression_simple():
-    X,y = make_regression(n_informative=1)
+    X,y = make_regression(n_features=100, n_informative=1)
     FKR_prediction = FKR_EigenPro(
-        kernel="gaussian", n_epoch=200, bandwidth=1, random_state=0).fit(X, y).predict(X)
+        kernel="gaussian", n_epoch=200, bandwidth=10, random_state=0).fit(X, y).predict(X)
     assert_array_almost_equal(abs(FKR_prediction / y), 1, decimal=2)
 
 
 def test_fast_kernel_regression_complex():
-    X, y = make_regression(n_samples=500, n_informative=500)
+    X, y = make_regression(n_samples=500, n_informative=100)
     FKR_prediction = FKR_EigenPro(
-        kernel="gaussian", n_epoch=50, bandwidth=1, random_state=0).fit(X, y).predict(y)
+        kernel="gaussian", n_epoch=50, bandwidth=10, random_state=0).fit(X, y).predict(X)
     assert_array_almost_equal(abs(FKR_prediction / y), 1, decimal=2)
 
 
@@ -72,7 +72,8 @@ def test_fast_kernel_regression_duplicate_data():
 
 def test_fast_kernel_regression_conflict_data():
     X, y = make_regression()
-    X, y = X, np.concatenate([y, y+2])
+    y = np.reshape(y, (-1, 1))
+    X, y = X, np.hstack([y, y+2])
     try:
         FKR_prediction = FKR_EigenPro(
             kernel="linear", n_epoch=5, bandwidth=1, random_state=0).fit(X, y).predict(X)
@@ -82,7 +83,7 @@ def test_fast_kernel_regression_conflict_data():
         return
 
 
-#       Tests for FastKernelClassification
+# Tests for FastKernelClassification
 
 
 def test_fast_kernel_classification_gaussian():
