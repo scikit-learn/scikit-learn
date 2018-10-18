@@ -335,6 +335,8 @@ def davies_bouldin_score(X, labels, pairwise_distances_func = pairwise_distances
             cluster_k, [centroid]))
 
     centroid_distances = pairwise_distances_func(centroids)
+    # Set diagonal to zero
+    np.fill_diagonal(centroid_distances, np.zeros(len(np.diag(centroid_distances))))
 
     if np.allclose(intra_dists, 0) or np.allclose(centroid_distances, 0):
         return 0.0
