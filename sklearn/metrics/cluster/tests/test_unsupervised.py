@@ -240,7 +240,7 @@ def pairwise_distances_nonzero_diag(X, Y=None, metric="euclidean", n_jobs=None, 
 
 
 def test_davies_bouldin_nonzero_diag():
-    # Tests the
+    # Test that davies-boulding is invariant to non-zero diagonals on distance matrices
     dataset = datasets.load_iris()
     X = dataset.data
     y = dataset.target
