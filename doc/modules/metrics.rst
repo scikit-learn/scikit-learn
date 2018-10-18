@@ -33,6 +33,27 @@ the kernel:
     2. ``S = 1. / (D / np.max(D))``
 
 
+.. currentmodule:: sklearn.metrics
+
+.. _pairwise_distances:
+
+The distances between each row vector of ``X`` and a column vector ``y``
+can be evaluated using :func:`pairwise_distances`. If ``y`` is omitted the
+pairwise distances of the row vectors of ``X`` are calculated.
+
+>>> import numpy as np
+>>> from sklearn.metrics import pairwise_distances
+>>> X = np.array([[2, 3], [3, 5], [5, 8]])
+>>> y = np.array([[1, 0]])
+>>> pairwise_distances(X, y, metric='manhattan')
+array([[ 4.],
+       [ 7.],
+       [12.]])
+>>> pairwise_distances(X, metric='manhattan')
+array([[0., 3., 8.],
+       [3., 0., 5.],
+       [8., 5., 0.]])
+
 .. currentmodule:: sklearn.metrics.pairwise
 
 .. _cosine_similarity:
