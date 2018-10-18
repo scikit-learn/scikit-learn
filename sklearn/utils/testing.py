@@ -993,6 +993,10 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     # Remove the parameters that should be ignored from list
     param_docs = list(filter(lambda x: x not in ignore, param_docs))
 
+    # The following is derived from pytest, Copyright (c) 2004-2017 Holger
+    # Krekel and others, Licensed under MIT License. See
+    # https://github.com/pytest-dev/pytest
+
     message = []
     for i in range(min(len(param_docs), len(param_signature))):
         if param_signature[i] != param_docs[i]:
