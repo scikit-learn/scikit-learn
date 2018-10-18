@@ -305,6 +305,9 @@ def davies_bouldin_score(X, labels, pairwise_distances_func=pairwise_distances):
     labels : array-like, shape (``n_samples``,)
         Predicted labels for each sample.
 
+    pairwise_distances_func : callable
+        Function that conforms to :obj:`sklearn.metrics.pairwise_distances`.
+
     Returns
     -------
     score: float
