@@ -12,9 +12,9 @@ import warnings
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
-from ..utils import Parallel
-from ..utils import delayed
-from ..utils import effective_n_jobs
+from ..externals.joblib import Parallel
+from ..externals.joblib import delayed
+from ..externals.joblib import effective_n_jobs
 from ..isotonic import IsotonicRegression
 
 
