@@ -72,7 +72,7 @@ Changelog
 
 - |Fix| Fixed a bug in :func:`metrics.silhouette_score` where diagonal entries
   of a precomputed distance matrix affected the final score.
-  :issue:`12258` by :user:`Stephen Tierney`.
+  :issue:`12258` by :user:`Stephen Tierney <sjtrny>`.
 
 :mod:`sklearn.neighbors`
 ........................
