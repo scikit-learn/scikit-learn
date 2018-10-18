@@ -503,54 +503,68 @@ def test_check_docstring_parameters():
         ])
 
     messages = [
-            "At index 0 diff: 'b' != 'a'\n"
-            + "Full diff:\n"
-            + "- ['b', 'a']\n"
-            + "+ ['a', 'b']",
+            ["In function: sklearn.utils.tests.test_testing.f_bad_order",
+             "At index 0 diff: 'b' != 'a'",
+             "Full diff:",
+             "- ['b', 'a']",
+             "+ ['a', 'b']"],
 
-            "Parameters in function docstring have more items, first extra"
-            + " item: c\n"
-            + "Full diff:\n"
-            + "- ['a', 'b']\n"
-            + "+ ['a', 'b', 'c']\n"
-            + "?          +++++",
+            ["In function: " +
+                "sklearn.utils.tests.test_testing.f_too_many_param_docstring",
+             "Parameters in function docstring have more items, first extra"
+             + " item: c",
+             "Full diff:",
+             "- ['a', 'b']",
+             "+ ['a', 'b', 'c']",
+             "?          +++++"],
 
-            "Parameters in function signature have more items, first extra"
-            + " item: b\n"
-            + "Full diff:\n"
-            + "- ['a', 'b']\n"
-            + "+ ['a']",
+            ["In function: sklearn.utils.tests.test_testing.f_missing",
+             "Parameters in function signature have more items, first extra"
+             + " item: b",
+             "Full diff:",
+             "- ['a', 'b']",
+             "+ ['a']"],
 
-            "Parameters in function signature have more items, first extra"
-            + " item: X\n"
-            + "Full diff:\n"
-            + "- ['X', 'y']\n"
-            + "+ []",
+            ["In function: sklearn.utils.tests.test_testing.Klass.f_missing",
+             "Parameters in function signature have more items, first extra"
+             + " item: X",
+             "Full diff:",
+             "- ['X', 'y']",
+             "+ []"],
 
-            "At index 0 diff: 'X' != 'y'\n"
-            + "Full diff:\n"
-            + "- ['X']\n"
-            + "?   ^\n"
-            + "+ ['y']\n"
-            + "?   ^",
+            ["In function: " +
+                "sklearn.utils.tests.test_testing.MockMetaEstimator.predict",
+             "At index 0 diff: 'X' != 'y'",
+             "Full diff:",
+             "- ['X']",
+             "?   ^",
+             "+ ['y']",
+             "?   ^"],
 
-            "Parameters in function signature have more items, first extra"
-            + " item: X\n"
-            + "Full diff:\n"
-            + "- ['X']\n"
-            + "+ []",
+            ["In function: " +
+                "sklearn.utils.tests.test_testing.MockMetaEstimator."
+                + "predict_proba",
+             "Parameters in function signature have more items, first extra"
+             + " item: X",
+             "Full diff:",
+             "- ['X']",
+             "+ []"],
 
-            "Parameters in function signature have more items, first extra"
-            + " item: X\n"
-            + "Full diff:\n"
-            + "- ['X']\n"
-            + "+ []",
+            ["In function: " +
+                "sklearn.utils.tests.test_testing.MockMetaEstimator.score",
+             "Parameters in function signature have more items, first extra"
+             + " item: X",
+             "Full diff:",
+             "- ['X']",
+             "+ []"],
 
-            "Parameters in function signature have more items, first extra"
-            + " item: X\n"
-            + "Full diff:\n"
-            + "- ['X', 'y']\n"
-            + "+ []",
+            ["In function: " +
+                "sklearn.utils.tests.test_testing.MockMetaEstimator.fit",
+             "Parameters in function signature have more items, first extra"
+             + " item: X",
+             "Full diff:",
+             "- ['X', 'y']",
+             "+ []"],
 
             ]
 

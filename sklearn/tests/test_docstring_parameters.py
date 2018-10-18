@@ -89,7 +89,7 @@ def test_docstring_parameters():
                 continue
             elif cls_init is not None:
                 this_incorrect += check_docstring_parameters(
-                    cls.__init__, cdoc, class_name=cname)
+                    cls.__init__, cdoc)
 
             for method_name in cdoc.methods:
                 method = getattr(cls, method_name)
@@ -104,7 +104,7 @@ def test_docstring_parameters():
                             sig.parameters['y'].default is None):
                         param_ignore = ['y']  # ignore y for fit and score
                 result = check_docstring_parameters(
-                    method, ignore=param_ignore, class_name=cname)
+                    method, ignore=param_ignore)
                 this_incorrect += result
 
             incorrect += this_incorrect

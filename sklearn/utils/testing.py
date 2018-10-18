@@ -884,16 +884,13 @@ def _get_args(function, varargs=False):
         return args
 
 
-def _get_func_name(func, class_name=None):
+def _get_func_name(func):
     """Get function full name
 
     Parameters
     ----------
     func : callable
         The function object.
-    class_name : string, optional (default: None)
-       If ``func`` is a class method and the class name is known specify
-       class_name for the error message.
 
     Returns
     -------
@@ -904,16 +901,21 @@ def _get_func_name(func, class_name=None):
     module = inspect.getmodule(func)
     if module:
         parts.append(module.__name__)
-    if class_name is not None:
-        parts.append(class_name)
-    elif hasattr(func, 'im_class'):
+
+    try:
+        # Python 3
+        qualname = func.__qualname__
+        if qualname != func.__name__:
+            parts.append(qualname[:qualname.find('.')])
+    except AttributeError:
+        # Python 2
         parts.append(func.im_class.__name__)
 
     parts.append(func.__name__)
     return '.'.join(parts)
 
 
-def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
+def check_docstring_parameters(func, doc=None, ignore=None):
     """Helper to check docstring
 
     Parameters
@@ -924,9 +926,6 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
         Docstring if it is passed manually to the test.
     ignore : None | list
         Parameters to ignore.
-    class_name : string, optional (default: None)
-       If ``func`` is a class method and the class name is known specify
-       class_name for the error message.
 
     Returns
     -------
@@ -937,7 +936,7 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     incorrect = []
     ignore = [] if ignore is None else ignore
 
-    func_name = _get_func_name(func, class_name=class_name)
+    func_name = _get_func_name(func)
     if (not func_name.startswith('sklearn.') or
             func_name.startswith('sklearn.externals')):
         return incorrect
@@ -1033,6 +1032,6 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     incorrect.extend(message)
 
     # Prepend function name
-    incorrect = ['In : ' + str(func)] + incorrect
+    incorrect = ['In function: ' + func_name] + incorrect
 
     return incorrect
