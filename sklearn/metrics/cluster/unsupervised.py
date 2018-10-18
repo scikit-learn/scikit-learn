@@ -288,7 +288,7 @@ def calinski_harabaz_score(X, labels):
             (intra_disp * (n_labels - 1.)))
 
 
-def davies_bouldin_score(X, labels):
+def davies_bouldin_score(X, labels, pairwise_distances_func = pairwise_distances):
     """Computes the Davies-Bouldin score.
 
     The score is defined as the ratio of within-cluster distances to
@@ -331,10 +331,10 @@ def davies_bouldin_score(X, labels):
         cluster_k = safe_indexing(X, labels == k)
         centroid = cluster_k.mean(axis=0)
         centroids[k] = centroid
-        intra_dists[k] = np.average(pairwise_distances(
+        intra_dists[k] = np.average(pairwise_distances_func(
             cluster_k, [centroid]))
 
-    centroid_distances = pairwise_distances(centroids)
+    centroid_distances = pairwise_distances_func(centroids)
 
     if np.allclose(intra_dists, 0) or np.allclose(centroid_distances, 0):
         return 0.0

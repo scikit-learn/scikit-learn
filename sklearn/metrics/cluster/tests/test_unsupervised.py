@@ -228,3 +228,23 @@ def test_davies_bouldin_score():
     X = ([[0, 0], [2, 2], [3, 3], [5, 5]])
     labels = [0, 0, 1, 2]
     pytest.approx(davies_bouldin_score(X, labels), (5. / 4) / 3)
+
+def pairwise_distances_nonzero_diag(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
+
+    dists = pairwise_distances(X, Y, metric, n_jobs, **kwds)
+    # Construct a nonzero-diagonal distance matrix
+    diag_dists = np.diag(np.ones(dists.shape[0])) + dists
+
+    return diag_dists
+
+def test_davies_bouldin_nonzero_diag():
+    # Tests the
+    dataset = datasets.load_iris()
+    X = dataset.data
+    y = dataset.target
+
+    original_score = davies_bouldin_score(X, y)
+
+    nonzero_diag_score = davies_bouldin_score(X, y, pairwise_distances_func = pairwise_distances_nonzero_diag)
+
+    assert_equal(original_score, nonzero_diag_score)
