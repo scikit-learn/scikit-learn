@@ -2,8 +2,9 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    =
-SPHINXBUILD  ?= sphinx-build
+PYTHON       ?= python
+SPHINXOPTS   ?= -j $(shell nproc)
+SPHINXBUILD  ?= $(PYTHON) -m sphinx
 PAPER         =
 BUILDDIR      = _build
 ifneq ($(EXAMPLES_PATTERN),)
