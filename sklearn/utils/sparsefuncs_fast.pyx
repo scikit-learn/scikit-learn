@@ -39,12 +39,11 @@ def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
     cdef:
         unsigned long long n_samples = shape[0]
         unsigned long long n_features = shape[1]
-        np.ndarray[DOUBLE, ndim=1, mode="c"] norms
+        floating[::1] norms = np.zeros(n_samples, dtype=X_data.dtype)
 
-        np.npy_intp i, j
+        unsigned long long i
+        int j
         double sum_
-
-    norms = np.zeros(n_samples, dtype=np.float64)
 
     for i in range(n_samples):
         sum_ = 0.0
