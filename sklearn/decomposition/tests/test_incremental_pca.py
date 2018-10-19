@@ -176,13 +176,13 @@ def test_incremental_pca_batch_values():
 
 
 def test_incremental_pca_batch_rank():
-    # Test that sample size in each batch is always larger or equal to dim of X
+    # Test sample size in each batch is always larger or equal to n_components
     rng = np.random.RandomState(1999)
     n_samples = 100
     n_features = 20
     X = rng.randn(n_samples, n_features)
     all_components = []
-    batch_sizes = np.arange(20, 40, 3)
+    batch_sizes = np.arange(20, 90, 3)
     for batch_size in batch_sizes:
         ipca = IncrementalPCA(n_components=20, batch_size=batch_size).fit(X)
         all_components.append(ipca.components_)
