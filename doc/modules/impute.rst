@@ -130,7 +130,6 @@ dataset from OpenML, which has many missing values.
   >>> import sklearn.model_selection
   >>> import sklearn.pipeline
   >>> import sklearn.tree
-  >>>
   >>> X, y = sklearn.datasets.fetch_openml('anneal', 1, return_X_y=True)
   >>> X_train, X_test, y_train, _ = sklearn.model_selection.train_test_split(
   >>>     X, y, test_size=100, random_state=0)
@@ -162,7 +161,7 @@ that did not have any missing values.
 
 Of course, we can not use the transformer to make any predictions. We should
 wrap this in a :class:`Pipeline` with a classifier (e.g., a
-:class:`DecisionTreeClassifier`) to be able to make predictions. 
+:class:`DecisionTreeClassifier`) to be able to make predictions.
 
   >>> clf.fit(X_train, y_train)
   >>> results = clf.predict(X_test)
