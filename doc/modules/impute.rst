@@ -131,8 +131,9 @@ dataset from OpenML, which has many missing values.
   >>> import sklearn.pipeline
   >>> import sklearn.tree
   >>> X, y = sklearn.datasets.fetch_openml('anneal', 1, return_X_y=True)
-  >>> X_train, X_test, y_train, _ = sklearn.model_selection.train_test_split(
-  >>>     X, y, test_size=100, random_state=0)
+  >>> X_train, X_test, y_train, _ = \
+  >>>     sklearn.model_selection.train_test_split(X, y, test_size=100,
+  >>>                                              random_state=0)
 
 Now we create a :class:`FeatureUnion`. All features will be imputed using
 :class:`SimpleImputer`, in order to enable classifiers to work with this data.
@@ -141,11 +142,8 @@ Additionally, it adds the the indicator variables from
 
   >>> transformer = sklearn.pipeline.FeatureUnion(
   >>>     transformer_list=[
-  >>>         ('vanilla_features',
-  >>>          sklearn.impute.SimpleImputer(strategy='constant',
-  >>>                                       fill_value=-1)),
-  >>>         ('indicate_features',
-  >>>          sklearn.impute.MissingIndicator(features='all'))])
+  >>>         ('features', sklearn.impute.SimpleImputer(strategy='mean')),
+  >>>         ('indicaters', sklearn.impute.MissingIndicator(features='all'))])
   >>> clf = sklearn.pipeline.make_pipeline(transformer,
   >>>                                      sklearn.tree.DecisionTreeClassifier())
 
