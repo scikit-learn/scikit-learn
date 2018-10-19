@@ -282,12 +282,13 @@ def test_compare_to_ELKI():
           -1, -1, -1, -1, -1, -1, -1, -1, -1]
     clust2 = OPTICS(min_samples=5, max_eps=0.5, metric='minkowski').fit(X)
 
-    assert_array_equal(clust1.ordering_, np.array(o1))
-    assert_array_equal(clust1.predecessor_[clust1.ordering_], np.array(p1))
-    assert_allclose(clust1.reachability_[clust1.ordering_], np.array(r1))
-    
+    assert_array_equal(clust2.ordering_, np.array(o2))
+    assert_array_equal(clust2.predecessor_[clust2.ordering_], np.array(p2))
+    assert_allclose(clust2.reachability_[clust2.ordering_], np.array(r2))
+
     index = np.where(clust1.core_distances_ <= 0.5)[0]
-    assert_allclose(clust1.core_distances_[index], clust2.core_distances_[index])
+    assert_allclose(clust1.core_distances_[index],
+                    clust2.core_distances_[index])
 
 
 def test_precomputed_dists():
