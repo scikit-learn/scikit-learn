@@ -431,6 +431,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         nbrs.fit(X)
         self.core_distances_ = self._compute_core_distances_(X, nbrs)
+        self.core_distances_[self.core_distances_ > self.max_eps] = np.inf
         self.ordering_ = self._calculate_optics_order(X, nbrs)
 
         indices_, self.labels_ = _extract_optics(self.ordering_,
@@ -491,12 +492,21 @@ class OPTICS(BaseEstimator, ClusterMixin):
         for point in range(X.shape[0]):
             if processed[point]:
                 continue
-            if self.core_distances_[point] <= self.max_eps:
-                while not processed[point]:
+            if self.core_distances_[point] != np.inf:
+                while True:
                     processed[point] = True
                     ordering[ordering_idx] = point
                     ordering_idx += 1
-                    point = self._set_reach_dist(point, processed, X, nbrs)
+                    if self.core_distances_[point] != np.inf:
+                        self._set_reach_dist(point, processed, X, nbrs)
+                    # Take all the points which have not been processed
+                    # and need to be processed in current while loop.
+                    mask = processed | (self.reachability_ == np.inf)
+                    if np.all(mask):
+                        break
+                    # Choose next based on smallest reachability distance
+                    # (And prefer smaller ids on ties).
+                    point = np.ma.array(self.reachability_, mask=mask).argmin()
             else:  # For very noisy points
                 ordering[ordering_idx] = point
                 ordering_idx += 1
@@ -513,7 +523,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                              indices, axis=0)
         # Keep n_jobs = 1 in the following lines...please
         if not unproc.size:
-            # Everything is already processed. Return to main loop
+            # Neighbors of current point are already processed.
             return point_index
 
         if self.metric == 'precomputed':
@@ -526,12 +536,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
         improved = np.where(rdists < np.take(self.reachability_, unproc))
         self.reachability_[unproc[improved]] = rdists[improved]
         self.predecessor_[unproc[improved]] = point_index
-
-        # Choose next based on smallest reachability distance
-        # (And prefer smaller ids on ties).
-        # All unprocessed points qualify, not just new neighbors ("unproc")
-        return (np.ma.array(self.reachability_, mask=processed)
-                .argmin(fill_value=np.inf))
 
     def extract_dbscan(self, eps):
         """Performs DBSCAN extraction for an arbitrary epsilon.
