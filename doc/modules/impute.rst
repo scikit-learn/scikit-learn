@@ -122,7 +122,8 @@ whether or not they contain missing values::
   array([0, 1, 2, 3])
 
 When using it in a pipeline, be sure to use the :class:`FeatureUnion` to add
-the indicator features to the regular features:
+the indicator features to the regular features. First we obtain the `annael`
+dataset from OpenML, which has many missing values.
 
   >>> import sklearn.datasets
   >>> import sklearn.impute
@@ -131,22 +132,40 @@ the indicator features to the regular features:
   >>> import sklearn.tree
   >>>
   >>> X, y = sklearn.datasets.fetch_openml('anneal', 1, return_X_y=True)
+  >>> X_train, X_test, y_train, _ = sklearn.model_selection.train_test_split(
+  >>>     X, y, test_size=100, random_state=0)
+
+Now we create a :class:`FeatureUnion`. All features will be imputed using
+:class:`SimpleImputer`, in order to enable classifiers to work with this data.
+Additionally, it adds the the indicator variables from
+:class:`MissingIndicator`.
+
   >>> transformer = sklearn.pipeline.FeatureUnion(
   >>>     transformer_list=[
   >>>         ('vanilla_features',
   >>>          sklearn.impute.SimpleImputer(strategy='constant',
   >>>                                       fill_value=-1)),
   >>>         ('indicate_features',
-  >>>          sklearn.impute.MissingIndicator())])
+  >>>          sklearn.impute.MissingIndicator(features='all'))])
   >>> clf = sklearn.pipeline.make_pipeline(transformer,
   >>>                                      sklearn.tree.DecisionTreeClassifier())
-  >>>
-  >>> X_train, X_test, y_train, _ = sklearn.model_selection.train_test_split(
-  >>>     X, y, test_size=100, random_state=0)
-  >>>
+
+
+Note that the anneal dataset has 38 columns. By applying the `features='all'`
+function, we ensure that all columns obtain a indicator column, also the ones
+that did not have any missing values.
+
+  >>> transformer.fit(X_train, y_train)
+  >>> results = transformer.transform(X_test)
+  >>> results.shape
+  (100, 76)
+
+Of course, we can not use the transformer to make any predictions. We should
+wrap this in a :class:`Pipeline` with a classifier (e.g., a
+:class:`DecisionTreeClassifier`) to be able to make predictions. 
+
   >>> clf.fit(X_train, y_train)
   >>> results = clf.predict(X_test)
-  >>>
   >>> results.shape
   (100,)
 
