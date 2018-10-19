@@ -41,8 +41,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
 from sklearn.base import (clone, ClusterMixin,
-                          BaseEstimator, is_classifier, is_regressor,
-                          is_outlier_detector)
+                          is_classifier, is_regressor, is_outlier_detector)
 
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 

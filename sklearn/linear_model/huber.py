@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from scipy import optimize, sparse
+from scipy import optimize
 
 from ..base import BaseEstimator, RegressorMixin
 from .base import LinearModel
