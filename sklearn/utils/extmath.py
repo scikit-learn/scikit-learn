@@ -235,7 +235,7 @@ def randomized_range_finder(A, size, n_iter,
 def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
                    power_iteration_normalizer='auto', transpose='auto',
                    flip_sign=True, random_state=0):
-    """Computes a truncated randomized SVD, i.e. finds a approximate
+    """Computes a truncated randomized SVD, i.e. finds an approximate
     truncated singular value decomposition using randomization to speed up
     computations. It is particularly fast on large matrices to extract only
     a small number of components. It can be quite accurate using even a small
