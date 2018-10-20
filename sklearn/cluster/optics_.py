@@ -488,29 +488,17 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # written to the 'ordering_' list is important!
         processed = np.zeros(X.shape[0], dtype=bool)
         ordering = np.zeros(X.shape[0], dtype=int)
-        ordering_idx = 0
-        for point in range(X.shape[0]):
-            if processed[point]:
-                continue
+        for ordering_idx in range(X.shape[0]):
+            # Choose next based on smallest reachability distance
+            # (And prefer smaller ids on ties, possibly np.inf!)
+            # XXX: Do we have a better solution from numpy?
+            index = np.where(processed == 0)[0]
+            point = index[np.argmin(self.reachability_[index])]
+
+            processed[point] = True
+            ordering[ordering_idx] = point
             if self.core_distances_[point] != np.inf:
-                while True:
-                    processed[point] = True
-                    ordering[ordering_idx] = point
-                    ordering_idx += 1
-                    if self.core_distances_[point] != np.inf:
-                        self._set_reach_dist(point, processed, X, nbrs)
-                    # Take all the points which have not been processed
-                    # and need to be processed in current while loop.
-                    mask = processed | (self.reachability_ == np.inf)
-                    if np.all(mask):
-                        break
-                    # Choose next based on smallest reachability distance
-                    # (And prefer smaller ids on ties).
-                    point = np.ma.array(self.reachability_, mask=mask).argmin()
-            else:  # For very noisy points
-                ordering[ordering_idx] = point
-                ordering_idx += 1
-                processed[point] = True
+                self._set_reach_dist(point, processed, X, nbrs)
         return ordering
 
     def _set_reach_dist(self, point_index, processed, X, nbrs):
@@ -524,7 +512,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # Keep n_jobs = 1 in the following lines...please
         if not unproc.size:
             # Neighbors of current point are already processed.
-            return point_index
+            return
 
         if self.metric == 'precomputed':
             dists = X[point_index, unproc]
