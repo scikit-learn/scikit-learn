@@ -1597,8 +1597,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     # compute all applicable averages
     for average in average_options:
         if average.startswith('micro') and micro_is_accuracy:
-            continue
-            # line_heading = average + ' avg (accuracy)'
+            line_heading = 'accuracy'
         else:
             line_heading = average + ' avg'
 
@@ -1612,10 +1611,20 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
             report_dict[line_heading] = dict(
                 zip(headers, [i.item() for i in avg]))
         else:
-            report += row_fmt.format(line_heading, *avg,
-                                     width=width, digits=digits)
+            if line_heading == 'accuracy':
+                row_fmt_accuracy = u'{:>{width}s} ' + \
+                        u' {:>9.{digits}}' * 2 + u' {:>9.{digits}f}' + \
+                        u' {:>9}\n'
+                report += row_fmt_accuracy.format(line_heading, '', '',
+                                                  *avg[2:], width=width,
+                                                  digits=digits)
+            else:
+                report += row_fmt.format(line_heading, *avg,
+                                         width=width, digits=digits)
 
     if output_dict:
+        if 'accuracy' in report_dict.keys():
+            report_dict['accuracy'] = report_dict['accuracy']['precision']
         return report_dict
     else:
         return report
