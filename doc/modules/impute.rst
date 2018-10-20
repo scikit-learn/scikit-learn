@@ -150,7 +150,7 @@ Note that the anneal dataset has 38 columns. By applying the `features='all'`
 function, we ensure that all columns obtain a indicator column, also the ones
 that did not have any missing values.
 
-  >>> transformer.fit(X_train, y_train)
+  >>> transformer = transformer.fit(X_train, y_train)
   >>> results = transformer.transform(X_test)
   >>> results.shape
   (100, 76)
