@@ -684,9 +684,9 @@ class TSNE(BaseEstimator):
                 raise ValueError("All distances should be positive, the "
                                  "precomputed distances given as X is not "
                                  "correct")
-        if not ((self.metric_params is None) or
-                ((type(self.metric_params) == dict) and
-                (len(self.metric_params) > 0))):
+        if not (self.metric_params is None or
+                type(self.metric_params) == dict and
+                len(self.metric_params) > 0):
             raise TypeError("'metric_params' parameter must be either None or\
                              non empty dicionary")
         if self.method == 'barnes_hut' and sp.issparse(X):
@@ -761,7 +761,7 @@ class TSNE(BaseEstimator):
                 print("[t-SNE] Computing {} nearest neighbors...".format(k))
 
             # Find the nearest neighbors for every point
-            if (self.metric_params is None) or not ('p' in self.metric_params):
+            if self.metric_params is None or 'p' not in self.metric_params:
                 knn = NearestNeighbors(algorithm='auto', n_neighbors=k,
                                        metric=self.metric,
                                        metric_params=self.metric_params)
