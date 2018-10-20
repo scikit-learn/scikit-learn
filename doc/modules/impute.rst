@@ -139,11 +139,11 @@ Additionally, it adds the the indicator variables from
 :class:`MissingIndicator`.
 
   >>> transformer = sklearn.pipeline.FeatureUnion(
-  >>>     transformer_list=[
-  >>>         ('features', sklearn.impute.SimpleImputer(strategy='mean')),
-  >>>         ('indicaters', sklearn.impute.MissingIndicator(features='all'))])
+  ...     transformer_list=[
+  ...         ('features', sklearn.impute.SimpleImputer(strategy='mean')),
+  ...         ('indicaters', sklearn.impute.MissingIndicator(features='all'))])
   >>> clf = sklearn.pipeline.make_pipeline(transformer,
-  >>>                                      sklearn.tree.DecisionTreeClassifier())
+  ...                                      sklearn.tree.DecisionTreeClassifier())
 
 
 Note that the anneal dataset has 38 columns. By applying the `features='all'`
