@@ -209,6 +209,16 @@ def test_cluster_sigmin_pruning(reach, n_child, members):
     assert_array_equal(members, root.children[0].points)
 
 
+def test_processing_order():
+    # Make sure that OPTICS consider all unprocessed points,
+    # not only direct neighbors, when picking the next point.
+    Y = [[0], [10], [-10], [25]]
+    clust = OPTICS(min_samples=3, max_eps=15).fit(Y)
+    assert_allclose(clust.reachability_, [np.inf, 10, 10, 15])
+    assert_allclose(clust.core_distances_, [10, 15, np.inf, np.inf])
+    assert_array_equal(clust.ordering_, [0, 1, 2, 3])
+
+
 def test_compare_to_ELKI():
     # Expected values, computed with (future) ELKI 0.7.5 using:
     # java -jar elki.jar cli -dbc.in csv -dbc.filter FixedDBIDsFilter
