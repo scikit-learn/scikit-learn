@@ -430,7 +430,12 @@ class OPTICS(BaseEstimator, ClusterMixin):
                                 n_jobs=self.n_jobs)
 
         nbrs.fit(X)
+        # Here we first do a kNN query for each point, this differs from
+        # the original OPTICS that only used epsilon range queries
+        # This can save us some distance computations later - or it can
+        # mean we are computing the same distances twice.
         self.core_distances_ = self._compute_core_distances_(X, nbrs)
+        # OPTICS puts an upper limit on these, use inf for undefined.
         self.core_distances_[self.core_distances_ > self.max_eps] = np.inf
         self.ordering_ = self._calculate_optics_order(X, nbrs)
 
@@ -486,6 +491,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
     def _calculate_optics_order(self, X, nbrs):
         # Main OPTICS loop. Not parallelizable. The order that entries are
         # written to the 'ordering_' list is important!
+        # Note that this implementation is O(n^2) theoretically, but
+        # supposedly with very low constant factors.
         processed = np.zeros(X.shape[0], dtype=bool)
         ordering = np.zeros(X.shape[0], dtype=int)
         for ordering_idx in range(X.shape[0]):
@@ -503,6 +510,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     def _set_reach_dist(self, point_index, processed, X, nbrs):
         P = X[point_index:point_index + 1]
+        # Assume that radius_neighbors is faster without distances.
+        # and we don't need all distances, nevertheless, this means
+        # we may be doing some work twice.
         indices = nbrs.radius_neighbors(P, radius=self.max_eps,
                                         return_distance=False)[0]
 
@@ -514,6 +524,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
             # Neighbors of current point are already processed.
             return
 
+        # ONLY compute distances to unprocessed neighbors:
         if self.metric == 'precomputed':
             dists = X[point_index, unproc]
         else:
