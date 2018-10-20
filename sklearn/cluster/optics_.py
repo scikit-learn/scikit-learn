@@ -39,9 +39,8 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
     This implementation deviates from the original OPTICS by first performing
     k-nearest-neighborhood searches on all points to identify core sizes, then
     computing only the distances to unprocessed points when constructing the
-    cluster order. It also does not employ a heap to manage the expansion
-    candiates, but rather uses numpy masked arrays. This can be potentially
-    slower with some parameters (at the benefit from using fast numpy code).
+    cluster order. Note that we do not employ a heap to manage the expansion
+    candidates, so the time complexity will be O(n^2).
 
     Read more in the :ref:`User Guide <optics>`.
 
@@ -199,7 +198,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
     This implementation deviates from the original OPTICS by first performing
     k-nearest-neighborhood searches on all points to identify core sizes, then
     computing only the distances to unprocessed points when constructing the
-    cluster order.
+    cluster order. Note that we do not employ a heap to manage the expansion
+    candidates, so the time complexity will be O(n^2).
 
     Read more in the :ref:`User Guide <optics>`.
 
