@@ -122,7 +122,7 @@ whether or not they contain missing values::
   array([0, 1, 2, 3])
 
 When using it in a pipeline, be sure to use the :class:`FeatureUnion` to add
-the indicator features to the regular features. First we obtain the `audiology`
+the indicator features to the regular features. First we obtain the `mushroom`
 dataset from OpenML, which has many missing values.
 
   >>> from sklearn.datasets import fetch_openml
@@ -130,7 +130,7 @@ dataset from OpenML, which has many missing values.
   >>> from sklearn.model_selection import train_test_split
   >>> from sklearn.pipeline import FeatureUnion, make_pipeline
   >>> from sklearn.tree import DecisionTreeClassifier
-  >>> X, y = fetch_openml('audiology', 1, return_X_y=True)
+  >>> X, y = fetch_openml('mushroom', 1, return_X_y=True)
   >>> X_train, X_test, y_train, _ = train_test_split(X, y, test_size=100,
   ...                                                random_state=0)
 
@@ -145,14 +145,14 @@ Additionally, it adds the the indicator variables from
   ...         ('indicaters', MissingIndicator(features='all'))])
   >>> clf = make_pipeline(transformer, DecisionTreeClassifier())
 
-Note that the `audiology` dataset has 70 features. By applying the
+Note that the `mushroom` dataset has 23 features. By applying the
 `features='all'` function, we ensure that all columns obtain a indicator
 column, also the ones that did not have any missing values.
 
   >>> transformer = transformer.fit(X_train, y_train)
   >>> results = transformer.transform(X_test)
   >>> results.shape
-  (100, 140)
+  (100, 46)
 
 Of course, we can not use the transformer to make any predictions. We should
 wrap this in a :class:`Pipeline` with a classifier (e.g., a
