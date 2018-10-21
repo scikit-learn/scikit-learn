@@ -122,7 +122,7 @@ whether or not they contain missing values::
   array([0, 1, 2, 3])
 
 When using it in a pipeline, be sure to use the :class:`FeatureUnion` to add
-the indicator features to the regular features. First we obtain the `annael`
+the indicator features to the regular features. First we obtain the `audiology`
 dataset from OpenML, which has many missing values.
 
   >>> from sklearn.datasets import fetch_openml
@@ -145,7 +145,7 @@ Additionally, it adds the the indicator variables from
   ...         ('indicaters', MissingIndicator(features='all'))])
   >>> clf = make_pipeline(transformer, DecisionTreeClassifier())
 
-Note that the audiology dataset has 70 features. By applying the
+Note that the `audiology` dataset has 70 features. By applying the
 `features='all'` function, we ensure that all columns obtain a indicator
 column, also the ones that did not have any missing values.
 
