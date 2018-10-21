@@ -591,6 +591,7 @@ class OneHotEncoder(_BaseEncoder):
         X_out : sparse matrix if sparse=True else a 2-d array
             Transformed input.
         """
+        check_is_fitted(self, 'categories_')
         if self._legacy_mode:
             return _transform_selected(X, self._legacy_transform, self.dtype,
                                        self._categorical_features,
