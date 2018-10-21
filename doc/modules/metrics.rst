@@ -38,7 +38,7 @@ the kernel:
 The distances between the row vectors of ``X`` and the row vectors of ``Y``
 can be evaluated using :func:`pairwise_distances`. If ``Y`` is omitted the
 pairwise distances of the row vectors of ``X`` are calculated. Similarly,
-:func:`pairwise_kernel` can be used to calculate the kernel between `X`
+:func:`pairwise.pairwise_kernels` can be used to calculate the kernel between `X`
 and `Y` using different kernel distances. See the API reference for more
 details.
 
