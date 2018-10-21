@@ -25,6 +25,7 @@ from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 from .lobpcg import lobpcg
+from scipy.sparse.linalg import LinearOperator
 
 
 def squared_norm(x):
@@ -441,25 +442,38 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
     if transpose == 'auto':
         transpose = n_samples > n_features
     if transpose:
-        M = M.T
+        M = M.T.conj()
 
     Q = random_state.normal(size=(M.shape[0], n_random))
     if M.dtype.kind == 'f':
         # Ensure f32 is preserved as f32
         Q = Q.astype(M.dtype, copy=False)
 
-    A = - safe_sparse_dot(M, M.T)
-    # 1. LOBPCG default option largest=True is currently broken, so we
-    # go the smallest (negative) of the negative normal matrix A
-    # 2. In contrast to randomised, lobpcg allows setting up useful
-    # tol=lobpcg_tol but adding it below currently results in
-    # Docstring Error:
-    # sklearn.cluster.spectral.discretize arg mismatch.
-    _, Q = lobpcg(A, Q, maxiter=n_iter, largest=False)
+    # determine the normal matrix 
+    explixitNormalMatrix = False
+    if explixitNormalMatrix:
+        A = safe_sparse_dot(M, M.T.conj())
+    else:
+        def normalOperation(V):
+             return safe_sparse_dot(M,
+             (safe_sparse_dot(V.T.conj(), M)).T.conj())
+    
+        Ms0 = M.shape[0]
+        A = LinearOperator(dtype=M.dtype, shape=(Ms0, Ms0),
+                           matvec=normalOperation)
+
+    # for lobpcg debugging, use verbosityLevel = 1
+    lobpcgVerbosityLevel = 0
+    # lobpcg tol, if large enough, may overwrite maxiter
+    lobpcgTol = None
+    # lobpcg computes the largest, be default, eigenvalues of the normal matrix
+    # A, given inlicitely via LinearOperator or explixitly as dense or sparse
+    _, Q = lobpcg(A, Q, maxiter=n_iter,
+                  verbosityLevel=lobpcgVerbosityLevel, tol=lobpcgTol)
 
     # project M to the (k + p) dimensional space using the basis vectors
     # project M to the (k + p) dimensional space using the basis vectors
-    B = safe_sparse_dot(Q.T, M)
+    B = safe_sparse_dot(Q.T.conj(), M)
 
     # compute the SVD on the thin matrix: (k + p) wide
     Uhat, s, V = linalg.svd(B, full_matrices=False)
@@ -477,7 +491,8 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     if transpose:
         # transpose back the results according to the input convention
-        return V[:n_components, :].T, s[:n_components], U[:, :n_components].T
+        return (V[:n_components,:].T.conj(), s[:n_components],
+                U[:, :n_components].T.conj())
     else:
         return U[:, :n_components], s[:n_components], V[:n_components, :]
 
