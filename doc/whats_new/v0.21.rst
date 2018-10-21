@@ -40,6 +40,12 @@ Support for Python 3.4 and below has been officially dropped.
 - An entry goes here
 - An entry goes here
 
+:mod:`sklearn.linear_model`
+...........................
+- |Fix| Fixed a bug in :class:`linear_model.MultiTaskElasticNet` which was breaking
+  ``MultiTaskElasticNet`` and ``MultiTaskLasso`` when ``warm_start = True``. :issue:`12360`
+  by :user:`Aakanksha Joshi <joaak>`.
+
 :mod:`sklearn.cluster`
 ......................
 
