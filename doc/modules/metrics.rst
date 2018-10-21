@@ -35,24 +35,30 @@ the kernel:
 
 .. currentmodule:: sklearn.metrics
 
-.. _pairwise_distances:
+The distances between the row vectors of ``X`` and the row vectors of ``Y``
+can be evaluated using :func:`pairwise_distances`. If ``Y`` is omitted the
+pairwise distances of the row vectors of ``X`` are calculated. Similarly,
+:func:`pairwise_kernel` can be used to calculate the kernel between `X`
+and `Y` using different kernel distances. See the API reference for more
+details.
 
-The distances between each row vector of ``X`` and a column vector ``y``
-can be evaluated using :func:`pairwise_distances`. If ``y`` is omitted the
-pairwise distances of the row vectors of ``X`` are calculated.
-
->>> import numpy as np
->>> from sklearn.metrics import pairwise_distances
->>> X = np.array([[2, 3], [3, 5], [5, 8]])
->>> y = np.array([[1, 0]])
->>> pairwise_distances(X, y, metric='manhattan')
-array([[ 4.],
-       [ 7.],
-       [12.]])
->>> pairwise_distances(X, metric='manhattan')
-array([[0., 3., 8.],
-       [3., 0., 5.],
+    >>> import numpy as np
+    >>> from sklearn.metrics import pairwise_distances
+    >>> X = np.array([[2, 3], [3, 5], [5, 8]])
+    >>> Y = np.array([[1, 0], [2, 1]])
+    >>> pairwise_distances(X, Y, metric='manhattan')
+    array([[ 4.,  2.],
+           [ 7.,  5.],
+           [12., 10.]])
+    >>> pairwise_distances(X, metric='manhattan')
+    array([[0., 3., 8.],
+           [3., 0., 5.],
        [8., 5., 0.]])
+    >>> pairwise_kernels(X, Y, metric='linear')
+    array([[ 2.,  7.],
+           [ 3., 11.],
+           [ 5., 18.]])
+
 
 .. currentmodule:: sklearn.metrics.pairwise
 
