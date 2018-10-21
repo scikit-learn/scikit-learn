@@ -15,6 +15,13 @@ enhancements to features released in 0.20.0.
 Changelog
 ---------
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Fixed a bug in :class:`linear_model.MultiTaskElasticNet` and
+  :class:`linear_model.MultiTaskLasso` which were breaking when
+  ``warm_start = True``. :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 

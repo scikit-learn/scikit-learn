@@ -818,3 +818,15 @@ def test_coef_shape_not_zero():
     est_no_intercept = Lasso(fit_intercept=False)
     est_no_intercept.fit(np.c_[np.ones(3)], np.ones(3))
     assert est_no_intercept.coef_.shape == (1,)
+
+
+def test_warm_start_multitask_lasso():
+    X, y, X_test, y_test = build_dataset()
+    Y = np.c_[y, y]
+    clf = MultiTaskLasso(alpha=0.1, max_iter=5, warm_start=True)
+    ignore_warnings(clf.fit)(X, Y)
+    ignore_warnings(clf.fit)(X, Y)  # do a second round with 5 iterations
+
+    clf2 = MultiTaskLasso(alpha=0.1, max_iter=10)
+    ignore_warnings(clf2.fit)(X, Y)
+    assert_array_almost_equal(clf2.coef_, clf.coef_)
