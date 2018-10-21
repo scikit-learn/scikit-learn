@@ -158,7 +158,7 @@ Of course, we can not use the transformer to make any predictions. We should
 wrap this in a :class:`Pipeline` with a classifier (e.g., a
 :class:`DecisionTreeClassifier`) to be able to make predictions.
 
-  >>> clf.fit(X_train, y_train)
+  >>> clf = clf.fit(X_train, y_train)
   >>> results = clf.predict(X_test)
   >>> results.shape
   (100,)
