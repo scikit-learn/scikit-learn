@@ -44,6 +44,7 @@ details.
 
     >>> import numpy as np
     >>> from sklearn.metrics import pairwise_distances
+    >>> from sklearn.metrics.pairwise import pairwise_kernels
     >>> X = np.array([[2, 3], [3, 5], [5, 8]])
     >>> Y = np.array([[1, 0], [2, 1]])
     >>> pairwise_distances(X, Y, metric='manhattan')
@@ -53,7 +54,7 @@ details.
     >>> pairwise_distances(X, metric='manhattan')
     array([[0., 3., 8.],
            [3., 0., 5.],
-       [8., 5., 0.]])
+           [8., 5., 0.]])
     >>> pairwise_kernels(X, Y, metric='linear')
     array([[ 2.,  7.],
            [ 3., 11.],
