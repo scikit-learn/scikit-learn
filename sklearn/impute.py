@@ -413,8 +413,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     """Binary indicators for missing values.
 
     Note that this component typically should not not be used in a vanilla
-    pipeline consisting of transformers and a classifier, but rather could be
-    added using a FeatureUnion.
+    :class:`Pipeline` consisting of transformers and a classifier, but rather
+    could be added using a :class:`FeatureUnion`.
 
     Read more in the :ref:`User Guide <impute>`.
 

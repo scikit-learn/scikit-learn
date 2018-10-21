@@ -125,26 +125,25 @@ When using it in a pipeline, be sure to use the :class:`FeatureUnion` to add
 the indicator features to the regular features. First we obtain the `annael`
 dataset from OpenML, which has many missing values.
 
-  >>> import sklearn.datasets
-  >>> import sklearn.impute
-  >>> import sklearn.model_selection
-  >>> import sklearn.pipeline
-  >>> import sklearn.tree
-  >>> X, y = sklearn.datasets.fetch_openml('anneal', 1, return_X_y=True)
-  >>> X_train, X_test, y_train, _ = sklearn.model_selection.train_test_split(X, y, test_size=100, random_state=0)
+  >>> from sklearn.datasets import fetch_openml
+  >>> from sklearn.impute import SimpleImputer, MissingIndicator
+  >>> from sklearn.model_selection import train_test_split
+  >>> from sklearn.pipeline import FeatureUnion, make_pipeline
+  >>> from sklearn.tree import DecisionTreeClassifier
+  >>> X, y = fetch_openml('anneal', 1, return_X_y=True)
+  >>> X_train, X_test, y_train, _ = train_test_split(X, y, test_size=100,
+  ...                                                random_state=0)
 
 Now we create a :class:`FeatureUnion`. All features will be imputed using
 :class:`SimpleImputer`, in order to enable classifiers to work with this data.
 Additionally, it adds the the indicator variables from
 :class:`MissingIndicator`.
 
-  >>> transformer = sklearn.pipeline.FeatureUnion(
+  >>> transformer = FeatureUnion(
   ...     transformer_list=[
-  ...         ('features', sklearn.impute.SimpleImputer(strategy='mean')),
-  ...         ('indicaters', sklearn.impute.MissingIndicator(features='all'))])
-  >>> clf = sklearn.pipeline.make_pipeline(transformer,
-  ...                                      sklearn.tree.DecisionTreeClassifier())
-
+  ...         ('features', SimpleImputer(strategy='mean')),
+  ...         ('indicaters', MissingIndicator(features='all'))])
+  >>> clf = make_pipeline(transformer, DecisionTreeClassifier())
 
 Note that the anneal dataset has 38 columns. By applying the `features='all'`
 function, we ensure that all columns obtain a indicator column, also the ones
