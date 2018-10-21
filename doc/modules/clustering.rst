@@ -1551,7 +1551,7 @@ Advantages
 - **Upper-bounded at 1**:  Values close to zero indicate two label
   assignments that are largely independent, while values close to one
   indicate significant agreement. Further, values of exactly 0 indicate
-  **purely** independent label assignments and a AMI of exactly 1 indicates
+  **purely** independent label assignments and a FMI of exactly 1 indicates
   that the two label assignments are equal (with or without permutation).
 
 - **No assumption is made on the cluster structure**: can be used
