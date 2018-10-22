@@ -465,7 +465,7 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
     else:
         def normalOperation(V):
                 return (safe_sparse_dot(M,
-                (safe_sparse_dot(V.T.conj(), M)).T.conj()))
+                        (safe_sparse_dot(V.T.conj(), M)).T.conj()))
 
         Ms0 = M.shape[0]
         A = LinearOperator(dtype=M.dtype, shape=(Ms0, Ms0),
