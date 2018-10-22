@@ -622,6 +622,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers):
     labels = np.full(n_samples, -1, dtype=np.int32)
     centers_squared_norms = np.zeros(centers.shape[0], dtype=centers.dtype)
     weight_in_clusters = np.zeros_like(centers_squared_norms)
+    center_shift = np.zeros_like(centers_squared_norms)
 
     if sp.issparse(X):
         labels_centers = _lloyd_iter_chunked_sparse
@@ -632,7 +633,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers):
 
     labels_centers(X, sample_weight, x_squared_norms, centers,
                    centers, centers_squared_norms, weight_in_clusters,
-                   labels, update_centers=False)
+                   labels, center_shift, update_centers=False)
 
     inertia = _inertia(X, sample_weight, centers, labels)
 
