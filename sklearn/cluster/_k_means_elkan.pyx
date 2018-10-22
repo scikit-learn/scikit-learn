@@ -114,12 +114,13 @@ cpdef void _elkan_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
                                      floating[::1] sample_weight,
                                      floating[:, ::1] centers_old,
                                      floating[:, ::1] centers_new,
-                                     floating[::1] weight_in_clusters, 
+                                     floating[::1] weight_in_clusters,
+                                     int[::1] labels,
+                                     floating[::1] center_shift,
                                      floating[:, ::1] center_half_distances,
                                      floating[::1] distance_next_center,
                                      floating[::1] upper_bounds,
                                      floating[:, ::1] lower_bounds,
-                                     int[::1] labels,
                                      int n_jobs = -1,
                                      bint update_centers = True):
     """Single interation of K-means elkan algorithm
@@ -147,6 +148,9 @@ cpdef void _elkan_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
         Placeholder for the sums of the weights of every observation assigned
         to each center.
 
+    labels : int array-like, shape (n_samples,)
+        labels assignment.
+
     center_half_distances : {float32, float64} array-like, \
 shape (n_clusters, n_clusters)
         Half pairwise distances between centers.
@@ -161,9 +165,6 @@ shape (n_clusters, n_clusters)
     lower_bounds : {float32, float64} array-like, shape (n_samples, n_clusters)
         Lower bound for the distance between each sample and each center,
         updated inplace.
-
-    labels : int array-like, shape (n_samples,)
-        labels assignment.
 
     n_jobs : int
         The number of threads to be used by openmp. If -1, openmp will use as
@@ -194,8 +195,6 @@ shape (n_clusters, n_clusters)
 
         floating *centers_new_chunk
         floating *weight_in_clusters_chunk
-
-        floating[::1] center_shift = np.zeros(n_clusters, dtype=X.dtype)
 
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk

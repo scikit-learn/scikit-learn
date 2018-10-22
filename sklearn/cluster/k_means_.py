@@ -418,27 +418,28 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
     n_samples = X.shape[0]
 
     centers_old = np.zeros_like(centers)
-    center_half_distances = euclidean_distances(centers_old) / 2
+    labels = np.full(n_samples, -1, dtype=np.int32)
+    weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
+    center_shift = np.zeros(n_clusters, dtype=X.dtype)
+    center_half_distances = np.zeros((n_clusters, n_clusters), dtype=X.dtype)
     distance_next_center = np.zeros(n_clusters, dtype=X.dtype)
     upper_bounds = np.zeros(n_samples, dtype=X.dtype)
     lower_bounds = np.zeros((n_samples, n_clusters), dtype=X.dtype)
-    labels = np.full(n_samples, -1, dtype=np.int32)
-    weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
 
     _init_bounds(X, centers, center_half_distances,
                  labels, upper_bounds, lower_bounds)
 
     for i in range(max_iter):
         _elkan_iter_chunked_dense(X, sample_weight, centers_old, centers,
-                                  weight_in_clusters, center_half_distances,
-                                  distance_next_center, upper_bounds,
-                                  lower_bounds, labels, n_jobs)
+                                  weight_in_clusters, labels, center_shift,
+                                  center_half_distances, distance_next_center,
+                                  upper_bounds, lower_bounds, n_jobs)
 
         if verbose:
             inertia = _inertia_dense(X, sample_weight, centers_old, labels)
             print("Iteration {0}, inertia {1}" .format(i, inertia))
 
-        center_shift_tot = squared_norm(centers - centers_old)
+        center_shift_tot = (center_shift**2).sum()
         if center_shift_tot <= tol:
             if verbose:
                 print("Converged at iteration {0}: "
@@ -449,10 +450,10 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
     if center_shift_tot > 0:
         # rerun E-step in case of non-convergence so that predicted labels
         # match cluster centers
-        _elkan_iter_chunked_dense(X, sample_weight, centers, centers,
-                                  weight_in_clusters, center_half_distances,
-                                  distance_next_center, upper_bounds,
-                                  lower_bounds, labels, n_jobs,
+        _elkan_iter_chunked_dense(X, sample_weight, centers_old, centers,
+                                  weight_in_clusters, labels, center_shift,
+                                  center_half_distances, distance_next_center,
+                                  upper_bounds, lower_bounds, n_jobs,
                                   update_centers=False)
 
     inertia = _inertia_dense(X, sample_weight, centers, labels)
