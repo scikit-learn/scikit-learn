@@ -309,10 +309,9 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
         X = np.reshape(X, (1, -1))
         warnings.warn("Only one sample available. "
                       "You may want to reshape your data array")
-        n_samples = 1
         n_features = X.size
     else:
-        n_samples, n_features = X.shape
+        _, n_features = X.shape
 
     # get Ledoit-Wolf shrinkage
     shrinkage = ledoit_wolf_shrinkage(
