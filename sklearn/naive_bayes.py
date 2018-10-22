@@ -535,8 +535,6 @@ class BaseDiscreteNB(BaseNB):
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
 
-        n_samples, n_classes = Y.shape
-
         if X.shape[0] != Y.shape[0]:
             msg = "X.shape[0]=%d and y.shape[0]=%d are incompatible."
             raise ValueError(msg % (X.shape[0], y.shape[0]))
@@ -700,7 +698,7 @@ class MultinomialNB(BaseDiscreteNB):
     ----------
     C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234-265.
-    http://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
+    https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
     """
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
@@ -796,7 +794,7 @@ class ComplementNB(BaseDiscreteNB):
     Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
     Tackling the poor assumptions of naive bayes text classifiers. In ICML
     (Vol. 3, pp. 616-623).
-    http://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
+    https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,
@@ -897,7 +895,7 @@ class BernoulliNB(BaseDiscreteNB):
 
     C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234-265.
-    http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
+    https://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
 
     A. McCallum and K. Nigam (1998). A comparison of event models for naive
     Bayes text classification. Proc. AAAI/ICML-98 Workshop on Learning for

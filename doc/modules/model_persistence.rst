@@ -87,4 +87,4 @@ another architecture is not supported.
 
 If you want to know more about these issues and explore other possible
 serialization methods, please refer to this
-`talk by Alex Gaynor <http://pyvideo.org/video/2566/pickles-are-for-delis-not-software>`_.
+`talk by Alex Gaynor <https://pyvideo.org/video/2566/pickles-are-for-delis-not-software>`_.

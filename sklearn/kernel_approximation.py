@@ -72,7 +72,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     [1] "Weighted Sums of Random Kitchen Sinks: Replacing
     minimization with randomization in learning" by A. Rahimi and
     Benjamin Recht.
-    (http://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
+    (https://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
     """
 
     def __init__(self, gamma=1., n_components=100, random_state=None):
@@ -334,7 +334,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         self : object
             Returns the transformer.
         """
-        X = check_array(X, accept_sparse='csr')
+        check_array(X, accept_sparse='csr')
         if self.sample_interval is None:
             # See reference, figure 2 c)
             if self.sample_steps == 1:
@@ -619,10 +619,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
             if (self.gamma is not None or
                     self.coef0 is not None or
                     self.degree is not None):
-                warnings.warn(
-                    "Passing gamma, coef0 or degree to Nystroem when using a"
-                    " callable kernel is deprecated in version 0.19 and will"
-                    " raise an error in 0.21, as they are ignored. Use "
-                    "kernel_params instead.", DeprecationWarning)
+                raise ValueError("Don't pass gamma, coef0 or degree to "
+                                 "Nystroem if using a callable kernel.")
 
         return params

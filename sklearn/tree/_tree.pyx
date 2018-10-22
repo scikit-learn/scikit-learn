@@ -524,7 +524,7 @@ cdef class Tree:
         great as `node_count`.
 
     max_depth : int
-        The maximal depth of the tree.
+        The depth of the tree, i.e. the maximum depth of its leaves.
 
     children_left : array of int, shape [node_count]
         children_left[i] holds the node id of the left child of node i.
@@ -573,6 +573,12 @@ cdef class Tree:
     property children_right:
         def __get__(self):
             return self._get_node_ndarray()['right_child'][:self.node_count]
+
+    property n_leaves:
+        def __get__(self):
+            return np.sum(np.logical_and(
+                self.children_left == -1,
+                self.children_right == -1))
 
     property feature:
         def __get__(self):

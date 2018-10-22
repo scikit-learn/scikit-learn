@@ -128,7 +128,7 @@ feedback:
 
 - The ideal bug report contains a **short reproducible code snippet**, this way
   anyone can try to reproduce the bug easily (see `this
-  <http://stackoverflow.com/help/mcve>`_ for more details). If your snippet is
+  <https://stackoverflow.com/help/mcve>`_ for more details). If your snippet is
   longer than around 50 lines, please link to a `gist
   <https://gist.github.com>`_ or a github repo.
 
@@ -226,7 +226,7 @@ mailing list for more visibility.
 
 If any of the above seems like magic to you, then look up the `Git documentation
 <https://git-scm.com/documentation>`_ and the `Git development workflow
-<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
+<https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
 web.
 
 If some conflicts arise between your branch and the ``master`` branch, you need
@@ -352,9 +352,9 @@ and Cython optimizations.
 
    For two very well documented and more detailed guides on development
    workflow, please pay a visit to the `Scipy Development Workflow
-   <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
+   <https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
    and the `Astropy Workflow for Developers
-   <http://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
+   <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
 
 .. topic:: Continuous Integration (CI)
@@ -560,7 +560,7 @@ We expect code coverage of new features to be at least around 90%.
 .. note:: **Workflow to improve test coverage**
 
    To test code coverage, you need to install the `coverage
-   <https://pypi.python.org/pypi/coverage>`_ package in addition to pytest.
+   <https://pypi.org/project/coverage/>`_ package in addition to pytest.
 
    1. Run 'make test-coverage'. The output lists for each file the line
       numbers that are not tested.
@@ -899,7 +899,7 @@ just remember that ``print`` is a function and
 integer division is written ``//``.
 String handling has been overhauled, though, as have parts of
 the Python standard library.
-The `six <http://pythonhosted.org/six/>`_ package helps with
+The `six <https://pythonhosted.org/six/>`_ package helps with
 cross-compatibility and is included in scikit-learn as
 ``sklearn.externals.six``.
 
@@ -1143,6 +1143,16 @@ data dependent. A tolerance stopping criterion ``tol`` is not directly
 data dependent (although the optimal value according to some scoring
 function probably is).
 
+When ``fit`` is called, any previous call to ``fit`` should be ignored. In
+general, calling ``estimator.fit(X1)`` and then ``estimator.fit(X2)`` should
+be the same as only calling ``estimator.fit(X2)``. However, this may not be
+true in practice when ``fit`` depends on some random process, see
+:term:`random_state`. Another exception to this rule is when the
+hyper-parameter ``warm_start`` is set to ``True`` for estimators that
+support it. ``warm_start=True`` means that the previous state of the
+trainable parameters of the estimator are reused instead of using the
+default initialization strategy.
+
 Estimated Attributes
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -1151,9 +1161,8 @@ ending with trailing underscore, for example the coefficients of
 some regression estimator would be stored in a ``coef_`` attribute after
 ``fit`` has been called.
 
-The last-mentioned attributes are expected to be overridden when
-you call ``fit`` a second time without taking any previous value into
-account: **fit should be idempotent**.
+The estimated attributes are expected to be overridden when you call ``fit``
+a second time.
 
 Optional Arguments
 ^^^^^^^^^^^^^^^^^^
@@ -1195,7 +1204,7 @@ the correct interface more easily.
     * directory structures and scripts to compile documentation and example
       galleries
     * scripts to manage continuous integration (testing on Linux and Windows)
-    * instructions from getting started to publishing on `PyPi <https://pypi.python.org/pypi>`_
+    * instructions from getting started to publishing on `PyPi <https://pypi.org/>`_
 
 .. topic:: ``BaseEstimator`` and mixins:
 

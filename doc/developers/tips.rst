@@ -14,8 +14,8 @@ such as `TamperMonkey`_ or `GreaseMonkey`_; to set up userscripts you must have
 one of these extensions installed, enabled and running.  We provide userscripts
 as GitHub gists; to install them, click on the "Raw" button on the gist page.
 
-.. _TamperMonkey: https://tampermonkey.net
-.. _GreaseMonkey: http://www.greasespot.net
+.. _TamperMonkey: https://tampermonkey.net/
+.. _GreaseMonkey: https://www.greasespot.net/
 
 
 .. _viewing_rendered_html_documentation:
@@ -177,7 +177,7 @@ PR-NEW: Fix #
 PR-NEW or Issue: Maintenance cost
     ::
 
-        Every feature we include has a [maintenance cost](http://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn). Our maintainers are mostly volunteers. For a new feature to be included, we need evidence that it is often useful and, ideally, [well-established](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms) in the literature or in practice. That doesn't stop you implementing it for yourself and publishing it in a separate repository, or even [scikit-learn-contrib](http://scikit-learn-contrib.github.io).
+        Every feature we include has a [maintenance cost](http://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn). Our maintainers are mostly volunteers. For a new feature to be included, we need evidence that it is often useful and, ideally, [well-established](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms) in the literature or in practice. That doesn't stop you implementing it for yourself and publishing it in a separate repository, or even [scikit-learn-contrib](https://scikit-learn-contrib.github.io).
 
 PR-WIP: What's needed before merge?
     ::
@@ -244,8 +244,8 @@ code. Follow these steps:
        $> valgrind -v --suppressions=valgrind-python.supp python my_test_script.py
 
 .. _valgrind: http://valgrind.org
-.. _`README.valgrind`: http://svn.python.org/projects/python/trunk/Misc/README.valgrind
-.. _`valgrind-python.supp`: http://svn.python.org/projects/python/trunk/Misc/valgrind-python.supp
+.. _`README.valgrind`: https://svn.python.org/projects/python/trunk/Misc/README.valgrind
+.. _`valgrind-python.supp`: https://svn.python.org/projects/python/trunk/Misc/valgrind-python.supp
 
 
 The result will be a list of all the memory-related errors, which reference

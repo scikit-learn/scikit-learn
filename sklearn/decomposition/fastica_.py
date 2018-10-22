@@ -18,7 +18,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..exceptions import ConvergenceWarning
 from ..externals import six
 from ..externals.six import moves
-from ..externals.six import string_types
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
@@ -553,7 +552,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         self._fit(X, compute_sources=False)
         return self
 
-    def transform(self, X, y='deprecated', copy=True):
+    def transform(self, X, copy=True):
         """Recover the sources from X (apply the unmixing matrix).
 
         Parameters
@@ -561,9 +560,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Data to transform, where n_samples is the number of samples
             and n_features is the number of features.
-        y : (ignored)
-            .. deprecated:: 0.19
-               This parameter will be removed in 0.21.
+
         copy : bool (optional)
             If False, data passed to fit are overwritten. Defaults to True.
 
@@ -571,11 +568,6 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        if not isinstance(y, string_types) or y != 'deprecated':
-            warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
-
         check_is_fitted(self, 'mixing_')
 
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
