@@ -181,7 +181,7 @@ boolean mask array or callable
     @_transformers.setter
     def _transformers(self, value):
         self.transformers = [
-            (name, trans, col) for ((name, trans), (_, _, col))
+            (name, col, trans) for ((name, trans), (_, _, col))
             in zip(value, self.transformers)]
 
     def get_params(self, deep=True):
@@ -214,7 +214,7 @@ boolean mask array or callable
 
     def _iter(self, fitted=False, replace_strings=False):
         """
-        Generate (name, trans, column, weight) tuples.
+        Generate (name, column, trans, weight) tuples.
 
         If fitted=True, use the fitted transformers, else use the
         user specified transformers updated with converted column names
@@ -226,7 +226,7 @@ boolean mask array or callable
         else:
             # interleave the validated column specifiers
             transformers = [
-                (name, trans, column) for (name, trans, _), column
+                (name, column, trans) for (name, _, trans), column
                 in zip(self.transformers, self._columns)
             ]
             # add transformer tuple for remainder
@@ -234,7 +234,7 @@ boolean mask array or callable
                 transformers = chain(transformers, [self._remainder])
         get_weight = (self.transformer_weights or {}).get
 
-        for name, trans, column in transformers:
+        for name, column, trans in transformers:
             if replace_strings:
                 # replace 'passthrough' with identity transformer and
                 # skip in case of 'drop'
@@ -247,13 +247,13 @@ boolean mask array or callable
                 elif _is_empty_column_selection(column):
                     continue
 
-            yield (name, trans, column, get_weight(name))
+            yield (name, column, trans, get_weight(name))
 
     def _validate_transformers(self):
         if not self.transformers:
             return
 
-        names, transformers, _ = zip(*self.transformers)
+        names, _, transformers = zip(*self.transformers)
 
         # validate names
         self._validate_names(names)
@@ -274,7 +274,7 @@ boolean mask array or callable
         Converts callable column specifications.
         """
         columns = []
-        for _, _, column in self.transformers:
+        for _, column, _ in self.transformers:
             if callable(column):
                 column = column(X)
             columns.append(column)
@@ -313,7 +313,7 @@ boolean mask array or callable
 
         """
         # Use Bunch object to improve autocomplete
-        return Bunch(**dict([(name, trans) for name, trans, _
+        return Bunch(**dict([(name, trans) for name, _, trans
                              in self.transformers_]))
 
     def get_feature_names(self):
@@ -326,7 +326,7 @@ boolean mask array or callable
         """
         check_is_fitted(self, 'transformers_')
         feature_names = []
-        for name, trans, _, _ in self._iter(fitted=True):
+        for name, _, trans, _ in self._iter(fitted=True):
             if trans == 'drop':
                 continue
             elif trans == 'passthrough':
@@ -346,7 +346,7 @@ boolean mask array or callable
         fitted_transformers = iter(transformers)
         transformers_ = []
 
-        for name, old, column, _ in self._iter():
+        for name, column, old, _ in self._iter():
             if old == 'drop':
                 trans = 'drop'
             elif old == 'passthrough':
@@ -358,7 +358,7 @@ boolean mask array or callable
                 trans = old
             else:
                 trans = next(fitted_transformers)
-            transformers_.append((name, trans, column))
+            transformers_.append((name, column, trans))
 
         # sanity check that transformers is exhausted
         assert not list(fitted_transformers)
@@ -389,7 +389,7 @@ boolean mask array or callable
             return Parallel(n_jobs=self.n_jobs)(
                 delayed(func)(clone(trans) if not fitted else trans,
                               _get_column(X, column), y, weight)
-                for _, trans, column, weight in self._iter(
+                for _, column, trans, weight in self._iter(
                     fitted=fitted, replace_strings=True))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
