@@ -179,8 +179,8 @@ shape (n_clusters, n_clusters)
         int n_features = X.shape[1]
         int n_clusters = centers_new.shape[0]
 
-        # hard-coded number of samples per chunk. Appeared to be close to
-        # optimal in all situations.
+        # hard-coded number of samples per chunk. Splitting in chunks is
+        # necessary to get parallelism. Chunk size chosed to be same as lloyd's
         int n_samples_chunk = 256 if n_samples > 256 else n_samples
         int n_chunks = n_samples // n_samples_chunk
         int n_samples_r = n_samples % n_samples_chunk
