@@ -52,18 +52,13 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
     Parameters
     ----------
     transformers : list of tuples
-        List of (name, transformer, column(s)) tuples specifying the
+        List of (name, column(s), transformer) tuples specifying the
         transformer objects to be applied to subsets of the data.
 
         name : string
             Like in Pipeline and FeatureUnion, this allows the transformer and
             its parameters to be set using ``set_params`` and searched in grid
             search.
-        transformer : estimator or {'passthrough', 'drop'}
-            Estimator must support `fit` and `transform`. Special-cased
-            strings 'drop' and 'passthrough' are accepted as well, to
-            indicate to drop the columns or to pass them through untransformed,
-            respectively.
         column(s) : string or int, array-like of string or int, slice, \
 boolean mask array or callable
             Indexes the data on its second axis. Integers are interpreted as
@@ -73,6 +68,11 @@ boolean mask array or callable
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
             above.
+        transformer : estimator or {'passthrough', 'drop'}
+            Estimator must support `fit` and `transform`. Special-cased
+            strings 'drop' and 'passthrough' are accepted as well, to
+            indicate to drop the columns or to pass them through untransformed,
+            respectively.
 
     remainder : {'drop', 'passthrough'} or estimator, default 'drop'
         By default, only the specified columns in `transformers` are
@@ -108,12 +108,12 @@ boolean mask array or callable
     ----------
     transformers_ : list
         The collection of fitted transformers as tuples of
-        (name, fitted_transformer, column). `fitted_transformer` can be an
+        (name, column, fitted_transformer). `fitted_transformer` can be an
         estimator, 'drop', or 'passthrough'. In case there were no columns
         selected, this will be the unfitted transformer.
         If there are remaining columns, the final element is a tuple of the
         form:
-        ('remainder', transformer, remaining_columns) corresponding to the
+        ('remainder', remaining_columns, transformer) corresponding to the
         ``remainder`` parameter. If there are remaining columns, then
         ``len(transformers_)==len(transformers)+1``, otherwise
         ``len(transformers_)==len(transformers)``.
