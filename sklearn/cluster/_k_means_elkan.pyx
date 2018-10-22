@@ -15,7 +15,7 @@ from libc.stdlib cimport malloc, free
 from libc.string cimport memset, memcpy
 
 from ..metrics import euclidean_distances
-from ._k_means import _relocate_empty_clusters_dense
+from ._k_means import _relocate_empty_clusters_dense, _mean_and_center_shift
 
 
 np.import_array()
@@ -252,22 +252,10 @@ shape (n_clusters, n_clusters)
         _relocate_empty_clusters_dense(X, sample_weight, centers_new,
                                        weight_in_clusters, labels)
 
-        # average new centers wrt sample weights
-        for j in xrange(n_clusters):
-            if weight_in_clusters[j] > 0:
-                alpha = 1.0 / weight_in_clusters[j]
-                for k in xrange(n_features):
-                    centers_new[j, k] *= alpha
+        _mean_and_center_shift(centers_old, centers_new, weight_in_clusters,
+                               center_shift)
 
-        # compute shift distance between old and new centers
-        for j in range(n_clusters):
-            tmp = 0
-            for k in range(n_features):
-                x = centers_new[j, k] - centers_old[j, k]
-                tmp += x * x
-            center_shift[j] = sqrt(tmp)
-
-        # update lower and upper bounds accordingly
+        # update lower and upper bounds
         for i in range(n_samples):
             upper_bounds[i] += center_shift[labels[i]]
 

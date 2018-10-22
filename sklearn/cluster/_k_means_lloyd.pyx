@@ -9,11 +9,13 @@ cimport openmp
 from cython cimport floating
 from cython.parallel import prange, parallel
 from scipy.linalg.cython_blas cimport sgemm, dgemm
+from libc.math cimport sqrt
 from libc.stdlib cimport malloc, free
 from libc.string cimport memset, memcpy
 
 from ._k_means import (_relocate_empty_clusters_dense,
-                       _relocate_empty_clusters_sparse)
+                       _relocate_empty_clusters_sparse,
+                       _mean_and_center_shift)
 
 
 np.import_array()
@@ -41,6 +43,7 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
                                      floating[::1] centers_squared_norms,
                                      floating[::1] weight_in_clusters, 
                                      int[::1] labels,
+                                     floating[::1] center_shift,
                                      int n_jobs = -1,
                                      bint update_centers = True):
     """Single interation of K-means lloyd algorithm
@@ -179,12 +182,8 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
         _relocate_empty_clusters_dense(X, sample_weight, centers_new,
                                        weight_in_clusters, labels)
 
-        # average new centers wrt sample weights
-        for j in xrange(n_clusters):
-            if weight_in_clusters[j] > 0:
-                alpha = 1.0 / weight_in_clusters[j]
-                for k in xrange(n_features):
-                    centers_new[j, k] *= alpha
+        _mean_and_center_shift(centers_old, centers_new, weight_in_clusters,
+                               center_shift)
 
 
 cdef void _update_chunk_dense(floating *X,
@@ -253,6 +252,7 @@ cpdef void _lloyd_iter_chunked_sparse(X,
                                       floating[::1] centers_squared_norms,
                                       floating[::1] weight_in_clusters, 
                                       int[::1] labels,
+                                      floating[::1] center_shift,
                                       int n_jobs = -1,
                                       bint update_centers = True):
     """Single interation of K-means lloyd algorithm
@@ -391,12 +391,8 @@ cpdef void _lloyd_iter_chunked_sparse(X,
                                         sample_weight, centers_new,
                                         weight_in_clusters, labels)
 
-        # average new centers wrt sample weights
-        for j in xrange(n_clusters):
-            if weight_in_clusters[j] > 0:
-                alpha = 1.0 / weight_in_clusters[j]
-                for k in xrange(n_features):
-                    centers_new[j, k] *= alpha
+        _mean_and_center_shift(centers_old, centers_new, weight_in_clusters,
+                               center_shift)
 
 
 cdef void _update_chunk_sparse(floating *X_data,

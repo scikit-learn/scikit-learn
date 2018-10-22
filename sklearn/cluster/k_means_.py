@@ -19,7 +19,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
-from ..utils.extmath import row_norms, squared_norm, stable_cumsum
+from ..utils.extmath import row_norms, stable_cumsum
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _num_samples
@@ -551,6 +551,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
     centers_squared_norms = np.zeros(n_clusters, dtype=X.dtype)
     labels = np.full(X.shape[0], -1, dtype=np.int32)
     weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
+    center_shift = np.zeros(n_clusters, dtype=X.dtype)
 
     if sp.issparse(X):
         lloyd_iter = _lloyd_iter_chunked_sparse
@@ -561,26 +562,27 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
 
     for i in range(max_iter):
         lloyd_iter(X, sample_weight, x_squared_norms, centers_old, centers,
-                   centers_squared_norms, weight_in_clusters, labels, n_jobs)
+                   centers_squared_norms, weight_in_clusters, labels,
+                   center_shift, n_jobs)
 
         if verbose:
             inertia = _inertia(X, sample_weight, centers_old, labels)
             print("Iteration {0}, inertia {1}" .format(i, inertia))
 
-        center_shift = squared_norm(centers - centers_old)
-        if center_shift <= tol:
+        center_shift_tot = (center_shift**2).sum()
+        if center_shift_tot <= tol:
             if verbose:
                 print("Converged at iteration {0}: "
                       "center shift {1} within tolerance {2}"
-                      .format(i, center_shift, tol))
+                      .format(i, center_shift_tot, tol))
             break
 
-    if center_shift > 0:
+    if center_shift_tot > 0:
         # rerun E-step in case of non-convergence so that predicted labels
         # match cluster centers
         lloyd_iter(X, sample_weight, x_squared_norms, centers, centers,
-                   centers_squared_norms, weight_in_clusters, labels, n_jobs,
-                   update_centers=False)
+                   centers_squared_norms, weight_in_clusters, labels,
+                   center_shift, n_jobs, update_centers=False)
 
     inertia = _inertia(X, sample_weight, centers, labels)
 

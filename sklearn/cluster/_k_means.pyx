@@ -12,6 +12,7 @@ import numpy as np
 cimport numpy as np
 cimport cython
 from cython cimport floating
+from libc.math cimport sqrt
 
 
 np.import_array()
@@ -180,6 +181,33 @@ cpdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
 
             weight_in_clusters[new_cluster_id] = weight
             weight_in_clusters[old_cluster_id] -= weight
+
+
+cpdef void _mean_and_center_shift(floating[:, ::1] centers_old,
+                                  floating[:, ::1] centers_new,
+                                  floating[::1] weight_in_clusters,
+                                  floating[::1] center_shift):
+    cdef:
+        int n_clusters = centers_old.shape[0]
+        int n_features = centers_old.shape[1]
+
+        int j, k
+        floating alpha, tmp, x
+
+    # average new centers wrt sample weights
+    for j in xrange(n_clusters):
+        if weight_in_clusters[j] > 0:
+            alpha = 1.0 / weight_in_clusters[j]
+            for k in xrange(n_features):
+                centers_new[j, k] *= alpha
+    
+    # compute shift distance between old and new centers
+    for j in range(n_clusters):
+        tmp = 0
+        for k in range(n_features):
+            x = centers_new[j, k] - centers_old[j, k]
+            tmp += x * x
+        center_shift[j] = sqrt(tmp)
 
 
 def _mini_batch_update_csr(X, np.ndarray[floating, ndim=1] sample_weight,
