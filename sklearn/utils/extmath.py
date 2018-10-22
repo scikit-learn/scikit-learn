@@ -464,9 +464,9 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
         A = safe_sparse_dot(M, M.T.conj())
     else:
         def normalOperation(V):
-             return safe_sparse_dot(M,
-             (safe_sparse_dot(V.T.conj(), M)).T.conj())
-    
+                return (safe_sparse_dot(M,
+                (safe_sparse_dot(V.T.conj(), M)).T.conj()))
+
         Ms0 = M.shape[0]
         A = LinearOperator(dtype=M.dtype, shape=(Ms0, Ms0),
                            matvec=normalOperation)
@@ -498,7 +498,7 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     if transpose:
         # transpose back the results according to the input convention
-        return (V[:n_components,:].T.conj(), s[:n_components],
+        return (V[:n_components, :].T.conj(), s[:n_components],
                 U[:, :n_components].T.conj())
     else:
         return U[:, :n_components], s[:n_components], V[:n_components, :]
