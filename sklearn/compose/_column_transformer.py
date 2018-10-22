@@ -14,6 +14,7 @@ import numpy as np
 import warnings
 from scipy import sparse
 
+from ..externals import six
 from ..base import clone, TransformerMixin
 from ..utils import Parallel, delayed
 from ..externals import six
@@ -249,6 +250,28 @@ boolean mask array or callable
 
             yield (name, column, trans, get_weight(name))
 
+    def _validate_tuple_order(self):
+        # check if any given tuple follows the
+        # (name, transformer, column) order.
+        # flip all tuples if that's the case.
+        # remove in v0.22
+        warn_message = ('ColumnTransformer transformer tuples should be '
+                        '(name, column, transformer), whereas '
+                        '(name, transformer, column) was passed; '
+                        'its support is deprecated and will be removed in '
+                        'version 0.22. Assuming the deprecated '
+                        'order for all given tuples.')
+        try:
+            self._validate_transformers()
+        except TypeError as e:
+            try:
+                self.transformers = [(x, z, y)
+                                     for (x, y, z) in self.transformers]
+                warnings.warn(warn_message, DeprecationWarning)
+            except TypeError:
+                # the other order also doesn't work.
+                pass
+
     def _validate_transformers(self):
         if not self.transformers:
             return
@@ -442,6 +465,7 @@ boolean mask array or callable
 
         """
         X = _check_X(X)
+        self._validate_tuple_order()
         self._validate_transformers()
         self._validate_column_callables(X)
         self._validate_remainder(X)

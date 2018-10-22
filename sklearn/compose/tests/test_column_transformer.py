@@ -128,6 +128,21 @@ def test_column_transformer():
     assert_array_equal(both.fit(X_array).transform(X_array), 0.1 * X_res_both)
     assert len(both.transformers_) == 1
 
+    # test if the DeprecationWarning is raised if the wrong order in
+    # the tuple is passed.
+    # XXX Remove in v0.22
+    with pytest.warns(DeprecationWarning,
+                      match="ColumnTransformer transformer tuples should be"):
+        ct = ColumnTransformer([('trans1', Trans(), [0]),
+                                ('trans2', Trans(), [1])])
+        ct.fit_transform(X_array)
+
+    with pytest.warns(DeprecationWarning,
+                      match="ColumnTransformer transformer tuples should be"):
+        ct = ColumnTransformer([('trans1', Trans(), [0]),
+                                ('trans2', Trans(), [1])])
+        ct.fit(X_array)
+
 
 def test_column_transformer_dataframe():
     pd = pytest.importorskip('pandas')
