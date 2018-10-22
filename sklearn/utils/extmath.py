@@ -459,7 +459,7 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
         # Ensure f32 is preserved as f32
         Q = Q.astype(M.dtype, copy=False)
 
-    # determine the normal matrix 
+    # determine the normal matrix
     if explicitNormalMatrix:
         A = safe_sparse_dot(M, M.T.conj())
     else:
