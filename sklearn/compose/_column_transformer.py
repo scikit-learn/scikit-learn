@@ -711,8 +711,25 @@ def _get_transformer_list(estimators):
     Construct (name, trans, column) tuples from list
 
     """
-    transformers = [trans[1] for trans in estimators]
-    columns = [trans[0] for trans in estimators]
+    # check if any given tuple follows the (columns, transformer) order.
+    # flip all tuples if that's the case.
+    # remove in v0.22
+    trans_ix, cols_ix = 0, 1
+    for tup in estimators:
+        if (hasattr(tup[1], 'fit') or
+                (tup[1] in ('drop', 'passthrough')
+                 and tup[0] not in ('drop', 'passthrough'))):
+            warnings.warn('make_column_transformer arguments should be '
+                          '(transformer, columns), whereas '
+                          '(columns, transformer) was passed; '
+                          'its support is deprecated and will be removed in '
+                          'version 0.22. Assuming the deprecated '
+                          'order for all given tuples.', DeprecationWarning)
+            trans_ix, cols_ix = 1, 0
+            break
+
+    transformers = [trans[trans_ix] for trans in estimators]
+    columns = [trans[cols_ix] for trans in estimators]
     names = [trans[0] for trans in _name_estimators(transformers)]
 
     transformer_list = list(zip(names, columns, transformers))
@@ -772,8 +789,8 @@ def make_column_transformer(*transformers, **kwargs):
     >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
     >>> from sklearn.compose import make_column_transformer
     >>> make_column_transformer(
-    ...     (['numerical_column'], StandardScaler()),
-    ...     (['categorical_column'], OneHotEncoder()))
+    ...     (StandardScaler(), ['numerical_column']),
+    ...     (OneHotEncoder(), ['categorical_column']))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
              transformer_weights=None,
