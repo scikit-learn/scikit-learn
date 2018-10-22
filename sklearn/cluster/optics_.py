@@ -431,9 +431,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         nbrs.fit(X)
         # Here we first do a kNN query for each point, this differs from
-        # the original OPTICS that only used epsilon range queries
-        # This can save us some distance computations later - or it can
-        # mean we are computing the same distances twice.
+        # the original OPTICS that only used epsilon range queries.
         self.core_distances_ = self._compute_core_distances_(X, nbrs)
         # OPTICS puts an upper limit on these, use inf for undefined.
         self.core_distances_[self.core_distances_ > self.max_eps] = np.inf
@@ -451,7 +449,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
         return self
 
     # OPTICS helper functions
-
     def _compute_core_distances_(self, X, neighbors, working_memory=None):
         """Compute the k-th nearest neighbor of each sample
 
@@ -498,7 +495,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
         for ordering_idx in range(X.shape[0]):
             # Choose next based on smallest reachability distance
             # (And prefer smaller ids on ties, possibly np.inf!)
-            # XXX: Do we have a better solution from numpy?
             index = np.where(processed == 0)[0]
             point = index[np.argmin(self.reachability_[index])]
 
@@ -510,7 +506,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     def _set_reach_dist(self, point_index, processed, X, nbrs):
         P = X[point_index:point_index + 1]
-        # Assume that radius_neighbors is faster without distances.
+        # Assume that radius_neighbors is faster without distances
         # and we don't need all distances, nevertheless, this means
         # we may be doing some work twice.
         indices = nbrs.radius_neighbors(P, radius=self.max_eps,
@@ -519,12 +515,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # Getting indices of neighbors that have not been processed
         unproc = np.compress((~np.take(processed, indices)).ravel(),
                              indices, axis=0)
-        # Keep n_jobs = 1 in the following lines...please
+        # Neighbors of current point are already processed.
         if not unproc.size:
-            # Neighbors of current point are already processed.
             return
 
-        # ONLY compute distances to unprocessed neighbors:
+        # Only compute distances to unprocessed neighbors:
         if self.metric == 'precomputed':
             dists = X[point_index, unproc]
         else:

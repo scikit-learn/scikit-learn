@@ -210,8 +210,8 @@ def test_cluster_sigmin_pruning(reach, n_child, members):
 
 
 def test_processing_order():
-    # Early dev version of OPTICS would not consider all unprocessed points,
-    # but only direct neighbors. This tests against this mistake.
+    # Ensure that we consider all unprocessed points,
+    # not only direct neighbors. when picking the next point.
     Y = [[0], [10], [-10], [25]]
     clust = OPTICS(min_samples=3, max_eps=15).fit(Y)
     assert_array_equal(clust.reachability_, [np.inf, 10, 10, 15])
