@@ -103,6 +103,7 @@ jobs:
           command: |
             if [[ "${CIRCLE_BRANCH}" =~ ^master$|^[0-9]+\.[0-9]+\.X$ ]]; then
               bash build_tools/circle/push_doc.sh doc/_build/html/stable
+<<<<<<< 6c0faf614b525bad520269e28ec684b44c00c22a
             fi
 
 workflows:
@@ -130,3 +131,6 @@ workflows:
                 - master
     jobs:
       - pypy3
+=======
+            fi
+>>>>>>> drop python 2 CI
