@@ -1332,7 +1332,7 @@ def test_gradient_boosting_with_init(estimator):
     X = np.random.random_sample((100, 5))
 
     if estimator is "classifier":
-        init = LogisticRegression()
+        init = LogisticRegression(solver="lbfgs")
         est = GradientBoostingClassifier
         y = np.random.randint(0, 2, 100)
     else:
