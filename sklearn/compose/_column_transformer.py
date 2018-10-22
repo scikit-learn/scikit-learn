@@ -711,25 +711,6 @@ def _get_transformer_list(estimators):
     Construct (name, trans, column) tuples from list
 
     """
-
-    """
-    # check if any given tuple follows the (columns, transformer) order.
-    # flip all tuples if that's the case.
-    # remove in v0.22
-    trans_ix, cols_ix = 0, 1
-    for tup in estimators:
-        if (hasattr(tup[1], 'fit') or
-                (tup[1] in ('drop', 'passthrough')
-                 and tup[0] not in ('drop', 'passthrough'))):
-            warnings.warn('make_column_transformer arguments should be '
-                          '(transformer, columns), whereas '
-                          '(columns, transformer) was passed; '
-                          'its support is deprecated and will be removed in '
-                          'version 0.22. Assuming the deprecated '
-                          'order for all given tuples.', DeprecationWarning)
-            trans_ix, cols_ix = 1, 0
-            break
-    """
     transformers = [trans[1] for trans in estimators]
     columns = [trans[0] for trans in estimators]
     names = [trans[0] for trans in _name_estimators(transformers)]
