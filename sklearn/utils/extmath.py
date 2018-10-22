@@ -365,7 +365,8 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
 
 def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
-               transpose='auto', flip_sign=True, random_state=0):
+               transpose='auto', flip_sign=True, random_state=0,
+               tol=None, explicitNormalMatrix=False):
     """Computes a truncated SVD using LOBPCG to accelerate the randomized SVD.
     Compared to 'randomised', the 'lobpcg' option gives more accurate
     approximations, with the same n_iter, n_components, and n_oversamples,
@@ -375,7 +376,7 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
     Parameters
     ----------
     M : ndarray or sparse matrix
-        Matrix to decompose
+        Matrix to decompose, real or complex.
 
     n_components : int
         Number of singular values and vectors to extract.
@@ -388,7 +389,7 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
         approximation of singular vectors and singular values.
 
     n_iter : int or 'auto' (default is 'auto')
-        Number of power iterations. It can be used to deal with very noisy
+        Number of lobpcg iterations. It can be used to deal with very noisy
         problems. When 'auto', it is set to 4, unless `n_components` is small
         (< .1 * min(X.shape)) `n_iter` in which case is set to 7.
         This improves precision with few components.
@@ -396,9 +397,8 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
     transpose : True, False or 'auto' (default)
         Whether the algorithm should be applied to M.T instead of M. The
         result should approximately be the same. The 'auto' mode will
-        trigger the transposition if M.shape[1] > M.shape[0] since this
-        implementation of randomized SVD tend to be a little faster in that
-        case.
+        trigger the transposition if M.shape[0] > M.shape[1] since this
+        leads to the normal matrix of the smaller size and thus runs faster.
 
     flip_sign : boolean, (True by default)
         The output of a singular value decomposition is only unique up to a
@@ -412,6 +412,16 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
+
+    tol : scalar, (default=None)
+        Optional solver tolerance (stopping criterion), if large enough, may
+        overwrite n_iter. If None, lobpcg sets is internally. 
+
+    explicitNormalMatrix : boolean, (False by default)
+        Optional parameter that determines if the normal matrix used by lobpcg
+        is computed explicitly or implicitly via LinearOperator performing
+        multiplication of the normal matrix and a vector. The latter may be
+        faster for data matrices M of large sizes.
 
     Notes
     -----
@@ -450,8 +460,7 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
         Q = Q.astype(M.dtype, copy=False)
 
     # determine the normal matrix 
-    explixitNormalMatrix = False
-    if explixitNormalMatrix:
+    if explicitNormalMatrix:
         A = safe_sparse_dot(M, M.T.conj())
     else:
         def normalOperation(V):
@@ -464,12 +473,10 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     # for lobpcg debugging, use verbosityLevel = 1
     lobpcgVerbosityLevel = 0
-    # lobpcg tol, if large enough, may overwrite maxiter
-    lobpcgTol = None
     # lobpcg computes the largest, be default, eigenvalues of the normal matrix
-    # A, given inlicitely via LinearOperator or explixitly as dense or sparse
+    # A, given implicitly via LinearOperator or explicitly as dense or sparse
     _, Q = lobpcg(A, Q, maxiter=n_iter,
-                  verbosityLevel=lobpcgVerbosityLevel, tol=lobpcgTol)
+                  verbosityLevel=lobpcgVerbosityLevel, tol=tol)
 
     # project M to the (k + p) dimensional space using the basis vectors
     # project M to the (k + p) dimensional space using the basis vectors
