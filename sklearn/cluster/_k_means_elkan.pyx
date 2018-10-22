@@ -146,9 +146,6 @@ cpdef void _elkan_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
         Placeholder for the sums of the weights of every observation assigned
         to each center.
 
-    labels : int array-like, shape (n_samples,)
-        labels assignment.
-
     center_half_distances : {float32, float64} array-like, \
 shape (n_clusters, n_clusters)
         Half pairwise distances between centers.
@@ -163,6 +160,12 @@ shape (n_clusters, n_clusters)
     lower_bounds : {float32, float64} array-like, shape (n_samples, n_clusters)
         Lower bound for the distance between each sample and each center,
         updated inplace.
+
+    labels : int array-like, shape (n_samples,)
+        labels assignment.
+
+    center_shift : {float32, float64} array-like, shape (n_clusters,)
+        Distance between old and new centers.
 
     n_jobs : int
         The number of threads to be used by openmp. If -1, openmp will use as

@@ -187,6 +187,7 @@ cpdef void _mean_and_center_shift(floating[:, ::1] centers_old,
                                   floating[:, ::1] centers_new,
                                   floating[::1] weight_in_clusters,
                                   floating[::1] center_shift):
+    """Average new centers wrt weights and compute center shift"""
     cdef:
         int n_clusters = centers_old.shape[0]
         int n_features = centers_old.shape[1]

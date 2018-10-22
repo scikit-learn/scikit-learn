@@ -79,6 +79,9 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
 
     labels : int array-like, shape (n_samples,)
         labels assignment.
+    
+    center_shift : {float32, float64} array-like, shape (n_clusters,)
+        Distance between old and new centers.
 
     n_jobs : int
         The number of threads to be used by openmp. If -1, openmp will use as
@@ -288,6 +291,9 @@ cpdef void _lloyd_iter_chunked_sparse(X,
 
     labels : int array-like, shape (n_samples,)
         labels assignment.
+    
+    center_shift : {float32, float64} array-like, shape (n_clusters,)
+        Distance between old and new centers.
 
     n_jobs : int
         The number of threads to be used by openmp. If -1, openmp will use as
