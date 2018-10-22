@@ -1683,7 +1683,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
         ----------
         X : array-like
         """
-        X = check_array(X, accept_sparse='csr')
+        check_array(X, accept_sparse='csr')
         return self
 
     def transform(self, X, copy=None):
