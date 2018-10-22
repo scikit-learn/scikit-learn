@@ -93,8 +93,6 @@ cpdef _init_bounds(np.ndarray[floating, ndim=2, mode='c'] X,
         floating min_dist, dist
         int best_cluster, i, j
 
-    center_half_distances = euclidean_distances(np.asarray(centers)) / 2
-
     for i in range(n_samples):
         best_cluster = 0
         min_dist = euclidean_dist(&X[i, 0], &centers[0, 0], n_features)
@@ -115,12 +113,12 @@ cpdef void _elkan_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
                                      floating[:, ::1] centers_old,
                                      floating[:, ::1] centers_new,
                                      floating[::1] weight_in_clusters,
-                                     int[::1] labels,
-                                     floating[::1] center_shift,
                                      floating[:, ::1] center_half_distances,
                                      floating[::1] distance_next_center,
                                      floating[::1] upper_bounds,
                                      floating[:, ::1] lower_bounds,
+                                     int[::1] labels,
+                                     floating[::1] center_shift,
                                      int n_jobs = -1,
                                      bint update_centers = True):
     """Single interation of K-means elkan algorithm
@@ -205,9 +203,6 @@ shape (n_clusters, n_clusters)
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
-    # compute pairwise distances between centers and get next closest center
-    distance_next_center = np.partition(np.asarray(center_half_distances), kth=1, axis=0)[1]
-
     # set number of threads to be used by openmp
     num_threads = n_jobs if n_jobs != -1 else openmp.omp_get_max_threads()
 
@@ -280,8 +275,6 @@ shape (n_clusters, n_clusters)
                 lower_bounds[i, j] -= center_shift[j]
                 if lower_bounds[i, j] < 0:
                     lower_bounds[i, j] = 0
-
-        center_half_distances = euclidean_distances(np.asarray(centers_old)) / 2
 
 
 cdef void _update_chunk(floating *X,

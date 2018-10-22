@@ -418,22 +418,29 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
     n_samples = X.shape[0]
 
     centers_old = np.zeros_like(centers)
-    labels = np.full(n_samples, -1, dtype=np.int32)
     weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
-    center_shift = np.zeros(n_clusters, dtype=X.dtype)
-    center_half_distances = np.zeros((n_clusters, n_clusters), dtype=X.dtype)
+    labels = np.full(n_samples, -1, dtype=np.int32)
+    center_half_distances = euclidean_distances(centers) / 2
     distance_next_center = np.zeros(n_clusters, dtype=X.dtype)
     upper_bounds = np.zeros(n_samples, dtype=X.dtype)
     lower_bounds = np.zeros((n_samples, n_clusters), dtype=X.dtype)
+    center_shift = np.zeros(n_clusters, dtype=X.dtype)
 
     _init_bounds(X, centers, center_half_distances,
                  labels, upper_bounds, lower_bounds)
 
     for i in range(max_iter):
+        # compute the closest other center of each center
+        distance_next_center = np.partition(np.asarray(center_half_distances),
+                                            kth=1, axis=0)[1]
+
         _elkan_iter_chunked_dense(X, sample_weight, centers_old, centers,
-                                  weight_in_clusters, labels, center_shift,
-                                  center_half_distances, distance_next_center,
-                                  upper_bounds, lower_bounds, n_jobs)
+                                  weight_in_clusters, center_half_distances,
+                                  distance_next_center, upper_bounds,
+                                  lower_bounds, labels, center_shift, n_jobs)
+
+        # compute new pairwise distances between centers for next iterations
+        center_half_distances = euclidean_distances(centers) / 2
 
         if verbose:
             inertia = _inertia_dense(X, sample_weight, centers_old, labels)
@@ -450,10 +457,10 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
     if center_shift_tot > 0:
         # rerun E-step in case of non-convergence so that predicted labels
         # match cluster centers
-        _elkan_iter_chunked_dense(X, sample_weight, centers_old, centers,
-                                  weight_in_clusters, labels, center_shift,
-                                  center_half_distances, distance_next_center,
-                                  upper_bounds, lower_bounds, n_jobs,
+        _elkan_iter_chunked_dense(X, sample_weight, centers, centers,
+                                  weight_in_clusters, center_half_distances,
+                                  distance_next_center, upper_bounds,
+                                  lower_bounds, labels, center_shift, n_jobs,
                                   update_centers=False)
 
     inertia = _inertia_dense(X, sample_weight, centers, labels)
