@@ -1421,7 +1421,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             self.init_.fit(X, y, sample_weight)
 
             # init predictions
-            y_pred = self.init_.predict(X)
+            y_pred = self.init_.predict(X).astype(np.float64, copy=False)
+            if y_pred.shape == (X.shape[0],):
+                y_pred = y_pred[:, np.newaxis]
             begin_at_stage = 0
 
             # The rng state must be preserved if warm_start is True

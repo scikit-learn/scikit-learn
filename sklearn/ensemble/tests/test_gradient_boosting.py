@@ -33,6 +33,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import LinearRegression, LogisticRegression
 
 GRADIENT_BOOSTING_ESTIMATORS = [GradientBoostingClassifier,
                                 GradientBoostingRegressor]
@@ -1323,3 +1324,21 @@ def test_gradient_boosting_validation_fraction():
     gbr3.fit(X_train, y_train)
     assert gbr.n_estimators_ < gbr3.n_estimators_
     assert gbc.n_estimators_ < gbc3.n_estimators_
+
+
+@pytest.mark.parametrize("estimator", ["classifier", "regressor"])
+def test_gradient_boosting_with_init(estimator):
+    # Check that Gradient Boosting works when init is a sklearn estimator.
+    X = np.random.random_sample((100, 5))
+
+    if estimator is "classifier":
+        init = LogisticRegression()
+        est = GradientBoostingClassifier
+        y = np.random.randint(0, 2, 100)
+    else:
+        init = LinearRegression()
+        est = GradientBoostingRegressor
+        y = np.random.rand(100)
+
+    est = est(init=init)
+    est.fit(X, y)
