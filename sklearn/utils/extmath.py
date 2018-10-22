@@ -473,7 +473,7 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     # for lobpcg debugging, use verbosityLevel = 1
     lobpcgVerbosityLevel = 0
-    # lobpcg computes the largest, be default, eigenvalues of the normal matrix
+    # lobpcg computes largest, be default, eigenvalues of the normal matrix
     # A, given implicitly via LinearOperator or explicitly as dense or sparse
     _, Q = lobpcg(A, Q, maxiter=n_iter,
                   verbosityLevel=lobpcgVerbosityLevel, tol=tol)
