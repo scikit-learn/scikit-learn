@@ -14,7 +14,6 @@ import numpy as np
 import warnings
 from scipy import sparse
 
-from ..externals import six
 from ..base import clone, TransformerMixin
 from ..utils import Parallel, delayed
 from ..externals import six
