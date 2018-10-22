@@ -144,20 +144,20 @@ boolean mask array or callable
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.compose import ColumnTransformer
     >>> from sklearn.preprocessing import Normalizer
     >>> ct = ColumnTransformer(
-    ...     [("norm1", Normalizer(norm='l1'), [0, 1]),
-    ...      ("norm2", Normalizer(norm='l1'), slice(2, 4))])
+    ...     [("norm1", [0, 1], Normalizer(norm='l1')),
+    ...      ("norm2", slice(2, 4), Normalizer(norm='l1'))])
     >>> X = np.array([[0., 1., 2., 2.],
     ...               [1., 1., 0., 1.]])
     >>> # Normalizer scales each row of X to unit norm. A separate scaling
-    >>> # is applied for the two first and two last elements of each
+    >>> # applied for the two first and two last elements of each
     >>> # row independently.
     >>> ct.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE
     array([[0. , 1. , 0.5, 0.5],
            [0.5, 0.5, 0. , 1. ]])
-
     """
 
     def __init__(self, transformers, remainder='drop', sparse_threshold=0.3,
@@ -176,12 +176,12 @@ boolean mask array or callable
         of get_params via BaseComposition._get_params which expects lists
         of tuples of len 2.
         """
-        return [(name, trans) for name, trans, _ in self.transformers]
+        return [(name, trans) for name, _, trans in self.transformers]
 
     @_transformers.setter
     def _transformers(self, value):
         self.transformers = [
-            (name, col, trans) for ((name, trans), (_, _, col))
+            (name, col, trans) for ((name, trans), (_, col, _))
             in zip(value, self.transformers)]
 
     def get_params(self, deep=True):
@@ -230,7 +230,7 @@ boolean mask array or callable
                 in zip(self.transformers, self._columns)
             ]
             # add transformer tuple for remainder
-            if self._remainder[2] is not None:
+            if self._remainder[1] is not None:
                 transformers = chain(transformers, [self._remainder])
         get_weight = (self.transformer_weights or {}).get
 
@@ -301,7 +301,7 @@ boolean mask array or callable
             cols.extend(_get_column_indices(X, columns))
         remaining_idx = sorted(list(set(range(n_columns)) - set(cols))) or None
 
-        self._remainder = ('remainder', self.remainder, remaining_idx)
+        self._remainder = ('remainder', remaining_idx, self.remainder)
 
     @property
     def named_transformers_(self):
@@ -687,6 +687,8 @@ def _get_transformer_list(estimators):
     Construct (name, trans, column) tuples from list
 
     """
+
+    """
     # check if any given tuple follows the (columns, transformer) order.
     # flip all tuples if that's the case.
     # remove in v0.22
@@ -703,12 +705,12 @@ def _get_transformer_list(estimators):
                           'order for all given tuples.', DeprecationWarning)
             trans_ix, cols_ix = 1, 0
             break
-
-    transformers = [trans[trans_ix] for trans in estimators]
-    columns = [trans[cols_ix] for trans in estimators]
+    """
+    transformers = [trans[1] for trans in estimators]
+    columns = [trans[0] for trans in estimators]
     names = [trans[0] for trans in _name_estimators(transformers)]
 
-    transformer_list = list(zip(names, transformers, columns))
+    transformer_list = list(zip(names, columns, transformers))
     return transformer_list
 
 
@@ -765,18 +767,17 @@ def make_column_transformer(*transformers, **kwargs):
     >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
     >>> from sklearn.compose import make_column_transformer
     >>> make_column_transformer(
-    ...     (StandardScaler(), ['numerical_column']),
-    ...     (OneHotEncoder(), ['categorical_column']))
+    ...     (['numerical_column'], StandardScaler()),
+    ...     (['categorical_column'], OneHotEncoder()))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
              transformer_weights=None,
              transformers=[('standardscaler',
-                            StandardScaler(...),
-                            ['numerical_column']),
+                            ['numerical_column'],
+                             StandardScaler(...)),
                            ('onehotencoder',
-                            OneHotEncoder(...),
-                            ['categorical_column'])])
-
+                            ['categorical_column'],
+                            OneHotEncoder(...))])
     """
     # transformer_weights keyword is not passed through because the user
     # would need to know the automatically generated names of the transformers
