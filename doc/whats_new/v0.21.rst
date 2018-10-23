@@ -43,9 +43,9 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.manifold`
 ......................
 
-- |Enhancement| add ``metric_params`` parameter to :class:`manifold.TSNE`
-  constructor for additional parameters of distance metric to use in
-  optimization. :issue:`11793` by :user:`Muneeb Aadil <muneebaadil>`.
+- |Enhancement| add ``metric_params`` and ``p`` parameters to
+  :class:`manifold.TSNE` constructor for additional parameters of distance
+  metric to use in optimization. :issue:`11793` by :user:`Muneeb Aadil <muneebaadil>`.
 
 :mod:`sklearn.linear_model`
 ...........................

@@ -878,38 +878,3 @@ def test_tsne_with_mahalanobis_distance():
                n_components=n_embedding, random_state=0, metric='mahalanobis',
                metric_params={'V': np.cov(X.T)}).fit_transform(X)
     assert_array_equal(ref, now)
-
-
-def test_tsne_with_metric_params_type():
-    """Makes sure tsne interface intended output for all possible metric_params
-    type"""
-    random_state = check_random_state(0)
-    n_features = 10
-    n_embedding = 3
-    n_samples = 15
-    X = random_state.randn(n_samples, n_features)
-
-    # using metric_params = None when not required for euclidean distance
-    # runs okay and does not generate an error
-    tsne = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-                n_components=n_embedding, random_state=0, metric='euclidean')
-    assert_equal((n_samples, n_embedding), tsne.fit_transform(X).shape)
-
-    # using metric_params = {} when not required for euclidean distance
-    # generates a type error
-    tsne = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-                n_components=n_embedding, random_state=0, metric='euclidean',
-                metric_params={})
-    assert_raises(TypeError, tsne.fit_transform, X)
-
-    # using metric_params with 'VI' key is already tested on above function
-
-    # testing metric_params having 'p' with minkowski distance
-    # note: minkowski distance with p=1 is equivalent to manhattan distance
-    now = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-               n_components=n_embedding, random_state=0, metric='minkowski',
-               metric_params={'p': 1}).fit_transform(X)
-    ref = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-               n_components=n_embedding, random_state=0,
-               metric='precomputed').fit_transform(manhattan_distances(X))
-    assert_array_equal(ref, now)

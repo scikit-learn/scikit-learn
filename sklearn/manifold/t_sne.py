@@ -548,8 +548,14 @@ class TSNE(BaseEstimator):
         the distance between them. The default is "euclidean" which is
         interpreted as squared euclidean distance.
 
+    p : integer, optional (default: 2)
+        Parameter for the Minkowski metric from
+        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
     metric_params : dictionary, optional (default: None)
-        Keyword arguments of distance metric to use.
+        Additional keyword arguments for the distance metric function.
 
     init : string or numpy array, optional (default: "random")
         Initialization of embedding. Possible options are 'random', 'pca',
@@ -631,7 +637,7 @@ class TSNE(BaseEstimator):
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=12.0, learning_rate=200.0, n_iter=1000,
                  n_iter_without_progress=300, min_grad_norm=1e-7,
-                 metric="euclidean", metric_params=None, init="random",
+                 metric="euclidean", p=2, metric_params=None, init="random",
                  verbose=0, random_state=None, method='barnes_hut', angle=0.5):
         self.n_components = n_components
         self.perplexity = perplexity
@@ -641,6 +647,7 @@ class TSNE(BaseEstimator):
         self.n_iter_without_progress = n_iter_without_progress
         self.min_grad_norm = min_grad_norm
         self.metric = metric
+        self.p = p
         self.metric_params = metric_params
         self.init = init
         self.verbose = verbose
@@ -684,11 +691,6 @@ class TSNE(BaseEstimator):
                 raise ValueError("All distances should be positive, the "
                                  "precomputed distances given as X is not "
                                  "correct")
-        if not (self.metric_params is None or
-                type(self.metric_params) == dict and
-                len(self.metric_params) > 0):
-            raise TypeError("'metric_params' parameter must be either None or "
-                            "non empty dicionary")
         if self.method == 'barnes_hut' and sp.issparse(X):
             raise TypeError('A sparse matrix was passed, but dense '
                             'data is required for method="barnes_hut". Use '
@@ -716,18 +718,16 @@ class TSNE(BaseEstimator):
             raise ValueError("n_iter should be at least 250")
 
         n_samples = X.shape[0]
-
         neighbors_nn = None
+
         if self.method == "exact":
             # Retrieve the distance matrix, either using the precomputed one or
             # computing it.
-            metric_params_ = ({}
-                              if (self.metric_params is None)
-                              else self.metric_params)
-
             if self.metric == "precomputed":
                 distances = X
             else:
+                metric_params_ = ({} if (self.metric_params is None)
+                                  else self.metric_params)
                 if self.verbose:
                     print("[t-SNE] Computing pairwise distances...")
 
@@ -761,15 +761,9 @@ class TSNE(BaseEstimator):
                 print("[t-SNE] Computing {} nearest neighbors...".format(k))
 
             # Find the nearest neighbors for every point
-            if self.metric_params is None or 'p' not in self.metric_params:
-                knn = NearestNeighbors(algorithm='auto', n_neighbors=k,
-                                       metric=self.metric,
-                                       metric_params=self.metric_params)
-            else:
-                p = self.metric_params.pop('p')
-                knn = NearestNeighbors(algorithm='auto', n_neighbors=k,
-                                       metric=self.metric, p=p,
-                                       metric_params=self.metric_params)
+            knn = NearestNeighbors(algorithm='auto', n_neighbors=k,
+                                   metric=self.metric, p=self.p,
+                                   metric_params=self.metric_params)
             t0 = time()
             knn.fit(X)
             duration = time() - t0
