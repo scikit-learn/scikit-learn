@@ -36,7 +36,6 @@ from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
-from ..exceptions import ChangedBehaviorWarning
 
 from ._criterion import Criterion
 from ._splitter import Splitter
@@ -292,23 +291,16 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                np.sum(sample_weight))
 
         if self.min_impurity_split is not None:
-            if self.min_impurity_split != float('-inf'):
-                warnings.warn(
-                    "The min_impurity_split parameter is deprecated and"
-                    " will be removed in version 0.21. "
-                    "Use the min_impurity_decrease parameter instead.",
-                    DeprecationWarning)
+            warnings.warn("The min_impurity_split parameter is deprecated. "
+                          "Its default value will change from 1e-7 to 0 in "
+                          "version 0.23, and will be removed in 0.25. "
+                          "Use the min_impurity_decrease parameter instead.",
+                          DeprecationWarning)
             min_impurity_split = self.min_impurity_split
         else:
-            warnings.warn("The min_impurity_split parameter is deprecated and "
-                          "will be removed in version 0.21. However it still "
-                          "defaults to 1e-7 if it is not set. To silence this "
-                          "warning and get the future behavior from 0.21, "
-                          "set it to float('-inf').",
-                          ChangedBehaviorWarning)
             min_impurity_split = 1e-7
 
-        if min_impurity_split < 0. and min_impurity_split != float('-inf'):
+        if min_impurity_split < 0.:
             raise ValueError("min_impurity_split must be greater than "
                              "or equal to 0")
 
@@ -636,14 +628,15 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.25.
+           Use ``min_impurity_decrease`` instead. Also, the default value
+           will change from 1e-7 to 0 in 0.23.
 
     class_weight : dict, list of dicts, "balanced" or None, default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1008,14 +1001,15 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.25.
+           Use ``min_impurity_decrease`` instead. Also, the default value
+           will change from 1e-7 to 0 in 0.23.
 
     presort : bool, optional (default=False)
         Whether to presort the data to speed up the finding of best splits in
@@ -1270,14 +1264,15 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.25.
+           Use ``min_impurity_decrease`` instead. Also, the default value
+           will change from 1e-7 to 0 in 0.23.
 
     class_weight : dict, list of dicts, "balanced" or None, default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1453,14 +1448,15 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.25.
+           Use ``min_impurity_decrease`` instead. Also, the default value
+           will change from 1e-7 to 0 in 0.23.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
