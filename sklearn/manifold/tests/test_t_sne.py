@@ -360,7 +360,7 @@ def test_non_positive_computed_distances():
     def metric(x, y):
         return -1
 
-    tsne = TSNE(metric=metric, method='exact')
+    tsne = TSNE(metric=metric, method='exact', square_distance=False)
     X = np.array([[0.0, 0.0], [1.0, 1.0]])
     assert_raises_regexp(ValueError, "All distances .*metric given.*",
                          tsne.fit_transform, X)
@@ -852,3 +852,71 @@ def test_tsne_with_different_distance_metrics():
             metric='precomputed', n_components=n_components_embedding,
             random_state=0).fit_transform(dist_func(X))
         assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
+
+
+def test_tsne_with_different_square_distances():
+    """Make sure that TSNE works for different values of the param
+    square_distance"""
+    random_state = check_random_state(0)
+    n_components_original = 3
+    n_components_embedding = 2
+    X = random_state.randn(50, n_components_original).astype(np.float32)
+    metrics = ['manhattan', 'cosine']
+    dist_funcs = [manhattan_distances, cosine_distances]
+    square_distances = [True, False, 'warn', 'legacy']
+    methods = ['exact', 'barnes_hut']
+    for metric, dist_func in zip(metrics, dist_funcs):
+        for square_distance in square_distances:
+            for method in methods:
+                X_transformed_tsne = TSNE(
+                    metric=metric, n_components=n_components_embedding,
+                    random_state=0, square_distance=square_distance,
+                    method=method).fit_transform(X)
+                X_transformed_tsne_precomputed = TSNE(
+                    metric='precomputed', n_components=n_components_embedding,
+                    random_state=0, square_distance=square_distance,
+                    method=method).fit_transform(dist_func(X))
+                assert_array_equal(X_transformed_tsne,
+                                   X_transformed_tsne_precomputed)
+
+
+def test_tsne_with_euclidean_metric_for_different_square_distances():
+    """Make sure that TSNE works for different values of the param
+    square_distance for euclidean distance metric"""
+    square_distances = [True, False, 'warn', 'legacy']
+    methods = ['exact', 'barnes_hut']
+    random_state = check_random_state(0)
+    n_components_original = 3
+    n_components_embedding = 2
+    X = random_state.randn(50, n_components_original).astype(np.float32)
+    euclidean_distance = pairwise_distances(X, metric='euclidean')
+
+    for method in methods:
+        for square_distance in square_distances:
+            X_transformed_tsne = TSNE(
+                metric='euclidean', n_components=n_components_embedding,
+                random_state=0, square_distance=square_distance,
+                method=method).fit_transform(X)
+
+            # For 'legacy' case with euclidean metric, precomputed distance
+            # should be squared
+            if square_distance is 'legacy':
+                precomputed_X = euclidean_distance**2
+            else:
+                precomputed_X = euclidean_distance
+
+            X_transformed_tsne_precomputed = TSNE(
+                metric='precomputed', n_components=n_components_embedding,
+                random_state=0, square_distance=square_distance,
+                method=method).fit_transform(precomputed_X)
+
+            assert_array_equal(X_transformed_tsne,
+                               X_transformed_tsne_precomputed)
+
+
+def test_raise_invalid_square_distance():
+    """Make sure that TSNE raises value error for invalid value of
+    square_distance"""
+    tsne = TSNE(square_distance='invalid_key')
+    assert_raises_regexp(ValueError, "square_distance should be .*",
+                         tsne.fit, np.array([[0.0], [0.0]]))

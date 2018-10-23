@@ -585,8 +585,10 @@ class TSNE(BaseEstimator):
         in the range of 0.2 - 0.8. Angle less than 0.2 has quickly increasing
         computation time and angle greater 0.8 has quickly increasing error.
 
-    square_distance: bool or string (default: 'legacy')
+    square_distance : {True, False, "legacy", "warn"} (default: "warn")
         Facilitates squaring the distance matrix.
+        If 'warn', set it to True and raise FutureWarning if metric is
+        not 'euclidean'
         If 'legacy',  the behavior is to square the distance only if 'metric' =
         'euclidean'.
         If True, square the distance for all the metrics including precomputed
@@ -637,7 +639,7 @@ class TSNE(BaseEstimator):
                  n_iter_without_progress=300, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5,
-                 square_distance='legacy'):
+                 square_distance="warn"):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -716,7 +718,7 @@ class TSNE(BaseEstimator):
             raise ValueError("n_iter should be at least 250")
 
         if self.square_distance not in [True, False, 'legacy', 'warn']:
-            raise ValueError("squared_distance should be True, False, 'legacy'"
+            raise ValueError("square_distance should be True, False, 'legacy'"
                              "or warn")
 
         if self.square_distance == 'warn':
@@ -735,7 +737,7 @@ class TSNE(BaseEstimator):
                 if self.square_distance is True:
                     distances = X**2
                 else:
-                    # self.squared_distance is False or 'legacy'
+                    # self.square_distance is False or 'legacy'
                     distances = X
             else:
                 if self.verbose:
@@ -743,15 +745,13 @@ class TSNE(BaseEstimator):
 
                 if self.square_distance == 'legacy':
                     if self.metric == "euclidean":
-                        distances = pairwise_distances(X, metric=self.metric,
-                                                       squared=True)
+                        distances = pairwise_distances(X, metric=self.metric)**2
                     else:
                         distances = pairwise_distances(X, metric=self.metric)
                 elif self.square_distance is True:
-                    distances = pairwise_distances(X, metric=self.metric,
-                                                   squared=True)
+                    distances = pairwise_distances(X, metric=self.metric)**2
                 else:
-                    # self.squared_distance is False
+                    # self.square_distance is False
                     distances = pairwise_distances(X, metric=self.metric)
 
                 if np.any(distances < 0):
@@ -804,10 +804,8 @@ class TSNE(BaseEstimator):
                     # the input space. Not sure of the implication of using a
                     # different metric.
                     distances_nn **= 2
-            elif self.square_distance is True:
+            if self.square_distance is True:
                 distances_nn **= 2
-            else:
-                distances_nn = distances_nn
 
             # compute the joint probability distribution for the input space
             P = _joint_probabilities_nn(distances_nn, neighbors_nn,
