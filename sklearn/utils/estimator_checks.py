@@ -1194,7 +1194,6 @@ def check_estimators_pickle(name, estimator_orig):
 
 def check_pairwise_estimator_tag(name, estimator_orig):
     attributes_to_check = ['metric', 'affinity', 'kernel']
-    attribute_value = 'precomputed'
 
     # Check if _pairwise attribute is present - will be used later
     has_pairwise_tag = (False
@@ -1213,7 +1212,7 @@ def check_pairwise_estimator_tag(name, estimator_orig):
         try:
             # Construct new object of estimator with desired attribute value
             modified_estimator = clone(estimator_orig).set_params(
-                                                **{attribute: attribute_value})
+                                                **{attribute: 'precomputed'})
             # Estimators may validate parameters in fit if not in set_params
             modified_estimator.fit(distance_matrix, y_)
         except Exception:
@@ -1234,9 +1233,9 @@ def check_pairwise_estimator_tag(name, estimator_orig):
                     modified_estimator.predict(X)
         except ValueError:
             # Check if estimator defines _pairwise attribute
-            error_message = ("{0} implements {1}={2} but does"
+            error_message = ("{0} implements {1}='precomputed' but does"
                              " not implement '_pairwise' estimator tag"
-                             "".format(name, attribute, attribute_value))
+                             "".format(name, attribute))
             assert has_pairwise_tag is True, error_message
         else:
             # Estimator does not raise an error - skip
