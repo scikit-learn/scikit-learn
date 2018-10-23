@@ -256,7 +256,7 @@ def test_compare_to_ELKI():
     # Tests against known extraction array
     # Does NOT work with metric='euclidean', because sklearn euclidean has
     # worse numeric precision. 'minkowski' is slower but more accurate.
-    clust = OPTICS(min_samples=5).fit(X)
+    clust1 = OPTICS(min_samples=5).fit(X)
 
     assert_array_equal(clust1.ordering_, np.array(o1))
     assert_array_equal(clust1.predecessor_[clust1.ordering_], np.array(p1))
