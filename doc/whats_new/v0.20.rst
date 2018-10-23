@@ -71,6 +71,13 @@ Changelog
   avoid pickling errors caused by the serialization of their methods.
   :issue:`12171` by :user:`Thomas Moreau <tomMoral>`.
 
+Miscellaneous
+.............
+
+- |Fix| When using site joblib by setting the environment variable
+  `SKLEARN_SITE_JOBLIB`, added compatibility with joblib 0.11 in addition
+  to 0.12+. :issue:`12350` by `Joel Nothman`_ and `Roman Yurchak`_.
+
 .. _changes_0_20:
 
 Version 0.20.0
