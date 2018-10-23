@@ -69,7 +69,7 @@ BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'ExtraTreeRegressor', 'ExtraTreesRegressor',
-                'FKC_EigenPro','FKR_EigenPro'
+                'FKC_EigenPro', 'FKR_EigenPro',
                 'GaussianProcessRegressor', 'TransformedTargetRegressor',
                 'KNeighborsRegressor', 'KernelRidge', 'Lars', 'Lasso',
                 'LassoLars', 'LinearRegression', 'MultiTaskElasticNet',
