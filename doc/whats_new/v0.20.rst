@@ -51,6 +51,10 @@ Changelog
   for values of ``n_informative`` parameter larger than 64.
   :issue:`10811` by :user:`Roman Feldbauer <VarIr>`.
 
+- |Fix| Fixed olivetti faces dataset ``DESCR`` attribute to point to the right
+  location in :func:`datasets.fetch_olivetti_faces`. :issue:`12441` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`
+
 :mod:`sklearn.ensemble`
 .......................
 
