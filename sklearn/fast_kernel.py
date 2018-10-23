@@ -2,7 +2,7 @@ import numpy as np
 import scipy as sp
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.metrics.pairwise import pairwise_kernels, euclidean_distances
-from sklearn.utils import check_random_state, check_array
+from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_is_fitted, check_X_y
 
@@ -224,7 +224,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         max_bs = min(max(n_subsamples / 5, mG), n_subsamples)
         n_components = np.sum(np.power(1 / S, alpha) < max_bs) - 1
         if n_components < 2:
-            n_components = max(S.shape[0]-1, 2)
+            n_components = min(S.shape[0]-1, 2)
 
         self.V_ = V[:, :n_components]
         scale = np.power(S[0] / S[n_components], alpha)
@@ -331,6 +331,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
 
                 # Update 1: Sampled Coordinate Block.
                 gradient = np.dot(kfeat, self.coef_) - batch_y
+
                 self.coef_[batch_inds] = \
                     self.coef_[batch_inds] - step * gradient
 
@@ -357,7 +358,8 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         """
         check_is_fitted(self, ["bs_", "centers_", "centers_squared_", "coef_",
                                "eta_", "random_state_", "pinx_", "Q_", "V_", "was_1D_"])
-        X = np.asarray(X,dtype=np.float64)
+        X = np.asarray(X, dtype=np.float64)
+
         if len(X.shape) == 1:
             raise ValueError("Reshape your data. X should be a matrix of shape"
                              " (n_samples, n_features).")
@@ -516,7 +518,6 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
 
         for ind, label in enumerate(y):
             class_matrix[ind][loc[label]] = 1
-
         self.regressor_.fit(X, class_matrix)
 
         return self
