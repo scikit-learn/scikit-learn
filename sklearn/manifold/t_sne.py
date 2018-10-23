@@ -545,7 +545,7 @@ class TSNE(BaseEstimator):
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
         should take two arrays from X as input and return a value indicating
-        the distance between them. The default is "euclidean" which is
+        the distance between them. The default is "minkowski" with p=2 which is
         interpreted as squared euclidean distance.
 
     p : integer, optional (default: 2)
@@ -720,6 +720,11 @@ class TSNE(BaseEstimator):
         n_samples = X.shape[0]
         neighbors_nn = None
 
+        def _homogenize_distances(distances):
+            return distances ** 2 if (
+                self.metric == 'euclidean' or
+                self.metric == 'minkowski' and self.p == 2) else distances
+
         if self.method == "exact":
             # Retrieve the distance matrix, either using the precomputed one or
             # computing it.
@@ -731,13 +736,9 @@ class TSNE(BaseEstimator):
                 if self.verbose:
                     print("[t-SNE] Computing pairwise distances...")
 
-                if self.metric == "euclidean":
-                    distances = pairwise_distances(X, metric=self.metric,
-                                                   squared=True,
-                                                   **metric_params_)
-                else:
-                    distances = pairwise_distances(X, metric=self.metric,
-                                                   **metric_params_)
+                distances = pairwise_distances(X, metric=self.metric,
+                                               **metric_params_)
+                distances = _homogenize_distances(distances)
 
                 if np.any(distances < 0):
                     raise ValueError("All distances should be positive, the "
@@ -782,13 +783,7 @@ class TSNE(BaseEstimator):
             # Free the memory used by the ball_tree
             del knn
 
-            if self.metric == "euclidean":
-                # knn return the euclidean distance but we need it squared
-                # to be consistent with the 'exact' method. Note that the
-                # the method was derived using the euclidean method as in the
-                # input space. Not sure of the implication of using a different
-                # metric.
-                distances_nn **= 2
+            distances_nn = _homogenize_distances(distances_nn)
 
             # compute the joint probability distribution for the input space
             P = _joint_probabilities_nn(distances_nn, neighbors_nn,
