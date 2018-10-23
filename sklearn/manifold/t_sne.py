@@ -687,8 +687,8 @@ class TSNE(BaseEstimator):
         if not (self.metric_params is None or
                 type(self.metric_params) == dict and
                 len(self.metric_params) > 0):
-            raise TypeError("'metric_params' parameter must be either None or\
-                             non empty dicionary")
+            raise TypeError("'metric_params' parameter must be either None or "
+                            "non empty dicionary")
         if self.method == 'barnes_hut' and sp.issparse(X):
             raise TypeError('A sparse matrix was passed, but dense '
                             'data is required for method="barnes_hut". Use '

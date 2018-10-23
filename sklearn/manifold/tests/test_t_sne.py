@@ -855,12 +855,12 @@ def test_tsne_with_different_distance_metrics():
 
 
 def test_tsne_with_mahalanobis_distance():
-    """Make sure if it fixes the proposes issue (#11793)"""
+    # issue # 11793
     random_state = check_random_state(0)
     n_features = 10
     n_embedding = 3
     n_samples = 500
-    X = random_state.randn(n_samples, n_features).astype(np.float32)
+    X = random_state.randn(n_samples, n_features)
 
     # 1. raises error here (original issue)
     tsne = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
@@ -868,14 +868,7 @@ def test_tsne_with_mahalanobis_distance():
     ref = "Must provide either V or VI for Mahalanobis distance"
     assert_raises_regexp(ValueError, ref, tsne.fit_transform, X)
 
-    # 2. error fix: provide distance metric parameters in a dictionary
-    # it now provides the embedding results in correct shape
-    tsne = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-                n_components=n_embedding, random_state=0, metric='mahalanobis',
-                metric_params={'V': np.cov(X.T)})
-    assert_equal((n_samples, n_embedding), tsne.fit_transform(X).shape)
-
-    # 3. check for correct answer
+    # 2. check for correct answer
     precomputed_X = squareform(pdist(X, metric='mahalanobis'), checks=True)
     ref = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
                n_components=n_embedding, random_state=0,
@@ -894,7 +887,7 @@ def test_tsne_with_metric_params_type():
     n_features = 10
     n_embedding = 3
     n_samples = 15
-    X = random_state.randn(n_samples, n_features).astype(np.float32)
+    X = random_state.randn(n_samples, n_features)
 
     # using metric_params = None when not required for euclidean distance
     # runs okay and does not generate an error
