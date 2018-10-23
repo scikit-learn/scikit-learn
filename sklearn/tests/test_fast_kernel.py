@@ -58,7 +58,7 @@ def test_fast_kernel_regression_simple():
 def test_fast_kernel_regression_complex():
     X, y = make_regression(n_samples=500, n_informative=100)
     FKR_prediction = FKR_EigenPro(
-        kernel="gaussian", n_epoch=40, bandwidth=1, random_state=0).fit(X, y).predict(X)
+        kernel="gaussian", n_epoch=40, bandwidth=10, random_state=0).fit(X, y).predict(X)
     assert_array_almost_equal(abs(FKR_prediction / y), 1, decimal=2)
 
 
