@@ -39,7 +39,7 @@ def test_correct_number_of_clusters():
     X = generate_clustered_data(n_clusters=n_clusters)
     # Parameters chosen specifically for this task.
     # Compute OPTICS
-    clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4, metric='euclidean')
+    clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4)
     clust.fit(X)
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(clust.labels_)) - int(-1 in clust.labels_)
@@ -366,7 +366,7 @@ def test_compare_to_ELKI():
     # Tests against known extraction array
     # Does NOT work with metric='euclidean', because sklearn euclidean has
     # worse numeric precision. 'minkowski' is slower but more accurate.
-    clust = OPTICS(min_samples=5, metric='minkowski').fit(X)
+    clust = OPTICS(min_samples=5).fit(X)
 
     assert_array_equal(clust.ordering_, np.array(o))
     assert_array_equal(clust.predecessor_[clust.ordering_], np.array(p))
