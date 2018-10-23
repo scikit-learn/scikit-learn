@@ -10,10 +10,12 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_warns_message
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics.cluster import calinski_harabasz_score
+from sklearn.metrics.cluster import calinski_harabaz_score
 from sklearn.metrics.cluster import davies_bouldin_score
 
 
@@ -206,16 +208,18 @@ def test_calinski_harabasz_score():
     pytest.approx(calinski_harabasz_score(X, labels),
                   45 * (40 - 4) / (5 * (4 - 1)))
 
+
 def test_deprecated_calinski_harabaz_score():
-    depr_message = ("Function 'calinski_harabaz_score' was renamed to "
-                    "'calinski_harabasz_score' "
+    depr_message = ("Function 'calinski_harabaz_score' was renamed "
+                    "to 'calinski_harabasz_score' "
                     "in version 0.21 and will be removed in release 0.23. ")
-    assert_warns_message(DeprecationWarning, depr_message, calinski_harabaz_score,
+    assert_warns_message(DeprecationWarning, depr_message,
+                         calinski_harabaz_score,
                          np.ones((10, 2)), [0] * 5 + [1] * 5)
 
     # Assert the value is 1. when all samples are equals
     assert_equal(1., calinski_harabaz_score(np.ones((10, 2)),
-                                             [0] * 5 + [1] * 5))
+                                            [0] * 5 + [1] * 5))
 
 
 def test_davies_bouldin_score():
