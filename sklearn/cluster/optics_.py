@@ -22,7 +22,7 @@ from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
 
 
-def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
+def optics(X, min_samples=5, max_eps=np.inf, metric='minkowski',
            p=2, metric_params=None, maxima_ratio=.75,
            rejection_ratio=.7, similarity_threshold=0.4,
            significant_min=.003, min_cluster_size=.005,
@@ -60,7 +60,7 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
         clusters across all scales; reducing `max_eps` will result in
         shorter run times.
 
-    metric : string or callable, optional (default='euclidean')
+    metric : string or callable, optional (default='minkowski')
         metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
@@ -215,7 +215,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         clusters across all scales; reducing `max_eps` will result in
         shorter run times.
 
-    metric : string or callable, optional (default='euclidean')
+    metric : string or callable, optional (default='minkowski')
         metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
@@ -353,7 +353,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
     """
 
-    def __init__(self, min_samples=5, max_eps=np.inf, metric='euclidean',
+    def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski',
                  p=2, metric_params=None, maxima_ratio=.75,
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size=.005,
