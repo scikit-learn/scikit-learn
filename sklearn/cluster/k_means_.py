@@ -1556,7 +1556,7 @@ class MiniBatchKMeans(KMeans):
                 init_size=init_size)
 
             # Compute the label assignment on the init dataset
-            batch_inertia, centers_squared_diff = _mini_batch_step(
+            _mini_batch_step(
                 X_valid, sample_weight_valid,
                 x_squared_norms[validation_indices], cluster_centers,
                 weight_sums, old_center_buffer, False, distances=None,
