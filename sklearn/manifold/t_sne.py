@@ -6,7 +6,7 @@
 # This is the exact and Barnes-Hut t-SNE implementation. There are other
 # modifications of the algorithm:
 # * Fast Optimization for t-SNE:
-#   http://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
+#   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 from __future__ import division
 
 import warnings
@@ -26,7 +26,6 @@ from ..metrics.pairwise import pairwise_distances
 from . import _utils
 from . import _barnes_hut_tsne
 from ..externals.six import string_types
-from ..utils import deprecated
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -618,7 +617,7 @@ class TSNE(BaseEstimator):
 
     [3] L.J.P. van der Maaten. Accelerating t-SNE using Tree-Based Algorithms.
         Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
-        http://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf
+        https://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf
     """
     # Control the number of exploration iterations with early_exaggeration on
     _EXPLORATION_N_ITER = 250
@@ -804,12 +803,6 @@ class TSNE(BaseEstimator):
                           X_embedded=X_embedded,
                           neighbors=neighbors_nn,
                           skip_num_points=skip_num_points)
-
-    @property
-    @deprecated("Attribute n_iter_final was deprecated in version 0.19 and "
-                "will be removed in 0.21. Use ``n_iter_`` instead")
-    def n_iter_final(self):
-        return self.n_iter_
 
     def _tsne(self, P, degrees_of_freedom, n_samples, X_embedded,
               neighbors=None, skip_num_points=0):

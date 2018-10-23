@@ -194,7 +194,7 @@ or store training examples.
 .. topic:: References:
 
     .. [RR2007] `"Random features for large-scale kernel machines"
-      <http://www.robots.ox.ac.uk/~vgg/rg/papers/randomfeatures.pdf>`_
+      <https://www.robots.ox.ac.uk/~vgg/rg/papers/randomfeatures.pdf>`_
       Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
     .. [LS2010] `"Random Fourier approximations for skewed multiplicative histogram kernels"
       <http://www.maths.lth.se/matematiklth/personal/sminchis/papers/lis_dagm10.pdf>`_

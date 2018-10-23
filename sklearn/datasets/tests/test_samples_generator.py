@@ -84,7 +84,8 @@ def test_make_classification_informative_features():
                                                          (2, [1/4] * 4, 1),
                                                          (2, [1/2] * 2, 2),
                                                          (2, [3/4, 1/4], 2),
-                                                         (10, [1/3] * 3, 10)
+                                                         (10, [1/3] * 3, 10),
+                                                         (np.int(64), [1], 1)
                                                          ]:
         n_classes = len(weights)
         n_clusters = n_classes * n_clusters_per_class
@@ -128,19 +129,19 @@ def test_make_classification_informative_features():
             for cluster in range(len(unique_signs)):
                 centroid = X[cluster_index == cluster].mean(axis=0)
                 if hypercube:
-                    assert_array_almost_equal(np.abs(centroid),
-                                              [class_sep] * n_informative,
-                                              decimal=0,
+                    assert_array_almost_equal(np.abs(centroid) / class_sep,
+                                              np.ones(n_informative),
+                                              decimal=5,
                                               err_msg="Clusters are not "
                                                       "centered on hypercube "
                                                       "vertices")
                 else:
                     assert_raises(AssertionError,
                                   assert_array_almost_equal,
-                                  np.abs(centroid),
-                                  [class_sep] * n_informative,
-                                  decimal=0,
-                                  err_msg="Clusters should not be cenetered "
+                                  np.abs(centroid) / class_sep,
+                                  np.ones(n_informative),
+                                  decimal=5,
+                                  err_msg="Clusters should not be centered "
                                           "on hypercube vertices")
 
     assert_raises(ValueError, make, n_features=2, n_informative=2, n_classes=5,

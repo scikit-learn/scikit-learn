@@ -22,7 +22,7 @@ from abc import ABCMeta
 
 import numpy as np
 
-from . import (r2_score, median_absolute_error, mean_absolute_error,
+from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
                mean_squared_error, mean_squared_log_error, accuracy_score,
                f1_score, roc_auc_score, average_precision_score,
                precision_score, recall_score, log_loss,
@@ -454,6 +454,8 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
 # Standard regression scores
 explained_variance_scorer = make_scorer(explained_variance_score)
 r2_scorer = make_scorer(r2_score)
+max_error_scorer = make_scorer(max_error,
+                               greater_is_better=False)
 neg_mean_squared_error_scorer = make_scorer(mean_squared_error,
                                             greater_is_better=False)
 neg_mean_squared_log_error_scorer = make_scorer(mean_squared_log_error,
@@ -498,6 +500,7 @@ fowlkes_mallows_scorer = make_scorer(fowlkes_mallows_score)
 
 SCORERS = dict(explained_variance=explained_variance_scorer,
                r2=r2_scorer,
+               max_error=max_error_scorer,
                neg_median_absolute_error=neg_median_absolute_error_scorer,
                neg_mean_absolute_error=neg_mean_absolute_error_scorer,
                neg_mean_squared_error=neg_mean_squared_error_scorer,

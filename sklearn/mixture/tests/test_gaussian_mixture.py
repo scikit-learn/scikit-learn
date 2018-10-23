@@ -686,10 +686,10 @@ def test_multiple_init():
     for cv_type in COVARIANCE_TYPE:
         train1 = GaussianMixture(n_components=n_components,
                                  covariance_type=cv_type,
-                                 random_state=rng).fit(X).score(X)
+                                 random_state=0).fit(X).score(X)
         train2 = GaussianMixture(n_components=n_components,
                                  covariance_type=cv_type,
-                                 random_state=rng, n_init=5).fit(X).score(X)
+                                 random_state=0, n_init=5).fit(X).score(X)
         assert_greater_equal(train2, train1)
 
 

@@ -262,7 +262,6 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
 
     """
     random_state = check_random_state(random_state)
-    n_samples, n_features = X.shape
 
     if isinstance(n_trials, numbers.Integral):
         run_from_estimates = False
@@ -433,9 +432,9 @@ def fast_mcd(X, support_fraction=None,
         except MemoryError:
             # The above is too big. Let's try with something much small
             # (and less optimal)
+            n_best_tot = 10
             all_best_covariances = np.zeros((n_best_tot, n_features,
                                              n_features))
-            n_best_tot = 10
             n_best_sub = 2
         for i in range(n_subsets):
             low_bound = i * n_samples_subsets

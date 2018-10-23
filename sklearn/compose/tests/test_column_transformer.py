@@ -368,17 +368,47 @@ def test_column_transformer_sparse_stacking():
     assert_array_equal(X_trans[:, 1:], np.eye(X_trans.shape[0]))
 
 
+def test_column_transformer_mixed_cols_sparse():
+    df = np.array([['a', 1, True],
+                   ['b', 2, False]],
+                  dtype='O')
+
+    ct = make_column_transformer(
+        ([0], OneHotEncoder()),
+        ([1, 2], 'passthrough'),
+        sparse_threshold=1.0
+    )
+
+    # this shouldn't fail, since boolean can be coerced into a numeric
+    # See: https://github.com/scikit-learn/scikit-learn/issues/11912
+    X_trans = ct.fit_transform(df)
+    assert X_trans.getformat() == 'csr'
+    assert_array_equal(X_trans.toarray(), np.array([[1, 0, 1, 1],
+                                                    [0, 1, 2, 0]]))
+
+    ct = make_column_transformer(
+        ([0], OneHotEncoder()),
+        ([0], 'passthrough'),
+        sparse_threshold=1.0
+    )
+    with pytest.raises(ValueError,
+                       match="For a sparse output, all columns should"):
+        # this fails since strings `a` and `b` cannot be
+        # coerced into a numeric.
+        ct.fit_transform(df)
+
+
 def test_column_transformer_sparse_threshold():
     X_array = np.array([['a', 'b'], ['A', 'B']], dtype=object).T
     # above data has sparsity of 4 / 8 = 0.5
 
-    # if all sparse, keep sparse (even if above threshold)
+    # apply threshold even if all sparse
     col_trans = ColumnTransformer([('trans1', OneHotEncoder(), [0]),
                                    ('trans2', OneHotEncoder(), [1])],
                                   sparse_threshold=0.2)
     res = col_trans.fit_transform(X_array)
-    assert sparse.issparse(res)
-    assert col_trans.sparse_output_
+    assert not sparse.issparse(res)
+    assert not col_trans.sparse_output_
 
     # mixed -> sparsity of (4 + 2) / 8 = 0.75
     for thres in [0.75001, 1]:
