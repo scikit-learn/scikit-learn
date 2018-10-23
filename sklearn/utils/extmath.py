@@ -415,7 +415,7 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     tol : scalar, (default=None)
         Optional solver tolerance (stopping criterion), if large enough, may
-        overwrite n_iter. If None, lobpcg sets is internally. 
+        overwrite n_iter. If None, lobpcg sets is internally.
 
     explicitNormalMatrix : boolean, (False by default)
         Optional parameter that determines if the normal matrix used by lobpcg
