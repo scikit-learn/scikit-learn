@@ -110,9 +110,10 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.metrics`
 ......................
 
-- |API| Corrected spelling of Harabasz score. :issue:`8657` by
-  :user:`Mark Hannel <markhannel>`, :user:`Melissa Ferrari <mferrari3>`
-  and :user:`Lisa Thomas <LisaThomas9>`.
+- |API| The metrics.calinski_harabaz_score has been renamed  to 
+  metrics.calinski_harabasz_score and will be removed in version 0.23
+  :issue:`8657` by :user:`Mark Hannel <markhannel>`, 
+  :user:`Melissa Ferrari <mferrari3>` and :user:`Lisa Thomas <LisaThomas9>`.
 
 Multiple modules
 ................

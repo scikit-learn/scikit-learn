@@ -204,7 +204,6 @@ def test_calinski_harabasz_score():
     X = ([[0, 0], [1, 1]] * 5 + [[3, 3], [4, 4]] * 5 +
          [[0, 4], [1, 3]] * 5 + [[3, 1], [4, 0]] * 5)
     labels = [0] * 10 + [1] * 10 + [2] * 10 + [3] * 10
-
     pytest.approx(calinski_harabasz_score(X, labels),
                   45 * (40 - 4) / (5 * (4 - 1)))
 
@@ -216,10 +215,6 @@ def test_deprecated_calinski_harabaz_score():
     assert_warns_message(DeprecationWarning, depr_message,
                          calinski_harabaz_score,
                          np.ones((10, 2)), [0] * 5 + [1] * 5)
-
-    # Assert the value is 1. when all samples are equals
-    assert_equal(1., calinski_harabaz_score(np.ones((10, 2)),
-                                            [0] * 5 + [1] * 5))
 
 
 def test_davies_bouldin_score():
