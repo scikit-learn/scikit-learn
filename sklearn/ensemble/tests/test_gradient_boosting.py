@@ -12,7 +12,8 @@ import pytest
 
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.datasets import make_classification, fetch_california_housing
+from sklearn.datasets import (make_classification, fetch_california_housing,
+                              make_regression)
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
@@ -33,7 +34,8 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
-from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.dummy import DummyClassifier, DummyRegressor
+
 
 GRADIENT_BOOSTING_ESTIMATORS = [GradientBoostingClassifier,
                                 GradientBoostingRegressor]
@@ -1326,19 +1328,38 @@ def test_gradient_boosting_validation_fraction():
     assert gbc.n_estimators_ < gbc3.n_estimators_
 
 
-@pytest.mark.parametrize("estimator", ["classifier", "regressor"])
-def test_gradient_boosting_with_init(estimator):
-    # Check that Gradient Boosting works when init is a sklearn estimator.
-    X = np.random.random_sample((100, 5))
+class _NoSampleWaightWrapper:
+    def __init__(self, est):
+        self.est = est
 
-    if estimator is "classifier":
-        init = LogisticRegression(solver="lbfgs")
-        est = GradientBoostingClassifier
-        y = np.random.randint(0, 2, 100)
-    else:
-        init = LinearRegression()
-        est = GradientBoostingRegressor
-        y = np.random.rand(100)
+    def fit(self, X, y):
+        self.est.fit(X, y)
 
-    est = est(init=init)
-    est.fit(X, y)
+    def predict(self, X):
+        return self.est.predict(X)
+
+
+@pytest.mark.parametrize(
+    "task",
+    [(GradientBoostingClassifier, make_classification, DummyClassifier),
+     (GradientBoostingRegressor, make_regression, DummyRegressor)],
+    ids=["classification", "regression"])
+def test_gradient_boosting_with_init(task):
+    # Check that GradientBoostingRegressor works when init is a sklearn
+    # estimator.
+    # Check that an error is raised if trying to fit with sample weight but
+    # inital estimator does not support sample weight
+    gb, dataset_maker, init = task
+
+    X, y = dataset_maker()
+    sample_weight = np.random.rand(100)
+
+    # init supports sample weights
+    init_est = init()
+    gb(init=init_est).fit(X, y, sample_weight=sample_weight)
+
+    # init does not support sample weights
+    init_est = _NoSampleWaightWrapper(init())
+    gb(init=init_est).fit(X, y)  # ok no sample weights
+    with pytest.raises(ValueError):
+        gb(init=init_est).fit(X, y, sample_weight=sample_weight)

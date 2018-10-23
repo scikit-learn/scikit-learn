@@ -55,7 +55,7 @@ from ..utils import check_X_y
 from ..utils import column_or_1d
 from ..utils import check_consistent_length
 from ..utils import deprecated
-from ..utils.fixes import logsumexp
+from ..utils.fixes import logsumexp, signature
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
@@ -1394,10 +1394,13 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         # Check input
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'], dtype=DTYPE)
         n_samples, self.n_features_ = X.shape
+
         if sample_weight is None:
             sample_weight = np.ones(n_samples, dtype=np.float32)
+            sample_weight_was_none = True
         else:
             sample_weight = column_or_1d(sample_weight, warn=True)
+            sample_weight_was_none = False
 
         check_consistent_length(X, y, sample_weight)
 
@@ -1417,12 +1420,19 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             # init state
             self._init_state()
 
-            # fit initial model - FIXME make sample_weight optional
-            self.init_.fit(X, y, sample_weight)
+            # fit initial model
+            if "sample_weight" in signature(self.init_.fit).parameters:
+                self.init_.fit(X, y, sample_weight)
+            elif sample_weight_was_none:
+                self.init_.fit(X, y)
+            else:
+                raise ValueError(
+                    "The initial estimator {} does not support sample weights "
+                    "yet.".format(self.init_.__class__.__name__))
 
             # init predictions
             y_pred = self.init_.predict(X).astype(np.float64, copy=False)
-            if y_pred.shape == (X.shape[0],):
+            if y_pred.ndim == 1:
                 y_pred = y_pred[:, np.newaxis]
             begin_at_stage = 0
 
