@@ -1,7 +1,7 @@
 from itertools import chain, product
 import warnings
 import string
-import time
+import timeit
 
 import pytest
 import numpy as np
@@ -314,10 +314,11 @@ def test_message_with_time(source, message, is_long, time, time_str):
         ('', message_with_time('ABC', '', 0.1) + '\n'),
         (None, ''),
     ])
-def test_log_elapsed(message, expected, capsys):
+def test_log_elapsed(message, expected, capsys, monkeypatch):
+    monkeypatch.setattr(timeit, 'default_timer', lambda: 0)
     with log_elapsed('ABC', message):
-        time.sleep(0.1)
-    assert capsys.readouterr()[0] == expected
+        monkeypatch.setattr(timeit, 'default_timer', lambda: 0.1)
+    assert capsys.readouterr().out == expected
 
 
 @pytest.mark.parametrize("value, result", [(float("nan"), True),

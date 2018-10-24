@@ -4,7 +4,7 @@ The :mod:`sklearn.utils` module includes various utilities.
 from __future__ import division, print_function
 
 from contextlib import contextmanager
-import time as _time
+import timeit
 import numbers
 import platform
 import struct
@@ -578,9 +578,11 @@ def log_elapsed(source, message=None):
     if message is None:
         yield
     else:
-        start = _time.time()
+        start = timeit.default_timer()
         yield
-        print(message_with_time(source, message, _time.time() - start))
+        print(
+            message_with_time(source, message,
+                              timeit.default_timer() - start))
 
 
 def get_chunk_n_rows(row_bytes, max_n_rows=None,
