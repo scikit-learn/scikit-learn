@@ -61,6 +61,10 @@ Changelog
   for values of ``n_informative`` parameter larger than 64.
   :issue:`10811` by :user:`Roman Feldbauer <VarIr>`.
 
+- |Fix| Fixed olivetti faces dataset ``DESCR`` attribute to point to the right
+  location in :func:`datasets.fetch_olivetti_faces`. :issue:`12441` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -103,6 +107,14 @@ Changelog
   :issue:`12317` by :user:`Eric Chang <chang>`.
 - |Fix| Fixed bug in :class:`preprocessing.OrdinalEncoder` when passing
   manually specified categories. :issue:`12365` by `Joris Van den Bossche`_.
+
+:mod:`sklearn.utils`
+........................
+
+- |Fix| Use float64 for mean accumulator to avoid floating point
+  precision issues in :class:`preprocessing.StandardScaler` and
+  :class:`decomposition.IncrementalPCA` when using float32 datasets.
+  :issue:`12338` by :user:`bauks <bauks>`.
 
 .. _changes_0_20:
 
@@ -788,6 +800,11 @@ Support for Python 3.3 has been officially dropped.
   v0.22. It no longer has any effect, as batch size is determined by global
   ``working_memory`` config. See :ref:`working_memory`. :issue:`10280` by `Joel
   Nothman`_ and :user:`Aman Dalmia <dalmia>`.
+
+- |API| The :func:`metrics.calinski_harabaz_score` has been renamed to
+  :func:`metrics.calinski_harabasz_score` and will be removed in version 0.23.
+  :issue:`12211` by :user:`Lisa Thomas <LisaThomas9>`,
+  :user:`Mark Hannel <markhannel>` and :user:`Melissa Ferrari <mferrari3>`.
 
 
 :mod:`sklearn.mixture`
