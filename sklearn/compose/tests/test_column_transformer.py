@@ -1010,7 +1010,7 @@ def test_column_transformer_verbose(est, pattern, method, capsys):
     func = getattr(est, method)
     est.set_params(verbose=False)
     func(X_array)
-    assert not capsys.readouterr()[0], 'Got output for verbose=False'
+    assert not capsys.readouterr().out, 'Got output for verbose=False'
 
     est.set_params(verbose=True)
     func(X_array)

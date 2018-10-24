@@ -547,7 +547,8 @@ def message_with_time(source, message, time):
     """
     start_message = "[%s] " % (source,)
 
-    # from joblib.logger.short_format_time without the Windows -.1s adjustment
+    # adapted from joblib.logger.short_format_time without the Windows -.1s
+    # adjustment
     if time > 60:
         time_str = "%4.1fmin" % (time / 60)
     else:
@@ -558,7 +559,7 @@ def message_with_time(source, message, time):
 
 
 @contextmanager
-def log_elapsed(source, message):
+def log_elapsed(source, message=None):
     """Log elapsed time to stdout when the context is exited
 
     Parameters

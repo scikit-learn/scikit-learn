@@ -165,8 +165,8 @@ class Pipeline(_BaseComposition):
         for t in transformers:
             if t is None:
                 continue
-            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform"))
-                    or not hasattr(t, "transform")):
+            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
+                    hasattr(t, "transform")):
                 raise TypeError("All intermediate steps should be "
                                 "transformers and implement fit and transform."
                                 " '%s' (type %s) doesn't" % (t, type(t)))
@@ -193,8 +193,6 @@ class Pipeline(_BaseComposition):
     def _log_message(self, step_idx):
         if not self.verbose:
             return
-        if step_idx < 0:
-            step_idx = len(self.steps) + step_idx
         n_steps = len([est for _, est in self.steps if est is not None])
         step_num = len(
             [est for _, est in self.steps[:step_idx + 1] if est is not None])
@@ -616,8 +614,8 @@ def make_pipeline(*steps, **kwargs):
     memory = kwargs.pop('memory', None)
     verbose = kwargs.pop('verbose', False)
     if kwargs:
-        raise TypeError('Unknown keyword arguments: "{}"'.format(
-            list(kwargs.keys())[0]))
+        raise TypeError('Unknown keyword arguments: "{}"'
+                        .format(list(kwargs.keys())[0]))
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
@@ -629,8 +627,14 @@ def _transform_one(transformer, X, y, weight, **fit_params):
     return res * weight
 
 
-def _fit_transform_one(is_transform, clsname, message, transformer, weight, X,
-                       y, **fit_params):
+def _fit_transform_one(transformer,
+                       weight,
+                       X,
+                       y,
+                       is_transform=None,
+                       clsname=None,
+                       message=None,
+                       **fit_params):
     """
     Fits ``transformer`` to ``X`` and ``y``.
 
@@ -640,7 +644,14 @@ def _fit_transform_one(is_transform, clsname, message, transformer, weight, X,
 
     If ``is_transform`` is ``False``, then a tuple of
     (``None``, fitted_transformer) will be returned.
+
+    If ``is_transform`` is ``None``, then it is set to true
+    when ``transformer`` is a ``TransformerMixin``.
     """
+    if clsname is None:
+        clsname = transformer.__class__.__name__
+    if is_transform is None:
+        is_transform = isinstance(transformer, TransformerMixin)
     with log_elapsed(clsname, message):
         if not is_transform:
             return None, transformer.fit(X, y, **fit_params)
