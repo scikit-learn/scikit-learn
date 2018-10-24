@@ -783,6 +783,11 @@ Support for Python 3.3 has been officially dropped.
   ``working_memory`` config. See :ref:`working_memory`. :issue:`10280` by `Joel
   Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
+- |API| The :func:`metrics.calinski_harabaz_score` has been renamed to
+  :func:`metrics.calinski_harabasz_score` and will be removed in version 0.23.
+  :issue:`12211` by :user:`Lisa Thomas <LisaThomas9>`,
+  :user:`Mark Hannel <markhannel>` and :user:`Melissa Ferrari <mferrari3>`.
+
 
 :mod:`sklearn.mixture`
 ......................

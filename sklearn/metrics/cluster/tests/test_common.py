@@ -12,7 +12,7 @@ from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.cluster import silhouette_score
-from sklearn.metrics.cluster import calinski_harabaz_score
+from sklearn.metrics.cluster import calinski_harabasz_score
 from sklearn.metrics.cluster import davies_bouldin_score
 
 from sklearn.utils.testing import assert_allclose, ignore_warnings
@@ -44,7 +44,7 @@ SUPERVISED_METRICS = {
 UNSUPERVISED_METRICS = {
     "silhouette_score": silhouette_score,
     "silhouette_manhattan": partial(silhouette_score, metric='manhattan'),
-    "calinski_harabaz_score": calinski_harabaz_score,
+    "calinski_harabasz_score": calinski_harabasz_score,
     "davies_bouldin_score": davies_bouldin_score
 }
 

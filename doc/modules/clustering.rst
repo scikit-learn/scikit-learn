@@ -1652,17 +1652,16 @@ Drawbacks
  * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In this example
    the silhouette analysis is used to choose an optimal value for n_clusters.
 
-.. _calinski_harabaz_index:
+.. _calinski_harabasz_index:
 
-Calinski-Harabaz Index
+Calinski-Harabasz Index
 ----------------------
-
-If the ground truth labels are not known, the Calinski-Harabaz index
-(:func:`sklearn.metrics.calinski_harabaz_score`) - also known as the Variance 
+If the ground truth labels are not known, the Calinski-Harabasz index
+(:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance 
 Ratio Criterion - can be used to evaluate the model, where a higher 
-Calinski-Harabaz score relates to a model with better defined clusters.
+Calinski-Harabasz score relates to a model with better defined clusters.
 
-For :math:`k` clusters, the Calinski-Harabaz score :math:`s` is given as the
+For :math:`k` clusters, the Calinski-Harabasz score :math:`s` is given as the
 ratio of the between-clusters dispersion mean and the within-cluster
 dispersion:
 
@@ -1689,16 +1688,15 @@ points in cluster :math:`q`.
   >>> X = dataset.data
   >>> y = dataset.target
 
-In normal usage, the Calinski-Harabaz index is applied to the results of a
+In normal usage, the Calinski-Harabasz index is applied to the results of a
 cluster analysis.
 
   >>> import numpy as np
   >>> from sklearn.cluster import KMeans
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
-  >>> metrics.calinski_harabaz_score(X, labels)  # doctest: +ELLIPSIS
+  >>> metrics.calinski_harabasz_score(X, labels)  # doctest: +ELLIPSIS
   561.62...
-
 
 Advantages
 ~~~~~~~~~~
@@ -1712,7 +1710,7 @@ Advantages
 Drawbacks
 ~~~~~~~~~
 
-- The Calinski-Harabaz index is generally higher for convex clusters than other
+- The Calinski-Harabasz index is generally higher for convex clusters than other
   concepts of clusters, such as density based clusters like those obtained
   through DBSCAN.
 

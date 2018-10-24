@@ -107,6 +107,7 @@ Support for Python 3.4 and below has been officially dropped.
   when called before fit :issue:`12279` by :user:`Krishna Sangeeth
   <whiletruelearn>`.
 
+
 Multiple modules
 ................
 
