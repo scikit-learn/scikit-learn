@@ -426,13 +426,13 @@ def test_invariant_translation():
             assert_almost_equal(bgmm1.covariances_, bgmm2.covariances_)
 
 
-@pytest.mark.parametrize(('seed', 'max_iter', 'tol'), [
+@ignore_warnings(category=ConvergenceWarning)  # we test non-converged cases
+@pytest.mark.parametrize('seed, max_iter, tol', [
     (0, 2, 1e-7),    # strict non-convergence
     (1, 2, 1e-1),    # loose non-convergence
     (3, 300, 1e-7),  # strict convergence
     (4, 300, 1e-1),  # loose convergence
 ])
-@ignore_warnings(category=ConvergenceWarning)  # we test non-converged cases
 def test_bayesian_mixture_fit_predict(seed, max_iter, tol):
     rng = np.random.RandomState(seed)
     rand_data = RandomData(rng, scale=7)
