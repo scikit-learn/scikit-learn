@@ -377,7 +377,7 @@ def test_export_ascii():
 |   |   | (class: c2)
 """)
     assert export_ascii(clf, class_names=['c1', 'c2'],
-                             show_class=None) == expected_report
+                        show_class=None) == expected_report
 
     expected_report = dedent("""|---feature_1 <= 0.00
 |---feature_1 >  0.00
