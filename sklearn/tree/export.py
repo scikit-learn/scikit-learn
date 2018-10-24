@@ -838,7 +838,7 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
     >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
     >>> decision_tree.fit(X, y)
     >>> print(export_ascii(decision_tree, feature_names=iris['feature_names'],
-                           class_names=iris['target_names'], show_class=True))
+                           class_names=iris['target_names'], show_class=True));
 
     |---petal width (cm) <= 0.80
     |   | (value: [50.0, 50.0, 50.0])
@@ -874,7 +874,7 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
     if spacing <= 0:
         raise ValueError("spacing must be > 0, given %d" % spacing)
 
-    if tree_.n_classes[0] != 1 and show_class != False:
+    if tree_.n_classes[0] != 1 and show_class is not False:
         show_class = True
     if tree_.n_classes[0] == 1:
         show_class = False
@@ -933,8 +933,9 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
             else:  # leaf
                 # meaningful for classification and regression
                 if show_leaves_value:
+                    val = str(value.tolist())
                     export_ascii.report += value_string.format(indent, '*',
-                                                               str(value.tolist()))
+                                                               val)
                 if show_class:
                     export_ascii.report += class_string.format(info_indent,
                                                                class_name)
