@@ -54,6 +54,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import ShuffleSplit
+from sklearn.model_selection._validation import _safe_split
 from sklearn.metrics.pairwise import (rbf_kernel, linear_kernel,
                                       pairwise_distances)
 
@@ -2367,16 +2369,16 @@ def check_fit_idempotent(name, estimator_orig):
 
     n_samples = 100
     X = rng.normal(loc=100, size=(n_samples, 2))
+    X = pairwise_estimator_convert_X(X, estimator)
     if is_regressor(estimator_orig):
         y = rng.normal(size=n_samples)
     else:
         y = rng.randint(low=0, high=2, size=n_samples)
     y = multioutput_estimator_convert_y_2d(estimator, y)
-    X_train, X_test, y_train, _ = train_test_split(X, y, test_size=.5,
-                                                   random_state=rng)
-    # some estimators expect a square matrix
-    X_train = pairwise_estimator_convert_X(X_train, estimator)
-    X_test = pairwise_estimator_convert_X(X_test, estimator)
+
+    train, test = next(ShuffleSplit(test_size=.2, random_state=rng).split(X))
+    X_train, y_train = _safe_split(estimator, X, y, train)
+    X_test, y_test = _safe_split(estimator, X, y, test, train)
 
     # Fit for the first time
     estimator.fit(X_train, y_train)
