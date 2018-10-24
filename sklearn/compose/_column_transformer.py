@@ -404,9 +404,9 @@ boolean mask array or callable
             return Parallel(n_jobs=self.n_jobs)(
                 delayed(func)(
                     transformer=clone(trans) if not fitted else trans,
-                    weight=weight,
                     X=_get_column(X, column),
                     y=y,
+                    weight=weight,
                     is_transform=True,
                     message_clsname='ColumnTransformer',
                     message=self._log_message(name, idx, len(transformers)))

@@ -240,7 +240,7 @@ class Pipeline(_BaseComposition):
                     cloned_transformer = clone(transformer)
                 # Fit or load from cache the current transfomer
                 Xt, fitted_transformer = fit_transform_one_cached(
-                    cloned_transformer, None, Xt, y,
+                    cloned_transformer, Xt, y, None,
                     is_transform=True, message_clsname='Pipeline',
                     message=self._log_message(step_idx),
                     **fit_params_steps[name])
@@ -630,9 +630,9 @@ def _transform_one(transformer, X, y, weight, **fit_params):
 
 
 def _fit_transform_one(transformer,
-                       weight,
                        X,
                        y,
+                       weight,
                        is_transform=None,
                        message_clsname=None,
                        message=None,
@@ -851,7 +851,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         self._validate_transformers()
         transformers = list(self._iter())
         result = Parallel(n_jobs=self.n_jobs)(delayed(_fit_transform_one)(
-            transformer, weight, X, y,
+            transformer, X, y, weight,
             is_transform=is_transform,
             message_clsname='FeatureUnion',
             message=self._log_message(name, idx, len(transformers)),
