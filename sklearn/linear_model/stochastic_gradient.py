@@ -166,6 +166,20 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                 # Before 0.19, default was n_iter=5
             max_iter = 5
         else:
+            if self.tol is None:
+                # max_iter was set, but tol wasn't. The docs / warning do not
+                # specify this case. In 0.20 tol would stay being None which
+                # is equivalent to -inf, but it will be changed to 1e-3 in
+                # 0.21. We warn users that the behaviour (and potentially
+                # their results) will change.
+                warnings.warn(
+                    "max_iter and tol parameters have been added in %s in "
+                    "0.19. If max_iter is set but tol is left unset, the "
+                    "default value for tol in 0.19 and 0.20 will be None "
+                    "(which is equivalent to -infinity, so it has no effect) "
+                    "but will change in 0.21 to 1e-3. Specify tol to "
+                    "silence this warning." % type(self).__name__,
+                    FutureWarning)
             max_iter = self.max_iter if self.max_iter is not None else 1000
         self._max_iter = max_iter
 
@@ -936,14 +950,14 @@ class SGDClassifier(BaseSGDClassifier):
     >>> from sklearn import linear_model
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> Y = np.array([1, 1, 2, 2])
-    >>> clf = linear_model.SGDClassifier(max_iter=1000)
+    >>> clf = linear_model.SGDClassifier(max_iter=1000, tol=1e-3)
     >>> clf.fit(X, Y)
     ... #doctest: +NORMALIZE_WHITESPACE
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
            l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=1000,
            n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
-           power_t=0.5, random_state=None, shuffle=True, tol=None,
+           power_t=0.5, random_state=None, shuffle=True, tol=0.001,
            validation_fraction=0.1, verbose=0, warm_start=False)
 
     >>> print(clf.predict([[-0.8, -1]]))
@@ -1539,14 +1553,14 @@ class SGDRegressor(BaseSGDRegressor):
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = linear_model.SGDRegressor(max_iter=1000)
+    >>> clf = linear_model.SGDRegressor(max_iter=1000, tol=1e-3)
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
     SGDRegressor(alpha=0.0001, average=False, early_stopping=False,
            epsilon=0.1, eta0=0.01, fit_intercept=True, l1_ratio=0.15,
            learning_rate='invscaling', loss='squared_loss', max_iter=1000,
            n_iter=None, n_iter_no_change=5, penalty='l2', power_t=0.25,
-           random_state=None, shuffle=True, tol=None, validation_fraction=0.1,
+           random_state=None, shuffle=True, tol=0.001, validation_fraction=0.1,
            verbose=0, warm_start=False)
 
     See also
