@@ -1788,9 +1788,9 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.25.
-           Use ``min_impurity_decrease`` instead. Also, the default value
-           will change from 1e-7 to 0 in 0.23.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     init : estimator, optional
         An estimator object that is used to compute the initial
@@ -2248,9 +2248,9 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.25.
-           Use ``min_impurity_decrease`` instead. Also, the default value
-           will change from 1e-7 to 0 in 0.23.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     init : estimator, optional (default=None)
         An estimator object that is used to compute the initial

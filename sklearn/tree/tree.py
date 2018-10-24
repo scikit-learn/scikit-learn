@@ -293,7 +293,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         if self.min_impurity_split is not None:
             warnings.warn("The min_impurity_split parameter is deprecated. "
                           "Its default value will change from 1e-7 to 0 in "
-                          "version 0.23, and will be removed in 0.25. "
+                          "version 0.23, and it will be removed in 0.25. "
                           "Use the min_impurity_decrease parameter instead.",
                           DeprecationWarning)
             min_impurity_split = self.min_impurity_split
@@ -634,9 +634,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.25.
-           Use ``min_impurity_decrease`` instead. Also, the default value
-           will change from 1e-7 to 0 in 0.23.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     class_weight : dict, list of dicts, "balanced" or None, default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1007,9 +1007,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.25.
-           Use ``min_impurity_decrease`` instead. Also, the default value
-           will change from 1e-7 to 0 in 0.23.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     presort : bool, optional (default=False)
         Whether to presort the data to speed up the finding of best splits in
@@ -1270,9 +1270,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.25.
-           Use ``min_impurity_decrease`` instead. Also, the default value
-           will change from 1e-7 to 0 in 0.23.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     class_weight : dict, list of dicts, "balanced" or None, default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1454,9 +1454,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.25.
-           Use ``min_impurity_decrease`` instead. Also, the default value
-           will change from 1e-7 to 0 in 0.23.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
