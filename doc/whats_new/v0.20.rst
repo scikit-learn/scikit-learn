@@ -67,6 +67,14 @@ Changelog
   those estimators as part of parallel parameter search or cross-validation.
   :issue:`12122` by :user:`Olivier Grisel <ogrisel>`.
 
+
+:mod:`sklearn.mixture`
+........................
+- |Fix| Fixed a unstable test for :func:`mixture.GaussianMixture` which failed
+  almost surely using different seeds. Made it more robust to seeding.
+  :issue:`12452` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+
 :mod:`sklearn.neighbors`
 ........................
 
