@@ -71,6 +71,14 @@ Changelog
   those estimators as part of parallel parameter search or cross-validation.
   :issue:`12122` by :user:`Olivier Grisel <ogrisel>`.
 
+:mod:`sklearn.mixture`
+........................
+
+- |Fix| :func:`mixture.BayesianGaussianMixture` ensure that ``fit_predict``
+  always yield assignments consistent with ``fit`` followed by ``predict`` even
+  if the convergence criterion is too loose or not met. :issue:`12451`
+  by :user:`Olivier Grisel <ogrisel>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
