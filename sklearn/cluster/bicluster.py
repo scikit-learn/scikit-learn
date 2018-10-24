@@ -59,7 +59,6 @@ def _bistochastic_normalize(X, max_iter=1000, tol=1e-5):
     # deviation reduction and balancing algorithms.
     X = make_nonnegative(X)
     X_scaled = X
-    dist = None
     for _ in range(max_iter):
         X_new, _, _ = _scale_normalize(X_scaled)
         if issparse(X):

@@ -56,7 +56,7 @@ from sklearn.externals import joblib
 PY3_OR_LATER = sys.version_info[0] >= 3
 
 # The original data can be found at:
-# http://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
+# https://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
 SAMPLES = RemoteFileMetadata(
     filename='samples.zip',
     url='https://ndownloader.figshare.com/files/5976075',
@@ -64,7 +64,7 @@ SAMPLES = RemoteFileMetadata(
               '3c098f7f85955e89d321ee8efe37ac28'))
 
 # The original data can be found at:
-# http://biodiversityinformatics.amnh.org/open_source/maxent/coverages.zip
+# https://biodiversityinformatics.amnh.org/open_source/maxent/coverages.zip
 COVERAGES = RemoteFileMetadata(
     filename='coverages.zip',
     url='https://ndownloader.figshare.com/files/5976078',
@@ -82,7 +82,7 @@ def _load_coverage(F, header_length=6, dtype=np.int16):
 
     This will return a numpy array of the given dtype
     """
-    header = [F.readline() for i in range(header_length)]
+    header = [F.readline() for _ in range(header_length)]
     make_tuple = lambda t: (t.split()[0], float(t.split()[1]))
     header = dict([make_tuple(line) for line in header])
 

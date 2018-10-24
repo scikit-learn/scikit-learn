@@ -32,10 +32,10 @@ data in *folds* that we use for training and testing::
     >>> for k in range(3):
     ...     # We use 'list' to copy, in order to 'pop' later on
     ...     X_train = list(X_folds)
-    ...     X_test  = X_train.pop(k)
+    ...     X_test = X_train.pop(k)
     ...     X_train = np.concatenate(X_train)
     ...     y_train = list(y_folds)
-    ...     y_test  = y_train.pop(k)
+    ...     y_test = y_train.pop(k)
     ...     y_train = np.concatenate(y_train)
     ...     scores.append(svc.fit(X_train, y_train).score(X_test, y_test))
     >>> print(scores)  # doctest: +ELLIPSIS
@@ -73,7 +73,7 @@ This example shows an example usage of the ``split`` method.
 The cross-validation can then be performed easily::
 
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
-    ...          for train, test in k_fold.split(X_digits)]  # doctest: +ELLIPSIS
+    ...  for train, test in k_fold.split(X_digits)]  # doctest: +ELLIPSIS
     [0.963..., 0.922..., 0.963..., 0.963..., 0.930...]
 
 The cross-validation score can be directly calculated using the

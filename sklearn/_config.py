@@ -35,11 +35,15 @@ def set_config(assume_finite=None, working_memory=None,
         False, validation for finiteness will be performed,
         avoiding error.  Global default: False.
 
+        .. versionadded:: 0.19
+
     working_memory : int, optional
         If set, scikit-learn will attempt to limit the size of temporary arrays
         to this number of MiB (per job when parallelised), often saving both
         computation time and memory on expensive operations that can be
         performed in chunks. Global default: 1024.
+
+        .. versionadded:: 0.20
 
     print_changed_only : bool, optional
         If True, only the parameters that were set to non-default
@@ -47,6 +51,8 @@ def set_config(assume_finite=None, working_memory=None,
         ``print(SCV())`` while True will only print 'SVC()' while the default
         behaviour would be to print 'SVC(C=1.0, cache_size=200, ...)' with
         all the non-changed parameters.
+
+        .. versionadded:: 0.21
     """
     if assume_finite is not None:
         _global_config['assume_finite'] = assume_finite

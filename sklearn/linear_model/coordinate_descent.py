@@ -619,7 +619,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     --------
     >>> from sklearn.linear_model import ElasticNet
     >>> from sklearn.datasets import make_regression
-    >>>
+
     >>> X, y = make_regression(n_features=2, random_state=0)
     >>> regr = ElasticNet(random_state=0)
     >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
@@ -1247,7 +1247,9 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
 
 
 class LassoCV(LinearModelCV, RegressorMixin):
-    """Lasso linear model with iterative fitting along a regularization path
+    """Lasso linear model with iterative fitting along a regularization path.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     The best model is selected by cross-validation.
 
@@ -1412,9 +1414,9 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
-    """Elastic Net model with iterative fitting along a regularization path
+    """Elastic Net model with iterative fitting along a regularization path.
 
-    The best model is selected by cross-validation.
+    See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <elastic_net>`.
 
@@ -1547,7 +1549,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     --------
     >>> from sklearn.linear_model import ElasticNetCV
     >>> from sklearn.datasets import make_regression
-    >>>
+
     >>> X, y = make_regression(n_features=2, random_state=0)
     >>> regr = ElasticNetCV(cv=5, random_state=0)
     >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
@@ -1794,7 +1796,7 @@ class MultiTaskElasticNet(Lasso):
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, self.fit_intercept, self.normalize, copy=False)
 
-        if not self.warm_start or self.coef_ is None:
+        if not self.warm_start or not hasattr(self, "coef_"):
             self.coef_ = np.zeros((n_tasks, n_features), dtype=X.dtype.type,
                                   order='F')
 
@@ -1824,7 +1826,7 @@ class MultiTaskElasticNet(Lasso):
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
-    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
+    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
 
     The optimization objective for Lasso is::
 
@@ -1945,6 +1947,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     """Multi-task L1/L2 ElasticNet with built-in cross-validation.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     The optimization objective for MultiTaskElasticNet is::
 
@@ -2132,7 +2136,9 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
-    """Multi-task L1/L2 Lasso with built-in cross-validation.
+    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     The optimization objective for MultiTaskLasso is::
 

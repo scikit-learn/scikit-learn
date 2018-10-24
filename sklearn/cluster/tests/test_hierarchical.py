@@ -38,21 +38,6 @@ from sklearn.utils.testing import assert_warns
 from sklearn.datasets import make_moons, make_circles
 
 
-def test_deprecation_of_n_components_in_linkage_tree():
-    rng = np.random.RandomState(0)
-    X = rng.randn(50, 100)
-    # Test for warning of deprecation of n_components in linkage_tree
-    children, n_nodes, n_leaves, parent = assert_warns(DeprecationWarning,
-                                                       linkage_tree,
-                                                       X.T,
-                                                       n_components=10)
-    children_t, n_nodes_t, n_leaves_t, parent_t = linkage_tree(X.T)
-    assert_array_equal(children, children_t)
-    assert_equal(n_nodes, n_nodes_t)
-    assert_equal(n_leaves, n_leaves_t)
-    assert_equal(parent, parent_t)
-
-
 def test_linkage_misc():
     # Misc tests on linkage
     rng = np.random.RandomState(42)

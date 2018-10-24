@@ -947,7 +947,7 @@ class RandomForestClassifier(ForestClassifier):
     --------
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.datasets import make_classification
-    >>>
+
     >>> X, y = make_classification(n_samples=1000, n_features=4,
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
@@ -1199,7 +1199,7 @@ class RandomForestRegressor(ForestRegressor):
     --------
     >>> from sklearn.ensemble import RandomForestRegressor
     >>> from sklearn.datasets import make_regression
-    >>>
+
     >>> X, y = make_regression(n_features=4, n_informative=2,
     ...                        random_state=0, shuffle=False)
     >>> regr = RandomForestRegressor(max_depth=2, random_state=0,
@@ -1896,6 +1896,9 @@ class RandomTreesEmbedding(BaseForest):
 
     """
 
+    criterion = 'mse'
+    max_features = 1
+
     def __init__(self,
                  n_estimators='warn',
                  max_depth=5,
@@ -1925,12 +1928,10 @@ class RandomTreesEmbedding(BaseForest):
             verbose=verbose,
             warm_start=warm_start)
 
-        self.criterion = 'mse'
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
-        self.max_features = 1
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split

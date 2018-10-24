@@ -508,11 +508,11 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
 
     .. [3] `Gorodkin, (2004). Comparing two K-category assignments by a
         K-category correlation coefficient
-        <http://www.sciencedirect.com/science/article/pii/S1476927104000799>`_
+        <https://www.sciencedirect.com/science/article/pii/S1476927104000799>`_
 
     .. [4] `Jurman, Riccadonna, Furlanello, (2012). A Comparison of MCC and CEN
         Error Measures in MultiClass Prediction
-        <http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0041882>`_
+        <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0041882>`_
 
     Examples
     --------

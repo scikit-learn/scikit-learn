@@ -145,7 +145,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     References
     ----------
     `LIBLINEAR: A Library for Large Linear Classification
-    <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`__
+    <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`__
 
     See also
     --------
@@ -553,6 +553,21 @@ class SVC(BaseSVC):
     intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
+
+    probA_ : array, shape = [n_class * (n_class-1) / 2]
+    probB_ : array, shape = [n_class * (n_class-1) / 2]
+        If probability=True, the parameters learned in Platt scaling to
+        produce probability estimates from decision values. If
+        probability=False, an empty array. Platt scaling uses the logistic
+        function
+        ``1 / (1 + exp(decision_value * probA_ + probB_))``
+        where ``probA_`` and ``probB_`` are learned from the dataset. For more
+        information on the multiclass case and training procedure see section
+        8 of LIBSVM: A Library for Support Vector Machines (in References)
+        for more.
+
     Examples
     --------
     >>> import numpy as np
@@ -578,6 +593,11 @@ class SVC(BaseSVC):
         implemented using liblinear. Check the See also section of
         LinearSVC for more comparison element.
 
+    Notes
+    -----
+    **References:**
+    `LIBSVM: A Library for Support Vector Machines
+    <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`__
     """
 
     _impl = 'c_svc'
@@ -740,6 +760,12 @@ class NuSVC(BaseSVC):
     LinearSVC
         Scalable linear Support Vector Machine for classification using
         liblinear.
+
+    Notes
+    -----
+    **References:**
+    `LIBSVM: A Library for Support Vector Machines
+    <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`__
     """
 
     _impl = 'nu_svc'
@@ -863,6 +889,12 @@ class SVR(BaseLibSVM, RegressorMixin):
     LinearSVR
         Scalable Linear Support Vector Machine for regression
         implemented using liblinear.
+
+    Notes
+    -----
+    **References:**
+    `LIBSVM: A Library for Support Vector Machines
+    <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`__
     """
 
     _impl = 'epsilon_svr'
@@ -984,6 +1016,12 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     SVR
         epsilon Support Vector Machine for regression implemented with libsvm.
+
+    Notes
+    -----
+    **References:**
+    `LIBSVM: A Library for Support Vector Machines
+    <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`__
     """
 
     _impl = 'nu_svr'

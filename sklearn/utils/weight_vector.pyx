@@ -104,7 +104,7 @@ cdef class WeightVector(object):
         self.sq_norm += (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
     # Update the average weights according to the sparse trick defined
-    # here: http://research.microsoft.com/pubs/192769/tricks-2012.pdf
+    # here: https://research.microsoft.com/pubs/192769/tricks-2012.pdf
     # by Leon Bottou
     cdef void add_average(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,
                           double c, double num_iter) nogil:
