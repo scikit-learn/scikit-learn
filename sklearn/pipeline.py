@@ -634,23 +634,19 @@ def _fit_transform_one(transformer,
                        y,
                        weight,
                        return_transform=False,
-                       message_clsname=None,
+                       message_clsname='',
                        message=None,
                        **fit_params):
     """
     Fits ``transformer`` to ``X`` and ``y``.
 
-    If ``return_transform`` is ``True``, then ``X``, ``y`` will be transformed. The
-    transformed result is returned with the fitted transformer. If ``weight``
-    is not ``None``, the result will be multipled by ``weight``.
+    If ``return_transform`` is ``True``, then ``X``, ``y`` will be transformed.
+    The transformed result is returned with the fitted transformer. If
+    ``weight`` is not ``None``, the result will be multipled by ``weight``.
 
     If ``return_transform`` is ``False``, then a tuple of
     (``None``, fitted_transformer) will be returned.
-
-    If ``message_clsname`` is ``None``, the ``transformer`` class name is used.
     """
-    if message_clsname is None:
-        message_clsname = transformer.__class__.__name__
     with log_elapsed(message_clsname, message):
         if not return_transform:
             return None, transformer.fit(X, y, **fit_params)
