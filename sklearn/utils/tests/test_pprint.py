@@ -106,11 +106,11 @@ GridSearchCV(cv=5, error_score='raise-deprecating',
                            gamma='auto_deprecated', kernel='rbf', max_iter=-1,
                            probability=False, random_state=None, shrinking=True,
                            tol=0.001, verbose=False),
-             fit_params=None, iid='warn', n_jobs=None,
+             iid='warn', n_jobs=None,
              param_grid=[{'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001],
                           'kernel': ['rbf']},
                          {'C': [1, 10, 100, 1000], 'kernel': ['linear']}],
-             pre_dispatch='2*n_jobs', refit=True, return_train_score='warn',
+             pre_dispatch='2*n_jobs', refit=True, return_train_score=False,
              scoring=None, verbose=0)"""
 
     expected = expected[1:]  # remove first \n
@@ -157,7 +157,7 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
                                                   penalty='l2',
                                                   random_state=None, tol=0.0001,
                                                   verbose=0))]),
-             fit_params=None, iid='warn', n_jobs=1,
+             iid='warn', n_jobs=1,
              param_grid=[{'classify__C': [1, 10, 100, 1000],
                           'reduce_dim': [PCA(copy=True, iterated_power=7,
                                              n_components=None,
@@ -175,7 +175,7 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
                           'reduce_dim': [SelectKBest(k=10,
                                                      score_func=<function chi2 at some_address>)],
                           'reduce_dim__k': [2, 4, 8]}],
-             pre_dispatch='2*n_jobs', refit=True, return_train_score='warn',
+             pre_dispatch='2*n_jobs', refit=True, return_train_score=False,
              scoring=None, verbose=0)"""
 
     expected = expected[1:]  # remove first \n
