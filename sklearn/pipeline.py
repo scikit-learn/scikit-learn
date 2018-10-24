@@ -241,7 +241,7 @@ class Pipeline(_BaseComposition):
                 # Fit or load from cache the current transfomer
                 Xt, fitted_transformer = fit_transform_one_cached(
                     cloned_transformer, Xt, y, None,
-                    is_transform=True, message_clsname='Pipeline',
+                    return_transform=True, message_clsname='Pipeline',
                     message=self._log_message(step_idx),
                     **fit_params_steps[name])
                 # Replace the transformer of the step with the fitted
@@ -633,31 +633,26 @@ def _fit_transform_one(transformer,
                        X,
                        y,
                        weight,
-                       is_transform=None,
+                       return_transform=False,
                        message_clsname=None,
                        message=None,
                        **fit_params):
     """
     Fits ``transformer`` to ``X`` and ``y``.
 
-    If ``is_transform`` is ``True``, then ``X``, ``y`` will be transformed. The
+    If ``return_transform`` is ``True``, then ``X``, ``y`` will be transformed. The
     transformed result is returned with the fitted transformer. If ``weight``
     is not ``None``, the result will be multipled by ``weight``.
 
-    If ``is_transform`` is ``False``, then a tuple of
+    If ``return_transform`` is ``False``, then a tuple of
     (``None``, fitted_transformer) will be returned.
-
-    If ``is_transform`` is ``None``, then it is set to true
-    when ``transformer`` is a ``TransformerMixin``.
 
     If ``message_clsname`` is ``None``, the ``transformer`` class name is used.
     """
     if message_clsname is None:
         message_clsname = transformer.__class__.__name__
-    if is_transform is None:
-        is_transform = isinstance(transformer, TransformerMixin)
     with log_elapsed(message_clsname, message):
-        if not is_transform:
+        if not return_transform:
             return None, transformer.fit(X, y, **fit_params)
         elif hasattr(transformer, 'fit_transform'):
             res = transformer.fit_transform(X, y, **fit_params)
@@ -852,7 +847,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         transformers = list(self._iter())
         result = Parallel(n_jobs=self.n_jobs)(delayed(_fit_transform_one)(
             transformer, X, y, weight,
-            is_transform=is_transform,
+            return_transform=is_transform,
             message_clsname='FeatureUnion',
             message=self._log_message(name, idx, len(transformers)),
             **fit_params) for idx, (name, transformer,
