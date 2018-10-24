@@ -1,3 +1,6 @@
+# Authors: Siyuan Ma <Siyuan.ma9@gmail.com>
+#          Alex Li <7Alex7Li@gmail.com>
+
 import numpy as np
 import scipy as sp
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
