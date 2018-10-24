@@ -329,7 +329,9 @@ def test_k_means_fortran_aligned_data():
 def test_k_means_fit_predict(algo, dtype, constructor):
     # check that fit.predict gives same result as fit_predict
     if not (algo == 'elkan' and constructor is sp.csr_matrix):
-        X = np.random.random_sample((1000, 2)).astype(dtype, copy=False)
+        rng = np.random.RandomState(0)
+
+        X = rng.random_sample((1000, 2)).astype(dtype, copy=False)
         X = constructor(X)
         kmeans = KMeans(algorithm=algo, n_clusters=10, random_state=0)
 
