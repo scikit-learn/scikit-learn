@@ -853,6 +853,7 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
     |   |   | (class: versicolor)
     |   |   |---* (value: [0.0, 1.0, 45.0])
     |   |   |   | (class: virginica)
+    ...
     """
     check_is_fitted(decision_tree, 'tree_')
     tree_ = decision_tree.tree_
