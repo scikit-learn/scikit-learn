@@ -1068,4 +1068,4 @@ def test_verbose(est, method, pattern, capsys):
 
     est.set_params(verbose=True)
     func(X, y)
-    assert re.match(pattern, capsys.readouterr()[0])
+    assert re.match(pattern, capsys.readouterr().out)

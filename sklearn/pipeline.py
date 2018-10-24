@@ -193,6 +193,8 @@ class Pipeline(_BaseComposition):
     def _log_message(self, step_idx):
         if not self.verbose:
             return
+        if step_idx < 0:
+            step_idx = len(self.steps) + step_idx
         n_steps = len([est for _, est in self.steps if est is not None])
         step_num = len(
             [est for _, est in self.steps[:step_idx + 1] if est is not None])
@@ -240,8 +242,10 @@ class Pipeline(_BaseComposition):
                     cloned_transformer = clone(transformer)
                 # Fit or load from cache the current transfomer
                 Xt, fitted_transformer = fit_transform_one_cached(
-                    True, 'Pipeline', self._log_message(step_idx),
-                    cloned_transformer, None, Xt, y, **fit_params_steps[name])
+                    cloned_transformer, None, Xt, y,
+                    is_transform=True, clsname='Pipeline',
+                    message=self._log_message(step_idx),
+                    **fit_params_steps[name])
                 # Replace the transformer of the step with the fitted
                 # transformer. This is necessary when loading the transformer
                 # from the cache.
@@ -837,16 +841,22 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         """
         return self._fit_transform(X, y, fit_params, is_transform=True)
 
+    def _log_message(self, name, idx, total):
+        if not self.verbose:
+            return None
+        return '(step %d of %d) Fitting %s' % (idx, total, name)
+
     def _fit_transform(self, X, y, fit_params, is_transform):
         self.transformer_list = list(self.transformer_list)
         self._validate_transformers()
         transformers = list(self._iter())
-        result = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_transform_one)(is_transform, 'FeatureUnion', (
-                '(step %d of %d) Fitting %s' %
-                (idx + 1, len(transformers), name) if self.verbose else None
-            ), transformer, weight, X, y, **fit_params)
-            for idx, (name, transformer, weight) in enumerate(transformers))
+        result = Parallel(n_jobs=self.n_jobs)(delayed(_fit_transform_one)(
+            transformer, weight, X, y,
+            is_transform=is_transform,
+            clsname='FeatureUnion',
+            message=self._log_message(name, idx, len(transformers)),
+            **fit_params) for idx, (name, transformer,
+                                    weight) in enumerate(transformers, 1))
 
         if not result:
             # All transformers are None
