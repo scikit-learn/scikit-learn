@@ -1087,6 +1087,7 @@ def test_column_transformer_callable_specifier():
     assert ct.transformers_[0][2] == ['first']
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_column_transformer_inverse_with_strings():
     pd = pytest.importorskip('pandas')
 
