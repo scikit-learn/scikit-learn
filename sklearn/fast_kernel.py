@@ -336,10 +336,10 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
                     self.coef_[batch_inds] - step * gradient
 
                 # Update 2: Fixed Coordinate Block
-                delta = np.linalg.multi_dot([self.V_ * self.Q_,
-                                             self.V_.T,
-                                             kfeat[:, self.pinx_].T,
-                                             gradient])
+                delta = np.dot(self.V_ * self.Q_,
+                        np.dot(self.V_.T,
+                        np.dot(kfeat[:, self.pinx_].T,
+                               gradient)))
                 self.coef_[self.pinx_] += step * delta
         return self
 

@@ -4,11 +4,6 @@ from sklearn.datasets import make_regression, make_classification
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.fast_kernel import FKR_EigenPro, FKC_EigenPro
 
-
-from sklearn.utils.estimator_checks import check_estimator
-# check_estimator(FKR_EigenPro)
-# check_estimator(FKC_EigenPro)
-
 np.random.seed(1)
 # Tests for Fast Kernel Classification
 
