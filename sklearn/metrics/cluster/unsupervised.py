@@ -291,7 +291,7 @@ def calinski_harabasz_score(X, labels):
 
 @deprecated("Function 'calinski_harabaz_score' was renamed to "
             "'calinski_harabasz_score' "
-            "in version 0.21 and will be removed in release 0.23. ")
+            "in version 0.21 and will be removed in version 0.23.")
 def calinski_harabaz_score(X, labels):
     return calinski_harabasz_score(X, labels)
 
