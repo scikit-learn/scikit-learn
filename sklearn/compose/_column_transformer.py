@@ -9,7 +9,6 @@ different columns.
 from __future__ import division
 
 from itertools import chain
-from functools import partial
 
 import numpy as np
 from scipy import sparse
@@ -405,9 +404,11 @@ boolean mask array or callable
             return Parallel(n_jobs=self.n_jobs)(
                 delayed(func)(
                     transformer=clone(trans) if not fitted else trans,
+                    weight=weight,
                     X=_get_column(X, column),
                     y=y,
-                    weight=weight,
+                    is_transform=True,
+                    clsname='ColumnTransformer',
                     message=self._log_message(name, idx, len(transformers)))
                 for idx, (name, trans, column, weight) in enumerate(
                         self._iter(fitted=fitted, replace_strings=True), 1))
@@ -466,10 +467,7 @@ boolean mask array or callable
         self._validate_column_callables(X)
         self._validate_remainder(X)
 
-        fit_transform_one = partial(
-            _fit_transform_one, is_transform=True, clsname='ColumnTransformer')
-
-        result = self._fit_transform(X, y, fit_transform_one)
+        result = self._fit_transform(X, y, _fit_transform_one)
 
         if not result:
             self._update_fitted_transformers([])
