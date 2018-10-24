@@ -876,6 +876,8 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
 
     if tree_.n_classes[0] != 1 and show_class != False:
         show_class = True
+    if tree_.n_classes[0] == 1:
+        show_class = False
 
     if feature_names:
         feature_names_ = [feature_names[i] for i in tree_.feature]
