@@ -426,7 +426,7 @@ def test_invariant_translation():
             assert_almost_equal(bgmm1.covariances_, bgmm2.covariances_)
 
 
-@ignore_warnings(category=ConvergenceWarning)  # we test non-converged cases
+@pytest.mark.filterwarnings("ignore:.*did not converge.*")
 @pytest.mark.parametrize('seed, max_iter, tol', [
     (0, 2, 1e-7),    # strict non-convergence
     (1, 2, 1e-1),    # loose non-convergence
