@@ -6,7 +6,6 @@
 from __future__ import division
 
 import warnings
-import re
 import itertools
 
 import numpy as np
@@ -157,6 +156,17 @@ def test_polynomial_feature_names():
                        feature_names)
 
 
+def test_polynomial_feature_array_order():
+    X = np.arange(10).reshape(5, 2)
+
+    def is_c_contiguous(a):
+        return np.isfortran(a.T)
+
+    assert is_c_contiguous(PolynomialFeatures().fit_transform(X))
+    assert is_c_contiguous(PolynomialFeatures(order='C').fit_transform(X))
+    assert np.isfortran(PolynomialFeatures(order='F').fit_transform(X))
+
+
 @pytest.mark.parametrize(['deg', 'include_bias', 'interaction_only', 'dtype'],
                          [(1, True, False, int),
                           (2, True, False, int),
@@ -218,6 +228,20 @@ def test_standard_scaler_1d():
     assert_array_almost_equal(X_scaled.mean(axis=0), .0)
     assert_array_almost_equal(X_scaled.std(axis=0), .0)
     assert_equal(scaler.n_samples_seen_, X.shape[0])
+
+
+def test_standard_scaler_dtype():
+    # Ensure scaling does not affect dtype
+    rng = np.random.RandomState(0)
+    n_samples = 10
+    n_features = 3
+    for dtype in [np.float16, np.float32, np.float64]:
+        X = rng.randn(n_samples, n_features).astype(dtype)
+        scaler = StandardScaler()
+        X_scaled = scaler.fit(X).transform(X)
+        assert X.dtype == X_scaled.dtype
+        assert scaler.mean_.dtype == np.float64
+        assert scaler.scale_.dtype == np.float64
 
 
 def test_scale_1d():
@@ -2031,7 +2055,10 @@ def test_power_transformer_1d():
         pt = PowerTransformer(method='box-cox', standardize=standardize)
 
         X_trans = pt.fit_transform(X)
-        X_trans_func = power_transform(X, standardize=standardize)
+        X_trans_func = power_transform(
+            X, method='box-cox',
+            standardize=standardize
+        )
 
         X_expected, lambda_expected = stats.boxcox(X.flatten())
 
@@ -2055,7 +2082,10 @@ def test_power_transformer_2d():
         pt = PowerTransformer(method='box-cox', standardize=standardize)
 
         X_trans_class = pt.fit_transform(X)
-        X_trans_func = power_transform(X, standardize=standardize)
+        X_trans_func = power_transform(
+            X, method='box-cox',
+            standardize=standardize
+        )
 
         for X_trans in [X_trans_class, X_trans_func]:
             for j in range(X_trans.shape[1]):
@@ -2278,3 +2308,21 @@ def test_power_transformer_copy_False(method, standardize):
 
     X_inv_trans = pt.inverse_transform(X_trans)
     assert X_trans is X_inv_trans
+
+
+def test_power_transform_default_method():
+    X = np.abs(X_2d)
+
+    future_warning_message = (
+        "The default value of 'method' "
+        "will change from 'box-cox'"
+    )
+    assert_warns_message(FutureWarning, future_warning_message,
+                         power_transform, X)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        X_trans_default = power_transform(X)
+
+    X_trans_boxcox = power_transform(X, method='box-cox')
+    assert_array_equal(X_trans_boxcox, X_trans_default)
