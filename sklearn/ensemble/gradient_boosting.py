@@ -55,9 +55,9 @@ from ..utils import check_X_y
 from ..utils import column_or_1d
 from ..utils import check_consistent_length
 from ..utils import deprecated
-from ..utils.fixes import logsumexp, signature
+from ..utils.fixes import logsumexp
 from ..utils.stats import _weighted_percentile
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, has_fit_parameter
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
 
@@ -1421,7 +1421,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             self._init_state()
 
             # fit initial model
-            if "sample_weight" in signature(self.init_.fit).parameters:
+            if has_fit_parameter(self.init_, "sample_weight"):
                 self.init_.fit(X, y, sample_weight)
             elif sample_weight_was_none:
                 self.init_.fit(X, y)
