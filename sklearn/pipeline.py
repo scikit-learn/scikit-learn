@@ -241,7 +241,7 @@ class Pipeline(_BaseComposition):
                 # Fit or load from cache the current transfomer
                 Xt, fitted_transformer = fit_transform_one_cached(
                     cloned_transformer, None, Xt, y,
-                    is_transform=True, clsname='Pipeline',
+                    is_transform=True, message_clsname='Pipeline',
                     message=self._log_message(step_idx),
                     **fit_params_steps[name])
                 # Replace the transformer of the step with the fitted
@@ -634,7 +634,7 @@ def _fit_transform_one(transformer,
                        X,
                        y,
                        is_transform=None,
-                       clsname=None,
+                       message_clsname=None,
                        message=None,
                        **fit_params):
     """
@@ -649,12 +649,14 @@ def _fit_transform_one(transformer,
 
     If ``is_transform`` is ``None``, then it is set to true
     when ``transformer`` is a ``TransformerMixin``.
+
+    If ``message_clsname`` is ``None``, the ``transformer`` class name is used.
     """
-    if clsname is None:
-        clsname = transformer.__class__.__name__
+    if message_clsname is None:
+        message_clsname = transformer.__class__.__name__
     if is_transform is None:
         is_transform = isinstance(transformer, TransformerMixin)
-    with log_elapsed(clsname, message):
+    with log_elapsed(message_clsname, message):
         if not is_transform:
             return None, transformer.fit(X, y, **fit_params)
         elif hasattr(transformer, 'fit_transform'):
@@ -851,7 +853,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         result = Parallel(n_jobs=self.n_jobs)(delayed(_fit_transform_one)(
             transformer, weight, X, y,
             is_transform=is_transform,
-            clsname='FeatureUnion',
+            message_clsname='FeatureUnion',
             message=self._log_message(name, idx, len(transformers)),
             **fit_params) for idx, (name, transformer,
                                     weight) in enumerate(transformers, 1))

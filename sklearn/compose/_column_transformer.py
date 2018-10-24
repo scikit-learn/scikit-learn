@@ -408,7 +408,7 @@ boolean mask array or callable
                     X=_get_column(X, column),
                     y=y,
                     is_transform=True,
-                    clsname='ColumnTransformer',
+                    message_clsname='ColumnTransformer',
                     message=self._log_message(name, idx, len(transformers)))
                 for idx, (name, trans, column, weight) in enumerate(
                         self._iter(fitted=fitted, replace_strings=True), 1))
