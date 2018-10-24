@@ -6,6 +6,7 @@ from tempfile import mkdtemp
 import shutil
 import time
 import re
+import itertools
 
 import pytest
 import numpy as np
@@ -1033,31 +1034,31 @@ def test_make_pipeline_memory():
     shutil.rmtree(cachedir)
 
 
-@pytest.mark.parametrize(['est', 'pattern'], [
-    (Pipeline([('transf', Transf()), ('clf', FitParamT())]),
-     r'''\[Pipeline\].*\(step 1 of 2\) Fitting transf.* elapsed=.*\n'''
-     r'''\[Pipeline\].*\(step 2 of 2\) Fitting clf.* elapsed=.*\n$'''),
-    (Pipeline([('transf', Transf()), ('clf', None)]),
-     r'''\[Pipeline\].*\(step 1 of 1\) Fitting transf.* elapsed=.*\n$'''),
-    (Pipeline([('transf', None), ('mult', Mult())]),
-     r'''\[Pipeline\].*\(step 1 of 1\) Fitting mult.* elapsed=.*\n$'''),
-    (FeatureUnion([('mult1', Mult()), ('mult2', Mult())]),
-     r'''\[FeatureUnion\].*\(step 1 of 2\) Fitting mult1.* elapsed=.*\n'''
-     r'''\[FeatureUnion\].*\(step 2 of 2\) Fitting mult2.* elapsed=.*\n$'''),
-    (FeatureUnion([('mult1', None), ('mult2', Mult()), ('mult3', None)]),
-     r'''\[FeatureUnion\].*\(step 1 of 1\) Fitting mult2.* elapsed=.*\n$'''),
-])
-@pytest.mark.parametrize('method', ['fit', 'fit_transform', 'fit_predict'])
+parameter_grid_test_verbose = ((est, pattern, method) for (
+    est, pattern
+), method in itertools.product(
+    [(Pipeline([('transf', Transf()), ('clf', FitParamT())]),
+      r'''\[Pipeline\].*\(step 1 of 2\) Fitting transf.* elapsed=.*\n'''
+      r'''\[Pipeline\].*\(step 2 of 2\) Fitting clf.* elapsed=.*\n$'''),
+     (Pipeline([('transf', Transf()), ('clf', None)]),
+      r'''\[Pipeline\].*\(step 1 of 1\) Fitting transf.* elapsed=.*\n$'''),
+     (Pipeline([('transf', None), ('mult', Mult())]),
+      r'''\[Pipeline\].*\(step 1 of 1\) Fitting mult.* elapsed=.*\n$'''),
+     (FeatureUnion([('mult1', Mult()), ('mult2', Mult())]),
+      r'''\[FeatureUnion\].*\(step 1 of 2\) Fitting mult1.* elapsed=.*\n'''
+      r'''\[FeatureUnion\].*\(step 2 of 2\) Fitting mult2.* elapsed=.*\n$'''),
+     (FeatureUnion([('mult1', None), ('mult2', Mult()), ('mult3', None)]),
+      r'''\[FeatureUnion\].*\(step 1 of 1\) Fitting mult2.* elapsed=.*\n$'''
+      )], ['fit', 'fit_transform', 'fit_predict'])
+    if hasattr(est, method) and not (
+        method == 'fit_transform' and hasattr(est, 'steps') and
+        type(est.steps[-1][1]).__name__ == 'FitParamT')
+)
+
+
+@pytest.mark.parametrize('est, pattern, method', parameter_grid_test_verbose)
 def test_verbose(est, method, pattern, capsys):
-    try:
-        func = getattr(est, method)
-    except AttributeError:
-        return
-    # XXX: skips test when method is `fit_transform` and when the last step is
-    # `FitParamT` since `FitParamT` does not define a `transform` method
-    if (method == 'fit_transform' and hasattr(est, 'steps') and
-            type(est.steps[-1][1]).__name__ == 'FitParamT'):
-        return
+    func = getattr(est, method)
 
     X = [[1, 2, 3], [4, 5, 6]]
     y = [[7], [8]]
