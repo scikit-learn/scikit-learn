@@ -841,20 +841,16 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
     ...                  class_names=iris['target_names'], show_class=True)
     >>> print(r)
     |---petal width (cm) <= 0.80
-    |   | (value: [50.0, 50.0, 50.0])
     |   | (class: setosa)
     |   |---* (value: [50.0, 0.0, 0.0])
     |   |   | (class: setosa)
     |---petal width (cm) >  0.80
-    |   | (value: [50.0, 50.0, 50.0])
     |   | (class: setosa)
     |   |---petal width (cm) <= 1.75
-    |   |   | (value: [0.0, 50.0, 50.0])
     |   |   | (class: versicolor)
     |   |   |---* (value: [0.0, 49.0, 5.0])
     |   |   |   | (class: versicolor)
     |   |---petal width (cm) >  1.75
-    |   |   | (value: [0.0, 50.0, 50.0])
     |   |   | (class: versicolor)
     |   |   |---* (value: [0.0, 1.0, 45.0])
     |   |   |   | (class: virginica)
