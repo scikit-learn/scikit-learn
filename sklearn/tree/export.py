@@ -784,27 +784,9 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
 
 
 def export_ascii(decision_tree, feature_names=None, class_names=None,
-                 max_depth=10, show_value=False, show_class=False, spacing=3):
+                 max_depth=10, show_value=False, show_class=None,
+                 show_leaves_value=True, spacing=3):
     """Build a text report showing the rules of a decision tree.
-
-    Sample output
-
-    ```
-    |---petal width (cm) <= 0.80
-    |   | (class: setosa)
-    |   |---* value: [ 50.   0.   0.]
-    |   |   | (class: setosa)
-    |---petal width (cm) >  0.80
-    |   | (class: setosa)
-    |   |---petal width (cm) <= 1.75
-    |   |   | (class: versicolor)
-    |   |   |---* value: [  0.  49.   5.]
-    |   |   |   | (class: versicolor)
-    |   |---petal width (cm) >  1.75
-    |   |   | (class: versicolor)
-    |   |   |---* value: [  0.   1.  45.]
-    |   |   |   | (class: virginica)
-    ```
 
     Parameters
     ----------
@@ -827,9 +809,13 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
         If True the value of each internal node is printed.
         Otherwise the value will be reported only for leaves.
 
-    show_class : bool, optional (default=False)
-        If True the class label is printed for each node.
+    show_class : bool, optional (default=None)
+        If False the class label is not printed for each node.
+        The class is printed by default for classification trees.
         Only relevant for classification.
+
+    show_leaves_value : bool, optional (default=True)
+        If True the value on the leaves is showed.
 
     spacing : int, optional (default=3)
         Number of spaces between edges. The higher it is, the wider the result.
@@ -838,6 +824,34 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
     -------
     report : string
         Text summary of all the rules in the decision tree.
+
+    Examples
+    -------
+
+    ```
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> from sklearn.tree.export import export_ascii
+    >>> iris = load_iris()
+    >>> X = iris['data']
+    >>> y = iris['target']
+    >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
+    >>> decision_tree.fit(X, y)
+    >>> print(export_ascii(decision_tree, feature_names=iris['feature_names'],
+                           class_names=iris['target_names'], show_class=True))
+
+    |---petal width (cm) <= 0.80
+    |   | (value: [50.0, 50.0, 50.0])
+    |   |---* (value: [50.0, 0.0, 0.0])
+    |---petal width (cm) >  0.80
+    |   | (value: [50.0, 50.0, 50.0])
+    |   |---petal width (cm) <= 1.75
+    |   |   | (value: [0.0, 50.0, 50.0])
+    |   |   |---* (value: [0.0, 49.0, 5.0])
+    |   |---petal width (cm) >  1.75
+    |   |   | (value: [0.0, 50.0, 50.0])
+    |   |   |---* (value: [0.0, 1.0, 45.0])
+    ```
     """
     check_is_fitted(decision_tree, 'tree_')
     tree_ = decision_tree.tree_
@@ -859,6 +873,9 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
 
     if spacing <= 0:
         raise ValueError("spacing must be > 0, given %d" % spacing)
+
+    if tree_.n_classes[0] != 1 and show_class != False:
+        show_class = True
 
     if feature_names:
         feature_names_ = [feature_names[i] for i in tree_.feature]
@@ -912,9 +929,10 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
                 print_tree_recurse(tree_.children_right[node],
                                    depth+1)
             else:  # leaf
-                # value always meaningful for classification and regression
-                export_ascii.report += value_string.format(indent, '*',
-                                                           str(value.tolist()))
+                # meaningful for classification and regression
+                if show_leaves_value:
+                    export_ascii.report += value_string.format(indent, '*',
+                                                               str(value.tolist()))
                 if show_class:
                     export_ascii.report += class_string.format(info_indent,
                                                                class_name)

@@ -4,6 +4,7 @@ Testing for export functions of decision trees (sklearn.tree.export).
 import pytest
 
 from re import finditer, search
+from textwrap import dedent
 
 from numpy.random import RandomState
 
@@ -333,42 +334,40 @@ def test_export_ascii():
     clf = DecisionTreeClassifier(max_depth=2, random_state=0)
     clf.fit(X, y)
 
-    expected_report = """\
-|---feature_1 <= 0.00
+    expected_report = dedent("""|---feature_1 <= 0.00
 |   |---* (value: [3.0, 0.0])
 |---feature_1 >  0.00
 |   |---* (value: [0.0, 3.0])
-"""
-    assert_equal(export_ascii(clf), expected_report)
+""")
+    assert export_ascii(clf, show_class=False) == expected_report
 
-    expected_report = """\
-|---feature_1 <= 0.00
+    expected_report = dedent("""|---feature_1 <= 0.00
 |   | (value: [3.0, 3.0])
 |   |---* (value: [3.0, 0.0])
 |---feature_1 >  0.00
 |   | (value: [3.0, 3.0])
 |   |---* (value: [0.0, 3.0])
-"""
-    assert_equal(export_ascii(clf, show_value=True), expected_report)
+""")
+    assert export_ascii(clf, show_value=True,
+                        show_class=False) == expected_report
 
-    expected_report = """\
-|---b <= 0.00
+    expected_report = dedent("""|---b <= 0.00
 |   |---* (value: [3.0, 0.0])
 |---b >  0.00
 |   |---* (value: [0.0, 3.0])
-"""
-    assert_equal(export_ascii(clf, ['a', 'b']), expected_report)
+""")
+    assert export_ascii(clf, feature_names=['a', 'b'],
+                        show_class=False) == expected_report
 
-    expected_report = """\
-|-feature_1 <= 0.00
+    expected_report = dedent("""|-feature_1 <= 0.00
 | |-* (value: [3.0, 0.0])
 |-feature_1 >  0.00
 | |-* (value: [0.0, 3.0])
-"""
-    assert_equal(export_ascii(clf, spacing=1), expected_report)
+""")
+    assert export_ascii(clf, spacing=1,
+                        show_class=False) == expected_report
 
-    expected_report = """\
-|---feature_1 <= 0.00
+    expected_report = dedent("""|---feature_1 <= 0.00
 |   | (class: c1)
 |   |---* (value: [3.0, 0.0])
 |   |   | (class: c1)
@@ -376,26 +375,29 @@ def test_export_ascii():
 |   | (class: c1)
 |   |---* (value: [0.0, 3.0])
 |   |   | (class: c2)
-"""
-    assert_equal(export_ascii(clf, class_names=['c1', 'c2'],
-                              show_class=True),
-                 expected_report)
+""")
+    assert export_ascii(clf, class_names=['c1', 'c2'],
+                             show_class=None) == expected_report
+
+    expected_report = dedent("""|---feature_1 <= 0.00
+|---feature_1 >  0.00
+""")
+    assert export_ascii(clf, show_class=False,
+                        show_leaves_value=False) == expected_report
 
     clf = DecisionTreeRegressor(max_depth=2, random_state=0)
     clf.fit(X, y)
-    expected_report = """\
-|---feature_1 <= 0.00
+    expected_report = dedent("""|---feature_1 <= 0.00
 |   |---* (value: [-1.0])
 |---feature_1 >  0.00
 |   |---* (value: [1.0])
-"""
-    assert_equal(export_ascii(clf), expected_report)
+""")
+    assert export_ascii(clf) == expected_report
 
-    expected_report = """\
-|---feature_1 <= 0.00
+    expected_report = dedent("""|---feature_1 <= 0.00
 |---feature_1 >  0.00
-"""
-    assert_equal(export_ascii(clf, max_depth=1), expected_report)
+""")
+    assert export_ascii(clf, max_depth=1) == expected_report
 
 
 def test_plot_tree():
