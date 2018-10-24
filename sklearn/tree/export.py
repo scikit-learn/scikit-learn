@@ -837,8 +837,9 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
     >>> y = iris['target']
     >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
     >>> decision_tree = decision_tree.fit(X, y)
-    >>> print(export_ascii(decision_tree, feature_names=iris['feature_names'],
-                           class_names=iris['target_names'], show_class=True))
+    >>> r = export_ascii(decision_tree, feature_names=iris['feature_names'],
+    ...                  class_names=iris['target_names'], show_class=True)
+    >>> print(r)
     |---petal width (cm) <= 0.80
     |   | (value: [50.0, 50.0, 50.0])
     |   |---* (value: [50.0, 0.0, 0.0])
