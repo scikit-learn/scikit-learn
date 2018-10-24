@@ -1092,8 +1092,7 @@ def test_column_transformer_inverse_with_strings():
 
     df = pd.DataFrame({
         'city': ['London', 'London', 'Paris', 'Sallisaw'],
-        'title': ["His Last Bow", "How Watson Learned the Trick",
-                  "A Moveable Feast", "The Grapes of Wrath"],
+        'title': ["bow", "trick", "feast", "wrath"],
         'expert_rating': [5, 3, 4, 5],
         'user_rating': [4, 5, 4, 3]
     })
@@ -1104,6 +1103,6 @@ def test_column_transformer_inverse_with_strings():
         remainder=MinMaxScaler())
 
     result = column_trans.fit_transform(df)
-    df_inverse = column_trans.inverse_transform(result) 
+    df_inverse = column_trans.inverse_transform(result)
 
     pd.util.testing.assert_frame_equal(df, df_inverse)

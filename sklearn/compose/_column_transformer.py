@@ -428,6 +428,7 @@ boolean mask array or callable
         self._n_features_in = X.shape[1]
         self._X_columns = getattr(X, 'columns', None)
         self._X_dtypes = getattr(X, 'dtypes', None)
+        self._X_row_index = getattr(X, 'index', None)
         self._X_is_sparse = sparse.issparse(X)
         self._invert_error = ""
         self._output_indices = []
@@ -608,7 +609,7 @@ boolean mask array or callable
             delayed(_inverse_transform_one)(
                 trans, X_sel, weight)
             for trans, X_sel, weight in inv_transformers)
-            
+
         if hasattr(X, 'shape'):
             X_length = X.shape[0]
         else:
@@ -625,20 +626,28 @@ boolean mask array or callable
                 inverse_Xs[:, indices] = inverse_X
             return inverse_Xs.tocsr()
 
-        inverse_Xs = np.empty((X_length, self._n_features_in))
+        if self._X_row_index is None:
+            inverse_Xs = np.empty((X_length, self._n_features_in))
+            for indices, inverse_X in zip(self._input_indices, Xs):
+                if sparse.issparse(inverse_X):
+                    inverse_Xs[:, indices] = inverse_X.toarray()
+                else:
+                    inverse_Xs[:, indices] = inverse_X
+
+            if self._X_is_sparse:
+                return inverse_Xs.tocsr()
+            return inverse_Xs
+
+        # pandas dataframe and cannot be sparse
+        import pandas as pd
+        output_dfs = []
         for indices, inverse_X in zip(self._input_indices, Xs):
-            if sparse.issparse(inverse_X):
-                inverse_Xs[:, indices] = inverse_X.toarray()
-            else:
-                inverse_Xs[:, indices] = inverse_X
+            cols = self._X_columns[indices]
+            dtype = self._X_dtypes[indices][0]
+            output_dfs.append(
+                pd.DataFrame(inverse_X, columns=cols, dtype=dtype))
 
-        if self._X_is_sparse:
-            return inverse_Xs.tocsr()
-
-        if self._X_columns is not None:
-            import pandas as pd
-            return pd.DataFrame(inverse_Xs, columns=self._X_columns)
-        return inverse_Xs
+        return pd.concat(output_dfs, axis=1)[self._X_columns]
 
 
 def _check_X(X):
