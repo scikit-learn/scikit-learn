@@ -193,8 +193,6 @@ class Pipeline(_BaseComposition):
     def _log_message(self, step_idx):
         if not self.verbose:
             return
-        if step_idx < 0:
-            step_idx = len(self.steps) + step_idx
         n_steps = len([est for _, est in self.steps if est is not None])
         step_num = len(
             [est for _, est in self.steps[:step_idx + 1] if est is not None])
@@ -282,7 +280,7 @@ class Pipeline(_BaseComposition):
         """
         Xt, fit_params = self._fit(X, y, **fit_params)
         if self._final_estimator is not None:
-            with log_elapsed('Pipeline', self._log_message(-1)):
+            with log_elapsed('Pipeline', self._log_message(len(self.steps)-1)):
                 self._final_estimator.fit(Xt, y, **fit_params)
         return self
 
@@ -317,7 +315,7 @@ class Pipeline(_BaseComposition):
         Xt, fit_params = self._fit(X, y, **fit_params)
         if last_step is None:
             return Xt
-        with log_elapsed('Pipeline', self._log_message(-1)):
+        with log_elapsed('Pipeline', self._log_message(len(self.steps)-1)):
             if hasattr(last_step, 'fit_transform'):
                 Xt = last_step.fit_transform(Xt, y, **fit_params)
             else:
@@ -380,7 +378,7 @@ class Pipeline(_BaseComposition):
         y_pred : array-like
         """
         Xt, fit_params = self._fit(X, y, **fit_params)
-        with log_elapsed('Pipeline', self._log_message(-1)):
+        with log_elapsed('Pipeline', self._log_message(len(self.steps)-1)):
             y_pred = self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
         return y_pred
 
