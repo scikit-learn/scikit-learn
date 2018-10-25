@@ -447,16 +447,24 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         Return samples from the conditional distribution p(Xa | Xb)
 
+        Example usage:
+        >>> gmm = GaussianMixture()
+        >>> X = np.random.randn(100, 4)
+        >>> gmm.fit(X)
+        >>> indices = [0, 1]
+        >>> Xb = X[0, indices]
+        >>> gmm.sample_conditional(Xb, indices, n_samples=10)
+
         Parameters
         ----------
-        Xb : array, shape (k,)
-        indices : array, shape (k,)
+        Xb : array, shape (n_conditionals,)
+        indices : array, shape (n_conditionals,)
         n_samples : int, optional
             Number of samples to generate. Defaults to 1.
 
         Returns
         -------
-        X : array, shape (n_samples, len(indices))
+        X : array, shape (n_samples, n_features - n_conditionals)
             Randomly generated samples
 
         y : array, shape (n_samples,)
@@ -478,6 +486,9 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                              'conditioned dimensions')
         if min(indices) < 0 or max(indices) > n_features - 1:
             raise ValueError('Indices are not in range [0, n_features - 1]')
+
+        # Notation in code follows the following page:
+        # http://pypr.sourceforge.net/mog.html
 
         # Calculate conditional mixture weights
         # (This might be an interesting separate function in the future?)
@@ -529,7 +540,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         res = np.zeros((n_samples, n_features - Xb.shape[0]))
         for i, k in zip(range(n_samples), components):
             res[i] = multivariate_normal.rvs(µs[k], Σs[k])
-        return res
+        return res, components
 
     def _estimate_weighted_log_prob(self, X):
         """Estimate the weighted log-probabilities, log P(X | Z) + log weights.
