@@ -777,11 +777,11 @@ def make_column_transformer(*transformers, **kwargs):
     ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
              transformer_weights=None,
              transformers=[('standardscaler',
-                            StandardScaler(...),
-                            ['numerical_column']),
+                            ['numerical_column'],
+                            StandardScaler(...)),
                            ('onehotencoder',
-                            OneHotEncoder(...),
-                            ['categorical_column'])])
+                            ['categorical_column'],
+                            OneHotEncoder(...))])
     """
     # transformer_weights keyword is not passed through because the user
     # would need to know the automatically generated names of the transformers
