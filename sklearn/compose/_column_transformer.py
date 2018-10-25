@@ -273,7 +273,6 @@ boolean mask array or callable
                 # Restoring the original order.
                 self.transformers = [(x, z, y)
                                      for (x, y, z) in self.transformers]
-                pass
 
     def _validate_transformers(self):
         if not self.transformers:
