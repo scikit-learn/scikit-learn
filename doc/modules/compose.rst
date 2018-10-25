@@ -418,8 +418,8 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
   >>> from sklearn.compose import ColumnTransformer
   >>> from sklearn.feature_extraction.text import CountVectorizer
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
-  ...      ('title_bow', CountVectorizer(), 'title')],
+  ...     [('city_category', 'city', CountVectorizer(analyzer=lambda x: [x])),
+  ...      ('title_bow', 'title', CountVectorizer())],
   ...     remainder='drop')
 
   >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
@@ -458,8 +458,8 @@ We can keep the remaining rating columns by setting
 transformation::
 
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
-  ...      ('title_bow', CountVectorizer(), 'title')],
+  ...     [('city_category', 'city', CountVectorizer(analyzer=lambda x: [x])),
+  ...      ('title_bow', 'title', CountVectorizer())],
   ...     remainder='passthrough')
 
   >>> column_trans.fit_transform(X)
@@ -475,8 +475,8 @@ the transformation::
 
   >>> from sklearn.preprocessing import MinMaxScaler
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
-  ...      ('title_bow', CountVectorizer(), 'title')],
+  ...     [('city_category', 'city', CountVectorizer(analyzer=lambda x: [x])),
+  ...      ('title_bow', 'title', CountVectorizer())],
   ...     remainder=MinMaxScaler())
 
   >>> column_trans.fit_transform(X)[:, -2:]
