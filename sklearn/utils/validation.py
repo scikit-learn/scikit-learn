@@ -140,7 +140,11 @@ def _num_samples(x):
         if len(x.shape) == 0:
             raise TypeError("Singleton array %r cannot be considered"
                             " a valid collection." % x)
-        return x.shape[0]
+        # Check that shape is returning an integer or default to len
+        if isinstance(x.shape[0], int):
+            return x.shape[0]
+        else:
+            return len(x)
     else:
         return len(x)
 
