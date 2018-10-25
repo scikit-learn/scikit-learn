@@ -153,7 +153,7 @@ boolean mask array or callable
     >>> X = np.array([[0., 1., 2., 2.],
     ...               [1., 1., 0., 1.]])
     >>> # Normalizer scales each row of X to unit norm. A separate scaling
-    >>> # applied for the two first and two last elements of each
+    >>> # is applied for the two first and two last elements of each
     >>> # row independently.
     >>> ct.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE
     array([[0. , 1. , 0.5, 0.5],
@@ -257,8 +257,8 @@ boolean mask array or callable
         warn_message = ('ColumnTransformer transformer tuples should be '
                         '(name, column, transformer), whereas '
                         '(name, transformer, column) was passed; '
-                        'its support is deprecated and will be removed in '
-                        'version 0.22. Assuming the deprecated '
+                        'its support is deprecated in 0.20.1 and will be '
+                        'removed in version 0.22. Assuming the deprecated '
                         'order for all given tuples.')
         try:
             self._validate_transformers()
@@ -710,25 +710,8 @@ def _get_transformer_list(estimators):
     Construct (name, trans, column) tuples from list
 
     """
-    # check if any given tuple follows the (columns, transformer) order.
-    # flip all tuples if that's the case.
-    # remove in v0.22
-    trans_ix, cols_ix = 0, 1
-    for tup in estimators:
-        if (hasattr(tup[1], 'fit') or
-                (tup[1] in ('drop', 'passthrough')
-                 and tup[0] not in ('drop', 'passthrough'))):
-            warnings.warn('make_column_transformer arguments should be '
-                          '(transformer, columns), whereas '
-                          '(columns, transformer) was passed; '
-                          'its support is deprecated and will be removed in '
-                          'version 0.22. Assuming the deprecated '
-                          'order for all given tuples.', DeprecationWarning)
-            trans_ix, cols_ix = 1, 0
-            break
-
-    transformers = [trans[trans_ix] for trans in estimators]
-    columns = [trans[cols_ix] for trans in estimators]
+    transformers = [trans[1] for trans in estimators]
+    columns = [trans[0] for trans in estimators]
     names = [trans[0] for trans in _name_estimators(transformers)]
 
     transformer_list = list(zip(names, columns, transformers))
@@ -788,17 +771,17 @@ def make_column_transformer(*transformers, **kwargs):
     >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
     >>> from sklearn.compose import make_column_transformer
     >>> make_column_transformer(
-    ...     (StandardScaler(), ['numerical_column']),
-    ...     (OneHotEncoder(), ['categorical_column']))
+    ...     (['numerical_column'], StandardScaler()),
+    ...     (['categorical_column'], OneHotEncoder()))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
              transformer_weights=None,
              transformers=[('standardscaler',
-                            ['numerical_column'],
-                             StandardScaler(...)),
+                            StandardScaler(...),
+                            ['numerical_column']),
                            ('onehotencoder',
-                            ['categorical_column'],
-                            OneHotEncoder(...))])
+                            OneHotEncoder(...),
+                            ['categorical_column'])])
     """
     # transformer_weights keyword is not passed through because the user
     # would need to know the automatically generated names of the transformers
