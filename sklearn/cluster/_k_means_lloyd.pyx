@@ -118,32 +118,24 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
     
     # re-initialize all arrays at each iteration
     memset(&centers_squared_norms[0], 0, n_clusters * sizeof(floating))
-    for j in xrange(n_clusters):
-        for k in xrange(n_features):
+    for j in range(n_clusters):
+        for k in range(n_features):
             centers_squared_norms[j] += centers_new[j, k] * centers_new[j, k]
 
     if update_centers:
-        memcpy(&centers_old[0, 0], &centers_new[0, 0],
-            n_clusters * n_features * sizeof(floating))
-        memset(&centers_new[0, 0], 0,
-            n_clusters * n_features * sizeof(floating))
+        memcpy(&centers_old[0, 0], &centers_new[0, 0], n_clusters * n_features * sizeof(floating))
+        memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
     # set number of threads to be used by openmp
     num_threads = n_jobs if n_jobs != -1 else openmp.omp_get_max_threads()
     with nogil, parallel(num_threads=num_threads):
-        centers_new_chunk = \
-            <floating*> malloc(n_clusters * n_features * sizeof(floating))
-
-        weight_in_clusters_chunk = \
-            <floating*> malloc(n_clusters * sizeof(floating))
-
-        pairwise_distances_chunk = \
-            <floating*> malloc(n_samples_chunk * n_clusters * sizeof(floating))
-
+        # thread local buffers
+        centers_new_chunk = <floating*> malloc(n_clusters * n_features * sizeof(floating))
+        weight_in_clusters_chunk = <floating*> malloc(n_clusters * sizeof(floating))
+        pairwise_distances_chunk = <floating*> malloc(n_samples_chunk * n_clusters * sizeof(floating))
         # initialize local buffers
-        memset(centers_new_chunk, 0,
-               n_clusters * n_features * sizeof(floating))
+        memset(centers_new_chunk, 0, n_clusters * n_features * sizeof(floating))
         memset(weight_in_clusters_chunk, 0, n_clusters * sizeof(floating))
         
         for chunk_idx in prange(n_chunks):
@@ -171,11 +163,10 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
         # race conditions.
         if update_centers:
             with gil:
-                for j in xrange(n_clusters):
+                for j in range(n_clusters):
                     weight_in_clusters[j] += weight_in_clusters_chunk[j]
-                    for k in xrange(n_features):
-                        centers_new[j, k] += \
-                            centers_new_chunk[j * n_features + k]
+                    for k in range(n_features):
+                        centers_new[j, k] += centers_new_chunk[j * n_features + k]
 
         free(weight_in_clusters_chunk)
         free(centers_new_chunk)
@@ -221,18 +212,18 @@ cdef void _update_chunk_dense(floating *X,
     # ||X - C||² = ||X||² - 2 X.C^T + ||C||², we only need to store
     # the - 2 X.C^T + ||C||² term since the argmin for a given sample only
     # depends on the centers.
-    for i in xrange(n_samples):
-        for j in xrange(n_clusters):
+    for i in range(n_samples):
+        for j in range(n_clusters):
             pairwise_distances[i * n_clusters + j] = centers_squared_norms[j]
     
     xgemm(trans_centers, trans_data, &n_clusters, &n_samples, &n_features,
           &alpha, centers_old, &n_features, X, &n_features,
           &beta, pairwise_distances, &n_clusters)
 
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         min_sq_dist = pairwise_distances[i * n_clusters]
         best_cluster = 0
-        for j in xrange(n_clusters):
+        for j in range(n_clusters):
             sq_dist = pairwise_distances[i * n_clusters + j]
             if sq_dist < min_sq_dist:
                 min_sq_dist = sq_dist
@@ -242,9 +233,8 @@ cdef void _update_chunk_dense(floating *X,
 
         if update_centers:
             weight_in_clusters[best_cluster] += sample_weight[i]
-            for k in xrange(n_features):  
-                centers_new[best_cluster * n_features + k] += \
-                    X[i * n_features + k] * sample_weight[i]
+            for k in range(n_features):  
+                centers_new[best_cluster * n_features + k] += X[i * n_features + k] * sample_weight[i]
 
 
 cpdef void _lloyd_iter_chunked_sparse(X,
@@ -332,29 +322,23 @@ cpdef void _lloyd_iter_chunked_sparse(X,
     
     # re-initialize all arrays at each iteration
     memset(&centers_squared_norms[0], 0, n_clusters * sizeof(floating))
-    for j in xrange(n_clusters):
-        for k in xrange(n_features):
+    for j in range(n_clusters):
+        for k in range(n_features):
             centers_squared_norms[j] += centers_new[j, k] * centers_new[j, k]
 
     if update_centers:
-        memcpy(&centers_old[0, 0], &centers_new[0, 0],
-               n_clusters * n_features * sizeof(floating))
-        memset(&centers_new[0, 0], 0, 
-               n_clusters * n_features * sizeof(floating))
+        memcpy(&centers_old[0, 0], &centers_new[0, 0], n_clusters * n_features * sizeof(floating))
+        memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
     # set number of threads to be used by openmp
     num_threads = n_jobs if n_jobs != -1 else openmp.omp_get_max_threads()
     with nogil, parallel(num_threads=num_threads):
-        centers_new_chunk = \
-            <floating*> malloc(n_clusters * n_features * sizeof(floating))
-
-        weight_in_clusters_chunk = \
-            <floating*> malloc(n_clusters * sizeof(floating))
-
+        # thread local buffers
+        centers_new_chunk = <floating*> malloc(n_clusters * n_features * sizeof(floating))
+        weight_in_clusters_chunk = <floating*> malloc(n_clusters * sizeof(floating))
         # initialize local buffers
-        memset(centers_new_chunk, 0,
-               n_clusters * n_features * sizeof(floating))
+        memset(centers_new_chunk, 0, n_clusters * n_features * sizeof(floating))
         memset(weight_in_clusters_chunk, 0, n_clusters * sizeof(floating))
 
         for chunk_idx in prange(n_chunks):
@@ -383,11 +367,10 @@ cpdef void _lloyd_iter_chunked_sparse(X,
         # race conditions.
         if update_centers:
             with gil:
-                for j in xrange(n_clusters):
+                for j in range(n_clusters):
                     weight_in_clusters[j] += weight_in_clusters_chunk[j]
-                    for k in xrange(n_features):
-                        centers_new[j, k] += \
-                            centers_new_chunk[j * n_features + k]
+                    for k in range(n_features):
+                        centers_new[j, k] += centers_new_chunk[j * n_features + k]
 
         free(weight_in_clusters_chunk)
         free(centers_new_chunk)
@@ -429,15 +412,14 @@ cdef void _update_chunk_sparse(floating *X_data,
     # XXX Precompute the pairwise distances matrix is not worth for sparse
     # currently. Should be tested when BLAS (sparse x dense) matrix
     # multiplication is available.
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         min_sq_dist = max_floating
         best_cluster = 0
 
-        for j in xrange(n_clusters):
+        for j in range(n_clusters):
             sq_dist = 0.0
-            for k in xrange(X_indptr[i] - s, X_indptr[i + 1] - s):
-                sq_dist += \
-                    centers_old[j * n_features + X_indices[k]] * X_data[k]
+            for k in range(X_indptr[i] - s, X_indptr[i + 1] - s):
+                sq_dist += centers_old[j * n_features + X_indices[k]] * X_data[k]
             
             # Instead of computing the full squared distance with each cluster,
             # ||X - C||² = ||X||² - 2 X.C^T + ||C||², we only need to compute
@@ -452,6 +434,5 @@ cdef void _update_chunk_sparse(floating *X_data,
         
         if update_centers:
             weight_in_cluster[best_cluster] += sample_weight[i]
-            for k in xrange(X_indptr[i] - s, X_indptr[i + 1] - s):
-                centers_new[best_cluster * n_features + X_indices[k]] += \
-                    X_data[k] * sample_weight[i]
+            for k in range(X_indptr[i] - s, X_indptr[i + 1] - s):
+                centers_new[best_cluster * n_features + X_indices[k]] += X_data[k] * sample_weight[i]

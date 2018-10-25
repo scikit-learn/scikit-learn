@@ -243,9 +243,9 @@ shape (n_clusters, n_clusters)
         # race conditions.
         if update_centers:
             with gil:
-                for j in xrange(n_clusters):
+                for j in range(n_clusters):
                     weight_in_clusters[j] += weight_in_clusters_chunk[j]
-                    for k in xrange(n_features):
+                    for k in range(n_features):
                         centers_new[j, k] += centers_new_chunk[j * n_features + k]
 
         free(weight_in_clusters_chunk)

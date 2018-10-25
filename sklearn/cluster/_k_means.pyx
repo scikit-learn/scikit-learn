@@ -38,10 +38,10 @@ cpdef floating _inertia_dense(np.ndarray[floating, ndim=2, mode='c'] X,
 
         floating inertia = 0.0
 
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         j = labels[i]
         sample_inertia = 0.0
-        for k in xrange(n_features):
+        for k in range(n_features):
             tmp = X[i, k] - centers[j, k]
             sample_inertia += tmp * tmp
         inertia += sample_inertia * sample_weight[i]
@@ -70,13 +70,13 @@ cpdef floating _inertia_sparse(X,
 
         floating inertia = 0.0
 
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         j = labels[i]
         sample_inertia = 0.0
         row_ptr = X_indptr[i]
         nz_len = X_indptr[i + 1] - X_indptr[i]
         nz_ptr = 0
-        for k in xrange(n_features):
+        for k in range(n_features):
             if nz_ptr < nz_len and k == X_indices[row_ptr + nz_ptr]:
                 tmp = X_data[row_ptr + nz_ptr] - centers[j, k]
                 nz_ptr += 1
@@ -112,7 +112,7 @@ cpdef void _relocate_empty_clusters_dense(np.ndarray[floating, ndim=2, mode='c']
         floating weight
 
     if n_empty > 0:
-        for idx in xrange(n_empty):
+        for idx in range(n_empty):
 
             new_cluster_id = empty_clusters[idx]
 
@@ -121,7 +121,7 @@ cpdef void _relocate_empty_clusters_dense(np.ndarray[floating, ndim=2, mode='c']
 
             old_cluster_id = labels[far_idx]
 
-            for k in xrange(n_features):
+            for k in range(n_features):
                 centers[new_cluster_id, k] = X[far_idx, k] * weight
                 centers[old_cluster_id, k] -= X[far_idx, k] * weight
 
@@ -138,8 +138,7 @@ cpdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
                                            int[::1] labels):
     """Relocate centers which have no sample assigned to them"""
     cdef:
-        int[::1] empty_clusters = \
-            np.where(np.equal(weight_in_clusters,0))[0].astype(np.int32)
+        int[::1] empty_clusters = np.where(np.equal(weight_in_clusters,0))[0].astype(np.int32)
         int n_empty = empty_clusters.shape[0]
 
     if n_empty == 0:
@@ -152,21 +151,20 @@ cpdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
 
         floating[::1] distances = np.zeros(n_samples, dtype=X_data.base.dtype)
     
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         j = labels[i]
-        for k in xrange(X_indptr[i], X_indptr[i + 1]):
+        for k in range(X_indptr[i], X_indptr[i + 1]):
             x = (X_data[k] - centers[j, X_indices[k]])
             distances[i] += x * x
 
     cdef:      
-        int[::1] far_from_centers = \
-            np.argpartition(distances, -n_empty)[-n_empty:].astype(np.int32)
+        int[::1] far_from_centers = np.argpartition(distances, -n_empty)[-n_empty:].astype(np.int32)
 
         int new_cluster_id, old_cluster_id, far_idx, idx
         floating weight
  
     if n_empty > 0:
-        for idx in xrange(n_empty):
+        for idx in range(n_empty):
 
             new_cluster_id = empty_clusters[idx]
 
@@ -175,7 +173,7 @@ cpdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
 
             old_cluster_id = labels[far_idx]
             
-            for k in xrange(X_indptr[far_idx], X_indptr[far_idx + 1]):
+            for k in range(X_indptr[far_idx], X_indptr[far_idx + 1]):
                 centers[new_cluster_id, X_indices[k]] += X_data[k] * weight
                 centers[old_cluster_id, X_indices[k]] -= X_data[k] * weight
 
@@ -196,10 +194,10 @@ cpdef void _mean_and_center_shift(floating[:, ::1] centers_old,
         floating alpha, tmp, x
 
     # average new centers wrt sample weights
-    for j in xrange(n_clusters):
+    for j in range(n_clusters):
         if weight_in_clusters[j] > 0:
             alpha = 1.0 / weight_in_clusters[j]
-            for k in xrange(n_features):
+            for k in range(n_features):
                 centers_new[j, k] *= alpha
     
     # compute shift distance between old and new centers
