@@ -74,7 +74,8 @@ Changelog
 :mod:`sklearn.mixture`
 ........................
 
-- |Fix| :func:`mixture.BayesianGaussianMixture` ensure that ``fit_predict``
+- |Fix| Ensure that the ``fit_predict`` method of
+  :class:`mixture.GaussianMixture` and :class:`mixture.BayesianGaussianMixture`
   always yield assignments consistent with ``fit`` followed by ``predict`` even
   if the convergence criterion is too loose or not met. :issue:`12451`
   by :user:`Olivier Grisel <ogrisel>`.
