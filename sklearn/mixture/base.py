@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Base class for mixture models."""
 
 # Author: Wei Xue <xuewei4d@gmail.com>
@@ -492,19 +491,19 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         # Calculate conditional mixture weights
         # (This might be an interesting separate function in the future?)
-        # pxbs[k] = p(Xb | µkb, Σkbb)
+        # pxbs[k] = p(Xb | mu_kb, Sigma_kbb)
         pxbs = np.zeros(n_components)
         if self.covariance_type == "tied":
-            Σkbb = self.covariances_[indices][:, indices]
+            Sigma_kbb = self.covariances_[indices][:, indices]
         for k in range(n_components):
             if self.covariance_type == 'full':
-                Σkbb = self.covariances_[k, indices][:, indices]
+                Sigma_kbb = self.covariances_[k, indices][:, indices]
             elif self.covariance_type == 'spherical':
-                Σkbb = self.covariances_[k]
+                Sigma_kbb = self.covariances_[k]
             elif self.covariance_type == 'diag':
-                Σkbb = self.covariances_[k][indices]
-            µkb = self.means_[k][indices]
-            pxb = multivariate_normal.pdf(Xb, mean=µkb, cov=Σkbb)
+                Sigma_kbb = self.covariances_[k][indices]
+            mu_kb = self.means_[k][indices]
+            pxb = multivariate_normal.pdf(Xb, mean=mu_kb, cov=Sigma_kbb)
             pxbs[k] = pxb
 
         π_conditional = self.weights_ * pxbs / sum(self.weights_ * pxbs)
@@ -514,8 +513,8 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         components = np.random.multinomial(1,
                                            π_conditional,
                                            size=n_samples).argmax(axis=1)
-        µs = dict()
-        Σs = dict()
+        mus = dict()
+        Sigmas = dict()
         for k in set(components):
             if self.covariance_type == "tied":
                 Lambda_k = self.precisions_
@@ -530,16 +529,16 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                                    axis=1)
             Lambda_kaa_inv = np.linalg.inv(Lambda_kaa)
             Lambda_kab = np.delete(Lambda_k[:, indices], indices, axis=0)
-            µka = np.delete(self.means_[k], indices)
-            µkb = self.means_[k][indices]
-            µkab = µka - Lambda_kaa_inv @ Lambda_kab @ (Xb - µkb)
-            µs[k] = µkab
-            Σs[k] = Lambda_kaa_inv
+            mu_ka = np.delete(self.means_[k], indices)
+            mu_kb = self.means_[k][indices]
+            mu_kab = mu_ka - Lambda_kaa_inv @ Lambda_kab @ (Xb - mu_kb)
+            mus[k] = mu_kab
+            Sigmas[k] = Lambda_kaa_inv
 
         # Sample n_samples in the sampled components
         res = np.zeros((n_samples, n_features - Xb.shape[0]))
         for i, k in zip(range(n_samples), components):
-            res[i] = multivariate_normal.rvs(µs[k], Σs[k])
+            res[i] = multivariate_normal.rvs(mus[k], Sigmas[k])
         return res, components
 
     def _estimate_weighted_log_prob(self, X):
