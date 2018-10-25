@@ -454,14 +454,12 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
                       .format(i, center_shift_tot, tol))
             break
 
-    if center_shift_tot > 0:
-        # rerun E-step in case of non-convergence so that predicted labels
-        # match cluster centers
-        _elkan_iter_chunked_dense(X, sample_weight, centers, centers,
-                                  weight_in_clusters, center_half_distances,
-                                  distance_next_center, upper_bounds,
-                                  lower_bounds, labels, center_shift, n_jobs,
-                                  update_centers=False)
+    # rerun E-step so that predicted labels match cluster centers
+    _elkan_iter_chunked_dense(X, sample_weight, centers, centers,
+                              weight_in_clusters, center_half_distances,
+                              distance_next_center, upper_bounds,
+                              lower_bounds, labels, center_shift, n_jobs,
+                              update_centers=False)
 
     inertia = _inertia_dense(X, sample_weight, centers, labels)
 
@@ -544,6 +542,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
     # init
     centers = _init_centroids(X, n_clusters, init, random_state=random_state,
                               x_squared_norms=x_squared_norms)
+
     if verbose:
         print("Initialization complete")
 
@@ -577,12 +576,10 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
                       .format(i, center_shift_tot, tol))
             break
 
-    if center_shift_tot > 0:
-        # rerun E-step in case of non-convergence so that predicted labels
-        # match cluster centers
-        lloyd_iter(X, sample_weight, x_squared_norms, centers, centers,
-                   centers_squared_norms, weight_in_clusters, labels,
-                   center_shift, n_jobs, update_centers=False)
+    # rerun E-step so that predicted labels match cluster centers
+    lloyd_iter(X, sample_weight, x_squared_norms, centers, centers,
+               centers_squared_norms, weight_in_clusters, labels,
+               center_shift, n_jobs, update_centers=False)
 
     inertia = _inertia(X, sample_weight, centers, labels)
 
@@ -625,15 +622,15 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers):
     center_shift = np.zeros_like(centers_squared_norms)
 
     if sp.issparse(X):
-        labels_centers = _lloyd_iter_chunked_sparse
+        _labels = _lloyd_iter_chunked_sparse
         _inertia = _inertia_sparse
     else:
-        labels_centers = _lloyd_iter_chunked_dense
+        _labels = _lloyd_iter_chunked_dense
         _inertia = _inertia_dense
 
-    labels_centers(X, sample_weight, x_squared_norms, centers,
-                   centers, centers_squared_norms, weight_in_clusters,
-                   labels, center_shift, update_centers=False)
+    _labels(X, sample_weight, x_squared_norms, centers,
+            centers, centers_squared_norms, weight_in_clusters,
+            labels, center_shift, update_centers=False)
 
     inertia = _inertia(X, sample_weight, centers, labels)
 
