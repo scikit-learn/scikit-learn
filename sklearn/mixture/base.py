@@ -506,12 +506,12 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
             pxb = multivariate_normal.pdf(Xb, mean=mu_kb, cov=Sigma_kbb)
             pxbs[k] = pxb
 
-        π_conditional = self.weights_ * pxbs / sum(self.weights_ * pxbs)
+        pi_conditional = self.weights_ * pxbs / sum(self.weights_ * pxbs)
 
         # Sample components and compute conditional distribution in
         # those components
         components = np.random.multinomial(1,
-                                           π_conditional,
+                                           pi_conditional,
                                            size=n_samples).argmax(axis=1)
         mus = dict()
         Sigmas = dict()
