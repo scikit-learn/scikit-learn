@@ -387,7 +387,7 @@ is updated according to the following equation:
 
 .. math::
 
-    x_i^{t+1} = x_i^t + m(x_i^t)
+    x_i^{t+1} = m(x_i^t)
 
 Where :math:`N(x_i)` is the neighborhood of samples within a given distance
 around :math:`x_i` and :math:`m` is the *mean shift* vector that is computed for each
