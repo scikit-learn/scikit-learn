@@ -266,6 +266,7 @@ boolean mask array or callable
             try:
                 self.transformers = [(x, z, y)
                                      for (x, y, z) in self.transformers]
+                self._validate_transformers()
                 warnings.warn(warn_message, DeprecationWarning)
             except TypeError:
                 # the other order also doesn't work.
