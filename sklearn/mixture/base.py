@@ -531,7 +531,8 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
             Lambda_kab = np.delete(Lambda_k[:, indices], indices, axis=0)
             mu_ka = np.delete(self.means_[k], indices)
             mu_kb = self.means_[k][indices]
-            mu_kab = mu_ka - Lambda_kaa_inv @ Lambda_kab @ (Xb - mu_kb)
+            mu_kab = mu_ka - np.dot(np.dot(Lambda_kaa_inv, Lambda_kab),
+                                    (Xb - mu_kb))
             mus[k] = mu_kab
             Sigmas[k] = Lambda_kaa_inv
 
