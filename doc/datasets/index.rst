@@ -546,3 +546,27 @@ Note: if you manage your own numerical data it is recommended to use an
 optimized file format such as HDF5 to reduce data load times. Various libraries
 such as H5Py, PyTables and pandas provides a Python interface for reading and 
 writing data in that format.
+
+Donwloading Gunnar Raetsch benchmark datasets
+---------------------------------------------
+
+`Gunnar Raetsch benchmark datasets
+<https://github.com/tdiethe/gunnar_raetsch_benchmark_datasets>`
+have been used in several publications and include the 100 folds used for the CV
+evaluation of the model. Also, the first 5 folds can be used in the inner loop
+of a nested CV strategy to replicate the hyper-parameter search used by the
+authors.
+
+The available datasets are: 'banana', 'breast_cancer', 'diabetis',
+'flare_solar', 'german', 'heart', 'image', 'ringnorm', 'splice', 'thyroid',
+'titanic', 'twonorm' and 'waveform'.
+
+@misc{Diethe15,
+      Author = {Diethe, T.},
+      Date-Added = {2015-05-06 14:18:52 +0000},
+      Date-Modified = {2015-05-28 14:17:57 +0000},
+      Doi = {DOI: http://dx.doi.org/10.5281/zenodo.18110},
+      Howpublished = {\url{https://github.com/tdiethe/gunnar\_raetsch\_benchmark\_datasets/}},
+      Keywords = {dataset},
+      Title = {{13 benchmark datasets derived from the UCI, DELVE and STATLOG repositories}},
+      Year = {2015}}
