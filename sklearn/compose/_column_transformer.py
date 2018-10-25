@@ -270,6 +270,9 @@ boolean mask array or callable
                 warnings.warn(warn_message, DeprecationWarning)
             except TypeError:
                 # the other order also doesn't work.
+                # Restoring the original order.
+                self.transformers = [(x, z, y)
+                                     for (x, y, z) in self.transformers]
                 pass
 
     def _validate_transformers(self):
