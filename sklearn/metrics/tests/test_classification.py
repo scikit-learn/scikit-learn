@@ -140,10 +140,14 @@ def test_classification_report_dictionary_output():
     # assert the 2 dicts are equal.
     assert(report.keys() == expected_report.keys())
     for key in expected_report:
-        assert report[key].keys() == expected_report[key].keys()
-        for metric in expected_report[key]:
-            assert_almost_equal(expected_report[key][metric],
-                                report[key][metric])
+        if key == 'accuracy':
+            assert isinstance(report[key], float)
+            assert report[key] == expected_report[key]
+        else:
+            assert report[key].keys() == expected_report[key].keys()
+            for metric in expected_report[key]:
+                assert_almost_equal(expected_report[key][metric],
+                                    report[key][metric])
 
     assert type(expected_report['setosa']['precision']) == float
     assert type(expected_report['macro avg']['precision']) == float
