@@ -304,8 +304,8 @@ class OneHotEncoder(_BaseEncoder):
         return self._n_values_
 
     def _handle_deprecations(self, X):
-        self._n_values = self.n_values
         # internal version of the attributes to handle deprecations
+        self._n_values = self.n_values
         self._categories = getattr(self, '_categories', None)
         self._categorical_features = getattr(self, '_categorical_features',
                                              None)
