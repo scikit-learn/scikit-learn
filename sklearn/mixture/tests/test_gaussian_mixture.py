@@ -1007,6 +1007,25 @@ def test_sample():
             assert_equal(X_s.shape, (sample_size, n_features))
 
 
+def test_sample_conditional():
+    samples_shape = (200, 4)
+    X = np.random.randn(*samples_shape)
+    for n_components in [1, 3]:
+        for covariance_type in COVARIANCE_TYPE:
+            gmm = GaussianMixture(n_components=n_components,
+                                  covariance_type=covariance_type)
+            gmm.fit(X)
+            samples_1 = gmm.sample_conditional(X[0, [0, 2, 3]],
+                                               [0, 2, 3],
+                                               n_samples=10)
+            samples_2 = gmm.sample_conditional(X[0, [0, 3]],
+                                               [0, 3], n_samples=1)
+            samples_3 = gmm.sample_conditional(X[0, [0]], [0], n_samples=10)
+            assert_true(samples_1.shape == (10, 1))
+            assert_true(samples_2.shape == (1, 2))
+            assert_true(samples_3.shape == (10, 3))
+
+
 @ignore_warnings(category=ConvergenceWarning)
 def test_init():
     # We check that by increasing the n_init number we have a better solution
