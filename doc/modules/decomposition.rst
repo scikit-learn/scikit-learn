@@ -864,7 +864,8 @@ The graphical model of LDA is a three-level generative model:
 .. image:: ../images/lda_model_graph.png
    :align: center
 
-Note on notations presented in the graphical model above:
+Note on notations presented in the graphical model above, which can be found in 
+Hoffman et al. (2013):
 
   * The corpus is a collection of :math:`D` documents.
   * A document is a sequence of :math:`N` words.
