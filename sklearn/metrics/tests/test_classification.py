@@ -1644,3 +1644,25 @@ def test_calibration_loss():
     y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
     calibration_loss_val = calibration_loss(y_true, y_pred, bin_size=2)
     assert_almost_equal(calibration_loss_val, 0.46999, decimal=4)
+
+def test_balanced_accuracy_score_unseen():
+    assert_warns_message(UserWarning, 'y_pred contains classes not in y_true',
+                         balanced_accuracy_score, [0, 0, 0], [0, 0, 1])
+
+
+@pytest.mark.parametrize('y_true,y_pred',
+                         [
+                             (['a', 'b', 'a', 'b'], ['a', 'a', 'a', 'b']),
+                             (['a', 'b', 'c', 'b'], ['a', 'a', 'a', 'b']),
+                             (['a', 'a', 'a', 'b'], ['a', 'b', 'c', 'b']),
+                         ])
+def test_balanced_accuracy_score(y_true, y_pred):
+    macro_recall = recall_score(y_true, y_pred, average='macro',
+                                labels=np.unique(y_true))
+    with ignore_warnings():
+        # Warnings are tested in test_balanced_accuracy_score_unseen
+        balanced = balanced_accuracy_score(y_true, y_pred)
+    assert balanced == pytest.approx(macro_recall)
+    adjusted = balanced_accuracy_score(y_true, y_pred, adjusted=True)
+    chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
+    assert adjusted == (balanced - chance) / (1 - chance)
