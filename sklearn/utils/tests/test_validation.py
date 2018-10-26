@@ -794,7 +794,7 @@ def test_retrieve_samples_from_non_standard_shape():
             self.shape = ("not numeric",)
 
         def __len__(self):
-            return len([1,2,3])
+            return len([1, 2, 3])
 
     X = TestNonNumericShape()
     assert _num_samples(X) == len(X)
