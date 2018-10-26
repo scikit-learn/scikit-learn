@@ -343,7 +343,7 @@ class OneHotEncoder(_BaseEncoder):
 
                 # check if we have integer or categorical input
                 try:
-                    X = check_array(X, dtype=np.int)
+                    check_array(X, dtype=np.int)
                 except ValueError:
                     self._legacy_mode = False
                     self._categories = 'auto'
