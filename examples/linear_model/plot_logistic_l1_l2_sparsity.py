@@ -4,7 +4,7 @@ L1 Penalty and Sparsity in Logistic Regression
 ==============================================
 
 Comparison of the sparsity (percentage of zero coefficients) of solutions when
-L1, L2 and elastic-net penalty are used for different values of C. We can see
+L1, L2 and Elastic Net penalty are used for different values of C. We can see
 that large values of C give more freedom to the model.  Conversely, smaller
 values of C constrain the model more. In the L1 penalty case, this leads to
 sparser solutions. As expected, the elastic-net penalty sparsity is between
@@ -36,13 +36,16 @@ X = StandardScaler().fit_transform(X)
 # classify small against large digits
 y = (y > 4).astype(np.int)
 
+l1_ratio = 0.5  # L1 weight in the Elastic Net regularization
+
+fig, axes = plt.subplots(3, 3)
 
 # Set regularization parameter
-for i, C in enumerate((1, 0.1, 0.01)):
+for i, (C, axes_row) in enumerate(zip((1, 0.1, 0.01), axes)):
     # turn down tolerance for short training time
     clf_l1_LR = LogisticRegression(C=C, penalty='l1', tol=0.01, solver='saga')
     clf_l2_LR = LogisticRegression(C=C, penalty='l2', tol=0.01, solver='saga')
-    clf_EN_LR = LogisticRegression(C=C, l1_ratio=.3, penalty='elasticnet',
+    clf_EN_LR = LogisticRegression(C=C, l1_ratio=l1_ratio, penalty='elasticnet',
                                    solver='saga', tol=0.01)
     clf_l1_LR.fit(X, y)
     clf_l2_LR.fit(X, y)
@@ -71,27 +74,18 @@ for i, C in enumerate((1, 0.1, 0.01)):
     print("{:<40} {:.2f}".format("Score with elastic-net penalty:",
                                  clf_EN_LR.score(X, y)))
 
-    l1_plot = plt.subplot(3, 3, 3 * i + 1)
-    l2_plot = plt.subplot(3, 3, 3 * i + 2)
-    en_plot = plt.subplot(3, 3, 3 * i + 3)
     if i == 0:
-        l1_plot.set_title("L1 penalty")
-        l2_plot.set_title("L2 penalty")
-        en_plot.set_title("Elastic-net with l1_ratio = 0.3")
+        axes_row[0].set_title("L1 penalty")
+        axes_row[1].set_title("L2 penalty")
+        axes_row[2].set_title("Elastic Net\nl1_ratio = %s" % l1_ratio)
 
-    l1_plot.imshow(np.abs(coef_l1_LR.reshape(8, 8)), interpolation='nearest',
-                   cmap='binary', vmax=1, vmin=0)
-    l2_plot.imshow(np.abs(coef_l2_LR.reshape(8, 8)), interpolation='nearest',
-                   cmap='binary', vmax=1, vmin=0)
-    en_plot.imshow(np.abs(coef_EN_LR.reshape(8, 8)), interpolation='nearest',
-                   cmap='binary', vmax=1, vmin=0)
+    for ax, coefs in zip(axes_row, [coef_l1_LR, coef_l2_LR, coef_EN_LR]):
+        ax.imshow(np.abs(coefs.reshape(8, 8)), interpolation='nearest',
+                  cmap='binary', vmax=1, vmin=0)
+        ax.set_xticks(())
+        ax.set_yticks(())
+
+    axes_row[0].set_ylabel('C = %s' % C)
     plt.text(-40, 3, "C = %.2f" % C)
-
-    l1_plot.set_xticks(())
-    l1_plot.set_yticks(())
-    l2_plot.set_xticks(())
-    l2_plot.set_yticks(())
-    en_plot.set_xticks(())
-    en_plot.set_yticks(())
 
 plt.show()

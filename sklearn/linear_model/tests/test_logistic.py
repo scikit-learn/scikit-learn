@@ -1474,7 +1474,7 @@ def test_elastic_net_vs_l1_l2(C):
 @pytest.mark.parametrize('l1_ratio', [.5])
 def test_LogisticRegression_elastic_net_objective(C, l1_ratio):
     # train a logistic regression with l2 (a) and elasticnet (b) penalties,
-    # and compute the elasticnet objective. That of a sould be greater than
+    # and compute the elasticnet objective. That of a should be greater than
     # that of b.
     X, y = make_classification(n_samples=10000, n_classes=2, n_features=20,
                                n_informative=10, n_redundant=0,
@@ -1482,16 +1482,17 @@ def test_LogisticRegression_elastic_net_objective(C, l1_ratio):
     X = scale(X)
 
     lr_enet = LogisticRegression(penalty='elasticnet', solver='saga',
-                                 random_state=0, C=C, l1_ratio=l1_ratio)
+                                 random_state=0, C=C, l1_ratio=l1_ratio,
+                                 fit_intercept=False)
     lr_l2 = LogisticRegression(penalty='l2', solver='saga', random_state=0,
-                               C=C)
+                               C=C, fit_intercept=False)
     lr_enet.fit(X, y)
     lr_l2.fit(X, y)
 
     def enet_objective(lr):
-        obj = C * log_loss(y, lr.predict(X))
+        obj = C * log_loss(y, lr.decision_function(X))
         obj += l1_ratio * np.linalg.norm(lr.coef_, 1)
-        obj += ((1 - l1_ratio) / 2) * np.linalg.norm(lr.coef_, 2)
+        obj += ((1. - l1_ratio) / 2.) * np.linalg.norm(lr.coef_, 2) ** 2
         return obj
 
     assert enet_objective(lr_enet) < enet_objective(lr_l2)
