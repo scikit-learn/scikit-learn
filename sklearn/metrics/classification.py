@@ -2054,3 +2054,4 @@ def calibration_loss(y_true, y_prob, bin_size=2):
     loss = (0.5) * (pos_loss + neg_loss)
 
     return loss
+
