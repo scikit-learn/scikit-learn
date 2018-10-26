@@ -859,11 +859,10 @@ Latent Dirichlet Allocation is a generative probabilistic model for collections 
 discrete dataset such as text corpora. It is also a topic model that is used for
 discovering abstract topics from a collection of documents.
 
-The graphical model of LDA is a three-level Bayesian model:
+The graphical model of LDA is a three-level generative model:
 
 .. image:: ../images/lda_model_graph.png
    :align: center
-
 
 Note on notations presented in the graphical model above:
 
@@ -871,17 +870,6 @@ Note on notations presented in the graphical model above:
   * A document is a sequence of :math:`N` words.
   * There are :math:`K` topics in the corpus. 
   * The boxes represent repeated sampling. 
-
-
-The three levels of the Bayesian model are: 
-
-  1. Generation of global hyperparameters :math:`\alpha` and :math:`\eta`, 
-     and global parameter :math:`\beta`.
-
-  2. Generation of document-level variable :math:`\theta`. 
-
-  3. Generation of word-level variables :math:`z` and :math:`w`.
-
 
 In the graphical model, each node is a random variable and has a role in the 
 generative process. A shaded node indicates an observed variable and an unshaded 
@@ -891,21 +879,25 @@ of topics in the corpus and the distribution of words in the documents.
 The goal of LDA is to use the observed words to infer the hidden topic 
 structure. 
 
+When modeling text corpora, the model assumes the following generative process 
+for a corpus with :math:`D` documents and :math:`K` topics, with :math:`K` 
+corresponding to :attr:`n_components` in the API:
 
-When modeling text corpora, the model assumes the following generative process for
-a corpus with :math:`D` documents and :math:`K` topics, with :math:`K` corresponding 
-to :attr:`n_components` in the API:
+  1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim 
+     \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words, 
+     i.e. the probability of a word appearing in topic :math:`k`. 
+     :math:`\eta` corresponds to :attr:`topic_word_prior`. 
 
-  1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim \mathrm{Dirichlet}(\eta)`. 
-     This provides a distribution over the words, i.e. the probability of a word appearing 
-     in topic :math:`k`. :math:`\eta` corresponds to :attr:`topic_word_prior`. 
-
-  2. For each document :math:`d \in D`, draw the topic proportions :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha` corresponds to :attr:`doc_topic_prior`. 
+  2. For each document :math:`d \in D`, draw the topic proportions 
+     :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha` 
+     corresponds to :attr:`doc_topic_prior`. 
 
   3. For each word :math:`i` in document :math:`d`:
 
-    a. Draw the topic assignment :math:`z_{di} \sim \mathrm{Multinomial}(\theta_d)`
-    b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}(\beta_{z_{di}})`
+    a. Draw the topic assignment :math:`z_{di} \sim \mathrm{Multinomial}
+       (\theta_d)`
+    b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}
+       (\beta_{z_{di}})`
 
 For parameter estimation, the posterior distribution is:
 
@@ -915,8 +907,9 @@ For parameter estimation, the posterior distribution is:
 
 Since the posterior is intractable, variational Bayesian method
 uses a simpler distribution :math:`q(z,\theta,\beta | \lambda, \phi, \gamma)`
-to approximate it, and those variational parameters :math:`\lambda`, :math:`\phi`,
-:math:`\gamma` are optimized to maximize the Evidence Lower Bound (ELBO):
+to approximate it, and those variational parameters :math:`\lambda`, 
+:math:`\phi`, :math:`\gamma` are optimized to maximize the Evidence 
+Lower Bound (ELBO):
 
 .. math::
   \log\: P(w | \alpha, \eta) \geq L(w,\phi,\gamma,\lambda) \overset{\triangle}{=}
@@ -926,10 +919,11 @@ Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
 between :math:`q(z,\theta,\beta)` and the true posterior
 :math:`p(z, \theta, \beta |w, \alpha, \eta)`.
 
-:class:`LatentDirichletAllocation` implements online variational Bayes algorithm and supports
-both online and batch update method.
-While batch method updates variational variables after each full pass through the data,
-online method updates variational variables from mini-batch data points.
+:class:`LatentDirichletAllocation` implements online variational Bayes 
+algorithm and supports both online and batch update method.
+While batch method updates variational variables after each full pass through 
+the data, online method updates variational variables from mini-batch data 
+points.
 
 .. note::
 
