@@ -39,7 +39,7 @@ Changelog
   Müller`_.
 
 - |API| :class:`compose.ColumnTransformer` now expects
-  `(columns, transformer)` instead of `(transformer, columns)`.
+  `(name, columns, transformer)` instead of `(name, transformer, columns)`.
   :issue:`12339` by :user:`Adrin Jalali <adrinjalali>`.
 
 :mod:`sklearn.datasets`
