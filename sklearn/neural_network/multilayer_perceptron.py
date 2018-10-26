@@ -340,6 +340,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                                            incremental):
             # First time training the model
             self._initialize(y, layer_units)
+        else:
+            check_partial_fit_n_features(X, self.coefs_[0].T, self)
 
         # lbfgs does not support mini-batches
         if self.solver == 'lbfgs':
