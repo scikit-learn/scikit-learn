@@ -1093,14 +1093,15 @@ def test_column_transformer_inverse_with_strings():
 
     df = pd.DataFrame({
         'city': ['London', 'London', 'Paris', 'Sallisaw'],
-        'title': ["bow", "trick", "feast", "wrath"],
+        'title': ["His Last Bow", "How Watson Learned the Trick",
+                  "A Moveable Feast", "The Grapes of Wrath"],
         'expert_rating': [5, 3, 4, 5],
         'user_rating': [4, 5, 4, 3]
     })
 
     column_trans = ColumnTransformer(
         [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
-         ('title_bow', CountVectorizer(), 'title')],
+         ('title_bow', CountVectorizer(analyzer=lambda x: [x]), 'title')],
         remainder=MinMaxScaler())
 
     result = column_trans.fit_transform(df)
