@@ -7,6 +7,7 @@ import traceback
 import pickle
 from copy import deepcopy
 from functools import partial
+import pytest
 
 import numpy as np
 from scipy import sparse
@@ -126,7 +127,6 @@ def _yield_classifier_checks(name, classifier):
     # test classifiers trained on a single label always return this label
     yield check_classifiers_one_label
     yield check_classifiers_classes
-    yield check_estimators_partial_fit_n_features
     # basic consistency testing
     yield check_classifiers_train
     yield partial(check_classifiers_train, readonly_memmap=True)
@@ -179,7 +179,6 @@ def _yield_regressor_checks(name, regressor):
     yield check_regressors_train
     yield partial(check_regressors_train, readonly_memmap=True)
     yield check_regressor_data_not_an_array
-    yield check_estimators_partial_fit_n_features
     yield check_regressors_no_decision_function
     yield check_supervised_y_2d
     yield check_supervised_y_no_nan
@@ -220,7 +219,6 @@ def _yield_clustering_checks(name, clusterer):
         # let's not test that here.
         yield check_clustering
         yield partial(check_clustering, readonly_memmap=True)
-        yield check_estimators_partial_fit_n_features
     yield check_non_transformer_estimators_n_iter
 
 
@@ -268,6 +266,7 @@ def _yield_all_checks(name, estimator):
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
     yield check_fit_idempotent
+    yield check_estimators_partial_fit_n_features
 
 
 def check_estimator(Estimator):
@@ -1261,12 +1260,15 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
     except NotImplementedError:
         return
 
-    with assert_raises(ValueError,
-                       msg="The estimator {} does not raise an"
-                           " error when the number of features"
-                           " changes between calls to "
-                           "partial_fit.".format(name)):
-        estimator.partial_fit(X[:, :-1], y)
+    try:
+        with pytest.raises(ValueError, match="Number of input features has "
+                                             "changed .* between calls to "
+                                             "partial_fit"):
+            estimator.partial_fit(X[:, :-1], y)
+    except pytest.fail.Exception:
+        raise AssertionError("The estimator {} does not raise an appropriate "
+                             "error when the number of features changes "
+                             "between calls to partial_fit.".format(name))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

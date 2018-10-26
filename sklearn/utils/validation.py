@@ -971,3 +971,26 @@ def check_non_negative(X, whom):
 
     if X_min < 0:
         raise ValueError("Negative values in data passed to %s" % whom)
+
+
+def check_partial_fit_n_features(X, components, estimator):
+    """
+    Check if number of features is preseved between calls to partial_fit.
+
+    Parameters
+    ----------
+    X : array-like
+        Input data for the new call to partial_fit
+
+    components : array_like
+        Fitted attribute of an estimator which has the same number of features
+        as the input data from the first fit.
+
+    estimator : estimator instance.
+        Estimator instance for which the check is performed.
+    """
+    if X.shape[-1] != components.shape[-1]:
+        raise ValueError("Number of input features has changed from {0} to {1}"
+                         " between calls to partial_fit of {2}."
+                         "".format(X.shape[-1], components.shape[-1],
+                                   type(estimator).__name__))
