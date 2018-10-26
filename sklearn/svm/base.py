@@ -327,7 +327,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return predict(X)
 
     def _dense_predict(self, X):
-        n_samples, n_features = X.shape
         X = self._compute_kernel(X)
         if X.ndim == 1:
             X = check_array(X, order='C', accept_large_sparse=False)

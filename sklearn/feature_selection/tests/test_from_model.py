@@ -25,6 +25,8 @@ data, y = iris.data, iris.target
 rng = np.random.RandomState(0)
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_invalid_input():
     clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
                         random_state=None, tol=None)
@@ -243,6 +245,8 @@ def test_2d_coef():
 
 
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_partial_fit():
     est = PassiveAggressiveClassifier(random_state=0, shuffle=False,
                                       max_iter=5, tol=None)
@@ -273,6 +277,8 @@ def test_calling_fit_reinitializes():
     assert_equal(transformer.estimator_.C, 100)
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_prefit():
     # Test all possible combinations of the prefit parameter.
 
@@ -311,6 +317,8 @@ def test_threshold_string():
     assert_array_almost_equal(X_transform, data[:, mask])
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_threshold_without_refitting():
     # Test that the threshold can be set without refitting the model.
     clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,

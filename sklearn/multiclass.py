@@ -541,7 +541,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self
         """
         if _check_partial_fit_first_call(self, classes):
-            self.estimators_ = [clone(self.estimator) for i in
+            self.estimators_ = [clone(self.estimator) for _ in
                                 range(self.n_classes_ *
                                       (self.n_classes_ - 1) // 2)]
 
