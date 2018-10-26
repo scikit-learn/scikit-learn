@@ -788,6 +788,7 @@ def test_check_X_y_informative_error():
     y = None
     assert_raise_message(ValueError, "y cannot be None", check_X_y, X, y)
 
+
 def test_retrieve_samples_from_non_standard_shape():
     class TestNonNumericShape:
         def __init__(self):
