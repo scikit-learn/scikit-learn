@@ -326,14 +326,26 @@ def test_k_means_fortran_aligned_data():
 @pytest.mark.parametrize('algo', ['full', 'elkan'])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 @pytest.mark.parametrize('constructor', [np.asarray, sp.csr_matrix])
-def test_k_means_fit_predict(algo, dtype, constructor):
+@pytest.mark.parametrize('seed, max_iter, tol', [
+    (0, 2, 1e-7),    # strict non-convergence
+    (1, 2, 1e-1),    # loose non-convergence
+    (3, 300, 1e-7),  # strict convergence
+    (4, 300, 1e-1),  # loose convergence
+])
+def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
     # check that fit.predict gives same result as fit_predict
+    # There's a very small chance of failure with elkan on unstructured dataset
+    # because predict method uses fast euclidean distances computation which
+    # may cause small numerical instabilities.
     if not (algo == 'elkan' and constructor is sp.csr_matrix):
-        rng = np.random.RandomState(0)
+        rng = np.random.RandomState(seed)
 
-        X = rng.random_sample((1000, 2)).astype(dtype, copy=False)
+        X = make_blobs(n_samples=1000, n_features=10, centers=10,
+                       random_state=rng)[0].astype(dtype, copy=False)
         X = constructor(X)
-        kmeans = KMeans(algorithm=algo, n_clusters=10, random_state=0)
+
+        kmeans = KMeans(algorithm=algo, n_clusters=10, random_state=seed,
+                        tol=tol, max_iter=max_iter, n_jobs=1)
 
         labels_1 = kmeans.fit(X).predict(X)
         labels_2 = kmeans.fit_predict(X)
