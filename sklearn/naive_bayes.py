@@ -30,7 +30,7 @@ from .utils import check_X_y, check_array, check_consistent_length
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
-from .utils.validation import check_is_fitted
+from .utils.validation import check_is_fitted, check_partial_fit_n_features
 from .externals import six
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB']
@@ -382,9 +382,8 @@ class GaussianNB(BaseNB):
                 self.class_prior_ = np.zeros(len(self.classes_),
                                              dtype=np.float64)
         else:
-            if X.shape[1] != self.theta_.shape[1]:
-                msg = "Number of features %d does not match previous data %d."
-                raise ValueError(msg % (X.shape[1], self.theta_.shape[1]))
+            check_partial_fit_n_features(X, self.theta_, self)
+
             # Put epsilon back in each time
             self.sigma_[:, :] -= self.epsilon_
 
@@ -527,9 +526,8 @@ class BaseDiscreteNB(BaseNB):
             self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
             self.feature_count_ = np.zeros((n_effective_classes, n_features),
                                            dtype=np.float64)
-        elif n_features != self.coef_.shape[1]:
-            msg = "Number of features %d does not match previous data %d."
-            raise ValueError(msg % (n_features, self.coef_.shape[-1]))
+        else:
+            check_partial_fit_n_features(X, self.coef_, self)
 
         Y = label_binarize(y, classes=self.classes_)
         if Y.shape[1] == 1:

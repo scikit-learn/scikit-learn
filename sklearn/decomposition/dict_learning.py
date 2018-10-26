@@ -19,7 +19,7 @@ from ..externals.six.moves import zip
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches)
 from ..utils.extmath import randomized_svd, row_norms
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_partial_fit_n_features
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
@@ -1412,6 +1412,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             self.random_state_ = check_random_state(self.random_state)
         X = check_array(X)
         if hasattr(self, 'components_'):
+            check_partial_fit_n_features(X, self.components_, self)
             dict_init = self.components_
         else:
             dict_init = self.dict_init

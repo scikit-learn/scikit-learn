@@ -14,7 +14,7 @@ from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_partial_fit_n_features
 from ..exceptions import NotFittedError, ConvergenceWarning
 from .hierarchical import AgglomerativeClustering
 
@@ -546,11 +546,8 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         # Should raise an error if one does not fit before predicting.
         if not (is_fitted or has_partial_fit):
             raise NotFittedError("Fit training data before predicting")
-
-        if is_fitted and X.shape[1] != self.subcluster_centers_.shape[1]:
-            raise ValueError(
-                "Training data and predicted data do "
-                "not have same number of features.")
+        if is_fitted:
+            check_partial_fit_n_features(X, self.subcluster_centers_, self)
 
     def predict(self, X):
         """

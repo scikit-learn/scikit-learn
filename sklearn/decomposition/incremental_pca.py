@@ -11,6 +11,7 @@ from scipy import linalg
 from .base import _BasePCA
 from ..utils import check_array, gen_batches
 from ..utils.extmath import svd_flip, _incremental_mean_and_var
+from ..utils.validation import check_partial_fit_n_features
 
 
 class IncrementalPCA(_BasePCA):
@@ -224,6 +225,8 @@ class IncrementalPCA(_BasePCA):
         n_samples, n_features = X.shape
         if not hasattr(self, 'components_'):
             self.components_ = None
+        elif self.components_ is not None:
+            check_partial_fit_n_features(X, self.components_, self)
 
         if self.n_components is None:
             if self.components_ is None:
@@ -240,13 +243,6 @@ class IncrementalPCA(_BasePCA):
                              "%d." % (self.n_components, n_samples))
         else:
             self.n_components_ = self.n_components
-
-        if (self.components_ is not None) and (self.components_.shape[0] !=
-                                               self.n_components_):
-            raise ValueError("Number of input features has changed from %i "
-                             "to %i between calls to partial_fit! Try "
-                             "setting n_components to a fixed value." %
-                             (self.components_.shape[0], self.n_components_))
 
         # This is the first partial_fit
         if not hasattr(self, 'n_samples_seen_'):

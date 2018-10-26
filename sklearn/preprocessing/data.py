@@ -31,7 +31,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  mean_variance_axis, incr_mean_variance_axis,
                                  min_max_axis)
 from ..utils.validation import (check_is_fitted, check_random_state,
-                                FLOAT_DTYPES)
+                                FLOAT_DTYPES, check_partial_fit_n_features)
 
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
@@ -358,6 +358,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             self.n_samples_seen_ = X.shape[0]
         # Next steps
         else:
+            check_partial_fit_n_features(X, self.scale_, self)
+
             data_min = np.minimum(self.data_min_, data_min)
             data_max = np.maximum(self.data_max_, data_max)
             self.n_samples_seen_ += X.shape[0]
@@ -652,6 +654,16 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             self.n_samples_seen_ = np.repeat(self.n_samples_seen_,
                                              X.shape[1]).astype(np.int64)
 
+        # if first pass: store number of features
+        if not hasattr(self, "mean_"):
+            self._n_features_ = X.shape[1]
+
+        # check number of features consistency for next passes
+        if hasattr(self, "mean_") and self.mean_ is not None:
+            check_partial_fit_n_features(X, self.mean_, self)
+        if hasattr(self, "scale_") and self.scale_ is not None:
+            check_partial_fit_n_features(X, self.scale_, self)
+
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
@@ -911,6 +923,8 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
             self.n_samples_seen_ = X.shape[0]
         # Next passes
         else:
+            check_partial_fit_n_features(X, self.scale_, self)
+
             max_abs = np.maximum(self.max_abs_, max_abs)
             self.n_samples_seen_ += X.shape[0]
 

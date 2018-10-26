@@ -21,7 +21,7 @@ from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_partial_fit_n_features
 
 
 class BernoulliRBM(BaseEstimator, TransformerMixin):
@@ -243,6 +243,8 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
                     (self.n_components, X.shape[1])
                 ),
                 order='F')
+        else:
+            check_partial_fit_n_features(X, self.components_, self)
         if not hasattr(self, 'intercept_hidden_'):
             self.intercept_hidden_ = np.zeros(self.n_components, )
         if not hasattr(self, 'intercept_visible_'):

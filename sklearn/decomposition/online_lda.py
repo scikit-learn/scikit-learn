@@ -19,7 +19,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
                      gen_batches, gen_even_slices)
 from ..utils.fixes import logsumexp
-from ..utils.validation import check_non_negative
+from ..utils.validation import check_non_negative, check_partial_fit_n_features
 from ..utils import Parallel, delayed, effective_n_jobs
 from ..externals.six.moves import xrange
 from ..exceptions import NotFittedError
@@ -493,12 +493,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         # initialize parameters or check
         if not hasattr(self, 'components_'):
             self._init_latent_vars(n_features)
-
-        if n_features != self.components_.shape[1]:
-            raise ValueError(
-                "The provided data has %d dimensions while "
-                "the model was trained with feature size %d." %
-                (n_features, self.components_.shape[1]))
+        else:
+            check_partial_fit_n_features(X, self.components_, self)
 
         n_jobs = effective_n_jobs(self.n_jobs)
         with Parallel(n_jobs=n_jobs, verbose=max(0,

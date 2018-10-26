@@ -27,7 +27,7 @@ from ..utils.validation import _num_samples
 from ..utils import check_array
 from ..utils import gen_batches
 from ..utils import check_random_state
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_partial_fit_n_features
 from ..utils.validation import FLOAT_DTYPES
 from ..utils import Parallel
 from ..utils import delayed
@@ -1694,6 +1694,7 @@ class MiniBatchKMeans(KMeans):
             random_reassign = False
             distances = None
         else:
+            check_partial_fit_n_features(X, self.cluster_centers_, self)
             # The lower the minimum count is, the more we do random
             # reassignment, however, we don't want to do random
             # reassignment too often, to allow for building up counts

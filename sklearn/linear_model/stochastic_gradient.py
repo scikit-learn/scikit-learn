@@ -18,7 +18,7 @@ from ..base import BaseEstimator, RegressorMixin
 from ..utils import check_array, check_random_state, check_X_y
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_partial_fit_n_features
 from ..exceptions import ConvergenceWarning
 from ..externals import six
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
@@ -533,9 +533,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         if getattr(self, "coef_", None) is None or coef_init is not None:
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
-        elif n_features != self.coef_.shape[-1]:
-            raise ValueError("Number of features %d does not match previous "
-                             "data %d." % (n_features, self.coef_.shape[-1]))
+        else:
+            check_partial_fit_n_features(X, self.coef_, self)
 
         self.loss_function_ = self._get_loss_function(loss)
         if not hasattr(self, "t_"):
@@ -1144,9 +1143,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         if getattr(self, "coef_", None) is None:
             self._allocate_parameter_mem(1, n_features, coef_init,
                                          intercept_init)
-        elif n_features != self.coef_.shape[-1]:
-            raise ValueError("Number of features %d does not match previous "
-                             "data %d." % (n_features, self.coef_.shape[-1]))
+        else:
+            check_partial_fit_n_features(X, self.coef_, self)
+
         if self.average > 0 and getattr(self, "average_coef_", None) is None:
             self.average_coef_ = np.zeros(n_features,
                                           dtype=np.float64,
