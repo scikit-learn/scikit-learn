@@ -62,6 +62,11 @@ Changelog
   where ``class_weight='balanced_subsample'`` failed with more than 32 classes.
   :issue:`12165` by `Joel Nothman`_.
 
+- |Fix| Fixed a bug affecting :class:`ensemble.BaggingClassifier`,
+  :class:`ensemble.BaggingRegressor` and :class:`ensemble.IsolationForest`,
+  where ``max_features`` was sometimes rounded down to zero.
+  :issue:`12388` by :user:`Connor Tann <Connossor>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
