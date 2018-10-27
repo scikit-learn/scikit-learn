@@ -631,7 +631,7 @@ def _hc_cut(n_clusters, children, n_leaves):
     # are interested in largest elements
     # children[-1] is the root of the tree
     nodes = [-(max(children[-1]) + 1)]
-    for i in xrange(n_clusters - 1):
+    for _ in xrange(n_clusters - 1):
         # As we have a heap, nodes[0] is the smallest element
         these_children = children[-nodes[0] - n_leaves]
         # Insert the 2 children and remove the largest node
