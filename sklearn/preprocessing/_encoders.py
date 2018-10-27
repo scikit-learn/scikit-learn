@@ -112,7 +112,8 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                     # continue `The rows are marked `X_mask` and will be
                     # removed later.
                     X_mask[:, i] = valid_mask
-                    Xi = Xi.copy()
+                    # cast Xi into a np.object to handle different string types
+                    Xi = Xi.astype(np.object)
                     Xi[~valid_mask] = self.categories_[i][0]
             _, encoded = _encode(Xi, self.categories_[i], encode=True)
             X_int[:, i] = encoded
