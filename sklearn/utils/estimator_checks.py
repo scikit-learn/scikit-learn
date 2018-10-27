@@ -120,10 +120,8 @@ def _yield_non_meta_checks(name, estimator):
 
 
 def _yield_classifier_checks(name, classifier):
-    # test classifiers can handle non-array data
-    yield check_classifier_data_not_an_array
-    # test classifiers can handle pandas objects
-    yield check_classifier_pandas_dataframe
+    # test classifiers can handle non-array data and pandas objects
+    yield check_classifier_two_data_types
     # test classifiers trained on a single label always return this label
     yield check_classifiers_one_label
     yield check_classifiers_classes
@@ -179,8 +177,7 @@ def _yield_regressor_checks(name, regressor):
     # basic testing
     yield check_regressors_train
     yield partial(check_regressors_train, readonly_memmap=True)
-    yield check_regressor_data_not_an_array
-    yield check_regressor_pandas_dataframe
+    yield check_regressor_two_data_types
     yield check_estimators_partial_fit_n_features
     yield check_regressors_no_decision_function
     yield check_supervised_y_2d
@@ -237,7 +234,7 @@ def _yield_outliers_checks(name, estimator):
         yield check_outliers_train
         yield partial(check_outliers_train, readonly_memmap=True)
         # test outlier detectors can handle non-array data
-        yield check_classifier_data_not_an_array
+        yield check_classifier_two_data_types
         # test if NotFittedError is raised
         yield check_estimators_unfitted
 
@@ -2022,24 +2019,26 @@ def check_sparsify_coefficients(name, estimator_orig):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_classifier_data_not_an_array(name, estimator_orig):
+def check_classifier_two_data_types(name, estimator_orig):
     X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1]])
     X = pairwise_estimator_convert_X(X, estimator_orig)
     y = [1, 1, 1, 2, 2, 2]
     y = multioutput_estimator_convert_y_2d(estimator_orig, y)
-    check_estimators_data_not_an_array(name, estimator_orig, X, y)
+    for obj_type in ["NotAnArray", "PandasDataframe"]:
+        check_estimators_two_data_types(name, estimator_orig, X, y, obj_type)
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_regressor_data_not_an_array(name, estimator_orig):
+def check_regressor_two_data_types(name, estimator_orig):
     X, y = _boston_subset(n_samples=50)
     X = pairwise_estimator_convert_X(X, estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator_orig, y)
-    check_estimators_data_not_an_array(name, estimator_orig, X, y)
+    for obj_type in ["NotAnArray", "PandasDataframe"]:
+        check_estimators_two_data_types(name, estimator_orig, X, y, obj_type)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
-def check_estimators_data_not_an_array(name, estimator_orig, X, y):
+def check_estimators_two_data_types(name, estimator_orig, X, y, obj_type):
     if name in CROSS_DECOMPOSITION:
         raise SkipTest("Skipping check_estimators_data_not_an_array "
                        "for cross decomposition module as estimators "
@@ -2049,54 +2048,21 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y):
     estimator_2 = clone(estimator_orig)
     set_random_state(estimator_1)
     set_random_state(estimator_2)
-
-    y_ = NotAnArray(np.asarray(y))
-    X_ = NotAnArray(np.asarray(X))
-
-    # fit
-    estimator_1.fit(X_, y_)
-    pred1 = estimator_1.predict(X_)
-    estimator_2.fit(X, y)
-    pred2 = estimator_2.predict(X)
-    assert_allclose(pred1, pred2, atol=1e-2, err_msg=name)
-
-
-@ignore_warnings(category=DeprecationWarning)
-def check_classifier_pandas_dataframe(name, estimator_orig):
-    X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1]])
-    X = pairwise_estimator_convert_X(X, estimator_orig)
-    y = [1, 1, 1, 2, 2, 2]
-    y = multioutput_estimator_convert_y_2d(estimator_orig, y)
-    check_estimators_pandas_dataframe(name, estimator_orig, X, y)
-
-
-@ignore_warnings(category=DeprecationWarning)
-def check_regressor_pandas_dataframe(name, estimator_orig):
-    X, y = _boston_subset(n_samples=50)
-    X = pairwise_estimator_convert_X(X, estimator_orig)
-    y = multioutput_estimator_convert_y_2d(estimator_orig, y)
-    check_estimators_pandas_dataframe(name, estimator_orig, X, y)
-
-
-@ignore_warnings(category=(DeprecationWarning, FutureWarning))
-def check_estimators_pandas_dataframe(name, estimator_orig, X, y):
-    if name in CROSS_DECOMPOSITION:
-        raise SkipTest("Skipping check_estimators_pandas_dataframe "
-                       "for cross decomposition module as estimators "
-                       "are not deterministic.")
-    # separate estimators to control random seeds
-    estimator_1 = clone(estimator_orig)
-    estimator_2 = clone(estimator_orig)
-    set_random_state(estimator_1)
-    set_random_state(estimator_2)
-
-    import pandas as pd
-    y_ = np.asarray(y)
-    if y_.ndim == 1:
-        y_ = pd.Series(y_)
+    
+    if obj_type not in ["NotAnArray", 'PandasDataframe']:
+        raise ValueError("Data type {0} not supported".format(obj_type))
+        
+    if obj_type == "NotAnArray":
+        y_ = NotAnArray(np.asarray(y))
+        X_ = NotAnArray(np.asarray(X))
     else:
-        y_ = pd.DataFrame(y_)
-    X_ = pd.DataFrame(np.asarray(X))
+        import pandas as pd
+        y_ = np.asarray(y)
+        if y_.ndim == 1:
+            y_ = pd.Series(y_)
+        else:
+            y_ = pd.DataFrame(y_)
+        X_ = pd.DataFrame(np.asarray(X))
 
     # fit
     estimator_1.fit(X_, y_)
