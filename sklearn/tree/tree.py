@@ -67,7 +67,6 @@ DENSE_SPLITTERS = {"best": _splitter.BestSplitter,
 SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
                     "random": _splitter.RandomSparseSplitter}
 
-
 # =============================================================================
 # Base decision tree
 # =============================================================================
