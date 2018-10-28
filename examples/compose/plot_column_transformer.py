@@ -93,19 +93,19 @@ pipeline = Pipeline([
     ('union', ColumnTransformer(
         [
             # Pulling features from the post's subject line (first column)
-            ('subject', TfidfVectorizer(min_df=50), 0),
+            ('subject', 0, TfidfVectorizer(min_df=50)),
 
             # Pipeline for standard bag-of-words model for body (second column)
-            ('body_bow', Pipeline([
+            ('body_bow', 1, Pipeline([
                 ('tfidf', TfidfVectorizer()),
                 ('best', TruncatedSVD(n_components=50)),
-            ]), 1),
+            ])),
 
             # Pipeline for pulling ad hoc features from post's body
-            ('body_stats', Pipeline([
+            ('body_stats', 1, Pipeline([
                 ('stats', TextStats()),  # returns a list of dicts
                 ('vect', DictVectorizer()),  # list of dicts -> feature matrix
-            ]), 1),
+            ])),
         ],
 
         # weight components in ColumnTransformer

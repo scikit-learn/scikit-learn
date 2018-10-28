@@ -65,8 +65,8 @@ categorical_transformer = Pipeline(steps=[
 
 preprocessor = ColumnTransformer(
     transformers=[
-        ('num', numeric_transformer, numeric_features),
-        ('cat', categorical_transformer, categorical_features)])
+        ('num', numeric_features, numeric_transformer),
+        ('cat', categorical_features, categorical_transformer)])
 
 # Append classifier to preprocessing pipeline.
 # Now we have a full prediction pipeline.
