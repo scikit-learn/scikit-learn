@@ -269,8 +269,8 @@ def test_one_hot_encoder_no_categorical_features():
         X_tr = enc.fit_transform(X)
     expected_features = np.array(list(), dtype='object')
     assert_array_equal(X, X_tr)
-    assert_equal(enc.categories_, list())
     assert_array_equal(enc.get_feature_names(), expected_features)
+    assert enc.categories_ == []
 
 
 @pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])

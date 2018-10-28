@@ -385,7 +385,7 @@ class OneHotEncoder(_BaseEncoder):
                 sel = np.zeros(n_features, dtype=bool)
                 sel[np.asarray(self.categorical_features)] = True
                 if sum(sel) == 0:
-                    self.categories_ = list()
+                    self.categories_ = []
                 self._legacy_mode = True
             self._categorical_features = self.categorical_features
         else:
@@ -687,7 +687,7 @@ class OneHotEncoder(_BaseEncoder):
         cats = self.categories_
         if input_features is None:
             input_features = ['x%d' % i for i in range(len(cats))]
-        elif (len(input_features) != len(self.categories_)):
+        elif len(input_features) != len(self.categories_):
             raise ValueError(
                 "input_features should have length equal to number of "
                 "features ({}), got {}".format(len(self.categories_),
