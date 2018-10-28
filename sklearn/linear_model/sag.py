@@ -214,7 +214,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     >>> y = np.array([1, 1, 2, 2])
     >>> clf = linear_model.LogisticRegression(
     ...     solver='sag', multi_class='multinomial')
-    >>> clf.fit(X, y)
+    >>> print(clf.fit(X, y))
     ... #doctest: +NORMALIZE_WHITESPACE
     LogisticRegression(C=1.0, class_weight=None, dual=False,
         fit_intercept=True, intercept_scaling=1, max_iter=100,

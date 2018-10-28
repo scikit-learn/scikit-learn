@@ -75,7 +75,7 @@ def clone(estimator, safe=True):
 
 
 ###############################################################################
-def _pprint(params, offset=0, printer=repr):
+def _pprint(params, offset=0, printer=repr, max_line_length=75):
     """Pretty print the dictionary 'params'
 
     Parameters
@@ -89,6 +89,10 @@ def _pprint(params, offset=0, printer=repr):
     printer : callable
         The function to convert entries to strings, typically
         the builtin str or repr
+
+    max_line_length : number
+        The maximum number of characters a line can have before it gets broken
+        into multiple lines.
 
     """
     # Do a multi-line justified repr:
@@ -109,7 +113,9 @@ def _pprint(params, offset=0, printer=repr):
         if len(this_repr) > 500:
             this_repr = this_repr[:300] + '...' + this_repr[-100:]
         if i > 0:
-            if (this_line_length + len(this_repr) >= 75 or '\n' in this_repr):
+            break_line = (this_line_length + len(this_repr) >= max_line_length
+                          or '\n' in this_repr)
+            if break_line:
                 params_list.append(line_sep)
                 this_line_length = len(line_sep)
             else:
@@ -224,6 +230,12 @@ class BaseEstimator(object):
         return self
 
     def __repr__(self):
+        class_name = self.__class__.__name__
+        return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
+                                               offset=len(class_name),
+                                               max_line_length=float('inf')),)
+
+    def __str__(self):
         class_name = self.__class__.__name__
         return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
                                                offset=len(class_name),),)
