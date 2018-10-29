@@ -142,6 +142,8 @@ def assert_warns(warning_class, func, *args, **kw):
         warnings.simplefilter("always")
         # Trigger a warning.
         result = func(*args, **kw)
+        w = [e for e in w
+             if e.category is not FutureWarning]
         if hasattr(np, 'VisibleDeprecationWarning'):
             # Filter out numpy-specific warnings in numpy >= 1.9
             w = [e for e in w
@@ -189,6 +191,9 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
+
+        w = [e for e in w
+             if e.category is not FutureWarning]
         if hasattr(np, 'VisibleDeprecationWarning'):
             # Let's not catch the numpy internal DeprecationWarnings
             warnings.simplefilter('ignore', np.VisibleDeprecationWarning)
@@ -266,6 +271,8 @@ def assert_no_warnings(func, *args, **kw):
         warnings.simplefilter('always')
 
         result = func(*args, **kw)
+        w = [e for e in w
+             if e.category is not FutureWarning]
         if hasattr(np, 'VisibleDeprecationWarning'):
             # Filter out numpy-specific warnings in numpy >= 1.9
             w = [e for e in w
