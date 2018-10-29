@@ -1328,7 +1328,7 @@ def test_gradient_boosting_validation_fraction():
     assert gbc.n_estimators_ < gbc3.n_estimators_
 
 
-class _NoSampleWaightWrapper:
+class _NoSampleWeightWrapper:
     def __init__(self, est):
         self.est = est
 
@@ -1359,7 +1359,7 @@ def test_gradient_boosting_with_init(task):
     gb(init=init_est).fit(X, y, sample_weight=sample_weight)
 
     # init does not support sample weights
-    init_est = _NoSampleWaightWrapper(init())
+    init_est = _NoSampleWeightWrapper(init())
     gb(init=init_est).fit(X, y)  # ok no sample weights
     with pytest.raises(ValueError):
         gb(init=init_est).fit(X, y, sample_weight=sample_weight)
