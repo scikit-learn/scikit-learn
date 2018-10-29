@@ -17,7 +17,7 @@ def test_fast_kernel_regression_gaussian():
 
 
 def test_fast_kernel_regression_laplace():
-    X, y = make_regression(n_samples=200, n_features=100)
+    X, y = make_regression(n_features=100)
     FKR_prediction = FKR_EigenPro(
         kernel="laplace", n_epoch=200, bandwidth=13,
         random_state=0).fit(X, y).predict(X)

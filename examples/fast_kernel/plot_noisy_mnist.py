@@ -52,7 +52,7 @@ train_sizes = [500, 1000, 2000]
 # Fit models to data
 for train_size in train_sizes:
     for name, estimator in [
-        ("FastKernel", FKC_EigenPro(n_epoch=2, bandwidth=5,random_state=rng)),
+        ("FastKernel", FKC_EigenPro(n_epoch=2, bandwidth=5, random_state=rng)),
             ("SupportVector", SVC(C=5, gamma=1./(2 * 5 * 5)))]:
         stime = time()
         estimator.fit(x_train[:train_size], y_train[:train_size])
@@ -76,7 +76,7 @@ for train_size in train_sizes:
 
 # set up grid for figures
 fig = plt.figure(num=None, figsize=(6, 4), dpi=160)
-ax = plt.subplot2grid((2, 2), (0, 0), rowspan=2, fig=fig)
+ax = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
 train_size_labels = [str(s) for s in train_sizes]
 
 # Graph fit(train) time
@@ -94,7 +94,7 @@ ax.set_xticks([], minor=True)
 ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
 
 # Graph prediction(test) time
-ax = plt.subplot2grid((2, 2), (0, 1), rowspan=1, fig=fig)
+ax = plt.subplot2grid((2, 2), (0, 1), rowspan=1)
 ax.plot(train_sizes, fkc_pred_times, 'o-', color='r')
 ax.plot(train_sizes, svc_pred_times, 'o--', color='g')
 ax.set_xscale('log')
@@ -105,7 +105,7 @@ ax.set_xticks([])
 ax.set_xticks([], minor=True)
 
 # Graph training error
-ax = plt.subplot2grid((2, 2), (1, 1), rowspan=1, fig=fig)
+ax = plt.subplot2grid((2, 2), (1, 1), rowspan=1)
 ax.plot(train_sizes, fkc_err, 'o-', color='r')
 ax.plot(train_sizes, svc_err, 'o-', color='g')
 ax.set_xscale('log')
