@@ -53,6 +53,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import ShuffleSplit
+from sklearn.model_selection._validation import _safe_split
 from sklearn.metrics.pairwise import (rbf_kernel, linear_kernel,
                                       pairwise_distances)
 
@@ -265,6 +267,7 @@ def _yield_all_checks(name, estimator):
     yield check_set_params
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
+    yield check_fit_idempotent
 
 
 def check_estimator(Estimator):
@@ -2330,3 +2333,50 @@ def check_outliers_fit_predict(name, estimator_orig):
         for contamination in [-0.5, 2.3]:
             estimator.set_params(contamination=contamination)
             assert_raises(ValueError, estimator.fit_predict, X)
+
+
+def check_fit_idempotent(name, estimator_orig):
+    # Check that est.fit(X) is the same as est.fit(X).fit(X). Ideally we would
+    # check that the estimated parameters during training (e.g. coefs_) are
+    # the same, but having a universal comparison function for those
+    # attributes is difficult and full of edge cases. So instead we check that
+    # predict(), predict_proba(), decision_function() and transform() return
+    # the same results.
+
+    check_methods = ["predict", "transform", "decision_function",
+                     "predict_proba"]
+    rng = np.random.RandomState(0)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    if 'warm_start' in estimator.get_params().keys():
+        estimator.set_params(warm_start=False)
+
+    n_samples = 100
+    X = rng.normal(loc=100, size=(n_samples, 2))
+    X = pairwise_estimator_convert_X(X, estimator)
+    if is_regressor(estimator_orig):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
+
+    train, test = next(ShuffleSplit(test_size=.2, random_state=rng).split(X))
+    X_train, y_train = _safe_split(estimator, X, y, train)
+    X_test, y_test = _safe_split(estimator, X, y, test, train)
+
+    # Fit for the first time
+    estimator.fit(X_train, y_train)
+
+    result = {}
+    for method in check_methods:
+        if hasattr(estimator, method):
+            result[method] = getattr(estimator, method)(X_test)
+
+    # Fit again
+    estimator.fit(X_train, y_train)
+
+    for method in check_methods:
+        if hasattr(estimator, method):
+            new_result = getattr(estimator, method)(X_test)
+            assert_allclose_dense_sparse(result[method], new_result)
