@@ -351,12 +351,14 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
     x_squared_norms = row_norms(X, squared=True)
 
     best_labels, best_inertia, best_centers = None, None, None
-    if n_clusters == 1:
-        # elkan doesn't make sense for a single cluster, full will produce
-        # the right result.
-        algorithm = "full"
+
     if algorithm == "auto":
-        algorithm = "full" if sp.issparse(X) else 'elkan'
+        algorithm = "full" if sp.issparse(X) else "elkan"
+    if algorithm == "elkan" and n_clusters == 1:
+        warnings.warns("algorithm='elkan' doesn't make sense for a single "
+                       "cluster. Using 'full' instead.")
+        algorithm = "full"
+
     if algorithm == "full":
         kmeans_single = _kmeans_single_lloyd
     elif algorithm == "elkan":
