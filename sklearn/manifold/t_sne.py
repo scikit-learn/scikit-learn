@@ -848,7 +848,7 @@ class TSNE(BaseEstimator):
             obj_func = _kl_divergence
 
         # Learning schedule (part 1): do n_iter_early_exag iteration with
-        # lower momentum but higher learning rate controlled via 
+        # lower momentum but higher learning rate controlled via
         # the early exageration parameter
         P *= self.early_exaggeration
         params, kl_divergence, it = _gradient_descent(obj_func, params,
