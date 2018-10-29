@@ -355,8 +355,8 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
     if algorithm == "auto":
         algorithm = "full" if sp.issparse(X) else "elkan"
     if algorithm == "elkan" and n_clusters == 1:
-        warnings.warns("algorithm='elkan' doesn't make sense for a single "
-                       "cluster. Using 'full' instead.")
+        warnings.warn("algorithm='elkan' doesn't make sense for a single "
+                      "cluster. Using 'full' instead.", RuntimeWarning)
         algorithm = "full"
 
     if algorithm == "full":
