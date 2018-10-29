@@ -69,9 +69,8 @@ def test_fast_kernel_regression_conflict_data():
     X, y = make_regression()
     y = np.reshape(y, (-1, 1))
     X, y = X, np.hstack([y, y+2])
-    # Make sure we don't throw an error
-    FKR_prediction = FKR_EigenPro(
-        kernel="linear", n_epoch=5, bandwidth=1, random_state=0).fit(X, y).predict(X)
+    # Make sure we don't throw an error when fitting or predicting
+    FKR_EigenPro(kernel="linear", n_epoch=5, bandwidth=1, random_state=0).fit(X, y).predict(X)
 
 
 # Tests for FastKernelClassification
@@ -125,6 +124,5 @@ def test_fast_kernel_classification_duplicate_data():
 def test_fast_kernel_classification_conflict_data():
     X, y = make_classification()
     X, y = np.concatenate([X, X]), np.concatenate([y, 1-y])
-    # Make sure we don't throw an error
-    FKR_prediction = FKC_EigenPro(
-        kernel="linear", n_epoch=5, bandwidth=5, random_state=0).fit(X, y).predict(X)
+    # Make sure we don't throw an error when fitting or predicting
+    FKC_EigenPro(kernel="linear", n_epoch=5, bandwidth=5, random_state=0).fit(X, y).predict(X)
