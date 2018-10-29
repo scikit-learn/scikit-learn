@@ -252,7 +252,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         self.centers_ = X
 
         # Calculate the subsample size to be used.
-        if self.subsample_size is "auto":
+        if self.subsample_size == "auto":
             if n < 100000:
                 sample_size = min(n, 4000)
             else:
@@ -272,7 +272,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
                                                replace=False).astype('int32')
         max_S, beta = self._setup(X[self.pinx_], n_components, mG, alpha=.95)
         # Calculate best batch size.
-        if self.bs is "auto":
+        if self.bs == "auto":
             bs = min(np.int32(beta / max_S + 1), mG)
         else:
             bs = self.bs
