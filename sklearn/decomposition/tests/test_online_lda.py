@@ -142,21 +142,6 @@ def test_lda_fit_transform(method):
     assert_array_almost_equal(X_fit, X_trans, 4)
 
 
-def test_lda_partial_fit_dim_mismatch():
-    # test `n_features` mismatch in `partial_fit`
-    rng = np.random.RandomState(0)
-    n_components = rng.randint(3, 6)
-    n_col = rng.randint(6, 10)
-    X_1 = np.random.randint(4, size=(10, n_col))
-    X_2 = np.random.randint(4, size=(10, n_col + 1))
-    lda = LatentDirichletAllocation(n_components=n_components,
-                                    learning_offset=5., total_samples=20,
-                                    random_state=rng)
-    lda.partial_fit(X_1)
-    assert_raises_regexp(ValueError, r"^The provided data has",
-                         lda.partial_fit, X_2)
-
-
 def test_invalid_params():
     # test `_check_params` method
     X = np.ones((5, 10))
@@ -202,7 +187,7 @@ def test_lda_transform_mismatch():
                                     random_state=rng)
     lda.partial_fit(X)
     assert_raises_regexp(ValueError, r"^The provided data has",
-                         lda.partial_fit, X_2)
+                         lda.transform, X_2)
 
 
 @if_safe_multiprocessing_with_blas
