@@ -1666,3 +1666,6 @@ def test_balanced_accuracy_score(y_true, y_pred):
     adjusted = balanced_accuracy_score(y_true, y_pred, adjusted=True)
     chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
     assert adjusted == (balanced - chance) / (1 - chance)
+def test_balanced_accuracy_score_unseen():
+    assert_warns_message(UserWarning, 'y_pred contains classes not in y_true',
+                         balanced_accuracy_score, [0, 0, 0], [0, 0, 1])
