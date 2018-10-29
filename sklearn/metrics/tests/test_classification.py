@@ -1703,6 +1703,7 @@ def test_balanced_accuracy_score(y_true, y_pred):
     chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
     assert adjusted == (balanced - chance) / (1 - chance)
 
+
 def test_calibration_loss():
     # Check calibration_loss function
     y_true = np.array([0, 1, 1, 0, 1, 1])
