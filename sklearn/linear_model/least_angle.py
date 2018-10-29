@@ -431,7 +431,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 idx]
 
             n_active -= 1
-            m, n = idx, n_active
             # handle the case when idx is not length of 1
             drop_idx = [active.pop(ii) for ii in idx]
 

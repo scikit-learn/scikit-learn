@@ -427,6 +427,12 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         """
         X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self)
         self.classes_ = unique_labels(y)
+        n_samples, _ = X.shape
+        n_classes = len(self.classes_)
+
+        if n_samples == n_classes:
+            raise ValueError("The number of samples must be more "
+                             "than the number of classes.")
 
         if self.priors is None:  # estimate priors from sample
             _, y_t = np.unique(y, return_inverse=True)  # non-negative ints

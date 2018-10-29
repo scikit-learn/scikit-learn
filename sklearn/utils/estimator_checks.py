@@ -41,8 +41,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
 from sklearn.base import (clone, ClusterMixin,
-                          BaseEstimator, is_classifier, is_regressor,
-                          is_outlier_detector)
+                          is_classifier, is_regressor, is_outlier_detector)
 
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
@@ -523,7 +522,7 @@ def check_estimator_sparse_data(name, estimator_orig):
                           "sparse input is not supported if this is not"
                           " the case." % name)
                     raise
-        except Exception as e:
+        except Exception:
             print("Estimator %s doesn't seem to fail gracefully on "
                   "sparse data: it should raise a TypeError if sparse input "
                   "is explicitly not supported." % name)
@@ -1660,7 +1659,6 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
 
     if hasattr(classifier, "decision_function"):
         decision = classifier.decision_function(X)
-        n_samples, n_features = X.shape
         assert isinstance(decision, np.ndarray)
         if len(classes) == 2:
             dec_pred = (decision.ravel() > 0).astype(np.int)
@@ -2205,19 +2203,6 @@ def check_transformer_n_iter(name, estimator_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_get_params_invariance(name, estimator_orig):
     # Checks if get_params(deep=False) is a subset of get_params(deep=True)
-    class T(BaseEstimator):
-        """Mock classifier
-        """
-
-        def __init__(self):
-            pass
-
-        def fit(self, X, y):
-            return self
-
-        def transform(self, X):
-            return X
-
     e = clone(estimator_orig)
 
     shallow_params = e.get_params(deep=False)
