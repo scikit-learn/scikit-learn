@@ -420,10 +420,10 @@ class KNeighborsMixin(object):
             kwds = ({'squared': True} if self.effective_metric_ == 'euclidean'
                     else self.effective_metric_params_)
 
-            result = pairwise_distances_chunked(
+            result = list(pairwise_distances_chunked(
                 X, self._fit_X, reduce_func=reduce_func,
                 metric=self.effective_metric_, n_jobs=n_jobs,
-                **kwds)
+                **kwds))
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):

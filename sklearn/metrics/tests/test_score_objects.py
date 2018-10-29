@@ -385,7 +385,7 @@ def test_thresholded_scorers_multilabel_indicator_data():
     clf.fit(X_train, y_train)
     y_proba = clf.predict_proba(X_test)
     score1 = get_scorer('roc_auc')(clf, X_test, y_test)
-    score2 = roc_auc_score(y_test, np.vstack(p[:, -1] for p in y_proba).T)
+    score2 = roc_auc_score(y_test, np.vstack([p[:, -1] for p in y_proba]).T)
     assert_almost_equal(score1, score2)
 
     # Multi-output multi-class decision_function
@@ -398,7 +398,7 @@ def test_thresholded_scorers_multilabel_indicator_data():
 
     y_proba = clf.decision_function(X_test)
     score1 = get_scorer('roc_auc')(clf, X_test, y_test)
-    score2 = roc_auc_score(y_test, np.vstack(p for p in y_proba).T)
+    score2 = roc_auc_score(y_test, np.vstack([p for p in y_proba]).T)
     assert_almost_equal(score1, score2)
 
     # Multilabel predict_proba
