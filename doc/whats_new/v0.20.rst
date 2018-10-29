@@ -103,6 +103,14 @@ Changelog
   :class:`decomposition.IncrementalPCA` when using float32 datasets.
   :issue:`12338` by :user:`bauks <bauks>`.
 
+Miscellaneous
+.............
+
+- |Fix| Make sure to avoid raising ``FutureWarning`` when calling
+  ``np.vstack`` with numpy 1.16 and later (use list comprehensions
+  instead of generator expressions in many locations of the scikit-learn
+  code base). :issue:`12467` by :user:`Olivier Grisel`.
+
 .. _changes_0_20:
 
 Version 0.20.0
