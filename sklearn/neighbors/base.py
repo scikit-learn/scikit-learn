@@ -373,7 +373,7 @@ class KNeighborsMixin(object):
                [2]]...)
 
         """
-        check_is_fitted(self, "_fit_method")
+        check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -526,6 +526,7 @@ class KNeighborsMixin(object):
         --------
         NearestNeighbors.radius_neighbors_graph
         """
+        check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
@@ -664,7 +665,7 @@ class RadiusNeighborsMixin(object):
         For efficiency, `radius_neighbors` returns arrays of objects, where
         each object is a 1D array of indices or distances.
         """
-        check_is_fitted(self, "_fit_method")
+        check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
 
         if X is not None:
             query_is_train = False
@@ -801,6 +802,7 @@ class RadiusNeighborsMixin(object):
         --------
         kneighbors_graph
         """
+        check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
         if X is not None:
             X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 

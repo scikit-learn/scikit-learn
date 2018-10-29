@@ -594,21 +594,20 @@ learners. Decision trees have a number of abilities that make them
 valuable for boosting, namely the ability to handle data of mixed type
 and the ability to model complex functions.
 
-Similar to other boosting algorithms GBRT builds the additive model in
-a forward stagewise fashion:
+Similar to other boosting algorithms, GBRT builds the additive model in
+a greedy fashion:
 
   .. math::
 
-    F_m(x) = F_{m-1}(x) + \gamma_m h_m(x)
+    F_m(x) = F_{m-1}(x) + \gamma_m h_m(x),
 
-At each stage the decision tree :math:`h_m(x)` is chosen to
-minimize the loss function :math:`L` given the current model
-:math:`F_{m-1}` and its fit :math:`F_{m-1}(x_i)`
+where the newly added tree :math:`h_m` tries to minimize the loss :math:`L`,
+given the previous ensemble :math:`F_{m-1}`:
 
   .. math::
 
-    F_m(x) = F_{m-1}(x) + \arg\min_{h} \sum_{i=1}^{n} L(y_i,
-    F_{m-1}(x_i) + h(x))
+    h_m =  \arg\min_{h} \sum_{i=1}^{n} L(y_i,
+    F_{m-1}(x_i) + h(x_i)).
 
 The initial model :math:`F_{0}` is problem specific, for least-squares
 regression one usually chooses the mean of the target values.

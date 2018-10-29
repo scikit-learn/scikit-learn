@@ -310,11 +310,15 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         # Validate max_features
         if isinstance(self.max_features, (numbers.Integral, np.integer)):
             max_features = self.max_features
-        else:  # float
-            max_features = int(self.max_features * self.n_features_)
+        elif isinstance(self.max_features, np.float):
+            max_features = self.max_features * self.n_features_
+        else:
+            raise ValueError("max_features must be int or float")
 
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
+
+        max_features = max(1, int(max_features))
 
         # Store validated integer feature sampling value
         self._max_features = max_features
