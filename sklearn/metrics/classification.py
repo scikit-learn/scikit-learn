@@ -2053,7 +2053,7 @@ def calibration_loss(y_true, y_prob, bin_size=2):
      y_prob : array, shape (n_samples,)
         Probabilities of the positive class.
      bin_size : int
-        Size of the bin (samples) analysed in one iteration
+        Size of the bin (samples) analysed in each iteration
      Returns
     -------
     score : float
@@ -2072,7 +2072,12 @@ def calibration_loss(y_true, y_prob, bin_size=2):
     """
     pos_loss = 0.0
     neg_loss = 0.0
-    for bin_start in range(0, len(y_true) - bin_size + 1):
+    len_y = len(y_true)
+    
+    if(bin_size <= 0):
+        raise ValueError("Bin size needs to be positive")
+
+    for bin_start in range(len_y - bin_size + 1):
         bin_end = bin_start + bin_size
         actual_per_pos_class = (y_true[bin_start:bin_end]
                                 .sum()) / bin_size
@@ -2085,8 +2090,8 @@ def calibration_loss(y_true, y_prob, bin_size=2):
                             - actual_per_neg_class).sum()
         neg_loss += bin_error_neg
 
-    pos_loss /= (len(y_true) - bin_size + 1)
-    neg_loss /= (len(y_true) - bin_size + 1)
+    pos_loss /= (len_y - bin_size + 1)
+    neg_loss /= (len_y - bin_size + 1)
     loss = (0.5) * (pos_loss + neg_loss)
 
     return loss
