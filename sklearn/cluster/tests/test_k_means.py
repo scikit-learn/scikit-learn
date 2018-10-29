@@ -291,8 +291,7 @@ def test_k_means_fortran_aligned_data():
     X = np.asfortranarray([[0, 0], [0, 1], [0, 1]])
     centers = np.array([[0, 0], [0, 1]])
     labels = np.array([0, 1, 1])
-    km = KMeans(n_init=1, init=centers, precompute_distances=False,
-                random_state=42, n_clusters=2)
+    km = KMeans(n_init=1, init=centers, random_state=42, n_clusters=2)
     km.fit(X)
     assert_array_almost_equal(km.cluster_centers_, centers)
     assert_array_equal(km.labels_, labels)
