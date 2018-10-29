@@ -18,84 +18,84 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
 
     Parameters
     ----------
-        bs : int, default = 'auto'
-            Mini-batch size for gradient descent.
+    bs : int, default = 'auto'
+        Mini-batch size for gradient descent.
 
-        n_epoch : int, default = 1
-            The number of passes over the training data.
+    n_epoch : int, default = 1
+        The number of passes over the training data.
 
-        n_components : int, default = 1000
-            the maximum number of eigendirections used in modifying the kernel
-            operator. Convergence rate speedup over normal gradient descent is
-            approximately the largest eigenvalue over the n_componentth
-            eigenvalue, however, it may take time to compute eigenvalues for
-            large n_components
+    n_components : int, default = 1000
+        the maximum number of eigendirections used in modifying the kernel
+        operator. Convergence rate speedup over normal gradient descent is
+        approximately the largest eigenvalue over the n_componentth
+        eigenvalue, however, it may take time to compute eigenvalues for
+        large n_components
 
-        subsample_size : int, default = 'auto'
-            The number of subsamples used for estimating the largest
-            n_component eigenvalues and eigenvectors. When it is set to 'auto',
-            it will be 4000 if there are less than 100,000 samples
-            (for training), and otherwise 10000.
+    subsample_size : int, default = 'auto'
+        The number of subsamples used for estimating the largest
+        n_component eigenvalues and eigenvectors. When it is set to 'auto',
+        it will be 4000 if there are less than 100,000 samples
+        (for training), and otherwise 10000.
 
-        mem_gb : int, default = 1
-            Physical device memory in GB.
+    mem_gb : int, default = 1
+        Physical device memory in GB.
 
-        kernel : string or callable, default = "gaussian"
-            Kernel mapping used internally. Strings can be anything supported
-            by sklearn's library, however, it is recommended to use a radial
-            kernel. There is special support for gaussian, laplace, and cauchy
-            kernels. A callable should accept two arguments and return a
-            floating point number.
+    kernel : string or callable, default = "gaussian"
+        Kernel mapping used internally. Strings can be anything supported
+        by sklearn's library, however, it is recommended to use a radial
+        kernel. There is special support for gaussian, laplace, and cauchy
+        kernels. A callable should accept two arguments and return a
+        floating point number.
 
-        bandwidth : float, default=5
-            Bandwidth to use with the gaussian, laplacian, and cauchy kernels.
-            Ignored by other kernels.
+    bandwidth : float, default=5
+        Bandwidth to use with the gaussian, laplacian, and cauchy kernels.
+        Ignored by other kernels.
 
-        gamma : float, default=None
-            Gamma parameter for the RBF, polynomial, exponential chi2 and
-            sigmoid kernels. Interpretation of the default value is left to
-            the kernel; see the documentation for sklearn.metrics.pairwise.
-            Ignored by other kernels.
+    gamma : float, default=None
+        Gamma parameter for the RBF, polynomial, exponential chi2 and
+        sigmoid kernels. Interpretation of the default value is left to
+        the kernel; see the documentation for sklearn.metrics.pairwise.
+        Ignored by other kernels.
 
-        degree : float, default=3
-            Degree of the polynomial kernel. Ignored by other kernels.
+    degree : float, default=3
+        Degree of the polynomial kernel. Ignored by other kernels.
 
-        coef0 : float, default=1
-            Zero coefficient for polynomial and sigmoid kernels.
-            Ignored by other kernels.
+    coef0 : float, default=1
+        Zero coefficient for polynomial and sigmoid kernels.
+        Ignored by other kernels.
 
-        kernel_params : mapping of string to any
-            Additional parameters (keyword arguments) for kernel function
-            passed as callable object.
+    kernel_params : mapping of string to any
+        Additional parameters (keyword arguments) for kernel function
+        passed as callable object.
 
-        random_state : int, RandomState instance or None, (default=None)
-            The seed of the pseudo random number generator to use when
-            shuffling the data.  If int, random_state is the seed used by the
-            random number generator; If RandomState instance, random_state is
-            the random number generator; If None, the random number generator
-            is the RandomState instance used by `np.random`.
+    random_state : int, RandomState instance or None, (default=None)
+        The seed of the pseudo random number generator to use when
+        shuffling the data.  If int, random_state is the seed used by the
+        random number generator; If RandomState instance, random_state is
+        the random number generator; If None, the random number generator
+        is the RandomState instance used by `np.random`.
 
-       References
-       ----------
-       * Siyuan Ma, Mikhail Belkin
-         "Diving into the shallows: a computational perspective on
-         large-scale machine learning", NIPS 2017.
+   References
+   ----------
+   * Siyuan Ma, Mikhail Belkin
+     "Diving into the shallows: a computational perspective on
+     large-scale machine learning", NIPS 2017.
 
-       Examples
-       --------
-           >>> from sklearn.fast_kernel import FKR_EigenPro
-           >>> import numpy as np
-           >>> n_samples, n_features, n_targets = 4000, 20, 3
-           >>> rng = np.random.RandomState(1)
-           >>> x_train = rng.randn(n_samples, n_features)
-           >>> y_train = rng.randn(n_samples, n_targets)
-           >>> rgs = FKR_EigenPro(n_epoch=3, bandwidth=1,subsample_size=50)
-           >>> rgs.fit(x_train, y_train)
-           FKR_EigenPro(bandwidth=1, bs='auto', coef0=1, degree=3, gamma=None,
-                  kernel='gaussian', kernel_params=None, mem_gb=1, n_components=1000,
-                  n_epoch=3, random_state=None, subsample_size=50)
-           >>> y_pred = rgs.predict(x_train)
-           >>> loss = np.mean(np.square(y_train - y_pred))
+   Examples
+   --------
+    >>> from sklearn.fast_kernel import FKR_EigenPro
+    >>> import numpy as np
+    >>> n_samples, n_features, n_targets = 4000, 20, 3
+    >>> rng = np.random.RandomState(1)
+    >>> x_train = rng.randn(n_samples, n_features)
+    >>> y_train = rng.randn(n_samples, n_targets)
+    >>> rgs = FKR_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
+    >>> rgs.fit(x_train, y_train)
+    FKR_EigenPro(bandwidth=1, bs='auto', coef0=1, degree=3, gamma=None,
+           kernel='gaussian', kernel_params=None, mem_gb=1, n_components=1000,
+           n_epoch=3, random_state=None, subsample_size=50)
+    >>> y_pred = rgs.predict(x_train)
+    >>> loss = np.mean(np.square(y_train - y_pred))
     """
 
     def __init__(self, bs="auto", n_epoch=1, n_components=1000,
@@ -386,92 +386,91 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
 class FKC_EigenPro(BaseEstimator, ClassifierMixin):
     """Fast kernel classification using EigenPro iteration.
 
-       Train least squared kernel classification model with mini-batch EigenPro
-       iteration.
+    Train least squared kernel classification model with mini-batch EigenPro
+    iteration.
 
-       Parameters
-       ----------
-           bs : int, default = 'auto'
-               Mini-batch size for gradient descent.
+    Parameters
+    ----------
+        bs : int, default = 'auto'
+            Mini-batch size for gradient descent.
 
-           n_epoch : int, default = 1
-               The number of passes over the training data.
+        n_epoch : int, default = 1
+            The number of passes over the training data.
 
-           n_components : int, default = 1000
-               the maximum number of eigendirections used in modifying the
-               kernel operator. Convergence rate speedup over normal gradient
-               descent is approximately the largest eigenvalue over the
-               n_componenth eigenvalue, however, it may take time to compute
-               eigenvalues for large n_components
+        n_components : int, default = 1000
+            the maximum number of eigendirections used in modifying the
+            kernel operator. Convergence rate speedup over normal gradient
+            descent is approximately the largest eigenvalue over the
+            n_componenth eigenvalue, however, it may take time to compute
+            eigenvalues for large n_components
 
-           subsample_size : int, default = 'auto'
-               The size of subsamples used for estimating the largest
-               n_component eigenvalues and eigenvectors. When it is set to
-               'auto', it will be 4000 if there are less than 100,000 samples
-               (for training), and otherwise 10000.
+        subsample_size : int, default = 'auto'
+            The size of subsamples used for estimating the largest
+            n_component eigenvalues and eigenvectors. When it is set to
+            'auto', it will be 4000 if there are less than 100,000 samples
+            (for training), and otherwise 10000.
 
-           mem_gb : int, default = 1
-               Physical device memory in GB.
+        mem_gb : int, default = 1
+            Physical device memory in GB.
 
-           kernel : string or callable, default = "gaussian"
-               Kernel mapping used internally. Strings can be anything
-               supported by sklearn's library, however, it is recommended to
-               use a radial kernel. There is special support for gaussian,
-               laplace, and cauchy kernels. A callable should accept two
-               arguments and return a floating point number.
+        kernel : string or callable, default = "gaussian"
+            Kernel mapping used internally. Strings can be anything
+            supported by sklearn's library, however, it is recommended to
+            use a radial kernel. There is special support for gaussian,
+            laplace, and cauchy kernels. A callable should accept two
+            arguments and return a floating point number.
 
-           bandwidth : float, default=5
-               Bandwidth to use with the gaussian, laplacian, and cauchy
-               kernels. Ignored by other kernels.
+        bandwidth : float, default=5
+            Bandwidth to use with the gaussian, laplacian, and cauchy
+            kernels. Ignored by other kernels.
 
-           gamma : float, default=None
-               Gamma parameter for the RBF, polynomial, exponential chi2
-               and sigmoid kernels. Interpretation of the default value is left
-               to the kernel; see the documentation for
-               sklearn.metrics.pairwise. Ignored by other kernels.
+        gamma : float, default=None
+            Gamma parameter for the RBF, polynomial, exponential chi2
+            and sigmoid kernels. Interpretation of the default value is left
+            to the kernel; see the documentation for
+            sklearn.metrics.pairwise. Ignored by other kernels.
 
-           degree : float, default=3
-               Degree of the polynomial kernel. Ignored by other kernels.
+        degree : float, default=3
+            Degree of the polynomial kernel. Ignored by other kernels.
 
-           coef0 : float, default=1
-               Zero coefficient for polynomial and sigmoid kernels. Ignored by
-               other kernels.
+        coef0 : float, default=1
+            Zero coefficient for polynomial and sigmoid kernels. Ignored by
+            other kernels.
 
-           kernel_params : mapping of string to any
-               Additional parameters (keyword arguments) for kernel function
-               passed as callable object.
+        kernel_params : mapping of string to any
+            Additional parameters (keyword arguments) for kernel function
+            passed as callable object.
 
-           random_state : int, RandomState instance or None (default=None)
-               The seed of the pseudo random number generator to use when
-               shuffling the data.  If int, random_state is the seed used by
-               the random number generator; If RandomState instance,
-               random_state is the random number generator;
-               If None, the random number generator is the RandomState
-               instance used by `np.random`.
+        random_state : int, RandomState instance or None (default=None)
+            The seed of the pseudo random number generator to use when
+            shuffling the data.  If int, random_state is the seed used by
+            the random number generator; If RandomState instance,
+            random_state is the random number generator;
+            If None, the random number generator is the RandomState
+            instance used by `np.random`.
 
-       References
-       ----------
-       * Siyuan Ma, Mikhail Belkin
-         "Diving into the shallows: a computational perspective on
-         large-scale machine learning", NIPS 2017.
+    References
+    ----------
+    * Siyuan Ma, Mikhail Belkin
+      "Diving into the shallows: a computational perspective on
+      large-scale machine learning", NIPS 2017.
 
-       Examples
-       --------
-           >>> from sklearn.fast_kernel import FKC_EigenPro
-           >>> import numpy as np
-           >>> n_samples, n_features, n_targets = 4000, 20, 3
-           >>> rng = np.random.RandomState(1)
-           >>> x_train = rng.randn(n_samples, n_features)
-           >>> y_train = rng.randint(n_targets, size=n_samples)
-           >>> rgs = FKC_EigenPro(n_epoch=3, bandwidth=1,subsample_size=50)
-           >>> rgs.fit(x_train, y_train)
-           FKC_EigenPro(bandwidth=1, bs='auto', coef0=1, degree=3, gamma=None,
-                  kernel='gaussian', kernel_params=None, mem_gb=1,
-                  n_components=1000, n_epoch=3, random_state=None,
-                  subsample_size=50)
-           >>> y_pred = rgs.predict(x_train)
-           >>> loss = np.mean(np.square(y_train - y_pred))
-       """
+    Examples
+    --------
+    >>> from sklearn.fast_kernel import FKC_EigenPro
+    >>> import numpy as np
+    >>> n_samples, n_features, n_targets = 4000, 20, 3
+    >>> rng = np.random.RandomState(1)
+    >>> x_train = rng.randn(n_samples, n_features)
+    >>> y_train = rng.randint(n_targets, size=n_samples)
+    >>> rgs = FKC_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
+    >>> rgs.fit(x_train, y_train)
+    FKC_EigenPro(bandwidth=1, bs='auto', coef0=1, degree=3, gamma=None,
+           kernel='gaussian', kernel_params=None, mem_gb=1, n_components=1000,
+           n_epoch=3, random_state=None, subsample_size=50)
+    >>> y_pred = rgs.predict(x_train)
+    >>> loss = np.mean(np.square(y_train - y_pred))
+    """
 
     def __init__(self, bs="auto", n_epoch=1, n_components=1000,
                  subsample_size="auto", mem_gb=1, kernel="gaussian",
@@ -498,7 +497,7 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
             X : {float, array}, shape = [n_samples, n_raw_feature]
                 The raw input feature matrix.
 
-            y : {float, array}, shape =[n_samples]
+            Y : {float, array}, shape =[n_samples]
                 The labels corresponding to the features of X.
 
         Returns

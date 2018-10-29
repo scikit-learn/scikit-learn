@@ -19,7 +19,7 @@ def test_fast_kernel_regression_gaussian():
 def test_fast_kernel_regression_laplace():
     X, y = make_regression(n_samples=200, n_features=100)
     FKR_prediction = FKR_EigenPro(
-        kernel="laplace", n_epoch=200, bandwidth=40,
+        kernel="laplace", n_epoch=200, bandwidth=13,
         random_state=0).fit(X, y).predict(X)
     assert_array_almost_equal(abs(FKR_prediction / y), 1, decimal=2)
 
@@ -33,11 +33,11 @@ def test_fast_kernel_regression_cauchy():
 
 
 def test_fast_kernel_regression_2d():
-    X, Y = make_regression(n_features=100, n_targets=30)
+    X, y = make_regression(n_features=100, n_targets=30)
     FKR_prediction = FKR_EigenPro(
         kernel="gaussian", n_epoch=200, bandwidth=10,
-        random_state=0).fit(X,Y).predict(X)
-    assert_array_almost_equal(abs(FKR_prediction / Y), 1, decimal=2)
+        random_state=0).fit(X, y).predict(X)
+    assert_array_almost_equal(abs(FKR_prediction / y), 1, decimal=2)
 
 
 def test_fast_kernel_regression_manyfeatures():
