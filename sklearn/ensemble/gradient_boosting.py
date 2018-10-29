@@ -57,7 +57,7 @@ from ..utils import check_consistent_length
 from ..utils import deprecated
 from ..utils.fixes import logsumexp
 from ..utils.stats import _weighted_percentile
-from ..utils.validation import check_is_fitted, has_fit_parameter
+from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
 
@@ -1421,14 +1421,15 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             self._init_state()
 
             # fit initial model
-            if has_fit_parameter(self.init_, "sample_weight"):
-                self.init_.fit(X, y, sample_weight)
-            elif sample_weight_was_none:
-                self.init_.fit(X, y)
-            else:
-                raise ValueError(
-                    "The initial estimator {} does not support sample weights "
-                    "yet.".format(self.init_.__class__.__name__))
+            try:
+                self.init_.fit(X, y, sample_weight=sample_weight)
+            except TypeError:
+                if sample_weight_was_none:
+                    self.init_.fit(X, y)
+                else:
+                    raise ValueError(
+                        "The initial estimator {} does not support sample "
+                        "weights yet.".format(self.init_.__class__.__name__))
 
             # init predictions
             y_pred = self.init_.predict(X).astype(np.float64, copy=False)
