@@ -2073,7 +2073,7 @@ def calibration_loss(y_true, y_prob, bin_size=2):
     pos_loss = 0.0
     neg_loss = 0.0
     len_y = len(y_true)
-    
+
     if(bin_size <= 0):
         raise ValueError("Bin size needs to be positive")
 
