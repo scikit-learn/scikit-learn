@@ -518,22 +518,22 @@ class TSNE(BaseEstimator):
         learning rate is too low, most points may look compressed in a dense
         cloud with few outliers. If the cost function gets stuck in a bad local
         minimum increasing the learning rate may help.
-        Some discussion on how to set learning rate optimally can be found 
-        at https://doi.org/10.1101/451690. Effective use of this parameter has 
+        Some discussion on how to set learning rate optimally can be found
+        at https://doi.org/10.1101/451690. Effective use of this parameter has
         the benefit of decreasing the number of iterations required
         for a good embedding.
 
     n_iter : int, optional (default: 1000)
         Maximum number of iterations for the optimization. Must be greater than
-        or equal to n_iter_early_exag. If embedding quality is suffering as a consequence
-        of increasing number of samples being embedded, increasing this value 
-        and n_iter_early_exag proportionately can help.
+        or equal to n_iter_early_exag. If embedding quality is suffering as a
+        consequence of increasing number of samples being embedded, increasing
+        this value and n_iter_early_exag proportionately can help.
 
     n_iter_early_exag : int, optional (default: 250)
-        Number of iterations out of total n_iter that the algorithm should spend
-        in the early exaggeration phase. If embedding quality is suffering as a consequence
-        of increasing number of samples being embedded, increasing this value 
-        and n_iter proportionately can help.
+        Number of iterations out of total n_iter that t-SNE should spend
+        in the early exaggeration phase. If embedding quality is suffering as a
+        consequence of increasing number of samples being embedded, increasing
+        this value and n_iter proportionately can help.
 
     n_iter_without_progress : int, optional (default: 300)
         Maximum number of iterations without progress before we abort the
@@ -637,9 +637,10 @@ class TSNE(BaseEstimator):
 
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=12.0, learning_rate=200.0, n_iter=1000,
-                 n_iter_early_exag=250, n_iter_without_progress=300, min_grad_norm=1e-7,
-                 metric="euclidean", init="random", verbose=0,
-                 random_state=None, method='barnes_hut', angle=0.5):
+                 n_iter_early_exag=250, n_iter_without_progress=300,
+                 min_grad_norm=1e-7, metric="euclidean",
+                 init="random", verbose=0, random_state=None,
+                 method='barnes_hut', angle=0.5):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -715,7 +716,8 @@ class TSNE(BaseEstimator):
                              .format(self.early_exaggeration))
 
         if self.n_iter < self.n_iter_early_exag:
-            raise ValueError("n_iter should be greater than or equal to n_iter_early_exag")
+            raise ValueError("n_iter should be greater than or equal "
+                             "to n_iter_early_exag.")
 
         n_samples = X.shape[0]
 
@@ -845,8 +847,9 @@ class TSNE(BaseEstimator):
         else:
             obj_func = _kl_divergence
 
-        # Learning schedule (part 1): do n_iter_early_exag iteration with lower momentum but
-        # higher learning rate controlled via the early exageration parameter
+        # Learning schedule (part 1): do n_iter_early_exag iteration with
+        # lower momentum but higher learning rate controlled via 
+        # the early exageration parameter
         P *= self.early_exaggeration
         params, kl_divergence, it = _gradient_descent(obj_func, params,
                                                       **opt_args)
