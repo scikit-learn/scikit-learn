@@ -18,7 +18,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
 
     Parameters
     ----------
-        bs: int, default = 'auto'
+        bs : int, default = 'auto'
             Mini-batch size for gradient descent.
 
         n_epoch : int, default = 1
@@ -32,10 +32,10 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
             large n_components
 
         subsample_size : int, default = 'auto'
-            The number of subsamples used for estimating the largest n_component
-            eigenvalues and eigenvectors. When it is set to 'auto', it will be
-            4000 if there are less than 100,000 samples (for training),
-            and otherwise 10000.
+            The number of subsamples used for estimating the largest
+            n_component eigenvalues and eigenvectors. When it is set to 'auto',
+            it will be 4000 if there are less than 100,000 samples
+            (for training), and otherwise 10000.
 
         mem_gb : int, default = 1
             Physical device memory in GB.
@@ -64,16 +64,16 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
             Zero coefficient for polynomial and sigmoid kernels.
             Ignored by other kernels.
 
-        kernel_params : mapping of string to any, optional
+        kernel_params : mapping of string to any
             Additional parameters (keyword arguments) for kernel function
             passed as callable object.
 
-        random_state : int, RandomState instance or None, optional (default=None)
-            The seed of the pseudo random number generator to use when shuffling
-            the data.  If int, random_state is the seed used by the random number
-            generator; If RandomState instance, random_state is the random number
-            generator; If None, the random number generator is the RandomState
-            instance used by `np.random`.
+        random_state : int, RandomState instance or None, (default=None)
+            The seed of the pseudo random number generator to use when
+            shuffling the data.  If int, random_state is the seed used by the
+            random number generator; If RandomState instance, random_state is
+            the random number generator; If None, the random number generator
+            is the RandomState instance used by `np.random`.
 
        References
        ----------
@@ -92,9 +92,8 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
            >>> rgs = FKR_EigenPro(n_epoch=3, bandwidth=1,subsample_size=50)
            >>> rgs.fit(x_train, y_train)
            FKR_EigenPro(bandwidth=1, bs='auto', coef0=1, degree=3, gamma=None,
-                      kernel='gaussian', kernel_params=None, mem_gb=1,
-                      n_components=1000, n_epoch=3, random_state=None,
-                      subsample_size=50)
+                  kernel='gaussian', kernel_params=None, mem_gb=1, n_components=1000,
+                  n_epoch=3, random_state=None, subsample_size=50)
            >>> y_pred = rgs.predict(x_train)
            >>> loss = np.mean(np.square(y_train - y_pred))
     """
@@ -146,7 +145,8 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
                           "coef0": self.coef0}
             return pairwise_kernels(X, Y, metric=self.kernel,
                                     filter_params=True, **params)
-        distance = euclidean_distances(X, Y, squared=True, Y_norm_squared=Y_squared)
+        distance = euclidean_distances(X, Y, squared=True,
+                                       Y_norm_squared=Y_squared)
         bandwidth = np.float32(self.bandwidth)
         if self.kernel == "gaussian":
             K = np.exp(-distance / (2 * np.square(bandwidth)))
@@ -158,7 +158,8 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         return K
 
     def _nystrom_svd(self, X, n_components):
-        """Compute the top eigensystem of a kernel operator using Nystrom method
+        """Compute the top eigensystem of a kernel
+        operator using Nystrom method
 
         Parameters
         ----------
@@ -340,9 +341,8 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
 
                 # Update 2: Fixed Coordinate Block
                 delta = np.dot(self.V_ * self.Q_,
-                        np.dot(self.V_.T,
-                        np.dot(kfeat[:, self.pinx_].T,
-                               gradient)))
+                               np.dot(self.V_.T, np.dot(
+                                   kfeat[:, self.pinx_].T, gradient)))
                 self.coef_[self.pinx_] += step * delta
         return self
 
@@ -360,7 +360,8 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
             Predicted targets.
         """
         check_is_fitted(self, ["bs_", "centers_", "centers_squared_", "coef_",
-                               "eta_", "random_state_", "pinx_", "Q_", "V_", "was_1D_"])
+                               "eta_", "random_state_", "pinx_",
+                               "Q_", "V_", "was_1D_"])
         X = np.asarray(X, dtype=np.float64)
 
         if len(X.shape) == 1:
@@ -390,7 +391,7 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
 
        Parameters
        ----------
-           bs: int, default = 'auto'
+           bs : int, default = 'auto'
                Mini-batch size for gradient descent.
 
            n_epoch : int, default = 1
@@ -436,15 +437,16 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
                Zero coefficient for polynomial and sigmoid kernels. Ignored by
                other kernels.
 
-           kernel_params : mapping of string to any, optional
+           kernel_params : mapping of string to any
                Additional parameters (keyword arguments) for kernel function
                passed as callable object.
 
-           random_state : int, RandomState instance or None, optional (default=None)
-               The seed of the pseudo random number generator to use when shuffling
-               the data.  If int, random_state is the seed used by the random number
-               generator; If RandomState instance, random_state is the random number
-               generator; If None, the random number generator is the RandomState
+           random_state : int, RandomState instance or None (default=None)
+               The seed of the pseudo random number generator to use when
+               shuffling the data.  If int, random_state is the seed used by
+               the random number generator; If RandomState instance,
+               random_state is the random number generator;
+               If None, the random number generator is the RandomState
                instance used by `np.random`.
 
        References
@@ -463,11 +465,10 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
            >>> y_train = rng.randint(n_targets, size=n_samples)
            >>> rgs = FKC_EigenPro(n_epoch=3, bandwidth=1,subsample_size=50)
            >>> rgs.fit(x_train, y_train)
-           FKC_EigenPro(bandwidth=1, bs='auto', coef0=1, degree=3,
-                        gamma=None, kernel='gaussian', kernel_params=None, mem_gb=1,
-                        n_components=1000, n_epoch=3, random_state=None,
-                        subsample_size=50)
-
+           FKC_EigenPro(bandwidth=1, bs='auto', coef0=1, degree=3, gamma=None,
+                  kernel='gaussian', kernel_params=None, mem_gb=1,
+                  n_components=1000, n_epoch=3, random_state=None,
+                  subsample_size=50)
            >>> y_pred = rgs.predict(x_train)
            >>> loss = np.mean(np.square(y_train - y_pred))
        """
@@ -489,7 +490,7 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
         self.kernel_params = kernel_params
         self.random_state = random_state
 
-    def fit(self, X, y):
+    def fit(self, X, Y):
         """ Train fast kernel classification model
 
         Parameters
@@ -506,20 +507,21 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
        """
         self.regressor_ = FKR_EigenPro(
             bs=self.bs, n_epoch=self.n_epoch, n_components=self.n_components,
-            subsample_size=self.subsample_size, mem_gb=self.mem_gb, kernel=self.kernel,
-            bandwidth=self.bandwidth, gamma=self.gamma, degree=self.degree, coef0=self.coef0,
+            subsample_size=self.subsample_size, mem_gb=self.mem_gb,
+            kernel=self.kernel, bandwidth=self.bandwidth, gamma=self.gamma,
+            degree=self.degree, coef0=self.coef0,
             kernel_params=self.kernel_params, random_state=self.random_state)
-        X, y = check_X_y(X, y, multi_output=False, ensure_min_samples=3)
-        check_classification_targets(y)
-        self.classes_, ind = np.unique(y, return_inverse=True)
+        X, Y = check_X_y(X, Y, multi_output=False, ensure_min_samples=3)
+        check_classification_targets(Y)
+        self.classes_, ind = np.unique(Y, return_inverse=True)
 
         loc = {}
         for ind, label in enumerate(self.classes_):
             loc[label] = ind
 
-        class_matrix = np.zeros((y.shape[0], self.classes_.shape[0]))
+        class_matrix = np.zeros((Y.shape[0], self.classes_.shape[0]))
 
-        for ind, label in enumerate(y):
+        for ind, label in enumerate(Y):
             class_matrix[ind][loc[label]] = 1
         self.regressor_.fit(X, class_matrix)
 
@@ -530,7 +532,7 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-            X: {float, array}, shape = [n_samples, n_features]
+            X : {float, array}, shape = [n_samples, n_features]
                 Samples.
 
         Returns
