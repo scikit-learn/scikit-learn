@@ -343,49 +343,57 @@ def test_paired_distances_callable():
 def test_pairwise_distances_argmin_min():
     # Check pairwise minimum distances computation for any metric
     X = [[0], [1]]
-    Y = [[-1], [2]]
+    Y = [[-2], [3]]
 
     Xsp = dok_matrix(X)
     Ysp = csr_matrix(Y, dtype=np.float32)
 
-    # euclidean metric
-    D, E = pairwise_distances_argmin_min(X, Y, metric="euclidean")
-    D2 = pairwise_distances_argmin(X, Y, metric="euclidean")
-    assert_array_almost_equal(D, [0, 1])
-    assert_array_almost_equal(D2, [0, 1])
-    assert_array_almost_equal(D, [0, 1])
-    assert_array_almost_equal(E, [1., 1.])
+    expected_idx = [0, 1]
+    expected_vals = [2, 2]
+    expected_vals_sq = [4, 4]
 
+    # euclidean metric
+    idx, vals = pairwise_distances_argmin_min(X, Y, metric="euclidean")
+    idx2 = pairwise_distances_argmin(X, Y, metric="euclidean")
+    assert_array_almost_equal(idx, expected_idx)
+    assert_array_almost_equal(idx2, expected_idx)
+    assert_array_almost_equal(vals, expected_vals)
     # sparse matrix case
-    Dsp, Esp = pairwise_distances_argmin_min(Xsp, Ysp, metric="euclidean")
-    assert_array_equal(Dsp, D)
-    assert_array_equal(Esp, E)
+    idxsp, valssp = pairwise_distances_argmin_min(Xsp, Ysp, metric="euclidean")
+    assert_array_almost_equal(idxsp, expected_idx)
+    assert_array_almost_equal(valssp, expected_vals)
     # We don't want np.matrix here
-    assert_equal(type(Dsp), np.ndarray)
-    assert_equal(type(Esp), np.ndarray)
+    assert_equal(type(idxsp), np.ndarray)
+    assert_equal(type(valssp), np.ndarray)
+
+    # euclidean metric squared
+    idx, vals = pairwise_distances_argmin_min(X, Y, metric="euclidean",
+                                              metric_kwargs={"squared": True})
+    assert_array_almost_equal(idx, expected_idx)
+    assert_array_almost_equal(vals, expected_vals_sq)
 
     # Non-euclidean scikit-learn metric
-    D, E = pairwise_distances_argmin_min(X, Y, metric="manhattan")
-    D2 = pairwise_distances_argmin(X, Y, metric="manhattan")
-    assert_array_almost_equal(D, [0, 1])
-    assert_array_almost_equal(D2, [0, 1])
-    assert_array_almost_equal(E, [1., 1.])
-    D, E = pairwise_distances_argmin_min(Xsp, Ysp, metric="manhattan")
-    D2 = pairwise_distances_argmin(Xsp, Ysp, metric="manhattan")
-    assert_array_almost_equal(D, [0, 1])
-    assert_array_almost_equal(E, [1., 1.])
+    idx, vals = pairwise_distances_argmin_min(X, Y, metric="manhattan")
+    idx2 = pairwise_distances_argmin(X, Y, metric="manhattan")
+    assert_array_almost_equal(idx, expected_idx)
+    assert_array_almost_equal(idx2, expected_idx)
+    assert_array_almost_equal(vals, expected_vals)
+    # sparse matrix case
+    idxsp, valssp = pairwise_distances_argmin_min(Xsp, Ysp, metric="manhattan")
+    assert_array_almost_equal(idxsp, expected_idx)
+    assert_array_almost_equal(valssp, expected_vals)
 
     # Non-euclidean Scipy distance (callable)
-    D, E = pairwise_distances_argmin_min(X, Y, metric=minkowski,
-                                         metric_kwargs={"p": 2})
-    assert_array_almost_equal(D, [0, 1])
-    assert_array_almost_equal(E, [1., 1.])
+    idx, vals = pairwise_distances_argmin_min(X, Y, metric=minkowski,
+                                              metric_kwargs={"p": 2})
+    assert_array_almost_equal(idx, expected_idx)
+    assert_array_almost_equal(vals, expected_vals)
 
     # Non-euclidean Scipy distance (string)
-    D, E = pairwise_distances_argmin_min(X, Y, metric="minkowski",
-                                         metric_kwargs={"p": 2})
-    assert_array_almost_equal(D, [0, 1])
-    assert_array_almost_equal(E, [1., 1.])
+    idx, vals = pairwise_distances_argmin_min(X, Y, metric="minkowski",
+                                              metric_kwargs={"p": 2})
+    assert_array_almost_equal(idx, expected_idx)
+    assert_array_almost_equal(vals, expected_vals)
 
     # Compare with naive implementation
     rng = np.random.RandomState(0)
