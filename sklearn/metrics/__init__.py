@@ -30,6 +30,7 @@ from .classification import precision_score
 from .classification import recall_score
 from .classification import zero_one_loss
 from .classification import brier_score_loss
+from .classification import calibration_loss
 
 from . import cluster
 from .cluster import adjusted_mutual_info_score
@@ -129,4 +130,5 @@ __all__ = [
     'v_measure_score',
     'zero_one_loss',
     'brier_score_loss',
+    'calibration_loss',
 ]
