@@ -494,24 +494,13 @@ above example would be::
   >>> from sklearn.compose import make_column_transformer
   >>> column_trans = make_column_transformer(
   ...     ('city', CountVectorizer(analyzer=lambda x: [x])),
-  ...     ('title', CountVectorizer(analyzer=lambda x: [x])),
+  ...     ('title', CountVectorizer()),
   ...     remainder='passthrough')
   >>> column_trans # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   ColumnTransformer(n_jobs=None, remainder='passthrough',
            sparse_threshold=0.3,
            transformer_weights=None,
            transformers=[('countvectorizer-1', ...)
-
-In the above example, since none of the columns are dropped, the inverse
-transform is defined::
-
-  >>> X_trans = column_trans.fit_transform(X)
-  >>> column_trans.inverse_transform(X_trans) # doctest: +NORMALIZE_WHITESPACE
-         city                         title  expert_rating  user_rating
-  0    London                  His Last Bow              5            4
-  1    London  How Watson Learned the Trick              3            5
-  2     Paris              A Moveable Feast              4            4
-  3  Sallisaw           The Grapes of Wrath              5            3
 
 .. topic:: Examples:
 
