@@ -53,7 +53,7 @@ def test_fast_kernel_regression_simple():
 def test_fast_kernel_regression_complex():
     X, y = make_regression(n_samples=500, n_informative=100)
     FKR_prediction = FKR_EigenPro(
-        kernel="gaussian", n_epoch=40, bandwidth=10, random_state=0).fit(X, y).predict(X)
+        kernel="gaussian", n_epoch=200, bandwidth=10, random_state=0).fit(X, y).predict(X)
     assert_array_almost_equal(abs(FKR_prediction / y), 1, decimal=2)
 
 
@@ -85,39 +85,39 @@ def test_fast_kernel_classification_gaussian():
 def test_fast_kernel_classification_laplace():
     X, y = make_classification()
     FKC_prediction = FKC_EigenPro(
-        kernel="laplace", n_epoch=40, bandwidth=13).fit(X, y).predict(X)
+        kernel="laplace", n_epoch=80, bandwidth=13).fit(X, y).predict(X)
     assert_array_almost_equal(FKC_prediction, y)
 
 
 def test_fast_kernel_classification_cauchy():
     X, y = make_classification()
     FKC_prediction = FKC_EigenPro(
-        kernel="cauchy", n_epoch=40, bandwidth=10, random_state=0).fit(X, y).predict(X)
+        kernel="cauchy", n_epoch=80, bandwidth=10, random_state=0).fit(X, y).predict(X)
     assert_array_almost_equal(FKC_prediction, y)
 
 
 def test_fast_kernel_classification_complex():
     X, y = make_classification(n_samples=300, n_features=500, n_informative=170)
-    FKC_prediction = FKC_EigenPro(kernel="gaussian", bandwidth=5, n_epoch=40).fit(X, y).predict(X)
+    FKC_prediction = FKC_EigenPro(kernel="gaussian", bandwidth=5, n_epoch=80).fit(X, y).predict(X)
     assert_array_almost_equal(FKC_prediction, y)
 
 
 def test_fast_kernel_classification_redundant():
     X, y = make_classification(n_redundant=18)
-    FKC_prediction = FKC_EigenPro(kernel="laplace", bandwidth=1, n_epoch=40).fit(X, y).predict(X)
+    FKC_prediction = FKC_EigenPro(kernel="laplace", bandwidth=1, n_epoch=80).fit(X, y).predict(X)
     assert_array_almost_equal(FKC_prediction, y)
 
 
 def test_fast_kernel_classification_shift():
     X, y = make_classification(shift=1, hypercube=False)
-    FKC_prediction = FKC_EigenPro(kernel="gaussian", bandwidth=5, n_epoch=40).fit(X, y).predict(X)
+    FKC_prediction = FKC_EigenPro(kernel="gaussian", bandwidth=5, n_epoch=80).fit(X, y).predict(X)
     assert_array_almost_equal(FKC_prediction, y)
 
 
 def test_fast_kernel_classification_duplicate_data():
     X, y = make_classification(n_features=200, n_repeated=50)
     FKC_prediction = FKC_EigenPro(
-        kernel="gaussian", n_epoch=40, bandwidth=1, random_state=0).fit(X, y).predict(X)
+        kernel="gaussian", n_epoch=800, bandwidth=1, random_state=0).fit(X, y).predict(X)
     assert_array_almost_equal(FKC_prediction, y)
 
 
