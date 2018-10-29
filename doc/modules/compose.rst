@@ -494,10 +494,9 @@ above example would be::
   >>> from sklearn.compose import make_column_transformer
   >>> column_trans = make_column_transformer(
   ...     ('city', CountVectorizer(analyzer=lambda x: [x])),
-  ...     ('title', CountVectorizer()),
-  ...     remainder='passthrough')
+  ...     ('title', CountVectorizer()))
   >>> column_trans # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=None, remainder='passthrough',
+  ColumnTransformer(n_jobs=None, remainder='drop',
            sparse_threshold=0.3,
            transformer_weights=None,
            transformers=[('countvectorizer-1', ...)
