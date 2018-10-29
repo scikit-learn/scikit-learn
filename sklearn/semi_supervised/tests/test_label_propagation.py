@@ -13,6 +13,7 @@ from sklearn.exceptions import ConvergenceWarning
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
+
 ESTIMATORS = [
     (label_propagation.LabelPropagation, {'kernel': 'rbf'}),
     (label_propagation.LabelPropagation, {'kernel': 'knn', 'n_neighbors': 2}),
@@ -155,3 +156,19 @@ def test_convergence_warning():
 
     mdl = label_propagation.LabelPropagation(kernel='rbf', max_iter=500)
     assert_no_warnings(mdl.fit, X, y)
+
+
+def test_underflow():
+    RS = np.random.RandomState(42)
+
+    X = RS.randn(1000, 784)
+    y = RS.randint(0, 10, size=1000)
+
+    # Use only 300 labeled examples
+    y[300:] = -1
+
+    lp_model = label_propagation.LabelSpreading(kernel='rbf', gamma=100, n_jobs=-1)
+
+    with np.errstate(under='raise'):
+        # Force underflow errors
+        lp_model.fit(X, y)

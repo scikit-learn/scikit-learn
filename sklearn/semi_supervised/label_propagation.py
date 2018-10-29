@@ -126,10 +126,12 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
     def _get_kernel(self, X, y=None):
         if self.kernel == "rbf":
-            if y is None:
-                return rbf_kernel(X, X, gamma=self.gamma)
-            else:
-                return rbf_kernel(X, y, gamma=self.gamma)
+            with np.errstate(under='ignore'):
+                # Ignore underflow errors
+                if y is None:
+                    return rbf_kernel(X, X, gamma=self.gamma)
+                else:
+                    return rbf_kernel(X, y, gamma=self.gamma)
         elif self.kernel == "knn":
             if self.nn_fit is None:
                 self.nn_fit = NearestNeighbors(self.n_neighbors,
@@ -229,10 +231,6 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         self.X_ = X
         check_classification_targets(y)
 
-	# ignore expected underflow
-        old_error_settings = np.geterr()
-        np.seterr(invalid='ignore', under='ignore')
-
         # actual graph construction (implementations should override this)
         graph_matrix = self._build_graph()
 
@@ -299,9 +297,6 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
         self.label_distributions_ /= normalizer
-
-        # restore error settings
-        np.seterr(**old_error_settings)
 
         # set the transduction item
         transduction = self.classes_[np.argmax(self.label_distributions_,
