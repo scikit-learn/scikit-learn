@@ -2065,9 +2065,9 @@ def calibration_loss(y_true, y_prob, bin_size=2):
     >>> y_true = np.array([0, 1, 1, 0])
     >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.3])
-    >>> calibration_loss(y_true, y_prob, bin_size=1)
+    >>> calibration_loss(y_true, y_prob, bin_size = 1)
     0.175
-    >>> calibration_loss(y_true, y_prob, bin_size=)
+    >>> calibration_loss(y_true, y_prob, bin_size = 3)
     0.83333333333333348
     """
     pos_loss = 0.0
