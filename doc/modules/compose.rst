@@ -496,8 +496,7 @@ above example would be::
   ...     ('city', CountVectorizer(analyzer=lambda x: [x])),
   ...     ('title', CountVectorizer()))
   >>> column_trans # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=None, remainder='drop',
-           sparse_threshold=0.3,
+  ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
            transformer_weights=None,
            transformers=[('countvectorizer-1', ...)
 
