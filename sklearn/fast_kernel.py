@@ -1,6 +1,5 @@
 # Authors: Alex Li <7Alex7Li@gmail.com>
 #          Siyuan Ma <Siyuan.ma9@gmail.com>
-#
 
 import numpy as np
 import scipy as sp
