@@ -40,6 +40,7 @@ from sklearn.metrics import jaccard_similarity_score
 from sklearn.metrics import label_ranking_average_precision_score
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import log_loss
+from sklearn.metrics import max_error
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
@@ -89,6 +90,7 @@ from sklearn.metrics.base import _average_binary_score
 #
 
 REGRESSION_METRICS = {
+    "max_error": max_error,
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
     "median_absolute_error": median_absolute_error,
@@ -399,7 +401,7 @@ SYMMETRIC_METRICS = {
     "micro_precision_score", "micro_recall_score",
 
     "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
-    "median_absolute_error",
+    "median_absolute_error", "max_error",
 
     "cohen_kappa_score",
 }
@@ -429,6 +431,7 @@ NOT_SYMMETRIC_METRICS = {
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = {
     "median_absolute_error",
+    "max_error"
 }
 
 

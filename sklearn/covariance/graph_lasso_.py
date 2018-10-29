@@ -586,12 +586,6 @@ class GraphicalLassoCV(GraphicalLasso):
         self.cv = cv
         self.n_jobs = n_jobs
 
-    @property
-    @deprecated("Attribute grid_scores was deprecated in version 0.19 and "
-                "will be removed in 0.21. Use ``grid_scores_`` instead")
-    def grid_scores(self):
-        return self.grid_scores_
-
     def fit(self, X, y=None):
         """Fits the GraphicalLasso covariance model to X.
 

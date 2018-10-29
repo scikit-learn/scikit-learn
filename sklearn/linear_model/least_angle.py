@@ -20,7 +20,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import arrayfuncs, as_float_array, check_X_y, deprecated
+from ..utils import arrayfuncs, as_float_array, check_X_y
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..utils import Parallel, delayed
@@ -683,7 +683,6 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
                 arrayfuncs.cholesky_delete(L[:n_active, :n_active], ii)
 
             n_active -= 1
-            m, n = idx, n_active
             # handle the case when idx is not length of 1
             drop_idx = [active.pop(ii) for ii in idx]
 
@@ -1437,13 +1436,6 @@ class LarsCV(Lars):
         self._fit(X, y, max_iter=self.max_iter, alpha=best_alpha,
                   Xy=None, fit_path=True)
         return self
-
-    @property
-    @deprecated("Attribute alpha is deprecated in 0.19 and "
-                "will be removed in 0.21. See ``alpha_`` instead")
-    def alpha(self):
-        # impedance matching for the above Lars.fit (should not be documented)
-        return self.alpha_
 
 
 class LassoLarsCV(LarsCV):

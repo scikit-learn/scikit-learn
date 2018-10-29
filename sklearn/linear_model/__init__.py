@@ -31,9 +31,6 @@ from .passive_aggressive import PassiveAggressiveClassifier
 from .passive_aggressive import PassiveAggressiveRegressor
 from .perceptron import Perceptron
 
-from .randomized_l1 import (RandomizedLasso, RandomizedLogisticRegression,
-                            lasso_stability_path)
-
 from .ransac import RANSACRegressor
 from .theil_sen import TheilSenRegressor
 
@@ -65,8 +62,6 @@ __all__ = ['ARDRegression',
            'PassiveAggressiveClassifier',
            'PassiveAggressiveRegressor',
            'Perceptron',
-           'RandomizedLasso',
-           'RandomizedLogisticRegression',
            'Ridge',
            'RidgeCV',
            'RidgeClassifier',
@@ -79,7 +74,6 @@ __all__ = ['ARDRegression',
            'lars_path',
            'lars_path_gram',
            'lasso_path',
-           'lasso_stability_path',
            'logistic_regression_path',
            'orthogonal_mp',
            'orthogonal_mp_gram',
