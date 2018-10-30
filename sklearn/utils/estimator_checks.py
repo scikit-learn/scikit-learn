@@ -7,7 +7,6 @@ import traceback
 import pickle
 from copy import deepcopy
 from functools import partial
-import pytest
 
 import numpy as np
 from scipy import sparse
@@ -1260,15 +1259,14 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
     except NotImplementedError:
         return
 
-    try:
-        with pytest.raises(ValueError, match="Number of input features has "
-                                             "changed .* between calls to "
-                                             "partial_fit"):
-            estimator.partial_fit(X[:, :-1], y)
-    except pytest.fail.Exception:
-        raise AssertionError("The estimator {} does not raise an appropriate "
-                             "error when the number of features changes "
-                             "between calls to partial_fit.".format(name))
+    match = ("Number of input features has changed .* between "
+             "calls to partial_fit")
+    msg = ("The estimator {} does not raise an appropriate error when "
+           "the number of features changes between calls to "
+           "partial_fit.".format(name))
+
+    with assert_raises_regex(ValueError, match, msg=msg):
+        estimator.partial_fit(X[:, :-1], y)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
