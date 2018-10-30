@@ -411,7 +411,7 @@ def gen_batches(n, batch_size, min_batch_size=0):
     n : int
     batch_size : int
         Number of element in each batch
-    min_batch_size : int
+    min_batch_size : int, default=0
         Minimum batch size to produce.
 
     Yields
