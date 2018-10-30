@@ -48,7 +48,8 @@ bandwidth = 2
 # Fit models to data
 for train_size in train_sizes:
     for name, estimator in [
-        ("FastKernel", FKC_EigenPro(n_epoch=2, bandwidth=bandwidth,  random_state=rng)),
+        ("FastKernel", FKC_EigenPro(
+            n_epoch=2, bandwidth=bandwidth,  random_state=rng)),
             ("SupportVector", SVC(C=5, gamma=1./(2 * bandwidth * bandwidth)))]:
         stime = time()
         estimator.fit(x_train[:train_size], y_train[:train_size])

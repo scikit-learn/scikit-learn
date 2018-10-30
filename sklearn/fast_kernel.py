@@ -152,8 +152,9 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         elif self.kernel == "laplace":
             d = np.maximum(distance, 0)
             K = np.exp(-np.sqrt(d) / bandwidth)
-        elif self.kernel == "cauchy":
+        else:  # self.kernel == "cauchy":
             K = 1 / (1 + distance / np.square(bandwidth))
+
         return K
 
     def _nystrom_svd(self, X, n_components):
@@ -510,7 +511,7 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
             kernel_params=self.kernel_params, random_state=self.random_state)
         X, Y = check_X_y(X, Y, multi_output=False, ensure_min_samples=3)
         check_classification_targets(Y)
-        self.classes_, ind = np.unique(Y, return_inverse=True)
+        self.classes_ = np.unique(Y)
 
         loc = {}
         for ind, label in enumerate(self.classes_):
