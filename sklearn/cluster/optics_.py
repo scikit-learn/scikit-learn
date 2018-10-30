@@ -402,14 +402,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
        the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
     """
 
-<<<<<<< HEAD
-    def __init__(self, min_samples=5, max_eps=np.inf, metric='euclidean',
+    def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski',
                  p=2, metric_params=None, extract_method='sqlnk',
                  eps=0.5, maxima_ratio=.75,
-=======
-    def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski',
-                 p=2, metric_params=None, maxima_ratio=.75,
->>>>>>> upstream/master
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size=.005,
                  min_maxima_ratio=0.001, algorithm='ball_tree',
@@ -619,41 +614,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.reachability_[unproc[improved]] = rdists[improved]
         self.predecessor_[unproc[improved]] = point_index
 
-<<<<<<< HEAD
-        # Define return order based on reachability distance
-        return (unproc[quick_scan(np.take(self.reachability_, unproc),
-                                  dists)])
-
-=======
-    def extract_dbscan(self, eps):
-        """Performs DBSCAN extraction for an arbitrary epsilon.
-
-        Extraction runs in linear time. Note that if the `max_eps` OPTICS
-        parameter was set to < inf for extracting reachability and ordering
-        arrays, DBSCAN extractions will be unstable for `eps` values close to
-        `max_eps`. Setting `eps` < (`max_eps` / 5.0) will guarantee
-        extraction parity with DBSCAN.
-
-        Parameters
-        ----------
-        eps : float or int, required
-            DBSCAN `eps` parameter. Must be set to < `max_eps`. Equivalence
-            with DBSCAN algorithm is achieved if `eps` is < (`max_eps` / 5)
-
-        Returns
-        -------
-        core_sample_indices_ : array, shape (n_core_samples,)
-            The indices of the core samples.
-
-        labels_ : array, shape (n_samples,)
-            The estimated labels.
-        """
-        check_is_fitted(self, 'reachability_')
-
-        if eps > self.max_eps:
-            raise ValueError('Specify an epsilon smaller than %s. Got %s.'
-                             % (self.max_eps, eps))
->>>>>>> upstream/master
 
 def extract_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
     """Performs DBSCAN extraction for an arbitrary epsilon.
