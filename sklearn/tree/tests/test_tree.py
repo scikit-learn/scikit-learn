@@ -1215,8 +1215,7 @@ def test_max_leaf_nodes():
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
-        tree = est.tree_
-        assert_equal((tree.children_left == TREE_LEAF).sum(), k + 1)
+        assert_equal(est.get_n_leaves(), k + 1)
 
         # max_leaf_nodes in (0, 1) should raise ValueError
         est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
@@ -1233,8 +1232,7 @@ def test_max_leaf_nodes_max_depth():
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
-        tree = est.tree_
-        assert_greater(tree.max_depth, 1)
+        assert_greater(est.get_depth(), 1)
 
 
 def test_arrays_persist():

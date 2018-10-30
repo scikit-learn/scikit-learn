@@ -19,10 +19,9 @@ from ..utils import gen_batches, get_chunk_n_rows
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
-from ._optics_inner import quick_scan
 
 
-def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
+def optics(X, min_samples=5, max_eps=np.inf, metric='minkowski',
            p=2, metric_params=None, extract_method='sqlnk',
            eps=0.5, maxima_ratio=.75,
            rejection_ratio=.7, similarity_threshold=0.4,
@@ -38,6 +37,12 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
     datasets than the current sklearn implementation of DBSCAN.
 
     Clusters are then extracted using a DBSCAN like method [1]_, or SQLNK [2]_.
+
+    This implementation deviates from the original OPTICS by first performing
+    k-nearest-neighborhood searches on all points to identify core sizes, then
+    computing only the distances to unprocessed points when constructing the
+    cluster order. Note that we do not employ a heap to manage the expansion
+    candidates, so the time complexity will be O(n^2).
 
     Read more in the :ref:`User Guide <optics>`.
 
@@ -56,7 +61,7 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='euclidean',
         clusters across all scales; reducing `max_eps` will result in
         shorter run times.
 
-    metric : string or callable, optional (default='euclidean')
+    metric : string or callable, optional (default='minkowski')
         metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
@@ -219,6 +224,12 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     Clusters are then extracted using a DBSCAN like method [1]_, or SQLNK [2]_.
 
+    This implementation deviates from the original OPTICS by first performing
+    k-nearest-neighborhood searches on all points to identify core sizes, then
+    computing only the distances to unprocessed points when constructing the
+    cluster order. Note that we do not employ a heap to manage the expansion
+    candidates, so the time complexity will be O(n^2).
+
     Read more in the :ref:`User Guide <optics>`.
 
     Parameters
@@ -233,7 +244,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         clusters across all scales; reducing `max_eps` will result in
         shorter run times.
 
-    metric : string or callable, optional (default='euclidean')
+    metric : string or callable, optional (default='minkowski')
         metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
@@ -357,7 +368,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         ``clust.reachability_[clust.ordering_]`` to access in cluster order.
 
     ordering_ : array, shape (n_samples,)
-        The cluster ordered list of sample indices
+        The cluster ordered list of sample indices.
 
     core_distances_ : array, shape (n_samples,)
         Distance at which each sample becomes a core point, indexed by object
@@ -365,7 +376,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         ``clust.core_distances_[clust.ordering_]`` to access in cluster order.
 
     predecessor_ : array, shape (n_samples,)
-        Point that a sample was reached from.
+        Point that a sample was reached from, indexed by object order.
         Seed points have a predecessor of -1.
 
     See also
@@ -391,9 +402,14 @@ class OPTICS(BaseEstimator, ClusterMixin):
        the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
     """
 
+<<<<<<< HEAD
     def __init__(self, min_samples=5, max_eps=np.inf, metric='euclidean',
                  p=2, metric_params=None, extract_method='sqlnk',
                  eps=0.5, maxima_ratio=.75,
+=======
+    def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski',
+                 p=2, metric_params=None, maxima_ratio=.75,
+>>>>>>> upstream/master
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size=.005,
                  min_maxima_ratio=0.001, algorithm='ball_tree',
@@ -490,7 +506,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
                                 n_jobs=self.n_jobs)
 
         nbrs.fit(X)
+        # Here we first do a kNN query for each point, this differs from
+        # the original OPTICS that only used epsilon range queries.
         self.core_distances_ = self._compute_core_distances_(X, nbrs)
+        # OPTICS puts an upper limit on these, use inf for undefined.
+        self.core_distances_[self.core_distances_ > self.max_eps] = np.inf
         self.ordering_ = self._calculate_optics_order(X, nbrs)
 
         # Extract clusters from the calculated orders and reachability
@@ -517,7 +537,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
         return self
 
     # OPTICS helper functions
-
     def _compute_core_distances_(self, X, neighbors, working_memory=None):
         """Compute the k-th nearest neighbor of each sample
 
@@ -557,37 +576,38 @@ class OPTICS(BaseEstimator, ClusterMixin):
     def _calculate_optics_order(self, X, nbrs):
         # Main OPTICS loop. Not parallelizable. The order that entries are
         # written to the 'ordering_' list is important!
+        # Note that this implementation is O(n^2) theoretically, but
+        # supposedly with very low constant factors.
         processed = np.zeros(X.shape[0], dtype=bool)
         ordering = np.zeros(X.shape[0], dtype=int)
-        ordering_idx = 0
-        for point in range(X.shape[0]):
-            if processed[point]:
-                continue
-            if self.core_distances_[point] <= self.max_eps:
-                while not processed[point]:
-                    processed[point] = True
-                    ordering[ordering_idx] = point
-                    ordering_idx += 1
-                    point = self._set_reach_dist(point, processed, X, nbrs)
-            else:  # For very noisy points
-                ordering[ordering_idx] = point
-                ordering_idx += 1
-                processed[point] = True
+        for ordering_idx in range(X.shape[0]):
+            # Choose next based on smallest reachability distance
+            # (And prefer smaller ids on ties, possibly np.inf!)
+            index = np.where(processed == 0)[0]
+            point = index[np.argmin(self.reachability_[index])]
+
+            processed[point] = True
+            ordering[ordering_idx] = point
+            if self.core_distances_[point] != np.inf:
+                self._set_reach_dist(point, processed, X, nbrs)
         return ordering
 
     def _set_reach_dist(self, point_index, processed, X, nbrs):
         P = X[point_index:point_index + 1]
+        # Assume that radius_neighbors is faster without distances
+        # and we don't need all distances, nevertheless, this means
+        # we may be doing some work twice.
         indices = nbrs.radius_neighbors(P, radius=self.max_eps,
                                         return_distance=False)[0]
 
         # Getting indices of neighbors that have not been processed
         unproc = np.compress((~np.take(processed, indices)).ravel(),
                              indices, axis=0)
-        # Keep n_jobs = 1 in the following lines...please
+        # Neighbors of current point are already processed.
         if not unproc.size:
-            # Everything is already processed. Return to main loop
-            return point_index
+            return
 
+        # Only compute distances to unprocessed neighbors:
         if self.metric == 'precomputed':
             dists = X[point_index, unproc]
         else:
@@ -599,10 +619,41 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.reachability_[unproc[improved]] = rdists[improved]
         self.predecessor_[unproc[improved]] = point_index
 
+<<<<<<< HEAD
         # Define return order based on reachability distance
         return (unproc[quick_scan(np.take(self.reachability_, unproc),
                                   dists)])
 
+=======
+    def extract_dbscan(self, eps):
+        """Performs DBSCAN extraction for an arbitrary epsilon.
+
+        Extraction runs in linear time. Note that if the `max_eps` OPTICS
+        parameter was set to < inf for extracting reachability and ordering
+        arrays, DBSCAN extractions will be unstable for `eps` values close to
+        `max_eps`. Setting `eps` < (`max_eps` / 5.0) will guarantee
+        extraction parity with DBSCAN.
+
+        Parameters
+        ----------
+        eps : float or int, required
+            DBSCAN `eps` parameter. Must be set to < `max_eps`. Equivalence
+            with DBSCAN algorithm is achieved if `eps` is < (`max_eps` / 5)
+
+        Returns
+        -------
+        core_sample_indices_ : array, shape (n_core_samples,)
+            The indices of the core samples.
+
+        labels_ : array, shape (n_samples,)
+            The estimated labels.
+        """
+        check_is_fitted(self, 'reachability_')
+
+        if eps > self.max_eps:
+            raise ValueError('Specify an epsilon smaller than %s. Got %s.'
+                             % (self.max_eps, eps))
+>>>>>>> upstream/master
 
 def extract_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
     """Performs DBSCAN extraction for an arbitrary epsilon.
