@@ -109,6 +109,9 @@ Changelog
 - |Fix| Fixed a bug in :func:`pairwise.pairwise_distances_argmin_min` which
   returned the square root of the distance when the metric parameter was set to
   "euclidean". :issue:`12481` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+- |Feature| Added ancalibration loss metric for classification models 
+  which is calculated based on CalB. :issue:`12479` by 
+  :user:`Aishwarya Srinivasan` <aishgrt1>
 
 Miscellaneous
 .............
