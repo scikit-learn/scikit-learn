@@ -124,7 +124,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         target = target[order]
 
     module_path = dirname(__file__)
-    with open(join(module_path, 'descr', 'covtype.rst')) as rst_file:
+    with open(join(module_path, 'descr', 'olivetti_faces.rst')) as rst_file:
         fdescr = rst_file.read()
 
     return Bunch(data=faces.reshape(len(faces), -1),
