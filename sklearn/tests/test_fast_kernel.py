@@ -33,14 +33,14 @@ def test_fast_kernel_regression_cauchy():
 
 
 def test_fast_kernel_regression_2d():
-    X, y = make_regression(n_features=100, n_targets=30, random_state=1)
+    X, y = make_regression(n_features=200, n_targets=30, random_state=1)
     FKR_prediction = FKR_EigenPro(
-        kernel="gaussian", n_epoch=100, bandwidth=12,
+        kernel="gaussian", n_epoch=100, bandwidth=14,
         random_state=1).fit(X, y).predict(X)
     assert_array_almost_equal(abs(FKR_prediction / y)/2.0, .5, decimal=2)
 
 
-def test_fast_kernel_regression_manyfeatures():
+def test_fast_kernel_regression_many_features():
     X, y = make_regression(n_features=10000, random_state=1)
     FKR_prediction = FKR_EigenPro(
         kernel="gaussian", n_epoch=100, bandwidth=1,
