@@ -1603,6 +1603,7 @@ def test_LogisticRegressionCV_no_refit(multi_class):
     assert lrcv.coef_.shape == (n_classes, n_features)
 
 
+@pytest.mark.filterwarnings('ignore: multi_class will be changed')  # 0.22
 def test_LogisticRegressionCV_elasticnet_attribute_shapes():
     # Make sure the shapes of scores_ and coefs_paths_ attributes are correct
     # when using elasticnet (added one dimension for l1_ratios)
