@@ -27,7 +27,7 @@ def test_fast_kernel_regression_laplace():
 def test_fast_kernel_regression_cauchy():
     X, y = make_regression()
     FKR_prediction = FKR_EigenPro(
-        kernel="cauchy", n_epoch=200, bandwidth=10,
+        kernel="cauchy", n_epoch=200, bandwidth=10, subsample_size=1000,
         random_state=0).fit(X, y).predict(X)
     assert_array_almost_equal(abs(FKR_prediction / y), 1, decimal=2)
 
@@ -50,7 +50,7 @@ def test_fast_kernel_regression_manyfeatures():
 
 def test_fast_kernel_regression_simple():
     X, y = make_regression(n_features=100, n_informative=1)
-    FKR_prediction = FKR_EigenPro(
+    FKR_prediction = FKR_EigenPro(bs=500,
         kernel="gaussian", n_epoch=200, bandwidth=10,
         random_state=0).fit(X, y).predict(X)
     assert_array_almost_equal(abs(FKR_prediction / y), 1, decimal=2)
@@ -86,8 +86,9 @@ def test_fast_kernel_regression_conflict_data():
 
 
 def test_fast_kernel_classification_gaussian():
-    X, y = make_classification()
-    FKC_prediction = FKC_EigenPro(kernel="gaussian", bandwidth=5, n_epoch=200)\
+    X, y = make_classification(n_samples=10, hypercube=False)
+    FKC_prediction = FKC_EigenPro(
+        bs=9, kernel="gaussian", bandwidth=1, n_epoch=200)\
         .fit(X, y).predict(X)
     assert_array_almost_equal(FKC_prediction, y)
 
@@ -108,8 +109,8 @@ def test_fast_kernel_classification_cauchy():
 
 
 def test_fast_kernel_classification_complex():
-    X, y = make_classification(n_samples=300, n_features=500,
-                               n_informative=170)
+    X, y = make_classification(n_samples=500, n_features=500,
+                               n_informative=170, scale=30,shift=6)
     FKC_prediction = FKC_EigenPro(kernel="gaussian", bandwidth=5,
                                   n_epoch=200).fit(X, y).predict(X)
     assert_array_almost_equal(FKC_prediction, y)

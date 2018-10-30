@@ -18,19 +18,20 @@ from time import time
 
 from sklearn.fast_kernel import FKC_EigenPro
 from sklearn.svm import SVC
-from sklearn.datasets import fetch_mldata
+from sklearn.datasets import fetch_mldata, load_digits
 
 rng = np.random.RandomState(1)
 
 # Generate sample data from mnist
-mnist = fetch_mldata('MNIST original')
-mnist.data = mnist.data / 255.
+mnist = load_digits()
+# mnist = fetch_mldata('MNIST original')
+mnist.data = mnist.data / 15.0
 
-p = np.random.permutation(60000)
-x_train = mnist.data[p][:60000]
-y_train = np.int32(mnist.target[p][:60000])
-x_test = mnist.data[60000:]
-y_test = np.int32(mnist.target[60000:])
+p = np.random.permutation(len(mnist.data))
+x_train = mnist.data[p][:1400]
+y_train = np.int32(mnist.target[p][:1400])
+x_test = mnist.data[1400:]
+y_test = np.int32(mnist.target[1400:])
 
 # Run tests comparing fkc to svc
 fkc_fit_times = []
@@ -40,13 +41,15 @@ svc_fit_times = []
 svc_pred_times = []
 svc_err = []
 
-train_sizes = [500, 1000, 2000]
+train_sizes = [400, 800, 1400]
+
+bandwidth = 2
 
 # Fit models to data
 for train_size in train_sizes:
     for name, estimator in [
-        ("FastKernel", FKC_EigenPro(n_epoch=2, bandwidth=5, random_state=rng)),
-            ("SupportVector", SVC(C=5, gamma=1./(2 * 5 * 5)))]:
+        ("FastKernel", FKC_EigenPro(n_epoch=2, bandwidth=bandwidth,  random_state=rng)),
+            ("SupportVector", SVC(C=5, gamma=1./(2 * bandwidth * bandwidth)))]:
         stime = time()
         estimator.fit(x_train[:train_size], y_train[:train_size])
         fit_t = time() - stime
@@ -108,3 +111,4 @@ ax.set_xticks([], minor=True)
 ax.set_xlabel('train size')
 ax.set_ylabel('classification error %')
 plt.tight_layout()
+plt.show()

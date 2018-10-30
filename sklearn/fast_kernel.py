@@ -75,14 +75,14 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         the random number generator; If None, the random number generator
         is the RandomState instance used by `np.random`.
 
-   References
-   ----------
-   * Siyuan Ma, Mikhail Belkin
-     "Diving into the shallows: a computational perspective on
-     large-scale machine learning", NIPS 2017.
+    References
+    ----------
+    * Siyuan Ma, Mikhail Belkin
+      "Diving into the shallows: a computational perspective on
+      large-scale machine learning", NIPS 2017.
 
-   Examples
-   --------
+    Examples
+    --------
     >>> from sklearn.fast_kernel import FKR_EigenPro
     >>> import numpy as np
     >>> n_samples, n_features, n_targets = 4000, 20, 3
