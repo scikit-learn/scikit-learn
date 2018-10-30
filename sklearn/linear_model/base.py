@@ -478,8 +478,8 @@ class LinearRegression(LinearModel, RegressorMixin):
                 outs = Parallel(n_jobs=n_jobs_)(
                     delayed(sparse_lsqr)(X, y[:, j].ravel())
                     for j in range(y.shape[1]))
-                self.coef_ = np.vstack(out[0] for out in outs)
-                self._residues = np.vstack(out[3] for out in outs)
+                self.coef_ = np.vstack([out[0] for out in outs])
+                self._residues = np.vstack([out[3] for out in outs])
         else:
             self.coef_, self._residues, self.rank_, self.singular_ = \
                 linalg.lstsq(X, y)

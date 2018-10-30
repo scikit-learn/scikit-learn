@@ -31,6 +31,11 @@ from sklearn.linear_model import sgd_fast
 from sklearn.model_selection import RandomizedSearchCV
 
 
+# 0.23. warning about tol not having its correct default value.
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:max_iter and tol parameters have been")
+
+
 class SparseSGDClassifier(SGDClassifier):
 
     def fit(self, X, y, *args, **kw):
@@ -1330,8 +1335,11 @@ def test_future_and_deprecation_warnings():
     msg_deprecation = "n_iter parameter is deprecated"
     assert_warns_message(DeprecationWarning, msg_deprecation, init, 6, 0, 5)
 
-    # When n_iter=None, and at least one of tol and max_iter is specified
-    assert_no_warnings(init, 100, None, None)
+    # When n_iter=None and max_iter is specified but tol=None
+    msg_changed = "If max_iter is set but tol is left unset"
+    assert_warns_message(FutureWarning, msg_changed, init, 100, None, None)
+
+    # When n_iter=None and tol is specified
     assert_no_warnings(init, None, 1e-3, None)
     assert_no_warnings(init, 100, 1e-3, None)
 
