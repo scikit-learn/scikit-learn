@@ -257,9 +257,10 @@ boolean mask array or callable
         warn_message = ('ColumnTransformer transformer tuples should be '
                         '(name, column, transformer), whereas '
                         '(name, transformer, column) was passed; '
-                        'its support is deprecated in 0.20.1 and will be '
-                        'removed in version 0.22. Assuming the deprecated '
-                        'order for all given tuples.')
+                        'Assuming the deprecated (name, transformer, column) '
+                        'order for all given tuples. '
+                        'The support for the old order is deprecated in 0.20.1 '
+                        'and will be removed in version 0.22.')
         try:
             self._validate_transformers()
         except TypeError as e:
