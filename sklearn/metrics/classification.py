@@ -2050,15 +2050,17 @@ def calibration_loss(y_true, y_prob, bin_size=2):
     ----------
     y_true : array, shape (n_samples,)
         True targets.
-     y_prob : array, shape (n_samples,)
+    y_prob : array, shape (n_samples,)
         Probabilities of the positive class.
-     bin_size : int
+    bin_size : int
         Size of the bin (samples) analysed in each iteration
-     Returns
+
+    Returns
     -------
     score : float
         Calibration loss
-     Examples
+
+    Examples
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import calibration_loss
@@ -2070,6 +2072,7 @@ def calibration_loss(y_true, y_prob, bin_size=2):
     >>> calibration_loss(y_true, y_prob, bin_size = 3)
     0.8333333333333335
     """
+
     pos_loss = 0.0
     neg_loss = 0.0
     len_y = len(y_true)
