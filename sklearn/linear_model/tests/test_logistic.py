@@ -1490,9 +1490,10 @@ def test_LogisticRegression_elastic_net_objective(C, l1_ratio):
     lr_l2.fit(X, y)
 
     def enet_objective(lr):
-        obj = C * log_loss(y, lr.decision_function(X))
-        obj += l1_ratio * np.linalg.norm(lr.coef_, 1)
-        obj += ((1. - l1_ratio) / 2.) * np.linalg.norm(lr.coef_, 2) ** 2
+        coef = lr.coef_.ravel()
+        obj = C * log_loss(y, lr.predict_proba(X))
+        obj += l1_ratio * np.sum(np.abs(coef))
+        obj += (1. - l1_ratio) * 0.5 * np.dot(coef, coef)
         return obj
 
     assert enet_objective(lr_enet) < enet_objective(lr_l2)
@@ -1659,6 +1660,29 @@ def test_l1_ratios_param(l1_ratios):
         function = LogisticRegressionCV(penalty='l1', solver='saga',
                                         l1_ratios=l1_ratios, cv=2).fit
         assert_warns_message(UserWarning, msg, function, X, Y1)
+
+
+def test_elastic_net_versus_sgd():
+    # Compare elasticnet penatly in LogisticRegression() and SGD(loss='log')
+    n_samples = 100
+    X, y = make_classification(n_samples=n_samples, n_classes=2, n_features=5,
+                               n_informative=5, n_redundant=0, n_repeated=0,
+                               random_state=0)
+    X = scale(X)
+
+    C = 0.1
+    l1_ratio = 0.8
+
+    sgd = SGDClassifier(
+        penalty='elasticnet', random_state=0, fit_intercept=False, tol=-np.inf,
+        max_iter=1000, l1_ratio=l1_ratio, alpha=1. / C / n_samples, loss='log')
+    log = LogisticRegression(
+        penalty='elasticnet', random_state=0, fit_intercept=False, tol=1e-5,
+        max_iter=1000, l1_ratio=l1_ratio, C=C, solver='saga')
+
+    sgd.fit(X, y)
+    log.fit(X, y)
+    assert_array_almost_equal(sgd.coef_, log.coef_, decimal=3)
 
 
 def test_logistic_regression_path_coefs_multinomial():
