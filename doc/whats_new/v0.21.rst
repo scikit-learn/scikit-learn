@@ -94,6 +94,14 @@ Support for Python 3.4 and below has been officially dropped.
   ``'max_error'`` scorer for single output regression.
   :issue:`12232` by :user:`Krishna Sangeeth <whiletruelearn>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| Add :func:`metrics.multilabel_confusion_matrix`, which calculates a
+  confusion matrix with true positive, false positive, false negative and true
+  negative counts for each class. This facilitates the calculation of set-wise
+  metrics such as recall, specificity, fall out and miss rate.
+  :issue:`11179` by :user:`Shangwu Yao <ShangwuYao>` and `Joel Nothman`_.
 
 :mod:`sklearn.neighbors`
 ......................
@@ -106,7 +114,6 @@ Support for Python 3.4 and below has been officially dropped.
   now raise ``NotFittedError``, rather than AttributeError,
   when called before fit :issue:`12279` by :user:`Krishna Sangeeth
   <whiletruelearn>`.
-
 
 Multiple modules
 ................
