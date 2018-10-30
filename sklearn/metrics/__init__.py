@@ -110,6 +110,7 @@ __all__ = [
     'mean_squared_error',
     'mean_squared_log_error',
     'median_absolute_error',
+    'multilabel_confusion_matrix',
     'mutual_info_score',
     'normalized_mutual_info_score',
     'pairwise_distances',
