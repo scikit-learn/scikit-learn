@@ -103,6 +103,13 @@ Changelog
   :class:`decomposition.IncrementalPCA` when using float32 datasets.
   :issue:`12338` by :user:`bauks <bauks>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :func:`pairwise.pairwise_distances_argmin_min` which
+  returned the square root of the distance when the metric parameter was set to
+  "euclidean". :issue:`12481` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 Miscellaneous
 .............
 
