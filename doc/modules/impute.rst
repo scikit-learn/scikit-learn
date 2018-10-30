@@ -133,6 +133,8 @@ dataset, and add some missing values to it.
   >>> X, y = load_iris(return_X_y=True)
   >>> mask = np.random.randint(0,2,size=X.shape).astype(np.bool)
   >>> X[mask] = np.nan
+  >>> X_train, X_test, y_train, _ = train_test_split(X, y, test_size=100,
+  ...                                                random_state=0)
 
 Now we create a :class:`FeatureUnion`. All features will be imputed using
 :class:`SimpleImputer`, in order to enable classifiers to work with this data.
@@ -152,7 +154,7 @@ column, also the ones that did not have any missing values.
   >>> transformer = transformer.fit(X_train, y_train)
   >>> results = transformer.transform(X_test)
   >>> results.shape
-  (150, 8)
+  (100, 8)
 
 Of course, we can not use the transformer to make any predictions. We should
 wrap this in a :class:`Pipeline` with a classifier (e.g., a
