@@ -12,6 +12,16 @@ Version 0.20.1
 This is a bug-fix release with some minor documentation improvements and
 enhancements to features released in 0.20.0.
 
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- :class:`decomposition.IncrementalPCA` (bug fix)
+
 Changelog
 ---------
 
@@ -54,6 +64,14 @@ Changelog
 - |Fix| Fixed olivetti faces dataset ``DESCR`` attribute to point to the right
   location in :func:`datasets.fetch_olivetti_faces`. :issue:`12441` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a regression in :class:`decomposition.IncrementalPCA` where
+  0.20.0 raised an error if the number of samples in the final batch for
+   fitting IncrementalPCA was smaller than n_components.
+  :issue:`12234` by :user:`Ming Li <minggli>`.
 
 :mod:`sklearn.ensemble`
 .......................
