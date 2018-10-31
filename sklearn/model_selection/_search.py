@@ -1001,7 +1001,7 @@ class GridSearchCV(BaseSearchCV):
     >>> cv = custom_cv_2folds(iris.data)
     >>> clf = GridSearchCV(svc, parameters, cv=cv)
     >>> clf.fit(iris.data, iris.target)
-    GridSearchCV(cv=<generator object custom_cv_2folds at 0x10f9bf048>,
+    GridSearchCV(cv=...,
            error_score='raise-deprecating',
            estimator=SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
       decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
