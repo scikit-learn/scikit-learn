@@ -1516,3 +1516,43 @@ def test_multi_core_gridsearch_and_early_stopping():
                                 random_state=0)
     search.fit(iris.data, iris.target)
     assert search.best_score_ > 0.8
+
+
+def test_SGDClassifier_fit_for_all_backends():
+    # This is a non-regression smoke test. In the multi-class case,
+    # SGDClassifier.fit fits each class in a one-versus-all fashion using
+    # joblib.Parallel.  However, each OvA step updates the coef_ attribute of
+    # the estimator in-place. Internally, SGDClassifier calls Parallel using
+    # require='sharedmem'. This test makes sure SGDClassifier.fit works
+    # consistently even when the user asks for a backend that does not provide
+    # sharedmem semantics.
+
+    # We further test a case where memmapping would have been used if
+    # SGDClassifier.fit was called from a loky or multiprocessing backend. In
+    # this specific case, in-place modiciation of clf.coef_ would have caused a
+    # segmentation fault
+
+    random_state = 42
+
+    # Create a classification problem with 50000 features and 20 classes. Using
+    # loky or multiprocessing this make the clf.coef_ exceed the threshold
+    # above which memmaping is used in joblib and loky (1MB as of 2018/11/1).
+    sparse_X = sp.random(1000, 50000, density=0.01, format='csr',
+                         random_state=random_state)
+    y = np.random.choice(20, 1000)
+
+    # begin by fitting a SGD classifier sequentially
+    clf = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=1,
+                        random_state=random_state)
+    clf.fit(sparse_X, y=y)
+    coef_sequential_fitting = clf.coef_
+
+    # fit a SGDClassifier for each available backend, and make sure the
+    # coefficients are equal to those obtained using a sequential fit
+    from sklearn.externals.joblib import parallel_backend
+    for backend in ['threading', 'multiprocessing', 'loky']:
+        clf = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=4,
+                            random_state=random_state)
+        with parallel_backend(backend=backend):
+            clf.fit(sparse_X, y=y)
+        assert_array_equal(coef_sequential_fitting, clf.coef_)
