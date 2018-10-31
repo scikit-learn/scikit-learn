@@ -553,7 +553,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C",
                          accept_large_sparse=False)
-        n_samples, n_features = X.shape
 
         # labels can be encoded as float, int, or string literals
         # np.unique sorts in asc order; largest class id is positive class

@@ -43,6 +43,7 @@ from .cluster import normalized_mutual_info_score
 from .cluster import fowlkes_mallows_score
 from .cluster import silhouette_samples
 from .cluster import silhouette_score
+from .cluster import calinski_harabasz_score
 from .cluster import calinski_harabaz_score
 from .cluster import v_measure_score
 from .cluster import davies_bouldin_score
@@ -76,6 +77,7 @@ __all__ = [
     'average_precision_score',
     'balanced_accuracy_score',
     'calinski_harabaz_score',
+    'calinski_harabasz_score',
     'check_scoring',
     'classification_report',
     'cluster',
