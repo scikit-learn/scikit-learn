@@ -610,8 +610,12 @@ def _transform_one(transformer, X, y, weight, **fit_params):
 
 
 def _inverse_transform_one(transformer, X, weight, **fit_params):
-    weight = 1 if weight is None else weight
-    res = transformer.inverse_transform(X / weight)
+    try:
+        weight = 1 if weight is None else weight
+        weighted_X = X / weight
+    except TypeError:
+        weighted_X = X
+    res = transformer.inverse_transform(weighted_X)
     return res
 
 

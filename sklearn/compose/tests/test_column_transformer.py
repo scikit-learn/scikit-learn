@@ -1108,3 +1108,27 @@ def test_column_transformer_inverse_with_strings():
     df_inverse = column_trans.inverse_transform(result)
 
     pd.util.testing.assert_frame_equal(df, df_inverse)
+
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+def test_column_transformer_inverse_with_strings_passthrough():
+    pd = pytest.importorskip('pandas')
+
+    df = pd.DataFrame({
+        'city': ['London', 'London', 'Paris', 'Sallisaw'],
+        'title': ["His Last Bow", "How Watson Learned the Trick",
+                  "A Moveable Feast", "The Grapes of Wrath"],
+        'expert_rating': [5, 3, 4, 5],
+        'user_rating': [4, 5, 4, 3]
+    })
+
+    column_trans = ColumnTransformer(
+        [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+         ('min_max', MinMaxScaler(),
+          ['expert_rating', 'user_rating'])],
+        remainder='passthrough')
+
+    result = column_trans.fit_transform(df)
+    df_inverse = column_trans.inverse_transform(result)
+
+    pd.util.testing.assert_frame_equal(df, df_inverse)

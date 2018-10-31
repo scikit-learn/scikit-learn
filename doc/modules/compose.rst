@@ -500,6 +500,23 @@ above example would be::
            transformer_weights=None,
            transformers=[('countvectorizer-1', ...)
 
+When none of the columns are dropped and all the transformers define an
+``inverse_transform``, then :class:`~sklearn.compose.ColumnTransformer`
+is able to run ``inverse_transform``::
+
+  >>> column_trans = ColumnTransformer(
+  ...   [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...    ('min_max', MinMaxScaler(), ['expert_rating', 'user_rating'])],
+  ...   remainder='passthrough')
+  >>> X_trans = column_trans.fit_transform(X)
+  >>> column_trans.inverse_transform(X_trans)
+  ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+          city                         title  expert_rating  user_rating
+   0    London                  His Last Bow              5            4
+   1    London  How Watson Learned the Trick              3            5
+   2     Paris              A Moveable Feast              4            4
+   3  Sallisaw           The Grapes of Wrath              5            3
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
