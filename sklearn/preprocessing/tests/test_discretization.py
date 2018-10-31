@@ -189,10 +189,10 @@ def test_invalid_strategy_option():
 @pytest.mark.parametrize(
     'strategy, expected_2bins, expected_3bins',
     [('uniform', [0, 0, 0, 0, 1, 1], [0, 0, 0, 0, 2, 2]),
-     ('kmeans', [0, 0, 0, 0, 1, 1], [0, 1, 1, 1, 2, 2]),
+     ('kmeans', [0, 0, 0, 0, 1, 1], [0, 0, 1, 1, 2, 2]),
      ('quantile', [0, 0, 0, 1, 1, 1], [0, 0, 1, 1, 2, 2])])
 def test_nonuniform_strategies(strategy, expected_2bins, expected_3bins):
-    X = np.array([0, 1, 2, 3, 9, 10]).reshape(-1, 1)
+    X = np.array([0, 0.5, 2, 3, 9, 10]).reshape(-1, 1)
 
     # with 2 bins
     est = KBinsDiscretizer(n_bins=2, strategy=strategy, encode='ordinal')
