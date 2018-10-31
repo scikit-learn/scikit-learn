@@ -1520,11 +1520,13 @@ def test_multi_core_gridsearch_and_early_stopping():
 
 
 @pytest.mark.skipif(
-        not hasattr(sp, 'random'),
+        not hasattr(sp, "random"),
         reason="this test uses scipy.random, that was introduced in version  "
         "0.17. This skip condition can be dropped as soon as we drop support "
         "for scipy versions older than 0.17")
-def test_SGDClassifier_fit_for_all_backends():
+@pytest.mark.parametrize("backend",
+                         ["loky", "multiprocessing", "threading"])
+def test_SGDClassifier_fit_for_all_backends(backend):
     # This is a non-regression smoke test. In the multi-class case,
     # SGDClassifier.fit fits each class in a one-versus-all fashion using
     # joblib.Parallel.  However, each OvA step updates the coef_ attribute of
@@ -1556,11 +1558,10 @@ def test_SGDClassifier_fit_for_all_backends():
     clf.fit(X, y)
     coef_sequential_fitting = clf.coef_
 
-    # fit a SGDClassifier for each available backend, and make sure the
+    # fit a SGDClassifier using the specified backend, and make sure the
     # coefficients are equal to those obtained using a sequential fit
-    for backend in ['threading', 'multiprocessing', 'loky']:
-        clf = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=4,
-                            random_state=random_state)
-        with parallel_backend(backend=backend):
-            clf.fit(X, y)
-        assert_array_almost_equal(coef_sequential_fitting, clf.coef_)
+    clf = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=4,
+                        random_state=random_state)
+    with parallel_backend(backend=backend):
+        clf.fit(X, y)
+    assert_array_almost_equal(coef_sequential_fitting, clf.coef_)
