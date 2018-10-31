@@ -4,7 +4,6 @@
 
 import numpy as np
 cimport numpy as np
-cimport cython
 cimport openmp
 from cython cimport floating
 from cython.parallel import prange, parallel
@@ -12,6 +11,7 @@ from scipy.linalg.cython_blas cimport sgemm, dgemm
 from libc.math cimport sqrt
 from libc.stdlib cimport malloc, free
 from libc.string cimport memset, memcpy
+from libc.float cimport DBL_MAX, FLT_MAX
 
 from ._k_means import (_relocate_empty_clusters_dense,
                        _relocate_empty_clusters_sparse,
@@ -19,11 +19,6 @@ from ._k_means import (_relocate_empty_clusters_dense,
 
 
 np.import_array()
-
-
-cdef:
-    float MAX_FLT = np.finfo(np.float32).max
-    double MAX_DBL = np.finfo(np.float64).max
 
 
 cdef void xgemm(char *ta, char *tb, int *m, int *n, int *k, floating *alpha,
@@ -406,7 +401,7 @@ cdef void _update_chunk_sparse(floating *X_data,
     cdef:    
         floating sq_dist, min_sq_dist
         int i, j, k, best_cluster
-        floating max_floating = MAX_FLT if floating is float else MAX_DBL
+        floating max_floating = FLT_MAX if floating is float else DBL_MAX
         int s = X_indptr[0]
 
     # XXX Precompute the pairwise distances matrix is not worth for sparse
