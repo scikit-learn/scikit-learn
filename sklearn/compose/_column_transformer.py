@@ -405,6 +405,21 @@ boolean mask array or callable
         """
         Private function to calcuate indicies for inverse_transform
         """
+        # check transformers defines inverse_transform
+        trans_no_inverse = []
+        for name, trans, _ in self.transformers_:
+            if (trans in ['passthrough', 'drop'] or
+               hasattr(trans, "inverse_transform") and
+               callable(trans.inverse_transform)):
+                continue
+            trans_no_inverse.append(name)
+        if trans_no_inverse:
+            self._invert_error = (
+                "Unable to invert: {} does not define "
+                "inverse_transform".format(",".join(trans_no_inverse))
+            )
+            return
+
         # checks for overlap
         all_indices = set()
         input_indices = []

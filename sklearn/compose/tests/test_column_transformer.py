@@ -198,7 +198,9 @@ def test_column_transformer_inverse_transform_does_not_define_inverse():
                             ('trans2', TransNo2D(), [1])])
     res = ct.fit_transform(X_array)
 
-    with pytest.raises(AttributeError):
+    error_msg = ("Unable to invert: "
+                 "trans2 does not define inverse_transform")
+    with pytest.raises(ValueError, match=error_msg):
         ct.inverse_transform(res)
 
 
@@ -1132,3 +1134,40 @@ def test_column_transformer_inverse_with_strings_passthrough():
     df_inverse = column_trans.inverse_transform(result)
 
     pd.util.testing.assert_frame_equal(df, df_inverse)
+
+
+def test_column_transformer_transformer_does_not_define_inverse():
+
+    class NoInverseTransform(BaseEstimator):
+        def fit(self, X, y=None):
+            return self
+
+        def transform(self, X, y=None):
+            # 1D Series -> 2D DataFrame
+            if hasattr(X, 'to_frame'):
+                return X.to_frame()
+            # 1D array -> 2D array
+            if X.ndim == 1:
+                return np.atleast_2d(X).T
+            return X
+
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    ct = ColumnTransformer([('trans1', NoInverseTransform(), [0]),
+                            ('trans2', NoInverseTransform(), [1])])
+    X_trans = ct.fit_transform(X_array)
+
+    error_msg = ("Unable to invert: "
+                 "trans1,trans2 does not define inverse_transform")
+    with pytest.raises(ValueError, match=error_msg):
+        ct.inverse_transform(X_trans)
+
+    pd = pytest.importorskip('pandas')
+    X_df = pd.DataFrame(X_array, columns=['first', 'second'])
+    ct = ColumnTransformer([('trans1', Trans(), ['first']),
+                            ('trans2', NoInverseTransform(), ['second'])])
+    X_trans = ct.fit_transform(X_df)
+
+    error_msg = ("Unable to invert: "
+                 "trans2 does not define inverse_transform")
+    with pytest.raises(ValueError, match=error_msg):
+        ct.inverse_transform(X_trans)
