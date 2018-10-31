@@ -92,7 +92,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        activations : list, length = n_layers - 1
+        activations : list, length = n_layers
             The ith element of the list holds the values of the ith layer.
         """
         hidden_activation = ACTIVATIONS[self.activation]
