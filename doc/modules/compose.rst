@@ -513,11 +513,11 @@ is able to run ``inverse_transform``::
   >>> X_trans = column_trans.fit_transform(X)
   >>> column_trans.inverse_transform(X_trans)
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-          city                         title  expert_rating  user_rating
-   0    London                  His Last Bow              5            4
-   1    London  How Watson Learned the Trick              3            5
-   2     Paris              A Moveable Feast              4            4
-   3  Sallisaw           The Grapes of Wrath              5            3
+          city  ...  user_rating
+   0    London  ...            4
+   1    London  ...            5
+   2     Paris  ...            4
+   3  Sallisaw  ...            3
 
 .. topic:: Examples:
 
