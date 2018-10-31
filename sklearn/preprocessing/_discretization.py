@@ -141,10 +141,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        n_samples, n_features = X.shape
-
         X = check_array(X, dtype='numeric')
-
+        n_samples, n_features = X.shape
         if n_samples > subsample:
         	X = X.sample(subsample)
 
