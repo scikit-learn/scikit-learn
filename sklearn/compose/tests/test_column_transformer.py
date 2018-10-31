@@ -129,9 +129,8 @@ def test_column_transformer():
     assert len(both.transformers_) == 1
 
 
-@pytest.mark.parametrize("t", [('drop', [0]),
-                               (Trans(), [0])])
-def test_column_transformer_tuple_order_deprecation(t):
+@pytest.mark.parametrize("transformer", ['drop', Trans()])
+def test_column_transformer_tuple_order_deprecation(transformer):
     # test if the DeprecationWarning is raised if the wrong order in
     # the tuple is passed.
     # XXX Remove in v0.22
@@ -139,13 +138,13 @@ def test_column_transformer_tuple_order_deprecation(t):
     with pytest.warns(
             DeprecationWarning,
             match="ColumnTransformer transformer tuples should be"):
-        ct = ColumnTransformer([('name', t[0], t[1])])
+        ct = ColumnTransformer([('name', transformer, [0])])
         ct.fit_transform(X_array)
 
     with pytest.warns(
             DeprecationWarning,
             match="ColumnTransformer transformer tuples should be"):
-        ct = ColumnTransformer([('name', t[0], t[1])])
+        ct = ColumnTransformer([('name', transformer, [0])])
         ct.fit(X_array)
 
 
