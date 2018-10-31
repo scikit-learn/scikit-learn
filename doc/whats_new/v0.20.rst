@@ -76,6 +76,19 @@ Changelog
   those estimators as part of parallel parameter search or cross-validation.
   :issue:`12122` by :user:`Olivier Grisel <ogrisel>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :func:`metrics.pairwise.pairwise_distances_argmin_min`
+  which returned the square root of the distance when the metric parameter was
+  set to "euclidean". :issue:`12481` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| The :func:`metrics.calinski_harabaz_score` has been renamed to
+  :func:`metrics.calinski_harabasz_score` and will be removed in version 0.23.
+  :issue:`12211` by :user:`Lisa Thomas <LisaThomas9>`,
+  :user:`Mark Hannel <markhannel>` and :user:`Melissa Ferrari <mferrari3>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
@@ -92,6 +105,7 @@ Changelog
   to :code:`yeo-johnson` to match :class:`preprocessing.PowerTransformer`
   in version 0.23. A FutureWarning is raised when the default value is used.
   :issue:`12317` by :user:`Eric Chang <chang>`.
+
 - |Fix| Fixed bug in :class:`preprocessing.OrdinalEncoder` when passing
   manually specified categories. :issue:`12365` by `Joris Van den Bossche`_.
 
@@ -102,13 +116,6 @@ Changelog
   precision issues in :class:`preprocessing.StandardScaler` and
   :class:`decomposition.IncrementalPCA` when using float32 datasets.
   :issue:`12338` by :user:`bauks <bauks>`.
-
-:mod:`sklearn.metrics`
-......................
-
-- |Fix| Fixed a bug in :func:`pairwise.pairwise_distances_argmin_min` which
-  returned the square root of the distance when the metric parameter was set to
-  "euclidean". :issue:`12481` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 Miscellaneous
 .............
@@ -802,11 +809,6 @@ Support for Python 3.3 has been officially dropped.
   v0.22. It no longer has any effect, as batch size is determined by global
   ``working_memory`` config. See :ref:`working_memory`. :issue:`10280` by `Joel
   Nothman`_ and :user:`Aman Dalmia <dalmia>`.
-
-- |API| The :func:`metrics.calinski_harabaz_score` has been renamed to
-  :func:`metrics.calinski_harabasz_score` and will be removed in version 0.23.
-  :issue:`12211` by :user:`Lisa Thomas <LisaThomas9>`,
-  :user:`Mark Hannel <markhannel>` and :user:`Melissa Ferrari <mferrari3>`.
 
 
 :mod:`sklearn.mixture`
