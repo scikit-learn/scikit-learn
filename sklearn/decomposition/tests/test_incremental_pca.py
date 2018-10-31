@@ -5,6 +5,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_allclose_dense_sparse
 
 from sklearn import datasets
 from sklearn.decomposition import PCA, IncrementalPCA
@@ -188,7 +189,7 @@ def test_incremental_pca_batch_rank():
         all_components.append(ipca.components_)
 
     for i, j in zip(all_components[:-1], all_components[1:]):
-        assert_almost_equal(i, j, decimal=1)
+        assert_allclose_dense_sparse(i, j)
 
 
 def test_incremental_pca_partial_fit():
