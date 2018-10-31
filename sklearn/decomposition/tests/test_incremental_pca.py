@@ -188,8 +188,9 @@ def test_incremental_pca_batch_rank():
         ipca = IncrementalPCA(n_components=20, batch_size=batch_size).fit(X)
         all_components.append(ipca.components_)
 
-    for i, j in zip(all_components[:-1], all_components[1:]):
-        assert_allclose_dense_sparse(i, j)
+    for components_i, components_j in zip(all_components[:-1],
+                                          all_components[1:]):
+        assert_allclose_dense_sparse(components_i, components_j)
 
 
 def test_incremental_pca_partial_fit():
