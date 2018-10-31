@@ -35,6 +35,11 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         If ``n_bins`` is an array, and there is an ignored feature at
         index ``i``, ``n_bins[i]`` will be ignored.
 
+    subsample : int, optional (default=1e5)
+        Maximum number of samples used to estimate the quantiles for
+        computational efficiency. Note that the subsampling procedure may
+        differ for value-identical sparse and dense matrices.
+
     encode : {'onehot', 'onehot-dense', 'ordinal'}, (default='onehot')
         Method used to encode the transformed result.
 
@@ -116,8 +121,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         ``1`` based on a parameter ``threshold``.
     """
 
-    def __init__(self, n_bins=5, encode='onehot', strategy='quantile'):
+    def __init__(self, n_bins=5, subsample=1e5, encode='onehot', strategy='quantile'):
         self.n_bins = n_bins
+        self.subsample = 1e5
         self.encode = encode
         self.strategy = strategy
 
@@ -135,7 +141,12 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         -------
         self
         """
+        n_samples, n_features = X.shape
+
         X = check_array(X, dtype='numeric')
+
+        if n_samples > subsample:
+        	X = X.sample(subsample)
 
         valid_encode = ('onehot', 'onehot-dense', 'ordinal')
         if self.encode not in valid_encode:
@@ -148,7 +159,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                              "Got strategy={!r} instead."
                              .format(valid_strategy, self.strategy))
 
-        n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
 
         bin_edges = np.zeros(n_features, dtype=object)
