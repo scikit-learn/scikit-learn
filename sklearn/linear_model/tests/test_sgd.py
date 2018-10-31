@@ -1518,6 +1518,11 @@ def test_multi_core_gridsearch_and_early_stopping():
     assert search.best_score_ > 0.8
 
 
+@pytest.mark.skipif(
+        not hasattr(sp, 'random'),
+        reason="this test uses scipy.random, that was introduced in version  "
+        "0.17. This skip condition can be dropped as soon as we drop support "
+        "for scipy versions older than 0.17")
 def test_SGDClassifier_fit_for_all_backends():
     # This is a non-regression smoke test. In the multi-class case,
     # SGDClassifier.fit fits each class in a one-versus-all fashion using
