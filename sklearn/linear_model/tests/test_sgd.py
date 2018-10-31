@@ -1546,6 +1546,8 @@ def test_SGDClassifier_fit_for_all_backends():
     # above which memmaping is used in joblib and loky (1MB as of 2018/11/1).
     X = sp.random(1000, 50000, density=0.01, format='csr',
                   random_state=random_state)
+
+    np.random.seed(random_state)
     y = np.random.choice(20, 1000)
 
     # begin by fitting a SGD classifier sequentially
@@ -1561,4 +1563,4 @@ def test_SGDClassifier_fit_for_all_backends():
                             random_state=random_state)
         with parallel_backend(backend=backend):
             clf.fit(X, y)
-        assert_array_equal(coef_sequential_fitting, clf.coef_)
+        assert_array_almost_equal(coef_sequential_fitting, clf.coef_)
