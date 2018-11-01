@@ -113,7 +113,11 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                     # removed later.
                     X_mask[:, i] = valid_mask
                     # cast Xi into a np.object to handle different string types
-                    Xi = Xi.astype(np.object)
+                    if (isinstance(self.categories_[i][0], six.string_types)):
+                        Xi = Xi.astype(np.object)
+                    else:
+                        Xi = Xi.copy()
+                    
                     Xi[~valid_mask] = self.categories_[i][0]
             _, encoded = _encode(Xi, self.categories_[i], encode=True)
             X_int[:, i] = encoded
