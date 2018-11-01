@@ -249,11 +249,10 @@ def test_one_hot_encoder_handle_unknown():
     oh = OneHotEncoder(handle_unknown='42')
     assert_raises(ValueError, oh.fit, X)
 
-
     # Test the ignore option, when categories are strings
     # particularly when the known category strings are larger
     # than the unknown category strings
-    X  = np.array(['11111111', '22', '333', '4444']).reshape((-1, 1))
+    X = np.array(['11111111', '22', '333', '4444']).reshape((-1, 1))
     X2 = np.array(['55555', '22']).reshape((-1, 1))
 
     oh = OneHotEncoder(handle_unknown='ignore')
@@ -266,7 +265,7 @@ def test_one_hot_encoder_handle_unknown():
     # ensure transformed data was not modified in place
     assert_array_equal(X2, X2_passed)
 
-    
+
 
 
 @pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
