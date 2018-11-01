@@ -121,7 +121,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         ``1`` based on a parameter ``threshold``.
     """
 
-    def __init__(self, n_bins = 5, subsample = 1e5, encode = 'onehot', strategy = 'quantile'):
+    def __init__(self, n_bins=5, subsample=1e5, encode='onehot', strategy='quantile'):
         self.n_bins = n_bins
         self.subsample = 1e5
         self.encode = encode
@@ -141,14 +141,14 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        X = check_array(X, dtype = 'numeric')
+        X = check_array(X, dtype='numeric')
         n_samples, n_features = X.shape
 
         if n_samples > self.subsample:
             subsample_idx = random_state.choice(n_samples,
-                                                size = self.subsample,
-                                                replace = False)
-            X = X.take(subsample_idx, mode = 'clip')
+                                                size=self.subsample,
+                                                replace=False)
+            X = X.take(subsample_idx, mode='clip')
 
         valid_encode = ('onehot', 'onehot-dense', 'ordinal')
         if self.encode not in valid_encode:
