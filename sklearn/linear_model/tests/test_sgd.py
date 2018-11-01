@@ -1541,27 +1541,24 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # a segmentation fault when trying to write in a readonly memory mapped
     # buffer.
 
-    random_state = 42
+    random_state = np.random.RandomState(42)
 
     # Create a classification problem with 50000 features and 20 classes. Using
     # loky or multiprocessing this make the clf.coef_ exceed the threshold
     # above which memmaping is used in joblib and loky (1MB as of 2018/11/1).
     X = sp.random(1000, 50000, density=0.01, format='csr',
                   random_state=random_state)
+    y = random_state.choice(20, 1000)
 
-    np.random.seed(random_state)
-    y = np.random.choice(20, 1000)
+    # Begin by fitting a SGD classifier sequentially
+    clf_sequential = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=1,
+                                   random_state=42)
+    clf_sequential.fit(X, y)
 
-    # begin by fitting a SGD classifier sequentially
-    clf = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=1,
-                        random_state=random_state)
-    clf.fit(X, y)
-    coef_sequential_fitting = clf.coef_
-
-    # fit a SGDClassifier using the specified backend, and make sure the
+    # Fit a SGDClassifier using the specified backend, and make sure the
     # coefficients are equal to those obtained using a sequential fit
-    clf = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=4,
-                        random_state=random_state)
+    clf_parallel = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=4,
+                                 random_state=42)
     with parallel_backend(backend=backend):
-        clf.fit(X, y)
-    assert_array_almost_equal(coef_sequential_fitting, clf.coef_)
+        clf_parallel.fit(X, y)
+    assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
