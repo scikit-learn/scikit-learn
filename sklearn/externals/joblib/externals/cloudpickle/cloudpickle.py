@@ -44,7 +44,7 @@ from __future__ import print_function
 
 import dis
 from functools import partial
-import imp
+import importlib
 import io
 import itertools
 import logging
@@ -933,7 +933,7 @@ def subimport(name):
 
 
 def dynamic_subimport(name, vars):
-    mod = imp.new_module(name)
+    mod = importlib.util.module_from_spec(name)
     mod.__dict__.update(vars)
     return mod
 
@@ -1127,14 +1127,14 @@ def _rehydrate_skeleton_class(skeleton_class, class_dict):
 
 def _find_module(mod_name):
     """
-    Iterate over each part instead of calling imp.find_module directly.
+    Iterate over each part instead of calling importlib.util.find_spec directly.
     This function is able to find submodules (e.g. scikit.tree)
     """
     path = None
     for part in mod_name.split('.'):
         if path is not None:
             path = [path]
-        file, path, description = imp.find_module(part, path)
+        file, path, description = importlib.util.find_spec(part, path)
         if file is not None:
             file.close()
     return path, description
