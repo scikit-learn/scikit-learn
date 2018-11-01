@@ -466,7 +466,7 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
         def _matvec(V):
                 return (safe_sparse_dot(M,
                         (safe_sparse_dot(V.T.conj(), M)).T.conj()))
-                        # or try (safe_sparse_dot(M.T.conj(), V))))
+                # Faster than (safe_sparse_dot(M.T.conj(), V))))
 
         Ms0 = M.shape[0]
         A = LinearOperator(dtype=M.dtype, shape=(Ms0, Ms0),
