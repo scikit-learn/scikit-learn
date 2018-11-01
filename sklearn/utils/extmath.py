@@ -366,7 +366,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
 def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
                transpose='auto', flip_sign=True, random_state=0,
-               tol=None, explicitNormalMatrix=False):
+               tol=None, explicitNormalMatrix=True):
     """Computes a truncated SVD using LOBPCG to accelerate the randomized SVD.
     Compared to 'randomised', the 'lobpcg' option gives more accurate
     approximations, with the same n_iter, n_components, and n_oversamples,
@@ -417,7 +417,7 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
         Optional solver tolerance (stopping criterion), if large enough, may
         overwrite n_iter. If None, lobpcg sets is internally.
 
-    explicitNormalMatrix : boolean, (False by default)
+    explicitNormalMatrix : boolean, (True by default)
         Optional parameter that determines if the normal matrix used by lobpcg
         is computed explicitly or implicitly via LinearOperator performing
         multiplication of the normal matrix and a vector. The latter may be
@@ -466,6 +466,7 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
         def _matvec(V):
                 return (safe_sparse_dot(M,
                         (safe_sparse_dot(V.T.conj(), M)).T.conj()))
+                        # or try (safe_sparse_dot(M.T.conj(), V))))
 
         Ms0 = M.shape[0]
         A = LinearOperator(dtype=M.dtype, shape=(Ms0, Ms0),
@@ -477,6 +478,7 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
     # A, given implicitly via LinearOperator or explicitly as dense or sparse
     _, Q = lobpcg(A, Q, maxiter=n_iter,
                   verbosityLevel=lobpcgVerbosityLevel, tol=tol)
+    del A
 
     # project M to the (k + p) dimensional space using the basis vectors
     # project M to the (k + p) dimensional space using the basis vectors
