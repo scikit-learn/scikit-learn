@@ -381,6 +381,7 @@ class OneHotEncoder(_BaseEncoder):
                     "The 'categorical_features' keyword is deprecated in "
                     "version 0.20 and will be removed in 0.22. You can "
                     "use the ColumnTransformer instead.", DeprecationWarning)
+                # Set categories_ to empty list if no categorical columns exist
                 n_features = X.shape[1]
                 sel = np.zeros(n_features, dtype=bool)
                 sel[np.asarray(self.categorical_features)] = True
