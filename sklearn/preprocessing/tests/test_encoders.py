@@ -249,12 +249,14 @@ def test_one_hot_encoder_handle_unknown():
     oh = OneHotEncoder(handle_unknown='42')
     assert_raises(ValueError, oh.fit, X)
 
-    # Test the ignore option, when categories are strings
-    # particularly when the known category strings are larger
-    # than the unknown category strings
+
+def test_one_hot_encoder_handle_unknown_strings():
     X = np.array(['11111111', '22', '333', '4444']).reshape((-1, 1))
     X2 = np.array(['55555', '22']).reshape((-1, 1))
 
+    # Test the ignore option, when categories are strings
+    # particularly when the known category strings are larger
+    # than the unknown category strings
     oh = OneHotEncoder(handle_unknown='ignore')
 
     oh.fit(X)
