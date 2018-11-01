@@ -41,7 +41,8 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
 from sklearn.base import (clone, ClusterMixin,
-                          is_classifier, is_regressor, is_outlier_detector)
+                          BaseEstimator, is_classifier, is_regressor,
+                          is_outlier_detector)
 
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
@@ -53,8 +54,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import ShuffleSplit
-from sklearn.model_selection._validation import _safe_split
 from sklearn.metrics.pairwise import (rbf_kernel, linear_kernel,
                                       pairwise_distances)
 
@@ -268,7 +267,6 @@ def _yield_all_checks(name, estimator):
     yield check_set_params
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
-    yield check_fit_idempotent
 
 
 def check_estimator(Estimator):
@@ -526,7 +524,7 @@ def check_estimator_sparse_data(name, estimator_orig):
                           "sparse input is not supported if this is not"
                           " the case." % name)
                     raise
-        except Exception:
+        except Exception as e:
             print("Estimator %s doesn't seem to fail gracefully on "
                   "sparse data: it should raise a TypeError if sparse input "
                   "is explicitly not supported." % name)
@@ -1663,6 +1661,7 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
 
     if hasattr(classifier, "decision_function"):
         decision = classifier.decision_function(X)
+        n_samples, n_features = X.shape
         assert isinstance(decision, np.ndarray)
         if len(classes) == 2:
             dec_pred = (decision.ravel() > 0).astype(np.int)
@@ -2207,6 +2206,19 @@ def check_transformer_n_iter(name, estimator_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_get_params_invariance(name, estimator_orig):
     # Checks if get_params(deep=False) is a subset of get_params(deep=True)
+    class T(BaseEstimator):
+        """Mock classifier
+        """
+
+        def __init__(self):
+            pass
+
+        def fit(self, X, y):
+            return self
+
+        def transform(self, X):
+            return X
+
     e = clone(estimator_orig)
 
     shallow_params = e.get_params(deep=False)
@@ -2334,50 +2346,3 @@ def check_outliers_fit_predict(name, estimator_orig):
         for contamination in [-0.5, 2.3]:
             estimator.set_params(contamination=contamination)
             assert_raises(ValueError, estimator.fit_predict, X)
-
-
-def check_fit_idempotent(name, estimator_orig):
-    # Check that est.fit(X) is the same as est.fit(X).fit(X). Ideally we would
-    # check that the estimated parameters during training (e.g. coefs_) are
-    # the same, but having a universal comparison function for those
-    # attributes is difficult and full of edge cases. So instead we check that
-    # predict(), predict_proba(), decision_function() and transform() return
-    # the same results.
-
-    check_methods = ["predict", "transform", "decision_function",
-                     "predict_proba"]
-    rng = np.random.RandomState(0)
-
-    estimator = clone(estimator_orig)
-    set_random_state(estimator)
-    if 'warm_start' in estimator.get_params().keys():
-        estimator.set_params(warm_start=False)
-
-    n_samples = 100
-    X = rng.normal(loc=100, size=(n_samples, 2))
-    X = pairwise_estimator_convert_X(X, estimator)
-    if is_regressor(estimator_orig):
-        y = rng.normal(size=n_samples)
-    else:
-        y = rng.randint(low=0, high=2, size=n_samples)
-    y = multioutput_estimator_convert_y_2d(estimator, y)
-
-    train, test = next(ShuffleSplit(test_size=.2, random_state=rng).split(X))
-    X_train, y_train = _safe_split(estimator, X, y, train)
-    X_test, y_test = _safe_split(estimator, X, y, test, train)
-
-    # Fit for the first time
-    estimator.fit(X_train, y_train)
-
-    result = {}
-    for method in check_methods:
-        if hasattr(estimator, method):
-            result[method] = getattr(estimator, method)(X_test)
-
-    # Fit again
-    estimator.fit(X_train, y_train)
-
-    for method in check_methods:
-        if hasattr(estimator, method):
-            new_result = getattr(estimator, method)(X_test)
-            assert_allclose_dense_sparse(result[method], new_result)
