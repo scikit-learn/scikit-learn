@@ -117,7 +117,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                         Xi = Xi.astype(np.object)
                     else:
                         Xi = Xi.copy()
-                    
+
                     Xi[~valid_mask] = self.categories_[i][0]
             _, encoded = _encode(Xi, self.categories_[i], encode=True)
             X_int[:, i] = encoded
