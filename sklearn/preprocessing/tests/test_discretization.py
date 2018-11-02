@@ -27,7 +27,7 @@ X = [[-2, 1.5, -4, -1],
      ('kmeans', [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]]),
      ('quantile', [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]])])
 def test_fit_transform(strategy, expected):
-    est = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy=strategy)
+    est = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy=strategy, subsample=None)
     est.fit(X)
     assert_array_equal(expected, est.transform(X))
 
@@ -35,7 +35,7 @@ def test_fit_transform(strategy, expected):
 def test_valid_n_bins():
     KBinsDiscretizer(n_bins=2, subsample=None).fit_transform(X)
     KBinsDiscretizer(n_bins=np.array([2])[0], subsample=None).fit_transform(X)
-    assert KBinsDiscretizer(n_bins=2).fit(X).n_bins_.dtype == np.dtype(np.int)
+    assert KBinsDiscretizer(n_bins=2, subsample=None).fit(X).n_bins_.dtype == np.dtype(np.int)
 
 
 def test_invalid_n_bins():
