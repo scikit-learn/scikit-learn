@@ -210,7 +210,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                     uniform_edges = np.linspace(col_min, col_max,
                                                 n_bins[jj] + 1)
                     init = (uniform_edges[1:] + uniform_edges[:-1])[:,
-                            None] * 0.5
+                                                                    None] * 0.5
 
                     # 1D k-means procedure
                     km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
