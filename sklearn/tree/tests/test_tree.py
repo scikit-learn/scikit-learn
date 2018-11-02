@@ -315,6 +315,32 @@ def test_probability():
                             err_msg="Failed with {0}".format(name))
 
 
+
+def test_feature_selection_stability():
+    # Check consistency on dataset iris.
+    for criterion in CLF_CRITERIONS:
+        clf0 = DecisionTreeClassifier(criterion=criterion, random_state=0)
+        clf1 = DecisionTreeClassifier(criterion=criterion, random_state=1)
+        clf2 = DecisionTreeClassifier(criterion=criterion, random_state=2)
+
+        # train/test segmentation
+        rs = np.random.RandomState(1234)
+        itr = rs.rand(iris.data.shape[0]) < 0.75
+
+        clf0.fit(iris.data[itr], iris.target[itr])
+        clf1.fit(iris.data[itr], iris.target[itr])
+        clf2.fit(iris.data[itr], iris.target[itr])
+
+        assert_array_equal(clf0.predict(iris.data[~itr]),
+                           clf1.predict(iris.data[~itr]),
+                           err_msg="Failed with {0}".format(name))
+
+        assert_array_equal(clf1.predict(iris.data[~itr]),
+                           clf2.predict(iris.data[~itr]),
+                           err_msg="Failed with {0}".format(name))
+
+
+
 def test_arrayrepr():
     # Check the array representation.
     # Check resize
