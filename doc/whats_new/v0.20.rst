@@ -945,9 +945,6 @@ Support for Python 3.3 has been officially dropped.
 - |API| :class:`pipeline.FeatureUnion` now supports ``'drop'`` as a transformer
   to drop features. :issue:`11144` by :user:`thomasjpfan`.
 
-- |API| :class:`pipeline.Pipeline` now supports using ``'passthrough'`` as a 
-  transformer. :issue:`11144` by :user:`thomasjpfan`.
-  
 
 :mod:`sklearn.preprocessing`
 ............................
