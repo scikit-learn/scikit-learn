@@ -136,7 +136,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         self.random_state = random_state
         self.subsample = subsample
         
-    def fit(self, X, y=None, random_state):
+    def fit(self, X, y=None, random_state=self.random_state):
         """Fits the estimator.
 
         Parameters
