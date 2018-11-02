@@ -36,8 +36,8 @@ def test_fit_transform(strategy, expected):
 def test_valid_n_bins():
     KBinsDiscretizer(n_bins=2, subsample=None).fit_transform(X)
     KBinsDiscretizer(n_bins=np.array([2])[0], subsample=None).fit_transform(X)
-    assert KBinsDiscretizer(n_bins=2, subsample=None).fit(X).n_bins_.dtype == np.dtype(
-                            np.int)
+    assert KBinsDiscretizer(n_bins=2, subsample=None).fit(X
+                                                          ).n_bins_.dtype == np.dtype(np.int)
 
 
 def test_invalid_n_bins():
