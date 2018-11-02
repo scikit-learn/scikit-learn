@@ -59,7 +59,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         kmeans
             Values in each bin have the same nearest center of a 1D k-means
             cluster.
-   
+
     subsample : int, optional (default='warn')
             Maximum number of samples used to estimate the quantiles for
             computational efficiency. Note that the subsampling procedure may
@@ -193,23 +193,24 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                     continue
 
                 if self.strategy == 'uniform':
-                    bin_edges[jj] = np.linspace(col_min, col_max, 
+                    bin_edges[jj] = np.linspace(col_min, col_max,
                                                 n_bins[jj] + 1)
 
                 elif self.strategy == 'quantile':
                     quantiles = np.linspace(0, 100, n_bins[jj] + 1)
                     if np_version < (1, 9):
                         quantiles = list(quantiles)
-                    bin_edges[jj] = np.asarray(np.percentile(column, 
+                    bin_edges[jj] = np.asarray(np.percentile(column,
                                                quantiles))
 
                 elif self.strategy == 'kmeans':
                     from ..cluster import KMeans  # fixes import loops
 
                     # Deterministic initialization with uniform spacing
-                    uniform_edges = np.linspace(col_min, col_max, n_bins[jj] + 1)
-                    init = (uniform_edges[1:] + uniform_edges[:-1])
-                            [:, None] * 0.5
+                    uniform_edges = np.linspace(col_min, col_max,
+                                                n_bins[jj] + 1)
+                    init = (uniform_edges[1:] + uniform_edges[:-1])[:,
+                            None] * 0.5
 
                     # 1D k-means procedure
                     km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
