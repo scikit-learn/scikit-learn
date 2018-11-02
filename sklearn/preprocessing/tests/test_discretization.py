@@ -33,18 +33,18 @@ def test_fit_transform(strategy, expected):
 
 
 def test_valid_n_bins():
-    KBinsDiscretizer(n_bins=2).fit_transform(X)
-    KBinsDiscretizer(n_bins=np.array([2])[0]).fit_transform(X)
+    KBinsDiscretizer(n_bins=2, subsample=None).fit_transform(X)
+    KBinsDiscretizer(n_bins=np.array([2])[0], subsample=None).fit_transform(X)
     assert KBinsDiscretizer(n_bins=2).fit(X).n_bins_.dtype == np.dtype(np.int)
 
 
 def test_invalid_n_bins():
-    est = KBinsDiscretizer(n_bins=1)
+    est = KBinsDiscretizer(n_bins=1, subsample=None)
     assert_raise_message(ValueError, "KBinsDiscretizer received an invalid "
                          "number of bins. Received 1, expected at least 2.",
                          est.fit_transform, X)
 
-    est = KBinsDiscretizer(n_bins=1.1)
+    est = KBinsDiscretizer(n_bins=1.1, subsample=None)
     assert_raise_message(ValueError, "KBinsDiscretizer received an invalid "
                          "n_bins type. Received float, expected int.",
                          est.fit_transform, X)
@@ -53,21 +53,21 @@ def test_invalid_n_bins():
 def test_invalid_n_bins_array():
     # Bad shape
     n_bins = np.full((2, 4), 2.)
-    est = KBinsDiscretizer(n_bins=n_bins)
+    est = KBinsDiscretizer(n_bins=n_bins, subsample=None)
     assert_raise_message(ValueError,
                          "n_bins must be a scalar or array of shape "
                          "(n_features,).", est.fit_transform, X)
 
     # Incorrect number of features
     n_bins = [1, 2, 2]
-    est = KBinsDiscretizer(n_bins=n_bins)
+    est = KBinsDiscretizer(n_bins=n_bins, subsample=None)
     assert_raise_message(ValueError,
                          "n_bins must be a scalar or array of shape "
                          "(n_features,).", est.fit_transform, X)
 
     # Bad bin values
     n_bins = [1, 2, 2, 1]
-    est = KBinsDiscretizer(n_bins=n_bins)
+    est = KBinsDiscretizer(n_bins=n_bins, subsample=None)
     assert_raise_message(ValueError,
                          "KBinsDiscretizer received an invalid number of bins "
                          "at indices 0, 3. Number of bins must be at least 2, "
@@ -76,7 +76,7 @@ def test_invalid_n_bins_array():
 
     # Float bin values
     n_bins = [2.1, 2, 2.1, 2]
-    est = KBinsDiscretizer(n_bins=n_bins)
+    est = KBinsDiscretizer(n_bins=n_bins, subsample=None)
     assert_raise_message(ValueError,
                          "KBinsDiscretizer received an invalid number of bins "
                          "at indices 0, 2. Number of bins must be at least 2, "
@@ -91,7 +91,7 @@ def test_invalid_n_bins_array():
      ('quantile', [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]])])
 def test_fit_transform_n_bins_array(strategy, expected):
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='ordinal',
-                           strategy=strategy).fit(X)
+                           strategy=strategy, subsample=None).fit(X)
     assert_array_equal(expected, est.transform(X))
 
     # test the shape of bin_edges_
@@ -102,7 +102,7 @@ def test_fit_transform_n_bins_array(strategy, expected):
 
 
 def test_invalid_n_features():
-    est = KBinsDiscretizer(n_bins=3).fit(X)
+    est = KBinsDiscretizer(n_bins=3, subsample=None).fit(X)
     bad_X = np.arange(25).reshape(5, -1)
     assert_raise_message(ValueError,
                          "Incorrect number of features. Expecting 4, "
@@ -116,7 +116,7 @@ def test_same_min_max(strategy):
                   [1, -1],
                   [1, 0],
                   [1, 1]])
-    est = KBinsDiscretizer(strategy=strategy, n_bins=3, encode='ordinal')
+    est = KBinsDiscretizer(strategy=strategy, n_bins=3, encode='ordinal', subsample=None)
     assert_warns_message(UserWarning,
                          "Feature 0 is constant and will be replaced "
                          "with 0.", est.fit, X)
@@ -128,10 +128,10 @@ def test_same_min_max(strategy):
 
 def test_transform_1d_behavior():
     X = np.arange(4)
-    est = KBinsDiscretizer(n_bins=2)
+    est = KBinsDiscretizer(n_bins=2, subsample=None)
     assert_raises(ValueError, est.fit, X)
 
-    est = KBinsDiscretizer(n_bins=2)
+    est = KBinsDiscretizer(n_bins=2, subsample=None)
     est.fit(X.reshape(-1, 1))
     assert_raises(ValueError, est.transform, X)
 
@@ -143,12 +143,12 @@ def test_numeric_stability():
     # Test up to discretizing nano units
     for i in range(1, 9):
         X = X_init / 10**i
-        Xt = KBinsDiscretizer(n_bins=2, encode='ordinal').fit_transform(X)
+        Xt = KBinsDiscretizer(n_bins=2, encode='ordinal', subsample=None).fit_transform(X)
         assert_array_equal(Xt_expected, Xt)
 
 
 def test_invalid_encode_option():
-    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='invalid-encode')
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='invalid-encode', subsample=None)
     assert_raise_message(ValueError, "Valid options for 'encode' are "
                          "('onehot', 'onehot-dense', 'ordinal'). "
                          "Got encode='invalid-encode' instead.",
@@ -157,10 +157,10 @@ def test_invalid_encode_option():
 
 def test_encode_options():
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
-                           encode='ordinal').fit(X)
+                           encode='ordinal', subsample=None).fit(X)
     Xt_1 = est.transform(X)
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
-                           encode='onehot-dense').fit(X)
+                           encode='onehot-dense', subsample=None).fit(X)
     Xt_2 = est.transform(X)
     assert not sp.issparse(Xt_2)
     assert_array_equal(OneHotEncoder(
@@ -168,7 +168,7 @@ def test_encode_options():
                            sparse=False)
                        .fit_transform(Xt_1), Xt_2)
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
-                           encode='onehot').fit(X)
+                           encode='onehot', subsample=None).fit(X)
     Xt_3 = est.transform(X)
     assert sp.issparse(Xt_3)
     assert_array_equal(OneHotEncoder(
@@ -179,7 +179,7 @@ def test_encode_options():
 
 
 def test_invalid_strategy_option():
-    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], strategy='invalid-strategy')
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], strategy='invalid-strategy', subsample=None)
     assert_raise_message(ValueError, "Valid options for 'strategy' are "
                          "('uniform', 'quantile', 'kmeans'). "
                          "Got strategy='invalid-strategy' instead.",
@@ -195,12 +195,12 @@ def test_nonuniform_strategies(strategy, expected_2bins, expected_3bins):
     X = np.array([0, 0.5, 2, 3, 9, 10]).reshape(-1, 1)
 
     # with 2 bins
-    est = KBinsDiscretizer(n_bins=2, strategy=strategy, encode='ordinal')
+    est = KBinsDiscretizer(n_bins=2, strategy=strategy, encode='ordinal', subsample=None)
     Xt = est.fit_transform(X)
     assert_array_equal(expected_2bins, Xt.ravel())
 
     # with 3 bins
-    est = KBinsDiscretizer(n_bins=3, strategy=strategy, encode='ordinal')
+    est = KBinsDiscretizer(n_bins=3, strategy=strategy, encode='ordinal', subsample=None)
     Xt = est.fit_transform(X)
     assert_array_equal(expected_3bins, Xt.ravel())
 
@@ -209,7 +209,7 @@ def test_nonuniform_strategies(strategy, expected_2bins, expected_3bins):
 @pytest.mark.parametrize('encode', ['ordinal', 'onehot', 'onehot-dense'])
 def test_inverse_transform(strategy, encode):
     X = np.random.RandomState(0).randn(100, 3)
-    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy, encode=encode)
+    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy, encode=encode, subsample=None)
     Xt = kbd.fit_transform(X)
     X2 = kbd.inverse_transform(Xt)
     X2t = kbd.fit_transform(X2)
@@ -228,7 +228,7 @@ def test_inverse_transform(strategy, encode):
 @pytest.mark.parametrize('strategy', ['uniform', 'kmeans', 'quantile'])
 def test_transform_outside_fit_range(strategy):
     X = np.array([0, 1, 2, 3])[:, None]
-    kbd = KBinsDiscretizer(n_bins=4, strategy=strategy, encode='ordinal')
+    kbd = KBinsDiscretizer(n_bins=4, strategy=strategy, encode='ordinal', subsample=None)
     kbd.fit(X)
 
     X2 = np.array([-2, 5])[:, None]
@@ -241,7 +241,7 @@ def test_overwrite():
     X = np.array([0, 1, 2, 3])[:, None]
     X_before = X.copy()
 
-    est = KBinsDiscretizer(n_bins=3, encode="ordinal")
+    est = KBinsDiscretizer(n_bins=3, encode="ordinal", subsample=None)
     Xt = est.fit_transform(X)
     assert_array_equal(X, X_before)
 
