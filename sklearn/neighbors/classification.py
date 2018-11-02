@@ -82,6 +82,11 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         for more details.
         Doesn't affect :meth:`fit` method.
 
+    Attributes
+    ----------
+    classes_ : array, shape = (n_classes,)
+        Class labels.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
@@ -295,6 +300,11 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    Attributes
+    ----------
+    classes_ : array, shape = (n_classes,)
+        Class labels.
 
     Examples
     --------

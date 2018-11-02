@@ -938,6 +938,9 @@ class SGDClassifier(BaseSGDClassifier):
     intercept_ : array, shape (1,) if n_classes == 2 else (n_classes,)
         Constants in decision function.
 
+    classes_ : array, shape = (n_classes,)
+        Class labels.
+
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.

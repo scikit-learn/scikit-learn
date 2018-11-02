@@ -1167,6 +1167,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
             ``max_iter``. ``n_iter_`` will now report at most ``max_iter``.
 
+    classes_ : array, shape = (n_classes,)
+        Class labels.
+
     Examples
     --------
     >>> from sklearn.datasets import load_iris
@@ -1637,6 +1640,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     n_iter_ : array, shape (n_classes, n_folds, n_cs) or (1, n_folds, n_cs)
         Actual number of iterations for all classes, folds and Cs.
         In the binary or multinomial cases, the first dimension is equal to 1.
+
+    classes_ : array, shape = (n_classes,)
+        Class labels.
 
     Examples
     --------

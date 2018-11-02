@@ -340,7 +340,7 @@ class LabelPropagation(BaseLabelPropagation):
     X_ : array, shape = [n_samples, n_features]
         Input array.
 
-    classes_ : array, shape = [n_classes]
+    classes_ : array, shape = (n_classes,)
         The distinct labels used in classifying instances.
 
     label_distributions_ : array, shape = [n_samples, n_classes]
@@ -454,7 +454,7 @@ class LabelSpreading(BaseLabelPropagation):
     X_ : array, shape = [n_samples, n_features]
         Input array.
 
-    classes_ : array, shape = [n_classes]
+    classes_ : array, shape = (n_classes,)
         The distinct labels used in classifying instances.
 
     label_distributions_ : array, shape = [n_samples, n_classes]

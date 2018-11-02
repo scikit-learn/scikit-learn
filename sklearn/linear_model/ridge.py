@@ -775,6 +775,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
 
+    classes_ : array, shape = (n_classes,)
+        Class labels.
+
     n_iter_ : array or None, shape (n_targets,)
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
@@ -1357,6 +1360,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
+
+    classes_ : array, shape = (n_classes,)
+        Class labels.
 
     alpha_ : float
         Estimated regularization parameter

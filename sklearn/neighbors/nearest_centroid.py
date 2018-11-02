@@ -48,6 +48,9 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
     centroids_ : array-like, shape = [n_classes, n_features]
         Centroid of each class
 
+    classes_ : array, shape = (n_classes,)
+        Class labels.
+
     Examples
     --------
     >>> from sklearn.neighbors.nearest_centroid import NearestCentroid

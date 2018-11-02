@@ -111,6 +111,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    classes_ : array, shape = (n_classes,)
+        Class labels.
+
     Examples
     --------
     >>> from sklearn.svm import LinearSVC
@@ -556,6 +559,9 @@ class SVC(BaseSVC):
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
 
+    classes_ : array, shape = (n_classes,)
+        Class labels.
+
     probA_ : array, shape = [n_class * (n_class-1) / 2]
     probB_ : array, shape = [n_class * (n_class-1) / 2]
         If probability=True, the parameters learned in Platt scaling to
@@ -736,6 +742,9 @@ class NuSVC(BaseSVC):
 
     intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
+
+    classes_ : array, shape = (n_classes,)
+        Class labels.
 
     Examples
     --------
