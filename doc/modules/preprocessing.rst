@@ -413,14 +413,15 @@ norms::
          [ 1.  ...,  0.  ...,  0.  ...],
          [ 0.  ...,  0.70..., -0.70...]])
 
-Note: l2 Normalization is also called 'Spatial Sign'.
+Note: l2 Normalizer implements 'Spatial Sign'.
+
 The ``preprocessing`` module further provides a utility class
 :class:`Normalizer` that implements the same operation using the
 ``Transformer`` API (even though the ``fit`` method is useless in this case:
 the class is stateless as this operation treats samples independently).
 
 This class is hence suitable for use in the early steps of a
-:class:`sklearn.pipeline.Pipeline`::.
+:class:`sklearn.pipeline.Pipeline`::
 
   >>> normalizer = preprocessing.Normalizer().fit(X)  # fit does nothing
   >>> normalizer
