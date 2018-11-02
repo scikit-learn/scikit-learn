@@ -1218,7 +1218,7 @@ the correct interface more easily.
     and optionally the mixin classes in ``sklearn.base``.
     For example, below is a custom classifier, with more examples included
     in the scikit-learn-contrib
-    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`__.
+    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/_template.py>`__.
 
       >>> import numpy as np
       >>> from sklearn.base import BaseEstimator, ClassifierMixin
