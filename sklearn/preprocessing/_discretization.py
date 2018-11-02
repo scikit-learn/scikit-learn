@@ -136,7 +136,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         self.random_state = random_state
         self.subsample = subsample
         
-    def fit(self, X, y=None, random_state=random_state):
+    def fit(self, X, y=None):
         """Fits the estimator.
 
         Parameters
@@ -162,7 +162,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         else:
             
             if n_samples > self.subsample and self.subsample != None:
-                subsample_idx = random_state.choice(n_samples,
+                subsample_idx = self.random_state.choice(n_samples,
                                                        size=self.subsample,
                                                        replace=False)
                 X = X.take(subsample_idx, mode='clip')
