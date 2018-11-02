@@ -129,14 +129,14 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_bins=5, encode='onehot',
-                 strategy='quantile', subsample='warn', random_state=None):
+                 strategy='quantile', subsample='warn'):
         self.n_bins = n_bins
         self.encode = encode
         self.strategy = strategy
         self.random_state = random_state
         self.subsample = subsample
         
-    def fit(self, X, y=None, random_state=self.random_state):
+    def fit(self, X, y=None, random_state=random_state):
         """Fits the estimator.
 
         Parameters
