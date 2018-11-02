@@ -88,7 +88,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     ...      [-1, 2, -3, -0.5],
     ...      [ 0, 3, -2,  0.5],
     ...      [ 1, 4, -1,    2]]
-    >>> est = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='uniform', subsample=None)
+    >>> est = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='uniform',
+                                subsample=None)
     >>> est.fit(X)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     KBinsDiscretizer(...)
     >>> Xt = est.transform(X)
@@ -135,7 +136,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         self.strategy = strategy
         self.random_state = random_state
         self.subsample = subsample
-        
+
     def fit(self, X, y=None):
         """Fits the estimator.
 
@@ -152,21 +153,20 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         """
         X = check_array(X, dtype='numeric')
         n_samples, n_features = X.shape
-        
+
         if self.subsample == 'warn':
             warnings.warn("In the future (v0.22) onwards subsample = 1e5"
                           "will be used by default. Pass subsample=None to"
-                          "silence this warning for now.",
-                    FutureWarning)
-        
+                          "silence this warning for now.", FutureWarning)
+
         else:
-            
-            if n_samples > self.subsample and self.subsample != None:
+
+            if n_samples > self.subsample and self.subsample is not None:
                 subsample_idx = self.random_state.choice(n_samples,
-                                                       size=self.subsample,
-                                                       replace=False)
+                                                         size=self.subsample,
+                                                         replace=False)
                 X = X.take(subsample_idx, mode='clip')
-           
+
             valid_encode = ('onehot', 'onehot-dense', 'ordinal')
             if self.encode not in valid_encode:
                 raise ValueError("Valid options for 'encode' are {}. "
@@ -193,20 +193,23 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                     continue
 
                 if self.strategy == 'uniform':
-                    bin_edges[jj] = np.linspace(col_min, col_max, n_bins[jj] + 1)
+                    bin_edges[jj] = np.linspace(col_min, col_max, 
+                                                n_bins[jj] + 1)
 
                 elif self.strategy == 'quantile':
                     quantiles = np.linspace(0, 100, n_bins[jj] + 1)
                     if np_version < (1, 9):
                         quantiles = list(quantiles)
-                    bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
+                    bin_edges[jj] = np.asarray(np.percentile(column, 
+                                               quantiles))
 
                 elif self.strategy == 'kmeans':
                     from ..cluster import KMeans  # fixes import loops
 
                     # Deterministic initialization with uniform spacing
                     uniform_edges = np.linspace(col_min, col_max, n_bins[jj] + 1)
-                    init = (uniform_edges[1:] + uniform_edges[:-1])[:, None] * 0.5
+                    init = (uniform_edges[1:] + uniform_edges[:-1])
+                            [:, None] * 0.5
 
                     # 1D k-means procedure
                     km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
