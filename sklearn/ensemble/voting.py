@@ -1,26 +1,38 @@
 """
-Soft Voting/Majority Rule classifier.
+Soft Voting/Majority Rule classifier and Average regressor.
 
-This module contains a Soft Voting/Majority Rule classifier for
+This module contains:
+ - A Soft Voting/Majority Rule classifier for
 classification estimators.
+ - An average regressor for
+regression estimators.
 
 """
 
 # Authors: Sebastian Raschka <se.raschka@gmail.com>,
-#          Gilles Louppe <g.louppe@gmail.com>
+#          Gilles Louppe <g.louppe@gmail.com>,
+#          Mohamed Ali Jamaoui <m.ali.jamaoui@gmail.com>
+#          Ramil Nugmanov <stsouko@live.ru>
 #
 # License: BSD 3 clause
 
 import numpy as np
+from abc import ABCMeta, abstractmethod
 
 from ..base import ClassifierMixin
+from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
+from ..externals.six import with_metaclass
 from ..preprocessing import LabelEncoder
 from ..utils import Parallel, delayed
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils.metaestimators import _BaseComposition
 from ..utils import Bunch
+
+
+__all__ = ["AverageRegressor",
+           "VotingClassifier"]
 
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
@@ -32,7 +44,71 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     return estimator
 
 
-class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
+class BaseVoting(with_metaclass(ABCMeta, _BaseComposition, TransformerMixin)):
+    """Base class for voting and averaging.
+
+    Warning: This class should not be used directly. Use derived classes
+    instead.
+    """
+
+    @property
+    def named_estimators(self):
+        return Bunch(**dict(self.estimators))
+
+    @property
+    def _weights_not_none(self):
+        """Get the weights of not `None` estimators"""
+        if self.weights is None:
+            return None
+        return [w for est, w in zip(self.estimators,
+                                    self.weights) if est[1] is not None]
+
+    def _predict(self, X):
+        """Collect results from clf.predict calls. """
+        return np.asarray([clf.predict(X) for clf in self.estimators_]).T
+
+    @abstractmethod
+    def fit(self, X, y, sample_weight=None):
+        """
+        common fit operations.
+        """
+        if self.estimators is None or len(self.estimators) == 0:
+            raise AttributeError('Invalid `estimators` attribute, `estimators`'
+                                 ' should be a list of (string, estimator)'
+                                 ' tuples')
+
+        if (self.weights is not None and
+                len(self.weights) != len(self.estimators)):
+            raise ValueError('Number of `estimators` and weights must be equal'
+                             '; got %d weights, %d estimators'
+                             % (len(self.weights), len(self.estimators)))
+
+        if sample_weight is not None:
+            for name, step in self.estimators:
+                if not has_fit_parameter(step, 'sample_weight'):
+                    raise ValueError('Underlying estimator \'%s\' does not'
+                                     ' support sample weights.' % name)
+
+        names, clfs = zip(*self.estimators)
+        self._validate_names(names)
+
+        n_isnone = np.sum([clf is None for _, clf in self.estimators])
+        if n_isnone == len(self.estimators):
+            raise ValueError('All estimators are None. At least one is '
+                             'required!')
+
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+                delayed(_parallel_fit_estimator)(clone(clf), X, y,
+                                                 sample_weight=sample_weight)
+                for clf in clfs if clf is not None)
+
+        self.named_estimators_ = Bunch()
+        for k, e in zip(self.estimators, self.estimators_):
+            self.named_estimators_[k[0]] = e
+        return self
+
+
+class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
     .. versionadded:: 0.17
@@ -130,10 +206,6 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         self.n_jobs = n_jobs
         self.flatten_transform = flatten_transform
 
-    @property
-    def named_estimators(self):
-        return Bunch(**dict(self.estimators))
-
     def fit(self, X, y, sample_weight=None):
         """ Fit the estimators.
 
@@ -163,53 +235,11 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             raise ValueError("Voting must be 'soft' or 'hard'; got (voting=%r)"
                              % self.voting)
 
-        if self.estimators is None or len(self.estimators) == 0:
-            raise AttributeError('Invalid `estimators` attribute, `estimators`'
-                                 ' should be a list of (string, estimator)'
-                                 ' tuples')
-
-        if (self.weights is not None and
-                len(self.weights) != len(self.estimators)):
-            raise ValueError('Number of classifiers and weights must be equal'
-                             '; got %d weights, %d estimators'
-                             % (len(self.weights), len(self.estimators)))
-
-        if sample_weight is not None:
-            for name, step in self.estimators:
-                if not has_fit_parameter(step, 'sample_weight'):
-                    raise ValueError('Underlying estimator \'%s\' does not'
-                                     ' support sample weights.' % name)
-        names, clfs = zip(*self.estimators)
-        self._validate_names(names)
-
-        n_isnone = np.sum([clf is None for _, clf in self.estimators])
-        if n_isnone == len(self.estimators):
-            raise ValueError('All estimators are None. At least one is '
-                             'required to be a classifier!')
-
         self.le_ = LabelEncoder().fit(y)
         self.classes_ = self.le_.classes_
-        self.estimators_ = []
-
         transformed_y = self.le_.transform(y)
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
-                                                 sample_weight=sample_weight)
-                for clf in clfs if clf is not None)
-
-        self.named_estimators_ = Bunch(**dict())
-        for k, e in zip(self.estimators, self.estimators_):
-            self.named_estimators_[k[0]] = e
-        return self
-
-    @property
-    def _weights_not_none(self):
-        """Get the weights of not `None` estimators"""
-        if self.weights is None:
-            return None
-        return [w for est, w in zip(self.estimators,
-                                    self.weights) if est[1] is not None]
+        return super(VotingClassifier, self).fit(X, transformed_y, sample_weight)
 
     def predict(self, X):
         """ Predict class labels for X.
@@ -327,8 +357,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         eclf.set_params(rf=None)
 
         """
-        super(VotingClassifier, self)._set_params('estimators', **params)
-        return self
+        return self._set_params('estimators', **params)
 
     def get_params(self, deep=True):
         """ Get the parameters of the VotingClassifier
@@ -339,9 +368,157 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             Setting it to True gets the various classifiers and the parameters
             of the classifiers as well
         """
-        return super(VotingClassifier,
-                     self)._get_params('estimators', deep=deep)
+        return self._get_params('estimators', deep=deep)
 
-    def _predict(self, X):
-        """Collect results from clf.predict calls. """
-        return np.asarray([clf.predict(X) for clf in self.estimators_]).T
+
+class AverageRegressor(BaseVoting, RegressorMixin, TransformerMixin):
+    """
+    An average regressor is an ensemble meta-estimator that fits base
+    regressors each on the whole dataset. it, then, averages the individual
+    predictions to form a final prediction.
+
+        .. versionadded:: 0.21
+
+    Read more in the :ref:`User Guide <average_regressor>`.
+
+    Parameters
+    ----------
+    estimators : list of (string, estimator) tuples
+        Invoking the ``fit`` method on the ``AverageRegressor`` will fit clones
+        of those original estimators that will be stored in the class attribute
+        ``self.estimators_``. An estimator can be set to `None` using
+        ``set_params``.
+
+    weights : array-like, shape = [n_regressors], optional (default=`None`)
+        Sequence of weights (`float` or `int`) to weight the occurrences of
+        predicted values before averaging. Uses uniform weights if `None`.
+
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to run in parallel for ``fit``.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+    Attributes
+    ----------
+    estimators_ : list of regressors
+        The collection of fitted sub-estimators as defined in ``estimators``
+        that are not `None`.
+
+    named_estimators_ : Bunch object, a dictionary with attribute access
+        Attribute to access any fitted sub-estimators by name.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.ensemble import RandomForestRegressor, AverageRegressor
+    >>> r1 = LinearRegression()
+    >>> r2 = RandomForestRegressor(n_estimators=10, random_state=1)
+    >>> X = np.array([[1, 1], [2, 4], [3, 9], [4, 16], [5, 25], [6, 36]])
+    >>> y = np.array([2, 6, 12, 20, 30, 42])
+    >>> er = AverageRegressor(estimators=[
+    ...         ('lr', r1), ('rf', r2)])
+    >>> print(er.fit(X, y).predict(X))
+    [ 3.3  5.7 11.8 19.7 28.  40.3]
+    """
+
+    def __init__(self, estimators, weights=None, n_jobs=None):
+        self.estimators = estimators
+        self.weights = weights
+        self.n_jobs = n_jobs
+
+    def fit(self, X, y, sample_weight=None):
+        """ Fit the estimators.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted.
+            Note that this is supported only if all underlying estimators
+            support sample weights.
+
+        Returns
+        -------
+        self : object
+        """
+        return super(AverageRegressor, self).fit(X, y, sample_weight)
+
+    def predict(self, X):
+        """Predict regression target for X.
+
+        The predicted regression target of an input sample is computed as the
+        mean predicted regression targets of the estimators in the ensemble.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
+            The training input samples. Sparse matrices are accepted only if
+            they are supported by the base estimator.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted values.
+        """
+        check_is_fitted(self, "estimators_")
+        return np.average(self._predict(X), axis=1,
+                          weights=self._weights_not_none)
+
+    def transform(self, X):
+        """Return predictions for X for each estimator.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        Returns
+        -------
+        predictions
+            array-like of shape (n_samples, n_classifiers), being
+            values predicted by each regressor.
+        """
+        check_is_fitted(self, 'estimators_')
+        return self._predict(X)
+
+    def set_params(self, **params):
+        """ Setting the parameters for the average regressor
+
+        Valid parameter keys can be listed with get_params().
+
+        Parameters
+        ----------
+        params : keyword arguments
+            Specific parameters using e.g. set_params(parameter_name=new_value)
+            In addition, to setting the parameters of the ``AverageRegressor``,
+            the individual regressors of the ``AverageRegressor`` can also be
+            set or replaced by setting them to None.
+
+        Examples
+        --------
+        # In this example, the RandomForestRegressor is removed
+        clf1 = LinearRegression()
+        clf2 = RandomForestRegressor()
+        eclf = AverageRegressor(estimators=[('lr', clf1), ('rf', clf2)]
+        eclf.set_params(rf=None)
+        """
+        return self._set_params('estimators', **params)
+
+    def get_params(self, deep=True):
+        """ Get the parameters of the AverageRegressor
+
+        Parameters
+        ----------
+        deep: bool
+            Setting it to True gets the various regressors and their parameters
+        """
+        return self._get_params('estimators', deep=deep)
