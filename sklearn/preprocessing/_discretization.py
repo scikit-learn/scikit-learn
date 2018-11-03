@@ -164,8 +164,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
                 if n_samples > self.subsample:
                     subsample_idx = self.random_state.choice(n_samples,
-                                                             size=self.subsample,
-                                                             replace=False)
+                                                        size=self.subsample,
+                                                        replace=False)
                     X = X.take(subsample_idx, mode='clip')
 
             valid_encode = ('onehot', 'onehot-dense', 'ordinal')
@@ -292,8 +292,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
                 if n_samples > self.subsample:
                     subsample_idx = self.random_state.choice(n_samples,
-                                                             size=self.subsample,
-                                                             replace=False)
+                                                        size=self.subsample,
+                                                        replace=False)
                     X = X.take(subsample_idx, mode='clip')
 
             check_is_fitted(self, ["bin_edges_"])
@@ -302,14 +302,16 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             n_features = self.n_bins_.shape[0]
             if Xt.shape[1] != n_features:
                 raise ValueError("Incorrect number of features. Expecting {}, "
-                                 "received {}.".format(n_features, Xt.shape[1]))
+                                 "received {}.".format(n_features, 
+                                                       Xt.shape[1]))
 
             bin_edges = self.bin_edges_
             for jj in range(Xt.shape[1]):
-                # Values which are close to a bin edge are susceptible to numeric
-                # instability. Add eps to X so these values are binned correctly
-                # with respect to their decimal truncation. See documentation of
-                # numpy.isclose for an explanation of ``rtol`` and ``atol``.
+                # Values which are close to a bin edge are susceptible
+                # to numeric instability. Add eps to X so these values
+                # are binned correctly with respect to their decimal
+                # truncation. See documentation of numpy.isclose for an
+                # explanation of ``rtol`` and ``atol``.
                 rtol = 1.e-5
                 atol = 1.e-8
                 eps = atol + rtol * np.abs(Xt[:, jj])
