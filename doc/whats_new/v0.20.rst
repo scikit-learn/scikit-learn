@@ -107,6 +107,15 @@ Changelog
   :issue:`12211` by :user:`Lisa Thomas <LisaThomas9>`,
   :user:`Mark Hannel <markhannel>` and :user:`Melissa Ferrari <mferrari3>`.
 
+:mod:`sklearn.mixture`
+........................
+
+- |Fix| Ensure that the ``fit_predict`` method of
+  :class:`mixture.GaussianMixture` and :class:`mixture.BayesianGaussianMixture`
+  always yield assignments consistent with ``fit`` followed by ``predict`` even
+  if the convergence criterion is too loose or not met. :issue:`12451`
+  by :user:`Olivier Grisel <ogrisel>`.
+
 :mod:`sklearn.neighbors`
 ........................
 

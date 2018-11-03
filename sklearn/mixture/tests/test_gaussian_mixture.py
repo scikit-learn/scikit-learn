@@ -10,6 +10,7 @@ import pytest
 import numpy as np
 
 from scipy import stats, linalg
+import pytest
 
 from sklearn.covariance import EmpiricalCovariance
 from sklearn.datasets.samples_generator import make_spd_matrix
@@ -572,8 +573,15 @@ def test_gaussian_mixture_predict_predict_proba():
         assert_greater(adjusted_rand_score(Y, Y_pred), .95)
 
 
-def test_gaussian_mixture_fit_predict():
-    rng = np.random.RandomState(0)
+@pytest.mark.filterwarnings("ignore:.*did not converge.*")
+@pytest.mark.parametrize('seed, max_iter, tol', [
+    (0, 2, 1e-7),    # strict non-convergence
+    (1, 2, 1e-1),    # loose non-convergence
+    (3, 300, 1e-7),  # strict convergence
+    (4, 300, 1e-1),  # loose convergence
+])
+def test_gaussian_mixture_fit_predict(seed, max_iter, tol):
+    rng = np.random.RandomState(seed)
     rand_data = RandomData(rng)
     for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
@@ -582,7 +590,8 @@ def test_gaussian_mixture_fit_predict():
                             random_state=rng, weights_init=rand_data.weights,
                             means_init=rand_data.means,
                             precisions_init=rand_data.precisions[covar_type],
-                            covariance_type=covar_type)
+                            covariance_type=covar_type,
+                            max_iter=max_iter, tol=tol)
 
         # check if fit_predict(X) is equivalent to fit(X).predict(X)
         f = copy.deepcopy(g)
