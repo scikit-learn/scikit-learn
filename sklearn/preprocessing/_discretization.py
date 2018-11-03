@@ -159,11 +159,13 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         X = check_array(X, dtype='numeric')
         n_samples, n_features = X.shape
 
-        if n_samples > self.subsample and self.subsample is not None:
-            subsample_idx = self.random_state.choice(n_samples,
-                                                     size=self.subsample,
-                                                     replace=False)
-            X = X.take(subsample_idx, mode='clip')
+        if self.subsample is not None:
+
+            if n_samples > self.subsample:
+                subsample_idx = self.random_state.choice(n_samples,
+                                                        size=self.subsample,
+                                                        replace=False)
+                X = X.take(subsample_idx, mode='clip')
 
         valid_encode = ('onehot', 'onehot-dense', 'ordinal')
         if self.encode not in valid_encode:
