@@ -239,7 +239,8 @@ class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
         self.classes_ = self.le_.classes_
         transformed_y = self.le_.transform(y)
 
-        return super(VotingClassifier, self).fit(X, transformed_y, sample_weight)
+        return super(VotingClassifier, self).fit(X, transformed_y,
+                                                 sample_weight)
 
     def predict(self, X):
         """ Predict class labels for X.
@@ -491,13 +492,13 @@ class AverageRegressor(BaseVoting, RegressorMixin, TransformerMixin):
         return self._predict(X)
 
     def set_params(self, **params):
-        """ Setting the parameters for the average regressor
+        """ Setting the parameters for the AverageRegressor
 
         Valid parameter keys can be listed with get_params().
 
         Parameters
         ----------
-        params : keyword arguments
+        **params : keyword arguments
             Specific parameters using e.g. set_params(parameter_name=new_value)
             In addition, to setting the parameters of the ``AverageRegressor``,
             the individual regressors of the ``AverageRegressor`` can also be
@@ -518,7 +519,7 @@ class AverageRegressor(BaseVoting, RegressorMixin, TransformerMixin):
 
         Parameters
         ----------
-        deep: bool
+        deep : bool
             Setting it to True gets the various regressors and their parameters
         """
         return self._get_params('estimators', deep=deep)

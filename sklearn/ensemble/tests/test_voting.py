@@ -100,8 +100,10 @@ def test_notfitted():
                                         ('lr2', LinearRegression())])
     msg = ("This %s instance is not fitted yet. Call \'fit\'"
            " with appropriate arguments before using this method.")
-    assert_raise_message(NotFittedError, msg % 'VotingClassifier', eclf.predict_proba, X)
-    assert_raise_message(NotFittedError, msg % 'AverageRegressor', ereg.predict, X_r)
+    assert_raise_message(NotFittedError, msg % 'VotingClassifier',
+                         eclf.predict_proba, X)
+    assert_raise_message(NotFittedError, msg % 'AverageRegressor',
+                         ereg.predict, X_r)
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
@@ -121,7 +123,9 @@ def test_majority_label_iris():
 
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_tie_situation():
-    """Check voting classifier selects smaller class label in tie situation."""
+    """
+    Check voting classifier selects smaller class label in tie situation.
+    """
     clf1 = LogisticRegression(random_state=123, multi_class='ovr',
                               solver='liblinear')
     clf2 = RandomForestClassifier(random_state=123)
@@ -278,6 +282,8 @@ def test_multilabel():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore:The default of the `iid` parameter will '
+                            'change from True to False')  # 0.22
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_gridsearch():
     """Check GridSearch support."""
@@ -349,7 +355,9 @@ def test_parallel_fit():
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_sample_weight():
-    """Tests sample_weight parameter of VotingClassifier and AverageRegressor"""
+    """
+    Tests sample_weight parameter of VotingClassifier and AverageRegressor
+    """
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
     clf3 = SVC(gamma='scale', probability=True, random_state=123)
@@ -388,13 +396,16 @@ def test_sample_weight():
     assert_array_almost_equal(p1, p2)
 
     ereg2 = AverageRegressor(estimators=[('br', reg1), ('knn', reg4)])
-    assert_raise_message(ValueError, msg, ereg2.fit, X_r, y_r, sample_weight=np.ones((len(y_r),)))
+    assert_raise_message(ValueError, msg, ereg2.fit, X_r, y_r,
+                         sample_weight=np.ones((len(y_r),)))
 
 
 def test_sample_weight_kwargs():
     """Check that VotingClassifier passes sample_weight as kwargs"""
     class MockClassifier(BaseEstimator, ClassifierMixin):
-        """Mock Classifier to check that sample_weight is received as kwargs"""
+        """
+        Mock Classifier to check that sample_weight is received as kwargs
+        """
         def fit(self, X, y, *args, **sample_weight):
             assert_true('sample_weight' in sample_weight)
 
@@ -405,7 +416,9 @@ def test_sample_weight_kwargs():
     eclf.fit(X, y, sample_weight=np.ones((len(y),)))
 
     class MockRegressor(BaseEstimator, RegressorMixin):
-        """Mock Regressor to check that sample_weight is received as kwargs"""
+        """
+        Mock Regressor to check that sample_weight is received as kwargs
+        """
         def fit(self, X, y, *args, **sample_weight):
             assert_true('sample_weight' in sample_weight)
 
