@@ -901,10 +901,8 @@ class GridSearchCV(BaseSearchCV):
 
         - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - A :term:`CV splitter <CV splitter>` object. See
-          :ref:`sphx_glr_auto_examples_svm_plot_rbf_parameters.py` for
-          an example.
-        - An iterable yielding train, test splits as arrays of indices.
+        - :term:`CV splitter <CV splitter>`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -983,34 +981,6 @@ class GridSearchCV(BaseSearchCV):
      'rank_test_score', 'split0_test_score',...
      'split2_test_score', ...
      'std_fit_time', 'std_score_time', 'std_test_score']
-
-    >>> from sklearn import svm, datasets
-    >>> from sklearn.model_selection import GridSearchCV
-    >>> import numpy as np
-    >>> iris = datasets.load_iris()
-    >>> svc = svm.SVC(gamma="scale")
-    >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> def custom_cv_2folds(X):
-    ...     n = X.shape[0]
-    ...     i = 1
-    ...     while i <= 2:
-    ...         idx = np.arange(n * (i - 1) / 2, n * i / 2, dtype=int)
-    ...         yield idx, idx
-    ...         i += 1
-    ...
-    >>> cv = custom_cv_2folds(iris.data)
-    >>> clf = GridSearchCV(svc, parameters, cv=cv)
-    >>> clf.fit(iris.data, iris.target)
-    GridSearchCV(cv=...,
-           error_score='raise-deprecating',
-           estimator=SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-      decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-      max_iter=-1, probability=False, random_state=None, shrinking=True,
-      tol=0.001, verbose=False),
-           iid='warn', n_jobs=None,
-           param_grid={'kernel': ('linear', 'rbf'), 'C': [1, 10]},
-           pre_dispatch='2*n_jobs', refit=True, return_train_score=False,
-           scoring=None, verbose=0)
 
     Attributes
     ----------
