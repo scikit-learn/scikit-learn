@@ -153,8 +153,8 @@ indices, for example::
   ...         yield idx, idx
   ...         i += 1
   ...
-  >>> cv = custom_cv_2folds(iris.data)
-  >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
+  >>> custom_cv = custom_cv_2folds(iris.data)
+  >>> cross_val_score(clf, iris.data, iris.target, cv=custom_cv)
   array([1.        , 0.973...])
 
 .. topic:: Data transformation with held out data
