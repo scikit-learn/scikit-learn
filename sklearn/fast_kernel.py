@@ -97,7 +97,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(np.square(y_train - y_pred))
     """
-    def __init__(self, bs="auto", n_epoch=1, n_components=1000,
+    def __init__(self, bs="auto", n_epoch=2, n_components=1000,
                  subsample_size="auto", mem_gb=1, kernel="gaussian",
                  bandwidth=5, gamma=None, degree=3, coef0=1,
                  kernel_params=None, random_state=None):
@@ -471,7 +471,7 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(np.square(y_train - y_pred))
     """
-    def __init__(self, bs="auto", n_epoch=1, n_components=1000,
+    def __init__(self, bs="auto", n_epoch=2, n_components=1000,
                  subsample_size="auto", mem_gb=1, kernel="gaussian",
                  bandwidth=5, gamma=None, degree=3, coef0=1,
                  kernel_params=None, random_state=None):
