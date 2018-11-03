@@ -137,10 +137,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         self.random_state = random_state
         self.subsample = subsample
 
-        if self.subsample == 'warn':
-            warnings.warn("In the future (v0.22) onwards subsample = 1e5"
-                          "will be used by default. Pass subsample=None to"
-                          "silence this warning for now.", FutureWarning)
 
     def fit(self, X, y=None):
         """Fits the estimator.
@@ -159,72 +155,77 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         X = check_array(X, dtype='numeric')
         n_samples, n_features = X.shape
 
-        if self.subsample is not None:
+        if self.subsample == 'warn':
+            warnings.warn("In the future (v0.22) onwards subsample = 1e5"
+                          "will be used by default. Pass subsample=None to"
+                          "silence this warning for now.", FutureWarning)
+        else:
+            if self.subsample is not None:
 
-            if n_samples > self.subsample:
-                subsample_idx = self.random_state.choice(n_samples,
-                                                         size=self.subsample,
-                                                         replace=False)
-                X = X.take(subsample_idx, mode='clip')
+                if n_samples > self.subsample:
+                    subsample_idx = self.random_state.choice(n_samples,
+                                                             size=self.subsample,
+                                                             replace=False)
+                    X = X.take(subsample_idx, mode='clip')
 
-        valid_encode = ('onehot', 'onehot-dense', 'ordinal')
-        if self.encode not in valid_encode:
-            raise ValueError("Valid options for 'encode' are {}. "
-                             "Got encode={!r} instead."
-                             .format(valid_encode, self.encode))
-        valid_strategy = ('uniform', 'quantile', 'kmeans')
-        if self.strategy not in valid_strategy:
-            raise ValueError("Valid options for 'strategy' are {}. "
-                             "Got strategy={!r} instead."
-                             .format(valid_strategy, self.strategy))
+            valid_encode = ('onehot', 'onehot-dense', 'ordinal')
+            if self.encode not in valid_encode:
+                raise ValueError("Valid options for 'encode' are {}. "
+                                 "Got encode={!r} instead."
+                                 .format(valid_encode, self.encode))
+            valid_strategy = ('uniform', 'quantile', 'kmeans')
+            if self.strategy not in valid_strategy:
+                raise ValueError("Valid options for 'strategy' are {}. "
+                                 "Got strategy={!r} instead."
+                                 .format(valid_strategy, self.strategy))
 
-        n_bins = self._validate_n_bins(n_features)
+            n_bins = self._validate_n_bins(n_features)
 
-        bin_edges = np.zeros(n_features, dtype=object)
-        for jj in range(n_features):
-            column = X[:, jj]
-            col_min, col_max = column.min(), column.max()
+            bin_edges = np.zeros(n_features, dtype=object)
+            for jj in range(n_features):
+                column = X[:, jj]
+                col_min, col_max = column.min(), column.max()
 
-            if col_min == col_max:
-                warnings.warn("Feature %d is constant and will be "
-                              "replaced with 0." % jj)
-                n_bins[jj] = 1
-                bin_edges[jj] = np.array([-np.inf, np.inf])
-                continue
+                if col_min == col_max:
+                    warnings.warn("Feature %d is constant and will be "
+                                  "replaced with 0." % jj)
+                    n_bins[jj] = 1
+                    bin_edges[jj] = np.array([-np.inf, np.inf])
+                    continue
 
-            if self.strategy == 'uniform':
-                bin_edges[jj] = np.linspace(col_min, col_max,
-                                            n_bins[jj] + 1)
+                if self.strategy == 'uniform':
+                    bin_edges[jj] = np.linspace(col_min, col_max,
+                                                n_bins[jj] + 1)
 
-            elif self.strategy == 'quantile':
-                quantiles = np.linspace(0, 100, n_bins[jj] + 1)
-                if np_version < (1, 9):
-                    quantiles = list(quantiles)
-                bin_edges[jj] = np.asarray(np.percentile(column,
-                                           quantiles))
+                elif self.strategy == 'quantile':
+                    quantiles = np.linspace(0, 100, n_bins[jj] + 1)
+                    if np_version < (1, 9):
+                        quantiles = list(quantiles)
+                    bin_edges[jj] = np.asarray(np.percentile(column,
+                                               quantiles))
 
-            elif self.strategy == 'kmeans':
-                from ..cluster import KMeans  # fixes import loops
+                elif self.strategy == 'kmeans':
+                    from ..cluster import KMeans  # fixes import loops
 
-                # Deterministic initialization with uniform spacing
-                uniform_edges = np.linspace(col_min, col_max,
-                                            n_bins[jj] + 1)
-                init = (uniform_edges[1:] + uniform_edges[:-1])[:,
-                                                                None] * 0.5
+                    # Deterministic initialization with uniform spacing
+                    uniform_edges = np.linspace(col_min, col_max,
+                                                n_bins[jj] + 1)
+                    init = (uniform_edges[1:] + uniform_edges[:-1])[:,
+                                                                    None] * 0.5
 
-                # 1D k-means procedure
-                km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
-                centers = km.fit(column[:, None]).cluster_centers_[:, 0]
-                bin_edges[jj] = (centers[1:] + centers[:-1]) * 0.5
-                bin_edges[jj] = np.r_[col_min, bin_edges[jj], col_max]
+                    # 1D k-means procedure
+                    km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
+                    centers = km.fit(column[:, None]).cluster_centers_[:, 0]
+                    bin_edges[jj] = (centers[1:] + centers[:-1]) * 0.5
+                    bin_edges[jj] = np.r_[col_min, bin_edges[jj], col_max]
 
-        self.bin_edges_ = bin_edges
-        self.n_bins_ = n_bins
+            self.bin_edges_ = bin_edges
+            self.n_bins_ = n_bins
 
-        if 'onehot' in self.encode:
-            self._encoder = OneHotEncoder(
-                categories=[np.arange(i) for i in self.n_bins_],
-                sparse=self.encode == 'onehot')
+            if 'onehot' in self.encode:
+                self._encoder = OneHotEncoder(
+                    categories=[np.arange(i) for i in self.n_bins_],
+                    sparse=self.encode == 'onehot')
 
         return self
 
@@ -280,36 +281,43 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         X = check_array(X, dtype='numeric')
         n_samples, n_features = X.shape
 
-        if self.subsample is not None:
+        if self.subsample == 'warn':
+            warnings.warn("In the future (v0.22) onwards subsample = 1e5"
+                          "will be used by default. Pass subsample=None to"
+                          "silence this warning for now.", FutureWarning)
 
-            if n_samples > self.subsample:
-                subsample_idx = self.random_state.choice(n_samples,
-                                                         size=self.subsample,
-                                                         replace=False)
-                X = X.take(subsample_idx, mode='clip')
+        else:
 
-        check_is_fitted(self, ["bin_edges_"])
+            if self.subsample is not None:
 
-        Xt = check_array(X, copy=True, dtype=FLOAT_DTYPES)
-        n_features = self.n_bins_.shape[0]
-        if Xt.shape[1] != n_features:
-            raise ValueError("Incorrect number of features. Expecting {}, "
-                             "received {}.".format(n_features, Xt.shape[1]))
+                if n_samples > self.subsample:
+                    subsample_idx = self.random_state.choice(n_samples,
+                                                             size=self.subsample,
+                                                             replace=False)
+                    X = X.take(subsample_idx, mode='clip')
 
-        bin_edges = self.bin_edges_
-        for jj in range(Xt.shape[1]):
-            # Values which are close to a bin edge are susceptible to numeric
-            # instability. Add eps to X so these values are binned correctly
-            # with respect to their decimal truncation. See documentation of
-            # numpy.isclose for an explanation of ``rtol`` and ``atol``.
-            rtol = 1.e-5
-            atol = 1.e-8
-            eps = atol + rtol * np.abs(Xt[:, jj])
-            Xt[:, jj] = np.digitize(Xt[:, jj] + eps, bin_edges[jj][1:])
-        np.clip(Xt, 0, self.n_bins_ - 1, out=Xt)
+            check_is_fitted(self, ["bin_edges_"])
 
-        if self.encode == 'ordinal':
-            return Xt
+            Xt = check_array(X, copy=True, dtype=FLOAT_DTYPES)
+            n_features = self.n_bins_.shape[0]
+            if Xt.shape[1] != n_features:
+                raise ValueError("Incorrect number of features. Expecting {}, "
+                                 "received {}.".format(n_features, Xt.shape[1]))
+
+            bin_edges = self.bin_edges_
+            for jj in range(Xt.shape[1]):
+                # Values which are close to a bin edge are susceptible to numeric
+                # instability. Add eps to X so these values are binned correctly
+                # with respect to their decimal truncation. See documentation of
+                # numpy.isclose for an explanation of ``rtol`` and ``atol``.
+                rtol = 1.e-5
+                atol = 1.e-8
+                eps = atol + rtol * np.abs(Xt[:, jj])
+                Xt[:, jj] = np.digitize(Xt[:, jj] + eps, bin_edges[jj][1:])
+            np.clip(Xt, 0, self.n_bins_ - 1, out=Xt)
+
+            if self.encode == 'ordinal':
+                return Xt
 
         return self._encoder.fit_transform(Xt)
 
