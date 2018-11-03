@@ -163,9 +163,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             if self.subsample is not None:
 
                 if n_samples > self.subsample:
-                    subsample_idx = self.random_state.choice(n_samples,
-                                                        size=self.subsample,
-                                                        replace=False)
+                    subsample_idx = self.random_state
+                                    .choice(n_samples, size=self.subsample,
+                                            replace=False)
                     X = X.take(subsample_idx, mode='clip')
 
             valid_encode = ('onehot', 'onehot-dense', 'ordinal')
@@ -291,9 +291,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             if self.subsample is not None:
 
                 if n_samples > self.subsample:
-                    subsample_idx = self.random_state.choice(n_samples,
-                                                        size=self.subsample,
-                                                        replace=False)
+                    subsample_idx = self.random_state
+                                    .choice(n_samples, size=self.subsample,
+                                            replace=False)
                     X = X.take(subsample_idx, mode='clip')
 
             check_is_fitted(self, ["bin_edges_"])
@@ -302,7 +302,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             n_features = self.n_bins_.shape[0]
             if Xt.shape[1] != n_features:
                 raise ValueError("Incorrect number of features. Expecting {}, "
-                                 "received {}.".format(n_features, 
+                                 "received {}.".format(n_features,
                                                        Xt.shape[1]))
 
             bin_edges = self.bin_edges_
