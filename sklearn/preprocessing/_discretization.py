@@ -163,9 +163,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             if self.subsample is not None:
 
                 if n_samples > self.subsample:
-                    subsample_idx = self.random_state
-                                    .choice(n_samples, size=self.subsample,
-                                            replace=False)
+                    subsample_idx = self.random_state.choice(
+                                    n_samples, size=self.subsample,
+                                    replace=False)
                     X = X.take(subsample_idx, mode='clip')
 
             valid_encode = ('onehot', 'onehot-dense', 'ordinal')
@@ -291,9 +291,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             if self.subsample is not None:
 
                 if n_samples > self.subsample:
-                    subsample_idx = self.random_state
-                                    .choice(n_samples, size=self.subsample,
-                                            replace=False)
+                    subsample_idx = self.random_state.choice(
+                                    n_samples, size=self.subsample,
+                                    replace=False)
                     X = X.take(subsample_idx, mode='clip')
 
             check_is_fitted(self, ["bin_edges_"])
