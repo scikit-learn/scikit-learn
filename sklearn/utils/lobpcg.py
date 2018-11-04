@@ -52,15 +52,12 @@ def _as2d(ar):
         return aux
 
 
-def _makeOperator(operatorInput, expectedShape, dtype=None):
+def _makeOperator(operatorInput, expectedShape):
     """Takes a dense numpy array or a sparse matrix or
     a function and makes an operator performing matrix * blockvector
     products."""
     if operatorInput is None:
-        def ident(x):
-            return x
-        operator = LinearOperator(expectedShape, ident, matmat=ident,
-                                  dtype=dtype)
+        return None
     else:
         operator = aslinearoperator(operatorInput)
 
@@ -90,6 +87,8 @@ def _b_orthonormalize(B, blockVectorV, blockVectorBV=None, retInvR=False):
     blockVectorV = np.dot(blockVectorV, gramVBV)
     if B is not None:
         blockVectorBV = np.dot(blockVectorBV, gramVBV)
+    else:
+        blockVectorBV = None # blockVectorV # Shared data!!!
 
     if retInvR:
         return blockVectorV, blockVectorBV, gramVBV
@@ -301,8 +300,8 @@ def lobpcg(A, X,
         print(aux)
 
     A = _makeOperator(A, (n, n))
-    B = _makeOperator(B, (n, n), dtype=A.dtype if B is None else B.dtype)
-    M = _makeOperator(M, (n, n), dtype=A.dtype if M is None else M.dtype)
+    B = _makeOperator(B, (n, n))
+    M = _makeOperator(M, (n, n))
 
     if (n - sizeY) < (5 * sizeX):
         # warn('The problem size is small compared to the block size.' \
@@ -396,7 +395,12 @@ def lobpcg(A, X,
         if verbosityLevel > 0:
             print('iteration %d' % iterationNumber)
 
-        aux = blockVectorBX * _lambda[np.newaxis, :]
+        if B is not None:
+            aux = blockVectorBX * _lambda[np.newaxis,:]
+
+        else:
+            aux = blockVectorX * _lambda[np.newaxis,:]
+
         blockVectorR = blockVectorAX - aux
 
         aux = np.sum(blockVectorR.conjugate() * blockVectorR, 0)
@@ -429,7 +433,8 @@ def lobpcg(A, X,
         if iterationNumber > 0:
             activeBlockVectorP = _as2d(blockVectorP[:, activeMask])
             activeBlockVectorAP = _as2d(blockVectorAP[:, activeMask])
-            activeBlockVectorBP = _as2d(blockVectorBP[:, activeMask])
+            if B is not None:
+                activeBlockVectorBP = _as2d(blockVectorBP[:, activeMask])
 
         if M is not None:
             # Apply preconditioner T to the active residuals.
@@ -450,38 +455,70 @@ def lobpcg(A, X,
         activeBlockVectorAR = A(activeBlockVectorR)
 
         if iterationNumber > 0:
-            aux = _b_orthonormalize(B, activeBlockVectorP,
-                                    activeBlockVectorBP, retInvR=True)
-            activeBlockVectorP, activeBlockVectorBP, invR = aux
-            activeBlockVectorAP = np.dot(activeBlockVectorAP, invR)
+            if B is not None:
+                aux = _b_orthonormalize(B, activeBlockVectorP,
+                                        activeBlockVectorBP, retInvR=True)
+                activeBlockVectorP, activeBlockVectorBP, invR = aux
+                activeBlockVectorAP = np.dot(activeBlockVectorAP, invR)
+
+            else:
+                aux = _b_orthonormalize(B, activeBlockVectorP, retInvR=True)
+                activeBlockVectorP, _, invR = aux
+                activeBlockVectorAP = np.dot(activeBlockVectorAP, invR)
 
         ##
         # Perform the Rayleigh Ritz Procedure:
         # Compute symmetric Gram matrices:
 
-        xaw = np.dot(blockVectorX.T.conj(), activeBlockVectorAR)
-        waw = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorAR)
-        xbw = np.dot(blockVectorX.T.conj(), activeBlockVectorBR)
+        if B is not None:
+            xaw = np.dot(blockVectorX.T.conj(), activeBlockVectorAR)
+            waw = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorAR)
+            xbw = np.dot(blockVectorX.T.conj(), activeBlockVectorBR)
 
-        if iterationNumber > 0:
-            xap = np.dot(blockVectorX.T.conj(), activeBlockVectorAP)
-            wap = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorAP)
-            pap = np.dot(activeBlockVectorP.T.conj(), activeBlockVectorAP)
-            xbp = np.dot(blockVectorX.T.conj(), activeBlockVectorBP)
-            wbp = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorBP)
+            if iterationNumber > 0:
+                xap = np.dot(blockVectorX.T.conj(), activeBlockVectorAP)
+                wap = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorAP)
+                pap = np.dot(activeBlockVectorP.T.conj(), activeBlockVectorAP)
+                xbp = np.dot(blockVectorX.T.conj(), activeBlockVectorBP)
+                wbp = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorBP)
 
-            gramA = np.bmat([[np.diag(_lambda), xaw, xap],
-                            [xaw.T.conj(), waw, wap],
-                            [xap.T.conj(), wap.T.conj(), pap]])
+                gramA = np.bmat([[np.diag(_lambda), xaw, xap],
+                                [xaw.T.conj(), waw, wap],
+                                [xap.T.conj(), wap.T.conj(), pap]])
 
-            gramB = np.bmat([[ident0, xbw, xbp],
-                            [xbw.T.conj(), ident, wbp],
-                            [xbp.T.conj(), wbp.T.conj(), ident]])
+                gramB = np.bmat([[ident0, xbw, xbp],
+                                [xbw.T.conj(), ident, wbp],
+                                [xbp.T.conj(), wbp.T.conj(), ident]])
+            else:
+                gramA = np.bmat([[np.diag(_lambda), xaw],
+                                [xaw.T.conj(), waw]])
+                gramB = np.bmat([[ident0, xbw],
+                                [xbw.T.conj(), ident]])
+
         else:
-            gramA = np.bmat([[np.diag(_lambda), xaw],
-                            [xaw.T.conj(), waw]])
-            gramB = np.bmat([[ident0, xbw],
-                            [xbw.T.conj(), ident]])
+            xaw = np.dot(blockVectorX.T.conj(), activeBlockVectorAR)
+            waw = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorAR)
+            xbw = np.dot(blockVectorX.T.conj(), activeBlockVectorR)
+
+            if iterationNumber > 0:
+                xap = np.dot(blockVectorX.T.conj(), activeBlockVectorAP)
+                wap = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorAP)
+                pap = np.dot(activeBlockVectorP.T.conj(), activeBlockVectorAP)
+                xbp = np.dot(blockVectorX.T.conj(), activeBlockVectorP)
+                wbp = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorP)
+
+                gramA = np.bmat([[np.diag(_lambda), xaw, xap],
+                                  [xaw.T.conj(), waw, wap],
+                                  [xap.T.conj(), wap.T.conj(), pap]])
+
+                gramB = np.bmat([[ident0, xbw, xbp],
+                                  [xbw.T.conj(), ident, wbp],
+                                  [xbp.T.conj(), wbp.T.conj(), ident]])
+            else:
+                gramA = np.bmat([[np.diag(_lambda), xaw],
+                                  [xaw.T.conj(), waw]])
+                gramB = np.bmat([[ident0, xbw],
+                                  [xbw.T.conj(), ident]])
 
         if verbosityLevel > 0:
             _report_nonhermitian(gramA, 3, -1, 'gramA')
@@ -516,39 +553,72 @@ def lobpcg(A, X,
             print(eigBlockVector)
 
         # Compute Ritz vectors.
-        if iterationNumber > 0:
-            eigBlockVectorX = eigBlockVector[:sizeX]
-            eigBlockVectorR = eigBlockVector[sizeX:sizeX+currentBlockSize]
-            eigBlockVectorP = eigBlockVector[sizeX+currentBlockSize:]
+        if B is not None:
+            if iterationNumber > 0:
+                eigBlockVectorX = eigBlockVector[:sizeX]
+                eigBlockVectorR = eigBlockVector[sizeX:sizeX+currentBlockSize]
+                eigBlockVectorP = eigBlockVector[sizeX+currentBlockSize:]
 
-            pp = np.dot(activeBlockVectorR, eigBlockVectorR)
-            pp += np.dot(activeBlockVectorP, eigBlockVectorP)
+                pp = np.dot(activeBlockVectorR, eigBlockVectorR)
+                pp += np.dot(activeBlockVectorP, eigBlockVectorP)
 
-            app = np.dot(activeBlockVectorAR, eigBlockVectorR)
-            app += np.dot(activeBlockVectorAP, eigBlockVectorP)
+                app = np.dot(activeBlockVectorAR, eigBlockVectorR)
+                app += np.dot(activeBlockVectorAP, eigBlockVectorP)
 
-            bpp = np.dot(activeBlockVectorBR, eigBlockVectorR)
-            bpp += np.dot(activeBlockVectorBP, eigBlockVectorP)
+                bpp = np.dot(activeBlockVectorBR, eigBlockVectorR)
+                bpp += np.dot(activeBlockVectorBP, eigBlockVectorP)
+            else:
+                eigBlockVectorX = eigBlockVector[:sizeX]
+                eigBlockVectorR = eigBlockVector[sizeX:]
+
+                pp = np.dot(activeBlockVectorR, eigBlockVectorR)
+                app = np.dot(activeBlockVectorAR, eigBlockVectorR)
+                bpp = np.dot(activeBlockVectorBR, eigBlockVectorR)
+
+            if verbosityLevel > 10:
+                print(pp)
+                print(app)
+                print(bpp)
+
+            blockVectorX = np.dot(blockVectorX, eigBlockVectorX) + pp
+            blockVectorAX = np.dot(blockVectorAX, eigBlockVectorX) + app
+            blockVectorBX = np.dot(blockVectorBX, eigBlockVectorX) + bpp
+
+            blockVectorP, blockVectorAP, blockVectorBP = pp, app, bpp
+
         else:
-            eigBlockVectorX = eigBlockVector[:sizeX]
-            eigBlockVectorR = eigBlockVector[sizeX:]
+            if iterationNumber > 0:
+                eigBlockVectorX = eigBlockVector[:sizeX]
+                eigBlockVectorR = eigBlockVector[sizeX:sizeX+currentBlockSize]
+                eigBlockVectorP = eigBlockVector[sizeX+currentBlockSize:]
 
-            pp = np.dot(activeBlockVectorR, eigBlockVectorR)
-            app = np.dot(activeBlockVectorAR, eigBlockVectorR)
-            bpp = np.dot(activeBlockVectorBR, eigBlockVectorR)
+                pp = np.dot(activeBlockVectorR, eigBlockVectorR)
+                pp += np.dot(activeBlockVectorP, eigBlockVectorP)
 
-        if verbosityLevel > 10:
-            print(pp)
-            print(app)
-            print(bpp)
+                app = np.dot(activeBlockVectorAR, eigBlockVectorR)
+                app += np.dot(activeBlockVectorAP, eigBlockVectorP)
+            else:
+                eigBlockVectorX = eigBlockVector[:sizeX]
+                eigBlockVectorR = eigBlockVector[sizeX:]
 
-        blockVectorX = np.dot(blockVectorX, eigBlockVectorX) + pp
-        blockVectorAX = np.dot(blockVectorAX, eigBlockVectorX) + app
-        blockVectorBX = np.dot(blockVectorBX, eigBlockVectorX) + bpp
+                pp = np.dot(activeBlockVectorR, eigBlockVectorR)
+                app = np.dot(activeBlockVectorAR, eigBlockVectorR)
 
-        blockVectorP, blockVectorAP, blockVectorBP = pp, app, bpp
+            if verbosityLevel > 10:
+                print(pp)
+                print(app)
 
-    aux = blockVectorBX * _lambda[np.newaxis, :]
+            blockVectorX = np.dot(blockVectorX, eigBlockVectorX) + pp
+            blockVectorAX = np.dot(blockVectorAX, eigBlockVectorX) + app
+
+            blockVectorP, blockVectorAP = pp, app
+
+    if B is not None:
+        aux = blockVectorBX * _lambda[np.newaxis,:]
+
+    else:
+        aux = blockVectorX * _lambda[np.newaxis,:]
+
     blockVectorR = blockVectorAX - aux
 
     aux = np.sum(blockVectorR.conjugate() * blockVectorR, 0)
