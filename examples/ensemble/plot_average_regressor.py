@@ -39,5 +39,6 @@ ereg.fit(X, y)
 
 xt = X[:20]
 yt = y[:20]
-plt.plot(yt, reg1.predict(xt), 'gd', yt, reg2.predict(xt), 'b^', yt, reg3.predict(xt), 'ys', yt, ereg.predict(xt), 'r*')
+plt.plot(yt, reg1.predict(xt), 'gd', yt, reg2.predict(xt), 'b^',
+         yt, reg3.predict(xt), 'ys', yt, ereg.predict(xt), 'r*')
 plt.show()

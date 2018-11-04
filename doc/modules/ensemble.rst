@@ -1117,10 +1117,10 @@ The following example shows how to fit the AverageRegressor::
    >>> reg2 = RandomForestRegressor(random_state=1, n_estimators=10)
    >>> reg3 = LinearRegression()
    >>> ereg = AverageRegressor(estimators=[('gb', reg1), ('rf', reg2), ('lr', reg3)])
-   >>> reg1.fit(X, y)
-   >>> reg2.fit(X, y)
-   >>> reg3.fit(X, y)
-   >>> ereg.fit(X, y)
+   >>> reg1 = reg1.fit(X, y)
+   >>> reg2 = reg2.fit(X, y)
+   >>> reg3 = reg3.fit(X, y)
+   >>> ereg = ereg.fit(X, y)
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_average_regressor_001.png
     :target: ../auto_examples/ensemble/plot_average_regressor.html
