@@ -191,7 +191,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         if 'onehot' in self.encode:
             self._encoder = OneHotEncoder(
                 categories=[np.arange(i) for i in self.n_bins_],
-                sparse=self.encode == 'onehot')
+                sparse=self.encode == 'onehot').fit(X)
 
         return self
 
@@ -267,7 +267,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         if self.encode == 'ordinal':
             return Xt
 
-        return self._encoder.fit_transform(Xt)
+        return self._encoder.transform(Xt)
 
     def inverse_transform(self, Xt):
         """Transforms discretized data back to original feature space.
