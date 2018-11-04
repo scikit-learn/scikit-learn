@@ -1084,3 +1084,45 @@ Optionally, weights can be provided for the individual classifiers::
 
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
    ...                         voting='soft', weights=[2, 5, 1])
+
+
+ .. _average_regressor:
+
+Average Regressor
+=================
+
+The idea behind the :class:`AverageRegressor` is to combine conceptually
+different machine learning regressors and return the average predicted values.
+Such a regressor can be useful for a set of equally well performing model
+in order to balance out their individual weaknesses.
+
+Usage
+.....
+
+The following example shows how to fit the AverageRegressor::
+
+   >>> from sklearn import datasets
+   >>> from sklearn.ensemble import GradientBoostingRegressor
+   >>> from sklearn.ensemble import RandomForestRegressor
+   >>> from sklearn.linear_model import LinearRegression
+   >>> from sklearn.ensemble import AverageRegressor
+
+   >>> # Loading some example data
+   >>> boston = datasets.load_boston()
+   >>> X = boston.data
+   >>> y = boston.target
+
+   >>> # Training classifiers
+   >>> reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)
+   >>> reg2 = RandomForestRegressor(random_state=1, n_estimators=10)
+   >>> reg3 = LinearRegression()
+   >>> ereg = AverageRegressor(estimators=[('gb', reg1), ('rf', reg2), ('lr', reg3)])
+   >>> reg1.fit(X, y)
+   >>> reg2.fit(X, y)
+   >>> reg3.fit(X, y)
+   >>> ereg.fit(X, y)
+
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_average_regressor_001.png
+    :target: ../auto_examples/ensemble/plot_average_regressor.html
+    :align: center
+    :scale: 75%
