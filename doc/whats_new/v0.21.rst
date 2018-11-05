@@ -40,12 +40,6 @@ Support for Python 3.4 and below has been officially dropped.
 - An entry goes here
 - An entry goes here
 
-:mod:`sklearn.linear_model`
-...........................
-- |Fix| Fixed a bug in :class:`linear_model.MultiTaskElasticNet` which was breaking
-  ``MultiTaskElasticNet`` and ``MultiTaskLasso`` when ``warm_start = True``. :issue:`12360`
-  by :user:`Aakanksha Joshi <joaak>`.
-
 :mod:`sklearn.cluster`
 ......................
 
@@ -53,12 +47,50 @@ Support for Python 3.4 and below has been officially dropped.
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>`,
   :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
-  
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Fixed a bug in :class:`linear_model.MultiTaskElasticNet` and
+  :class:`linear_model.MultiTaskLasso` which were breaking when
+  ``warm_start = True``. :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| Added the :func:`metrics.max_error` metric and a corresponding
+  ``'max_error'`` scorer for single output regression.
+  :issue:`12232` by :user:`Krishna Sangeeth <whiletruelearn>`.
+
+- |Feature| Add :func:`metrics.multilabel_confusion_matrix`, which calculates a
+  confusion matrix with true positive, false positive, false negative and true
+  negative counts for each class. This facilitates the calculation of set-wise
+  metrics such as recall, specificity, fall out and miss rate.
+  :issue:`11179` by :user:`Shangwu Yao <ShangwuYao>` and `Joel Nothman`_.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |API| Methods in :class:`neighbors.NearestNeighbors` :
+  :func:`~neighbors.NearestNeighbors.kneighbors`,
+  :func:`~neighbors.NearestNeighbors.radius_neighbors`,
+  :func:`~neighbors.NearestNeighbors.kneighbors_graph`,
+  :func:`~neighbors.NearestNeighbors.radius_neighbors_graph`
+  now raise ``NotFittedError``, rather than AttributeError,
+  when called before fit :issue:`12279` by :user:`Krishna Sangeeth
+  <whiletruelearn>`.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |API| :class:`pipeline.Pipeline` now supports using ``'passthrough'`` as a
+  transformer. :issue:`11144` by :user:`Thomas Fan <thomasjpfan>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
-- |Efficiency| Make :class:`preprocessing.MultiLabelBinarizer` to cache class mappings instead 
-  of calculating it every time on the fly.
+- |Efficiency| Make :class:`preprocessing.MultiLabelBinarizer` to cache class
+  mappings instead of calculating it every time on the fly.
   :issue:`12116` by :user:`Ekaterina Krivich <kiote>` and `Joel Nothman`_.
 
 - |Efficiency| :class:`preprocessing.PolynomialFeatures` now supports compressed
@@ -71,18 +103,11 @@ Support for Python 3.4 and below has been officially dropped.
   in the dense case. Also added a new parameter ``order`` which controls output
   order for further speed performances. :issue:`12251` by `Tom Dupre la Tour`_.
 
-:mod:`sklearn.pipeline`
-.......................
-
-- |API| :class:`pipeline.Pipeline` now supports using ``'passthrough'`` as a
-  transformer. :issue:`11144` by :user:`thomasjpfan`.
-
 :mod:`sklearn.tree`
 ...................
 - Decision Trees can now be plotted with matplotlib using
-  :func:`tree.export.plot_tree` without relying on  the ``dot`` library,
-  removing a hard-to-install dependency.
-  :issue:`8508` by `Andreas Müller`_.
+  :func:`tree.export.plot_tree` without relying on the ``dot`` library,
+  removing a hard-to-install dependency. :issue:`8508` by `Andreas Müller`_.
 
 - |Feature| ``get_n_leaves()`` and ``get_depth()`` have been added to
   :class:`tree.BaseDecisionTree` and consequently all estimators based
@@ -90,35 +115,6 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
   and :class:`tree.ExtraTreeRegressor`.
   :issue:`12300` by :user:`Adrin Jalali <adrinjalali>`.
-
-
-:mod:`sklearn.metrics`
-......................
-
-- |Feature| Added the :func:`metrics.max_error` metric and a corresponding
-  ``'max_error'`` scorer for single output regression.
-  :issue:`12232` by :user:`Krishna Sangeeth <whiletruelearn>`.
-
-:mod:`sklearn.metrics`
-......................
-
-- |Feature| Add :func:`metrics.multilabel_confusion_matrix`, which calculates a
-  confusion matrix with true positive, false positive, false negative and true
-  negative counts for each class. This facilitates the calculation of set-wise
-  metrics such as recall, specificity, fall out and miss rate.
-  :issue:`11179` by :user:`Shangwu Yao <ShangwuYao>` and `Joel Nothman`_.
-
-:mod:`sklearn.neighbors`
-......................
-
-- |API| Methods in :class:`neighbors.NearestNeighbors` :
-  :func:`~neighbors.NearestNeighbors.kneighbors`,
-  :func:`~neighbors.NearestNeighbors.radius_neighbors`,
-  :func:`~neighbors.NearestNeighbors.kneighbors_graph`,
-  :func:`~neighbors.NearestNeighbors.radius_neighbors_graph`
-  now raise ``NotFittedError``, rather than AttributeError,
-  when called before fit :issue:`12279` by :user:`Krishna Sangeeth
-  <whiletruelearn>`.
 
 Multiple modules
 ................
@@ -132,4 +128,4 @@ These changes mostly affect library developers.
   :func:`~utils.estimator_checks.check_estimator`, which checks that
   when `fit` is called twice with the same data, the ouput of
   `predit`, `predict_proba`, `transform`, and `decision_function` does not
-  change. :issue:`12328` by :user:`Nicolas Hug<NicolasHug>`
+  change. :issue:`12328` by :user:`Nicolas Hug <NicolasHug>`
