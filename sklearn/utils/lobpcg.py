@@ -13,7 +13,7 @@ import numpy as np
 
 from scipy.linalg import (inv, eigh, cho_factor, cho_solve, cholesky,
                           LinAlgError)
-from scipy.sparse.linalg import aslinearoperator, LinearOperator
+from scipy.sparse.linalg import aslinearoperator
 
 __all__ = ['lobpcg']
 
