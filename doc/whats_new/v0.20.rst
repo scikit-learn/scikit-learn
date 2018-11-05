@@ -70,7 +70,7 @@ Changelog
 
 - |Fix| Fixed a regression in :class:`decomposition.IncrementalPCA` where
   0.20.0 raised an error if the number of samples in the final batch for
-   fitting IncrementalPCA was smaller than n_components.
+  fitting IncrementalPCA was smaller than n_components.
   :issue:`12234` by :user:`Ming Li <minggli>`.
 
 :mod:`sklearn.ensemble`
@@ -88,19 +88,18 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Fix| :func:`linear_model.SGDClassifier` and variants
+- |Fix| :class:`linear_model.SGDClassifier` and variants
   with ``early_stopping=True`` would not use a consistent validation
   split in the multiclass case and this would cause a crash when using
   those estimators as part of parallel parameter search or cross-validation.
   :issue:`12122` by :user:`Olivier Grisel <ogrisel>`.
 
-- |Fix| Fixed a bug affecting :func:`SGDClassifier.fit` in the multiclass
+- |Fix| Fixed a bug affecting :class:`SGDClassifier` in the multiclass
   case. Each one-versus-all step is run in a :class:`joblib.Parallel` call and
   mutating a common parameter, causing a segmentation fault if called within a
   backend using processes and not threads. We now use ``require=sharedmem``
-  at the :class:`Parallel` instance creation.
-  :issue:`12518` by :user:`Pierre Glaser <pierreglaser>` and
-  :user:`Olivier Grisel <ogrisel>`.
+  at the :class:`joblib.Parallel` instance creation. :issue:`12518` by
+  :user:`Pierre Glaser <pierreglaser>` and :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -158,7 +157,7 @@ Miscellaneous
 - |Fix| Make sure to avoid raising ``FutureWarning`` when calling
   ``np.vstack`` with numpy 1.16 and later (use list comprehensions
   instead of generator expressions in many locations of the scikit-learn
-  code base). :issue:`12467` by :user:`Olivier Grisel`.
+  code base). :issue:`12467` by :user:`Olivier Grisel <ogrisel>`.
 
 .. _changes_0_20:
 
@@ -1032,7 +1031,7 @@ Support for Python 3.3 has been officially dropped.
   :issue:`9304` by :user:`Breno Freitas <brenolf>`.
 
 - |API| :class:`pipeline.FeatureUnion` now supports ``'drop'`` as a transformer
-  to drop features. :issue:`11144` by :user:`thomasjpfan`.
+  to drop features. :issue:`11144` by :user:`Thomas Fan <thomasjpfan>`.
 
 
 :mod:`sklearn.preprocessing`
