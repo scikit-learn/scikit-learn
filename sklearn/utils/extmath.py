@@ -461,14 +461,14 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
         Q = Q.astype(M.dtype, copy=False)
 
     # The values are chosen experimentally
-    if explicitNormalMatrix == None:
+    if explicitNormalMatrix is None:
         if sparse.issparse(M):
             explicitNormalMatrix = False
         elif min(M.shape) > 4000 or min(M.shape)/max(M.shape) > 0.5:
             explicitNormalMatrix = False
         else:
             # Rectangular and small-size data matrix M
-            explicitNormalMatrix=True
+            explicitNormalMatrix = True
 
     # Determine the normal matrix
     if explicitNormalMatrix:
