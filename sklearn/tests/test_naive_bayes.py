@@ -23,6 +23,7 @@ from sklearn.utils.testing import assert_warns
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
+from sklearn.naive_bayes import CategoricalNB
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -118,7 +119,7 @@ def test_gnb_priors():
 def test_gnb_priors_sum_isclose():
     # test whether the class prior sum is properly tested"""
     X = np.array([[-1, -1], [-2, -1], [-3, -2], [-4, -5], [-5, -4],
-                 [1, 1], [2, 1], [3, 2], [4, 4], [5, 5]])
+                  [1, 1], [2, 1], [3, 2], [4, 4], [5, 5]])
     priors = np.array([0.08, 0.14, 0.03, 0.16, 0.11, 0.16, 0.07, 0.14,
                        0.11, 0.0])
     Y = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
@@ -333,7 +334,7 @@ def test_discretenb_predict_proba():
     X_multinomial = [[0, 1], [1, 3], [4, 0]]
 
     # test binary case (1-d output)
-    y = [0, 0, 2]   # 2 is regression test for binary case, 02e673
+    y = [0, 0, 2]  # 2 is regression test for binary case, 02e673
     for cls, X in zip([BernoulliNB, MultinomialNB],
                       [X_bernoulli, X_multinomial]):
         clf = cls().fit(X, y)
@@ -541,7 +542,7 @@ def test_bnb():
 
     # Check the feature probabilities are correct
     feature_prob = np.array([[0.4, 0.8, 0.2, 0.4, 0.4, 0.2],
-                             [1/3.0, 2/3.0, 2/3.0, 1/3.0, 1/3.0, 2/3.0]])
+                             [1 / 3.0, 2 / 3.0, 2 / 3.0, 1 / 3.0, 1 / 3.0, 2 / 3.0]])
     assert_array_almost_equal(np.exp(clf.feature_log_prob_), feature_prob)
 
     # Testing data point is:
@@ -644,7 +645,7 @@ def test_alpha():
     nb = MultinomialNB(alpha=0.)
     assert_warns(UserWarning, nb.partial_fit, X, y, classes=[0, 1])
     assert_warns(UserWarning, nb.fit, X, y)
-    prob = np.array([[2./3, 1./3], [0, 1]])
+    prob = np.array([[2. / 3, 1. / 3], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
     # Test sparse X
@@ -656,7 +657,7 @@ def test_alpha():
 
     nb = MultinomialNB(alpha=0.)
     assert_warns(UserWarning, nb.fit, X, y)
-    prob = np.array([[2./3, 1./3], [0, 1]])
+    prob = np.array([[2. / 3, 1. / 3], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
     # Test for alpha < 0
@@ -717,3 +718,12 @@ def test_alpha_vector():
     expected_msg = ('alpha should be a scalar or a numpy array '
                     'with shape [n_features]')
     assert_raise_message(ValueError, expected_msg, m_nb.fit, X, y)
+
+
+def test_cnb():
+    # Check the ability to predict the learning set.
+    clf = CategoricalNB()
+    assert_raises(ValueError, clf.fit, -X, y2)
+    y_pred = clf.fit(X2, y2).predict(X2)
+
+    assert_array_equal(y_pred, y2)

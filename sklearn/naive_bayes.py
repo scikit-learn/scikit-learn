@@ -441,6 +441,7 @@ class GaussianNB(BaseNB):
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
 
+
 _ALPHA_MIN = 1e-10
 
 
@@ -951,3 +952,101 @@ class BernoulliNB(BaseDiscreteNB):
         jll += self.class_log_prior_ + neg_prob.sum(axis=1)
 
         return jll
+
+
+class CategoricalNB(BaseDiscreteNB):
+
+    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+        self.alpha = alpha
+        self.fit_prior = fit_prior
+        self.class_prior = class_prior
+
+    # is overridden because we use a different implementation for self.feature_count
+    def fit(self, X, y, sample_weight=None):
+        """Fit Naive Bayes classifier according to X, y
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        sample_weight : array-like, shape = [n_samples], (default=None)
+            Weights applied to individual samples (1. for unweighted).
+
+        Returns
+        -------
+        self : object
+        """
+        X, y = check_X_y(X, y, 'csr')
+        _, n_features = X.shape
+
+        labelbin = LabelBinarizer()
+        Y = labelbin.fit_transform(y)
+        self.classes_ = labelbin.classes_
+        if Y.shape[1] == 1:
+            Y = np.concatenate((1 - Y, Y), axis=1)
+
+        # LabelBinarizer().fit_transform() returns arrays with dtype=np.int64.
+        # We convert it to np.float64 to support sample_weight consistently;
+        # this means we also don't have to cast X to floating point
+        Y = Y.astype(np.float64)
+        if sample_weight is not None:
+            sample_weight = np.atleast_2d(sample_weight)
+            Y *= check_array(sample_weight).T
+
+        class_prior = self.class_prior
+
+        # Count raw events from data before updating the class log prior
+        # and feature log probas
+        n_effective_classes = Y.shape[1]
+        self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
+
+        self._count(X, Y)
+        alpha = self._check_alpha()
+        self._update_feature_log_prob(alpha)
+        self._update_class_log_prior(class_prior=class_prior)
+        return self
+
+    def _count(self, X, Y):
+        self.class_count_ += Y.sum(axis=0)
+        feature_count = {}
+        feature_cats = {}
+        n_features = X.shape[1]
+        for i in range(n_features):
+            X_feature = X[:, i]
+            cat_mapping, n_categories = np.unique(X_feature, return_counts=True)
+            feature_cats[i] = {int(category): index for index, category in enumerate(np.nditer(cat_mapping))}
+            feature_count[i] = np.zeros((self.class_count_.shape[0], n_categories.shape[0]))
+            for j in range(self.class_count_.shape[0]):
+                X_feature_class = X_feature[Y[:, j] == 1]
+                class_cats, n_feature_class = np.unique(X_feature_class, return_counts=True)
+                indizes = [feature_cats[i][int(category)] for category in np.nditer(class_cats)]
+                feature_count[i][j, indizes] = n_feature_class
+        self.feature_count_ = feature_count
+        self.feature_cat_mapping_ = feature_cats
+
+    def _update_feature_log_prob(self, alpha):
+        feature_log_prob = {}
+        for i in range(len(self.feature_count_)):
+            smoothed_fc = self.feature_count_[i] + alpha
+            smoothed_cc = smoothed_fc.sum(axis=1)
+            feature_log_prob[i] = (np.log(smoothed_fc) -
+                                   np.log(smoothed_cc.reshape(-1, 1)))
+        self.feature_log_prob_ = feature_log_prob
+
+    def _joint_log_likelihood(self, X):
+        check_is_fitted(self, "classes_")
+        X = check_array(X, accept_sparse='csr')
+
+        jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
+        for i in range(len(self.feature_count_)):
+            X_feature = X[:, i]
+            indizes = [self.feature_cat_mapping_[i][int(category)] for category in np.nditer(X_feature)]
+            jll += self.feature_log_prob_[i][:, indizes].T
+        return jll + self.class_log_prior_
+
+
