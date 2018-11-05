@@ -25,7 +25,7 @@ from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 from .lobpcg import lobpcg
-from scipy.sparse.linalg import LinearOperator
+from scipy.sparse.linalg import aslinearoperator, LinearOperator
 
 
 def squared_norm(x):
@@ -463,14 +463,17 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
     if explicitNormalMatrix:
         A = safe_sparse_dot(M, M.T.conj())
     else:
+        MLO = aslinearoperator(M)
         def _matvec(V):
-                return (safe_sparse_dot(M,
-                        (safe_sparse_dot(V.T.conj(), M)).T.conj()))
-                # Faster than (safe_sparse_dot(M.T.conj(), V))))
+            return MLO(MLO.H(V))
+        # MLO = aslinearoperator(M)
+        # MTLO = aslinearoperator(M.T.conj())
+        # def _matvec(V):
+        #     return MLO(MTLO(V))
 
         Ms0 = M.shape[0]
         A = LinearOperator(dtype=M.dtype, shape=(Ms0, Ms0),
-                           matvec=_matvec)
+                           matvec=_matvec, matmat=_matvec)
 
     # for lobpcg debugging, use verbosityLevel = 1
     lobpcgVerbosityLevel = 0
