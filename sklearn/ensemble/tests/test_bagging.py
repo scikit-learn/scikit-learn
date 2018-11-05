@@ -884,3 +884,16 @@ def test_bagging_classifier_with_missing_inputs():
     assert_raises(ValueError, pipeline.fit, X, y)
     bagging_classifier = BaggingClassifier(pipeline)
     assert_raises(ValueError, bagging_classifier.fit, X, y)
+
+
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+def test_bagging_small_max_features():
+    # Check that Bagging estimator can accept low fractional max_features
+
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+
+    bagging = BaggingClassifier(LogisticRegression(),
+                                max_features=0.3, random_state=1)
+    bagging.fit(X, y)

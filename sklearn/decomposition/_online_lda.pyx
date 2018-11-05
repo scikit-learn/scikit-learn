@@ -93,7 +93,7 @@ def _dirichlet_expectation_2d(np.ndarray[ndim=2, dtype=np.float64_t] arr):
 # Psi function for positive arguments. Optimized for speed, not accuracy.
 #
 # After: J. Bernardo (1976). Algorithm AS 103: Psi (Digamma) Function.
-# http://www.uv.es/~bernardo/1976AppStatist.pdf
+# https://www.uv.es/~bernardo/1976AppStatist.pdf
 @cython.cdivision(True)
 cdef double psi(double x) nogil:
     if x <= 1e-6:

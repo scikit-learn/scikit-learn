@@ -220,8 +220,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                              k in range(self.n_outputs_)], [n_samples, 1])
 
             elif self.strategy == "stratified":
-                y = np.vstack(classes_[k][proba[k].argmax(axis=1)] for
-                              k in range(self.n_outputs_)).T
+                y = np.vstack([classes_[k][proba[k].argmax(axis=1)] for
+                               k in range(self.n_outputs_)]).T
 
             elif self.strategy == "uniform":
                 ret = [classes_[k][rs.randint(n_classes_[k], size=n_samples)]
