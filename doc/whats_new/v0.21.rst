@@ -71,6 +71,11 @@ Support for Python 3.4 and below has been officially dropped.
   in the dense case. Also added a new parameter ``order`` which controls output
   order for further speed performances. :issue:`12251` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |API| :class:`pipeline.Pipeline` now supports using ``'passthrough'`` as a
+  transformer. :issue:`11144` by :user:`thomasjpfan`.
 
 :mod:`sklearn.tree`
 ...................

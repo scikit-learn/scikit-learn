@@ -107,10 +107,10 @@ This is particularly important for doing grid searches::
     >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
 
 Individual steps may also be replaced as parameters, and non-final steps may be
-ignored by setting them to ``None``::
+ignored by setting them to ``'passthrough'``::
 
     >>> from sklearn.linear_model import LogisticRegression
-    >>> param_grid = dict(reduce_dim=[None, PCA(5), PCA(10)],
+    >>> param_grid = dict(reduce_dim=['passthrough', PCA(5), PCA(10)],
     ...                   clf=[SVC(), LogisticRegression()],
     ...                   clf__C=[0.1, 10, 100])
     >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
