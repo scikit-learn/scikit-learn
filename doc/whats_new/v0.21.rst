@@ -116,6 +116,13 @@ Support for Python 3.4 and below has been officially dropped.
   and :class:`tree.ExtraTreeRegressor`.
   :issue:`12300` by :user:`Adrin Jalali <adrinjalali>`.
 
+:mod:`sklearn.utils`
+..................
+- New :func:`utils._init_arpack_v0` which goal is to be used each time eigs,
+  eigsh or svds from scipy.sparse.linalg is called. It initializes the v0
+  parameter correctly with value sampled from the uniform distribution in
+  [-1, 1] to avoid convergence issues with another initialization.
+
 Multiple modules
 ................
 
