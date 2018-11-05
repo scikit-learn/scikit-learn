@@ -94,6 +94,14 @@ Changelog
   those estimators as part of parallel parameter search or cross-validation.
   :issue:`12122` by :user:`Olivier Grisel <ogrisel>`.
 
+- |Fix| Fixed a bug affecting :func:`SGDClassifier.fit` in the multiclass
+  case. Each one-versus-all step is run in a :class:`joblib.Parallel` call and
+  mutating a common parameter, causing a segmentation fault if called within a
+  backend using processes and not threads. We now use ``require=sharedmem``
+  at the :class:`Parallel` instance creation.
+  :issue:`12518` by :user:`Pierre Glaser <pierreglaser>` and
+  :user:`Olivier Grisel <ogrisel>`.
+
 :mod:`sklearn.metrics`
 ......................
 
