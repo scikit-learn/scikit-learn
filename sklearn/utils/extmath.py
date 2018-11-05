@@ -476,8 +476,16 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
     else:
         MLO = aslinearoperator(M)
 
-        def _matvec(V):
-            return MLO(MLO.H(V))
+        if hasattr(MLO, 'H'):
+
+            def _matvec(V):
+                return MLO(MLO.H(V))
+
+        else:  # Old SciPy versions.
+            MTLO = aslinearoperator(M.T.conj())
+
+            def _matvec(V):
+                return MLO(MTLO(V))
 
         Ms0 = M.shape[0]
         A = LinearOperator(dtype=M.dtype, shape=(Ms0, Ms0),
