@@ -715,7 +715,7 @@ class PLSCanonical(_PLS):
     >>> plsca.fit(X, Y)
     ... # doctest: +NORMALIZE_WHITESPACE
     PLSCanonical(algorithm='nipals', copy=True, max_iter=500, n_components=2,
-                 scale=True, tol=1e-06)
+                 random_state=None, scale=True, tol=1e-06)
     >>> X_c, Y_c = plsca.transform(X, Y)
 
     References
@@ -768,6 +768,8 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
+
+	.. versionadded:: 0.21
 
     Attributes
     ----------
