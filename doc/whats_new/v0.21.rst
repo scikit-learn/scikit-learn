@@ -122,6 +122,7 @@ Support for Python 3.4 and below has been officially dropped.
   eigsh or svds from scipy.sparse.linalg is called. It initializes the v0
   parameter correctly with value sampled from the uniform distribution in
   [-1, 1] to avoid convergence issues with another initialization.
+  :issue:`5545` by :user:`Giorgio Patrini <giorgiop>`
 
 Multiple modules
 ................
