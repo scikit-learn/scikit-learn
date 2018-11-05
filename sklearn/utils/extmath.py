@@ -366,7 +366,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
 def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
                transpose='auto', flip_sign=True, random_state=0,
-               tol=None, explicitNormalMatrix=True):
+               tol=None, explicitNormalMatrix=None):
     """Computes a truncated SVD using LOBPCG to accelerate the randomized SVD.
     Compared to 'randomised', the 'lobpcg' option gives more accurate
     approximations, with the same n_iter, n_components, and n_oversamples,
@@ -417,11 +417,11 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
         Optional solver tolerance (stopping criterion), if large enough, may
         overwrite n_iter. If None, lobpcg sets is internally.
 
-    explicitNormalMatrix : boolean, (True by default)
+    explicitNormalMatrix : boolean, (default=None)
         Optional parameter that determines if the normal matrix used by lobpcg
         is computed explicitly or implicitly via LinearOperator performing
         multiplication of the normal matrix and a vector. The latter may be
-        faster for data matrices M of large sizes.
+        faster for data matrices M of large sizes or sparse.
 
     Notes
     -----
@@ -450,6 +450,7 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
         n_iter = 7 if n_components < .1 * min(M.shape) else 4
 
     if transpose == 'auto':
+        # Make the normal matrix A with the smallest size
         transpose = n_samples > n_features
     if transpose:
         M = M.T.conj()
@@ -459,7 +460,17 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
         # Ensure f32 is preserved as f32
         Q = Q.astype(M.dtype, copy=False)
 
-    # determine the normal matrix
+    # The values are chosen experimentally
+    if explicitNormalMatrix == None:
+        if sparse.issparse(M):
+            explicitNormalMatrix = False
+        elif min(M.shape) > 4000 or min(M.shape)/max(M.shape) > 0.5:
+            explicitNormalMatrix = False
+        else:
+            # Rectangular and small-size data matrix M
+            explicitNormalMatrix=True
+
+    # Determine the normal matrix
     if explicitNormalMatrix:
         A = safe_sparse_dot(M, M.T.conj())
     else:
@@ -467,16 +478,12 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
         def _matvec(V):
             return MLO(MLO.H(V))
-        # MLO = aslinearoperator(M)
-        # MTLO = aslinearoperator(M.T.conj())
-        # def _matvec(V):
-        #     return MLO(MTLO(V))
 
         Ms0 = M.shape[0]
         A = LinearOperator(dtype=M.dtype, shape=(Ms0, Ms0),
                            matvec=_matvec, matmat=_matvec)
 
-    # for lobpcg debugging, use verbosityLevel = 1
+    # For lobpcg debugging, use verbosityLevel = 1
     lobpcgVerbosityLevel = 0
     # lobpcg computes largest, be default, eigenvalues of the normal matrix
     # A, given implicitly via LinearOperator or explicitly as dense or sparse
@@ -484,11 +491,10 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
                   verbosityLevel=lobpcgVerbosityLevel, tol=tol)
     del A
 
-    # project M to the (k + p) dimensional space using the basis vectors
-    # project M to the (k + p) dimensional space using the basis vectors
+    # Project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T.conj(), M)
 
-    # compute the SVD on the thin matrix: (k + p) wide
+    # Compute the SVD on the thin matrix: (k + p) wide
     Uhat, s, V = linalg.svd(B, full_matrices=False)
 
     del B
@@ -503,7 +509,7 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
             U, V = svd_flip(U, V, u_based_decision=False)
 
     if transpose:
-        # transpose back the results according to the input convention
+        # Transpose back the results according to the input convention
         return (V[:n_components, :].T.conj(), s[:n_components],
                 U[:, :n_components].T.conj())
     else:
