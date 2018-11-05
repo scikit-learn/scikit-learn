@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+s# -*- coding: utf-8 -*-
 """Ordering Points To Identify the Clustering Structure (OPTICS)
 
 These routines execute the OPTICS algorithm, and implement various

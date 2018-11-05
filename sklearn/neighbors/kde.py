@@ -49,6 +49,10 @@ class KernelDensity(BaseEstimator):
         output is correct only for the Euclidean distance metric. Default
         is 'euclidean'.
 
+    p : float, optional
+        The power of the Minkowski metric to be used to calculate distance
+        between points.
+
     atol : float
         The desired absolute tolerance of the result.  A larger tolerance will
         generally lead to faster execution. Default is 0.
@@ -71,12 +75,13 @@ class KernelDensity(BaseEstimator):
         :class:`BallTree` or :class:`KDTree`.
     """
     def __init__(self, bandwidth=1.0, algorithm='auto',
-                 kernel='gaussian', metric="euclidean", atol=0, rtol=0,
+                 kernel='gaussian', metric="minkowski", p=2, atol=0, rtol=0,
                  breadth_first=True, leaf_size=40, metric_params=None):
         self.algorithm = algorithm
         self.bandwidth = bandwidth
         self.kernel = kernel
         self.metric = metric
+        self.p = p
         self.atol = atol
         self.rtol = rtol
         self.breadth_first = breadth_first
