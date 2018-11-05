@@ -88,7 +88,7 @@ def _b_orthonormalize(B, blockVectorV, blockVectorBV=None, retInvR=False):
     if B is not None:
         blockVectorBV = np.dot(blockVectorBV, gramVBV)
     else:
-        blockVectorBV = None # blockVectorV # Shared data!!!
+        blockVectorBV = None
 
     if retInvR:
         return blockVectorV, blockVectorBV, gramVBV
@@ -396,10 +396,10 @@ def lobpcg(A, X,
             print('iteration %d' % iterationNumber)
 
         if B is not None:
-            aux = blockVectorBX * _lambda[np.newaxis,:]
+            aux = blockVectorBX * _lambda[np.newaxis, :]
 
         else:
-            aux = blockVectorX * _lambda[np.newaxis,:]
+            aux = blockVectorX * _lambda[np.newaxis, :]
 
         blockVectorR = blockVectorAX - aux
 
@@ -508,17 +508,17 @@ def lobpcg(A, X,
                 wbp = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorP)
 
                 gramA = np.bmat([[np.diag(_lambda), xaw, xap],
-                                  [xaw.T.conj(), waw, wap],
-                                  [xap.T.conj(), wap.T.conj(), pap]])
+                                 [xaw.T.conj(), waw, wap],
+                                 [xap.T.conj(), wap.T.conj(), pap]])
 
                 gramB = np.bmat([[ident0, xbw, xbp],
-                                  [xbw.T.conj(), ident, wbp],
-                                  [xbp.T.conj(), wbp.T.conj(), ident]])
+                                 [xbw.T.conj(), ident, wbp],
+                                 [xbp.T.conj(), wbp.T.conj(), ident]])
             else:
                 gramA = np.bmat([[np.diag(_lambda), xaw],
-                                  [xaw.T.conj(), waw]])
+                                 [xaw.T.conj(), waw]])
                 gramB = np.bmat([[ident0, xbw],
-                                  [xbw.T.conj(), ident]])
+                                 [xbw.T.conj(), ident]])
 
         if verbosityLevel > 0:
             _report_nonhermitian(gramA, 3, -1, 'gramA')
@@ -614,10 +614,10 @@ def lobpcg(A, X,
             blockVectorP, blockVectorAP = pp, app
 
     if B is not None:
-        aux = blockVectorBX * _lambda[np.newaxis,:]
+        aux = blockVectorBX * _lambda[np.newaxis, :]
 
     else:
-        aux = blockVectorX * _lambda[np.newaxis,:]
+        aux = blockVectorX * _lambda[np.newaxis, :]
 
     blockVectorR = blockVectorAX - aux
 

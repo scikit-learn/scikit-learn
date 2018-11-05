@@ -464,6 +464,7 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
         A = safe_sparse_dot(M, M.T.conj())
     else:
         MLO = aslinearoperator(M)
+
         def _matvec(V):
             return MLO(MLO.H(V))
         # MLO = aslinearoperator(M)
