@@ -158,7 +158,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     Parameters
     ----------
-    adjacency : array-like or sparse matrix, shape: (n_samples, n_samples)
+    adjacency : array-like or sparse graph, shape: (n_samples, n_samples)
         The adjacency matrix of the graph to embed.
 
     n_components : integer, optional, default 8

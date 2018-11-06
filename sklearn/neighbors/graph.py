@@ -84,7 +84,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
 
     Returns
     -------
-    A : sparse matrix in CSR format, shape = [n_samples, n_samples]
+    A : sparse graph in CSR format, shape = [n_samples, n_samples]
         A[i, j] is assigned the weight of edge that connects i to j.
 
     Examples
@@ -162,7 +162,7 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
 
     Returns
     -------
-    A : sparse matrix in CSR format, shape = [n_samples, n_samples]
+    A : sparse graph in CSR format, shape = [n_samples, n_samples]
         A[i, j] is assigned the weight of edge that connects i to j.
 
     Examples
@@ -293,9 +293,10 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
 
         Returns
         -------
-        Xt : CSR sparse matrix, shape (n_samples_fit, n_samples_transform)
+        Xt : CSR sparse graph, shape (n_samples_fit, n_samples_transform)
             Xt[i, j] is assigned the weight of edge that connects i to j.
             Only the neighbors have an explicit value.
+            The diagonal is always explicit.
         """
         check_is_fitted(self, '_fit_X')
         return self.kneighbors_graph(X, mode=self.mode)
@@ -315,7 +316,7 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
 
         Returns
         -------
-        Xt : CSR sparse matrix, shape (n_samples, n_samples)
+        Xt : CSR sparse graph, shape (n_samples, n_samples)
             Xt[i, j] is assigned the weight of edge that connects i to j.
             Only the neighbors have an explicit value.
             The diagonal is always explicit.
@@ -427,9 +428,10 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
 
         Returns
         -------
-        Xt : CSR sparse matrix, shape (n_samples_fit, n_samples_transform)
+        Xt : CSR sparse graph, shape (n_samples_fit, n_samples_transform)
             Xt[i, j] is assigned the weight of edge that connects i to j.
             Only the neighbors have an explicit value.
+            The diagonal is always explicit.
         """
         check_is_fitted(self, '_fit_X')
         return self.radius_neighbors_graph(X, mode=self.mode,
@@ -450,7 +452,7 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
 
         Returns
         -------
-        Xt : CSR sparse matrix, shape (n_samples, n_samples)
+        Xt : CSR sparse graph, shape (n_samples, n_samples)
             Xt[i, j] is assigned the weight of edge that connects i to j.
             Only the neighbors have an explicit value.
             The diagonal is always explicit.

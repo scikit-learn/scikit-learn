@@ -174,7 +174,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
 
     Parameters
     -----------
-    affinity : array-like or sparse matrix, shape: (n_samples, n_samples)
+    affinity : array-like or sparse graph, shape: (n_samples, n_samples)
         The affinity matrix describing the relationship of the samples to
         embed. **Must be symmetric**.
 
@@ -449,9 +449,9 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse graph, shape (n_samples, n_features)
             OR, if affinity==`precomputed`, a precomputed affinity
-            matrix of shape (n_samples, n_samples)
+            sparse graph of shape (n_samples, n_samples).
 
         y : Ignored
 

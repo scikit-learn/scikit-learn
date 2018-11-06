@@ -522,13 +522,14 @@ regressors such as :class:`KNeighborsClassifier` and
 manifold embeddings such as :class:`manifold.TSNE` and :class:`manifold.Isomap`.
 
 All these estimators can compute internally the nearest neighbors, but most of
-them also accept precomputed nearest neighbors graph, as given by
-:func:`neighbors.kneighbors_graph` and :func:`neighbors.radius_neighbors_graph`.
-With mode `mode='connectivity'`, these functions return an affinity graph
-(larger values mean closer points) as required for instance in
-:class:`cluster.SpectralClustering`, whereas with `mode='distance'`, they return
-a distance graph (smaller values mean closer points) as required for instance in
-:class:`cluster.DBSCAN`. The benefits of precomputation are multiple.
+them also accept precomputed nearest neighbors :term:`Glossary <sparse graph>`.,
+as given by :func:`neighbors.kneighbors_graph` and
+:func:`neighbors.radius_neighbors_graph`. With mode `mode='connectivity'`, these
+functions return an affinity graph (larger values mean closer points) as
+required for instance in :class:`cluster.SpectralClustering`, whereas with
+`mode='distance'`, they return a distance graph (smaller values mean closer
+points) as required for instance in :class:`cluster.DBSCAN`. The benefits of
+precomputation are multiple.
 
 First, the precomputed graph can be re-used multiple times, for instance while
 varying a parameter of the estimator. This can be done manually, or using the
@@ -549,15 +550,16 @@ estimation, for instance enabling multiprocessing though the parameter `n_jobs`.
 
 Finally, the precomputation can be performed by custom estimators to use
 different implementations, such as approximate nearest neighbors methods, or
-implementation with special data types. The precomputed neighbors need to be
-formatted as in :func:`neighbors.radius_neighbors_graph` output:
+implementation with special data types. The precomputed neighbors
+:term:`Glossary <sparse graph>`.need to be formatted as in
+:func:`neighbors.radius_neighbors_graph` output:
 
 * a CSR matrix (although COO, CSC or LIL will be accepted).
 * only explicitly store nearest neighborhoods of each sample with respect to the
-  training data. This should include those at 0 distance from a query point, but
-  may exclude the matrix diagonal in the training data.
-* each row's `data` should store the distance in increasing order (although
-  unsorted data will be stable-sorted).
+  training data. This should include those at 0 distance from a query point,
+  including the matrix diagonal in the training data.
+* each row's `data` should store the distance in increasing order (optional.
+  Unsorted data will be stable-sorted, adding a computational overhead).
 * all values in data should be non-negative.
 * (there should be no duplicate `indices` in any row; but if you don't get what
   this means, you're probably fine).

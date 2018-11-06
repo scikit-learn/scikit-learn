@@ -60,8 +60,7 @@ class Isomap(BaseEstimator, TransformerMixin):
         Algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance.
         If "precomputed", X is assumed to be a distance matrix and
-        must be square. X may be a sparse matrix, in which case only "nonzero"
-        elements may be considered neighbors.
+        must be square. X may be a :term:`Glossary <sparse graph>`.
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
@@ -182,9 +181,9 @@ class Isomap(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
+        X : {array-like, sparse graph, BallTree, KDTree, NearestNeighbors}
             Sample data, shape = (n_samples, n_features), in the form of a
-            numpy array, precomputed tree, or NearestNeighbors
+            numpy array, sparse graph, precomputed tree, or NearestNeighbors
             object.
 
         y : Ignored
@@ -201,7 +200,7 @@ class Isomap(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, KDTree}
+        X : {array-like, sparse graph, BallTree, KDTree}
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -229,7 +228,8 @@ class Isomap(BaseEstimator, TransformerMixin):
         ----------
         X : array-like, shape (n_samples_transform, n_features)
             If neighbors_algorithm='precomputed', X is assumed to be a
-            distance matrix of shape (n_samples_transform, n_samples_fit).
+            distance matrix or a sparse graph of shape
+            (n_samples_transform, n_samples_fit).
 
         Returns
         -------

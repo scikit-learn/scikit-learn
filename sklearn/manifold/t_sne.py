@@ -656,10 +656,11 @@ class TSNE(BaseEstimator):
         ----------
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
-            matrix. Otherwise it contains a sample per row. Note that this
-            when method='barnes_hut', X can be a sparse array and if need be
-            will be converted to a 32 bit float array. Method='exact' allows
-            sparse arrays and 64bit floating point inputs.
+            matrix. Otherwise it contains a sample per row. Note that
+            when the method is 'barnes_hut', X can be either a sparse graph or
+            a dense feature array. In the latter case, X will be converted to
+            a 32 bit float array if needed. Method='exact' allows sparse arrays
+            and 64bit floating point inputs.
 
         skip_num_points : int (optional, default:0)
             This does not compute the gradient for points with indices below
@@ -897,7 +898,8 @@ class TSNE(BaseEstimator):
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row. If the method
             is 'exact', X may be a sparse matrix of type 'csr', 'csc'
-            or 'coo'.
+            or 'coo'. If the method is 'barnes_hut' and the metric is
+            'precomputed', X may be a precomputed sparse graph.
 
         y : Ignored
         """

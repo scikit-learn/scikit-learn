@@ -48,8 +48,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
         its metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square. X may be a sparse matrix, in which case only "nonzero"
-        elements may be considered neighbors for DBSCAN.
+        must be square during fit. X may be a :term:`Glossary <sparse graph>`,
+        in which case only "nonzero" elements may be considered neighbors.
 
     metric_params : dict, optional
         Additional keyword arguments for the metric function.
@@ -207,8 +207,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
         its metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square. X may be a sparse matrix, in which case only "nonzero"
-        elements may be considered neighbors for DBSCAN.
+        must be square. X may be a :term:`Glossary <sparse graph>`, in which
+        case only "nonzero" elements may be considered neighbors for DBSCAN.
 
         .. versionadded:: 0.17
            metric *precomputed* to accept precomputed sparse matrix.
