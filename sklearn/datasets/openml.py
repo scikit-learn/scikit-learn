@@ -4,6 +4,7 @@ import os
 import shutil
 from os.path import join
 from warnings import warn
+from contextlib import closing
 
 try:
     # Python 3+
@@ -70,7 +71,6 @@ def _open_openml_url(openml_path, data_home):
 
     local_path = _get_local_path(openml_path, data_home)
     if not os.path.exists(local_path):
-        fsrc = urlopen(req)
         try:
             os.makedirs(os.path.dirname(local_path))
         except OSError:
@@ -78,14 +78,13 @@ def _open_openml_url(openml_path, data_home):
             pass
 
         try:
-            if is_gzip(fsrc):
-                with open(local_path, 'wb') as fdst:
-                    shutil.copyfileobj(fsrc, fdst)
-                    fsrc.close()
-            else:
-                with gzip.GzipFile(local_path, 'wb') as fdst:
-                    shutil.copyfileobj(fsrc, fdst)
-                    fsrc.close()
+            with closing(urlopen(req)) as fsrc:
+                if is_gzip(fsrc):
+                    with open(local_path, 'wb') as fdst:
+                        shutil.copyfileobj(fsrc, fdst)
+                else:
+                    with gzip.GzipFile(local_path, 'wb') as fdst:
+                        shutil.copyfileobj(fsrc, fdst)
         except Exception:
             os.unlink(local_path)
             raise
@@ -126,25 +125,20 @@ def _get_json_content_from_openml_api(url, error_message, raise_if_error,
         None otherwise iff raise_if_error was set to False and the error was
         ``acceptable``
     """
-    data_found = True
     try:
-        response = _open_openml_url(url, data_home)
+        with closing(_open_openml_url(url, data_home)) as response:
+            return json.loads(response.read().decode("utf-8"))
     except HTTPError as error:
         # 412 is an OpenML specific error code, indicating a generic error
         # (e.g., data not found)
-        if error.code == 412:
-            data_found = False
-        else:
+        if error.code != 412:
             raise error
-    if not data_found:
-        # not in except for nicer traceback
-        if raise_if_error:
-            raise ValueError(error_message)
-        else:
-            return None
-    json_data = json.loads(response.read().decode("utf-8"))
-    response.close()
-    return json_data
+
+    # 412 error
+    # not in except for nicer traceback
+    if raise_if_error:
+        raise ValueError(error_message)
+    return None
 
 
 def _split_sparse_columns(arff_data, include_columns):
@@ -324,20 +318,22 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
     # encode_nominal argument is to ensure unit testing, do not alter in
     # production!
     url = _DATA_FILE.format(file_id)
-    response = _open_openml_url(url, data_home)
-    if sparse is True:
-        return_type = _arff.COO
-    else:
-        return_type = _arff.DENSE
+    with closing(_open_openml_url(url, data_home)) as response:
+        if sparse is True:
+            return_type = _arff.COO
+        else:
+            return_type = _arff.DENSE
 
-    if PY2:
-        arff_file = _arff.load(response.read(), encode_nominal=encode_nominal,
-                               return_type=return_type, )
-    else:
-        arff_file = _arff.loads(response.read().decode('utf-8'),
-                                encode_nominal=encode_nominal,
-                                return_type=return_type)
-    response.close()
+        if PY2:
+            arff_file = _arff.load(
+                response.read(),
+                encode_nominal=encode_nominal,
+                return_type=return_type,
+            )
+        else:
+            arff_file = _arff.loads(response.read().decode('utf-8'),
+                                    encode_nominal=encode_nominal,
+                                    return_type=return_type)
     return arff_file
 
 
