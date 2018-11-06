@@ -39,6 +39,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import skip_if_no_parallel
 
 from sklearn import datasets
 from sklearn.decomposition import TruncatedSVD
@@ -1284,12 +1285,14 @@ class MyBackend(LokyBackend):
 register_parallel_backend('testing', MyBackend)
 
 
+
 @pytest.mark.skipif(_joblib.__version__ < LooseVersion('0.12.0'),
                     reason='tests not yet supported in joblib <0.12')
+@skip_if_no_parallel
 def test_backend_respected():
     clf = RandomForestClassifier(n_estimators=10, n_jobs=2)
 
-    with parallel_backend("testing") as (ba, _):
+    with parallel_backend("testing") as (ba, n_jobs):
         clf.fit(X, y)
 
     assert ba.count > 0

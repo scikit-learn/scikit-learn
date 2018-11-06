@@ -358,8 +358,6 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     indices = np.concatenate(indices)
     values = np.concatenate(values)
 
-    if metric == "euclidean" and not metric_kwargs.get("squared", False):
-        np.sqrt(values, values)
     return indices, values
 
 
