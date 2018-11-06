@@ -227,7 +227,6 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- :class:`cluster.DBSCAN` (bug fix)
 - :class:`cluster.MeanShift` (bug fix)
 - :class:`decomposition.IncrementalPCA` in Python 2 (bug fix)
 - :class:`decomposition.SparsePCA` (bug fix)
