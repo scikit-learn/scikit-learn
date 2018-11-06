@@ -840,19 +840,16 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
     ...                  class_names=iris['target_names'], show_class=True)
     >>> print(r)
     |---petal width (cm) <= 0.80
-    |   | (class: setosa)
+    |   (class: setosa)
     |   |---* (value: [50.0, 0.0, 0.0])
-    |   |   | (class: setosa)
     |---petal width (cm) >  0.80
-    |   | (class: setosa)
+    |   (class: versicolor)
     |   |---petal width (cm) <= 1.75
-    |   |   | (class: versicolor)
+    |   |   (class: versicolor)
     |   |   |---* (value: [0.0, 49.0, 5.0])
-    |   |   |   | (class: versicolor)
     |   |---petal width (cm) >  1.75
-    |   |   | (class: versicolor)
+    |   |   (class: virginica)
     |   |   |---* (value: [0.0, 1.0, 45.0])
-    |   |   |   | (class: virginica)
     ...
     """
     check_is_fitted(decision_tree, 'tree_')
@@ -950,9 +947,6 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
                     val = str(value.tolist())
                     export_ascii.report += value_string.format(indent, '*',
                                                                val)
-                #if show_class:
-                #    export_ascii.report += class_string.format(info_indent,
-                #                                               class_name).replace('\n', '!\n')
 
     print_tree_recurse(0, 1)
 
