@@ -1314,6 +1314,9 @@ Miscellaneous
   happens immediately (i.e., without a deprecation cycle).
   :issue:`11741` by `Olivier Grisel`_.
 
+- |Fix| Fixed a bug in validation helpers where passing a Dask DataFrame results
+  in an error. :issue:`12462` by :user:`Zachariah Miller <zwmiller>`
+
 Changes to estimator checks
 ---------------------------
 
