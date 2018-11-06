@@ -5,6 +5,8 @@ import shutil
 from os.path import join
 from warnings import warn
 from contextlib import closing
+from functools import wraps
+import warnings
 
 try:
     # Python 3+
@@ -34,6 +36,29 @@ _DATA_FILE = "data/v1/download/{}"
 
 def _get_local_path(openml_path, data_home):
     return os.path.join(data_home, 'openml.org', openml_path + ".gz")
+
+
+def _retry_if_error_with_cache_removed(openml_path, data_home):
+    """If the first call to the decorated function fails, the local cached
+    file is removed, and the function is called again. If ``data_home`` is
+    ``None``, then the function is called once.
+    """
+    def decorator(f):
+        @wraps(f)
+        def wrapper():
+            if data_home is None:
+                return f()
+            try:
+                return f()
+            except Exception:
+                warnings.warn(
+                    "Unable to successfully read from cache, "
+                    "redownloading file",
+                    RuntimeWarning)
+                os.unlink(_get_local_path(openml_path, data_home))
+                return f()
+        return wrapper
+    return decorator
 
 
 def _open_openml_url(openml_path, data_home):
@@ -125,9 +150,14 @@ def _get_json_content_from_openml_api(url, error_message, raise_if_error,
         None otherwise iff raise_if_error was set to False and the error was
         ``acceptable``
     """
-    try:
+
+    @_retry_if_error_with_cache_removed(url, data_home)
+    def _load_json():
         with closing(_open_openml_url(url, data_home)) as response:
             return json.loads(response.read().decode("utf-8"))
+
+    try:
+        return _load_json()
     except HTTPError as error:
         # 412 is an OpenML specific error code, indicating a generic error
         # (e.g., data not found)
@@ -318,23 +348,28 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
     # encode_nominal argument is to ensure unit testing, do not alter in
     # production!
     url = _DATA_FILE.format(file_id)
-    with closing(_open_openml_url(url, data_home)) as response:
-        if sparse is True:
-            return_type = _arff.COO
-        else:
-            return_type = _arff.DENSE
 
-        if PY2:
-            arff_file = _arff.load(
-                response.read(),
-                encode_nominal=encode_nominal,
-                return_type=return_type,
-            )
-        else:
-            arff_file = _arff.loads(response.read().decode('utf-8'),
-                                    encode_nominal=encode_nominal,
-                                    return_type=return_type)
-    return arff_file
+    @_retry_if_error_with_cache_removed(url, data_home)
+    def _arff_load():
+        with closing(_open_openml_url(url, data_home)) as response:
+            if sparse is True:
+                return_type = _arff.COO
+            else:
+                return_type = _arff.DENSE
+
+            if PY2:
+                arff_file = _arff.load(
+                    response.read(),
+                    encode_nominal=encode_nominal,
+                    return_type=return_type,
+                )
+            else:
+                arff_file = _arff.loads(response.read().decode('utf-8'),
+                                        encode_nominal=encode_nominal,
+                                        return_type=return_type)
+        return arff_file
+
+    return _arff_load()
 
 
 def _verify_target_data_type(features_dict, target_columns):

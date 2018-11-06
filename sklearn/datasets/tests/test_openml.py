@@ -13,7 +13,8 @@ from sklearn.datasets import fetch_openml
 from sklearn.datasets.openml import (_open_openml_url,
                                      _get_data_description_by_id,
                                      _download_data_arff,
-                                     _get_local_path)
+                                     _get_local_path,
+                                     _retry_if_error_with_cache_removed)
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 from sklearn.externals.six import string_types
@@ -493,6 +494,29 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
     # redownload, to utilize cache
     response2 = _open_openml_url(openml_path, cache_directory)
     assert response1.read() == response2.read()
+
+
+def test_retry_if_error_with_cache_removed(tmpdir):
+    data_id = 61
+    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
+    location = _get_local_path(openml_path, cache_directory)
+    os.makedirs(os.path.dirname(location))
+
+    with open(location, 'w') as f:
+        f.write("")
+
+    @_retry_if_error_with_cache_removed(openml_path, cache_directory)
+    def _load_data():
+        # The first call will raise an error since location exists
+        if os.path.exists(location):
+            raise Exception("File exist!")
+        return 1
+
+    warn_msg = "Unable to successfully read from cache, redownloading file"
+    with pytest.warns(RuntimeWarning, match=warn_msg):
+        result = _load_data()
+    assert result == 1
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
