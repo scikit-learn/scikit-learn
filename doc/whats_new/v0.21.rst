@@ -127,5 +127,5 @@ These changes mostly affect library developers.
 - Add ``check_fit_idempotent`` to
   :func:`~utils.estimator_checks.check_estimator`, which checks that
   when `fit` is called twice with the same data, the ouput of
-  `predit`, `predict_proba`, `transform`, and `decision_function` does not
+  `predict`, `predict_proba`, `transform`, and `decision_function` does not
   change. :issue:`12328` by :user:`Nicolas Hug <NicolasHug>`
