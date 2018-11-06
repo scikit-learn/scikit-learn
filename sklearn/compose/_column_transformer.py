@@ -259,11 +259,11 @@ boolean mask array or callable
                         '(name, transformer, column) was passed; '
                         'Assuming the deprecated (name, transformer, column) '
                         'order for all given tuples. '
-                        'The support for the old order is deprecated in 0.20.1 '
-                        'and will be removed in version 0.22.')
+                        'The support for the old order is deprecated in 0.20.1'
+                        ' and will be removed in version 0.22.')
         try:
             self._validate_transformers()
-        except TypeError as e:
+        except TypeError:
             try:
                 self.transformers = [(x, z, y)
                                      for (x, y, z) in self.transformers]
