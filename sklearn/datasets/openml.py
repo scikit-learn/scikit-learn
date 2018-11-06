@@ -36,7 +36,7 @@ def _get_local_path(openml_path, data_home):
     return os.path.join(data_home, 'openml.org', openml_path + ".gz")
 
 
-def _open_openml_url(openml_path, data_home, invalidate_cache=False):
+def _open_openml_url(openml_path, data_home):
     """
     Returns a resource from OpenML.org. Caches it to data_home if required.
 
@@ -49,9 +49,6 @@ def _open_openml_url(openml_path, data_home, invalidate_cache=False):
     data_home : str
         Directory to which the files will be cached. If None, no caching will
         be applied.
-
-    invalidate_cache : bool, default=False
-        Remove cached file and redownload file.
 
     Returns
     -------
@@ -73,10 +70,6 @@ def _open_openml_url(openml_path, data_home, invalidate_cache=False):
         return fsrc
 
     local_path = _get_local_path(openml_path, data_home)
-
-    if invalidate_cache and os.path.exists(local_path):
-        os.unlink(local_path)
-
     if not os.path.exists(local_path):
         try:
             os.makedirs(os.path.dirname(local_path))

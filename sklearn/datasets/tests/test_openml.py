@@ -490,40 +490,9 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
     # assert file exists
     location = _get_local_path(openml_path, cache_directory)
     assert os.path.isfile(location)
-    stat_before = os.stat(location)
-
     # redownload, to utilize cache
     response2 = _open_openml_url(openml_path, cache_directory)
     assert response1.read() == response2.read()
-
-    stat_after = os.stat(location)
-    assert stat_before == stat_after
-
-
-@pytest.mark.parametrize('gzip_response', [True, False])
-def test_open_openml_url_cache_invalidate_cache(
-        monkeypatch, gzip_response, tmpdir):
-    data_id = 61
-
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, gzip_response)
-    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
-    cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
-    # first fill the cache
-    response1 = _open_openml_url(
-        openml_path, cache_directory, invalidate_cache=True)
-    # assert file exists
-    location = _get_local_path(openml_path, cache_directory)
-    assert os.path.isfile(location)
-    stat_before = os.stat(location)
-
-    # redownload, to utilize cache
-    response2 = _open_openml_url(
-        openml_path, cache_directory, invalidate_cache=True)
-    assert response1.read() == response2.read()
-
-    stat_after = os.stat(location)
-    assert stat_before != stat_after
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
