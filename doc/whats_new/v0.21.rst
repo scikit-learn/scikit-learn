@@ -115,6 +115,16 @@ Support for Python 3.4 and below has been officially dropped.
   when called before fit :issue:`12279` by :user:`Krishna Sangeeth
   <whiletruelearn>`.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Feature| Add :class:`ensemble.AverageRegressor`
+  which provides an equivalent of :class:`ensemble.VotingClassifier`
+  for regression problems.
+  :issue:`10868` by :user:`Ramil Nugmanov <stsouko>` and
+  :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
+
+
 Multiple modules
 ................
 
