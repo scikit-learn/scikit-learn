@@ -375,18 +375,21 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_X = X._fit_X
             self._tree = X._tree
             self._fit_method = X._fit_method
+            self.n_samples_fit_ = X.n_samples_fit_
             return self
 
         elif isinstance(X, BallTree):
             self._fit_X = X.data
             self._tree = X
             self._fit_method = 'ball_tree'
+            self.n_samples_fit_ = X.data.shape[0]
             return self
 
         elif isinstance(X, KDTree):
             self._fit_X = X.data
             self._tree = X
             self._fit_method = 'kd_tree'
+            self.n_samples_fit_ = X.data.shape[0]
             return self
 
         if self.effective_metric_ == 'precomputed':
@@ -413,10 +416,12 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_X = X.copy()
             self._tree = None
             self._fit_method = 'brute'
+            self.n_samples_fit_ = X.shape[0]
             return self
 
         self._fit_method = self.algorithm
         self._fit_X = X
+        self.n_samples_fit_ = X.shape[0]
 
         if self._fit_method == 'auto':
             # A tree approach is better for small number of neighbors,
@@ -513,8 +518,8 @@ class KNeighborsMixin(object):
 
         Parameters
         ----------
-        X : array-like, shape (n_query, n_features), \
-                or (n_query, n_indexed) if metric == 'precomputed'
+        X : array-like, shape (n_queries, n_features), \
+                or (n_queries, n_indexed) if metric == 'precomputed'
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -528,11 +533,11 @@ class KNeighborsMixin(object):
 
         Returns
         -------
-        neigh_dist : array, shape (n_query, n_neighbors)
+        neigh_dist : array, shape (n_queries, n_neighbors)
             Array representing the lengths to points, only present if
             return_distance=True
 
-        neigh_ind : array, shape (n_query, n_neighbors)
+        neigh_ind : array, shape (n_queries, n_neighbors)
             Indices of the nearest points in the population matrix.
 
         Examples
@@ -588,12 +593,12 @@ class KNeighborsMixin(object):
             # returned, which is removed later
             n_neighbors += 1
 
-        train_size = self._fit_X.shape[0]
-        if n_neighbors > train_size:
+        n_samples_fit = self.n_samples_fit_
+        if n_neighbors > n_samples_fit:
             raise ValueError(
                 "Expected n_neighbors <= n_samples, "
                 " but n_samples = %d, n_neighbors = %d" %
-                (train_size, n_neighbors)
+                (n_samples_fit, n_neighbors)
             )
 
         n_jobs = effective_n_jobs(self.n_jobs)
@@ -660,8 +665,8 @@ class KNeighborsMixin(object):
             else:
                 neigh_ind = results
 
-            n_samples, _ = X.shape
-            sample_range = np.arange(n_samples)[:, None]
+            n_queries, _ = X.shape
+            sample_range = np.arange(n_queries)[:, None]
             sample_mask = neigh_ind != sample_range
 
             # Corner case: When the number of duplicates are more
@@ -671,11 +676,11 @@ class KNeighborsMixin(object):
             dup_gr_nbrs = np.all(sample_mask, axis=1)
             sample_mask[:, 0][dup_gr_nbrs] = False
             neigh_ind = np.reshape(
-                neigh_ind[sample_mask], (n_samples, n_neighbors - 1))
+                neigh_ind[sample_mask], (n_queries, n_neighbors - 1))
 
             if return_distance:
                 neigh_dist = np.reshape(
-                    neigh_dist[sample_mask], (n_samples, n_neighbors - 1))
+                    neigh_dist[sample_mask], (n_queries, n_neighbors - 1))
                 return neigh_dist, neigh_ind
             return neigh_ind
 
@@ -685,8 +690,8 @@ class KNeighborsMixin(object):
 
         Parameters
         ----------
-        X : array-like, shape (n_query, n_features), \
-                or (n_query, n_indexed) if metric == 'precomputed'
+        X : array-like, shape (n_queries, n_features), \
+                or (n_queries, n_indexed) if metric == 'precomputed'
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -702,7 +707,7 @@ class KNeighborsMixin(object):
 
         Returns
         -------
-        A : sparse matrix in CSR format, shape = [n_query, n_samples_fit]
+        A : sparse graph in CSR format, shape = [n_queries, n_samples_fit]
             n_samples_fit is the number of samples in the fitted data
             A[i, j] is assigned the weight of edge that connects i to j.
 
@@ -732,8 +737,8 @@ class KNeighborsMixin(object):
         # construct CSR matrix representation of the k-NN graph
         if mode == 'connectivity':
             A_ind = self.kneighbors(X, n_neighbors, return_distance=False)
-            n_samples1 = A_ind.shape[0]
-            A_data = np.ones(n_samples1 * n_neighbors)
+            n_queries = A_ind.shape[0]
+            A_data = np.ones(n_queries * n_neighbors)
 
         elif mode == 'distance':
             A_data, A_ind = self.kneighbors(
@@ -745,13 +750,13 @@ class KNeighborsMixin(object):
                 'Unsupported mode, must be one of "connectivity" '
                 'or "distance" but got "%s" instead' % mode)
 
-        n_samples1 = A_ind.shape[0]
-        n_samples2 = self._fit_X.shape[0]
-        n_nonzero = n_samples1 * n_neighbors
+        n_queries = A_ind.shape[0]
+        n_samples_fit = self.n_samples_fit_
+        n_nonzero = n_queries * n_neighbors
         A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
 
         kneighbors_graph = csr_matrix((A_data, A_ind.ravel(), A_indptr),
-                                      shape=(n_samples1, n_samples2))
+                                      shape=(n_queries, n_samples_fit))
 
         return kneighbors_graph
 
@@ -978,7 +983,7 @@ class RadiusNeighborsMixin(object):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features], optional
+        X : array-like, shape = [n_queries, n_features], optional
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -999,7 +1004,8 @@ class RadiusNeighborsMixin(object):
 
         Returns
         -------
-        A : sparse matrix in CSR format, shape = [n_samples, n_samples]
+        A : sparse graph in CSR format, shape = [n_queries, n_samples_fit]
+            n_samples_fit is the number of samples in the fitted data
             A[i, j] is assigned the weight of edge that connects i to j.
 
         Examples
@@ -1041,8 +1047,8 @@ class RadiusNeighborsMixin(object):
                 'Unsupported mode, must be one of "connectivity", '
                 'or "distance" but got %s instead' % mode)
 
-        n_samples1 = A_ind.shape[0]
-        n_samples2 = self._fit_X.shape[0]
+        n_queries = A_ind.shape[0]
+        n_samples_fit = self.n_samples_fit_
         n_neighbors = np.array([len(a) for a in A_ind])
         A_ind = np.concatenate(list(A_ind))
         if A_data is None:
@@ -1051,7 +1057,7 @@ class RadiusNeighborsMixin(object):
                                    np.cumsum(n_neighbors)))
 
         return csr_matrix((A_data, A_ind, A_indptr),
-                          shape=(n_samples1, n_samples2))
+                          shape=(n_queries, n_samples_fit))
 
 
 class SupervisedFloatMixin(object):

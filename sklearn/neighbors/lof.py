@@ -244,7 +244,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         super(LocalOutlierFactor, self).fit(X)
 
-        n_samples = self._fit_X.shape[0]
+        n_samples = self.n_samples_fit_
         if self.n_neighbors > n_samples:
             warnings.warn("n_neighbors (%s) is greater than the "
                           "total number of samples (%s). n_neighbors "
@@ -326,7 +326,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             is_inlier = np.ones(X.shape[0], dtype=int)
             is_inlier[self.decision_function(X) < 0] = -1
         else:
-            is_inlier = np.ones(self._fit_X.shape[0], dtype=int)
+            is_inlier = np.ones(self.n_samples_fit_, dtype=int)
             is_inlier[self.negative_outlier_factor_ < self.offset_] = -1
 
         return is_inlier
@@ -482,17 +482,17 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         Parameters
         ----------
-        distances_X : array, shape (n_query, self.n_neighbors)
+        distances_X : array, shape (n_queries, self.n_neighbors)
             Distances to the neighbors (in the training samples `self._fit_X`)
             of each query point to compute the LRD.
 
-        neighbors_indices : array, shape (n_query, self.n_neighbors)
+        neighbors_indices : array, shape (n_queries, self.n_neighbors)
             Neighbors indices (of each query point) among training samples
             self._fit_X.
 
         Returns
         -------
-        local_reachability_density : array, shape (n_samples,)
+        local_reachability_density : array, shape (n_queries,)
             The local reachability density of each sample.
         """
         dist_k = self._distances_fit_X_[neighbors_indices,

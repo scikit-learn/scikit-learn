@@ -138,13 +138,13 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_query, n_features), \
-                or (n_query, n_indexed) if metric == 'precomputed'
+        X : array-like, shape (n_queries, n_features), \
+                or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
         Returns
         -------
-        y : array of shape [n_samples] or [n_samples, n_outputs]
+        y : array of shape [n_queries] or [n_queries, n_outputs]
             Class labels for each data sample.
         """
         X = check_array(X, accept_sparse='csr')
@@ -157,10 +157,10 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             classes_ = [self.classes_]
 
         n_outputs = len(classes_)
-        n_samples = X.shape[0]
+        n_queries = X.shape[0]
         weights = _get_weights(neigh_dist, self.weights)
 
-        y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
+        y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
             if weights is None:
                 mode, _ = stats.mode(_y[neigh_ind, k], axis=1)
@@ -180,8 +180,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_query, n_features), \
-                or (n_query, n_indexed) if metric == 'precomputed'
+        X : array-like, shape (n_queries, n_features), \
+                or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
         Returns
@@ -201,7 +201,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             _y = self._y.reshape((-1, 1))
             classes_ = [self.classes_]
 
-        n_samples = X.shape[0]
+        n_queries = X.shape[0]
 
         weights = _get_weights(neigh_dist, self.weights)
         if weights is None:
@@ -211,7 +211,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         probabilities = []
         for k, classes_k in enumerate(classes_):
             pred_labels = _y[:, k][neigh_ind]
-            proba_k = np.zeros((n_samples, classes_k.size))
+            proba_k = np.zeros((n_queries, classes_k.size))
 
             # a simple ':' index doesn't work right
             for i, idx in enumerate(pred_labels.T):  # loop is O(n_neighbors)
@@ -346,18 +346,18 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_query, n_features), \
-                or (n_query, n_indexed) if metric == 'precomputed'
+        X : array-like, shape (n_queries, n_features), \
+                or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
         Returns
         -------
-        y : array of shape [n_samples] or [n_samples, n_outputs]
+        y : array of shape [n_queries] or [n_queries, n_outputs]
             Class labels for each data sample.
 
         """
         X = check_array(X, accept_sparse='csr')
-        n_samples = X.shape[0]
+        n_queries = X.shape[0]
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
 
@@ -382,7 +382,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         weights = _get_weights(neigh_dist, self.weights)
 
-        y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
+        y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
             pred_labels = np.zeros(len(neigh_ind), dtype=object)
             pred_labels[:] = [_y[ind, k] for ind in neigh_ind]

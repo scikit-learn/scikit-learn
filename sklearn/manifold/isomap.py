@@ -226,14 +226,14 @@ class Isomap(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples_transform, n_features)
+        X : array-like, shape (n_queries, n_features)
             If neighbors_algorithm='precomputed', X is assumed to be a
             distance matrix or a sparse graph of shape
-            (n_samples_transform, n_samples_fit).
+            (n_queries, n_samples_fit).
 
         Returns
         -------
-        X_new : array-like, shape (n_samples_transform, n_components)
+        X_new : array-like, shape (n_queries, n_components)
         """
         check_is_fitted(self, 'embedding_')
         distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
@@ -243,10 +243,10 @@ class Isomap(BaseEstimator, TransformerMixin):
         # This can be done as a single array operation, but it potentially
         # takes a lot of memory.  To avoid that, use a loop:
 
-        n_samples_fit = self.nbrs_._fit_X.shape[0]
-        n_samples_transform = distances.shape[0]
-        G_X = np.zeros((n_samples_transform, n_samples_fit))
-        for i in range(n_samples_transform):
+        n_samples_fit = self.nbrs_.n_samples_fit_
+        n_queries = distances.shape[0]
+        G_X = np.zeros((n_queries, n_samples_fit))
+        for i in range(n_queries):
             G_X[i] = np.min(self.dist_matrix_[indices[i]] +
                             distances[i][:, None], 0)
 
