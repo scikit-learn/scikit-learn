@@ -10,6 +10,7 @@ Testing for the forest module (sklearn.ensemble.forest).
 
 import pickle
 from collections import defaultdict
+from distutils.version import LooseVersion
 import itertools
 from itertools import combinations
 from itertools import product
@@ -21,6 +22,7 @@ from scipy.sparse import coo_matrix
 
 import pytest
 
+from sklearn.utils import _joblib
 from sklearn.utils import parallel_backend
 from sklearn.utils import register_parallel_backend
 from sklearn.externals.joblib.parallel import LokyBackend
@@ -1283,6 +1285,8 @@ class MyBackend(LokyBackend):
 register_parallel_backend('testing', MyBackend)
 
 
+@pytest.mark.skipif(_joblib.__version__ < LooseVersion('0.12'),
+                    reason='tests not yet supported in joblib <0.12')
 @skip_if_no_parallel
 def test_backend_respected():
     clf = RandomForestClassifier(n_estimators=10, n_jobs=2)

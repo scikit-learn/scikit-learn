@@ -1,4 +1,5 @@
 
+from distutils.version import LooseVersion
 import pickle
 import unittest
 import pytest
@@ -30,6 +31,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import sgd_fast
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.utils import _joblib
 
 
 # 0.23. warning about tol not having its correct default value.
@@ -1540,6 +1542,9 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # this specific case, in-place modification of clf.coef_ would have caused
     # a segmentation fault when trying to write in a readonly memory mapped
     # buffer.
+
+    if _joblib.__version__ < LooseVersion('0.12') and backend == 'loky':
+        pytest.skip('loky backend does not exist in joblib <0.12')
 
     random_state = np.random.RandomState(42)
 
