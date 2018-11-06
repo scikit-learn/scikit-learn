@@ -147,6 +147,7 @@ Changelog
   to :code:`yeo-johnson` to match :class:`preprocessing.PowerTransformer`
   in version 0.23. A FutureWarning is raised when the default value is used.
   :issue:`12317` by :user:`Eric Chang <chang>`.
+  
 
 :mod:`sklearn.utils`
 ........................
@@ -155,6 +156,13 @@ Changelog
   precision issues in :class:`preprocessing.StandardScaler` and
   :class:`decomposition.IncrementalPCA` when using float32 datasets.
   :issue:`12338` by :user:`bauks <bauks>`.
+  
+Miscellaneous
+.............
+
+- |Fix| When using site joblib by setting the environment variable
+  `SKLEARN_SITE_JOBLIB`, added compatibility with joblib 0.11 in addition
+  to 0.12+. :issue:`12350` by `Joel Nothman`_ and `Roman Yurchak`_.
 
 Miscellaneous
 .............

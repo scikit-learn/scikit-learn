@@ -33,6 +33,7 @@ from ..exceptions import (NotFittedError, ConvergenceWarning,
                           ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
 from ..utils import Parallel, delayed, effective_n_jobs
+from ..utils.fixes import _joblib_parallel_args
 from ..model_selection import check_cv
 from ..externals import six
 from ..metrics import get_scorer
@@ -1346,7 +1347,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         else:
             prefer = 'processes'
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                               prefer=prefer)(
+                               **_joblib_parallel_args(prefer=prefer))(
             path_func(X, y, pos_class=class_, Cs=[self.C],
                       fit_intercept=self.fit_intercept, tol=self.tol,
                       verbose=self.verbose, solver=solver,
@@ -1777,7 +1778,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         else:
             prefer = 'processes'
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                               prefer=prefer)(
+                               **_joblib_parallel_args(prefer=prefer))(
             path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
                       fit_intercept=self.fit_intercept, penalty=self.penalty,
                       dual=self.dual, solver=solver, tol=self.tol,

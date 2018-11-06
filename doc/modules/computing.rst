@@ -567,9 +567,9 @@ These environment variables should be set before importing scikit-learn.
     scikit-learn uses the site joblib rather than its vendored version.
     Consequently, joblib must be installed for scikit-learn to run.
     Note that using the site joblib is at your own risks: the versions of
-    scikt-learn and joblib need to be compatible. In addition, dumps from
-    joblib.Memory might be incompatible, and you might loose some caches
-    and have to redownload some datasets.
+    scikit-learn and joblib need to be compatible. Currently, joblib 0.11+
+    is supported. In addition, dumps from joblib.Memory might be incompatible,
+    and you might loose some caches and have to redownload some datasets.
 
 :SKLEARN_ASSUME_FINITE:
 
