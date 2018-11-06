@@ -3,10 +3,10 @@
 # Copyright (C) 2007-2009 Cournapeau David <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 # License: 3-clause BSD
-descr = """A set of python modules for machine learning and data mining"""
 
 import sys
 import os
+import platform
 import shutil
 from distutils.command.clean import clean as Clean
 from pkg_resources import parse_version
@@ -41,8 +41,12 @@ import sklearn
 
 VERSION = sklearn.__version__
 
-SCIPY_MIN_VERSION = '0.13.3'
-NUMPY_MIN_VERSION = '1.8.2'
+if platform.python_implementation() == 'PyPy':
+    SCIPY_MIN_VERSION = '1.1.0'
+    NUMPY_MIN_VERSION = '1.14.0'
+else:
+    SCIPY_MIN_VERSION = '0.13.3'
+    NUMPY_MIN_VERSION = '1.8.2'
 
 
 # Optional setuptools features
@@ -185,6 +189,11 @@ def setup_package():
                                  'Programming Language :: Python :: 3.4',
                                  'Programming Language :: Python :: 3.5',
                                  'Programming Language :: Python :: 3.6',
+                                 'Programming Language :: Python :: 3.7',
+                                 ('Programming Language :: Python :: '
+                                  'Implementation :: CPython'),
+                                 ('Programming Language :: Python :: '
+                                  'Implementation :: PyPy')
                                  ],
                     cmdclass=cmdclass,
                     install_requires=[

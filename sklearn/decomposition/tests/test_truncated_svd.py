@@ -3,15 +3,17 @@
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.decomposition import TruncatedSVD
+import pytest
+
+from sklearn.decomposition import TruncatedSVD, PCA
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_raises, assert_greater,
-                                   assert_array_less)
+                                   assert_array_less, assert_allclose)
 
 
 # Make an X that looks somewhat like a small tf-idf matrix.
-# XXX newer versions of SciPy have scipy.sparse.rand for this.
+# XXX newer versions of SciPy >0.16 have scipy.sparse.rand for this.
 shape = 60, 55
 n_samples, n_features = shape
 rng = check_random_state(42)
@@ -43,31 +45,31 @@ def test_attributes():
         assert_equal(tsvd.components_.shape, (n_components, n_features))
 
 
-def test_too_many_components():
-    for algorithm in ["arpack", "randomized"]:
-        for n_components in (n_features, n_features + 1):
-            tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm)
-            assert_raises(ValueError, tsvd.fit, X)
+@pytest.mark.parametrize('algorithm', ("arpack", "randomized"))
+def test_too_many_components(algorithm):
+    for n_components in (n_features, n_features + 1):
+        tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm)
+        assert_raises(ValueError, tsvd.fit, X)
 
 
-def test_sparse_formats():
-    for fmt in ("array", "csr", "csc", "coo", "lil"):
-        Xfmt = Xdense if fmt == "dense" else getattr(X, "to" + fmt)()
-        tsvd = TruncatedSVD(n_components=11)
-        Xtrans = tsvd.fit_transform(Xfmt)
-        assert_equal(Xtrans.shape, (n_samples, 11))
-        Xtrans = tsvd.transform(Xfmt)
-        assert_equal(Xtrans.shape, (n_samples, 11))
+@pytest.mark.parametrize('fmt', ("array", "csr", "csc", "coo", "lil"))
+def test_sparse_formats(fmt):
+    Xfmt = Xdense if fmt == "dense" else getattr(X, "to" + fmt)()
+    tsvd = TruncatedSVD(n_components=11)
+    Xtrans = tsvd.fit_transform(Xfmt)
+    assert_equal(Xtrans.shape, (n_samples, 11))
+    Xtrans = tsvd.transform(Xfmt)
+    assert_equal(Xtrans.shape, (n_samples, 11))
 
 
-def test_inverse_transform():
-    for algo in ("arpack", "randomized"):
-        # We need a lot of components for the reconstruction to be "almost
-        # equal" in all positions. XXX Test means or sums instead?
-        tsvd = TruncatedSVD(n_components=52, random_state=42, algorithm=algo)
-        Xt = tsvd.fit_transform(X)
-        Xinv = tsvd.inverse_transform(Xt)
-        assert_array_almost_equal(Xinv, Xdense, decimal=1)
+@pytest.mark.parametrize('algo', ("arpack", "randomized"))
+def test_inverse_transform(algo):
+    # We need a lot of components for the reconstruction to be "almost
+    # equal" in all positions. XXX Test means or sums instead?
+    tsvd = TruncatedSVD(n_components=52, random_state=42, algorithm=algo)
+    Xt = tsvd.fit_transform(X)
+    Xinv = tsvd.inverse_transform(Xt)
+    assert_array_almost_equal(Xinv, Xdense, decimal=1)
 
 
 def test_integers():
@@ -220,3 +222,21 @@ def test_singular_values():
     rpca.fit(X_hat_rpca)
     assert_array_almost_equal(apca.singular_values_, [3.142, 2.718, 1.0], 14)
     assert_array_almost_equal(rpca.singular_values_, [3.142, 2.718, 1.0], 14)
+
+
+def test_truncated_svd_eq_pca():
+    # TruncatedSVD should be equal to PCA on centered data
+
+    X_c = X - X.mean(axis=0)
+
+    params = dict(n_components=10, random_state=42)
+
+    svd = TruncatedSVD(algorithm='arpack', **params)
+    pca = PCA(svd_solver='arpack', **params)
+
+    Xt_svd = svd.fit_transform(X_c)
+    Xt_pca = pca.fit_transform(X_c)
+
+    assert_allclose(Xt_svd, Xt_pca, rtol=1e-9)
+    assert_allclose(pca.mean_, 0, atol=1e-9)
+    assert_allclose(svd.components_, pca.components_)
