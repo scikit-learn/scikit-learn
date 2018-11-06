@@ -368,13 +368,11 @@ def test_export_ascii():
                         show_class=False) == expected_report
 
     expected_report = dedent("""|---feature_1 <= 0.00
-|   | (class: c1)
+|   (class: c1)
 |   |---* (value: [3.0, 0.0])
-|   |   | (class: c1)
 |---feature_1 >  0.00
-|   | (class: c1)
+|   (class: c2)
 |   |---* (value: [0.0, 3.0])
-|   |   | (class: c2)
 """)
     assert export_ascii(clf, class_names=['c1', 'c2'],
                         show_class=None) == expected_report

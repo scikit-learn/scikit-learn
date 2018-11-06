@@ -897,24 +897,36 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
 
         right_child_string = "{}{} <= {:.2f}\n"
         left_child_string = "{}{} >  {:.2f}\n"
-        class_string = "{}| (class: {})\n"
+        class_string = "{}(class: {})\n"
         value_string = "{}{} (value: {})\n"
 
         if depth <= max_depth:
             value = tree_.value[node][0]
             class_name = np.argmax(value)
+            right_child = tree_.children_right[node]
+            left_child = tree_.children_left[node]
+            class_name_right = np.argmax(tree_.value[right_child][0])
+            class_name_left = np.argmax(tree_.value[left_child][0])
             if (class_names is not None and
                     tree_.n_classes[0] != 1 and
                     tree_.n_outputs == 1):
                 class_name = class_names[class_name]
+                class_name_right = class_names[class_name_right]
+                class_name_left = class_names[class_name_left]
 
             info_string = ""
             if show_value:
                 info_string += value_string.format(info_indent, '|',
                                                    str(value.tolist()))
+
+            info_string_left = info_string
+            info_string_right = info_string
+
             if show_class:
-                info_string += class_string.format(info_indent,
-                                                   class_name)
+                info_string_left += class_string.format(info_indent,
+                                                        class_name_left)
+                info_string_right += class_string.format(info_indent,
+                                                         class_name_right)
 
             if tree_.feature[node] != _tree.TREE_UNDEFINED:
                 name = feature_names_[node]
@@ -922,14 +934,14 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
                 export_ascii.report += right_child_string.format(indent,
                                                                  name,
                                                                  threshold)
-                export_ascii.report += info_string
+                export_ascii.report += info_string_left
                 print_tree_recurse(tree_.children_left[node],
                                    depth+1)
 
                 export_ascii.report += left_child_string.format(indent,
                                                                 name,
                                                                 threshold)
-                export_ascii.report += info_string
+                export_ascii.report += info_string_right
                 print_tree_recurse(tree_.children_right[node],
                                    depth+1)
             else:  # leaf
@@ -938,9 +950,9 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
                     val = str(value.tolist())
                     export_ascii.report += value_string.format(indent, '*',
                                                                val)
-                if show_class:
-                    export_ascii.report += class_string.format(info_indent,
-                                                               class_name)
+                #if show_class:
+                #    export_ascii.report += class_string.format(info_indent,
+                #                                               class_name).replace('\n', '!\n')
 
     print_tree_recurse(0, 1)
 
