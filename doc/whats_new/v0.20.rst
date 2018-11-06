@@ -134,6 +134,14 @@ Changelog
 :mod:`sklearn.preprocessing`
 ........................
 
+- |Fix| Fixed bug in :class:`preprocessing.OrdinalEncoder` when passing
+  manually specified categories. :issue:`12365` by `Joris Van den Bossche`_.
+
+- |Fix| Fixed bug in :class:`preprocessing.KBinsDiscretizer` where the
+  ``transform`` method mutates the ``_encoder`` attribute. The ``transform``
+  method is now thread safe. :issue:`12514` by
+  :user:`Hanmin Qin <qinhanmin2014>`.
+
 - |API| The default value of the :code:`method` argument in
   :func:`preprocessing.power_transform` will be changed from :code:`box-cox`
   to :code:`yeo-johnson` to match :class:`preprocessing.PowerTransformer`
@@ -1312,6 +1320,9 @@ Miscellaneous
   :term:`Glossary <n_jobs>` for additional information). Note that this change
   happens immediately (i.e., without a deprecation cycle).
   :issue:`11741` by `Olivier Grisel`_.
+
+- |Fix| Fixed a bug in validation helpers where passing a Dask DataFrame results
+  in an error. :issue:`12462` by :user:`Zachariah Miller <zwmiller>`
 
 Changes to estimator checks
 ---------------------------
