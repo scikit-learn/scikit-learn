@@ -2537,7 +2537,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     >>> print(pt.fit(data))
     PowerTransformer(copy=True, method='yeo-johnson', standardize=True)
     >>> print(pt.lambdas_)
-    [ 1.38668178 -3.10053332]
+    [ 1.38668178 -3.10053309]
     >>> print(pt.transform(data))
     [[-1.31616039 -0.70710678]
      [ 0.20998268 -0.70710678]
@@ -2718,11 +2718,6 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     def _yeo_johnson_inverse_transform(self, x, lmbda):
         """Return inverse-transformed input x following Yeo-Johnson inverse
         transform with parameter lambda.
-
-        Notes
-        -----
-        We're comparing lmbda to 1e-19 instead of strict equality to 0. See
-        scipy/special/_boxcox.pxd for a rationale behind this
         """
         x_inv = np.zeros_like(x)
         pos = x >= 0
@@ -2790,7 +2785,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
             n_samples = x.shape[0]
 
             loglike = -n_samples / 2 * np.log(x_trans.var())
-            loglike += (lmbda - 1) * (np.sign(x) * np.log(np.abs(x) + 1)).sum()
+            loglike += (lmbda - 1) * (np.sign(x) * np.log1p(np.abs(x))).sum()
 
             return -loglike
 
