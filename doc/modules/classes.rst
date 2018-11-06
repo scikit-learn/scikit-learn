@@ -410,6 +410,7 @@ Samples generator
 
    ensemble.AdaBoostClassifier
    ensemble.AdaBoostRegressor
+   ensemble.AverageRegressor
    ensemble.BaggingClassifier
    ensemble.BaggingRegressor
    ensemble.ExtraTreesClassifier
