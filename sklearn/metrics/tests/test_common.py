@@ -905,7 +905,7 @@ def test_normalize_option_multiclass_classification(name):
         metrics = ALL_METRICS[name]
         measure = metrics(y_true, y_pred, normalize=True)
         assert_array_less(-1.0 * measure, 0,
-                       msg="We failed to test correctly the normalize option")
+                          err_msg="We failed to test correctly the normalize option")
         assert_allclose(metrics(y_true, y_pred, normalize=False)
                         / n_samples, measure)
 
