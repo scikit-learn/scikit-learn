@@ -55,7 +55,9 @@ def _retry_if_error_with_cache_removed(openml_path, data_home):
                     "Unable to successfully read from cache, "
                     "redownloading file",
                     RuntimeWarning)
-                os.unlink(_get_local_path(openml_path, data_home))
+                local_path = _get_local_path(openml_path, data_home)
+                if os.path.exists(local_path):
+                    os.unlink(local_path)
                 return f()
         return wrapper
     return decorator
