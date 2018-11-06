@@ -21,7 +21,6 @@ from scipy import optimize
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
-from ..externals.six import string_types
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
@@ -34,8 +33,9 @@ from ..utils.sparsefuncs import (inplace_column_scale,
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
 
-from ._encoders import OneHotEncoder
+from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
+from ._encoders import OneHotEncoder
 
 BOUNDS_THRESHOLD = 1e-7
 
@@ -203,7 +203,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     """Transforms features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
-    that it is in the given range on the training set, i.e. between
+    that it is in the given range on the training set, e.g. between
     zero and one.
 
     The transformation is given by::
@@ -480,6 +480,14 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
 class StandardScaler(BaseEstimator, TransformerMixin):
     """Standardize features by removing the mean and scaling to unit variance
 
+    The standard score of a sample `x` is calculated as:
+
+        z = (x - u) / s
+
+    where `u` is the mean of the training samples or zero if `with_mean=False`,
+    and `s` is the standard deviation of the training samples or one if
+    `with_std=False`.
+
     Centering and scaling happen independently on each feature by computing
     the relevant statistics on the samples in the training set. Mean and
     standard deviation are then stored to be used on later data using the
@@ -525,8 +533,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     scale_ : ndarray or None, shape (n_features,)
-        Per feature relative scaling of the data. Equal to ``None`` when
-        ``with_std=False``.
+        Per feature relative scaling of the data. This is calculated using
+        `np.sqrt(var_)`. Equal to ``None`` when ``with_std=False``.
 
         .. versionadded:: 0.17
            *scale_*
@@ -718,24 +726,16 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
         return self
 
-    def transform(self, X, y='deprecated', copy=None):
+    def transform(self, X, copy=None):
         """Perform standardization by centering and scaling
 
         Parameters
         ----------
         X : array-like, shape [n_samples, n_features]
             The data used to scale along the features axis.
-        y : (ignored)
-            .. deprecated:: 0.19
-               This parameter will be removed in 0.21.
         copy : bool, optional (default: None)
             Copy the input X or not.
         """
-        if not isinstance(y, string_types) or y != 'deprecated':
-            warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
-
         check_is_fitted(self, 'scale_')
 
         copy = copy if copy is not None else self.copy
@@ -1390,8 +1390,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         combinations = self._combinations(self.n_input_features_, self.degree,
                                           self.interaction_only,
                                           self.include_bias)
-        return np.vstack(np.bincount(c, minlength=self.n_input_features_)
-                         for c in combinations)
+        return np.vstack([np.bincount(c, minlength=self.n_input_features_)
+                          for c in combinations])
 
     def get_feature_names(self, input_features=None):
         """
@@ -1452,41 +1452,71 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         ----------
         X : array-like or sparse matrix, shape [n_samples, n_features]
             The data to transform, row by row.
-            Sparse input should preferably be in CSC format.
+            Sparse input should preferably be in CSR format (for speed),
+            but must be in CSC format if the degree is 4 or higher.
+
+            If the input matrix is in CSR format and the expansion is of
+            degree 2 or 3, the method described in the work "Leveraging
+            Sparsity to Speed Up Polynomial Feature Expansions of CSR
+            Matrices Using K-Simplex Numbers" by Andrew Nystrom and
+            John Hughes is used, which is much faster than the method
+            used on CSC input.
 
         Returns
         -------
-        XP : np.ndarray or CSC sparse matrix, shape [n_samples, NP]
+        XP : np.ndarray or CSR/CSC sparse matrix, shape [n_samples, NP]
             The matrix of features, where NP is the number of polynomial
             features generated from the combination of inputs.
         """
         check_is_fitted(self, ['n_input_features_', 'n_output_features_'])
 
-        X = check_array(X, order='F', dtype=FLOAT_DTYPES, accept_sparse='csc')
+        X = check_array(X, order='F', dtype=FLOAT_DTYPES,
+                        accept_sparse=('csr', 'csc'))
+
         n_samples, n_features = X.shape
 
         if n_features != self.n_input_features_:
             raise ValueError("X shape does not match training shape")
 
-        combinations = self._combinations(n_features, self.degree,
-                                          self.interaction_only,
-                                          self.include_bias)
-        if sparse.isspmatrix(X):
-            columns = []
-            for comb in combinations:
-                if comb:
-                    out_col = 1
-                    for col_idx in comb:
-                        out_col = X[:, col_idx].multiply(out_col)
-                    columns.append(out_col)
-                else:
-                    columns.append(sparse.csc_matrix(np.ones((X.shape[0], 1))))
-            XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
+        if sparse.isspmatrix_csr(X):
+            if self.degree > 3:
+                return self.transform(X.tocsc()).tocsr()
+            to_stack = []
+            if self.include_bias:
+                to_stack.append(np.ones(shape=(n_samples, 1), dtype=X.dtype))
+            to_stack.append(X)
+            for deg in range(2, self.degree+1):
+                Xp_next = _csr_polynomial_expansion(X.data, X.indices,
+                                                    X.indptr, X.shape[1],
+                                                    self.interaction_only,
+                                                    deg)
+                if Xp_next is None:
+                    break
+                to_stack.append(Xp_next)
+            XP = sparse.hstack(to_stack, format='csr')
+        elif sparse.isspmatrix_csc(X) and self.degree < 4:
+            return self.transform(X.tocsr()).tocsc()
         else:
-            XP = np.empty((n_samples, self.n_output_features_), dtype=X.dtype,
-                          order=self.order)
-            for i, comb in enumerate(combinations):
-                XP[:, i] = X[:, comb].prod(1)
+            combinations = self._combinations(n_features, self.degree,
+                                              self.interaction_only,
+                                              self.include_bias)
+            if sparse.isspmatrix(X):
+                columns = []
+                for comb in combinations:
+                    if comb:
+                        out_col = 1
+                        for col_idx in comb:
+                            out_col = X[:, col_idx].multiply(out_col)
+                        columns.append(out_col)
+                    else:
+                        bias = sparse.csc_matrix(np.ones((X.shape[0], 1)))
+                        columns.append(bias)
+                XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
+            else:
+                XP = np.empty((n_samples, self.n_output_features_),
+                              dtype=X.dtype, order=self.order)
+                for i, comb in enumerate(combinations):
+                    XP[:, i] = X[:, comb].prod(1)
 
         return XP
 
@@ -1661,10 +1691,10 @@ class Normalizer(BaseEstimator, TransformerMixin):
         ----------
         X : array-like
         """
-        X = check_array(X, accept_sparse='csr')
+        check_array(X, accept_sparse='csr')
         return self
 
-    def transform(self, X, y='deprecated', copy=None):
+    def transform(self, X, copy=None):
         """Scale each non zero row of X to unit norm
 
         Parameters
@@ -1672,17 +1702,9 @@ class Normalizer(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape [n_samples, n_features]
             The data to normalize, row by row. scipy.sparse matrices should be
             in CSR format to avoid an un-necessary copy.
-        y : (ignored)
-            .. deprecated:: 0.19
-               This parameter will be removed in 0.21.
         copy : bool, optional (default: None)
             Copy the input X or not.
         """
-        if not isinstance(y, string_types) or y != 'deprecated':
-            warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
-
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr')
         return normalize(X, norm=self.norm, axis=1, copy=copy)
@@ -1803,7 +1825,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         check_array(X, accept_sparse='csr')
         return self
 
-    def transform(self, X, y='deprecated', copy=None):
+    def transform(self, X, copy=None):
         """Binarize each element of X
 
         Parameters
@@ -1812,17 +1834,10 @@ class Binarizer(BaseEstimator, TransformerMixin):
             The data to binarize, element by element.
             scipy.sparse matrices should be in CSR format to avoid an
             un-necessary copy.
-        y : (ignored)
-            .. deprecated:: 0.19
-               This parameter will be removed in 0.21.
+
         copy : bool
             Copy the input X or not.
         """
-        if not isinstance(y, string_types) or y != 'deprecated':
-            warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
-
         copy = copy if copy is not None else self.copy
         return binarize(X, threshold=self.threshold, copy=copy)
 
@@ -1881,16 +1896,14 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
         return self
 
-    def transform(self, K, y='deprecated', copy=True):
+    def transform(self, K, copy=True):
         """Center kernel matrix.
 
         Parameters
         ----------
         K : numpy array of shape [n_samples1, n_samples2]
             Kernel matrix.
-        y : (ignored)
-            .. deprecated:: 0.19
-               This parameter will be removed in 0.21.
+
         copy : boolean, optional, default True
             Set to False to perform inplace computation.
 
@@ -1898,11 +1911,6 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         K_new : numpy array of shape [n_samples1, n_samples2]
         """
-        if not isinstance(y, string_types) or y != 'deprecated':
-            warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
-
         check_is_fitted(self, 'K_fit_all_')
 
         K = check_array(K, copy=copy, dtype=FLOAT_DTYPES)
@@ -2937,17 +2945,3 @@ def power_transform(X, method='warn', standardize=True, copy=True):
         method = 'box-cox'
     pt = PowerTransformer(method=method, standardize=standardize, copy=copy)
     return pt.fit_transform(X)
-
-
-class CategoricalEncoder:
-    """
-    CategoricalEncoder briefly existed in 0.20dev. Its functionality
-    has been rolled into the OneHotEncoder and OrdinalEncoder.
-    This stub will be removed in version 0.21.
-    """
-
-    def __init__(*args, **kwargs):
-        raise RuntimeError(
-            "CategoricalEncoder briefly existed in 0.20dev. Its functionality "
-            "has been rolled into the OneHotEncoder and OrdinalEncoder. "
-            "This stub will be removed in version 0.21.")

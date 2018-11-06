@@ -26,7 +26,6 @@ from ..metrics.pairwise import pairwise_distances
 from . import _utils
 from . import _barnes_hut_tsne
 from ..externals.six import string_types
-from ..utils import deprecated
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -804,12 +803,6 @@ class TSNE(BaseEstimator):
                           X_embedded=X_embedded,
                           neighbors=neighbors_nn,
                           skip_num_points=skip_num_points)
-
-    @property
-    @deprecated("Attribute n_iter_final was deprecated in version 0.19 and "
-                "will be removed in 0.21. Use ``n_iter_`` instead")
-    def n_iter_final(self):
-        return self.n_iter_
 
     def _tsne(self, P, degrees_of_freedom, n_samples, X_embedded,
               neighbors=None, skip_num_points=0):

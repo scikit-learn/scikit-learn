@@ -177,7 +177,7 @@ class _ThresholdScorer(_BaseScorer):
 
                 # For multi-output multi-class estimator
                 if isinstance(y_pred, list):
-                    y_pred = np.vstack(p for p in y_pred).T
+                    y_pred = np.vstack([p for p in y_pred]).T
 
             except (NotImplementedError, AttributeError):
                 y_pred = clf.predict_proba(X)

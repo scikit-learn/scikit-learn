@@ -1,11 +1,11 @@
 import numpy as np
 from scipy.sparse import csr_matrix
+import pytest
 
 from sklearn.utils.testing import assert_array_equal, assert_equal, assert_true
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 from sklearn.utils.testing import assert_less_equal
-from sklearn.utils.testing import assert_warns_message
 
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
@@ -250,8 +250,9 @@ def test_nystroem_callable():
         return np.dot(X, Y.T)
 
     # if degree, gamma or coef0 is passed, we raise a warning
-    msg = "Passing gamma, coef0 or degree to Nystroem"
+    msg = "Don't pass gamma, coef0 or degree to Nystroem"
     params = ({'gamma': 1}, {'coef0': 1}, {'degree': 2})
     for param in params:
         ny = Nystroem(kernel=linear_kernel, **param)
-        assert_warns_message(DeprecationWarning, msg, ny.fit, X)
+        with pytest.raises(ValueError, match=msg):
+            ny.fit(X)

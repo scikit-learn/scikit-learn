@@ -12,6 +12,16 @@ Version 0.20.1
 This is a bug-fix release with some minor documentation improvements and
 enhancements to features released in 0.20.0.
 
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- :class:`decomposition.IncrementalPCA` (bug fix)
+
 Changelog
 ---------
 
@@ -34,6 +44,10 @@ Changelog
   columns with types not convertible to a numeric.
   :issue:`11912` by :user:`Adrin Jalali <adrinjalali>`.
 
+- |API| :class:`compose.ColumnTransformer` now applies the ``sparse_threshold``
+  even if all transformation results are sparse. :issue:`12304` by `Andreas
+  Müller`_.
+
 :mod:`sklearn.datasets`
 ............................
 
@@ -47,6 +61,18 @@ Changelog
   for values of ``n_informative`` parameter larger than 64.
   :issue:`10811` by :user:`Roman Feldbauer <VarIr>`.
 
+- |Fix| Fixed olivetti faces dataset ``DESCR`` attribute to point to the right
+  location in :func:`datasets.fetch_olivetti_faces`. :issue:`12441` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a regression in :class:`decomposition.IncrementalPCA` where
+  0.20.0 raised an error if the number of samples in the final batch for
+  fitting IncrementalPCA was smaller than n_components.
+  :issue:`12234` by :user:`Ming Li <minggli>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -54,14 +80,48 @@ Changelog
   where ``class_weight='balanced_subsample'`` failed with more than 32 classes.
   :issue:`12165` by `Joel Nothman`_.
 
+- |Fix| Fixed a bug affecting :class:`ensemble.BaggingClassifier`,
+  :class:`ensemble.BaggingRegressor` and :class:`ensemble.IsolationForest`,
+  where ``max_features`` was sometimes rounded down to zero.
+  :issue:`12388` by :user:`Connor Tann <Connossor>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Fix| :func:`linear_model.SGDClassifier` and variants
+- |Fix| :class:`linear_model.SGDClassifier` and variants
   with ``early_stopping=True`` would not use a consistent validation
   split in the multiclass case and this would cause a crash when using
   those estimators as part of parallel parameter search or cross-validation.
   :issue:`12122` by :user:`Olivier Grisel <ogrisel>`.
+
+- |Fix| Fixed a bug affecting :class:`SGDClassifier` in the multiclass
+  case. Each one-versus-all step is run in a :class:`joblib.Parallel` call and
+  mutating a common parameter, causing a segmentation fault if called within a
+  backend using processes and not threads. We now use ``require=sharedmem``
+  at the :class:`joblib.Parallel` instance creation. :issue:`12518` by
+  :user:`Pierre Glaser <pierreglaser>` and :user:`Olivier Grisel <ogrisel>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :func:`metrics.pairwise.pairwise_distances_argmin_min`
+  which returned the square root of the distance when the metric parameter was
+  set to "euclidean". :issue:`12481` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| The :func:`metrics.calinski_harabaz_score` has been renamed to
+  :func:`metrics.calinski_harabasz_score` and will be removed in version 0.23.
+  :issue:`12211` by :user:`Lisa Thomas <LisaThomas9>`,
+  :user:`Mark Hannel <markhannel>` and :user:`Melissa Ferrari <mferrari3>`.
+
+:mod:`sklearn.mixture`
+........................
+
+- |Fix| Ensure that the ``fit_predict`` method of
+  :class:`mixture.GaussianMixture` and :class:`mixture.BayesianGaussianMixture`
+  always yield assignments consistent with ``fit`` followed by ``predict`` even
+  if the convergence criterion is too loose or not met. :issue:`12451`
+  by :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -74,11 +134,35 @@ Changelog
 :mod:`sklearn.preprocessing`
 ........................
 
+- |Fix| Fixed bug in :class:`preprocessing.OrdinalEncoder` when passing
+  manually specified categories. :issue:`12365` by `Joris Van den Bossche`_.
+
+- |Fix| Fixed bug in :class:`preprocessing.KBinsDiscretizer` where the
+  ``transform`` method mutates the ``_encoder`` attribute. The ``transform``
+  method is now thread safe. :issue:`12514` by
+  :user:`Hanmin Qin <qinhanmin2014>`.
+
 - |API| The default value of the :code:`method` argument in
   :func:`preprocessing.power_transform` will be changed from :code:`box-cox`
   to :code:`yeo-johnson` to match :class:`preprocessing.PowerTransformer`
   in version 0.23. A FutureWarning is raised when the default value is used.
   :issue:`12317` by :user:`Eric Chang <chang>`.
+
+:mod:`sklearn.utils`
+........................
+
+- |Fix| Use float64 for mean accumulator to avoid floating point
+  precision issues in :class:`preprocessing.StandardScaler` and
+  :class:`decomposition.IncrementalPCA` when using float32 datasets.
+  :issue:`12338` by :user:`bauks <bauks>`.
+
+Miscellaneous
+.............
+
+- |Fix| Make sure to avoid raising ``FutureWarning`` when calling
+  ``np.vstack`` with numpy 1.16 and later (use list comprehensions
+  instead of generator expressions in many locations of the scikit-learn
+  code base). :issue:`12467` by :user:`Olivier Grisel <ogrisel>`.
 
 .. _changes_0_20:
 
@@ -952,7 +1036,7 @@ Support for Python 3.3 has been officially dropped.
   :issue:`9304` by :user:`Breno Freitas <brenolf>`.
 
 - |API| :class:`pipeline.FeatureUnion` now supports ``'drop'`` as a transformer
-  to drop features. :issue:`11144` by :user:`thomasjpfan`.
+  to drop features. :issue:`11144` by :user:`Thomas Fan <thomasjpfan>`.
 
 
 :mod:`sklearn.preprocessing`
@@ -1229,6 +1313,9 @@ Miscellaneous
   :term:`Glossary <n_jobs>` for additional information). Note that this change
   happens immediately (i.e., without a deprecation cycle).
   :issue:`11741` by `Olivier Grisel`_.
+
+- |Fix| Fixed a bug in validation helpers where passing a Dask DataFrame results
+  in an error. :issue:`12462` by :user:`Zachariah Miller <zwmiller>`
 
 Changes to estimator checks
 ---------------------------
