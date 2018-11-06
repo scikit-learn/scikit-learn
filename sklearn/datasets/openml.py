@@ -164,8 +164,7 @@ def _get_json_content_from_openml_api(url, error_message, raise_if_error,
         if error.code != 412:
             raise error
 
-    # 412 error
-    # not in except for nicer traceback
+    # 412 error, not in except for nicer traceback
     if raise_if_error:
         raise ValueError(error_message)
     return None
