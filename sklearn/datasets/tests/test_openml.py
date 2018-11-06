@@ -513,7 +513,7 @@ def test_retry_if_error_with_cache_removed(tmpdir):
             raise Exception("File exist!")
         return 1
 
-    warn_msg = "Unable to successfully read from cache, redownloading file"
+    warn_msg = "Invalid cache, redownloading file"
     with pytest.warns(RuntimeWarning, match=warn_msg):
         result = _load_data()
     assert result == 1
