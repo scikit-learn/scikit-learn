@@ -134,14 +134,19 @@ Changelog
 :mod:`sklearn.preprocessing`
 ........................
 
+- |Fix| Fixed bug in :class:`preprocessing.OrdinalEncoder` when passing
+  manually specified categories. :issue:`12365` by `Joris Van den Bossche`_.
+
+- |Fix| Fixed bug in :class:`preprocessing.KBinsDiscretizer` where the
+  ``transform`` method mutates the ``_encoder`` attribute. The ``transform``
+  method is now thread safe. :issue:`12514` by
+  :user:`Hanmin Qin <qinhanmin2014>`.
+
 - |API| The default value of the :code:`method` argument in
   :func:`preprocessing.power_transform` will be changed from :code:`box-cox`
   to :code:`yeo-johnson` to match :class:`preprocessing.PowerTransformer`
   in version 0.23. A FutureWarning is raised when the default value is used.
   :issue:`12317` by :user:`Eric Chang <chang>`.
-
-- |Fix| Fixed bug in :class:`preprocessing.OrdinalEncoder` when passing
-  manually specified categories. :issue:`12365` by `Joris Van den Bossche`_.
 
 :mod:`sklearn.utils`
 ........................
