@@ -639,7 +639,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         validation_mask = self._make_validation_split(y)
 
         # Use joblib to fit OvA in parallel.
-        result = Parallel(n_jobs=self.n_jobs, prefer="threads",
+        result = Parallel(n_jobs=self.n_jobs, require="sharedmem",
                           verbose=self.verbose)(
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
                                 max_iter, self._expanded_class_weight[i],
