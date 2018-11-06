@@ -519,6 +519,22 @@ def test_retry_if_error_with_cache_removed(tmpdir):
     assert result == 1
 
 
+def test_retry_if_error_with_cache_removed_http_error(tmpdir):
+    data_id = 61
+    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
+
+    @_retry_if_error_with_cache_removed(openml_path, cache_directory)
+    def _load_data():
+        raise HTTPError(url=None, code=412,
+                        msg='Simulated mock error',
+                        hdrs=None, fp=None)
+
+    error_msg = "Simulated mock error"
+    with pytest.raises(HTTPError, match=error_msg):
+        _load_data()
+
+
 @pytest.mark.parametrize('gzip_response', [True, False])
 def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
     def _mock_urlopen_raise(request):

@@ -50,6 +50,8 @@ def _retry_if_error_with_cache_removed(openml_path, data_home):
                 return f()
             try:
                 return f()
+            except HTTPError:
+                raise
             except Exception:
                 warnings.warn(
                     "Invalid cache, redownloading file",
