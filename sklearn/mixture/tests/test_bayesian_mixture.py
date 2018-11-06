@@ -5,6 +5,7 @@ import copy
 
 import numpy as np
 from scipy.special import gammaln
+import pytest
 
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_almost_equal
@@ -425,15 +426,22 @@ def test_invariant_translation():
             assert_almost_equal(bgmm1.covariances_, bgmm2.covariances_)
 
 
-def test_bayesian_mixture_fit_predict():
-    rng = np.random.RandomState(0)
+@pytest.mark.filterwarnings("ignore:.*did not converge.*")
+@pytest.mark.parametrize('seed, max_iter, tol', [
+    (0, 2, 1e-7),    # strict non-convergence
+    (1, 2, 1e-1),    # loose non-convergence
+    (3, 300, 1e-7),  # strict convergence
+    (4, 300, 1e-1),  # loose convergence
+])
+def test_bayesian_mixture_fit_predict(seed, max_iter, tol):
+    rng = np.random.RandomState(seed)
     rand_data = RandomData(rng, scale=7)
     n_components = 2 * rand_data.n_components
 
     for covar_type in COVARIANCE_TYPE:
         bgmm1 = BayesianGaussianMixture(n_components=n_components,
-                                        max_iter=100, random_state=rng,
-                                        tol=1e-3, reg_covar=0)
+                                        max_iter=max_iter, random_state=rng,
+                                        tol=tol, reg_covar=0)
         bgmm1.covariance_type = covar_type
         bgmm2 = copy.deepcopy(bgmm1)
         X = rand_data.X[covar_type]
