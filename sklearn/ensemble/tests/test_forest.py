@@ -1285,8 +1285,7 @@ class MyBackend(LokyBackend):
 register_parallel_backend('testing', MyBackend)
 
 
-
-@pytest.mark.skipif(_joblib.__version__ < LooseVersion('0.12.0'),
+@pytest.mark.skipif(_joblib.__version__ < LooseVersion('0.12'),
                     reason='tests not yet supported in joblib <0.12')
 @skip_if_no_parallel
 def test_backend_respected():
