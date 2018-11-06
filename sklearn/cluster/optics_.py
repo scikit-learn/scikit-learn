@@ -26,7 +26,7 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='minkowski',
            p=2, metric_params=None, maxima_ratio=.75,
            rejection_ratio=.7, similarity_threshold=0.4,
            significant_min=.003, min_cluster_size=.005,
-           min_maxima_ratio=0.001, algorithm='ball_tree',
+           min_maxima_ratio=0.001, algorithm='auto',
            leaf_size=30, n_jobs=None):
     """Perform OPTICS clustering from vector array
 
@@ -133,11 +133,11 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='minkowski',
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree` (default)
+        - 'ball_tree' will use :class:`BallTree`
         - 'kd_tree' will use :class:`KDTree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
-          based on the values passed to :meth:`fit` method.
+          based on the values passed to :meth:`fit` method. (default)
 
         Note: fitting on sparse input will override the setting of
         this parameter, using brute force.
@@ -289,11 +289,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree` (default)
+        - 'ball_tree' will use :class:`BallTree`
         - 'kd_tree' will use :class:`KDTree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
-          based on the values passed to :meth:`fit` method.
+          based on the values passed to :meth:`fit` method. (default)
 
         Note: fitting on sparse input will override the setting of
         this parameter, using brute force.
@@ -357,7 +357,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                  p=2, metric_params=None, maxima_ratio=.75,
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size=.005,
-                 min_maxima_ratio=0.001, algorithm='ball_tree',
+                 min_maxima_ratio=0.001, algorithm='auto',
                  leaf_size=30, n_jobs=None):
 
         self.max_eps = max_eps
