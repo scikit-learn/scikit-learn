@@ -86,6 +86,10 @@ boston.target = boston.target[perm]
 hastie_X, hastie_y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
 hastie_X = hastie_X.astype(np.float32)
 
+# Get the default backend in joblib to test parallelism and interaction with
+# different backends
+DEFAULT_JOBLIB_BACKEND = joblib.parallel.get_active_backend()[0].__class__
+
 FOREST_CLASSIFIERS = {
     "ExtraTreesClassifier": ExtraTreesClassifier,
     "RandomForestClassifier": RandomForestClassifier,
@@ -446,6 +450,7 @@ def check_oob_score_raise_error(name):
 def test_oob_score_raise_error(name):
     check_oob_score_raise_error(name)
 
+
 def check_gridsearch(name):
     forest = FOREST_CLASSIFIERS[name]()
     clf = GridSearchCV(forest, {'n_estimators': (1, 2), 'max_depth': (1, 2)})
@@ -743,7 +748,8 @@ def check_min_samples_split(name):
     assert_greater(np.min(node_samples), len(X) * 0.5 - 1,
                    "Failed with {0}".format(name))
 
-    est = ForestEstimator(min_samples_split=0.5, n_estimators=1, random_state=0)
+    est = ForestEstimator(min_samples_split=0.5, n_estimators=1,
+                          random_state=0)
     est.fit(X, y)
     node_idx = est.estimators_[0].tree_.children_left != -1
     node_samples = est.estimators_[0].tree_.n_node_samples[node_idx]
@@ -1272,7 +1278,7 @@ def test_nestimators_future_warning(forest):
     est = assert_no_warnings(est.fit, X, y)
 
 
-class MyBackend(joblib._parallel_backends.LokyBackend):
+class MyBackend(DEFAULT_JOBLIB_BACKEND):
     def __init__(self, *args, **kwargs):
         self.count = 0
         super(MyBackend, self).__init__(*args, **kwargs)
