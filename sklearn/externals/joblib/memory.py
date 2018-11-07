@@ -247,8 +247,21 @@ class MemorizedResult(Logger):
                                    metadata=self.metadata)
         else:
             msg = None
-        return self.store_backend.load_item(
-            [self.func_id, self.args_id], msg=msg, verbose=self.verbose)
+
+        try:
+            return self.store_backend.load_item(
+                [self.func_id, self.args_id], msg=msg, verbose=self.verbose)
+        except (ValueError, KeyError) as exc:
+            # KeyError is expected under Python 2.7, ValueError under Python 3
+            new_exc = KeyError(
+                "Error while trying to load a MemorizedResult's value. "
+                "It seems that this folder is corrupted : {}".format(
+                    os.path.join(
+                        self.store_backend.location, self.func_id,
+                        self.args_id)
+                ))
+            new_exc.__cause__ = exc
+            raise new_exc
 
     def clear(self):
         """Clear value from cache"""
