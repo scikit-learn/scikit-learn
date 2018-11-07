@@ -121,9 +121,10 @@ whether or not they contain missing values::
   >>> indicator.features_
   array([0, 1, 2, 3])
 
-When using it in a pipeline, be sure to use the :class:`FeatureUnion` to add
-the indicator features to the regular features. First we obtain the `iris`
-dataset, and add some missing values to it.
+When using the :class:`MissingIndicator` in a :class:`Pipeline`, be sure to use
+the :class:`FeatureUnion` to add the indicator features to the regular
+features. First we obtain the `iris` dataset, and add some missing values to
+it.
 
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.impute import SimpleImputer, MissingIndicator
@@ -144,22 +145,17 @@ Additionally, it adds the the indicator variables from
   >>> transformer = FeatureUnion(
   ...     transformer_list=[
   ...         ('features', SimpleImputer(strategy='mean')),
-  ...         ('indicaters', MissingIndicator(features='all'))])
-  >>> clf = make_pipeline(transformer, DecisionTreeClassifier())
-
-Note that the `iris` dataset has 4 features. By applying the
-`features='all'` function, we ensure that all columns obtain a indicator
-column, also the ones that did not have any missing values.
-
+  ...         ('indicators', MissingIndicator())])
   >>> transformer = transformer.fit(X_train, y_train)
   >>> results = transformer.transform(X_test)
   >>> results.shape
   (100, 8)
 
-Of course, we can not use the transformer to make any predictions. We should
+Of course, we cannot use the transformer to make any predictions. We should
 wrap this in a :class:`Pipeline` with a classifier (e.g., a
 :class:`DecisionTreeClassifier`) to be able to make predictions.
 
+  >>> clf = make_pipeline(transformer, DecisionTreeClassifier())
   >>> clf = clf.fit(X_train, y_train)
   >>> results = clf.predict(X_test)
   >>> results.shape
