@@ -1086,26 +1086,26 @@ Optionally, weights can be provided for the individual classifiers::
    ...                         voting='soft', weights=[2, 5, 1])
 
 
- .. _average_regressor:
+ .. _averaging_regressor:
 
-Average Regressor
+Averaging Regressor
 =================
 
-The idea behind the :class:`AverageRegressor` is to combine conceptually
+The idea behind the :class:`AveragingRegressor` is to combine conceptually
 different machine learning regressors and return the average predicted values.
-Such a regressor can be useful for a set of equally well performing model
+Such a regressor can be useful for a set of equally well performing models
 in order to balance out their individual weaknesses.
 
 Usage
 .....
 
-The following example shows how to fit the AverageRegressor::
+The following example shows how to fit the AveragingRegressor::
 
    >>> from sklearn import datasets
    >>> from sklearn.ensemble import GradientBoostingRegressor
    >>> from sklearn.ensemble import RandomForestRegressor
    >>> from sklearn.linear_model import LinearRegression
-   >>> from sklearn.ensemble import AverageRegressor
+   >>> from sklearn.ensemble import AveragingRegressor
 
    >>> # Loading some example data
    >>> boston = datasets.load_boston()
@@ -1116,13 +1116,10 @@ The following example shows how to fit the AverageRegressor::
    >>> reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)
    >>> reg2 = RandomForestRegressor(random_state=1, n_estimators=10)
    >>> reg3 = LinearRegression()
-   >>> ereg = AverageRegressor(estimators=[('gb', reg1), ('rf', reg2), ('lr', reg3)])
-   >>> reg1 = reg1.fit(X, y)
-   >>> reg2 = reg2.fit(X, y)
-   >>> reg3 = reg3.fit(X, y)
+   >>> ereg = AveragingRegressor(estimators=[('gb', reg1), ('rf', reg2), ('lr', reg3)])
    >>> ereg = ereg.fit(X, y)
 
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_average_regressor_001.png
-    :target: ../auto_examples/ensemble/plot_average_regressor.html
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_averaging_regressor_001.png
+    :target: ../auto_examples/ensemble/plot_averaging_regressor.html
     :align: center
     :scale: 75%

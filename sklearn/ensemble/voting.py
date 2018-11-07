@@ -1,12 +1,9 @@
 """
-Soft Voting/Majority Rule classifier and Average regressor.
+Soft Voting/Majority Rule classifier and Averaging regressor.
 
 This module contains:
- - A Soft Voting/Majority Rule classifier for
-classification estimators.
- - An average regressor for
-regression estimators.
-
+ - A Soft Voting/Majority Rule classifier for classification estimators.
+ - An averaging regressor for regression estimators.
 """
 
 # Authors: Sebastian Raschka <se.raschka@gmail.com>,
@@ -31,7 +28,7 @@ from ..utils.metaestimators import _BaseComposition
 from ..utils import Bunch
 
 
-__all__ = ["AverageRegressor",
+__all__ = ["AveragingRegressor",
            "VotingClassifier"]
 
 
@@ -372,20 +369,21 @@ class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
         return self._get_params('estimators', deep=deep)
 
 
-class AverageRegressor(BaseVoting, RegressorMixin, TransformerMixin):
-    """
-    An average regressor is an ensemble meta-estimator that fits base
-    regressors each on the whole dataset. it, then, averages the individual
+class AveragingRegressor(BaseVoting, RegressorMixin, TransformerMixin):
+    """Prediction averaging regressor for unfitted estimators.
+
+    .. versionadded:: 0.21
+
+    An averaging regressor is an ensemble meta-estimator that fits base
+    regressors each on the whole dataset. It, then, averages the individual
     predictions to form a final prediction.
 
-        .. versionadded:: 0.21
-
-    Read more in the :ref:`User Guide <average_regressor>`.
+    Read more in the :ref:`User Guide <averaging_regressor>`.
 
     Parameters
     ----------
     estimators : list of (string, estimator) tuples
-        Invoking the ``fit`` method on the ``AverageRegressor`` will fit clones
+        Invoking the ``fit`` method on the ``AveragingRegressor`` will fit clones
         of those original estimators that will be stored in the class attribute
         ``self.estimators_``. An estimator can be set to `None` using
         ``set_params``.
@@ -413,12 +411,12 @@ class AverageRegressor(BaseVoting, RegressorMixin, TransformerMixin):
     --------
     >>> import numpy as np
     >>> from sklearn.linear_model import LinearRegression
-    >>> from sklearn.ensemble import RandomForestRegressor, AverageRegressor
+    >>> from sklearn.ensemble import RandomForestRegressor, AveragingRegressor
     >>> r1 = LinearRegression()
     >>> r2 = RandomForestRegressor(n_estimators=10, random_state=1)
     >>> X = np.array([[1, 1], [2, 4], [3, 9], [4, 16], [5, 25], [6, 36]])
     >>> y = np.array([2, 6, 12, 20, 30, 42])
-    >>> er = AverageRegressor(estimators=[
+    >>> er = AveragingRegressor(estimators=[
     ...         ('lr', r1), ('rf', r2)])
     >>> print(er.fit(X, y).predict(X))
     [ 3.3  5.7 11.8 19.7 28.  40.3]
@@ -450,7 +448,7 @@ class AverageRegressor(BaseVoting, RegressorMixin, TransformerMixin):
         -------
         self : object
         """
-        return super(AverageRegressor, self).fit(X, y, sample_weight)
+        return super(AveragingRegressor, self).fit(X, y, sample_weight)
 
     def predict(self, X):
         """Predict regression target for X.
@@ -492,7 +490,7 @@ class AverageRegressor(BaseVoting, RegressorMixin, TransformerMixin):
         return self._predict(X)
 
     def set_params(self, **params):
-        """ Setting the parameters for the AverageRegressor
+        """ Setting the parameters for the AveragingRegressor
 
         Valid parameter keys can be listed with get_params().
 
@@ -500,22 +498,23 @@ class AverageRegressor(BaseVoting, RegressorMixin, TransformerMixin):
         ----------
         **params : keyword arguments
             Specific parameters using e.g. set_params(parameter_name=new_value)
-            In addition, to setting the parameters of the ``AverageRegressor``,
-            the individual regressors of the ``AverageRegressor`` can also be
-            set or replaced by setting them to None.
+            In addition, to setting the parameters of the
+            ``AveragingRegressor``, the individual regressors of the
+            ``AveragingRegressor`` can also be set or replaced by setting
+            them to None.
 
         Examples
         --------
         # In this example, the RandomForestRegressor is removed
         clf1 = LinearRegression()
         clf2 = RandomForestRegressor()
-        eclf = AverageRegressor(estimators=[('lr', clf1), ('rf', clf2)]
+        eclf = AveragingRegressor(estimators=[('lr', clf1), ('rf', clf2)]
         eclf.set_params(rf=None)
         """
         return self._set_params('estimators', **params)
 
     def get_params(self, deep=True):
-        """ Get the parameters of the AverageRegressor
+        """ Get the parameters of the AveragingRegressor
 
         Parameters
         ----------

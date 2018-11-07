@@ -1,4 +1,4 @@
-"""Testing for the VotingClassifier and AverageRegressor"""
+"""Testing for the VotingClassifier and AveragingRegressor"""
 
 import pytest
 import numpy as np
@@ -15,7 +15,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import BaggingRegressor
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.ensemble import VotingClassifier, AverageRegressor
+from sklearn.ensemble import VotingClassifier, AveragingRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn import datasets
 from sklearn.model_selection import cross_val_score
@@ -39,7 +39,7 @@ X_r, y_r = boston.data, boston.target
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_estimator_init():
     eclf = VotingClassifier(estimators=[])
-    ereg = AverageRegressor(estimators=[])
+    ereg = AveragingRegressor([])
     msg = ('Invalid `estimators` attribute, `estimators` should be'
            ' a list of (string, estimator) tuples')
     assert_raise_message(AttributeError, msg, eclf.fit, X, y)
@@ -53,7 +53,7 @@ def test_estimator_init():
     assert_raise_message(ValueError, msg, eclf.fit, X, y)
 
     eclf = VotingClassifier(estimators=[('lr', clf)], weights=[1, 2])
-    ereg = AverageRegressor(estimators=[('lr', reg)], weights=[1, 2])
+    ereg = AveragingRegressor([('lr', reg)], weights=[1, 2])
     msg = ('Number of `estimators` and weights must be equal'
            '; got 2 weights, 1 estimators')
     assert_raise_message(ValueError, msg, eclf.fit, X, y)
@@ -61,20 +61,19 @@ def test_estimator_init():
 
     eclf = VotingClassifier(estimators=[('lr', clf), ('lr', clf)],
                             weights=[1, 2])
-    ereg = AverageRegressor(estimators=[('lr', reg), ('lr', reg)],
-                            weights=[1, 2])
+    ereg = AveragingRegressor([('lr', reg), ('lr', reg)], weights=[1, 2])
     msg = "Names provided are not unique: ['lr', 'lr']"
     assert_raise_message(ValueError, msg, eclf.fit, X, y)
     assert_raise_message(ValueError, msg, ereg.fit, X_r, y_r)
 
     eclf = VotingClassifier(estimators=[('lr__', clf)])
-    ereg = AverageRegressor(estimators=[('lr__', reg)])
+    ereg = AveragingRegressor([('lr__', reg)])
     msg = "Estimator names must not contain __: got ['lr__']"
     assert_raise_message(ValueError, msg, eclf.fit, X, y)
     assert_raise_message(ValueError, msg, ereg.fit, X_r, y_r)
 
     eclf = VotingClassifier(estimators=[('estimators', clf)])
-    ereg = AverageRegressor(estimators=[('estimators', reg)])
+    ereg = AveragingRegressor([('estimators', reg)])
     msg = "Estimator names conflict with constructor arguments: ['estimators']"
     assert_raise_message(ValueError, msg, eclf.fit, X, y)
     assert_raise_message(ValueError, msg, ereg.fit, X_r, y_r)
@@ -96,13 +95,13 @@ def test_notfitted():
     eclf = VotingClassifier(estimators=[('lr1', LogisticRegression()),
                                         ('lr2', LogisticRegression())],
                             voting='soft')
-    ereg = AverageRegressor(estimators=[('lr1', LinearRegression()),
-                                        ('lr2', LinearRegression())])
+    ereg = AveragingRegressor([('lr1', LinearRegression()),
+                               ('lr2', LinearRegression())])
     msg = ("This %s instance is not fitted yet. Call \'fit\'"
            " with appropriate arguments before using this method.")
     assert_raise_message(NotFittedError, msg % 'VotingClassifier',
                          eclf.predict_proba, X)
-    assert_raise_message(NotFittedError, msg % 'AverageRegressor',
+    assert_raise_message(NotFittedError, msg % 'AveragingRegressor',
                          ereg.predict, X_r)
 
 
@@ -123,9 +122,7 @@ def test_majority_label_iris():
 
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_tie_situation():
-    """
-    Check voting classifier selects smaller class label in tie situation.
-    """
+    """Check voting classifier selects smaller class label in tie situation."""
     clf1 = LogisticRegression(random_state=123, multi_class='ovr',
                               solver='liblinear')
     clf2 = RandomForestClassifier(random_state=123)
@@ -137,16 +134,15 @@ def test_tie_situation():
 
 
 def test_average_prediction():
-    """ Check AverageRegressor with multiple models"""
+    """ Check AveragingRegressor with multiple models"""
     reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
                             random_state=1,  n_estimators=100)
     reg2 = RandomForestRegressor(random_state=1, n_estimators=100)
     reg3 = GradientBoostingRegressor(random_state=1, n_estimators=100)
 
-    ensemble = AverageRegressor(estimators=[
-        ('br', reg1), ('rf', reg2), ('gbr', reg3)])
+    ereg = AveragingRegressor([('br', reg1), ('rf', reg2), ('gbr', reg3)])
 
-    scores = cross_val_score(ensemble, X_r, y_r, cv=5, scoring='r2')
+    scores = cross_val_score(ereg, X_r, y_r, cv=5, scoring='r2')
     assert_almost_equal(scores.mean(), 0.65, decimal=2)
 
 
@@ -164,17 +160,15 @@ def test_weights():
                             ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                             voting='soft',
                             weights=[1, 2, 10])
+    scores = cross_val_score(eclf, X, y, cv=5, scoring='accuracy')
+    assert_almost_equal(scores.mean(), 0.93, decimal=2)
 
     reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
                             random_state=1, n_estimators=100)
     reg2 = RandomForestRegressor(random_state=1, n_estimators=100)
     reg3 = GradientBoostingRegressor(random_state=1, n_estimators=100)
-    ereg = AverageRegressor(estimators=[
-                            ('br', reg1), ('rf', reg2), ('gbr', reg3)],
-                            weights=[1, 2, 10])
-
-    scores = cross_val_score(eclf, X, y, cv=5, scoring='accuracy')
-    assert_almost_equal(scores.mean(), 0.93, decimal=2)
+    ereg = AveragingRegressor([('br', reg1), ('rf', reg2), ('gbr', reg3)],
+                              weights=[1, 2, 10])
     scores = cross_val_score(ereg, X_r, y_r, cv=5, scoring='r2')
     assert_almost_equal(scores.mean(), 0.67, decimal=2)
 
@@ -294,18 +288,18 @@ def test_gridsearch():
                 ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                 voting='soft')
 
-    reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
-                            random_state=1, n_estimators=100)
-    reg2 = RandomForestRegressor(random_state=1, n_estimators=100)
-    reg3 = GradientBoostingRegressor(random_state=1, n_estimators=100)
-    ereg = AverageRegressor(estimators=[
-        ('br', reg1), ('rf', reg2), ('gbr', reg3)])
-
     params = {'lr__C': [1.0, 100.0],
               'voting': ['soft', 'hard'],
               'weights': [[0.5, 0.5, 0.5], [1.0, 0.5, 0.5]]}
 
-    GridSearchCV(estimator=eclf, param_grid=params, cv=5).fit(X, y)
+    grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
+    grid.fit(X, y)
+
+    reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
+                            random_state=1, n_estimators=100)
+    reg2 = RandomForestRegressor(random_state=1, n_estimators=100)
+    reg3 = GradientBoostingRegressor(random_state=1, n_estimators=100)
+    ereg = AveragingRegressor([('br', reg1), ('rf', reg2), ('gbr', reg3)])
 
     params = {'rf__n_estimators': [10, 100],
               'weights': [[0.5, 0.5, 0.5], [1.0, 0.5, 0.5]]}
@@ -341,12 +335,10 @@ def test_parallel_fit():
     reg1 = DecisionTreeRegressor(random_state=1)
     reg2 = LinearRegression()
     reg3 = RandomForestRegressor(n_estimators=10, random_state=1)
-    ereg1 = AverageRegressor(estimators=[
-        ('dtr', reg1), ('lr', reg2), ('rf', reg3)],
-        n_jobs=1).fit(X, y)
-    ereg2 = AverageRegressor(estimators=[
-        ('dtr', reg1), ('lr', reg2), ('rf', reg3)],
-        n_jobs=3).fit(X, y)
+    ereg1 = AveragingRegressor([('dtr', reg1), ('lr', reg2), ('rf', reg3)],
+                               n_jobs=1).fit(X, y)
+    ereg2 = AveragingRegressor([('dtr', reg1), ('lr', reg2), ('rf', reg3)],
+                               n_jobs=3).fit(X, y)
 
     assert_array_almost_equal(ereg1.predict(X), ereg2.predict(X))
 
@@ -355,9 +347,8 @@ def test_parallel_fit():
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_sample_weight():
-    """
-    Tests sample_weight parameter of VotingClassifier and AverageRegressor
-    """
+    """Tests sample_weight parameter of VotingClassifier and
+    AveragingRegressor"""
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
     clf3 = SVC(gamma='scale', probability=True, random_state=123)
@@ -389,13 +380,12 @@ def test_sample_weight():
     reg2 = RandomForestRegressor(random_state=1, n_estimators=100)
     reg3 = GradientBoostingRegressor(random_state=1, n_estimators=100)
     reg4 = KNeighborsRegressor()
-    ereg = AverageRegressor(estimators=[
-        ('br', reg1), ('rf', reg2), ('gbr', reg3)])
+    ereg = AveragingRegressor([('br', reg1), ('rf', reg2), ('gbr', reg3)])
     p1 = ereg.fit(X_r, y_r).predict(X_r)
     p2 = ereg.fit(X_r, y_r, sample_weight=np.ones((len(y_r),))).predict(X_r)
     assert_array_almost_equal(p1, p2)
 
-    ereg2 = AverageRegressor(estimators=[('br', reg1), ('knn', reg4)])
+    ereg2 = AveragingRegressor([('br', reg1), ('knn', reg4)])
     assert_raise_message(ValueError, msg, ereg2.fit, X_r, y_r,
                          sample_weight=np.ones((len(y_r),)))
 
@@ -403,9 +393,7 @@ def test_sample_weight():
 def test_sample_weight_kwargs():
     """Check that VotingClassifier passes sample_weight as kwargs"""
     class MockClassifier(BaseEstimator, ClassifierMixin):
-        """
-        Mock Classifier to check that sample_weight is received as kwargs
-        """
+        """Mock Classifier to check that sample_weight is received as kwargs"""
         def fit(self, X, y, *args, **sample_weight):
             assert_true('sample_weight' in sample_weight)
 
@@ -416,14 +404,12 @@ def test_sample_weight_kwargs():
     eclf.fit(X, y, sample_weight=np.ones((len(y),)))
 
     class MockRegressor(BaseEstimator, RegressorMixin):
-        """
-        Mock Regressor to check that sample_weight is received as kwargs
-        """
+        """Mock Regressor to check that sample_weight is received as kwargs"""
         def fit(self, X, y, *args, **sample_weight):
-            assert_true('sample_weight' in sample_weight)
+            assert 'sample_weight' in sample_weight
 
     reg = MockRegressor()
-    ereg = AverageRegressor(estimators=[('mock', reg)])
+    ereg = AveragingRegressor([('mock', reg)])
     ereg.fit(X_r, y_r, sample_weight=np.ones((len(y_r),)))
 
 
@@ -468,31 +454,29 @@ def test_set_params():
                                  n_estimators=10)
     reg3 = GradientBoostingRegressor(random_state=1,
                                      n_estimators=10)
-    ereg1 = AverageRegressor(estimators=[
-        ('lr', reg1), ('rf', reg2)], weights=[1, 2])
+    ereg1 = AveragingRegressor([('lr', reg1), ('rf', reg2)], weights=[1, 2])
 
-    assert_true('lr' in ereg1.named_estimators)
-    assert_true(ereg1.named_estimators.lr is ereg1.estimators[0][1])
-    assert_true(ereg1.named_estimators.lr is ereg1.named_estimators['lr'])
+    assert 'lr' in ereg1.named_estimators
+    assert ereg1.named_estimators.lr is ereg1.estimators[0][1]
+    assert ereg1.named_estimators.lr is ereg1.named_estimators['lr']
 
     ereg1.fit(X_r, y_r)
-    assert_true('lr' in ereg1.named_estimators_)
-    assert_true(ereg1.named_estimators_.lr is ereg1.estimators_[0])
-    assert_true(ereg1.named_estimators_.lr is ereg1.named_estimators_['lr'])
+    assert 'lr' in ereg1.named_estimators_
+    assert ereg1.named_estimators_.lr is ereg1.estimators_[0]
+    assert ereg1.named_estimators_.lr is ereg1.named_estimators_['lr']
 
-    ereg2 = AverageRegressor([
-        ('lr', reg1), ('gbr', reg3)], weights=[1, 2])
+    ereg2 = AveragingRegressor([('lr', reg1), ('gbr', reg3)], weights=[1, 2])
     ereg2.set_params(gbr=reg2).fit(X_r, y_r)
-    assert_false(hasattr(ereg2, 'gbr'))
+    assert not hasattr(ereg2, 'gbr')
 
     assert_array_equal(ereg1.predict(X_r), ereg2.predict(X_r))
-    assert_equal(ereg2.estimators[0][1].get_params(), reg1.get_params())
-    assert_equal(ereg2.estimators[1][1].get_params(), reg2.get_params())
+    assert ereg2.estimators[0][1].get_params() == reg1.get_params()
+    assert ereg2.estimators[1][1].get_params() == reg2.get_params()
 
     ereg2.set_params(gbr__max_depth=5)
-    assert_true(ereg2.estimators[1][1].get_params()['max_depth'] == 5)
-    assert_equal(ereg2.get_params()["gbr__max_depth"],
-                 ereg2.get_params()["gbr"].get_params()['max_depth'])
+    assert ereg2.estimators[1][1].get_params()['max_depth'] == 5
+    assert ereg2.get_params()["gbr__max_depth"] == \
+        ereg2.get_params()["gbr"].get_params()['max_depth']
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
