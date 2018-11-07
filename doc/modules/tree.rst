@@ -182,7 +182,7 @@ render these plots inline automatically::
    :align: center
    :scale: 75
 
-Alternatively, the tree can also be exported in ascii format with the function :func:`export_ascii`. This method doesn't require the installation of external libraries.
+Alternatively, the tree can also be exported in textual format with the function :func:`export_ascii`. This method doesn't require the installation of external libraries.
 
 .. topic:: Examples:
 
