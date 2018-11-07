@@ -625,7 +625,7 @@ def test_dataset_with_openml_warning(monkeypatch, gzip_response):
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     assert_warns_message(
         UserWarning,
-        "OpenML registered a problem with the dataset. It might be unusable. "
+        "OpenML raised a warning on the dataset. It might be unusable. "
         "Warning:",
         fetch_openml, data_id=data_id, cache=False
     )
