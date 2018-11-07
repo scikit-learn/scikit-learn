@@ -61,7 +61,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |Efficiency| Make :class:`ensemble.IsolationForest` prefer threads over
   processes when running with ``n_jobs > 1`` as the underlying decision tree
   fit calls do release the GIL. This changes reduces memory usage and
-  communication overhead. :issue:`12469` by :user:`Isaac Storch <istorch>`
+  communication overhead. :issue:`12543` by :user:`Isaac Storch <istorch>`
   and `Olivier Grisel`_.
 
 :mod:`sklearn.metrics`
