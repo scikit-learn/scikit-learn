@@ -8,6 +8,7 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 #         Lars Buitinck
 #
 # License: BSD 3 clause
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -302,7 +303,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, eps=0.5, min_samples=5, metric='minkowski',
-                 metric_params=None, algorithm='auto', leaf_size=30, p=2,
+                 metric_params=None, algorithm='auto', leaf_size=30, p='warn',
                  n_jobs=None):
         self.eps = eps
         self.min_samples = min_samples
@@ -331,6 +332,10 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         y : Ignored
 
         """
+        if self.metric == 'minkowski' and self.p != 2:
+            warnings.warn("The default value of p will change to default p=2.", FutureWarning)
+            self.p = 2
+
         X = check_array(X, accept_sparse='csr')
         clust = dbscan(X, sample_weight=sample_weight,
                        **self.get_params())

@@ -3,6 +3,7 @@ Kernel Density Estimation
 -------------------------
 """
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
+import warnings
 
 import numpy as np
 from scipy.special import gammainc
@@ -12,7 +13,6 @@ from ..utils import check_array, check_random_state, check_consistent_length
 from ..utils.extmath import row_norms
 from .ball_tree import BallTree, DTYPE
 from .kd_tree import KDTree
-
 
 VALID_KERNELS = ['gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear',
                  'cosine']
@@ -47,7 +47,7 @@ class KernelDensity(BaseEstimator):
         :class:`BallTree` and :class:`KDTree` for a description of
         available algorithms.  Note that the normalization of the density
         output is correct only for the Euclidean distance metric. Default
-        is 'euclidean'.
+        is 'minkowski'.
 
     p : float, optional
         The power of the Minkowski metric to be used to calculate distance
@@ -74,6 +74,7 @@ class KernelDensity(BaseEstimator):
         metric.  For more information, see the documentation of
         :class:`BallTree` or :class:`KDTree`.
     """
+
     def __init__(self, bandwidth=1.0, algorithm='auto',
                  kernel='gaussian', metric="minkowski", p=2, atol=0, rtol=0,
                  breadth_first=True, leaf_size=40, metric_params=None):
@@ -129,6 +130,11 @@ class KernelDensity(BaseEstimator):
         sample_weight : array_like, shape (n_samples,), optional
             List of sample weights attached to the data X.
         """
+
+        if self.metric == 'minkowski' and self.p != 2:
+            warnings.warn("The default value of p will change to default p=2.", FutureWarning)
+            self.p = 2
+
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
         X = check_array(X, order='C', dtype=DTYPE)
 

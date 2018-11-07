@@ -48,6 +48,13 @@ Support for Python 3.4 and below has been officially dropped.
   to set and that scales better, by :user:`Shane <espg>`,
   :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
 
+- |API| Changing the parameter pattern in :class:`cluster.DBSCAN` from
+  ``metric = euclidean`` to ``metric = minkowski``. In addition to creating the
+  parameter ``p = 2``. This p is that it should be possible to switch between
+  Manhattan and Euclidian and other Minkowski distances just by modifying
+  ``'p'`` (without changing metric).
+  :issue:`12437` by :user:`Gilberto Olimpio <gilbertoolimpio>`
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -79,6 +86,13 @@ Support for Python 3.4 and below has been officially dropped.
   now raise ``NotFittedError``, rather than AttributeError,
   when called before fit :issue:`12279` by :user:`Krishna Sangeeth
   <whiletruelearn>`.
+
+- |API| Changing the parameter pattern in :class:`cluster.DBSCAN` from
+  ``metric = euclidean`` to ``metric = minkowski``. In addition to creating the
+  parameter ``p = 2``. This p is that it should be possible to switch between
+  Manhattan and Euclidian and other Minkowski distances just by modifying
+  ``'p'`` (without changing metric).
+  :issue:`12437` by :user:`Gilberto Olimpio <gilbertoolimpio>`
 
 :mod:`sklearn.pipeline`
 .......................

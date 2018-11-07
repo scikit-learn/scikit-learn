@@ -548,10 +548,6 @@ class TSNE(BaseEstimator):
         the distance between them. The default is "euclidean" which is
         interpreted as squared euclidean distance.
 
-    p : float, optional
-        The power of the Minkowski metric to be used to calculate distance
-        between points.
-
     init : string or numpy array, optional (default: "random")
         Initialization of embedding. Possible options are 'random', 'pca',
         and a numpy array of shape (n_samples, n_components).
@@ -632,7 +628,7 @@ class TSNE(BaseEstimator):
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=12.0, learning_rate=200.0, n_iter=1000,
                  n_iter_without_progress=300, min_grad_norm=1e-7,
-                 metric="euclidean", p=2, init="random", verbose=0,
+                 metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5):
         self.n_components = n_components
         self.perplexity = perplexity
