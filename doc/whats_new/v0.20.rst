@@ -40,6 +40,9 @@ Changelog
 
 - |API| :class:`compose.ColumnTransformer` now expects
   `(name, columns, transformer)` instead of `(name, transformer, columns)`.
+  The support for the `(name, transformer, columns)` order will be removed
+  in v0.22, and until then, a `UserWarning` is raised if the deprecated
+  input order is given.
   :issue:`12339` by :user:`Adrin Jalali <adrinjalali>`.
 
 :mod:`sklearn.datasets`
