@@ -850,7 +850,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     Attributes
     ----------
     cluster_centers_ : array, [n_clusters, n_features]
-        Coordinates of cluster centers
+        Coordinates of cluster centers. If the algorithm stops before fully
+        converging (see ``tol`` and ``max_iter``), these will not be
+        consistent with ``labels_``.
 
     labels_ :
         Labels of each point
@@ -901,11 +903,12 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     clustering algorithms available), but it falls in local minima. That's why
     it can be useful to restart it several times.
 
-    If the algorithm stops before fully converging (because of ``tol`` of
-    ``max_iter``), ``labels_`` and ``means_`` will not be consistent, i.e. the
-    ``means_`` will not be the means of the points in each cluster.
-    Also, the estimator will reassign ``labels_`` after the last iteration to
-    make ``labels_`` consistent with ``predict`` on the training set.
+    If the algorithm stops before fully converging (because of ``tol`` or
+    ``max_iter``), ``labels_`` and ``cluster_centers_`` will not be consistent,
+    i.e. the ``cluster_centers_`` will not be the means of the points in each
+    cluster. Also, the estimator will reassign ``labels_`` after the last
+    iteration to make ``labels_`` consistent with ``predict`` on the training
+    set.
 
     """
 
