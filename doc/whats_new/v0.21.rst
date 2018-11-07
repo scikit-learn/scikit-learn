@@ -106,7 +106,7 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.tree`
 ...................
 - Decision Trees can now be plotted with matplotlib using
-  :func:`tree.export.plot_tree` without relying on the ``dot`` library,
+  :func:`tree.plot_tree` without relying on the ``dot`` library,
   removing a hard-to-install dependency. :issue:`8508` by `Andreas Müller`_.
 
 - |Feature| ``get_n_leaves()`` and ``get_depth()`` have been added to
