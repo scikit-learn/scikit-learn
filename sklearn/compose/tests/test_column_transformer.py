@@ -402,13 +402,13 @@ def test_column_transformer_sparse_threshold():
     X_array = np.array([['a', 'b'], ['A', 'B']], dtype=object).T
     # above data has sparsity of 4 / 8 = 0.5
 
-    # if all sparse, keep sparse (even if above threshold)
+    # apply threshold even if all sparse
     col_trans = ColumnTransformer([('trans1', OneHotEncoder(), [0]),
                                    ('trans2', OneHotEncoder(), [1])],
                                   sparse_threshold=0.2)
     res = col_trans.fit_transform(X_array)
-    assert sparse.issparse(res)
-    assert col_trans.sparse_output_
+    assert not sparse.issparse(res)
+    assert not col_trans.sparse_output_
 
     # mixed -> sparsity of (4 + 2) / 8 = 0.75
     for thres in [0.75001, 1]:

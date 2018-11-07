@@ -49,7 +49,6 @@ import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 
-
 from ..base import ClassifierMixin, RegressorMixin
 from ..utils import Parallel, delayed
 from ..externals import six
@@ -61,7 +60,7 @@ from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
 from ..exceptions import DataConversionWarning, NotFittedError
 from .base import BaseEnsemble, _partition_estimators
-from ..utils.fixes import parallel_helper
+from ..utils.fixes import parallel_helper, _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 
@@ -174,7 +173,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """
         X = self._validate_X_predict(X)
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                           prefer="threads")(
+                           **_joblib_parallel_args(prefer="threads"))(
             delayed(parallel_helper)(tree, 'apply', X, check_input=False)
             for tree in self.estimators_)
 
@@ -205,7 +204,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """
         X = self._validate_X_predict(X)
         indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                              prefer="threads")(
+                              **_joblib_parallel_args(prefer='threads'))(
             delayed(parallel_helper)(tree, 'decision_path', X,
                                      check_input=False)
             for tree in self.estimators_)
@@ -323,11 +322,11 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
             # Parallel loop: we prefer the threading backend as the Cython code
             # for fitting the trees is internally releasing the Python GIL
             # making threading more efficient than multiprocessing in
-            # that case. However, we respect any parallel_backend contexts set
-            # at a higher level, since correctness does not rely on using
-            # threads.
+            # that case. However, for joblib 0.12+ we respect any
+            # parallel_backend contexts set at a higher level,
+            # since correctness does not rely on using threads.
             trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                             prefer="threads")(
+                             **_joblib_parallel_args(prefer='threads'))(
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),
                     verbose=self.verbose, class_weight=self.class_weight)
@@ -374,7 +373,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         check_is_fitted(self, 'estimators_')
 
         all_importances = Parallel(n_jobs=self.n_jobs,
-                                   prefer="threads")(
+                                   **_joblib_parallel_args(prefer='threads'))(
             delayed(getattr)(tree, 'feature_importances_')
             for tree in self.estimators_)
 
@@ -590,7 +589,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         all_proba = [np.zeros((X.shape[0], j), dtype=np.float64)
                      for j in np.atleast_1d(self.n_classes_)]
         lock = threading.Lock()
-        Parallel(n_jobs=n_jobs, verbose=self.verbose, require="sharedmem")(
+        Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                 **_joblib_parallel_args(require="sharedmem"))(
             delayed(_accumulate_prediction)(e.predict_proba, X, all_proba,
                                             lock)
             for e in self.estimators_)
@@ -698,7 +698,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
         # Parallel loop
         lock = threading.Lock()
-        Parallel(n_jobs=n_jobs, verbose=self.verbose, require="sharedmem")(
+        Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                 **_joblib_parallel_args(require="sharedmem"))(
             delayed(_accumulate_prediction)(e.predict, X, [y_hat], lock)
             for e in self.estimators_)
 
@@ -947,7 +948,7 @@ class RandomForestClassifier(ForestClassifier):
     --------
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.datasets import make_classification
-    >>>
+
     >>> X, y = make_classification(n_samples=1000, n_features=4,
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
@@ -1199,7 +1200,7 @@ class RandomForestRegressor(ForestRegressor):
     --------
     >>> from sklearn.ensemble import RandomForestRegressor
     >>> from sklearn.datasets import make_regression
-    >>>
+
     >>> X, y = make_regression(n_features=4, n_informative=2,
     ...                        random_state=0, shuffle=False)
     >>> regr = RandomForestRegressor(max_depth=2, random_state=0,
@@ -1896,6 +1897,9 @@ class RandomTreesEmbedding(BaseForest):
 
     """
 
+    criterion = 'mse'
+    max_features = 1
+
     def __init__(self,
                  n_estimators='warn',
                  max_depth=5,
@@ -1925,12 +1929,10 @@ class RandomTreesEmbedding(BaseForest):
             verbose=verbose,
             warm_start=warm_start)
 
-        self.criterion = 'mse'
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
-        self.max_features = 1
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split

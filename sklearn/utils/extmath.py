@@ -17,24 +17,12 @@ import warnings
 import numpy as np
 from scipy import linalg, sparse
 
-from . import check_random_state, deprecated
+from . import check_random_state
 from .fixes import np_version
-from .fixes import logsumexp as scipy_logsumexp
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-
-
-@deprecated("sklearn.utils.extmath.norm was deprecated in version 0.19 "
-            "and will be removed in 0.21. Use scipy.linalg.norm instead.")
-def norm(x):
-    """Compute the Euclidean or Frobenius norm of x.
-
-    Returns the Euclidean norm when x is a vector, the Frobenius norm when x
-    is a matrix (2-d array). More precise than sqrt(squared_norm(x)).
-    """
-    return linalg.norm(x)
 
 
 def squared_norm(x):
@@ -107,12 +95,6 @@ def fast_logdet(A):
     if not sign > 0:
         return -np.inf
     return ld
-
-
-@deprecated("sklearn.utils.extmath.fast_dot was deprecated in version 0.19 "
-            "and will be removed in 0.21. Use the equivalent np.dot instead.")
-def fast_dot(a, b, out=None):
-    return np.dot(a, b, out)
 
 
 def density(w, **kwargs):
@@ -378,25 +360,6 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         return U[:, :n_components], s[:n_components], V[:n_components, :]
 
 
-@deprecated("sklearn.utils.extmath.logsumexp was deprecated in version 0.19 "
-            "and will be removed in 0.21. Use scipy.misc.logsumexp instead.")
-def logsumexp(arr, axis=0):
-    """Computes the sum of arr assuming arr is in the log domain.
-    Returns log(sum(exp(arr))) while minimizing the possibility of
-    over/underflow.
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.utils.extmath import logsumexp
-    >>> a = np.arange(10)
-    >>> np.log(np.sum(np.exp(a)))
-    9.458...
-    >>> logsumexp(a)  # doctest: +SKIP
-    9.458...
-    """
-    return scipy_logsumexp(arr, axis)
-
-
 def weighted_mode(a, w, axis=0):
     """Returns an array of the weighted modal (most common) value in a
 
@@ -468,12 +431,6 @@ def weighted_mode(a, w, axis=0):
         oldcounts = np.maximum(counts, oldcounts)
         oldmostfreq = mostfrequent
     return mostfrequent, oldcounts
-
-
-@deprecated("sklearn.utils.extmath.pinvh was deprecated in version 0.19 "
-            "and will be removed in 0.21. Use scipy.linalg.pinvh instead.")
-def pinvh(a, cond=None, rcond=None, lower=True):
-    return linalg.pinvh(a, cond, rcond, lower)
 
 
 def cartesian(arrays, out=None):
@@ -753,7 +710,12 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     # new = the current increment
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
-    new_sum = np.nansum(X, axis=0)
+    if np.issubdtype(X.dtype, np.floating) and X.dtype.itemsize < 8:
+        # Use at least float64 for the accumulator to avoid precision issues;
+        # see https://github.com/numpy/numpy/issues/9393
+        new_sum = np.nansum(X, axis=0, dtype=np.float64).astype(X.dtype)
+    else:
+        new_sum = np.nansum(X, axis=0)
 
     new_sample_count = np.sum(~np.isnan(X), axis=0)
     updated_sample_count = last_sample_count + new_sample_count

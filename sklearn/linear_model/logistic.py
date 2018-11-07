@@ -33,6 +33,7 @@ from ..exceptions import (NotFittedError, ConvergenceWarning,
                           ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
 from ..utils import Parallel, delayed, effective_n_jobs
+from ..utils.fixes import _joblib_parallel_args
 from ..model_selection import check_cv
 from ..externals import six
 from ..metrics import get_scorer
@@ -1203,7 +1204,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     ----------
 
     LIBLINEAR -- A Library for Large Linear Classification
-        http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+        https://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
     SAG -- Mark Schmidt, Nicolas Le Roux, and Francis Bach
         Minimizing Finite Sums with the Stochastic Average Gradient
@@ -1217,7 +1218,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     Hsiang-Fu Yu, Fang-Lan Huang, Chih-Jen Lin (2011). Dual coordinate descent
         methods for logistic regression and maximum entropy models.
         Machine Learning 85(1-2):41-75.
-        http://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
+        https://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
@@ -1249,7 +1250,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_targets)
+        y : array-like, shape (n_samples,)
             Target vector relative to X.
 
         sample_weight : array-like, shape (n_samples,) optional
@@ -1346,7 +1347,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         else:
             prefer = 'processes'
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                               prefer=prefer)(
+                               **_joblib_parallel_args(prefer=prefer))(
             path_func(X, y, pos_class=class_, Cs=[self.C],
                       fit_intercept=self.fit_intercept, tol=self.tol,
                       verbose=self.verbose, solver=solver,
@@ -1688,7 +1689,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_targets)
+        y : array-like, shape (n_samples,)
             Target vector relative to X.
 
         sample_weight : array-like, shape (n_samples,) optional
@@ -1777,7 +1778,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         else:
             prefer = 'processes'
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                               prefer=prefer)(
+                               **_joblib_parallel_args(prefer=prefer))(
             path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
                       fit_intercept=self.fit_intercept, penalty=self.penalty,
                       dual=self.dual, solver=solver, tol=self.tol,

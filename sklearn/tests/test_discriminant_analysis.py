@@ -1,5 +1,7 @@
 import numpy as np
 
+import pytest
+
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -9,7 +11,6 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
 
@@ -316,20 +317,6 @@ def test_qda_store_covariance():
     )
 
 
-def test_qda_deprecation():
-    # Test the deprecation
-    clf = QuadraticDiscriminantAnalysis(store_covariances=True)
-    assert_warns_message(DeprecationWarning, "'store_covariances' was renamed"
-                         " to store_covariance in version 0.19 and will be "
-                         "removed in 0.21.", clf.fit, X, y)
-
-    # check that covariance_ (and covariances_ with warning) is stored
-    assert_warns_message(DeprecationWarning, "Attribute ``covariances_`` was "
-                         "deprecated in version 0.19 and will be removed "
-                         "in 0.21. Use ``covariance_`` instead", getattr, clf,
-                         'covariances_')
-
-
 def test_qda_regularization():
     # the default is reg_param=0. and will cause issues
     # when there is a constant variable
@@ -365,3 +352,16 @@ def test_covariance():
 
     c_s = _cov(x, 'auto')
     assert_almost_equal(c_s, c_s.T)
+
+
+@pytest.mark.parametrize("solver", ['svd, lsqr', 'eigen'])
+def test_raises_value_error_on_same_number_of_classes_and_samples(solver):
+    """
+    Tests that if the number of samples equals the number
+    of classes, a ValueError is raised.
+    """
+    X = np.array([[0.5, 0.6], [0.6, 0.5]])
+    y = np.array(["a", "b"])
+    clf = LinearDiscriminantAnalysis(solver=solver)
+    with pytest.raises(ValueError, match="The number of samples must be more"):
+        clf.fit(X, y)

@@ -226,7 +226,7 @@ mailing list for more visibility.
 
 If any of the above seems like magic to you, then look up the `Git documentation
 <https://git-scm.com/documentation>`_ and the `Git development workflow
-<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
+<https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
 web.
 
 If some conflicts arise between your branch and the ``master`` branch, you need
@@ -352,7 +352,7 @@ and Cython optimizations.
 
    For two very well documented and more detailed guides on development
    workflow, please pay a visit to the `Scipy Development Workflow
-   <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
+   <https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
    and the `Astropy Workflow for Developers
    <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
@@ -1143,6 +1143,16 @@ data dependent. A tolerance stopping criterion ``tol`` is not directly
 data dependent (although the optimal value according to some scoring
 function probably is).
 
+When ``fit`` is called, any previous call to ``fit`` should be ignored. In
+general, calling ``estimator.fit(X1)`` and then ``estimator.fit(X2)`` should
+be the same as only calling ``estimator.fit(X2)``. However, this may not be
+true in practice when ``fit`` depends on some random process, see
+:term:`random_state`. Another exception to this rule is when the
+hyper-parameter ``warm_start`` is set to ``True`` for estimators that
+support it. ``warm_start=True`` means that the previous state of the
+trainable parameters of the estimator are reused instead of using the
+default initialization strategy.
+
 Estimated Attributes
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -1151,9 +1161,8 @@ ending with trailing underscore, for example the coefficients of
 some regression estimator would be stored in a ``coef_`` attribute after
 ``fit`` has been called.
 
-The last-mentioned attributes are expected to be overridden when
-you call ``fit`` a second time without taking any previous value into
-account: **fit should be idempotent**.
+The estimated attributes are expected to be overridden when you call ``fit``
+a second time.
 
 Optional Arguments
 ^^^^^^^^^^^^^^^^^^
@@ -1209,7 +1218,7 @@ the correct interface more easily.
     and optionally the mixin classes in ``sklearn.base``.
     For example, below is a custom classifier, with more examples included
     in the scikit-learn-contrib
-    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`__.
+    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/_template.py>`__.
 
       >>> import numpy as np
       >>> from sklearn.base import BaseEstimator, ClassifierMixin

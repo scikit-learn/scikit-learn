@@ -239,13 +239,13 @@ and use ``decision_function`` instead of ``predict_proba``.
 
  * Wu, Lin and Weng,
    `"Probability estimates for multi-class classification by pairwise coupling"
-   <http://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_,
+   <https://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_,
    JMLR 5:975-1005, 2004.
  
  
  * Platt
    `"Probabilistic outputs for SVMs and comparisons to regularized likelihood methods"
-   <http://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_.
+   <https://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_.
 
 Unbalanced problems
 --------------------
@@ -637,7 +637,7 @@ term :math:`\rho` :
 
 
  * `"Support-vector networks"
-   <http://link.springer.com/article/10.1007%2FBF00994018>`_,
+   <https://link.springer.com/article/10.1007%2FBF00994018>`_,
    C. Cortes, V. Vapnik - Machine Learning, 20, 273-297 (1995).
 
 
@@ -712,8 +712,8 @@ Implementation details
 Internally, we use `libsvm`_ and `liblinear`_ to handle all
 computations. These libraries are wrapped using C and Cython.
 
-.. _`libsvm`: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
-.. _`liblinear`: http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+.. _`libsvm`: https://www.csie.ntu.edu.tw/~cjlin/libsvm/
+.. _`liblinear`: https://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
 .. topic:: References:
 
@@ -721,9 +721,9 @@ computations. These libraries are wrapped using C and Cython.
   used, please refer to
 
     - `LIBSVM: A Library for Support Vector Machines
-      <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_.
+      <https://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_.
 
     - `LIBLINEAR -- A Library for Large Linear Classification
-      <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_.
+      <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_.
 
 

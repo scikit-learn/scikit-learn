@@ -19,7 +19,6 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
-from sklearn.utils.testing import assert_warns
 
 from sklearn.exceptions import NotFittedError
 from sklearn.externals.six.moves import xrange
@@ -347,19 +346,6 @@ def test_lda_fit_perplexity():
     assert_almost_equal(perplexity1, perplexity2)
 
 
-def test_doc_topic_distr_deprecation():
-    # Test that the appropriate warning message is displayed when a user
-    # attempts to pass the doc_topic_distr argument to the perplexity method
-    n_components, X = _build_sparse_mtx()
-    lda = LatentDirichletAllocation(n_components=n_components, max_iter=1,
-                                    learning_method='batch',
-                                    total_samples=100, random_state=0)
-    distr1 = lda.fit_transform(X)
-    distr2 = None
-    assert_warns(DeprecationWarning, lda.perplexity, X, distr1)
-    assert_warns(DeprecationWarning, lda.perplexity, X, distr2)
-
-
 def test_lda_empty_docs():
     """Test LDA on empty document (all-zero rows)."""
     Z = np.zeros((5, 4))
@@ -415,9 +401,3 @@ def test_verbosity(verbose, evaluate_every, expected_lines,
                    expected_perplexities):
     check_verbosity(verbose, evaluate_every, expected_lines,
                     expected_perplexities)
-
-
-def test_lda_n_topics_deprecation():
-    n_components, X = _build_sparse_mtx()
-    lda = LatentDirichletAllocation(n_topics=10, learning_method='batch')
-    assert_warns(DeprecationWarning, lda.fit, X)

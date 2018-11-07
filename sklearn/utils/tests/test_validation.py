@@ -41,6 +41,7 @@ from sklearn.utils.validation import (
     check_memory,
     check_non_negative,
     LARGE_SPARSE_SUPPORTED,
+    _num_samples
 )
 import sklearn
 
@@ -780,3 +781,21 @@ def test_check_non_negative(retype):
     A[0, 0] = -1
     X = retype(A)
     assert_raises_regex(ValueError, "Negative ", check_non_negative, X, "")
+
+
+def test_check_X_y_informative_error():
+    X = np.ones((2, 2))
+    y = None
+    assert_raise_message(ValueError, "y cannot be None", check_X_y, X, y)
+
+
+def test_retrieve_samples_from_non_standard_shape():
+    class TestNonNumericShape:
+        def __init__(self):
+            self.shape = ("not numeric",)
+
+        def __len__(self):
+            return len([1, 2, 3])
+
+    X = TestNonNumericShape()
+    assert _num_samples(X) == len(X)
