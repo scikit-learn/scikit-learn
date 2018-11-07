@@ -260,6 +260,11 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                 best_params = self._get_parameters()
                 best_n_iter = n_iter
 
+        # Always do a final e-step to guarantee that the labels returned by
+        # fit_predict(X) are always consistent with fit(X).predict(X)
+        # for any value of max_iter and tol (and any random_state).
+        _, log_resp = self._e_step(X)
+
         if not self.converged_:
             warnings.warn('Initialization %d did not converge. '
                           'Try different init parameters, '

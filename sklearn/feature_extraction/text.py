@@ -35,7 +35,8 @@ from ..utils.fixes import sp_version
 from ..utils.fixes import _Mapping as Mapping  # noqa
 
 
-__all__ = ['CountVectorizer',
+__all__ = ['HashingVectorizer',
+           'CountVectorizer',
            'ENGLISH_STOP_WORDS',
            'TfidfTransformer',
            'TfidfVectorizer',
