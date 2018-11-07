@@ -147,6 +147,9 @@ def test_column_transformer_tuple_order_deprecation(transformer):
         ct = ColumnTransformer([('name', transformer, [0])])
         ct.fit(X_array)
 
+    # and this whould not raise any warnings.
+    ct.transform(X_array)
+
 
 def test_column_transformer_dataframe():
     pd = pytest.importorskip('pandas')
