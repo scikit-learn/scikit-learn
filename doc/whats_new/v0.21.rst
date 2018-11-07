@@ -55,6 +55,15 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`linear_model.MultiTaskLasso` which were breaking when
   ``warm_start = True``. :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Efficiency| Make :class:`ensemble.IsolationForest` prefer threads over
+  processes when running with ``n_jobs > 1`` as the underlying decision tree
+  fit calls do release the GIL. This changes reduces memory usage and
+  communication overhead. :issue:`12543` by :user:`Isaac Storch <istorch>`
+  and `Olivier Grisel`_.
+
 :mod:`sklearn.metrics`
 ......................
 
