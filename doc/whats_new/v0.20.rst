@@ -39,7 +39,8 @@ Changelog
   Müller`_.
 
 - |API| :class:`compose.ColumnTransformer` now expects
-  `(name, columns, transformer)` instead of `(name, transformer, columns)`.
+  `(name, columns, transformer)` instead of `(name, transformer, columns)`
+  as the first argument to the constructor.
   The support for the `(name, transformer, columns)` order will be removed
   in v0.22, and until then, a `UserWarning` is raised if the deprecated
   input order is given.
