@@ -383,10 +383,10 @@ class AveragingRegressor(BaseVoting, RegressorMixin, TransformerMixin):
     Parameters
     ----------
     estimators : list of (string, estimator) tuples
-        Invoking the ``fit`` method on the ``AveragingRegressor`` will fit clones
-        of those original estimators that will be stored in the class attribute
-        ``self.estimators_``. An estimator can be set to `None` using
-        ``set_params``.
+        Invoking the ``fit`` method on the ``AveragingRegressor`` will fit
+        clones of those original estimators that will be stored in the class
+        attribute ``self.estimators_``. An estimator can be set to `None`
+        using ``set_params``.
 
     weights : array-like, shape = [n_regressors], optional (default=`None`)
         Sequence of weights (`float` or `int`) to weight the occurrences of
@@ -411,13 +411,13 @@ class AveragingRegressor(BaseVoting, RegressorMixin, TransformerMixin):
     --------
     >>> import numpy as np
     >>> from sklearn.linear_model import LinearRegression
-    >>> from sklearn.ensemble import RandomForestRegressor, AveragingRegressor
+    >>> from sklearn.ensemble import RandomForestRegressor
+    >>> from sklearn.ensemble import AveragingRegressor
     >>> r1 = LinearRegression()
     >>> r2 = RandomForestRegressor(n_estimators=10, random_state=1)
     >>> X = np.array([[1, 1], [2, 4], [3, 9], [4, 16], [5, 25], [6, 36]])
     >>> y = np.array([2, 6, 12, 20, 30, 42])
-    >>> er = AveragingRegressor(estimators=[
-    ...         ('lr', r1), ('rf', r2)])
+    >>> er = AveragingRegressor([('lr', r1), ('rf', r2)])
     >>> print(er.fit(X, y).predict(X))
     [ 3.3  5.7 11.8 19.7 28.  40.3]
     """
