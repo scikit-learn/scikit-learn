@@ -638,7 +638,6 @@ class TSNE(BaseEstimator):
         self.n_iter_without_progress = n_iter_without_progress
         self.min_grad_norm = min_grad_norm
         self.metric = metric
-        self.p = p
         self.init = init
         self.verbose = verbose
         self.random_state = random_state
