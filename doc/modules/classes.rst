@@ -1399,6 +1399,7 @@ Low-level methods
    :template: function.rst
 
    tree.export_graphviz
+   tree.export_ascii
 
 
 .. _utils_ref:

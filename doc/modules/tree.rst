@@ -182,6 +182,8 @@ render these plots inline automatically::
    :align: center
    :scale: 75
 
+Alternatively, :func:`export_ascii` will print the tree using ascii characters.
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_tree_plot_iris.py`

@@ -9,6 +9,7 @@ This module defines export functions for decision trees.
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Trevor Stephens <trev.stephens@gmail.com>
 #          Li Li <aiki.nogard@gmail.com>
+#          Giuseppe Vettigli <vettigli@gmail.com>
 # License: BSD 3 clause
 import warnings
 
