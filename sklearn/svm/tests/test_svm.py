@@ -317,8 +317,8 @@ def test_probability():
         prob_predict = clf.predict_proba(iris.data)
         assert_array_almost_equal(
             np.sum(prob_predict, 1), np.ones(iris.data.shape[0]))
-        assert np.mean(np.argmax(prob_predict, 1
-                            == clf.predict(iris.data)) > 0.9)
+        assert np.mean(np.argmax(prob_predict, 1)
+                            == clf.predict(iris.data)) > 0.9
 
         assert_almost_equal(clf.predict_proba(iris.data),
                             np.exp(clf.predict_log_proba(iris.data)), 8)
@@ -472,7 +472,7 @@ def test_auto_weight():
         y_pred = clf.fit(X[unbalanced], y[unbalanced]).predict(X)
         clf.set_params(class_weight='balanced')
         y_pred_balanced = clf.fit(X[unbalanced], y[unbalanced],).predict(X)
-        assert metrics.f1_score(y, y_pred, average='macro'
+        assert (metrics.f1_score(y, y_pred, average='macro')
                     <= metrics.f1_score(y, y_pred_balanced,
                                         average='macro'))
 
