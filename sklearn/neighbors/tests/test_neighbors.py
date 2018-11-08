@@ -603,7 +603,7 @@ def test_kneighbors_regressor(n_samples=40,
             knn.fit(X, y)
             epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
             y_pred = knn.predict(X[:n_test_pts] + epsilon)
-            assert_true(np.all(abs(y_pred - y_target) < 0.3))
+            assert np.all(abs(y_pred - y_target) < 0.3)
 
 
 def test_KNeighborsRegressor_multioutput_uniform_weight():
@@ -657,7 +657,7 @@ def test_kneighbors_regressor_multioutput(n_samples=40,
         y_pred = knn.predict(X[:n_test_pts] + epsilon)
         assert_equal(y_pred.shape, y_target.shape)
 
-        assert_true(np.all(np.abs(y_pred - y_target) < 0.3))
+        assert np.all(np.abs(y_pred - y_target) < 0.3)
 
 
 def test_radius_neighbors_regressor(n_samples=40,
@@ -683,7 +683,7 @@ def test_radius_neighbors_regressor(n_samples=40,
             neigh.fit(X, y)
             epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
             y_pred = neigh.predict(X[:n_test_pts] + epsilon)
-            assert_true(np.all(abs(y_pred - y_target) < radius / 2))
+            assert np.all(abs(y_pred - y_target) < radius / 2)
 
     # test that nan is returned when no nearby observations
     for weights in ['uniform', 'distance']:
@@ -698,7 +698,7 @@ def test_radius_neighbors_regressor(n_samples=40,
                                     empty_warning_msg,
                                     neigh.predict,
                                     X_test_nan)
-        assert_true(np.all(np.isnan(pred)))
+        assert np.all(np.isnan(pred))
 
 
 def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
@@ -755,7 +755,7 @@ def test_RadiusNeighborsRegressor_multioutput(n_samples=40,
         y_pred = rnn.predict(X[:n_test_pts] + epsilon)
 
         assert_equal(y_pred.shape, y_target.shape)
-        assert_true(np.all(np.abs(y_pred - y_target) < 0.3))
+        assert np.all(np.abs(y_pred - y_target) < 0.3)
 
 
 def test_kneighbors_regressor_sparse(n_samples=40,
@@ -1354,7 +1354,7 @@ def test_dtype_convert():
 
 def test_sparse_metric_callable():
     def sparse_metric(x, y):  # Metric accepting sparse matrix input (only)
-        assert_true(issparse(x) and issparse(y))
+        assert issparse(x) and issparse(y)
         return x.dot(y.T).A.item()
 
     X = csr_matrix([  # Population matrix

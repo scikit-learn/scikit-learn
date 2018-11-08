@@ -89,9 +89,9 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
         """
         assert len(X) == len(y)
         if self.check_X is not None:
-            assert_true(self.check_X(X))
+            assert self.check_X(X)
         if self.check_y is not None:
-            assert_true(self.check_y(y))
+            assert self.check_y(y)
         self.classes_ = np.unique(check_array(y, ensure_2d=False,
                                               allow_nd=True))
         if self.expected_fit_params:
@@ -112,7 +112,7 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
         T : indexable, length n_samples
         """
         if self.check_X is not None:
-            assert_true(self.check_X(T))
+            assert self.check_X(T)
         return self.classes_[np.zeros(_num_samples(T), dtype=np.int)]
 
     def score(self, X=None, Y=None):

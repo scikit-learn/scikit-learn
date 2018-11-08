@@ -75,7 +75,7 @@ def test_one_of_k():
     assert_equal(D_out[0], {"version=1": 1, "ham": 2})
 
     names = v.get_feature_names()
-    assert_true("version=2" in names)
+    assert "version=2" in names
     assert_false("version" in names)
 
 

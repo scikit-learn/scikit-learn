@@ -107,8 +107,8 @@ def test_labels_assignment_and_inertia():
         labels_gold[dist < mindist] = center_id
         mindist = np.minimum(dist, mindist)
     inertia_gold = mindist.sum()
-    assert_true((mindist >= 0.0).all())
-    assert_true((labels_gold != -1).all())
+    assert (mindist >= 0.0).all()
+    assert (labels_gold != -1).all()
 
     sample_weight = None
 
@@ -565,9 +565,9 @@ def test_k_means_non_collapsed():
     assert_equal(len(np.unique(km.labels_)), 3)
 
     centers = km.cluster_centers_
-    assert_true(np.linalg.norm(centers[0] - centers[1]) >= 0.1)
-    assert_true(np.linalg.norm(centers[0] - centers[2]) >= 0.1)
-    assert_true(np.linalg.norm(centers[1] - centers[2]) >= 0.1)
+    assert np.linalg.norm(centers[0] - centers[1]) >= 0.1
+    assert np.linalg.norm(centers[0] - centers[2]) >= 0.1
+    assert np.linalg.norm(centers[1] - centers[2]) >= 0.1
 
 
 @pytest.mark.parametrize('algo', ['full', 'elkan'])
@@ -689,7 +689,7 @@ def test_n_init():
     failure_msg = ("Inertia %r should be decreasing"
                    " when n_init is increasing.") % list(inertia)
     for i in range(len(n_init_range) - 1):
-        assert_true(inertia[i] >= inertia[i + 1], failure_msg)
+        assert inertia[i] >= inertia[i + 1], failure_msg
 
 
 def test_k_means_function():

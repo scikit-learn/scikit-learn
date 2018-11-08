@@ -586,7 +586,7 @@ def test_pca_score2():
         pca = PCA(n_components=2, whiten=True, svd_solver=solver)
         pca.fit(X)
         ll2 = pca.score(X)
-        assert_true(ll1 > ll2)
+        assert ll1 > ll2
 
 
 def test_pca_score3():

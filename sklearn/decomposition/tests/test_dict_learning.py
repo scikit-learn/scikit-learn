@@ -83,13 +83,13 @@ def test_dict_learning_positivity(transform_algorithm,
         positive_code=positive_code, positive_dict=positive_dict).fit(X)
     code = dico.transform(X)
     if positive_dict:
-        assert_true((dico.components_ >= 0).all())
+        assert (dico.components_ >= 0).all()
     else:
-        assert_true((dico.components_ < 0).any())
+        assert (dico.components_ < 0).any()
     if positive_code:
-        assert_true((code >= 0).all())
+        assert (code >= 0).all()
     else:
-        assert_true((code < 0).any())
+        assert (code < 0).any()
 
 
 def test_dict_learning_reconstruction():
@@ -199,26 +199,26 @@ def test_dict_learning_online_positivity(transform_algorithm,
         positive_code=positive_code, positive_dict=positive_dict).fit(X)
     code = dico.transform(X)
     if positive_dict:
-        assert_true((dico.components_ >= 0).all())
+        assert (dico.components_ >= 0).all()
     else:
-        assert_true((dico.components_ < 0).any())
+        assert (dico.components_ < 0).any()
     if positive_code:
-        assert_true((code >= 0).all())
+        assert (code >= 0).all()
     else:
-        assert_true((code < 0).any())
+        assert (code < 0).any()
 
     code, dictionary = dict_learning_online(X, n_components=n_components,
                                             alpha=1, random_state=rng,
                                             positive_dict=positive_dict,
                                             positive_code=positive_code)
     if positive_dict:
-        assert_true((dictionary >= 0).all())
+        assert (dictionary >= 0).all()
     else:
-        assert_true((dictionary < 0).any())
+        assert (dictionary < 0).any()
     if positive_code:
-        assert_true((code >= 0).all())
+        assert (code >= 0).all()
     else:
-        assert_true((code < 0).any())
+        assert (code < 0).any()
 
 
 def test_dict_learning_online_verbosity():
@@ -324,9 +324,9 @@ def test_sparse_encode_positivity(positive):
     for algo in ('lasso_lars', 'lasso_cd', 'lars', 'threshold'):
         code = sparse_encode(X, V, algorithm=algo, positive=positive)
         if positive:
-            assert_true((code >= 0).all())
+            assert (code >= 0).all()
         else:
-            assert_true((code < 0).any())
+            assert (code < 0).any()
 
     try:
         sparse_encode(X, V, algorithm='omp', positive=positive)

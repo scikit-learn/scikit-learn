@@ -123,7 +123,7 @@ def test_collinearity():
 
     f = ignore_warnings
     _, _, coef_path_ = f(linear_model.lars_path)(X, y, alpha_min=0.01)
-    assert_true(not np.isnan(coef_path_).any())
+    assert not np.isnan(coef_path_).any()
     residual = np.dot(X, coef_path_[:, -1]) - y
     assert_less((residual ** 2).sum(), 1.)  # just make sure it's bounded
 
@@ -304,7 +304,7 @@ def test_lasso_lars_path_length():
     lasso2.fit(X, y)
     assert_array_almost_equal(lasso.alphas_[:3], lasso2.alphas_)
     # Also check that the sequence of alphas is always decreasing
-    assert_true(np.all(np.diff(lasso.alphas_) < 0))
+    assert np.all(np.diff(lasso.alphas_) < 0)
 
 
 def test_lasso_lars_vs_lasso_cd_ill_conditioned():
@@ -376,7 +376,7 @@ def test_lars_add_features():
     H = 1. / (np.arange(1, n + 1) + np.arange(n)[:, np.newaxis])
     clf = linear_model.Lars(fit_intercept=False).fit(
         H, np.arange(n))
-    assert_true(np.all(np.isfinite(clf.coef_)))
+    assert np.all(np.isfinite(clf.coef_))
 
 
 def test_lars_n_nonzero_coefs(verbose=False):
@@ -507,13 +507,13 @@ def test_lars_path_positive_constraint():
         linear_model.lars_path(diabetes['data'], diabetes['target'],
                                return_path=True, method=method,
                                positive=False)
-    assert_true(coefs.min() < 0)
+    assert coefs.min() < 0
 
     alpha, active, coefs = \
         linear_model.lars_path(diabetes['data'], diabetes['target'],
                                return_path=True, method=method,
                                positive=True)
-    assert_true(coefs.min() >= 0)
+    assert coefs.min() >= 0
 
 
 # now we gonna test the positive option for all estimator classes
@@ -535,10 +535,10 @@ def test_estimatorclasses_positive_constraint():
         params.update(estimator_parameter_map[estname])
         estimator = getattr(linear_model, estname)(positive=False, **params)
         estimator.fit(diabetes['data'], diabetes['target'])
-        assert_true(estimator.coef_.min() < 0)
+        assert estimator.coef_.min() < 0
         estimator = getattr(linear_model, estname)(positive=True, **params)
         estimator.fit(diabetes['data'], diabetes['target'])
-        assert_true(min(estimator.coef_) >= 0)
+        assert min(estimator.coef_) >= 0
 
 
 def test_lasso_lars_vs_lasso_cd_positive(verbose=False):

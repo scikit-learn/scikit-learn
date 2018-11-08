@@ -476,7 +476,7 @@ def _test_tolerance(filter_):
     ridge2.fit(filter_(X_diabetes), y_diabetes)
     score2 = ridge2.score(filter_(X_diabetes), y_diabetes)
 
-    assert_true(score >= score2)
+    assert score >= score2
 
 
 def check_dense_sparse(test_func):

@@ -64,7 +64,7 @@ def test_initialize_close():
     W, H = nmf._initialize_nmf(A, 10, init='nndsvd')
     error = linalg.norm(np.dot(W, H) - A)
     sdev = linalg.norm(A - A.mean())
-    assert_true(error <= sdev)
+    assert error <= sdev
 
 
 def test_initialize_variants():

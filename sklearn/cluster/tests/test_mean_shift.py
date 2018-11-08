@@ -31,7 +31,7 @@ X, _ = make_blobs(n_samples=300, n_features=2, centers=centers,
 def test_estimate_bandwidth():
     # Test estimate_bandwidth
     bandwidth = estimate_bandwidth(X, n_samples=200)
-    assert_true(0.9 <= bandwidth <= 1.5)
+    assert 0.9 <= bandwidth <= 1.5
 
 
 def test_estimate_bandwidth_1sample():

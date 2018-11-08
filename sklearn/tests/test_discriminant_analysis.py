@@ -79,7 +79,7 @@ def test_lda_predict():
         # Primarily test for commit 2f34950 -- "reuse" of priors
         y_pred3 = clf.fit(X, y3).predict(X)
         # LDA shouldn't be able to separate those
-        assert_true(np.any(y_pred3 != y3), 'solver %s' % solver)
+        assert np.any(y_pred3 != y3), 'solver %s' % solver
 
     # Test invalid shrinkages
     clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=-0.2231)
@@ -231,12 +231,12 @@ def test_lda_store_covariance():
     # 'store_covariance' has no effect on 'lsqr' and 'eigen' solvers
     for solver in ('lsqr', 'eigen'):
         clf = LinearDiscriminantAnalysis(solver=solver).fit(X6, y6)
-        assert_true(hasattr(clf, 'covariance_'))
+        assert hasattr(clf, 'covariance_')
 
         # Test the actual attribute:
         clf = LinearDiscriminantAnalysis(solver=solver,
                                          store_covariance=True).fit(X6, y6)
-        assert_true(hasattr(clf, 'covariance_'))
+        assert hasattr(clf, 'covariance_')
 
         assert_array_almost_equal(
             clf.covariance_,
@@ -250,7 +250,7 @@ def test_lda_store_covariance():
     # Test the actual attribute:
     clf = LinearDiscriminantAnalysis(solver=solver,
                                      store_covariance=True).fit(X6, y6)
-    assert_true(hasattr(clf, 'covariance_'))
+    assert hasattr(clf, 'covariance_')
 
     assert_array_almost_equal(
         clf.covariance_,
@@ -278,7 +278,7 @@ def test_qda():
 
     y_pred3 = clf.fit(X6, y7).predict(X6)
     # QDA shouldn't be able to separate those
-    assert_true(np.any(y_pred3 != y7))
+    assert np.any(y_pred3 != y7)
 
     # Classes should have at least 2 elements
     assert_raises(ValueError, clf.fit, X6, y4)
@@ -304,7 +304,7 @@ def test_qda_store_covariance():
 
     # Test the actual attribute:
     clf = QuadraticDiscriminantAnalysis(store_covariance=True).fit(X6, y6)
-    assert_true(hasattr(clf, 'covariance_'))
+    assert hasattr(clf, 'covariance_')
 
     assert_array_almost_equal(
         clf.covariance_[0],
@@ -323,7 +323,7 @@ def test_qda_regularization():
     clf = QuadraticDiscriminantAnalysis()
     with ignore_warnings():
         y_pred = clf.fit(X2, y6).predict(X2)
-    assert_true(np.any(y_pred != y6))
+    assert np.any(y_pred != y6)
 
     # adding a little regularization fixes the problem
     clf = QuadraticDiscriminantAnalysis(reg_param=0.01)

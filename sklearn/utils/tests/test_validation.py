@@ -62,7 +62,7 @@ def test_as_float_array():
     X = X.astype(np.int64)
     X2 = as_float_array(X, copy=True)
     # Checking that the array wasn't overwritten
-    assert_true(as_float_array(X, False) is not X)
+    assert as_float_array(X, False) is not X
     assert_equal(X2.dtype, np.float64)
     # Test int dtypes <= 32bit
     tested_dtypes = [np.bool,
@@ -80,10 +80,10 @@ def test_as_float_array():
 
     # Here, X is of the right type, it shouldn't be modified
     X = np.ones((3, 2), dtype=np.float32)
-    assert_true(as_float_array(X, copy=False) is X)
+    assert as_float_array(X, copy=False) is X
     # Test that if X is fortran ordered it stays
     X = np.asfortranarray(X)
-    assert_true(np.isfortran(as_float_array(X, copy=True)))
+    assert np.isfortran(as_float_array(X, copy=True))
 
     # Test the copy parameter with some matrices
     matrices = [
@@ -141,9 +141,9 @@ def test_ordering():
     for A in X, X.T:
         for copy in (True, False):
             B = check_array(A, order='C', copy=copy)
-            assert_true(B.flags['C_CONTIGUOUS'])
+            assert B.flags['C_CONTIGUOUS']
             B = check_array(A, order='F', copy=copy)
-            assert_true(B.flags['F_CONTIGUOUS'])
+            assert B.flags['F_CONTIGUOUS']
             if copy:
                 assert_false(A is B)
 
@@ -228,10 +228,10 @@ def test_check_array():
         else:
             assert_equal(X_checked.dtype, X.dtype)
         if order == 'C':
-            assert_true(X_checked.flags['C_CONTIGUOUS'])
+            assert X_checked.flags['C_CONTIGUOUS']
             assert_false(X_checked.flags['F_CONTIGUOUS'])
         elif order == 'F':
-            assert_true(X_checked.flags['F_CONTIGUOUS'])
+            assert X_checked.flags['F_CONTIGUOUS']
             assert_false(X_checked.flags['C_CONTIGUOUS'])
         if copy:
             assert_false(X is X_checked)
@@ -240,7 +240,7 @@ def test_check_array():
             if (X.dtype == X_checked.dtype and
                     X_checked.flags['C_CONTIGUOUS'] == X.flags['C_CONTIGUOUS']
                     and X_checked.flags['F_CONTIGUOUS'] == X.flags['F_CONTIGUOUS']):
-                assert_true(X is X_checked)
+                assert X is X_checked
 
     # allowed sparse != None
     X_csc = sp.csc_matrix(X_C)
@@ -260,7 +260,7 @@ def test_check_array():
             message = str(w[0].message)
             messages = ["object dtype is not supported by sparse matrices",
                         "Can't check dok sparse matrix for nan or inf."]
-            assert_true(message in messages)
+            assert message in messages
         else:
             assert_equal(len(w), 0)
         if dtype is not None:
@@ -278,19 +278,19 @@ def test_check_array():
         else:
             # doesn't copy if it was already good
             if (X.dtype == X_checked.dtype and X.format == X_checked.format):
-                assert_true(X is X_checked)
+                assert X is X_checked
 
     # other input formats
     # convert lists to arrays
     X_dense = check_array([[1, 2], [3, 4]])
-    assert_true(isinstance(X_dense, np.ndarray))
+    assert isinstance(X_dense, np.ndarray)
     # raise on too deep lists
     assert_raises(ValueError, check_array, X_ndim.tolist())
     check_array(X_ndim.tolist(), allow_nd=True)  # doesn't raise
     # convert weird stuff to arrays
     X_no_array = NotAnArray(X_dense)
     result = check_array(X_no_array)
-    assert_true(isinstance(result, np.ndarray))
+    assert isinstance(result, np.ndarray)
 
     # deprecation warning if string-like array with dtype="numeric"
     expected_warn_regex = r"converted to decimal numbers if dtype='numeric'"
@@ -388,7 +388,7 @@ def test_check_array_dtype_warning():
                                        dtype=[np.float64, np.float32],
                                        accept_sparse=True)
         assert_equal(X_checked.dtype, np.float32)
-        assert_true(X_checked is X)
+        assert X_checked is X
 
         X_checked = assert_no_warnings(check_array, X,
                                        dtype=[np.float64, np.float32],
@@ -579,9 +579,9 @@ def test_check_array_complex_data_error():
 
 def test_has_fit_parameter():
     assert_false(has_fit_parameter(KNeighborsClassifier, "sample_weight"))
-    assert_true(has_fit_parameter(RandomForestRegressor, "sample_weight"))
-    assert_true(has_fit_parameter(SVR, "sample_weight"))
-    assert_true(has_fit_parameter(SVR(), "sample_weight"))
+    assert has_fit_parameter(RandomForestRegressor, "sample_weight")
+    assert has_fit_parameter(SVR, "sample_weight")
+    assert has_fit_parameter(SVR(), "sample_weight")
 
     class TestClassWithDeprecatedFitMethod:
         @deprecated("Deprecated for the purpose of testing has_fit_parameter")
