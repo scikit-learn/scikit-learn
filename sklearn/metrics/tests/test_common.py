@@ -45,6 +45,7 @@ from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import median_absolute_error
+from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
@@ -115,6 +116,9 @@ CLASSIFICATION_METRICS = {
             *args, **kwargs).sum(axis=1)[:, np.newaxis]
     ),
 
+    "unnormalized_multilabel_confusion_matrix": multilabel_confusion_matrix,
+    "unnormalized_multilabel_confusion_matrix_sample":
+        partial(multilabel_confusion_matrix, samplewise=True),
     "hamming_loss": hamming_loss,
 
     "jaccard_similarity_score": jaccard_similarity_score,
@@ -243,6 +247,7 @@ METRIC_UNDEFINED_BINARY = {
     "samples_precision_score",
     "samples_recall_score",
     "coverage_error",
+    "unnormalized_multilabel_confusion_matrix_sample",
     "label_ranking_loss",
     "label_ranking_average_precision_score",
 }
@@ -334,6 +339,8 @@ METRICS_WITH_LABELS = {
 
     "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
     "macro_precision_score", "macro_recall_score",
+    "unnormalized_multilabel_confusion_matrix",
+    "unnormalized_multilabel_confusion_matrix_sample",
 
     "cohen_kappa_score",
 }
@@ -375,6 +382,7 @@ MULTILABELS_METRICS = {
 
     "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
     "micro_precision_score", "micro_recall_score",
+    "unnormalized_multilabel_confusion_matrix",
 
     "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
     "samples_precision_score", "samples_recall_score",
@@ -421,7 +429,7 @@ NOT_SYMMETRIC_METRICS = {
     "precision_score", "recall_score", "f2_score", "f0.5_score",
 
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
-    "weighted_precision_score",
+    "weighted_precision_score", "unnormalized_multilabel_confusion_matrix",
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
     "macro_recall_score", "log_loss", "hinge_loss"

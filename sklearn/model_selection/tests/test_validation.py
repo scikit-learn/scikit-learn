@@ -1100,6 +1100,8 @@ def test_learning_curve_incremental_learning_unsupervised():
                               np.linspace(0.1, 1.0, 10))
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_learning_curve_batch_and_incremental_learning_are_equal():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
@@ -1167,6 +1169,8 @@ def test_learning_curve_with_boolean_indices():
                               np.linspace(0.1, 1.0, 10))
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_learning_curve_with_shuffle():
     # Following test case was designed this way to verify the code
     # changes made in pull request: #7506.
