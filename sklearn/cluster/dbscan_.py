@@ -332,8 +332,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         y : Ignored
 
         """
-        if self.metric == 'minkowski' and self.p != 2:
-            warnings.warn("The default value of p will change to default p=2.", FutureWarning)
+        if self.metric == 'minkowski' and self.p == 'warn':
+            warnings.warn("The default value of p will change to p=2.", FutureWarning)
             self.p = 2
 
         X = check_array(X, accept_sparse='csr')
