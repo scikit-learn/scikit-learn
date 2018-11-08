@@ -759,8 +759,8 @@ def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand):
     # Test the search.cv_results_ contains all the required results
     assert_array_equal(sorted(cv_results.keys()),
                        sorted(param_keys + score_keys + ('params',)))
-    assert all(cv_results[key].shape == (n_cand,
-                    for key in param_keys + score_keys))
+    assert all(cv_results[key].shape == (n_cand,)
+                    for key in param_keys + score_keys)
 
 
 def test_grid_search_cv_results():
