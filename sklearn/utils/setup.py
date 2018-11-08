@@ -24,6 +24,10 @@ def configuration(parent_package='', top_path=None):
     config.add_extension('sparsefuncs_fast', sources=['sparsefuncs_fast.pyx'],
                          libraries=libraries)
 
+    config.add_extension('_cython_blas',
+                         sources=['_cython_blas.pyx'],
+                         libraries=libraries)
+
     config.add_extension('arrayfuncs',
                          sources=['arrayfuncs.pyx'],
                          depends=[join('src', 'cholesky_delete.h')],
