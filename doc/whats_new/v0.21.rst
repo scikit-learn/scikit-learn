@@ -64,6 +64,12 @@ Support for Python 3.4 and below has been officially dropped.
   communication overhead. :issue:`12543` by :user:`Isaac Storch <istorch>`
   and `Olivier Grisel`_.
 
+- |Feature| Add :class:`ensemble.AveragingRegressor`
+  which provides an equivalent of :class:`ensemble.VotingClassifier`
+  for regression problems.
+  :issue:`10868` by :user:`Ramil Nugmanov <stsouko>` and
+  :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -124,15 +130,6 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
   and :class:`tree.ExtraTreeRegressor`.
   :issue:`12300` by :user:`Adrin Jalali <adrinjalali>`.
-
-:mod:`sklearn.ensemble`
-.......................
-
-- |Feature| Add :class:`ensemble.AveragingRegressor`
-  which provides an equivalent of :class:`ensemble.VotingClassifier`
-  for regression problems.
-  :issue:`10868` by :user:`Ramil Nugmanov <stsouko>` and
-  :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
 
 Multiple modules
 ................
