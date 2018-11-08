@@ -59,7 +59,7 @@ def test_libsvm_iris():
     for k in ('linear', 'rbf'):
         clf = svm.SVC(gamma='scale', kernel=k).fit(iris.data, iris.target)
         assert_greater(np.mean(clf.predict(iris.data) == iris.target), 0.9)
-        assert_true(hasattr(clf, "coef_") == (k == 'linear'))
+        assert hasattr(clf, "coef_") == (k == 'linear')
 
     assert_array_equal(clf.classes_, np.sort(clf.classes_))
 
@@ -464,7 +464,7 @@ def test_auto_weight():
 
     classes = np.unique(y[unbalanced])
     class_weights = compute_class_weight('balanced', classes, y[unbalanced])
-    assert_true(np.argmax(class_weights) == 2)
+    assert np.argmax(class_weights) == 2
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
                 LogisticRegression()):
@@ -741,7 +741,7 @@ def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
     y = [0, 0, 1, 1]
     clf = classifier(fit_intercept=True, penalty='l1', loss='squared_hinge',
                      dual=False, C=4, tol=1e-7, random_state=0)
-    assert_true(clf.intercept_scaling == 1, clf.intercept_scaling)
+    assert clf.intercept_scaling == 1, clf.intercept_scaling
     assert_true(clf.fit_intercept)
 
     # when intercept_scaling is low the intercept value is highly "penalized"

@@ -82,7 +82,7 @@ class MockClassifier(object):
         self.foo_param = foo_param
 
     def fit(self, X, Y):
-        assert_true(len(X) == len(Y))
+        assert len(X) == len(Y)
         self.classes_ = np.unique(Y)
         return self
 
@@ -487,7 +487,7 @@ def test_grid_search_sparse():
     y_pred2 = cv.predict(X_[180:])
     C2 = cv.best_estimator_.C
 
-    assert_true(np.mean(y_pred == y_pred2) >= .9)
+    assert np.mean(y_pred == y_pred2) >= .9
     assert_equal(C, C2)
 
 
@@ -551,7 +551,7 @@ def test_grid_search_precomputed_kernel():
 
     y_pred = cv.predict(K_test)
 
-    assert_true(np.mean(y_pred == y_test) >= 0)
+    assert np.mean(y_pred == y_test) >= 0
 
     # test error is raised when the precomputed kernel is not array-like
     # or sparse
@@ -743,7 +743,7 @@ def check_cv_results_array_types(search, param_keys, score_keys):
     cv_results = search.cv_results_
     assert_true(all(isinstance(cv_results[param], np.ma.MaskedArray)
                     for param in param_keys))
-    assert_true(all(cv_results[key].dtype == object for key in param_keys))
+    assert all(cv_results[key].dtype == object for key in param_keys)
     assert_false(any(isinstance(cv_results[key], np.ma.MaskedArray)
                      for key in score_keys))
     assert_true(all(cv_results[key].dtype == np.float64
@@ -752,14 +752,14 @@ def check_cv_results_array_types(search, param_keys, score_keys):
     scorer_keys = search.scorer_.keys() if search.multimetric_ else ['score']
 
     for key in scorer_keys:
-        assert_true(cv_results['rank_test_%s' % key].dtype == np.int32)
+        assert cv_results['rank_test_%s' % key].dtype == np.int32
 
 
 def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand):
     # Test the search.cv_results_ contains all the required results
     assert_array_equal(sorted(cv_results.keys()),
                        sorted(param_keys + score_keys + ('params',)))
-    assert_true(all(cv_results[key].shape == (n_cand,)
+    assert all(cv_results[key].shape == (n_cand,
                     for key in param_keys + score_keys))
 
 
@@ -1118,7 +1118,7 @@ def test_search_cv_timing():
 
         for key in ['mean_score_time', 'std_score_time']:
             assert_true(search.cv_results_[key][1] >= 0)
-            assert_true(search.cv_results_[key][0] == 0.0)
+            assert search.cv_results_[key][0] == 0.0
             assert_true(np.all(search.cv_results_[key] < 1))
 
         assert_true(hasattr(search, "refit_time_"))

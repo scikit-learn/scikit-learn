@@ -136,7 +136,7 @@ def test_pairwise_boolean_distance(metric):
         for Z in [Y, None]:
             res = pairwise_distances(X, Z, metric=metric)
             res[np.isnan(res)] = 0
-            assert_true(np.sum(res != 0) == 0)
+            assert np.sum(res != 0) == 0
 
 
 @pytest.mark.parametrize('func', [pairwise_distances, pairwise_kernels])

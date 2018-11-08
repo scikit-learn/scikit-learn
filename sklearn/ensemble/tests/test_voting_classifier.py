@@ -347,8 +347,8 @@ def test_set_params():
     eclf1.set_params(lr__C=10.0)
     eclf2.set_params(nb__max_depth=5)
 
-    assert_true(eclf1.estimators[0][1].get_params()['C'] == 10.0)
-    assert_true(eclf2.estimators[1][1].get_params()['max_depth'] == 5)
+    assert eclf1.estimators[0][1].get_params()['C'] == 10.0
+    assert eclf2.estimators[1][1].get_params()['max_depth'] == 5
     assert_equal(eclf1.get_params()["lr__C"],
                  eclf1.get_params()["lr"].get_params()['C'])
 
@@ -373,7 +373,7 @@ def test_set_estimator_none():
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
 
     assert_true(dict(eclf2.estimators)["rf"] is None)
-    assert_true(len(eclf2.estimators_) == 2)
+    assert len(eclf2.estimators_) == 2
     assert_true(all([not isinstance(est, RandomForestClassifier) for est in
                      eclf2.estimators_]))
     assert_true(eclf2.get_params()["rf"] is None)

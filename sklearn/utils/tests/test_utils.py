@@ -29,7 +29,7 @@ def test_make_rng():
     assert_true(check_random_state(np.random) is np.random.mtrand._rand)
 
     rng_42 = np.random.RandomState(42)
-    assert_true(check_random_state(42).randint(100) == rng_42.randint(100))
+    assert check_random_state(42).randint(100) == rng_42.randint(100)
 
     rng_42 = np.random.RandomState(42)
     assert_true(check_random_state(rng_42) is rng_42)

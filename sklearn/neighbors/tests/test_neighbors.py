@@ -780,7 +780,7 @@ def test_kneighbors_regressor_sparse(n_samples=40,
 
         for sparsev in SPARSE_OR_DENSE:
             X2 = sparsev(X)
-            assert_true(np.mean(knn.predict(X2).round() == y) > 0.95)
+            assert np.mean(knn.predict(X2).round() == y) > 0.95
 
             X2_pre = sparsev(pairwise_distances(X, metric='euclidean'))
             if issparse(sparsev(X2_pre)):
@@ -803,7 +803,7 @@ def test_neighbors_iris():
 
         clf.set_params(n_neighbors=9, algorithm=algorithm)
         clf.fit(iris.data, iris.target)
-        assert_true(np.mean(clf.predict(iris.data) == iris.target) > 0.95)
+        assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
 
         rgs = neighbors.KNeighborsRegressor(n_neighbors=5, algorithm=algorithm)
         rgs.fit(iris.data, iris.target)

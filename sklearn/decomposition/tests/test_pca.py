@@ -603,7 +603,7 @@ def test_pca_score3():
         pca.fit(Xl)
         ll[k] = pca.score(Xt)
 
-    assert_true(ll.argmax() == 1)
+    assert ll.argmax() == 1
 
 
 def test_pca_score_with_different_solvers():

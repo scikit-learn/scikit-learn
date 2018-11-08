@@ -50,10 +50,10 @@ def test_simple():
             eps = 1e-3
             ocur = len(cov[C - eps < abs(cov)])
             if i < X.shape[1]:
-                assert_true(ocur == i + 1)
+                assert ocur == i + 1
             else:
                 # no more than max_pred variables can go into the active set
-                assert_true(ocur == X.shape[1])
+                assert ocur == X.shape[1]
     finally:
         sys.stdout = old_stdout
 
@@ -72,10 +72,10 @@ def test_simple_precomputed():
         eps = 1e-3
         ocur = len(cov[C - eps < abs(cov)])
         if i < X.shape[1]:
-            assert_true(ocur == i + 1)
+            assert ocur == i + 1
         else:
             # no more than max_pred variables can go into the active set
-            assert_true(ocur == X.shape[1])
+            assert ocur == X.shape[1]
 
 
 def test_all_precomputed():
@@ -146,7 +146,7 @@ def test_no_path():
         diabetes.data, diabetes.target, method="lar", return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
-    assert_true(alpha_ == alphas_[-1])
+    assert alpha_ == alphas_[-1]
 
 
 def test_no_path_precomputed():
@@ -161,7 +161,7 @@ def test_no_path_precomputed():
         return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
-    assert_true(alpha_ == alphas_[-1])
+    assert alpha_ == alphas_[-1]
 
 
 def test_no_path_all_precomputed():
@@ -178,7 +178,7 @@ def test_no_path_all_precomputed():
         X, y, method="lasso", Gram=G, Xy=Xy, alpha_min=0.9, return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
-    assert_true(alpha_ == alphas_[-1])
+    assert alpha_ == alphas_[-1]
 
 
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
@@ -444,7 +444,7 @@ def test_lars_cv_max_iter():
         X = np.c_[X, x, x]  # add correlated features
         lars_cv = linear_model.LassoLarsCV(max_iter=5)
         lars_cv.fit(X, y)
-    assert_true(len(w) == 0)
+    assert len(w) == 0
 
 
 def test_lasso_lars_ic():

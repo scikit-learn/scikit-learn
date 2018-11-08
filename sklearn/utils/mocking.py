@@ -87,7 +87,7 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
         """
-        assert_true(len(X) == len(y))
+        assert len(X) == len(y)
         if self.check_X is not None:
             assert_true(self.check_X(X))
         if self.check_y is not None:

@@ -252,7 +252,7 @@ def test_weight():
         clf.set_params(class_weight={0: 5})
         clf.fit(X_[:180], y_[:180])
         y_pred = clf.predict(X_[180:])
-        assert_true(np.sum(y_pred == y_[180:]) >= 11)
+        assert np.sum(y_pred == y_[180:]) >= 11
 
 
 def test_sample_weights():

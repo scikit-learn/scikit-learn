@@ -194,7 +194,7 @@ def test_get_params():
     assert_true('a__d' not in test.get_params(deep=False))
 
     test.set_params(a__d=2)
-    assert_true(test.a.d == 2)
+    assert test.a.d == 2
     assert_raises(ValueError, test.set_params, a__a=2)
 
 
@@ -302,7 +302,7 @@ def test_clone_pandas_dataframe():
     cloned_e = clone(e)
 
     # the test
-    assert_true((e.df == cloned_e.df).values.all())
+    assert (e.df == cloned_e.df).values.all()
     assert_equal(e.scalar_param, cloned_e.scalar_param)
 
 

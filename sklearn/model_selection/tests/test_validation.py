@@ -702,8 +702,8 @@ def test_permutation_score():
     score_group, _, pvalue_group = permutation_test_score(
         svm, X, y, n_permutations=30, cv=cv, scoring="accuracy",
         groups=np.ones(y.size), random_state=0)
-    assert_true(score_group == score)
-    assert_true(pvalue_group == pvalue)
+    assert score_group == score
+    assert pvalue_group == pvalue
 
     # check that we obtain the same results with a sparse representation
     svm_sparse = SVC(kernel='linear')
@@ -712,8 +712,8 @@ def test_permutation_score():
         svm_sparse, X_sparse, y, n_permutations=30, cv=cv_sparse,
         scoring="accuracy", groups=np.ones(y.size), random_state=0)
 
-    assert_true(score_group == score)
-    assert_true(pvalue_group == pvalue)
+    assert score_group == score
+    assert pvalue_group == pvalue
 
     # test with custom scoring object
     def custom_score(y_true, y_pred):

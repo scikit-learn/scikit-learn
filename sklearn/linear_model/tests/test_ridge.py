@@ -464,7 +464,7 @@ def _test_ridge_classifiers(filter_):
     reg = RidgeClassifierCV(cv=cv)
     reg.fit(filter_(X_iris), y_iris)
     y_pred = reg.predict(filter_(X_iris))
-    assert_true(np.mean(y_iris == y_pred) >= 0.8)
+    assert np.mean(y_iris == y_pred) >= 0.8
 
 
 def _test_tolerance(filter_):
