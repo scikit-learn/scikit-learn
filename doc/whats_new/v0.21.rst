@@ -182,6 +182,7 @@ Support for Python 3.4 and below has been officially dropped.
   and :class:`tree.ExtraTreeRegressor`.
   :issue:`12300` by :user:`Adrin Jalali <adrinjalali>`.
 
+<<<<<<< 048dd794c301ac6bee38790b26da3e3f758ee042
 - |Fix| Fixed an issue with :class:`tree.BaseDecisionTree`
   and consequently all estimators based
   on it, including :class:`tree.DecisionTreeClassifier`,
@@ -193,6 +194,8 @@ Support for Python 3.4 and below has been officially dropped.
   :pr:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
 
+=======
+>>>>>>> fix merge conflicts
 Multiple modules
 ................
 
