@@ -149,6 +149,10 @@ Changelog
   :issue:`12317` by :user:`Eric Chang <chang>`.
   
 
+- |Fix| Fixed a bug in :class:`preprocessing.PowerTransformer` where the
+  Yeo-Johnson transform was incorrect for lambda parameters outside of `[0, 2]`
+  :issue:`12522` by :user:`Nicolas Hug<NicolasHug>`.
+
 :mod:`sklearn.utils`
 ........................
 
