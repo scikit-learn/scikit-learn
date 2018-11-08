@@ -104,6 +104,40 @@ class BaseVoting(with_metaclass(ABCMeta, _BaseComposition, TransformerMixin)):
             self.named_estimators_[k[0]] = e
         return self
 
+    def set_params(self, **params):
+        """ Setting the parameters for the ensemble estimator
+
+        Valid parameter keys can be listed with get_params().
+
+        Parameters
+        ----------
+        **params : keyword arguments
+            Specific parameters using e.g. set_params(parameter_name=new_value)
+            In addition, to setting the parameters of the ensemble estimator,
+            the individual estimators of the ensemble estimator can also be
+            set or replaced by setting them to None.
+
+        Examples
+        --------
+        # In this example, the RandomForestClassifier is removed
+        clf1 = LogisticRegression()
+        clf2 = RandomForestClassifier()
+        eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)]
+        eclf.set_params(rf=None)
+        """
+        return self._set_params('estimators', **params)
+
+    def get_params(self, deep=True):
+        """ Get the parameters of the ensemble estimator
+
+        Parameters
+        ----------
+        deep : bool
+            Setting it to True gets the various estimators and the parameters
+            of the estimators as well
+        """
+        return self._get_params('estimators', deep=deep)
+
 
 class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
@@ -333,41 +367,6 @@ class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
         else:
             return self._predict(X)
 
-    def set_params(self, **params):
-        """ Setting the parameters for the voting classifier
-
-        Valid parameter keys can be listed with get_params().
-
-        Parameters
-        ----------
-        **params : keyword arguments
-            Specific parameters using e.g. set_params(parameter_name=new_value)
-            In addition, to setting the parameters of the ``VotingClassifier``,
-            the individual classifiers of the ``VotingClassifier`` can also be
-            set or replaced by setting them to None.
-
-        Examples
-        --------
-        # In this example, the RandomForestClassifier is removed
-        clf1 = LogisticRegression()
-        clf2 = RandomForestClassifier()
-        eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)]
-        eclf.set_params(rf=None)
-
-        """
-        return self._set_params('estimators', **params)
-
-    def get_params(self, deep=True):
-        """ Get the parameters of the VotingClassifier
-
-        Parameters
-        ----------
-        deep : bool
-            Setting it to True gets the various classifiers and the parameters
-            of the classifiers as well
-        """
-        return self._get_params('estimators', deep=deep)
-
 
 class AveragingRegressor(BaseVoting, RegressorMixin, TransformerMixin):
     """Prediction averaging regressor for unfitted estimators.
@@ -488,37 +487,3 @@ class AveragingRegressor(BaseVoting, RegressorMixin, TransformerMixin):
         """
         check_is_fitted(self, 'estimators_')
         return self._predict(X)
-
-    def set_params(self, **params):
-        """ Setting the parameters for the AveragingRegressor
-
-        Valid parameter keys can be listed with get_params().
-
-        Parameters
-        ----------
-        **params : keyword arguments
-            Specific parameters using e.g. set_params(parameter_name=new_value)
-            In addition, to setting the parameters of the
-            ``AveragingRegressor``, the individual regressors of the
-            ``AveragingRegressor`` can also be set or replaced by setting
-            them to None.
-
-        Examples
-        --------
-        # In this example, the RandomForestRegressor is removed
-        clf1 = LinearRegression()
-        clf2 = RandomForestRegressor()
-        eclf = AveragingRegressor(estimators=[('lr', clf1), ('rf', clf2)]
-        eclf.set_params(rf=None)
-        """
-        return self._set_params('estimators', **params)
-
-    def get_params(self, deep=True):
-        """ Get the parameters of the AveragingRegressor
-
-        Parameters
-        ----------
-        deep : bool
-            Setting it to True gets the various regressors and their parameters
-        """
-        return self._get_params('estimators', deep=deep)
