@@ -110,45 +110,6 @@ def test_output_shape_exact():
             assert (pdp.shape == (1, 100))
 
 
-@ignore_warnings()
-def test_output_shape_estimated():
-    # Test estimated partial_dependence has same output shape for everything
-    for name, Estimator in all_estimators():
-        est = Estimator()
-        if not hasattr(est, '_estimator_type') or 'MultiTask' in name:
-            continue
-        if est._estimator_type == 'classifier':
-            if not hasattr(est, 'predict_proba'):
-                continue
-            est.fit(X_c, y_c)
-            pdp, axes = partial_dependence(est,
-                                           target_variables=[1],
-                                           X=X_c,
-                                           method='estimated',
-                                           grid_resolution=10)
-            assert (pdp.shape == (1, 10))
-            pdp, axes = partial_dependence(est,
-                                           target_variables=[1, 2],
-                                           X=X_r,
-                                           method='estimated',
-                                           grid_resolution=10)
-            assert (pdp.shape == (1, 100))
-        elif est._estimator_type == 'regressor':
-            est.fit(X_r, y_r)
-            pdp, axes = partial_dependence(est,
-                                           target_variables=[1],
-                                           X=X_r,
-                                           method='estimated',
-                                           grid_resolution=10)
-            assert (pdp.shape == (1, 10))
-            pdp, axes = partial_dependence(est,
-                                           target_variables=[1, 2],
-                                           X=X_r,
-                                           method='estimated',
-                                           grid_resolution=10)
-            assert (pdp.shape == (1, 100))
-
-
 def test_partial_dependence_classifier():
     # Test partial dependence for classifier
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)

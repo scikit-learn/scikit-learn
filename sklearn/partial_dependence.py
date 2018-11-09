@@ -124,11 +124,60 @@ def _predict(est, X_eval, output=None):
             out = out[output]
         out = np.log(np.clip(out, 1e-16, 1))
         out = np.subtract(out, np.mean(out, 1)[:, np.newaxis])
-    else:
-        raise ValueError('est must be a fitted regressor or classifier '
-                         'model.')
     return out
 
+
+def _recursion(est, grid, target_variables, output=None, X=None):
+    # TODO: The pattern below required to avoid a namespace collision.
+    # TODO: Move below imports to module level import at 0.22 release.
+    from .ensemble._gradient_boosting import _partial_dependence_tree
+    from .ensemble.gradient_boosting import BaseGradientBoosting
+    from .ensemble.forest import ForestRegressor
+    if isinstance(est, BaseGradientBoosting):
+        n_trees_per_stage = est.estimators_.shape[1]
+        n_estimators = est.estimators_.shape[0]
+        learning_rate = est.learning_rate
+    else:
+        n_trees_per_stage = 1
+        n_estimators = len(est.estimators_)
+        learning_rate = 1.
+    pdp = np.zeros((n_trees_per_stage, grid.shape[0],), dtype=np.float64,
+                    order='C')
+    for stage in range(n_estimators):
+        for k in range(n_trees_per_stage):
+            if isinstance(est, BaseGradientBoosting):
+                tree = est.estimators_[stage, k].tree_
+            else:
+                tree = est.estimators_[stage].tree_
+            _partial_dependence_tree(tree, grid, target_variables,
+                                        learning_rate, pdp[k])
+    if isinstance(est, ForestRegressor):
+        pdp /= n_estimators
+
+    return pdp
+
+
+def _exact(est, grid, target_variables, output, X):
+    n_samples = X.shape[0]
+    pdp = []
+    for row in range(grid.shape[0]):
+        X_eval = X.copy()
+        for i, variable in enumerate(target_variables):
+            X_eval[:, variable] = np.repeat(grid[row, i], n_samples)
+        pdp_row = _predict(est, X_eval, output=output)
+        if est._estimator_type == 'regressor':
+            pdp.append(np.mean(pdp_row))
+        else:
+            pdp.append(np.mean(pdp_row, 0))
+    pdp = np.array(pdp).transpose()
+    if pdp.shape[0] == 2:
+        # Binary classification
+        pdp = pdp[1, :][np.newaxis]
+    elif pdp.ndim == 1:
+        # Regression
+        pdp = pdp[np.newaxis]
+
+    return pdp
 
 def partial_dependence(est, target_variables, grid=None, X=None, output=None,
                        percentiles=(0.05, 0.95), grid_resolution=100,
@@ -164,7 +213,7 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
         for the ``grid``. Only if ``X`` is not None.
     grid_resolution : int, default=100
         The number of equally spaced points on the ``grid``.
-    method : {'recursion', 'exact', 'estimated', 'auto'}, default='auto'
+    method : {'recursion', 'exact', 'auto'}, default='auto'
         The method to use to calculate the partial dependence function:
 
         - If 'recursion', the underlying trees of ``est`` will be recursed to
@@ -174,9 +223,6 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
           ``predict_proba`` method of ``est`` for classification or ``predict``
           for regression on ``X``for every point in the grid. To speed up this
           method, you can use a subset of ``X`` or a more coarse grid.
-        - If 'estimated', the function will be calculated by calling the
-          ``predict_proba`` method of ``est`` for classification or ``predict``
-          for regression on the median of ``X``.
         - If 'auto', then 'recursion' will be used if ``est`` is
           BaseGradientBoosting or ForestRegressor, and 'exact' used for other
           estimators.
@@ -200,51 +246,57 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
     >>> partial_dependence(gb, [0], **kwargs) # doctest: +SKIP
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
     """
-    # TODO: The pattern below required to avoid a namespace collision.
-    # TODO: Move below imports to module level import at 0.22 release.
-    from .ensemble._gradient_boosting import _partial_dependence_tree
+
     from .ensemble.gradient_boosting import BaseGradientBoosting
     from .ensemble.forest import ForestRegressor
+
+    if (not hasattr(est, '_estimator_type') or
+            est._estimator_type not in ('classifier', 'regressor')):
+        raise ValueError('est must be a fitted regressor or classifier model.')
 
     if method == 'auto':
         if isinstance(est, (BaseGradientBoosting, ForestRegressor)):
             method = 'recursion'
         else:
             method = 'exact'
-    if (not isinstance(est, (BaseGradientBoosting, ForestRegressor)) and
-            method == 'recursion'):
-        raise ValueError('est has to be an instance of BaseGradientBoosting or'
-                         ' ForestRegressor for the "recursion" method. Try '
-                         'using method="exact" or "estimated".')
-    if (not hasattr(est, '_estimator_type') or
-            est._estimator_type not in ('classifier', 'regressor')):
-        raise ValueError('est must be a fitted regressor or classifier model.')
-    if (method != 'recursion' and est._estimator_type == 'classifier' and
-            not hasattr(est, 'predict_proba')):
-        raise ValueError('est requires a predict_proba method for '
-                         'method="exact" or "estimated" for classification.')
-    if X is not None:
-        X = check_array(X, dtype=DTYPE, order='C')
+    method_to_function = {
+        'exact': _exact,
+        'recursion': _recursion
+    }
+    if method not in method_to_function:
+        raise ValueError('method {} is invalid. Accepted method names are '
+                         '{}'.format(method,
+                                     ', '.join(method_to_function.keys())))
+
     if method == 'recursion':
-        check_is_fitted(est, 'estimators_', msg='Call %s.fit before '
-                                                'partial_dependence' %
-                                                est.__class__.__name__)
+        if not isinstance(est, (BaseGradientBoosting, ForestRegressor)):
+            raise ValueError(
+                'est has to be an instance of BaseGradientBoosting or '
+                'ForestRegressor for the "recursion" method. Try '
+                'using method="exact".')
+        check_is_fitted(est, 'estimators_',
+                        msg='Call fit() before partial_dependence()')
         n_features = est.n_features_
     elif X is None:
-        raise ValueError('X is required for method="exact" or "estimated".')
+        raise ValueError('X is required for exact method')
     else:
+        if (est._estimator_type == 'classifier' and
+                not hasattr(est, 'predict_proba')):
+            raise ValueError('est requires a predict_proba() method for '
+                             'method="exact" for classification.')
         n_features = X.shape[1]
-    if (grid is None and X is None) or (grid is not None and X is not None):
-        raise ValueError('Either grid or X must be specified')
 
     target_variables = np.asarray(target_variables, dtype=np.int32,
                                   order='C').ravel()
-
-    if any([not (0 <= fx < n_features) for fx in target_variables]):
+    if any(not (0 <= fx < n_features) for fx in target_variables):
         raise ValueError('target_variables must be in [0, %d]'
                          % (n_features - 1))
 
+    if (grid is None and X is None) or (grid is not None and X is not None):
+        raise ValueError('Either grid or X must be specified.')
+
     if X is not None:
+        X = check_array(X, dtype=DTYPE, order='C')
         grid, axes = _grid_from_X(X[:, target_variables], percentiles,
                                   grid_resolution)
     else:
@@ -260,63 +312,8 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
     grid = np.asarray(grid, dtype=DTYPE, order='C')
     assert grid.shape[1] == target_variables.shape[0]
 
-    if method == 'recursion':
-        if isinstance(est, BaseGradientBoosting):
-            n_trees_per_stage = est.estimators_.shape[1]
-            n_estimators = est.estimators_.shape[0]
-            learning_rate = est.learning_rate
-        else:
-            n_trees_per_stage = 1
-            n_estimators = len(est.estimators_)
-            learning_rate = 1.
-        pdp = np.zeros((n_trees_per_stage, grid.shape[0],), dtype=np.float64,
-                       order='C')
-        for stage in range(n_estimators):
-            for k in range(n_trees_per_stage):
-                if isinstance(est, BaseGradientBoosting):
-                    tree = est.estimators_[stage, k].tree_
-                else:
-                    tree = est.estimators_[stage].tree_
-                _partial_dependence_tree(tree, grid, target_variables,
-                                         learning_rate, pdp[k])
-        if isinstance(est, ForestRegressor):
-            pdp /= n_estimators
-    elif method == 'exact':
-        n_samples = X.shape[0]
-        pdp = []
-        for row in range(grid.shape[0]):
-            X_eval = X.copy()
-            for i, variable in enumerate(target_variables):
-                X_eval[:, variable] = np.repeat(grid[row, i], n_samples)
-            pdp_row = _predict(est, X_eval, output=output)
-            if est._estimator_type == 'regressor':
-                pdp.append(np.mean(pdp_row))
-            else:
-                pdp.append(np.mean(pdp_row, 0))
-        pdp = np.array(pdp).transpose()
-        if pdp.shape[0] == 2:
-            # Binary classification
-            pdp = pdp[1, :][np.newaxis]
-        elif pdp.ndim == 1:
-            # Regression
-            pdp = pdp[np.newaxis]
-    elif method == 'estimated':
-        n_samples = grid.shape[0]
-        X_eval = np.tile(np.median(X, 0), [n_samples, 1])
-        for i, variable in enumerate(target_variables):
-            X_eval[:, variable] = grid[:, i]
-        pdp = _predict(est, X_eval, output=output)
-        if est._estimator_type == 'classifier' and pdp.shape[1] == 2:
-            # Binary classification
-            pdp = pdp[:, 1][np.newaxis]
-        elif est._estimator_type == 'classifier' and pdp.shape[1] > 2:
-            # Multi-label classification
-            pdp = pdp.T
-        if est._estimator_type == 'regressor':
-            pdp = pdp[np.newaxis]
-    else:
-        raise ValueError('method "%s" is invalid. Use "recursion", "exact", '
-                         '"estimated", or None.' % method)
+    pdp = method_to_function[method](est, grid, target_variables, output, X)
+
     return pdp, axes
 
 
@@ -363,7 +360,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     percentiles : (low, high), default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the PDP axes.
-    method : {'recursion', 'exact', 'estimated', 'auto'}, default='auto'
+    method : {'recursion', 'exact', 'auto'}, default='auto'
         The method to use to calculate the partial dependence function:
 
         - If 'recursion', the underlying trees of ``est`` will be recursed to
@@ -373,9 +370,6 @@ def plot_partial_dependence(est, X, features, feature_names=None,
           ``predict_proba`` method of ``est`` for classification or ``predict``
           for regression on ``X``for every point in the grid. To speed up this
           method, you can use a subset of ``X`` or a more coarse grid.
-        - If 'estimated', the function will be calculated by calling the
-          ``predict_proba`` method of ``est`` for classification or ``predict``
-          for regression on the median of ``X``.
         - If 'auto', then 'recursion' will be used if ``est`` is
           BaseGradientBoosting or ForestRegressor, and 'exact' used for other
           estimators.
@@ -422,35 +416,6 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     from .ensemble.gradient_boosting import BaseGradientBoosting
     from .ensemble.forest import ForestRegressor
 
-    if method == 'auto':
-        if isinstance(est, (BaseGradientBoosting, ForestRegressor)):
-            method = 'recursion'
-        else:
-            method = 'exact'
-    if (not isinstance(est, (BaseGradientBoosting, ForestRegressor)) and
-            method == 'recursion'):
-        raise ValueError('est has to be an instance of BaseGradientBoosting or'
-                         ' ForestRegressor for the "recursion" method. Try '
-                         'using method="exact" or "estimated".')
-    if (not hasattr(est, '_estimator_type') or
-            est._estimator_type not in ('classifier', 'regressor')):
-        raise ValueError('est must be a fitted regressor or classifier model.')
-    if (method != 'recursion' and est._estimator_type == 'classifier' and
-            not hasattr(est, 'predict_proba')):
-        raise ValueError('est requires a predict_proba method for '
-                         'method="exact" or "estimated" for classification.')
-    if X is not None:
-        X = check_array(X, dtype=DTYPE, order='C')
-    if method == 'recursion':
-        check_is_fitted(est, 'estimators_', msg='Call %s.fit before '
-                                                'partial_dependence' %
-                                                est.__class__.__name__)
-        n_features = est.n_features_
-    elif X is None:
-        raise ValueError('X is required for method="exact" or "estimated".')
-    else:
-        n_features = X.shape[1]
-
     # set label_idx for multi-class estimators
     if hasattr(est, 'classes_') and np.size(est.classes_) > 2:
         if label is None:
@@ -476,8 +441,10 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         # regression and binary classification
         label_idx = 0
 
+    X = check_array(X, dtype=DTYPE, order='C')
     if hasattr(est, 'n_features_') and est.n_features_ != X.shape[1]:
         raise ValueError('X.shape[1] does not match est.n_features_')
+    n_features = X.shape[1]
 
     if line_kw is None:
         line_kw = {'color': 'green'}
