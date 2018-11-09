@@ -1,0 +1,63 @@
+/* More details can be found at https://github.com/choldgraf/sphinx-copybutton
+/* Copy buttons */
+a.copybtn {
+    background: transparent no-repeat none;
+    border: none;
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    margin: 0.5px;
+    width: 1em;
+    height: 0.6em;
+    font-size: 13px;
+    font-family: monospace;
+    text-shadow: none;
+    }
+
+div.highlight  {
+    position: relative;
+}
+
+/**
+ * A minimal CSS-only tooltip copied from:
+ *   https://codepen.io/mildrenben/pen/rVBrpK
+ *
+ * To use, write HTML like the following:
+ *
+ * <p class="o-tooltip--left" data-tooltip="Hey">Short</p>
+ */
+ .o-tooltip--right {
+  position: relative;
+ }
+
+ .o-tooltip--right:after {
+    opacity: 0;
+    text-shadow: none;
+    font-family: monospace;
+    font-weight: bold;
+    font-size: 13px;
+    background: #3F556B;
+    visibility: hidden;
+    position: absolute;
+    content: attr(data-tooltip);
+    padding: 2px;
+    top: -15px;
+    left: 180%;
+    color: white;
+    white-space: nowrap;
+    z-index: 100;
+    border-radius: 2px;
+    transform: translateX(10%) translateY(0);
+    transition: opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1), transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
+}
+
+.o-tooltip--right:hover:after {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    top: -15px;
+    left: 180%;
+    z-index: 100;
+    transform: translateX(0%) translateY(0);
+    transition: opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1), transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
+}

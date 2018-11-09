@@ -279,12 +279,19 @@ issues_uri = 'https://github.com/scikit-learn/scikit-learn/issues/{issue}'
 issues_github_path = 'scikit-learn/scikit-learn'
 issues_user_uri = 'https://github.com/{user}'
 
+clipboard_js_url = "https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"
 
 def setup(app):
     # to hide/show the prompt in code examples:
     app.add_javascript('js/copybutton.js')
     app.add_javascript('js/extra.js')
     app.connect('build-finished', make_carousel_thumbs)
+
+    # to add a button to copy the code from examples:
+    # Details at https://github.com/choldgraf/sphinx-copybutton
+    app.add_stylesheet('css/sphinx_copybutton.css')
+    app.add_javascript('js/sphinx_copybutton.js')
+    app.add_javascript(clipboard_js_url)
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
