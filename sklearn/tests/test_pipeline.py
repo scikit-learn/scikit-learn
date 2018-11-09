@@ -1,11 +1,12 @@
 """
 Test the pipeline module.
 """
-
+from distutils.version import LooseVersion
 from tempfile import mkdtemp
 import shutil
 import time
 
+import pytest
 import numpy as np
 from scipy import sparse
 
@@ -33,7 +34,8 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.externals.joblib import Memory
+from sklearn.utils import Memory
+from sklearn.utils._joblib import __version__ as joblib_version
 
 
 JUNK_FOOD_DOCS = (
@@ -161,7 +163,8 @@ def test_pipeline_init():
     # Check that we can't instantiate pipelines with objects without fit
     # method
     assert_raises_regex(TypeError,
-                        'Last step of Pipeline should implement fit. '
+                        'Last step of Pipeline should implement fit '
+                        'or be the string \'passthrough\''
                         '.*NoFit.*',
                         Pipeline, [('clf', NoFit())])
     # Smoke test with only an estimator
@@ -228,11 +231,13 @@ def test_pipeline_init_tuple():
     pipe.fit(X, y=None)
     pipe.score(X)
 
-    pipe.set_params(transf=None)
+    pipe.set_params(transf='passthrough')
     pipe.fit(X, y=None)
     pipe.score(X)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_pipeline_methods_anova():
     # Test the various methods of the pipeline (anova).
     iris = load_iris()
@@ -570,8 +575,8 @@ def test_pipeline_named_steps():
     assert_true(pipeline.named_steps.mult is mult2)
 
 
-def test_set_pipeline_step_none():
-    # Test setting Pipeline steps to None
+@pytest.mark.parametrize('passthrough', [None, 'passthrough'])
+def test_set_pipeline_step_passthrough(passthrough):
     X = np.array([[1]])
     y = np.array([1])
     mult2 = Mult(mult=2)
@@ -588,7 +593,7 @@ def test_set_pipeline_step_none():
     assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
-    pipeline.set_params(m3=None)
+    pipeline.set_params(m3=passthrough)
     exp = 2 * 5
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal([exp], pipeline.fit(X).predict(X))
@@ -596,14 +601,14 @@ def test_set_pipeline_step_none():
     assert_dict_equal(pipeline.get_params(deep=True),
                       {'steps': pipeline.steps,
                        'm2': mult2,
-                       'm3': None,
+                       'm3': passthrough,
                        'last': mult5,
                        'memory': None,
                        'm2__mult': 2,
                        'last__mult': 5,
                        })
 
-    pipeline.set_params(m2=None)
+    pipeline.set_params(m2=passthrough)
     exp = 5
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal([exp], pipeline.fit(X).predict(X))
@@ -622,19 +627,20 @@ def test_set_pipeline_step_none():
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
     pipeline = make()
-    pipeline.set_params(last=None)
+    pipeline.set_params(last=passthrough)
     # mult2 and mult3 are active
     exp = 6
     assert_array_equal([[exp]], pipeline.fit(X, y).transform(X))
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
     assert_raise_message(AttributeError,
-                         "'NoneType' object has no attribute 'predict'",
+                         "'str' object has no attribute 'predict'",
                          getattr, pipeline, 'predict')
 
-    # Check None step at construction time
+    # Check 'passthrough' step at construction time
     exp = 2 * 5
-    pipeline = Pipeline([('m2', mult2), ('m3', None), ('last', mult5)])
+    pipeline = Pipeline(
+        [('m2', mult2), ('m3', passthrough), ('last', mult5)])
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
@@ -651,7 +657,8 @@ def test_pipeline_ducktyping():
     pipeline.transform
     pipeline.inverse_transform
 
-    pipeline = make_pipeline(None)
+    pipeline = make_pipeline('passthrough')
+    assert pipeline.steps[0] == ('passthrough', 'passthrough')
     assert_false(hasattr(pipeline, 'predict'))
     pipeline.transform
     pipeline.inverse_transform
@@ -783,6 +790,8 @@ def test_feature_union_feature_names():
                          'get_feature_names', ft.get_feature_names)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classes_property():
     iris = load_iris()
     X = iris.data
@@ -826,7 +835,8 @@ def test_set_feature_union_steps():
     assert_equal(['mock__x5'], ft.get_feature_names())
 
 
-def test_set_feature_union_step_none():
+@pytest.mark.parametrize('drop', ['drop', None])
+def test_set_feature_union_step_drop(drop):
     mult2 = Mult(2)
     mult2.get_feature_names = lambda: ['x2']
     mult3 = Mult(3)
@@ -838,12 +848,12 @@ def test_set_feature_union_step_none():
     assert_array_equal([[2, 3]], ft.fit_transform(X))
     assert_equal(['m2__x2', 'm3__x3'], ft.get_feature_names())
 
-    ft.set_params(m2=None)
+    ft.set_params(m2=drop)
     assert_array_equal([[3]], ft.fit(X).transform(X))
     assert_array_equal([[3]], ft.fit_transform(X))
     assert_equal(['m3__x3'], ft.get_feature_names())
 
-    ft.set_params(m3=None)
+    ft.set_params(m3=drop)
     assert_array_equal([[]], ft.fit(X).transform(X))
     assert_array_equal([[]], ft.fit_transform(X))
     assert_equal([], ft.get_feature_names())
@@ -851,6 +861,12 @@ def test_set_feature_union_step_none():
     # check we can change back
     ft.set_params(m3=mult3)
     assert_array_equal([[3]], ft.fit(X).transform(X))
+
+    # Check 'drop' step at construction time
+    ft = FeatureUnion([('m2', drop), ('m3', mult3)])
+    assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert_array_equal([[3]], ft.fit_transform(X))
+    assert_equal(['m3__x3'], ft.get_feature_names())
 
 
 def test_step_name_validation():
@@ -886,6 +902,8 @@ def test_step_name_validation():
                                  [[1]], [1])
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_set_params_nested_pipeline():
     estimator = Pipeline([
         ('a', Pipeline([
@@ -908,7 +926,7 @@ def test_pipeline_wrong_memory():
                             ('svc', SVC())], memory=memory)
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
-                        "sklearn.externals.joblib.Memory."
+                        "sklearn.utils.Memory."
                         " Got memory='1' instead.", cached_pipe.fit, X, y)
 
 
@@ -931,7 +949,7 @@ def test_pipeline_with_cache_attribute():
                     memory=dummy)
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
-                        "sklearn.externals.joblib.Memory."
+                        "sklearn.utils.Memory."
                         " Got memory='{}' instead.".format(dummy), pipe.fit, X)
 
 
@@ -941,7 +959,11 @@ def test_pipeline_memory():
     y = iris.target
     cachedir = mkdtemp()
     try:
-        memory = Memory(cachedir=cachedir, verbose=10)
+        if LooseVersion(joblib_version) < LooseVersion('0.12'):
+            # Deal with change of API in joblib
+            memory = Memory(cachedir=cachedir, verbose=10)
+        else:
+            memory = Memory(location=cachedir, verbose=10)
         # Test with Transformer + SVC
         clf = SVC(gamma='scale', probability=True, random_state=0)
         transf = DummyTransf()
@@ -999,7 +1021,11 @@ def test_pipeline_memory():
 
 def test_make_pipeline_memory():
     cachedir = mkdtemp()
-    memory = Memory(cachedir=cachedir)
+    if LooseVersion(joblib_version) < LooseVersion('0.12'):
+        # Deal with change of API in joblib
+        memory = Memory(cachedir=cachedir, verbose=10)
+    else:
+        memory = Memory(location=cachedir, verbose=10)
     pipeline = make_pipeline(DummyTransf(), SVC(), memory=memory)
     assert_true(pipeline.memory is memory)
     pipeline = make_pipeline(DummyTransf(), SVC())

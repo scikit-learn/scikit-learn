@@ -4,9 +4,12 @@ import numpy as np
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix, issparse)
 
+import pytest
+
 from sklearn import metrics
 from sklearn import neighbors, datasets
 from sklearn.exceptions import DataConversionWarning
+from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
@@ -24,6 +27,8 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
+
+from sklearn.externals.joblib import parallel_backend
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -124,6 +129,13 @@ def test_n_neighbors_datatype():
                         neighbors_.kneighbors, X=X, n_neighbors=3.)
 
 
+def test_not_fitted_error_gets_raised():
+    X = [[1]]
+    neighbors_ = neighbors.NearestNeighbors()
+    assert_raises(NotFittedError, neighbors_.kneighbors_graph, X)
+    assert_raises(NotFittedError, neighbors_.radius_neighbors_graph, X)
+
+
 def test_precomputed(random_state=42):
     """Tests unsupervised NearestNeighbors with a distance matrix."""
     # Note: smaller samples may result in spurious test success
@@ -179,6 +191,7 @@ def test_precomputed(random_state=42):
         assert_array_almost_equal(pred_X, pred_D)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_precomputed_cross_validation():
     # Ensure array is split correctly
     rng = np.random.RandomState(0)
@@ -361,9 +374,6 @@ def test_radius_neighbors_classifier_when_no_neighbors():
                                    clf.predict(z1))
                 if outlier_label is None:
                     assert_raises(ValueError, clf.predict, z2)
-                elif False:
-                    assert_array_equal(np.array([1, outlier_label]),
-                                       clf.predict(z2))
 
 
 def test_radius_neighbors_classifier_outlier_labeling():
@@ -681,7 +691,7 @@ def test_radius_neighbors_regressor(n_samples=40,
                                                    weights=weights,
                                                    algorithm='auto')
         neigh.fit(X, y)
-        X_test_nan = np.ones((1, n_features))*-1
+        X_test_nan = np.full((1, n_features), -1.)
         empty_warning_msg = ("One or more samples have no neighbors "
                              "within specified radius; predicting NaN.")
         pred = assert_warns_message(UserWarning,
@@ -1260,63 +1270,76 @@ def test_include_self_neighbors_graph():
     assert_array_equal(rng_not_self, [[0., 1.], [1., 0.]])
 
 
-def test_same_knn_parallel():
+@pytest.mark.parametrize('algorithm', ALGORITHMS)
+def test_same_knn_parallel(algorithm):
     X, y = datasets.make_classification(n_samples=30, n_features=5,
                                         n_redundant=0, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-    def check_same_knn_parallel(algorithm):
+    clf = neighbors.KNeighborsClassifier(n_neighbors=3,
+                                         algorithm=algorithm)
+    clf.fit(X_train, y_train)
+    y = clf.predict(X_test)
+    dist, ind = clf.kneighbors(X_test)
+    graph = clf.kneighbors_graph(X_test, mode='distance').toarray()
+
+    clf.set_params(n_jobs=3)
+    clf.fit(X_train, y_train)
+    y_parallel = clf.predict(X_test)
+    dist_parallel, ind_parallel = clf.kneighbors(X_test)
+    graph_parallel = \
+        clf.kneighbors_graph(X_test, mode='distance').toarray()
+
+    assert_array_equal(y, y_parallel)
+    assert_array_almost_equal(dist, dist_parallel)
+    assert_array_equal(ind, ind_parallel)
+    assert_array_almost_equal(graph, graph_parallel)
+
+
+@pytest.mark.parametrize('algorithm', ALGORITHMS)
+def test_same_radius_neighbors_parallel(algorithm):
+    X, y = datasets.make_classification(n_samples=30, n_features=5,
+                                        n_redundant=0, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+    clf = neighbors.RadiusNeighborsClassifier(radius=10,
+                                              algorithm=algorithm)
+    clf.fit(X_train, y_train)
+    y = clf.predict(X_test)
+    dist, ind = clf.radius_neighbors(X_test)
+    graph = clf.radius_neighbors_graph(X_test, mode='distance').toarray()
+
+    clf.set_params(n_jobs=3)
+    clf.fit(X_train, y_train)
+    y_parallel = clf.predict(X_test)
+    dist_parallel, ind_parallel = clf.radius_neighbors(X_test)
+    graph_parallel = \
+        clf.radius_neighbors_graph(X_test, mode='distance').toarray()
+
+    assert_array_equal(y, y_parallel)
+    for i in range(len(dist)):
+        assert_array_almost_equal(dist[i], dist_parallel[i])
+        assert_array_equal(ind[i], ind_parallel[i])
+    assert_array_almost_equal(graph, graph_parallel)
+
+
+@pytest.mark.parametrize('backend', ['loky', 'multiprocessing', 'threading'])
+@pytest.mark.parametrize('algorithm', ALGORITHMS)
+def test_knn_forcing_backend(backend, algorithm):
+    # Non-regression test which ensure the knn methods are properly working
+    # even when forcing the global joblib backend.
+    with parallel_backend(backend):
+        X, y = datasets.make_classification(n_samples=30, n_features=5,
+                                            n_redundant=0, random_state=0)
+        X_train, X_test, y_train, y_test = train_test_split(X, y)
+
         clf = neighbors.KNeighborsClassifier(n_neighbors=3,
-                                             algorithm=algorithm)
+                                             algorithm=algorithm,
+                                             n_jobs=3)
         clf.fit(X_train, y_train)
-        y = clf.predict(X_test)
-        dist, ind = clf.kneighbors(X_test)
-        graph = clf.kneighbors_graph(X_test, mode='distance').toarray()
-
-        clf.set_params(n_jobs=3)
-        clf.fit(X_train, y_train)
-        y_parallel = clf.predict(X_test)
-        dist_parallel, ind_parallel = clf.kneighbors(X_test)
-        graph_parallel = \
-            clf.kneighbors_graph(X_test, mode='distance').toarray()
-
-        assert_array_equal(y, y_parallel)
-        assert_array_almost_equal(dist, dist_parallel)
-        assert_array_equal(ind, ind_parallel)
-        assert_array_almost_equal(graph, graph_parallel)
-
-    for algorithm in ALGORITHMS:
-        yield check_same_knn_parallel, algorithm
-
-
-def test_same_radius_neighbors_parallel():
-    X, y = datasets.make_classification(n_samples=30, n_features=5,
-                                        n_redundant=0, random_state=0)
-    X_train, X_test, y_train, y_test = train_test_split(X, y)
-
-    def check_same_radius_neighbors_parallel(algorithm):
-        clf = neighbors.RadiusNeighborsClassifier(radius=10,
-                                                  algorithm=algorithm)
-        clf.fit(X_train, y_train)
-        y = clf.predict(X_test)
-        dist, ind = clf.radius_neighbors(X_test)
-        graph = clf.radius_neighbors_graph(X_test, mode='distance').toarray()
-
-        clf.set_params(n_jobs=3)
-        clf.fit(X_train, y_train)
-        y_parallel = clf.predict(X_test)
-        dist_parallel, ind_parallel = clf.radius_neighbors(X_test)
-        graph_parallel = \
-            clf.radius_neighbors_graph(X_test, mode='distance').toarray()
-
-        assert_array_equal(y, y_parallel)
-        for i in range(len(dist)):
-            assert_array_almost_equal(dist[i], dist_parallel[i])
-            assert_array_equal(ind[i], ind_parallel[i])
-        assert_array_almost_equal(graph, graph_parallel)
-
-    for algorithm in ALGORITHMS:
-        yield check_same_radius_neighbors_parallel, algorithm
+        clf.predict(X_test)
+        clf.kneighbors(X_test)
+        clf.kneighbors_graph(X_test, mode='distance').toarray()
 
 
 def test_dtype_convert():

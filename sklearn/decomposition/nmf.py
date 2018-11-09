@@ -34,12 +34,25 @@ def norm(x):
     """Dot product-based Euclidean norm implementation
 
     See: http://fseoane.net/blog/2011/computing-the-vector-norm/
+
+    Parameters
+    ----------
+    x : array-like
+        Vector for which to compute the norm
     """
     return sqrt(squared_norm(x))
 
 
 def trace_dot(X, Y):
-    """Trace of np.dot(X, Y.T)."""
+    """Trace of np.dot(X, Y.T).
+
+    Parameters
+    ----------
+    X : array-like
+        First matrix
+    Y : array-like
+        Second matrix
+    """
     return np.dot(X.ravel(), Y.ravel())
 
 
@@ -867,7 +880,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     init :  None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
-        Default: 'nndsvd' if n_components < n_features, otherwise random.
+        Default: 'random'.
         Valid options:
 
         - 'random': non-negative random matrices, scaled with:
@@ -1005,7 +1018,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         # 'mu' solver should not be initialized by zeros
         if solver == 'mu':
             avg = np.sqrt(X.mean() / n_components)
-            W = avg * np.ones((n_samples, n_components))
+            W = np.full((n_samples, n_components), avg)
         else:
             W = np.zeros((n_samples, n_components))
     else:
