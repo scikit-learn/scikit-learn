@@ -370,7 +370,21 @@ def test_thresholded_scorers():
     X, y = make_blobs(random_state=0, centers=3)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf.fit(X_train, y_train)
-    assert_raises(ValueError, get_scorer('roc_auc'), clf, X_test, y_test)
+    with pytest.raises(ValueError, match="multiclass format is not supported"):
+        get_scorer('roc_auc')(clf, X_test, y_test)
+
+    # test error is raised with a single class present in model
+    # (predict_proba shape is not suitable for binary auc)
+    X, y = make_blobs(random_state=0, centers=2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = DecisionTreeClassifier()
+    clf.fit(X_train, np.zeros_like(y_train))
+    with pytest.raises(ValueError, match="use classifier with two classes"):
+        get_scorer('roc_auc')(clf, X_test, y_test)
+
+    # for proba scorers
+    with pytest.raises(ValueError, match="use classifier with two classes"):
+        get_scorer('neg_log_loss')(clf, X_test, y_test)
 
 
 def test_thresholded_scorers_multilabel_indicator_data():
