@@ -2345,6 +2345,16 @@ def test_optimization_power_transformer(method, lmbda):
     assert_almost_equal(1, X_inv_trans.std(), decimal=1)
 
 
+def test_yeo_johnson_darwin_example():
+    # test from original paper "A new family of power transformations to
+    # improve normality or symmetry" by Yeo and Johnson.
+    X = [6.1, -8.4, 1.0, 2.0, 0.7, 2.9, 3.5, 5.1, 1.8, 3.6, 7.0, 3.0, 9.3,
+         7.5, -6.0]
+    X = np.array(X).reshape(-1, 1)
+    lmbda = PowerTransformer(method='yeo-johnson').fit(X).lambdas_
+    assert np.allclose(lmbda, 1.305, atol=1e-3)
+
+
 @pytest.mark.parametrize('method', ['box-cox', 'yeo-johnson'])
 def test_power_transformer_nans(method):
     # Make sure lambda estimation is not influenced by NaN values
