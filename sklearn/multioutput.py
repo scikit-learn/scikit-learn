@@ -512,7 +512,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         possible inputs for cv are:
 
         - integer, to specify the number of folds in a (Stratified)KFold,
-        - :term:`CV splitter <CV splitter>`,
+        - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -668,7 +668,7 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         possible inputs for cv are:
 
         - integer, to specify the number of folds in a (Stratified)KFold,
-        - :term:`CV splitter <CV splitter>`,
+        - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
     random_state : int, RandomState instance or None, optional (default=None)

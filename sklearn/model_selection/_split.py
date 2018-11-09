@@ -1913,7 +1913,7 @@ def check_cv(cv='warn', y=None, classifier=False):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - :term:`CV splitter <CV splitter>`,
+        - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if classifier is True and ``y`` is either

@@ -901,7 +901,7 @@ class GridSearchCV(BaseSearchCV):
 
         - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - :term:`CV splitter <CV splitter>`,
+        - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
@@ -1235,7 +1235,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
         - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - :term:`CV splitter <CV splitter>`,
+        - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
