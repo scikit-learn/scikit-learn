@@ -279,6 +279,7 @@ issues_uri = 'https://github.com/scikit-learn/scikit-learn/issues/{issue}'
 issues_github_path = 'scikit-learn/scikit-learn'
 issues_user_uri = 'https://github.com/{user}'
 
+# Clipboard.js script for sphinx_copybutton:
 clipboard_js_url = "https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"
 
 def setup(app):
