@@ -224,7 +224,7 @@ def test_check_scoring_and_check_multimetric_scoring():
         assert isinstance(scorers, dict)
         assert_equal(sorted(scorers.keys()), sorted(list(scoring)))
         assert all([isinstance(scorer, _PredictScorer)
-                         for scorer in list(scorers.values())])
+                    for scorer in list(scorers.values())])
 
         if 'acc' in scoring:
             assert_almost_equal(scorers['acc'](

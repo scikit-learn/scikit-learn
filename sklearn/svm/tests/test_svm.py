@@ -318,7 +318,7 @@ def test_probability():
         assert_array_almost_equal(
             np.sum(prob_predict, 1), np.ones(iris.data.shape[0]))
         assert np.mean(np.argmax(prob_predict, 1)
-                            == clf.predict(iris.data)) > 0.9
+                       == clf.predict(iris.data)) > 0.9
 
         assert_almost_equal(clf.predict_proba(iris.data),
                             np.exp(clf.predict_log_proba(iris.data)), 8)
