@@ -997,6 +997,34 @@ def test_ovr_decision_function():
     assert np.all(pred_class_deci_val[:, 0] < pred_class_deci_val[:, 1])
 
 
+@pytest.mark.parametrize("svc", [svm.SVC, svm.NuSVC])
+def test_svc_ovr_tie_breaking(svc):
+    """Test if predict breaks ties in OVR mode.
+    Related issue: https://github.com/scikit-learn/scikit-learn/issues/8277
+    """
+    X, y = make_blobs(random_state=27)
+
+    xlim = [X[:, 0].min(), X[:, 0].max()]
+    ylim = [X[:, 1].min(), X[:, 1].max()]
+
+    np.random.seed(0)
+    xs = np.linspace(xlim[0], xlim[1], 1000)
+    ys = np.linspace(ylim[0], ylim[1], 1000)
+    xx, yy = np.meshgrid(xs, ys)
+
+    svm = svc(kernel="linear", decision_function_shape='ovr',
+              ovr_predict_break_tie=False).fit(X, y)
+    pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
+    dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
+    assert np.sum(pred != np.argmax(dv, axis=1)) > 0
+
+    svm = svc(kernel="linear", decision_function_shape='ovr',
+              ovr_predict_break_tie=True).fit(X, y)
+    pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
+    dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
+    assert np.sum(pred != np.argmax(dv, axis=1)) == 0
+
+
 def test_gamma_auto():
     X, y = [[0.0, 1.2], [1.0, 1.3]], [0, 1]
 

@@ -518,6 +518,13 @@ class SVC(BaseSVC):
         .. versionchanged:: 0.17
            Deprecated *decision_function_shape='ovo' and None*.
 
+    ovr_predict_break_tie : bool, optional (default=False)
+        If true, decision_function_shape='ovr', and number of classes > 2,
+        `predict` will break ties according to the confidence values the same
+        way as `decision_function` does.
+
+        .. versionadded:: 0.21
+
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator used when shuffling
         the data for probability estimates. If int, random_state is the
@@ -578,8 +585,8 @@ class SVC(BaseSVC):
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
         decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
-        max_iter=-1, probability=False, random_state=None, shrinking=True,
-        tol=0.001, verbose=False)
+        max_iter=-1, ovr_predict_break_tie=False, probability=False,
+        random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -606,6 +613,7 @@ class SVC(BaseSVC):
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
                  verbose=False, max_iter=-1, decision_function_shape='ovr',
+                 ovr_predict_break_tie=False,
                  random_state=None):
 
         super(SVC, self).__init__(
@@ -614,6 +622,7 @@ class SVC(BaseSVC):
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
             decision_function_shape=decision_function_shape,
+            ovr_predict_break_tie=ovr_predict_break_tie,
             random_state=random_state)
 
 
@@ -702,6 +711,13 @@ class NuSVC(BaseSVC):
         .. versionchanged:: 0.17
            Deprecated *decision_function_shape='ovo' and None*.
 
+    ovr_predict_break_tie : bool, optional (default=False)
+        If true, decision_function_shape='ovr', and number of classes > 2,
+        `predict` will break ties according to the confidence values the same
+        way as `decision_function` does.
+
+        .. versionadded:: 0.21
+
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator used when shuffling
         the data for probability estimates. If int, random_state is the seed
@@ -747,8 +763,8 @@ class NuSVC(BaseSVC):
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     NuSVC(cache_size=200, class_weight=None, coef0=0.0,
           decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-          max_iter=-1, nu=0.5, probability=False, random_state=None,
-          shrinking=True, tol=0.001, verbose=False)
+          max_iter=-1, nu=0.5, ovr_predict_break_tie=False, probability=False,
+          random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -773,7 +789,8 @@ class NuSVC(BaseSVC):
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto_deprecated',
                  coef0=0.0, shrinking=True, probability=False, tol=1e-3,
                  cache_size=200, class_weight=None, verbose=False, max_iter=-1,
-                 decision_function_shape='ovr', random_state=None):
+                 decision_function_shape='ovr', ovr_predict_break_tie=False,
+                 random_state=None):
 
         super(NuSVC, self).__init__(
             kernel=kernel, degree=degree, gamma=gamma,
@@ -781,6 +798,7 @@ class NuSVC(BaseSVC):
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
             decision_function_shape=decision_function_shape,
+            ovr_predict_break_tie=ovr_predict_break_tie,
             random_state=random_state)
 
 
