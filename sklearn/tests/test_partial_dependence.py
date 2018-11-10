@@ -4,6 +4,7 @@ Testing for the partial dependence module.
 
 import numpy as np
 from numpy.testing import assert_array_equal
+import pytest
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import if_matplotlib
@@ -33,81 +34,37 @@ boston = load_boston()
 iris = load_iris()
 
 
-@ignore_warnings()
-def test_output_shape_recursion():
-    # Test recursion partial_dependence has same output shape for everything
+@pytest.mark.parametrize('method', ('recursion', 'exact'))
+@pytest.mark.parametrize('target_variables, expected_shape',
+                         [([1], (1, 10)),
+                          ([1, 2], (1, 100))])
+def test_output_shape(method, target_variables, expected_shape):
+    # Check that partial_dependence has consistent output shape
     for name, Estimator in all_estimators():
         est = Estimator()
-        if not (isinstance(est, BaseGradientBoosting) or
-                isinstance(est, ForestRegressor)):
-            continue
-        if est._estimator_type == 'classifier':
-            est.fit(X_c, y_c)
-            pdp, axes = partial_dependence(est,
-                                           target_variables=[1],
-                                           X=X_c,
-                                           method='recursion',
-                                           grid_resolution=10)
-            assert (pdp.shape == (1, 10))
-            pdp, axes = partial_dependence(est,
-                                           target_variables=[1, 2],
-                                           X=X_c,
-                                           method='recursion',
-                                           grid_resolution=10)
-            assert (pdp.shape == (1, 100))
-        elif est._estimator_type == 'regressor':
-            est.fit(X_r, y_r)
-            pdp, axes = partial_dependence(est,
-                                           target_variables=[1],
-                                           X=X_r,
-                                           method='recursion',
-                                           grid_resolution=10)
-            assert (pdp.shape == (1, 10))
-            pdp, axes = partial_dependence(est,
-                                           target_variables=[1, 2],
-                                           X=X_r,
-                                           method='recursion',
-                                           grid_resolution=10)
-            assert (pdp.shape == (1, 100))
-
-
-@ignore_warnings()
-def test_output_shape_exact():
-    # Test exact partial_dependence has same output shape for everything
-    for name, Estimator in all_estimators():
-        est = Estimator()
-        if not hasattr(est, '_estimator_type') or 'MultiTask' in name:
-            continue
-        if est._estimator_type == 'classifier':
-            if not hasattr(est, 'predict_proba'):
+        if method == 'recursion':
+            if not (isinstance(est, BaseGradientBoosting) or
+                    isinstance(est, ForestRegressor)):
                 continue
-            est.fit(X_c, y_c)
-            pdp, axes = partial_dependence(est,
-                                           target_variables=[1],
-                                           X=X_c,
-                                           method='exact',
-                                           grid_resolution=10)
-            assert (pdp.shape == (1, 10))
-            pdp, axes = partial_dependence(est,
-                                           target_variables=[1, 2],
-                                           X=X_c,
-                                           method='exact',
-                                           grid_resolution=10)
-            assert (pdp.shape == (1, 100))
-        elif est._estimator_type == 'regressor':
-            est.fit(X_r, y_r)
-            pdp, axes = partial_dependence(est,
-                                           target_variables=[1],
-                                           X=X_r,
-                                           method='exact',
-                                           grid_resolution=10)
-            assert (pdp.shape == (1, 10))
-            pdp, axes = partial_dependence(est,
-                                           target_variables=[1, 2],
-                                           X=X_r,
-                                           method='exact',
-                                           grid_resolution=10)
-            assert (pdp.shape == (1, 100))
+        else:
+            if not hasattr(est, '_estimator_type') or 'MultiTask' in name:
+                continue
+            if (est._estimator_type == 'classifier' and 
+                    not hasattr(est, 'predict_proba')):
+                continue
+        if est._estimator_type not in ('classifier', 'regressor'):
+            continue
+
+        X, y = ((X_c, y_c) if est._estimator_type == 'classifier'
+                else (X_r, y_r))
+
+        est.fit(X, y)
+        pdp, axes = partial_dependence(est,
+                                       target_variables=target_variables,
+                                       X=X,
+                                       method=method,
+                                       grid_resolution=10)
+        assert pdp.shape == expected_shape
 
 
 def test_partial_dependence_classifier():
@@ -219,41 +176,6 @@ def test_plot_partial_dependence():
 
 
 @if_matplotlib
-def test_plot_partial_dependence_input():
-    # Test partial dependence plot function input checks.
-    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
-
-    # not fitted yet
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, X, [0])
-
-    clf.fit(X, y)
-
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, np.array(X)[:, :0], [0])
-
-    # first argument must be an instance of BaseGradientBoosting
-    assert_raises(ValueError, plot_partial_dependence,
-                  {}, X, [0])
-
-    # must be larger than -1
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, X, [-1])
-
-    # too large feature value
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, X, [100])
-
-    # str feature but no feature_names
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, X, ['foobar'])
-
-    # not valid features value
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, X, [{'foo': 'bar'}])
-
-
-@if_matplotlib
 def test_plot_partial_dependence_multiclass():
     # Test partial dependence plot function on multi-class input.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
@@ -287,3 +209,38 @@ def test_plot_partial_dependence_multiclass():
     assert_raises(ValueError, plot_partial_dependence,
                   clf, iris.data, [0, 1],
                   grid_resolution=grid_resolution)
+
+
+@if_matplotlib
+def test_plot_partial_dependence_input():
+    # Test partial dependence plot function input checks.
+    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
+
+    # not fitted yet
+    assert_raises(ValueError, plot_partial_dependence,
+                  clf, X, [0])
+
+    clf.fit(X, y)
+
+    assert_raises(ValueError, plot_partial_dependence,
+                  clf, np.array(X)[:, :0], [0])
+
+    # first argument must be an instance of BaseGradientBoosting
+    assert_raises(ValueError, plot_partial_dependence,
+                  {}, X, [0])
+
+    # must be larger than -1
+    assert_raises(ValueError, plot_partial_dependence,
+                  clf, X, [-1])
+
+    # too large feature value
+    assert_raises(ValueError, plot_partial_dependence,
+                  clf, X, [100])
+
+    # str feature but no feature_names
+    assert_raises(ValueError, plot_partial_dependence,
+                  clf, X, ['foobar'])
+
+    # not valid features value
+    assert_raises(ValueError, plot_partial_dependence,
+                  clf, X, [{'foo': 'bar'}])
