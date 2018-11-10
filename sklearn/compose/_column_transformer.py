@@ -11,7 +11,6 @@ from __future__ import division
 from itertools import chain
 
 import numpy as np
-import warnings
 from scipy import sparse
 
 from ..base import clone, TransformerMixin
@@ -209,6 +208,7 @@ boolean mask array or callable
         -------
         self
         """
+        self._validate_tuple_order()
         self._set_params('_transformers', **kwargs)
         return self
 
@@ -254,32 +254,33 @@ boolean mask array or callable
         # (name, transformer, column) order.
         # flip all tuples if that's the case.
         # remove in v0.22
-        warn_message = ('ColumnTransformer transformer tuples should be '
-                        '(name, column, transformer), whereas '
-                        '(name, transformer, column) was passed; '
-                        'Assuming the deprecated (name, transformer, column) '
-                        'order for all given tuples. '
-                        'The support for the old order is deprecated in 0.20.1'
-                        ' and will be removed in version 0.22.')
+        message = ('ColumnTransformer transformer tuples should be '
+                   '(name, column, transformer), whereas '
+                   '(name, transformer, column) was passed as the first '
+                   'argument to the constructor. ColumnTransformer was '
+                   'introduced in v0.20 as experimental and expecting the '
+                   '(name, transformer, column) order. In v0.20.1 the API '
+                   'is changed and it expects the new '
+                   '(name, column, transformer) order.')
         try:
-            self._validate_transformers()
+            self._validate_transformers(self.transformers)
         except TypeError:
             try:
-                self.transformers = [(x, z, y)
-                                     for (x, y, z) in self.transformers]
-                self._validate_transformers()
-                warnings.warn(warn_message, DeprecationWarning)
+                transformers = [(x, z, y)
+                                for (x, y, z) in self.transformers]
+                self._validate_transformers(transformers)
+                raise ValueError(message)
             except TypeError:
                 # the other order also doesn't work.
-                # Restoring the original order.
-                self.transformers = [(x, z, y)
-                                     for (x, y, z) in self.transformers]
+                # letting a future _validate_transformers call to raise
+                # the appropriate error
+                pass
 
-    def _validate_transformers(self):
-        if not self.transformers:
+    def _validate_transformers(self, transformer_tuples):
+        if not transformer_tuples:
             return
 
-        names, _, transformers = zip(*self.transformers)
+        names, _, transformers = zip(*transformer_tuples)
 
         # validate names
         self._validate_names(names)
@@ -469,7 +470,7 @@ boolean mask array or callable
         """
         X = _check_X(X)
         self._validate_tuple_order()
-        self._validate_transformers()
+        self._validate_transformers(self.transformers)
         self._validate_column_callables(X)
         self._validate_remainder(X)
 
