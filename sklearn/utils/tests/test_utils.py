@@ -25,17 +25,17 @@ from sklearn import config_context
 
 def test_make_rng():
     # Check the check_random_state utility function behavior
-    assert_true(check_random_state(None) is np.random.mtrand._rand)
-    assert_true(check_random_state(np.random) is np.random.mtrand._rand)
+    assert check_random_state(None) is np.random.mtrand._rand
+    assert check_random_state(np.random) is np.random.mtrand._rand
 
     rng_42 = np.random.RandomState(42)
-    assert_true(check_random_state(42).randint(100) == rng_42.randint(100))
+    assert check_random_state(42).randint(100) == rng_42.randint(100)
 
     rng_42 = np.random.RandomState(42)
-    assert_true(check_random_state(rng_42) is rng_42)
+    assert check_random_state(rng_42) is rng_42
 
     rng_42 = np.random.RandomState(42)
-    assert_true(check_random_state(43).randint(100) != rng_42.randint(100))
+    assert check_random_state(43).randint(100) != rng_42.randint(100)
 
     assert_raises(ValueError, check_random_state, "some invalid seed")
 
@@ -57,8 +57,8 @@ def test_deprecated():
         assert_equal(spam, "spam")     # function must remain usable
 
         assert_equal(len(w), 1)
-        assert_true(issubclass(w[0].category, DeprecationWarning))
-        assert_true("deprecated" in str(w[0].message).lower())
+        assert issubclass(w[0].category, DeprecationWarning)
+        assert "deprecated" in str(w[0].message).lower()
 
     # ... then a class.
     with warnings.catch_warnings(record=True) as w:
@@ -70,16 +70,16 @@ def test_deprecated():
 
         ham = Ham()
 
-        assert_true(hasattr(ham, "SPAM"))
+        assert hasattr(ham, "SPAM")
 
         assert_equal(len(w), 1)
-        assert_true(issubclass(w[0].category, DeprecationWarning))
-        assert_true("deprecated" in str(w[0].message).lower())
+        assert issubclass(w[0].category, DeprecationWarning)
+        assert "deprecated" in str(w[0].message).lower()
 
 
 def test_resample():
     # Border case not worth mentioning in doctests
-    assert_true(resample() is None)
+    assert resample() is None
 
     # Check that invalid arguments yield ValueError
     assert_raises(ValueError, resample, [0], [0, 1])

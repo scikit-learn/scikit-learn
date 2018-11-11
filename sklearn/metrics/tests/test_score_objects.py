@@ -162,7 +162,7 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
     scorer = scoring_validator(estimator)
-    assert_true(scorer is _passthrough_scorer)
+    assert scorer is _passthrough_scorer
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFitAndPredict()
@@ -176,13 +176,13 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
 
     estimator = EstimatorWithFit()
     scorer = scoring_validator(estimator, "accuracy")
-    assert_true(isinstance(scorer, _PredictScorer))
+    assert isinstance(scorer, _PredictScorer)
 
     # Test the allow_none parameter for check_scoring alone
     if scoring_validator is check_scoring:
         estimator = EstimatorWithFit()
         scorer = scoring_validator(estimator, allow_none=True)
-        assert_true(scorer is None)
+        assert scorer is None
 
 
 def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
@@ -194,7 +194,7 @@ def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
     # For all single metric use cases, it should register as not multimetric
     assert_false(is_multi)
     if args[0] is not None:
-        assert_true(scorers is not None)
+        assert scorers is not None
         names, scorers = zip(*scorers.items())
         assert_equal(len(scorers), 1)
         assert_equal(names[0], 'score')
@@ -220,11 +220,11 @@ def test_check_scoring_and_check_multimetric_scoring():
         estimator.fit([[1], [2], [3]], [1, 1, 0])
 
         scorers, is_multi = _check_multimetric_scoring(estimator, scoring)
-        assert_true(is_multi)
-        assert_true(isinstance(scorers, dict))
+        assert is_multi
+        assert isinstance(scorers, dict)
         assert_equal(sorted(scorers.keys()), sorted(list(scoring)))
-        assert_true(all([isinstance(scorer, _PredictScorer)
-                         for scorer in list(scorers.values())]))
+        assert all([isinstance(scorer, _PredictScorer)
+                    for scorer in list(scorers.values())])
 
         if 'acc' in scoring:
             assert_almost_equal(scorers['acc'](
@@ -257,11 +257,11 @@ def test_check_scoring_gridsearchcv():
 
     grid = GridSearchCV(LinearSVC(), param_grid={'C': [.1, 1]})
     scorer = check_scoring(grid, "f1")
-    assert_true(isinstance(scorer, _PredictScorer))
+    assert isinstance(scorer, _PredictScorer)
 
     pipe = make_pipeline(LinearSVC())
     scorer = check_scoring(pipe, "f1")
-    assert_true(isinstance(scorer, _PredictScorer))
+    assert isinstance(scorer, _PredictScorer)
 
     # check that cross_val_score definitely calls the scorer
     # and doesn't make any assumptions about the estimator apart from having a

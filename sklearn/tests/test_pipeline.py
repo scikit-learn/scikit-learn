@@ -259,10 +259,10 @@ def test_pipeline_fit_params():
     pipe = Pipeline([('transf', Transf()), ('clf', FitParamT())])
     pipe.fit(X=None, y=None, clf__should_succeed=True)
     # classifier should return True
-    assert_true(pipe.predict(None))
+    assert pipe.predict(None)
     # and transformer params should not be changed
-    assert_true(pipe.named_steps['transf'].a is None)
-    assert_true(pipe.named_steps['transf'].b is None)
+    assert pipe.named_steps['transf'].a is None
+    assert pipe.named_steps['transf'].b is None
     # invalid parameters should raise an error message
     assert_raise_message(
         TypeError,
@@ -410,8 +410,8 @@ def test_fit_predict_with_intermediate_fit_params():
                      y=None,
                      transf__should_get_this=True,
                      clf__should_succeed=True)
-    assert_true(pipe.named_steps['transf'].fit_params['should_get_this'])
-    assert_true(pipe.named_steps['clf'].successful)
+    assert pipe.named_steps['transf'].fit_params['should_get_this']
+    assert pipe.named_steps['clf'].successful
     assert_false('should_succeed' in pipe.named_steps['transf'].fit_params)
 
 
@@ -422,7 +422,7 @@ def test_predict_with_predict_params():
     pipe.fit(None, None)
     pipe.predict(X=None, got_attribute=True)
 
-    assert_true(pipe.named_steps['clf'].got_attribute)
+    assert pipe.named_steps['clf'].got_attribute
 
 
 def test_feature_union():
@@ -536,12 +536,12 @@ def test_set_pipeline_steps():
     transf1 = Transf()
     transf2 = Transf()
     pipeline = Pipeline([('mock', transf1)])
-    assert_true(pipeline.named_steps['mock'] is transf1)
+    assert pipeline.named_steps['mock'] is transf1
 
     # Directly setting attr
     pipeline.steps = [('mock2', transf2)]
-    assert_true('mock' not in pipeline.named_steps)
-    assert_true(pipeline.named_steps['mock2'] is transf2)
+    assert 'mock' not in pipeline.named_steps
+    assert pipeline.named_steps['mock2'] is transf2
     assert_equal([('mock2', transf2)], pipeline.steps)
 
     # Using set_params
@@ -564,15 +564,15 @@ def test_pipeline_named_steps():
     pipeline = Pipeline([('mock', transf), ("mult", mult2)])
 
     # Test access via named_steps bunch object
-    assert_true('mock' in pipeline.named_steps)
-    assert_true('mock2' not in pipeline.named_steps)
-    assert_true(pipeline.named_steps.mock is transf)
-    assert_true(pipeline.named_steps.mult is mult2)
+    assert 'mock' in pipeline.named_steps
+    assert 'mock2' not in pipeline.named_steps
+    assert pipeline.named_steps.mock is transf
+    assert pipeline.named_steps.mult is mult2
 
     # Test bunch with conflict attribute of dict
     pipeline = Pipeline([('values', transf), ("mult", mult2)])
-    assert_true(pipeline.named_steps.values is not transf)
-    assert_true(pipeline.named_steps.mult is mult2)
+    assert pipeline.named_steps.values is not transf
+    assert pipeline.named_steps.mult is mult2
 
 
 @pytest.mark.parametrize('passthrough', [None, 'passthrough'])
@@ -678,12 +678,12 @@ def test_make_pipeline():
     t1 = Transf()
     t2 = Transf()
     pipe = make_pipeline(t1, t2)
-    assert_true(isinstance(pipe, Pipeline))
+    assert isinstance(pipe, Pipeline)
     assert_equal(pipe.steps[0][0], "transf-1")
     assert_equal(pipe.steps[1][0], "transf-2")
 
     pipe = make_pipeline(t1, t2, FitParamT())
-    assert_true(isinstance(pipe, Pipeline))
+    assert isinstance(pipe, Pipeline)
     assert_equal(pipe.steps[0][0], "transf-1")
     assert_equal(pipe.steps[1][0], "transf-2")
     assert_equal(pipe.steps[2][0], "fitparamt")
@@ -781,7 +781,7 @@ def test_feature_union_feature_names():
     ft.fit(JUNK_FOOD_DOCS)
     feature_names = ft.get_feature_names()
     for feat in feature_names:
-        assert_true("chars__" in feat or "words__" in feat)
+        assert "chars__" in feat or "words__" in feat
     assert_equal(len(feature_names), 35)
 
     ft = FeatureUnion([("tr1", Transf())]).fit([[1]])
@@ -1027,8 +1027,8 @@ def test_make_pipeline_memory():
     else:
         memory = Memory(location=cachedir, verbose=10)
     pipeline = make_pipeline(DummyTransf(), SVC(), memory=memory)
-    assert_true(pipeline.memory is memory)
+    assert pipeline.memory is memory
     pipeline = make_pipeline(DummyTransf(), SVC())
-    assert_true(pipeline.memory is None)
+    assert pipeline.memory is None
 
     shutil.rmtree(cachedir)

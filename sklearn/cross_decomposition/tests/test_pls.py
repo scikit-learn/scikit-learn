@@ -317,7 +317,7 @@ def test_predict_transform_copy():
     assert_array_equal(X_copy, X)
     assert_array_equal(Y_copy, Y)
     # also check that mean wasn't zero before (to make sure we didn't touch it)
-    assert_true(np.all(X.mean(axis=0) != 0))
+    assert np.all(X.mean(axis=0) != 0)
 
 
 def test_scale_and_stability():

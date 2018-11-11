@@ -15,7 +15,7 @@ def test_base_optimizer():
 
     for lr in [10 ** i for i in range(-3, 4)]:
         optimizer = BaseOptimizer(params, lr)
-        assert_true(optimizer.trigger_stopping('', False))
+        assert optimizer.trigger_stopping('', False)
 
 
 def test_sgd_optimizer_no_momentum():
@@ -55,7 +55,7 @@ def test_sgd_optimizer_trigger_stopping():
     optimizer = SGDOptimizer(params, lr, lr_schedule='adaptive')
     assert_false(optimizer.trigger_stopping('', False))
     assert_equal(lr / 5, optimizer.learning_rate)
-    assert_true(optimizer.trigger_stopping('', False))
+    assert optimizer.trigger_stopping('', False)
 
 
 def test_sgd_optimizer_nesterovs_momentum():

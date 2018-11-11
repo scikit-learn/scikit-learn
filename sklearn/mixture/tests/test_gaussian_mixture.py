@@ -749,8 +749,8 @@ def test_gaussian_mixture_aic_bic():
         bic = (2 * n_samples * sgh +
                np.log(n_samples) * g._n_parameters())
         bound = n_features / np.sqrt(n_samples)
-        assert_true((g.aic(X) - aic) / n_samples < bound)
-        assert_true((g.bic(X) - bic) / n_samples < bound)
+        assert (g.aic(X) - aic) / n_samples < bound
+        assert (g.bic(X) - bic) / n_samples < bound
 
 
 def test_gaussian_mixture_verbose():
@@ -920,7 +920,7 @@ def test_monotonic_likelihood():
                 if gmm.converged_:
                     break
 
-            assert_true(gmm.converged_)
+            assert gmm.converged_
 
 
 def test_regularisation():

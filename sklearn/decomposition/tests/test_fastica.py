@@ -140,7 +140,7 @@ def test_fastica_nowhiten():
     # test for issue #697
     ica = FastICA(n_components=1, whiten=False, random_state=0)
     assert_warns(UserWarning, ica.fit, m)
-    assert_true(hasattr(ica, 'mixing_'))
+    assert hasattr(ica, 'mixing_')
 
 
 def test_fastica_convergence_fail():

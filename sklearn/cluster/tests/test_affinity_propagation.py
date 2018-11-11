@@ -160,5 +160,5 @@ def test_equal_similarities_and_preferences():
     assert_false(_equal_similarities_and_preferences(S, np.array([0, 1])))
 
     # Same preferences
-    assert_true(_equal_similarities_and_preferences(S, np.array([0, 0])))
-    assert_true(_equal_similarities_and_preferences(S, np.array(0)))
+    assert _equal_similarities_and_preferences(S, np.array([0, 0]))
+    assert _equal_similarities_and_preferences(S, np.array(0))
