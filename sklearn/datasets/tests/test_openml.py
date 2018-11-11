@@ -14,7 +14,7 @@ from sklearn.datasets.openml import (_open_openml_url,
                                      _get_data_description_by_id,
                                      _download_data_arff,
                                      _get_local_path,
-                                     _retry_if_error_with_cache_removed)
+                                     _retry_with_clean_cache)
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 from sklearn.externals.six import string_types
@@ -496,7 +496,7 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
     assert response1.read() == response2.read()
 
 
-def test_retry_if_error_with_cache_removed(tmpdir):
+def test_retry_with_clean_cache(tmpdir):
     data_id = 61
     openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
     cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
@@ -506,7 +506,7 @@ def test_retry_if_error_with_cache_removed(tmpdir):
     with open(location, 'w') as f:
         f.write("")
 
-    @_retry_if_error_with_cache_removed(openml_path, cache_directory)
+    @_retry_with_clean_cache(openml_path, cache_directory)
     def _load_data():
         # The first call will raise an error since location exists
         if os.path.exists(location):
@@ -519,12 +519,12 @@ def test_retry_if_error_with_cache_removed(tmpdir):
     assert result == 1
 
 
-def test_retry_if_error_with_cache_removed_http_error(tmpdir):
+def test_retry_with_clean_cache_http_error(tmpdir):
     data_id = 61
     openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
     cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
 
-    @_retry_if_error_with_cache_removed(openml_path, cache_directory)
+    @_retry_with_clean_cache(openml_path, cache_directory)
     def _load_data():
         raise HTTPError(url=None, code=412,
                         msg='Simulated mock error',

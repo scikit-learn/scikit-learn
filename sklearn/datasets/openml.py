@@ -38,7 +38,7 @@ def _get_local_path(openml_path, data_home):
     return os.path.join(data_home, 'openml.org', openml_path + ".gz")
 
 
-def _retry_if_error_with_cache_removed(openml_path, data_home):
+def _retry_with_clean_cache(openml_path, data_home):
     """If the first call to the decorated function fails, the local cached
     file is removed, and the function is called again. If ``data_home`` is
     ``None``, then the function is called once.
@@ -154,7 +154,7 @@ def _get_json_content_from_openml_api(url, error_message, raise_if_error,
         ``acceptable``
     """
 
-    @_retry_if_error_with_cache_removed(url, data_home)
+    @_retry_with_clean_cache(url, data_home)
     def _load_json():
         with closing(_open_openml_url(url, data_home)) as response:
             return json.loads(response.read().decode("utf-8"))
@@ -351,7 +351,7 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
     # production!
     url = _DATA_FILE.format(file_id)
 
-    @_retry_if_error_with_cache_removed(url, data_home)
+    @_retry_with_clean_cache(url, data_home)
     def _arff_load():
         with closing(_open_openml_url(url, data_home)) as response:
             if sparse is True:
