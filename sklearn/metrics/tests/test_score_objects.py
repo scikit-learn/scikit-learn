@@ -186,10 +186,11 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
 
 
 def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
-    # This wraps the _check_multimetric_scoring to take in single metric
-    # scoring parameter so we can run the tests that we will run for
-    # check_scoring, for check_multimetric_scoring too for single-metric
-    # usecases
+    # This wraps the _check_multimetric_scoring to take in
+    # single metric scoring parameter so we can run the tests
+    # that we will run for check_scoring, for check_multimetric_scoring
+    # too for single-metric usecases
+
     scorers, is_multi = _check_multimetric_scoring(*args, **kwargs)
     # For all single metric use cases, it should register as not multimetric
     assert_false(is_multi)
@@ -372,7 +373,7 @@ def test_thresholded_scorers():
     clf.fit(X_train, y_train)
     with pytest.raises(ValueError, match="multiclass format is not supported"):
         get_scorer('roc_auc')(clf, X_test, y_test)
-    
+
     # test error is raised with a single class present in model
     # (predict_proba shape is not suitable for binary auc)
     X, y = make_blobs(random_state=0, centers=2)
@@ -381,7 +382,7 @@ def test_thresholded_scorers():
     clf.fit(X_train, np.zeros_like(y_train))
     with pytest.raises(ValueError, match="use classifier with two classes"):
         get_scorer('roc_auc')(clf, X_test, y_test)
-    
+
     # for proba scorers
     with pytest.raises(ValueError, match="use classifier with two classes"):
         get_scorer('neg_log_loss')(clf, X_test, y_test)

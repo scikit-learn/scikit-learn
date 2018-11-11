@@ -126,7 +126,13 @@ class _ProbaScorer(_BaseScorer):
         y_type = type_of_target(y)
         y_pred = clf.predict_proba(X)
         if y_type == "binary":
-            y_pred = y_pred[:, 1]
+            if y_pred.shape[1] == 2:
+                y_pred = y_pred[:, 1]
+            else:
+                raise ValueError('got predict_proba of shape;'
+                                 ' use 2-class classifier'
+                                 ' for {} scoring'.format(
+                                     self._score_func.__name__))
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
                                                  sample_weight=sample_weight,
@@ -186,8 +192,10 @@ class _ThresholdScorer(_BaseScorer):
                     if y_pred.shape[1] == 2:
                         y_pred = y_pred[:, 1]
                     else:
-                        raise ValueError('got predict_proba of shape; use 2-class classifier'
-                                         'for {} scoring'.format(self._score_func.__name__))
+                        raise ValueError('got predict_proba of shape; '
+                                         'use 2-class classifier'
+                                         ' for {} scoring'.format(
+                                             self._score_func.__name__))
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
