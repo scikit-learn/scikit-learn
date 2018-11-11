@@ -5,7 +5,7 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import (assert_equal, assert_raises, assert_true,
+from sklearn.utils.testing import (assert_equal, assert_raises,
                                    assert_array_equal,
                                    SkipTest, assert_raises_regex,
                                    assert_warns_message, assert_no_warnings)

@@ -34,7 +34,6 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 

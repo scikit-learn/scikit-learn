@@ -10,9 +10,9 @@ from sklearn.datasets import make_classification, load_digits, make_blobs
 from sklearn.svm.tests import test_svm
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils.testing import (assert_raises, assert_true, assert_false,
-                                   assert_warns, assert_raise_message,
-                                   ignore_warnings, skip_if_32bit)
+from sklearn.utils.testing import (assert_raises, assert_false, assert_warns,
+                                   assert_raise_message, ignore_warnings,
+                                   skip_if_32bit)
 
 
 # test sample 1

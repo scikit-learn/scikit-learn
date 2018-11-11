@@ -16,7 +16,6 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
@@ -590,8 +589,7 @@ def test_bagging_with_pipeline():
                                                 DecisionTreeClassifier()),
                                   max_features=2)
     estimator.fit(iris.data, iris.target)
-    assert_true(isinstance(estimator[0].steps[-1][1].random_state,
-                           int))
+    assert isinstance(estimator[0].steps[-1][1].random_state, int)
 
 
 class DummyZeroEstimator(BaseEstimator):

@@ -28,7 +28,6 @@ from sklearn.externals.six import b, u
 from sklearn.externals._pilutil import pillow_installed
 
 from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 

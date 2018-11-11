@@ -9,9 +9,8 @@ from sklearn.externals import joblib
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
-from sklearn.utils.testing import (assert_raises_regex, assert_true,
-                                   assert_equal, ignore_warnings,
-                                   assert_warns)
+from sklearn.utils.testing import (assert_raises_regex, assert_equal,
+                                   ignore_warnings, assert_warns)
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.estimator_checks import set_checking_parameters
