@@ -18,7 +18,7 @@ from sklearn.model_selection import GroupKFold
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_greater, assert_equal, assert_true
+from sklearn.utils.testing import assert_greater, assert_equal
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer

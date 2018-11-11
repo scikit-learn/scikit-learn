@@ -12,7 +12,6 @@ from sklearn.datasets.tests.test_common import check_return_X_y
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import SkipTest
 
 

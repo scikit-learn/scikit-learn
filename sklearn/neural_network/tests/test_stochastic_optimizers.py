@@ -3,8 +3,8 @@ import numpy as np
 from sklearn.neural_network._stochastic_optimizers import (BaseOptimizer,
                                                            SGDOptimizer,
                                                            AdamOptimizer)
-from sklearn.utils.testing import (assert_array_equal, assert_true,
-                                   assert_false, assert_equal)
+from sklearn.utils.testing import (assert_array_equal, assert_false,
+                                   assert_equal)
 
 
 shapes = [(4, 6), (6, 8), (7, 8, 9)]

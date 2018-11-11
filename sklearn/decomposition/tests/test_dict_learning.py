@@ -11,7 +11,6 @@ from sklearn.utils import check_array
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
@@ -294,8 +293,7 @@ def test_dict_learning_online_partial_fit():
         for sample in X:
             dict2.partial_fit(sample[np.newaxis, :])
 
-    assert_true(not np.all(sparse_encode(X, dict1.components_, alpha=1) ==
-                           0))
+    assert not np.all(sparse_encode(X, dict1.components_, alpha=1) == 0)
     assert_array_almost_equal(dict1.components_, dict2.components_,
                               decimal=2)
 

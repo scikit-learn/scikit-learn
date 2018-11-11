@@ -1,4 +1,3 @@
-
 from distutils.version import LooseVersion
 import pickle
 import unittest
@@ -13,7 +12,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_false, assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_warns

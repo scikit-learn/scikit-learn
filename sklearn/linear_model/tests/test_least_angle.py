@@ -10,7 +10,6 @@ import pytest
 from sklearn.model_selection import train_test_split
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater

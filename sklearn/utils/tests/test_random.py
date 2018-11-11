@@ -9,8 +9,7 @@ from sklearn.utils.fixes import comb
 
 from sklearn.utils.testing import (
     assert_raises,
-    assert_equal,
-    assert_true)
+    assert_equal)
 
 
 ###############################################################################

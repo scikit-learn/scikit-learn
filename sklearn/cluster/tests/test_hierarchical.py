@@ -14,7 +14,6 @@ import numpy as np
 from scipy import sparse
 from scipy.cluster import hierarchy
 
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal

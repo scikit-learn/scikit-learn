@@ -10,7 +10,6 @@ from numpy.testing import assert_equal
 
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_true
 
 from sklearn.datasets import load_iris
 from sklearn.ensemble import BaggingClassifier

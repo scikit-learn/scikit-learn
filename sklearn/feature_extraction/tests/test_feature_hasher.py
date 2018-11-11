@@ -4,7 +4,7 @@ import numpy as np
 from numpy.testing import assert_array_equal
 
 from sklearn.feature_extraction import FeatureHasher
-from sklearn.utils.testing import (assert_raises, assert_true, assert_equal,
+from sklearn.utils.testing import (assert_raises, assert_equal,
                                    ignore_warnings, fails_if_pypy)
 
 pytestmark = fails_if_pypy

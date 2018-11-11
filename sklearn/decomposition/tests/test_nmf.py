@@ -9,7 +9,6 @@ from scipy.sparse import csc_matrix
 
 import pytest
 
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raise_message, assert_no_warnings
 from sklearn.utils.testing import assert_array_equal
