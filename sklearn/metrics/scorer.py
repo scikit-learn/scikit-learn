@@ -129,12 +129,8 @@ class _ProbaScorer(_BaseScorer):
             if y_pred.shape[1] == 2:
                 y_pred = y_pred[:, 1]
             else:
-<<<<<<< HEAD
                 raise ValueError('got predict_proba of shape;'
                                  ' use 2-class classifier'
-=======
-                raise ValueError('Must use classifier with two classes'
->>>>>>> 15a43978cc2e7495b04691d1314eec70f4502e37
                                  ' for {} scoring'.format(
                                      self._score_func.__name__))
         if sample_weight is not None:
@@ -196,12 +192,8 @@ class _ThresholdScorer(_BaseScorer):
                     if y_pred.shape[1] == 2:
                         y_pred = y_pred[:, 1]
                     else:
-<<<<<<< HEAD
-                        raise ValueError('got predict_proba of shape; '
-                                         'use 2-class classifier'
-=======
-                        raise ValueError('Must use classifier with two classes'
->>>>>>> 15a43978cc2e7495b04691d1314eec70f4502e37
+                        raise ValueError('got predict_proba of shape;'
+                                         ' use 2-class classifier'
                                          ' for {} scoring'.format(
                                              self._score_func.__name__))
                 elif isinstance(y_pred, list):
