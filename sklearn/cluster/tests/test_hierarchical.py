@@ -72,7 +72,7 @@ def test_structured_linkage_tree():
         children, n_components, n_leaves, parent = \
             tree_builder(X.T, connectivity)
         n_nodes = 2 * X.shape[1] - 1
-        assert_true(len(children) + n_leaves == n_nodes)
+        assert len(children) + n_leaves == n_nodes
         # Check that ward_tree raises a ValueError with a connectivity matrix
         # of the wrong shape
         assert_raises(ValueError,
@@ -114,7 +114,7 @@ def test_height_linkage_tree():
     for linkage_func in _TREE_BUILDERS.values():
         children, n_nodes, n_leaves, parent = linkage_func(X.T, connectivity)
         n_nodes = 2 * X.shape[1] - 1
-        assert_true(len(children) + n_leaves == n_nodes)
+        assert len(children) + n_leaves == n_nodes
 
 
 def test_agglomerative_clustering_wrong_arg_memory():
@@ -152,7 +152,7 @@ def test_agglomerative_clustering():
                 linkage=linkage)
             clustering.fit(X)
             labels = clustering.labels_
-            assert_true(np.size(np.unique(labels)) == 10)
+            assert np.size(np.unique(labels)) == 10
         finally:
             shutil.rmtree(tempdir)
         # Turn caching off now
@@ -166,7 +166,7 @@ def test_agglomerative_clustering():
                                                          labels), 1)
         clustering.connectivity = None
         clustering.fit(X)
-        assert_true(np.size(np.unique(clustering.labels_)) == 10)
+        assert np.size(np.unique(clustering.labels_)) == 10
         # Check that we raise a TypeError on dense matrices
         clustering = AgglomerativeClustering(
             n_clusters=10,
@@ -226,12 +226,12 @@ def test_ward_agglomeration():
     connectivity = grid_to_graph(*mask.shape)
     agglo = FeatureAgglomeration(n_clusters=5, connectivity=connectivity)
     agglo.fit(X)
-    assert_true(np.size(np.unique(agglo.labels_)) == 5)
+    assert np.size(np.unique(agglo.labels_)) == 5
 
     X_red = agglo.transform(X)
-    assert_true(X_red.shape[1] == 5)
+    assert X_red.shape[1] == 5
     X_full = agglo.inverse_transform(X_red)
-    assert_true(np.unique(X_full[0]).size == 5)
+    assert np.unique(X_full[0]).size == 5
     assert_array_almost_equal(agglo.transform(X_full), X_red)
 
     # Check that fitting with no samples raises a ValueError
@@ -265,7 +265,7 @@ def assess_same_labelling(cut1, cut2):
         ecut = np.zeros((n, k))
         ecut[np.arange(n), cut] = 1
         co_clust.append(np.dot(ecut, ecut.T))
-    assert_true((co_clust[0] == co_clust[1]).all())
+    assert (co_clust[0] == co_clust[1]).all()
 
 
 def test_scikit_vs_scipy():

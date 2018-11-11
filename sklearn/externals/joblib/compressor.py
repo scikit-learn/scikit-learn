@@ -30,7 +30,7 @@ except ImportError:
     lz4 = None
 
 LZ4_NOT_INSTALLED_ERROR = ('LZ4 is not installed. Install it with pip: '
-                           'https://python-lz4.readthedocs.io/')
+                           'http://python-lz4.readthedocs.io/')
 
 # Registered compressors
 _COMPRESSORS = {}
