@@ -150,6 +150,9 @@ and tasks.
 
 - `lasagne <https://github.com/Lasagne/Lasagne>`_ A lightweight library to
   build and train neural networks in Theano.
+  
+- `skorch <https://github.com/dnouri/skorch>`_ A scikit-learn compatible 
+  neural network library that wraps PyTorch.
 
 **Broad scope**
 
