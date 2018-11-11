@@ -464,7 +464,7 @@ def _test_ridge_classifiers(filter_):
     reg = RidgeClassifierCV(cv=cv)
     reg.fit(filter_(X_iris), y_iris)
     y_pred = reg.predict(filter_(X_iris))
-    assert_true(np.mean(y_iris == y_pred) >= 0.8)
+    assert np.mean(y_iris == y_pred) >= 0.8
 
 
 def _test_tolerance(filter_):
@@ -476,7 +476,7 @@ def _test_tolerance(filter_):
     ridge2.fit(filter_(X_diabetes), y_diabetes)
     score2 = ridge2.score(filter_(X_diabetes), y_diabetes)
 
-    assert_true(score >= score2)
+    assert score >= score2
 
 
 def check_dense_sparse(test_func):

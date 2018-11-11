@@ -51,7 +51,7 @@ def test_get_submatrix():
         submatrix[:] = -1
         if issparse(X):
             X = X.toarray()
-        assert_true(np.all(X != -1))
+        assert np.all(X != -1)
 
 
 def _test_shape_indices(model):

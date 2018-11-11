@@ -346,7 +346,7 @@ def test_check_estimator():
         pass
     finally:
         sys.stdout = old_stdout
-    assert_true(msg in string_buffer.getvalue())
+    assert msg in string_buffer.getvalue()
 
     # Large indices test on bad estimator
     msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '

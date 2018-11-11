@@ -248,7 +248,7 @@ def check_importances(name, criterion, dtype, tolerance):
     est = ForestEstimator(n_estimators=10, random_state=0, criterion=criterion)
     est.fit(X, y, sample_weight=sample_weight)
     importances = est.feature_importances_
-    assert_true(np.all(importances >= 0.0))
+    assert np.all(importances >= 0.0)
 
     for scale in [0.5, 100]:
         est = ForestEstimator(n_estimators=10, random_state=0,
@@ -1163,7 +1163,7 @@ def check_warm_start_oob(name):
     clf_2.set_params(warm_start=True, oob_score=True, n_estimators=15)
     clf_2.fit(X, y)
 
-    assert_true(hasattr(clf_2, 'oob_score_'))
+    assert hasattr(clf_2, 'oob_score_')
     assert_equal(clf.oob_score_, clf_2.oob_score_)
 
     # Test that oob_score is computed even if we don't need to train
@@ -1171,7 +1171,7 @@ def check_warm_start_oob(name):
     clf_3 = ForestEstimator(n_estimators=15, max_depth=3, warm_start=True,
                             random_state=1, bootstrap=True, oob_score=False)
     clf_3.fit(X, y)
-    assert_true(not(hasattr(clf_3, 'oob_score_')))
+    assert not(hasattr(clf_3, 'oob_score_'))
 
     clf_3.set_params(oob_score=True)
     ignore_warnings(clf_3.fit)(X, y)

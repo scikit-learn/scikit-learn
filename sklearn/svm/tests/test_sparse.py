@@ -48,14 +48,14 @@ def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
     else:
         X_test_dense = X_test
     sparse_svm.fit(X_train, y_train)
-    assert_true(sparse.issparse(sparse_svm.support_vectors_))
-    assert_true(sparse.issparse(sparse_svm.dual_coef_))
+    assert sparse.issparse(sparse_svm.support_vectors_)
+    assert sparse.issparse(sparse_svm.dual_coef_)
     assert_array_almost_equal(dense_svm.support_vectors_,
                               sparse_svm.support_vectors_.toarray())
     assert_array_almost_equal(dense_svm.dual_coef_,
                               sparse_svm.dual_coef_.toarray())
     if dense_svm.kernel == "linear":
-        assert_true(sparse.issparse(sparse_svm.coef_))
+        assert sparse.issparse(sparse_svm.coef_)
         assert_array_almost_equal(dense_svm.coef_, sparse_svm.coef_.toarray())
     assert_array_almost_equal(dense_svm.support_, sparse_svm.support_)
     assert_array_almost_equal(dense_svm.predict(X_test_dense),
@@ -199,7 +199,7 @@ def test_linearsvc():
     clf = svm.LinearSVC(random_state=0).fit(X, Y)
     sp_clf = svm.LinearSVC(random_state=0).fit(X_sp, Y)
 
-    assert_true(sp_clf.fit_intercept)
+    assert sp_clf.fit_intercept
 
     assert_array_almost_equal(clf.coef_, sp_clf.coef_, decimal=4)
     assert_array_almost_equal(clf.intercept_, sp_clf.intercept_, decimal=4)
@@ -252,7 +252,7 @@ def test_weight():
         clf.set_params(class_weight={0: 5})
         clf.fit(X_[:180], y_[:180])
         y_pred = clf.predict(X_[180:])
-        assert_true(np.sum(y_pred == y_[180:]) >= 11)
+        assert np.sum(y_pred == y_[180:]) >= 11
 
 
 def test_sample_weights():

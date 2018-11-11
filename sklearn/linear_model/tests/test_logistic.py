@@ -314,7 +314,7 @@ def test_sparsify():
     pred_d_d = clf.decision_function(iris.data)
 
     clf.sparsify()
-    assert_true(sp.issparse(clf.coef_))
+    assert sp.issparse(clf.coef_)
     pred_s_d = clf.decision_function(iris.data)
 
     sp_data = sp.coo_matrix(iris.data)

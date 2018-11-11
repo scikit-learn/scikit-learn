@@ -42,7 +42,7 @@ def test_input_estimator_unchanged():
     est = RandomForestClassifier()
     transformer = SelectFromModel(estimator=est)
     transformer.fit(data, y)
-    assert_true(transformer.estimator is est)
+    assert transformer.estimator is est
 
 
 @pytest.mark.parametrize(
@@ -169,7 +169,7 @@ def test_feature_importances():
     for threshold, func in zip(["mean", "median"], [np.mean, np.median]):
         transformer = SelectFromModel(estimator=est, threshold=threshold)
         transformer.fit(X, y)
-        assert_true(hasattr(transformer.estimator_, 'feature_importances_'))
+        assert hasattr(transformer.estimator_, 'feature_importances_')
 
         X_new = transformer.transform(X)
         assert_less(X_new.shape[1], X.shape[1])
@@ -233,7 +233,7 @@ def test_2d_coef():
                                           threshold=threshold,
                                           norm_order=order)
             transformer.fit(X, y)
-            assert_true(hasattr(transformer.estimator_, 'coef_'))
+            assert hasattr(transformer.estimator_, 'coef_')
             X_new = transformer.transform(X)
             assert_less(X_new.shape[1], X.shape[1])
 
@@ -257,7 +257,7 @@ def test_partial_fit():
     transformer.partial_fit(data, y,
                             classes=np.unique(y))
     new_model = transformer.estimator_
-    assert_true(old_model is new_model)
+    assert old_model is new_model
 
     X_transform = transformer.transform(data)
     transformer.fit(np.vstack((data, data)), np.concatenate((y, y)))

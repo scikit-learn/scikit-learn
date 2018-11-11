@@ -24,7 +24,7 @@ def test_compute_class_weight():
     # total effect of samples is preserved
     class_counts = np.bincount(y)[2:]
     assert_almost_equal(np.dot(cw, class_counts), y.shape[0])
-    assert_true(cw[0] < cw[1] < cw[2])
+    assert cw[0] < cw[1] < cw[2]
 
 
 def test_compute_class_weight_not_present():
