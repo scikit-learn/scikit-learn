@@ -9,7 +9,6 @@ from scipy import stats
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_warns
@@ -140,7 +139,7 @@ def test_fastica_nowhiten():
     # test for issue #697
     ica = FastICA(n_components=1, whiten=False, random_state=0)
     assert_warns(UserWarning, ica.fit, m)
-    assert_true(hasattr(ica, 'mixing_'))
+    assert hasattr(ica, 'mixing_')
 
 
 def test_fastica_convergence_fail():

@@ -420,7 +420,7 @@ def check_cross_validate_single_metric(clf, X, y, scores):
             mse_scores_dict = cross_validate(clf, X, y, cv=5,
                                              scoring='neg_mean_squared_error',
                                              return_train_score=False)
-        assert_true(isinstance(mse_scores_dict, dict))
+        assert isinstance(mse_scores_dict, dict)
         assert_equal(len(mse_scores_dict), dict_len)
         assert_array_almost_equal(mse_scores_dict['test_score'],
                                   test_mse_scores)
@@ -435,7 +435,7 @@ def check_cross_validate_single_metric(clf, X, y, scores):
         else:
             r2_scores_dict = cross_validate(clf, X, y, cv=5, scoring=['r2'],
                                             return_train_score=False)
-        assert_true(isinstance(r2_scores_dict, dict))
+        assert isinstance(r2_scores_dict, dict)
         assert_equal(len(r2_scores_dict), dict_len)
         assert_array_almost_equal(r2_scores_dict['test_r2'], test_r2_scores)
 
@@ -475,7 +475,7 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
             else:
                 cv_results = cross_validate(clf, X, y, cv=5, scoring=scoring,
                                             return_train_score=False)
-            assert_true(isinstance(cv_results, dict))
+            assert isinstance(cv_results, dict)
             assert_equal(set(cv_results.keys()),
                          keys_with_train if return_train_score
                          else keys_sans_train)
@@ -702,8 +702,8 @@ def test_permutation_score():
     score_group, _, pvalue_group = permutation_test_score(
         svm, X, y, n_permutations=30, cv=cv, scoring="accuracy",
         groups=np.ones(y.size), random_state=0)
-    assert_true(score_group == score)
-    assert_true(pvalue_group == pvalue)
+    assert score_group == score
+    assert pvalue_group == pvalue
 
     # check that we obtain the same results with a sparse representation
     svm_sparse = SVC(kernel='linear')
@@ -712,8 +712,8 @@ def test_permutation_score():
         svm_sparse, X_sparse, y, n_permutations=30, cv=cv_sparse,
         scoring="accuracy", groups=np.ones(y.size), random_state=0)
 
-    assert_true(score_group == score)
-    assert_true(pvalue_group == pvalue)
+    assert score_group == score
+    assert pvalue_group == pvalue
 
     # test with custom scoring object
     def custom_score(y_true, y_pred):
@@ -1273,7 +1273,7 @@ def test_check_is_permutation():
     rng = np.random.RandomState(0)
     p = np.arange(100)
     rng.shuffle(p)
-    assert_true(_check_is_permutation(p, 100))
+    assert _check_is_permutation(p, 100)
     assert_false(_check_is_permutation(np.delete(p, 23), 100))
 
     p[0] = 23

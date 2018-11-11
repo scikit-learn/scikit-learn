@@ -304,8 +304,8 @@ class OneHotEncoder(_BaseEncoder):
         return self._n_values_
 
     def _handle_deprecations(self, X):
-
         # internal version of the attributes to handle deprecations
+        self._n_values = self.n_values
         self._categories = getattr(self, '_categories', None)
         self._categorical_features = getattr(self, '_categorical_features',
                                              None)
@@ -362,7 +362,7 @@ class OneHotEncoder(_BaseEncoder):
                     )
                     warnings.warn(msg, FutureWarning)
                     self._legacy_mode = True
-                    self.n_values = 'auto'
+                    self._n_values = 'auto'
 
         # if user specified categorical_features -> always use legacy mode
         if self.categorical_features is not None:
@@ -427,18 +427,18 @@ class OneHotEncoder(_BaseEncoder):
                              "be able to use arbitrary integer values as "
                              "category identifiers.")
         n_samples, n_features = X.shape
-        if (isinstance(self.n_values, six.string_types) and
-                self.n_values == 'auto'):
+        if (isinstance(self._n_values, six.string_types) and
+                self._n_values == 'auto'):
             n_values = np.max(X, axis=0) + 1
-        elif isinstance(self.n_values, numbers.Integral):
-            if (np.max(X, axis=0) >= self.n_values).any():
+        elif isinstance(self._n_values, numbers.Integral):
+            if (np.max(X, axis=0) >= self._n_values).any():
                 raise ValueError("Feature out of bounds for n_values=%d"
-                                 % self.n_values)
+                                 % self._n_values)
             n_values = np.empty(n_features, dtype=np.int)
-            n_values.fill(self.n_values)
+            n_values.fill(self._n_values)
         else:
             try:
-                n_values = np.asarray(self.n_values, dtype=int)
+                n_values = np.asarray(self._n_values, dtype=int)
             except (ValueError, TypeError):
                 raise TypeError("Wrong type for parameter `n_values`. Expected"
                                 " 'auto', int or array of ints, got %r"
@@ -462,8 +462,8 @@ class OneHotEncoder(_BaseEncoder):
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
 
-        if (isinstance(self.n_values, six.string_types) and
-                self.n_values == 'auto'):
+        if (isinstance(self._n_values, six.string_types) and
+                self._n_values == 'auto'):
             mask = np.array(out.sum(axis=0)).ravel() != 0
             active_features = np.where(mask)[0]
             out = out[:, active_features]
@@ -542,8 +542,8 @@ class OneHotEncoder(_BaseEncoder):
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
-        if (isinstance(self.n_values, six.string_types) and
-                self.n_values == 'auto'):
+        if (isinstance(self._n_values, six.string_types) and
+                self._n_values == 'auto'):
             out = out[:, self._active_features_]
 
         return out if self.sparse else out.toarray()
