@@ -186,7 +186,8 @@ class _ThresholdScorer(_BaseScorer):
                     if y_pred.shape[1] == 2:
                         y_pred = y_pred[:, 1]
                     else:
-                        raise ValueError('must use classifier w/ >=2 classes')
+                        raise ValueError('got predict_proba of shape; use 2-class classifier'
+                                         'for {} scoring'.format(self._score_func.__name__))
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
