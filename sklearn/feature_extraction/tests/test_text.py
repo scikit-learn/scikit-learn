@@ -1181,6 +1181,7 @@ def test_stop_word_validation_custom_preprocessor(Estimator):
     vec = CustomEstimator(stop_words=['and'])
     assert _check_stop_words_consistency(vec) == 'error'
 
-    vec = CustomEstimator(tokenizer=lambda doc: re.compile(r'\w{1,}')
-                                                  .findall(doc))
+    vec = Estimator(tokenizer=lambda doc: re.compile(r'\w{1,}')
+                                            .findall(doc),
+                    stop_words=['and'])
     assert _check_stop_words_consistency(vec) is True
