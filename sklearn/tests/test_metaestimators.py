@@ -115,7 +115,7 @@ def test_metaestimator_delegation():
         for method in methods:
             if method in delegator_data.skip_methods:
                 continue
-            assert_true(hasattr(delegate, method))
+            assert hasattr(delegate, method)
             assert_true(hasattr(delegator, method),
                         msg="%s does not have method %r when its delegate does"
                             % (delegator_data.name, method))

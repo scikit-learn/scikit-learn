@@ -59,7 +59,7 @@ def test_libsvm_iris():
     for k in ('linear', 'rbf'):
         clf = svm.SVC(gamma='scale', kernel=k).fit(iris.data, iris.target)
         assert_greater(np.mean(clf.predict(iris.data) == iris.target), 0.9)
-        assert_true(hasattr(clf, "coef_") == (k == 'linear'))
+        assert hasattr(clf, "coef_") == (k == 'linear')
 
     assert_array_equal(clf.classes_, np.sort(clf.classes_))
 
@@ -317,8 +317,8 @@ def test_probability():
         prob_predict = clf.predict_proba(iris.data)
         assert_array_almost_equal(
             np.sum(prob_predict, 1), np.ones(iris.data.shape[0]))
-        assert_true(np.mean(np.argmax(prob_predict, 1)
-                            == clf.predict(iris.data)) > 0.9)
+        assert np.mean(np.argmax(prob_predict, 1)
+                       == clf.predict(iris.data)) > 0.9
 
         assert_almost_equal(clf.predict_proba(iris.data),
                             np.exp(clf.predict_log_proba(iris.data)), 8)
@@ -423,7 +423,7 @@ def test_weight():
         clf.set_params(class_weight={0: .1, 1: 10})
         clf.fit(X_[:100], y_[:100])
         y_pred = clf.predict(X_[100:])
-        assert_true(f1_score(y_[100:], y_pred) > .3)
+        assert f1_score(y_[100:], y_pred) > .3
 
 
 def test_sample_weights():
@@ -464,7 +464,7 @@ def test_auto_weight():
 
     classes = np.unique(y[unbalanced])
     class_weights = compute_class_weight('balanced', classes, y[unbalanced])
-    assert_true(np.argmax(class_weights) == 2)
+    assert np.argmax(class_weights) == 2
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
                 LogisticRegression()):
@@ -472,7 +472,7 @@ def test_auto_weight():
         y_pred = clf.fit(X[unbalanced], y[unbalanced]).predict(X)
         clf.set_params(class_weight='balanced')
         y_pred_balanced = clf.fit(X[unbalanced], y[unbalanced],).predict(X)
-        assert_true(metrics.f1_score(y, y_pred, average='macro')
+        assert (metrics.f1_score(y, y_pred, average='macro')
                     <= metrics.f1_score(y, y_pred_balanced,
                                         average='macro'))
 
@@ -633,7 +633,7 @@ def test_linearsvc():
     clf = svm.LinearSVC(random_state=0).fit(X, Y)
 
     # by default should have intercept
-    assert_true(clf.fit_intercept)
+    assert clf.fit_intercept
 
     assert_array_equal(clf.predict(T), true_result)
     assert_array_almost_equal(clf.intercept_, [0], decimal=3)
@@ -669,7 +669,7 @@ def test_linearsvc_crammer_singer():
                  cs_clf.predict(iris.data)).mean() > .9)
 
     # classifiers shouldn't be the same
-    assert_true((ovr_clf.coef_ != cs_clf.coef_).all())
+    assert (ovr_clf.coef_ != cs_clf.coef_).all()
 
     # test decision function
     assert_array_equal(cs_clf.predict(iris.data),
@@ -741,8 +741,8 @@ def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
     y = [0, 0, 1, 1]
     clf = classifier(fit_intercept=True, penalty='l1', loss='squared_hinge',
                      dual=False, C=4, tol=1e-7, random_state=0)
-    assert_true(clf.intercept_scaling == 1, clf.intercept_scaling)
-    assert_true(clf.fit_intercept)
+    assert clf.intercept_scaling == 1, clf.intercept_scaling
+    assert clf.fit_intercept
 
     # when intercept_scaling is low the intercept value is highly "penalized"
     # by regularization
@@ -928,9 +928,9 @@ def test_hasattr_predict_proba():
     # `probability` param
 
     G = svm.SVC(gamma='scale', probability=True)
-    assert_true(hasattr(G, 'predict_proba'))
+    assert hasattr(G, 'predict_proba')
     G.fit(iris.data, iris.target)
-    assert_true(hasattr(G, 'predict_proba'))
+    assert hasattr(G, 'predict_proba')
 
     G = svm.SVC(gamma='scale', probability=False)
     assert_false(hasattr(G, 'predict_proba'))
@@ -940,7 +940,7 @@ def test_hasattr_predict_proba():
     # Switching to `probability=True` after fitting should make
     # predict_proba available, but calling it must not work:
     G.probability = True
-    assert_true(hasattr(G, 'predict_proba'))
+    assert hasattr(G, 'predict_proba')
     msg = "predict_proba is not available when fitted with probability=False"
     assert_raise_message(NotFittedError, msg, G.predict_proba, iris.data)
 
@@ -993,7 +993,7 @@ def test_ovr_decision_function():
 
     # Test if the first point has lower decision value on every quadrant
     # compared to the second point
-    assert_true(np.all(pred_class_deci_val[:, 0] < pred_class_deci_val[:, 1]))
+    assert np.all(pred_class_deci_val[:, 0] < pred_class_deci_val[:, 1])
 
 
 def test_gamma_auto():
