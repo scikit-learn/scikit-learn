@@ -12,7 +12,6 @@ from sklearn.decomposition._online_lda import (_dirichlet_expectation_1d,
                                                _dirichlet_expectation_2d)
 
 from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal

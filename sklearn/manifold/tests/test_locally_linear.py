@@ -10,7 +10,6 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
 
 eigen_solvers = ['dense', 'arpack']
 

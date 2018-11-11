@@ -7,7 +7,7 @@ import scipy.sparse as sp
 from scipy.linalg import pinv2
 from scipy.sparse.csgraph import laplacian
 
-from sklearn.utils.testing import (assert_equal, assert_raises, assert_true,
+from sklearn.utils.testing import (assert_equal, assert_raises,
                                    assert_almost_equal, assert_array_equal,
                                    SkipTest, assert_raises_regex,
                                    assert_greater_equal, ignore_warnings,

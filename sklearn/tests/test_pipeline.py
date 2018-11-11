@@ -16,7 +16,6 @@ from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_dict_equal

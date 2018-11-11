@@ -17,7 +17,7 @@ from sklearn.datasets.samples_generator import make_blobs
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_true, assert_equal, assert_raises
+from sklearn.utils.testing import assert_equal, assert_raises
 from sklearn.utils.testing import SkipTest
 
 
@@ -160,8 +160,7 @@ def test_spectral_embedding_callable_affinity(seed=36):
     assert_array_almost_equal(
         se_callable.affinity_matrix_, se_rbf.affinity_matrix_)
     assert_array_almost_equal(kern, se_rbf.affinity_matrix_)
-    assert_true(
-        _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.05))
+    assert _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.05)
 
 
 def test_spectral_embedding_amg_solver(seed=36):

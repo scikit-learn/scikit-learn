@@ -13,7 +13,6 @@ from sklearn.utils.multiclass import type_of_target
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns_message

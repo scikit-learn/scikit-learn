@@ -12,7 +12,7 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import __version__ as scipy_version
 
-from sklearn.utils.testing import assert_true, assert_false, assert_equal
+from sklearn.utils.testing import assert_false, assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_no_warnings
