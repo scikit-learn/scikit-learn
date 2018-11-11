@@ -223,6 +223,8 @@ and tasks.
 - `imbalanced-learn
   <https://github.com/scikit-learn-contrib/imbalanced-learn>`_ Various
   methods to under- and over-sample datasets.
+  
+- `albumentations <https://github.com/albu/albumentations>`_ A fast image augmentation library.
 
 Statistical learning with Python
 --------------------------------
