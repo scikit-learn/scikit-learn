@@ -130,8 +130,8 @@ class _ProbaScorer(_BaseScorer):
                 y_pred = y_pred[:, 1]
             else:
                 raise ValueError('got predict_proba of shape;'
-                                 ' use 2-class classifier'
-                                 ' for {} scoring'.format(
+                                 ' use classifier with two'
+                                 ' classes for {} scoring'.format(
                                      self._score_func.__name__))
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
