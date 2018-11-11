@@ -10,7 +10,7 @@ from numpy.testing import assert_array_equal
 import pytest
 
 from sklearn.utils.testing import (assert_equal, assert_in,
-                                   assert_false, assert_true)
+                                   assert_false)
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import SelectKBest, chi2

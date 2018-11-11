@@ -1,7 +1,6 @@
 import pytest
 import numpy as np
 
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less

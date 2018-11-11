@@ -10,7 +10,6 @@ from scipy import sparse
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message

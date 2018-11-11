@@ -22,7 +22,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
@@ -786,8 +785,7 @@ def test_kneighbors_regressor_sparse(n_samples=40,
             if issparse(sparsev(X2_pre)):
                 assert_raises(ValueError, knn_pre.predict, X2_pre)
             else:
-                assert_true(
-                    np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95)
+                assert np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95
 
 
 def test_neighbors_iris():
