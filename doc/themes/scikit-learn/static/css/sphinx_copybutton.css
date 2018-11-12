@@ -1,4 +1,27 @@
-/* More details can be found at https://github.com/choldgraf/sphinx-copybutton
+/*
+MIT License
+
+Copyright (c) 2018 Chris Holdgraf
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 /* Copy buttons */
 a.copybtn {
     background: transparent no-repeat none;
@@ -41,12 +64,11 @@ div.highlight  {
     position: absolute;
     content: attr(data-tooltip);
     padding: 2px;
-    top: -15px;
+    top: 0px;
     left: 180%;
     color: white;
-    white-space: nowrap;
     z-index: 100;
-    border-radius: 2px;
+    border-radius: 4px;
     transform: translateX(10%) translateY(0);
     transition: opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1), transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
 }
@@ -55,9 +77,27 @@ div.highlight  {
     display: block;
     opacity: 1;
     visibility: visible;
-    top: -15px;
+    top: 0px;
     left: 180%;
     z-index: 100;
+    width: 150px;
+    min-width: 150px;
     transform: translateX(0%) translateY(0);
     transition: opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1), transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
+}
+
+/* Relocate the `Hide the prompts and output` button and change its style
+so that it will match with the copybutton. `Hide the prompts and output` button
+has been named as copybutton in css. And sphinx_copybutton is named as `copybtn`.
+*/
+
+span.copybutton {
+    font-size: 13px !important;
+    font-weight: bold !important;
+    font-family: monospace;
+    border-color: transparent !important;
+    color: rgb(119,119,119) !important;
+    top: 20px !important;
+    padding: 0px 4px 2px !important;
+    background: transparent no-repeat none;
 }
