@@ -496,6 +496,29 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
     assert response1.read() == response2.read()
 
 
+@pytest.mark.parametrize('gzip_response', [True, False])
+@pytest.mark.parametrize('write_to_disk', [True, False])
+def test_open_openml_url_unlinks_local_path(
+        monkeypatch, gzip_response, tmpdir, write_to_disk):
+    data_id = 61
+    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
+    location = _get_local_path(openml_path, cache_directory)
+
+    def _mock_urlopen(request):
+        if write_to_disk:
+            with open(location, "w") as f:
+                f.write("")
+        raise ValueError("Invalid request")
+
+    monkeypatch.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
+
+    with pytest.raises(ValueError, match="Invalid request"):
+        _open_openml_url(openml_path, cache_directory)
+
+    assert not os.path.exists(location)
+
+
 def test_retry_with_clean_cache(tmpdir):
     data_id = 61
     openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
