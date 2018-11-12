@@ -304,9 +304,8 @@ maintained::
     >>> clf.fit(iris.data, iris.target_names[iris.target])  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
       decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-      max_iter=-1, ovr_predict_break_tie=False, ovr_predict_break_tie=False,
-      probability=False, random_state=None, shrinking=True, tol=0.001,
-      verbose=False)
+      max_iter=-1, ovr_predict_break_tie=False, probability=False,
+      random_state=None, shrinking=True, tol=0.001, verbose=False)
 
     >>> list(clf.predict(iris.data[:3]))  # doctest: +NORMALIZE_WHITESPACE
     ['setosa', 'setosa', 'setosa']
