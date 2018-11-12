@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import re
 import warnings
 
 import pytest
@@ -28,7 +29,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
-from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
+from sklearn.utils.testing import (assert_equal, assert_false,
                                    assert_not_equal, assert_almost_equal,
                                    assert_in, assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
@@ -333,7 +334,7 @@ def test_tf_idf_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=True, norm='l2')
     tfidf = tr.fit_transform(X).toarray()
-    assert_true((tfidf >= 0).all())
+    assert (tfidf >= 0).all()
 
     # check normalization
     assert_array_almost_equal((tfidf ** 2).sum(axis=1), [1., 1., 1.])
@@ -344,7 +345,7 @@ def test_tf_idf_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=True, norm='l2')
     tfidf = tr.fit_transform(X).toarray()
-    assert_true((tfidf >= 0).all())
+    assert (tfidf >= 0).all()
 
 
 def test_tfidf_no_smoothing():
@@ -353,7 +354,7 @@ def test_tfidf_no_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
     tfidf = tr.fit_transform(X).toarray()
-    assert_true((tfidf >= 0).all())
+    assert (tfidf >= 0).all()
 
     # check normalization
     assert_array_almost_equal((tfidf ** 2).sum(axis=1), [1., 1., 1.])
@@ -497,11 +498,11 @@ def test_tfidf_vectorizer_setters():
     tv.norm = 'l1'
     assert_equal(tv._tfidf.norm, 'l1')
     tv.use_idf = True
-    assert_true(tv._tfidf.use_idf)
+    assert tv._tfidf.use_idf
     tv.smooth_idf = True
-    assert_true(tv._tfidf.smooth_idf)
+    assert tv._tfidf.smooth_idf
     tv.sublinear_tf = True
-    assert_true(tv._tfidf.sublinear_tf)
+    assert tv._tfidf.sublinear_tf
 
 
 @fails_if_pypy
@@ -515,10 +516,10 @@ def test_hashing_vectorizer():
 
     # By default the hashed values receive a random sign and l2 normalization
     # makes the feature values bounded
-    assert_true(np.min(X.data) > -1)
-    assert_true(np.min(X.data) < 0)
-    assert_true(np.max(X.data) > 0)
-    assert_true(np.max(X.data) < 1)
+    assert np.min(X.data) > -1
+    assert np.min(X.data) < 0
+    assert np.max(X.data) > 0
+    assert np.max(X.data) < 1
 
     # Check that the rows are normalized
     for i in range(X.shape[0]):
@@ -532,12 +533,12 @@ def test_hashing_vectorizer():
 
     # ngrams generate more non zeros
     ngrams_nnz = X.nnz
-    assert_true(ngrams_nnz > token_nnz)
-    assert_true(ngrams_nnz < 2 * token_nnz)
+    assert ngrams_nnz > token_nnz
+    assert ngrams_nnz < 2 * token_nnz
 
     # makes the feature values bounded
-    assert_true(np.min(X.data) > 0)
-    assert_true(np.max(X.data) < 1)
+    assert np.min(X.data) > 0
+    assert np.max(X.data) < 1
 
     # Check that the rows are normalized
     for i in range(X.shape[0]):
@@ -573,7 +574,7 @@ def test_feature_names():
     feature_names = cv.get_feature_names()
     assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza', 'salad',
                         'sparkling', 'tomato', 'water'], feature_names)
-    assert_true(cv.fixed_vocabulary_)
+    assert cv.fixed_vocabulary_
 
     for idx, name in enumerate(feature_names):
         assert_equal(idx, cv.vocabulary_.get(name))
@@ -622,22 +623,22 @@ def test_vectorizer_max_df():
     test_data = ['abc', 'dea', 'eat']
     vect = CountVectorizer(analyzer='char', max_df=1.0)
     vect.fit(test_data)
-    assert_true('a' in vect.vocabulary_.keys())
+    assert 'a' in vect.vocabulary_.keys()
     assert_equal(len(vect.vocabulary_.keys()), 6)
     assert_equal(len(vect.stop_words_), 0)
 
     vect.max_df = 0.5  # 0.5 * 3 documents -> max_doc_count == 1.5
     vect.fit(test_data)
-    assert_true('a' not in vect.vocabulary_.keys())  # {ae} ignored
+    assert 'a' not in vect.vocabulary_.keys()  # {ae} ignored
     assert_equal(len(vect.vocabulary_.keys()), 4)    # {bcdt} remain
-    assert_true('a' in vect.stop_words_)
+    assert 'a' in vect.stop_words_
     assert_equal(len(vect.stop_words_), 2)
 
     vect.max_df = 1
     vect.fit(test_data)
-    assert_true('a' not in vect.vocabulary_.keys())  # {ae} ignored
+    assert 'a' not in vect.vocabulary_.keys()  # {ae} ignored
     assert_equal(len(vect.vocabulary_.keys()), 4)    # {bcdt} remain
-    assert_true('a' in vect.stop_words_)
+    assert 'a' in vect.stop_words_
     assert_equal(len(vect.stop_words_), 2)
 
 
@@ -645,22 +646,22 @@ def test_vectorizer_min_df():
     test_data = ['abc', 'dea', 'eat']
     vect = CountVectorizer(analyzer='char', min_df=1)
     vect.fit(test_data)
-    assert_true('a' in vect.vocabulary_.keys())
+    assert 'a' in vect.vocabulary_.keys()
     assert_equal(len(vect.vocabulary_.keys()), 6)
     assert_equal(len(vect.stop_words_), 0)
 
     vect.min_df = 2
     vect.fit(test_data)
-    assert_true('c' not in vect.vocabulary_.keys())  # {bcdt} ignored
+    assert 'c' not in vect.vocabulary_.keys()  # {bcdt} ignored
     assert_equal(len(vect.vocabulary_.keys()), 2)    # {ae} remain
-    assert_true('c' in vect.stop_words_)
+    assert 'c' in vect.stop_words_
     assert_equal(len(vect.stop_words_), 4)
 
     vect.min_df = 0.8  # 0.8 * 3 documents -> min_doc_count == 2.4
     vect.fit(test_data)
-    assert_true('c' not in vect.vocabulary_.keys())  # {bcdet} ignored
+    assert 'c' not in vect.vocabulary_.keys()  # {bcdet} ignored
     assert_equal(len(vect.vocabulary_.keys()), 1)    # {a} remains
-    assert_true('c' in vect.stop_words_)
+    assert 'c' in vect.stop_words_
     assert_equal(len(vect.stop_words_), 5)
 
 
@@ -871,7 +872,7 @@ def test_tfidf_vectorizer_with_fixed_vocabulary():
     X_1 = vect.fit_transform(ALL_FOOD_DOCS)
     X_2 = vect.transform(ALL_FOOD_DOCS)
     assert_array_almost_equal(X_1.toarray(), X_2.toarray())
-    assert_true(vect.fixed_vocabulary_)
+    assert vect.fixed_vocabulary_
 
 
 def test_pickling_vectorizer():
@@ -1019,7 +1020,7 @@ def test_hashingvectorizer_nan_in_docs():
 def test_tfidfvectorizer_binary():
     # Non-regression test: TfidfVectorizer used to ignore its "binary" param.
     v = TfidfVectorizer(binary=True, use_idf=False, norm=None)
-    assert_true(v.binary)
+    assert v.binary
 
     X = v.fit_transform(['hello world', 'hello hello']).toarray()
     assert_array_equal(X.ravel(), [1, 1, 1, 0])
@@ -1121,6 +1122,14 @@ def test_vectorizers_invalid_ngram_range(vec):
             ValueError, message, vec.transform, ["good news everyone"])
 
 
+def _check_stop_words_consistency(estimator):
+    stop_words = estimator.get_stop_words()
+    tokenize = estimator.build_tokenizer()
+    preprocess = estimator.build_preprocessor()
+    return estimator._check_stop_words_consistency(stop_words, preprocess,
+                                                   tokenize)
+
+
 @fails_if_pypy
 def test_vectorizer_stop_words_inconsistent():
     if PY2:
@@ -1135,11 +1144,44 @@ def test_vectorizer_stop_words_inconsistent():
         vec.set_params(stop_words=["you've", "you", "you'll", 'AND'])
         assert_warns_message(UserWarning, message, vec.fit_transform,
                              ['hello world'])
+        # reset stop word validation
+        del vec._stop_words_id
+        assert _check_stop_words_consistency(vec) is False
 
     # Only one warning per stop list
     assert_no_warnings(vec.fit_transform, ['hello world'])
+    assert _check_stop_words_consistency(vec) is None
 
     # Test caching of inconsistency assessment
     vec.set_params(stop_words=["you've", "you", "you'll", 'blah', 'AND'])
     assert_warns_message(UserWarning, message, vec.fit_transform,
                          ['hello world'])
+
+
+@fails_if_pypy
+@pytest.mark.parametrize('Estimator',
+                         [CountVectorizer, TfidfVectorizer, HashingVectorizer])
+def test_stop_word_validation_custom_preprocessor(Estimator):
+    data = [{'text': 'some text'}]
+
+    vec = Estimator()
+    assert _check_stop_words_consistency(vec) is True
+
+    vec = Estimator(preprocessor=lambda x: x['text'],
+                    stop_words=['and'])
+    assert _check_stop_words_consistency(vec) == 'error'
+    # checks are cached
+    assert _check_stop_words_consistency(vec) is None
+    vec.fit_transform(data)
+
+    class CustomEstimator(Estimator):
+        def build_preprocessor(self):
+            return lambda x: x['text']
+
+    vec = CustomEstimator(stop_words=['and'])
+    assert _check_stop_words_consistency(vec) == 'error'
+
+    vec = Estimator(tokenizer=lambda doc: re.compile(r'\w{1,}')
+                                            .findall(doc),
+                    stop_words=['and'])
+    assert _check_stop_words_consistency(vec) is True

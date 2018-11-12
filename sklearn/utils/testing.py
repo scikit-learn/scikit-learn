@@ -763,6 +763,8 @@ try:
                                      reason='skip on travis')
     fails_if_pypy = pytest.mark.xfail(IS_PYPY, raises=NotImplementedError,
                                       reason='not compatible with PyPy')
+    skip_if_no_parallel = pytest.mark.skipif(not joblib.parallel.mp,
+                                             reason="joblib is in serial mode")
 
     #  Decorator for tests involving both BLAS calls and multiprocessing.
     #

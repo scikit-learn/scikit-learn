@@ -11,7 +11,6 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.stats import _weighted_percentile
@@ -552,7 +551,7 @@ def test_constant_strategy_sparse_target():
     clf = DummyClassifier(strategy="constant", random_state=0, constant=[1, 0])
     clf.fit(X, y)
     y_pred = clf.predict(X)
-    assert_true(sp.issparse(y_pred))
+    assert sp.issparse(y_pred)
     assert_array_equal(y_pred.toarray(), np.hstack([np.ones((n_samples, 1)),
                                                     np.zeros((n_samples, 1))]))
 
@@ -593,7 +592,7 @@ def test_stratified_strategy_sparse_target():
 
     X = [[0]] * 500
     y_pred = clf.predict(X)
-    assert_true(sp.issparse(y_pred))
+    assert sp.issparse(y_pred)
     y_pred = y_pred.toarray()
 
     for k in range(y.shape[1]):
@@ -618,7 +617,7 @@ def test_most_frequent_and_prior_strategy_sparse_target():
         clf.fit(X, y)
 
         y_pred = clf.predict(X)
-        assert_true(sp.issparse(y_pred))
+        assert sp.issparse(y_pred)
         assert_array_equal(y_pred.toarray(), y_expected)
 
 
