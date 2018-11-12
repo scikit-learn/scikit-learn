@@ -114,7 +114,8 @@ def _open_openml_url(openml_path, data_home):
                     with gzip.GzipFile(local_path, 'wb') as fdst:
                         shutil.copyfileobj(fsrc, fdst)
         except Exception:
-            os.unlink(local_path)
+            if os.path.exists(local_path):
+                os.unlink(local_path)
             raise
 
     # XXX: First time, decompression will not be necessary (by using fsrc), but
