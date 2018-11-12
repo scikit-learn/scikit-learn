@@ -142,6 +142,21 @@ validation iterator instead, for instance::
   >>> cross_val_score(clf, iris.data, iris.target, cv=cv)  # doctest: +ELLIPSIS
   array([0.977..., 0.977..., 1.  ..., 0.955..., 1.        ])
 
+Another option is to use an iterable yielding (train, test) splits as arrays of
+indices, for example::
+
+  >>> def custom_cv_2folds(X):
+  ...     n = X.shape[0]
+  ...     i = 1
+  ...     while i <= 2:
+  ...         idx = np.arange(n * (i - 1) / 2, n * i / 2, dtype=int)
+  ...         yield idx, idx
+  ...         i += 1
+  ...
+  >>> custom_cv = custom_cv_2folds(iris.data)
+  >>> cross_val_score(clf, iris.data, iris.target, cv=custom_cv)
+  array([1.        , 0.973...])
+
 .. topic:: Data transformation with held out data
 
     Just as it is important to test a predictor on data held-out from
