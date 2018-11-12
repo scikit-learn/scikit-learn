@@ -254,7 +254,8 @@ def test_one_hot_encoder_handle_unknown_strings():
     X = np.array(['11111111', '22', '333', '4444']).reshape((-1, 1))
     X2 = np.array(['55555', '22']).reshape((-1, 1))
 
-    # Test the ignore option, when categories are strings
+    # Non Regression test for the issue #12470
+    # Test the ignore option, when categories are numpy string dtype
     # particularly when the known category strings are larger
     # than the unknown category strings
     oh = OneHotEncoder(handle_unknown='ignore')
