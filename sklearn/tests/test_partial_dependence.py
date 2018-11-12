@@ -4,6 +4,7 @@ Testing for the partial dependence module.
 
 import numpy as np
 from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
 import pytest
 
 from sklearn.utils.testing import assert_raises
@@ -18,6 +19,7 @@ from sklearn.ensemble.gradient_boosting import BaseGradientBoosting
 from sklearn.ensemble.forest import ForestRegressor
 from sklearn.datasets import load_boston, load_iris
 from sklearn.datasets import make_classification, make_regression
+from sklearn.base import is_classifier, is_regressor
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -34,37 +36,63 @@ boston = load_boston()
 iris = load_iris()
 
 
+
+
+@pytest.mark.parametrize('Estimator', all_estimators())
 @pytest.mark.parametrize('method', ('recursion', 'exact'))
-@pytest.mark.parametrize('target_variables, expected_shape',
-                         [([1], (1, 10)),
-                          ([1, 2], (1, 100))])
-def test_output_shape(method, target_variables, expected_shape):
+@pytest.mark.parametrize('multiclass', (True, False))
+@pytest.mark.parametrize('grid_resolution', (10,))
+@pytest.mark.parametrize('target_variables', ([1], [1, 2]))
+def test_output_shape(Estimator, method, multiclass, grid_resolution,
+                      target_variables):
     # Check that partial_dependence has consistent output shape
-    for name, Estimator in all_estimators():
-        est = Estimator()
-        if method == 'recursion':
-            if not (isinstance(est, BaseGradientBoosting) or
-                    isinstance(est, ForestRegressor)):
-                continue
+
+    name, Estimator = Estimator
+    est = Estimator()
+    if not (is_classifier(est) or is_regressor(est)):
+        return
+    if method == 'recursion':
+        # recursion method only accepts some of the ensemble estimators
+        if not (isinstance(est, BaseGradientBoosting) or
+                isinstance(est, ForestRegressor)):
+            return
+    else:
+        # why skip multitask? We shouldn't
+        if 'MultiTask' in name:
+            return
+        # classifiers with exact method need predict_proba()
+        if is_classifier(est) and not hasattr(est, 'predict_proba'):
+            return
+
+    if is_classifier(est):
+        if multiclass == True:
+            X, y = iris.data, iris.target
+            n_classes = 3
         else:
-            if not hasattr(est, '_estimator_type') or 'MultiTask' in name:
-                continue
-            if (est._estimator_type == 'classifier' and 
-                    not hasattr(est, 'predict_proba')):
-                continue
-        if est._estimator_type not in ('classifier', 'regressor'):
-            continue
+            X, y = X_c, y_c
+            n_classes = 1
+    else:  # regressor
+            X, y = X_r, y_r
+            n_classes = 1
 
-        X, y = ((X_c, y_c) if est._estimator_type == 'classifier'
-                else (X_r, y_r))
+    est.fit(X, y)
+    pdp, axes = partial_dependence(est,
+                                    target_variables=target_variables,
+                                    X=X,
+                                    method=method,
+                                    grid_resolution=grid_resolution)
 
-        est.fit(X, y)
-        pdp, axes = partial_dependence(est,
-                                       target_variables=target_variables,
-                                       X=X,
-                                       method=method,
-                                       grid_resolution=10)
-        assert pdp.shape == expected_shape
+    expected_pdp_shape = (n_classes,
+                            grid_resolution ** len(target_variables))
+    expected_axes_shape = (len(target_variables), grid_resolution)
+
+    assert pdp.shape == expected_pdp_shape
+    assert axes is not None
+    assert np.asarray(axes).shape == expected_axes_shape
+
+
+def test_grid_from_X():
+    pass
 
 
 def test_partial_dependence_classifier():
@@ -76,7 +104,7 @@ def test_partial_dependence_classifier():
 
     # only 4 grid points instead of 5 because only 4 unique X[:,0] vals
     assert pdp.shape == (1, 4)
-    assert axes[0].shape[0] == 4
+    assert np.asarray(axes).shape == (1, 4)
 
     # now with our own grid
     X_ = np.asarray(X)
@@ -84,38 +112,10 @@ def test_partial_dependence_classifier():
     pdp_2, axes = partial_dependence(clf, [0], grid=grid)
 
     assert axes is None
-    assert_array_equal(pdp, pdp_2)
+    assert_array_almost_equal(pdp, pdp_2)
 
 
-def test_partial_dependence_multiclass():
-    # Test partial dependence for multi-class classifier
-    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
-    clf.fit(iris.data, iris.target)
-
-    grid_resolution = 25
-    n_classes = clf.n_classes_
-    pdp, axes = partial_dependence(
-        clf, [0], X=iris.data, grid_resolution=grid_resolution)
-
-    assert pdp.shape == (n_classes, grid_resolution)
-    assert len(axes) == 1
-    assert axes[0].shape[0] == grid_resolution
-
-
-def test_partial_dependence_regressor():
-    # Test partial dependence for regressor
-    clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
-    clf.fit(boston.data, boston.target)
-
-    grid_resolution = 25
-    pdp, axes = partial_dependence(
-        clf, [0], X=boston.data, grid_resolution=grid_resolution)
-
-    assert pdp.shape == (1, grid_resolution)
-    assert axes[0].shape[0] == grid_resolution
-
-
-def test_partial_dependecy_input():
+def test_partial_dependency_input():
     # Test input validation of partial dependence.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(X, y)
