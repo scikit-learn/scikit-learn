@@ -28,6 +28,7 @@ from ..preprocessing import normalize
 from ..utils import Parallel
 from ..utils import delayed
 from ..utils import effective_n_jobs
+from ..neighbors import DistanceMetric
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
@@ -440,6 +441,23 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
                                          metric_kwargs=metric_kwargs,
                                          batch_size=batch_size)[0]
 
+def haversine_distance(X, Y=None):
+    """ Compute the haversine distance between samples in X and Y
+
+
+    This metric is used from `DistanceMetric.get_metric('haversine')`
+    Parameters
+    ----------
+    X : {array-like}, shape (n_samples_1, 2)
+
+    Y : {array-like}, shape (n_samples_2, 2)
+
+    Returns
+    -------
+    distance : {array}, shape (n_samples_1, n_samples_2)
+    """
+
+    return DistanceMetric.get_metric('haversine').pairwise(X, Y)
 
 def manhattan_distances(X, Y=None, sum_over_features=True):
     """ Compute the L1 distances between the vectors in X and Y.
@@ -1016,6 +1034,7 @@ PAIRWISE_DISTANCE_FUNCTIONS = {
     'cityblock': manhattan_distances,
     'cosine': cosine_distances,
     'euclidean': euclidean_distances,
+    'haversine': haversine_distance,
     'l2': euclidean_distances,
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
@@ -1105,7 +1124,8 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
                   'cosine', 'dice', 'hamming', 'jaccard', 'kulsinski',
                   'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
                   'russellrao', 'seuclidean', 'sokalmichener',
-                  'sokalsneath', 'sqeuclidean', 'yule', "wminkowski"]
+                  'sokalsneath', 'sqeuclidean', 'yule', 'wminkowski',
+                  'haversine']
 
 
 def _check_chunk_size(reduced, chunk_size):
