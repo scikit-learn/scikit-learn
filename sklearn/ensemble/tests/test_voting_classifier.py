@@ -5,7 +5,7 @@ import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal, assert_true, assert_false
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
@@ -337,7 +337,7 @@ def test_set_params():
     eclf2 = VotingClassifier([('lr', clf1), ('nb', clf3)], voting='soft',
                              weights=[1, 2])
     eclf2.set_params(nb=clf2).fit(X, y)
-    assert_false(hasattr(eclf2, 'nb'))
+    assert not hasattr(eclf2, 'nb')
 
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
@@ -374,8 +374,8 @@ def test_set_estimator_none():
 
     assert dict(eclf2.estimators)["rf"] is None
     assert len(eclf2.estimators_) == 2
-    assert_true(all([not isinstance(est, RandomForestClassifier) for est in
-                     eclf2.estimators_]))
+    assert all(isinstance(est, (LogisticRegression, GaussianNB))
+               for est in eclf2.estimators_)
     assert eclf2.get_params()["rf"] is None
 
     eclf1.set_params(voting='soft').fit(X, y)
