@@ -13,6 +13,7 @@ from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import ignore_warnings
 from sklearn.partial_dependence import partial_dependence
 from sklearn.partial_dependence import plot_partial_dependence
+from sklearn.partial_dependence import _grid_from_X
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import BaseGradientBoosting
@@ -34,8 +35,6 @@ X_r, y_r = make_regression(n_features=10, n_informative=5, random_state=0)
 # Load the boston & iris datasets
 boston = load_boston()
 iris = load_iris()
-
-
 
 
 @pytest.mark.parametrize('Estimator', all_estimators())
@@ -76,14 +75,12 @@ def test_output_shape(Estimator, method, multiclass, grid_resolution,
             n_classes = 1
 
     est.fit(X, y)
-    pdp, axes = partial_dependence(est,
-                                    target_variables=target_variables,
-                                    X=X,
-                                    method=method,
-                                    grid_resolution=grid_resolution)
+    pdp, axes = partial_dependence(est, target_variables=target_variables,
+                                   X=X, method=method,
+                                   grid_resolution=grid_resolution)
 
     expected_pdp_shape = (n_classes,
-                            grid_resolution ** len(target_variables))
+                          grid_resolution ** len(target_variables))
     expected_axes_shape = (len(target_variables), grid_resolution)
 
     assert pdp.shape == expected_pdp_shape
@@ -92,27 +89,26 @@ def test_output_shape(Estimator, method, multiclass, grid_resolution,
 
 
 def test_grid_from_X():
-    pass
+    # test shapes of returned objects depending on the number of unique values
+    # for a feature.
 
+    rng = np.random.RandomState(0)
+    grid_resolution = 15
 
-def test_partial_dependence_classifier():
-    # Test partial dependence for classifier
-    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
-    clf.fit(X, y)
+    # n_unique_values > grid_resolution
+    X = rng.normal(size=(20, 2))
+    grid, axes = _grid_from_X(X, grid_resolution=grid_resolution)
+    assert grid.shape == (grid_resolution * grid_resolution, X.shape[1])
+    assert np.asarray(axes).shape == (2, grid_resolution)
 
-    pdp, axes = partial_dependence(clf, [0], X=X, grid_resolution=5)
-
-    # only 4 grid points instead of 5 because only 4 unique X[:,0] vals
-    assert pdp.shape == (1, 4)
-    assert np.asarray(axes).shape == (1, 4)
-
-    # now with our own grid
-    X_ = np.asarray(X)
-    grid = np.unique(X_[:, 0])
-    pdp_2, axes = partial_dependence(clf, [0], grid=grid)
-
-    assert axes is None
-    assert_array_almost_equal(pdp, pdp_2)
+    # n_unique_values < grid_resolution, will use actual values
+    n_unique_values = 10
+    X[:n_unique_values + 1, 0] = 12345
+    grid, axes = _grid_from_X(X, grid_resolution=grid_resolution)
+    assert grid.shape == (n_unique_values * grid_resolution, X.shape[1])
+    # axes is a list of arrays of different shapes
+    assert axes[0].shape == (n_unique_values,)
+    assert axes[1].shape == (grid_resolution,)
 
 
 def test_partial_dependency_input():
