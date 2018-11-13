@@ -5,6 +5,7 @@ Testing for mean shift clustering methods
 
 import numpy as np
 import warnings
+import pytest
 
 from scipy import sparse
 
@@ -28,17 +29,24 @@ X, _ = make_blobs(n_samples=300, n_features=2, centers=centers,
                   cluster_std=0.4, shuffle=True, random_state=11)
 
 
-def test_estimate_bandwidth():
+@pytest.mark.parametrize('seed', range(5))
+def test_estimate_bandwidth(seed):
     # Test estimate_bandwidth
-    bandwidth = estimate_bandwidth(X, n_samples=200)
+    bandwidth = estimate_bandwidth(X, n_samples=200, random_state=seed)
     assert 0.9 <= bandwidth <= 1.5
 
 
-def test_estimate_bandwidth_1sample():
+@pytest.mark.parametrize('seed', range(5))
+def test_estimate_bandwidth_1sample(seed):
     # Test estimate_bandwidth when n_samples=1 and quantile<1, so that
     # n_neighbors is set to 1.
-    bandwidth = estimate_bandwidth(X, n_samples=1, quantile=0.3)
-    assert_almost_equal(bandwidth, 0.)
+    bandwidth = estimate_bandwidth(X, n_samples=1, quantile=0.3,
+                                   random_state=seed)
+
+    # The squared Euclidean distance computation used internally by the
+    # nearest neighbor query is not very accurate, so let's be lax with
+    # the tolerance:
+    assert_almost_equal(bandwidth, 0., decimal=6)
 
 
 def test_mean_shift():
