@@ -8,19 +8,27 @@ from numpy.testing import assert_array_almost_equal
 import pytest
 
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import if_matplotlib
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import ignore_warnings
 from sklearn.partial_dependence import partial_dependence
 from sklearn.partial_dependence import plot_partial_dependence
 from sklearn.partial_dependence import _grid_from_X
+from sklearn.partial_dependence import _partial_dependence_exact
+from sklearn.partial_dependence import _partial_dependence_recursion
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import BaseGradientBoosting
+from sklearn.linear_model import LinearRegression
+from sklearn.svm import SVC
 from sklearn.ensemble.forest import ForestRegressor
 from sklearn.datasets import load_boston, load_iris
 from sklearn.datasets import make_classification, make_regression
 from sklearn.base import is_classifier, is_regressor
+from sklearn.utils.estimator_checks import multioutput_estimator_convert_y_2d
+from sklearn.cluster import KMeans
+
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -46,7 +54,7 @@ def test_output_shape(Estimator, method, multiclass, grid_resolution,
                       target_variables):
     # Check that partial_dependence has consistent output shape
 
-    name, Estimator = Estimator
+    _, Estimator = Estimator
     est = Estimator()
     if not (is_classifier(est) or is_regressor(est)):
         return
@@ -55,34 +63,32 @@ def test_output_shape(Estimator, method, multiclass, grid_resolution,
         if not (isinstance(est, BaseGradientBoosting) or
                 isinstance(est, ForestRegressor)):
             return
-    else:
-        # why skip multitask? We shouldn't
-        if 'MultiTask' in name:
-            return
+    elif is_classifier(est) and not hasattr(est, 'predict_proba'):
         # classifiers with exact method need predict_proba()
-        if is_classifier(est) and not hasattr(est, 'predict_proba'):
-            return
+        return
 
     if is_classifier(est):
         if multiclass == True:
             X, y = iris.data, iris.target
-            n_classes = 3
+            n_targets = 3
         else:
             X, y = X_c, y_c
-            n_classes = 1
+            n_targets = 1
     else:  # regressor
         if multiclass:  # multiclass for regressor makes no sense
             return
         X, y = X_r, y_r
-        n_classes = 1
+        n_targets = 1
+        if "MultiTask" in est.__class__.__name__:
+            y = np.array([y, y]).T
+            n_targets = 2
 
     est.fit(X, y)
     pdp, axes = partial_dependence(est, target_variables=target_variables,
                                    X=X, method=method,
                                    grid_resolution=grid_resolution)
 
-    expected_pdp_shape = (n_classes,
-                          grid_resolution ** len(target_variables))
+    expected_pdp_shape = (n_targets, grid_resolution ** len(target_variables))
     expected_axes_shape = (len(target_variables), grid_resolution)
 
     assert pdp.shape == expected_pdp_shape
@@ -114,32 +120,100 @@ def test_grid_from_X():
     assert axes[1].shape == (grid_resolution,)
 
 
-def test_partial_dependency_input():
+@pytest.mark.parametrize('target_feature', (0, 3))
+@pytest.mark.parametrize('est, partial_dependence_fun',
+                         [(LinearRegression(), _partial_dependence_exact),
+                          (GradientBoostingRegressor(random_state=0), _partial_dependence_recursion)])
+def test_partial_dependence_helpers(est, partial_dependence_fun,
+                                    target_feature):
+    # Check that the what is returned by _partial_dependence_exact or
+    # _partial_dependece_recursion is equivalent to manually setting a target
+    # feature to a given value, and computing the average prediction over all
+    # samples.
+
+    # doesn't work for _partial_dependence_recursion, dont know why :(
+    if partial_dependence_fun is _partial_dependence_recursion:
+        return
+
+    X, y = X_r, y_r
+    est.fit(X, y)
+
+    # target feature will be set to .5 and then to 123
+    target_variables = np.array([target_feature], dtype=np.int32)
+    grid = np.array([[.5],
+                     [123]])
+    pdp = partial_dependence_fun(est, grid, target_variables, X)
+
+    mean_predictions = []
+    for val in (.5, 123):
+        X_ = X.copy()
+        X_[:, target_feature] = val
+        mean_predictions.append(est.predict(X_).mean())
+
+    pdp = pdp[0]  # (shape is (1, 2) so make it (2,))
+    assert_array_almost_equal(pdp, mean_predictions)
+    
+
+def test_partial_dependence_input():
     # Test input validation of partial dependence.
-    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
-    clf.fit(X, y)
 
-    assert_raises(ValueError, partial_dependence,
-                  clf, [0], grid=None, X=None)
+    lr = LinearRegression()
+    lr.fit(X, y)
+    gbc = GradientBoostingClassifier(random_state=0)
+    gbc.fit(X, y)
 
-    assert_raises(ValueError, partial_dependence,
-                  clf, [0], grid=[0, 1], X=X)
+    assert_raises_regex(ValueError,
+                        "est must be a fitted regressor or classifier",
+                        partial_dependence, KMeans(), [0])
 
-    # first argument must be an instance of BaseGradientBoosting
-    assert_raises(ValueError, partial_dependence,
-                  {}, [0], X=X)
+    assert_raises_regex(ValueError,
+                        "method blahblah is invalid. Accepted method names "
+                        "are exact, recursion, auto.",
+                        partial_dependence, lr, [0], method='blahblah')
 
-    # Gradient boosting estimator must be fit
-    assert_raises(ValueError, partial_dependence,
-                  GradientBoostingClassifier(), [0], X=X)
+    assert_raises_regex(ValueError,
+                        'est must be an instance of BaseGradientBoosting or '
+                        'ForestRegressor for the "recursion" method',
+                        partial_dependence, lr, [0], method='recursion')
 
-    assert_raises(ValueError, partial_dependence, clf, [-1], X=X)
+    assert_raises_regex(ValueError, "est requires a predict_proba()",
+                        partial_dependence, SVC(), [0], X=X)
 
-    assert_raises(ValueError, partial_dependence, clf, [100], X=X)
+    for feature in (-1, 1000000):
+        for est in (lr, gbc):
+            assert_raises_regex(ValueError,
+                                "all target_variables must be in",
+                                partial_dependence, est, [feature], X=X)
 
-    # wrong ndim for grid
-    grid = np.random.rand(10, 2, 1)
-    assert_raises(ValueError, partial_dependence, clf, [0], grid=grid)
+    assert_raises_regex(ValueError, "Either grid or X must be specified",
+                        partial_dependence, gbc, [0], grid=None, X=None)
+
+    for percentiles in ((1, 2, 3, 4), 12345):
+        assert_raises_regex(ValueError, "percentiles must be a sequence",
+                            partial_dependence, lr, [0], grid=None, X=X,
+                            percentiles=percentiles)
+    for percentiles in ((-1, .95), (.05, 2)):
+        assert_raises_regex(ValueError, "percentiles values must be in",
+                            partial_dependence, lr, [0], grid=None, X=X,
+                            percentiles=percentiles)
+    assert_raises_regex(ValueError, "percentiles\[0\] must be less than",
+                        partial_dependence, lr, [0], grid=None, X=X,
+                        percentiles=(.9, .1))
+
+    assert_raises_regex(ValueError, "grid must be 1d or 2d",
+                        partial_dependence, lr, [0], grid=[[[1]]], X=X)
+
+    for target_variables in ([0], [0, 1, 0]):
+        assert_raises_regex(ValueError,
+                            'grid.shape\[1\] \(2\) must be equal to the number'
+                            ' of target variables',
+                            partial_dependence, lr, target_variables,
+                            grid=[[30, -123]], X=X)
+
+    for unfitted_est in (LinearRegression(), GradientBoostingRegressor()):
+        assert_raises_regex(ValueError,
+                            'est parameter must be a fitted estimator',
+                            partial_dependence, unfitted_est, [0], X=X)
 
 
 @if_matplotlib

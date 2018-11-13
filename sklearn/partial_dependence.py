@@ -10,6 +10,7 @@ import numbers
 import numpy as np
 from scipy.stats.mstats import mquantiles
 
+from .base import is_classifier, is_regressor
 from .utils.extmath import cartesian
 from .externals.joblib import Parallel, delayed
 from .externals import six
@@ -50,10 +51,14 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     axes : seq of ndarray
         The axes with which the grid has been created.
     """
-    if len(percentiles) != 2:
-        raise ValueError('percentile must be tuple of len 2')
+    try:
+        assert len(percentiles) == 2
+    except (AssertionError, TypeError):
+        raise ValueError('percentiles must be a sequence of 2 elements.')
     if not all(0. <= x <= 1. for x in percentiles):
-        raise ValueError('percentile values must be in [0, 1]')
+        raise ValueError('percentiles values must be in [0, 1].')
+    if percentiles[0] > percentiles[1]:
+        raise ValueError('percentiles[0] must be less than percentiles[1].')
 
     axes = []
     emp_percentiles = mquantiles(X, prob=percentiles, axis=0)
@@ -72,12 +77,16 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     return cartesian(axes), axes
 
 
-def _recursion(est, grid, target_variables, output=None, X=None):
+def _partial_dependence_recursion(est, grid, target_variables, X=None):
     # TODO: The pattern below required to avoid a namespace collision.
     # TODO: Move below imports to module level import at 0.22 release.
     from .ensemble._gradient_boosting import _partial_dependence_tree
     from .ensemble.gradient_boosting import BaseGradientBoosting
     from .ensemble.forest import ForestRegressor
+
+    # grid needs to be DTYPE
+    grid = np.asarray(grid, dtype=DTYPE, order='C')
+
     if isinstance(est, BaseGradientBoosting):
         n_trees_per_stage = est.estimators_.shape[1]
         n_estimators = est.estimators_.shape[0]
@@ -95,71 +104,59 @@ def _recursion(est, grid, target_variables, output=None, X=None):
             else:
                 tree = est.estimators_[stage].tree_
             _partial_dependence_tree(tree, grid, target_variables,
-                                        learning_rate, pdp[k])
+                                     learning_rate, pdp[k])
     if isinstance(est, ForestRegressor):
         pdp /= n_estimators
 
     return pdp
 
 
-def _exact(est, grid, target_variables, output, X):
+def _partial_dependence_exact(est, grid, target_variables, X):
 
-    def _predict(est, X, output=None):
-        if est._estimator_type == 'regressor':
-            try:
-                predictions = est.predict(X)
-            except NotFittedError:
-                raise ValueError('est parameter must be a fitted estimator')
-            if predictions.ndim != 1 and predictions.shape[1] != 1:
-                # Multi-output
-                if not 0 <= output < predictions.shape[1]:
-                    # TODO: better error msg, also could this be checked
-                    # before?
-                    raise ValueError('Valid out must be specified for '
-                                     'multi-output models.')
-                predictions = predictions[:, output]
-            print(predictions.shape)
-        elif est._estimator_type == 'classifier':
-            # Note: no support for multi-output classifiers.
-            # TODO: raise error if multi-output classifier.
-            try:
-                predictions = est.predict_proba(X)
-            except NotFittedError:
-                raise ValueError('est parameter must be a fitted estimator')
+    pdp = []
+    for new_values in grid:
+        X_eval = X.copy()
+        for i, variable in enumerate(target_variables):
+            X_eval[:, variable] = new_values[i]
+
+        try:
+            predictions = (est.predict(X_eval) if is_regressor(est)
+                           else est.predict_proba(X_eval))
+        except NotFittedError:
+            raise ValueError('est parameter must be a fitted estimator')
+
+        # Note: predictions is of shape
+        # (n_points,) for non-multioutput regressors
+        # (n_points, n_tasks) for multioutput regressors
+        # (n_points, 1) for the regressors in cross_decomposition (I think)
+        # (n_points, 2)  for binary classifaction
+        # (n_points, n_classes) for multiclass classification
+
+        if is_classifier(est):
             predictions = np.log(np.clip(predictions, 1e-16, 1))
             # not sure yet why we need to center probas?
             predictions = predictions - np.mean(predictions, axis=1,
                                                 keepdims=True)
-        # predictions is of shape
-        # (n_points,) for most regressors (multioutput or not)
-        # (n_points, 1) for the regressors in cross_decomposition (I think)
-        # (n_points, 2)  for binary classifaction
-        # (n_points, n_classes)  for multiclass classification
-        return predictions
 
-    pdp = []
-    for row in grid:
-        X_eval = X.copy()
-        for i, variable in enumerate(target_variables):
-            X_eval[:, variable] = row[i]
-        predictions = _predict(est, X_eval, output=output)
-        pdp.append(np.mean(predictions, axis=0))  # average over points
+        pdp.append(np.mean(predictions, axis=0))  # average over samples
 
-    # reshape pdp to (n_classes, n_points) where n_classes is 1 for binary
-    # classification and for regression. The shape is already correct for
-    # multiclass classification.
+    # reshape pdp to (n_targets, n_points) where n_targets is:
+    # - 1 for non-multioutput regression and binary classification (shape is
+    #   already correct in those cases)
+    # - n_tasks for multi-output regression
+    # - n_classes for multiclass classification.
     pdp = np.array(pdp).T
-    if pdp.ndim == 1:
-        # Regression, pdp shape is (n_points,)
+    if is_regressor(est) and pdp.ndim == 1:
+        # non-multioutput regression, pdp shape is (n_points,)
         pdp = pdp.reshape(1, -1)
-    elif pdp.shape[0] == 2:
+    elif is_classifier(est) and pdp.shape[0] == 2:
         # Binary classification, pdp shape is (2, n_points).
         pdp = pdp[1] # we output the effect of **positive** class
         pdp = pdp.reshape(1, -1)
 
     return pdp
 
-def partial_dependence(est, target_variables, grid=None, X=None, output=None,
+def partial_dependence(est, target_variables, grid=None, X=None,
                        percentiles=(0.05, 0.95), grid_resolution=100,
                        method='auto'):
     """Partial dependence of ``target_variables``.
@@ -230,9 +227,11 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
     from .ensemble.gradient_boosting import BaseGradientBoosting
     from .ensemble.forest import ForestRegressor
 
-    if (not hasattr(est, '_estimator_type') or
-            est._estimator_type not in ('classifier', 'regressor')):
-        raise ValueError('est must be a fitted regressor or classifier model.')
+    if not (is_classifier(est) or is_regressor(est)):
+        raise ValueError('est must be a fitted regressor or classifier.')
+
+    if X is not None:
+        X = check_array(X)
 
     if method == 'auto':
         if isinstance(est, (BaseGradientBoosting, ForestRegressor)):
@@ -240,29 +239,28 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
         else:
             method = 'exact'
     method_to_function = {
-        'exact': _exact,
-        'recursion': _recursion
+        'exact': _partial_dependence_exact,
+        'recursion': _partial_dependence_recursion
     }
     if method not in method_to_function:
         raise ValueError(
-            'method {} is invalid. Accepted method names are {}'.format(
-                method,
-                                     ', '.join(method_to_function.keys())))
+            'method {} is invalid. Accepted method names are {}, auto.'.format(
+                method, ', '.join(method_to_function.keys())))
 
     if method == 'recursion':
         if not isinstance(est, (BaseGradientBoosting, ForestRegressor)):
             raise ValueError(
-                'est has to be an instance of BaseGradientBoosting or '
+                'est must be an instance of BaseGradientBoosting or '
                 'ForestRegressor for the "recursion" method. Try '
                 'using method="exact".')
         check_is_fitted(est, 'estimators_',
-                        msg='Call fit() before partial_dependence()')
+                        msg='est parameter must be a fitted estimator')
+        # Note: if method is exact, this check is done at prediction time
         n_features = est.n_features_
     elif X is None:
         raise ValueError('X is required for exact method')
     else:
-        if (est._estimator_type == 'classifier' and
-                not hasattr(est, 'predict_proba')):
+        if is_classifier(est) and not hasattr(est, 'predict_proba'):
             raise ValueError('est requires a predict_proba() method for '
                              'method="exact" for classification.')
         n_features = X.shape[1]
@@ -270,31 +268,30 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
     target_variables = np.asarray(target_variables, dtype=np.int32,
                                   order='C').ravel()
     if any(not (0 <= fx < n_features) for fx in target_variables):
-        raise ValueError('target_variables must be in [0, %d]'
+        raise ValueError('all target_variables must be in [0, %d]'
                          % (n_features - 1))
 
-    if (grid is None and X is None) or (grid is not None and X is not None):
+    if (grid is None and X is None):
         raise ValueError('Either grid or X must be specified.')
 
-    if X is not None:
-        X = check_array(X, dtype=DTYPE, order='C')
+    if grid is None:
         grid, axes = _grid_from_X(X[:, target_variables], percentiles,
                                   grid_resolution)
     else:
-        assert grid is not None
-        # don't return axes if grid is given
-        axes = None
+        grid = np.asarray(grid)
+        axes = None  # don't return axes if grid is given
         # grid must be 2d
         if grid.ndim == 1:
             grid = grid[:, np.newaxis]
         if grid.ndim != 2:
-            raise ValueError('grid must be 2d but is %dd' % grid.ndim)
+            raise ValueError('grid must be 1d or 2d, got %dd dimensions' %
+                             grid.ndim)
+        if grid.shape[1] != target_variables.shape[0]:
+            raise ValueError('grid.shape[1] ({}) must be equal to the number '
+                             'of target variables ({})'.format(
+                                 grid.shape[1], target_variables.shape[0]))
 
-    grid = np.asarray(grid, dtype=DTYPE, order='C')
-    # TODO: output error message
-    assert grid.shape[1] == target_variables.shape[0]
-
-    pdp = method_to_function[method](est, grid, target_variables, output, X)
+    pdp = method_to_function[method](est, grid, target_variables, X)
 
     return pdp, axes
 
