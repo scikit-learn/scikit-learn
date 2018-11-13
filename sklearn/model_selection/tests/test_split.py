@@ -411,7 +411,7 @@ def test_kfold_balance():
         for _, test in kf:
             sizes.append(len(test))
 
-        assert_true((np.max(sizes) - np.min(sizes)) <= 1)
+        assert (np.max(sizes) - np.min(sizes)) <= 1
         assert_equal(np.sum(sizes), i)
 
 
@@ -430,7 +430,7 @@ def test_stratifiedkfold_balance():
             for _, test in skf:
                 sizes.append(len(test))
 
-            assert_true((np.max(sizes) - np.min(sizes)) <= 1)
+            assert (np.max(sizes) - np.min(sizes)) <= 1
             assert_equal(np.sum(sizes), i)
 
 
@@ -846,7 +846,7 @@ def test_leave_one_p_group_out():
 
                 # Third test:
                 # The number of groups in test must be equal to p_groups_out
-                assert_true(np.unique(groups_arr[test]).shape[0], p_groups_out)
+                assert np.unique(groups_arr[test]).shape[0], p_groups_out
 
     # check get_n_splits() with dummy parameters
     assert_equal(logo.get_n_splits(None, None, ['a', 'b', 'c', 'b', 'c']), 3)
@@ -1043,8 +1043,8 @@ def test_train_test_split():
     # don't convert lists to anything else by default
     split = train_test_split(X, X_s, y.tolist())
     X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
-    assert_true(isinstance(y_train, list))
-    assert_true(isinstance(y_test, list))
+    assert isinstance(y_train, list)
+    assert isinstance(y_test, list)
 
     # allow nd-arrays
     X_4d = np.arange(10 * 5 * 3 * 2).reshape(10, 5, 3, 2)
@@ -1088,8 +1088,8 @@ def train_test_split_pandas():
         # X dataframe
         X_df = InputFeatureType(X)
         X_train, X_test = train_test_split(X_df)
-        assert_true(isinstance(X_train, InputFeatureType))
-        assert_true(isinstance(X_test, InputFeatureType))
+        assert isinstance(X_train, InputFeatureType)
+        assert isinstance(X_test, InputFeatureType)
 
 
 def train_test_split_sparse():
@@ -1100,16 +1100,16 @@ def train_test_split_sparse():
     for InputFeatureType in sparse_types:
         X_s = InputFeatureType(X)
         X_train, X_test = train_test_split(X_s)
-        assert_true(isinstance(X_train, csr_matrix))
-        assert_true(isinstance(X_test, csr_matrix))
+        assert isinstance(X_train, csr_matrix)
+        assert isinstance(X_test, csr_matrix)
 
 
 def train_test_split_mock_pandas():
     # X mock dataframe
     X_df = MockDataFrame(X)
     X_train, X_test = train_test_split(X_df)
-    assert_true(isinstance(X_train, MockDataFrame))
-    assert_true(isinstance(X_test, MockDataFrame))
+    assert isinstance(X_train, MockDataFrame)
+    assert isinstance(X_test, MockDataFrame)
     X_train_arr, X_test_arr = train_test_split(X_df)
 
 
@@ -1378,7 +1378,7 @@ def test_time_series_cv():
 def _check_time_series_max_train_size(splits, check_splits, max_train_size):
     for (train, test), (check_train, check_test) in zip(splits, check_splits):
         assert_array_equal(test, check_test)
-        assert_true(len(check_train) <= max_train_size)
+        assert len(check_train) <= max_train_size
         suffix_start = max(len(train) - max_train_size, 0)
         assert_array_equal(check_train, train[suffix_start:])
 

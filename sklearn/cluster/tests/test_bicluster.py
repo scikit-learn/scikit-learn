@@ -10,7 +10,6 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import SkipTest
 
 from sklearn.base import BaseEstimator, BiclusterMixin
@@ -51,7 +50,7 @@ def test_get_submatrix():
         submatrix[:] = -1
         if issparse(X):
             X = X.toarray()
-        assert_true(np.all(X != -1))
+        assert np.all(X != -1)
 
 
 def _test_shape_indices(model):

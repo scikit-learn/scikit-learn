@@ -661,7 +661,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
-        pred = None
 
         if self.algorithm == 'SAMME.R':
             # The weights are all 1. for SAMME.R
