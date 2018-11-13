@@ -717,144 +717,39 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                       "average != 'binary' (got %r). You may use "
                       "labels=[pos_label] to specify a single positive class."
                       % (pos_label, average), UserWarning)
+    if average != 'samples' and normalize != 'true-if-samples':
+        raise ValueError("'normalize' is only meaningful with "
+                         "`average='samples'`, got `average='%s'`."
+                         % average)
 
-    if labels is None:
-        labels = present_labels
-        n_labels = None
+    samplewise = average == 'samples'
+    MCM = multilabel_confusion_matrix(y_true, y_pred,
+                                      sample_weight=sample_weight,
+                                      labels=labels, samplewise=samplewise)
+    numerator = MCM[:, 1, 1]
+    denominator = MCM[:, 1, 1] + MCM[:, 0, 1] + MCM[:, 1, 0]
+
+    if average == 'micro':
+        numerator = np.array([numerator.sum()])
+        denominator = np.array([denominator.sum()])
+
+    if not np.all(denominator):
+        # TODO: warn that 0 will be returned
+        denominator[denominator == 0] == 1
+
+    jaccard = numerator / denominator
+    if average is None:
+        return jaccard
+    if not normalize:
+        return (jaccard * (1 if sample_weight is None
+                           else sample_weight)).sum()
+    if average == 'weighted':
+        weights = MCM[:, 1, 0] + MCM[:, 1, 1]
+    elif average == 'samples' and sample_weight is not None:
+        weights = sample_weight
     else:
-        n_labels = len(labels)
-        labels = np.hstack([labels, np.setdiff1d(present_labels, labels,
-                                                 assume_unique=True)])
-
-    if y_type.startswith('multilabel'):
-        if average != 'samples' and normalize != 'true-if-samples':
-            raise ValueError("'normalize' is only meaningful with "
-                             "`average='samples'`, got `average='%s'`."
-                             % average)
-
-        _validate_multilabels(labels, present_labels)
-
-        if n_labels is not None:
-            y_true = y_true[:, labels[:n_labels]]
-            y_pred = y_pred[:, labels[:n_labels]]
-
-        class_weight = None
-
-        if average == 'samples':
-            sum_axis = 1
-            class_weight = sample_weight
-            weights = None
-        elif average == 'micro':
-            sum_axis = 1
-            class_weight = None
-            weights = sample_weight
-        elif average == 'macro':
-            sum_axis = 0
-            class_weight = None
-            weights = sample_weight
-        elif average == 'weighted':
-            sum_axis = 0
-            weights = sample_weight
-            if sample_weight is None:
-                class_weight = y_true.toarray().sum(axis=0)
-            else:
-                class_weight = (y_true.toarray().T).dot(sample_weight)
-            if class_weight.sum() == 0:
-                return 0
-        else:
-            # average=None
-            sum_axis = 0
-            weights = sample_weight
-
-        pred_or_true = count_nonzero(y_true + y_pred, axis=sum_axis,
-                                     sample_weight=weights)
-        pred_and_true = count_nonzero(y_true.multiply(y_pred),
-                                      axis=sum_axis,
-                                      sample_weight=weights)
-        if average == 'micro':
-            pred_or_true = np.array([pred_or_true.sum()])
-            pred_and_true = np.array([pred_and_true.sum()])
-
-        with np.errstate(divide='ignore', invalid='ignore'):
-            score = pred_and_true / pred_or_true
-            score[pred_or_true == 0.0] = 0.0
-
-            if average is not None:
-                if not normalize:
-                    if class_weight is not None:
-                        score = np.dot(score, class_weight)
-                    else:
-                        score = score.sum()
-                else:
-                    score = np.average(score, weights=class_weight)
-        return score
-    elif average == 'samples':
-        raise ValueError("Sample-based jaccard similarity score is "
-                         "not meaningful outside multilabel "
-                         "classification. See the accuracy_score instead.")
-    else:
-        le = LabelEncoder()
-        le.fit(labels)
-        y_true = le.transform(y_true)
-        y_pred = le.transform(y_pred)
-
-        Labels = labels
-        labels = le.transform(labels)[:n_labels]
-        # use 'np.in1d' instead of 'np.isin' (unavailable in version < 1.13.0)
-        indices = np.where(np.in1d(y_true, labels, assume_unique=False,
-                                   invert=False)
-                           + np.in1d(y_pred, labels, assume_unique=False,
-                                     invert=False))[0]
-
-        y_true = y_true[indices]
-        y_pred = y_pred[indices]
-        tp = y_true == y_pred
-        tp_bins = y_true[tp]
-        if sample_weight is not None:
-            sample_weight = np.array(sample_weight)[indices]
-            tp_bins_weights = np.asarray(sample_weight)[tp]
-        else:
-            tp_bins_weights = None
-
-        if len(tp_bins):
-            tp_sum = np.bincount(tp_bins, weights=tp_bins_weights,
-                                 minlength=len(labels))[labels]
-            true_sum = np.bincount(y_true, weights=sample_weight,
-                                   minlength=len(labels))[labels]
-            pred_sum = np.bincount(y_pred, weights=sample_weight,
-                                   minlength=len(labels))[labels]
-        else:
-            tp_sum = np.zeros(len(labels))
-            if len(y_true):
-                true_sum = np.bincount(y_true, weights=sample_weight,
-                                       minlength=len(Labels))[labels]
-            else:
-                true_sum = np.zeros(len(labels))
-            if len(y_pred):
-                pred_sum = np.bincount(y_pred, weights=sample_weight,
-                                       minlength=len(Labels))[labels]
-            else:
-                pred_sum = np.zeros(len(labels))
-
-        class_weight = None
-        if average == 'micro' or average == 'binary':
-            tp_sum = np.array([tp_sum.sum()])
-            true_sum = np.array([true_sum.sum()])
-            pred_sum = np.array([pred_sum.sum()])
-            class_weight = None
-        elif average == 'macro':
-            class_weight = None
-        elif average == 'weighted':
-            class_weight = true_sum
-            if class_weight.sum() == 0:
-                return 0
-
-        with np.errstate(divide='ignore', invalid='ignore'):
-            score = tp_sum / (true_sum + pred_sum - tp_sum)
-
-            if average is not None:
-                score = np.average(score, weights=class_weight)
-        return score
+        weights = None
+    return np.average(jaccard, weights=weights)
 
 
 def matthews_corrcoef(y_true, y_pred, sample_weight=None):

@@ -165,6 +165,8 @@ CLASSIFICATION_METRICS = {
     "samples_f2_score": partial(fbeta_score, average="samples", beta=2),
     "samples_precision_score": partial(precision_score, average="samples"),
     "samples_recall_score": partial(recall_score, average="samples"),
+    "samples_jaccard_similarity_score":
+    partial(jaccard_similarity_score, average="macro"),
 
     "cohen_kappa_score": cohen_kappa_score,
 
@@ -413,6 +415,7 @@ MULTILABELS_METRICS = {
 
     "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
     "samples_precision_score", "samples_recall_score",
+    "samples_jaccard_similarity_score",
 }
 
 # Regression metrics with "multioutput-continuous" format support
