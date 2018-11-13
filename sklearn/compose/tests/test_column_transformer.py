@@ -135,13 +135,13 @@ def test_column_transformer_tuple_order_deprecation(transformer):
     # XXX Remove in v0.22
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     with pytest.warns(
-            UserWarning,
+            DeprecationWarning,
             match="ColumnTransformer transformer tuples should be"):
         ct1 = ColumnTransformer([('name', transformer, [0])])
         ct1.fit_transform(X_array)
 
     with pytest.warns(
-            UserWarning,
+            DeprecationWarning,
             match="ColumnTransformer transformer tuples should be"):
         ct2 = ColumnTransformer([('name', transformer, [0])])
         ct2.fit(X_array)
@@ -150,7 +150,7 @@ def test_column_transformer_tuple_order_deprecation(transformer):
     ct2.transform(X_array)
 
     with pytest.warns(
-            UserWarning,
+            DeprecationWarning,
             match="ColumnTransformer transformer tuples should be"):
         ct3 = ColumnTransformer([('trans', transformer, [0])])
         ct3.set_params(trans=Trans())
@@ -544,7 +544,8 @@ def test_column_transformer_invalid_transformer():
 def test_make_column_transformer():
     scaler = StandardScaler()
     norm = Normalizer()
-    ct = make_column_transformer(('first', scaler), (['second'], norm))
+    ct = make_column_transformer(('first', scaler), (['second'], norm),
+                                 force_deprecated=False)
     names, columns, transformers = zip(*ct.transformers)
     assert_equal(names, ("standardscaler", "normalizer"))
     assert_equal(transformers, (scaler, norm))

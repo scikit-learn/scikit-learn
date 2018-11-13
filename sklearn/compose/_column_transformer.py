@@ -171,8 +171,13 @@ boolean mask array or callable
     def _guess_tuple_order(self):
         """Guess the tuple order of the given `transformers`.
 
-        Returns the inferred column and transformer indices from the given
-        `transformers`. This is only for backward compatibility until v0.22
+        Returns
+        -------
+        (column_ix, transformer_ix): returns the inferred column and
+        transformer indices from the given `transformers`. This is only for
+        backward compatibility until v0.22. (1, 2) is the new order, (2, 1)
+        is the deprecated order.
+
         XXX Remove in v0.22
         """
         message = ('ColumnTransformer transformer tuples should be '
@@ -192,7 +197,7 @@ boolean mask array or callable
                 transformers = [(x, z, y)
                                 for (x, y, z) in self.transformers]
                 self._validate_transformers(transformers)
-                warnings.warn(message, UserWarning)
+                warnings.warn(message, DeprecationWarning)
                 return 2, 1
             except TypeError:
                 # the other order also doesn't work.
@@ -774,16 +779,19 @@ def _is_empty_column_selection(column):
         return False
 
 
-def _get_transformer_list(estimators):
+def _get_transformer_list(estimators, force_deprecated=False):
     """
     Construct (name, trans, column) tuples from list
 
+    # XXX Remove force_deprecated in v0.22 and assume it's value False
     """
-    transformers = [trans[1] for trans in estimators]
-    columns = [trans[0] for trans in estimators]
-    names = [trans[0] for trans in _name_estimators(transformers)]
+    columns, transformers = zip(*estimators)
+    names, _ = zip(*_name_estimators(transformers))
 
-    transformer_list = list(zip(names, columns, transformers))
+    if force_deprecated:
+        transformer_list = list(zip(names, transformers, columns))
+    else:
+        transformer_list = list(zip(names, columns, transformers))
     return transformer_list
 
 
@@ -825,6 +833,13 @@ def make_column_transformer(*transformers, **kwargs):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    force_deprecated: bool, optional (default=True)
+        To force the deprecated order of tuples when constructing the
+        ColumnTransformer objects. This is by default True only for backward
+        compatibility and should be explicitly set to True to suppress
+        and fix the DeprecationWarning. It will be ignored in v0.22 and
+        removed in v0.25.
+
     Returns
     -------
     ct : ColumnTransformer
@@ -841,7 +856,8 @@ def make_column_transformer(*transformers, **kwargs):
     >>> from sklearn.compose import make_column_transformer
     >>> make_column_transformer(
     ...     (['numerical_column'], StandardScaler()),
-    ...     (['categorical_column'], OneHotEncoder()))
+    ...     (['categorical_column'], OneHotEncoder()),
+    ...     force_deprecated=False)
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
              transformer_weights=None,
@@ -852,6 +868,9 @@ def make_column_transformer(*transformers, **kwargs):
                             ['categorical_column'],
                             OneHotEncoder(...))])
     """
+    # Remove in v0.25, and change the default to False in v0.22
+    force_deprecated = kwargs.pop('force_deprecated', True)
+
     # transformer_weights keyword is not passed through because the user
     # would need to know the automatically generated names of the transformers
     n_jobs = kwargs.pop('n_jobs', None)
@@ -860,7 +879,13 @@ def make_column_transformer(*transformers, **kwargs):
     if kwargs:
         raise TypeError('Unknown keyword arguments: "{}"'
                         .format(list(kwargs.keys())[0]))
-    transformer_list = _get_transformer_list(transformers)
-    return ColumnTransformer(transformer_list, n_jobs=n_jobs,
-                             remainder=remainder,
-                             sparse_threshold=sparse_threshold)
+    transformer_list = _get_transformer_list(transformers, force_deprecated)
+    ct = ColumnTransformer(transformer_list, n_jobs=n_jobs,
+                           remainder=remainder,
+                           sparse_threshold=sparse_threshold)
+
+    # XXX Remove in v0.22
+    if len(transformers) == 0 and force_deprecated:
+        ct._column_ix_, ct._transformer_ix_ = 2, 1
+
+    return ct
