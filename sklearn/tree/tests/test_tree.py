@@ -1210,7 +1210,6 @@ def test_class_weight_errors(name):
 
 def test_max_leaf_nodes():
     # Test greedy trees with max_depth + 1 leafs.
-    from sklearn.tree._tree import TREE_LEAF
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
@@ -1232,7 +1231,7 @@ def test_max_leaf_nodes_max_depth():
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
-        assert_greater(est.get_depth(), 1)
+        assert_equal(est.get_depth(), 1)
 
 
 def test_arrays_persist():

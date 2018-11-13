@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import re
 import warnings
 
 import pytest
@@ -1121,6 +1122,14 @@ def test_vectorizers_invalid_ngram_range(vec):
             ValueError, message, vec.transform, ["good news everyone"])
 
 
+def _check_stop_words_consistency(estimator):
+    stop_words = estimator.get_stop_words()
+    tokenize = estimator.build_tokenizer()
+    preprocess = estimator.build_preprocessor()
+    return estimator._check_stop_words_consistency(stop_words, preprocess,
+                                                   tokenize)
+
+
 @fails_if_pypy
 def test_vectorizer_stop_words_inconsistent():
     if PY2:
@@ -1135,11 +1144,44 @@ def test_vectorizer_stop_words_inconsistent():
         vec.set_params(stop_words=["you've", "you", "you'll", 'AND'])
         assert_warns_message(UserWarning, message, vec.fit_transform,
                              ['hello world'])
+        # reset stop word validation
+        del vec._stop_words_id
+        assert _check_stop_words_consistency(vec) is False
 
     # Only one warning per stop list
     assert_no_warnings(vec.fit_transform, ['hello world'])
+    assert _check_stop_words_consistency(vec) is None
 
     # Test caching of inconsistency assessment
     vec.set_params(stop_words=["you've", "you", "you'll", 'blah', 'AND'])
     assert_warns_message(UserWarning, message, vec.fit_transform,
                          ['hello world'])
+
+
+@fails_if_pypy
+@pytest.mark.parametrize('Estimator',
+                         [CountVectorizer, TfidfVectorizer, HashingVectorizer])
+def test_stop_word_validation_custom_preprocessor(Estimator):
+    data = [{'text': 'some text'}]
+
+    vec = Estimator()
+    assert _check_stop_words_consistency(vec) is True
+
+    vec = Estimator(preprocessor=lambda x: x['text'],
+                    stop_words=['and'])
+    assert _check_stop_words_consistency(vec) == 'error'
+    # checks are cached
+    assert _check_stop_words_consistency(vec) is None
+    vec.fit_transform(data)
+
+    class CustomEstimator(Estimator):
+        def build_preprocessor(self):
+            return lambda x: x['text']
+
+    vec = CustomEstimator(stop_words=['and'])
+    assert _check_stop_words_consistency(vec) == 'error'
+
+    vec = Estimator(tokenizer=lambda doc: re.compile(r'\w{1,}')
+                                            .findall(doc),
+                    stop_words=['and'])
+    assert _check_stop_words_consistency(vec) is True

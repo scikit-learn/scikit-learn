@@ -18,6 +18,8 @@ occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
 - please add class and reason here (see version 0.20 what's new)
+- Decision trees and derived ensembles when both `max_depth` and
+  `max_leaf_nodes` are set. (bug fix)
 
 Details are listed in the changelog below.
 
@@ -124,6 +126,17 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
   and :class:`tree.ExtraTreeRegressor`.
   :issue:`12300` by :user:`Adrin Jalali <adrinjalali>`.
+
+- |Fix| Fixed an issue with :class:`tree.BaseDecisionTree`
+  and consequently all estimators based
+  on it, including :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
+  and :class:`tree.ExtraTreeRegressor`, where they used to exceed the given
+  ``max_depth`` by 1 while expanding the tree if ``max_leaf_nodes`` and
+  ``max_depth`` were both specified by the user. Please note that this also
+  affects all ensemble methods using decision trees.
+  :pr:`12344` by :user:`Adrin Jalali <adrinjalali>`.
+
 
 Multiple modules
 ................
