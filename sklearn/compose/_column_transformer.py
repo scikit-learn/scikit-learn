@@ -11,6 +11,7 @@ from __future__ import division
 from itertools import chain
 
 import numpy as np
+import warnings
 from scipy import sparse
 
 from ..base import clone, TransformerMixin
@@ -167,6 +168,74 @@ boolean mask array or callable
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
 
+    def _guess_tuple_order(self):
+        """Guess the tuple order of the given `transformers`.
+
+        Returns the inferred column and transformer indices from the given
+        `transformers`. This is only for backward compatibility until v0.22
+        XXX Remove in v0.22
+        """
+        message = ('ColumnTransformer transformer tuples should be '
+                   '(name, column, transformer), whereas '
+                   '(name, transformer, column) was passed as the first '
+                   'argument to the constructor. ColumnTransformer was '
+                   'introduced in v0.20 as experimental and expecting the '
+                   '(name, transformer, column) order. In v0.20.1 the API '
+                   'is changed and it expects the new '
+                   '(name, column, transformer) order. The support for the '
+                   'deprecated input order will be removed in v0.22.')
+        try:
+            self._validate_transformers(self.transformers)
+            return 1, 2
+        except TypeError:
+            try:
+                transformers = [(x, z, y)
+                                for (x, y, z) in self.transformers]
+                self._validate_transformers(transformers)
+                warnings.warn(message, UserWarning)
+                return 2, 1
+            except TypeError:
+                # the other order also doesn't work.
+                # letting a future _validate_transformers call to raise
+                # the appropriate error while pretending the expected
+                # order was given.
+                return 1, 2
+
+    @property
+    def _column_ix(self):
+        """Returns the index of "column" in `transformers` tuples.
+
+        XXX Remove in v0.22
+        This is only to handle backward compatibility until v0.22
+        """
+        if hasattr(self, "_column_ix_"):
+            return self._column_ix_
+
+        c_ix, t_ix = self._guess_tuple_order()
+        self._column_ix_, self._transformer_ix_ = c_ix, t_ix
+        return c_ix
+
+    @property
+    def _transformer_ix(self):
+        """Returns the index of "transformer" in `transformers` tuples.
+
+        XXX Remove in v0.22
+        This is only to handle backward compatibility until v0.22
+        """
+        if hasattr(self, "_transformer_ix_"):
+            return self._transformer_ix_
+
+        c_ix, t_ix = self._guess_tuple_order()
+        self._column_ix_, self._transformer_ix_ = c_ix, t_ix
+        return t_ix
+
+    def _flip_if_needed(self, transformers):
+        """Flip the tuple order if (col_ix, trans_ix) is (2, 1).
+        XXX Remove in v0.22
+        """
+        return [(t[0], t[self._column_ix], t[self._transformer_ix])
+                for t in transformers]
+
     @property
     def _transformers(self):
         """
@@ -175,13 +244,22 @@ boolean mask array or callable
         of get_params via BaseComposition._get_params which expects lists
         of tuples of len 2.
         """
-        return [(name, trans) for name, _, trans in self.transformers]
+        # XXX Remove in v0.22
+        transformers = self._flip_if_needed(self.transformers)
+
+        return [(name, trans) for name, _, trans in transformers]
 
     @_transformers.setter
     def _transformers(self, value):
-        self.transformers = [
+        # XXX Remove in v0.22
+        transformers = self._flip_if_needed(self.transformers)
+
+        transformers = [
             (name, col, trans) for ((name, trans), (_, col, _))
-            in zip(value, self.transformers)]
+            in zip(value, transformers)]
+
+        # XXX Remove in v0.22
+        self.transformers = self._flip_if_needed(transformers)
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -208,7 +286,6 @@ boolean mask array or callable
         -------
         self
         """
-        self._validate_tuple_order()
         self._set_params('_transformers', **kwargs)
         return self
 
@@ -222,12 +299,15 @@ boolean mask array or callable
 
         """
         if fitted:
-            transformers = self.transformers_
+            # XXX Remove the function call in v0.22
+            transformers = self._flip_if_needed(self.transformers_)
         else:
             # interleave the validated column specifiers
+            # XXX Remove in v0.22
+            local_transformers = self._flip_if_needed(self.transformers)
             transformers = [
                 (name, column, trans) for (name, _, trans), column
-                in zip(self.transformers, self._columns)
+                in zip(local_transformers, self._columns)
             ]
             # add transformer tuple for remainder
             if self._remainder[1] is not None:
@@ -248,33 +328,6 @@ boolean mask array or callable
                     continue
 
             yield (name, column, trans, get_weight(name))
-
-    def _validate_tuple_order(self):
-        # check if any given tuple follows the
-        # (name, transformer, column) order.
-        # flip all tuples if that's the case.
-        # remove in v0.22
-        message = ('ColumnTransformer transformer tuples should be '
-                   '(name, column, transformer), whereas '
-                   '(name, transformer, column) was passed as the first '
-                   'argument to the constructor. ColumnTransformer was '
-                   'introduced in v0.20 as experimental and expecting the '
-                   '(name, transformer, column) order. In v0.20.1 the API '
-                   'is changed and it expects the new '
-                   '(name, column, transformer) order.')
-        try:
-            self._validate_transformers(self.transformers)
-        except TypeError:
-            try:
-                transformers = [(x, z, y)
-                                for (x, y, z) in self.transformers]
-                self._validate_transformers(transformers)
-                raise ValueError(message)
-            except TypeError:
-                # the other order also doesn't work.
-                # letting a future _validate_transformers call to raise
-                # the appropriate error
-                pass
 
     def _validate_transformers(self, transformer_tuples):
         if not transformer_tuples:
@@ -300,8 +353,11 @@ boolean mask array or callable
         """
         Converts callable column specifications.
         """
+        # XXX Remove in v0.22
+        transformers = self._flip_if_needed(self.transformers)
+
         columns = []
-        for _, column, _ in self.transformers:
+        for _, column, _ in transformers:
             if callable(column):
                 column = column(X)
             columns.append(column)
@@ -339,9 +395,12 @@ boolean mask array or callable
         objects.
 
         """
+        # Remove in v0.22
+        transformers_ = self._flip_if_needed(self.transformers_)
+
         # Use Bunch object to improve autocomplete
         return Bunch(**dict([(name, trans) for name, _, trans
-                             in self.transformers_]))
+                             in transformers_]))
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -389,7 +448,9 @@ boolean mask array or callable
 
         # sanity check that transformers is exhausted
         assert not list(fitted_transformers)
-        self.transformers_ = transformers_
+
+        # Remove the function call in v0.22
+        self.transformers_ = self._flip_if_needed(transformers_)
 
     def _validate_output(self, result):
         """
@@ -469,8 +530,11 @@ boolean mask array or callable
 
         """
         X = _check_X(X)
-        self._validate_tuple_order()
-        self._validate_transformers(self.transformers)
+
+        # XXX Remove in v0.22
+        local_transformers = self._flip_if_needed(self.transformers)
+
+        self._validate_transformers(local_transformers)
         self._validate_column_callables(X)
         self._validate_remainder(X)
 
