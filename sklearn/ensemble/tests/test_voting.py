@@ -159,6 +159,14 @@ def test_weights_regressor():
                      weights=[1, 2, 10])
     assert_almost_equal(ereg_y, avg, decimal=2)
 
+    ereg_n = AveragingRegressor([('mean', reg1), ('median', reg2),
+                                ('quantile', reg3)], weights=None)
+    ereg_o = AveragingRegressor([('mean', reg1), ('median', reg2),
+                                 ('quantile', reg3)], weights=[1, 1, 1])
+    ereg_n_y = ereg_n.fit(X_r_train, y_r_train).predict(X_r_test)
+    ereg_o_y = ereg_o.fit(X_r_train, y_r_train).predict(X_r_test)
+    assert_almost_equal(ereg_n_y, ereg_o_y, decimal=2)
+
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22

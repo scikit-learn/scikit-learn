@@ -227,6 +227,10 @@ class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
     [1 1 1 2 2 2]
     >>> print(eclf3.transform(X).shape)
     (6, 6)
+
+    See also
+    --------
+    AveragingRegressor: Prediction averaging regressor.
     """
 
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=None,
@@ -419,6 +423,10 @@ class AveragingRegressor(BaseVoting, RegressorMixin, TransformerMixin):
     >>> er = AveragingRegressor([('lr', r1), ('rf', r2)])
     >>> print(er.fit(X, y).predict(X))
     [ 3.3  5.7 11.8 19.7 28.  40.3]
+
+    See also
+    --------
+    VotingClassifier: Soft Voting/Majority Rule classifier.
     """
 
     def __init__(self, estimators, weights=None, n_jobs=None):
