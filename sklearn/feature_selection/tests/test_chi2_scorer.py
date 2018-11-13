@@ -1,5 +1,5 @@
 """
-Tests for chi2, currently the only feature selection function designed
+Tests for Chi2Scorer, currently the only feature selection function designed
 specifically to work with sparse matrices.
 """
 
@@ -9,7 +9,7 @@ import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
 import scipy.stats
 
-from sklearn.feature_selection import SelectKBest, chi2
+from sklearn.feature_selection import SelectKBest, Chi2Scorer
 from sklearn.feature_selection.univariate_selection import _chisquare
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_almost_equal
@@ -27,8 +27,8 @@ y = [0, 1, 2, 2]
 
 
 def mkchi2(k):
-    """Make k-best chi2 selector"""
-    return SelectKBest(chi2, k=k)
+    """Make k-best Chi2Scorer selector"""
+    return SelectKBest(Chi2Scorer(), k=k)
 
 
 def test_chi2():
@@ -65,7 +65,7 @@ def test_chi2_negative():
     # Check for proper error on negative numbers in the input X.
     X, y = [[0, 1], [-1e-20, 1]], [0, 1]
     for X in (X, np.array(X), csr_matrix(X)):
-        assert_raises(ValueError, chi2, X, y)
+        assert_raises(ValueError, Chi2Scorer().fit, X, y)
 
 
 def test_chi2_unused_feature():
@@ -74,12 +74,12 @@ def test_chi2_unused_feature():
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as warned:
         warnings.simplefilter('always')
-        chi, p = chi2([[1, 0], [0, 0]], [1, 0])
+        scorer = Chi2Scorer().fit([[1, 0], [0, 0]], [1, 0])
         for w in warned:
             if 'divide by zero' in repr(w):
                 raise AssertionError('Found unexpected warning %s' % w)
-    assert_array_equal(chi, [1, np.nan])
-    assert_array_equal(p[1], np.nan)
+    assert_array_equal(scorer.scores_, [1, np.nan])
+    assert_array_equal(scorer.pvalues_[1], np.nan)
 
 
 def test_chisquare():
