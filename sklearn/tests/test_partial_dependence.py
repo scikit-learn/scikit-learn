@@ -80,6 +80,7 @@ def test_output_shape(Estimator, method, multiclass, grid_resolution,
         X, y = X_r, y_r
         n_targets = 1
         if "MultiTask" in est.__class__.__name__:
+            # multioutput regressor
             y = np.array([y, y]).T
             n_targets = 2
 
@@ -97,9 +98,21 @@ def test_output_shape(Estimator, method, multiclass, grid_resolution,
 
 
 def test_grid_from_X():
+    # tests for _grid_from_X
+
+    # Make sure that the grid is a cartesian product of the input (it will use
+    # the unique values instead of the percentiles)
+    X = np.asarray([[1, 2], 
+                    [3, 4]])
+    grid, axes = _grid_from_X(X)
+    assert_array_almost_equal(grid, [[1, 2],
+                                     [1, 4],
+                                     [3, 2],
+                                     [3, 4]])
+    assert_array_almost_equal(axes, X.T)
+
     # test shapes of returned objects depending on the number of unique values
     # for a feature.
-
     rng = np.random.RandomState(0)
     grid_resolution = 15
 
@@ -126,7 +139,7 @@ def test_grid_from_X():
                           (GradientBoostingRegressor(random_state=0), _partial_dependence_recursion)])
 def test_partial_dependence_helpers(est, partial_dependence_fun,
                                     target_feature):
-    # Check that the what is returned by _partial_dependence_exact or
+    # Check that what is returned by _partial_dependence_exact or
     # _partial_dependece_recursion is equivalent to manually setting a target
     # feature to a given value, and computing the average prediction over all
     # samples.
@@ -155,7 +168,7 @@ def test_partial_dependence_helpers(est, partial_dependence_fun,
     
 
 def test_partial_dependence_input():
-    # Test input validation of partial dependence.
+    # Test input validation of partial_dependence.
 
     lr = LinearRegression()
     lr.fit(X, y)
