@@ -835,10 +835,13 @@ def make_column_transformer(*transformers, **kwargs):
 
     force_deprecated: bool, optional (default=True)
         To force the deprecated order of tuples when constructing the
-        ColumnTransformer objects. This is by default True only for backward
-        compatibility and should be explicitly set to True to suppress
-        and fix the DeprecationWarning. It will be ignored in v0.22 and
-        removed in v0.25.
+        `ColumnTransformer` objects. It should be explicitly set to suppress
+        the `DeprecationWarning`. It will be ignored and assumed True in v0.22
+        and removed in v0.25.
+        - True: use the deprecated (name, transformer, column) order to
+        construct `ColumnTransformer` objects. (default)
+        - False: use the new (name, column, transformer) order to construct
+        the `ColumnTransformer` object.
 
     Returns
     -------
@@ -869,7 +872,16 @@ def make_column_transformer(*transformers, **kwargs):
                             OneHotEncoder(...))])
     """
     # Remove in v0.25, and change the default to False in v0.22
-    force_deprecated = kwargs.pop('force_deprecated', True)
+    force_deprecated = kwargs.pop('force_deprecated', 'warn')
+    message = ('make_column_transformer constructs the ColumnTransformer '
+               'objects using the deprecated tuple order by default for '
+               'backward compatibility. '
+               'Please explicitly set force_deprecated parameter when '
+               'calling make_column_transformer to suppress the warning.')
+ 
+    if force_deprecated == 'warn':
+        force_deprecated = True
+        warnings.warn(message, DeprecationWarning)
 
     # transformer_weights keyword is not passed through because the user
     # would need to know the automatically generated names of the transformers
@@ -885,7 +897,9 @@ def make_column_transformer(*transformers, **kwargs):
                            sparse_threshold=sparse_threshold)
 
     # XXX Remove in v0.22
-    if len(transformers) == 0 and force_deprecated:
+    if force_deprecated:
         ct._column_ix_, ct._transformer_ix_ = 2, 1
+    else:
+        ct._column_ix_, ct._transformer_ix_ = 1, 2
 
     return ct
