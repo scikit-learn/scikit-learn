@@ -72,61 +72,6 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     return cartesian(axes), axes
 
 
-def _predict(est, X_eval, output=None):
-    """Calculate part of the partial dependence of ``target_variables``.
-
-    The function will be calculated by calling the ``predict_proba`` method of
-    ``est`` for classification or ``predict`` for regression on ``X`` for every
-    point in the grid.
-
-    Parameters
-    ----------
-    est : BaseEstimator
-        A fitted classification or regression model.
-    X_eval : array-like, shape=(n_samples, n_features)
-        The data on which the partial dependence of ``est`` should be
-        predicted.
-    output : int, optional (default=None)
-        The output index to use for multi-output estimators.
-
-    Returns
-    -------
-    out : array, shape=(n_classes, n_points)
-        The partial dependence function evaluated on the ``grid``.
-        For regression and binary classification ``n_classes==1``.
-    """
-    if est._estimator_type == 'regressor':
-        try:
-            out = est.predict(X_eval)
-        except NotFittedError:
-            raise ValueError('Call %s.fit before partial_dependence' %
-                             est.__class__.__name__)
-        if out.ndim != 1 and out.shape[1] == 1:
-            # Column output
-            out = out.ravel()
-        if out.ndim != 1 and out.shape[1] != 1:
-            # Multi-output
-            if not 0 <= output < out.shape[1]:
-                raise ValueError('Valid output must be specified for '
-                                 'multi-output models.')
-            out = out[:, output]
-    elif est._estimator_type == 'classifier':
-        try:
-            out = est.predict_proba(X_eval)
-        except NotFittedError:
-            raise ValueError('Call %s.fit before partial_dependence' %
-                             est.__class__.__name__)
-        if isinstance(out, list):
-            # Multi-output
-            if not 0 <= output < len(out):
-                raise ValueError('Valid output must be specified for '
-                                 'multi-output models.')
-            out = out[output]
-        out = np.log(np.clip(out, 1e-16, 1))
-        out = np.subtract(out, np.mean(out, 1)[:, np.newaxis])
-    return out
-
-
 def _recursion(est, grid, target_variables, output=None, X=None):
     # TODO: The pattern below required to avoid a namespace collision.
     # TODO: Move below imports to module level import at 0.22 release.
@@ -158,24 +103,59 @@ def _recursion(est, grid, target_variables, output=None, X=None):
 
 
 def _exact(est, grid, target_variables, output, X):
-    n_samples = X.shape[0]
+
+    def _predict(est, X, output=None):
+        if est._estimator_type == 'regressor':
+            try:
+                predictions = est.predict(X)
+            except NotFittedError:
+                raise ValueError('est parameter must be a fitted estimator')
+            if predictions.ndim != 1 and predictions.shape[1] != 1:
+                # Multi-output
+                if not 0 <= output < predictions.shape[1]:
+                    # TODO: better error msg, also could this be checked
+                    # before?
+                    raise ValueError('Valid out must be specified for '
+                                     'multi-output models.')
+                predictions = predictions[:, output]
+            print(predictions.shape)
+        elif est._estimator_type == 'classifier':
+            # Note: no support for multi-output classifiers.
+            # TODO: raise error if multi-output classifier.
+            try:
+                predictions = est.predict_proba(X)
+            except NotFittedError:
+                raise ValueError('est parameter must be a fitted estimator')
+            predictions = np.log(np.clip(predictions, 1e-16, 1))
+            # not sure yet why we need to center probas?
+            predictions = predictions - np.mean(predictions, axis=1,
+                                                keepdims=True)
+        # predictions is of shape
+        # (n_points,) for most regressors (multioutput or not)
+        # (n_points, 1) for the regressors in cross_decomposition (I think)
+        # (n_points, 2)  for binary classifaction
+        # (n_points, n_classes)  for multiclass classification
+        return predictions
+
     pdp = []
-    for row in range(grid.shape[0]):
+    for row in grid:
         X_eval = X.copy()
         for i, variable in enumerate(target_variables):
-            X_eval[:, variable] = np.repeat(grid[row, i], n_samples)
-        pdp_row = _predict(est, X_eval, output=output)
-        if est._estimator_type == 'regressor':
-            pdp.append(np.mean(pdp_row))
-        else:
-            pdp.append(np.mean(pdp_row, 0))
-    pdp = np.array(pdp).transpose()
-    if pdp.shape[0] == 2:
-        # Binary classification
-        pdp = pdp[1, :][np.newaxis]
-    elif pdp.ndim == 1:
-        # Regression
-        pdp = pdp[np.newaxis]
+            X_eval[:, variable] = row[i]
+        predictions = _predict(est, X_eval, output=output)
+        pdp.append(np.mean(predictions, axis=0))  # average over points
+
+    # reshape pdp to (n_classes, n_points) where n_classes is 1 for binary
+    # classification and for regression. The shape is already correct for
+    # multiclass classification.
+    pdp = np.array(pdp).T
+    if pdp.ndim == 1:
+        # Regression, pdp shape is (n_points,)
+        pdp = pdp.reshape(1, -1)
+    elif pdp.shape[0] == 2:
+        # Binary classification, pdp shape is (2, n_points).
+        pdp = pdp[1] # we output the effect of **positive** class
+        pdp = pdp.reshape(1, -1)
 
     return pdp
 
@@ -264,8 +244,9 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
         'recursion': _recursion
     }
     if method not in method_to_function:
-        raise ValueError('method {} is invalid. Accepted method names are '
-                         '{}'.format(method,
+        raise ValueError(
+            'method {} is invalid. Accepted method names are {}'.format(
+                method,
                                      ', '.join(method_to_function.keys())))
 
     if method == 'recursion':
@@ -310,6 +291,7 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
             raise ValueError('grid must be 2d but is %dd' % grid.ndim)
 
     grid = np.asarray(grid, dtype=DTYPE, order='C')
+    # TODO: output error message
     assert grid.shape[1] == target_variables.shape[0]
 
     pdp = method_to_function[method](est, grid, target_variables, output, X)

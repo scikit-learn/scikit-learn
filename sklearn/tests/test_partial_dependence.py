@@ -71,8 +71,10 @@ def test_output_shape(Estimator, method, multiclass, grid_resolution,
             X, y = X_c, y_c
             n_classes = 1
     else:  # regressor
-            X, y = X_r, y_r
-            n_classes = 1
+        if multiclass:  # multiclass for regressor makes no sense
+            return
+        X, y = X_r, y_r
+        n_classes = 1
 
     est.fit(X, y)
     pdp, axes = partial_dependence(est, target_variables=target_variables,
@@ -102,8 +104,9 @@ def test_grid_from_X():
     assert np.asarray(axes).shape == (2, grid_resolution)
 
     # n_unique_values < grid_resolution, will use actual values
-    n_unique_values = 10
-    X[:n_unique_values + 1, 0] = 12345
+    n_unique_values = 12
+    X[n_unique_values - 1:, 0] = 12345
+    rng.shuffle(X)  # just to make sure the order is irrelevant
     grid, axes = _grid_from_X(X, grid_resolution=grid_resolution)
     assert grid.shape == (n_unique_values * grid_resolution, X.shape[1])
     # axes is a list of arrays of different shapes
