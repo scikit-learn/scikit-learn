@@ -28,7 +28,6 @@ from ..preprocessing import normalize
 from ..utils import Parallel
 from ..utils import delayed
 from ..utils import effective_n_jobs
-from ..neighbors import DistanceMetric
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
@@ -441,23 +440,53 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
                                          metric_kwargs=metric_kwargs,
                                          batch_size=batch_size)[0]
 
+
 def haversine_distance(X, Y=None):
     """ Compute the haversine distance between samples in X and Y
 
+    Haversine (Spherical) Distance
 
-    This metric is used from `DistanceMetric.get_metric('haversine')`
+    The Haversine distance is the angular distance between two points on
+    the surface of a sphere. The first distance of each point is assumed
+    to be the latitude, the second is the longitude, given in radians.
+    The dimension of the points must be 2.
+
+    .. math::
+       D(x, y) = 2\arcsin[\sqrt{\sin^2((x1 - y1) / 2)
+                                + cos(x1)cos(y1)sin^2((x2 - y2) / 2)}]
+
     Parameters
     ----------
-    X : {array-like}, shape (n_samples_1, 2)
+    X : array_like
+        An array with shape (n_samples_1, 2).
 
-    Y : {array-like}, shape (n_samples_2, 2)
+    Y : array_like, optional
+        An array with shape (n_samples_2, 2).
 
     Returns
     -------
     distance : {array}, shape (n_samples_1, n_samples_2)
-    """
 
+    Examples
+    --------
+    >>> from sklearn.metrics.pairwise import haversine_distance
+    >>> haversine_distance([[3,3]], [[3,3]])
+    array([[0.]])
+    >>> haversine_distance([[3, 2]], [[1, 1]])
+    array([[1.74188653]])
+    >>> import numpy as np
+    >>> X = np.ones((5,2))
+    >>> Y = np.full((5,2), 2.)
+    >>> haversine_distance(X, Y)
+    array([[0.87152123, 0.87152123, 0.87152123, 0.87152123, 0.87152123],
+           [0.87152123, 0.87152123, 0.87152123, 0.87152123, 0.87152123],
+           [0.87152123, 0.87152123, 0.87152123, 0.87152123, 0.87152123],
+           [0.87152123, 0.87152123, 0.87152123, 0.87152123, 0.87152123],
+           [0.87152123, 0.87152123, 0.87152123, 0.87152123, 0.87152123]])
+    """
+    from sklearn.neighbors import DistanceMetric
     return DistanceMetric.get_metric('haversine').pairwise(X, Y)
+
 
 def manhattan_distances(X, Y=None, sum_over_features=True):
     """ Compute the L1 distances between the vectors in X and Y.
