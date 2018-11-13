@@ -30,6 +30,7 @@ from .classification import precision_score
 from .classification import recall_score
 from .classification import zero_one_loss
 from .classification import brier_score_loss
+from .classification import multilabel_confusion_matrix
 
 from . import cluster
 from .cluster import adjusted_mutual_info_score
@@ -108,6 +109,7 @@ __all__ = [
     'mean_squared_error',
     'mean_squared_log_error',
     'median_absolute_error',
+    'multilabel_confusion_matrix',
     'mutual_info_score',
     'normalized_mutual_info_score',
     'pairwise_distances',

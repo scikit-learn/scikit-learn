@@ -349,12 +349,12 @@ def test_K_inv_reset(kernel):
 
     # Test that self._K_inv is reset after a new fit
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    assert_true(hasattr(gpr, '_K_inv'))
-    assert_true(gpr._K_inv is None)
+    assert hasattr(gpr, '_K_inv')
+    assert gpr._K_inv is None
     gpr.predict(X, return_std=True)
-    assert_true(gpr._K_inv is not None)
+    assert gpr._K_inv is not None
     gpr.fit(X2, y2)
-    assert_true(gpr._K_inv is None)
+    assert gpr._K_inv is None
     gpr.predict(X2, return_std=True)
     gpr2 = GaussianProcessRegressor(kernel=kernel).fit(X2, y2)
     gpr2.predict(X2, return_std=True)

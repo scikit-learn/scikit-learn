@@ -44,7 +44,7 @@ print(__doc__)
 
 pipe = Pipeline([
     # the reduce_dim stage is populated by the param_grid
-    ('reduce_dim', None),
+    ('reduce_dim', 'passthrough'),
     ('classify', LinearSVC())
 ])
 

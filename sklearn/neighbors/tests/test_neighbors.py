@@ -22,7 +22,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
@@ -603,7 +602,7 @@ def test_kneighbors_regressor(n_samples=40,
             knn.fit(X, y)
             epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
             y_pred = knn.predict(X[:n_test_pts] + epsilon)
-            assert_true(np.all(abs(y_pred - y_target) < 0.3))
+            assert np.all(abs(y_pred - y_target) < 0.3)
 
 
 def test_KNeighborsRegressor_multioutput_uniform_weight():
@@ -657,7 +656,7 @@ def test_kneighbors_regressor_multioutput(n_samples=40,
         y_pred = knn.predict(X[:n_test_pts] + epsilon)
         assert_equal(y_pred.shape, y_target.shape)
 
-        assert_true(np.all(np.abs(y_pred - y_target) < 0.3))
+        assert np.all(np.abs(y_pred - y_target) < 0.3)
 
 
 def test_radius_neighbors_regressor(n_samples=40,
@@ -683,7 +682,7 @@ def test_radius_neighbors_regressor(n_samples=40,
             neigh.fit(X, y)
             epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
             y_pred = neigh.predict(X[:n_test_pts] + epsilon)
-            assert_true(np.all(abs(y_pred - y_target) < radius / 2))
+            assert np.all(abs(y_pred - y_target) < radius / 2)
 
     # test that nan is returned when no nearby observations
     for weights in ['uniform', 'distance']:
@@ -698,7 +697,7 @@ def test_radius_neighbors_regressor(n_samples=40,
                                     empty_warning_msg,
                                     neigh.predict,
                                     X_test_nan)
-        assert_true(np.all(np.isnan(pred)))
+        assert np.all(np.isnan(pred))
 
 
 def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
@@ -755,7 +754,7 @@ def test_RadiusNeighborsRegressor_multioutput(n_samples=40,
         y_pred = rnn.predict(X[:n_test_pts] + epsilon)
 
         assert_equal(y_pred.shape, y_target.shape)
-        assert_true(np.all(np.abs(y_pred - y_target) < 0.3))
+        assert np.all(np.abs(y_pred - y_target) < 0.3)
 
 
 def test_kneighbors_regressor_sparse(n_samples=40,
@@ -780,14 +779,13 @@ def test_kneighbors_regressor_sparse(n_samples=40,
 
         for sparsev in SPARSE_OR_DENSE:
             X2 = sparsev(X)
-            assert_true(np.mean(knn.predict(X2).round() == y) > 0.95)
+            assert np.mean(knn.predict(X2).round() == y) > 0.95
 
             X2_pre = sparsev(pairwise_distances(X, metric='euclidean'))
             if issparse(sparsev(X2_pre)):
                 assert_raises(ValueError, knn_pre.predict, X2_pre)
             else:
-                assert_true(
-                    np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95)
+                assert np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95
 
 
 def test_neighbors_iris():
@@ -803,7 +801,7 @@ def test_neighbors_iris():
 
         clf.set_params(n_neighbors=9, algorithm=algorithm)
         clf.fit(iris.data, iris.target)
-        assert_true(np.mean(clf.predict(iris.data) == iris.target) > 0.95)
+        assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
 
         rgs = neighbors.KNeighborsRegressor(n_neighbors=5, algorithm=algorithm)
         rgs.fit(iris.data, iris.target)
@@ -1354,7 +1352,7 @@ def test_dtype_convert():
 
 def test_sparse_metric_callable():
     def sparse_metric(x, y):  # Metric accepting sparse matrix input (only)
-        assert_true(issparse(x) and issparse(y))
+        assert issparse(x) and issparse(y)
         return x.dot(y.T).A.item()
 
     X = csr_matrix([  # Population matrix

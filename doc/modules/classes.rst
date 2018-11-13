@@ -846,6 +846,7 @@ details.
    metrics.jaccard_similarity_score
    metrics.log_loss
    metrics.matthews_corrcoef
+   metrics.multilabel_confusion_matrix
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score
@@ -1399,6 +1400,7 @@ Low-level methods
    :template: function.rst
 
    tree.export_graphviz
+   tree.plot_tree
 
 
 .. _utils_ref:

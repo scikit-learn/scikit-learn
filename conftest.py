@@ -16,8 +16,9 @@ from sklearn.utils.fixes import PY3_OR_LATER
 PYTEST_MIN_VERSION = '3.3.0'
 
 if LooseVersion(pytest.__version__) < PYTEST_MIN_VERSION:
-    raise('Your version of pytest is too old, you should have at least '
-          'pytest >= {} installed.'.format(PYTEST_MIN_VERSION))
+    raise ImportError('Your version of pytest is too old, you should have '
+                      'at least pytest >= {} installed.'
+                      .format(PYTEST_MIN_VERSION))
 
 
 def pytest_addoption(parser):

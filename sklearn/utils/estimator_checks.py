@@ -53,6 +53,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import ShuffleSplit
+from sklearn.model_selection._validation import _safe_split
 from sklearn.metrics.pairwise import (rbf_kernel, linear_kernel,
                                       pairwise_distances)
 
@@ -265,6 +267,7 @@ def _yield_all_checks(name, estimator):
     yield check_set_params
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
+    yield check_fit_idempotent
 
 
 def check_estimator(Estimator):
@@ -1227,7 +1230,7 @@ def check_estimators_pickle(name, estimator_orig):
     # pickle and unpickle!
     pickled_estimator = pickle.dumps(estimator)
     if estimator.__module__.startswith('sklearn.'):
-        assert_true(b"version" in pickled_estimator)
+        assert b"version" in pickled_estimator
     unpickled_estimator = pickle.loads(pickled_estimator)
 
     result = dict()
@@ -1319,7 +1322,7 @@ def check_clustering(name, clusterer_orig, readonly_memmap=False):
                                                 labels_sorted[-1] + 1))
 
     # Labels are expected to start at 0 (no noise) or -1 (if noise)
-    assert_true(labels_sorted[0] in [0, -1])
+    assert labels_sorted[0] in [0, -1]
     # Labels should be less than n_clusters - 1
     if hasattr(clusterer, 'n_clusters'):
         n_clusters = getattr(clusterer, 'n_clusters')
@@ -1413,7 +1416,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
         classifier.fit(X, y)
         # with lists
         classifier.fit(X.tolist(), y.tolist())
-        assert_true(hasattr(classifier, "classes_"))
+        assert hasattr(classifier, "classes_")
         y_pred = classifier.predict(X)
         assert_equal(y_pred.shape, (n_samples,))
         # training set performance
@@ -1578,7 +1581,7 @@ def check_estimators_fit_returns_self(name, estimator_orig,
         X, y = create_memmap_backed_data([X, y])
 
     set_random_state(estimator)
-    assert_true(estimator.fit(X, y) is estimator)
+    assert estimator.fit(X, y) is estimator
 
 
 @ignore_warnings
@@ -2005,13 +2008,13 @@ def check_sparsify_coefficients(name, estimator_orig):
 
     # test sparsify with dense inputs
     est.sparsify()
-    assert_true(sparse.issparse(est.coef_))
+    assert sparse.issparse(est.coef_)
     pred = est.predict(X)
     assert_array_equal(pred, pred_orig)
 
     # pickle and unpickle with sparse coef_
     est = pickle.loads(pickle.dumps(est))
-    assert_true(sparse.issparse(est.coef_))
+    assert sparse.issparse(est.coef_)
     pred = est.predict(X)
     assert_array_equal(pred, pred_orig)
 
@@ -2071,7 +2074,7 @@ def check_parameters_default_constructible(name, Estimator):
         # test __repr__
         repr(estimator)
         # test that set_params returns self
-        assert_true(estimator.set_params() is estimator)
+        assert estimator.set_params() is estimator
 
         # test if init does nothing but set parameters
         # this is important for grid_search etc.
@@ -2111,7 +2114,7 @@ def check_parameters_default_constructible(name, Estimator):
                        np.float64, types.FunctionType, Memory])
             if init_param.name not in params.keys():
                 # deprecated parameter, not in get_params
-                assert_true(init_param.default is None)
+                assert init_param.default is None
                 continue
 
             if (issubclass(Estimator, BaseSGD) and
@@ -2330,3 +2333,50 @@ def check_outliers_fit_predict(name, estimator_orig):
         for contamination in [-0.5, 2.3]:
             estimator.set_params(contamination=contamination)
             assert_raises(ValueError, estimator.fit_predict, X)
+
+
+def check_fit_idempotent(name, estimator_orig):
+    # Check that est.fit(X) is the same as est.fit(X).fit(X). Ideally we would
+    # check that the estimated parameters during training (e.g. coefs_) are
+    # the same, but having a universal comparison function for those
+    # attributes is difficult and full of edge cases. So instead we check that
+    # predict(), predict_proba(), decision_function() and transform() return
+    # the same results.
+
+    check_methods = ["predict", "transform", "decision_function",
+                     "predict_proba"]
+    rng = np.random.RandomState(0)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    if 'warm_start' in estimator.get_params().keys():
+        estimator.set_params(warm_start=False)
+
+    n_samples = 100
+    X = rng.normal(loc=100, size=(n_samples, 2))
+    X = pairwise_estimator_convert_X(X, estimator)
+    if is_regressor(estimator_orig):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
+
+    train, test = next(ShuffleSplit(test_size=.2, random_state=rng).split(X))
+    X_train, y_train = _safe_split(estimator, X, y, train)
+    X_test, y_test = _safe_split(estimator, X, y, test, train)
+
+    # Fit for the first time
+    estimator.fit(X_train, y_train)
+
+    result = {}
+    for method in check_methods:
+        if hasattr(estimator, method):
+            result[method] = getattr(estimator, method)(X_test)
+
+    # Fit again
+    estimator.fit(X_train, y_train)
+
+    for method in check_methods:
+        if hasattr(estimator, method):
+            new_result = getattr(estimator, method)(X_test)
+            assert_allclose_dense_sparse(result[method], new_result)

@@ -511,6 +511,12 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                 data_description['version'],
                 data_description['name'],
                 data_description['url']))
+    if 'error' in data_description:
+        warn("OpenML registered a problem with the dataset. It might be "
+             "unusable. Error: {}".format(data_description['error']))
+    if 'warning' in data_description:
+        warn("OpenML raised a warning on the dataset. It might be "
+             "unusable. Warning: {}".format(data_description['warning']))
 
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
