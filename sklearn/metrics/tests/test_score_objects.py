@@ -380,11 +380,11 @@ def test_thresholded_scorers():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = DecisionTreeClassifier()
     clf.fit(X_train, np.zeros_like(y_train))
-    with pytest.raises(ValueError, match="use classifier with two classes"):
+    with pytest.raises(ValueError, match="need classifier with two classes"):
         get_scorer('roc_auc')(clf, X_test, y_test)
 
     # for proba scorers
-    with pytest.raises(ValueError, match="use classifier with two classes"):
+    with pytest.raises(ValueError, match="need classifier with two classes"):
         get_scorer('neg_log_loss')(clf, X_test, y_test)
 
 
