@@ -133,6 +133,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         - If X is not an array of floating values;
         - If X is encoded as a CSR matrix.
 
+    add_indicator : boolean, optional (default=False)
+        If True, a MissingIndicator transform will stack into output of the imputer's transform.
+
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
@@ -145,7 +148,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     >>> imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
     >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
     ... # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(copy=True, fill_value=None, missing_values=nan,
+    SimpleImputer(add_indicator=False, copy=True, fill_value=None, missing_values=nan,
            strategy='mean', verbose=0)
     >>> X = [[np.nan, 2, 3], [4, np.nan, 6], [10, np.nan, 9]]
     >>> print(imp_mean.transform(X))
@@ -161,12 +164,16 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     """
     def __init__(self, missing_values=np.nan, strategy="mean",
-                 fill_value=None, verbose=0, copy=True):
+                 fill_value=None, verbose=0, copy=True, add_indicator=False):
         self.missing_values = missing_values
         self.strategy = strategy
         self.fill_value = fill_value
         self.verbose = verbose
         self.copy = copy
+        self.add_indicator = add_indicator
+
+        if self.add_indicator:
+            self.indicator_ = MissingIndicator(missing_values=missing_values)
 
     def _validate_input(self, X):
         allowed_strategies = ["mean", "median", "most_frequent", "constant"]
@@ -257,6 +264,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                                                self.strategy,
                                                self.missing_values,
                                                fill_value)
+
+        if self.add_indicator:
+            self.indicator_.fit(X)
 
         return self
 
@@ -385,6 +395,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                                   "observed values: %s" % missing)
                 X = X[:, valid_statistics_indexes]
 
+        # MissingIndicator transform
+        if self.add_indicator:
+            X_trans = self.indicator_.transform(X)
+
         # Do actual imputation
         if sparse.issparse(X):
             if self.missing_values == 0:
@@ -405,6 +419,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             coordinates = np.where(mask.transpose())[::-1]
 
             X[coordinates] = values
+
+        # stacks a MissingIndicator transform into the output of the imputer
+        if self.add_indicator:
+            X = np.concatenate((X, X_trans), axis=1)
 
         return X
 
