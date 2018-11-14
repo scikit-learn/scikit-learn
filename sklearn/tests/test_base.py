@@ -168,7 +168,8 @@ def test_clone_sparse_matrices():
 
 
 def test_clone_estimator_types():
-    # Check that clone works for parameters that are types rather than instances
+    # Check that clone works for parameters that are types rather than
+    # instances
     clf = MyEstimator(empty=MyEstimator)
     clf2 = clone(clf)
 
