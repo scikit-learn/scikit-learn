@@ -7,9 +7,7 @@ import copy
 import warnings
 
 import numpy as np
-
 from scipy import stats, linalg
-import pytest
 
 from sklearn.covariance import EmpiricalCovariance
 from sklearn.datasets.samples_generator import make_spd_matrix
