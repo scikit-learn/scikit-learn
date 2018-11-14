@@ -30,7 +30,7 @@ that contain the missing values::
     >>> from sklearn.impute import SimpleImputer
     >>> imp = SimpleImputer(missing_values=np.nan, strategy='mean')
     >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])       # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(copy=True, fill_value=None, missing_values=nan, strategy='mean', verbose=0)
+    SimpleImputer(add_indicator=False, copy=True, fill_value=None, missing_values=nan, strategy='mean', verbose=0)
     >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
     >>> print(imp.transform(X))           # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
     [[4.          2.        ]
@@ -43,7 +43,7 @@ The :class:`SimpleImputer` class also supports sparse matrices::
     >>> X = sp.csc_matrix([[1, 2], [0, -1], [8, 4]])
     >>> imp = SimpleImputer(missing_values=-1, strategy='mean')
     >>> imp.fit(X)                  # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(copy=True, fill_value=None, missing_values=-1, strategy='mean', verbose=0)
+    SimpleImputer(add_indicator=False, copy=True, fill_value=None, missing_values=-1, strategy='mean', verbose=0)
     >>> X_test = sp.csc_matrix([[-1, 2], [6, -1], [7, 6]])
     >>> print(imp.transform(X_test).toarray())      # doctest: +NORMALIZE_WHITESPACE
     [[3. 2.]
