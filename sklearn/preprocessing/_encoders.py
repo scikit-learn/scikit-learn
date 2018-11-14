@@ -112,10 +112,8 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                     X_mask[:, i] = valid_mask
                     # cast Xi into the largest string type necessary
                     # to handle different lengths of numpy string dtypes
-                    if (isinstance(self.categories_[i][0],
-                                   six.string_types)
-                            and self.categories_[i].itemsize > Xi.itemsize
-                            and type(self.categories_[0]) != object):
+                    if (self.categories_.dtype.kind in ('U', 'S')
+                            and self.categories_[i].itemsize > Xi.itemsize):
                         Xi = Xi.astype(self.categories_[i].dtype)
                     else:
                         Xi = Xi.copy()
