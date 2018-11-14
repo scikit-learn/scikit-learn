@@ -299,7 +299,7 @@ def test_plot_partial_dependence_multiclass():
 
     grid_resolution = 25
     fig, axs = plot_partial_dependence(clf, iris.data, [0, 1],
-                                       label=0,
+                                       target=0,
                                        grid_resolution=grid_resolution)
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
@@ -311,14 +311,14 @@ def test_plot_partial_dependence_multiclass():
 
     grid_resolution = 25
     fig, axs = plot_partial_dependence(clf, iris.data, [0, 1],
-                                       label='setosa',
+                                       target='setosa',
                                        grid_resolution=grid_resolution)
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
 
     # label not in gbrt.classes_
     assert_raises(ValueError, plot_partial_dependence,
-                  clf, iris.data, [0, 1], label='foobar',
+                  clf, iris.data, [0, 1], target='foobar',
                   grid_resolution=grid_resolution)
 
     # label not provided
