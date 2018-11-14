@@ -5,9 +5,10 @@ import numbers
 import platform
 import struct
 
+import warnings
 import numpy as np
 from scipy.sparse import issparse
-import warnings
+from distutils.version import LooseVersion
 
 from .murmurhash import murmurhash3_32
 from .class_weight import compute_class_weight, compute_sample_weight
@@ -48,9 +49,10 @@ class Parallel(_joblib.Parallel):
     pass
 
 
-@deprecate
-class parallel_backend(_joblib.parallel_backend):
-    pass
+if LooseVersion(_joblib.__version__) >= LooseVersion("0.12"):
+    @deprecate
+    class parallel_backend(_joblib.parallel_backend):
+        pass
 
 
 __all__ = ["murmurhash3_32", "as_float_array",
