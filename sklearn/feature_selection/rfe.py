@@ -169,8 +169,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             step = int(self.step)
         elif 0.0 < self.step < 1.0 and not self.step_decay:
             step = int(max(1, self.step * n_features))
-        elif step <= 0:
+        elif self.step <= 0:
             raise ValueError("Step must be >0")
+        if self.step_one_threshold <= 0:
+            raise ValueError("Step one threshold must be >0")
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
@@ -525,8 +527,10 @@ class RFECV(RFE, MetaEstimatorMixin):
             step = int(self.step)
         elif 0.0 < self.step < 1.0 and not self.step_decay:
             step = int(max(1, self.step * n_features))
-        elif step <= 0:
+        elif self.step <= 0:
             raise ValueError("Step must be >0")
+        if self.step_one_threshold <= 0:
+            raise ValueError("Step one threshold must be >0")
 
         # Build an RFE object, which will evaluate and score each possible
         # feature count, down to self.min_features_to_select
