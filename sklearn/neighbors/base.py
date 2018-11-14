@@ -474,13 +474,13 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         return self.metric == 'precomputed'
 
 
-def _tree_query_parallel_helper(tree, data, n_neighbors, return_distance):
+def _tree_query_parallel_helper(tree, *args, **kwargs):
     """Helper for the Parallel calls in KNeighborsMixin.kneighbors
 
     The Cython method tree.query is not directly picklable by cloudpickle
     under PyPy.
     """
-    return tree.query(data, n_neighbors, return_distance)
+    return tree.query(*args, **kwargs)
 
 
 class KNeighborsMixin(object):
@@ -770,15 +770,13 @@ class KNeighborsMixin(object):
         return kneighbors_graph
 
 
-def _tree_query_radius_parallel_helper(tree, data, radius, return_distance,
-                                       count_only, sort_results):
+def _tree_query_radius_parallel_helper(tree, *args, **kwargs):
     """Helper for the Parallel calls in RadiusNeighborsMixin.radius_neighbors
 
     The Cython method tree.query_radius is not directly picklable by
     cloudpickle under PyPy.
     """
-    return tree.query_radius(data, radius, return_distance, count_only,
-                             sort_results)
+    return tree.query_radius(*args, **kwargs)
 
 
 class RadiusNeighborsMixin(object):
