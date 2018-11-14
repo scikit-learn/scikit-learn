@@ -7,6 +7,7 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 import pytest
 
+import sklearn
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import if_matplotlib
@@ -20,7 +21,11 @@ from sklearn.partial_dependence import _partial_dependence_recursion
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import BaseGradientBoosting
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import MultiTaskLasso
 from sklearn.svm import SVC
 from sklearn.ensemble.forest import ForestRegressor
 from sklearn.datasets import load_boston, load_iris
@@ -34,55 +39,50 @@ from sklearn.cluster import KMeans
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
 
-# Make some sample data to test output shapes
-X_c, y_c = make_classification(n_features=10, n_informative=5, random_state=0)
-# Non-negative for MultinomialNB
-X_c = X_c + np.abs(X_c.min())
-X_r, y_r = make_regression(n_features=10, n_informative=5, random_state=0)
 
-# Load the boston & iris datasets
-boston = load_boston()
-iris = load_iris()
+def binary_classification():
+    return make_classification(random_state=0), 1
 
 
-@pytest.mark.parametrize('Estimator', all_estimators())
-@pytest.mark.parametrize('method', ('recursion', 'exact'))
-@pytest.mark.parametrize('multiclass', (True, False))
-@pytest.mark.parametrize('grid_resolution', (10,))
+def multiclass_classification():
+    return (make_classification(n_classes=3, n_clusters_per_class=1,
+                                random_state=0), 3)
+
+
+def regression():
+    return make_regression(random_state=0), 1
+
+
+def multioutput_regression():
+    return make_regression(n_targets=2, random_state=0), 2
+
+@pytest.mark.parametrize('Estimator, method, data', [
+    (GradientBoostingClassifier, 'recursion', binary_classification()),
+    (GradientBoostingClassifier, 'recursion', multiclass_classification()),
+    (GradientBoostingClassifier, 'exact', binary_classification()),
+    (GradientBoostingClassifier, 'exact', multiclass_classification()),
+    (GradientBoostingRegressor, 'recursion', regression()),
+    (GradientBoostingRegressor, 'exact', regression()),
+    (LinearRegression, 'exact', regression()),
+    (LogisticRegression, 'exact', binary_classification()),
+    (LogisticRegression, 'exact', multiclass_classification()),
+    (MultiTaskLasso, 'exact', multioutput_regression())])
+@pytest.mark.parametrize('grid_resolution', (5, 10))
 @pytest.mark.parametrize('target_variables', ([1], [1, 2]))
-def test_output_shape(Estimator, method, multiclass, grid_resolution,
+def test_output_shape(Estimator, method, data, grid_resolution,
                       target_variables):
-    # Check that partial_dependence has consistent output shape
+    # Check that partial_dependence has consistent output shape for different
+    # kinds of estimators:
+    # - classifiers with binary and multiclass settings
+    # - regressors
+    # - multi-task regressors
 
-    _, Estimator = Estimator
     est = Estimator()
-    if not (is_classifier(est) or is_regressor(est)):
-        return
-    if method == 'recursion':
-        # recursion method only accepts some of the ensemble estimators
-        if not (isinstance(est, BaseGradientBoosting) or
-                isinstance(est, ForestRegressor)):
-            return
-    elif is_classifier(est) and not hasattr(est, 'predict_proba'):
-        # classifiers with exact method need predict_proba()
-        return
 
-    if is_classifier(est):
-        if multiclass == True:
-            X, y = iris.data, iris.target
-            n_targets = 3
-        else:
-            X, y = X_c, y_c
-            n_targets = 1
-    else:  # regressor
-        if multiclass:  # multiclass for regressor makes no sense
-            return
-        X, y = X_r, y_r
-        n_targets = 1
-        if "MultiTask" in est.__class__.__name__:
-            # multioutput regressor
-            y = np.array([y, y]).T
-            n_targets = 2
+    # n_target corresponds to the number of classes (1 for binary classif) or
+    # the number of tasks / outputs in multi task settings. It's equal to 1 for
+    # classical regression.
+    (X, y), n_targets = data
 
     est.fit(X, y)
     pdp, axes = partial_dependence(est, target_variables=target_variables,
@@ -98,7 +98,7 @@ def test_output_shape(Estimator, method, multiclass, grid_resolution,
 
 
 def test_grid_from_X():
-    # tests for _grid_from_X
+    # tests for _grid_from_X: sanity check for output, and for shapes.
 
     # Make sure that the grid is a cartesian product of the input (it will use
     # the unique values instead of the percentiles)
@@ -148,7 +148,7 @@ def test_partial_dependence_helpers(est, partial_dependence_fun,
     if partial_dependence_fun is _partial_dependence_recursion:
         return
 
-    X, y = X_r, y_r
+    X, y = make_regression(random_state=0)
     est.fit(X, y)
 
     # target feature will be set to .5 and then to 123
@@ -167,8 +167,33 @@ def test_partial_dependence_helpers(est, partial_dependence_fun,
     assert_array_almost_equal(pdp, mean_predictions)
     
 
+@pytest.mark.parametrize('Estimator',
+                         (sklearn.tree.DecisionTreeClassifier,
+                          sklearn.tree.ExtraTreeClassifier,
+                          sklearn.ensemble.ExtraTreesClassifier,
+                          sklearn.neighbors.KNeighborsClassifier,
+                          sklearn.neighbors.RadiusNeighborsClassifier,
+                          sklearn.ensemble.RandomForestClassifier))
+def test_multiclass_multioutput(Estimator):
+    # Make sure multiclass-multioutput classifiers are not supported
+
+    # make multiclass-multioutput dataset
+    X, y = make_classification(n_classes=3, n_clusters_per_class=1,
+                               random_state=0)
+    y = np.array([y, y]).T
+
+    est = Estimator()
+    est.fit(X, y)
+
+    assert_raises_regex(ValueError,
+                        "Multiclass-multioutput estimators are not supported",
+                        partial_dependence, est, [0], X=X)
+
+
 def test_partial_dependence_input():
     # Test input validation of partial_dependence.
+
+    X, y = make_classification(random_state=0)
 
     lr = LinearRegression()
     lr.fit(X, y)
@@ -232,6 +257,7 @@ def test_partial_dependence_input():
 @if_matplotlib
 def test_plot_partial_dependence():
     # Test partial dependence plot function.
+    boston = load_boston()
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
     clf.fit(boston.data, boston.target)
 
@@ -264,6 +290,7 @@ def test_plot_partial_dependence():
 @if_matplotlib
 def test_plot_partial_dependence_multiclass():
     # Test partial dependence plot function on multi-class input.
+    iris = load_iris()
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, iris.target)
 

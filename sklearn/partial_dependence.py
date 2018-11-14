@@ -231,6 +231,10 @@ def partial_dependence(est, target_variables, grid=None, X=None,
     if not (is_classifier(est) or is_regressor(est)):
         raise ValueError('est must be a fitted regressor or classifier.')
 
+    if (hasattr(est, 'classes_') and
+            isinstance(est.classes_[0], np.ndarray)):
+        raise ValueError('Multiclass-multioutput estimators are not supported')
+
     if X is not None:
         X = check_array(X)
 
