@@ -122,9 +122,9 @@ whether or not they contain missing values::
   array([0, 1, 2, 3])
 
 When using the :class:`MissingIndicator` in a :class:`Pipeline`, be sure to use
-the :class:`FeatureUnion` to add the indicator features to the regular
-features. First we obtain the `iris` dataset, and add some missing values to
-it.
+the :class:`FeatureUnion` or :class:`ColumnTransformer` to add the indicator
+features to the regular features. First we obtain the `iris` dataset, and add
+some missing values to it.
 
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.impute import SimpleImputer, MissingIndicator
