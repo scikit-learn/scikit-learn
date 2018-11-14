@@ -24,6 +24,14 @@ SOFTWARE.
 """
 # This sphinx extension is to add a button to copy the code from examples.
 # Details at https://github.com/choldgraf/sphinx-copybutton
+import os
+
+
+def scb_static_path(app):
+    static_path = os.path.abspath(os.path.join(
+                                  os.path.dirname(__file__), '_static'))
+    app.config.html_static_path.append(static_path)
+
 
 # Clipboard.js script for sphinx_copybutton:
 clipboard_js_url = ('https://cdnjs.cloudflare.com/ajax/'
@@ -31,6 +39,10 @@ clipboard_js_url = ('https://cdnjs.cloudflare.com/ajax/'
 
 
 def setup(app):
-    app.add_stylesheet('css/sphinx_copybutton.css')
-    app.add_javascript('js/sphinx_copybutton.js')
+    # Add our static path
+    app.connect('builder-inited', scb_static_path)
+
+    # Add relevant code to headers
+    app.add_stylesheet('sphinx_copybutton.css')
+    app.add_javascript('sphinx_copybutton.js')
     app.add_javascript(clipboard_js_url)
