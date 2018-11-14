@@ -115,7 +115,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                     if (isinstance(self.categories_[i][0],
                                    six.string_types)
                             and self.categories_[i].itemsize > Xi.itemsize
-                            and type(self.categories_[0]) != object ):
+                            and type(self.categories_[0]) != object):
                         Xi = Xi.astype(self.categories_[i].dtype)
                     else:
                         Xi = Xi.copy()
