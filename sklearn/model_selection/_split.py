@@ -917,7 +917,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, of length n_samples
+        y : array-like, of length n_samples, optional
             The target variable for supervised learning problems.
 
         groups : array-like, with shape (n_samples,)
