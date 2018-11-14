@@ -273,29 +273,22 @@ def test_one_hot_encoder_no_categorical_features():
     assert enc.categories_ == []
 
 
-def test_one_hot_encoder_handle_unknown():
-    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
-    X2 = np.array([[4, 1, 1]])
-
-    # Test that one hot encoder raises error for unknown features
-    # present during transform.
-    oh = OneHotEncoder(handle_unknown='error')
-    assert_warns(FutureWarning, oh.fit, X)
-    assert_raises(ValueError, oh.transform, X2)
-
-    # Test the ignore option, ignores unknown features (giving all 0's)
+def test_one_hot_encoder_handle_unknown_strings():
+    X = np.array(['11111111', '22', '333', '4444']).reshape((-1, 1))
+    X2 = np.array(['55555', '22']).reshape((-1, 1))
+    
+    # Non Regression test for the issue #12470
+    # Test the ignore option, when categories are numpy string dtype
+    # particularly when the known category strings are larger
+    # than the unknown category strings
     oh = OneHotEncoder(handle_unknown='ignore')
     oh.fit(X)
     X2_passed = X2.copy()
     assert_array_equal(
         oh.transform(X2_passed).toarray(),
-        np.array([[0.,  0.,  0.,  0.,  1.,  0.,  0.]]))
+        np.array([[0.,  0.,  0.,  0.], [0.,  1.,  0.,  0.]]))
     # ensure transformed data was not modified in place
-    assert_allclose(X2, X2_passed)
-
-    # Raise error if handle_unknown is neither ignore or error.
-    oh = OneHotEncoder(handle_unknown='42')
-    assert_raises(ValueError, oh.fit, X)
+    assert_array_equal(X2, X2_passed)
 
 
 @pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
@@ -684,4 +677,3 @@ def test_one_hot_encoder_warning():
     enc = OneHotEncoder()
     X = [['Male', 1], ['Female', 3]]
     np.testing.assert_no_warnings(enc.fit_transform, X)
-
