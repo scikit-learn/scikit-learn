@@ -2,6 +2,7 @@
 
 # Authors: Peter Prettenhofer
 #          Trevor Stephens
+#          Nicolas Hug
 # License: BSD 3 clause
 
 from itertools import count
@@ -69,6 +70,10 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
         else:
             # create axis based on percentiles and grid resolution
             emp_percentiles = mquantiles(X, prob=percentiles, axis=0)
+            if np.allclose(emp_percentiles[0, feature],
+                           emp_percentiles[1, feature]):
+                raise ValueError('percentiles are too close to each other, '
+                                 'not able to build the grid.')
             axis = np.linspace(emp_percentiles[0, feature],
                                emp_percentiles[1, feature],
                                num=grid_resolution, endpoint=True)
@@ -107,11 +112,8 @@ def _partial_dependence_recursion(est, grid, target_variables, X=None):
 
     # _partial_dependence_tree doesn't add the initial estimator to the
     # predictions so we do it here
-    if isinstance(est, BaseGradientBoosting):
-        averaged_predictions += est._init_decision_function(X).mean()
+    averaged_predictions += est._init_decision_function(X).mean()
     
-    print(averaged_predictions.shape)
-
     return averaged_predictions
 
 
@@ -325,7 +327,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     X : array-like, shape=(n_samples, n_features)
         The data on which ``est`` was trained.
     features : seq of ints, strings, or tuples of ints or strings
-        If seq[i] is an int or a tuple with one int value, a one-way
+        If seq[i] is an int , a one-way
         PDP is created; if seq[i] is a tuple of two ints, a two-way
         PDP is created.
         If feature_names is specified and seq[i] is an int, seq[i]
@@ -405,40 +407,21 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         if target is None:
             raise ValueError('target must be specified for multi-class')
         target_idx = np.searchsorted(est.classes_, target)
-        if est.classes_[target_idx] != target:
-            raise ValueError('target %s not in ``est.classes_``' % str(target))
+        if (not (0 <= target_idx < len(est.classes_)) or
+            est.classes_[target_idx] != target):
+            raise ValueError('target not in est.classes_, got {}'.format(
+                target))
     else:
         # regression and binary classification
         target_idx = 0
 
-    if is_regressor(est) and "MultiTask" in est.__class__.__name__:
-        # multioutput regressor
-        if target is None:
-            raise ValueError(
-                'target must be specified for multi-output regressors')
-        if target < 0:
-            raise ValueError('target must be in [0, n_tasks], got {}.'.format(
-                target))
-        # Note: for multitask, upper bound for target can only be checked once
-        # we have the predictions
-        target_idx = target
-    else:
-        target_idx = 0
-
     #TODO: DYPE?????
     X = check_array(X, dtype=DTYPE, order='C')
-    if hasattr(est, 'n_features_') and est.n_features_ != X.shape[1]:
-        raise ValueError('X.shape[1] does not match est.n_features_')
     n_features = X.shape[1]
-
-    if line_kw is None:
-        line_kw = {'color': 'green'}
-    if contour_kw is None:
-        contour_kw = {}
 
     # convert feature_names to list
     if feature_names is None:
-        # if not feature_names use fx indices as name
+        # if not feature_names use feature indices as name
         feature_names = [str(i) for i in range(n_features)]
     elif isinstance(feature_names, np.ndarray):
         feature_names = feature_names.tolist()
@@ -449,20 +432,21 @@ def plot_partial_dependence(est, X, features, feature_names=None,
                 fx = feature_names.index(fx)
             except ValueError:
                 raise ValueError('Feature %s not in feature_names' % fx)
-        return fx
+        return int(fx)
 
     # convert features into a seq of int tuples
     tmp_features = []
     for fxs in features:
-        if isinstance(fxs, (numbers.Integral,) + six.string_types):
+        if isinstance(fxs, (numbers.Integral, six.string_types)):
             fxs = (fxs,)
         try:
-            fxs = np.array([convert_feature(fx) for fx in fxs], dtype=np.int32)
+            fxs = [convert_feature(fx) for fx in fxs]
         except TypeError:
-            raise ValueError('features must be either int, str, or tuple '
-                             'of int/str')
+            raise ValueError('Each entry in features must be either an int, '
+                             'a string, or an iterable of size at most 2.')
         if not (1 <= np.size(fxs) <= 2):
-            raise ValueError('target features must be either one or two')
+            raise ValueError('Each entry in features must be either an int, '
+                             'a string, or an iterable of size at most 2.')
 
         tmp_features.append(fxs)
 
@@ -481,21 +465,30 @@ def plot_partial_dependence(est, X, features, feature_names=None,
                          'len(feature_names) = {0}, got {1}.'
                          .format(len(feature_names), i))
 
-    # compute PD functions
+    # compute averaged predictions
     pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(partial_dependence)(est, fxs, X=X, method=method,
                                     grid_resolution=grid_resolution,
                                     percentiles=percentiles)
         for fxs in features)
 
-    # Need to check if output param is valid. We can only do that now that we
-    # have the predictions:
-    if is_regressor and "MultiTask" in est.__class__.__name__:
-        pd, _ = pd_result[0]
-        if not 0 <= output <= pd.shape[0]:
+    # For multioutput regression, we can only check the validity of target
+    # now that we have the predictions.
+    # Also note: as multiclass-multioutput classifiers are not supported,
+    # multiand multioutput setting. So there is no risk of overwriting
+    # target_idx here.
+    pd, _ = pd_result[0]  # checking the first result is enough
+    if is_regressor(est) and pd.shape[0] > 1:
+        if target is None:
+            raise ValueError(
+                'target must be specified for multi-output regressors')
+        if not 0 <= target <= pd.shape[0]:
                 raise ValueError(
-                    'output must be in [0, n_tasks], got {}.'.format(
-                        target_idx))
+                    'target must be in [0, n_tasks], got {}.'.format(
+                        target))
+        target_idx = target
+    else:
+        target_idx = 0
 
     # get global min and max values of PD grouped by plot type
     pdp_lim = {}
@@ -517,9 +510,14 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         fig = ax.get_figure()
         fig.clear()
 
+    if line_kw is None:
+        line_kw = {'color': 'green'}
+    if contour_kw is None:
+        contour_kw = {}
+
     n_cols = min(n_cols, len(features))
     n_rows = int(np.ceil(len(features) / float(n_cols)))
-    axes = []
+    axs = []
     for i, fx, name, (pd, values) in zip(count(), features, names,
                                         pd_result):
         ax = fig.add_subplot(n_rows, n_cols, i + 1)
@@ -567,8 +565,8 @@ def plot_partial_dependence(est, X, features, feature_names=None,
 
         if len(values) == 1:
             ax.set_ylim(pdp_lim[1])
-        axes.append(ax)
+        axs.append(ax)
 
     fig.subplots_adjust(bottom=0.15, top=0.7, left=0.1, right=0.95, wspace=0.4,
                         hspace=0.3)
-    return fig, axes
+    return fig, axs

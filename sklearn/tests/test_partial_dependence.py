@@ -63,6 +63,7 @@ def multioutput_regression():
     (GradientBoostingRegressor, 'recursion', regression()),
     (GradientBoostingRegressor, 'brute', regression()),
     (LinearRegression, 'brute', regression()),
+    (LinearRegression, 'brute', multioutput_regression()),
     (LogisticRegression, 'brute', binary_classification()),
     (LogisticRegression, 'brute', multiclass_classification()),
     (MultiTaskLasso, 'brute', multioutput_regression()),
@@ -132,6 +133,13 @@ def test_grid_from_X():
     assert axes[0].shape == (n_unique_values,)
     assert axes[1].shape == (grid_resolution,)
 
+    assert_raises_regex(ValueError,
+                        'percentiles are too close',
+                        _grid_from_X,
+                        X,
+                        grid_resolution=10,
+                        percentiles=(0, 0.0001))
+
 
 @pytest.mark.parametrize('target_feature', (0, 3))
 @pytest.mark.parametrize('est, partial_dependence_fun',
@@ -173,7 +181,7 @@ def test_partial_dependence_helpers(est, partial_dependence_fun,
                           sklearn.neighbors.RadiusNeighborsClassifier,
                           sklearn.ensemble.RandomForestClassifier))
 def test_multiclass_multioutput(Estimator):
-    # Make sure multiclass-multioutput classifiers are not supported
+    # Make error is raised for multiclass-multioutput classifiers
 
     # make multiclass-multioutput dataset
     X, y = make_classification(n_classes=3, n_clusters_per_class=1,
@@ -329,34 +337,57 @@ def test_plot_partial_dependence_multiclass():
 
 @if_matplotlib
 def test_plot_partial_dependence_input():
-    # Test partial dependence plot function input checks.
-    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
+    X, y = make_classification(random_state=0)
 
-    # not fitted yet
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, X, [0])
+    lr = LinearRegression()
+    lr.fit(X, y)
+    gbc = GradientBoostingClassifier(random_state=0)
+    gbc.fit(X, y)
 
-    clf.fit(X, y)
+    # check target param for multiclass
+    (X_m, y_m), _ = multiclass_classification()
+    lr_m = LogisticRegression()
+    lr_m.fit(X_m, y_m)
+    assert_raises_regex(ValueError,
+                        'target must be specified for multi-class',
+                        plot_partial_dependence, lr_m, X_m, [0],
+                        target=None)
+    for target in (-1, 100):
+        assert_raises_regex(ValueError,
+                            'target not in est.classes_',
+                            plot_partial_dependence, lr_m, X_m, [0],
+                            target=target)
 
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, np.array(X)[:, :0], [0])
+    # check target param for multioutput
+    (X_m, y_m), _ = multioutput_regression()
+    lr_m = LinearRegression()
+    lr_m.fit(X_m, y_m)
+    assert_raises_regex(ValueError,
+                        'target must be specified for multi-output',
+                        plot_partial_dependence, lr_m, X_m, [0],
+                        target=None)
+    for target in (-1, 100):
+        assert_raises_regex(ValueError,
+                            'target must be in \[0, n_tasks\]',
+                            plot_partial_dependence, lr_m, X_m, [0],
+                            target=target)
 
-    # first argument must be an instance of BaseGradientBoosting
-    assert_raises(ValueError, plot_partial_dependence,
-                  {}, X, [0])
 
-    # must be larger than -1
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, X, [-1])
+    for feature_names in (None, ['abcd', 'def']):
+        assert_raises_regex(ValueError,
+                            'Feature foobar not in feature_names',
+                            plot_partial_dependence, lr, X,
+                            features=['foobar'],
+                            feature_names=feature_names)
 
-    # too large feature value
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, X, [100])
+    for features in([(1, 2, 3)], [1, {}], [tuple()]):
+        assert_raises_regex(ValueError,
+                            'Each entry in features must be either an int, ',
+                            plot_partial_dependence, lr, X,
+                            features=features)
 
-    # str feature but no feature_names
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, X, ['foobar'])
-
-    # not valid features value
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, X, [{'foo': 'bar'}])
+    assert_raises_regex(ValueError,
+                        'All entries of features must be less than ',
+                        plot_partial_dependence, lr, X,
+                        features=[123],
+                        feature_names=['blah'])
