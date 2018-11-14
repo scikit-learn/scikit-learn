@@ -89,10 +89,10 @@ def test_simple_precomputed_sufficient_stats():
         eps = 1e-3
         ocur = len(cov[C - eps < abs(cov)])
         if i < X.shape[1]:
-            assert_true(ocur == i + 1)
+            assert ocur == i + 1
         else:
             # no more than max_pred variables can go into the active set
-            assert_true(ocur == X.shape[1])
+            assert ocur == X.shape[1]
 
 
 def test_x_none_gram_none_raises_deprecation_warning():
@@ -193,7 +193,7 @@ def test_collinearity_sufficient_stats():
     Xy = np.dot(X.T, y)
     _, _, coef_path_ = ignore_warnings(linear_model.lars_path_gram)(
         Xy=Xy, Gram=G, n_samples=y.size, alpha_min=0.01)
-    assert_true(not np.isnan(coef_path_).any())
+    assert not np.isnan(coef_path_).any()
     residual = np.dot(X, coef_path_[:, -1]) - y
     assert_less((residual ** 2).sum(), 1.)  # just make sure it's bounded
 
@@ -206,7 +206,7 @@ def test_no_path():
         X, y, method='lar', return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
-    assert_true(alpha_ == alphas_[-1])
+    assert alpha_ == alphas_[-1]
 
 
 def test_no_path_sufficient_stats():
@@ -227,7 +227,7 @@ def test_no_path_precomputed():
         X, y, method='lar', Gram=G, return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
-    assert_true(alpha_ == alphas_[-1])
+    assert alpha_ == alphas_[-1]
 
 
 def test_no_path_precomputed_sufficient_stats():
@@ -257,7 +257,7 @@ def test_no_path_all_precomputed():
         X, y, method='lasso', Gram=G, Xy=Xy, alpha_min=0.9, return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
-    assert_true(alpha_ == alphas_[-1])
+    assert alpha_ == alphas_[-1]
 
 
 def test_no_path_all_precomputed_sufficient_stats():
@@ -710,12 +710,12 @@ def test_lars_path_positive_constraint():
     _, _, coefs = \
         linear_model.lars_path(X, y, return_path=True, method=method,
                                positive=False)
-    assert_true(coefs.min() < 0)
+    assert coefs.min() < 0
 
     _, _, coefs = \
         linear_model.lars_path(X, y, return_path=True, method=method,
                                positive=True)
-    assert_true(coefs.min() >= 0)
+    assert coefs.min() >= 0
 
 
 def test_lars_path_positive_constraint_sufficient_stats():
