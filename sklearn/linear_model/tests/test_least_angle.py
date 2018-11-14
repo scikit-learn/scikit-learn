@@ -738,30 +738,16 @@ def test_lars_path_positive_constraint_sufficient_stats():
 
     method = 'lasso'
     alpha, active, coefs = \
-<<<<<<< HEAD
-        linear_model.lars_path_gram(Xy=Xy, Gram=G, n_samples=n_samples,
+    linear_model.lars_path_gram(Xy=Xy, Gram=G, n_samples=n_samples,
                                     return_path=True, method=method,
                                     positive=False)
-    assert_true(coefs.min() < 0)
+    assert coefs.min() < 0
 
     alpha, active, coefs = \
         linear_model.lars_path_gram(Xy=Xy, Gram=G, n_samples=n_samples,
                                     return_path=True, method=method,
                                     positive=True)
-    assert_true(coefs.min() >= 0)
-=======
-        linear_model.lars_path(diabetes['data'], diabetes['target'],
-                               return_path=True, method=method,
-                               positive=False)
-    assert coefs.min() < 0
-
-    alpha, active, coefs = \
-        linear_model.lars_path(diabetes['data'], diabetes['target'],
-                               return_path=True, method=method,
-                               positive=True)
     assert coefs.min() >= 0
->>>>>>> 02dc9ed680e7f53f1b0d410dcdd37341c7958eb1
-
 
 # now we gonna test the positive option for all estimator classes
 
@@ -785,19 +771,11 @@ def test_estimatorclasses_positive_constraint():
         params = default_parameter.copy()
         params.update(estimator_parameter_map[estname])
         estimator = getattr(linear_model, estname)(positive=False, **params)
-<<<<<<< HEAD
         estimator.fit(X, y)
-        assert_true(estimator.coef_.min() < 0)
-        estimator = getattr(linear_model, estname)(positive=True, **params)
-        estimator.fit(X, y)
-        assert_true(min(estimator.coef_) >= 0)
-=======
-        estimator.fit(diabetes['data'], diabetes['target'])
         assert estimator.coef_.min() < 0
         estimator = getattr(linear_model, estname)(positive=True, **params)
-        estimator.fit(diabetes['data'], diabetes['target'])
+        estimator.fit(X, y)
         assert min(estimator.coef_) >= 0
->>>>>>> 02dc9ed680e7f53f1b0d410dcdd37341c7958eb1
 
 
 def test_lasso_lars_vs_lasso_cd_positive():
