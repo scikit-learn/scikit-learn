@@ -770,13 +770,14 @@ class KNeighborsMixin(object):
         return kneighbors_graph
 
 
-def _tree_query_radius_parallel_helper(tree, data, radius, return_distance):
+def _tree_query_radius_parallel_helper(tree, data, radius, return_distance,
+                                       sort_results):
     """Helper for the Parallel calls in RadiusNeighborsMixin.radius_neighbors
 
     The Cython method tree.query_radius is not directly picklable by
     cloudpickle under PyPy.
     """
-    return tree.query_radius(data, radius, return_distance)
+    return tree.query_radius(data, radius, return_distance, sort_results)
 
 
 class RadiusNeighborsMixin(object):
