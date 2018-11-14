@@ -645,7 +645,7 @@ def test_imputation_add_indicator(marker):
         [6, 3, marker],
         [1, 2, 9]
     ])
-    
+
     X_true = np.array([
         [3., 1., 5., 1., 0., 0.],
         [2., 2., 1., 0., 1., 0.],

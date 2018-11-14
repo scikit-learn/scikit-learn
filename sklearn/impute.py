@@ -134,7 +134,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         - If X is encoded as a CSR matrix.
 
     add_indicator : boolean, optional (default=False)
-        If True, a MissingIndicator transform will stack into output of the imputer's transform.
+        If True, a MissingIndicator transform will stack into output
+        of the imputer's transform.
 
     Attributes
     ----------
@@ -148,8 +149,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     >>> imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
     >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
     ... # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(add_indicator=False, copy=True, fill_value=None, missing_values=nan,
-           strategy='mean', verbose=0)
+    SimpleImputer(add_indicator=False, copy=True, fill_value=None,
+            missing_values=nan, strategy='mean', verbose=0)
     >>> X = [[np.nan, 2, 3], [4, np.nan, 6], [10, np.nan, 9]]
     >>> print(imp_mean.transform(X))
     ... # doctest: +NORMALIZE_WHITESPACE
