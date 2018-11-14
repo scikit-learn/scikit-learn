@@ -22,9 +22,6 @@ from sklearn.externals.six import u
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 sys.path.insert(0, os.path.abspath('sphinxext'))
-# Path for sphinx_copybutton ext.
-sys.path.insert(0, os.path.abspath(
-                os.path.join('sphinxext', 'sphinx_copybutton')))
 
 from github_link import make_linkcode_resolve
 import sphinx_gallery
@@ -41,7 +38,7 @@ extensions = [
     'sphinx.ext.imgconverter',
     'sphinx_gallery.gen_gallery',
     'sphinx_issues',
-    'sphinx_copybutton'
+    'sphinx_copybutton.sphinx_copybutton'
 ]
 
 # this is needed for some reason...
