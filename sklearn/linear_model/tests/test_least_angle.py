@@ -9,7 +9,6 @@ from scipy import linalg
 from sklearn.model_selection import train_test_split
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
@@ -51,10 +50,10 @@ def test_simple():
             eps = 1e-3
             ocur = len(cov[C - eps < abs(cov)])
             if i < X.shape[1]:
-                assert_true(ocur == i + 1)
+                assert ocur == i + 1
             else:
                 # no more than max_pred variables can go into the active set
-                assert_true(ocur == X.shape[1])
+                assert ocur == X.shape[1]
     finally:
         sys.stdout = old_stdout
 
@@ -72,10 +71,10 @@ def test_simple_precomputed():
         eps = 1e-3
         ocur = len(cov[C - eps < abs(cov)])
         if i < X.shape[1]:
-            assert_true(ocur == i + 1)
+            assert ocur == i + 1
         else:
             # no more than max_pred variables can go into the active set
-            assert_true(ocur == X.shape[1])
+            assert ocur == X.shape[1]
 
 
 def test_simple_precomputed_sufficient_stats():
@@ -168,9 +167,9 @@ def test_collinearity():
     y = np.array([1., 0., 0])
     rng = np.random.RandomState(0)
 
-    _, _, coef_path_ = ignore_warnings(linear_model.lars_path)(
-        X, y, alpha_min=0.01)
-    assert_true(not np.isnan(coef_path_).any())
+    f = ignore_warnings
+    _, _, coef_path_ = f(linear_model.lars_path)(X, y, alpha_min=0.01)
+    assert not np.isnan(coef_path_).any()
     residual = np.dot(X, coef_path_[:, -1]) - y
     assert_less((residual ** 2).sum(), 1.)  # just make sure it's bounded
 
@@ -217,7 +216,7 @@ def test_no_path_sufficient_stats():
     alpha_, active, coef = linear_model.lars_path_gram(
         Gram=G, Xy=Xy, n_samples=n_samples, method='lar', return_path=False)
     assert_array_almost_equal(coef, coef_path_[:, -1])
-    assert_true(alpha_ == alphas_[-1])
+    assert alpha_ == alphas_[-1]
 
 
 def test_no_path_precomputed():
@@ -243,7 +242,7 @@ def test_no_path_precomputed_sufficient_stats():
         return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
-    assert_true(alpha_ == alphas_[-1])
+    assert alpha_ == alphas_[-1]
 
 
 def test_no_path_all_precomputed():
@@ -276,7 +275,7 @@ def test_no_path_all_precomputed_sufficient_stats():
         alpha_min=0.9, return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
-    assert_true(alpha_ == alphas_[-1])
+    assert alpha_ == alphas_[-1]
 
 
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
@@ -479,7 +478,7 @@ def test_lasso_lars_path_length():
     lasso2.fit(X, y)
     assert_array_almost_equal(lasso.alphas_[:3], lasso2.alphas_)
     # Also check that the sequence of alphas is always decreasing
-    assert_true(np.all(np.diff(lasso.alphas_) < 0))
+    assert np.all(np.diff(lasso.alphas_) < 0)
 
 
 def test_lasso_lars_vs_lasso_cd_ill_conditioned():
@@ -586,7 +585,7 @@ def test_lars_add_features():
     H = 1. / (np.arange(1, n + 1) + np.arange(n)[:, np.newaxis])
     clf = linear_model.Lars(fit_intercept=False).fit(
         H, np.arange(n))
-    assert_true(np.all(np.isfinite(clf.coef_)))
+    assert np.all(np.isfinite(clf.coef_))
 
 
 def test_lars_n_nonzero_coefs(verbose=False):
@@ -652,7 +651,7 @@ def test_lars_cv_max_iter():
         X = np.c_[X, x, x]  # add correlated features
         lars_cv = linear_model.LassoLarsCV(max_iter=5)
         lars_cv.fit(X, y)
-    assert_true(len(w) == 0)
+    assert len(w) == 0
 
 
 def test_lasso_lars_ic():
@@ -739,6 +738,7 @@ def test_lars_path_positive_constraint_sufficient_stats():
 
     method = 'lasso'
     alpha, active, coefs = \
+<<<<<<< HEAD
         linear_model.lars_path_gram(Xy=Xy, Gram=G, n_samples=n_samples,
                                     return_path=True, method=method,
                                     positive=False)
@@ -749,6 +749,18 @@ def test_lars_path_positive_constraint_sufficient_stats():
                                     return_path=True, method=method,
                                     positive=True)
     assert_true(coefs.min() >= 0)
+=======
+        linear_model.lars_path(diabetes['data'], diabetes['target'],
+                               return_path=True, method=method,
+                               positive=False)
+    assert coefs.min() < 0
+
+    alpha, active, coefs = \
+        linear_model.lars_path(diabetes['data'], diabetes['target'],
+                               return_path=True, method=method,
+                               positive=True)
+    assert coefs.min() >= 0
+>>>>>>> 02dc9ed680e7f53f1b0d410dcdd37341c7958eb1
 
 
 # now we gonna test the positive option for all estimator classes
@@ -773,11 +785,19 @@ def test_estimatorclasses_positive_constraint():
         params = default_parameter.copy()
         params.update(estimator_parameter_map[estname])
         estimator = getattr(linear_model, estname)(positive=False, **params)
+<<<<<<< HEAD
         estimator.fit(X, y)
         assert_true(estimator.coef_.min() < 0)
         estimator = getattr(linear_model, estname)(positive=True, **params)
         estimator.fit(X, y)
         assert_true(min(estimator.coef_) >= 0)
+=======
+        estimator.fit(diabetes['data'], diabetes['target'])
+        assert estimator.coef_.min() < 0
+        estimator = getattr(linear_model, estname)(positive=True, **params)
+        estimator.fit(diabetes['data'], diabetes['target'])
+        assert min(estimator.coef_) >= 0
+>>>>>>> 02dc9ed680e7f53f1b0d410dcdd37341c7958eb1
 
 
 def test_lasso_lars_vs_lasso_cd_positive():

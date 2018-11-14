@@ -1230,7 +1230,7 @@ def check_estimators_pickle(name, estimator_orig):
     # pickle and unpickle!
     pickled_estimator = pickle.dumps(estimator)
     if estimator.__module__.startswith('sklearn.'):
-        assert_true(b"version" in pickled_estimator)
+        assert b"version" in pickled_estimator
     unpickled_estimator = pickle.loads(pickled_estimator)
 
     result = dict()
@@ -1322,7 +1322,7 @@ def check_clustering(name, clusterer_orig, readonly_memmap=False):
                                                 labels_sorted[-1] + 1))
 
     # Labels are expected to start at 0 (no noise) or -1 (if noise)
-    assert_true(labels_sorted[0] in [0, -1])
+    assert labels_sorted[0] in [0, -1]
     # Labels should be less than n_clusters - 1
     if hasattr(clusterer, 'n_clusters'):
         n_clusters = getattr(clusterer, 'n_clusters')
@@ -1416,7 +1416,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
         classifier.fit(X, y)
         # with lists
         classifier.fit(X.tolist(), y.tolist())
-        assert_true(hasattr(classifier, "classes_"))
+        assert hasattr(classifier, "classes_")
         y_pred = classifier.predict(X)
         assert_equal(y_pred.shape, (n_samples,))
         # training set performance
@@ -1581,7 +1581,7 @@ def check_estimators_fit_returns_self(name, estimator_orig,
         X, y = create_memmap_backed_data([X, y])
 
     set_random_state(estimator)
-    assert_true(estimator.fit(X, y) is estimator)
+    assert estimator.fit(X, y) is estimator
 
 
 @ignore_warnings
@@ -2008,13 +2008,13 @@ def check_sparsify_coefficients(name, estimator_orig):
 
     # test sparsify with dense inputs
     est.sparsify()
-    assert_true(sparse.issparse(est.coef_))
+    assert sparse.issparse(est.coef_)
     pred = est.predict(X)
     assert_array_equal(pred, pred_orig)
 
     # pickle and unpickle with sparse coef_
     est = pickle.loads(pickle.dumps(est))
-    assert_true(sparse.issparse(est.coef_))
+    assert sparse.issparse(est.coef_)
     pred = est.predict(X)
     assert_array_equal(pred, pred_orig)
 
@@ -2074,7 +2074,7 @@ def check_parameters_default_constructible(name, Estimator):
         # test __repr__
         repr(estimator)
         # test that set_params returns self
-        assert_true(estimator.set_params() is estimator)
+        assert estimator.set_params() is estimator
 
         # test if init does nothing but set parameters
         # this is important for grid_search etc.
@@ -2114,7 +2114,7 @@ def check_parameters_default_constructible(name, Estimator):
                        np.float64, types.FunctionType, Memory])
             if init_param.name not in params.keys():
                 # deprecated parameter, not in get_params
-                assert_true(init_param.default is None)
+                assert init_param.default is None
                 continue
 
             if (issubclass(Estimator, BaseSGD) and

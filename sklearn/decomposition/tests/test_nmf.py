@@ -9,7 +9,6 @@ from scipy.sparse import csc_matrix
 
 import pytest
 
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raise_message, assert_no_warnings
 from sklearn.utils.testing import assert_array_equal
@@ -64,7 +63,7 @@ def test_initialize_close():
     W, H = nmf._initialize_nmf(A, 10, init='nndsvd')
     error = linalg.norm(np.dot(W, H) - A)
     sdev = linalg.norm(A - A.mean())
-    assert_true(error <= sdev)
+    assert error <= sdev
 
 
 def test_initialize_variants():

@@ -7,6 +7,7 @@ import numpy as np
 from scipy import sparse
 import pytest
 
+from sklearn.exceptions import NotFittedError
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
@@ -248,6 +249,28 @@ def test_one_hot_encoder_handle_unknown():
     # Raise error if handle_unknown is neither ignore or error.
     oh = OneHotEncoder(handle_unknown='42')
     assert_raises(ValueError, oh.fit, X)
+
+
+def test_one_hot_encoder_not_fitted():
+    X = np.array([['a'], ['b']])
+    enc = OneHotEncoder(categories=['a', 'b'])
+    msg = ("This OneHotEncoder instance is not fitted yet. "
+           "Call 'fit' with appropriate arguments before using this method.")
+    with pytest.raises(NotFittedError, match=msg):
+        enc.transform(X)
+
+
+def test_one_hot_encoder_no_categorical_features():
+    X = np.array([[3, 2, 1], [0, 1, 1]], dtype='float64')
+
+    cat = [False, False, False]
+    enc = OneHotEncoder(categorical_features=cat)
+    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
+        X_tr = enc.fit_transform(X)
+    expected_features = np.array(list(), dtype='object')
+    assert_array_equal(X, X_tr)
+    assert_array_equal(enc.get_feature_names(), expected_features)
+    assert enc.categories_ == []
 
 
 @pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
