@@ -24,6 +24,22 @@ from .validation import (as_float_array,
                          check_symmetric)
 from .. import get_config
 
+# deprecate the joblib API in sklearn in favor of using the system joblib
+msg = ("This function is part of the joblib library. This function is a "
+       "vendored version, modified to be privately used in sklearn. Please "
+       "install joblib to have access to this function.")
+deprecate = deprecated(msg)
+dump = deprecate(dump)
+load = deprecate(load)
+Memory = deprecate(Memory)
+delayed = deprecate(delayed)
+Parallel = deprecate(Parallel)
+cpu_count = deprecate(cpu_count)
+joblib_hash = deprecate(joblib_hash)
+effective_n_jobs = deprecate(effective_n_jobs)
+parallel_backend = deprecate(parallel_backend)
+register_parallel_backend = deprecate(register_parallel_backend)
+
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
            "check_random_state",

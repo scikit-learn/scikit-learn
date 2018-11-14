@@ -33,7 +33,7 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.utils import Memory
+from sklearn.utils._joblib import Memory
 from sklearn.utils._joblib import __version__ as joblib_version
 
 

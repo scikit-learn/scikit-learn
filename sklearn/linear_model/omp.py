@@ -16,7 +16,7 @@ from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from ..utils import as_float_array, check_array, check_X_y
 from ..model_selection import check_cv
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
 dependence in the dictionary. The requested precision might not have been met.

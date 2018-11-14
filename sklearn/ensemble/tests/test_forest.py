@@ -22,10 +22,10 @@ from scipy.sparse import coo_matrix
 
 import pytest
 
-from sklearn.utils import _joblib
-from sklearn.utils import parallel_backend
-from sklearn.utils import register_parallel_backend
 from sklearn.utils._joblib import joblib
+from sklearn.utils._joblib import parallel_backend
+from sklearn.utils._joblib import register_parallel_backend
+from sklearn.utils._joblib import __version__ as __joblib_version__
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -1291,7 +1291,7 @@ class MyBackend(DEFAULT_JOBLIB_BACKEND):
 register_parallel_backend('testing', MyBackend)
 
 
-@pytest.mark.skipif(_joblib.__version__ < LooseVersion('0.12'),
+@pytest.mark.skipif(__joblib_version__ < LooseVersion('0.12'),
                     reason='tests not yet supported in joblib <0.12')
 @skip_if_no_parallel
 def test_backend_respected():

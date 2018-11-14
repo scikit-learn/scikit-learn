@@ -27,7 +27,7 @@ from .base import RemoteFileMetadata
 from ..utils import Bunch
 from .base import _pkl_filepath
 from ..utils.fixes import makedirs
-from ..utils import dump, load
+from ..utils._joblib import dump, load
 from ..utils import check_random_state
 
 # The original data can be found in:

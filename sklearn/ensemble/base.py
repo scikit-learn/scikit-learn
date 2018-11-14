@@ -12,7 +12,7 @@ from ..base import clone
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..utils import check_random_state
-from ..utils import effective_n_jobs
+from ..utils._joblib import effective_n_jobs
 from ..externals import six
 from abc import ABCMeta, abstractmethod
 

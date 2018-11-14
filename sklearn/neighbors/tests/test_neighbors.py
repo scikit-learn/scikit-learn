@@ -28,7 +28,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 
 from sklearn.utils._joblib import joblib
-from sklearn.utils import parallel_backend
+from sklearn.utils._joblib import parallel_backend
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset

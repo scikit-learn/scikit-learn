@@ -33,7 +33,7 @@ from .base import _fetch_remote
 from .base import _pkl_filepath
 from .base import RemoteFileMetadata
 from ..utils import Bunch
-from ..utils import dump, load
+from ..utils._joblib import dump, load
 
 # The original data can be found at:
 # https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz

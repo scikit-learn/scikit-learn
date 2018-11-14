@@ -33,7 +33,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SelectKBest
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
-from sklearn.utils import check_random_state, joblib_hash
+from sklearn.utils import check_random_state
+from sklearn.utils._joblib import joblib_hash
 from sklearn.preprocessing import FunctionTransformer
 
 from scipy.sparse import csc_matrix, csr_matrix

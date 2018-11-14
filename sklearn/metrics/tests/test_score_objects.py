@@ -39,7 +39,7 @@ from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.utils import dump, load
+from sklearn.utils._joblib import dump, load
 
 
 REGRESSION_SCORERS = ['explained_variance', 'r2',

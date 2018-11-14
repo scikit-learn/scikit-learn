@@ -51,7 +51,7 @@ from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils import Bunch
 from sklearn.datasets.base import _pkl_filepath
-from sklearn.utils import dump, load
+from sklearn.utils._joblib import dump, load
 
 PY3_OR_LATER = sys.version_info[0] >= 3
 

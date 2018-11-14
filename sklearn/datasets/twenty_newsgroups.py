@@ -44,7 +44,7 @@ from .base import RemoteFileMetadata
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
 from ..utils import deprecated
-from ..utils import dump, load
+from ..utils._joblib import dump, load
 from ..utils import check_random_state, Bunch
 
 logger = logging.getLogger(__name__)

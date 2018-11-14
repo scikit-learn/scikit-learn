@@ -23,7 +23,7 @@ from .base import get_data_home
 from .base import RemoteFileMetadata
 from ..externals import six
 from ..utils import Bunch
-from ..utils import dump, load
+from ..utils._joblib import dump, load
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
 

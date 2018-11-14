@@ -23,7 +23,7 @@ from .base import get_data_home
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from .base import _pkl_filepath
-from ..utils import dump, load
+from ..utils._joblib import dump, load
 from ..utils import check_random_state, Bunch
 
 # The original data can be found at:
