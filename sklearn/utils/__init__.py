@@ -11,9 +11,7 @@ import warnings
 
 from .murmurhash import murmurhash3_32
 from .class_weight import compute_class_weight, compute_sample_weight
-from ._joblib import cpu_count, Parallel, Memory, delayed, joblib_hash
-from ._joblib import parallel_backend, register_parallel_backend
-from ._joblib import effective_n_jobs, dump, load
+from .import _joblib
 from ..exceptions import DataConversionWarning
 from .fixes import _Sequence as Sequence
 from .deprecation import deprecated
@@ -24,21 +22,36 @@ from .validation import (as_float_array,
                          check_symmetric)
 from .. import get_config
 
-# deprecate the joblib API in sklearn in favor of using the system joblib
-msg = ("This function is part of the joblib library. This function is a "
-       "vendored version, modified to be privately used in sklearn. Please "
-       "install joblib to have access to this function.")
+# deprecate the joblib API in sklearn in favor of using directly joblib
+msg = ("it is a vendored version, modified to be privately used in sklearn. "
+       "Please install joblib to have access to this function.")
 deprecate = deprecated(msg)
-dump = deprecate(dump)
-load = deprecate(load)
-Memory = deprecate(Memory)
-delayed = deprecate(delayed)
-Parallel = deprecate(Parallel)
-cpu_count = deprecate(cpu_count)
-joblib_hash = deprecate(joblib_hash)
-effective_n_jobs = deprecate(effective_n_jobs)
-parallel_backend = deprecate(parallel_backend)
-register_parallel_backend = deprecate(register_parallel_backend)
+
+dump = deprecate(_joblib.dump)
+load = deprecate(_joblib.load)
+delayed = deprecate(_joblib.delayed)
+cpu_count = deprecate(_joblib.cpu_count)
+joblib_hash = deprecate(_joblib.joblib_hash)
+effective_n_jobs = deprecate(_joblib.effective_n_jobs)
+register_parallel_backend = deprecate(_joblib.register_parallel_backend)
+
+
+# for classes, deprecated will change the object from _joblib module so we need
+# to subclass the class
+@deprecate
+class Memory(_joblib.Memory):
+    pass
+
+
+@deprecate
+class Parallel(_joblib.Parallel):
+    pass
+
+
+@deprecate
+class parallel_backend(_joblib.parallel_backend):
+    pass
+
 
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
