@@ -55,7 +55,7 @@ if LooseVersion(_joblib.__version__) >= LooseVersion("0.12"):
     class parallel_backend(_joblib.parallel_backend):
         pass
 else:
-    parallel_backend = deprecate(parallel_backend)
+    parallel_backend = deprecate(_joblib.parallel_backend)
 
 
 __all__ = ["murmurhash3_32", "as_float_array",
