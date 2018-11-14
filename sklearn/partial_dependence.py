@@ -47,8 +47,8 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     -------
     grid : ndarray
         All data points on the grid. This is the cartesian product of ``axes``.
-    axes : list of ndarray
-        The axes with which the grid has been created. The ndarrays may be of
+    values: list of ndarray
+        The values with which the grid has been created. The ndarrays may be of
         different shape: either (grid_resolution, ) or (n_unique_values,).
     """
     try:
@@ -60,7 +60,7 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     if percentiles[0] > percentiles[1]:
         raise ValueError('percentiles[0] must be less than percentiles[1].')
 
-    axes = []
+    values = []
     for feature in range(X.shape[1]):
         uniques = np.unique(X[:, feature])
         if uniques.shape[0] < grid_resolution:
@@ -72,9 +72,9 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
             axis = np.linspace(emp_percentiles[0, feature],
                                emp_percentiles[1, feature],
                                num=grid_resolution, endpoint=True)
-        axes.append(axis)
+        values.append(axis)
 
-    return cartesian(axes), axes
+    return cartesian(values), values
 
 
 def _partial_dependence_recursion(est, grid, target_variables, X=None):
@@ -94,8 +94,8 @@ def _partial_dependence_recursion(est, grid, target_variables, X=None):
         n_trees_per_stage = 1
         n_estimators = len(est.estimators_)
         learning_rate = 1.
-    pdp = np.zeros((n_trees_per_stage, grid.shape[0]), dtype=np.float64,
-                   order='C')
+    averaged_predictions = np.zeros((n_trees_per_stage, grid.shape[0]), dtype=np.float64,
+                                    order='C')
     for stage in range(n_estimators):
         for k in range(n_trees_per_stage):
             if isinstance(est, BaseGradientBoosting):
@@ -103,21 +103,21 @@ def _partial_dependence_recursion(est, grid, target_variables, X=None):
             else:
                 tree = est.estimators_[stage].tree_
             _partial_dependence_tree(tree, grid, target_variables,
-                                     learning_rate, pdp[k])
+                                     learning_rate, averaged_predictions[k])
 
     # _partial_dependence_tree doesn't add the initial estimator to the
     # predictions so we do it here
     if isinstance(est, BaseGradientBoosting):
-        pdp += est._init_decision_function(X).mean()
+        averaged_predictions += est._init_decision_function(X).mean()
     
-    print(pdp.shape)
+    print(averaged_predictions.shape)
 
-    return pdp
+    return averaged_predictions
 
 
 def _partial_dependence_brute(est, grid, target_variables, X):
 
-    pdp = []
+    averaged_predictions = []
     for new_values in grid:
         X_eval = X.copy()
         for i, variable in enumerate(target_variables):
@@ -143,23 +143,25 @@ def _partial_dependence_brute(est, grid, target_variables, X):
         #     predictions = predictions - np.mean(predictions, axis=1,
         #                                         keepdims=True)
 
-        pdp.append(np.mean(predictions, axis=0))  # average over samples
+        # average over samples
+        averaged_predictions.append(np.mean(predictions, axis=0))
 
-    # reshape pdp to (n_targets, n_points) where n_targets is:
+    # reshape to (n_targets, n_points) where n_targets is:
     # - 1 for non-multioutput regression and binary classification (shape is
     #   already correct in those cases)
     # - n_tasks for multi-output regression
     # - n_classes for multiclass classification.
-    pdp = np.array(pdp).T
-    if is_regressor(est) and pdp.ndim == 1:
-        # non-multioutput regression, pdp shape is (n_points,)
-        pdp = pdp.reshape(1, -1)
-    elif is_classifier(est) and pdp.shape[0] == 2:
-        # Binary classification, pdp shape is (2, n_points).
-        pdp = pdp[1] # we output the effect of **positive** class
-        pdp = pdp.reshape(1, -1)
+    averaged_predictions = np.array(averaged_predictions).T
+    if is_regressor(est) and averaged_predictions.ndim == 1:
+        # non-multioutput regression, shape is (n_points,)
+        averaged_predictions = averaged_predictions.reshape(1, -1)
+    elif is_classifier(est) and averaged_predictions.shape[0] == 2:
+        # Binary classification, shape is (2, n_points).
+        # we output the effect of **positive** class
+        averaged_predictions = averaged_predictions[1]
+        averaged_predictions = averaged_predictions.reshape(1, -1)
 
-    return pdp
+    return averaged_predictions
 
 def partial_dependence(est, target_variables, grid=None, X=None,
                        percentiles=(0.05, 0.95), grid_resolution=100,
@@ -210,11 +212,11 @@ def partial_dependence(est, target_variables, grid=None, X=None,
 
     Returns
     -------
-    pdp : array, shape=(n_classes, n_points)
-        The partial dependence function evaluated on the ``grid``.
-        For regression and binary classification ``n_classes==1``.
-    axes : seq of ndarray or None
-        The axes with which the grid has been created or None if
+    averaged_predictions : array, shape=(n_classes, n_points)
+        The predictions for all the points in the ``grid``, averaged over
+        all samples. For regression and binary classification ``n_classes==1``.
+    values: seq of ndarray or None
+        The values with which the grid has been created or None if
         the grid has been given.
 
     Examples
@@ -281,11 +283,11 @@ def partial_dependence(est, target_variables, grid=None, X=None,
         raise ValueError('Either grid or X must be specified.')
 
     if grid is None:
-        grid, axes = _grid_from_X(X[:, target_variables], percentiles,
+        grid, values = _grid_from_X(X[:, target_variables], percentiles,
                                   grid_resolution)
     else:
         grid = np.asarray(grid)
-        axes = None  # don't return axes if grid is given
+        values = None  # don't return values if grid is given
         # grid must be 2d
         if grid.ndim == 1:
             grid = grid[:, np.newaxis]
@@ -297,9 +299,10 @@ def partial_dependence(est, target_variables, grid=None, X=None,
                              'of target variables ({})'.format(
                                  grid.shape[1], target_variables.shape[0]))
 
-    pdp = method_to_function[method](est, grid, target_variables, X)
+    averaged_predictions = method_to_function[method](est, grid,
+                                                      target_variables, X)
 
-    return pdp, axes
+    return averaged_predictions, values
 
 
 def plot_partial_dependence(est, X, features, feature_names=None,
@@ -377,7 +380,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     -------
     fig : figure
         The Matplotlib Figure object.
-    axs : seq of Axis objects
+    axes : seq of Axis objects
         A seq of Axis objects, one for each subplot.
 
     Examples
@@ -400,7 +403,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     # set target_idx for multi-class estimators
     if hasattr(est, 'classes_') and np.size(est.classes_) > 2:
         if target is None:
-            raise ValueError('target must be specified for multi-class PDP')
+            raise ValueError('target must be specified for multi-class')
         target_idx = np.searchsorted(est.classes_, target)
         if est.classes_[target_idx] != target:
             raise ValueError('target %s not in ``est.classes_``' % str(target))
@@ -488,17 +491,17 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     # Need to check if output param is valid. We can only do that now that we
     # have the predictions:
     if is_regressor and "MultiTask" in est.__class__.__name__:
-        pdp, _ = pd_result[0]
-        if not 0 <= output <= pdp.shape[0]:
+        pd, _ = pd_result[0]
+        if not 0 <= output <= pd.shape[0]:
                 raise ValueError(
                     'output must be in [0, n_tasks], got {}.'.format(
                         target_idx))
 
     # get global min and max values of PD grouped by plot type
     pdp_lim = {}
-    for pdp, axes in pd_result:
-        min_pd, max_pd = pdp[target_idx].min(), pdp[target_idx].max()
-        n_fx = len(axes)
+    for pd, values in pd_result:
+        min_pd, max_pd = pd[target_idx].min(), pd[target_idx].max()
+        n_fx = len(values)
         old_min_pd, old_max_pd = pdp_lim.get(n_fx, (min_pd, max_pd))
         min_pd = min(min_pd, old_min_pd)
         max_pd = max(max_pd, old_max_pd)
@@ -516,18 +519,18 @@ def plot_partial_dependence(est, X, features, feature_names=None,
 
     n_cols = min(n_cols, len(features))
     n_rows = int(np.ceil(len(features) / float(n_cols)))
-    axs = []
-    for i, fx, name, (pdp, axes) in zip(count(), features, names,
+    axes = []
+    for i, fx, name, (pd, values) in zip(count(), features, names,
                                         pd_result):
         ax = fig.add_subplot(n_rows, n_cols, i + 1)
 
-        if len(axes) == 1:
-            ax.plot(axes[0], pdp[target_idx].ravel(), **line_kw)
+        if len(values) == 1:
+            ax.plot(values[0], pd[target_idx].ravel(), **line_kw)
         else:
             # make contour plot
-            assert len(axes) == 2
-            XX, YY = np.meshgrid(axes[0], axes[1])
-            Z = pdp[target_idx].reshape(list(map(np.size, axes))).T
+            assert len(values) == 2
+            XX, YY = np.meshgrid(values[0], values[1])
+            Z = pd[target_idx].reshape(list(map(np.size, values))).T
             CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5,
                             colors='k')
             ax.contourf(XX, YY, Z, levels=Z_level, vmax=Z_level[-1],
@@ -549,7 +552,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         tick_formatter.set_powerlimits((-3, 4))
         ax.xaxis.set_major_formatter(tick_formatter)
 
-        if len(axes) > 1:
+        if len(values) > 1:
             # two-way PDP - y-axis deciles + labels
             deciles = mquantiles(X[:, fx[1]], prob=np.arange(0.1, 1.0, 0.1))
             trans = transforms.blended_transform_factory(ax.transAxes,
@@ -562,10 +565,10 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         else:
             ax.set_ylabel('Partial dependence')
 
-        if len(axes) == 1:
+        if len(values) == 1:
             ax.set_ylim(pdp_lim[1])
-        axs.append(ax)
+        axes.append(ax)
 
     fig.subplots_adjust(bottom=0.15, top=0.7, left=0.1, right=0.95, wspace=0.4,
                         hspace=0.3)
-    return fig, axs
+    return fig, axes
