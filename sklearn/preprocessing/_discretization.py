@@ -61,9 +61,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             cluster.
 
     subsample : int, optional (default='warn')
-            Maximum number of samples used to estimate the quantiles for
-            computational efficiency. Note that the subsampling procedure may
-            differ for value-identical sparse and dense matrices.
+        Maximum number of samples used to estimate the quantiles for
+        computational efficiency. Note that the subsampling procedure may
+        differ for value-identical sparse and dense matrices.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -159,73 +159,74 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             warnings.warn("In the future (v0.22) onwards subsample = 1e5"
                           "will be used by default. Pass subsample=None to"
                           "silence this warning for now.", FutureWarning)
-        else:
-            if self.subsample is not None:
+            self.subsample = None
 
-                if n_samples > self.subsample:
-                    subsample_idx = self.random_state.choice(
-                                    n_samples, size=self.subsample,
-                                    replace=False)
-                    X = X.take(subsample_idx, mode='clip')
+        if self.subsample is not None:
 
-            valid_encode = ('onehot', 'onehot-dense', 'ordinal')
-            if self.encode not in valid_encode:
-                raise ValueError("Valid options for 'encode' are {}. "
-                                 "Got encode={!r} instead."
-                                 .format(valid_encode, self.encode))
-            valid_strategy = ('uniform', 'quantile', 'kmeans')
-            if self.strategy not in valid_strategy:
-                raise ValueError("Valid options for 'strategy' are {}. "
-                                 "Got strategy={!r} instead."
-                                 .format(valid_strategy, self.strategy))
+            if n_samples > self.subsample:
+                subsample_idx = self.random_state.choice(
+                                n_samples, size=self.subsample,
+                                replace=False)
+                X = X.take(subsample_idx, mode='clip')
 
-            n_bins = self._validate_n_bins(n_features)
+        valid_encode = ('onehot', 'onehot-dense', 'ordinal')
+        if self.encode not in valid_encode:
+            raise ValueError("Valid options for 'encode' are {}. "
+                             "Got encode={!r} instead."
+                             .format(valid_encode, self.encode))
+        valid_strategy = ('uniform', 'quantile', 'kmeans')
+        if self.strategy not in valid_strategy:
+            raise ValueError("Valid options for 'strategy' are {}. "
+                             "Got strategy={!r} instead."
+                             .format(valid_strategy, self.strategy))
 
-            bin_edges = np.zeros(n_features, dtype=object)
-            for jj in range(n_features):
-                column = X[:, jj]
-                col_min, col_max = column.min(), column.max()
+        n_bins = self._validate_n_bins(n_features)
 
-                if col_min == col_max:
-                    warnings.warn("Feature %d is constant and will be "
-                                  "replaced with 0." % jj)
-                    n_bins[jj] = 1
-                    bin_edges[jj] = np.array([-np.inf, np.inf])
-                    continue
+        bin_edges = np.zeros(n_features, dtype=object)
+        for jj in range(n_features):
+            column = X[:, jj]
+            col_min, col_max = column.min(), column.max()
 
-                if self.strategy == 'uniform':
-                    bin_edges[jj] = np.linspace(col_min, col_max,
-                                                n_bins[jj] + 1)
+            if col_min == col_max:
+                warnings.warn("Feature %d is constant and will be "
+                              "replaced with 0." % jj)
+                n_bins[jj] = 1
+                bin_edges[jj] = np.array([-np.inf, np.inf])
+                continue
 
-                elif self.strategy == 'quantile':
-                    quantiles = np.linspace(0, 100, n_bins[jj] + 1)
-                    if np_version < (1, 9):
-                        quantiles = list(quantiles)
-                    bin_edges[jj] = np.asarray(np.percentile(column,
-                                               quantiles))
+            if self.strategy == 'uniform':
+                bin_edges[jj] = np.linspace(col_min, col_max,
+                                            n_bins[jj] + 1)
 
-                elif self.strategy == 'kmeans':
-                    from ..cluster import KMeans  # fixes import loops
+            elif self.strategy == 'quantile':
+                quantiles = np.linspace(0, 100, n_bins[jj] + 1)
+                if np_version < (1, 9):
+                    quantiles = list(quantiles)
+                bin_edges[jj] = np.asarray(np.percentile(column,
+                                           quantiles))
 
-                    # Deterministic initialization with uniform spacing
-                    uniform_edges = np.linspace(col_min, col_max,
-                                                n_bins[jj] + 1)
-                    init = (uniform_edges[1:] + uniform_edges[:-1])[:,
-                                                                    None] * 0.5
+            elif self.strategy == 'kmeans':
+                from ..cluster import KMeans  # fixes import loops
 
-                    # 1D k-means procedure
-                    km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
-                    centers = km.fit(column[:, None]).cluster_centers_[:, 0]
-                    bin_edges[jj] = (centers[1:] + centers[:-1]) * 0.5
-                    bin_edges[jj] = np.r_[col_min, bin_edges[jj], col_max]
+                # Deterministic initialization with uniform spacing
+                uniform_edges = np.linspace(col_min, col_max,
+                                            n_bins[jj] + 1)
+                init = (uniform_edges[1:] + uniform_edges[:-1])[:,
+                                                                None] * 0.5
 
-            self.bin_edges_ = bin_edges
-            self.n_bins_ = n_bins
+                # 1D k-means procedure
+                km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
+                centers = km.fit(column[:, None]).cluster_centers_[:, 0]
+                bin_edges[jj] = (centers[1:] + centers[:-1]) * 0.5
+                bin_edges[jj] = np.r_[col_min, bin_edges[jj], col_max]
 
-            if 'onehot' in self.encode:
-                self._encoder = OneHotEncoder(
-                    categories=[np.arange(i) for i in self.n_bins_],
-                    sparse=self.encode == 'onehot')
+        self.bin_edges_ = bin_edges
+        self.n_bins_ = n_bins
+
+        if 'onehot' in self.encode:
+            self._encoder = OneHotEncoder(
+                categories=[np.arange(i) for i in self.n_bins_],
+                sparse=self.encode == 'onehot')
 
         return self
 
