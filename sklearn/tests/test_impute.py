@@ -635,3 +635,27 @@ def test_inconsistent_dtype_X_missing_values(imputer_constructor,
 
     with pytest.raises(ValueError, match=err_msg):
         imputer.fit_transform(X)
+
+
+@pytest.mark.parametrize("marker", [np.nan, -1, 0])
+def test_imputation_add_indicator(marker):
+    X = np.array([
+        [marker, 1, 5],
+        [2, marker, 1],
+        [6, 3, marker],
+        [1, 2, 9]
+    ])
+    
+    X_true = np.array([
+        [3., 1., 5., 1., 0., 0.],
+        [2., 2., 1., 0., 1., 0.],
+        [6., 3., 5., 0., 0., 1.],
+        [1., 2., 9., 0., 0., 0.],
+    ])
+
+    imputer = SimpleImputer(missing_values=marker, add_indicator=True)
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_trans, X_true)
+    assert_array_equal(imputer.statistics_, np.array([3., 2., 5.]))
+    assert_array_equal(imputer.indicator_.features_, np.array([0, 1, 2]))
