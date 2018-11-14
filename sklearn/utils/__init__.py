@@ -49,10 +49,13 @@ class Parallel(_joblib.Parallel):
     pass
 
 
+# deprecate backend change from a function in 0.11 to a class in 0.12
 if LooseVersion(_joblib.__version__) >= LooseVersion("0.12"):
     @deprecate
     class parallel_backend(_joblib.parallel_backend):
         pass
+else:
+    parallel_backend = deprecate(parallel_backend)
 
 
 __all__ = ["murmurhash3_32", "as_float_array",
