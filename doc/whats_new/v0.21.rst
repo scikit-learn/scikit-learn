@@ -129,6 +129,14 @@ Support for Python 3.4 and below has been officially dropped.
   in the dense case. Also added a new parameter ``order`` which controls output
   order for further speed performances. :issue:`12251` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.svm`
+..................
+- |Feature| |API| :class:`svm.SVC` and :class:`NuSVC` now accept a `break_ties`
+  parameter. This parameter results in `predict` breaking the ties the same way
+  it is done in `decision_function`, if `decision_function_shape`='ovr', and
+  number of target classes > 2.
+  :pr:`12557` by :user:`Adrin Jalali <adrinjalali>`.
+
 :mod:`sklearn.tree`
 ...................
 - Decision Trees can now be plotted with matplotlib using
