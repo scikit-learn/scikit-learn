@@ -969,7 +969,7 @@ class GridSearchCV(BaseSearchCV):
            estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
                          decision_function_shape='ovr', degree=..., gamma=...,
                          kernel='rbf', max_iter=-1,
-                         ovr_predict_break_tie=False, probability=False,
+                         break_ties=False, probability=False,
                          random_state=None, shrinking=True,
                          tol=..., verbose=False),
            iid=..., n_jobs=None,

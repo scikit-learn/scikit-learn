@@ -464,7 +464,7 @@ classification --:class:`SVC` (Support Vector Classification).
     >>> svc.fit(iris_X_train, iris_y_train)    # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
         decision_function_shape='ovr', degree=3, gamma='auto_deprecated',
-        kernel='linear', max_iter=-1, ovr_predict_break_tie=False,
+        kernel='linear', max_iter=-1, break_ties=False,
         probability=False, random_state=None, shrinking=True, tol=0.001,
         verbose=False)
 

@@ -182,7 +182,7 @@ the last item from ``digits.data``::
   >>> clf.fit(digits.data[:-1], digits.target[:-1])  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=100.0, cache_size=200, class_weight=None, coef0=0.0,
     decision_function_shape='ovr', degree=3, gamma=0.001, kernel='rbf',
-    max_iter=-1, ovr_predict_break_tie=False, probability=False,
+    max_iter=-1, break_ties=False, probability=False,
     random_state=None, shrinking=True, tol=0.001, verbose=False)
 
 Now you can *predict* new values. In this case, you'll predict using the last
@@ -222,7 +222,7 @@ persistence model, `pickle <https://docs.python.org/2/library/pickle.html>`_::
   >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
     decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-    max_iter=-1, ovr_predict_break_tie=False, probability=False,
+    max_iter=-1, break_ties=False, probability=False,
     random_state=None, shrinking=True, tol=0.001, verbose=False)
 
   >>> import pickle
@@ -295,7 +295,7 @@ maintained::
     >>> clf.fit(iris.data, iris.target)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
       decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-      max_iter=-1, ovr_predict_break_tie=False, probability=False,
+      max_iter=-1, break_ties=False, probability=False,
       random_state=None, shrinking=True, tol=0.001, verbose=False)
 
     >>> list(clf.predict(iris.data[:3]))
@@ -304,7 +304,7 @@ maintained::
     >>> clf.fit(iris.data, iris.target_names[iris.target])  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
       decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-      max_iter=-1, ovr_predict_break_tie=False, probability=False,
+      max_iter=-1, break_ties=False, probability=False,
       random_state=None, shrinking=True, tol=0.001, verbose=False)
 
     >>> list(clf.predict(iris.data[:3]))  # doctest: +NORMALIZE_WHITESPACE
@@ -333,7 +333,7 @@ once will overwrite what was learned by any previous ``fit()``::
   >>> clf.set_params(kernel='linear').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
     decision_function_shape='ovr', degree=3, gamma='auto_deprecated',
-    kernel='linear', max_iter=-1, ovr_predict_break_tie=False,
+    kernel='linear', max_iter=-1, break_ties=False,
     probability=False, random_state=None, shrinking=True, tol=0.001,
     verbose=False)
   >>> clf.predict(X_test)
@@ -342,7 +342,7 @@ once will overwrite what was learned by any previous ``fit()``::
   >>> clf.set_params(kernel='rbf', gamma='scale').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
     decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-    max_iter=-1, ovr_predict_break_tie=False, probability=False,
+    max_iter=-1, break_ties=False, probability=False,
     random_state=None, shrinking=True, tol=0.001, verbose=False)
   >>> clf.predict(X_test)
   array([1, 0, 1, 1, 0])

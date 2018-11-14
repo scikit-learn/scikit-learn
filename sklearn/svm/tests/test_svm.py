@@ -1013,13 +1013,13 @@ def test_svc_ovr_tie_breaking(svc):
     xx, yy = np.meshgrid(xs, ys)
 
     svm = svc(kernel="linear", decision_function_shape='ovr',
-              ovr_predict_break_tie=False).fit(X, y)
+              break_ties=False).fit(X, y)
     pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
     dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
     assert np.sum(pred != np.argmax(dv, axis=1)) > 0
 
     svm = svc(kernel="linear", decision_function_shape='ovr',
-              ovr_predict_break_tie=True).fit(X, y)
+              break_ties=True).fit(X, y)
     pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
     dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
     assert np.sum(pred != np.argmax(dv, axis=1)) == 0

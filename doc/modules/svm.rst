@@ -79,7 +79,7 @@ n_features]`` holding the training samples, and an array y of class labels
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
         decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-        max_iter=-1, ovr_predict_break_tie=False, probability=False,
+        max_iter=-1, break_ties=False, probability=False,
         random_state=None, shrinking=True, tol=0.001, verbose=False)
 
 After being fitted, the model can then be used to predict new values::
@@ -123,7 +123,7 @@ n_classes)``::
     >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
         decision_function_shape='ovo', degree=3, gamma='scale', kernel='rbf',
-        max_iter=-1, ovr_predict_break_tie=False, probability=False,
+        max_iter=-1, break_ties=False, probability=False,
         random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
@@ -532,7 +532,7 @@ test vectors must be provided.
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
         decision_function_shape='ovr', degree=3, gamma='auto_deprecated',
-        kernel='precomputed', max_iter=-1, ovr_predict_break_tie=False,
+        kernel='precomputed', max_iter=-1, break_ties=False,
         probability=False, random_state=None, shrinking=True, tol=0.001,
         verbose=False)
     >>> # predict on training examples
