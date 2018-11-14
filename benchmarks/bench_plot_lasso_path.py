@@ -32,7 +32,7 @@ def compute_bench(samples_range, features_range):
             dataset_kwargs = {
                 'n_samples': n_samples,
                 'n_features': n_features,
-                'n_informative': n_features / 10,
+                'n_informative': n_features // 10,
                 'effective_rank': min(n_samples, n_features) / 10,
                 #'effective_rank': None,
                 'bias': 0.0,
