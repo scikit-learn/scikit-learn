@@ -755,6 +755,7 @@ Kernels:
 
    linear_model.enet_path
    linear_model.lars_path
+   linear_model.lars_path_gram
    linear_model.lasso_path
    linear_model.logistic_regression_path
    linear_model.orthogonal_mp

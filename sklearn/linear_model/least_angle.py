@@ -48,7 +48,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
     Parameters
     -----------
     X : None or array, shape (n_samples, n_features)
-        Input data.
+        Input data. Note that if X is None then the Gram matrix must be
+        specified, i.e., cannot be None or False.
 
     y : None or array, shape (n_samples,)
         Input targets.
@@ -124,6 +125,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
     See also
     --------
     lasso_path
+    lasso_path_gram
     LassoLars
     Lars
     LassoLarsCV
@@ -142,7 +144,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
 
     """
-    if X is None:
+    if X is None and Gram is None:
         warnings.warn('Use lars_path_gram to avoid passing X and y. '
                       'The current option will be removed in future versions.',
                       DeprecationWarning)
@@ -241,6 +243,7 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
     See also
     --------
     lasso_path
+    lasso_path_gram
     LassoLars
     Lars
     LassoLarsCV
@@ -285,7 +288,8 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
     Parameters
     -----------
     X : None or ndarray, shape (n_samples, n_features)
-        Input data.
+        Input data. Note that if X is None then Gram must be specified,
+        i.e., cannot be None or False.
 
     y : None or ndarray, shape (n_samples)
         Input targets.
@@ -397,6 +401,8 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
     if Gram is None or Gram is False:
         Gram = None
+        if X is None:
+        	raise ValueError('X and Gram cannot both be unspecified.')
         if copy_X:
             # force copy. setting the array to be fortran-ordered
             # speeds up the calculation of the (partial) Gram matrix

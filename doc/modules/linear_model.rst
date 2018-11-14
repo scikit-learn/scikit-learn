@@ -456,7 +456,7 @@ The disadvantages of the LARS method include:
     Statistics article.
 
 The LARS model can be used using estimator :class:`Lars`, or its
-low-level implementation :func:`lars_path`.
+low-level implementation :func:`lars_path` or :func:`lars_path_gram`.
 
 
 LARS Lasso
@@ -489,7 +489,8 @@ function of the norm of its coefficients.
 
 The Lars algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation
-consist of retrieving the path with function :func:`lars_path`
+consist of retrieving the path with function :func:`lars_path` or 
+:func:`lars_path_gram`
 
 Mathematical formulation
 ------------------------
