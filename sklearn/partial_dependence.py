@@ -399,28 +399,29 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     # set label_idx for multi-class estimators
     if hasattr(est, 'classes_') and np.size(est.classes_) > 2:
         if label is None:
-            raise ValueError('label is not given for multi-class PDP')
-        if type(est.classes_) == list:
-            # multi-output classification
-            if output is None:
-                raise ValueError('output is required for multi-output '
-                                 'estimators')
-            if output > len(est.classes_):
-                raise ValueError('output %d exceeds number of outputs in est, '
-                                 '%d' % (output, len(est.classes_)))
-            label_idx = np.searchsorted(est.classes_[output], label)
-            if est.classes_[output][label_idx] != label:
-                raise ValueError('label %s not in ``est.classes_``' %
-                                 str(label))
-        else:
-            label_idx = np.searchsorted(est.classes_, label)
-            if est.classes_[label_idx] != label:
-                raise ValueError('label %s not in ``est.classes_``' %
-                                 str(label))
+            raise ValueError('label must be specified for multi-class PDP')
+        label_idx = np.searchsorted(est.classes_, label)
+        if est.classes_[label_idx] != label:
+            raise ValueError('label %s not in ``est.classes_``' %
+                                str(label))
     else:
         # regression and binary classification
         label_idx = 0
 
+    if is_regressor and "MultiTask" in est.__class__.__name__:
+        # multioutput regressor
+        if output is None:
+            raise ValueError(
+                'output must be specified for multi-output regressors')
+        if output < 0:
+            raise ValueError('output must be in [0, n_tasks], got {}.'.format(
+                output))
+        # Note: upper bound for output can only be checked once we have the
+        # predictions
+    else:
+        output = 0
+
+    #TODO: DYPE?????
     X = check_array(X, dtype=DTYPE, order='C')
     if hasattr(est, 'n_features_') and est.n_features_ != X.shape[1]:
         raise ValueError('X.shape[1] does not match est.n_features_')
@@ -483,10 +484,22 @@ def plot_partial_dependence(est, X, features, feature_names=None,
                                     percentiles=percentiles)
         for fxs in features)
 
+    # Need to check if output param is valid. We can only do that now that we
+    # have the predictions:
+    if is_regressor and "MultiTask" in est.__class__.__name__:
+        pdp, _ = pd_result[0]
+        if not 0 <= output <= pdp.shape[0]:
+                raise ValueError(
+                    'output must be in [0, n_tasks], got {}.'.format(output))
+
+    # as we don't support multiclass-multioutput estimators label_idx and
+    # output are mutually exclusive and we can merge them here.
+    target = max(label_idx, output)
+
     # get global min and max values of PD grouped by plot type
     pdp_lim = {}
     for pdp, axes in pd_result:
-        min_pd, max_pd = pdp[label_idx].min(), pdp[label_idx].max()
+        min_pd, max_pd = pdp[target].min(), pdp[target].max()
         n_fx = len(axes)
         old_min_pd, old_max_pd = pdp_lim.get(n_fx, (min_pd, max_pd))
         min_pd = min(min_pd, old_min_pd)
@@ -511,12 +524,12 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         ax = fig.add_subplot(n_rows, n_cols, i + 1)
 
         if len(axes) == 1:
-            ax.plot(axes[0], pdp[label_idx].ravel(), **line_kw)
+            ax.plot(axes[0], pdp[target].ravel(), **line_kw)
         else:
             # make contour plot
             assert len(axes) == 2
             XX, YY = np.meshgrid(axes[0], axes[1])
-            Z = pdp[label_idx].reshape(list(map(np.size, axes))).T
+            Z = pdp[target].reshape(list(map(np.size, axes))).T
             CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5,
                             colors='k')
             ax.contourf(XX, YY, Z, levels=Z_level, vmax=Z_level[-1],
