@@ -66,7 +66,6 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
                   target_variables=target_variables,
                   grid=grid,
                   X=X,
-                  output=None,
                   percentiles=percentiles,
                   grid_resolution=grid_resolution,
                   method='recursion')

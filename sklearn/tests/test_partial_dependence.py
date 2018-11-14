@@ -27,7 +27,6 @@ from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import MultiTaskLasso
 from sklearn.svm import SVC
-from sklearn.ensemble.forest import ForestRegressor
 from sklearn.datasets import load_boston, load_iris
 from sklearn.datasets import make_classification, make_regression
 from sklearn.base import is_classifier, is_regressor
@@ -66,7 +65,8 @@ def multioutput_regression():
     (LinearRegression, 'exact', regression()),
     (LogisticRegression, 'exact', binary_classification()),
     (LogisticRegression, 'exact', multiclass_classification()),
-    (MultiTaskLasso, 'exact', multioutput_regression())])
+    (MultiTaskLasso, 'exact', multioutput_regression()),
+    ])
 @pytest.mark.parametrize('grid_resolution', (5, 10))
 @pytest.mark.parametrize('target_variables', ([1], [1, 2]))
 def test_output_shape(Estimator, method, data, grid_resolution,
@@ -143,10 +143,8 @@ def test_partial_dependence_helpers(est, partial_dependence_fun,
     # _partial_dependece_recursion is equivalent to manually setting a target
     # feature to a given value, and computing the average prediction over all
     # samples.
-
-    # doesn't work for _partial_dependence_recursion, dont know why :(
-    if partial_dependence_fun is _partial_dependence_recursion:
-        return
+    # This also checks that the exact method and the recursion give the same
+    # output.
 
     X, y = make_regression(random_state=0)
     est.fit(X, y)
@@ -164,7 +162,7 @@ def test_partial_dependence_helpers(est, partial_dependence_fun,
         mean_predictions.append(est.predict(X_).mean())
 
     pdp = pdp[0]  # (shape is (1, 2) so make it (2,))
-    assert_array_almost_equal(pdp, mean_predictions)
+    assert_array_almost_equal(pdp, mean_predictions, decimal=3)
     
 
 @pytest.mark.parametrize('Estimator',
@@ -210,8 +208,8 @@ def test_partial_dependence_input():
                         partial_dependence, lr, [0], method='blahblah')
 
     assert_raises_regex(ValueError,
-                        'est must be an instance of BaseGradientBoosting or '
-                        'ForestRegressor for the "recursion" method',
+                        'est must be an instance of BaseGradientBoosting '
+                        'for the "recursion" method',
                         partial_dependence, lr, [0], method='recursion')
 
     assert_raises_regex(ValueError, "est requires a predict_proba()",
@@ -252,6 +250,11 @@ def test_partial_dependence_input():
         assert_raises_regex(ValueError,
                             'est parameter must be a fitted estimator',
                             partial_dependence, unfitted_est, [0], X=X)
+
+    # check that array-like objects are accepted
+    for est in (lr, gbc):
+        partial_dependence(est, [0], grid=[1, 2], X=list(X))
+        partial_dependence(est, [0], grid=[[1], [2]], X=list(X))
 
 
 @if_matplotlib

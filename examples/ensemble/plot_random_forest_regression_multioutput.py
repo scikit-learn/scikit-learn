@@ -55,6 +55,8 @@ regr_rf.fit(X_train, y_train)
 # Predict on new data
 y_multirf = regr_multirf.predict(X_test)
 y_rf = regr_rf.predict(X_test)
+print(y_multirf.shape)
+print(y_rf.shape)
 
 # Plot the results
 plt.figure()
