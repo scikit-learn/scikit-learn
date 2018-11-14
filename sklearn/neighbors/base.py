@@ -474,6 +474,15 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         return self.metric == 'precomputed'
 
 
+def _tree_query_parallel_helper(tree, data, n_neighbors, return_distance):
+    """Helper for the Parallel calls in KNeighborsMixin.kneighbors
+
+    The Cython method tree.query is not directly picklable by cloudpickle
+    under PyPy.
+    """
+    return tree.query(data, n_neighbors, return_distance)
+
+
 class KNeighborsMixin(object):
     """Mixin for k-neighbors searches"""
 
@@ -633,15 +642,15 @@ class KNeighborsMixin(object):
             if (sys.version_info < (3,) or
                     LooseVersion(joblib_version) < LooseVersion('0.12')):
                 # Deal with change of API in joblib
-                delayed_query = delayed(self._tree.query,
+                delayed_query = delayed(_tree_query_parallel_helper,
                                         check_pickle=False)
                 parallel_kwargs = {"backend": "threading"}
             else:
-                delayed_query = delayed(self._tree.query)
+                delayed_query = delayed(_tree_query_parallel_helper)
                 parallel_kwargs = {"prefer": "threads"}
             chunked_results = Parallel(n_jobs, **parallel_kwargs)(
                 delayed_query(
-                    X[s], n_neighbors, return_distance)
+                    self._tree, X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
         else:
@@ -759,6 +768,15 @@ class KNeighborsMixin(object):
                                       shape=(n_queries, n_samples_fit))
 
         return kneighbors_graph
+
+
+def _tree_query_radius_parallel_helper(tree, data, radius, return_distance):
+    """Helper for the Parallel calls in RadiusNeighborsMixin.radius_neighbors
+
+    The Cython method tree.query_radius is not directly picklable by
+    cloudpickle under PyPy.
+    """
+    return tree.query_radius(data, radius, return_distance)
 
 
 class RadiusNeighborsMixin(object):
@@ -933,15 +951,17 @@ class RadiusNeighborsMixin(object):
             n_jobs = effective_n_jobs(self.n_jobs)
             if LooseVersion(joblib_version) < LooseVersion('0.12'):
                 # Deal with change of API in joblib
-                delayed_query = delayed(self._tree.query_radius,
+                delayed_query = delayed(_tree_query_radius_parallel_helper,
                                         check_pickle=False)
                 parallel_kwargs = {"backend": "threading"}
             else:
-                delayed_query = delayed(self._tree.query_radius)
+                delayed_query = delayed(_tree_query_radius_parallel_helper)
                 parallel_kwargs = {"prefer": "threads"}
+
             chunked_results = Parallel(n_jobs, **parallel_kwargs)(
-                delayed_query(X[s], radius, return_distance,
+                delayed_query(self._tree, X[s], radius, return_distance,
                               sort_results=sort_results)
+
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
             if return_distance:

@@ -82,7 +82,7 @@ class MockClassifier(object):
         self.foo_param = foo_param
 
     def fit(self, X, Y):
-        assert_true(len(X) == len(Y))
+        assert len(X) == len(Y)
         self.classes_ = np.unique(Y)
         return self
 
@@ -146,8 +146,8 @@ def test_parameter_grid():
     # Test basic properties of ParameterGrid.
     params1 = {"foo": [1, 2, 3]}
     grid1 = ParameterGrid(params1)
-    assert_true(isinstance(grid1, Iterable))
-    assert_true(isinstance(grid1, Sized))
+    assert isinstance(grid1, Iterable)
+    assert isinstance(grid1, Sized)
     assert_equal(len(grid1), 3)
     assert_grid_iter_equals_getitem(grid1)
 
@@ -284,8 +284,8 @@ def test_grid_search_score_method():
     score_auc = search_auc.score(X, y)
 
     # ensure the test is sane
-    assert_true(score_auc < 1.0)
-    assert_true(score_accuracy < 1.0)
+    assert score_auc < 1.0
+    assert score_accuracy < 1.0
     assert_not_equal(score_auc, score_accuracy)
 
     assert_almost_equal(score_accuracy, score_no_scoring)
@@ -357,11 +357,11 @@ def test_trivial_cv_results_attr():
     clf = MockClassifier()
     grid_search = GridSearchCV(clf, {'foo_param': [1]})
     grid_search.fit(X, y)
-    assert_true(hasattr(grid_search, "cv_results_"))
+    assert hasattr(grid_search, "cv_results_")
 
     random_search = RandomizedSearchCV(clf, {'foo_param': [0]}, n_iter=1)
     random_search.fit(X, y)
-    assert_true(hasattr(grid_search, "cv_results_"))
+    assert hasattr(grid_search, "cv_results_")
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
@@ -487,7 +487,7 @@ def test_grid_search_sparse():
     y_pred2 = cv.predict(X_[180:])
     C2 = cv.best_estimator_.C
 
-    assert_true(np.mean(y_pred == y_pred2) >= .9)
+    assert np.mean(y_pred == y_pred2) >= .9
     assert_equal(C, C2)
 
 
@@ -543,7 +543,7 @@ def test_grid_search_precomputed_kernel():
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
     cv.fit(K_train, y_train)
 
-    assert_true(cv.best_score_ >= 0)
+    assert cv.best_score_ >= 0
 
     # compute the test kernel matrix
     K_test = np.dot(X_[180:], X_[:180].T)
@@ -551,7 +551,7 @@ def test_grid_search_precomputed_kernel():
 
     y_pred = cv.predict(K_test)
 
-    assert_true(np.mean(y_pred == y_test) >= 0)
+    assert np.mean(y_pred == y_test) >= 0
 
     # test error is raised when the precomputed kernel is not array-like
     # or sparse
@@ -577,7 +577,7 @@ class BrokenClassifier(BaseEstimator):
         self.parameter = parameter
 
     def fit(self, X, y):
-        assert_true(not hasattr(self, 'has_been_fit_'))
+        assert not hasattr(self, 'has_been_fit_')
         self.has_been_fit_ = True
 
     def predict(self, X):
@@ -608,7 +608,7 @@ def test_gridsearch_nd():
     clf = CheckingClassifier(check_X=check_X, check_y=check_y)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
     grid_search.fit(X_4d, y_3d).score(X, y)
-    assert_true(hasattr(grid_search, "cv_results_"))
+    assert hasattr(grid_search, "cv_results_")
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
@@ -621,7 +621,7 @@ def test_X_as_list():
     cv = KFold(n_splits=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
-    assert_true(hasattr(grid_search, "cv_results_"))
+    assert hasattr(grid_search, "cv_results_")
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
@@ -634,7 +634,7 @@ def test_y_as_list():
     cv = KFold(n_splits=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X, y.tolist()).score(X, y)
-    assert_true(hasattr(grid_search, "cv_results_"))
+    assert hasattr(grid_search, "cv_results_")
 
 
 @ignore_warnings
@@ -665,7 +665,7 @@ def test_pandas_input():
         grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
         grid_search.fit(X_df, y_ser).score(X_df, y_ser)
         grid_search.predict(X_df)
-        assert_true(hasattr(grid_search, "cv_results_"))
+        assert hasattr(grid_search, "cv_results_")
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
@@ -722,8 +722,8 @@ def test_param_sampler():
     samples = [x for x in sampler]
     assert_equal(len(samples), 10)
     for sample in samples:
-        assert_true(sample["kernel"] in ["rbf", "linear"])
-        assert_true(0 <= sample["C"] <= 1)
+        assert sample["kernel"] in ["rbf", "linear"]
+        assert 0 <= sample["C"] <= 1
 
     # test that repeated calls yield identical parameters
     param_distributions = {"C": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
@@ -741,9 +741,9 @@ def test_param_sampler():
 def check_cv_results_array_types(search, param_keys, score_keys):
     # Check if the search `cv_results`'s array are of correct types
     cv_results = search.cv_results_
-    assert_true(all(isinstance(cv_results[param], np.ma.MaskedArray)
-                    for param in param_keys))
-    assert_true(all(cv_results[key].dtype == object for key in param_keys))
+    assert all(isinstance(cv_results[param], np.ma.MaskedArray)
+               for param in param_keys)
+    assert all(cv_results[key].dtype == object for key in param_keys)
     assert_false(any(isinstance(cv_results[key], np.ma.MaskedArray)
                      for key in score_keys))
     assert_true(all(cv_results[key].dtype == np.float64
@@ -752,15 +752,15 @@ def check_cv_results_array_types(search, param_keys, score_keys):
     scorer_keys = search.scorer_.keys() if search.multimetric_ else ['score']
 
     for key in scorer_keys:
-        assert_true(cv_results['rank_test_%s' % key].dtype == np.int32)
+        assert cv_results['rank_test_%s' % key].dtype == np.int32
 
 
 def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand):
     # Test the search.cv_results_ contains all the required results
     assert_array_equal(sorted(cv_results.keys()),
                        sorted(param_keys + score_keys + ('params',)))
-    assert_true(all(cv_results[key].shape == (n_cand,)
-                    for key in param_keys + score_keys))
+    assert all(cv_results[key].shape == (n_cand,)
+               for key in param_keys + score_keys)
 
 
 def test_grid_search_cv_results():
@@ -791,7 +791,7 @@ def test_grid_search_cv_results():
         assert_equal(iid, search.iid)
         cv_results = search.cv_results_
         # Check if score and timing are reasonable
-        assert_true(all(cv_results['rank_test_score'] >= 1))
+        assert all(cv_results['rank_test_score'] >= 1)
         assert_true(all(cv_results[k] >= 0) for k in score_keys
                     if k is not 'rank_test_score')
         assert_true(all(cv_results[k] <= 1) for k in score_keys
@@ -874,7 +874,7 @@ def test_search_iid_param():
                                        return_train_score=True)
     for search in (grid_search, random_search):
         search.fit(X, y)
-        assert_true(search.iid or search.iid is None)
+        assert search.iid or search.iid is None
 
         test_cv_scores = np.array(list(search.cv_results_['split%d_test_score'
                                                           % s_i][0]
@@ -1008,7 +1008,7 @@ def compare_cv_results_multimetric_with_single(
     single metric cv_results from single metric grid/random search"""
 
     assert_equal(search_multi.iid, iid)
-    assert_true(search_multi.multimetric_)
+    assert search_multi.multimetric_
     assert_array_equal(sorted(search_multi.scorer_),
                        ('accuracy', 'recall'))
 
@@ -1113,16 +1113,16 @@ def test_search_cv_timing():
         for key in ['mean_fit_time', 'std_fit_time']:
             # NOTE The precision of time.time in windows is not high
             # enough for the fit/score times to be non-zero for trivial X and y
-            assert_true(np.all(search.cv_results_[key] >= 0))
-            assert_true(np.all(search.cv_results_[key] < 1))
+            assert np.all(search.cv_results_[key] >= 0)
+            assert np.all(search.cv_results_[key] < 1)
 
         for key in ['mean_score_time', 'std_score_time']:
-            assert_true(search.cv_results_[key][1] >= 0)
-            assert_true(search.cv_results_[key][0] == 0.0)
-            assert_true(np.all(search.cv_results_[key] < 1))
+            assert search.cv_results_[key][1] >= 0
+            assert search.cv_results_[key][0] == 0.0
+            assert np.all(search.cv_results_[key] < 1)
 
-        assert_true(hasattr(search, "refit_time_"))
-        assert_true(isinstance(search.refit_time_, float))
+        assert hasattr(search, "refit_time_")
+        assert isinstance(search.refit_time_, float)
         assert_greater_equal(search.refit_time_, 0)
 
 
@@ -1142,7 +1142,7 @@ def test_grid_search_correct_score_results():
         expected_keys = (("mean_test_score", "rank_test_score") +
                          tuple("split%d_test_score" % cv_i
                                for cv_i in range(n_splits)))
-        assert_true(all(np.in1d(expected_keys, result_keys)))
+        assert all(np.in1d(expected_keys, result_keys))
 
         cv = StratifiedKFold(n_splits=n_splits)
         n_splits = grid_search.n_splits_
@@ -1382,7 +1382,7 @@ def test_parameters_sampler_replacement():
     samples = list(sampler)
     assert_equal(len(samples), 6)
     for values in ParameterGrid(params):
-        assert_true(values in samples)
+        assert values in samples
 
     # test sampling without replacement in a large grid
     params = {'a': range(10), 'b': range(10), 'c': range(10)}

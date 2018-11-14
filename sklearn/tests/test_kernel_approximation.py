@@ -213,7 +213,7 @@ def test_nystroem_singular_kernel():
     K = rbf_kernel(X, gamma=gamma)
 
     assert_array_almost_equal(K, np.dot(X_transformed, X_transformed.T))
-    assert_true(np.all(np.isfinite(Y)))
+    assert np.all(np.isfinite(Y))
 
 
 def test_nystroem_poly_kernel_params():

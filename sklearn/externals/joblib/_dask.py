@@ -145,7 +145,7 @@ class DaskDistributedBackend(ParallelBackendBase, AutoBatchingMixin):
         return (DaskDistributedBackend, ())
 
     def get_nested_backend(self):
-        return DaskDistributedBackend(client=self.client)
+        return DaskDistributedBackend(client=self.client), -1
 
     def configure(self, n_jobs=1, parallel=None, **backend_args):
         return self.effective_n_jobs(n_jobs)

@@ -34,6 +34,7 @@ from .sgd_fast import SquaredLoss
 from .sgd_fast import Huber
 from .sgd_fast import EpsilonInsensitive
 from .sgd_fast import SquaredEpsilonInsensitive
+from ..utils.fixes import _joblib_parallel_args
 
 LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3,
                        "adaptive": 4, "pa1": 5, "pa2": 6}
@@ -639,8 +640,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         validation_mask = self._make_validation_split(y)
 
         # Use joblib to fit OvA in parallel.
-        result = Parallel(n_jobs=self.n_jobs, require="sharedmem",
-                          verbose=self.verbose)(
+        result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                          **_joblib_parallel_args(require="sharedmem"))(
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
                                 max_iter, self._expanded_class_weight[i],
                                 1., sample_weight,

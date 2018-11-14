@@ -1,4 +1,4 @@
-
+from distutils.version import LooseVersion
 import pickle
 import unittest
 import pytest
@@ -12,7 +12,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_false, assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_warns
@@ -30,6 +30,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import sgd_fast
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.utils import _joblib
 
 
 # 0.23. warning about tol not having its correct default value.
@@ -224,10 +225,10 @@ class CommonTest(object):
         clf = self.factory(average=True, eta0=.01)
         clf.fit(X, Y)
 
-        assert_true(hasattr(clf, 'average_coef_'))
-        assert_true(hasattr(clf, 'average_intercept_'))
-        assert_true(hasattr(clf, 'standard_intercept_'))
-        assert_true(hasattr(clf, 'standard_coef_'))
+        assert hasattr(clf, 'average_coef_')
+        assert hasattr(clf, 'average_intercept_')
+        assert hasattr(clf, 'standard_intercept_')
+        assert hasattr(clf, 'standard_coef_')
 
         clf = self.factory()
         clf.fit(X, Y)
@@ -536,7 +537,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf.fit(X2, Y2, coef_init=np.zeros((3, 2)),
                 intercept_init=np.zeros(3))
         assert_equal(clf.coef_.shape, (3, 2))
-        assert_true(clf.intercept_.shape, (3,))
+        assert clf.intercept_.shape, (3,)
         pred = clf.predict(T2)
         assert_array_equal(pred, true_result2)
 
@@ -607,14 +608,14 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
             clf = self.factory(loss=loss, alpha=0.01, max_iter=10)
             clf.fit(X, Y)
             p = clf.predict_proba([[3, 2]])
-            assert_true(p[0, 1] > 0.5)
+            assert p[0, 1] > 0.5
             p = clf.predict_proba([[-1, -1]])
-            assert_true(p[0, 1] < 0.5)
+            assert p[0, 1] < 0.5
 
             p = clf.predict_log_proba([[3, 2]])
-            assert_true(p[0, 1] > p[0, 0])
+            assert p[0, 1] > p[0, 0]
             p = clf.predict_log_proba([[-1, -1]])
-            assert_true(p[0, 1] < p[0, 0])
+            assert p[0, 1] < p[0, 0]
 
         # log loss multiclass probability estimates
         clf = self.factory(loss="log", alpha=0.01, max_iter=10).fit(X2, Y2)
@@ -623,7 +624,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         p = clf.predict_proba([[.1, -.1], [.3, .2]])
         assert_array_equal(np.argmax(p, axis=1), np.argmax(d, axis=1))
         assert_almost_equal(p[0].sum(), 1)
-        assert_true(np.all(p[0] >= 0))
+        assert np.all(p[0] >= 0)
 
         p = clf.predict_proba([[-1, -1]])
         d = clf.decision_function([[-1, -1]])
@@ -677,13 +678,13 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
         # test sparsify with dense inputs
         clf.sparsify()
-        assert_true(sp.issparse(clf.coef_))
+        assert sp.issparse(clf.coef_)
         pred = clf.predict(X)
         assert_array_equal(pred, Y)
 
         # pickle and unpickle with sparse coef_
         clf = pickle.loads(pickle.dumps(clf))
-        assert_true(sp.issparse(clf.coef_))
+        assert sp.issparse(clf.coef_)
         pred = clf.predict(X)
         assert_array_equal(pred, Y)
 
@@ -839,7 +840,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf.partial_fit(X[third:], Y[third:])
         id2 = id(clf.coef_.data)
         # check that coef_ haven't been re-allocated
-        assert_true(id1, id2)
+        assert id1, id2
 
         y_pred = clf.predict(T)
         assert_array_equal(y_pred, true_result)
@@ -858,7 +859,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf.partial_fit(X2[third:], Y2[third:])
         id2 = id(clf.coef_.data)
         # check that coef_ haven't been re-allocated
-        assert_true(id1, id2)
+        assert id1, id2
 
     def test_partial_fit_multiclass_average(self):
         third = X2.shape[0] // 3
@@ -938,7 +939,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # Test multiple calls of fit w/ different shaped inputs.
         clf = self.factory(alpha=0.01, shuffle=False)
         clf.fit(X, Y)
-        assert_true(hasattr(clf, "coef_"))
+        assert hasattr(clf, "coef_")
 
         # Non-regression test: try fitting with a different label set.
         y = [["ham", "spam"][i] for i in LabelEncoder().fit_transform(Y)]
@@ -1091,7 +1092,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
-        assert_true(score > 0.99)
+        assert score > 0.99
 
         # simple linear function with noise
         y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
@@ -1101,7 +1102,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
-        assert_true(score > 0.5)
+        assert score > 0.5
 
     def test_sgd_huber_fit(self):
         xmin, xmax = -5, 5
@@ -1168,7 +1169,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         clf.partial_fit(X[third:], Y[third:])
         id2 = id(clf.coef_.data)
         # check that coef_ haven't been re-allocated
-        assert_true(id1, id2)
+        assert id1, id2
 
     def _test_partial_fit_equal_fit(self, lr):
         clf = self.factory(alpha=0.01, max_iter=2, eta0=0.01,
@@ -1242,13 +1243,13 @@ def test_underflow_or_overlow():
 
         X = rng.normal(size=(n_samples, n_features))
         X[:, :2] *= 1e300
-        assert_true(np.isfinite(X).all())
+        assert np.isfinite(X).all()
 
         # Use MinMaxScaler to scale the data without introducing a numerical
         # instability (computing the standard deviation naively is not possible
         # on this data)
         X_scaled = MinMaxScaler().fit_transform(X)
-        assert_true(np.isfinite(X_scaled).all())
+        assert np.isfinite(X_scaled).all()
 
         # Define a ground truth on the scaled data
         ground_truth = rng.normal(size=n_features)
@@ -1259,7 +1260,7 @@ def test_underflow_or_overlow():
 
         # smoke test: model is stable on scaled data
         model.fit(X_scaled, y)
-        assert_true(np.isfinite(model.coef_).all())
+        assert np.isfinite(model.coef_).all()
 
         # model is numerically unstable on unscaled data
         msg_regxp = (r"Floating-point under-/overflow occurred at epoch #.*"
@@ -1276,7 +1277,7 @@ def test_numerical_stability_large_gradient():
                           eta0=0.001, random_state=0, tol=None)
     with np.errstate(all='raise'):
         model.fit(iris.data, iris.target)
-    assert_true(np.isfinite(model.coef_).all())
+    assert np.isfinite(model.coef_).all()
 
 
 @pytest.mark.parametrize('penalty', ['l2', 'l1', 'elasticnet'])
@@ -1540,6 +1541,9 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # this specific case, in-place modification of clf.coef_ would have caused
     # a segmentation fault when trying to write in a readonly memory mapped
     # buffer.
+
+    if _joblib.__version__ < LooseVersion('0.12') and backend == 'loky':
+        pytest.skip('loky backend does not exist in joblib <0.12')
 
     random_state = np.random.RandomState(42)
 
