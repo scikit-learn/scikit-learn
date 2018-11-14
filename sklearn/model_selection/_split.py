@@ -794,7 +794,7 @@ class TimeSeriesSplit(_BaseKFold):
         y : array-like, shape (n_samples,)
             Always ignored, exists for compatibility.
 
-        groups : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,)
             Always ignored, exists for compatibility.
 
         Yields
@@ -886,13 +886,13 @@ class LeaveOneGroupOut(BaseCrossValidator):
 
         Parameters
         ----------
-        X : object, optional
+        X : object
             Always ignored, exists for compatibility.
 
-        y : object, optional
+        y : object
             Always ignored, exists for compatibility.
 
-        groups : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set. This 'groups' parameter must always be specified to
             calculate the number of splits, though the other parameters can be
@@ -1016,13 +1016,13 @@ class LeavePGroupsOut(BaseCrossValidator):
 
         Parameters
         ----------
-        X : object, optional
+        X : object
             Always ignored, exists for compatibility.
 
-        y : object, optional
+        y : object
             Always ignored, exists for compatibility.
 
-        groups : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set. This 'groups' parameter must always be specified to
             calculate the number of splits, though the other parameters can be
