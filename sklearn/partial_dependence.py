@@ -18,7 +18,6 @@ from .externals.six.moves import map, range, zip
 from .utils import check_array
 from .utils.validation import check_is_fitted
 from .tree._tree import DTYPE
-
 from .exceptions import NotFittedError
 
 
@@ -116,7 +115,7 @@ def _partial_dependence_recursion(est, grid, target_variables, X=None):
     return pdp
 
 
-def _partial_dependence_exact(est, grid, target_variables, X):
+def _partial_dependence_brute(est, grid, target_variables, X):
 
     pdp = []
     for new_values in grid:
@@ -196,17 +195,17 @@ def partial_dependence(est, target_variables, grid=None, X=None,
         for the ``grid``. Only if ``X`` is not None.
     grid_resolution : int, default=100
         The number of equally spaced points on the ``grid``.
-    method : {'recursion', 'exact', 'auto'}, default='auto'
+    method : {'recursion', 'brute', 'auto'}, default='auto'
         The method to use to calculate the partial dependence function:
 
         - If 'recursion', the underlying trees of ``est`` will be recursed to
           calculate the function. Only supported for BaseGradientBoosting.
-        - If 'exact', the function will be calculated by calling the
+        - If 'brute', the function will be calculated by calling the
           ``predict_proba`` method of ``est`` for classification or ``predict``
           for regression on ``X``for every point in the grid. To speed up this
           method, you can use a subset of ``X`` or a more coarse grid.
         - If 'auto', then 'recursion' will be used if ``est`` is
-          BaseGradientBoosting, and 'exact' used for other
+          BaseGradientBoosting, and 'brute' used for other
           estimators.
 
     Returns
@@ -245,9 +244,9 @@ def partial_dependence(est, target_variables, grid=None, X=None,
         if isinstance(est, BaseGradientBoosting):
             method = 'recursion'
         else:
-            method = 'exact'
+            method = 'brute'
     method_to_function = {
-        'exact': _partial_dependence_exact,
+        'brute': _partial_dependence_brute,
         'recursion': _partial_dependence_recursion
     }
     if method not in method_to_function:
@@ -259,17 +258,17 @@ def partial_dependence(est, target_variables, grid=None, X=None,
         if not isinstance(est, BaseGradientBoosting):
             raise ValueError(
                 'est must be an instance of BaseGradientBoosting '
-                'for the "recursion" method. Try using method="exact".')
+                'for the "recursion" method. Try using method="brute".')
         check_is_fitted(est, 'estimators_',
                         msg='est parameter must be a fitted estimator')
-        # Note: if method is exact, this check is done at prediction time
+        # Note: if method is brute, this check is done at prediction time
         n_features = est.n_features_
     elif X is None:
-        raise ValueError('X is required for exact method')
+        raise ValueError('X is required for brute method')
     else:
         if is_classifier(est) and not hasattr(est, 'predict_proba'):
             raise ValueError('est requires a predict_proba() method for '
-                             'method="exact" for classification.')
+                             'method="brute" for classification.')
         n_features = X.shape[1]
 
     target_variables = np.asarray(target_variables, dtype=np.int32,
@@ -345,17 +344,17 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     percentiles : (low, high), default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the PDP axes.
-    method : {'recursion', 'exact', 'auto'}, default='auto'
+    method : {'recursion', 'brute', 'auto'}, default='auto'
         The method to use to calculate the partial dependence function:
 
         - If 'recursion', the underlying trees of ``est`` will be recursed to
           calculate the function. Only supported for BaseGradientBoosting.
-        - If 'exact', the function will be calculated by calling the
+        - If 'brute', the function will be calculated by calling the
           ``predict_proba`` method of ``est`` for classification or ``predict``
           for regression on ``X``for every point in the grid. To speed up this
           method, you can use a subset of ``X`` or a more coarse grid.
         - If 'auto', then 'recursion' will be used if ``est`` is
-          BaseGradientBoosting, and 'exact' used for other estimators.
+          BaseGradientBoosting, and 'brute' used for other estimators.
     n_jobs : int
         The number of CPUs to use to compute the PDs. -1 means 'all CPUs'.
         Defaults to 1.

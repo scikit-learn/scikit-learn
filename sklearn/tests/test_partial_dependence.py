@@ -16,7 +16,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.partial_dependence import partial_dependence
 from sklearn.partial_dependence import plot_partial_dependence
 from sklearn.partial_dependence import _grid_from_X
-from sklearn.partial_dependence import _partial_dependence_exact
+from sklearn.partial_dependence import _partial_dependence_brute
 from sklearn.partial_dependence import _partial_dependence_recursion
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
@@ -58,14 +58,14 @@ def multioutput_regression():
 @pytest.mark.parametrize('Estimator, method, data', [
     (GradientBoostingClassifier, 'recursion', binary_classification()),
     (GradientBoostingClassifier, 'recursion', multiclass_classification()),
-    (GradientBoostingClassifier, 'exact', binary_classification()),
-    (GradientBoostingClassifier, 'exact', multiclass_classification()),
+    (GradientBoostingClassifier, 'brute', binary_classification()),
+    (GradientBoostingClassifier, 'brute', multiclass_classification()),
     (GradientBoostingRegressor, 'recursion', regression()),
-    (GradientBoostingRegressor, 'exact', regression()),
-    (LinearRegression, 'exact', regression()),
-    (LogisticRegression, 'exact', binary_classification()),
-    (LogisticRegression, 'exact', multiclass_classification()),
-    (MultiTaskLasso, 'exact', multioutput_regression()),
+    (GradientBoostingRegressor, 'brute', regression()),
+    (LinearRegression, 'brute', regression()),
+    (LogisticRegression, 'brute', binary_classification()),
+    (LogisticRegression, 'brute', multiclass_classification()),
+    (MultiTaskLasso, 'brute', multioutput_regression()),
     ])
 @pytest.mark.parametrize('grid_resolution', (5, 10))
 @pytest.mark.parametrize('target_variables', ([1], [1, 2]))
@@ -135,15 +135,15 @@ def test_grid_from_X():
 
 @pytest.mark.parametrize('target_feature', (0, 3))
 @pytest.mark.parametrize('est, partial_dependence_fun',
-                         [(LinearRegression(), _partial_dependence_exact),
+                         [(LinearRegression(), _partial_dependence_brute),
                           (GradientBoostingRegressor(random_state=0), _partial_dependence_recursion)])
 def test_partial_dependence_helpers(est, partial_dependence_fun,
                                     target_feature):
-    # Check that what is returned by _partial_dependence_exact or
+    # Check that what is returned by _partial_dependence_brute or
     # _partial_dependece_recursion is equivalent to manually setting a target
     # feature to a given value, and computing the average prediction over all
     # samples.
-    # This also checks that the exact method and the recursion give the same
+    # This also checks that the brute method and the recursion give the same
     # output.
 
     X, y = make_regression(random_state=0)
@@ -204,7 +204,7 @@ def test_partial_dependence_input():
 
     assert_raises_regex(ValueError,
                         "method blahblah is invalid. Accepted method names "
-                        "are exact, recursion, auto.",
+                        "are brute, recursion, auto.",
                         partial_dependence, lr, [0], method='blahblah')
 
     assert_raises_regex(ValueError,
