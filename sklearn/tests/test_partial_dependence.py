@@ -133,12 +133,25 @@ def test_grid_from_X():
     assert axes[0].shape == (n_unique_values,)
     assert axes[1].shape == (grid_resolution,)
 
-    assert_raises_regex(ValueError,
-                        'percentiles are too close',
-                        _grid_from_X,
-                        X,
-                        grid_resolution=10,
+    assert_raises_regex(ValueError, 'percentiles are too close',
+                        _grid_from_X, X, grid_resolution=2,
                         percentiles=(0, 0.0001))
+
+    for percentiles in ((1, 2, 3, 4), 12345):
+        assert_raises_regex(ValueError, "percentiles must be a sequence",
+                            _grid_from_X, X, percentiles=percentiles)
+
+    for percentiles in ((-1, .95), (.05, 2)):
+        assert_raises_regex(ValueError, "percentiles values must be in",
+                            _grid_from_X, X, percentiles=percentiles)
+
+    assert_raises_regex(ValueError,
+                        "percentiles\[0\] must be strictly less than",
+                        _grid_from_X, X, percentiles=(.9, .1))
+
+    assert_raises_regex(ValueError,
+                        'grid_resolution must be strictly greater than 1.',
+                        _grid_from_X, X, grid_resolution=1)
 
 
 @pytest.mark.parametrize('target_feature', (0, 3))
@@ -235,18 +248,6 @@ def test_partial_dependence_input():
 
     assert_raises_regex(ValueError, "Either grid or X must be specified",
                         partial_dependence, gbc, [0], grid=None, X=None)
-
-    for percentiles in ((1, 2, 3, 4), 12345):
-        assert_raises_regex(ValueError, "percentiles must be a sequence",
-                            partial_dependence, lr, [0], grid=None, X=X,
-                            percentiles=percentiles)
-    for percentiles in ((-1, .95), (.05, 2)):
-        assert_raises_regex(ValueError, "percentiles values must be in",
-                            partial_dependence, lr, [0], grid=None, X=X,
-                            percentiles=percentiles)
-    assert_raises_regex(ValueError, "percentiles\[0\] must be less than",
-                        partial_dependence, lr, [0], grid=None, X=X,
-                        percentiles=(.9, .1))
 
     assert_raises_regex(ValueError, "grid must be 1d or 2d",
                         partial_dependence, lr, [0], grid=[[[1]]], X=X)

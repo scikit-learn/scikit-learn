@@ -60,8 +60,12 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
         raise ValueError('percentiles must be a sequence of 2 elements.')
     if not all(0. <= x <= 1. for x in percentiles):
         raise ValueError('percentiles values must be in [0, 1].')
-    if percentiles[0] > percentiles[1]:
-        raise ValueError('percentiles[0] must be less than percentiles[1].')
+    if percentiles[0] >= percentiles[1]:
+        raise ValueError('percentiles[0] must be strictly less '
+                         'than percentiles[1].')
+
+    if grid_resolution <= 1:
+        raise ValueError('grid_resolution must be strictly greater than 1.')
 
     values = []
     for feature in range(X.shape[1]):
