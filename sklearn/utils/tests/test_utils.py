@@ -277,7 +277,7 @@ def test_is_scalar_nan(value, result):
     assert is_scalar_nan(value) is result
 
 
-def test_deprecation_joblib_api():
+def test_deprecation_joblib_api(tmpdir):
     def check_warning(*args, **kw):
         return assert_warns_message(
             DeprecationWarning, "deprecated in version 0.20.1", *args, **kw)
@@ -285,7 +285,7 @@ def test_deprecation_joblib_api():
     # Ensure that the joblib API is deprecated in sklearn.util
     from sklearn.utils import Parallel, Memory, delayed
     from sklearn.utils import cpu_count, hash, effective_n_jobs
-    check_warning(Memory)
+    check_warning(Memory , tmpdir)
     check_warning(hash, 1)
     check_warning(Parallel)
     check_warning(cpu_count)
@@ -303,7 +303,7 @@ def test_deprecation_joblib_api():
     from sklearn.utils._joblib import cpu_count, hash, effective_n_jobs
     from sklearn.utils._joblib import parallel_backend
     from sklearn.utils._joblib import register_parallel_backend
-    assert_no_warnings(Memory)
+    assert_no_warnings(Memory, tmpdir)
     assert_no_warnings(hash, 1)
     assert_no_warnings(Parallel)
     assert_no_warnings(cpu_count)
