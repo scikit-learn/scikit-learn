@@ -333,7 +333,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
         """
         if self.metric == 'default' and self.p != 2:
-            warnings.warn("The default value of p will change to p=2.", FutureWarning)
+            warnings.warn("The default value of p will change to p=2.",
+                          FutureWarning)
             self.p = 2
 
         X = check_array(X, accept_sparse='csr')
