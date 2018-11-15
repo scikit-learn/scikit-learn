@@ -252,7 +252,7 @@ def partial_dependence(est, target_variables, grid=None, X=None,
     if method not in method_to_function:
         raise ValueError(
             'method {} is invalid. Accepted method names are {}, auto.'.format(
-                method, ', '.join(method_to_function.keys())))
+                method, ', '.join(sorted(method_to_function.keys()))))
 
     if method == 'recursion':
         if not isinstance(est, BaseGradientBoosting):
