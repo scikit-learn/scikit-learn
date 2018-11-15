@@ -306,13 +306,12 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         Valid values for metric are:
 
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan']
+          'sqeuclidean', 'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
           'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
-          'yule']
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
@@ -403,14 +402,13 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
 
         Valid values for metric are:
 
-        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan']
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean',
+          'sqeuclidean', 'l1', 'l2', 'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
           'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
-          'yule']
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
@@ -1016,6 +1014,7 @@ PAIRWISE_DISTANCE_FUNCTIONS = {
     'cityblock': manhattan_distances,
     'cosine': cosine_distances,
     'euclidean': euclidean_distances,
+    'sqeuclidean': partial(euclidean_distances, squared=True),
     'l2': euclidean_distances,
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
@@ -1294,13 +1293,13 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
 
     Valid values for metric are:
 
-    - From scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-      'manhattan']. These metrics support sparse matrix inputs.
+    - From scikit-learn: ['cityblock', 'cosine', 'euclidean', 'sqeuclidean',
+      'l1', 'l2', 'manhattan']. These metrics support sparse matrix inputs.
 
     - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
       'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
-      'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+      'sokalmichener', 'sokalsneath', 'yule']
       See the documentation for scipy.spatial.distance for details on these
       metrics. These metrics do not support sparse matrix inputs.
 

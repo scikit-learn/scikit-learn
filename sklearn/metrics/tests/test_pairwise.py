@@ -62,10 +62,13 @@ def test_pairwise_distances():
     S = pairwise_distances(X, Y, metric="euclidean")
     S2 = euclidean_distances(X, Y)
     assert_array_almost_equal(S, S2)
+    # Test sqeuclidean distance
+    S = pairwise_distances(X, Y, metric="sqeuclidean")
+    assert_allclose(S, S2**2)
     # Test with tuples as X and Y
     X_tuples = tuple([tuple([v for v in row]) for row in X])
     Y_tuples = tuple([tuple([v for v in row]) for row in Y])
-    S2 = pairwise_distances(X_tuples, Y_tuples, metric="euclidean")
+    S = pairwise_distances(X_tuples, Y_tuples, metric="euclidean")
     assert_array_almost_equal(S, S2)
     # "cityblock" uses scikit-learn metric, cityblock (function) is
     # scipy.spatial.

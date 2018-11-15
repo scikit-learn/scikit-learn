@@ -73,14 +73,13 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='minkowski',
 
         Valid values for metric are:
 
-        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan']
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean',
+          'sqeuclidean', 'l1', 'l2', 'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
           'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
-          'yule']
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
