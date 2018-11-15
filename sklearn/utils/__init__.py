@@ -23,6 +23,15 @@ from .validation import (as_float_array,
                          check_symmetric)
 from .. import get_config
 
+
+# Do not deprecate parallel_backend and register_parallel_backend as they are
+# needed to tune `scikit-learn` behavior and have different effect if called
+# from the vendored version or or the site-package version. The other are
+# utilities that are independent of scikit-learn so they are not part of
+# scikit-learn public API.
+parallel_backend = _joblib.parallel_backend
+register_parallel_backend = _joblib.register_parallel_backend
+
 # deprecate the joblib API in sklearn in favor of using directly joblib
 msg = ("it is a vendored version, modified to be privately used in sklearn. "
        "Please install joblib to have access to this function.")
@@ -32,13 +41,12 @@ dump = deprecate(_joblib.dump)
 load = deprecate(_joblib.load)
 delayed = deprecate(_joblib.delayed)
 cpu_count = deprecate(_joblib.cpu_count)
-joblib_hash = deprecate(_joblib.joblib_hash)
+joblib_hash = deprecate(_joblib.hash)
 effective_n_jobs = deprecate(_joblib.effective_n_jobs)
-register_parallel_backend = deprecate(_joblib.register_parallel_backend)
 
 
-# for classes, deprecated will change the object from _joblib module so we need
-# to subclass the class
+# for classes, deprecated will change the object in _joblib module so we need
+# to subclass them.
 @deprecate
 class Memory(_joblib.Memory):
     pass
@@ -47,15 +55,6 @@ class Memory(_joblib.Memory):
 @deprecate
 class Parallel(_joblib.Parallel):
     pass
-
-
-# deprecate backend change from a function in 0.11 to a class in 0.12
-if LooseVersion(_joblib.__version__) >= LooseVersion("0.12"):
-    @deprecate
-    class parallel_backend(_joblib.parallel_backend):
-        pass
-else:
-    parallel_backend = deprecate(_joblib.parallel_backend)
 
 
 __all__ = ["murmurhash3_32", "as_float_array",
