@@ -1399,7 +1399,7 @@ def test_elastic_net_coeffs():
     # with saga solver (l1_ratio different from 0 or 1)
     X, y = make_classification(random_state=0)
 
-    C = 2. 
+    C = 2.
     l1_ratio = .5
     coeffs = list()
     for penalty in ('elasticnet', 'l1', 'l2'):
@@ -1601,6 +1601,8 @@ def test_LogisticRegressionCV_elasticnet_attribute_shapes():
                                  l1_ratios.size, n_features + 1)
     scores = np.asarray(list(lrcv.scores_.values()))
     assert scores.shape == (n_classes, n_folds, Cs.size, l1_ratios.size)
+
+    assert lrcv.n_iter_.shape == (n_classes, n_folds, Cs.size, l1_ratios.size)
 
 
 @pytest.mark.parametrize('l1_ratio', (-1, 2, None, 'something_wrong'))

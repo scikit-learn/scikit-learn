@@ -1315,7 +1315,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             warnings.warn("l1_ratio parameter is only used when penalty is "
                           "'elasticnet'. Got "
                           "(penalty={})".format(self.penalty))
-            self.l1_ratio = None
         if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
             raise ValueError("Maximum number of iteration must be positive;"
                              " got (max_iter=%r)" % self.max_iter)
@@ -1672,9 +1671,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         the coefs_paths are the coefficients corresponding to each class.
         Each dict value has shape ``(n_folds, len(Cs_), n_features)`` or
         ``(n_folds, len(Cs_), n_features + 1)`` depending on whether the
-        intercept is fit or not. If ``penalty='elasticnet'``, The shape is
+        intercept is fit or not. If ``penalty='elasticnet'``, the shape is
         ``(n_folds, len(Cs_), len(l1_ratios_), n_features)`` or
-        ``(n_folds, len(Cs_), len(l1_ratios_), len n_features + 1)``.
+        ``(n_folds, len(Cs_), len(l1_ratios_), n_features + 1)``.
 
     scores_ : dict
         dict with classes as the keys, and the values as the
@@ -1683,7 +1682,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         given is 'multinomial' then the same scores are repeated across
         all classes, since this is the multinomial class. Each dict value
         has shape ``(n_folds, len(Cs))`` or ``(n_folds, len(Cs),
-        len(l1_ratios))`` is ``penalty='elasticnet'``.
+        len(l1_ratios))`` if ``penalty='elasticnet'``.
 
     C_ : array, shape (n_classes,) or (n_classes - 1,)
         Array of C that maps to the best scores across every class. If refit is
@@ -1697,9 +1696,14 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         average of the l1_ratio's that correspond to the best scores for each
         fold.  `l1_ratio_` is of shape(n_classes,) when the problem is binary.
 
-    n_iter_ : array, shape (n_classes, n_folds, n_cs) or (1, n_folds, n_cs)
+    n_iter_ : array, shape (n_classes, n_folds, len(Cs)) or \
+              (1, n_folds, len(Cs))
         Actual number of iterations for all classes, folds and Cs.
         In the binary or multinomial cases, the first dimension is equal to 1.
+        If ``penalty='elasticnet'``, the shape is ``(n_classes, n_folds,
+        len(Cs), len(l1_ratios))`` or ``(1, n_folds, len(Cs),
+        len(l1_ratios))``.
+
 
     Examples
     --------
@@ -1881,8 +1885,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         # - coefs_paths is of shape
         #  (n_classes X n_folds X n_Cs . n_l1_ratios X n_features)
         # - n_iter is of shape
-        #  (n_classes X n_folds X n_Cs . n_l1_ratios X n_features) or
-        #  (1 X n_folds X n_Cs . n_l1_ratios X n_features)
+        #  (n_classes X n_folds X n_Cs . n_l1_ratios) or
+        #  (1 X n_folds X n_Cs . n_l1_ratios)
         coefs_paths, Cs, scores, n_iter_ = zip(*fold_coefs_)
         self.Cs_ = Cs[0]
         if multi_class == 'multinomial':
@@ -1898,7 +1902,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 n_iter_,
                 (1, len(folds), len(self.Cs_) * len(l1_ratios_))
             )
-            # repeat same scores accross all classes
+            # repeat same scores across all classes
             scores = np.tile(scores, (n_classes, 1, 1))
         else:
             coefs_paths = np.reshape(
@@ -1925,7 +1929,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 scores = self.scores_[cls]
                 coefs_paths = self.coefs_paths_[cls]
             else:
-                # For multinomial, all scores are the same accross classes
+                # For multinomial, all scores are the same across classes
                 scores = scores[0]
                 # coefs_paths will keep its original shape because
                 # logistic_regression_path expects it this way
@@ -1969,7 +1973,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 w = w[0]
 
             else:
-                # Take the best scores accross every fold and the average of
+                # Take the best scores across every fold and the average of
                 # all coefficients corresponding to the best scores.
                 best_indices = np.argmax(scores, axis=1)
                 if self.multi_class == 'ovr':
@@ -1999,8 +2003,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.C_ = np.asarray(self.C_)
         self.l1_ratio_ = np.asarray(self.l1_ratio_)
         self.l1_ratios_ = np.asarray(l1_ratios_)
-        # if elasticnet was used, add the l1_ratios dimension to coefs_path_
-        # and scores_ attributes
+        # if elasticnet was used, add the l1_ratios dimension to some
+        # attributes
         if self.l1_ratios is not None:
             for cls, coefs_path in self.coefs_paths_.items():
                 self.coefs_paths_[cls] = coefs_path.reshape(
@@ -2008,6 +2012,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             for cls, score in self.scores_.items():
                 self.scores_[cls] = score.reshape(
                     (len(folds), self.Cs_.size, self.l1_ratios_.size))
+            self.n_iter_ = self.n_iter_.reshape(
+                (-1, len(folds), self.Cs_.size, self.l1_ratios_.size))
 
         return self
 
