@@ -7,7 +7,6 @@ from numpy.testing import assert_array_almost_equal
 import pytest
 
 import sklearn
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import if_matplotlib
 from sklearn.partial_dependence import partial_dependence
@@ -32,19 +31,23 @@ y = [-1, -1, -1, 1, 1, 1]
 
 
 def binary_classification():
+    # returns (X, y), n_targets  <-- as expected in the output of partial_dep()
     return make_classification(random_state=0), 1
 
 
 def multiclass_classification():
+    # returns (X, y), n_targets  <-- as expected in the output of partial_dep()
     return (make_classification(n_classes=3, n_clusters_per_class=1,
                                 random_state=0), 3)
 
 
 def regression():
+    # returns (X, y), n_targets  <-- as expected in the output of partial_dep()
     return make_regression(random_state=0), 1
 
 
 def multioutput_regression():
+    # returns (X, y), n_targets  <-- as expected in the output of partial_dep()
     return make_regression(n_targets=2, random_state=0), 2
 
 
@@ -334,15 +337,26 @@ def test_plot_partial_dependence_multiclass():
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
 
-    # label not in gbrt.classes_
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, iris.data, [0, 1], target='foobar',
-                  grid_resolution=grid_resolution)
 
-    # label not provided
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, iris.data, [0, 1],
-                  grid_resolution=grid_resolution)
+@if_matplotlib
+def test_plot_partial_dependence_multioutput():
+    # Test partial dependence plot function on multi-output input.
+    (X, y), _ = multioutput_regression()
+    clf = LinearRegression()
+    clf.fit(X, y)
+
+    grid_resolution = 25
+    fig, axs = plot_partial_dependence(clf, X, [0, 1],
+                                       target=0,
+                                       grid_resolution=grid_resolution)
+    assert len(axs) == 2
+    assert all(ax.has_data for ax in axs)
+
+    fig, axs = plot_partial_dependence(clf, X, [0, 1],
+                                       target=1,
+                                       grid_resolution=grid_resolution)
+    assert len(axs) == 2
+    assert all(ax.has_data for ax in axs)
 
 
 @if_matplotlib
