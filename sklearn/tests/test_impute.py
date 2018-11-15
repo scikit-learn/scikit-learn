@@ -686,6 +686,6 @@ def test_imputation_add_indicator_sparse_matrix(arr_type):
     imputer = SimpleImputer(missing_values=np.nan, add_indicator=True)
     X_trans = imputer.fit_transform(X_sparse)
 
-    assert isinstance(X_trans, sparse.csc.csc_matrix)
+    assert_true(sparse.issparse(X_trans))
     assert X_trans.shape == X_true.shape
     assert_allclose_dense_sparse(X_trans.toarray(), X_true)
