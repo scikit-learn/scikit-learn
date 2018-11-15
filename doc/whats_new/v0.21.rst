@@ -17,9 +17,15 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+<<<<<<< HEAD
 - :class:`cluster.DBSCAN` (bug fix)
 - :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver (bug fix).
+=======
+- please add class and reason here (see version 0.20 what's new)
+- Decision trees and derived ensembles when both `max_depth` and
+  `max_leaf_nodes` are set. (bug fix)
+>>>>>>> master
 
 Details are listed in the changelog below.
 
@@ -56,6 +62,15 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| Fixed a bug in :class:`linear_model.MultiTaskElasticNet` and
   :class:`linear_model.MultiTaskLasso` which were breaking when
   ``warm_start = True``. :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Efficiency| Make :class:`ensemble.IsolationForest` prefer threads over
+  processes when running with ``n_jobs > 1`` as the underlying decision tree
+  fit calls do release the GIL. This changes reduces memory usage and
+  communication overhead. :issue:`12543` by :user:`Isaac Storch <istorch>`
+  and `Olivier Grisel`_.
 
 :mod:`sklearn.metrics`
 ......................
@@ -108,7 +123,7 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.tree`
 ...................
 - Decision Trees can now be plotted with matplotlib using
-  :func:`tree.export.plot_tree` without relying on the ``dot`` library,
+  :func:`tree.plot_tree` without relying on the ``dot`` library,
   removing a hard-to-install dependency. :issue:`8508` by `Andreas Müller`_.
 
 - |Feature| ``get_n_leaves()`` and ``get_depth()`` have been added to
@@ -118,6 +133,15 @@ Support for Python 3.4 and below has been officially dropped.
   and :class:`tree.ExtraTreeRegressor`.
   :issue:`12300` by :user:`Adrin Jalali <adrinjalali>`.
 
+- |Fix| Fixed an issue with :class:`tree.BaseDecisionTree`
+  and consequently all estimators based
+  on it, including :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
+  and :class:`tree.ExtraTreeRegressor`, where they used to exceed the given
+  ``max_depth`` by 1 while expanding the tree if ``max_leaf_nodes`` and
+  ``max_depth`` were both specified by the user. Please note that this also
+  affects all ensemble methods using decision trees.
+  :pr:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -140,5 +164,5 @@ These changes mostly affect library developers.
 - Add ``check_fit_idempotent`` to
   :func:`~utils.estimator_checks.check_estimator`, which checks that
   when `fit` is called twice with the same data, the ouput of
-  `predit`, `predict_proba`, `transform`, and `decision_function` does not
+  `predict`, `predict_proba`, `transform`, and `decision_function` does not
   change. :issue:`12328` by :user:`Nicolas Hug <NicolasHug>`
