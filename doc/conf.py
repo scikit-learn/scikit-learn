@@ -38,7 +38,7 @@ extensions = [
     'sphinx.ext.imgconverter',
     'sphinx_gallery.gen_gallery',
     'sphinx_issues',
-    'sphinx_copybutton.sphinx_copybutton'
+    'sphinx_copybutton'
 ]
 
 # this is needed for some reason...
