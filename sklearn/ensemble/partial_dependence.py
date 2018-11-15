@@ -3,7 +3,6 @@
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
-import warnings
 from ..partial_dependence import partial_dependence as new_pd
 from ..partial_dependence import plot_partial_dependence as new_ppd
 from ..utils import deprecated

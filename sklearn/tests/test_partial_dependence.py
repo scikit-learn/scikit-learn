@@ -3,7 +3,6 @@ Testing for the partial dependence module.
 """
 
 import numpy as np
-from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 import pytest
 
@@ -11,8 +10,6 @@ import sklearn
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import if_matplotlib
-from sklearn.utils.testing import all_estimators
-from sklearn.utils.testing import ignore_warnings
 from sklearn.partial_dependence import partial_dependence
 from sklearn.partial_dependence import plot_partial_dependence
 from sklearn.partial_dependence import _grid_from_X
@@ -20,17 +17,12 @@ from sklearn.partial_dependence import _partial_dependence_brute
 from sklearn.partial_dependence import _partial_dependence_recursion
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.ensemble.gradient_boosting import BaseGradientBoosting
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import MultiTaskLasso
 from sklearn.svm import SVC
 from sklearn.datasets import load_boston, load_iris
 from sklearn.datasets import make_classification, make_regression
-from sklearn.base import is_classifier, is_regressor
-from sklearn.utils.estimator_checks import multioutput_estimator_convert_y_2d
 from sklearn.cluster import KMeans
 
 
@@ -54,6 +46,7 @@ def regression():
 
 def multioutput_regression():
     return make_regression(n_targets=2, random_state=0), 2
+
 
 @pytest.mark.parametrize('Estimator, method, data', [
     (GradientBoostingClassifier, 'recursion', binary_classification()),
@@ -103,7 +96,7 @@ def test_grid_from_X():
 
     # Make sure that the grid is a cartesian product of the input (it will use
     # the unique values instead of the percentiles)
-    X = np.asarray([[1, 2], 
+    X = np.asarray([[1, 2],
                     [3, 4]])
     grid, axes = _grid_from_X(X)
     assert_array_almost_equal(grid, [[1, 2],
@@ -157,7 +150,8 @@ def test_grid_from_X():
 @pytest.mark.parametrize('target_feature', (0, 3))
 @pytest.mark.parametrize('est, partial_dependence_fun',
                          [(LinearRegression(), _partial_dependence_brute),
-                          (GradientBoostingRegressor(random_state=0), _partial_dependence_recursion)])
+                          (GradientBoostingRegressor(random_state=0),
+                          _partial_dependence_recursion)])
 def test_partial_dependence_helpers(est, partial_dependence_fun,
                                     target_feature):
     # Check that what is returned by _partial_dependence_brute or
@@ -188,7 +182,7 @@ def test_partial_dependence_helpers(est, partial_dependence_fun,
 
     pdp = pdp[0]  # (shape is (1, 2) so make it (2,))
     assert_array_almost_equal(pdp, mean_predictions, decimal=3)
-    
+
 
 @pytest.mark.parametrize('Estimator',
                          (sklearn.tree.DecisionTreeClassifier,
@@ -270,6 +264,7 @@ def test_partial_dependence_input():
         partial_dependence(est, [0], grid=[[1], [2]], X=list(X))
 
     partial_dependence(gbc, [0], grid=[1, 2])
+
 
 @if_matplotlib
 def test_plot_partial_dependence():
@@ -377,7 +372,6 @@ def test_plot_partial_dependence_input():
                             'target must be in \[0, n_tasks\]',
                             plot_partial_dependence, lr_m, X_m, [0],
                             target=target)
-
 
     for feature_names in (None, ['abcd', 'def']):
         assert_raises_regex(ValueError,

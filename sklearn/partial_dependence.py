@@ -105,8 +105,8 @@ def _partial_dependence_recursion(est, grid, target_variables, X=None):
         n_trees_per_stage = 1
         n_estimators = len(est.estimators_)
         learning_rate = 1.
-    averaged_predictions = np.zeros((n_trees_per_stage, grid.shape[0]), dtype=np.float64,
-                                    order='C')
+    averaged_predictions = np.zeros((n_trees_per_stage, grid.shape[0]),
+                                    dtype=np.float64, order='C')
     for stage in range(n_estimators):
         for k in range(n_trees_per_stage):
             if isinstance(est, BaseGradientBoosting):
@@ -115,7 +115,7 @@ def _partial_dependence_recursion(est, grid, target_variables, X=None):
                 tree = est.estimators_[stage].tree_
             _partial_dependence_tree(tree, grid, target_variables,
                                      learning_rate, averaged_predictions[k])
-    
+
     return averaged_predictions
 
 
@@ -159,6 +159,7 @@ def _partial_dependence_brute(est, grid, target_variables, X):
         averaged_predictions = averaged_predictions.reshape(1, -1)
 
     return averaged_predictions
+
 
 def partial_dependence(est, target_variables, grid=None, X=None,
                        percentiles=(0.05, 0.95), grid_resolution=100,
@@ -281,7 +282,7 @@ def partial_dependence(est, target_variables, grid=None, X=None,
 
     if grid is None:
         grid, values = _grid_from_X(X[:, target_variables], percentiles,
-                                  grid_resolution)
+                                    grid_resolution)
     else:
         grid = np.asarray(grid)
         values = None  # don't return values if grid is given
@@ -355,7 +356,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         - If 'auto', then 'recursion' will be used for
           ``BaseGradientBoosting`` estimators, and 'brute' used for other
           estimators.
-        
+
         Unlike the 'brute' method, 'recursion' does not account for the
         ``init`` predictor of the boosting process. In practice this still
         produces the same plots, up to a constant offset.
@@ -397,9 +398,6 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     from matplotlib import transforms
     from matplotlib.ticker import MaxNLocator
     from matplotlib.ticker import ScalarFormatter
-    # TODO: The pattern below required to avoid a namespace collision.
-    # TODO: Move below imports to module level import at 0.22 release.
-    from .ensemble.gradient_boosting import BaseGradientBoosting
 
     # set target_idx for multi-class estimators
     if hasattr(est, 'classes_') and np.size(est.classes_) > 2:
@@ -407,7 +405,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
             raise ValueError('target must be specified for multi-class')
         target_idx = np.searchsorted(est.classes_, target)
         if (not (0 <= target_idx < len(est.classes_)) or
-            est.classes_[target_idx] != target):
+                est.classes_[target_idx] != target):
             raise ValueError('target not in est.classes_, got {}'.format(
                 target))
     else:
@@ -453,11 +451,11 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     names = []
     try:
         for fxs in features:
-            l = []
+            names_ = []
             # explicit loop so "i" is bound for exception below
             for i in fxs:
-                l.append(feature_names[i])
-            names.append(l)
+                names_.append(feature_names[i])
+            names.append(names_)
     except IndexError:
         raise ValueError('All entries of features must be less than '
                          'len(feature_names) = {0}, got {1}.'
@@ -516,8 +514,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     n_cols = min(n_cols, len(features))
     n_rows = int(np.ceil(len(features) / float(n_cols)))
     axs = []
-    for i, fx, name, (pd, values) in zip(count(), features, names,
-                                        pd_result):
+    for i, fx, name, (pd, values) in zip(count(), features, names, pd_result):
         ax = fig.add_subplot(n_rows, n_cols, i + 1)
 
         if len(values) == 1:
