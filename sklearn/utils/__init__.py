@@ -32,15 +32,14 @@ parallel_backend = _joblib.parallel_backend
 register_parallel_backend = _joblib.register_parallel_backend
 
 # deprecate the joblib API in sklearn in favor of using directly joblib
-msg = ("it is a vendored version, modified to be privately used in sklearn. "
-       "Please install joblib to have access to this function.")
+msg = ("deprecated in version 0.20.1 to be removed in version 0.23. "
+       "Please import this functionality directly from joblib, which can "
+       "be installed with: pip install joblib.")
 deprecate = deprecated(msg)
 
-dump = deprecate(_joblib.dump)
-load = deprecate(_joblib.load)
 delayed = deprecate(_joblib.delayed)
 cpu_count = deprecate(_joblib.cpu_count)
-joblib_hash = deprecate(_joblib.hash)
+hash = deprecate(_joblib.hash)
 effective_n_jobs = deprecate(_joblib.effective_n_jobs)
 
 
@@ -64,8 +63,8 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_consistent_length", "check_X_y", 'indexable',
            "check_symmetric", "indices_to_mask", "deprecated",
            "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
-           "register_parallel_backend", "joblib_hash", "effective_n_jobs",
-           "resample", "shuffle", "dump", "load"]
+           "register_parallel_backend", "hash", "effective_n_jobs",
+           "resample", "shuffle"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32
