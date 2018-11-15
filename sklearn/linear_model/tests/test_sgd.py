@@ -30,8 +30,8 @@ from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import sgd_fast
 from sklearn.model_selection import RandomizedSearchCV
 
+from sklearn.utils import _joblib
 from sklearn.utils._joblib import parallel_backend
-from sklearn.utils._joblib import __version__ as __joblib_version__
 
 
 # 0.23. warning about tol not having its correct default value.
@@ -1543,7 +1543,7 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # a segmentation fault when trying to write in a readonly memory mapped
     # buffer.
 
-    if __joblib_version__ < LooseVersion('0.12') and backend == 'loky':
+    if _joblib.__version__ < LooseVersion('0.12') and backend == 'loky':
         pytest.skip('loky backend does not exist in joblib <0.12')
 
     random_state = np.random.RandomState(42)

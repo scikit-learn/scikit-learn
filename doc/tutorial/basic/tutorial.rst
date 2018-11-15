@@ -234,7 +234,7 @@ persistence model, `pickle <https://docs.python.org/2/library/pickle.html>`_::
   0
 
 In the specific case of scikit-learn, it may be more interesting to use
-joblib's replacement for pickle in utils (``dump`` & ``load``),
+joblib's replacement for pickle (``joblib.dump`` & ``joblib.load``),
 which is more efficient on big data but it can only pickle to the disk
 and not to a string::
 
@@ -248,7 +248,7 @@ with::
 
 .. note::
 
-    ``dump`` and ``load`` functions also accept file-like object
+    ``joblib.dump`` and ``joblib.load`` functions also accept file-like object
     instead of filenames. More information on data persistence with Joblib is
     available `here <https://joblib.readthedocs.io/en/latest/persistence.html>`_.
 

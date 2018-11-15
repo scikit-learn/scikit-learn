@@ -15,7 +15,7 @@ if _os.environ.get('SKLEARN_SITE_JOBLIB', False):
         from joblib import dump, load
         from joblib import __version__
         from joblib import effective_n_jobs
-        from joblib import hash as joblib_hash
+        from joblib import hash
         from joblib import cpu_count, Parallel, Memory, delayed
         from joblib import parallel_backend, register_parallel_backend
 else:
@@ -24,11 +24,11 @@ else:
     from ..externals.joblib import dump, load
     from ..externals.joblib import __version__
     from ..externals.joblib import effective_n_jobs
-    from ..externals.joblib import hash as joblib_hash
+    from ..externals.joblib import hash
     from ..externals.joblib import cpu_count, Parallel, Memory, delayed
     from ..externals.joblib import parallel_backend, register_parallel_backend
 
 
 __all__ = ["parallel_backend", "register_parallel_backend", "cpu_count",
-           "Parallel", "Memory", "delayed", "joblib_hash", "effective_n_jobs",
-           "joblib_hash", "logger", "dump", "load", "joblib", "__version__"]
+           "Parallel", "Memory", "delayed", "effective_n_jobs", "hash",
+           "logger", "dump", "load", "joblib", "__version__"]

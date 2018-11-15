@@ -34,7 +34,7 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
-from sklearn.utils._joblib import joblib_hash
+from sklearn.utils import _joblib
 from sklearn.preprocessing import FunctionTransformer
 
 from scipy.sparse import csc_matrix, csr_matrix
@@ -227,7 +227,7 @@ class DummySizeEstimator(BaseEstimator):
 
     def fit(self, X, y):
         self.training_size_ = X.shape[0]
-        self.training_hash_ = joblib_hash(X)
+        self.training_hash_ = _joblib.hash(X)
 
 
 def test_bootstrap_samples():

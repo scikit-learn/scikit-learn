@@ -44,7 +44,6 @@ except NameError:
 
 import sklearn
 from sklearn.base import BaseEstimator
-from sklearn.utils._joblib import dump, load
 from sklearn.utils._joblib import joblib
 from sklearn.utils.fixes import signature
 from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
@@ -860,8 +859,8 @@ def create_memmap_backed_data(data, mmap_mode='r', return_folder=False):
     temp_folder = tempfile.mkdtemp(prefix='sklearn_testing_')
     atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
     filename = op.join(temp_folder, 'data.pkl')
-    dump(data, filename)
-    memmap_backed_data = load(filename, mmap_mode=mmap_mode)
+    joblib.dump(data, filename)
+    memmap_backed_data = joblib.load(filename, mmap_mode=mmap_mode)
     result = (memmap_backed_data if not return_folder
               else (memmap_backed_data, temp_folder))
     return result
