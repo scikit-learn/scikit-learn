@@ -71,7 +71,7 @@ Support for Python 3.4 and below has been officially dropped.
   :func:`partial_dependence.partial_dependence<sklearn.partial_dependence.partial_dependence>`
   and
   :func:`partial_dependence.plot_partial_dependence<sklearn.partial_dependence.plot_partial_dependence>`.
-  :issue:TODO by :user:`Trevor Stephens<trevorstephens>` and :user:`Nicolas
+  :issue:`12599` by :user:`Trevor Stephens<trevorstephens>` and :user:`Nicolas
   Hug<NicolasHug>`.
 
 :mod:`sklearn.metrics`
@@ -136,8 +136,6 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`12300` by :user:`Adrin Jalali <adrinjalali>`.
 
 - |Fix| Fixed an issue with :class:`tree.BaseDecisionTree`
-  and consequently all estimators based
-  on it, including :class:`tree.DecisionTreeClassifier`,
   :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
   and :class:`tree.ExtraTreeRegressor`, where they used to exceed the given
   ``max_depth`` by 1 while expanding the tree if ``max_leaf_nodes`` and
@@ -150,7 +148,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |Feature| Partial dependence plots
   (:func:`partial_dependence.plot_partial_dependence`) are now supported for
   any regressor or classifier (provided that they have a `predict_proba()`
-  method). :issue:TODO by :user:`Trevor Stephens<trevorstephens>` and
+  method). :issue:`12599` by :user:`Trevor Stephens<trevorstephens>` and
   :user:`Nicolas Hug<NicolasHug>`.
 
 Multiple modules
