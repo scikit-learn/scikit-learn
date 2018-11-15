@@ -498,7 +498,8 @@ def test_predict_proba_multilabel():
 def test_shuffle():
     X, y = make_multilabel_classification(n_samples=200, n_features=10,
                                           n_classes=5, n_labels=2,
-                                          allow_unlabeled=False, random_state=0)
+                                          allow_unlabeled=False,
+                                          random_state=0)
 
     # Ensure shuffling happens or doesn't happen when passed as an argument
     mlp1 = MLPClassifier(hidden_layer_sizes=(10,), max_iter=10, random_state=0,
