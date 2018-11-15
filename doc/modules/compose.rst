@@ -92,7 +92,7 @@ Parameters of the estimators in the pipeline can be accessed using the
     >>> pipe.set_params(clf__C=10) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     Pipeline(memory=None,
              steps=[('reduce_dim', PCA(copy=True, iterated_power='auto',...)),
-                    ('clf', SVC(C=10, cache_size=200, class_weight=None,...))])
+                    ('clf', SVC(C=10,...))])
 
 Attributes of named_steps map to keys, enabling tab completion in interactive environments::
 
