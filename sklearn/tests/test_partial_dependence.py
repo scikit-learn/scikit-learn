@@ -48,6 +48,8 @@ def multioutput_regression():
     return make_regression(n_targets=2, random_state=0), 2
 
 
+@pytest.mark.filterwarnings('ignore:Default solver will be changed ')  # 0.22
+@pytest.mark.filterwarnings('ignore:Default multi_class will be')  # 0.22
 @pytest.mark.parametrize('Estimator, method, data', [
     (GradientBoostingClassifier, 'recursion', binary_classification()),
     (GradientBoostingClassifier, 'recursion', multiclass_classification()),
@@ -187,6 +189,7 @@ def test_partial_dependence_helpers(est, method, target_feature):
     assert_array_almost_equal(pdp, mean_predictions, decimal=3)
 
 
+@pytest.mark.filterwarnings('ignore:The default value of ')  # 0.22
 @pytest.mark.parametrize('Estimator',
                          (sklearn.tree.DecisionTreeClassifier,
                           sklearn.tree.ExtraTreeClassifier,
@@ -343,6 +346,8 @@ def test_plot_partial_dependence_multiclass():
 
 
 @if_matplotlib
+@pytest.mark.filterwarnings('ignore:Default solver will be changed ')  # 0.22
+@pytest.mark.filterwarnings('ignore:Default multi_class will be')  # 0.22
 def test_plot_partial_dependence_input():
     X, y = make_classification(random_state=0)
 

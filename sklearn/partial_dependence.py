@@ -183,7 +183,8 @@ def partial_dependence(est, target_variables, grid=None, X=None,
         The data on which ``est`` was trained. It is used both to generate
         a ``grid`` for the ``target_variables`` (if ``grid`` wasn't specified),
         and to compute the averaged predictions where the target features
-        values would have been replaced by those in the grid.
+        values have been replaced by those in the grid, for 'brute' method.
+        Optional if ``grid`` is specified and ``method`` is 'recursion'.
     percentiles : (low, high), default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the ``grid``. Only used if ``grid`` is None.
@@ -310,7 +311,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
                             percentiles=(0.05, 0.95), method='auto',
                             n_jobs=1, verbose=0, ax=None, line_kw=None,
                             contour_kw=None, **fig_kw):
-    """Partial dependence plots for ``features``.
+    """Partial dependence plots.
 
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
     columns. Two-way partial dependence plots are plotted as contour
@@ -325,7 +326,8 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         ``predict_proba()`` method. Multioutput-multiclass estimators aren't
         supported.
     X : array-like, shape=(n_samples, n_features)
-        The data on which ``est`` was trained.
+        The data to use to build the grid of values on which the dependence
+        will be evaluated. This is usually the training data.
     features : seq of ints, strings, or tuples of ints or strings
         If features[i] is an int or a string, a one-way PDP is created; if
         features[i] is a tuple, a two-way PDP is created. Each tuple must be of
@@ -351,8 +353,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         The method to use to calculate the partial dependence predictions:
 
         - 'recursion' is only supported for objects inheriting from
-          `BaseGradientBoosting`, but is optimal in terms of speed. With
-          this method, ``X`` is optional and is only used to build the grid.
+          `BaseGradientBoosting`, but is optimal in terms of speed.
         - 'brute' is supported for any estimator, but is more
            computationally intensive.
         - If 'auto', then 'recursion' will be used for
