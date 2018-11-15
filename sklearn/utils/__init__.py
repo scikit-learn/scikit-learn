@@ -8,11 +8,10 @@ import struct
 import warnings
 import numpy as np
 from scipy.sparse import issparse
-from distutils.version import LooseVersion
 
 from .murmurhash import murmurhash3_32
 from .class_weight import compute_class_weight, compute_sample_weight
-from .import _joblib
+from . import _joblib
 from ..exceptions import DataConversionWarning
 from .fixes import _Sequence as Sequence
 from .deprecation import deprecated
