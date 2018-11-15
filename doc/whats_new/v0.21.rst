@@ -50,9 +50,9 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |API| Changing the parameter pattern in :class:`cluster.DBSCAN` from
   ``metric = euclidean`` to ``metric = minkowski``. In addition to creating the
-  parameter ``p = 2``. This p is that it should be possible to switch between
-  Manhattan and Euclidian and other Minkowski distances just by modifying
-  ``'p'`` (without changing metric).
+  parameter ``p = 2``. By modifying the `` p`` parameter it will be possible to
+  change between Manhattan and Euclidian metrics in addition to other Minkowski
+  distances, without modifying the metrics parameter.
   :issue:`12437` by :user:`Gilberto Olimpio <gilbertoolimpio>`
 
 :mod:`sklearn.linear_model`
@@ -87,11 +87,11 @@ Support for Python 3.4 and below has been officially dropped.
   when called before fit :issue:`12279` by :user:`Krishna Sangeeth
   <whiletruelearn>`.
 
-- |API| Changing the parameter pattern in :class:`cluster.DBSCAN` from
+- |API| Changing the parameter pattern in :class:`neighbors.KernelDensity` from
   ``metric = euclidean`` to ``metric = minkowski``. In addition to creating the
-  parameter ``p = 2``. This p is that it should be possible to switch between
-  Manhattan and Euclidian and other Minkowski distances just by modifying
-  ``'p'`` (without changing metric).
+  parameter ``p = 2``. By modifying the `` p`` parameter it will be possible to
+  change between Manhattan and Euclidian metrics in addition to other Minkowski
+  distances, without modifying the metrics parameter.
   :issue:`12437` by :user:`Gilberto Olimpio <gilbertoolimpio>`
 
 :mod:`sklearn.pipeline`

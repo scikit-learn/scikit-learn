@@ -131,7 +131,7 @@ class KernelDensity(BaseEstimator):
             List of sample weights attached to the data X.
         """
 
-        if self.metric == 'minkowski' and self.p =='warn':
+        if self.metric == 'default' and self.p != 2:
             warnings.warn("The default value of p will change to p=2.", FutureWarning)
             self.p = 2
 

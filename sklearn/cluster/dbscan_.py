@@ -303,7 +303,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, eps=0.5, min_samples=5, metric='minkowski',
-                 metric_params=None, algorithm='auto', leaf_size=30, p='warn',
+                 metric_params=None, algorithm='auto', leaf_size=30, p=2,
                  n_jobs=None):
         self.eps = eps
         self.min_samples = min_samples
@@ -332,7 +332,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         y : Ignored
 
         """
-        if self.metric == 'minkowski' and self.p == 'warn':
+        if self.metric == 'default' and self.p != 2:
             warnings.warn("The default value of p will change to p=2.", FutureWarning)
             self.p = 2
 
