@@ -1225,6 +1225,24 @@ Model validation
    pipeline.make_pipeline
    pipeline.make_union
 
+.. _partial_dependence_ref:
+
+:mod:`sklearn.partial_dependence`: Partial dependence plots
+===========================================================
+
+.. automodule:: sklearn.partial_dependence
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   partial_dependence.partial_dependence
+   partial_dependence.plot_partial_dependence
+
 
 .. _preprocessing_ref:
 

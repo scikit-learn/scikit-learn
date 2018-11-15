@@ -227,9 +227,8 @@ def test_warning_raised_for_partial_dependence():
     grid_resolution = 25
 
     assert_warns_message(DeprecationWarning, "The function "
-                         "ensemble.partial_dependence has been moved to "
-                         "partial_dependence in 0.20 and will be removed in "
-                         "0.22.", partial_dependence, clf, [0], X=boston.data,
+                         "ensemble.partial_dependence has been moved to ",
+                         partial_dependence, clf, [0], X=boston.data,
                          grid_resolution=grid_resolution)
 
 
@@ -241,8 +240,7 @@ def test_warning_raised_for_plot_partial_dependence():
     grid_resolution = 25
 
     assert_warns_message(DeprecationWarning, "The function "
-                         "ensemble.plot_partial_dependence has been moved to "
-                         "partial_dependence in 0.20 and will be removed in "
-                         "0.22.", plot_partial_dependence, clf, boston.data,
+                         "ensemble.plot_partial_dependence has been moved to ",
+                         plot_partial_dependence, clf, boston.data,
                          [0, 1, (0, 1)], grid_resolution=grid_resolution,
                          feature_names=boston.feature_names)

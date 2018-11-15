@@ -1,0 +1,124 @@
+
+.. _partial_dependence:
+
+========================
+Partial dependence plots
+========================
+
+.. currentmodule:: sklearn.partial_dependence
+
+Partial dependence plots (PDP) show the dependence between the target response
+and a set of 'target' features, marginalizing over the values of all other
+features (the 'complement' features). Intuitively, we can interpret the
+partial dependence as the expected target response [1]_ as a function of the
+'target' features.
+
+Due to the limits of human perception the size of the target feature set
+must be small (usually, one or two) thus the target features are usually
+chosen among the most important features.
+
+The Figure below shows four one-way and one two-way partial dependence plots
+for the California housing dataset, with a :class:`GradientBoostingRegressor
+<sklearn.ensemble.GradientBoostingRegressor>`:
+
+.. figure:: ../auto_examples/images/sphx_glr_plot_partial_dependence_001.png
+   :target: ../auto_examples/plot_partial_dependence.html
+   :align: center
+   :scale: 70
+
+One-way PDPs tell us about the interaction between the target response and
+the target feature (e.g. linear, non-linear). The upper left plot in the
+above figure shows the effect of the median income in a district on the
+median house price; we can clearly see a linear relationship among them.
+
+PDPs with two target features show the interactions among the two features.
+For example, the two-variable PDP in the above Figure shows the dependence
+of median house price on joint values of house age and avg. occupants per
+household. We can clearly see an interaction between the two features: for
+an avg. occupancy greater than two, the house price is nearly independent of
+the house age, whereas for values less than two there is a strong dependence
+on age.
+
+The :mod:`sklearn.partial_dependence` module provides a convenience function
+:func:`plot_partial_dependence` to create one-way and two-way partial
+dependence plots. In the below example we show how to create a grid of
+partial dependence plots: two one-way PDPs for the features ``0`` and ``1``
+and a two-way PDP between the two features::
+
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+    >>> from sklearn.partial_dependence import plot_partial_dependence
+
+    >>> X, y = make_hastie_10_2(random_state=0)
+    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+    ...     max_depth=1, random_state=0).fit(X, y)
+    >>> features = [0, 1, (0, 1)]
+    >>> fig, axs = plot_partial_dependence(clf, X, features) #doctest: +SKIP
+
+For multi-class classification, you need to set the class label for which
+the PDPs should be created via the ``target`` argument::
+
+    >>> from sklearn.datasets import load_iris
+    >>> iris = load_iris()
+    >>> mc_clf = GradientBoostingClassifier(n_estimators=10,
+    ...     max_depth=1).fit(iris.data, iris.target)
+    >>> features = [3, 2, (3, 2)]
+    >>> fig, axs = plot_partial_dependence(mc_clf, X, features, target=0) #doctest: +SKIP
+
+The same parameter ``target`` is used to specify the target in multi-output
+regression settings.
+
+If you need the raw values of the partial dependence function rather than
+the plots, you can use the :func:`partial_dependence` function::
+
+    >>> from sklearn.partial_dependence import partial_dependence
+
+    >>> pdp, axes = partial_dependence(clf, [0], X=X)
+    >>> pdp  # doctest: +ELLIPSIS
+    array([[ 2.46643157,  2.46643157, ...
+    >>> axes  # doctest: +ELLIPSIS
+    [array([-1.62497054, -1.59201391, ...
+
+The function requires either the argument ``grid`` which specifies the
+values of the target features on which the partial dependence function
+should be evaluated, or the argument ``X`` which is a convenience mode for
+automatically creating ``grid`` from the training data. If ``grid`` is not
+specified, the ``values`` field returned by the function gives the actual
+values used in the grid for each target feature. They also correspond to the
+axis of the plots.
+
+For each value of the 'target' features in the ``grid`` the partial
+dependence function needs to marginalize the predictions of the estimator
+over all possible values of the 'complement' features. With the ``'brute'``
+method, this is done by replacing every target feature value of `X` by those
+in the grid, and computing the average prediction.
+
+In decision trees this can be evaluated efficiently without reference to the
+training data (``'recursion'`` method). For each grid point a weighted tree
+traversal is performed: if a split node involves a 'target' feature, the
+corresponding left or right branch is followed, otherwise both branches are
+followed, each branch is weighted by the fraction of training samples that
+entered that branch. Finally, the partial dependence is given by a weighted
+average of all visited leaves.
+
+.. rubric:: Footnotes
+
+.. [1] For classification, the target response is the probability of a class.
+   In particular for binary classification, this is the probability of the
+   positive class.
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_plot_partial_dependence.py`
+
+
+.. topic:: References
+
+ .. [F2001] J. Friedman, "Greedy Function Approximation: A Gradient Boosting Machine",
+   The Annals of Statistics, Vol. 29, No. 5, 2001.
+
+ .. [F1999] J. Friedman, "Stochastic Gradient Boosting", 1999
+
+ .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical Learning Ed. 2", Springer, 2009.
+
+ .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm package", 2007

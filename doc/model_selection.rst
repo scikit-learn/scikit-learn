@@ -12,3 +12,4 @@ Model selection and evaluation
     modules/model_evaluation
     modules/model_persistence
     modules/learning_curve
+    modules/partial_dependence

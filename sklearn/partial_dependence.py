@@ -165,10 +165,6 @@ def partial_dependence(est, target_variables, grid=None, X=None,
                        method='auto'):
     """Partial dependence of ``target_variables``.
 
-    Partial dependence plots show the dependence between the joint values
-    of the ``target_variables`` and the function represented
-    by the ``est``.
-
     Read more in the :ref:`User Guide <partial_dependence>`.
 
     Parameters
@@ -179,14 +175,13 @@ def partial_dependence(est, target_variables, grid=None, X=None,
     target_variables : list or array-like of int
         The target features for which the partial dependency should be
         computed.
-    grid : array-like, shape=(n_points, len(target_variables))
+    grid : array-like, shape=(n_points, len(target_variables)), optional
         The grid of ``target_variables`` values for which the partial
-        dependency should be evaluated (either ``grid`` or ``X`` must be
-        specified).
+        dependency should be evaluated.
     X : array-like, shape=(n_samples, n_features)
         The data on which ``est`` was trained. It is used both to generate
         a ``grid`` for the ``target_variables`` (if ``grid`` wasn't specified),
-        and then to compute the averaged predictions where the target features
+        and to compute the averaged predictions where the target features
         values would have been replaced by those in the grid.
     percentiles : (low, high), default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
@@ -198,12 +193,17 @@ def partial_dependence(est, target_variables, grid=None, X=None,
         The method to use to calculate the partial dependence predictions:
 
         - 'recursion' is only supported for objects inheriting from
-          `BaseGradientBoosting`, but is optimal in terms of speed.
+          `BaseGradientBoosting`, but is optimal in terms of speed. With
+          this method, ``X`` is optional and is only used to build the grid.
         - 'brute' is supported for any estimator, but is more
            computationally intensive. Both methods are equivalent.
         - If 'auto', then 'recursion' will be used for
           ``BaseGradientBoosting`` estimators, and 'brute' used for other
           estimators.
+
+        Unlike the 'brute' method, 'recursion' does not account for the
+        ``init`` predictor of the boosting process. In practice this still
+        produces the same values, up to a constant offset.
 
     Returns
     -------
@@ -348,12 +348,17 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         The method to use to calculate the partial dependence predictions:
 
         - 'recursion' is only supported for objects inheriting from
-          `BaseGradientBoosting`, but is optimal in terms of speed.
+          `BaseGradientBoosting`, but is optimal in terms of speed. With
+          this method, ``X`` is optional and is only used to build the grid.
         - 'brute' is supported for any estimator, but is more
-           computationally intensive. Both methods are equivalent.
+           computationally intensive.
         - If 'auto', then 'recursion' will be used for
           ``BaseGradientBoosting`` estimators, and 'brute' used for other
           estimators.
+        
+        Unlike the 'brute' method, 'recursion' does not account for the
+        ``init`` predictor of the boosting process. In practice this still
+        produces the same plots, up to a constant offset.
     n_jobs : int
         The number of CPUs to use to compute the PDs. -1 means 'all CPUs'.
         Defaults to 1.

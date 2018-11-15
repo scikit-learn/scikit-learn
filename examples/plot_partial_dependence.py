@@ -8,8 +8,7 @@ and a set of 'target' features, marginalizing over the
 values of all other features (the complement features). Due to the limits
 of human perception the size of the target feature set must be small (usually,
 one or two) thus the target features are usually chosen among the most
-important features
-(see :attr:`~sklearn.ensemble.GradientBoostingRegressor.feature_importances_`).
+important features.
 
 This example shows how to obtain partial dependence plots from a
 :class:`~sklearn.ensemble.GradientBoostingRegressor` trained on the California
@@ -54,8 +53,8 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.ensemble.partial_dependence import plot_partial_dependence
-from sklearn.ensemble.partial_dependence import partial_dependence
+from sklearn.partial_dependence import plot_partial_dependence
+from sklearn.partial_dependence import partial_dependence
 from sklearn.datasets.california_housing import fetch_california_housing
 
 

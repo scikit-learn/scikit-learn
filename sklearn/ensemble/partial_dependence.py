@@ -60,7 +60,8 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
     """
     warnings.warn("The function ensemble.partial_dependence has been moved to "
-                  "partial_dependence in 0.20 and will be removed in 0.22.",
+                  "partial_dependence.partial_dependence in 0.21 and will "
+                  "be removed in 0.23.",
                   DeprecationWarning)
     return new_pd(est=gbrt,
                   target_variables=target_variables,
@@ -147,8 +148,8 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     ...
     """
     warnings.warn("The function ensemble.plot_partial_dependence has been "
-                  "moved to partial_dependence in 0.20 and will be removed "
-                  "in 0.22.",
+                  "moved to partial_dependence.plot_partial_dependence in "
+                  " 0.21 and will be removed in 0.23.",
                   DeprecationWarning)
     return new_ppd(est=gbrt,
                    X=X,
