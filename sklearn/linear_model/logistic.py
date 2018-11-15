@@ -1491,12 +1491,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     Elastic-Net penalty is only supported by the saga solver.
 
     For the grid of Cs values (that are set by default to be ten values in
-    a logarithmic scale between 1e-4 and 1e4), the best hyperparameter is
-    selected by the cross-validator StratifiedKFold, but it can be changed
-    using the cv parameter. In the case of newton-cg and lbfgs solvers,
-    we warm start along the path i.e guess the initial coefficients of the
-    present fit to be the coefficients got after convergence in the previous
-    fit, so it is supposed to be faster for high-dimensional dense data.
+    a logarithmic scale between 1e-4 and 1e4) and l1_ratios values, the best
+    hyperparameter is selected by the cross-validator StratifiedKFold, but
+    it can be changed using the cv parameter. In the case of newton-cg and
+    lbfgs solvers, we warm start along the path i.e guess the initial
+    coefficients of the present fit to be the coefficients got after
+    convergence in the previous fit, so it is supposed to be faster for
+    high-dimensional dense data.
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
@@ -1654,26 +1655,26 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         If `fit_intercept` is set to False, the intercept is set to zero.
         `intercept_` is of shape(1,) when the problem is binary.
 
-    Cs_ : array, shape (len(Cs))
+    Cs_ : array, shape (n_cs)
         Array of C i.e. inverse of regularization parameter values used
         for cross-validation.
 
-    l1_ratios_ : array, shape (len(l1_ratios))
+    l1_ratios_ : array, shape (n_l1_ratios)
         Array of l1_ratios used for cross-validation. If no l1_ratio is used
         (i.e. penalty is not 'elasticnet'), this is set to ``[None]``
 
-    coefs_paths_ : array, shape ``(n_folds, len(Cs_), n_features)`` or \
-                   ``(n_folds, len(Cs_), n_features + 1)``
+    coefs_paths_ : array, shape (n_folds, n_cs, n_features) or \
+                   (n_folds, n_cs, n_features + 1)
         dict with classes as the keys, and the path of coefficients obtained
         during cross-validating across each fold and then across each Cs
         after doing an OvR for the corresponding class as values.
         If the 'multi_class' option is set to 'multinomial', then
         the coefs_paths are the coefficients corresponding to each class.
-        Each dict value has shape ``(n_folds, len(Cs_), n_features)`` or
-        ``(n_folds, len(Cs_), n_features + 1)`` depending on whether the
+        Each dict value has shape ``(n_folds, n_cs, n_features)`` or
+        ``(n_folds, n_cs, n_features + 1)`` depending on whether the
         intercept is fit or not. If ``penalty='elasticnet'``, the shape is
-        ``(n_folds, len(Cs_), len(l1_ratios_), n_features)`` or
-        ``(n_folds, len(Cs_), len(l1_ratios_), n_features + 1)``.
+        ``(n_folds, n_cs, n_l1_ratios_, n_features)`` or
+        ``(n_folds, n_cs, n_l1_ratios_, n_features + 1)``.
 
     scores_ : dict
         dict with classes as the keys, and the values as the
@@ -1681,8 +1682,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         an OvR for the corresponding class. If the 'multi_class' option
         given is 'multinomial' then the same scores are repeated across
         all classes, since this is the multinomial class. Each dict value
-        has shape ``(n_folds, len(Cs))`` or ``(n_folds, len(Cs),
-        len(l1_ratios))`` if ``penalty='elasticnet'``.
+        has shape ``(n_folds, n_cs`` or ``(n_folds, n_cs, n_l1_ratios)`` if
+        ``penalty='elasticnet'``.
 
     C_ : array, shape (n_classes,) or (n_classes - 1,)
         Array of C that maps to the best scores across every class. If refit is
@@ -1696,13 +1697,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         average of the l1_ratio's that correspond to the best scores for each
         fold.  `l1_ratio_` is of shape(n_classes,) when the problem is binary.
 
-    n_iter_ : array, shape (n_classes, n_folds, len(Cs)) or \
-              (1, n_folds, len(Cs))
+    n_iter_ : array, shape (n_classes, n_folds, n_cs) or (1, n_folds, n_cs)
         Actual number of iterations for all classes, folds and Cs.
         In the binary or multinomial cases, the first dimension is equal to 1.
         If ``penalty='elasticnet'``, the shape is ``(n_classes, n_folds,
-        len(Cs), len(l1_ratios))`` or ``(1, n_folds, len(Cs),
-        len(l1_ratios))``.
+        n_cs, n_l1_ratios)`` or ``(1, n_folds, n_cs, n_l1_ratios)``.
 
 
     Examples
