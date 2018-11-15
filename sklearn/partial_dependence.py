@@ -474,8 +474,8 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     # For multioutput regression, we can only check the validity of target
     # now that we have the predictions.
     # Also note: as multiclass-multioutput classifiers are not supported,
-    # multiand multioutput setting. So there is no risk of overwriting
-    # target_idx here.
+    # multiclass and multioutput scenario are mutually exclusive. So there is
+    # no risk of overwriting target_idx here.
     pd, _ = pd_result[0]  # checking the first result is enough
     if is_regressor(est) and pd.shape[0] > 1:
         if target is None:
