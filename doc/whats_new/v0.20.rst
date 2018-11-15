@@ -65,6 +65,9 @@ Changelog
   location in :func:`datasets.fetch_olivetti_faces`. :issue:`12441` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`
 
+- |Fix| :func:`datasets.fetch_openml` to retry downloading when reading
+  from local cache fails. :issue:`12517` by :user:`Thomas Fan <thomasjpfan>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -84,6 +87,14 @@ Changelog
   :class:`ensemble.BaggingRegressor` and :class:`ensemble.IsolationForest`,
   where ``max_features`` was sometimes rounded down to zero.
   :issue:`12388` by :user:`Connor Tann <Connossor>`.
+
+:mod:`sklearn.feature_extraction`
+...........................
+
+- |Fix| Fixed a regression in v0.20.0 where
+  :func:`feature_extraction.text.CountVectorizer` and other text vectorizers
+  could error during stop words validation with custom preprocessors
+  or tokenizers. :issue:`12393` by `Roman Yurchak`_.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -147,6 +158,11 @@ Changelog
   to :code:`yeo-johnson` to match :class:`preprocessing.PowerTransformer`
   in version 0.23. A FutureWarning is raised when the default value is used.
   :issue:`12317` by :user:`Eric Chang <chang>`.
+  
+
+- |Fix| Fixed a bug in :class:`preprocessing.PowerTransformer` where the
+  Yeo-Johnson transform was incorrect for lambda parameters outside of `[0, 2]`
+  :issue:`12522` by :user:`Nicolas Hug<NicolasHug>`.
 
 :mod:`sklearn.utils`
 ........................
@@ -155,6 +171,13 @@ Changelog
   precision issues in :class:`preprocessing.StandardScaler` and
   :class:`decomposition.IncrementalPCA` when using float32 datasets.
   :issue:`12338` by :user:`bauks <bauks>`.
+  
+Miscellaneous
+.............
+
+- |Fix| When using site joblib by setting the environment variable
+  `SKLEARN_SITE_JOBLIB`, added compatibility with joblib 0.11 in addition
+  to 0.12+. :issue:`12350` by `Joel Nothman`_ and `Roman Yurchak`_.
 
 Miscellaneous
 .............

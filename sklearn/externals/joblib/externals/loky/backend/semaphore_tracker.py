@@ -23,10 +23,10 @@
 #
 
 import os
-import signal
 import sys
-import threading
+import signal
 import warnings
+import threading
 
 from . import spawn
 from multiprocessing import util
@@ -35,6 +35,9 @@ try:
     from _multiprocessing import sem_unlink
 except ImportError:
     from .semlock import sem_unlink
+
+if sys.version_info < (3,):
+    BrokenPipeError = IOError
 
 __all__ = ['ensure_running', 'register', 'unregister']
 

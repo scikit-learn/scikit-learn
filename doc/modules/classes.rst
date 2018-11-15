@@ -1418,6 +1418,7 @@ Low-level methods
    :template: function.rst
 
    tree.export_graphviz
+   tree.plot_tree
 
 
 .. _utils_ref:
