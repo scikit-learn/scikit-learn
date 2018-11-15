@@ -605,7 +605,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         If not provided, then each sample is given unit weight.
 
     l1_ratio : float or None, optional (default=None)
-        The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
+        The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
         used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
         to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
         to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
@@ -790,14 +790,14 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 loss = 'multinomial'
             else:
                 loss = 'log'
-            # alpha is for 2-norm, beta is for 1-norm
+            # alpha is for L2-norm, beta is for L1-norm
             if penalty == 'l1':
                 alpha = 0.
                 beta = 1. / C
             elif penalty == 'l2':
                 alpha = 1. / C
                 beta = 0.
-            else:  # elasticnet penalty
+            else:  # Elastic-Net penalty
                 alpha = (1. / C) * (1 - l1_ratio)
                 beta = (1. / C) * l1_ratio
 
@@ -941,7 +941,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         If not provided, then each sample is given unit weight.
 
     l1_ratio : float or None, optional (default=None)
-        The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
+        The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
         used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
         to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
         to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
@@ -1040,7 +1040,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     The 'newton-cg', 'sag', and 'lbfgs' solvers support only L2 regularization
     with primal formulation. The 'liblinear' solver supports both L1 and L2
     regularization, with a dual formulation only for the L2 penalty. The
-    elastic net regularization is only supported by the 'saga' solver.
+    Elastic-Net regularization is only supported by the 'saga' solver.
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
@@ -1168,7 +1168,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         See :term:`Glossary <n_jobs>` for more details.
 
     l1_ratio : float or None, optional (default=None)
-        The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
+        The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
         used if ``penalty='elasticnet'`. Setting ``l1_ratio=0`` is equivalent
         to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
         to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
@@ -1489,7 +1489,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     of lbfgs optimizer. The newton-cg, sag and lbfgs solvers support only L2
     regularization with primal formulation. The liblinear solver supports both
     L1 and L2 regularization, with a dual formulation only for the L2 penalty.
-    Elastic net penalyy is only supported by the saga solver.
+    Elastic-Net penalty is only supported by the saga solver.
 
     For the grid of Cs values (that are set by default to be ten values in
     a logarithmic scale between 1e-4 and 1e4), the best hyperparameter is
@@ -1635,7 +1635,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         by `np.random`.
 
     l1_ratios : list of float or None, optional (default=None)
-        The list of elastic net mixing parameter, with ``0 <= l1_ratio <= 1``.
+        The list of Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``.
         Only used if ``penalty='elasticnet'``. A value of 0 is equivalent to
         using ``penalty='l2'``, while 1 is equivalent to using
         ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a combination

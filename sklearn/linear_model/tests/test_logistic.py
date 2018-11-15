@@ -1399,7 +1399,7 @@ def test_elastic_net_coeffs():
     # with saga solver (l1_ratio different from 0 or 1)
     X, y = make_classification(random_state=0)
 
-    C = 1 / .5
+    C = 2. 
     l1_ratio = .5
     coeffs = list()
     for penalty in ('elasticnet', 'l1', 'l2'):
@@ -1436,7 +1436,7 @@ def test_elastic_net_l1_l2_equivalence(C, penalty, l1_ratio):
 
 @pytest.mark.parametrize('C', [.001, 1, 100, 1e6])
 def test_elastic_net_vs_l1_l2(C):
-    # Make sure that elastic net with grid search on l1_ratio gives same or
+    # Make sure that elasticnet with grid search on l1_ratio gives same or
     # better results than just l1 or just l2.
 
     X, y = make_classification(500, random_state=0)
@@ -1463,9 +1463,11 @@ def test_elastic_net_vs_l1_l2(C):
 @pytest.mark.parametrize('C', np.logspace(-3, 2, 4))
 @pytest.mark.parametrize('l1_ratio', [.1, .5, .9])
 def test_LogisticRegression_elastic_net_objective(C, l1_ratio):
-    # train a logistic regression with l2 (a) and elasticnet (b) penalties,
-    # and compute the elasticnet objective. That of a should be greater than
-    # that of b (both objective are convex).
+    # Check that training with a penalty matching the objective leads
+    # to a lower objective.
+    # Here we train a logistic regression with l2 (a) and elasticnet (b)
+    # penalties, and compute the elasticnet objective. That of a should be
+    # greater than that of b (both objectives are convex).
     X, y = make_classification(n_samples=1000, n_classes=2, n_features=20,
                                n_informative=10, n_redundant=0,
                                n_repeated=0, random_state=0)
