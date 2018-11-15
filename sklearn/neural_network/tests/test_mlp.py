@@ -24,7 +24,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
 from sklearn.utils.testing import (assert_raises, assert_greater, assert_equal,
                                    assert_false, ignore_warnings)
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raise_message, assert_not_equal
 
 
 np.seterr(all='warn')
@@ -493,6 +493,39 @@ def test_predict_proba_multilabel():
     assert_greater((y_proba.sum(1) - 1).dot(y_proba.sum(1) - 1), 1e-10)
     assert_array_equal(proba_max, proba_log_max)
     assert_array_equal(y_log_proba, np.log(y_proba))
+
+
+def test_shuffle():
+    X, y = make_multilabel_classification(n_samples=200, n_features=10,
+                                          n_classes=5, n_labels=2,
+                                          allow_unlabeled=False, random_state=0)
+
+    # Ensure shuffling happens or doesn't happen when passed as an argument
+    mlp1 = MLPClassifier(hidden_layer_sizes=(10,), max_iter=10, random_state=0,
+                         shuffle=True, batch_size=2)
+    mlp2 = MLPClassifier(hidden_layer_sizes=(10,), max_iter=10, random_state=0,
+                         shuffle=False, batch_size=2)
+
+    mlp1.fit(X[:100, ], y[:100, ])
+    mlp2.fit(X[:100, ], y[:100, ])
+    score1 = mlp1.score(X[100:, ], y[100:, ])
+    score2 = mlp2.score(X[100:, ], y[100:, ])
+
+    assert_not_equal(score1, score2)
+
+    # Now ensure that the scores are the same when both do or do not shuffle
+    for shuffle in [True, False]:
+        mlp1 = MLPClassifier(hidden_layer_sizes=(50,), max_iter=10,
+                             random_state=0, shuffle=shuffle)
+        mlp2 = MLPClassifier(hidden_layer_sizes=(50,), max_iter=10,
+                             random_state=0, shuffle=shuffle)
+
+        mlp1.fit(X[:100, ], y[:100, ])
+        mlp2.fit(X[:100, ], y[:100, ])
+        score1 = mlp1.score(X[100:, ], y[100:, ])
+        score2 = mlp2.score(X[100:, ], y[100:, ])
+
+        assert_equal(score1, score2)
 
 
 def test_sparse_matrices():
