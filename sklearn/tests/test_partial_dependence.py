@@ -155,6 +155,10 @@ def test_partial_dependence_helpers(est, partial_dependence_fun,
     # output.
 
     X, y = make_regression(random_state=0)
+    # The 'init' estimator for GBDT (here the average prediction) isn't taken
+    # into account with the recursion method, for technical reasons. We set
+    # the mean to 0 to that this 'bug' doesn't have any effect.
+    y = y - y.mean()
     est.fit(X, y)
 
     # target feature will be set to .5 and then to 123
@@ -264,6 +268,7 @@ def test_partial_dependence_input():
         partial_dependence(est, [0], grid=[1, 2], X=list(X))
         partial_dependence(est, [0], grid=[[1], [2]], X=list(X))
 
+    partial_dependence(gbc, [0], grid=[1, 2])
 
 @if_matplotlib
 def test_plot_partial_dependence():

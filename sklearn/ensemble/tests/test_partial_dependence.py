@@ -45,6 +45,7 @@ def test_partial_dependence_classifier():
     # now with our own grid
     X_ = np.asarray(X)
     grid = np.unique(X_[:, 0])
+    print(grid)
     pdp_2, axes = partial_dependence(clf, [0], grid=grid)
 
     assert axes is None
@@ -89,9 +90,6 @@ def test_partial_dependecy_input():
 
     assert_raises(ValueError, partial_dependence,
                   clf, [0], grid=None, X=None)
-
-    assert_raises(ValueError, partial_dependence,
-                  clf, [0], grid=[0, 1], X=X)
 
     # first argument must be an instance of BaseGradientBoosting
     assert_raises(ValueError, partial_dependence,
