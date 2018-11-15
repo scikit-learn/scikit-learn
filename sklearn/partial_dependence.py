@@ -88,7 +88,7 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     return cartesian(values), values
 
 
-def _partial_dependence_recursion(est, grid, target_variables, X=None):
+def _partial_dependence_recursion(est, grid, target_variables):
     # TODO: The pattern below required to avoid a namespace collision.
     # TODO: Move below imports to module level import at 0.22 release.
     from .ensemble._gradient_boosting import _partial_dependence_tree
@@ -240,19 +240,17 @@ def partial_dependence(est, target_variables, grid=None, X=None,
     if X is not None:
         X = check_array(X)
 
+    accepted_methods = ('brute', 'recursion', 'auto')
+    if method not in accepted_methods:
+        raise ValueError(
+            'method {} is invalid. Accepted method names are {}, auto.'.format(
+                method, ', '.join(accepted_methods)))
+
     if method == 'auto':
         if isinstance(est, BaseGradientBoosting):
             method = 'recursion'
         else:
             method = 'brute'
-    method_to_function = {
-        'brute': _partial_dependence_brute,
-        'recursion': _partial_dependence_recursion
-    }
-    if method not in method_to_function:
-        raise ValueError(
-            'method {} is invalid. Accepted method names are {}, auto.'.format(
-                method, ', '.join(sorted(method_to_function.keys()))))
 
     if method == 'recursion':
         if not isinstance(est, BaseGradientBoosting):
@@ -297,8 +295,12 @@ def partial_dependence(est, target_variables, grid=None, X=None,
                              'of target variables ({})'.format(
                                  grid.shape[1], target_variables.shape[0]))
 
-    averaged_predictions = method_to_function[method](est, grid,
-                                                      target_variables, X)
+    if method == 'brute':
+        averaged_predictions = _partial_dependence_brute(est, grid,
+                                                         target_variables, X)
+    else:
+        averaged_predictions = _partial_dependence_recursion(est, grid,
+                                                             target_variables)
 
     return averaged_predictions, values
 

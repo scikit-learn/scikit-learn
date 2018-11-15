@@ -148,12 +148,11 @@ def test_grid_from_X():
 
 
 @pytest.mark.parametrize('target_feature', (0, 3))
-@pytest.mark.parametrize('est, partial_dependence_fun',
-                         [(LinearRegression(), _partial_dependence_brute),
+@pytest.mark.parametrize('est, method',
+                         [(LinearRegression(), 'brute'),
                           (GradientBoostingRegressor(random_state=0),
-                          _partial_dependence_recursion)])
-def test_partial_dependence_helpers(est, partial_dependence_fun,
-                                    target_feature):
+                          'recursion')])
+def test_partial_dependence_helpers(est, method, target_feature):
     # Check that what is returned by _partial_dependence_brute or
     # _partial_dependece_recursion is equivalent to manually setting a target
     # feature to a given value, and computing the average prediction over all
@@ -172,7 +171,11 @@ def test_partial_dependence_helpers(est, partial_dependence_fun,
     target_variables = np.array([target_feature], dtype=np.int32)
     grid = np.array([[.5],
                      [123]])
-    pdp = partial_dependence_fun(est, grid, target_variables, X)
+
+    if method == 'brute':
+        pdp = _partial_dependence_brute(est, grid, target_variables, X)
+    else:
+        pdp = _partial_dependence_recursion(est, grid, target_variables)
 
     mean_predictions = []
     for val in (.5, 123):
@@ -192,7 +195,7 @@ def test_partial_dependence_helpers(est, partial_dependence_fun,
                           sklearn.neighbors.RadiusNeighborsClassifier,
                           sklearn.ensemble.RandomForestClassifier))
 def test_multiclass_multioutput(Estimator):
-    # Make error is raised for multiclass-multioutput classifiers
+    # Make sure error is raised for multiclass-multioutput classifiers
 
     # make multiclass-multioutput dataset
     X, y = make_classification(n_classes=3, n_clusters_per_class=1,
@@ -230,6 +233,9 @@ def test_partial_dependence_input():
                         'est must be an instance of BaseGradientBoosting '
                         'for the "recursion" method',
                         partial_dependence, lr, [0], method='recursion')
+
+    assert_raises_regex(ValueError, "X is required for brute method",
+                        partial_dependence, lr, [0], grid=[[[1]]])
 
     assert_raises_regex(ValueError, "est requires a predict_proba()",
                         partial_dependence, SVC(), [0], X=X)
