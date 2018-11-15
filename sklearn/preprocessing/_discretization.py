@@ -286,7 +286,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                           "will be used by default. Pass subsample=None to"
                           "silence this warning for now.", FutureWarning)
 
-        if self.subsample is not None and self.subsample is not "warn"::
+        if self.subsample is not None and self.subsample is not "warn":
 
             if n_samples > self.subsample:
                 subsample_idx = self.random_state.choice(
