@@ -1070,9 +1070,9 @@ def check_fit_score_takes_y(name, estimator_orig):
                 # with an explicit "self", so need to shift arguments
                 args = args[1:]
             assert args[1] in ["y", "Y"],\
-                        "Expected y or Y as second argument for method " \
-                        "%s of %s. Got arguments: %r." \
-                        % (func_name, type(estimator).__name__, args)
+                "Expected y or Y as second argument for method " \
+                "%s of %s. Got arguments: %r." \
+                % (func_name, type(estimator).__name__, args)
 
 
 @ignore_warnings
@@ -1643,7 +1643,7 @@ def check_supervised_y_2d(name, estimator_orig):
         # check that we warned if we don't support multi-output
         assert_greater(len(w), 0, msg)
         assert "DataConversionWarning('A column-vector y" \
-                    " was passed when a 1d array was expected" in msg
+               " was passed when a 1d array was expected" in msg
     assert_allclose(y_pred.ravel(), y_pred_2d.ravel())
 
 
@@ -1982,16 +1982,16 @@ def check_no_attributes_set_in_init(name, estimator):
     invalid_attr = (set(vars(estimator)) - set(init_params)
                     - set(parents_init_params))
     assert not(invalid_attr), \
-                 "Estimator %s should not set any attribute apart" \
-                 " from parameters during init. Found attributes %s." \
-                 % (name, sorted(invalid_attr))
+        "Estimator %s should not set any attribute apart" \
+        " from parameters during init. Found attributes %s." \
+        % (name, sorted(invalid_attr))
     # Ensure that each parameter is set in init
     invalid_attr = (set(init_params) - set(vars(estimator))
                     - set(["self"]))
     assert not(invalid_attr), \
-                 "Estimator %s should store all parameters" \
-                 " as an attribute during init. Did not find " \
-                 "attributes %s." % (name, sorted(invalid_attr))
+        "Estimator %s should store all parameters" \
+        " as an attribute during init. Did not find " \
+        "attributes %s." % (name, sorted(invalid_attr))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -2210,7 +2210,7 @@ def check_get_params_invariance(name, estimator_orig):
     deep_params = e.get_params(deep=True)
 
     assert all(item in deep_params.items() for item in
-                    shallow_params.items())
+               shallow_params.items())
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

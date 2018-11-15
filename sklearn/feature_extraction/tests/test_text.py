@@ -29,8 +29,9 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
-from sklearn.utils.testing import (assert_equal, assert_not_equal, assert_almost_equal,
-                                   assert_in, assert_less, assert_greater,
+from sklearn.utils.testing import (assert_equal, assert_not_equal,
+                                   assert_almost_equal, assert_in,
+                                   assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry, ignore_warnings,
                                    SkipTest, assert_raises, assert_no_warnings,

@@ -1239,8 +1239,9 @@ def test_cv_iterable_wrapper():
         splits_are_equal = True
     except AssertionError:
         splits_are_equal = False
-    assert not splits_are_equal, "If the splits are randomized, " \
-                                 "successive calls to split should yield different results"
+    assert not splits_are_equal, \
+        "If the splits are randomized, " \
+        "successive calls to split should yield different results"
 
 
 def test_group_kfold():

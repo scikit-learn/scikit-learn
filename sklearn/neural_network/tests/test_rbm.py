@@ -185,9 +185,8 @@ def test_sparse_and_verbose():
         rbm.fit(X)
         s = sys.stdout.getvalue()
         # make sure output is sound
-        assert re.match(r"\[BernoulliRBM\] Iteration 1," 
-                        r" pseudo-likelihood = -?(\d)+(\.\d+)?," 
-                        r" time = (\d|\.)+s",
-                             s)
+        assert re.match(r"\[BernoulliRBM\] Iteration 1,"
+                        r" pseudo-likelihood = -?(\d)+(\.\d+)?,"
+                        r" time = (\d|\.)+s", s)
     finally:
         sys.stdout = old_stdout
