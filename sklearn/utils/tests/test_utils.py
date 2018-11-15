@@ -285,7 +285,7 @@ def test_deprecation_joblib_api(tmpdir):
     # Ensure that the joblib API is deprecated in sklearn.util
     from sklearn.utils import Parallel, Memory, delayed
     from sklearn.utils import cpu_count, hash, effective_n_jobs
-    check_warning(Memory , tmpdir)
+    check_warning(Memory, tmpdir)
     check_warning(hash, 1)
     check_warning(Parallel)
     check_warning(cpu_count)
