@@ -9,7 +9,7 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_false, assert_true
 
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer
@@ -659,3 +659,33 @@ def test_imputation_add_indicator(marker):
     assert_array_equal(X_trans, X_true)
     assert_array_equal(imputer.statistics_, np.array([3., 2., 5.]))
     assert_array_equal(imputer.indicator_.features_, np.array([0, 1, 2]))
+
+
+@pytest.mark.parametrize(
+    "arr_type",
+    [
+        sparse.csc_matrix, sparse.csr_matrix, sparse.coo_matrix,
+        sparse.lil_matrix, sparse.bsr_matrix
+    ]
+)
+def test_imputation_add_indicator_sparse_matrix(arr_type):
+    X = np.array([
+        [np.nan, 1, 5],
+        [2, np.nan, 1],
+        [6, 3, np.nan],
+        [1, 2, 9]
+    ])
+    X_sparse = arr_type(X)
+    X_true = np.array([
+        [3., 1., 5., 1., 0., 0.],
+        [2., 2., 1., 0., 1., 0.],
+        [6., 3., 5., 0., 0., 1.],
+        [1., 2., 9., 0., 0., 0.],
+    ])
+
+    imputer = SimpleImputer(missing_values=np.nan, add_indicator=True)
+    X_trans = imputer.fit_transform(X_sparse)
+
+    assert isinstance(X_trans, sparse.csc.csc_matrix)
+    assert X_trans.shape == X_true.shape
+    assert_allclose_dense_sparse(X_trans.toarray(), X_true)
