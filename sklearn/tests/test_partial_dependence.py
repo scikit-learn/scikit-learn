@@ -139,7 +139,7 @@ def test_grid_from_X():
                             _grid_from_X, X, percentiles=percentiles)
 
     assert_raises_regex(ValueError,
-                        "percentiles\[0\] must be strictly less than",
+                        r"percentiles\[0\] must be strictly less than",
                         _grid_from_X, X, percentiles=(.9, .1))
 
     assert_raises_regex(ValueError,
@@ -248,8 +248,8 @@ def test_partial_dependence_input():
 
     for target_variables in ([0], [0, 1, 0]):
         assert_raises_regex(ValueError,
-                            'grid.shape\[1\] \(2\) must be equal to the number'
-                            ' of target variables',
+                            r'grid.shape\[1\] \(2\) must be equal '
+                            r'to the number of target variables',
                             partial_dependence, lr, target_variables,
                             grid=[[30, -123]], X=X)
 
@@ -369,7 +369,7 @@ def test_plot_partial_dependence_input():
                         target=None)
     for target in (-1, 100):
         assert_raises_regex(ValueError,
-                            'target must be in \[0, n_tasks\]',
+                            r'target must be in \[0, n_tasks\]',
                             plot_partial_dependence, lr_m, X_m, [0],
                             target=target)
 
