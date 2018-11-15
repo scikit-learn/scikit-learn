@@ -423,7 +423,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         # stacks a MissingIndicator transform into the output of the imputer
         if self.add_indicator:
-            X = np.concatenate((X, X_trans), axis=1)
+            if sparse.issparse(X):
+                X = sparse.hstack((X, X_trans))
+            else:
+                X = np.concatenate((X, X_trans), axis=1)
 
         return X
 
