@@ -120,13 +120,13 @@ class IncrementalPCA(_BasePCA):
     `D. Ross, J. Lim, R. Lin, M. Yang, Incremental Learning for Robust Visual
     Tracking, International Journal of Computer Vision, Volume 77, Issue 1-3,
     pp. 125-141, May 2008.`
-    See http://www.cs.toronto.edu/~dross/ivt/RossLimLinYang_ijcv.pdf
+    See https://www.cs.toronto.edu/~dross/ivt/RossLimLinYang_ijcv.pdf
 
     This model is an extension of the Sequential Karhunen-Loeve Transform from:
     `A. Levy and M. Lindenbaum, Sequential Karhunen-Loeve Basis Extraction and
     its Application to Images, IEEE Transactions on Image Processing, Volume 9,
     Number 8, pp. 1371-1374, August 2000.`
-    See http://www.cs.technion.ac.il/~mic/doc/skl-ip.pdf
+    See https://www.cs.technion.ac.il/~mic/doc/skl-ip.pdf
 
     We have specifically abstained from an optimization used by authors of both
     papers, a QR decomposition used in specific situations to reduce the
@@ -196,7 +196,8 @@ class IncrementalPCA(_BasePCA):
         else:
             self.batch_size_ = self.batch_size
 
-        for batch in gen_batches(n_samples, self.batch_size_):
+        for batch in gen_batches(n_samples, self.batch_size_,
+                                 min_batch_size=self.n_components or 0):
             self.partial_fit(X[batch], check_input=False)
 
         return self

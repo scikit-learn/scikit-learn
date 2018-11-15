@@ -527,7 +527,7 @@ def load_digits(n_class=10, return_X_y=False):
         .. versionadded:: 0.18
 
     This is a copy of the test set of the UCI ML hand-written digits datasets
-    http://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
+    https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
 
     Examples
     --------

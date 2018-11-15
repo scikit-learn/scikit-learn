@@ -178,17 +178,25 @@ following rules before submitting:
    as your Python, scikit-learn, numpy, and scipy versions. This information
    can be found by running the following code snippet:
 
-  ```python
-  import platform; print(platform.platform())
-  import sys; print("Python", sys.version)
-  import numpy; print("NumPy", numpy.__version__)
-  import scipy; print("SciPy", scipy.__version__)
-  import sklearn; print("Scikit-Learn", sklearn.__version__)
-  ```
+   For scikit-learn >= 0.20:
+
+   ```python
+   import sklearn; sklearn.show_versions()
+   ```
+
+   For scikit-learn < 0.20:
+
+   ```python
+   import platform; print(platform.platform())
+   import sys; print("Python", sys.version)
+   import numpy; print("NumPy", numpy.__version__)
+   import scipy; print("SciPy", scipy.__version__)
+   import sklearn; print("Scikit-Learn", sklearn.__version__)
+   ```
 
 -  Please be specific about what estimators and/or functions are involved
    and the shape of the data, as appropriate; please include a
-   [reproducible](http://stackoverflow.com/help/mcve) code snippet
+   [reproducible](https://stackoverflow.com/help/mcve) code snippet
    or link to a [gist](https://gist.github.com). If an exception is raised,
    please provide the traceback.
 
@@ -222,8 +230,8 @@ be placed in ``_build/html/stable`` and are viewable in a web browser. See the
 
 For building the documentation, you will need
 [sphinx](http://sphinx.pocoo.org/),
-[matplotlib](http://matplotlib.org/), and
-[pillow](http://pillow.readthedocs.io/en/latest/).
+[matplotlib](https://matplotlib.org/), and
+[pillow](https://pillow.readthedocs.io/en/latest/).
 
 When you are writing documentation, it is important to keep a good
 compromise between mathematical and algorithmic details, and give
