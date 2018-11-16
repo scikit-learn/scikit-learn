@@ -82,13 +82,6 @@ def test_pairwise_distances():
     S = pairwise_distances(X, metric="haversine")
     S2 = haversine_distances(X)
     assert_array_almost_equal(S, S2)
-    # Test haversine distance, with Y != X
-    Y = rng.random_sample((2, 2))
-    Y[:, 0] = (Y[:, 0] - 0.5)*2*np.pi/2
-    Y[:, 1] = (Y[:, 1] - 0.5)*2*np.pi
-    S = pairwise_distances(X, Y, metric="haversine")
-    S2 = haversine_distances(X, Y)
-    assert_array_almost_equal(S, S2)
 
     # "cityblock" uses scikit-learn metric, cityblock (function) is
     # scipy.spatial.
