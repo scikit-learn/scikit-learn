@@ -1044,10 +1044,8 @@ def test_callable_metric():
 
 
 def test_valid_brute_metric_for_auto_algorithm():
-    X = rng.rand(12, 12)
-    X_haversine = rng.rand(12, 2)
+    X = rng.rand(12, 2)
     Xcsr = csr_matrix(X)
-    Xcsr_haversine = csr_matrix(X_haversine)
 
     # check that there is a metric that is valid for brute
     # but not ball_tree (so we actually test something)
@@ -1058,18 +1056,9 @@ def test_valid_brute_metric_for_auto_algorithm():
     require_params = ['mahalanobis', 'wminkowski', 'seuclidean']
     for metric in VALID_METRICS['brute']:
         if metric != 'precomputed' and metric not in require_params:
-            if metric == 'haversine':
-                nn = neighbors.NearestNeighbors(
-                        n_neighbors=3,
-                        algorithm='auto',
-                        metric=metric).fit(X_haversine)
-                nn.kneighbors(X_haversine)
-            else:
-                nn = neighbors.NearestNeighbors(
-                        n_neighbors=3,
-                        algorithm='auto',
-                        metric=metric).fit(X)
-                nn.kneighbors(X)
+            nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
+                                            metric=metric).fit(X)
+            nn.kneighbors(X)
         elif metric == 'precomputed':
             X_precomputed = rng.random_sample((10, 4))
             Y_precomputed = rng.random_sample((3, 4))
@@ -1082,13 +1071,8 @@ def test_valid_brute_metric_for_auto_algorithm():
 
     for metric in VALID_METRICS_SPARSE['brute']:
         if metric != 'precomputed' and metric not in require_params:
-            if metric == 'haversine':
-                continue
-            else:
-                nn = neighbors.NearestNeighbors(
-                        n_neighbors=3,
-                        algorithm='auto',
-                        metric=metric).fit(Xcsr)
+            nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
+                                            metric=metric).fit(Xcsr)
                 nn.kneighbors(Xcsr)
 
     # Metric with parameter
