@@ -42,7 +42,7 @@ def set_config(assume_finite=None, working_memory=None,
         to this number of MiB (per job when parallelised), often saving both
         computation time and memory on expensive operations that can be
         performed in chunks. Global default: 1024.
-        
+
         .. versionadded:: 0.20
 
     euclidean_distance_algorithm : {str, None}
