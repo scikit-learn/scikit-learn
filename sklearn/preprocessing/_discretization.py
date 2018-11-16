@@ -89,7 +89,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     ...      [ 0, 3, -2,  0.5],
     ...      [ 1, 4, -1,    2]]
     >>> est = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='uniform',
-    subsample=None)
+    ...                        subsample=None)
     >>> est.fit(X)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     KBinsDiscretizer(...)
     >>> Xt = est.transform(X)
@@ -129,8 +129,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         ``1`` based on a parameter ``threshold``.
     """
 
-    def __init__(self, n_bins=5, encode='onehot',
-                 strategy='quantile', random_state=None, subsample='warn'):
+    def __init__(self, n_bins=5, encode='onehot', strategy='quantile',
+                 random_state=None, subsample='warn'):
         self.n_bins = n_bins
         self.encode = encode
         self.strategy = strategy
@@ -194,24 +194,20 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                 continue
 
             if self.strategy == 'uniform':
-                bin_edges[jj] = np.linspace(col_min, col_max,
-                                            n_bins[jj] + 1)
+                bin_edges[jj] = np.linspace(col_min, col_max, n_bins[jj] + 1)
 
             elif self.strategy == 'quantile':
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
                 if np_version < (1, 9):
                     quantiles = list(quantiles)
-                bin_edges[jj] = np.asarray(np.percentile(column,
-                                           quantiles))
+                bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
 
             elif self.strategy == 'kmeans':
                 from ..cluster import KMeans  # fixes import loops
 
                 # Deterministic initialization with uniform spacing
-                uniform_edges = np.linspace(col_min, col_max,
-                                            n_bins[jj] + 1)
-                init = (uniform_edges[1:] + uniform_edges[:-1])[:,
-                                                                None] * 0.5
+                uniform_edges = np.linspace(col_min, col_max, n_bins[jj] + 1)
+                init = (uniform_edges[1:] + uniform_edges[:-1])[:, None] * 0.5
 
                 # 1D k-means procedure
                 km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
@@ -300,16 +296,14 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         n_features = self.n_bins_.shape[0]
         if Xt.shape[1] != n_features:
             raise ValueError("Incorrect number of features. Expecting {}, "
-                             "received {}.".format(n_features,
-                                                   Xt.shape[1]))
+                             "received {}.".format(n_features, Xt.shape[1]))
 
         bin_edges = self.bin_edges_
         for jj in range(Xt.shape[1]):
-            # Values which are close to a bin edge are susceptible
-            # to numeric instability. Add eps to X so these values
-            # are binned correctly with respect to their decimal
-            # truncation. See documentation of numpy.isclose for an
-            # explanation of ``rtol`` and ``atol``.
+            # Values which are close to a bin edge are susceptible to numeric
+            # instability. Add eps to X so these values are binned correctly
+            # with respect to their decimal truncation. See documentation of
+            # numpy.isclose for an explanation of ``rtol`` and ``atol``.
             rtol = 1.e-5
             atol = 1.e-8
             eps = atol + rtol * np.abs(Xt[:, jj])
