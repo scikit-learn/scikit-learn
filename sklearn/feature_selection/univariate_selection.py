@@ -389,11 +389,11 @@ class SelectPercentile(_BaseFilter):
         Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
-    score_params : dict, default=None
-        Parameter kwargs to pass to score_func
-
     percentile : int, optional, default=10
         Percent of features to keep.
+
+    score_params : dict, default=None
+        Parameter kwargs to pass to score_func
 
     Attributes
     ----------
@@ -433,8 +433,8 @@ class SelectPercentile(_BaseFilter):
     GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
 
-    def __init__(self, score_func=f_classif, score_params=None,
-                 percentile=10):
+    def __init__(self, score_func=f_classif, percentile=10,
+                 score_params=None):
         super(SelectPercentile, self).__init__(score_func, score_params)
         self.percentile = percentile
 
@@ -476,12 +476,12 @@ class SelectKBest(_BaseFilter):
         Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
-    score_params : dict, default=None
-        Parameter kwargs to pass to score_func
-
     k : int or "all", optional, default=10
         Number of top features to select.
         The "all" option bypasses selection, for use in a parameter search.
+
+    score_params : dict, default=None
+        Parameter kwargs to pass to score_func
 
     Attributes
     ----------
@@ -521,7 +521,7 @@ class SelectKBest(_BaseFilter):
     GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
 
-    def __init__(self, score_func=f_classif, score_params=None, k=10):
+    def __init__(self, score_func=f_classif, k=10, score_params=None):
         super(SelectKBest, self).__init__(score_func, score_params)
         self.k = k
 
@@ -564,11 +564,11 @@ class SelectFpr(_BaseFilter):
         Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
-    score_params : dict, default=None
-        Parameter kwargs to pass to score_func
-
     alpha : float, optional
         The highest p-value for features to be kept.
+
+    score_params : dict, default=None
+        Parameter kwargs to pass to score_func
 
     Attributes
     ----------
@@ -603,7 +603,7 @@ class SelectFpr(_BaseFilter):
     GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
 
-    def __init__(self, score_func=f_classif, score_params=None, alpha=5e-2):
+    def __init__(self, score_func=f_classif, alpha=5e-2, score_params=None):
         super(SelectFpr, self).__init__(score_func, score_params)
         self.alpha = alpha
 
@@ -629,11 +629,11 @@ class SelectFdr(_BaseFilter):
         Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
-    score_params : dict, default=None
-        Parameter kwargs to pass to score_func
-
     alpha : float, optional
         The highest uncorrected p-value for features to keep.
+
+    score_params : dict, default=None
+        Parameter kwargs to pass to score_func
 
     Examples
     --------
@@ -672,7 +672,7 @@ class SelectFdr(_BaseFilter):
     GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
 
-    def __init__(self, score_func=f_classif, score_params=None, alpha=5e-2):
+    def __init__(self, score_func=f_classif, alpha=5e-2, score_params=None):
         super(SelectFdr, self).__init__(score_func, score_params)
         self.alpha = alpha
 
@@ -701,11 +701,11 @@ class SelectFwe(_BaseFilter):
         Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
-    score_params : dict, default=None
-        Parameter kwargs to pass to score_func
-
     alpha : float, optional
         The highest uncorrected p-value for features to keep.
+
+    score_params : dict, default=None
+        Parameter kwargs to pass to score_func
 
     Examples
     --------
@@ -738,7 +738,7 @@ class SelectFwe(_BaseFilter):
     GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
 
-    def __init__(self, score_func=f_classif, score_params=None, alpha=5e-2):
+    def __init__(self, score_func=f_classif, alpha=5e-2, score_params=None):
         super(SelectFwe, self).__init__(score_func, score_params)
         self.alpha = alpha
 
@@ -766,14 +766,14 @@ class GenericUnivariateSelect(_BaseFilter):
         (scores, pvalues). For modes 'percentile' or 'kbest' it can return
         a single array scores.
 
-    score_params : dict, default=None
-        Parameter kwargs to pass to score_func
-
     mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}
         Feature selection mode.
 
     param : float or int depending on the feature selection mode
         Parameter of the corresponding mode.
+
+    score_params : dict, default=None
+        Parameter kwargs to pass to score_func
 
     Attributes
     ----------
@@ -815,8 +815,8 @@ class GenericUnivariateSelect(_BaseFilter):
                         'fdr': SelectFdr,
                         'fwe': SelectFwe}
 
-    def __init__(self, score_func=f_classif, score_params=None,
-                 mode='percentile', param=1e-5):
+    def __init__(self, score_func=f_classif, mode='percentile', param=1e-5,
+                 score_params=None):
         super(GenericUnivariateSelect, self).__init__(score_func, score_params)
         self.mode = mode
         self.param = param
