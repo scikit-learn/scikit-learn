@@ -24,9 +24,12 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
 
 import sklearn
+from sklearn.base import RegressorMixin
 from sklearn.cluster.bicluster import BiclusterMixin
 
 from sklearn.linear_model.base import LinearClassifierMixin
+from sklearn.linear_model import Ridge
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.utils import IS_PYPY
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,
@@ -64,30 +67,27 @@ def _tested_estimators():
 
         required_parameters = getattr(Estimator, "_required_parameters", [])
         if len(required_parameters):
-            continue
-            """
             if required_parameters in (["estimator"], ["base_estimator"]):
                 if issubclass(Estimator, RegressorMixin):
                     estimator = Estimator(Ridge())
                 else:
                     estimator = Estimator(LinearDiscriminantAnalysis())
             else:
-                warn("Can't instantiate estimator {} which requires "
-                     "parameters {}".format(name, required_parameters),
-                     SkipTestWarning)
+                warnings.warn("Can't instantiate estimator {} which requires "
+                              "parameters {}".format(name,
+                                                     required_parameters),
+                              SkipTestWarning)
                 continue
         else:
             estimator = Estimator()
-        """
-        yield name, Estimator
+        yield name, estimator
 
 
 def _generate_checks_per_estimator(check_generator, estimators):
     with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
-        for name, Estimator in estimators:
-            estimator = Estimator()
+        for name, estimator in estimators:
             for check in check_generator(name, estimator):
-                yield name, Estimator, check
+                yield estimator, check
 
 
 def _rename_partial(val):
@@ -95,30 +95,32 @@ def _rename_partial(val):
         kwstring = "".join(["{}={}".format(k, v)
                             for k, v in val.keywords.items()])
         return "{}({})".format(val.func.__name__, kwstring)
+    # FIXME once we have short reprs we can use them here!
+    if hasattr(val, "get_params") and not isinstance(val, type):
+        return type(val).__name__
 
 
 @pytest.mark.parametrize(
-        "name, Estimator, check",
+        "estimator, check",
         _generate_checks_per_estimator(_yield_all_checks,
                                        _tested_estimators()),
         ids=_rename_partial
 )
-def test_estimators(name, Estimator, check):
-    # Common tests for non-meta estimators
+def test_estimators(estimator, check):
+    # Common tests for estimator instances
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
                                    UserWarning, FutureWarning)):
-        estimator = Estimator()
         set_checking_parameters(estimator)
+        name = estimator.__class__.__name__
         check(name, estimator)
 
 
-@pytest.mark.parametrize("name, Estimator",
+@pytest.mark.parametrize("name, estimator",
                          _tested_estimators())
-def test_no_attributes_set_in_init(name, Estimator):
+def test_no_attributes_set_in_init(name, estimator):
     # input validation etc for all estimators
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
                                    UserWarning, FutureWarning)):
-        estimator = Estimator()
         tags = _safe_tags(estimator)
         if tags['_skip_test']:
             warnings.warn("Explicit SKIP via _skip_test tag for "
