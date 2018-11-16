@@ -177,46 +177,52 @@ def partial_dependence(est, target_variables, grid=None, X=None,
         The target features for which the partial dependency should be
         computed.
     grid : array-like, shape=(n_points, len(target_variables)), optional
-        The grid of ``target_variables`` values for which the partial
-        dependency should be evaluated.
+        The grid of values for which the partial dependence should be
+        evaluated. If `None`, the grid will be generated from the values in
+        ``X``.
     X : array-like, shape=(n_samples, n_features)
-        The data on which ``est`` was trained. It is used both to generate
-        a ``grid`` for the ``target_variables`` (if ``grid`` wasn't specified),
-        and to compute the averaged predictions where the target features
-        values have been replaced by those in the grid, for 'brute' method.
-        Optional if ``grid`` is specified and ``method`` is 'recursion'.
-    percentiles : (low, high), default=(0.05, 0.95)
+        ``X`` is used both to generate a grid for the ``target_variables``
+        (if ``grid`` is None), and to compute the averaged predictions for
+        the 'brute' method. Optional if ``grid`` is not None and ``method``
+        is 'recursion'.
+    percentiles : tuple of float, optional (default=(0.05, 0.95))
         The lower and upper percentile used to create the extreme values
         for the ``grid``. Only used if ``grid`` is None.
-    grid_resolution : int, default=100
-        The number of equally spaced points on the grid. Only used  if ``grid``
-        is None.
-    method : {'recursion', 'brute', 'auto'}, default='auto'
-        The method to use to calculate the partial dependence predictions:
+    grid_resolution : int, optional (default=100)
+        The number of equally spaced points on the grid, for each target
+        feature. Only used if ``grid`` is None.
+    method : str, optional (default='auto')
+        The method used to calculate the averaged predictions:
 
         - 'recursion' is only supported for objects inheriting from
           `BaseGradientBoosting`, but is optimal in terms of speed. With
           this method, ``X`` is optional and is only used to build the grid.
+
         - 'brute' is supported for any estimator, but is more
-           computationally intensive. Both methods are equivalent.
+          computationally intensive.
+
         - If 'auto', then 'recursion' will be used for
           ``BaseGradientBoosting`` estimators, and 'brute' used for other
           estimators.
 
         Unlike the 'brute' method, 'recursion' does not account for the
         ``init`` predictor of the boosting process. In practice this still
-        produces the same values, up to a constant offset.
+        produces the same values, up to a constant offset in the target
+        response.
 
     Returns
     -------
-    averaged_predictions : array, shape=(n_classes, n_points)
+    averaged_predictions : array, shape=(n_targets, n_points)
         The predictions for all the points in the ``grid``, averaged over
-        all samples in X. For regression and binary classification
-        ``n_classes==1``.
+        all samples in X (or over the training data if ``method`` is
+        `recursion`). ``n_targets`` corresponds to the number of classes in
+        a multi-class setting, or to the number of tasks for multi-output
+        regression. For classical regression and binary classification
+        ``n_targets==1``.
     values: seq of ndarray or None
         The values with which the grid has been created, or None if
-        the grid has been given. The grid is a cartesian product of the arrays
-        in ``values``
+        the grid has been given. The generated grid is a cartesian product
+        of the arrays in ``values``
 
     Examples
     --------
@@ -314,8 +320,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     """Partial dependence plots.
 
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
-    columns. Two-way partial dependence plots are plotted as contour
-    plots.
+    columns. Two-way partial dependence plots are plotted as contour plots.
 
     Read more in the :ref:`User Guide <partial_dependence>`.
 
@@ -328,55 +333,61 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     X : array-like, shape=(n_samples, n_features)
         The data to use to build the grid of values on which the dependence
         will be evaluated. This is usually the training data.
-    features : seq of ints, strings, or tuples of ints or strings
+    features : list of ints or strings, or tuples of ints or strings
+        The target features for which to create the PDPs.
         If features[i] is an int or a string, a one-way PDP is created; if
-        features[i] is a tuple, a two-way PDP is created. Each tuple must be of
-        size 2.
+        features[i] is a tuple, a two-way PDP is created. Each tuple must be
+        of size 2.
         if any entry is a string, then it must be in ``feature_names``.
-    feature_names : seq of str
+    feature_names : seq of str, shape=(n_features,)
         Name of each feature; feature_names[i] holds the name of the feature
         with index i.
     target : int, optional (default=None)
         - In a multiclass setting, specifies the class for which the PDPs
-        should be computed. Note that for binary classification, the positive
-        class (index 1) is always used.
+          should be computed. Note that for binary classification, the
+          positive class (index 1) is always used.
         - In a multioutput setting, specifies the task for which the PDPs
           should be computed
-    n_cols : int
-        The number of columns in the grid plot (default: 3).
-    grid_resolution : int, default=100
-        The number of equally spaced points on the axes.
-    percentiles : (low, high), default=(0.05, 0.95)
+        Ignored in binary classification or classical regression settings.
+    n_cols : int, optional (default=3)
+        The number of columns in the grid plot.
+    grid_resolution : int, optional (default=100)
+        The number of equally spaced points on the axes of the plots, for each
+        target feature.
+    percentiles : tuple of float, optional (default=(0.05, 0.95))
         The lower and upper percentile used to create the extreme values
         for the PDP axes.
-    method : {'recursion', 'brute', 'auto'}, default='auto'
+    method : str, optional (default='auto')
         The method to use to calculate the partial dependence predictions:
 
         - 'recursion' is only supported for objects inheriting from
           `BaseGradientBoosting`, but is optimal in terms of speed.
+
         - 'brute' is supported for any estimator, but is more
-           computationally intensive.
+          computationally intensive.
+
         - If 'auto', then 'recursion' will be used for
           ``BaseGradientBoosting`` estimators, and 'brute' used for other
           estimators.
 
         Unlike the 'brute' method, 'recursion' does not account for the
         ``init`` predictor of the boosting process. In practice this still
-        produces the same plots, up to a constant offset.
-    n_jobs : int
+        produces the same plots, up to a constant offset in the target
+        response.
+    n_jobs : int, optional (default=1)
         The number of CPUs to use to compute the PDs. -1 means 'all CPUs'.
-        Defaults to 1.
-    verbose : int
-        Verbose output during PD computations. Defaults to 0.
-    ax : Matplotlib axis object, default None
+        See :term:`Glossary <n_jobs>` for more details.
+    verbose : int, optional (default=0)
+        Verbose output during PD computations.
+    ax : Matplotlib axis object, optional (default=None)
         An axis object onto which the plots will be drawn.
-    line_kw : dict
+    line_kw : dict, optional
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For one-way partial dependence plots.
-    contour_kw : dict
+    contour_kw : dict, optional
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For two-way partial dependence plots.
-    **fig_kw : dict
+    **fig_kw : dict, optional
         Dict with keywords passed to the figure() call.
         Note that all keywords not recognized above will be automatically
         included here.

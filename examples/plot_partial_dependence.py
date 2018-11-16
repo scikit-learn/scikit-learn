@@ -16,12 +16,12 @@ housing dataset. The example is taken from [1]_.
 
 The plot shows four one-way and one two-way partial dependence plots.
 The target variables for the one-way PDP are:
-median income (`MedInc`), avg. occupants per household (`AvgOccup`),
-median house age (`HouseAge`), and avg. rooms per household (`AveRooms`).
+median income (`MedInc`), average occupants per household (`AvgOccup`),
+median house age (`HouseAge`), and average rooms per household (`AveRooms`).
 
 We can clearly see that the median house price shows a linear relationship
 with the median income (top left) and that the house price drops when the
-avg. occupants per household increases (top middle).
+average occupants per household increases (top middle).
 The top right plot shows that the house age in a district does not have
 a strong influence on the (median) house price; so does the average rooms
 per household.
@@ -30,12 +30,11 @@ in the training data.
 
 Partial dependence plots with two target features enable us to visualize
 interactions among them. The two-way partial dependence plot shows the
-dependence of median house price on joint values of house age and avg.
+dependence of median house price on joint values of house age and average
 occupants per household. We can clearly see an interaction between the
-two features:
-For an avg. occupancy greater than two, the house price is nearly independent
-of the house age, whereas for values less than two there is a strong dependence
-on age.
+two features: for an average occupancy greater than two, the house price is
+nearly independent of the house age, whereas for values less than two there
+is a strong dependence on age.
 
 .. [1] T. Hastie, R. Tibshirani and J. Friedman,
     "Elements of Statistical Learning Ed. 2", Springer, 2009.

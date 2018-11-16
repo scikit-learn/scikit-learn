@@ -17,7 +17,7 @@ Due to the limits of human perception the size of the target feature set
 must be small (usually, one or two) thus the target features are usually
 chosen among the most important features.
 
-The Figure below shows four one-way and one two-way partial dependence plots
+The figure below shows four one-way and one two-way partial dependence plots
 for the California housing dataset, with a :class:`GradientBoostingRegressor
 <sklearn.ensemble.GradientBoostingRegressor>`:
 
@@ -32,11 +32,11 @@ above figure shows the effect of the median income in a district on the
 median house price; we can clearly see a linear relationship among them.
 
 PDPs with two target features show the interactions among the two features.
-For example, the two-variable PDP in the above Figure shows the dependence
-of median house price on joint values of house age and avg. occupants per
+For example, the two-variable PDP in the above figure shows the dependence
+of median house price on joint values of house age and average occupants per
 household. We can clearly see an interaction between the two features: for
-an avg. occupancy greater than two, the house price is nearly independent of
-the house age, whereas for values less than two there is a strong dependence
+an average occupancy greater than two, the house price is nearly independent of
+the house age, whereas for values less than 2 there is a strong dependence
 on age.
 
 The :mod:`sklearn.partial_dependence` module provides a convenience function
@@ -79,11 +79,11 @@ the plots, you can use the :func:`partial_dependence` function::
     >>> axes  # doctest: +ELLIPSIS
     [array([-1.624..., -1.592..., ...
 
-The function requires either the argument ``grid`` which specifies the
-values of the target features on which the partial dependence function
-should be evaluated, or the argument ``X`` which is a convenience mode for
-automatically creating ``grid`` from the training data. If ``grid`` is not
-specified, the ``values`` field returned by the function gives the actual
+You can specify the argument ``grid`` which defines the values of the target
+features on which the partial dependence function should be evaluated, or
+the argument ``X`` which is a convenience mode for automatically creating
+the grid from the training data. If ``grid`` is not specified, the
+``values`` field returned by :func:`partial_dependence` gives the actual
 values used in the grid for each target feature. They also correspond to the
 axis of the plots.
 
@@ -99,7 +99,10 @@ traversal is performed: if a split node involves a 'target' feature, the
 corresponding left or right branch is followed, otherwise both branches are
 followed, each branch is weighted by the fraction of training samples that
 entered that branch. Finally, the partial dependence is given by a weighted
-average of all visited leaves.
+average of all visited leaves. Note that with the ``'recursion'`` method,
+``X`` is only used to generate the grid, not to compute the averaged
+predictions. The averaged predictions will always be computed on the data with
+which the trees were trained.
 
 .. rubric:: Footnotes
 

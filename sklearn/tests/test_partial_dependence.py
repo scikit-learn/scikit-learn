@@ -162,7 +162,7 @@ def test_partial_dependence_helpers(est, method, target_feature):
     # _partial_dependece_recursion is equivalent to manually setting a target
     # feature to a given value, and computing the average prediction over all
     # samples.
-    # This also checks that the brute method and the recursion give the same
+    # This also checks that the brute and recursion methods give the same
     # output.
 
     X, y = make_regression(random_state=0)
