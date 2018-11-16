@@ -322,7 +322,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
             return [np.log(p) for p in proba]
 
     def _more_tags(self):
-        return {'no_accuracy_assured': True, 'no_validation': True}
+        return {'poor_score': True, 'no_validation': True}
 
     def score(self, X, y, sample_weight=None):
         """Returns the mean accuracy on the given test data and labels.
@@ -517,7 +517,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         return (y, y_std) if return_std else y
 
     def _more_tags(self):
-        return {'no_accuracy_assured': True, 'no_validation': True}
+        return {'poor_score': True, 'no_validation': True}
 
     def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction.

@@ -457,7 +457,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         return self.fit(X, y).transform(X, y)
 
     def _more_tags(self):
-        return {'no_accuracy_assured': True}
+        return {'poor_score': True}
 
 
 class PLSRegression(_PLS):

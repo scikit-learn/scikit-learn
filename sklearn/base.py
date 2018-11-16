@@ -19,7 +19,7 @@ _DEFAULT_TAGS = {
     'non_deterministic': False,
     'requires_positive_data': False,
     'X_types': ['2darray'],
-    'no_accuracy_assured': False,
+    'poor_score': False,
     'no_validation': False,
     'multioutput': False,
     "allow_nan": False,

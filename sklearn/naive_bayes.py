@@ -626,7 +626,7 @@ class BaseDiscreteNB(BaseNB):
     intercept_ = property(_get_intercept)
 
     def _more_tags(self):
-        return {'no_accuracy_assured': True}
+        return {'poor_score': True}
 
 
 class MultinomialNB(BaseDiscreteNB):

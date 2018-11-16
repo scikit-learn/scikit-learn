@@ -1398,9 +1398,11 @@ of estimators that allow programmatic inspection of their capabilities, such as
 sparse matrix support, supported output types and supported methods.  The
 estimator tags are a dictionary returned by the method ``_get_tags()``.  These
 tags are used by the common tests and the ``check_estimator`` function to
-decide what tests to run and what input data is appropriate.
+decide what tests to run and what input data is appropriate. Tags can depends on
+estimator parameters or even system architecture and can in general only be
+determined at runtime.
 
-The default value of all tags is ``False``.
+The default value of all tags buy ``X_types`` is ``False``.
 
 The current set of estimator tags are:
 
@@ -1426,7 +1428,7 @@ stateless
 allow_nan
     whether the estimator supports data with missing values encoded as np.NaN
 
-no_accuracy_assured
+poor_score
     whether the estimator fails to provide a "reasonable" test-set score.
 
 multioutput_only
@@ -1434,6 +1436,14 @@ multioutput_only
 
 _skip_test
     whether to skip common tests entirely. Don't use this unless you have a *very good* reason.
+
+X_types
+    Supported input types for X as list of strings. Tests are currently only run if '2darray' is contained
+    in the list, signifying that the estimator takes continuous 2d numpy arrays as input. The default
+    value is ['2darray']. Other possible types are ``'string'``, ``'sparse'``, ``'categorical'``, ``'1dlabels'`` and ``'2dlabels'``.
+    The goals is that in the future the supported input type will determine the data used during testsing,
+    in particular for ``'string'``, ``'sparse'`` and ``'categorical'`` data.
+    For now, the test for sparse data do not make use of the ``'sparse'`` tag.
 
 
 In addition to the tags, estimators are also need to declare any non-optional
