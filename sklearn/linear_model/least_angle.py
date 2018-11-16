@@ -402,7 +402,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
     if Gram is None or Gram is False:
         Gram = None
         if X is None:
-        	raise ValueError('X and Gram cannot both be unspecified.')
+            raise ValueError('X and Gram cannot both be unspecified.')
         if copy_X:
             # force copy. setting the array to be fortran-ordered
             # speeds up the calculation of the (partial) Gram matrix
