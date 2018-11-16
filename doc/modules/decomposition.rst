@@ -920,15 +920,15 @@ Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
 between :math:`q(z,\theta,\beta)` and the true posterior
 :math:`p(z, \theta, \beta |w, \alpha, \eta)`.
 
-:class:`LatentDirichletAllocation` implements online variational Bayes 
-algorithm and supports both online and batch update method.
-While batch method updates variational variables after each full pass through 
-the data, online method updates variational variables from mini-batch data 
+:class:`LatentDirichletAllocation` implements the online variational Bayes 
+algorithm and supports both online and batch update methods.
+While the batch method updates variational variables after each full pass through 
+the data, the online method updates variational variables from mini-batch data 
 points.
 
 .. note::
 
-  Although online method is guaranteed to converge to a local optimum point, the quality of
+  Although the online method is guaranteed to converge to a local optimum point, the quality of
   the optimum point and the speed of convergence may depend on mini-batch size and
   attributes related to learning rate setting.
 
