@@ -97,22 +97,14 @@ def _partial_dependence_recursion(est, grid, target_variables):
     # grid needs to be DTYPE
     grid = np.asarray(grid, dtype=DTYPE, order='C')
 
-    if isinstance(est, BaseGradientBoosting):
-        n_trees_per_stage = est.estimators_.shape[1]
-        n_estimators = est.estimators_.shape[0]
-        learning_rate = est.learning_rate
-    else:
-        n_trees_per_stage = 1
-        n_estimators = len(est.estimators_)
-        learning_rate = 1.
+    n_trees_per_stage = est.estimators_.shape[1]
+    n_estimators = est.estimators_.shape[0]
+    learning_rate = est.learning_rate
     averaged_predictions = np.zeros((n_trees_per_stage, grid.shape[0]),
                                     dtype=np.float64, order='C')
     for stage in range(n_estimators):
         for k in range(n_trees_per_stage):
-            if isinstance(est, BaseGradientBoosting):
-                tree = est.estimators_[stage, k].tree_
-            else:
-                tree = est.estimators_[stage].tree_
+            tree = est.estimators_[stage, k].tree_
             _partial_dependence_tree(tree, grid, target_variables,
                                      learning_rate, averaged_predictions[k])
 
@@ -234,7 +226,6 @@ def partial_dependence(est, target_variables, grid=None, X=None,
     >>> partial_dependence(gb, [0], **kwargs) # doctest: +SKIP
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
     """
-
 
     if not (is_classifier(est) or is_regressor(est)):
         raise ValueError('est must be a fitted regressor or classifier.')
