@@ -16,7 +16,6 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
 
@@ -136,7 +135,7 @@ def test_pairwise_boolean_distance(metric):
         for Z in [Y, None]:
             res = pairwise_distances(X, Z, metric=metric)
             res[np.isnan(res)] = 0
-            assert_true(np.sum(res != 0) == 0)
+            assert np.sum(res != 0) == 0
 
 
 @pytest.mark.parametrize('func', [pairwise_distances, pairwise_kernels])
@@ -156,11 +155,11 @@ def test_pairwise_precomputed(func):
     # Test not copied (if appropriate dtype)
     S = np.zeros((5, 5))
     S2 = func(S, metric="precomputed")
-    assert_true(S is S2)
+    assert S is S2
     # with two args
     S = np.zeros((5, 3))
     S2 = func(S, np.zeros((3, 3)), metric="precomputed")
-    assert_true(S is S2)
+    assert S is S2
 
     # Test always returns float dtype
     S = func(np.array([[1]], dtype='int'), metric='precomputed')
@@ -168,7 +167,7 @@ def test_pairwise_precomputed(func):
 
     # Test converts list to array-like
     S = func([[1.]], metric='precomputed')
-    assert_true(isinstance(S, np.ndarray))
+    assert isinstance(S, np.ndarray)
 
 
 def test_pairwise_precomputed_non_negative():
@@ -343,49 +342,57 @@ def test_paired_distances_callable():
 def test_pairwise_distances_argmin_min():
     # Check pairwise minimum distances computation for any metric
     X = [[0], [1]]
-    Y = [[-1], [2]]
+    Y = [[-2], [3]]
 
     Xsp = dok_matrix(X)
     Ysp = csr_matrix(Y, dtype=np.float32)
 
-    # euclidean metric
-    D, E = pairwise_distances_argmin_min(X, Y, metric="euclidean")
-    D2 = pairwise_distances_argmin(X, Y, metric="euclidean")
-    assert_array_almost_equal(D, [0, 1])
-    assert_array_almost_equal(D2, [0, 1])
-    assert_array_almost_equal(D, [0, 1])
-    assert_array_almost_equal(E, [1., 1.])
+    expected_idx = [0, 1]
+    expected_vals = [2, 2]
+    expected_vals_sq = [4, 4]
 
+    # euclidean metric
+    idx, vals = pairwise_distances_argmin_min(X, Y, metric="euclidean")
+    idx2 = pairwise_distances_argmin(X, Y, metric="euclidean")
+    assert_array_almost_equal(idx, expected_idx)
+    assert_array_almost_equal(idx2, expected_idx)
+    assert_array_almost_equal(vals, expected_vals)
     # sparse matrix case
-    Dsp, Esp = pairwise_distances_argmin_min(Xsp, Ysp, metric="euclidean")
-    assert_array_equal(Dsp, D)
-    assert_array_equal(Esp, E)
+    idxsp, valssp = pairwise_distances_argmin_min(Xsp, Ysp, metric="euclidean")
+    assert_array_almost_equal(idxsp, expected_idx)
+    assert_array_almost_equal(valssp, expected_vals)
     # We don't want np.matrix here
-    assert_equal(type(Dsp), np.ndarray)
-    assert_equal(type(Esp), np.ndarray)
+    assert_equal(type(idxsp), np.ndarray)
+    assert_equal(type(valssp), np.ndarray)
+
+    # euclidean metric squared
+    idx, vals = pairwise_distances_argmin_min(X, Y, metric="euclidean",
+                                              metric_kwargs={"squared": True})
+    assert_array_almost_equal(idx, expected_idx)
+    assert_array_almost_equal(vals, expected_vals_sq)
 
     # Non-euclidean scikit-learn metric
-    D, E = pairwise_distances_argmin_min(X, Y, metric="manhattan")
-    D2 = pairwise_distances_argmin(X, Y, metric="manhattan")
-    assert_array_almost_equal(D, [0, 1])
-    assert_array_almost_equal(D2, [0, 1])
-    assert_array_almost_equal(E, [1., 1.])
-    D, E = pairwise_distances_argmin_min(Xsp, Ysp, metric="manhattan")
-    D2 = pairwise_distances_argmin(Xsp, Ysp, metric="manhattan")
-    assert_array_almost_equal(D, [0, 1])
-    assert_array_almost_equal(E, [1., 1.])
+    idx, vals = pairwise_distances_argmin_min(X, Y, metric="manhattan")
+    idx2 = pairwise_distances_argmin(X, Y, metric="manhattan")
+    assert_array_almost_equal(idx, expected_idx)
+    assert_array_almost_equal(idx2, expected_idx)
+    assert_array_almost_equal(vals, expected_vals)
+    # sparse matrix case
+    idxsp, valssp = pairwise_distances_argmin_min(Xsp, Ysp, metric="manhattan")
+    assert_array_almost_equal(idxsp, expected_idx)
+    assert_array_almost_equal(valssp, expected_vals)
 
     # Non-euclidean Scipy distance (callable)
-    D, E = pairwise_distances_argmin_min(X, Y, metric=minkowski,
-                                         metric_kwargs={"p": 2})
-    assert_array_almost_equal(D, [0, 1])
-    assert_array_almost_equal(E, [1., 1.])
+    idx, vals = pairwise_distances_argmin_min(X, Y, metric=minkowski,
+                                              metric_kwargs={"p": 2})
+    assert_array_almost_equal(idx, expected_idx)
+    assert_array_almost_equal(vals, expected_vals)
 
     # Non-euclidean Scipy distance (string)
-    D, E = pairwise_distances_argmin_min(X, Y, metric="minkowski",
-                                         metric_kwargs={"p": 2})
-    assert_array_almost_equal(D, [0, 1])
-    assert_array_almost_equal(E, [1., 1.])
+    idx, vals = pairwise_distances_argmin_min(X, Y, metric="minkowski",
+                                              metric_kwargs={"p": 2})
+    assert_array_almost_equal(idx, expected_idx)
+    assert_array_almost_equal(vals, expected_vals)
 
     # Compare with naive implementation
     rng = np.random.RandomState(0)
@@ -565,16 +572,16 @@ def test_cosine_distances():
     D = cosine_distances(XA)
     assert_array_almost_equal(D, [[0., 0.], [0., 0.]])
     # check that all elements are in [0, 2]
-    assert_true(np.all(D >= 0.))
-    assert_true(np.all(D <= 2.))
+    assert np.all(D >= 0.)
+    assert np.all(D <= 2.)
     # check that diagonal elements are equal to 0
     assert_array_almost_equal(D[np.diag_indices_from(D)], [0., 0.])
 
     XB = np.vstack([x, -x])
     D2 = cosine_distances(XB)
     # check that all elements are in [0, 2]
-    assert_true(np.all(D2 >= 0.))
-    assert_true(np.all(D2 <= 2.))
+    assert np.all(D2 >= 0.)
+    assert np.all(D2 <= 2.)
     # check that diagonal elements are equal to 0 and non diagonal to 2
     assert_array_almost_equal(D2, [[0., 2.], [2., 0.]])
 
@@ -583,8 +590,8 @@ def test_cosine_distances():
     D = cosine_distances(X)
     # check that diagonal elements are equal to 0
     assert_array_almost_equal(D[np.diag_indices_from(D)], [0.] * D.shape[0])
-    assert_true(np.all(D >= 0.))
-    assert_true(np.all(D <= 2.))
+    assert np.all(D >= 0.)
+    assert np.all(D <= 2.)
 
 
 # Paired distances
@@ -624,8 +631,8 @@ def test_chi_square_kernel():
     K = chi2_kernel(Y)
     assert_array_equal(np.diag(K), 1)
     # check off-diagonal is < 1 but > 0:
-    assert_true(np.all(K > 0))
-    assert_true(np.all(K - np.diag(np.diag(K)) < 1))
+    assert np.all(K > 0)
+    assert np.all(K - np.diag(np.diag(K)) < 1)
     # check that float32 is preserved
     X = rng.random_sample((5, 4)).astype(np.float32)
     Y = rng.random_sample((10, 4)).astype(np.float32)
@@ -636,7 +643,7 @@ def test_chi_square_kernel():
     # check that zeros are handled
     X = rng.random_sample((10, 4)).astype(np.int32)
     K = chi2_kernel(X, X)
-    assert_true(np.isfinite(K).all())
+    assert np.isfinite(K).all()
     assert_equal(K.dtype, np.float)
 
     # check that kernel of similar things is greater than dissimilar ones
@@ -709,8 +716,8 @@ def test_laplacian_kernel():
     assert_array_almost_equal(np.diag(K), np.ones(5))
 
     # off-diagonal elements are < 1 but > 0:
-    assert_true(np.all(K > 0))
-    assert_true(np.all(K - np.diag(np.diag(K)) < 1))
+    assert np.all(K > 0)
+    assert np.all(K - np.diag(np.diag(K)) < 1)
 
 
 @pytest.mark.parametrize('metric, pairwise_func',
@@ -725,7 +732,7 @@ def test_pairwise_similarity_sparse_output(metric, pairwise_func):
 
     # should be sparse
     K1 = pairwise_func(Xcsr, Ycsr, dense_output=False)
-    assert_true(issparse(K1))
+    assert issparse(K1)
 
     # should be dense, and equal to K1
     K2 = pairwise_func(X, Y, dense_output=True)
@@ -763,7 +770,7 @@ def test_check_dense_matrices():
     # Check that if XB is None, XB is returned as reference to XA
     XA = np.resize(np.arange(40), (5, 8))
     XA_checked, XB_checked = check_pairwise_arrays(XA, None)
-    assert_true(XA_checked is XB_checked)
+    assert XA_checked is XB_checked
     assert_array_equal(XA, XA_checked)
 
 
@@ -815,15 +822,15 @@ def test_check_sparse_arrays():
     XA_checked, XB_checked = check_pairwise_arrays(XA_sparse, XB_sparse)
     # compare their difference because testing csr matrices for
     # equality with '==' does not work as expected.
-    assert_true(issparse(XA_checked))
+    assert issparse(XA_checked)
     assert_equal(abs(XA_sparse - XA_checked).sum(), 0)
-    assert_true(issparse(XB_checked))
+    assert issparse(XB_checked)
     assert_equal(abs(XB_sparse - XB_checked).sum(), 0)
 
     XA_checked, XA_2_checked = check_pairwise_arrays(XA_sparse, XA_sparse)
-    assert_true(issparse(XA_checked))
+    assert issparse(XA_checked)
     assert_equal(abs(XA_sparse - XA_checked).sum(), 0)
-    assert_true(issparse(XA_2_checked))
+    assert issparse(XA_2_checked)
     assert_equal(abs(XA_2_checked - XA_checked).sum(), 0)
 
 

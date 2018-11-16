@@ -5,6 +5,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_allclose_dense_sparse
 
 from sklearn import datasets
 from sklearn.decomposition import PCA, IncrementalPCA
@@ -173,6 +174,23 @@ def test_incremental_pca_batch_values():
 
     for i, j in zip(all_components[:-1], all_components[1:]):
         assert_almost_equal(i, j, decimal=1)
+
+
+def test_incremental_pca_batch_rank():
+    # Test sample size in each batch is always larger or equal to n_components
+    rng = np.random.RandomState(1999)
+    n_samples = 100
+    n_features = 20
+    X = rng.randn(n_samples, n_features)
+    all_components = []
+    batch_sizes = np.arange(20, 90, 3)
+    for batch_size in batch_sizes:
+        ipca = IncrementalPCA(n_components=20, batch_size=batch_size).fit(X)
+        all_components.append(ipca.components_)
+
+    for components_i, components_j in zip(all_components[:-1],
+                                          all_components[1:]):
+        assert_allclose_dense_sparse(components_i, components_j)
 
 
 def test_incremental_pca_partial_fit():

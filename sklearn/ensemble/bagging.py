@@ -243,6 +243,9 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         """
         return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
 
+    def _parallel_args(self):
+        return {}
+
     def _fit(self, X, y, max_samples=None, max_depth=None, sample_weight=None):
         """Build a Bagging ensemble of estimators from the training
            set (X, y).
@@ -365,7 +368,8 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         seeds = random_state.randint(MAX_INT, size=n_more_estimators)
         self._seeds = seeds
 
-        all_results = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_results = Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                               **self._parallel_args())(
             delayed(_parallel_build_estimators)(
                 n_estimators[i],
                 self,
@@ -686,7 +690,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
                                                              self.n_jobs)
 
-        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                             **self._parallel_args())(
             delayed(_parallel_predict_proba)(
                 self.estimators_[starts[i]:starts[i + 1]],
                 self.estimators_features_[starts[i]:starts[i + 1]],

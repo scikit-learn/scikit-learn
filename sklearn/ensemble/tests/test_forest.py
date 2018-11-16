@@ -10,6 +10,7 @@ Testing for the forest module (sklearn.ensemble.forest).
 
 import pickle
 from collections import defaultdict
+from distutils.version import LooseVersion
 import itertools
 from itertools import combinations
 from itertools import product
@@ -21,6 +22,7 @@ from scipy.sparse import coo_matrix
 
 import pytest
 
+from sklearn.utils import _joblib
 from sklearn.utils import parallel_backend
 from sklearn.utils import register_parallel_backend
 from sklearn.externals.joblib.parallel import LokyBackend
@@ -29,7 +31,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_false, assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_less, assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises
@@ -37,6 +39,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import skip_if_no_parallel
 
 from sklearn import datasets
 from sklearn.decomposition import TruncatedSVD
@@ -245,7 +248,7 @@ def check_importances(name, criterion, dtype, tolerance):
     est = ForestEstimator(n_estimators=10, random_state=0, criterion=criterion)
     est.fit(X, y, sample_weight=sample_weight)
     importances = est.feature_importances_
-    assert_true(np.all(importances >= 0.0))
+    assert np.all(importances >= 0.0)
 
     for scale in [0.5, 100]:
         est = ForestEstimator(n_estimators=10, random_state=0,
@@ -708,11 +711,11 @@ def check_max_leaf_nodes_max_depth(name):
     ForestEstimator = FOREST_ESTIMATORS[name]
     est = ForestEstimator(max_depth=1, max_leaf_nodes=4,
                           n_estimators=1, random_state=0).fit(X, y)
-    assert_greater(est.estimators_[0].tree_.max_depth, 1)
+    assert_equal(est.estimators_[0].get_depth(), 1)
 
     est = ForestEstimator(max_depth=1, n_estimators=1,
                           random_state=0).fit(X, y)
-    assert_equal(est.estimators_[0].tree_.max_depth, 1)
+    assert_equal(est.estimators_[0].get_depth(), 1)
 
 
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
@@ -1160,7 +1163,7 @@ def check_warm_start_oob(name):
     clf_2.set_params(warm_start=True, oob_score=True, n_estimators=15)
     clf_2.fit(X, y)
 
-    assert_true(hasattr(clf_2, 'oob_score_'))
+    assert hasattr(clf_2, 'oob_score_')
     assert_equal(clf.oob_score_, clf_2.oob_score_)
 
     # Test that oob_score is computed even if we don't need to train
@@ -1168,7 +1171,7 @@ def check_warm_start_oob(name):
     clf_3 = ForestEstimator(n_estimators=15, max_depth=3, warm_start=True,
                             random_state=1, bootstrap=True, oob_score=False)
     clf_3.fit(X, y)
-    assert_true(not(hasattr(clf_3, 'oob_score_')))
+    assert not(hasattr(clf_3, 'oob_score_'))
 
     clf_3.set_params(oob_score=True)
     ignore_warnings(clf_3.fit)(X, y)
@@ -1282,10 +1285,13 @@ class MyBackend(LokyBackend):
 register_parallel_backend('testing', MyBackend)
 
 
+@pytest.mark.skipif(_joblib.__version__ < LooseVersion('0.12'),
+                    reason='tests not yet supported in joblib <0.12')
+@skip_if_no_parallel
 def test_backend_respected():
     clf = RandomForestClassifier(n_estimators=10, n_jobs=2)
 
-    with parallel_backend("testing") as (ba, _):
+    with parallel_backend("testing") as (ba, n_jobs):
         clf.fit(X, y)
 
     assert ba.count > 0

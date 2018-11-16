@@ -305,10 +305,10 @@ class SpectralCoclustering(BaseSpectral):
         self.row_labels_ = labels[:n_rows]
         self.column_labels_ = labels[n_rows:]
 
-        self.rows_ = np.vstack(self.row_labels_ == c
-                               for c in range(self.n_clusters))
-        self.columns_ = np.vstack(self.column_labels_ == c
-                                  for c in range(self.n_clusters))
+        self.rows_ = np.vstack([self.row_labels_ == c
+                                for c in range(self.n_clusters)])
+        self.columns_ = np.vstack([self.column_labels_ == c
+                                   for c in range(self.n_clusters)])
 
 
 class SpectralBiclustering(BaseSpectral):
@@ -504,12 +504,12 @@ class SpectralBiclustering(BaseSpectral):
         self.column_labels_ = self._project_and_cluster(X.T, best_ut.T,
                                                         n_col_clusters)
 
-        self.rows_ = np.vstack(self.row_labels_ == label
-                               for label in range(n_row_clusters)
-                               for _ in range(n_col_clusters))
-        self.columns_ = np.vstack(self.column_labels_ == label
-                                  for _ in range(n_row_clusters)
-                                  for label in range(n_col_clusters))
+        self.rows_ = np.vstack([self.row_labels_ == label
+                                for label in range(n_row_clusters)
+                                for _ in range(n_col_clusters)])
+        self.columns_ = np.vstack([self.column_labels_ == label
+                                   for _ in range(n_row_clusters)
+                                   for label in range(n_col_clusters)])
 
     def _fit_best_piecewise(self, vectors, n_best, n_clusters):
         """Find the ``n_best`` vectors that are best approximated by piecewise

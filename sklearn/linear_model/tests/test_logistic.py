@@ -21,11 +21,11 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils.testing import skip_if_no_parallel
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import ChangedBehaviorWarning
@@ -146,6 +146,7 @@ def test_logistic_cv_score_does_not_warn_by_default():
     assert len(record) == 0
 
 
+@skip_if_no_parallel
 def test_lr_liblinear_warning():
     n_samples, n_features = iris.data.shape
     target = iris.target_names[iris.target]
@@ -312,7 +313,7 @@ def test_sparsify():
     pred_d_d = clf.decision_function(iris.data)
 
     clf.sparsify()
-    assert_true(sp.issparse(clf.coef_))
+    assert sp.issparse(clf.coef_)
     pred_s_d = clf.decision_function(iris.data)
 
     sp_data = sp.coo_matrix(iris.data)

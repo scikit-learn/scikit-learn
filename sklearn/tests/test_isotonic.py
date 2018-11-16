@@ -32,7 +32,7 @@ def test_check_increasing_small_number_of_samples():
     y = [1, 1.1, 1.05]
 
     is_increasing = assert_no_warnings(check_increasing, x, y)
-    assert_true(is_increasing)
+    assert is_increasing
 
 
 def test_check_increasing_up():
@@ -41,7 +41,7 @@ def test_check_increasing_up():
 
     # Check that we got increasing=True and no warnings
     is_increasing = assert_no_warnings(check_increasing, x, y)
-    assert_true(is_increasing)
+    assert is_increasing
 
 
 def test_check_increasing_up_extreme():
@@ -50,7 +50,7 @@ def test_check_increasing_up_extreme():
 
     # Check that we got increasing=True and no warnings
     is_increasing = assert_no_warnings(check_increasing, x, y)
-    assert_true(is_increasing)
+    assert is_increasing
 
 
 def test_check_increasing_down():
@@ -232,7 +232,7 @@ def test_isotonic_regression_auto_increasing():
 
     # Check that relationship increases
     is_increasing = y_[0] < y_[-1]
-    assert_true(is_increasing)
+    assert is_increasing
 
 
 def test_assert_raises_exceptions():
@@ -371,7 +371,7 @@ def test_isotonic_duplicate_min_entry():
     ir = IsotonicRegression(increasing=True, out_of_bounds="clip")
     ir.fit(x, y)
     all_predictions_finite = np.all(np.isfinite(ir.predict(x)))
-    assert_true(all_predictions_finite)
+    assert all_predictions_finite
 
 
 def test_isotonic_ymin_ymax():

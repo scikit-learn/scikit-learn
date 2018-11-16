@@ -480,6 +480,14 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
 class StandardScaler(BaseEstimator, TransformerMixin):
     """Standardize features by removing the mean and scaling to unit variance
 
+    The standard score of a sample `x` is calculated as:
+
+        z = (x - u) / s
+
+    where `u` is the mean of the training samples or zero if `with_mean=False`,
+    and `s` is the standard deviation of the training samples or one if
+    `with_std=False`.
+
     Centering and scaling happen independently on each feature by computing
     the relevant statistics on the samples in the training set. Mean and
     standard deviation are then stored to be used on later data using the
@@ -525,8 +533,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     scale_ : ndarray or None, shape (n_features,)
-        Per feature relative scaling of the data. Equal to ``None`` when
-        ``with_std=False``.
+        Per feature relative scaling of the data. This is calculated using
+        `np.sqrt(var_)`. Equal to ``None`` when ``with_std=False``.
 
         .. versionadded:: 0.17
            *scale_*
@@ -1382,8 +1390,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         combinations = self._combinations(self.n_input_features_, self.degree,
                                           self.interaction_only,
                                           self.include_bias)
-        return np.vstack(np.bincount(c, minlength=self.n_input_features_)
-                         for c in combinations)
+        return np.vstack([np.bincount(c, minlength=self.n_input_features_)
+                          for c in combinations])
 
     def get_feature_names(self, input_features=None):
         """
@@ -2529,7 +2537,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     >>> print(pt.fit(data))
     PowerTransformer(copy=True, method='yeo-johnson', standardize=True)
     >>> print(pt.lambdas_)
-    [1.38668178e+00 5.93926346e-09]
+    [ 1.38668178 -3.10053309]
     >>> print(pt.transform(data))
     [[-1.31616039 -0.70710678]
      [ 0.20998268 -0.70710678]
@@ -2710,23 +2718,18 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     def _yeo_johnson_inverse_transform(self, x, lmbda):
         """Return inverse-transformed input x following Yeo-Johnson inverse
         transform with parameter lambda.
-
-        Notes
-        -----
-        We're comparing lmbda to 1e-19 instead of strict equality to 0. See
-        scipy/special/_boxcox.pxd for a rationale behind this
         """
-        x_inv = np.zeros(x.shape, dtype=x.dtype)
+        x_inv = np.zeros_like(x)
         pos = x >= 0
 
         # when x >= 0
-        if lmbda < 1e-19:
+        if abs(lmbda) < np.spacing(1.):
             x_inv[pos] = np.exp(x[pos]) - 1
         else:  # lmbda != 0
             x_inv[pos] = np.power(x[pos] * lmbda + 1, 1 / lmbda) - 1
 
         # when x < 0
-        if lmbda < 2 - 1e-19:
+        if abs(lmbda - 2) > np.spacing(1.):
             x_inv[~pos] = 1 - np.power(-(2 - lmbda) * x[~pos] + 1,
                                        1 / (2 - lmbda))
         else:  # lmbda == 2
@@ -2737,27 +2740,22 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     def _yeo_johnson_transform(self, x, lmbda):
         """Return transformed input x following Yeo-Johnson transform with
         parameter lambda.
-
-        Notes
-        -----
-        We're comparing lmbda to 1e-19 instead of strict equality to 0. See
-        scipy/special/_boxcox.pxd for a rationale behind this
         """
 
-        out = np.zeros(shape=x.shape, dtype=x.dtype)
+        out = np.zeros_like(x)
         pos = x >= 0  # binary mask
 
         # when x >= 0
-        if lmbda < 1e-19:
-            out[pos] = np.log(x[pos] + 1)
+        if abs(lmbda) < np.spacing(1.):
+            out[pos] = np.log1p(x[pos])
         else:  # lmbda != 0
             out[pos] = (np.power(x[pos] + 1, lmbda) - 1) / lmbda
 
         # when x < 0
-        if lmbda < 2 - 1e-19:
+        if abs(lmbda - 2) > np.spacing(1.):
             out[~pos] = -(np.power(-x[~pos] + 1, 2 - lmbda) - 1) / (2 - lmbda)
         else:  # lmbda == 2
-            out[~pos] = -np.log(-x[~pos] + 1)
+            out[~pos] = -np.log1p(-x[~pos])
 
         return out
 
@@ -2786,12 +2784,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
             x_trans = self._yeo_johnson_transform(x, lmbda)
             n_samples = x.shape[0]
 
-            # Estimated mean and variance of the normal distribution
-            est_mean = x_trans.sum() / n_samples
-            est_var = np.power(x_trans - est_mean, 2).sum() / n_samples
-
-            loglike = -n_samples / 2 * np.log(est_var)
-            loglike += (lmbda - 1) * (np.sign(x) * np.log(np.abs(x) + 1)).sum()
+            loglike = -n_samples / 2 * np.log(x_trans.var())
+            loglike += (lmbda - 1) * (np.sign(x) * np.log1p(np.abs(x))).sum()
 
             return -loglike
 

@@ -230,6 +230,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
                           'retain the lower branches required '
                           'for the specified number of clusters',
                           stacklevel=2)
+        X = np.require(X, requirements="W")
         out = hierarchy.ward(X)
         children_ = out[:, :2].astype(np.intp)
 
