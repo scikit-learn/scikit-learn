@@ -18,7 +18,7 @@ import numpy as np
 
 from ..externals.six import string_types
 from ..utils.fixes import _Sequence as Sequence
-from .validation import check_array
+from .validation import check_array, _assert_all_finite
 
 
 def _unique_multiclass(y):
@@ -282,6 +282,7 @@ def type_of_target(y):
     # check float and contains non-integer float values
     if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
+        _assert_all_finite(y)
         return 'continuous' + suffix
 
     if (len(np.unique(y)) > 2) or (y.ndim >= 2 and len(y[0]) > 1):
