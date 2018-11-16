@@ -219,7 +219,7 @@ def test_plot_partial_dependence_multiclass():
                   grid_resolution=grid_resolution)
 
 
-def test_warning_raised():
+def test_warning_raised_partial_dependence():
     # Test that deprecation warning is raised
 
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
@@ -230,6 +230,14 @@ def test_warning_raised():
                          "ensemble.partial_dependence has been moved to ",
                          partial_dependence, clf, [0], X=boston.data,
                          grid_resolution=grid_resolution)
+
+@if_matplotlib
+def test_warning_raised_partial_dependence_plot():
+    # Test that deprecation warning is raised
+
+    clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
+    clf.fit(boston.data, boston.target)
+    grid_resolution = 25
 
     assert_warns_message(DeprecationWarning, "The function "
                          "ensemble.plot_partial_dependence has been moved to ",
