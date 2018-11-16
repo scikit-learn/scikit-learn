@@ -149,7 +149,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         # and is used when implementing RFECV
         # self.scores_ will not be calculated when calling _fit through fit
 
-        X, y = check_X_y(X, y, "csc")
+        X, y = check_X_y(X, y, "csc", ensure_min_features=2)
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -324,6 +324,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         check_is_fitted(self, 'estimator_')
         return self.estimator_.predict_log_proba(self.transform(X))
 
+    def _more_tags(self):
+        return {'no_accuracy_assured': True}
+
 
 class RFECV(RFE, MetaEstimatorMixin):
     """Feature ranking with recursive feature elimination and cross-validated
@@ -475,7 +478,7 @@ class RFECV(RFE, MetaEstimatorMixin):
             Group labels for the samples used while splitting the dataset into
             train/test set.
         """
-        X, y = check_X_y(X, y, "csr")
+        X, y = check_X_y(X, y, "csr", ensure_min_features=2)
 
         # Initialization
         cv = check_cv(self.cv, y, is_classifier(self.estimator))
