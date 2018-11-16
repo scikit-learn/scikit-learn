@@ -231,6 +231,7 @@ def test_warning_raised_partial_dependence():
                          partial_dependence, clf, [0], X=boston.data,
                          grid_resolution=grid_resolution)
 
+
 @if_matplotlib
 def test_warning_raised_partial_dependence_plot():
     # Test that deprecation warning is raised
