@@ -53,8 +53,8 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
 
         Valid values for metric are:
 
-        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'sqeuclidean',
-          'l1', 'l2', 'manhattan']
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean',
+          'sqeuclidean', 'l1', 'l2', 'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
