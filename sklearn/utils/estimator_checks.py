@@ -2121,7 +2121,7 @@ def check_parameters_default_constructible(name, Estimator):
     with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
         required_parameters = getattr(Estimator, "_required_parameters", [])
         if len(required_parameters):
-            if required_parameters in ["base_estimator", "estimator"]:
+            if required_parameters in (["base_estimator"], ["estimator"]):
                 if issubclass(Estimator, RegressorMixin):
                     estimator = Estimator(Ridge())
                 else:
