@@ -125,6 +125,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     def _estimator_type(self):
         return self.estimator._estimator_type
 
+    @property
+    def classes_(self):
+        return self.estimator_.classes_
+
     def fit(self, X, y):
         """Fit the RFE model and then the underlying estimator on the selected
            features.
