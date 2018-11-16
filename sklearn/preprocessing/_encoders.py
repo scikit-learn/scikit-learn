@@ -21,9 +21,7 @@ from ..utils.validation import check_is_fitted
 from .base import _transform_selected
 from .label import _encode, _encode_check_unknown
 
-
 range = six.moves.range
-
 
 __all__ = [
     'OneHotEncoder',
@@ -383,6 +381,12 @@ class OneHotEncoder(_BaseEncoder):
                     "The 'categorical_features' keyword is deprecated in "
                     "version 0.20 and will be removed in 0.22. You can "
                     "use the ColumnTransformer instead.", DeprecationWarning)
+                # Set categories_ to empty list if no categorical columns exist
+                n_features = X.shape[1]
+                sel = np.zeros(n_features, dtype=bool)
+                sel[np.asarray(self.categorical_features)] = True
+                if sum(sel) == 0:
+                    self.categories_ = []
                 self._legacy_mode = True
             self._categorical_features = self.categorical_features
         else:
@@ -591,6 +595,7 @@ class OneHotEncoder(_BaseEncoder):
         X_out : sparse matrix if sparse=True else a 2-d array
             Transformed input.
         """
+        check_is_fitted(self, 'categories_')
         if self._legacy_mode:
             return _transform_selected(X, self._legacy_transform, self.dtype,
                                        self._categorical_features,
@@ -683,7 +688,7 @@ class OneHotEncoder(_BaseEncoder):
         cats = self.categories_
         if input_features is None:
             input_features = ['x%d' % i for i in range(len(cats))]
-        elif(len(input_features) != len(self.categories_)):
+        elif len(input_features) != len(self.categories_):
             raise ValueError(
                 "input_features should have length equal to number of "
                 "features ({}), got {}".format(len(self.categories_),

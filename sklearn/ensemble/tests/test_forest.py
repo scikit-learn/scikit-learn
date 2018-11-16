@@ -711,11 +711,11 @@ def check_max_leaf_nodes_max_depth(name):
     ForestEstimator = FOREST_ESTIMATORS[name]
     est = ForestEstimator(max_depth=1, max_leaf_nodes=4,
                           n_estimators=1, random_state=0).fit(X, y)
-    assert_greater(est.estimators_[0].tree_.max_depth, 1)
+    assert_equal(est.estimators_[0].get_depth(), 1)
 
     est = ForestEstimator(max_depth=1, n_estimators=1,
                           random_state=0).fit(X, y)
-    assert_equal(est.estimators_[0].tree_.max_depth, 1)
+    assert_equal(est.estimators_[0].get_depth(), 1)
 
 
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
