@@ -22,7 +22,7 @@ only few labeled data points are available. The accuracy is averaged over
 print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.semi_supervised.self_training import SelfTrainingClassifier
+from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.utils import shuffle
 from sklearn.svm import SVC
 from sklearn.datasets import load_digits

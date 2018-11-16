@@ -106,10 +106,8 @@ class SelfTrainingClassifier(BaseEstimator):
 
     def fit(self, X, y):
         """
-        Fits this ``SelfTrainingClassifier`` to dataset, using the
-        base_classifier passed. The fitted base_classifier is stored as
-        ``self.base_classifier_``.
-
+        Fits this ``SelfTrainingClassifier`` to a dataset.
+        
         Parameters
         ----------
         X : array-like, shape = (n_samples, n_features)
@@ -142,7 +140,7 @@ class SelfTrainingClassifier(BaseEstimator):
             has_label = y != -1
 
         if np.all(has_label):
-            warnings.warn(RuntimeWarning("y contains no unlabeled samples"))
+            warnings.warn("y contains no unlabeled samples", UserWarning)
 
         self.y_labels_ = np.copy(y)
         self.y_labeled_iter_ = np.full_like(y, -1)
@@ -178,7 +176,6 @@ class SelfTrainingClassifier(BaseEstimator):
         self.classes_ = self.base_classifier_.classes_
         return self
 
-    @if_delegate_has_method(delegate='base_classifier')
     def predict(self, X):
         """Predict the classes of X.
 

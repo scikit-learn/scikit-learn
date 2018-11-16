@@ -16,7 +16,7 @@ identical to training the SVC on 100% of the data.
 print(__doc__)
 
 # Authors: Clay Woolam   <clay@woolam.org>
-#        : Oliver Rausch <rauscho@ethz.ch>
+#          Oliver Rausch <rauscho@ethz.ch>
 # License: BSD
 
 import numpy as np
@@ -36,10 +36,11 @@ y = iris.target
 # step size in the mesh
 h = .02
 
+y_rand = rng.rand(y.shape[0])
 y_30 = np.copy(y)
-y_30[rng.rand(len(y)) < 0.3] = -1
+y_30[y_rand < 0.3] = -1
 y_50 = np.copy(y)
-y_50[rng.rand(len(y)) < 0.5] = -1
+y_50[y_rand < 0.5] = -1
 # we create an instance of SVM and fit out data. We do not scale our
 # data since we want to plot the support vectors
 ls30 = (LabelSpreading().fit(X, y_30), y_30, 'Label Spreading 30% data')
