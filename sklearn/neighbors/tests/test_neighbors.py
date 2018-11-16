@@ -25,6 +25,7 @@ from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 
@@ -933,7 +934,7 @@ def test_neighbors_badargs():
                   neighbors.NearestNeighbors,
                   algorithm='blah')
 
-    X = rng.random_sample((10, 2))
+    X = rng.random_sample((10, 3))
     # Xsparse = csr_matrix(X)
     y = np.ones(10)
 
@@ -948,10 +949,12 @@ def test_neighbors_badargs():
                       cls, p=-1)
         assert_raises(ValueError,
                       cls, algorithm='blah')
-        nbrs = cls(algorithm='ball_tree', metric='haversine')
-        assert_raises(ValueError,
-                      nbrs.predict,
-                      X)
+        nbrs = cls(metric='haversine', algorithm='brute')
+        nbrs.fit(X, y)
+        assert_raise_message(ValueError,
+                             "Haversine distance only valid in 2 dimensions",
+                             nbrs.predict,
+                             X)
         nbrs = cls()
         assert_raises(ValueError,
                       nbrs.fit,
@@ -990,7 +993,8 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                ('chebyshev', {}),
                ('seuclidean', dict(V=rng.rand(n_features))),
                ('wminkowski', dict(p=3, w=rng.rand(n_features))),
-               ('mahalanobis', dict(VI=VI))]
+               ('mahalanobis', dict(VI=VI)),
+               ('haversine', {})]
     algorithms = ['brute', 'ball_tree', 'kd_tree']
     X = rng.rand(n_samples, n_features)
 
@@ -1012,8 +1016,14 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                                                algorithm=algorithm,
                                                metric=metric, p=p,
                                                metric_params=metric_params)
-            neigh.fit(X)
-            results[algorithm] = neigh.kneighbors(test, return_distance=True)
+            if metric == 'haversine':
+                neigh.fit(X[:, :2])
+                results[algorithm] = neigh.kneighbors(test[:, :2],
+                                                      return_distance=True)
+            else:
+                neigh.fit(X)
+                results[algorithm] = neigh.kneighbors(test, return_distance=True)
+
         assert_array_almost_equal(results['brute'][0], results['ball_tree'][0])
         assert_array_almost_equal(results['brute'][1], results['ball_tree'][1])
         if 'kd_tree' in results:
@@ -1044,7 +1054,7 @@ def test_callable_metric():
 
 
 def test_valid_brute_metric_for_auto_algorithm():
-    X = rng.rand(12, 2)
+    X = rng.rand(12, 12)
     Xcsr = csr_matrix(X)
 
     # check that there is a metric that is valid for brute
@@ -1056,9 +1066,14 @@ def test_valid_brute_metric_for_auto_algorithm():
     require_params = ['mahalanobis', 'wminkowski', 'seuclidean']
     for metric in VALID_METRICS['brute']:
         if metric != 'precomputed' and metric not in require_params:
-            nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
-                                            metric=metric).fit(X)
-            nn.kneighbors(X)
+            if  metric != 'haversine':
+                nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
+                                                metric=metric).fit(X)
+                nn.kneighbors(X)
+            else:
+                nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
+                                                metric=metric).fit(X[:, :2])
+                nn.kneighbors(X[:, :2])
         elif metric == 'precomputed':
             X_precomputed = rng.random_sample((10, 4))
             Y_precomputed = rng.random_sample((3, 4))
@@ -1071,6 +1086,8 @@ def test_valid_brute_metric_for_auto_algorithm():
 
     for metric in VALID_METRICS_SPARSE['brute']:
         if metric != 'precomputed' and metric not in require_params:
+            if metric == 'haversine':
+                continue
             nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                             metric=metric).fit(Xcsr)
             nn.kneighbors(Xcsr)
@@ -1081,8 +1098,6 @@ def test_valid_brute_metric_for_auto_algorithm():
                     ('wminkowski', dict(w=rng.rand(12))),
                     ('mahalanobis', dict(VI=VI))]
     for metric, params in list_metrics:
-        if metric == 'haversine':
-            continue
         nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                         metric=metric,
                                         metric_params=params).fit(X)

@@ -441,7 +441,7 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
                                          batch_size=batch_size)[0]
 
 
-def haversine_distance(X, Y=None):
+def haversine_distances(X, Y=None):
     """ Compute the haversine distance between samples in X and Y
 
     The Haversine distance is the angular distance between two points on
@@ -467,21 +467,22 @@ def haversine_distance(X, Y=None):
 
     Examples
     --------
-    >>> from sklearn.metrics.pairwise import haversine_distance
-    >>> haversine_distance([[3,3]], [[3,3]])
+    >>> from sklearn.metrics.pairwise import haversine_distances
+    >>> haversine_distances([[3,3]], [[3,3]])
     array([[0.]])
-    >>> haversine_distance([[3, 2]], [[1, 1]])
+    >>> haversine_distances([[3, 2]], [[1, 1]])
     array([[1.74188653]])
     >>> import numpy as np
     >>> X = np.ones((5,2))
     >>> Y = np.full((5,2), 2.)
-    >>> haversine_distance(X, Y)
+    >>> haversine_distances(X, Y)
     array([[0.87152123, 0.87152123, 0.87152123, 0.87152123, 0.87152123],
            [0.87152123, 0.87152123, 0.87152123, 0.87152123, 0.87152123],
            [0.87152123, 0.87152123, 0.87152123, 0.87152123, 0.87152123],
            [0.87152123, 0.87152123, 0.87152123, 0.87152123, 0.87152123],
            [0.87152123, 0.87152123, 0.87152123, 0.87152123, 0.87152123]])
     """
+
     from sklearn.neighbors import DistanceMetric
     return DistanceMetric.get_metric('haversine').pairwise(X, Y)
 
@@ -1061,7 +1062,7 @@ PAIRWISE_DISTANCE_FUNCTIONS = {
     'cityblock': manhattan_distances,
     'cosine': cosine_distances,
     'euclidean': euclidean_distances,
-    'haversine': haversine_distance,
+    'haversine': haversine_distances,
     'l2': euclidean_distances,
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
