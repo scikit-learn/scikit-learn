@@ -1073,7 +1073,7 @@ def test_valid_brute_metric_for_auto_algorithm():
         if metric != 'precomputed' and metric not in require_params:
             nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                             metric=metric).fit(Xcsr)
-                nn.kneighbors(Xcsr)
+            nn.kneighbors(Xcsr)
 
     # Metric with parameter
     VI = np.dot(X, X.T)
