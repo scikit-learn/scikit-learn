@@ -20,6 +20,8 @@ from .utils import check_array
 from .utils.validation import check_is_fitted
 from .tree._tree import DTYPE
 from .exceptions import NotFittedError
+from .ensemble.gradient_boosting import BaseGradientBoosting
+from .ensemble._gradient_boosting import _partial_dependence_tree
 
 
 __all__ = ['partial_dependence', 'plot_partial_dependence']
@@ -91,8 +93,6 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
 def _partial_dependence_recursion(est, grid, target_variables):
     # TODO: The pattern below required to avoid a namespace collision.
     # TODO: Move below imports to module level import at 0.22 release.
-    from .ensemble._gradient_boosting import _partial_dependence_tree
-    from .ensemble.gradient_boosting import BaseGradientBoosting
 
     # grid needs to be DTYPE
     grid = np.asarray(grid, dtype=DTYPE, order='C')
@@ -235,7 +235,6 @@ def partial_dependence(est, target_variables, grid=None, X=None,
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
     """
 
-    from .ensemble.gradient_boosting import BaseGradientBoosting
 
     if not (is_classifier(est) or is_regressor(est)):
         raise ValueError('est must be a fitted regressor or classifier.')

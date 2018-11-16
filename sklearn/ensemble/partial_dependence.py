@@ -3,8 +3,6 @@
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
-from ..partial_dependence import partial_dependence as new_pd
-from ..partial_dependence import plot_partial_dependence as new_ppd
 from ..utils import deprecated
 
 
@@ -67,6 +65,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     >>> partial_dependence(gb, [0], **kwargs) # doctest: +SKIP
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
     """
+    from ..partial_dependence import partial_dependence as new_pd
     return new_pd(est=gbrt,
                   target_variables=target_variables,
                   grid=grid,
@@ -159,6 +158,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     >>> fig, axs = plot_partial_dependence(clf, X, [0, (0, 1)]) #doctest: +SKIP
     ...
     """
+    from ..partial_dependence import plot_partial_dependence as new_ppd
     return new_ppd(est=gbrt,
                    X=X,
                    features=features,
