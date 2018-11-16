@@ -45,7 +45,6 @@ def test_partial_dependence_classifier():
     # now with our own grid
     X_ = np.asarray(X)
     grid = np.unique(X_[:, 0])
-    print(grid)
     pdp_2, axes = partial_dependence(clf, [0], grid=grid)
 
     assert axes is None
@@ -220,8 +219,9 @@ def test_plot_partial_dependence_multiclass():
                   grid_resolution=grid_resolution)
 
 
-def test_warning_raised_for_partial_dependence():
-    # Test that running the old partial_dependence function warns
+def test_warning_raised():
+    # Test that deprecation warning is raised
+
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
     clf.fit(boston.data, boston.target)
     grid_resolution = 25
@@ -230,14 +230,6 @@ def test_warning_raised_for_partial_dependence():
                          "ensemble.partial_dependence has been moved to ",
                          partial_dependence, clf, [0], X=boston.data,
                          grid_resolution=grid_resolution)
-
-
-@if_matplotlib
-def test_warning_raised_for_plot_partial_dependence():
-    # Test that running the old partial_dependence function warns
-    clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
-    clf.fit(boston.data, boston.target)
-    grid_resolution = 25
 
     assert_warns_message(DeprecationWarning, "The function "
                          "ensemble.plot_partial_dependence has been moved to ",
