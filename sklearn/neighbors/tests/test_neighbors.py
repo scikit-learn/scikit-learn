@@ -1081,6 +1081,8 @@ def test_valid_brute_metric_for_auto_algorithm():
                     ('wminkowski', dict(w=rng.rand(12))),
                     ('mahalanobis', dict(VI=VI))]
     for metric, params in list_metrics:
+        if metric == 'haversine':
+            continue
         nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                         metric=metric,
                                         metric_params=params).fit(X)
