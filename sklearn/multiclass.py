@@ -631,6 +631,10 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return getattr(self.estimator, "_pairwise", False)
 
+    def _more_tags(self):
+        # FIXME Remove once #10440 is merged
+        return {'_skip_test': True}
+
 
 class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     """(Error-Correcting) Output-Code multiclass strategy
