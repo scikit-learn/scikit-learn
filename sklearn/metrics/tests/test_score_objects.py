@@ -162,7 +162,7 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
     scorer = scoring_validator(estimator)
-    assert_true(scorer is _passthrough_scorer)
+    assert scorer is _passthrough_scorer
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFitAndPredict()
@@ -176,25 +176,26 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
 
     estimator = EstimatorWithFit()
     scorer = scoring_validator(estimator, "accuracy")
-    assert_true(isinstance(scorer, _PredictScorer))
+    assert isinstance(scorer, _PredictScorer)
 
     # Test the allow_none parameter for check_scoring alone
     if scoring_validator is check_scoring:
         estimator = EstimatorWithFit()
         scorer = scoring_validator(estimator, allow_none=True)
-        assert_true(scorer is None)
+        assert scorer is None
 
 
 def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
-    # This wraps the _check_multimetric_scoring to take in single metric
-    # scoring parameter so we can run the tests that we will run for
-    # check_scoring, for check_multimetric_scoring too for single-metric
-    # usecases
+    # This wraps the _check_multimetric_scoring to take in
+    # single metric scoring parameter so we can run the tests
+    # that we will run for check_scoring, for check_multimetric_scoring
+    # too for single-metric usecases
+
     scorers, is_multi = _check_multimetric_scoring(*args, **kwargs)
     # For all single metric use cases, it should register as not multimetric
     assert_false(is_multi)
     if args[0] is not None:
-        assert_true(scorers is not None)
+        assert scorers is not None
         names, scorers = zip(*scorers.items())
         assert_equal(len(scorers), 1)
         assert_equal(names[0], 'score')
@@ -220,11 +221,11 @@ def test_check_scoring_and_check_multimetric_scoring():
         estimator.fit([[1], [2], [3]], [1, 1, 0])
 
         scorers, is_multi = _check_multimetric_scoring(estimator, scoring)
-        assert_true(is_multi)
-        assert_true(isinstance(scorers, dict))
+        assert is_multi
+        assert isinstance(scorers, dict)
         assert_equal(sorted(scorers.keys()), sorted(list(scoring)))
-        assert_true(all([isinstance(scorer, _PredictScorer)
-                         for scorer in list(scorers.values())]))
+        assert all([isinstance(scorer, _PredictScorer)
+                    for scorer in list(scorers.values())])
 
         if 'acc' in scoring:
             assert_almost_equal(scorers['acc'](
@@ -257,11 +258,11 @@ def test_check_scoring_gridsearchcv():
 
     grid = GridSearchCV(LinearSVC(), param_grid={'C': [.1, 1]})
     scorer = check_scoring(grid, "f1")
-    assert_true(isinstance(scorer, _PredictScorer))
+    assert isinstance(scorer, _PredictScorer)
 
     pipe = make_pipeline(LinearSVC())
     scorer = check_scoring(pipe, "f1")
-    assert_true(isinstance(scorer, _PredictScorer))
+    assert isinstance(scorer, _PredictScorer)
 
     # check that cross_val_score definitely calls the scorer
     # and doesn't make any assumptions about the estimator apart from having a
@@ -370,7 +371,21 @@ def test_thresholded_scorers():
     X, y = make_blobs(random_state=0, centers=3)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf.fit(X_train, y_train)
-    assert_raises(ValueError, get_scorer('roc_auc'), clf, X_test, y_test)
+    with pytest.raises(ValueError, match="multiclass format is not supported"):
+        get_scorer('roc_auc')(clf, X_test, y_test)
+
+    # test error is raised with a single class present in model
+    # (predict_proba shape is not suitable for binary auc)
+    X, y = make_blobs(random_state=0, centers=2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = DecisionTreeClassifier()
+    clf.fit(X_train, np.zeros_like(y_train))
+    with pytest.raises(ValueError, match="need classifier with two classes"):
+        get_scorer('roc_auc')(clf, X_test, y_test)
+
+    # for proba scorers
+    with pytest.raises(ValueError, match="need classifier with two classes"):
+        get_scorer('neg_log_loss')(clf, X_test, y_test)
 
 
 def test_thresholded_scorers_multilabel_indicator_data():
@@ -385,7 +400,7 @@ def test_thresholded_scorers_multilabel_indicator_data():
     clf.fit(X_train, y_train)
     y_proba = clf.predict_proba(X_test)
     score1 = get_scorer('roc_auc')(clf, X_test, y_test)
-    score2 = roc_auc_score(y_test, np.vstack(p[:, -1] for p in y_proba).T)
+    score2 = roc_auc_score(y_test, np.vstack([p[:, -1] for p in y_proba]).T)
     assert_almost_equal(score1, score2)
 
     # Multi-output multi-class decision_function
@@ -398,7 +413,7 @@ def test_thresholded_scorers_multilabel_indicator_data():
 
     y_proba = clf.decision_function(X_test)
     score1 = get_scorer('roc_auc')(clf, X_test, y_test)
-    score2 = roc_auc_score(y_test, np.vstack(p for p in y_proba).T)
+    score2 = roc_auc_score(y_test, np.vstack([p for p in y_proba]).T)
     assert_almost_equal(score1, score2)
 
     # Multilabel predict_proba

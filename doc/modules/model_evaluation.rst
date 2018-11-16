@@ -309,6 +309,7 @@ Some also work in the multilabel case:
    hamming_loss
    jaccard_similarity_score
    log_loss
+   multilabel_confusion_matrix
    precision_recall_fscore_support
    precision_score
    recall_score
@@ -1119,6 +1120,112 @@ function:
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)  # doctest: +ELLIPSIS
     -0.33...
+
+.. _multilabel_confusion_matrix:
+
+Multi-label confusion matrix
+----------------------------
+
+The :func:`multilabel_confusion_matrix` function computes class-wise (default)
+or sample-wise (samplewise=True) multilabel confusion matrix to evaluate
+the accuracy of a classification. multilabel_confusion_matrix also treats
+multiclass data as if it were multilabel, as this is a transformation commonly
+applied to evaluate multiclass problems with binary classification metrics
+(such as precision, recall, etc.).
+
+When calculating class-wise multilabel confusion matrix :math:`C`, the
+count of true negatives for class :math:`i` is :math:`C_{i,0,0}`, false
+negatives is :math:`C_{i,1,0}`, true positives is :math:`C_{i,1,1}`
+and false positives is :math:`C_{i,0,1}`.
+
+Here is an example demonstrating the use of the
+:func:`multilabel_confusion_matrix` function with
+:term:`multilabel indicator matrix` input::
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import multilabel_confusion_matrix
+    >>> y_true = np.array([[1, 0, 1],
+    ...                    [0, 1, 0]])
+    >>> y_pred = np.array([[1, 0, 0],
+    ...                    [0, 1, 1]])
+    >>> multilabel_confusion_matrix(y_true, y_pred)
+    array([[[1, 0],
+            [0, 1]],
+    <BLANKLINE>
+           [[1, 0],
+            [0, 1]],
+    <BLANKLINE>
+           [[0, 1],
+            [1, 0]]])
+
+Or a confusion matrix can be constructed for each sample's labels:
+
+    >>> multilabel_confusion_matrix(y_true, y_pred, samplewise=True)
+    array([[[1, 0],
+            [1, 1]],
+    <BLANKLINE>
+           [[1, 1],
+            [0, 1]]])
+
+Here is an example demonstrating the use of the
+:func:`multilabel_confusion_matrix` function with
+:term:`multiclass` input::
+
+    >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
+    >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
+    >>> multilabel_confusion_matrix(y_true, y_pred,
+    ...                             labels=["ant", "bird", "cat"])
+    array([[[3, 1],
+            [0, 2]],
+    <BLANKLINE>
+           [[5, 0],
+            [1, 0]],
+    <BLANKLINE>
+           [[2, 1],
+            [1, 2]]])
+
+Here are some examples demonstrating the use of the
+:func:`multilabel_confusion_matrix` function to calculate recall
+(or sensitivity), specificity, fall out and miss rate for each class in a
+problem with multilabel indicator matrix input.
+
+Calculating
+`recall <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`__
+(also called the true positive rate or the sensitivity) for each class::
+
+    >>> y_true = np.array([[0, 0, 1],
+    ...                    [0, 1, 0],
+    ...                    [1, 1, 0]])
+    >>> y_pred = np.array([[0, 1, 0],
+    ...                    [0, 0, 1],
+    ...                    [1, 1, 0]])
+    >>> mcm = multilabel_confusion_matrix(y_true, y_pred)
+    >>> tn = mcm[:, 0, 0]
+    >>> tp = mcm[:, 1, 1]
+    >>> fn = mcm[:, 1, 0]
+    >>> fp = mcm[:, 0, 1]
+    >>> tp / (tp + fn)
+    array([1. , 0.5, 0. ])
+
+Calculating
+`specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`__
+(also called the true negative rate) for each class::
+
+    >>> tn / (tn + fp)
+    array([1. , 0. , 0.5])
+
+Calculating `fall out <https://en.wikipedia.org/wiki/False_positive_rate>`__
+(also called the false positive rate) for each class::
+
+    >>> fp / (fp + tn)
+    array([0. , 1. , 0.5])
+
+Calculating `miss rate
+<https://en.wikipedia.org/wiki/False_positives_and_false_negatives>`__
+(also called the false negative rate) for each class::
+
+    >>> fn / (fn + tp)
+    array([0. , 0.5, 1. ])
 
 .. _roc_metrics:
 

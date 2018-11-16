@@ -64,6 +64,9 @@ def test_docstring_parameters():
 
     incorrect = []
     for name in PUBLIC_MODULES:
+        if name == 'sklearn.utils.fixes':
+            # We cannot always control these docstrings
+            continue
         with warnings.catch_warnings(record=True):
             module = importlib.import_module(name)
         classes = inspect.getmembers(module, inspect.isclass)

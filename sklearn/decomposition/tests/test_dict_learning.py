@@ -11,7 +11,6 @@ from sklearn.utils import check_array
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
@@ -55,7 +54,7 @@ def test_dict_learning_shapes():
 def test_dict_learning_overcomplete():
     n_components = 12
     dico = DictionaryLearning(n_components, random_state=0).fit(X)
-    assert_true(dico.components_.shape == (n_components, n_features))
+    assert dico.components_.shape == (n_components, n_features)
 
 
 # positive lars deprecated 0.22
@@ -83,13 +82,13 @@ def test_dict_learning_positivity(transform_algorithm,
         positive_code=positive_code, positive_dict=positive_dict).fit(X)
     code = dico.transform(X)
     if positive_dict:
-        assert_true((dico.components_ >= 0).all())
+        assert (dico.components_ >= 0).all()
     else:
-        assert_true((dico.components_ < 0).any())
+        assert (dico.components_ < 0).any()
     if positive_code:
-        assert_true((code >= 0).all())
+        assert (code >= 0).all()
     else:
-        assert_true((code < 0).any())
+        assert (code < 0).any()
 
 
 def test_dict_learning_reconstruction():
@@ -137,7 +136,7 @@ def test_dict_learning_nonzero_coefs():
     dico = DictionaryLearning(n_components, transform_algorithm='lars',
                               transform_n_nonzero_coefs=3, random_state=0)
     code = dico.fit(X).transform(X[np.newaxis, 1])
-    assert_true(len(np.flatnonzero(code)) == 3)
+    assert len(np.flatnonzero(code)) == 3
 
     dico.set_params(transform_algorithm='omp')
     code = dico.transform(X[np.newaxis, 1])
@@ -199,26 +198,26 @@ def test_dict_learning_online_positivity(transform_algorithm,
         positive_code=positive_code, positive_dict=positive_dict).fit(X)
     code = dico.transform(X)
     if positive_dict:
-        assert_true((dico.components_ >= 0).all())
+        assert (dico.components_ >= 0).all()
     else:
-        assert_true((dico.components_ < 0).any())
+        assert (dico.components_ < 0).any()
     if positive_code:
-        assert_true((code >= 0).all())
+        assert (code >= 0).all()
     else:
-        assert_true((code < 0).any())
+        assert (code < 0).any()
 
     code, dictionary = dict_learning_online(X, n_components=n_components,
                                             alpha=1, random_state=rng,
                                             positive_dict=positive_dict,
                                             positive_code=positive_code)
     if positive_dict:
-        assert_true((dictionary >= 0).all())
+        assert (dictionary >= 0).all()
     else:
-        assert_true((dictionary < 0).any())
+        assert (dictionary < 0).any()
     if positive_code:
-        assert_true((code >= 0).all())
+        assert (code >= 0).all()
     else:
-        assert_true((code < 0).any())
+        assert (code < 0).any()
 
 
 def test_dict_learning_online_verbosity():
@@ -243,21 +242,21 @@ def test_dict_learning_online_verbosity():
     finally:
         sys.stdout = old_stdout
 
-    assert_true(dico.components_.shape == (n_components, n_features))
+    assert dico.components_.shape == (n_components, n_features)
 
 
 def test_dict_learning_online_estimator_shapes():
     n_components = 5
     dico = MiniBatchDictionaryLearning(n_components, n_iter=20, random_state=0)
     dico.fit(X)
-    assert_true(dico.components_.shape == (n_components, n_features))
+    assert dico.components_.shape == (n_components, n_features)
 
 
 def test_dict_learning_online_overcomplete():
     n_components = 12
     dico = MiniBatchDictionaryLearning(n_components, n_iter=20,
                                        random_state=0).fit(X)
-    assert_true(dico.components_.shape == (n_components, n_features))
+    assert dico.components_.shape == (n_components, n_features)
 
 
 def test_dict_learning_online_initialization():
@@ -294,8 +293,7 @@ def test_dict_learning_online_partial_fit():
         for sample in X:
             dict2.partial_fit(sample[np.newaxis, :])
 
-    assert_true(not np.all(sparse_encode(X, dict1.components_, alpha=1) ==
-                           0))
+    assert not np.all(sparse_encode(X, dict1.components_, alpha=1) == 0)
     assert_array_almost_equal(dict1.components_, dict2.components_,
                               decimal=2)
 
@@ -324,9 +322,9 @@ def test_sparse_encode_positivity(positive):
     for algo in ('lasso_lars', 'lasso_cd', 'lars', 'threshold'):
         code = sparse_encode(X, V, algorithm=algo, positive=positive)
         if positive:
-            assert_true((code >= 0).all())
+            assert (code >= 0).all()
         else:
-            assert_true((code < 0).any())
+            assert (code < 0).any()
 
     try:
         sparse_encode(X, V, algorithm='omp', positive=positive)
@@ -353,7 +351,7 @@ def test_sparse_encode_error():
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     code = sparse_encode(X, V, alpha=0.001)
-    assert_true(not np.all(code == 0))
+    assert not np.all(code == 0)
     assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
 
 
@@ -380,7 +378,7 @@ def test_sparse_coder_estimator():
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     code = SparseCoder(dictionary=V, transform_algorithm='lasso_lars',
                        transform_alpha=0.001).transform(X)
-    assert_true(not np.all(code == 0))
+    assert not np.all(code == 0)
     assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
 
 

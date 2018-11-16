@@ -846,6 +846,7 @@ details.
    metrics.jaccard_similarity_score
    metrics.log_loss
    metrics.matthews_corrcoef
+   metrics.multilabel_confusion_matrix
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score
@@ -904,7 +905,7 @@ details.
 
    metrics.adjusted_mutual_info_score
    metrics.adjusted_rand_score
-   metrics.calinski_harabaz_score
+   metrics.calinski_harabasz_score
    metrics.davies_bouldin_score
    metrics.completeness_score
    metrics.cluster.contingency_matrix
@@ -1399,6 +1400,7 @@ Low-level methods
    :template: function.rst
 
    tree.export_graphviz
+   tree.plot_tree
 
 
 .. _utils_ref:
@@ -1495,6 +1497,15 @@ Utilities from joblib:
 
 Recently deprecated
 ===================
+
+To be removed in 0.23
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_function.rst
+
+   metrics.calinski_harabaz_score
 
 
 To be removed in 0.22

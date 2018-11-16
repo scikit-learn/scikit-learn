@@ -7,7 +7,7 @@ import numpy as np
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import (
-    assert_equal, assert_false, assert_true, assert_array_equal, assert_raises,
+    assert_equal, assert_false, assert_array_equal, assert_raises,
     assert_warns, assert_warns_message, assert_no_warnings)
 
 from sklearn.cluster.affinity_propagation_ import AffinityPropagation
@@ -160,5 +160,5 @@ def test_equal_similarities_and_preferences():
     assert_false(_equal_similarities_and_preferences(S, np.array([0, 1])))
 
     # Same preferences
-    assert_true(_equal_similarities_and_preferences(S, np.array([0, 0])))
-    assert_true(_equal_similarities_and_preferences(S, np.array(0)))
+    assert _equal_similarities_and_preferences(S, np.array([0, 0]))
+    assert _equal_similarities_and_preferences(S, np.array(0))

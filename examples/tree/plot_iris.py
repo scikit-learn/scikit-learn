@@ -11,6 +11,8 @@ See :ref:`decision tree <tree>` for more information on the estimator.
 For each pair of iris features, the decision tree learns decision
 boundaries made of combinations of simple thresholding rules inferred from
 the training samples.
+
+We also show the tree structure of a model built on all of the features.
 """
 print(__doc__)
 
@@ -18,7 +20,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import load_iris
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, plot_tree
 
 # Parameters
 n_classes = 3
@@ -62,4 +64,8 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
 plt.suptitle("Decision surface of a decision tree using paired features")
 plt.legend(loc='lower right', borderpad=0, handletextpad=0)
 plt.axis("tight")
+
+plt.figure()
+clf = DecisionTreeClassifier().fit(iris.data, iris.target)
+plot_tree(clf, filled=True)
 plt.show()
