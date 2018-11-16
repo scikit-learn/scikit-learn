@@ -444,8 +444,6 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
 def haversine_distance(X, Y=None):
     """ Compute the haversine distance between samples in X and Y
 
-    Haversine (Spherical) Distance
-
     The Haversine distance is the angular distance between two points on
     the surface of a sphere. The first distance of each point is assumed
     to be the latitude, the second is the longitude, given in radians.
