@@ -630,6 +630,7 @@ def check_sample_weights_invariance(name, estimator_orig):
                       [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.dtype('float'))
         y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
                       1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('int'))
+        y = multioutput_estimator_convert_y_2d(estimator1, y)
 
         estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)))
         estimator2.fit(X, y=y, sample_weight=None)
@@ -1441,7 +1442,9 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
         n_classes = len(classes)
         n_samples, n_features = X.shape
         classifier = clone(classifier_orig)
-        X = pairwise_estimator_convert_X(X, classifier_orig)
+        X = pairwise_estimator_convert_X(X, classifier)
+        y = multioutput_estimator_convert_y_2d(classifier, y)
+
         set_random_state(classifier)
         # raises error on malformed input for fit
         if not tags["no_validation"]:
@@ -1460,6 +1463,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
         classifier.fit(X.tolist(), y.tolist())
         assert hasattr(classifier, "classes_")
         y_pred = classifier.predict(X)
+
         assert_equal(y_pred.shape, (n_samples,))
         # training set performance
         if not tags['no_accuracy_assured']:
