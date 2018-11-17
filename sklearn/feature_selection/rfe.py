@@ -70,10 +70,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         If specified step int or float equates to > 1 feature then the
         threshold number of remaining features when to revert to step = 1
 
-    step_decay : boolean, optional (default=False)
-        If step is a float whether to calculate the percentage of features
-        to remove at each iteration from the current number of remaining
-        features
+    reducing_step : boolean, optional (default=False)
+        If true and step is a float, the number of features removed is
+        calculated as a fraction of the remaining features in that iteration.
+        If false, the number of features removed is constant (a fraction of
+        the original number of features) across iterations.
 
     verbose : int, (default=0)
         Controls verbosity of output.
@@ -125,12 +126,12 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     def __init__(self, estimator, n_features_to_select=None, step=1,
-                 step_one_threshold=None, step_decay=False, verbose=0):
+                 step_one_threshold=None, reducing_step=False, verbose=0):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
         self.step_one_threshold = step_one_threshold
-        self.step_decay = step_decay
+        self.reducing_step = reducing_step
         self.verbose = verbose
 
     @property
@@ -167,12 +168,17 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         if self.step >= 1.0:
             step = int(self.step)
-        elif 0.0 < self.step < 1.0 and not self.step_decay:
+        elif 0.0 < self.step < 1.0 and not self.reducing_step:
             step = int(max(1, self.step * n_features))
         elif self.step <= 0:
-            raise ValueError("Step must be >0")
-        if self.step_one_threshold <= 0:
-            raise ValueError("Step one threshold must be >0")
+            raise ValueError("Step must be > 0")
+
+        if self.step_one_threshold is not None:
+            if (not n_features_to_select <
+                    self.step_one_threshold < n_features):
+                raise ValueError("step_one_threshold must be greater than "
+                                 "n_features_to_select and less than "
+                                 "initial number of features")
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
@@ -180,8 +186,6 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         if step_score:
             self.scores_ = []
 
-        step_one_threshold = (self.step_one_threshold if
-                              self.step_one_threshold is not None else 0)
         # Elimination
         while np.sum(support_) > n_features_to_select:
             # Remaining features
@@ -215,20 +219,26 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             # for sparse case ranks is matrix
             ranks = np.ravel(ranks)
 
-            # adjust step using special parameters if specified
-            if step_one_threshold > 0 or self.step_decay:
-                if n_remaining_features > step_one_threshold:
-                    if 0.0 < self.step < 1.0 and self.step_decay:
+            # Adjust step using special parameters if specified
+            if self.step_one_threshold is not None:
+                if n_remaining_features > self.step_one_threshold:
+                    if 0.0 < self.step < 1.0 and self.reducing_step:
                         step = int(min(
-                            n_remaining_features - step_one_threshold,
+                            n_remaining_features - self.step_one_threshold,
                             self.step * n_remaining_features
                         ))
                     else:
                         step = min(
-                            n_remaining_features - step_one_threshold, step
+                            n_remaining_features - self.step_one_threshold,
+                            step
                         )
                 else:
                     step = 1
+            elif 0.0 < self.step < 1.0 and self.reducing_step:
+                step = int(min(
+                    n_remaining_features - n_features_to_select,
+                    self.step * n_remaining_features
+                ))
 
             # Eliminate the worse features
             threshold = min(step, n_remaining_features - n_features_to_select)
@@ -381,10 +391,11 @@ class RFECV(RFE, MetaEstimatorMixin):
         If specified step int or float equates to > 1 feature then the
         threshold number of remaining features when to revert to step = 1
 
-    step_decay : boolean, optional (default=False)
-        If step is a float whether to calculate the percentage of features
-        to remove at each iteration from the current number of remaining
-        features
+    reducing_step : boolean, optional (default=False)
+        If true and step is a float, the number of features removed is
+        calculated as a fraction of the remaining features in that iteration.
+        If false, the number of features removed is constant (a fraction of
+        the original number of features) across iterations.
 
     min_features_to_select : int, (default=1)
         The minimum number of features to be selected. This number of features
@@ -486,12 +497,12 @@ class RFECV(RFE, MetaEstimatorMixin):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     def __init__(self, estimator, step=1, step_one_threshold=None,
-                 step_decay=False, min_features_to_select=1, cv='warn',
+                 reducing_step=False, min_features_to_select=1, cv='warn',
                  scoring=None, verbose=0, n_jobs=None):
         self.estimator = estimator
         self.step = step
         self.step_one_threshold = step_one_threshold
-        self.step_decay = step_decay
+        self.reducing_step = reducing_step
         self.cv = cv
         self.scoring = scoring
         self.verbose = verbose
@@ -525,19 +536,17 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         if self.step >= 1.0:
             step = int(self.step)
-        elif 0.0 < self.step < 1.0 and not self.step_decay:
+        elif 0.0 < self.step < 1.0 and not self.reducing_step:
             step = int(max(1, self.step * n_features))
         elif self.step <= 0:
-            raise ValueError("Step must be >0")
-        if self.step_one_threshold <= 0:
-            raise ValueError("Step one threshold must be >0")
+            raise ValueError("Step must be > 0")
 
         # Build an RFE object, which will evaluate and score each possible
         # feature count, down to self.min_features_to_select
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=self.min_features_to_select,
                   step=self.step, step_one_threshold=self.step_one_threshold,
-                  step_decay=self.step_decay, verbose=self.verbose)
+                  reducing_step=self.reducing_step, verbose=self.verbose)
 
         # Determine the number of subsets of features by fitting across
         # the train folds and choosing the "features_to_select" parameter
@@ -572,7 +581,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=n_features_to_select,
                   step=self.step, step_one_threshold=self.step_one_threshold,
-                  step_decay=self.step_decay, verbose=self.verbose)
+                  reducing_step=self.reducing_step, verbose=self.verbose)
 
         rfe.fit(X, y)
 
