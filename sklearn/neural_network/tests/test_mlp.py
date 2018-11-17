@@ -23,8 +23,9 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
-from sklearn.utils.testing import assert_raises, ignore_warnings
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import (assert_raises, assert_greater, assert_equal,
+                                   assert_false, ignore_warnings)
+from sklearn.utils.testing import assert_raise_message, assert_warns_message
 
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
@@ -654,6 +655,27 @@ def test_warm_start():
                    'classes as in the previous call to fit.'
                    ' Previously got [0 1 2], `y` has %s' % np.unique(y_i))
         assert_raise_message(ValueError, message, clf.fit, X, y_i)
+
+
+def test_warm_start_full():
+    # Test to make sure it is fitting for more than 1 iteration
+    X = Xboston
+    y = yboston
+
+    mlp = MLPRegressor(solver='adam', max_iter=150, hidden_layer_sizes=50,
+                       random_state=1, warm_start='full')
+    mlp.fit(X, y)
+
+    assert mlp.score(X, y) > -4.
+
+
+def test_warm_start_future_warning():
+    # FutureWarning should be raised for warm_start=True in <0.22
+    message = 'The behavior of warm_start=True will change in 0.22 ' \
+              'to behave like warm_start=\'full\'. To continue ' \
+              'using the old behavior, set max_iter=1 or switch to ' \
+              'partial_fit.'
+    assert_warns_message(FutureWarning, message, MLPRegressor, warm_start=True)
 
 
 def test_n_iter_no_change():
