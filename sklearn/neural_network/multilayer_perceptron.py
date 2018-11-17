@@ -79,6 +79,14 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self.n_iter_no_change = n_iter_no_change
         self.max_fun = max_fun
 
+        # FIXME remove this whole if statement for 0.22
+        if self.warm_start is True:
+            message = 'The behavior of warm_start=True will change in 0.22 ' \
+                      'to behave like warm_start=\'full\'. To continue ' \
+                      'using the old behavior, set max_iter=1 or switch to ' \
+                      'partial_fit.'
+            warnings.warn(message, FutureWarning)
+
     def _unpack(self, packed_parameters):
         """Extract the coefficients and intercepts from packed_parameters."""
         for i in range(self.n_layers_ - 1):
@@ -477,7 +485,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
     def _fit_stochastic(self, X, y, activations, deltas, coef_grads,
                         intercept_grads, layer_units, incremental):
 
-        if not incremental or not hasattr(self, '_optimizer'):
+        if not hasattr(self, '_optimizer') or (not incremental and
+                                               not self.warm_start):
             params = self.coefs_ + self.intercepts_
 
             if self.solver == 'sgd':
@@ -564,7 +573,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     else:
                         self._no_improvement_count = 0
 
-                if incremental:
+                # FIXME remove `or self.warm_start is True` condition for 0.22
+                if incremental or self.warm_start is True:
                     break
 
                 if self.n_iter_ == self.max_iter:
@@ -797,10 +807,16 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     verbose : bool, optional, default False
         Whether to print progress messages to stdout.
 
-    warm_start : bool, optional, default False
-        When set to True, reuse the solution of the previous
-        call to fit as initialization, otherwise, just erase the
+    warm_start : {True, False, 'full'}, optional, default False
+        When set to True, reuse the solution of the previous call to fit as
+        initialization and train for a single iteration. If 'full', do the same
+        as for True but train for 'n_iter' iterations. If False, just erase the
         previous solution. See :term:`the Glossary <warm_start>`.
+
+        .. deprecated:: 0.20
+           ``warm_start=True`` will adapt the new behavior of 'warm_start=full'
+           in 0.22. To continue using the old behavior, use the function
+           ``partial_fit`` instead.
 
     momentum : float, default 0.9
         Momentum for gradient descent update. Should be between 0 and 1. Only
@@ -936,11 +952,11 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
 
-        if not incremental:
+        if not hasattr(self, 'classes_'):
             self._label_binarizer = LabelBinarizer()
             self._label_binarizer.fit(y)
             self.classes_ = self._label_binarizer.classes_
-        elif self.warm_start:
+        elif self.warm_start and not incremental:
             classes = unique_labels(y)
             if set(classes) != set(self.classes_):
                 raise ValueError("warm_start can only be used where `y` has "
@@ -994,8 +1010,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         -------
         self : returns a trained MLP model.
         """
-        return self._fit(X, y, incremental=(self.warm_start and
-                                            hasattr(self, "classes_")))
+        return self._fit(X, y, incremental=False)
 
     @property
     def partial_fit(self):
@@ -1189,10 +1204,16 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     verbose : bool, optional, default False
         Whether to print progress messages to stdout.
 
-    warm_start : bool, optional, default False
-        When set to True, reuse the solution of the previous
-        call to fit as initialization, otherwise, just erase the
+    warm_start : {True, False, 'full'}, optional, default False
+        When set to True, reuse the solution of the previous call to fit as
+        initialization and train for a single iteration. If 'full', do the same
+        as for True but train for 'n_iter' iterations. If False, just erase the
         previous solution. See :term:`the Glossary <warm_start>`.
+
+        .. deprecated:: 0.20
+           ``warm_start=True`` will adapt the new behavior of 'warm_start=full'
+           in 0.22. To continue using the old behavior, use the function
+           ``partial_fit`` instead.
 
     momentum : float, default 0.9
         Momentum for gradient descent update.  Should be between 0 and 1. Only
