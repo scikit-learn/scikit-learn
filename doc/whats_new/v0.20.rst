@@ -175,12 +175,14 @@ Changelog
 Miscellaneous
 .............
 
+- |Fix| Deprecated using joblib from `sklearn.utils` and removed all
+  mentions to `sklearn.externals.joblib`. Only `parallel_backend` and
+  `register_parallel_backend` are accessible in `utils`.
+  :issue:`12345` by :user:`Thomas Moreau <tomMoral>`
+
 - |Fix| When using site joblib by setting the environment variable
   `SKLEARN_SITE_JOBLIB`, added compatibility with joblib 0.11 in addition
   to 0.12+. :issue:`12350` by `Joel Nothman`_ and `Roman Yurchak`_.
-
-Miscellaneous
-.............
 
 - |Fix| Make sure to avoid raising ``FutureWarning`` when calling
   ``np.vstack`` with numpy 1.16 and later (use list comprehensions
@@ -190,6 +192,7 @@ Miscellaneous
 .. _changes_0_20:
 
 Version 0.20.0
+
 ==============
 
 **September, 2018**
