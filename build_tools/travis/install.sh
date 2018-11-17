@@ -114,10 +114,10 @@ python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
 python -c "\
 try:
-import pandas
-print('pandas %s' % pandas.__version__)
+    import pandas
+    print('pandas %s' % pandas.__version__)
 except ImportError:
-pass
+    pass
 "
 python setup.py develop
 ccache --show-stats
