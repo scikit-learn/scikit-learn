@@ -299,6 +299,7 @@ def test_lbfgs_regression_maxfun(X, y):
     assert_raises(ValueError, mlp.fit, X, y)
 
 
+@ignore_warnings(category=FutureWarning)
 def test_learning_rate_warmstart():
     # Tests that warm_start reuse past solutions.
     X = [[3, 2], [1, 6], [5, 6], [-2, -4]]
@@ -632,6 +633,7 @@ def test_adaptive_learning_rate():
 
 
 @ignore_warnings(category=RuntimeWarning)
+@ignore_warnings(category=FutureWarning)
 def test_warm_start():
     X = X_iris
     y = y_iris
@@ -657,6 +659,7 @@ def test_warm_start():
         assert_raise_message(ValueError, message, clf.fit, X, y_i)
 
 
+@ignore_warnings(category=FutureWarning)
 def test_warm_start_full():
     # Test to make sure it is fitting for more than 1 iteration
     X = Xboston
@@ -664,7 +667,8 @@ def test_warm_start_full():
 
     mlp = MLPRegressor(solver='adam', max_iter=150, hidden_layer_sizes=50,
                        random_state=1, warm_start='full')
-    mlp.fit(X, y)
+    with ignore_warnings(category=ConvergenceWarning):
+        mlp.fit(X, y)
 
     assert mlp.score(X, y) > -4.
 
