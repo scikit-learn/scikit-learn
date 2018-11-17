@@ -32,7 +32,7 @@ _DOCSTRING_IGNORES = [
     'sklearn.pipeline.make_pipeline',
     'sklearn.pipeline.make_union',
     'sklearn.utils.extmath.safe_sparse_dot',
-    'Parallel', 'Memory'
+    'sklearn.utils._joblib'
 ]
 
 # Methods where y param should be ignored if y=None by default
