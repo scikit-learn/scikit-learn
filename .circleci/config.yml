@@ -72,7 +72,7 @@ jobs:
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - run:
           name: dependencies
-          command: pip install flake8
+          command: sudo pip install flake8
       - run:
           name: flake8
           command: ./build_tools/travis/flake8_diff.sh
