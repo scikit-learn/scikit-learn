@@ -177,7 +177,10 @@ Miscellaneous
 
 - |Fix| Removed all mentions of `sklearn.externals.joblib`, and deprecated
   joblib methods exposed in `sklearn.utils`, except for
-  :func:`utils.parallel_backend` and :func:`utils.register_parallel_backend`.
+  :func:`utils.parallel_backend` and :func:`utils.register_parallel_backend`,
+  which impact the behavior of `sklearn`. Other functionalities are part of
+  the [joblib](https://joblib.readthedocs.io/) package and should be used
+  directly, by installing it.
   :issue:`12345` by :user:`Thomas Moreau <tomMoral>`
 
 - |Fix| When using site joblib by setting the environment variable
