@@ -17,6 +17,8 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- :class:`linear_model.BayesianRidge` (bug fix)
+
 - please add class and reason here (see version 0.20 what's new)
 
 Details are listed in the changelog below.
@@ -47,6 +49,18 @@ Support for Python 3.4 and below has been officially dropped.
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>` and
   :user:`Adrin Jalali <adrinjalali>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Fixed the posterior mean, posterior covariance and returned
+  regularization parameters in :class:`linear_model.BayesianRidge`. The
+  posterior mean and the posterior covariance were not the ones computed
+  with the last update of the regularization parameters and the returned
+  regularization parameters were not the final ones. Also fixed the formula of
+  the log marginal likelihood used to compute the score when
+  `compute_score=True`. :issue:`10748` by
+  :user:`Albert Thomas <albertcthomas>`.
 
 Multiple modules
 ................
