@@ -738,7 +738,6 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         denominator[denominator == 0] = 1
 
     jaccard = numerator / denominator
-    print(numerator, denominator)
     if average is None:
         return jaccard
     if not normalize:
