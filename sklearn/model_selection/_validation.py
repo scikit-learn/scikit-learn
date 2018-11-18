@@ -551,23 +551,23 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         # _score will return dict if is_multimetric is True
         test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric)
         score_time = time.time() - start_time - fit_time
-        if return_train_score:
+        if return_train_score or verbose > 3:
             train_scores = _score(estimator, X_train, y_train, scorer,
                                   is_multimetric)
     if verbose > 3:
         if is_multimetric:
             for scorer_name in train_scores:
                 msg += ", %s=" % scorer_name
-                msg += "(train=%s, test=%s)" % (train_scores[scorer_name],
+                msg += "(train=%.3f, test=%.3f)" % (train_scores[scorer_name],
                                                 test_scores[scorer_name])
         else:
-            msg += ", score=(train=%s, test=%s)" % (train_scores, test_scores)
+            msg += ", score=(train=%s, test=%.3f)" % (train_scores, test_scores)
     elif verbose > 2:
         if is_multimetric:
             for scorer_name, score in test_scores.items():
-                msg += ", %s=%s" % (scorer_name, score)
+                msg += ", %s=%.3f" % (scorer_name, score)
         else:
-            msg += ", score=%s" % test_scores
+            msg += ", score=%.3f" % test_scores
     if verbose > 1:
         total_time = score_time + fit_time
         end_msg = "%s, total=%s" % (msg, logger.short_format_time(total_time))
