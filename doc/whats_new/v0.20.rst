@@ -65,6 +65,9 @@ Changelog
   location in :func:`datasets.fetch_olivetti_faces`. :issue:`12441` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`
 
+- |Fix| :func:`datasets.fetch_openml` to retry downloading when reading
+  from local cache fails. :issue:`12517` by :user:`Thomas Fan <thomasjpfan>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -948,8 +951,6 @@ Support for Python 3.3 has been officially dropped.
   of parameters in the parameter grid. ``n_iter`` now acts as an upper bound on
   iterations. :issue:`10982` by :user:`Juliet Lawton <julietcl>`
 
-Linear, kernelized and related models
-=======
 - |API| Invalid input for :class:`model_selection.ParameterGrid` now
   raises TypeError.
   :issue:`10928` by :user:`Solutus Immensus <solutusimmensus>`
@@ -1059,6 +1060,7 @@ Linear, kernelized and related models
 
 - |API| :class:`pipeline.FeatureUnion` now supports ``'drop'`` as a transformer
   to drop features. :issue:`11144` by :user:`Thomas Fan <thomasjpfan>`.
+
 
 :mod:`sklearn.preprocessing`
 ............................
