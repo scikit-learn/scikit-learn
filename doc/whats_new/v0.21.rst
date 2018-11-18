@@ -79,9 +79,10 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Feature| |Fix| :func:`metrics.jaccard_similarity_score` now accepts
   ``average`` argument like :func:`metrics.precision_recall_fscore_support` as
-  a naively set-wise measure applying only to binary, multilabel targets and it
-  binarizes multiclass input and treats them like the corresponding multilabel
-  problem.  :issue:`10083` by :user:`Gaurav Dhingra <gxyd>`.
+  a naively set-wise measure applying only to binary, multilabel targets. It
+  now binarizes multiclass input and treats them like the corresponding
+  multilabel problem.
+  :issue:`10083` by :user:`Gaurav Dhingra <gxyd>` and `Joel Nothman`_.
 
 :mod:`sklearn.neighbors`
 ........................
