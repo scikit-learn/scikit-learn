@@ -1060,20 +1060,8 @@ Linear, kernelized and related models
 - |API| :class:`pipeline.FeatureUnion` now supports ``'drop'`` as a transformer
   to drop features. :issue:`11144` by :user:`Thomas Fan <thomasjpfan>`.
 
-
-<<<<<<< HEAD
-- Fixed a bug in :func:`metrics.jaccard_similarity_score`, to disallow
-  sample-wise averaging of multiclass input, since it is redundantly equal to
-  :func:`metrics.accuracy_score`.
-  :issue:`10083` by :user:`Gaurav Dhingra <gxyd>`.
-
-- Fixed a bug in :func:`metrics.precision_precision_recall_fscore_support`
-  when truncated `range(n_labels)` is passed as value for `labels`.
-  :issue:`10377` by :user:`Gaurav Dhingra <gxyd>`.
-=======
 :mod:`sklearn.preprocessing`
 ............................
->>>>>>> master
 
 - |MajorFeature| Expanded :class:`preprocessing.OneHotEncoder` to allow to
   encode categorical string features as a numeric array using a one-hot (or
