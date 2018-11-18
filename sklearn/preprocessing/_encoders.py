@@ -110,7 +110,14 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                     # continue `The rows are marked `X_mask` and will be
                     # removed later.
                     X_mask[:, i] = valid_mask
-                    Xi = Xi.copy()
+                    # cast Xi into the largest string type necessary
+                    # to handle different lengths of numpy strings
+                    if (self.categories_[i].dtype.kind in ('U', 'S')
+                            and self.categories_[i].itemsize > Xi.itemsize):
+                        Xi = Xi.astype(self.categories_[i].dtype)
+                    else:
+                        Xi = Xi.copy()
+
                     Xi[~valid_mask] = self.categories_[i][0]
             _, encoded = _encode(Xi, self.categories_[i], encode=True)
             X_int[:, i] = encoded
