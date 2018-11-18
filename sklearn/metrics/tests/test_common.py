@@ -433,14 +433,14 @@ SYMMETRIC_METRICS = {
     "zero_one_loss", "unnormalized_zero_one_loss",
 
     "micro_jaccard_similarity_score", "macro_jaccard_similarity_score",
+    "binary_jaccard_similarity_score",
+    "samples_jaccard_similarity_score",
 
     "f1_score", "micro_f1_score", "macro_f1_score",
     "weighted_recall_score",
     # P = R = F = accuracy in multiclass case
     "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
     "micro_precision_score", "micro_recall_score",
-
-    "binary_jaccard_similarity_score",
 
     "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
     "median_absolute_error", "max_error",
@@ -888,8 +888,7 @@ def test_normalize_option_binary_classification(name):
             continue
         metrics = ALL_METRICS[name]
         measure = metrics(y_true, y_pred, normalize=True)
-        assert_greater(measure, 0,
-                       msg="We failed to test correctly the normalize option")
+        assert measure > 0, "We failed to test correctly the normalize option"
         assert_allclose(metrics(y_true, y_pred, normalize=False)
                         / n_samples, measure)
 

@@ -638,7 +638,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     normalize : bool, optional (default=True)
         If ``False``, return the sum of the Jaccard similarity coefficient
         over the sample set. Otherwise, return the average of Jaccard
-        similarity coefficient. ``normalize`` is only meaningful when
+        similarity coefficient. ``normalize`` is only applicable when
         ``average='samples'``.
 
     sample_weight : array-like of shape = [n_samples], optional
@@ -735,9 +735,10 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
 
     if not np.all(denominator):
         # TODO: warn that 0 will be returned
-        denominator[denominator == 0] == 1
+        denominator[denominator == 0] = 1
 
     jaccard = numerator / denominator
+    print(numerator, denominator)
     if average is None:
         return jaccard
     if not normalize:
@@ -745,6 +746,9 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                            else sample_weight)).sum()
     if average == 'weighted':
         weights = MCM[:, 1, 0] + MCM[:, 1, 1]
+        if not np.any(weights):
+            # numerator is 0, and warning should have already been issued
+            weights = None
     elif average == 'samples' and sample_weight is not None:
         weights = sample_weight
     else:

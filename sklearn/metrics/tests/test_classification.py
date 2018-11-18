@@ -1151,8 +1151,8 @@ def test_jaccard_similarity_score():
             "another average setting.")
     assert_raise_message(ValueError, msg2, jaccard_similarity_score, y_true,
                          y_pred, average='binary')
-    msg3 = ("Sample-based jaccard similarity score is not meaningful outside "
-            "multilabel classification. See the accuracy_score instead.")
+    msg3 = ("Samplewise metrics are not available outside of multilabel "
+            "classification.")
     assert_raise_message(ValueError, msg3, jaccard_similarity_score, y_true,
                          y_pred, average='samples')
     assert_raise_message(ValueError, msg3, jaccard_similarity_score, y_true,
@@ -1221,10 +1221,10 @@ def test_multilabel_jaccard_similarity_score():
                          y_pred, average='macro', normalize=False)
     assert_raise_message(ValueError, msg1, jaccard_similarity_score, y_true,
                          y_pred, average='macro', normalize=True)
-    msg2 = 'All labels must be in [0, n, labels). Got 4 > 2'
+    msg2 = 'Got 4 > 2'
     assert_raise_message(ValueError, msg2, jaccard_similarity_score, y_true,
                          y_pred, labels=[4])
-    msg3 = 'All labels must be in [0, n, labels). Got -1 < 0'
+    msg3 = 'Got -1 < 0'
     assert_raise_message(ValueError, msg3, jaccard_similarity_score, y_true,
                          y_pred, labels=[-1])
 
@@ -1253,8 +1253,8 @@ def test_multiclass_jaccard_similarity_score():
                                 bin_jaccard_similarity_score(average=average,
                                                              labels=b_label))
 
-    y_true = np.array([])
-    y_pred = np.array([])
+    y_true = np.array([[0, 0], [0, 0], [0, 0]])
+    y_pred = np.array([[0, 0], [0, 0], [0, 0]])
     assert_equal(jaccard_similarity_score(y_true, y_pred, average='weighted'),
                  0.)
 
