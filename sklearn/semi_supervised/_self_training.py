@@ -133,10 +133,7 @@ class SelfTrainingClassifier(BaseEstimator):
             msg = "threshold must be in [0,1), got {}".format(self.threshold)
             raise ValueError(msg)
 
-        if y.dtype.kind == 'U' or y.dtype.kind == 'S':
-            has_label = y != '-1'
-        else:
-            has_label = y != -1
+        has_label = y != -1
 
         if np.all(has_label):
             warnings.warn("y contains no unlabeled samples", UserWarning)

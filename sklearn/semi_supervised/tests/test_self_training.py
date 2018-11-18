@@ -29,8 +29,10 @@ n_labeled_samples = 50
 
 y_train_missing_labels = y_train.copy()
 y_train_missing_labels[n_labeled_samples:] = -1
-mapping = {0: 'A', 1: 'B', 2: 'C', -1: -1}
-y_train_missing_strings = np.vectorize(mapping.get)(y_train_missing_labels)
+mapping = {0: 'A', 1: 'B', 2: 'C', -1: '-1'}
+y_train_missing_strings = np.vectorize(mapping.get)(
+    y_train_missing_labels).astype(object)
+y_train_missing_strings[y_train_missing_labels == -1] = -1
 
 lb = LabelBinarizer()
 y_train_missing_dummies = lb.fit_transform(y_train_missing_labels)
