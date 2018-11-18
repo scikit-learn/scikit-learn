@@ -704,7 +704,7 @@ multilabel problem: ::
   >>> jaccard_similarity_score(y_true, y_pred, average='micro')
   0.33...
   >>> jaccard_similarity_score(y_true, y_pred, average=None)
-  array([ 1.,  0.,  0.,  1.])
+  array([1., 0., 0., 1.])
 
 .. _precision_recall_f_measure_metrics:
 
