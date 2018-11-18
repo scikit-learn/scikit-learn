@@ -213,35 +213,17 @@ class BayesianRidge(LinearModel, RegressorMixin):
         # Convergence loop of the bayesian ridge regression
         for iter_ in range(self.n_iter):
 
-            # Compute posterior mean and log det of posterior covariance:
-            # posterior covariance is given by 1/alpha_ * scaled_sigma_ where
-            # scaled_sigma_ = (lambda_/alpha_ * np.eye(n_features)
-            #                  + np.dot(X.T, X))^-1
-            # and posterior mean is given by coef_ = scaled_sigma_ * X.T * y
-            if n_samples > n_features:
-                coef_ = np.dot(Vh.T,
-                               Vh / (eigen_vals_ +
-                                     lambda_ / alpha_)[:, np.newaxis])
-                coef_ = np.dot(coef_, XT_y)
-                if self.compute_score:
-                    logdet_sigma_ = - np.sum(
-                        np.log(lambda_ + alpha_ * eigen_vals_))
-            else:
-                coef_ = np.dot(X.T, np.dot(
-                    U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
-                coef_ = np.dot(coef_, y)
-                if self.compute_score:
-                    logdet_sigma_ = np.full(n_features, lambda_,
-                                            dtype=np.array(lambda_).dtype)
-                    logdet_sigma_[:n_samples] += alpha_ * eigen_vals_
-                    logdet_sigma_ = - np.sum(np.log(logdet_sigma_))
-
-            rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
-            # Compute the log marginal likelihood
+            # update posterior mean coef_ based on alpha_ and lambda_ and
+            # compute corresponding rmse
+            coef_, rmse_ = self._update_coef_(X, y, n_samples, n_features,
+                                              XT_y, U, Vh, eigen_vals_,
+                                              alpha_, lambda_)
             if self.compute_score:
+                # compute the log marginal likelihood
                 s = self._log_marginal_likelihood(n_samples, n_features,
+                                                  eigen_vals_,
                                                   alpha_, lambda_,
-                                                  coef_, rmse_, logdet_sigma_)
+                                                  coef_, rmse_)
                 self.scores_.append(s)
 
             # Update alpha and lambda according to (MacKay, 1992)
@@ -261,36 +243,29 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
         self.n_iter_ = iter_ + 1
 
-        # return regularization parameters
+        # return regularization parameters and corresponding posterior mean,
+        # log marginal likelihood and posterior covariance
         self.alpha_ = alpha_
         self.lambda_ = lambda_
-        # and corresponding posterior mean and posterior covariance
-        if n_samples > n_features:
-            coef_ = np.dot(Vh.T,
-                           Vh / (eigen_vals_ +
-                                 lambda_ / alpha_)[:, np.newaxis])
-            coef_ = np.dot(coef_, XT_y)
-        else:
-            coef_ = np.dot(X.T, np.dot(
-                U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
-            coef_ = np.dot(coef_, y)
-        self.coef_ = coef_
+        self.coef_, rmse_ = self._update_coef_(X, y, n_samples, n_features,
+                                               XT_y, U, Vh, eigen_vals_,
+                                               alpha_, lambda_)
+        if self.compute_score:
+            # compute the log marginal likelihood
+            s = self._log_marginal_likelihood(n_samples, n_features,
+                                              eigen_vals_,
+                                              alpha_, lambda_,
+                                              coef_, rmse_)
+            self.scores_.append(s)
+            self.scores_ = np.array(self.scores_)
 
+        # posterior covariance is given by 1/alpha_ * scaled_sigma_
         scaled_sigma_ = np.dot(Vh.T,
                                Vh / (eigen_vals_ +
                                      lambda_ / alpha_)[:, np.newaxis])
-        # posterior covariance is given by 1/alpha_ * scaled_sigma_
         self.sigma_ = (1. / alpha_) * scaled_sigma_
 
         self._set_intercept(X_offset_, y_offset_, X_scale_)
-
-        # compute final log marginal likelihood
-        if self.compute_score:
-            s = self._log_marginal_likelihood(n_samples, n_features,
-                                              alpha_, lambda_,
-                                              coef_, rmse_, logdet_sigma_)
-            self.scores_.append(s)
-            self.scores_ = np.array(self.scores_)
 
         return self
 
@@ -326,36 +301,47 @@ class BayesianRidge(LinearModel, RegressorMixin):
             y_std = np.sqrt(sigmas_squared_data + (1. / self.alpha_))
             return y_mean, y_std
 
-    def _log_marginal_likelihood(self, n_samples, n_features, alpha_,
-                                 lambda_, coef, rmse, logdet_sigma):
-        """Log marginal likelihood.
+    def _update_coef_(self, X, y, n_samples, n_features, XT_y, U, Vh,
+                      eigen_vals_, alpha_, lambda_):
+        """Update posterior mean and compute corresponding rmse.
 
-        Parameters
-        ----------
-        n_samples : int
-            Number of samples.
-        n_features : int
-            Number of features.
-        alpha : float
-            Precision of the noise.
-        lambda_ : float
-            Precision of the weights.
-        coef : array, shape (n_features,)
-            Coefficients of the regression model (mean of distribution).
-        rmse : float
-            Value of the mean squared error obtained with coef.
-        logdet_sigma : float
-            Log of the determinant of sigma.
-
-        Returns
-        -------
-        score : float
-            Value of the log marginal likelihood.
+        Posterior mean is given by coef_ = scaled_sigma_ * X.T * y where
+        scaled_sigma_ = (lambda_/alpha_ * np.eye(n_features)
+                         + np.dot(X.T, X))^-1
         """
+
+        if n_samples > n_features:
+            coef_ = np.dot(Vh.T,
+                           Vh / (eigen_vals_ +
+                                 lambda_ / alpha_)[:, np.newaxis])
+            coef_ = np.dot(coef_, XT_y)
+        else:
+            coef_ = np.dot(X.T, np.dot(
+                U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
+            coef_ = np.dot(coef_, y)
+
+        rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
+
+        return coef_, rmse_
+
+    def _log_marginal_likelihood(self, n_samples, n_features, eigen_vals,
+                                 alpha_, lambda_, coef, rmse):
+        """Log marginal likelihood."""
         alpha_1 = self.alpha_1
         alpha_2 = self.alpha_2
         lambda_1 = self.lambda_1
         lambda_2 = self.lambda_2
+
+        # compute the log of the determinant of the posterior covariance.
+        # posterior covariance is given by
+        # sigma = (lambda_ * np.eye(n_features) + alpha_ * np.dot(X.T, X))^-1
+        if n_samples > n_features:
+            logdet_sigma = - np.sum(np.log(lambda_ + alpha_ * eigen_vals))
+        else:
+            logdet_sigma = np.full(n_features, lambda_,
+                                   dtype=np.array(lambda_).dtype)
+            logdet_sigma[:n_samples] += alpha_ * eigen_vals
+            logdet_sigma = - np.sum(np.log(logdet_sigma))
 
         score = lambda_1 * log(lambda_) - lambda_2 * lambda_
         score += alpha_1 * log(alpha_) - alpha_2 * alpha_
