@@ -1349,17 +1349,18 @@ def test_gradient_boosting_with_init(task):
     # estimator.
     # Check that an error is raised if trying to fit with sample weight but
     # inital estimator does not support sample weight
-    gb, dataset_maker, init = task
+    gb, dataset_maker, init_estimator = task
 
     X, y = dataset_maker()
-    sample_weight = np.random.rand(100)
+    sample_weight = np.random.RandomState(42).rand(100)
 
     # init supports sample weights
-    init_est = init()
+    init_est = init_estimator()
     gb(init=init_est).fit(X, y, sample_weight=sample_weight)
 
     # init does not support sample weights
-    init_est = _NoSampleWeightWrapper(init())
+    init_est = _NoSampleWeightWrapper(init_estimator())
     gb(init=init_est).fit(X, y)  # ok no sample weights
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError,
+                       match="estimator.*does not support sample weights"):
         gb(init=init_est).fit(X, y, sample_weight=sample_weight)

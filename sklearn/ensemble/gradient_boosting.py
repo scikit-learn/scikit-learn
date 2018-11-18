@@ -1397,10 +1397,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         if sample_weight is None:
             sample_weight = np.ones(n_samples, dtype=np.float32)
-            sample_weight_was_none = True
+            sample_weight_is_none = True
         else:
             sample_weight = column_or_1d(sample_weight, warn=True)
-            sample_weight_was_none = False
+            sample_weight_is_none = False
 
         check_consistent_length(X, y, sample_weight)
 
@@ -1424,12 +1424,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             try:
                 self.init_.fit(X, y, sample_weight=sample_weight)
             except TypeError:
-                if sample_weight_was_none:
+                if sample_weight_is_none:
                     self.init_.fit(X, y)
                 else:
                     raise ValueError(
                         "The initial estimator {} does not support sample "
-                        "weights yet.".format(self.init_.__class__.__name__))
+                        "weights.".format(self.init_.__class__.__name__))
 
             # init predictions
             y_pred = self.init_.predict(X).astype(np.float64, copy=False)
