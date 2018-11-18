@@ -29,7 +29,6 @@ n_labeled_samples = 50
 
 y_train_missing_labels = y_train.copy()
 y_train_missing_labels[n_labeled_samples:] = -1
-y_train_missing_labels_strings = y_train_missing_labels.copy()
 mapping = {0: 'A', 1: 'B', 2: 'C', -1: -1}
 y_train_missing_strings = np.vectorize(mapping.get)(y_train_missing_labels)
 
@@ -175,7 +174,7 @@ def test_no_unlabeled():
     knn.fit(X_train, y_train)
     st = SelfTrainingClassifier(knn)
     msg = "y contains no unlabeled samples"
-    assert_warns_message(RuntimeWarning, msg, st.fit, X_train, y_train)
+    assert_warns_message(UserWarning, msg, st.fit, X_train, y_train)
     assert_array_equal(knn.predict(X_test), st.predict(X_test))
     # Assert that all samples were labeled in iteration 0 (since there were no
     # unlabeled samples).

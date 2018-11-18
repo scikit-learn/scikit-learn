@@ -69,7 +69,6 @@ class SelfTrainingClassifier(BaseEstimator):
     n_iter_ : int
         The amount of iterations the classifier used during fitting.
 
-
     Examples
     --------
     >>> import numpy as np
@@ -107,7 +106,7 @@ class SelfTrainingClassifier(BaseEstimator):
     def fit(self, X, y):
         """
         Fits this ``SelfTrainingClassifier`` to a dataset.
-        
+
         Parameters
         ----------
         X : array-like, shape = (n_samples, n_features)
@@ -176,6 +175,7 @@ class SelfTrainingClassifier(BaseEstimator):
         self.classes_ = self.base_classifier_.classes_
         return self
 
+    @if_delegate_has_method(delegate='base_classifier')
     def predict(self, X):
         """Predict the classes of X.
 
