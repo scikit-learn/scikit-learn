@@ -164,6 +164,11 @@ Changelog
   Yeo-Johnson transform was incorrect for lambda parameters outside of `[0, 2]`
   :issue:`12522` by :user:`Nicolas Hug<NicolasHug>`.
 
+- |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where transform
+  failed when set to ignore unknown numpy strings of different lengths 
+  :issue:`12471` by :user:`Gabriel Marzinotto<GMarzinotto>`.
+
+
 :mod:`sklearn.utils`
 ........................
 
