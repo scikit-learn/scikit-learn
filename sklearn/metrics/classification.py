@@ -681,7 +681,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     >>> jaccard_similarity_score(y_true, y_pred, average='weighted')
     0.5
     >>> jaccard_similarity_score(y_true, y_pred, average=None)
-    array([ 0.,  0.,  1.])
+    array([0., 0., 1.])
 
     It may be a poor indicator if there are no positives for some samples
     or classes:
