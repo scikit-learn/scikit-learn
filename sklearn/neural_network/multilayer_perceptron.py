@@ -79,9 +79,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self.n_iter_no_change = n_iter_no_change
         self.max_fun = max_fun
 
-        # FIXME remove this whole if statement for 0.22
+        # FIXME remove this whole if statement for 0.23
         if self.warm_start is True:
-            message = 'The behavior of warm_start=True will change in 0.22 ' \
+            message = 'The behavior of warm_start=True will change in 0.23 ' \
                       'to behave like warm_start=\'full\'. To continue ' \
                       'using the old behavior, set max_iter=1 or switch to ' \
                       'partial_fit.'
@@ -317,7 +317,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                                                     fan_out)
         return coef_init, intercept_init
 
-    def _fit(self, X, y, incremental=False):
+    def _fit(self, X, y, partial=False):
         # Make sure self.hidden_layer_sizes is a list
         hidden_layer_sizes = self.hidden_layer_sizes
         if not hasattr(hidden_layer_sizes, "__iter__"):
@@ -330,7 +330,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             raise ValueError("hidden_layer_sizes must be > 0, got %s." %
                              hidden_layer_sizes)
 
-        X, y = self._validate_input(X, y, incremental)
+        X, y = self._validate_input(X, y, partial)
         n_samples, n_features = X.shape
 
         # Ensure y is 2D
@@ -346,7 +346,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self._random_state = check_random_state(self.random_state)
 
         if not hasattr(self, 'coefs_') or (not self.warm_start and not
-                                           incremental):
+                                           partial):
             # First time training the model
             self._initialize(y, layer_units)
 
@@ -377,7 +377,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         # Run the Stochastic optimization solver
         if self.solver in _STOCHASTIC_SOLVERS:
             self._fit_stochastic(X, y, activations, deltas, coef_grads,
-                                 intercept_grads, layer_units, incremental)
+                                 intercept_grads, layer_units, partial)
 
         # Run the LBFGS solver
         elif self.solver == 'lbfgs':
@@ -483,9 +483,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self._unpack(opt_res.x)
 
     def _fit_stochastic(self, X, y, activations, deltas, coef_grads,
-                        intercept_grads, layer_units, incremental):
+                        intercept_grads, layer_units, partial):
 
-        if not hasattr(self, '_optimizer') or (not incremental and
+        if not hasattr(self, '_optimizer') or (not partial and
                                                not self.warm_start):
             params = self.coefs_ + self.intercepts_
 
@@ -499,7 +499,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     self.epsilon)
 
         # early_stopping in partial_fit doesn't make sense
-        early_stopping = self.early_stopping and not incremental
+        early_stopping = self.early_stopping and not partial
         if early_stopping:
             # don't stratify in multilabel classification
             should_stratify = is_classifier(self) and self.n_outputs_ == 1
@@ -573,8 +573,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     else:
                         self._no_improvement_count = 0
 
-                # FIXME remove `or self.warm_start is True` condition for 0.22
-                if incremental or self.warm_start is True:
+                # FIXME remove `or self.warm_start is True` condition for 0.23
+                if partial or self.warm_start is True:
                     break
 
                 if self.n_iter_ == self.max_iter:
@@ -637,7 +637,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         -------
         self : returns a trained MLP model.
         """
-        return self._fit(X, y, incremental=False)
+        return self._fit(X, y, partial=False)
 
     @property
     def partial_fit(self):
@@ -662,7 +662,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         return self._partial_fit
 
     def _partial_fit(self, X, y):
-        return self._fit(X, y, incremental=True)
+        return self._fit(X, y, partial=True)
 
     def _predict(self, X):
         """Predict using the trained model
@@ -813,10 +813,10 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         as for True but train for 'n_iter' iterations. If False, just erase the
         previous solution. See :term:`the Glossary <warm_start>`.
 
-        .. deprecated:: 0.20
-           ``warm_start=True`` will adapt the new behavior of 'warm_start=full'
-           in 0.22. To continue using the old behavior, use the function
-           ``partial_fit`` instead.
+        .. deprecated:: 0.21
+           ``warm_start=True`` will adopt the new behavior of 'warm_start=full'
+           in 0.23. To continue using the old behavior, use the function
+           ``partial_fit`` instead or set 'max_iter=1'.
 
     momentum : float, default 0.9
         Momentum for gradient descent update. Should be between 0 and 1. Only
@@ -946,7 +946,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             beta_1=beta_1, beta_2=beta_2, epsilon=epsilon,
             n_iter_no_change=n_iter_no_change, max_fun=max_fun)
 
-    def _validate_input(self, X, y, incremental):
+    def _validate_input(self, X, y, partial):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                          multi_output=True)
         if y.ndim == 2 and y.shape[1] == 1:
@@ -956,7 +956,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             self._label_binarizer = LabelBinarizer()
             self._label_binarizer.fit(y)
             self.classes_ = self._label_binarizer.classes_
-        elif self.warm_start and not incremental:
+        elif self.warm_start and not partial:
             classes = unique_labels(y)
             if set(classes) != set(self.classes_):
                 raise ValueError("warm_start can only be used where `y` has "
@@ -1010,7 +1010,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         -------
         self : returns a trained MLP model.
         """
-        return self._fit(X, y, incremental=False)
+        return self._fit(X, y, partial=False)
 
     @property
     def partial_fit(self):
@@ -1210,10 +1210,10 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         as for True but train for 'n_iter' iterations. If False, just erase the
         previous solution. See :term:`the Glossary <warm_start>`.
 
-        .. deprecated:: 0.20
-           ``warm_start=True`` will adapt the new behavior of 'warm_start=full'
-           in 0.22. To continue using the old behavior, use the function
-           ``partial_fit`` instead.
+        .. deprecated:: 0.21
+           ``warm_start=True`` will adopt the new behavior of 'warm_start=full'
+           in 0.23. To continue using the old behavior, use the function
+           ``partial_fit`` instead or set 'max_iter=1'.
 
     momentum : float, default 0.9
         Momentum for gradient descent update.  Should be between 0 and 1. Only
@@ -1359,7 +1359,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
             return y_pred.ravel()
         return y_pred
 
-    def _validate_input(self, X, y, incremental):
+    def _validate_input(self, X, y, partial):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                          multi_output=True, y_numeric=True)
         if y.ndim == 2 and y.shape[1] == 1:
