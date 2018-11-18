@@ -119,17 +119,24 @@ def test_none_iter():
     assert st.n_iter_ < 10
 
 
-def test_zero_iterations():
+@pytest.mark.parametrize("base_classifier",
+                         [DummyClassifier(random_state=0),
+                          DecisionTreeClassifier(random_state=0),
+                          KNeighborsClassifier(),
+                          SVC(gamma="scale", probability=True,
+                              random_state=0)])
+@pytest.mark.parametrize("y", [y_train_missing_labels,
+                               y_train_missing_strings])
+def test_zero_iterations(base_classifier, y):
     # Check classification for zero iterations.
     # Fitting a SelfTrainingClassifier with zero iterations should give the
     # same results as fitting a supervised classifier.
+    # This also asserts that string arrays work as expected.
 
-    clf1 = SelfTrainingClassifier(KNeighborsClassifier(),
-                                  max_iter=0).fit(X_train,
-                                                  y_train_missing_labels)
+    clf1 = SelfTrainingClassifier(base_classifier, max_iter=0).fit(X_train, y)
 
-    clf2 = KNeighborsClassifier().fit(
-        X_train[:n_labeled_samples], y_train[:n_labeled_samples])
+    clf2 = base_classifier.fit(X_train[:n_labeled_samples],
+                               y[:n_labeled_samples])
 
     assert_array_equal(clf1.predict(X_test), clf2.predict(X_test))
 

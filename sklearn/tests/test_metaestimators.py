@@ -15,7 +15,7 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
-from sklearn.semi_supervised.self_training import SelfTrainingClassifier
+from sklearn.semi_supervised import SelfTrainingClassifier
 
 
 class DelegatorData(object):
