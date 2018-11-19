@@ -18,7 +18,6 @@ from sklearn.metrics import accuracy_score
 # Author: Oliver Rausch <rauscho@ethz.ch>
 # License: BSD 3 clause
 
-
 # load the iris dataset and randomly permute it
 iris = load_iris()
 X_train, X_test, y_train, y_test = train_test_split(iris.data,
