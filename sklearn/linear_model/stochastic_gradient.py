@@ -9,7 +9,7 @@ import warnings
 
 from abc import ABCMeta, abstractmethod
 
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 
 from ..base import clone, is_classifier
 from .base import LinearClassifierMixin, SparseCoefMixin

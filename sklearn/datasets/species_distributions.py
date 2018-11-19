@@ -51,7 +51,7 @@ from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils import Bunch
 from sklearn.datasets.base import _pkl_filepath
-from sklearn.externals import joblib
+from sklearn.utils import _joblib
 
 PY3_OR_LATER = sys.version_info[0] >= 3
 
@@ -265,8 +265,8 @@ def fetch_species_distributions(data_home=None,
                       test=test,
                       train=train,
                       **extra_params)
-        joblib.dump(bunch, archive_path, compress=9)
+        _joblib.dump(bunch, archive_path, compress=9)
     else:
-        bunch = joblib.load(archive_path)
+        bunch = _joblib.load(archive_path)
 
     return bunch
