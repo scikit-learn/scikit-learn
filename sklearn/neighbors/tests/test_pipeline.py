@@ -98,7 +98,7 @@ def test_isomap():
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        KNeighborsTransformer(n_neighbors=n_neighbors + 1, algorithm=algorithm,
+        KNeighborsTransformer(n_neighbors=n_neighbors, algorithm=algorithm,
                               mode='distance'),
         Isomap(n_neighbors=n_neighbors, neighbors_algorithm='precomputed'))
     est_compact = Isomap(n_neighbors=n_neighbors,
@@ -126,7 +126,7 @@ def test_tsne():
 
         # compare the chained version and the compact version
         est_chain = make_pipeline(
-            KNeighborsTransformer(n_neighbors=n_neighbors + 1, mode='distance',
+            KNeighborsTransformer(n_neighbors=n_neighbors, mode='distance',
                                   metric=metric),
             TSNE(metric='precomputed', perplexity=perplexity,
                  method="barnes_hut", random_state=42, n_iter=n_iter))
@@ -147,7 +147,7 @@ def test_lof_novelty_false():
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        KNeighborsTransformer(n_neighbors=n_neighbors + 1, mode='distance'),
+        KNeighborsTransformer(n_neighbors=n_neighbors, mode='distance'),
         LocalOutlierFactor(metric='precomputed', n_neighbors=n_neighbors,
                            novelty=False, contamination="auto"))
     est_compact = LocalOutlierFactor(n_neighbors=n_neighbors, novelty=False,
@@ -168,7 +168,7 @@ def test_lof_novelty_true():
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        KNeighborsTransformer(n_neighbors=n_neighbors + 1, mode='distance'),
+        KNeighborsTransformer(n_neighbors=n_neighbors, mode='distance'),
         LocalOutlierFactor(metric='precomputed', n_neighbors=n_neighbors,
                            novelty=True, contamination="auto"))
     est_compact = LocalOutlierFactor(n_neighbors=n_neighbors, novelty=True,

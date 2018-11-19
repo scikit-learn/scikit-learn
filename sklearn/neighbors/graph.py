@@ -206,10 +206,9 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         between neighbors according to the given metric.
 
     n_neighbors : int, optional (default = 5)
-        Number of neighbors to use for :meth:`kneighbors` queries. This always
-        includes the query point (each sample is its first own neighbor), so
-        one should usually use one more neighbor here than in following
-        estimators.
+        Number of neighbors to use for :meth:`kneighbors` queries. For
+        compatiblity reasons, as each sample is considered as its own neighbor,
+        one extra neighbor will be computed when mode == 'distance'.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
@@ -302,7 +301,9 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
             The diagonal is always explicit.
         """
         check_is_fitted(self, '_fit_X')
-        return self.kneighbors_graph(X, mode=self.mode)
+        add_one = self.mode == 'distance'
+        return self.kneighbors_graph(X, mode=self.mode,
+                                     n_neighbors=self.n_neighbors + add_one)
 
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it.
