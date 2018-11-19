@@ -378,6 +378,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             raise ValueError("X has %d features per sample, expected %d"
                              % (X.shape[1], self.statistics_.shape[0]))
 
+        # MissingIndicator transform
+        if self.add_indicator:
+            X_trans = self.indicator_.transform(X)
+
         # Delete the invalid columns if strategy is not constant
         if self.strategy == "constant":
             valid_statistics = statistics
@@ -394,10 +398,6 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                     warnings.warn("Deleting features without "
                                   "observed values: %s" % missing)
                 X = X[:, valid_statistics_indexes]
-
-        # MissingIndicator transform
-        if self.add_indicator:
-            X_trans = self.indicator_.transform(X)
 
         # Do actual imputation
         if sparse.issparse(X):
