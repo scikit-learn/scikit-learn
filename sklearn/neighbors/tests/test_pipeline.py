@@ -138,7 +138,7 @@ def test_tsne():
         assert_array_almost_equal(Xt_chain, Xt_compact)
 
 
-def test_lof():
+def test_lof_novelty_false():
     # Test chaining KNeighborsTransformer and LocalOutlierFactor
     n_neighbors = 4
 
@@ -149,12 +149,33 @@ def test_lof():
     est_chain = make_pipeline(
         KNeighborsTransformer(n_neighbors=n_neighbors + 1, mode='distance'),
         LocalOutlierFactor(metric='precomputed', n_neighbors=n_neighbors,
-                           contamination="auto"))
-    est_compact = LocalOutlierFactor(n_neighbors=n_neighbors,
+                           novelty=False, contamination="auto"))
+    est_compact = LocalOutlierFactor(n_neighbors=n_neighbors, novelty=False,
                                      contamination="auto")
 
     pred_chain = est_chain.fit_predict(X)
     pred_compact = est_compact.fit_predict(X)
+    assert_array_almost_equal(pred_chain, pred_compact)
+
+
+def test_lof_novelty_true():
+    # Test chaining KNeighborsTransformer and LocalOutlierFactor
+    n_neighbors = 4
+
+    rng = np.random.RandomState(0)
+    X1 = rng.randn(40, 2)
+    X2 = rng.randn(40, 2)
+
+    # compare the chained version and the compact version
+    est_chain = make_pipeline(
+        KNeighborsTransformer(n_neighbors=n_neighbors + 1, mode='distance'),
+        LocalOutlierFactor(metric='precomputed', n_neighbors=n_neighbors,
+                           novelty=True, contamination="auto"))
+    est_compact = LocalOutlierFactor(n_neighbors=n_neighbors, novelty=True,
+                                     contamination="auto")
+
+    pred_chain = est_chain.fit(X1).predict(X2)
+    pred_compact = est_compact.fit(X1).predict(X2)
     assert_array_almost_equal(pred_chain, pred_compact)
 
 
