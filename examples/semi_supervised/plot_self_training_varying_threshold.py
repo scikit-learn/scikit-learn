@@ -4,6 +4,14 @@ Effect of varying threshold for self-training
 =============================================
 
 This example illustrates the effect of a varying threshold on self-training.
+The `breast_cancer` dataset is loaded, and labels are deleted such that only 50
+out of 569 samples have labels. A `SelfTrainingClassifier` is fitted on this
+dataset, with varying thresholds.
+
+The upper graph shows the amount of (initially unlabeled) samples that the
+classifier predicted labels for during training, and the accuracy of the
+classifier. The lower graph shows the last iteration in which a sample was
+labeled. All values are cross validated with 3 folds.
 
 At low thresholds (in [0.4, 0.5]), the classifier learns from samples that were
 labeled with a low confidence. These low-confidence samples are likely have
@@ -12,7 +20,7 @@ produces a poor accuracy. Note that the classifier labels almost all of the
 samples, and only takes one iteration.
 
 For very high thresholds (in [0.9, 1)) we observe that the classifier does not
-augment its dataset (the amount of self-labeled samples is 0). In effect the
+augment its dataset (the amount of self-labeled samples is 0). As a result, the
 accuracy achieved with a threshold of 0.9999 is the same as a normal supervised
 classifier would achieve.
 
@@ -50,10 +58,9 @@ amount_iterations = np.empty((x_values.shape[0], n_splits))
 
 for (i, threshold) in enumerate(x_values):
     self_training_clf = SelfTrainingClassifier(base_classifier,
-                                               max_iter=20,
                                                threshold=threshold)
 
-    # We need maunal cross validation so that we don't treat -1 as a separate
+    # We need manual cross validation so that we don't treat -1 as a separate
     # class when computing accuracy
     skfolds = StratifiedKFold(n_splits=n_splits, random_state=42)
     for fold, (train_index, test_index) in enumerate(skfolds.split(X, y)):
