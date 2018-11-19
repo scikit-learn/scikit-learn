@@ -142,7 +142,7 @@ Support for Python 3.4 and below has been officially dropped.
 .....................
 - |Feature| The :class:`impute.SimpleImputer` has a new parameter
   ``'add_indicator'``, which simply stacks a :class:`impute.MissingIndicator`
-  transform into the output of the imputer's transform. :issue:`11886` by
+  transform into the output of the imputer's transform. :issue:`12583` by
   :user:`Danylo Baibak <DanilBaibak>`.
 
 Multiple modules
