@@ -515,21 +515,20 @@ the model from 0.81 to 0.82.
 Nearest Neighbors Transformer
 =============================
 
-Many scikit-learn estimators rely on nearest neighbors. Several classifiers and
+Many scikit-learn estimators rely on nearest neighbors: Several classifiers and
 regressors such as :class:`KNeighborsClassifier` and
 :class:`KNeighborsRegressor`, but also some clustering methods such as
 :class:`cluster.DBSCAN` and :class:`cluster.SpectralClustering`, and some
 manifold embeddings such as :class:`manifold.TSNE` and :class:`manifold.Isomap`.
 
 All these estimators can compute internally the nearest neighbors, but most of
-them also accept precomputed nearest neighbors :term:`Glossary <sparse graph>`.,
+them also accept precomputed nearest neighbors :term:`Glossary <sparse graph>`,
 as given by :func:`neighbors.kneighbors_graph` and
 :func:`neighbors.radius_neighbors_graph`. With mode `mode='connectivity'`, these
-functions return an affinity graph (larger values mean closer points) as
-required for instance in :class:`cluster.SpectralClustering`, whereas with
-`mode='distance'`, they return a distance graph (smaller values mean closer
-points) as required for instance in :class:`cluster.DBSCAN`. The benefits of
-precomputation are multiple.
+functions return an binary adjacency sparse graph as required for instance in
+:class:`cluster.SpectralClustering`, whereas with `mode='distance'`, they return
+a distance sparse graph as required for instance in :class:`cluster.DBSCAN`. The
+benefits of precomputation are multiple.
 
 First, the precomputed graph can be re-used multiple times, for instance while
 varying a parameter of the estimator. This can be done manually, or using the
@@ -551,7 +550,7 @@ estimation, for instance enabling multiprocessing though the parameter `n_jobs`.
 Finally, the precomputation can be performed by custom estimators to use
 different implementations, such as approximate nearest neighbors methods, or
 implementation with special data types. The precomputed neighbors
-:term:`Glossary <sparse graph>`.need to be formatted as in
+:term:`Glossary <sparse graph>` needs to be formatted as in
 :func:`neighbors.radius_neighbors_graph` output:
 
 * a CSR matrix (although COO, CSC or LIL will be accepted).

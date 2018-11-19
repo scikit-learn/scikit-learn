@@ -206,7 +206,10 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         between neighbors according to the given metric.
 
     n_neighbors : int, optional (default = 5)
-        Number of neighbors to use for :meth:`kneighbors` queries.
+        Number of neighbors to use for :meth:`kneighbors` queries. This always
+        includes the query point (each sample is its first own neighbor), so
+        one should usually use one more neighbor here than in following
+        estimators.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
