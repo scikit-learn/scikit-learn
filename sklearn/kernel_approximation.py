@@ -130,9 +130,6 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         projection *= np.sqrt(2.) / np.sqrt(self.n_components)
         return projection
 
-    def _more_tags(self):
-        return {'stateless': True}
-
 
 class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
     """Approximates feature map of the "skewed chi-squared" kernel by Monte
@@ -251,9 +248,6 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         np.cos(projection, projection)
         projection *= np.sqrt(2.) / np.sqrt(self.n_components)
         return projection
-
-    def _more_tags(self):
-        return {'stateless': True}
 
 
 class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
