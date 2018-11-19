@@ -612,27 +612,27 @@ class KNeighborsMixin(object):
 
         n_jobs = effective_n_jobs(self.n_jobs)
         chunked_results = None
-        if self._fit_method == 'brute':
+        if (self._fit_method == 'brute' and
+                self.effective_metric_ == 'precomputed' and issparse(X)):
+            results = _kneighbors_from_graph(
+                X, n_neighbors=n_neighbors,
+                return_distance=return_distance)
 
-            if self.effective_metric_ == 'precomputed' and issparse(X):
-                results = _kneighbors_from_graph(
-                    X, n_neighbors=n_neighbors,
-                    return_distance=return_distance)
+        elif self._fit_method == 'brute':
+            reduce_func = partial(self._kneighbors_reduce_func,
+                                  n_neighbors=n_neighbors,
+                                  return_distance=return_distance)
+
+            # for efficiency, use squared euclidean distances
+            if self.effective_metric_ == 'euclidean':
+                kwds = {'squared': True}
             else:
-                reduce_func = partial(self._kneighbors_reduce_func,
-                                      n_neighbors=n_neighbors,
-                                      return_distance=return_distance)
+                kwds = self.effective_metric_params_
 
-                # for efficiency, use squared euclidean distances
-                if self.effective_metric_ == 'euclidean':
-                    kwds = {'squared': True}
-                else:
-                    kwds = self.effective_metric_params_
-
-                chunked_results = list(pairwise_distances_chunked(
-                    X, self._fit_X, reduce_func=reduce_func,
-                    metric=self.effective_metric_, n_jobs=n_jobs,
-                    **kwds))
+            chunked_results = list(pairwise_distances_chunked(
+                X, self._fit_X, reduce_func=reduce_func,
+                metric=self.effective_metric_, n_jobs=n_jobs,
+                **kwds))
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
@@ -904,43 +904,42 @@ class RadiusNeighborsMixin(object):
         if radius is None:
             radius = self.radius
 
-        if self._fit_method == 'brute':
+        if (self._fit_method == 'brute' and
+                self.effective_metric_ == 'precomputed' and issparse(X)):
+            results = _radius_neighbors_from_graph(
+                X, radius=radius, return_distance=return_distance)
 
-            if self.effective_metric_ == 'precomputed' and issparse(X):
-                results = _radius_neighbors_from_graph(
-                    X, radius=radius, return_distance=return_distance)
-
+        elif self._fit_method == 'brute':
+            # for efficiency, use squared euclidean distances
+            if self.effective_metric_ == 'euclidean':
+                radius *= radius
+                kwds = {'squared': True}
             else:
-                # for efficiency, use squared euclidean distances
-                if self.effective_metric_ == 'euclidean':
-                    radius *= radius
-                    kwds = {'squared': True}
-                else:
-                    kwds = self.effective_metric_params_
+                kwds = self.effective_metric_params_
 
-                reduce_func = partial(self._radius_neighbors_reduce_func,
-                                      radius=radius,
-                                      return_distance=return_distance)
+            reduce_func = partial(self._radius_neighbors_reduce_func,
+                                  radius=radius,
+                                  return_distance=return_distance)
 
-                chunked_results = pairwise_distances_chunked(
-                    X, self._fit_X, reduce_func=reduce_func,
-                    metric=self.effective_metric_, n_jobs=self.n_jobs,
-                    **kwds)
-                if return_distance:
-                    neigh_dist_chunks, neigh_ind_chunks = zip(*chunked_results)
-                    neigh_dist_list = sum(neigh_dist_chunks, [])
-                    neigh_ind_list = sum(neigh_ind_chunks, [])
-                    # See https://github.com/numpy/numpy/issues/5456
-                    # to understand why this is initialized this way.
-                    neigh_dist = np.empty(len(neigh_dist_list), dtype='object')
-                    neigh_dist[:] = neigh_dist_list
-                    neigh_ind = np.empty(len(neigh_ind_list), dtype='object')
-                    neigh_ind[:] = neigh_ind_list
-                    results = neigh_dist, neigh_ind
-                else:
-                    neigh_ind_list = sum(chunked_results, [])
-                    results = np.empty(len(neigh_ind_list), dtype='object')
-                    results[:] = neigh_ind_list
+            chunked_results = pairwise_distances_chunked(
+                X, self._fit_X, reduce_func=reduce_func,
+                metric=self.effective_metric_, n_jobs=self.n_jobs,
+                **kwds)
+            if return_distance:
+                neigh_dist_chunks, neigh_ind_chunks = zip(*chunked_results)
+                neigh_dist_list = sum(neigh_dist_chunks, [])
+                neigh_ind_list = sum(neigh_ind_chunks, [])
+                # See https://github.com/numpy/numpy/issues/5456
+                # to understand why this is initialized this way.
+                neigh_dist = np.empty(len(neigh_dist_list), dtype='object')
+                neigh_dist[:] = neigh_dist_list
+                neigh_ind = np.empty(len(neigh_ind_list), dtype='object')
+                neigh_ind[:] = neigh_ind_list
+                results = neigh_dist, neigh_ind
+            else:
+                neigh_ind_list = sum(chunked_results, [])
+                results = np.empty(len(neigh_ind_list), dtype='object')
+                results[:] = neigh_ind_list
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
