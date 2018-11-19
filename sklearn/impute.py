@@ -174,9 +174,6 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         self.copy = copy
         self.add_indicator = add_indicator
 
-        if self.add_indicator:
-            self.indicator_ = MissingIndicator(missing_values=missing_values)
-
     def _validate_input(self, X):
         allowed_strategies = ["mean", "median", "most_frequent", "constant"]
         if self.strategy not in allowed_strategies:
@@ -268,6 +265,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                                                fill_value)
 
         if self.add_indicator:
+            self.indicator_ = MissingIndicator(missing_values=self.missing_values)
             self.indicator_.fit(X)
 
         return self
