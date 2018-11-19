@@ -180,6 +180,24 @@ The above commands assume that you have the Python installation folder in your
 PATH environment variable.
 
 
+Python >= 3.5
+-------------
+
+For Python versions as of 3.5, you need `Build Tools for Visual Studio 2017
+<https://visualstudio.microsoft.com/de/downloads/>`_.
+
+For 64-bit Python, configure the build environment with::
+
+    SET DISTUTILS_USE_SDK=1
+    "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+
+And build scikit-learn from this environment::
+
+    python setup.py install
+
+Replace ``x64`` by ``x86`` to build for 32-bit Python.
+
+
 32-bit Python (<= 3.4)
 ----------------------
 
@@ -226,23 +244,6 @@ Finally you can build scikit-learn in the same ``cmd`` console::
 Replace ``/x64`` by ``/x86`` to build for 32-bit Python instead of 64-bit
 Python.
 
-
-Python >= 3.5
--------------
-
-For Python versions as of 3.5, you need `Build Tools for Visual Studio 2017
-<https://visualstudio.microsoft.com/de/downloads/>`_.
-
-For 64-bit Python, configure the build environment with::
-
-    SET DISTUTILS_USE_SDK=1
-    "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
-
-And build scikit-learn from this environment::
-
-    python setup.py install
-
-Replace ``/x64`` by ``/x86`` to build for 32-bit Python.
 
 Building binary packages and installers
 ---------------------------------------
