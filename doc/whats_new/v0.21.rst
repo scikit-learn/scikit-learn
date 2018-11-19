@@ -59,7 +59,7 @@ Support for Python 3.4 and below has been officially dropped.
   with the last update of the regularization parameters and the returned
   regularization parameters were not the final ones. Also fixed the formula of
   the log marginal likelihood used to compute the score when
-  `compute_score=True`. :issue:`10748` by
+  `compute_score=True`. :issue:`12174` by
   :user:`Albert Thomas <albertcthomas>`.
 
 Multiple modules
