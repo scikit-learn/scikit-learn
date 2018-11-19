@@ -131,7 +131,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         a new copy will always be made, even if `copy=False`:
 
         - If X is not an array of floating values;
-        - If X is encoded as a CSR matrix.
+        - If X is encoded as a CSR matrix;
+        - If add_indicator=True.
 
     add_indicator : boolean, optional (default=False)
         If True, a MissingIndicator transform will stack into output
@@ -426,7 +427,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             if sparse.issparse(X):
                 X = sparse.hstack((X, X_trans))
             else:
-                X = np.concatenate((X, X_trans), axis=1)
+                X = np.hstack((X, X_trans))
 
         return X
 
