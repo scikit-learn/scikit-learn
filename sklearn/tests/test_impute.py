@@ -645,7 +645,6 @@ def test_imputation_add_indicator(marker):
         [6, 3, marker],
         [1, 2, 9]
     ])
-
     X_true = np.array([
         [3., 1., 5., 1., 0., 0.],
         [2., 2., 1., 0., 1., 0.],
@@ -688,3 +687,41 @@ def test_imputation_add_indicator_sparse_matrix(arr_type):
     assert sparse.issparse(X_trans)
     assert X_trans.shape == X_true.shape
     assert_allclose_dense_sparse(X_trans.toarray(), X_true)
+
+
+def test_imputation_add_indicator_empty_column():
+    X_test = np.array([
+        [np.nan, 1, 5],
+        [np.nan, 2, 1],
+        [np.nan, 6, 3],
+        [np.nan, 2, 9]
+    ])
+    X_true = np.array([
+        [1., 5., 1.],
+        [2., 1., 1.],
+        [6., 3., 1.],
+        [2., 9., 1.]
+    ])
+
+    imputer = SimpleImputer(add_indicator=True)
+    X_trans = imputer.fit_transform(X_test)
+    assert_allclose(X_trans, X_true)
+
+
+def test_imputation_add_indicator_with_empty_column():
+    X_test = np.array([
+        [np.nan, 1, np.nan],
+        [np.nan, 3, 1],
+        [np.nan, np.nan, 2],
+        [np.nan, 2, 9]
+    ])
+    X_true = np.array([
+        [1., 4., 1., 0., 1.],
+        [3., 1., 1., 0., 0.],
+        [2., 2., 1., 1., 0.],
+        [2., 9., 1., 0., 0.]
+    ])
+
+    imputer = SimpleImputer(add_indicator=True)
+    X_trans = imputer.fit_transform(X_test)
+    assert_allclose(X_trans, X_true)
