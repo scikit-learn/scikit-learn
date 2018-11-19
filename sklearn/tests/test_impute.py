@@ -656,7 +656,7 @@ def test_imputation_add_indicator(marker):
     imputer = SimpleImputer(missing_values=marker, add_indicator=True)
     X_trans = imputer.fit_transform(X)
 
-    assert_array_equal(X_trans, X_true)
+    assert_allclose(X_trans, X_true)
     assert_allclose(imputer.statistics_, np.array([3., 2., 5.]))
     assert_array_equal(imputer.indicator_.features_, np.array([0, 1, 2]))
 
@@ -685,6 +685,6 @@ def test_imputation_add_indicator_sparse_matrix(arr_type):
     imputer = SimpleImputer(missing_values=np.nan, add_indicator=True)
     X_trans = imputer.fit_transform(X_sparse)
 
-    assert sparse.issparse(X_trans) is True
+    assert sparse.issparse(X_trans)
     assert X_trans.shape == X_true.shape
     assert_allclose_dense_sparse(X_trans.toarray(), X_true)
