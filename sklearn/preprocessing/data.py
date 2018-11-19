@@ -2537,11 +2537,11 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     >>> print(pt.fit(data))
     PowerTransformer(copy=True, method='yeo-johnson', standardize=True)
     >>> print(pt.lambdas_)
-    [ 1.38668178 -3.10053309]
+    [ 1.386... -3.100...]
     >>> print(pt.transform(data))
-    [[-1.31616039 -0.70710678]
-     [ 0.20998268 -0.70710678]
-     [ 1.1061777   1.41421356]]
+    [[-1.316... -0.707...]
+     [ 0.209... -0.707...]
+     [ 1.106...  1.414...]]
 
     See also
     --------
