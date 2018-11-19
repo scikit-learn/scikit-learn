@@ -672,6 +672,11 @@ def test_warm_start_full():
 
     assert mlp.n_iter_ == 10
 
+    with ignore_warnings(category=ConvergenceWarning):
+        mlp.fit(X, y)
+
+    assert mlp.n_iter_ == 20
+
 
 # FIXME remove this test in 0.23 when the behavior of warm_start changes
 def test_warm_start_future_warning():

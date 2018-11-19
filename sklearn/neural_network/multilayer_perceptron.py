@@ -485,8 +485,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
     def _fit_stochastic(self, X, y, activations, deltas, coef_grads,
                         intercept_grads, layer_units, partial):
 
-        if not hasattr(self, '_optimizer') or (not partial and
-                                               not self.warm_start):
+        if not (hasattr(self, '_optimizer') and (partial or self.warm_start)):
             params = self.coefs_ + self.intercepts_
 
             if self.solver == 'sgd':
@@ -814,9 +813,9 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         previous solution. See :term:`the Glossary <warm_start>`.
 
         .. deprecated:: 0.21
-           ``warm_start=True`` will adopt the new behavior of 'warm_start=full'
+           `warm_start=True` will adopt the new behavior of `warm_start='full'`
            in 0.23. To continue using the old behavior, use the function
-           ``partial_fit`` instead or set 'max_iter=1'.
+           `partial_fit` instead or set `max_iter=1`.
 
     momentum : float, default 0.9
         Momentum for gradient descent update. Should be between 0 and 1. Only
@@ -1211,9 +1210,9 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         previous solution. See :term:`the Glossary <warm_start>`.
 
         .. deprecated:: 0.21
-           ``warm_start=True`` will adopt the new behavior of 'warm_start=full'
+           `warm_start=True` will adopt the new behavior of `warm_start='full'`
            in 0.23. To continue using the old behavior, use the function
-           ``partial_fit`` instead or set 'max_iter=1'.
+           `partial_fit` instead or set `max_iter=1`.
 
     momentum : float, default 0.9
         Momentum for gradient descent update.  Should be between 0 and 1. Only
