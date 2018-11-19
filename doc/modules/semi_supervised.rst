@@ -55,7 +55,8 @@ confident predictions for certain samples.
 
 .. topic:: Examples
 
-  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_self_training_performance.py`
+  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_self_training_varying_threshold.py`
+  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_semi_supervised_versus_svm_iris.py`
 
 .. topic:: References
 
@@ -128,7 +129,7 @@ which can drastically reduce running times.
 
 .. topic:: Examples
 
-  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_versus_svm_iris.py`
+  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_semi_supervised_versus_svm_iris.py`
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_structure.py`
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits.py`
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits_active_learning.py`

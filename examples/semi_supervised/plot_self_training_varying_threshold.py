@@ -83,7 +83,6 @@ ax1 = plt.subplot(211)
 ax1.errorbar(x_values, scores.mean(axis=1),
              yerr=scores.std(axis=1),
              capsize=2, color='tab:blue')
-ax1.set_xlabel("Threshold")
 ax1.set_ylabel('Accuracy', color='tab:blue')
 ax1.tick_params('y', colors='tab:blue')
 
@@ -99,5 +98,6 @@ ax3.errorbar(x_values, amount_iterations.mean(axis=1),
              yerr=amount_iterations.std(axis=1),
              capsize=2)
 ax3.set_ylabel('Amount of iterations')
+ax3.set_xlabel("Threshold")
 
 plt.show()
