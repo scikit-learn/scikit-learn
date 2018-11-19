@@ -1047,7 +1047,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     Parameters
     ----------
-    penalty : str, 'l1', 'l2', or 'elasticnet', default: 'l2'
+    penalty : str, 'l1', 'l2', or 'elasticnet', optional (default='l2')
         Used to specify the norm used in the penalization. The 'newton-cg',
         'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
         only supported by the 'saga' solver.
@@ -1055,24 +1055,24 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionadded:: 0.19
            l1 penalty with SAGA solver (allowing 'multinomial' + L1)
 
-    dual : bool, default: False
+    dual : bool, optional (default=False)
         Dual or primal formulation. Dual formulation is only implemented for
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
-    tol : float, default: 1e-4
+    tol : float, optional (default=1e-4)
         Tolerance for stopping criteria.
 
-    C : float, default: 1.0
+    C : float, optional (default=1.0)
         Inverse of regularization strength; must be a positive float.
         Like in support vector machines, smaller values specify stronger
         regularization.
 
-    fit_intercept : bool, default: True
+    fit_intercept : bool, optional (default=True)
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the decision function.
 
-    intercept_scaling : float, default 1.
+    intercept_scaling : float, optional (default=1)
         Useful only when the solver 'liblinear' is used
         and self.fit_intercept is set to True. In this case, x becomes
         [x, self.intercept_scaling],
@@ -1085,7 +1085,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    class_weight : dict or 'balanced', default: None
+    class_weight : dict or 'balanced', optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one.
 
@@ -1099,7 +1099,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionadded:: 0.17
            *class_weight='balanced'*
 
-    random_state : int, RandomState instance or None, optional, default: None
+    random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
@@ -1108,7 +1108,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         'liblinear'.
 
     solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
-             default: 'liblinear'.
+             optional (default='liblinear').
 
         Algorithm to use in the optimization problem.
 
@@ -1131,11 +1131,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionchanged:: 0.20
             Default will change from 'liblinear' to 'lbfgs' in 0.22.
 
-    max_iter : int, default: 100
+    max_iter : int, optional (default=100)
         Useful only for the newton-cg, sag and lbfgs solvers.
         Maximum number of iterations taken for the solvers to converge.
 
-    multi_class : str, {'ovr', 'multinomial', 'auto'}, default: 'ovr'
+    multi_class : str, {'ovr', 'multinomial', 'auto'}, optional (default='ovr')
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
@@ -1148,11 +1148,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionchanged:: 0.20
             Default will change from 'ovr' to 'auto' in 0.22.
 
-    verbose : int, default: 0
+    verbose : int, optional (default=0)
         For the liblinear and lbfgs solvers set verbose to any positive
         number for verbosity.
 
-    warm_start : bool, default: False
+    warm_start : bool, optional (default=False)
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         Useless for liblinear solver. See :term:`the Glossary <warm_start>`.
@@ -1493,31 +1493,28 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     L1 and L2 regularization, with a dual formulation only for the L2 penalty.
     Elastic-Net penalty is only supported by the saga solver.
 
-    For the grid of Cs values (that are set by default to be ten values in
-    a logarithmic scale between 1e-4 and 1e4) and l1_ratios values, the best
-    hyperparameter is selected by the cross-validator StratifiedKFold, but
-    it can be changed using the cv parameter. In the case of newton-cg and
-    lbfgs solvers, we warm start along the path i.e guess the initial
-    coefficients of the present fit to be the coefficients got after
-    convergence in the previous fit, so it is supposed to be faster for
-    high-dimensional dense data.
+    For the grid of `Cs` values and `l1_ratios` values, the best
+    hyperparameter is selected by the cross-validator `StratifiedKFold`, but
+    it can be changed using the `cv` parameter. The 'newton-cg', 'sag',
+    'saga' and 'lbfgs' solvers can warm-start the coefficients (see
+    :term:`Glossary<warm_start>`).
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
     Parameters
     ----------
-    Cs : list of floats | int
+    Cs : list of floats or int, optional (default=10)
         Each of the values in Cs describes the inverse of regularization
         strength. If Cs is as an int, then a grid of Cs values are chosen
         in a logarithmic scale between 1e-4 and 1e4.
         Like in support vector machines, smaller values specify stronger
         regularization.
 
-    fit_intercept : bool, default: True
+    fit_intercept : bool, optional (default=True)
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the decision function.
 
-    cv : integer or cross-validation generator, default: None
+    cv : int or cross-validation generator, optional (default=None)
         The default cross-validation generator used is Stratified K-Folds.
         If an integer is provided, then it is the number of folds used.
         See the module :mod:`sklearn.model_selection` module for the
@@ -1527,17 +1524,17 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    dual : bool
+    dual : bool, optional (default=False)
         Dual or primal formulation. Dual formulation is only implemented for
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
-    penalty : str, 'l1', 'l2', or 'elasticnet', default: 'l2'
+    penalty : str, 'l1', 'l2', or 'elasticnet', optional (default='l2')
         Used to specify the norm used in the penalization. The 'newton-cg',
         'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
         only supported by the 'saga' solver.
 
-    scoring : string, callable, or None
+    scoring : string, callable, or None, optional (default=None)
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``. For a list of scoring functions
@@ -1545,7 +1542,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         default scoring option used is 'accuracy'.
 
     solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
-             default: 'lbfgs'.
+             optional (default='lbfgs')
 
         Algorithm to use in the optimization problem.
 
@@ -1568,13 +1565,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         .. versionadded:: 0.19
            SAGA solver.
 
-    tol : float, optional
+    tol : float, optional (default=1e-4)
         Tolerance for stopping criteria.
 
-    max_iter : int, optional
+    max_iter : int, optional (default=100)
         Maximum number of iterations of the optimization algorithm.
 
-    class_weight : dict or 'balanced', optional
+    class_weight : dict or 'balanced', optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one.
 
@@ -1594,18 +1591,18 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : int
+    verbose : int, optional (default=0)
         For the 'liblinear', 'sag' and 'lbfgs' solvers set verbose to any
         positive number for verbosity.
 
-    refit : bool
+    refit : bool, optional (default=True)
         If set to True, the scores are averaged across all folds, and the
         coefs and the C that corresponds to the best score is taken, and a
         final refit is done using these parameters.
         Otherwise the coefs, intercepts and C that correspond to the
         best scores across folds are averaged.
 
-    intercept_scaling : float, default 1.
+    intercept_scaling : float, optional (default=1)
         Useful only when the solver 'liblinear' is used
         and self.fit_intercept is set to True. In this case, x becomes
         [x, self.intercept_scaling],
@@ -1618,7 +1615,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    multi_class : str, {'ovr', 'multinomial', 'auto'}, default: 'ovr'
+    multi_class : str, {'ovr', 'multinomial', 'auto'}, optional (default='ovr')
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
@@ -1631,7 +1628,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         .. versionchanged:: 0.20
             Default will change from 'ovr' to 'auto' in 0.22.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used

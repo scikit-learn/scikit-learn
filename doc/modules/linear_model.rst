@@ -852,14 +852,11 @@ with 'log' loss.
    thus be used to perform feature selection, as detailed in
    :ref:`l1_feature_selection`.
 
-:class:`LogisticRegressionCV` implements Logistic Regression with
-builtin cross-validation to find out the optimal C and l1_ratio parameters.
-"newton-cg", "sag", "saga" and "lbfgs" solvers are found to be faster
-for high-dimensional dense data, due to warm-starting. For the
-multiclass case, if `multi_class` option is set to "ovr", an optimal C and
-l1_ratio is obtained for each class and if the `multi_class` option is set to
-"multinomial", an optimal C and l1_ratio is obtained by minimizing the
-cross-entropy loss.
+:class:`LogisticRegressionCV` implements Logistic Regression with built-in
+cross-validation support, to find the optimal `C` and `l1_ratio` parameters
+according to the ``scoring`` attribute. The "newton-cg", "sag", "saga" and
+"lbfgs" solvers are found to be faster for high-dimensional dense data, due
+to warm-starting (see :term:`Glossary <warm_start>`).
 
 .. topic:: References:
 
