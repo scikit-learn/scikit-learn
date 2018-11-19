@@ -35,6 +35,16 @@ def test_changed_only():
     lr = LogisticRegression(C=99)
     expected = """LogisticRegression(C=99)"""
     assert lr.__repr__() == expected
+
+    # check with a repr that doesn't fit on a single line
+    lr = LogisticRegression(C=99, class_weight=.4, fit_intercept=False,
+                            tol=1234, verbose=True)
+    expected = """
+LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
+                   verbose=True)"""
+    expected = expected[1:]  # remove first \n
+    assert lr.__repr__() == expected
+
     set_config(print_changed_only=False)
 
 
