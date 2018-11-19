@@ -107,27 +107,19 @@ if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
     pip install sphinx numpydoc  # numpydoc requires sphinx
 fi
 
-if [[ "$SKIP_TESTS" == "true" && "$CHECK_PYTEST_SOFT_DEPENDENCY" != "true" ]]; then
-    echo "No need to build scikit-learn"
-else
-    # Build scikit-learn in the install.sh script to collapse the verbose
-    # build output in the travis output when it succeeds.
-    python --version
-    python -c "import numpy; print('numpy %s' % numpy.__version__)"
-    python -c "import scipy; print('scipy %s' % scipy.__version__)"
-    python -c "\
+# Build scikit-learn in the install.sh script to collapse the verbose
+# build output in the travis output when it succeeds.
+python --version
+python -c "import numpy; print('numpy %s' % numpy.__version__)"
+python -c "import scipy; print('scipy %s' % scipy.__version__)"
+python -c "\
 try:
     import pandas
     print('pandas %s' % pandas.__version__)
 except ImportError:
     pass
 "
-    python setup.py develop
-    ccache --show-stats
-    # Useful for debugging how ccache is used
-    # cat $CCACHE_LOGFILE
-fi
-
-if [[ "$RUN_FLAKE8" == "true" ]]; then
-    conda install flake8 -y
-fi
+python setup.py develop
+ccache --show-stats
+# Useful for debugging how ccache is used
+# cat $CCACHE_LOGFILE

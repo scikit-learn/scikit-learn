@@ -361,7 +361,8 @@ and Cython optimizations.
 
    * Travis is used for testing on Linux platforms
    * Appveyor is used for testing on Windows platforms
-   * CircleCI is used to build the docs for viewing and for testing with PyPy on Linux
+   * CircleCI is used to build the docs for viewing, for linting with flake8, and
+     for testing with PyPy on Linux 
 
    Please note that if one of the following markers appear in the latest commit
    message, the following actions are taken.
