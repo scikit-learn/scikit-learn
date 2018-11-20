@@ -509,6 +509,21 @@ class OutlierMixin(object):
         return self.fit(X).predict(X)
 
 
+class OneToOneMixin(object):
+    """Provides get_feature_names for simple transformers
+
+    Assumes there's a 1-to-1 correspondence between input features
+    and output features.
+    """
+
+    def get_feature_names(self, input_features=None):
+        if input_features is not None:
+            return input_features
+        else:
+            raise ValueError("Don't know how to get"
+                             " input feature names for {}".format(self))
+
+
 ###############################################################################
 class MetaEstimatorMixin(object):
     """Mixin class for all meta estimators in scikit-learn."""

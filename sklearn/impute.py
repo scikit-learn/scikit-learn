@@ -11,7 +11,7 @@ import numpy.ma as ma
 from scipy import sparse
 from scipy import stats
 
-from .base import BaseEstimator, TransformerMixin
+from .base import BaseEstimator, TransformerMixin, OneToOneMixin
 from .utils import check_array
 from .utils.sparsefuncs import _get_median
 from .utils.validation import check_is_fitted
@@ -90,7 +90,7 @@ def _most_frequent(array, extra_value, n_repeat):
             return extra_value
 
 
-class SimpleImputer(BaseEstimator, TransformerMixin):
+class SimpleImputer(BaseEstimator, TransformerMixin, OneToOneMixin):
     """Imputation transformer for completing missing values.
 
     Read more in the :ref:`User Guide <impute>`.

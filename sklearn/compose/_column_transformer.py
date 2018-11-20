@@ -325,7 +325,7 @@ boolean mask array or callable
         """
         check_is_fitted(self, 'transformers_')
         feature_names = []
-        for name, trans, _, _ in self._iter(fitted=True):
+        for name, trans, columns, _ in self._iter(fitted=True):
             if trans == 'drop':
                 continue
             elif trans == 'passthrough':
@@ -336,8 +336,12 @@ boolean mask array or callable
                 raise AttributeError("Transformer %s (type %s) does not "
                                      "provide get_feature_names."
                                      % (str(name), type(trans).__name__))
+            try:
+                more_names = trans.get_feature_names(input_features=columns)
+            except TypeError:
+                more_names = trans.get_feature_names()
             feature_names.extend([name + "__" + f for f in
-                                  trans.get_feature_names()])
+                                 more_names])
         return feature_names
 
     def _update_fitted_transformers(self, transformers):

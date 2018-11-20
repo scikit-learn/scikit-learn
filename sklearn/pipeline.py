@@ -531,6 +531,21 @@ class Pipeline(_BaseComposition):
         # check if first estimator expects pairwise input
         return getattr(self.steps[0][1], '_pairwise', False)
 
+    def get_feature_names(self, input_features=None):
+        feature_names = input_features
+        with_final = hasattr(self._final_estimator, "get_feature_names")
+        
+        for name, transform in self._iter(with_final=with_final):
+            if not hasattr(transform, "get_feature_names"):
+                raise TypeError("Transformer {} does provide"
+                                " get_feature_names".format(name))
+            try:
+                feature_names = transform.get_feature_names(
+                    input_features=feature_names)
+            except TypeError:
+                    feature_names = transform.get_feature_names()
+        return feature_names
+
 
 def _name_estimators(estimators):
     """Generate names for estimators."""
