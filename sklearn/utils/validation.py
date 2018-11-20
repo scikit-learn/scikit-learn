@@ -478,6 +478,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array, "__array__"):
+        # ndmin in case dtypes is a scalar (for Series)
         dtypes_orig = np.array(array.dtypes, ndmin=1)
 
     if dtype_numeric:
