@@ -1895,8 +1895,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 coefs_paths,
                 (len(folds),  len(l1_ratios_) * len(self.Cs_), n_classes, -1)
             )
-            coefs_paths = np.moveaxis(coefs_paths, (0, 1, 2, 3),
-                                                   (1, 2, 0, 3))
+            # equiv to coefs_paths = np.moveaxis(coefs_paths, (0, 1, 2, 3),
+            #                                                 (1, 2, 0, 3))
+            coefs_paths = np.swapaxes(coefs_paths, 0, 1)
+            coefs_paths = np.swapaxes(coefs_paths, 0, 2)
             self.n_iter_ = np.reshape(
                 n_iter_,
                 (1, len(folds), len(self.Cs_) * len(l1_ratios_))
