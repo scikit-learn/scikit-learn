@@ -107,7 +107,6 @@ cdef class Splitter:
 
         free(self.samples)
         free(self.features)
-        free(self.constant_features)
         free(self.feature_values)
 
     def __getstate__(self):
@@ -177,7 +176,6 @@ cdef class Splitter:
         self.n_features = n_features
 
         safe_realloc(&self.feature_values, n_samples)
-        safe_realloc(&self.constant_features, n_features)
 
         self.y = <DOUBLE_t*> y.data
         self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
@@ -324,7 +322,6 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t end = self.end
 
         cdef SIZE_t* features = self.features
-        cdef SIZE_t* constant_features = self.constant_features
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t* X = self.X
@@ -519,16 +516,6 @@ cdef class BestSplitter(BaseDenseSplitter):
             for p in range(start, end):
                 sample_mask[samples[p]] = 0
 
-        # Respect invariant for constant features: the original order of
-        # element in features[:n_known_constants] must be preserved for sibling
-        # and child nodes
-        memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
-
-        # Copy newly found constant features
-        memcpy(constant_features + n_known_constants,
-               features + n_known_constants,
-               sizeof(SIZE_t) * n_found_constants)
-
         # Return values
         split[0] = best
         n_constant_features[0] = n_total_constants
@@ -672,7 +659,6 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef SIZE_t end = self.end
 
         cdef SIZE_t* features = self.features
-        cdef SIZE_t* constant_features = self.constant_features
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t* X = self.X
@@ -851,16 +837,6 @@ cdef class RandomSplitter(BaseDenseSplitter):
             best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
-
-        # Respect invariant for constant features: the original order of
-        # element in features[:n_known_constants] must be preserved for sibling
-        # and child nodes
-        memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
-
-        # Copy newly found constant features
-        memcpy(constant_features + n_known_constants,
-               features + n_known_constants,
-               sizeof(SIZE_t) * n_found_constants)
 
         # Return values
         split[0] = best
@@ -1220,7 +1196,6 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         cdef DTYPE_t* X_data = self.X_data
 
         cdef SIZE_t* features = self.features
-        cdef SIZE_t* constant_features = self.constant_features
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t* Xf = self.feature_values
@@ -1409,16 +1384,6 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
 
-        # Respect invariant for constant features: the original order of
-        # element in features[:n_known_constants] must be preserved for sibling
-        # and child nodes
-        memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
-
-        # Copy newly found constant features
-        memcpy(constant_features + n_known_constants,
-               features + n_known_constants,
-               sizeof(SIZE_t) * n_found_constants)
-
         # Return values
         split[0] = best
         n_constant_features[0] = n_total_constants
@@ -1453,7 +1418,6 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         cdef DTYPE_t* X_data = self.X_data
 
         cdef SIZE_t* features = self.features
-        cdef SIZE_t* constant_features = self.constant_features
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t* Xf = self.feature_values
@@ -1639,16 +1603,6 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
             best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
-
-        # Respect invariant for constant features: the original order of
-        # element in features[:n_known_constants] must be preserved for sibling
-        # and child nodes
-        memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
-
-        # Copy newly found constant features
-        memcpy(constant_features + n_known_constants,
-               features + n_known_constants,
-               sizeof(SIZE_t) * n_found_constants)
 
         # Return values
         split[0] = best

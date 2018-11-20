@@ -50,7 +50,6 @@ cdef class Splitter:
     cdef SIZE_t n_samples                # X.shape[0]
     cdef double weighted_n_samples       # Weighted number of samples
     cdef SIZE_t* features                # Feature indices in X
-    cdef SIZE_t* constant_features       # Constant features indices
     cdef SIZE_t n_features               # X.shape[1]
     cdef DTYPE_t* feature_values         # temp. array holding feature values
 
@@ -72,9 +71,6 @@ cdef class Splitter:
     # The 1-d  `features` array of size n_features contains the features
     # indices and allows fast sampling without replacement of features.
 
-    # The 1-d `constant_features` array of size n_features holds in
-    # `constant_features[:n_constant_features]` the feature ids with
-    # constant values for all the samples that reached a specific node.
     # The value `n_constant_features` is given by the parent node to its
     # child nodes.  The content of the range `[n_constant_features:]` is left
     # undefined, but preallocated for performance reasons
