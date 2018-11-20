@@ -1581,7 +1581,7 @@ def test_fit_and_score_verbosity(capsys, return_train_score, scorer, expected):
 
 
 def test_score():
-    error_message = "scoring must return a number, got None (<class 'NoneType'"
+    error_message = "scoring must return a number, got None"
 
     def two_params_scorer(estimator, X_test):
         return None

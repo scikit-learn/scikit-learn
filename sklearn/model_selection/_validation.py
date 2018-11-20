@@ -555,13 +555,13 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                                   is_multimetric)
     if verbose > 2:
         if is_multimetric:
-            for scorer_name, test_score in test_scores.items():
+            for scorer_name in sorted(test_scores):
                 msg += ", %s=" % scorer_name
                 if return_train_score:
                     msg += "(train=%.3f," % train_scores[scorer_name]
-                    msg += " test=%.3f)" % test_score
+                    msg += " test=%.3f)" % test_scores[scorer_name]
                 else:
-                    msg += "%.3f" % test_score
+                    msg += "%.3f" % test_scores[scorer_name]
         else:
             msg += ", score="
             msg += ("%.3f" % test_scores if not return_train_score else
