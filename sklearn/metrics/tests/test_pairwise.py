@@ -473,7 +473,7 @@ def check_pairwise_distances_chunked(X, Y, working_memory, metric='euclidean'):
                                      metric=metric)
     assert isinstance(gen, GeneratorType)
     blockwise_distances = list(gen)
-    Y = np.array(X if Y is None else Y)
+    Y = X if Y is None else Y
     min_block_mib = len(Y) * 8 * 2 ** -20
 
     for block in blockwise_distances:
@@ -483,6 +483,18 @@ def check_pairwise_distances_chunked(X, Y, working_memory, metric='euclidean'):
     blockwise_distances = np.vstack(blockwise_distances)
     S = pairwise_distances(X, Y, metric=metric)
     assert_array_almost_equal(blockwise_distances, S)
+
+
+@pytest.mark.parametrize(
+        'metric',
+        ('euclidean', 'l2', 'sqeuclidean'))
+def test_pairwise_distances_chunked_diagonal(metric):
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(1000, 10), scale=1e10)
+    chunks = list(pairwise_distances_chunked(X, working_memory=1,
+                                             metric=metric))
+    assert len(chunks) > 1
+    assert_array_almost_equal(np.diag(np.vstack(chunks)), 0, decimal=10)
 
 
 @ignore_warnings
