@@ -494,7 +494,7 @@ def test_pairwise_distances_chunked_diagonal(metric):
     chunks = list(pairwise_distances_chunked(X, working_memory=1,
                                              metric=metric))
     assert len(chunks) > 1
-    assert_array_almost_equal(np.diag(np.vstack(chunks)), 0)
+    assert_array_almost_equal(np.diag(np.vstack(chunks)), 0, decimal=10)
 
 
 @ignore_warnings

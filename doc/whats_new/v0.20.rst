@@ -120,6 +120,10 @@ Changelog
   set to "euclidean". :issue:`12481` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| Fixed a bug in :func:`metrics.pairwise.pairwise_distances_chunked`
+  which didn't ensure the diagonal is zero for euclidean distances.
+  :issue:`12612` by :user:`Andreas Müller <amueller>`.
+
 - |API| The :func:`metrics.calinski_harabaz_score` has been renamed to
   :func:`metrics.calinski_harabasz_score` and will be removed in version 0.23.
   :issue:`12211` by :user:`Lisa Thomas <LisaThomas9>`,
