@@ -479,7 +479,7 @@ class PCA(_BasePCA):
         """
         n_samples, n_features = X.shape
 
-        if isinstance(n_components, six.string_types):
+        if isinstance(n_components, six.str):
             raise ValueError("n_components=%r cannot be a string "
                              "with svd_solver='%s'"
                              % (n_components, svd_solver))

@@ -107,7 +107,7 @@ def strip_tags(s):
 def _check_stop_list(stop):
     if stop == "english":
         return ENGLISH_STOP_WORDS
-    elif isinstance(stop, six.string_types):
+    elif isinstance(stop, six.str):
         raise ValueError("not a built-in stop list: %s" % stop)
     elif stop is None:
         return None
@@ -588,7 +588,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
             Training data.
         """
         # triggers a parameter validation
-        if isinstance(X, six.string_types):
+        if isinstance(X, six.str):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
@@ -613,7 +613,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         X : scipy.sparse matrix, shape = (n_samples, self.n_features)
             Document-term matrix.
         """
-        if isinstance(X, six.string_types):
+        if isinstance(X, six.str):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
@@ -1018,7 +1018,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         # We intentionally don't call the transform method to make
         # fit_transform overridable without unwanted side effects in
         # TfidfVectorizer.
-        if isinstance(raw_documents, six.string_types):
+        if isinstance(raw_documents, six.str):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
@@ -1073,7 +1073,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         X : sparse matrix, [n_samples, n_features]
             Document-term matrix.
         """
-        if isinstance(raw_documents, six.string_types):
+        if isinstance(raw_documents, six.str):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")

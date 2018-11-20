@@ -286,7 +286,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         def g(x, fun_args):
             return fun(x, **fun_args)
     else:
-        exc = ValueError if isinstance(fun, six.string_types) else TypeError
+        exc = ValueError if isinstance(fun, six.str) else TypeError
         raise exc("Unknown function %r;"
                   " should be one of 'logcosh', 'exp', 'cube' or callable"
                   % fun)

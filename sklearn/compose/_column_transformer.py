@@ -545,7 +545,7 @@ def _check_key_type(key, superclass):
     ----------
     key : scalar, list, slice, array-like
         The column specification to check
-    superclass : int or six.string_types
+    superclass : int or six.str
         The type for which to check the `key`
 
     """
@@ -560,7 +560,7 @@ def _check_key_type(key, superclass):
         if superclass is int:
             return key.dtype.kind == 'i'
         else:
-            # superclass = six.string_types
+            # superclass = six.str
             return key.dtype.kind in ('O', 'U', 'S')
     return False
 
@@ -589,7 +589,7 @@ def _get_column(X, key):
     # check whether we have string column names or integers
     if _check_key_type(key, int):
         column_names = False
-    elif _check_key_type(key, six.string_types):
+    elif _check_key_type(key, six.str):
         column_names = True
     elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
         # boolean mask
@@ -635,13 +635,13 @@ def _get_column_indices(X, key):
         else:
             return list(key)
 
-    elif _check_key_type(key, six.string_types):
+    elif _check_key_type(key, six.str):
         try:
             all_columns = list(X.columns)
         except AttributeError:
             raise ValueError("Specifying the columns using strings is only "
                              "supported for pandas DataFrames")
-        if isinstance(key, six.string_types):
+        if isinstance(key, six.str):
             columns = [key]
         elif isinstance(key, slice):
             start, stop = key.start, key.stop

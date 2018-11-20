@@ -275,7 +275,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         feature_names = feature_names.tolist()
 
     def convert_feature(fx):
-        if isinstance(fx, six.string_types):
+        if isinstance(fx, six.str):
             try:
                 fx = feature_names.index(fx)
             except ValueError:
@@ -285,7 +285,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     # convert features into a seq of int tuples
     tmp_features = []
     for fxs in features:
-        if isinstance(fxs, (numbers.Integral,) + six.string_types):
+        if isinstance(fxs, (numbers.Integral,) + six.str):
             fxs = (fxs,)
         try:
             fxs = np.array([convert_feature(fx) for fx in fxs], dtype=np.int32)

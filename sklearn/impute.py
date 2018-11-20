@@ -565,7 +565,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             raise ValueError("'features' has to be either 'missing-only' or "
                              "'all'. Got {} instead.".format(self.features))
 
-        if not ((isinstance(self.sparse, six.string_types) and
+        if not ((isinstance(self.sparse, six.str) and
                 self.sparse == "auto") or isinstance(self.sparse, bool)):
             raise ValueError("'sparse' has to be a boolean or 'auto'. "
                              "Got {!r} instead.".format(self.sparse))

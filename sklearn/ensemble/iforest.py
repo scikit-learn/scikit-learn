@@ -242,7 +242,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
         # ensure that max_sample is in [1, n_samples]:
         n_samples = X.shape[0]
 
-        if isinstance(self.max_samples, six.string_types):
+        if isinstance(self.max_samples, six.str):
             if self.max_samples == 'auto':
                 max_samples = min(256, n_samples)
             else:

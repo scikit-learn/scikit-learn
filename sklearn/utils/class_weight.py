@@ -114,12 +114,12 @@ def compute_sample_weight(class_weight, y, indices=None):
         y = np.reshape(y, (-1, 1))
     n_outputs = y.shape[1]
 
-    if isinstance(class_weight, six.string_types):
+    if isinstance(class_weight, six.str):
         if class_weight not in ['balanced']:
             raise ValueError('The only valid preset for class_weight is '
                              '"balanced". Given "%s".' % class_weight)
     elif (indices is not None and
-          not isinstance(class_weight, six.string_types)):
+          not isinstance(class_weight, six.str)):
         raise ValueError('The only valid class_weight for subsampling is '
                          '"balanced". Given "%s".' % class_weight)
     elif n_outputs > 1:

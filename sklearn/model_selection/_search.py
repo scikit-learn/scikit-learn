@@ -371,7 +371,7 @@ def _check_param_grid(param_grid):
             if isinstance(v, np.ndarray) and v.ndim > 1:
                 raise ValueError("Parameter array should be one-dimensional.")
 
-            if (isinstance(v, six.string_types) or
+            if (isinstance(v, six.str) or
                     not isinstance(v, (np.ndarray, Sequence))):
                 raise ValueError("Parameter values for parameter ({0}) need "
                                  "to be a sequence(but not a string) or"
@@ -619,7 +619,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         if self.multimetric_:
             if self.refit is not False and (
-                    not isinstance(self.refit, six.string_types) or
+                    not isinstance(self.refit, six.str) or
                     # This will work for both dict / list (tuple)
                     self.refit not in scorers):
                 raise ValueError("For multi-metric scoring, the parameter "

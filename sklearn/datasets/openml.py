@@ -21,7 +21,7 @@ import scipy.sparse
 
 from sklearn.externals import _arff
 from .base import get_data_home
-from ..externals.six import string_types, PY2, BytesIO
+from ..externals.six import str, PY2, BytesIO
 from ..externals.six.moves.urllib.error import HTTPError
 from ..utils import Bunch
 
@@ -567,7 +567,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         # see issue: https://github.com/openml/OpenML/issues/768)
         target_column = [feature['name'] for feature in features_list
                          if feature['is_target'] == 'true']
-    elif isinstance(target_column, string_types):
+    elif isinstance(target_column, str):
         # for code-simplicity, make target_column by default a list
         target_column = [target_column]
     elif target_column is None:

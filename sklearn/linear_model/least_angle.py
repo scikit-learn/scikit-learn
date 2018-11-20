@@ -25,7 +25,7 @@ from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..utils._joblib import Parallel, delayed
 from ..externals.six.moves import xrange
-from ..externals.six import string_types
+from ..externals.six import str
 
 solve_triangular_args = {'check_finite': False}
 
@@ -181,7 +181,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             # and allows to easily swap columns
             X = X.copy('F')
 
-    elif isinstance(Gram, string_types) and Gram == 'auto' or Gram is True:
+    elif isinstance(Gram, str) and Gram == 'auto' or Gram is True:
         if Gram is True or X.shape[0] > X.shape[1]:
             Gram = np.dot(X.T, X)
         else:

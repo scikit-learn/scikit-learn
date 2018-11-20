@@ -510,7 +510,7 @@ class SpectralEmbedding(BaseEstimator):
         X = check_array(X, ensure_min_samples=2, estimator=self)
 
         random_state = check_random_state(self.random_state)
-        if isinstance(self.affinity, six.string_types):
+        if isinstance(self.affinity, six.str):
             if self.affinity not in set(("nearest_neighbors", "rbf",
                                          "precomputed")):
                 raise ValueError(("%s is not a valid affinity. Expected "

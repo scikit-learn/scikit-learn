@@ -15,7 +15,6 @@ from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin
-from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
 from ..utils.validation import check_memory
@@ -23,8 +22,6 @@ from ..utils.validation import check_memory
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 from ..utils.fast_dict import IntFloatDict
-
-from ..externals.six.moves import xrange
 
 ###############################################################################
 # For non fully-connected graphs
@@ -274,7 +271,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
     inertia = np.empty(len(coord_row), dtype=np.float64, order='C')
     _hierarchical.compute_ward_dist(moments_1, moments_2, coord_row, coord_col,
                                     inertia)
-    inertia = list(six.moves.zip(inertia, coord_row, coord_col))
+    inertia = list(zip(inertia, coord_row, coord_col))
     heapify(inertia)
 
     # prepare the main fields

@@ -519,7 +519,7 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
         Xy = None
 
     # precompute if n_samples > n_features
-    if isinstance(precompute, six.string_types) and precompute == 'auto':
+    if isinstance(precompute, six.str) and precompute == 'auto':
         precompute = (n_samples > n_features)
 
     if precompute is True:

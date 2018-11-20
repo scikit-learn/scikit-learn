@@ -48,7 +48,7 @@ def _transform_selected(X, transform, dtype, selected="all", copy=True,
         raise ValueError("The retain_order option can only be set to True "
                          "for dense matrices.")
 
-    if isinstance(selected, six.string_types) and selected == "all":
+    if isinstance(selected, six.str) and selected == "all":
         return transform(X)
 
     if len(selected) == 0:

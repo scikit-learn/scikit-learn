@@ -281,7 +281,7 @@ class _BaseTreeExporter(object):
         if self.impurity:
             if isinstance(criterion, _criterion.FriedmanMSE):
                 criterion = "friedman_mse"
-            elif not isinstance(criterion, six.string_types):
+            elif not isinstance(criterion, six.str):
                 criterion = "impurity"
             if labels:
                 node_string += '%s = ' % criterion
@@ -755,7 +755,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
     own_file = False
     return_string = False
     try:
-        if isinstance(out_file, six.string_types):
+        if isinstance(out_file, six.str):
             if six.PY3:
                 out_file = open(out_file, "w", encoding="utf-8")
             else:

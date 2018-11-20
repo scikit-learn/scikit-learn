@@ -119,7 +119,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         for x in X:
             for f, v in six.iteritems(x):
-                if isinstance(v, six.string_types):
+                if isinstance(v, six.str):
                     f = "%s%s%s" % (f, self.separator, v)
                 if f not in vocab:
                     feature_names.append(f)
@@ -165,7 +165,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         # same time
         for x in X:
             for f, v in six.iteritems(x):
-                if isinstance(v, six.string_types):
+                if isinstance(v, six.str):
                     f = "%s%s%s" % (f, self.separator, v)
                     v = 1
                 if f in vocab:
@@ -299,7 +299,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
             for i, x in enumerate(X):
                 for f, v in six.iteritems(x):
-                    if isinstance(v, six.string_types):
+                    if isinstance(v, six.str):
                         f = "%s%s%s" % (f, self.separator, v)
                         v = 1
                     try:

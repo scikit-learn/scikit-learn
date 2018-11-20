@@ -48,7 +48,7 @@ def _calculate_threshold(estimator, importances, threshold):
         else:
             threshold = "mean"
 
-    if isinstance(threshold, six.string_types):
+    if isinstance(threshold, six.str):
         if "*" in threshold:
             scale, reference = threshold.split("*")
             scale = float(scale.strip())

@@ -91,7 +91,7 @@ class Hyperparameter(namedtuple('Hyperparameter',
     __slots__ = ()
 
     def __new__(cls, name, value_type, bounds, n_elements=1, fixed=None):
-        if not isinstance(bounds, six.string_types) or bounds != "fixed":
+        if not isinstance(bounds, six.str) or bounds != "fixed":
             bounds = np.atleast_2d(bounds)
             if n_elements > 1:  # vector-valued parameter
                 if bounds.shape[0] == 1:
@@ -102,7 +102,7 @@ class Hyperparameter(namedtuple('Hyperparameter',
                                      % (name, n_elements, bounds.shape[0]))
 
         if fixed is None:
-            fixed = isinstance(bounds, six.string_types) and bounds == "fixed"
+            fixed = isinstance(bounds, six.str) and bounds == "fixed"
         return super(Hyperparameter, cls).__new__(
             cls, name, value_type, bounds, n_elements, fixed)
 

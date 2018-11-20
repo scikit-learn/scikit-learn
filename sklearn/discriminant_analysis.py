@@ -13,7 +13,7 @@ from __future__ import print_function
 import warnings
 import numpy as np
 from scipy import linalg
-from .externals.six import string_types
+from .externals.six import str
 from .externals.six.moves import xrange
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
@@ -49,7 +49,7 @@ def _cov(X, shrinkage=None):
         Estimated covariance matrix.
     """
     shrinkage = "empirical" if shrinkage is None else shrinkage
-    if isinstance(shrinkage, string_types):
+    if isinstance(shrinkage, str):
         if shrinkage == 'auto':
             sc = StandardScaler()  # standardize features
             X = sc.fit_transform(X)
