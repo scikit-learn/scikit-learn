@@ -32,7 +32,7 @@ from ..utils.validation import check_X_y
 from ..exceptions import (NotFittedError, ConvergenceWarning,
                           ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
-from ..utils import Parallel, delayed, effective_n_jobs
+from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..utils.fixes import _joblib_parallel_args
 from ..model_selection import check_cv
 from ..externals import six

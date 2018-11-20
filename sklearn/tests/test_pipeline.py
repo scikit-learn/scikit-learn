@@ -33,7 +33,7 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.utils import Memory
+from sklearn.utils._joblib import Memory
 from sklearn.utils._joblib import __version__ as joblib_version
 
 
@@ -924,8 +924,7 @@ def test_pipeline_wrong_memory():
     cached_pipe = Pipeline([('transf', DummyTransf()),
                             ('svc', SVC())], memory=memory)
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
-                        " have the same interface as "
-                        "sklearn.utils.Memory."
+                        " have the same interface as joblib.Memory."
                         " Got memory='1' instead.", cached_pipe.fit, X, y)
 
 
@@ -947,8 +946,7 @@ def test_pipeline_with_cache_attribute():
     pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
                     memory=dummy)
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
-                        " have the same interface as "
-                        "sklearn.utils.Memory."
+                        " have the same interface as joblib.Memory."
                         " Got memory='{}' instead.".format(dummy), pipe.fit, X)
 
 

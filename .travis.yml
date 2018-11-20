@@ -54,12 +54,6 @@ matrix:
            CHECK_PYTEST_SOFT_DEPENDENCY="true" TEST_DOCSTRINGS="true"
            SKLEARN_SITE_JOBLIB=1 CHECK_WARNINGS="true"
       if: type != cron
-    # flake8 linting on diff wrt common ancestor with upstream/master
-    - env: RUN_FLAKE8="true" SKIP_TESTS="true"
-           DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
-           NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1"
-           CYTHON_VERSION="0.26.1"
-      if: type != cron
     # This environment tests scikit-learn against numpy and scipy master
     # installed from their CI wheels in a virtualenv with the Python
     # interpreter provided by travis.
