@@ -1150,19 +1150,24 @@ def test_logreg_l1_sparse_data():
 
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
-def test_logreg_cv_penalty():
+@pytest.mark.parametrize('penalty', ('l1', 'l2'))
+def test_logreg_cv_penalty(penalty):
     # Test that the correct penalty is passed to the final fit.
-    rng = np.random.RandomState(6)
-    X, y = make_classification(n_samples=50, n_features=20, random_state=rng)
-    lr_cv = LogisticRegressionCV(penalty="l2", Cs=[1.0], solver='saga',
-                                 random_state=rng)
+    random_state = 0
+    X, y = make_classification(n_samples=50, n_features=20,
+                               random_state=random_state)
+    lr_cv = LogisticRegressionCV(penalty=penalty, Cs=[1.0], solver='saga',
+                                 random_state=random_state)
     lr_cv.fit(X, y)
-    lr = LogisticRegression(penalty="l2", C=1.0, solver='saga',
-                            random_state=rng)
+    lr = LogisticRegression(penalty=penalty, C=1.0, solver='saga',
+                            random_state=random_state)
     lr.fit(X, y)
     # Note: due to warm-starting in LogisticRegressionCV, it is normal to
     # observe slightly different coefficient values
-    assert_array_almost_equal(lr_cv.coef_, lr.coef_, decimal=3)
+    if penalty == 'l2':
+        assert_array_almost_equal(lr_cv.coef_, lr.coef_, decimal=3)
+    else:
+        assert_equal(np.count_nonzero(lr_cv.coef_), np.count_nonzero(lr.coef_))
 
 
 def test_logreg_predict_proba_multinomial():
