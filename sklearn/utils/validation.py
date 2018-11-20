@@ -477,7 +477,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # check if the object contains several dtypes (typically a pandas
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
-    if hasattr(array, "dtypes") and hasattr(array, "__array__"):
+    if hasattr(array, "dtypes") and len(array.dtypes):
         dtypes_orig = np.array(array.dtypes)
 
     if dtype_numeric:
