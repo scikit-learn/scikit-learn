@@ -619,7 +619,9 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     @property
     def partial_fit(self):
-        """Fit the model to data matrix X and target y.
+        """Fit the model to data matrix X and target y for a single iteration.
+
+        Reuses the previously fitted solution as initialization if is exists.
 
         Parameters
         ----------
@@ -978,7 +980,9 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     @property
     def partial_fit(self):
-        """Fit the model to data matrix X and target y.
+        """Fit the model to data matrix X and target y for a single iteration.
+
+        Reuses the previously fitted solution as initialization if is exists.
 
         Parameters
         ----------
