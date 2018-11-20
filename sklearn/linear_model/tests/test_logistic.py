@@ -1160,6 +1160,8 @@ def test_logreg_cv_penalty():
     lr = LogisticRegression(penalty="l2", C=1.0, solver='saga',
                             random_state=rng)
     lr.fit(X, y)
+    # Note: due to warm-starting in LogisticRegressionCV, it is normal to
+    # observe slightly different coefficient values
     assert_array_almost_equal(lr_cv.coef_, lr.coef_, decimal=3)
 
 
