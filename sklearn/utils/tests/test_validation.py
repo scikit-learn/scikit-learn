@@ -694,6 +694,12 @@ def test_suppress_validation():
     assert_raises(ValueError, assert_all_finite, X)
 
 
+def test_check_array_series():
+    # regression test that check_array works on pandas Series
+    pd = importorskip("pandas")
+    check_array(pd.Series([1, 2, 3]), ensure_2d=False, warn_on_dtype=True)
+
+
 def test_check_dataframe_warns_on_dtype():
     # Check that warn_on_dtype also works for DataFrames.
     # https://github.com/scikit-learn/scikit-learn/issues/10948

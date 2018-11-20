@@ -478,7 +478,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array, "__array__"):
-        dtypes_orig = np.array(array.dtypes)
+        dtypes_orig = np.array(array.dtypes, ndmin=1)
 
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
