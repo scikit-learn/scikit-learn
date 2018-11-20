@@ -532,6 +532,22 @@ class Pipeline(_BaseComposition):
         return getattr(self.steps[0][1], '_pairwise', False)
 
     def get_feature_names(self, input_features=None):
+        """Get feature names for transformation.
+
+        Transform input features using the pipeline.
+        If the last step is a transformer, it's included
+        in the transformation, otherwise it's not.
+
+        Parameters
+        ----------
+        input_feature : array-like of string
+            Input feature names.
+
+        Returns
+        -------
+        feature_names : array-like of string
+            Transformed feature names
+        """
         feature_names = input_features
         with_final = hasattr(self._final_estimator, "transform")
         for name, transform in self._iter(with_final=with_final):

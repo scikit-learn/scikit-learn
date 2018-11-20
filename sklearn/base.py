@@ -517,6 +517,21 @@ class OneToOneMixin(object):
     """
 
     def get_feature_names(self, input_features=None):
+        """Get feature names for transformation.
+
+        Returns input_features as this transformation
+        doesn't add or drop features.
+
+        Parameters
+        ----------
+        input_feature : array-like of string
+            Input feature names.
+
+        Returns
+        -------
+        feature_names : array-like of string
+            Transformed feature names
+        """
         if input_features is not None:
             return input_features
         else:

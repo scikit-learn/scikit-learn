@@ -410,6 +410,18 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         return X
 
     def get_feature_names(self, input_features=None):
+        """Get feature names for transformation.
+
+        Parameters
+        ----------
+        input_feature : array-like of string
+            Input feature names.
+
+        Returns
+        -------
+        feature_names : array-like of string
+            Transformed feature names
+        """
         if input_features is None:
             raise TypeError("Don't have input_features")
         return np.array(input_features)[self._valid_mask]
