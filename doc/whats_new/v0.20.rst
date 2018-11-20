@@ -7,7 +7,7 @@
 Version 0.20.1
 ==============
 
-**October XX, 2018**
+**November 21, 2018**
 
 This is a bug-fix release with some minor documentation improvements and
 enhancements to features released in 0.20.0.
@@ -157,13 +157,6 @@ Changelog
   method is now thread safe. :issue:`12514` by
   :user:`Hanmin Qin <qinhanmin2014>`.
 
-- |API| The default value of the :code:`method` argument in
-  :func:`preprocessing.power_transform` will be changed from :code:`box-cox`
-  to :code:`yeo-johnson` to match :class:`preprocessing.PowerTransformer`
-  in version 0.23. A FutureWarning is raised when the default value is used.
-  :issue:`12317` by :user:`Eric Chang <chang>`.
-  
-
 - |Fix| Fixed a bug in :class:`preprocessing.PowerTransformer` where the
   Yeo-Johnson transform was incorrect for lambda parameters outside of `[0, 2]`
   :issue:`12522` by :user:`Nicolas Hug<NicolasHug>`.
@@ -172,6 +165,11 @@ Changelog
   failed when set to ignore unknown numpy strings of different lengths 
   :issue:`12471` by :user:`Gabriel Marzinotto<GMarzinotto>`.
 
+- |API| The default value of the :code:`method` argument in
+  :func:`preprocessing.power_transform` will be changed from :code:`box-cox`
+  to :code:`yeo-johnson` to match :class:`preprocessing.PowerTransformer`
+  in version 0.23. A FutureWarning is raised when the default value is used.
+  :issue:`12317` by :user:`Eric Chang <chang>`.
 
 :mod:`sklearn.utils`
 ........................
@@ -188,6 +186,15 @@ Changelog
 Miscellaneous
 .............
 
+- |Fix| When using site joblib by setting the environment variable
+  `SKLEARN_SITE_JOBLIB`, added compatibility with joblib 0.11 in addition
+  to 0.12+. :issue:`12350` by `Joel Nothman`_ and `Roman Yurchak`_.
+
+- |Fix| Make sure to avoid raising ``FutureWarning`` when calling
+  ``np.vstack`` with numpy 1.16 and later (use list comprehensions
+  instead of generator expressions in many locations of the scikit-learn
+  code base). :issue:`12467` by :user:`Olivier Grisel <ogrisel>`.
+
 - |API| Removed all mentions of ``sklearn.externals.joblib``, and deprecated
   joblib methods exposed in ``sklearn.utils``, except for
   :func:`utils.parallel_backend` and :func:`utils.register_parallel_backend`,
@@ -197,15 +204,6 @@ Miscellaneous
   The goal of this change is to prepare for
   unvendoring joblib in future version of scikit-learn.
   :issue:`12345` by :user:`Thomas Moreau <tomMoral>`
-
-- |Fix| When using site joblib by setting the environment variable
-  `SKLEARN_SITE_JOBLIB`, added compatibility with joblib 0.11 in addition
-  to 0.12+. :issue:`12350` by `Joel Nothman`_ and `Roman Yurchak`_.
-
-- |Fix| Make sure to avoid raising ``FutureWarning`` when calling
-  ``np.vstack`` with numpy 1.16 and later (use list comprehensions
-  instead of generator expressions in many locations of the scikit-learn
-  code base). :issue:`12467` by :user:`Olivier Grisel <ogrisel>`.
 
 .. _changes_0_20:
 
