@@ -93,8 +93,18 @@ def test_classification(base_classifier):
     assert_array_equal(proba, proba_string)
 
     # Check consistency between y_labeled_iter, n_iter and max_iter
+    labeled = y_train_missing_labels != -1
+    # assert that labeled samples have labeled_iter = 0 
+    assert_array_equal(st.y_labeled_iter_ == 0, labeled)
+    # assert that labeled samples do not change label during training
+    assert_array_equal(y_train_missing_labels[labeled], st.y_labels_[labeled])
+
+    # assert that the max of the iterations is less than the total amount of
+    # iterations
     assert np.max(st.y_labeled_iter_) <= st.n_iter_ <= max_iter
     assert np.max(st_string.y_labeled_iter_) <= st_string.n_iter_ <= max_iter
+
+    # check shapes
     assert_equal(st.y_labeled_iter_.shape, st.y_labels_.shape,
                  (n_labeled_samples,))
     assert_equal(st_string.y_labeled_iter_.shape, st_string.y_labels_.shape,
