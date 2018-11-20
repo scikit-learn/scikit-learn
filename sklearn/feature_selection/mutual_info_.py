@@ -6,7 +6,6 @@ import numpy as np
 from scipy.sparse import issparse
 from scipy.special import digamma
 
-from ..externals.six import moves
 from ..metrics.cluster.supervised import mutual_info_score
 from ..neighbors import NearestNeighbors
 from ..preprocessing import scale

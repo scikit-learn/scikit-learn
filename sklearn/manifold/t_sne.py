@@ -25,7 +25,6 @@ from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 from . import _utils
 from . import _barnes_hut_tsne
-from ..externals.six import str
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps

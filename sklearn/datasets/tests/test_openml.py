@@ -18,7 +18,7 @@ from sklearn.datasets.openml import (_open_openml_url,
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 from sklearn.externals.six import str
-from sklearn.externals.six.moves.urllib.error import HTTPError
+from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
 

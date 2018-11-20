@@ -5,7 +5,6 @@ import functools
 import numpy as np
 
 from sklearn.base import BaseEstimator
-from sklearn.externals.six import iterkeys
 from sklearn.datasets import make_classification
 
 from sklearn.utils.testing import assert_true, assert_false, assert_raises

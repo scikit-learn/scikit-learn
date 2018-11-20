@@ -22,7 +22,7 @@ import scipy.sparse
 from sklearn.externals import _arff
 from .base import get_data_home
 from ..externals.six import str, PY2, BytesIO
-from ..externals.six.moves.urllib.error import HTTPError
+from urllib.error import HTTPError
 from ..utils import Bunch
 
 __all__ = ['fetch_openml']

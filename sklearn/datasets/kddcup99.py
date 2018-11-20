@@ -276,8 +276,7 @@ def _fetch_brute_kddcup99(data_home=None,
         file_ = GzipFile(filename=archive_path, mode='r')
         Xy = []
         for line in file_.readlines():
-            if six.PY3:
-                line = line.decode()
+            line = line.decode()
             Xy.append(line.replace('\n', '').split(','))
         file_.close()
         logger.debug('extraction done')

@@ -17,7 +17,6 @@ from sklearn.utils.testing import assert_raises_regex
 
 from sklearn.decomposition import FastICA, fastica, PCA
 from sklearn.decomposition.fastica_ import _gs_decorrelation
-from sklearn.externals.six import moves
 from sklearn.exceptions import ConvergenceWarning
 
 

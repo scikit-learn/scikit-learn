@@ -38,11 +38,6 @@ from ._encoders import OneHotEncoder
 
 BOUNDS_THRESHOLD = 1e-7
 
-
-zip = six.moves.zip
-map = six.moves.map
-range = six.moves.range
-
 __all__ = [
     'Binarizer',
     'KernelCenterer',

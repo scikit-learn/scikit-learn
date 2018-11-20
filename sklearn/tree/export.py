@@ -11,6 +11,7 @@ This module defines export functions for decision trees.
 #          Li Li <aiki.nogard@gmail.com>
 # License: BSD 3 clause
 import warnings
+from IO import StringIO
 
 from numbers import Integral
 
@@ -755,15 +756,12 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
     return_string = False
     try:
         if isinstance(out_file, str):
-            if six.PY3:
-                out_file = open(out_file, "w", encoding="utf-8")
-            else:
-                out_file = open(out_file, "wb")
+            out_file = open(out_file, "w", encoding="utf-8")
             own_file = True
 
         if out_file is None:
             return_string = True
-            out_file = six.StringIO()
+            out_file = StringIO()
 
         exporter = _DOTTreeExporter(
             out_file=out_file, max_depth=max_depth,

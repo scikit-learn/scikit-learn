@@ -20,7 +20,6 @@ from ..utils.validation import check_is_fitted
 from .base import _transform_selected
 from .label import _encode, _encode_check_unknown
 
-range = six.moves.range
 
 __all__ = [
     'OneHotEncoder',
@@ -703,7 +702,7 @@ class OneHotEncoder(_BaseEncoder):
         feature_names = []
         for i in range(len(cats)):
             names = [
-                input_features[i] + '_' + six.text_type(t) for t in cats[i]]
+                input_features[i] + '_' + str(t) for t in cats[i]]
             feature_names.extend(names)
 
         return np.array(feature_names, dtype=object)

@@ -20,7 +20,7 @@ from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 
 from sklearn.exceptions import NotFittedError
-from sklearn.externals.six import StringIO
+from io import StringIO
 
 
 def _build_sparse_mtx():

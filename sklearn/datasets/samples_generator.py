@@ -17,8 +17,6 @@ from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
 from ..utils.fixes import _Iterable as Iterable
 from ..utils.random import sample_without_replacement
-map = six.moves.map
-zip = six.moves.zip
 
 
 def _generate_hypercube(samples, dimensions, rng):

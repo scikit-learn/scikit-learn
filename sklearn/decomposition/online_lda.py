@@ -21,7 +21,6 @@ from ..utils import (check_random_state, check_array,
 from ..utils.fixes import logsumexp
 from ..utils.validation import check_non_negative
 from ..utils._joblib import Parallel, delayed, effective_n_jobs
-from ..externals.six.moves import xrange
 from ..exceptions import NotFittedError
 
 from ._online_lda import (mean_change, _dirichlet_expectation_1d,

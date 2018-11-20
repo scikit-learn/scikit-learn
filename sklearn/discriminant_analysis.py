@@ -13,7 +13,6 @@ from __future__ import print_function
 import warnings
 import numpy as np
 from scipy import linalg
-from .externals.six import str
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .linear_model.base import LinearClassifierMixin

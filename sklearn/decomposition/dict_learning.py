@@ -15,7 +15,6 @@ from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils._joblib import Parallel, delayed, effective_n_jobs
-from ..externals.six.moves import zip
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches)
 from ..utils.extmath import randomized_svd, row_norms

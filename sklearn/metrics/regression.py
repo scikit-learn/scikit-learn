@@ -27,7 +27,6 @@ import numpy as np
 
 from ..utils.validation import check_array, check_consistent_length
 from ..utils.validation import column_or_1d
-from ..externals.six import str
 
 
 __ALL__ = [

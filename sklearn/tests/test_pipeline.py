@@ -10,7 +10,6 @@ import pytest
 import numpy as np
 from scipy import sparse
 
-from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message

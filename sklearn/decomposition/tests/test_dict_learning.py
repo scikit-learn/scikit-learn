@@ -223,7 +223,7 @@ def test_dict_learning_online_positivity(transform_algorithm,
 def test_dict_learning_online_verbosity():
     n_components = 5
     # test verbosity
-    from sklearn.externals.six.moves import cStringIO as StringIO
+    from io import StringIO
     import sys
 
     old_stdout = sys.stdout

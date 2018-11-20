@@ -18,7 +18,6 @@ import warnings
 import numpy as np
 
 from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
-from ..externals.six.moves import xrange
 from ..utils import check_array
 
 
