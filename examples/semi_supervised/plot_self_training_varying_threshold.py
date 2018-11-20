@@ -8,10 +8,10 @@ The `breast_cancer` dataset is loaded, and labels are deleted such that only 50
 out of 569 samples have labels. A `SelfTrainingClassifier` is fitted on this
 dataset, with varying thresholds.
 
-The upper graph shows the amount of (initially unlabeled) samples that the
-classifier predicted labels for during training, and the accuracy of the
-classifier. The lower graph shows the last iteration in which a sample was
-labeled. All values are cross validated with 3 folds.
+The upper graph shows the amount of labeled samples that the classifier has
+available by the end of fit, and the accuracy of the classifier. The lower
+graph shows the last iteration in which a sample was labeled. All values are
+cross validated with 3 folds.
 
 At low thresholds (in [0.4, 0.5]), the classifier learns from samples that were
 labeled with a low confidence. These low-confidence samples are likely have
@@ -72,7 +72,7 @@ for (i, threshold) in enumerate(x_values):
 
         self_training_clf.fit(X_train, y_train)
 
-        # The amount of samples that were self-labeled during fitting
+        # The amount of labeled samples that at the end of fitting
         amount_labeled[i, fold] = total_samples - np.unique(
             self_training_clf.y_labeled_iter_, return_counts=True)[1][0]
         # The last iteration the classifier labeled a sample in
@@ -94,7 +94,7 @@ ax2.errorbar(x_values, amount_labeled.mean(axis=1),
              yerr=amount_labeled.std(axis=1),
              capsize=2, color='g')
 ax2.set_ylim(bottom=0)
-ax2.set_ylabel('Amount of self-labeled samples', color='g')
+ax2.set_ylabel('Amount of labeled samples', color='g')
 ax2.tick_params('y', colors='g')
 
 ax3 = plt.subplot(212, sharex=ax1)
