@@ -65,6 +65,9 @@ Changelog
   location in :func:`datasets.fetch_olivetti_faces`. :issue:`12441` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`
 
+- |Fix| :func:`datasets.fetch_openml` to retry downloading when reading
+  from local cache fails. :issue:`12517` by :user:`Thomas Fan <thomasjpfan>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -161,6 +164,11 @@ Changelog
   Yeo-Johnson transform was incorrect for lambda parameters outside of `[0, 2]`
   :issue:`12522` by :user:`Nicolas Hug<NicolasHug>`.
 
+- |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where transform
+  failed when set to ignore unknown numpy strings of different lengths 
+  :issue:`12471` by :user:`Gabriel Marzinotto<GMarzinotto>`.
+
+
 :mod:`sklearn.utils`
 ........................
 
@@ -172,12 +180,19 @@ Changelog
 Miscellaneous
 .............
 
+- |API| Removed all mentions of ``sklearn.externals.joblib``, and deprecated
+  joblib methods exposed in ``sklearn.utils``, except for
+  :func:`utils.parallel_backend` and :func:`utils.register_parallel_backend`,
+  which allow users to configure parallel computation in scikit-learn.
+  Other functionalities are part of `joblib <https://joblib.readthedocs.io/>`_.
+  package and should be used directly, by installing it.
+  The goal of this change is to prepare for
+  unvendoring joblib in future version of scikit-learn.
+  :issue:`12345` by :user:`Thomas Moreau <tomMoral>`
+
 - |Fix| When using site joblib by setting the environment variable
   `SKLEARN_SITE_JOBLIB`, added compatibility with joblib 0.11 in addition
   to 0.12+. :issue:`12350` by `Joel Nothman`_ and `Roman Yurchak`_.
-
-Miscellaneous
-.............
 
 - |Fix| Make sure to avoid raising ``FutureWarning`` when calling
   ``np.vstack`` with numpy 1.16 and later (use list comprehensions

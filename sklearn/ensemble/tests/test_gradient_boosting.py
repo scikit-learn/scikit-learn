@@ -1103,7 +1103,7 @@ def test_max_leaf_nodes_max_depth(GBEstimator):
 
     est = GBEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
     tree = est.estimators_[0, 0].tree_
-    assert_greater(tree.max_depth, 1)
+    assert_equal(tree.max_depth, 1)
 
     est = GBEstimator(max_depth=1).fit(X, y)
     tree = est.estimators_[0, 0].tree_
