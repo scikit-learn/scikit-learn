@@ -226,7 +226,7 @@ General Concepts
 
         We try to adhere to `PEP257
         <https://www.python.org/dev/peps/pep-0257/>`_, and follow `NumpyDoc
-        conventions <numpydoc.readthedocs.io/en/latest/format.html>`_.
+        conventions <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
 
     double underscore
     double underscore notation

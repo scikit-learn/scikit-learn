@@ -20,7 +20,7 @@ from ..utils import (check_random_state, check_array,
                      gen_batches, gen_even_slices)
 from ..utils.fixes import logsumexp
 from ..utils.validation import check_non_negative
-from ..utils import Parallel, delayed, effective_n_jobs
+from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..externals.six.moves import xrange
 from ..exceptions import NotFittedError
 
@@ -148,12 +148,12 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     doc_topic_prior : float, optional (default=None)
         Prior of document topic distribution `theta`. If the value is None,
         defaults to `1 / n_components`.
-        In the literature, this is called `alpha`.
+        In [1]_, this is called `alpha`.
 
     topic_word_prior : float, optional (default=None)
         Prior of topic word distribution `beta`. If the value is None, defaults
         to `1 / n_components`.
-        In the literature, this is called `beta`.
+        In [1]_, this is called `eta`.
 
     learning_method : 'batch' | 'online', default='batch'
         Method used to update `_component`. Only used in `fit` method.

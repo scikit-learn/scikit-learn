@@ -14,7 +14,7 @@ import numpy as np
 from scipy import sparse
 
 from ..base import clone, TransformerMixin
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 from ..externals import six
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer

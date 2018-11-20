@@ -8,7 +8,6 @@ from re import escape
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
@@ -81,6 +80,8 @@ def test_ovr_fit_predict():
     assert_greater(np.mean(iris.target == pred), 0.65)
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_ovr_partial_fit():
     # Test if partial_fit is working as intended
     X, y = shuffle(iris.data, iris.target, random_state=0)
@@ -168,8 +169,8 @@ def test_ovr_fit_predict_sparse():
         clf_sprs = OneVsRestClassifier(base_clf).fit(X_train, sparse(Y_train))
         Y_pred_sprs = clf_sprs.predict(X_test)
 
-        assert_true(clf.multilabel_)
-        assert_true(sp.issparse(Y_pred_sprs))
+        assert clf.multilabel_
+        assert sp.issparse(Y_pred_sprs)
         assert_array_equal(Y_pred_sprs.toarray(), Y_pred)
 
         # Test predict_proba
@@ -301,7 +302,7 @@ def test_ovr_multilabel():
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         y_pred = clf.predict([[0, 4, 4]])[0]
         assert_array_equal(y_pred, [0, 1, 1])
-        assert_true(clf.multilabel_)
+        assert clf.multilabel_
 
 
 def test_ovr_fit_predict_svc():
@@ -326,7 +327,7 @@ def test_ovr_multilabel_dataset():
         clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
         Y_pred = clf.predict(X_test)
 
-        assert_true(clf.multilabel_)
+        assert clf.multilabel_
         assert_almost_equal(precision_score(Y_test, Y_pred, average="micro"),
                             prec,
                             decimal=2)
@@ -362,7 +363,7 @@ def test_ovr_multilabel_predict_proba():
         assert_false(hasattr(decision_only, 'predict_proba'))
         decision_only.fit(X_train, Y_train)
         assert_false(hasattr(decision_only, 'predict_proba'))
-        assert_true(hasattr(decision_only, 'decision_function'))
+        assert hasattr(decision_only, 'decision_function')
 
         # Estimator which can get predict_proba enabled after fitting
         gs = GridSearchCV(svm.SVC(gamma='scale', probability=False),
@@ -370,7 +371,7 @@ def test_ovr_multilabel_predict_proba():
         proba_after_fit = OneVsRestClassifier(gs)
         assert_false(hasattr(proba_after_fit, 'predict_proba'))
         proba_after_fit.fit(X_train, Y_train)
-        assert_true(hasattr(proba_after_fit, 'predict_proba'))
+        assert hasattr(proba_after_fit, 'predict_proba')
 
         Y_pred = clf.predict(X_test)
         Y_proba = clf.predict_proba(X_test)
@@ -437,7 +438,7 @@ def test_ovr_gridsearch():
     cv = GridSearchCV(ovr, {'estimator__C': Cs})
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
-    assert_true(best_C in Cs)
+    assert best_C in Cs
 
 
 def test_ovr_pipeline():
@@ -596,7 +597,7 @@ def test_ovo_decision_function():
         # binary classifiers.
         # Therefore, sorting predictions based on votes would yield
         # mostly tied predictions:
-        assert_true(set(votes[:, class_idx]).issubset(set([0., 1., 2.])))
+        assert set(votes[:, class_idx]).issubset(set([0., 1., 2.]))
 
         # The OVO decision function on the other hand is able to resolve
         # most of the ties on this data as it combines both the vote counts
@@ -615,9 +616,11 @@ def test_ovo_gridsearch():
     cv = GridSearchCV(ovo, {'estimator__C': Cs})
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
-    assert_true(best_C in Cs)
+    assert best_C in Cs
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_ovo_ties():
     # Test that ties are broken using the decision function,
     # not defaulting to the smallest label
@@ -643,6 +646,8 @@ def test_ovo_ties():
     assert_equal(ovo_prediction[0], normalized_confidences[0].argmax())
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_ovo_ties2():
     # test that ties can not only be won by the first two labels
     X = np.array([[1, 2], [2, 1], [-2, 1], [-2, -1]])
@@ -712,7 +717,7 @@ def test_ecoc_gridsearch():
     cv = GridSearchCV(ecoc, {'estimator__C': Cs})
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
-    assert_true(best_C in Cs)
+    assert best_C in Cs
 
 
 def test_ecoc_float_y():
@@ -752,7 +757,7 @@ def test_pairwise_attribute():
         assert_false(ovr_false._pairwise)
 
         ovr_true = MultiClassClassifier(clf_precomputed)
-        assert_true(ovr_true._pairwise)
+        assert ovr_true._pairwise
 
 
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22

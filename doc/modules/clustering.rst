@@ -387,7 +387,7 @@ is updated according to the following equation:
 
 .. math::
 
-    x_i^{t+1} = x_i^t + m(x_i^t)
+    x_i^{t+1} = m(x_i^t)
 
 Where :math:`N(x_i)` is the neighborhood of samples within a given distance
 around :math:`x_i` and :math:`m` is the *mean shift* vector that is computed for each
@@ -1551,7 +1551,7 @@ Advantages
 - **Upper-bounded at 1**:  Values close to zero indicate two label
   assignments that are largely independent, while values close to one
   indicate significant agreement. Further, values of exactly 0 indicate
-  **purely** independent label assignments and a AMI of exactly 1 indicates
+  **purely** independent label assignments and a FMI of exactly 1 indicates
   that the two label assignments are equal (with or without permutation).
 
 - **No assumption is made on the cluster structure**: can be used
@@ -1652,17 +1652,16 @@ Drawbacks
  * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In this example
    the silhouette analysis is used to choose an optimal value for n_clusters.
 
-.. _calinski_harabaz_index:
+.. _calinski_harabasz_index:
 
-Calinski-Harabaz Index
+Calinski-Harabasz Index
 ----------------------
-
-If the ground truth labels are not known, the Calinski-Harabaz index
-(:func:`sklearn.metrics.calinski_harabaz_score`) - also known as the Variance 
+If the ground truth labels are not known, the Calinski-Harabasz index
+(:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance 
 Ratio Criterion - can be used to evaluate the model, where a higher 
-Calinski-Harabaz score relates to a model with better defined clusters.
+Calinski-Harabasz score relates to a model with better defined clusters.
 
-For :math:`k` clusters, the Calinski-Harabaz score :math:`s` is given as the
+For :math:`k` clusters, the Calinski-Harabasz score :math:`s` is given as the
 ratio of the between-clusters dispersion mean and the within-cluster
 dispersion:
 
@@ -1689,16 +1688,15 @@ points in cluster :math:`q`.
   >>> X = dataset.data
   >>> y = dataset.target
 
-In normal usage, the Calinski-Harabaz index is applied to the results of a
+In normal usage, the Calinski-Harabasz index is applied to the results of a
 cluster analysis.
 
   >>> import numpy as np
   >>> from sklearn.cluster import KMeans
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
-  >>> metrics.calinski_harabaz_score(X, labels)  # doctest: +ELLIPSIS
+  >>> metrics.calinski_harabasz_score(X, labels)  # doctest: +ELLIPSIS
   561.62...
-
 
 Advantages
 ~~~~~~~~~~
@@ -1712,7 +1710,7 @@ Advantages
 Drawbacks
 ~~~~~~~~~
 
-- The Calinski-Harabaz index is generally higher for convex clusters than other
+- The Calinski-Harabasz index is generally higher for convex clusters than other
   concepts of clusters, such as density based clusters like those obtained
   through DBSCAN.
 
@@ -1750,7 +1748,7 @@ symmetric is:
 Then the Davies-Bouldin index is defined as:
 
 .. math::
-   DB = \frac{1}{k} \sum{i=1}^k \max_{i \neq j} R_{ij}
+   DB = \frac{1}{k} \sum_{i=1}^k \max_{i \neq j} R_{ij}
 
 Zero is the lowest possible score. Values closer to zero indicate a better
 partition.

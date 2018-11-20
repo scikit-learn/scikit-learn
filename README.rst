@@ -58,13 +58,14 @@ scikit-learn requires:
 Scikit-learn 0.21 and later will require Python 3.5 or newer.
 
 For running the examples Matplotlib >= 1.4 is required. A few examples
-require scikit-image >= 0.11.3 and a few examples require pandas >= 0.17.1.
+require scikit-image >= 0.11.3, a few examples require pandas >= 0.17.1
+and a few example require joblib >= 0.11.
 
 scikit-learn also uses CBLAS, the C interface to the Basic Linear Algebra
 Subprograms library. scikit-learn comes with a reference implementation, but
 the system CBLAS will be detected by the build system and used if present.
 CBLAS exists in many implementations; see `Linear algebra libraries
-<http://scikit-learn.org/stable/modules/computational_performance.html#linear-algebra-libraries>`_
+<http://scikit-learn.org/stable/modules/computing#linear-algebra-libraries>`_
 for known issues.
 
 User installation

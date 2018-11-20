@@ -25,10 +25,11 @@ from ..utils import gen_even_slices
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
-from ..utils import Parallel
-from ..utils import delayed
-from ..utils import effective_n_jobs
 from ..utils import get_config
+from ..utils._joblib import Parallel
+from ..utils._joblib import delayed
+from ..utils._joblib import effective_n_jobs
+
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
@@ -391,8 +392,6 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     indices = np.concatenate(indices)
     values = np.concatenate(values)
 
-    if metric == "euclidean" and not metric_kwargs.get("squared", False):
-        np.sqrt(values, values)
     return indices, values
 
 
