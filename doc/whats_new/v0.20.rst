@@ -180,6 +180,10 @@ Changelog
   precision issues in :class:`preprocessing.StandardScaler` and
   :class:`decomposition.IncrementalPCA` when using float32 datasets.
   :issue:`12338` by :user:`bauks <bauks>`.
+
+- |Fix| Calling :func:`utils.check_array` on `pandas.Series`, which
+  raised an error in 0.20.0, now returns the expected output again.
+  :issue:`12625` by `Andreas Müller`_
   
 Miscellaneous
 .............
