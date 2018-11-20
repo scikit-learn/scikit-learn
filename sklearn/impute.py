@@ -11,7 +11,7 @@ import numpy.ma as ma
 from scipy import sparse
 from scipy import stats
 
-from .base import BaseEstimator, TransformerMixin, OneToOneMixin
+from .base import BaseEstimator, TransformerMixin
 from .utils import check_array
 from .utils.sparsefuncs import _get_median
 from .utils.validation import check_is_fitted
@@ -90,7 +90,7 @@ def _most_frequent(array, extra_value, n_repeat):
             return extra_value
 
 
-class SimpleImputer(BaseEstimator, TransformerMixin, OneToOneMixin):
+class SimpleImputer(BaseEstimator, TransformerMixin):
     """Imputation transformer for completing missing values.
 
     Read more in the :ref:`User Guide <impute>`.
@@ -257,7 +257,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin, OneToOneMixin):
                                                self.strategy,
                                                self.missing_values,
                                                fill_value)
-
+        invalid_mask = _get_mask(self.statistics_, np.nan)
+        self._valid_mask = np.logical_not(invalid_mask)
         return self
 
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
@@ -373,8 +374,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin, OneToOneMixin):
             valid_statistics = statistics
         else:
             # same as np.isnan but also works for object dtypes
-            invalid_mask = _get_mask(statistics, np.nan)
-            valid_mask = np.logical_not(invalid_mask)
+            valid_mask = self._valid_mask
+            invalid_mask = np.logical_not(valid_mask)
             valid_statistics = statistics[valid_mask]
             valid_statistics_indexes = np.flatnonzero(valid_mask)
 
@@ -407,6 +408,11 @@ class SimpleImputer(BaseEstimator, TransformerMixin, OneToOneMixin):
             X[coordinates] = values
 
         return X
+
+    def get_feature_names(self, input_features=None):
+        if input_features is None:
+            raise TypeError("Don't have input_features")
+        return np.array(input_features)[self._valid_mask]
 
 
 class MissingIndicator(BaseEstimator, TransformerMixin):
