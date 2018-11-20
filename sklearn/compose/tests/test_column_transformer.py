@@ -373,8 +373,8 @@ def test_column_transformer_mixed_cols_sparse():
                   dtype='O')
 
     ct = make_column_transformer(
-        ([0], OneHotEncoder()),
-        ([1, 2], 'passthrough'),
+        (OneHotEncoder(), [0]),
+        ('passthrough', [1, 2]),
         sparse_threshold=1.0
     )
 
@@ -386,8 +386,8 @@ def test_column_transformer_mixed_cols_sparse():
                                                     [0, 1, 2, 0]]))
 
     ct = make_column_transformer(
-        ([0], OneHotEncoder()),
-        ([0], 'passthrough'),
+        (OneHotEncoder(), [0]),
+        ('passthrough', [0]),
         sparse_threshold=1.0
     )
     with pytest.raises(ValueError,
@@ -516,21 +516,35 @@ def test_column_transformer_invalid_transformer():
 def test_make_column_transformer():
     scaler = StandardScaler()
     norm = Normalizer()
-    ct = make_column_transformer(('first', scaler), (['second'], norm))
+    ct = make_column_transformer((scaler, 'first'), (norm, ['second']))
     names, transformers, columns = zip(*ct.transformers)
     assert_equal(names, ("standardscaler", "normalizer"))
     assert_equal(transformers, (scaler, norm))
     assert_equal(columns, ('first', ['second']))
 
+    # XXX remove in v0.22
+    with pytest.warns(DeprecationWarning,
+                      match='`make_column_transformer` now expects'):
+        make_column_transformer(('first', scaler))
+
+    with pytest.warns(DeprecationWarning,
+                      match='`make_column_transformer` now expects'):
+        make_column_transformer(('first', 'drop'))
+
+    with pytest.warns(DeprecationWarning,
+                      match='`make_column_transformer` now expects'):
+        make_column_transformer(('passthrough', 'passthrough'),
+                                ('first', 'drop'))
+
 
 def test_make_column_transformer_kwargs():
     scaler = StandardScaler()
     norm = Normalizer()
-    ct = make_column_transformer(('first', scaler), (['second'], norm),
+    ct = make_column_transformer((scaler, 'first'), (norm, ['second']),
                                  n_jobs=3, remainder='drop',
                                  sparse_threshold=0.5)
     assert_equal(ct.transformers, make_column_transformer(
-        ('first', scaler), (['second'], norm)).transformers)
+        (scaler, 'first'), (norm, ['second'])).transformers)
     assert_equal(ct.n_jobs, 3)
     assert_equal(ct.remainder, 'drop')
     assert_equal(ct.sparse_threshold, 0.5)
@@ -538,7 +552,7 @@ def test_make_column_transformer_kwargs():
     assert_raise_message(
         TypeError,
         'Unknown keyword arguments: "transformer_weights"',
-        make_column_transformer, ('first', scaler), (['second'], norm),
+        make_column_transformer, (scaler, 'first'), (norm, ['second']),
         transformer_weights={'pca': 10, 'Transf': 1}
     )
 
@@ -547,7 +561,7 @@ def test_make_column_transformer_remainder_transformer():
     scaler = StandardScaler()
     norm = Normalizer()
     remainder = StandardScaler()
-    ct = make_column_transformer(('first', scaler), (['second'], norm),
+    ct = make_column_transformer((scaler, 'first'), (norm, ['second']),
                                  remainder=remainder)
     assert ct.remainder == remainder
 
@@ -757,7 +771,7 @@ def test_column_transformer_remainder():
         "or estimator.", ct.fit_transform, X_array)
 
     # check default for make_column_transformer
-    ct = make_column_transformer(([0], Trans()))
+    ct = make_column_transformer((Trans(), [0]))
     assert ct.remainder == 'drop'
 
 
