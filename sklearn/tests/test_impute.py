@@ -640,24 +640,24 @@ def test_inconsistent_dtype_X_missing_values(imputer_constructor,
 @pytest.mark.parametrize("marker", [np.nan, -1, 0])
 def test_imputation_add_indicator(marker):
     X = np.array([
-        [marker, 1, 5],
-        [2, marker, 1],
-        [6, 3, marker],
-        [1, 2, 9]
+        [marker, 1, 5, 1, marker],
+        [2, marker, 1, 2, marker],
+        [6, 3, marker, 3, marker],
+        [1, 2, 9, 4, marker]
     ])
     X_true = np.array([
-        [3., 1., 5., 1., 0., 0.],
-        [2., 2., 1., 0., 1., 0.],
-        [6., 3., 5., 0., 0., 1.],
-        [1., 2., 9., 0., 0., 0.],
+        [3., 1., 5., 1., 1., 0., 0., 1.],
+        [2., 2., 1., 2., 0., 1., 0., 1.],
+        [6., 3., 5., 3., 0., 0., 1., 1.],
+        [1., 2., 9., 4., 0., 0., 0., 1.]
     ])
 
     imputer = SimpleImputer(missing_values=marker, add_indicator=True)
     X_trans = imputer.fit_transform(X)
 
     assert_allclose(X_trans, X_true)
-    assert_allclose(imputer.statistics_, np.array([3., 2., 5.]))
-    assert_array_equal(imputer.indicator_.features_, np.array([0, 1, 2]))
+    assert_allclose(imputer.statistics_, np.array([3., 2., 5., 2.5, np.nan]))
+    assert_array_equal(imputer.indicator_.features_, np.array([0, 1, 2, 4]))
 
 
 @pytest.mark.parametrize(
@@ -687,41 +687,3 @@ def test_imputation_add_indicator_sparse_matrix(arr_type):
     assert sparse.issparse(X_trans)
     assert X_trans.shape == X_true.shape
     assert_allclose_dense_sparse(X_trans.toarray(), X_true)
-
-
-def test_imputation_add_indicator_empty_column():
-    X_test = np.array([
-        [np.nan, 1, 5],
-        [np.nan, 2, 1],
-        [np.nan, 6, 3],
-        [np.nan, 2, 9]
-    ])
-    X_true = np.array([
-        [1., 5., 1.],
-        [2., 1., 1.],
-        [6., 3., 1.],
-        [2., 9., 1.]
-    ])
-
-    imputer = SimpleImputer(add_indicator=True)
-    X_trans = imputer.fit_transform(X_test)
-    assert_allclose(X_trans, X_true)
-
-
-def test_imputation_add_indicator_with_empty_column():
-    X_test = np.array([
-        [np.nan, 1, np.nan],
-        [np.nan, 3, 1],
-        [np.nan, np.nan, 2],
-        [np.nan, 2, 9]
-    ])
-    X_true = np.array([
-        [1., 4., 1., 0., 1.],
-        [3., 1., 1., 0., 0.],
-        [2., 2., 1., 1., 0.],
-        [2., 9., 1., 0., 0.]
-    ])
-
-    imputer = SimpleImputer(add_indicator=True)
-    X_trans = imputer.fit_transform(X_test)
-    assert_allclose(X_trans, X_true)
