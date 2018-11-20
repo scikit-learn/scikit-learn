@@ -25,8 +25,6 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals import six
-from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
@@ -107,7 +105,7 @@ def strip_tags(s):
 def _check_stop_list(stop):
     if stop == "english":
         return ENGLISH_STOP_WORDS
-    elif isinstance(stop, six.str):
+    elif isinstance(stop, str):
         raise ValueError("not a built-in stop list: %s" % stop)
     elif stop is None:
         return None
@@ -588,7 +586,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
             Training data.
         """
         # triggers a parameter validation
-        if isinstance(X, six.str):
+        if isinstance(X, str):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
@@ -613,7 +611,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         X : scipy.sparse matrix, shape = (n_samples, self.n_features)
             Document-term matrix.
         """
-        if isinstance(X, six.str):
+        if isinstance(X, str):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
@@ -1018,7 +1016,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         # We intentionally don't call the transform method to make
         # fit_transform overridable without unwanted side effects in
         # TfidfVectorizer.
-        if isinstance(raw_documents, six.str):
+        if isinstance(raw_documents, str):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
@@ -1073,7 +1071,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         X : sparse matrix, [n_samples, n_features]
             Document-term matrix.
         """
-        if isinstance(raw_documents, six.str):
+        if isinstance(raw_documents, str):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")

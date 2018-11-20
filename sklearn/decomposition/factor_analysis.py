@@ -26,7 +26,6 @@ from scipy import linalg
 
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals.six.moves import xrange
 from ..utils import check_array, check_random_state
 from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
 from ..utils.validation import check_is_fitted

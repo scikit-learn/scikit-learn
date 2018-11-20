@@ -16,8 +16,7 @@ from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
 from ..exceptions import ConvergenceWarning
-from ..externals import six
-from ..externals.six import moves
+
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
@@ -286,7 +285,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         def g(x, fun_args):
             return fun(x, **fun_args)
     else:
-        exc = ValueError if isinstance(fun, six.str) else TypeError
+        exc = ValueError if isinstance(fun, str) else TypeError
         raise exc("Unknown function %r;"
                   " should be one of 'logcosh', 'exp', 'cube' or callable"
                   % fun)

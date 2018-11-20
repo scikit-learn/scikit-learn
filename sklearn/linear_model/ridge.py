@@ -29,7 +29,6 @@ from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
-from ..externals import six
 from ..metrics.scorer import check_scoring
 from ..exceptions import ConvergenceWarning
 

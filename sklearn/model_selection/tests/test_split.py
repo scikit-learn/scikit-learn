@@ -56,9 +56,6 @@ from sklearn.model_selection._split import NSPLIT_WARNING
 from sklearn.datasets import load_digits
 from sklearn.datasets import make_classification
 
-from sklearn.externals import six
-from sklearn.externals.six.moves import zip
-
 from sklearn.utils.fixes import comb
 
 from sklearn.svm import SVC

@@ -1,7 +1,6 @@
 """Test the search module"""
 
-from sklearn.externals.six.moves import cStringIO as StringIO
-from sklearn.externals.six.moves import xrange
+from io import StringIO
 from itertools import chain, product
 import pickle
 import sys

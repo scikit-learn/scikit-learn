@@ -4,7 +4,6 @@ import numpy as np
 import scipy.sparse as sp
 from itertools import product
 
-from sklearn.externals.six.moves import xrange
 from sklearn.externals.six import iteritems
 
 from scipy.sparse import issparse

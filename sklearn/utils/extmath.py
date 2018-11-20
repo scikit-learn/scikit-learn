@@ -20,7 +20,6 @@ from scipy import linalg, sparse
 from . import check_random_state
 from .fixes import np_version
 from ._logistic_sigmoid import _log_logistic_sigmoid
-from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 

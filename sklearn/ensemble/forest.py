@@ -51,7 +51,6 @@ from scipy.sparse import hstack as sparse_hstack
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..utils._joblib import Parallel, delayed
-from ..externals import six
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
@@ -493,7 +492,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         if self.class_weight is not None:
             valid_presets = ('balanced', 'balanced_subsample')
-            if isinstance(self.class_weight, six.str):
+            if isinstance(self.class_weight, str):
                 if self.class_weight not in valid_presets:
                     raise ValueError('Valid presets for class_weight include '
                                      '"balanced" and "balanced_subsample". Given "%s".'

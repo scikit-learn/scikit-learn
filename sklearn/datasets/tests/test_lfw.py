@@ -14,7 +14,6 @@ import shutil
 import tempfile
 import numpy as np
 from functools import partial
-from sklearn.externals import six
 from sklearn.externals._pilutil import pillow_installed, imsave
 from sklearn.datasets import fetch_lfw_pairs
 from sklearn.datasets import fetch_lfw_people

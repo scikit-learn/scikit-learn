@@ -14,7 +14,6 @@ from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
-from ..externals import six
 from abc import ABCMeta, abstractmethod
 
 

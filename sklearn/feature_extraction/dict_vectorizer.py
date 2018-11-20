@@ -9,8 +9,6 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals import six
-from ..externals.six.moves import xrange
 from ..utils import check_array, tosequence
 from ..utils.fixes import _Mapping as Mapping
 
@@ -119,7 +117,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         for x in X:
             for f, v in six.iteritems(x):
-                if isinstance(v, six.str):
+                if isinstance(v, str):
                     f = "%s%s%s" % (f, self.separator, v)
                 if f not in vocab:
                     feature_names.append(f)
@@ -165,7 +163,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         # same time
         for x in X:
             for f, v in six.iteritems(x):
-                if isinstance(v, six.str):
+                if isinstance(v, str):
                     f = "%s%s%s" % (f, self.separator, v)
                     v = 1
                 if f in vocab:
@@ -299,7 +297,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
             for i, x in enumerate(X):
                 for f, v in six.iteritems(x):
-                    if isinstance(v, six.str):
+                    if isinstance(v, str):
                         f = "%s%s%s" % (f, self.separator, v)
                         v = 1
                     try:

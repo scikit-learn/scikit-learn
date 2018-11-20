@@ -40,7 +40,6 @@ from .cluster import fowlkes_mallows_score
 
 from ..utils.multiclass import type_of_target
 from ..utils.fixes import _Iterable as Iterable
-from ..externals import six
 from ..base import is_regressor
 
 
@@ -224,7 +223,7 @@ def get_scorer(scoring):
     scorer : callable
         The scorer.
     """
-    if isinstance(scoring, six.str):
+    if isinstance(scoring, str):
         try:
             scorer = SCORERS[scoring]
         except KeyError:
@@ -269,7 +268,7 @@ def check_scoring(estimator, scoring=None, allow_none=False):
     if not hasattr(estimator, 'fit'):
         raise TypeError("estimator should be an estimator implementing "
                         "'fit' method, %r was passed" % estimator)
-    if isinstance(scoring, six.str):
+    if isinstance(scoring, str):
         return get_scorer(scoring)
     elif callable(scoring):
         # Heuristic to ensure user has not passed a metric
@@ -339,7 +338,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
         False if scorer is None/str/callable
     """
     if callable(scoring) or scoring is None or isinstance(scoring,
-                                                          six.str):
+                                                          str):
         scorers = {"score": check_scoring(estimator, scoring=scoring)}
         return scorers, False
     else:
@@ -365,7 +364,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
                 raise ValueError(err_msg + "Duplicate elements were found in"
                                  " the given list. %r" % repr(scoring))
             elif len(keys) > 0:
-                if not all(isinstance(k, six.str) for k in keys):
+                if not all(isinstance(k, str) for k in keys):
                     if any(callable(k) for k in keys):
                         raise ValueError(err_msg +
                                          "One or more of the elements were "
@@ -385,7 +384,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
 
         elif isinstance(scoring, dict):
             keys = set(scoring)
-            if not all(isinstance(k, six.str) for k in keys):
+            if not all(isinstance(k, str) for k in keys):
                 raise ValueError("Non-string types were found in the keys of "
                                  "the given dict. scoring=%r" % repr(scoring))
             if len(keys) == 0:

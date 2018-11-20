@@ -16,7 +16,6 @@ from numbers import Integral
 
 import numpy as np
 
-from ..externals import six
 from ..utils.validation import check_is_fitted
 
 from . import _criterion
@@ -281,7 +280,7 @@ class _BaseTreeExporter(object):
         if self.impurity:
             if isinstance(criterion, _criterion.FriedmanMSE):
                 criterion = "friedman_mse"
-            elif not isinstance(criterion, six.str):
+            elif not isinstance(criterion, str):
                 criterion = "impurity"
             if labels:
                 node_string += '%s = ' % criterion
@@ -755,7 +754,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
     own_file = False
     return_string = False
     try:
-        if isinstance(out_file, six.str):
+        if isinstance(out_file, str):
             if six.PY3:
                 out_file = open(out_file, "w", encoding="utf-8")
             else:

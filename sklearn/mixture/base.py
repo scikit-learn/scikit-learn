@@ -15,7 +15,6 @@ import numpy as np
 from .. import cluster
 from ..base import BaseEstimator
 from ..base import DensityMixin
-from ..externals import six
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
 from ..utils.fixes import logsumexp

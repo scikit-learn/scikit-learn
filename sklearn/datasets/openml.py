@@ -574,7 +574,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         target_column = []
     elif not isinstance(target_column, list):
         raise TypeError("Did not recognize type of target_column"
-                        "Should be six.string_type, list or None. Got: "
+                        "Should be string_type, list or None. Got: "
                         "{}".format(type(target_column)))
     data_columns = _valid_data_column_names(features_list,
                                             target_column)

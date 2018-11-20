@@ -24,8 +24,6 @@ from ..utils import arrayfuncs, as_float_array, check_X_y
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..utils._joblib import Parallel, delayed
-from ..externals.six.moves import xrange
-from ..externals.six import str
 
 solve_triangular_args = {'check_finite': False}
 

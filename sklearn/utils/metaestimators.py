@@ -9,7 +9,6 @@ from functools import update_wrapper
 import numpy as np
 
 from ..utils import safe_indexing
-from ..externals import six
 from ..base import BaseEstimator
 
 __all__ = ['if_delegate_has_method']

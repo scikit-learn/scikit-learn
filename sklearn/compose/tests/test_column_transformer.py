@@ -785,7 +785,7 @@ def test_column_transformer_remainder_numpy(key):
 def test_column_transformer_remainder_pandas(key):
     # test different ways that columns are specified with passthrough
     pd = pytest.importorskip('pandas')
-    if isinstance(key, six.str) and key == 'pd-index':
+    if isinstance(key, str) and key == 'pd-index':
         key = pd.Index(['first'])
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T

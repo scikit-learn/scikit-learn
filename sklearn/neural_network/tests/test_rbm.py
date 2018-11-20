@@ -7,7 +7,7 @@ from sklearn.utils.testing import (assert_almost_equal, assert_array_equal,
                                    assert_true)
 
 from sklearn.datasets import load_digits
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 from sklearn.neural_network import BernoulliRBM
 from sklearn.utils.validation import assert_all_finite
 np.seterr(all='warn')

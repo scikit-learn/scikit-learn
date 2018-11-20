@@ -23,9 +23,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .. import __version__
-from ..externals import six
-from ..externals.six import u, b
-from ..externals.six.moves import range, zip
+
 from ..utils import check_array, IS_PYPY
 
 if not IS_PYPY:
@@ -159,7 +157,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
 def _gen_open(f):
     if isinstance(f, int):  # file descriptor
         return io.open(f, "rb", closefd=False)
-    elif not isinstance(f, six.str):
+    elif not isinstance(f, str):
         raise TypeError("expected {str, int, file-like}, got %s" % type(f))
 
     _, ext = os.path.splitext(f)
