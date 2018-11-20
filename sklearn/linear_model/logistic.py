@@ -1879,13 +1879,15 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         # _log_reg_scoring_path will output different shapes depending on the
         # multi_class param, so we need to reshape the outputs accordingly.
+        # Cs is of shape (n_classes . n_folds . n_l1_ratios, n_Cs) and all the
+        # rows are equal, so we just take the first one.
         # After reshaping,
-        # - scores is of shape (n_classes X n_folds X n_Cs . n_l1_ratios)
+        # - scores is of shape (n_classes, n_folds, n_Cs . n_l1_ratios)
         # - coefs_paths is of shape
-        #  (n_classes X n_folds X n_Cs . n_l1_ratios X n_features)
+        #  (n_classes, n_folds, n_Cs . n_l1_ratios, n_features)
         # - n_iter is of shape
-        #  (n_classes X n_folds X n_Cs . n_l1_ratios) or
-        #  (1 X n_folds X n_Cs . n_l1_ratios)
+        #  (n_classes, n_folds, n_Cs . n_l1_ratios) or
+        #  (1, n_folds, n_Cs . n_l1_ratios)
         coefs_paths, Cs, scores, n_iter_ = zip(*fold_coefs_)
         self.Cs_ = Cs[0]
         if multi_class == 'multinomial':
@@ -1893,10 +1895,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 coefs_paths,
                 (len(folds),  len(l1_ratios_) * len(self.Cs_), n_classes, -1)
             )
-            # equiv to coefs_paths = np.moveaxis(coefs_paths, (0, 1, 2, 3),
-            #                                                 (1, 2, 0, 3))
-            coefs_paths = np.swapaxes(coefs_paths, 0, 1)
-            coefs_paths = np.swapaxes(coefs_paths, 0, 2)
+            coefs_paths = np.moveaxis(coefs_paths, (0, 1, 2, 3),
+                                                   (1, 2, 0, 3))
             self.n_iter_ = np.reshape(
                 n_iter_,
                 (1, len(folds), len(self.Cs_) * len(l1_ratios_))

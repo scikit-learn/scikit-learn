@@ -1499,6 +1499,8 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(multi_class):
     # GridSearchCV when penalty is elasticnet
 
     if multi_class == 'ovr':
+        # This is actually binary classification, ovr multiclass is treated in
+        # test_LogisticRegressionCV_GridSearchCV_elastic_net_ovr
         X, y = make_classification(random_state=0)
     else:
         X, y = make_classification(n_samples=200, n_classes=3, n_informative=3,
@@ -1643,7 +1645,7 @@ def test_l1_ratios_param(l1_ratios):
 @pytest.mark.parametrize('C', np.logspace(-3, 2, 4))
 @pytest.mark.parametrize('l1_ratio', [.1, .5, .9])
 def test_elastic_net_versus_sgd(C, l1_ratio):
-    # Compare elasticnet penatly in LogisticRegression() and SGD(loss='log')
+    # Compare elasticnet penalty in LogisticRegression() and SGD(loss='log')
     n_samples = 500
     X, y = make_classification(n_samples=n_samples, n_classes=2, n_features=5,
                                n_informative=5, n_redundant=0, n_repeated=0,
