@@ -697,7 +697,8 @@ def test_suppress_validation():
 def test_check_array_series():
     # regression test that check_array works on pandas Series
     pd = importorskip("pandas")
-    check_array(pd.Series([1, 2, 3]), ensure_2d=False, warn_on_dtype=True)
+    res = check_array(pd.Series([1, 2, 3]), ensure_2d=False, warn_on_dtype=True)
+    assert_array_equal(res, np.array([1, 2, 3]))
 
 
 def test_check_dataframe_warns_on_dtype():
