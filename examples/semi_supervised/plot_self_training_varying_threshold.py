@@ -62,7 +62,7 @@ for (i, threshold) in enumerate(x_values):
 
     # We need manual cross validation so that we don't treat -1 as a separate
     # class when computing accuracy
-    skfolds = StratifiedKFold(n_splits=n_splits, random_state=42)
+    skfolds = StratifiedKFold(n_splits=n_splits)
     for fold, (train_index, test_index) in enumerate(skfolds.split(X, y)):
         X_train = X[train_index]
         y_train = y[train_index]
@@ -93,6 +93,7 @@ ax2 = ax1.twinx()
 ax2.errorbar(x_values, amount_labeled.mean(axis=1),
              yerr=amount_labeled.std(axis=1),
              capsize=2, color='g')
+ax2.set_ylim(bottom=0)
 ax2.set_ylabel('Amount of self-labeled samples', color='g')
 ax2.tick_params('y', colors='g')
 
@@ -100,6 +101,7 @@ ax3 = plt.subplot(212, sharex=ax1)
 ax3.errorbar(x_values, amount_iterations.mean(axis=1),
              yerr=amount_iterations.std(axis=1),
              capsize=2, color='b')
+ax3.set_ylim(bottom=0)
 ax3.set_ylabel('Amount of iterations')
 ax3.set_xlabel('Threshold')
 

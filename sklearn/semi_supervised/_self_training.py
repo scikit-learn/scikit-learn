@@ -63,8 +63,9 @@ class SelfTrainingClassifier(BaseEstimator):
 
     y_labeled_iter_ : array, shape=(n_samples,)
         The iteration in which each sample was labeled. When a sample has
-        iteration 0, the sample was already labeled in the given dataset. When
-        a sample has iteration -1, the sample was not labeled in any iteration.
+        iteration 0, the sample was already labeled in the original dataset.
+        When a sample has iteration -1, the sample was not labeled in any
+        iteration.
 
     n_iter_ : int
         The amount of iterations the classifier used during fitting.

@@ -2,13 +2,12 @@ import numpy as np
 import pytest
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_warns_message
 from sklearn.exceptions import NotFittedError
 
 from sklearn.semi_supervised import SelfTrainingClassifier
-from sklearn.dummy import DummyClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris
@@ -69,17 +68,15 @@ def test_invalid_params(max_iter, threshold):
 
 
 @pytest.mark.parametrize("base_classifier",
-                         [DummyClassifier(random_state=0),
-                          DecisionTreeClassifier(random_state=0),
-                          KNeighborsClassifier(),
+                         [KNeighborsClassifier(),
                           SVC(gamma="scale", probability=True,
                               random_state=0)])
-@pytest.mark.parametrize("max_iter", [1, 50, 100])
-@pytest.mark.parametrize("threshold", [0.0, 0.5, 0.9])
-def test_classification(base_classifier, max_iter, threshold):
+def test_classification(base_classifier):
     # Check classification for various parameter settings.
     # Also assert that predictions for strings and numerical labels are equal.
     # Also test for multioutput classification
+    threshold = 0.75
+    max_iter = 10
     st = SelfTrainingClassifier(base_classifier, max_iter=max_iter,
                                 threshold=threshold)
     st.fit(X_train, y_train_missing_labels)
@@ -95,6 +92,33 @@ def test_classification(base_classifier, max_iter, threshold):
     assert_array_equal(np.vectorize(mapping.get)(pred), pred_string)
     assert_array_equal(proba, proba_string)
 
+    # Check consistency between y_labeled_iter, n_iter and max_iter
+    assert np.max(st.y_labeled_iter_) <= st.n_iter_ <= max_iter
+    assert np.max(st_string.y_labeled_iter_) <= st_string.n_iter_ <= max_iter
+    assert_equal(st.y_labeled_iter_.shape, st.y_labels_.shape,
+                 (n_labeled_samples,))
+    assert_equal(st_string.y_labeled_iter_.shape, st_string.y_labels_.shape,
+                 (n_labeled_samples,))
+
+
+def test_output_depends_on_parameters():
+    base_classifier = SVC(gamma="scale", probability=True)
+
+    st1 = SelfTrainingClassifier(base_classifier, threshold=0.3)
+    st2 = SelfTrainingClassifier(base_classifier, threshold=0.7)
+    st3 = SelfTrainingClassifier(base_classifier, max_iter=2)
+
+    preds = [st1.fit(X_train, y_train_missing_labels).predict_proba(X_test),
+             st2.fit(X_train, y_train_missing_labels).predict_proba(X_test),
+             st3.fit(X_train, y_train_missing_labels).predict_proba(X_test)]
+
+    for i, x in enumerate(preds):
+        for j, y in enumerate(preds):
+            if j != i:
+                if np.array_equal(x, y):
+                    pytest.fail("st{} and st{} predictions are equal".format(
+                        i+1, j+1))
+
 
 def test_sanity_classification():
     base_classifier = SVC(gamma="scale", probability=True)
@@ -104,10 +128,12 @@ def test_sanity_classification():
     st = SelfTrainingClassifier(base_classifier)
     st.fit(X_train, y_train_missing_labels)
 
+    pred1, pred2 = base_classifier.predict(X_test), st.predict(X_test)
+    assert not np.array_equal(pred1, pred2)
     score_supervised = accuracy_score(base_classifier.predict(X_test), y_test)
     score_self_training = accuracy_score(st.predict(X_test), y_test)
 
-    assert(score_self_training > score_supervised)
+    assert score_self_training > score_supervised
 
 
 def test_none_iter():
@@ -121,9 +147,7 @@ def test_none_iter():
 
 
 @pytest.mark.parametrize("base_classifier",
-                         [DummyClassifier(random_state=0),
-                          DecisionTreeClassifier(random_state=0),
-                          KNeighborsClassifier(),
+                         [KNeighborsClassifier(),
                           SVC(gamma="scale", probability=True,
                               random_state=0)])
 @pytest.mark.parametrize("y", [y_train_missing_labels,
