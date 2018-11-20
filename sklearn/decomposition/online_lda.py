@@ -93,7 +93,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
         X_indices = X.indices
         X_indptr = X.indptr
 
-    for idx_d in xrange(n_samples):
+    for idx_d in range(n_samples):
         if is_sparse_x:
             ids = X_indices[X_indptr[idx_d]:X_indptr[idx_d + 1]]
             cnts = X_data[X_indptr[idx_d]:X_indptr[idx_d + 1]]
@@ -107,7 +107,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
         exp_topic_word_d = exp_topic_word_distr[:, ids]
 
         # Iterate between `doc_topic_d` and `norm_phi` until convergence
-        for _ in xrange(0, max_iters):
+        for _ in range(0, max_iters):
             last_d = doc_topic_d
 
             # The optimal phi_{dwk} is proportional to
@@ -544,7 +544,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         n_jobs = effective_n_jobs(self.n_jobs)
         with Parallel(n_jobs=n_jobs, verbose=max(0,
                       self.verbose - 1)) as parallel:
-            for i in xrange(max_iter):
+            for i in range(max_iter):
                 if learning_method == 'online':
                     for idx_slice in gen_batches(n_samples, batch_size):
                         self._em_step(X[idx_slice, :], total_samples=n_samples,
@@ -682,7 +682,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             X_indptr = X.indptr
 
         # E[log p(docs | theta, beta)]
-        for idx_d in xrange(0, n_samples):
+        for idx_d in range(0, n_samples):
             if is_sparse_x:
                 ids = X_indices[X_indptr[idx_d]:X_indptr[idx_d + 1]]
                 cnts = X_data[X_indptr[idx_d]:X_indptr[idx_d + 1]]

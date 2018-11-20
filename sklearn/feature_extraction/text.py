@@ -170,9 +170,9 @@ class VectorizerMixin(object):
             tokens_append = tokens.append
             space_join = " ".join
 
-            for n in xrange(min_n,
+            for n in range(min_n,
                             min(max_n + 1, n_original_tokens + 1)):
-                for i in xrange(n_original_tokens - n + 1):
+                for i in range(n_original_tokens - n + 1):
                     tokens_append(space_join(original_tokens[i: i + n]))
 
         return tokens
@@ -195,8 +195,8 @@ class VectorizerMixin(object):
         # bind method outside of loop to reduce overhead
         ngrams_append = ngrams.append
 
-        for n in xrange(min_n, min(max_n + 1, text_len + 1)):
-            for i in xrange(text_len - n + 1):
+        for n in range(min_n, min(max_n + 1, text_len + 1)):
+            for i in range(text_len - n + 1):
                 ngrams_append(text_document[i: i + n])
         return ngrams
 
@@ -218,7 +218,7 @@ class VectorizerMixin(object):
         for w in text_document.split():
             w = ' ' + w + ' '
             w_len = len(w)
-            for n in xrange(min_n, max_n + 1):
+            for n in range(min_n, max_n + 1):
                 offset = 0
                 ngrams_append(w[offset:offset + n])
                 while offset + n < w_len:
@@ -348,7 +348,7 @@ class VectorizerMixin(object):
                 indices = set(six.itervalues(vocabulary))
                 if len(indices) != len(vocabulary):
                     raise ValueError("Vocabulary contains repeated indices.")
-                for i in xrange(len(vocabulary)):
+                for i in range(len(vocabulary)):
                     if i not in indices:
                         msg = ("Vocabulary of size %d doesn't contain index "
                                "%d." % (len(vocabulary), i))

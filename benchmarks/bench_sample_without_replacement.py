@@ -15,7 +15,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 
-from sklearn.externals.six.moves import xrange
 from sklearn.utils.random import sample_without_replacement
 
 
@@ -90,9 +89,9 @@ if __name__ == "__main__":
     # Set Python core input
     sampling_algorithm["python-core-sample"] = \
         lambda n_population, n_sample: \
-            random.sample(xrange(n_population), n_sample)
+            random.sample(range(n_population), n_sample)
 
-   ###########################################################################
+    ###########################################################################
     # Set custom automatic method selection
     sampling_algorithm["custom-auto"] = \
         lambda n_population, n_samples, random_state=None: \
@@ -156,11 +155,11 @@ if __name__ == "__main__":
         print("Perform benchmarks for %s..." % name, end="")
         time[name] = np.zeros(shape=(opts.n_steps, opts.n_times))
 
-        for step in xrange(opts.n_steps):
-            for it in xrange(opts.n_times):
+        for step in range(opts.n_steps):
+            for it in range(opts.n_times):
                 time[name][step, it] = bench_sample(sampling_algorithm[name],
-                                                      opts.n_population,
-                                                      n_samples[step])
+                                                    opts.n_population,
+                                                    n_samples[step])
 
         print("done")
 

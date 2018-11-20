@@ -156,7 +156,7 @@ def test_parameter_grid():
     assert_equal(len(grid2), 6)
 
     # loop to assert we can iterate over the grid multiple times
-    for i in xrange(2):
+    for i in range(2):
         # tuple + chain transforms {"a": 1, "b": 2} to ("a", 1, "b", 2)
         points = set(tuple(chain(*(sorted(p.items())))) for p in grid2)
         assert_equal(points,

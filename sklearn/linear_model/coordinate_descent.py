@@ -742,7 +742,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
         self.n_iter_ = []
 
-        for k in xrange(n_targets):
+        for k in range(n_targets):
             if Xy is not None:
                 this_Xy = Xy[:, k]
             else:

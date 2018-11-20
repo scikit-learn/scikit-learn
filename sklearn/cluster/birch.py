@@ -29,7 +29,7 @@ def _iterate_sparse_X(X):
     X_data = X.data
     X_indptr = X.indptr
 
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         row = np.zeros(X.shape[1])
         startptr, endptr = X_indptr[i], X_indptr[i + 1]
         nonzero_indices = X_indices[startptr:endptr]

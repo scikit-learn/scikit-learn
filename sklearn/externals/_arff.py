@@ -431,7 +431,7 @@ class Data(object):
                 raise BadDataFormat(s)
             # XXX: int 0 is used for implicit values, not '0'
             values = [values[i] if i in values else 0 for i in
-                      xrange(len(conversors))]
+                      range(len(conversors))]
         else:
             if len(values) != len(conversors):
                 raise BadDataFormat(s)
@@ -524,7 +524,7 @@ class COOData(Data):
         data = data.data
 
         # Check if the rows are sorted
-        if not all(row[i] <= row[i + 1] for i in xrange(len(row) - 1)):
+        if not all(row[i] <= row[i + 1] for i in range(len(row) - 1)):
             raise ValueError("liac-arff can only output COO matrices with "
                              "sorted rows.")
 

@@ -211,7 +211,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             raise ValueError('SVD method %s is not supported. Please consider'
                              ' the documentation' % self.svd_method)
 
-        for i in xrange(self.max_iter):
+        for i in range(self.max_iter):
             # SMALL helps numerics
             sqrt_psi = np.sqrt(psi) + SMALL
             s, V, unexp_var = my_svd(X / (sqrt_psi * nsqrt))

@@ -5,7 +5,6 @@ import warnings
 import pytest
 from scipy import sparse
 
-from sklearn.externals.six import PY2
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii
@@ -1132,10 +1131,7 @@ def _check_stop_words_consistency(estimator):
 
 @fails_if_pypy
 def test_vectorizer_stop_words_inconsistent():
-    if PY2:
-        lstr = "[u'and', u'll', u've']"
-    else:
-        lstr = "['and', 'll', 've']"
+    lstr = "['and', 'll', 've']"
     message = ('Your stop_words may be inconsistent with your '
                'preprocessing. Tokenizing the stop words generated '
                'tokens %s not in stop_words.' % lstr)

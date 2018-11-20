@@ -166,7 +166,7 @@ def test_unique_labels():
     assert_raises(ValueError, unique_labels)
 
     # Multiclass problem
-    assert_array_equal(unique_labels(xrange(10)), np.arange(10))
+    assert_array_equal(unique_labels(range(10)), np.arange(10))
     assert_array_equal(unique_labels(np.arange(10)), np.arange(10))
     assert_array_equal(unique_labels([4, 0, 2]), np.array([0, 2, 4]))
 
@@ -181,7 +181,7 @@ def test_unique_labels():
                        np.arange(3))
 
     # Several arrays passed
-    assert_array_equal(unique_labels([4, 0, 2], xrange(5)),
+    assert_array_equal(unique_labels([4, 0, 2], range(5)),
                        np.arange(5))
     assert_array_equal(unique_labels((0, 1, 2), (0,), (2, 1)),
                        np.arange(3))

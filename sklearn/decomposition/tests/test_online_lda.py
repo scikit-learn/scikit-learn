@@ -90,7 +90,7 @@ def test_lda_partial_fit():
     lda = LatentDirichletAllocation(n_components=n_components,
                                     learning_offset=10., total_samples=100,
                                     random_state=rng)
-    for i in xrange(3):
+    for i in range(3):
         lda.partial_fit(X)
 
     correct_idx_grps = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]

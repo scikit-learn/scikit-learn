@@ -258,7 +258,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         n_samples = X.shape[0]
 
         names = self.feature_names_
-        dicts = [dict_type() for _ in xrange(n_samples)]
+        dicts = [dict_type() for _ in range(n_samples)]
 
         if sp.issparse(X):
             for i, j in zip(*X.nonzero()):

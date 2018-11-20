@@ -92,7 +92,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
             features.pop(0)
             n_features -= 1
 
-        for i in xrange(0, n_features):
+        for i in range(0, n_features):
             idx_s, value = features[i].split(COLON, 1)
             idx = int(idx_s)
             if idx < 0 or not zero_based and idx == 0:
