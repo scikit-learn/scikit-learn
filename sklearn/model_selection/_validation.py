@@ -598,8 +598,14 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
             score = scorer(estimator, X_test)
         else:
             score = scorer(estimator, X_test, y_test)
+
         if hasattr(score, 'item'):
-            score = score.item()
+            try:
+                # e.g. unwrap memmapped scalars
+                score = score.item()
+            except ValueError:
+                # non-scalar?
+                pass
 
         if not isinstance(score, numbers.Number):
             raise ValueError("scoring must return a number, got %s (%s) "
