@@ -41,6 +41,7 @@ __all__ = ['BaseCrossValidator',
            'RepeatedStratifiedKFold',
            'RepeatedKFold',
            'ShuffleSplit',
+           'SemiSupervisedSplitter',
            'GroupShuffleSplit',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
@@ -58,6 +59,26 @@ CV_WARNING = (
     "You should specify a value for 'cv' instead of relying on the "
     "default value. The default value will change from 3 to 5 "
     "in version 0.22.")
+
+
+class SemiSupervisedSplitter:
+
+    """Meta-splitter which always includes unlabelled samples in training"""
+
+    def __init__(self, cv):
+        self.cv = cv
+
+    def split(self, X, y, *args):
+        labeled = y != -1
+        labeled_idx = np.flatnonzero(labeled)
+        unlabeled_idx = np.flatnonzero(~labeled)
+        for train_idx, test_idx in self.cv.split(X[labeled_idx],
+                                                 y[labeled_idx]):
+            yield np.concatenate(
+                [labeled_idx[train_idx], unlabeled_idx]), labeled_idx[test_idx]
+
+    def get_n_splits(self, *args, **kwargs):
+        return check_cv(self.cv).get_n_splits(*args, **kwargs)
 
 
 class BaseCrossValidator(with_metaclass(ABCMeta)):

@@ -10,6 +10,7 @@ from ._split import LeavePOut
 from ._split import RepeatedKFold
 from ._split import RepeatedStratifiedKFold
 from ._split import ShuffleSplit
+from ._split import SemiSupervisedSplitter
 from ._split import GroupShuffleSplit
 from ._split import StratifiedShuffleSplit
 from ._split import PredefinedSplit
@@ -46,6 +47,7 @@ __all__ = ('BaseCrossValidator',
            'PredefinedSplit',
            'RandomizedSearchCV',
            'ShuffleSplit',
+           'SemiSupervisedSplitter',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
            'check_cv',

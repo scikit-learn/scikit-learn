@@ -35,10 +35,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
 from sklearn.svm import SVC
+from sklearn.model_selection import cross_validate
 from sklearn.model_selection import StratifiedKFold
 from sklearn.semi_supervised import SelfTrainingClassifier
-from sklearn.metrics import accuracy_score
 from sklearn.utils import shuffle
+from sklearn.model_selection import SemiSupervisedSplitter
 
 n_splits = 3
 
@@ -60,27 +61,21 @@ for (i, threshold) in enumerate(x_values):
     self_training_clf = SelfTrainingClassifier(base_classifier,
                                                threshold=threshold)
 
-    # We need manual cross validation so that we don't treat -1 as a separate
-    # class when computing accuracy
-    skfolds = StratifiedKFold(n_splits=n_splits)
-    for fold, (train_index, test_index) in enumerate(skfolds.split(X, y)):
-        X_train = X[train_index]
-        y_train = y[train_index]
-        X_test = X[test_index]
-        y_test = y[test_index]
-        y_test_true = y_true[test_index]
+    # Using a SemiSupervisedSplitter is necessary, see the User guide.
+    cross_val = cross_validate(self_training_clf, X, y,
+                               scoring='accuracy',
+                               cv=SemiSupervisedSplitter(StratifiedKFold(3)),
+                               n_jobs=1,
+                               return_estimator=True)
+    scores[i] = cross_val['test_score']
 
-        self_training_clf.fit(X_train, y_train)
-
-        # The amount of labeled samples that at the end of fitting
+    # get fit parameters from estimators
+    estimators = cross_val['estimator']
+    for fold, estimator in enumerate(estimators):
         amount_labeled[i, fold] = total_samples - np.unique(
-            self_training_clf.y_labeled_iter_, return_counts=True)[1][0]
+            estimator.y_labeled_iter_, return_counts=True)[1][0]
         # The last iteration the classifier labeled a sample in
-        amount_iterations[i, fold] = np.max(self_training_clf.y_labeled_iter_)
-
-        y_pred = self_training_clf.predict(X_test)
-        scores[i, fold] = accuracy_score(y_test_true, y_pred)
-
+        amount_iterations[i, fold] = np.max(estimator.y_labeled_iter_)
 
 ax1 = plt.subplot(211)
 ax1.errorbar(x_values, scores.mean(axis=1),

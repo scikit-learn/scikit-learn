@@ -92,7 +92,7 @@ def test_classification(base_classifier):
     assert_array_equal(np.vectorize(mapping.get)(pred), pred_string)
     assert_array_equal(proba, proba_string)
 
-    # Check consistency between y_labeled_iter, n_iter and max_iter
+    # Check consistency between y_labeled_iter, n_iter and max_iter:
     labeled = y_train_missing_labels != -1
     # assert that labeled samples have labeled_iter = 0 
     assert_array_equal(st.y_labeled_iter_ == 0, labeled)
@@ -115,7 +115,7 @@ def test_output_depends_on_parameters():
     base_classifier = SVC(gamma="scale", probability=True)
 
     st1 = SelfTrainingClassifier(base_classifier, threshold=0.3)
-    st2 = SelfTrainingClassifier(base_classifier, threshold=0.7)
+    st2 = SelfTrainingClassifier(base_classifier)
     st3 = SelfTrainingClassifier(base_classifier, max_iter=2)
 
     preds = [st1.fit(X_train, y_train_missing_labels).predict_proba(X_test),
