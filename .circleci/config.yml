@@ -12,10 +12,10 @@ jobs:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v2-datasets-{{ .Branch }}
       - run: ./build_tools/circle/build_doc.sh
       - save_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v2-datasets-{{ .Branch }}
           paths:
             - ~/scikit_learn_data
       - store_artifacts:
@@ -51,10 +51,10 @@ jobs:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
-          key: v1-datasets-{{ .Branch }}-python2
+          key: v2-datasets-{{ .Branch }}-python2
       - run: ./build_tools/circle/build_doc.sh
       - save_cache:
-          key: v1-datasets-{{ .Branch }}-python2
+          key: v2-datasets-{{ .Branch }}-python2
           paths:
             - ~/scikit_learn_data
       - store_artifacts:
