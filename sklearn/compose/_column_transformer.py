@@ -445,7 +445,7 @@ boolean mask array or callable
         self._X_dtypes = getattr(X, 'dtypes', None)
         self._X_row_index = getattr(X, 'index', None)
         self._X_is_sparse = sparse.issparse(X)
-        self._invert_error = ""
+        self._invert_error = None
         self._output_indices = []
         cur_index = 0
 
@@ -510,6 +510,10 @@ boolean mask array or callable
 
         if not result:
             self._update_fitted_transformers([])
+            self._invert_error = (
+                "dropping columns is not supported. "
+                "all columns were dropped"
+            )
             # All transformers are None
             return np.zeros((X.shape[0], 0))
 

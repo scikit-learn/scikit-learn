@@ -149,57 +149,40 @@ def test_column_transformer():
 def test_column_transformer_inverse_transform_all_transformers_drop():
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
 
-    # TransNo2D does not define inverse_transform
-    ct = ColumnTransformer([('trans1', 'drop', [0]),
-                            ('trans2', 'drop', [1])])
+    ct = ColumnTransformer([('trans1', 'drop', [0]), ('trans2', 'drop', [1])])
     res = ct.fit_transform(X_array)
     assert_array_equal(np.zeros((X_array.shape[0], 0)), res)
 
-
-def test_column_transformer_inverse_transform_with_drop():
-    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
-    ct = ColumnTransformer([('trans1', Trans(), [0]),
-                            ('trans2', 'drop', [1])])
-    res = ct.fit_transform(X_array)
-
     error_msg = ("Unable to invert: dropping columns is "
-                 "not supported. 'trans2' drops columns")
+                 "not supported. all columns were dropped")
+
     with pytest.raises(ValueError, match=error_msg):
         ct.inverse_transform(res)
 
 
-def test_column_transformer_inverse_transform_with_overlaping_slices():
-    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
-    ct = ColumnTransformer([('trans1', Trans(), [0]),
-                            ('trans2', Trans(), [0])])
-    res = ct.fit_transform(X_array)
-
-    error_msg = "Unable to invert: transformers contain overlapping columns"
-    with pytest.raises(ValueError, match=error_msg):
-        ct.inverse_transform(res)
-
-
-def test_column_transformer_inverse_transform_with_remainder_drops():
-    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
-    ct = ColumnTransformer([('trans1', Trans(), [0])])
-    res = ct.fit_transform(X_array)
-
-    error_msg = ("Unable to invert: dropping columns is not supported. "
-                 "'remainder' drops columns")
-    with pytest.raises(ValueError, match=error_msg):
-        ct.inverse_transform(res)
-
-
-def test_column_transformer_inverse_transform_does_not_define_inverse():
+@pytest.mark.parametrize("transformers, error_msg", [
+    ([('trans1', Trans(), [0]), ('trans2', 'drop', [1])],
+     ("Unable to invert: dropping columns is "
+      "not supported. 'trans2' drops columns")),
+    ([('trans1', Trans(), [0]), ('trans2', Trans(), [0])],
+     "Unable to invert: transformers contain overlapping columns"),
+    ([('trans1', Trans(), [0])],
+     ("Unable to invert: dropping columns is not supported. "
+      "'remainder' drops columns")),
+    ([('trans1', Trans(), [0]), ('trans2', TransNo2D(), [1])],
+     ("Unable to invert: "
+      "trans2 does not define inverse_transform")),
+    ([('trans1', Trans(), [0]), ('trans2', TransNo2D(), [1])],
+     ("Unable to invert: "
+      "trans2 does not define inverse_transform"))
+])
+def test_column_transformer_errors(
+        transformers, error_msg):
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
 
-    # TransNo2D does not define inverse_transform
-    ct = ColumnTransformer([('trans1', Trans(), [0]),
-                            ('trans2', TransNo2D(), [1])])
+    ct = ColumnTransformer(transformers)
     res = ct.fit_transform(X_array)
 
-    error_msg = ("Unable to invert: "
-                 "trans2 does not define inverse_transform")
     with pytest.raises(ValueError, match=error_msg):
         ct.inverse_transform(res)
 
