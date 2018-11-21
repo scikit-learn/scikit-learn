@@ -39,7 +39,7 @@ from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.externals import joblib
+from sklearn.utils import _joblib
 
 
 REGRESSION_SCORERS = ['explained_variance', 'r2',
@@ -98,8 +98,8 @@ def setup_module():
     _, y_ml = make_multilabel_classification(n_samples=X.shape[0],
                                              random_state=0)
     filename = os.path.join(TEMP_FOLDER, 'test_data.pkl')
-    joblib.dump((X, y, y_ml), filename)
-    X_mm, y_mm, y_ml_mm = joblib.load(filename, mmap_mode='r')
+    _joblib.dump((X, y, y_ml), filename)
+    X_mm, y_mm, y_ml_mm = _joblib.load(filename, mmap_mode='r')
     ESTIMATORS = _make_estimators(X_mm, y_mm, y_ml_mm)
 
 

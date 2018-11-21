@@ -14,7 +14,8 @@ from scipy.stats import rankdata
 
 from sklearn.externals.six.moves import zip
 from sklearn.utils import IS_PYPY, _IS_32BIT
-from sklearn.utils._joblib import hash, Memory
+from sklearn.utils import _joblib
+from sklearn.utils._joblib import Memory
 from sklearn.utils.testing import assert_raises, _get_args
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
@@ -1956,7 +1957,7 @@ def check_estimators_overwrite_params(name, estimator_orig):
         # The only exception to this rule of immutable constructor parameters
         # is possible RandomState instance but in this check we explicitly
         # fixed the random_state params recursively to be integer seeds.
-        assert_equal(hash(new_value), hash(original_value),
+        assert_equal(_joblib.hash(new_value), _joblib.hash(original_value),
                      "Estimator %s should not change or mutate "
                      " the parameter %s from %s to %s during fit."
                      % (name, param_name, original_value, new_value))
