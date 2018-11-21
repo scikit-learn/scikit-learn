@@ -136,6 +136,9 @@ then
     python build_tools/circle/list_versions.py > doc/versions.rst
 fi
 
+# Some examples seem to do oversubscription for some reason
+export OPENBLAS_NUM_THREADS=1
+
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
 
