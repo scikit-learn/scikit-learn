@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
+from sklearn.utils.testing import assert_almost_equal
 
 from sklearn.base import BaseEstimator
 from sklearn.externals import six
@@ -525,7 +526,11 @@ def test_make_column_transformer():
     # XXX remove in v0.22
     with pytest.warns(DeprecationWarning,
                       match='`make_column_transformer` now expects'):
-        make_column_transformer(('first', scaler))
+        ct1 = make_column_transformer(([0], norm))
+    ct2 = make_column_transformer((norm, [0]))
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    assert_almost_equal(ct1.fit_transform(X_array),
+                        ct2.fit_transform(X_array))
 
     with pytest.warns(DeprecationWarning,
                       match='`make_column_transformer` now expects'):

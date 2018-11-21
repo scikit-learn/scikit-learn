@@ -725,7 +725,7 @@ def _get_transformer_list(estimators):
     Construct (name, trans, column) tuples from list
 
     """
-    message = ('`make_column_transformer` now expects (transfomer, columns) '
+    message = ('`make_column_transformer` now expects (transformer, columns) '
                'as input tuples instead of (columns, transformer). This '
                'has been introduced in v0.20.1. `make_column_transformer` '
                'will stop accepting the deprecated (columns, transformer) '
