@@ -17,9 +17,11 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- please add class and reason here (see version 0.20 what's new)
+..
+    please add class and reason here (see version 0.20 what's new)
+
 - Decision trees and derived ensembles when both `max_depth` and
-  `max_leaf_nodes` are set. (bug fix)
+  `max_leaf_nodes` are set. |Fix|
 
 Details are listed in the changelog below.
 
