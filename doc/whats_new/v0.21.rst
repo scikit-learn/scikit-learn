@@ -58,7 +58,7 @@ Support for Python 3.4 and below has been officially dropped.
 ......................
 
 - |Feature| :class:`compose.ColumnTransformer` now supports
-  ``inverse_transform``. :issue:`11463` by :user:`Thomas Fan <thomasjpfan>`.
+  `inverse_transform`. :issue:`11463` by :user:`Thomas Fan <thomasjpfan>`.
 
 :mod:`sklearn.preprocessing`
 ............................
