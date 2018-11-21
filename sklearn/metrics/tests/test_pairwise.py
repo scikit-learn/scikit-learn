@@ -629,8 +629,9 @@ def test_haversine_distances():
     def slow_haversine_distances(x, y):
         diff_lat = y[0] - x[0]
         diff_lon = y[1] - x[1]
-        a = np.sin(diff_lat / 2) ** 2 + \
+        a = np.sin(diff_lat / 2) ** 2 + (
             np.cos(x[0]) * np.cos(y[0]) * np.sin(diff_lon/2) ** 2
+        )
         c = 2 * np.arcsin(np.sqrt(a))
         return c
     rng = np.random.RandomState(0)

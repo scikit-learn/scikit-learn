@@ -467,22 +467,17 @@ def haversine_distances(X, Y=None):
 
     Examples
     --------
-    >>> from sklearn.metrics.pairwise import haversine_distances
-    >>> haversine_distances([[3,3]], [[3,3]])
-    array([[0.]])
-    >>> haversine_distances([[3, 2]], [[1, 1]])
-    array([[1.74188653]])
-    >>> import numpy as np
-    >>> X = np.ones((5,2))
-    >>> Y = np.full((5,2), 2.)
-    >>> haversine_distances(X, Y)
-    array([[0.87152123, 0.87152123, 0.87152123, 0.87152123, 0.87152123],
-           [0.87152123, 0.87152123, 0.87152123, 0.87152123, 0.87152123],
-           [0.87152123, 0.87152123, 0.87152123, 0.87152123, 0.87152123],
-           [0.87152123, 0.87152123, 0.87152123, 0.87152123, 0.87152123],
-           [0.87152123, 0.87152123, 0.87152123, 0.87152123, 0.87152123]])
-    """
+    We want to calculate the distance between the Ezeiza Airport
+    (Buenos Aires, Argentina) and the Charles de Gaulle Airport (Paris, France)
 
+    >>> from sklearn.metrics.pairwise import haversine_distances
+    >>> bsas = [-34.83333, -58.5166646]
+    >>> paris = [49.0083899664, 2.53844117956]
+    >>> result = haversine_distances([bsas, paris])
+    >>> result * 6371000/1000
+    array([[    0.        , 11279.45379464],
+           [11279.45379464,     0.        ]])
+    """
     from sklearn.neighbors import DistanceMetric
     return DistanceMetric.get_metric('haversine').pairwise(X, Y)
 
