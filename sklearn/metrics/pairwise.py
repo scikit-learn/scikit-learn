@@ -1284,6 +1284,27 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
         yield D_chunk
 
 
+def set_diagonal_pairwise(distances, X, Y):
+    """Set the diagonal of unary pairwise distance to 0. This ensure that
+    the distances between themselves are always 0.0.
+
+    Parameters
+    ----------
+    X : array [n_samples_a, n_samples_a]
+        Array of pairwise distances between samples, or a feature array.
+
+    Y : array [n_samples_b, n_features]
+        Second feature array
+
+    distances : array [n_samples_a, n_samples_a] or [n_samples_a, n_samples_b]
+        A distance matrix D.
+    """
+    if Y is None or X is Y:
+        np.fill_diagonal(distances, 0)
+
+    return distances
+
+
 def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
     """ Compute the distance matrix from a vector array X and optional Y.
 
@@ -1400,7 +1421,9 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
                                                       **kwds))
         func = partial(distance.cdist, metric=metric, **kwds)
 
-    return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
+    return set_diagonal_pairwise(
+        _parallel_pairwise(X, Y, func, n_jobs, **kwds),
+        X, Y)
 
 
 # These distances recquire boolean arrays, when using scipy.spatial.distance
