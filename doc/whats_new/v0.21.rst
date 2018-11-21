@@ -53,7 +53,13 @@ Support for Python 3.4 and below has been officially dropped.
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>`,
   :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
-  
+
+:mod:`sklearn.compose`
+......................
+
+- |Feature| :class:`compose.ColumnTransformer` now supports
+  ``inverse_transform``. :issue:`11463` by :user:`Thomas Fan <thomasjpfan>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
