@@ -116,7 +116,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         vocab = {}
 
         for x in X:
-            for f, v in six.iteritems(x):
+            for f, v in x.items():
                 if isinstance(v, str):
                     f = "%s%s%s" % (f, self.separator, v)
                 if f not in vocab:
@@ -162,7 +162,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         # collect all the possible feature names and build sparse matrix at
         # same time
         for x in X:
-            for f, v in six.iteritems(x):
+            for f, v in x.items():
                 if isinstance(v, str):
                     f = "%s%s%s" % (f, self.separator, v)
                     v = 1
@@ -296,7 +296,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             Xa = np.zeros((len(X), len(vocab)), dtype=dtype)
 
             for i, x in enumerate(X):
-                for f, v in six.iteritems(x):
+                for f, v in x.items():
                     if isinstance(v, str):
                         f = "%s%s%s" % (f, self.separator, v)
                         v = 1
@@ -357,7 +357,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             new_vocab[names[i]] = len(new_vocab)
 
         self.vocabulary_ = new_vocab
-        self.feature_names_ = [f for f, i in sorted(six.iteritems(new_vocab),
+        self.feature_names_ = [f for f, i in sorted(new_vocab.items(),
                                                     key=itemgetter(1))]
 
         return self
