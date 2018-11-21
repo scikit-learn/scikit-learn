@@ -86,9 +86,6 @@ Support for Python 3.4 and below has been officially dropped.
   `return_train_scores` is True and `verbose` > 2.
   :issue:`12613` by :user:`Marc Torrellas <marctorrellas>`.
 
-- |API| Additional tests for :func:`_fit_and_score` and :func:`_score`.
-  :issue:`12613` by :user:`Marc Torrellas <marctorrellas>`.
-
 :mod:`sklearn.neighbors`
 ........................
 
