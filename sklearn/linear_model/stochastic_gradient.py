@@ -468,8 +468,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     return result
 
 
-class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
-                                           LinearClassifierMixin)):
+class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
 
     loss_functions = {
         "hinge": (Hinge, 1.0),
