@@ -659,6 +659,8 @@ boolean mask array or callable
         for indices, inverse_X in zip(self._input_indices, Xs):
             cols = self._X_columns[indices]
             dtype = self._X_dtypes[indices][0]
+            if not hasattr(inverse_X, "dtype"):
+                inverse_X = np.array(inverse_X)
             output_dfs.append(
                 pd.DataFrame(inverse_X, columns=cols, dtype=dtype))
 

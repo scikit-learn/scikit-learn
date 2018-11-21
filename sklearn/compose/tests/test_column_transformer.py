@@ -1089,7 +1089,7 @@ def test_column_transformer_callable_specifier():
     assert ct.transformers_[0][2] == ['first']
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+@pytest.mark.filterwarnings("ignore::DeprecationWarning:pandas")
 def test_column_transformer_inverse_with_strings():
     pd = pytest.importorskip('pandas')
 
@@ -1112,7 +1112,43 @@ def test_column_transformer_inverse_with_strings():
     pd.util.testing.assert_frame_equal(df, df_inverse)
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+@pytest.mark.filterwarnings("ignore::DeprecationWarning:pandas")
+def test_column_transformer_inverse_with_strings_default_count_vectorizer():
+    pd = pytest.importorskip('pandas')
+
+    df = pd.DataFrame({
+        'city': ['London', 'London', 'Paris', 'Sallisaw'],
+        'title': ["His Last Bow", "How Watson Learned the Trick",
+                  "A Moveable Feast", "The Grapes of Wrath"],
+        'expert_rating': [5, 3, 4, 5],
+        'user_rating': [4, 5, 4, 3]
+    })
+
+    column_trans = ColumnTransformer(
+        [('city_category', CountVectorizer(), 'city'),
+         ('title_bow', CountVectorizer(), 'title')],
+        remainder=MinMaxScaler())
+
+    result = column_trans.fit_transform(df)
+    df_inverse = column_trans.inverse_transform(result)
+
+    name_to_cv = {k: v for k, v, _ in column_trans.transformers_}
+    title_cv = name_to_cv['title_bow']
+    title_result = title_cv.transform(df['title'])
+    title_inverse = title_cv.inverse_transform(title_result)
+
+    city_cv = name_to_cv['city_category']
+    city_result = city_cv.transform(df['city'])
+    city_inverse = city_cv.inverse_transform(city_result)
+
+    expected_inverse = df.copy()
+    expected_inverse['title'] = np.array(title_inverse)
+    expected_inverse['city'] = np.array(city_inverse)
+
+    pd.util.testing.assert_frame_equal(df_inverse, expected_inverse)
+
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning:pandas")
 def test_column_transformer_inverse_with_strings_passthrough():
     pd = pytest.importorskip('pandas')
 
