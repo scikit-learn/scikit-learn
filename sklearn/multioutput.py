@@ -367,7 +367,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         return np.mean(np.all(y == y_pred, axis=1))
 
 
-class _BaseChain(six.with_metaclass(ABCMeta, BaseEstimator)):
+class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     def __init__(self, base_estimator, order=None, cv=None, random_state=None):
         self.base_estimator = base_estimator
         self.order = order

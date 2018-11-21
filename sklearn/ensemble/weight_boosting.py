@@ -45,7 +45,7 @@ __all__ = [
 ]
 
 
-class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
     """Base class for AdaBoost estimators.
 
     Warning: This class should not be used directly. Use derived classes

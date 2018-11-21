@@ -43,7 +43,7 @@ from ..utils.fixes import _Iterable as Iterable
 from ..base import is_regressor
 
 
-class _BaseScorer(six.with_metaclass(ABCMeta, object)):
+class _BaseScorer(object, metaclass=ABCMeta):
     def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func

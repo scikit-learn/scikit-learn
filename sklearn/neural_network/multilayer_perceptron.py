@@ -36,7 +36,7 @@ def _pack(coefs_, intercepts_):
     return np.hstack([l.ravel() for l in coefs_ + intercepts_])
 
 
-class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
+class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
     """Base class for MLP classification and regression.
 
     Warning: This class should not be used directly.

@@ -182,7 +182,7 @@ def _rescale_data(X, y, sample_weight):
     return X, y
 
 
-class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
+class LinearModel(BaseEstimator, metaclass=ABCMeta):
     """Base class for Linear Models"""
 
     @abstractmethod

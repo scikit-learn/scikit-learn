@@ -14,7 +14,7 @@ from ..base import BaseEstimator
 __all__ = ['if_delegate_has_method']
 
 
-class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
+class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
     """Handles parameter management for classifiers composed of named estimators.
     """
     @abstractmethod

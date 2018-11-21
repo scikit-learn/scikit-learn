@@ -14,7 +14,7 @@ from ..base import TransformerMixin
 from ..utils import check_array, safe_mask
 
 
-class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
+class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
     """
     Transformer mixin that performs feature selection given a support mask
 
