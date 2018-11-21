@@ -19,8 +19,6 @@ from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
 
-from sklearn.externals.six import iteritems
-
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.metrics.pairwise import linear_kernel

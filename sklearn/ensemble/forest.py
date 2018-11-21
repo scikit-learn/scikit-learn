@@ -242,7 +242,7 @@ class BaseForest(BaseEnsemble, metaclass=ABCMeta):
 
         if self.n_estimators == 'warn':
             warn("The default value of n_estimators will change from "
-                          "10 in version 0.20 to 100 in 0.22.", FutureWarning)
+                 "10 in version 0.20 to 100 in 0.22.", FutureWarning)
             self.n_estimators = 10
 
         # Validate or convert input data
@@ -394,8 +394,7 @@ def _accumulate_prediction(predict, X, out, lock):
                 out[i] += prediction[i]
 
 
-class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
-                                          ClassifierMixin)):
+class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
     """Base class for forest of trees-based classifiers.
 
     Warning: This class should not be used directly. Use derived classes

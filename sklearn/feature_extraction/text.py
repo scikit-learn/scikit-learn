@@ -343,7 +343,7 @@ class VectorizerMixin(object):
                         raise ValueError(msg)
                 vocabulary = vocab
             else:
-                indices = set(six.itervalues(vocabulary))
+                indices = set(vocabulary.values())
                 if len(indices) != len(vocabulary):
                     raise ValueError("Vocabulary contains repeated indices.")
                 for i in range(len(vocabulary)):
@@ -1124,7 +1124,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         self._check_vocabulary()
 
-        return [t for t, i in sorted(six.iteritems(self.vocabulary_),
+        return [t for t, i in sorted(self.vocabulary_.items(),
                                      key=itemgetter(1))]
 
 

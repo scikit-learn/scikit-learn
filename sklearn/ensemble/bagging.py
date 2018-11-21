@@ -183,7 +183,7 @@ def _parallel_predict_regression(estimators, estimators_features, X):
                                               estimators_features))
 
 
-class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     """Base class for Bagging meta-estimator.
 
     Warning: This class should not be used directly. Use derived classes

@@ -115,7 +115,7 @@ class Hyperparameter(namedtuple('Hyperparameter',
                 self.fixed == other.fixed)
 
 
-class Kernel(six.with_metaclass(ABCMeta)):
+class Kernel(metaclass=ABCMeta):
     """Base class for all kernels.
 
     .. versionadded:: 0.18

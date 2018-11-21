@@ -59,8 +59,7 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
     return estimator
 
 
-class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
-                                              MetaEstimatorMixin)):
+class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, estimator, n_jobs=None):
         self.estimator = estimator

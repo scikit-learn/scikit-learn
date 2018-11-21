@@ -29,8 +29,7 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         out.update(estimators)
         for name, estimator in estimators:
             if hasattr(estimator, 'get_params'):
-                for key, value in six.iteritems(
-                        estimator.get_params(deep=True)):
+                for key, value in estimator.get_params(deep=True).items():
                     out['%s__%s' % (name, key)] = value
         return out
 
@@ -44,7 +43,7 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         names = []
         if items:
             names, _ = zip(*items)
-        for name in list(six.iterkeys(params)):
+        for name in list(params.keys()):
             if '__' not in name and name in names:
                 self._replace_estimator(attr, name, params.pop(name))
         # 3. Step parameters and other initialisation arguments
