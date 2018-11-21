@@ -35,7 +35,7 @@ from .utils.validation import check_is_fitted
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB']
 
 
-class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
+class BaseNB(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
     """Abstract base class for naive Bayes estimators"""
 
     @abstractmethod

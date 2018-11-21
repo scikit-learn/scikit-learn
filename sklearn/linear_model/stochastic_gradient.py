@@ -64,7 +64,7 @@ class _ValidationScoreCallback(object):
         return est.score(self.X_val, self.y_val, self.sample_weight_val)
 
 
-class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
+class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
 
     def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
