@@ -283,7 +283,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     # convert features into a seq of int tuples
     tmp_features = []
     for fxs in features:
-        if isinstance(fxs, (numbers.Integral,) + str):
+        if isinstance(fxs, (numbers.Integral, str)):
             fxs = (fxs,)
         try:
             fxs = np.array([convert_feature(fx) for fx in fxs], dtype=np.int32)
