@@ -14,11 +14,11 @@ data and has specific optimizations for `numpy` arrays. It is
     ==================== ===============================================
     **Documentation:**       https://joblib.readthedocs.io
 
-    **Download:**            https://pypi.org/project/joblib/#files
+    **Download:**            http://pypi.python.org/pypi/joblib#downloads
 
-    **Source code:**         https://github.com/joblib/joblib
+    **Source code:**         http://github.com/joblib/joblib
 
-    **Report issues:**       https://github.com/joblib/joblib/issues
+    **Report issues:**       http://github.com/joblib/joblib/issues
     ==================== ===============================================
 
 
@@ -106,7 +106,7 @@ Main features
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.12.5'
+__version__ = '0.13.0'
 
 
 from .memory import Memory, MemorizedResult, register_store_backend
@@ -123,8 +123,11 @@ from .parallel import register_parallel_backend
 from .parallel import parallel_backend
 from .parallel import effective_n_jobs
 
+from .externals.loky import wrap_non_picklable_objects
+
 
 __all__ = ['Memory', 'MemorizedResult', 'PrintTime', 'Logger', 'hash', 'dump',
            'load', 'Parallel', 'delayed', 'cpu_count', 'effective_n_jobs',
            'register_parallel_backend', 'parallel_backend',
-           'register_store_backend', 'register_compressor']
+           'register_store_backend', 'register_compressor',
+           'wrap_non_picklable_objects']

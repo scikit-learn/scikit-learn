@@ -44,8 +44,9 @@ import numpy as np
 
 from scipy import sparse
 
+from joblib import Memory
+
 from sklearn.decomposition import randomized_svd
-from sklearn.utils import Memory
 from sklearn.externals.six.moves.urllib.request import urlopen
 from sklearn.externals.six import iteritems
 

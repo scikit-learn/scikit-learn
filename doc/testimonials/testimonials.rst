@@ -11,6 +11,39 @@ Who is using scikit-learn?
 
 .. to add a testimonials, just XXX
 
+`J.P.Morgan <https://www.jpmorgan.com>`_
+------------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/jpmorgan.png
+    :width: 120pt
+    :target: https://www.jpmorgan.com
+
+.. raw:: html
+
+    </div>
+
+Scikit-learn is an indispensable part of the Python machine learning
+toolkit at JPMorgan. It is very widely used across all parts of the bank
+for classification, predictive analytics, and very many other machine
+learning tasks. Its straightforward API, its breadth of algorithms, and
+the quality of its documentation combine to make scikit-learn
+simultaneously very approachable and very powerful.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Stephen Simmons, VP, Athena Research, JPMorgan
+
+.. raw:: html
+
+   </span>
+
+
 `Spotify <https://www.spotify.com>`_
 ------------------------------------
 

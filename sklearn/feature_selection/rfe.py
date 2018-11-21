@@ -15,7 +15,7 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
-from ..utils import Parallel, delayed, effective_n_jobs
+from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
 from ..metrics.scorer import check_scoring
@@ -356,8 +356,8 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`sklearn.model_selection.StratifiedKFold` is used. If the

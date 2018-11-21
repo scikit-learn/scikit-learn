@@ -361,7 +361,8 @@ and Cython optimizations.
 
    * Travis is used for testing on Linux platforms
    * Appveyor is used for testing on Windows platforms
-   * CircleCI is used to build the docs for viewing and for testing with PyPy on Linux
+   * CircleCI is used to build the docs for viewing, for linting with flake8, and
+     for testing with PyPy on Linux 
 
    Please note that if one of the following markers appear in the latest commit
    message, the following actions are taken.
@@ -1218,7 +1219,7 @@ the correct interface more easily.
     and optionally the mixin classes in ``sklearn.base``.
     For example, below is a custom classifier, with more examples included
     in the scikit-learn-contrib
-    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`__.
+    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/_template.py>`__.
 
       >>> import numpy as np
       >>> from sklearn.base import BaseEstimator, ClassifierMixin
