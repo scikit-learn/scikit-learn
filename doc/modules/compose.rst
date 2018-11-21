@@ -493,8 +493,8 @@ above example would be::
 
   >>> from sklearn.compose import make_column_transformer
   >>> column_trans = make_column_transformer(
-  ...     ('city', CountVectorizer(analyzer=lambda x: [x])),
-  ...     ('title', CountVectorizer()),
+  ...     (CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...     (CountVectorizer(), 'title'),
   ...     remainder=MinMaxScaler())
   >>> column_trans # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   ColumnTransformer(n_jobs=None, remainder=MinMaxScaler(copy=True, ...),

@@ -14,8 +14,8 @@ from time import time
 import numpy as np
 import json
 import argparse
+from joblib import Memory
 
-from sklearn.utils import Memory
 from sklearn.datasets import fetch_mldata
 from sklearn.manifold import TSNE
 from sklearn.neighbors import NearestNeighbors

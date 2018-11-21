@@ -694,6 +694,14 @@ def test_suppress_validation():
     assert_raises(ValueError, assert_all_finite, X)
 
 
+def test_check_array_series():
+    # regression test that check_array works on pandas Series
+    pd = importorskip("pandas")
+    res = check_array(pd.Series([1, 2, 3]), ensure_2d=False,
+                      warn_on_dtype=True)
+    assert_array_equal(res, np.array([1, 2, 3]))
+
+
 def test_check_dataframe_warns_on_dtype():
     # Check that warn_on_dtype also works for DataFrames.
     # https://github.com/scikit-learn/scikit-learn/issues/10948
@@ -745,14 +753,13 @@ def test_check_memory():
     memory = check_memory(dummy)
     assert memory is dummy
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
-                        " have the same interface as "
-                        "sklearn.utils.Memory."
+                        " have the same interface as joblib.Memory."
                         " Got memory='1' instead.", check_memory, 1)
     dummy = WrongDummyMemory()
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
-                        " have the same interface as "
-                        "sklearn.utils.Memory. Got memory='{}' "
-                        "instead.".format(dummy), check_memory, dummy)
+                        " have the same interface as joblib.Memory."
+                        " Got memory='{}' instead.".format(dummy),
+                        check_memory, dummy)
 
 
 @pytest.mark.parametrize('copy', [True, False])

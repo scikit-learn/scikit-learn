@@ -7,7 +7,7 @@
 Version 0.20.1
 ==============
 
-**October XX, 2018**
+**November 21, 2018**
 
 This is a bug-fix release with some minor documentation improvements and
 enhancements to features released in 0.20.0.
@@ -47,6 +47,11 @@ Changelog
 - |API| :class:`compose.ColumnTransformer` now applies the ``sparse_threshold``
   even if all transformation results are sparse. :issue:`12304` by `Andreas
   Müller`_.
+
+- |API| :func:`compose.make_column_transformer` now expects
+  ``(transformer, columns)`` instead of ``(columns, transformer)`` to keep
+  consistent with :class:`compose.ColumnTransformer`.
+  :issue:`12339` by :user:`Adrin Jalali <adrinjalali>`.
 
 :mod:`sklearn.datasets`
 ............................
@@ -120,6 +125,10 @@ Changelog
   set to "euclidean". :issue:`12481` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| Fixed a bug in :func:`metrics.pairwise.pairwise_distances_chunked`
+  which didn't ensure the diagonal is zero for euclidean distances.
+  :issue:`12612` by :user:`Andreas Müller <amueller>`.
+
 - |API| The :func:`metrics.calinski_harabaz_score` has been renamed to
   :func:`metrics.calinski_harabasz_score` and will be removed in version 0.23.
   :issue:`12211` by :user:`Lisa Thomas <LisaThomas9>`,
@@ -153,16 +162,19 @@ Changelog
   method is now thread safe. :issue:`12514` by
   :user:`Hanmin Qin <qinhanmin2014>`.
 
+- |Fix| Fixed a bug in :class:`preprocessing.PowerTransformer` where the
+  Yeo-Johnson transform was incorrect for lambda parameters outside of `[0, 2]`
+  :issue:`12522` by :user:`Nicolas Hug<NicolasHug>`.
+
+- |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where transform
+  failed when set to ignore unknown numpy strings of different lengths 
+  :issue:`12471` by :user:`Gabriel Marzinotto<GMarzinotto>`.
+
 - |API| The default value of the :code:`method` argument in
   :func:`preprocessing.power_transform` will be changed from :code:`box-cox`
   to :code:`yeo-johnson` to match :class:`preprocessing.PowerTransformer`
   in version 0.23. A FutureWarning is raised when the default value is used.
   :issue:`12317` by :user:`Eric Chang <chang>`.
-  
-
-- |Fix| Fixed a bug in :class:`preprocessing.PowerTransformer` where the
-  Yeo-Johnson transform was incorrect for lambda parameters outside of `[0, 2]`
-  :issue:`12522` by :user:`Nicolas Hug<NicolasHug>`.
 
 :mod:`sklearn.utils`
 ........................
@@ -171,6 +183,10 @@ Changelog
   precision issues in :class:`preprocessing.StandardScaler` and
   :class:`decomposition.IncrementalPCA` when using float32 datasets.
   :issue:`12338` by :user:`bauks <bauks>`.
+
+- |Fix| Calling :func:`utils.check_array` on `pandas.Series`, which
+  raised an error in 0.20.0, now returns the expected output again.
+  :issue:`12625` by `Andreas Müller`_
   
 Miscellaneous
 .............
@@ -179,13 +195,20 @@ Miscellaneous
   `SKLEARN_SITE_JOBLIB`, added compatibility with joblib 0.11 in addition
   to 0.12+. :issue:`12350` by `Joel Nothman`_ and `Roman Yurchak`_.
 
-Miscellaneous
-.............
-
 - |Fix| Make sure to avoid raising ``FutureWarning`` when calling
   ``np.vstack`` with numpy 1.16 and later (use list comprehensions
   instead of generator expressions in many locations of the scikit-learn
   code base). :issue:`12467` by :user:`Olivier Grisel <ogrisel>`.
+
+- |API| Removed all mentions of ``sklearn.externals.joblib``, and deprecated
+  joblib methods exposed in ``sklearn.utils``, except for
+  :func:`utils.parallel_backend` and :func:`utils.register_parallel_backend`,
+  which allow users to configure parallel computation in scikit-learn.
+  Other functionalities are part of `joblib <https://joblib.readthedocs.io/>`_.
+  package and should be used directly, by installing it.
+  The goal of this change is to prepare for
+  unvendoring joblib in future version of scikit-learn.
+  :issue:`12345` by :user:`Thomas Moreau <tomMoral>`
 
 .. _changes_0_20:
 
