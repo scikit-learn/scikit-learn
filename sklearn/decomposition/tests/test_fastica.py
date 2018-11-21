@@ -129,7 +129,7 @@ def test_fastica_simple(add_noise=False):
         ica = FastICA(fun=fn, algorithm=algo, random_state=0)
         assert_raises(ValueError, ica.fit, m.T)
 
-    assert_raises(TypeError, FastICA(fun=moves.range(10)).fit, m.T)
+    assert_raises(TypeError, FastICA(fun=range(10)).fit, m.T)
 
 
 def test_fastica_nowhiten():
