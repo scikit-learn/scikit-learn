@@ -22,6 +22,11 @@ environment:
       PYTHON_ARCH: "64"
       CHECK_WARNINGS: "true"
 
+    - PYTHON: "C:\\Python35"
+      PYTHON_VERSION: "3.5.x"
+      PYTHON_ARCH: "32"
+
+
 # Because we only have a single worker, we don't want to waste precious
 # appveyor CI time and make other PRs wait for repeated failures in a failing
 # PR. The following option cancels pending jobs in a given PR after the first
