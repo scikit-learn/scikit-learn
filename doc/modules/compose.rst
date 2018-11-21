@@ -503,8 +503,8 @@ above example would be::
            transformers=[('countvectorizer-1', ...)
 
 When none of the columns are dropped and all the transformers define an
-``inverse_transform``, then :class:`~sklearn.compose.ColumnTransformer`
-is able to run ``inverse_transform``::
+`inverse_transform`, then :class:`~sklearn.compose.ColumnTransformer`
+is able to run `inverse_transform`::
 
   >>> column_trans = ColumnTransformer(
   ...   [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
