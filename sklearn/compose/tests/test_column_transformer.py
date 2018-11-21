@@ -65,6 +65,8 @@ class SparseMatrixTrans(BaseEstimator):
         return sparse.eye(n_samples, n_samples).tocsr()
 
     def inverse_transform(self, X):
+        if self.X_.ndim == 1:
+            return np.atleast_2d(self.X_).T
         return self.X_
 
 
@@ -419,11 +421,13 @@ def test_column_transformer_list():
         assert_array_equal(ct.fit(X_list).transform(X_list), expected_result)
 
 
-def test_column_transformer_sparse_stacking():
+@pytest.mark.parametrize("sparse_col", [1, [1]])
+def test_column_transformer_sparse_stacking(sparse_col):
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
-    col_trans = ColumnTransformer([('trans1', Trans(), [0]),
-                                   ('trans2', SparseMatrixTrans(), [1])],
-                                  sparse_threshold=0.8)
+    col_trans = ColumnTransformer(
+        [('trans1', Trans(), [0]),
+         ('trans2', SparseMatrixTrans(), sparse_col)],
+        sparse_threshold=0.8)
     col_trans.fit(X_array)
     X_trans = col_trans.transform(X_array)
     assert sparse.issparse(X_trans)
@@ -433,9 +437,10 @@ def test_column_transformer_sparse_stacking():
     assert len(col_trans.transformers_) == 2
     assert col_trans.transformers_[-1][0] != 'remainder'
 
-    col_trans = ColumnTransformer([('trans1', Trans(), [0]),
-                                   ('trans2', SparseMatrixTrans(), [1])],
-                                  sparse_threshold=0.1)
+    col_trans = ColumnTransformer(
+        [('trans1', Trans(), [0]),
+         ('trans2', SparseMatrixTrans(), sparse_col)],
+        sparse_threshold=0.1)
     col_trans.fit(X_array)
     X_trans = col_trans.transform(X_array)
     assert not sparse.issparse(X_trans)
