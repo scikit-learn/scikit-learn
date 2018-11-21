@@ -48,6 +48,11 @@ Changelog
   even if all transformation results are sparse. :issue:`12304` by `Andreas
   Müller`_.
 
+- |API| :func:`compose.make_column_transformer` now expects
+  ``(transformer, columns)`` instead of ``(columns, transformer)`` to keep
+  consistent with :class:`compose.ColumnTransformer`.
+  :issue:`12339` by :user:`Adrin Jalali <adrinjalali>`.
+
 :mod:`sklearn.datasets`
 ............................
 
