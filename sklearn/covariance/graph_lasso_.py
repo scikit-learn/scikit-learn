@@ -233,6 +233,8 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                             alpha_min=alpha / (n_features - 1), copy_Gram=True,
                             eps=eps, method='lars', return_path=False)
                 # Update the precision matrix
+                if not np.isfinite(coefs).all():
+                    raise FloatingPointError('The system is too ill-conditioned for this solver')
                 precision_[idx, idx] = (
                     1. / (covariance_[idx, idx]
                           - np.dot(covariance_[indices != idx, idx], coefs)))
