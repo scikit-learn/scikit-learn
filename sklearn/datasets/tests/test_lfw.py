@@ -70,30 +70,31 @@ def setup_module():
 
     # add some random file pollution to test robustness
     with open(os.path.join(LFW_HOME, 'lfw_funneled', '.test.swp'), 'wb') as f:
-        f.write(six.b('Text file to be ignored by the dataset loader.'))
+        f.write('Text file to be ignored by the dataset loader.'.encode())
 
     # generate some pairing metadata files using the same format as LFW
     with open(os.path.join(LFW_HOME, 'pairsDevTrain.txt'), 'wb') as f:
-        f.write(six.b("10\n"))
+        f.write("10\n").encode()
         more_than_two = [name for name, count in counts.items()
                          if count >= 2]
         for i in range(5):
             name = random_state.choice(more_than_two)
             first, second = random_state.sample(range(counts[name]), 2)
-            f.write(six.b('%s\t%d\t%d\n' % (name, first, second)))
+            f.write('%s\t%d\t%d\n' % (name, first, second).encode())
 
         for i in range(5):
             first_name, second_name = random_state.sample(FAKE_NAMES, 2)
             first_index = random_state.choice(np.arange(counts[first_name]))
             second_index = random_state.choice(np.arange(counts[second_name]))
-            f.write(six.b('%s\t%d\t%s\t%d\n' % (first_name, first_index,
-                                                second_name, second_index)))
+            f.write(('%s\t%d\t%s\t%d\n' % (first_name, first_index,
+                                           second_name, second_index)).encode()
+                                           )
 
     with open(os.path.join(LFW_HOME, 'pairsDevTest.txt'), 'wb') as f:
-        f.write(six.b("Fake place holder that won't be tested"))
+        f.write("Fake place holder that won't be tested".encode())
 
     with open(os.path.join(LFW_HOME, 'pairs.txt'), 'wb') as f:
-        f.write(six.b("Fake place holder that won't be tested"))
+        f.write("Fake place holder that won't be tested".encode())
 
 
 def teardown_module():

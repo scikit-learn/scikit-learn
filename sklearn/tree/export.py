@@ -11,7 +11,7 @@ This module defines export functions for decision trees.
 #          Li Li <aiki.nogard@gmail.com>
 # License: BSD 3 clause
 import warnings
-from IO import StringIO
+from io import StringIO
 
 from numbers import Integral
 

@@ -21,7 +21,6 @@ import scipy.sparse
 
 from sklearn.externals import _arff
 from .base import get_data_home
-from ..externals.six import str, PY2, BytesIO
 from urllib.error import HTTPError
 from ..utils import Bunch
 
@@ -92,8 +91,6 @@ def _open_openml_url(openml_path, data_home):
     if data_home is None:
         fsrc = urlopen(req)
         if is_gzip(fsrc):
-            if PY2:
-                fsrc = BytesIO(fsrc.read())
             return gzip.GzipFile(fileobj=fsrc, mode='rb')
         return fsrc
 
@@ -360,16 +357,9 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
             else:
                 return_type = _arff.DENSE
 
-            if PY2:
-                arff_file = _arff.load(
-                    response.read(),
-                    encode_nominal=encode_nominal,
-                    return_type=return_type,
-                )
-            else:
-                arff_file = _arff.loads(response.read().decode('utf-8'),
-                                        encode_nominal=encode_nominal,
-                                        return_type=return_type)
+            arff_file = _arff.loads(response.read().decode('utf-8'),
+                                    encode_nominal=encode_nominal,
+                                    return_type=return_type)
         return arff_file
 
     return _arff_load()

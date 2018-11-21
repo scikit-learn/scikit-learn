@@ -31,7 +31,7 @@ def concurrency_safe_write(object_to_write, filename, write_func):
     return temporary_filename
 
 
-class StoreBackendBase(with_metaclass(ABCMeta)):
+class StoreBackendBase(metaclass=ABCMeta):
     """Helper Abstract Base Class which defines all methods that
        a StorageBackend must implement."""
 

@@ -74,7 +74,7 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
         w = w_init[j, :].copy()
         w /= np.sqrt((w ** 2).sum())
 
-        for i in moves.range(max_iter):
+        for i in range(max_iter):
             gwtx, g_wtx = g(np.dot(w.T, X), fun_args)
 
             w1 = (X * gwtx).mean(axis=1) - g_wtx.mean() * w
@@ -103,7 +103,7 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     W = _sym_decorrelation(w_init)
     del w_init
     p_ = float(X.shape[1])
-    for ii in moves.range(max_iter):
+    for ii in range(max_iter):
         gwtx, g_wtx = g(np.dot(W, X), fun_args)
         W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_
                                 - g_wtx[:, np.newaxis] * W)

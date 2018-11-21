@@ -284,7 +284,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
         bin_sizes[tuple(binned_point)] += 1
 
     # Select only those bins as seeds which have enough members
-    bin_seeds = np.array([point for point, freq in bin_sizes.items()) if
+    bin_seeds = np.array([point for point, freq in bin_sizes.items() if
                           freq >= min_bin_freq], dtype=np.float32)
     if len(bin_seeds) == len(X):
         warnings.warn("Binning data failed with provided bin_size=%f,"

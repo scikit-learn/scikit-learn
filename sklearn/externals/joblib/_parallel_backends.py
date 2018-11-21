@@ -27,7 +27,7 @@ if mp is not None:
     from .externals.loky import process_executor, cpu_count
 
 
-class ParallelBackendBase(with_metaclass(ABCMeta)):
+class ParallelBackendBase(metaclass=ABCMeta):
     """Helper abc which defines all methods a ParallelBackend must implement"""
 
     supports_timeout = False
