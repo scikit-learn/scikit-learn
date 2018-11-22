@@ -1096,7 +1096,15 @@ def test_column_transformer_callable_specifier():
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning:pandas")
-def test_column_transformer_inverse_with_strings():
+@pytest.mark.parametrize("transformers,remainder", [
+    ([('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+      ('title_bow', CountVectorizer(analyzer=lambda x: [x]), 'title')],
+     MinMaxScaler()),
+    ([('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+      ('min_max', MinMaxScaler(), ['expert_rating', 'user_rating'])],
+     'passthrough')
+])
+def test_column_transformer_inverse_with_strings(transformers, remainder):
     pd = pytest.importorskip('pandas')
 
     df = pd.DataFrame({
@@ -1107,10 +1115,7 @@ def test_column_transformer_inverse_with_strings():
         'user_rating': [4, 5, 4, 3]
     })
 
-    column_trans = ColumnTransformer(
-        [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
-         ('title_bow', CountVectorizer(analyzer=lambda x: [x]), 'title')],
-        remainder=MinMaxScaler())
+    column_trans = ColumnTransformer(transformers, remainder=remainder)
 
     result = column_trans.fit_transform(df)
     df_inverse = column_trans.inverse_transform(result)
@@ -1152,30 +1157,6 @@ def test_column_transformer_inverse_with_strings_default_count_vectorizer():
     expected_inverse['city'] = np.array(city_inverse)
 
     pd.util.testing.assert_frame_equal(df_inverse, expected_inverse)
-
-
-@pytest.mark.filterwarnings("ignore::DeprecationWarning:pandas")
-def test_column_transformer_inverse_with_strings_passthrough():
-    pd = pytest.importorskip('pandas')
-
-    df = pd.DataFrame({
-        'city': ['London', 'London', 'Paris', 'Sallisaw'],
-        'title': ["His Last Bow", "How Watson Learned the Trick",
-                  "A Moveable Feast", "The Grapes of Wrath"],
-        'expert_rating': [5, 3, 4, 5],
-        'user_rating': [4, 5, 4, 3]
-    })
-
-    column_trans = ColumnTransformer(
-        [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
-         ('min_max', MinMaxScaler(),
-          ['expert_rating', 'user_rating'])],
-        remainder='passthrough')
-
-    result = column_trans.fit_transform(df)
-    df_inverse = column_trans.inverse_transform(result)
-
-    pd.util.testing.assert_frame_equal(df, df_inverse)
 
 
 def test_column_transformer_transformer_does_not_define_inverse():
