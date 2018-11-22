@@ -404,7 +404,7 @@ boolean mask array or callable
 
     def _calculate_inverse_indices(self, X, Xs):
         """
-        Private function to calcuate indicies for inverse_transform
+        Private function to calcuate indices for inverse_transform
         """
         # check transformers defines inverse_transform
         trans_no_inverse = []
