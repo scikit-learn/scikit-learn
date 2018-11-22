@@ -1833,11 +1833,11 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    if labels is None:
-        labels = unique_labels(y_true, y_pred)
-    else:
-        labels = np.asarray(labels)
-
+    if labels is not None:
+        warnings.warn("This parameter was unused in version 0.21"
+                      " and will be removed in version 0.23 as the"
+                      " number of labels is identical"
+                      " to y_true.shape[1].")
     if sample_weight is None:
         weight_average = 1.
     else:
@@ -1847,7 +1847,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
         n_differences = count_nonzero(y_true - y_pred,
                                       sample_weight=sample_weight)
         return (n_differences /
-                (y_true.shape[0] * len(labels) * weight_average))
+                (y_true.shape[0] * y_true.shape[1] * weight_average))
 
     elif y_type in ["binary", "multiclass"]:
         return _weighted_sum(y_true != y_pred, sample_weight, normalize=True)
@@ -1875,7 +1875,8 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels for n_samples samples.
 
-    y_pred : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
+    y_pred : array-like of float, \
+        shape = (n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's
         predict_proba method. If ``y_pred.shape = (n_samples,)``
         the probabilities provided are assumed to be that of the
