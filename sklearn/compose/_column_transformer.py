@@ -651,9 +651,8 @@ boolean mask array or callable
             inverse_Xs = np.empty((X_length, self._n_features_in))
             for indices, inverse_X in zip(self._input_indices, Xs):
                 if sparse.issparse(inverse_X):
-                    inverse_Xs[:, indices] = inverse_X.toarray()
-                else:
-                    inverse_Xs[:, indices] = inverse_X
+                    inverse_X = inverse_X.toarray()
+                inverse_Xs[:, indices] = inverse_X
             return inverse_Xs
 
         # pandas dataframe and cannot be sparse
