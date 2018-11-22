@@ -212,6 +212,31 @@ Miscellaneous
   unvendoring joblib in future version of scikit-learn.
   :issue:`12345` by :user:`Thomas Moreau <tomMoral>`
 
+Code and Documentation Contributors
+-----------------------------------
+
+With thanks to:
+
+^__^, Adrin Jalali, Andrea Navarrete, Andreas Mueller,
+bauks, BenjaStudio, Cheuk Ting Ho, Connossor,
+Corey Levinson, Dan Stine, daten-kieker, Denis Kataev,
+Dillon Gardner, Dmitry Vukolov, Dougal J. Sutherland, Edward J Brown,
+Eric Chang, Federico Caselli, Gabriel Marzinotto, Gael Varoquaux,
+GauravAhlawat, Gustavo De Mari Pereira, Hanmin Qin, haroldfox,
+JackLangerman, Jacopo Notarstefano, janvanrijn, jdethurens,
+jeremiedbb, Joel Nothman, Joris Van den Bossche, Koen,
+Kushal Chauhan, Lee Yi Jie Joel, Lily Xiong, mail-liam,
+Mark Hannel, melsyt, Ming Li, Nicholas Smith,
+Nicolas Hug, Nikolay Shebanov, Oleksandr Pavlyk, Olivier Grisel,
+Peter Hausamann, Pierre Glaser, Pulkit Maloo, Quentin Batista,
+Radostin Stoyanov, Ramil Nugmanov, Rebekah Kim, Reshama Shaikh,
+Rohan Singh, Roman Feldbauer, Roman Yurchak, Roopam Sharma,
+Sam Waterbury, Scott Lowe, Sebastian Raschka, Stephen Tierney,
+SylvainLan, TakingItCasual, Thomas Fan, Thomas Moreau,
+Tom Dupré la Tour, Tulio Casagrande, Utkarsh Upadhyay, Xing Han Lu,
+Yaroslav Halchenko, Zach Miller
+
+
 .. _changes_0_20:
 
 Version 0.20.0
