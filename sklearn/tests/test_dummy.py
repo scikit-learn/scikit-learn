@@ -16,6 +16,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.stats import _weighted_percentile
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.exceptions import NotFittedError
 
 
 @ignore_warnings
@@ -244,8 +245,8 @@ def test_classifier_exceptions():
     clf = DummyClassifier(strategy="unknown")
     assert_raises(ValueError, clf.fit, [], [])
 
-    assert_raises(ValueError, clf.predict, [])
-    assert_raises(ValueError, clf.predict_proba, [])
+    assert_raises(NotFittedError, clf.predict, [])
+    assert_raises(NotFittedError, clf.predict_proba, [])
 
 
 def test_mean_strategy_regressor():
@@ -284,7 +285,7 @@ def test_mean_strategy_multioutput_regressor():
 
 def test_regressor_exceptions():
     reg = DummyRegressor()
-    assert_raises(ValueError, reg.predict, [])
+    assert_raises(NotFittedError, reg.predict, [])
 
 
 def test_median_strategy_regressor():

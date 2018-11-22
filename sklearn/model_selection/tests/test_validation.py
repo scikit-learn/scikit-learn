@@ -29,7 +29,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, ShuffleSplit
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import cross_validate
 from sklearn.model_selection import permutation_test_score
@@ -44,6 +44,7 @@ from sklearn.model_selection import learning_curve
 from sklearn.model_selection import validation_curve
 from sklearn.model_selection._validation import _check_is_permutation
 from sklearn.model_selection._validation import _fit_and_score
+from sklearn.model_selection._validation import _score
 
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
@@ -1477,7 +1478,7 @@ def test_permutation_test_score_pandas():
         permutation_test_score(clf, X_df, y_ser)
 
 
-def test_fit_and_score():
+def test_fit_and_score_failing():
     # Create a failing classifier to deliberately fail
     failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
     # dummy X data
@@ -1537,3 +1538,53 @@ def test_fit_and_score():
                          error_score='unvalid-string')
 
     assert_equal(failing_clf.score(), 0.)  # FailingClassifier coverage
+
+
+def test_fit_and_score_working():
+    X, y = make_classification(n_samples=30, random_state=0)
+    clf = SVC(kernel="linear", random_state=0)
+    train, test = next(ShuffleSplit().split(X))
+    # Test return_parameters option
+    fit_and_score_args = [clf, X, y, dict(), train, test, 0]
+    fit_and_score_kwargs = {'parameters': {'max_iter': 100, 'tol': 0.1},
+                            'fit_params': None,
+                            'return_parameters': True}
+    result = _fit_and_score(*fit_and_score_args,
+                            **fit_and_score_kwargs)
+    assert result[-1] == fit_and_score_kwargs['parameters']
+
+
+def three_params_scorer(i, j, k):
+    return 3.4213
+
+
+@pytest.mark.parametrize("return_train_score, scorer, expected", [
+    (False, three_params_scorer,
+     "[CV] .................................... , score=3.421, total=   0.0s"),
+    (True, three_params_scorer,
+     "[CV] ................ , score=(train=3.421, test=3.421), total=   0.0s"),
+    (True, {'sc1': three_params_scorer, 'sc2': three_params_scorer},
+     "[CV]  , sc1=(train=3.421, test=3.421)"
+     ", sc2=(train=3.421, test=3.421), total=   0.0s")
+])
+def test_fit_and_score_verbosity(capsys, return_train_score, scorer, expected):
+    X, y = make_classification(n_samples=30, random_state=0)
+    clf = SVC(kernel="linear", random_state=0)
+    train, test = next(ShuffleSplit().split(X))
+
+    # test print without train score
+    fit_and_score_args = [clf, X, y, scorer, train, test, 10, None, None]
+    fit_and_score_kwargs = {'return_train_score': return_train_score}
+    _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
+    out, _ = capsys.readouterr()
+    assert out.split('\n')[1] == expected
+
+
+def test_score():
+    error_message = "scoring must return a number, got None"
+
+    def two_params_scorer(estimator, X_test):
+        return None
+    fit_and_score_args = [None, None, None, two_params_scorer]
+    assert_raise_message(ValueError, error_message,
+                         _score, *fit_and_score_args)
