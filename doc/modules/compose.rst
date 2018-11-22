@@ -514,9 +514,9 @@ is able to run `inverse_transform`::
   >>> column_trans.inverse_transform(X_trans).values
   ... # doctest: +NORMALIZE_WHITESPACE
   array([['London', 'His Last Bow', 5, 4],
-       ['London', 'How Watson Learned the Trick', 3, 5],
-       ['Paris', 'A Moveable Feast', 4, 4],
-       ['Sallisaw', 'The Grapes of Wrath', 5, 3]], dtype=object)
+         ['London', 'How Watson Learned the Trick', 3, 5],
+         ['Paris', 'A Moveable Feast', 4, 4],
+         ['Sallisaw', 'The Grapes of Wrath', 5, 3]], dtype=object)
 
 .. topic:: Examples:
 
