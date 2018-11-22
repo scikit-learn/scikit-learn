@@ -183,6 +183,7 @@ Linear models: :math:`y = X\beta + \epsilon`
     [   0.30349955 -237.63931533  510.53060544  327.73698041 -814.13170937
       492.81458798  102.84845219  184.60648906  743.51961675   76.09517222]
 
+
     >>> # The mean square error
     >>> np.mean((regr.predict(diabetes_X_test) - diabetes_y_test)**2)
     ...                                                   # doctest: +ELLIPSIS
@@ -378,7 +379,7 @@ function or **logistic** function:
     ...                                       multi_class='multinomial')
     >>> log.fit(iris_X_train, iris_y_train)  # doctest: +NORMALIZE_WHITESPACE
     LogisticRegression(C=100000.0, class_weight=None, dual=False,
-        fit_intercept=True, intercept_scaling=1, max_iter=100,
+        fit_intercept=True, intercept_scaling=1, l1_ratio=None, max_iter=100,
         multi_class='multinomial', n_jobs=None, penalty='l2', random_state=None,
         solver='lbfgs', tol=0.0001, verbose=0, warm_start=False)
 

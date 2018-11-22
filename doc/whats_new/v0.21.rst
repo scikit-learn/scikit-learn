@@ -22,6 +22,9 @@ random sampling procedures.
 
 - Decision trees and derived ensembles when both `max_depth` and
   `max_leaf_nodes` are set. |Fix|
+- :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` with 'saga' solver. |Fix|
+
 
 Details are listed in the changelog below.
 
@@ -146,6 +149,15 @@ Support for Python 3.4 and below has been officially dropped.
   affects all ensemble methods using decision trees.
   :pr:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Feature| :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
+  with the 'saga' solver. :issue:`11646` by :user:`Nicolas Hug <NicolasHug>`.
+
+- |Fix| Fixed a bug in the 'saga' solver where the weights would not be
+  correctly updated in some cases. :issue:`11646` by `Tom Dupre la Tour`_.
 
 Multiple modules
 ................
