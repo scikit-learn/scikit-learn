@@ -653,9 +653,6 @@ boolean mask array or callable
                     inverse_Xs[:, indices] = inverse_X.toarray()
                 else:
                     inverse_Xs[:, indices] = inverse_X
-
-            if self._X_is_sparse:
-                return inverse_Xs.tocsr()
             return inverse_Xs
 
         # pandas dataframe and cannot be sparse
