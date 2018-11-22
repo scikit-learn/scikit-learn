@@ -25,7 +25,7 @@ y[::5] += 3 * (0.5 - np.random.rand(8))
 # Fit regression model
 svr_rbf = SVR(kernel='rbf', C=1e3, gamma=0.1)
 svr_lin = SVR(kernel='linear', C=1e3)
-svr_poly = SVR(kernel='poly', C=1e3, degree=2)
+svr_poly = SVR(kernel='poly', C=1e3, degree=2, gamma='auto')
 y_rbf = svr_rbf.fit(X, y).predict(X)
 y_lin = svr_lin.fit(X, y).predict(X)
 y_poly = svr_poly.fit(X, y).predict(X)
