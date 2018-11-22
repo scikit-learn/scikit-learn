@@ -29,7 +29,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from time import time
 from sklearn import metrics
-
+from functools import partial
 
 def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
                              fixed_n_classes=None, n_runs=5, seed=42):
@@ -55,10 +55,15 @@ def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
             scores[i, j] = score_func(labels_a, labels_b)
     return scores
 
+
+ami_score = partial(metrics.adjusted_mutual_info_score,
+                    average_method='arithmetic')
+ami_score.__name__ = 'adjusted_mutual_info_score'
+
 score_funcs = [
     metrics.adjusted_rand_score,
     metrics.v_measure_score,
-    metrics.adjusted_mutual_info_score,
+    ami_score,
     metrics.mutual_info_score,
 ]
 
@@ -87,7 +92,7 @@ plt.title("Clustering measures for 2 random uniform labelings\n"
 plt.xlabel('Number of clusters (Number of samples is fixed to %d)' % n_samples)
 plt.ylabel('Score value')
 plt.legend(plots, names)
-plt.ylim(ymin=-0.05, ymax=1.05)
+plt.ylim(bottom=-0.05, top=1.05)
 
 
 # Random labeling with varying n_clusters against ground class labels
@@ -117,6 +122,6 @@ plt.title("Clustering measures for random uniform labeling\n"
           "against reference assignment with %d classes" % n_classes)
 plt.xlabel('Number of clusters (Number of samples is fixed to %d)' % n_samples)
 plt.ylabel('Score value')
-plt.ylim(ymin=-0.05, ymax=1.05)
+plt.ylim(bottom=-0.05, top=1.05)
 plt.legend(plots, names)
 plt.show()
