@@ -1264,6 +1264,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                       % (pos_label, average), UserWarning)
 
     # Calculate tp_sum, pred_sum, true_sum ###
+<<<<<<< HEAD
     samplewise = average == 'samples'
     MCM = multilabel_confusion_matrix(y_true, y_pred,
                                       sample_weight=sample_weight,
@@ -1271,6 +1272,73 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     tp_sum = MCM[:, 1, 1]
     pred_sum = tp_sum + MCM[:, 0, 1]
     true_sum = tp_sum + MCM[:, 1, 0]
+=======
+
+    if y_type.startswith('multilabel'):
+        sum_axis = 1 if average == 'samples' else 0
+
+        # All labels are index integers for multilabel.
+        # Select labels:
+        if not np.all(labels == present_labels):
+            if np.max(labels) > np.max(present_labels):
+                raise ValueError('All labels must be in [0, n labels). '
+                                 'Got %d > %d' %
+                                 (np.max(labels), np.max(present_labels)))
+            if np.min(labels) < 0:
+                raise ValueError('All labels must be in [0, n labels). '
+                                 'Got %d < 0' % np.min(labels))
+
+        if n_labels is not None:
+            y_true = y_true[:, labels[:n_labels]]
+            y_pred = y_pred[:, labels[:n_labels]]
+
+        # calculate weighted counts
+        true_and_pred = y_true.multiply(y_pred)
+        tp_sum = count_nonzero(true_and_pred, axis=sum_axis,
+                               sample_weight=sample_weight)
+        pred_sum = count_nonzero(y_pred, axis=sum_axis,
+                                 sample_weight=sample_weight)
+        true_sum = count_nonzero(y_true, axis=sum_axis,
+                                 sample_weight=sample_weight)
+
+    elif average == 'samples':
+        raise ValueError("Sample-based precision, recall, fscore is "
+                         "not meaningful outside multilabel "
+                         "classification. See the accuracy_score instead.")
+    else:
+        le = LabelEncoder()
+        le.fit(labels)
+        y_true = le.transform(y_true)
+        y_pred = le.transform(y_pred)
+        sorted_labels = le.classes_
+
+        # labels are now from 0 to len(labels) - 1 -> use bincount
+        tp = y_true == y_pred
+        tp_bins = y_true[tp]
+        if sample_weight is not None:
+            tp_bins_weights = np.asarray(sample_weight)[tp]
+        else:
+            tp_bins_weights = None
+
+        if len(tp_bins):
+            tp_sum = np.bincount(tp_bins, weights=tp_bins_weights,
+                                 minlength=len(labels))
+        else:
+            # Pathological case
+            true_sum = pred_sum = tp_sum = np.zeros(len(labels))
+        if len(y_pred):
+            pred_sum = np.bincount(y_pred, weights=sample_weight,
+                                   minlength=len(labels))
+        if len(y_true):
+            true_sum = np.bincount(y_true, weights=sample_weight,
+                                   minlength=len(labels))
+
+        # Retain only selected labels
+        indices = np.searchsorted(sorted_labels, labels[:n_labels])
+        tp_sum = tp_sum[indices]
+        true_sum = true_sum[indices]
+        pred_sum = pred_sum[indices]
+>>>>>>> a547c29fb3d7c7e76f29bac60b059a01aa596e6b
 
     if average == 'micro':
         tp_sum = np.array([tp_sum.sum()])
@@ -1833,10 +1901,13 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    if labels is None:
-        labels = unique_labels(y_true, y_pred)
-    else:
-        labels = np.asarray(labels)
+    if labels is not None:
+        warnings.warn(
+                      "This parameter was deprecated in version 0.21"
+                      " and will be removed in version 0.23 as the"
+                      " number of labels is identical"
+                      " to y_true.shape[1].",
+                      DeprecationWarning)
 
     if sample_weight is None:
         weight_average = 1.
@@ -1847,7 +1918,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
         n_differences = count_nonzero(y_true - y_pred,
                                       sample_weight=sample_weight)
         return (n_differences /
-                (y_true.shape[0] * len(labels) * weight_average))
+                (y_true.shape[0] * y_true.shape[1] * weight_average))
 
     elif y_type in ["binary", "multiclass"]:
         return _weighted_sum(y_true != y_pred, sample_weight, normalize=True)
@@ -1875,7 +1946,8 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels for n_samples samples.
 
-    y_pred : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
+    y_pred : array-like of float, \
+    shape = (n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's
         predict_proba method. If ``y_pred.shape = (n_samples,)``
         the probabilities provided are assumed to be that of the
