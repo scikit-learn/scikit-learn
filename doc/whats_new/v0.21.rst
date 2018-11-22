@@ -81,6 +81,13 @@ Support for Python 3.4 and below has been officially dropped.
   metrics such as recall, specificity, fall out and miss rate.
   :issue:`11179` by :user:`Shangwu Yao <ShangwuYao>` and `Joel Nothman`_.
 
+:mod:`sklearn.model_selection`
+......................
+
+- |Enhancement| Method :func:`_fit_and_score` now prints train_scores when
+  `return_train_scores` is True and `verbose` > 2.
+  :issue:`12613` by :user:`Marc Torrellas <marctorrellas>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
