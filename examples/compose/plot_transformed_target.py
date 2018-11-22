@@ -54,13 +54,13 @@ y_trans = np.log1p(y)
 
 f, (ax0, ax1) = plt.subplots(1, 2)
 
-ax0.hist(y, bins=100, normed=True)
+ax0.hist(y, bins=100, density=True)
 ax0.set_xlim([0, 2000])
 ax0.set_ylabel('Probability')
 ax0.set_xlabel('Target')
 ax0.set_title('Target distribution')
 
-ax1.hist(y_trans, bins=100, normed=True)
+ax1.hist(y_trans, bins=100, density=True)
 ax1.set_ylabel('Probability')
 ax1.set_xlabel('Target')
 ax1.set_title('Transformed target distribution')
@@ -139,12 +139,12 @@ y_trans = quantile_transform(dataset.data[:, target],
 
 f, (ax0, ax1) = plt.subplots(1, 2)
 
-ax0.hist(y, bins=100, normed=True)
+ax0.hist(y, bins=100, density=True)
 ax0.set_ylabel('Probability')
 ax0.set_xlabel('Target')
 ax0.set_title('Target distribution')
 
-ax1.hist(y_trans, bins=100, normed=True)
+ax1.hist(y_trans, bins=100, density=True)
 ax1.set_ylabel('Probability')
 ax1.set_xlabel('Target')
 ax1.set_title('Transformed target distribution')
