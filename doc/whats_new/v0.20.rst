@@ -215,7 +215,7 @@ Miscellaneous
 Version 0.20.0
 ==============
 
-**September, 2018**
+**September 25, 2018**
 
 This release packs in a mountain of bug fixes, features and enhancements for
 the Scikit-learn library, and improvements to the documentation and examples.
