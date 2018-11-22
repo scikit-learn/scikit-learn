@@ -292,3 +292,9 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
                                          u'https://github.com/scikit-learn/'
                                          'scikit-learn/blob/{revision}/'
                                          '{package}/{path}#L{lineno}')
+
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning,
+                        module="matplotlib",
+                        message='Matplotlib is currently using agg, which is a'
+                                ' non-GUI backend, so cannot show the figure.')
