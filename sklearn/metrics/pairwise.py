@@ -251,10 +251,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     distances += YY
     np.maximum(distances, 0, out=distances)
 
-    if X is Y:
-        # Ensure that distances between vectors and themselves are set to 0.0.
-        # This may not be the case due to floating point rounding errors.
-        distances.flat[::distances.shape[0] + 1] = 0.0
+    distances = _set_diagonal_pairwise(distances, X, Y)
 
     return distances if squared else np.sqrt(distances, out=distances)
 
@@ -511,7 +508,9 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
 
     D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
     D = np.abs(D, D)
-    return D.reshape((-1, X.shape[1]))
+    return _set_diagonal_pairwise(
+        D.reshape((-1, X.shape[1])),
+        X, Y)
 
 
 def cosine_distances(X, Y=None):
@@ -544,11 +543,7 @@ def cosine_distances(X, Y=None):
     S *= -1
     S += 1
     np.clip(S, 0, 2, out=S)
-    if X is Y or Y is None:
-        # Ensure that distances between vectors and themselves are set to 0.0.
-        # This may not be the case due to floating point rounding errors.
-        S[np.diag_indices_from(S)] = 0.0
-    return S
+    return _set_diagonal_pairwise(S, X, Y)
 
 
 # Paired distances
@@ -1284,7 +1279,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
         yield D_chunk
 
 
-def set_diagonal_pairwise(distances, X, Y):
+def _set_diagonal_pairwise(distances, X, Y):
     """Set the diagonal of unary pairwise distance to 0. This ensure that
     the distances between themselves are always 0.0.
 
@@ -1300,7 +1295,7 @@ def set_diagonal_pairwise(distances, X, Y):
         A distance matrix D.
     """
     if Y is None or X is Y:
-        np.fill_diagonal(distances, 0)
+        np.fill_diagonal(distances, 0.0)
 
     return distances
 
@@ -1421,9 +1416,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
                                                       **kwds))
         func = partial(distance.cdist, metric=metric, **kwds)
 
-    return set_diagonal_pairwise(
-        _parallel_pairwise(X, Y, func, n_jobs, **kwds),
-        X, Y)
+    return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
 
 
 # These distances recquire boolean arrays, when using scipy.spatial.distance
