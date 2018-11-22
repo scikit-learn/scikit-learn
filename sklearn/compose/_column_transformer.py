@@ -646,6 +646,7 @@ boolean mask array or callable
                 inverse_Xs[:, indices] = inverse_X
             return inverse_Xs.tocsr()
 
+        # numpy array
         if self._X_row_index is None:
             inverse_Xs = np.empty((X_length, self._n_features_in))
             for indices, inverse_X in zip(self._input_indices, Xs):
