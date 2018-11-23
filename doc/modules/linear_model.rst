@@ -775,6 +775,12 @@ The "saga" solver [7]_ is a variant of "sag" that also supports the
 non-smooth `penalty="l1"` option. This is therefore the solver of choice
 for sparse multinomial logistic regression.
 
+The "lbfgs" is an optimization algorithm that approximates the 'BFGS'_, algortithm
+which belongs to quasi-Newton methods. It performs the best for small datasets
+then other solvers. The "lbfgs" solver is recommended for use for small data-sets
+ but for larger datasets its performance suffers.
+<http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_.
+
 In a nutshell, the following table summarizes the penalties supported by each solver:
 
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
