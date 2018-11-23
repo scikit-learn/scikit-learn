@@ -484,7 +484,7 @@ def check_pairwise_distances_chunked(X, Y, working_memory, metric='euclidean'):
     S = pairwise_distances(X, Y, metric=metric)
     assert_array_almost_equal(blockwise_distances, S)
 
-
+@ignore_warnings
 @pytest.mark.parametrize(
         'metric',
         ('euclidean', 'manhattan', 'cosine'))
@@ -495,7 +495,7 @@ def test_pairwise_distances_diagonal(metric):
         pairwise_distances(X, metric=metric)[np.diag_indices(X.shape[0])]
         )
 
-
+@ignore_warnings
 @pytest.mark.parametrize(
         'metric',
         ('euclidean', 'l2', 'sqeuclidean'))
