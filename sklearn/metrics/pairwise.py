@@ -1295,8 +1295,13 @@ def _set_diagonal_pairwise(distances, X, Y):
         A distance matrix D.
     """
     if Y is None or X is Y:
+        if not np.allclose(distances[np.diag_indices(X.shape[0])], 0.0):
+            warnings.warn("The specified metric is not a valid dissimilarity "
+                          "metric; it does not return metric(x, x) == 0 for "
+                          "some values. In version 0.23, the diagonal of "
+                          "pairwise_distances(X) will be set to 0.",
+                          FutureWarning)
         np.fill_diagonal(distances, 0.0)
-
     return distances
 
 
