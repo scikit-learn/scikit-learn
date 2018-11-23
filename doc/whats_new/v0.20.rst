@@ -96,7 +96,7 @@ Changelog
   :issue:`12388` by :user:`Connor Tann <Connossor>`.
 
 :mod:`sklearn.feature_extraction`
-...........................
+..................................
 
 - |Fix| Fixed a regression in v0.20.0 where
   :func:`feature_extraction.text.CountVectorizer` and other text vectorizers
@@ -154,7 +154,7 @@ Changelog
   :issue:`12171` by :user:`Thomas Moreau <tomMoral>`.
 
 :mod:`sklearn.preprocessing`
-........................
+.............................
 
 - |Fix| Fixed bug in :class:`preprocessing.OrdinalEncoder` when passing
   manually specified categories. :issue:`12365` by `Joris Van den Bossche`_.
