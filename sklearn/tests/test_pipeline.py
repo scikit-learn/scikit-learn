@@ -575,6 +575,27 @@ def test_pipeline_named_steps():
 
 
 @pytest.mark.parametrize('passthrough', [None, 'passthrough'])
+def test_pipeline_correctly_adjusts_steps(passthrough):
+    X = np.array([[1]])
+    y = np.array([1])
+    mult2 = Mult(mult=2)
+    mult3 = Mult(mult=3)
+    mult5 = Mult(mult=5)
+
+    pipeline = Pipeline([
+        ('m2', mult2),
+        ('bad', passthrough),
+        ('m3', mult3),
+        ('m5', mult5)
+    ])
+
+    pipeline.fit(X, y)
+    expected_names = ['m2', 'bad', 'm3', 'm5']
+    actual_names = [name for name, _ in pipeline.steps]
+    assert expected_names == actual_names
+
+
+@pytest.mark.parametrize('passthrough', [None, 'passthrough'])
 def test_set_pipeline_step_passthrough(passthrough):
     X = np.array([[1]])
     y = np.array([1])
