@@ -486,7 +486,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         (self.ordering_, self.core_distances_, self.reachability_,
          self.predecessor_) = _calculate_optics_order(
-             X = X, min_samples=self.min_samples, algorithm=self.algorithm,
+             X=X, min_samples=self.min_samples, algorithm=self.algorithm,
              leaf_size=self.leaf_size, metric=self.metric,
              metric_params=self.metric_params, p=self.p, n_jobs=self.n_jobs,
              max_eps=self.max_eps)
@@ -508,13 +508,14 @@ class OPTICS(BaseEstimator, ClusterMixin):
             indices_, labels_ = _extract_optics_sqlnk(**extract_params)
         elif self.extract_method == 'dbscan':
             indices_, labels_ = _extract_optics_dbscan(self.reachability_,
-                                                      self.core_distances_,
-                                                      self.ordering_,
-                                                      self.eps)
+                                                       self.core_distances_,
+                                                       self.ordering_,
+                                                       self.eps)
 
         self.core_sample_indices_ = indices_
         self.labels_ = labels_
         return self
+
 
 # OPTICS helper functions
 def _compute_core_distances_(X, neighbors, min_samples, working_memory):
@@ -687,10 +688,10 @@ def _extract_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
 
 
 def _extract_optics_sqlnk(reachability, ordering,
-                         maxima_ratio=.75,
-                         rejection_ratio=.7, similarity_threshold=.4,
-                         significant_min=.003, min_cluster_size=.005,
-                         min_maxima_ratio=.001):
+                          maxima_ratio=.75,
+                          rejection_ratio=.7, similarity_threshold=.4,
+                          significant_min=.003, min_cluster_size=.005,
+                          min_maxima_ratio=.001):
     """Performs automatic cluster extraction for variable density data.
     All parameters will use the value present in the class instance if
     not provided.
