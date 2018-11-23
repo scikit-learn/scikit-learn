@@ -778,7 +778,7 @@ for sparse multinomial logistic regression.
 The "lbfgs" is an optimization algorithm that approximates the 'BFGS'_, algortithm
 which belongs to quasi-Newton methods. It performs the best for small datasets
 then other solvers. The "lbfgs" solver is recommended for use for small data-sets
-but for larger datasets its performance suffers.
+but for larger datasets its performance suffers
 `lbfgs performance <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_.
 
 In a nutshell, the following table summarizes the penalties supported by each solver:
