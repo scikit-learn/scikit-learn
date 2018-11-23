@@ -19,13 +19,13 @@ from distutils.version import LooseVersion
 from numpy.core.numeric import ComplexWarning
 
 from ..externals import six
-from ..utils.fixes import signature
+from .fixes import signature
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
-from ..utils._joblib import Memory
-from ..utils._joblib import __version__ as joblib_version
+from ._joblib import Memory
+from ._joblib import __version__ as joblib_version
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -140,7 +140,12 @@ def _num_samples(x):
         if len(x.shape) == 0:
             raise TypeError("Singleton array %r cannot be considered"
                             " a valid collection." % x)
-        return x.shape[0]
+        # Check that shape is returning an integer or default to len
+        # Dask dataframes may not return numeric shape[0] value
+        if isinstance(x.shape[0], numbers.Integral):
+            return x.shape[0]
+        else:
+            return len(x)
     else:
         return len(x)
 
@@ -183,8 +188,8 @@ def check_memory(memory):
     """Check that ``memory`` is joblib.Memory-like.
 
     joblib.Memory-like means that ``memory`` can be converted into a
-    sklearn.utils.Memory instance (typically a str denoting the
-    ``cachedir``) or has the same interface (has a ``cache`` method).
+    joblib.Memory instance (typically a str denoting the ``location``)
+    or has the same interface (has a ``cache`` method).
 
     Parameters
     ----------
@@ -207,7 +212,7 @@ def check_memory(memory):
             memory = Memory(location=memory, verbose=0)
     elif not hasattr(memory, 'cache'):
         raise ValueError("'memory' should be None, a string or have the same"
-                         " interface as sklearn.utils.Memory."
+                         " interface as joblib.Memory."
                          " Got memory='{}' instead.".format(memory))
     return memory
 
@@ -472,7 +477,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # check if the object contains several dtypes (typically a pandas
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
-    if hasattr(array, "dtypes") and hasattr(array, "__array__"):
+    if hasattr(array, "dtypes") and len(array.dtypes):
         dtypes_orig = np.array(array.dtypes)
 
     if dtype_numeric:

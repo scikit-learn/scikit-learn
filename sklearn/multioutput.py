@@ -25,7 +25,7 @@ from .utils.fixes import parallel_helper
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import check_is_fitted, has_fit_parameter
 from .utils.multiclass import check_classification_targets
-from .utils import Parallel, delayed
+from .utils._joblib import Parallel, delayed
 from .externals import six
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
@@ -511,9 +511,9 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         If cv is None the true labels are used when fitting. Otherwise
         possible inputs for cv are:
 
-        * integer, to specify the number of folds in a (Stratified)KFold,
-        * An object to be used as a cross-validation generator.
-        * An iterable yielding train, test splits.
+        - integer, to specify the number of folds in a (Stratified)KFold,
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -667,9 +667,9 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         If cv is None the true labels are used when fitting. Otherwise
         possible inputs for cv are:
 
-        * integer, to specify the number of folds in a (Stratified)KFold,
-        * An object to be used as a cross-validation generator.
-        * An iterable yielding train, test splits.
+        - integer, to specify the number of folds in a (Stratified)KFold,
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;

@@ -64,6 +64,19 @@ jobs:
           path: ~/log.txt
           destination: log.txt
 
+  lint:
+    docker:
+      - image: circleci/python:3.6.1
+    steps:
+      - checkout
+      - run: ./build_tools/circle/checkout_merge_commit.sh
+      - run:
+          name: dependencies
+          command: sudo pip install flake8
+      - run:
+          name: flake8
+          command: ./build_tools/circle/flake8_diff.sh
+
   pypy3:
     docker:
       - image: pypy:3-6.0.0
@@ -103,6 +116,7 @@ workflows:
     jobs:
       - python3
       - python2
+      - lint
       - pypy3:
           filters:
             branches:

@@ -32,6 +32,7 @@ _DOCSTRING_IGNORES = [
     'sklearn.pipeline.make_pipeline',
     'sklearn.pipeline.make_union',
     'sklearn.utils.extmath.safe_sparse_dot',
+    'sklearn.utils._joblib'
 ]
 
 # Methods where y param should be ignored if y=None by default
@@ -64,6 +65,9 @@ def test_docstring_parameters():
 
     incorrect = []
     for name in PUBLIC_MODULES:
+        if name == 'sklearn.utils.fixes':
+            # We cannot always control these docstrings
+            continue
         with warnings.catch_warnings(record=True):
             module = importlib.import_module(name)
         classes = inspect.getmembers(module, inspect.isclass)

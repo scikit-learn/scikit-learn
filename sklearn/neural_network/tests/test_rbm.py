@@ -136,7 +136,7 @@ def test_gibbs_smoke():
     X_sampled = rbm1.gibbs(X)
     assert_all_finite(X_sampled)
     X_sampled2 = rbm1.gibbs(X)
-    assert_true(np.all((X_sampled != X_sampled2).max(axis=1)))
+    assert np.all((X_sampled != X_sampled2).max(axis=1))
 
 
 def test_score_samples():
@@ -148,7 +148,7 @@ def test_score_samples():
     rbm1 = BernoulliRBM(n_components=10, batch_size=2,
                         n_iter=10, random_state=rng)
     rbm1.fit(X)
-    assert_true((rbm1.score_samples(X) < -300).all())
+    assert (rbm1.score_samples(X) < -300).all()
 
     # Sparse vs. dense should not affect the output. Also test sparse input
     # validation.
