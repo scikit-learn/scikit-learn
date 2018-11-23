@@ -501,7 +501,7 @@ def test_pairwise_distances_diagonal(metric):
         ('euclidean', 'l2', 'sqeuclidean'))
 def test_pairwise_distances_chunked_diagonal(metric):
     rng = np.random.RandomState(0)
-    X = rng.normal(size=(1000, 10), )
+    X = rng.normal(size=(1000, 10))
     chunks = list(pairwise_distances_chunked(X, working_memory=1,
                                              metric=metric))
     assert len(chunks) > 1
