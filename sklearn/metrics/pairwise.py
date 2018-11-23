@@ -1271,7 +1271,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
                 is euclidean_distances):
             # zeroing diagonal, taking care of aliases of "euclidean",
             # i.e. "l2"
-            D_chunk.flat[sl.start::_num_samples(X) + 1] = 0
+            D_chunk.flat[sl.start::_num_samples(X) + 1] = 0.0
         if reduce_func is not None:
             chunk_size = D_chunk.shape[0]
             D_chunk = reduce_func(D_chunk, sl.start)
@@ -1295,12 +1295,17 @@ def _set_diagonal_pairwise(distances, X, Y):
         A distance matrix D.
     """
     if Y is None or X is Y:
-        if not np.allclose(distances[np.diag_indices(X.shape[0])], 0.0):
+        if not isinstance(X, list):
+            X_shape_0 = X.shape[0]
+        else:
+            X_shape_0 = 1
+        if not np.allclose(distances[np.diag_indices(X_shape_0)], 0.0):
             warnings.warn("The specified metric is not a valid dissimilarity "
                           "metric; it does not return metric(x, x) == 0 for "
                           "some values. In version 0.23, the diagonal of "
                           "pairwise_distances(X) will be set to 0.",
                           FutureWarning)
+            return distances
         np.fill_diagonal(distances, 0.0)
     return distances
 
@@ -1421,7 +1426,9 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
                                                       **kwds))
         func = partial(distance.cdist, metric=metric, **kwds)
 
-    return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
+    return _set_diagonal_pairwise(
+               _parallel_pairwise(X, Y, func, n_jobs, **kwds),
+               X, Y)
 
 
 # These distances recquire boolean arrays, when using scipy.spatial.distance
