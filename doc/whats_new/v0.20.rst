@@ -2,6 +2,22 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_20_2:
+
+Version 0.20.2
+==============
+
+**XX, 2019**
+
+This is a bug-fix release with some minor documentation improvements and
+enhancements to features released in 0.20.0.
+
+Changelog
+---------
+
+
+
+
 .. _changes_0_20_1:
 
 Version 0.20.1
