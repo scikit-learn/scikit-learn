@@ -689,31 +689,14 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     0.625
 
     """
-    _validate_set_wise_average(average)
-    y_type, y_true, y_pred, present_labels = _validate_input(y_true, y_pred,
-                                                             sample_weight)
-    if average == 'binary':
-        if y_type == 'binary':
-            if pos_label not in present_labels:
-                if len(present_labels) < 2:
-                    return 0.
-                else:
-                    raise ValueError("pos_label=%r is not a valid label: "
-                                     "%r" % (pos_label, present_labels))
-            labels = [pos_label]
-        else:
-            raise ValueError("Target is %s but average='binary'. Please "
-                             "choose another average setting." % y_type)
-    elif pos_label not in (None, 1):
-        warnings.warn("Note that pos_label (set to %r) is ignored when "
-                      "average != 'binary' (got %r). You may use "
-                      "labels=[pos_label] to specify a single positive class."
-                      % (pos_label, average), UserWarning)
     if average != 'samples' and normalize != 'true-if-samples':
         raise ValueError("'normalize' is only meaningful with "
                          "`average='samples'`, got `average='%s'`."
                          % average)
-
+    labels = _check_set_wise_labels(y_true, y_pred, average, labels,
+                                    pos_label)
+    if labels is _ALL_ZERO:
+        return 0.
     samplewise = average == 'samples'
     MCM = multilabel_confusion_matrix(y_true, y_pred,
                                       sample_weight=sample_weight,
@@ -1173,38 +1156,39 @@ def _prf_divide(numerator, denominator, metric, modifier, average, warn_for):
     return result
 
 
-def _validate_set_wise_average(average):
-    """Validate ``average`` as a valid average option for
-    functions :func:`metrics.precision_recall_fscore_support` and
-    :func:`metrics.jaccard_similarity_score`.
+_ALL_ZERO = object()  # sentinel for special, degenerate case
+
+
+def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
+    """Validation associated with set-wise metrics
+
+    Returns identified labels or _ALL_ZERO sentinel
     """
     average_options = (None, 'micro', 'macro', 'weighted', 'samples')
     if average not in average_options and average != 'binary':
         raise ValueError('average has to be one of ' +
                          str(average_options))
 
-
-def _validate_input(y_true, y_pred, sample_weight):
-    """Validate input for consistent length and type for functions
-    :func:`metrics.precision_recall_fscore_support` and
-    :func:`metrics.jaccard_similarity_score`.
-    """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
     present_labels = unique_labels(y_true, y_pred)
-    return y_type, y_true, y_pred, present_labels
-
-
-def _validate_multilabels(labels, present_labels):
-    """All labels are index integers for multilabel."""
-    if not np.all(labels == present_labels):
-        if np.max(labels) > np.max(present_labels):
-            raise ValueError('All labels must be in [0, n, labels). '
-                             'Got %d > %d' %
-                             (np.max(labels), np.max(present_labels)))
-        if np.min(labels) < 0:
-            raise ValueError('All labels must be in [0, n, labels). '
-                             'Got %d < 0' % np.min(labels))
+    if average == 'binary':
+        if y_type == 'binary':
+            if pos_label not in present_labels:
+                if len(present_labels) < 2:
+                    return _ALL_ZERO
+                else:
+                    raise ValueError("pos_label=%r is not a valid label: "
+                                     "%r" % (pos_label, present_labels))
+            labels = [pos_label]
+        else:
+            raise ValueError("Target is %s but average='binary'. Please "
+                             "choose another average setting." % y_type)
+    elif pos_label not in (None, 1):
+        warnings.warn("Note that pos_label (set to %r) is ignored when "
+                      "average != 'binary' (got %r). You may use "
+                      "labels=[pos_label] to specify a single positive class."
+                      % (pos_label, average), UserWarning)
+    return labels
 
 
 def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
@@ -1349,29 +1333,12 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
      array([2, 2, 2]))
 
     """
-    _validate_set_wise_average(average)
     if beta <= 0:
         raise ValueError("beta should be >0 in the F-beta score")
-    y_type, y_true, y_pred, present_labels = _validate_input(y_true, y_pred,
-                                                             sample_weight)
-    if average == 'binary':
-        if y_type == 'binary':
-            if pos_label not in present_labels:
-                if len(present_labels) < 2:
-                    # Only negative labels
-                    return (0., 0., 0., 0)
-                else:
-                    raise ValueError("pos_label=%r is not a valid label: %r" %
-                                     (pos_label, present_labels))
-            labels = [pos_label]
-        else:
-            raise ValueError("Target is %s but average='binary'. Please "
-                             "choose another average setting." % y_type)
-    elif pos_label not in (None, 1):
-        warnings.warn("Note that pos_label (set to %r) is ignored when "
-                      "average != 'binary' (got %r). You may use "
-                      "labels=[pos_label] to specify a single positive class."
-                      % (pos_label, average), UserWarning)
+    labels = _check_set_wise_labels(y_true, y_pred, average, labels,
+                                    pos_label)
+    if labels is _ALL_ZERO:
+        return (0., 0., 0., 0)
 
     # Calculate tp_sum, pred_sum, true_sum ###
     samplewise = average == 'samples'
