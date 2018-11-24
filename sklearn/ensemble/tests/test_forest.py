@@ -1078,8 +1078,8 @@ def check_warm_start(name, random_state=42):
                                 warm_start=False)
     clf_no_ws.fit(X, y)
 
-    assert_equal(set([tree.random_state for tree in clf_ws]),
-                 set([tree.random_state for tree in clf_no_ws]))
+    assert_equal({tree.random_state for tree in clf_ws},
+                 {tree.random_state for tree in clf_no_ws})
 
     assert_array_equal(clf_ws.apply(X), clf_no_ws.apply(X),
                        err_msg="Failed with {0}".format(name))

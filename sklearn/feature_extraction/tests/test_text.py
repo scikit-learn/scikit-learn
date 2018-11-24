@@ -582,9 +582,9 @@ def test_feature_names():
 
 @pytest.mark.parametrize('Vectorizer', (CountVectorizer, TfidfVectorizer))
 def test_vectorizer_max_features(Vectorizer):
-    expected_vocabulary = set(['burger', 'beer', 'salad', 'pizza'])
-    expected_stop_words = set([u'celeri', u'tomato', u'copyright', u'coke',
-                               u'sparkling', u'water', u'the'])
+    expected_vocabulary = {'burger', 'beer', 'salad', 'pizza'}
+    expected_stop_words = {u'celeri', u'tomato', u'copyright', u'coke',
+                           u'sparkling', u'water', u'the'}
 
     # test bounded number of extracted features
     vectorizer = Vectorizer(max_df=0.6, max_features=4)
