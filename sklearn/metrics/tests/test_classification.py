@@ -1129,11 +1129,9 @@ def test_multilabel_hamming_loss():
     assert_equal(hamming_loss(y1[0], y2[0]), sp_hamming(y1[0], y2[0]))
 
 
-def test_jaccard_similarity_score():
+def test_jaccard_similarity_score_validation():
     y_true = np.array([0, 1, 0, 1, 1])
     y_pred = np.array([0, 1, 0, 1, 1])
-    assert_equal(jaccard_similarity_score(y_true, y_pred, average='binary',
-                                          pos_label=0), 1.)
     assert_raise_message(ValueError, "pos_label=2 is not a valid label: "
                          "array([0, 1])", jaccard_similarity_score, y_true,
                          y_pred, average='binary', pos_label=2)
@@ -1174,13 +1172,13 @@ def test_multilabel_jaccard_similarity_score():
     # size(y1 \inter y2) = [1, 2]
     # size(y1 \union y2) = [2, 2]
 
-    assert_equal(jaccard_similarity_score(y1, y2), 0.75)
-    assert_equal(jaccard_similarity_score(y1, y1), 1)
-    assert_equal(jaccard_similarity_score(y2, y2), 1)
-    assert_equal(jaccard_similarity_score(y2, np.logical_not(y2)), 0)
-    assert_equal(jaccard_similarity_score(y1, np.logical_not(y1)), 0)
-    assert_equal(jaccard_similarity_score(y1, np.zeros(y1.shape)), 0)
-    assert_equal(jaccard_similarity_score(y2, np.zeros(y1.shape)), 0)
+    assert jaccard_similarity_score(y1, y2) == 0.75
+    assert jaccard_similarity_score(y1, y1) == 1
+    assert jaccard_similarity_score(y2, y2) == 1
+    assert jaccard_similarity_score(y2, np.logical_not(y2)) == 0
+    assert jaccard_similarity_score(y1, np.logical_not(y1)) == 0
+    assert jaccard_similarity_score(y1, np.zeros(y1.shape)) == 0
+    assert jaccard_similarity_score(y2, np.zeros(y1.shape)) == 0
 
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
@@ -1255,24 +1253,21 @@ def test_multiclass_jaccard_similarity_score():
 
     y_true = np.array([[0, 0], [0, 0], [0, 0]])
     y_pred = np.array([[0, 0], [0, 0], [0, 0]])
-    assert_equal(jaccard_similarity_score(y_true, y_pred, average='weighted'),
-                 0.)
+    assert jaccard_similarity_score(y_true, y_pred, average='weighted') == 0
 
 
 def test_average_binary_jaccard_similarity_score():
     # tp=0, fp=0, fn=1, tn=0
     y_true = np.array([1])
     y_pred = np.array([0])
-    assert_equal(jaccard_similarity_score(y_true, y_pred,
-                                          average='binary'), 0.)
+    assert jaccard_similarity_score(y_true, y_pred, average='binary') == 0.
     # tp=0, fp=0, fn=0, tn=1
     y_true = np.array([0])
     y_pred = np.array([0])
-    assert_equal(jaccard_similarity_score(y_true, y_pred,
-                                          average='binary'), 0.)
+    assert jaccard_similarity_score(y_true, y_pred, average='binary') == 0.
     # tp=1, fp=0, fn=0, tn=0 (pos_label=0)
-    assert_equal(jaccard_similarity_score(y_true, y_pred, pos_label=0,
-                                          average='binary'), 1.)
+    assert jaccard_similarity_score(y_true, y_pred, pos_label=0,
+                                    average='binary') == 1.
     y_true = np.array([1, 0, 1, 1, 0])
     y_pred = np.array([1, 0, 1, 1, 1])
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
