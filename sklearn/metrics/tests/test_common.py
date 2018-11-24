@@ -502,9 +502,12 @@ def test_symmetry():
     for name in SYMMETRIC_METRICS:
         metric = ALL_METRICS[name]
         if name in METRIC_UNDEFINED_BINARY:
-            assert_allclose(metric(y_true_bin, y_pred_bin),
-                            metric(y_pred_bin, y_true_bin),
-                            err_msg="%s is not symmetric" % name)
+            if name in MULTILABELS_METRICS:
+                assert_allclose(metric(y_true_bin, y_pred_bin),
+                                metric(y_pred_bin, y_true_bin),
+                                err_msg="%s is not symmetric" % name)
+            else:
+                assert False, "This case is currently unhandled"
         else:
             assert_allclose(metric(y_true, y_pred),
                             metric(y_pred, y_true),
@@ -877,40 +880,40 @@ def test_raise_value_error_multilabel_sequences(name):
 
 @pytest.mark.parametrize('name', METRICS_WITH_NORMALIZE_OPTION)
 def test_normalize_option_binary_classification(name):
+    if name in METRIC_UNDEFINED_BINARY:
+        return
     # Test in the binary case
     n_samples = 20
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(n_samples, ))
     y_pred = random_state.randint(0, 2, size=(n_samples, ))
 
-    for name in METRICS_WITH_NORMALIZE_OPTION:
-        if name in METRIC_UNDEFINED_BINARY:
-            continue
-        metrics = ALL_METRICS[name]
-        measure = metrics(y_true, y_pred, normalize=True)
-        assert measure > 0, "We failed to test correctly the normalize option"
-        assert_allclose(metrics(y_true, y_pred, normalize=False)
-                        / n_samples, measure)
+    metrics = ALL_METRICS[name]
+    measure = metrics(y_true, y_pred, normalize=True)
+    assert_array_less(-1.0 * measure, 0,
+                      err_msg="We failed to test correctly the normalize "
+                              "option")
+    assert_allclose(metrics(y_true, y_pred, normalize=False) / n_samples,
+                    measure)
 
 
 @pytest.mark.parametrize('name', METRICS_WITH_NORMALIZE_OPTION)
 def test_normalize_option_multiclass_classification(name):
+    if name in METRIC_UNDEFINED_MULTICLASS:
+        return
     # Test in the multiclass case
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 4, size=(20, ))
     y_pred = random_state.randint(0, 4, size=(20, ))
     n_samples = y_true.shape[0]
 
-    for name in METRICS_WITH_NORMALIZE_OPTION:
-        if name in METRIC_UNDEFINED_MULTICLASS:
-            continue
-        metrics = ALL_METRICS[name]
-        measure = metrics(y_true, y_pred, normalize=True)
-        assert_array_less(-1.0 * measure, 0,
-                          err_msg="We failed to test correctly the normalize "
-                                  "option")
-        assert_allclose(metrics(y_true, y_pred, normalize=False)
-                        / n_samples, measure)
+    metrics = ALL_METRICS[name]
+    measure = metrics(y_true, y_pred, normalize=True)
+    assert_array_less(-1.0 * measure, 0,
+                      err_msg="We failed to test correctly the normalize "
+                              "option")
+    assert_allclose(metrics(y_true, y_pred, normalize=False) / n_samples,
+                    measure)
 
 
 def test_normalize_option_multilabel_classification():
