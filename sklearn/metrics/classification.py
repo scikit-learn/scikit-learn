@@ -646,7 +646,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
 
     Returns
     -------
-    score: float (if average is not None) or array of floats, shape =\
+    score : float (if average is not None) or array of floats, shape =\
             [n_unique_labels]
 
     See also
@@ -665,14 +665,13 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.metrics import jaccard_similarity_score
 
-    In the multilabel case with binary label indicators:
+    In the multilabel case:
 
     >>> y_true = np.array([[1, 0, 1], [0, 0, 1], [1, 1, 1]])
     >>> y_pred = np.array([[0, 1, 1], [1, 1, 1], [0, 0, 1]])
-    >>> jaccard_similarity_score(y_true, y_pred)
+    >>> jaccard_similarity_score(y_true, y_pred, average='samples')
     ... # doctest: +ELLIPSIS
     0.33...
     >>> jaccard_similarity_score(y_true, y_pred, average='micro')
@@ -683,18 +682,11 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     >>> jaccard_similarity_score(y_true, y_pred, average=None)
     array([0., 0., 1.])
 
-    It may be a poor indicator if there are no positives for some samples
-    or classes:
-
-    >>> jaccard_similarity_score(np.array([0]), np.array([0]),
-    ... average='binary')
-    0.0
-
     In the multiclass case:
 
-    >>> jaccard_similarity_score(np.array([0, 2, 1, 3]),
-    ... np.array([0, 1, 2, 3]), average='macro')
-    0.5
+    >>> jaccard_similarity_score(np.array([0, 1, 2, 3]),
+    ...                          np.array([0, 2, 2, 3]), average='macro')
+    0.625
 
     """
     _validate_set_wise_average(average)
@@ -741,8 +733,8 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     if average is None:
         return jaccard
     if not normalize:
-        return (jaccard * (1 if sample_weight is None
-                           else sample_weight)).sum()
+        return np.sum(jaccard * (1 if sample_weight is None
+                                 else sample_weight))
     if average == 'weighted':
         weights = MCM[:, 1, 0] + MCM[:, 1, 1]
         if not np.any(weights):
