@@ -65,7 +65,6 @@ from __future__ import print_function
 # License: BSD 3 clause
 
 import sys
-from datetime import datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
