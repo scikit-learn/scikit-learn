@@ -708,11 +708,8 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         numerator = np.array([numerator.sum()])
         denominator = np.array([denominator.sum()])
 
-    if not np.all(denominator):
-        # TODO: warn that 0 will be returned
-        denominator[denominator == 0] = 1
-
-    jaccard = numerator / denominator
+    jaccard = _prf_divide(numerator, denominator, 'jaccard',
+                          'true or predicted', average, ('jaccard',))
     if average is None:
         return jaccard
     if not normalize:
