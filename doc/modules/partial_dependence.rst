@@ -114,7 +114,6 @@ which the trees were trained.
 
  * :ref:`sphx_glr_auto_examples_plot_partial_dependence.py`
 
-
 .. topic:: References
 
  .. [F2001] J. Friedman, "Greedy Function Approximation: A Gradient Boosting Machine",

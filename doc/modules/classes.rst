@@ -427,23 +427,6 @@ Samples generator
    :template: function.rst
 
 
-partial dependence
-------------------
-
-.. automodule:: sklearn.ensemble.partial_dependence
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   ensemble.partial_dependence.partial_dependence
-   ensemble.partial_dependence.plot_partial_dependence
-
-
 .. _exceptions_ref:
 
 :mod:`sklearn.exceptions`: Exceptions and warnings
@@ -1525,6 +1508,13 @@ To be removed in 0.23
    utils.cpu_count
    utils.delayed
    metrics.calinski_harabaz_score
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   ensemble.partial_dependence.partial_dependence
+   ensemble.partial_dependence.plot_partial_dependence
 
 
 To be removed in 0.22

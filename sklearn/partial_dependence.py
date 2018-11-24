@@ -91,8 +91,6 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
 
 
 def _partial_dependence_recursion(est, grid, target_variables):
-    # TODO: The pattern below required to avoid a namespace collision.
-    # TODO: Move below imports to module level import at 0.22 release.
 
     # grid needs to be DTYPE
     grid = np.asarray(grid, dtype=DTYPE, order='C')
@@ -187,8 +185,9 @@ def partial_dependence(est, target_variables, grid=None, X=None,
         The method used to calculate the averaged predictions:
 
         - 'recursion' is only supported for objects inheriting from
-          `BaseGradientBoosting`, but is optimal in terms of speed. With
-          this method, ``X`` is optional and is only used to build the grid.
+          `BaseGradientBoosting`, but is more efficient in terms of speed.
+          With this method, ``X`` is optional and is only used to build the
+          grid.
 
         - 'brute' is supported for any estimator, but is more
           computationally intensive.
@@ -211,7 +210,7 @@ def partial_dependence(est, target_variables, grid=None, X=None,
         a multi-class setting, or to the number of tasks for multi-output
         regression. For classical regression and binary classification
         ``n_targets==1``.
-    values: seq of ndarray or None
+    values : seq of ndarray or None
         The values with which the grid has been created, or None if
         the grid has been given. The generated grid is a cartesian product
         of the arrays in ``values``
@@ -351,7 +350,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         The method to use to calculate the partial dependence predictions:
 
         - 'recursion' is only supported for objects inheriting from
-          `BaseGradientBoosting`, but is optimal in terms of speed.
+          `BaseGradientBoosting`, but is more efficient in terms of speed.
 
         - 'brute' is supported for any estimator, but is more
           computationally intensive.
