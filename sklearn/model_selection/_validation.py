@@ -504,7 +504,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     is_multimetric = not callable(scorer)
     n_scorers = len(scorer.keys()) if is_multimetric else 1
-
     try:
         if y_train is None:
             estimator.fit(X_train, **fit_params)
@@ -554,13 +553,20 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         if return_train_score:
             train_scores = _score(estimator, X_train, y_train, scorer,
                                   is_multimetric)
-
     if verbose > 2:
         if is_multimetric:
-            for scorer_name, score in test_scores.items():
-                msg += ", %s=%s" % (scorer_name, score)
+            for scorer_name in sorted(test_scores):
+                msg += ", %s=" % scorer_name
+                if return_train_score:
+                    msg += "(train=%.3f," % train_scores[scorer_name]
+                    msg += " test=%.3f)" % test_scores[scorer_name]
+                else:
+                    msg += "%.3f" % test_scores[scorer_name]
         else:
-            msg += ", score=%s" % test_scores
+            msg += ", score="
+            msg += ("%.3f" % test_scores if not return_train_score else
+                    "(train=%.3f, test=%.3f)" % (train_scores, test_scores))
+
     if verbose > 1:
         total_time = score_time + fit_time
         end_msg = "%s, total=%s" % (msg, logger.short_format_time(total_time))
