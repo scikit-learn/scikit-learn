@@ -6,7 +6,6 @@ from os.path import join
 from warnings import warn
 from contextlib import closing
 from functools import wraps
-import warnings
 
 try:
     # Python 3+
@@ -53,9 +52,7 @@ def _retry_with_clean_cache(openml_path, data_home):
             except HTTPError:
                 raise
             except Exception:
-                warnings.warn(
-                    "Invalid cache, redownloading file",
-                    RuntimeWarning)
+                warn("Invalid cache, redownloading file", RuntimeWarning)
                 local_path = _get_local_path(openml_path, data_home)
                 if os.path.exists(local_path):
                     os.unlink(local_path)

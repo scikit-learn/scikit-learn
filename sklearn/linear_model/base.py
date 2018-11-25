@@ -24,7 +24,7 @@ from scipy import linalg
 from scipy import sparse
 
 from ..externals import six
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import check_array, check_X_y
 from ..utils.validation import FLOAT_DTYPES

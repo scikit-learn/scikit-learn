@@ -19,7 +19,6 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils import parallel_backend
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone, is_classifier
@@ -30,7 +29,9 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import sgd_fast
 from sklearn.model_selection import RandomizedSearchCV
+
 from sklearn.utils import _joblib
+from sklearn.utils._joblib import parallel_backend
 
 
 # 0.23. warning about tol not having its correct default value.

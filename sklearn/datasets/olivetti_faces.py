@@ -23,8 +23,8 @@ from .base import get_data_home
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from .base import _pkl_filepath
+from ..utils import _joblib
 from ..utils import check_random_state, Bunch
-from ..externals import joblib
 
 # The original data can be found at:
 # https://cs.nyu.edu/~roweis/data/olivettifaces.mat
@@ -104,10 +104,10 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         remove(mat_path)
 
         faces = mfile['faces'].T.copy()
-        joblib.dump(faces, filepath, compress=6)
+        _joblib.dump(faces, filepath, compress=6)
         del mfile
     else:
-        faces = joblib.load(filepath)
+        faces = _joblib.load(filepath)
 
     # We want floating point data, but float32 is enough (there is only
     # one byte of precision in the original uint8s anyway)
