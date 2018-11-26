@@ -349,7 +349,7 @@ def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
         labels_1 = kmeans.fit(X).predict(X)
         labels_2 = kmeans.fit_predict(X)
 
-        assert_array_equal(labels_1, labels_2)
+        assert_almost_equal(v_measure_score(labels_1, labels_2), 1.0)
 
 
 def test_mb_kmeans_verbose():
