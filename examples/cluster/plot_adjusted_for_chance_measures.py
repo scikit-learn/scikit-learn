@@ -56,9 +56,9 @@ def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
     return scores
 
 
-ami_score = partial(metrics.adjusted_mutual_info_score,
-                    average_method='arithmetic')
-ami_score.__name__ = 'adjusted_mutual_info_score'
+def ami_score(U, V):
+    return metrics.adjusted_mutual_info_score(U, V,
+                                              average_method='arithmetic')
 
 score_funcs = [
     metrics.adjusted_rand_score,
