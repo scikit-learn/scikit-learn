@@ -250,7 +250,11 @@ def type_of_target(y):
         return 'multilabel-indicator'
 
     try:
-        y = np.asarray(y)
+        # handle sparse output matrices
+        if issparse(y):
+            y = y.toarray()
+        else:
+            y = np.asarray(y)
     except ValueError:
         # Known to fail in numpy 1.3 for array of arrays
         return 'unknown'
