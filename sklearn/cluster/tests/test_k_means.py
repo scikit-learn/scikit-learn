@@ -560,7 +560,7 @@ def test_k_means_non_collapsed():
     km = KMeans(init=array_init, n_clusters=3, random_state=42, n_init=1)
     km.fit(my_X)
 
-    # centers must not been collapsed
+    # centers must not have been collapsed
     assert_equal(len(np.unique(km.labels_)), 3)
 
     centers = km.cluster_centers_
