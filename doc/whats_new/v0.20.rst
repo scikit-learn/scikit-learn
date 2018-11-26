@@ -19,8 +19,8 @@ Changelog
 .......................
 
 - |Fix| Fixed a regression in :class:`pipeline.Pipeline` where the ``steps``
-  parameter may not have been updated correctly when ``None`` or
-  ``'passthrough'`` is used. :user:`Thomas Fan <thomasjpfan>`.
+  parameter may not have been updated correctly when a step is set to ``None``
+  or ``'passthrough'``. :user:`Thomas Fan <thomasjpfan>`.
 
 
 .. _changes_0_20_1:
