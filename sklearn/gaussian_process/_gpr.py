@@ -251,6 +251,13 @@ class GaussianProcessRegressor(MultiOutputMixin,
             # likelihood
             lml_values = list(map(itemgetter(1), optima))
             self.kernel_.theta = optima[np.argmin(lml_values)][0]
+            if np.min(np.abs((self.kernel_.bounds - np.atleast_2d(self.kernel_.theta).T)/self.kernel_.bounds)) < 1e-8:
+                i, j = np.unravel_index(np.abs((self.kernel_.bounds - np.atleast_2d(self.kernel_.theta).T) /
+                                               self.kernel_.bounds).argmin(), self.kernel_.bounds.shape)
+                which_bound = "upper" if j else "lower"
+                warnings.warn("Hyperparameter %s has been optimized to the %s bound of its given interval. "
+                              "Broaden the bounds and re-do the fit to check" % (self.kernel_.hyperparameters[i].name,
+                                                                                 which_bound), ConvergenceWarning)
             self.log_marginal_likelihood_value_ = -np.min(lml_values)
         else:
             self.log_marginal_likelihood_value_ = \
