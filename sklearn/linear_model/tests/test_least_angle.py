@@ -429,7 +429,7 @@ def test_lars_cv():
         lars_cv.fit(X, y)
         np.testing.assert_array_less(old_alpha, lars_cv.alpha_)
         old_alpha = lars_cv.alpha_
-    assert not(hasattr(lars_cv, 'n_nonzero_coefs'))
+    assert not hasattr(lars_cv, 'n_nonzero_coefs')
 
 
 @pytest.mark.filterwarnings('ignore::FutureWarning')

@@ -129,7 +129,7 @@ def test_huber_scaling_invariant():
     huber = HuberRegressor(fit_intercept=False, alpha=0.0, max_iter=100)
     huber.fit(X, y)
     n_outliers_mask_1 = huber.outliers_
-    assert not(np.all(n_outliers_mask_1))
+    assert not np.all(n_outliers_mask_1)
 
     huber.fit(X, 2. * y)
     n_outliers_mask_2 = huber.outliers_

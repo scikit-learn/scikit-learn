@@ -185,12 +185,12 @@ def test_boston(name, criterion):
 def check_regressor_attributes(name):
     # Regression models should not have a classes_ attribute.
     r = FOREST_REGRESSORS[name](random_state=0)
-    assert not(hasattr(r, "classes_"))
-    assert not(hasattr(r, "n_classes_"))
+    assert not hasattr(r, "classes_")
+    assert not hasattr(r, "n_classes_")
 
     r.fit([[1, 2, 3], [4, 5, 6]], [1, 2])
-    assert not(hasattr(r, "classes_"))
-    assert not(hasattr(r, "n_classes_"))
+    assert not hasattr(r, "classes_")
+    assert not hasattr(r, "n_classes_")
 
 
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
@@ -433,7 +433,7 @@ def check_oob_score_raise_error(name):
                                      (False, False)]:
             est = ForestEstimator(oob_score=oob_score, bootstrap=bootstrap,
                                   random_state=0)
-            assert not(hasattr(est, "oob_score_"))
+            assert not hasattr(est, "oob_score_")
 
         # No bootstrap
         assert_raises(ValueError, ForestEstimator(oob_score=True,

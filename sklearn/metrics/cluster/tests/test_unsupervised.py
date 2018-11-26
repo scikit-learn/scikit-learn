@@ -78,7 +78,7 @@ def test_cluster_size_1():
     #            silhouette    = [1., 1.]
 
     silhouette = silhouette_score(X, labels)
-    assert not(np.isnan(silhouette))
+    assert not np.isnan(silhouette)
     ss = silhouette_samples(X, labels)
     assert_array_equal(ss, [0, .5, .5, 0, 1, 1])
 

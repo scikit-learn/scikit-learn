@@ -102,15 +102,15 @@ class MockClassifier(object):
         if X.ndim >= 3 and not self.allow_nd:
             raise ValueError('X cannot be d')
         if sample_weight is not None:
-            assert sample_weight.shape[0] == X.shape[0], \
-                'MockClassifier extra fit_param sample_weight.shape[0]'' \
-                '' is {0}, should be {1}'.format(sample_weight.shape[0],
-                                                 X.shape[0])
+            assert sample_weight.shape[0] == X.shape[0], (
+                'MockClassifier extra fit_param sample_weight.shape[0]'
+                ' is {0}, should be {1}'.format(sample_weight.shape[0],
+                                                X.shape[0]))
         if class_prior is not None:
-            assert class_prior.shape[0] == len(np.unique(y)), \
-                        'MockClassifier extra fit_param class_prior.shape[0]' \
+            assert class_prior.shape[0] == len(np.unique(y)), (
+                        'MockClassifier extra fit_param class_prior.shape[0]'
                         ' is {0}, should be {1}'.format(class_prior.shape[0],
-                                                        len(np.unique(y)))
+                                                        len(np.unique(y))))
         if sparse_sample_weight is not None:
             fmt = ('MockClassifier extra fit_param sparse_sample_weight'
                    '.shape[0] is {0}, should be {1}')
@@ -119,10 +119,10 @@ class MockClassifier(object):
         if sparse_param is not None:
             fmt = ('MockClassifier extra fit_param sparse_param.shape '
                    'is ({0}, {1}), should be ({2}, {3})')
-            assert sparse_param.shape == P_sparse.shape, \
+            assert sparse_param.shape == P_sparse.shape, (
                 fmt.format(sparse_param.shape[0],
                            sparse_param.shape[1],
-                           P_sparse.shape[0], P_sparse.shape[1])
+                           P_sparse.shape[0], P_sparse.shape[1]))
         return self
 
     def predict(self, T):
@@ -789,8 +789,8 @@ def test_group_shuffle_split():
             # First test: no train group is in the test set and vice versa
             l_train_unique = np.unique(l[train])
             l_test_unique = np.unique(l[test])
-            assert not(np.any(np.in1d(l[train], l_test_unique)))
-            assert not(np.any(np.in1d(l[test], l_train_unique)))
+            assert not np.any(np.in1d(l[train], l_test_unique))
+            assert not np.any(np.in1d(l[test], l_train_unique))
 
             # Second test: train and test add up to all the data
             assert_equal(l[train].size + l[test].size, l.size)
@@ -1200,9 +1200,9 @@ def test_check_cv():
     np.testing.assert_equal(list(StratifiedKFold(3).split(X, y_multiclass_2d)),
                             list(cv.split(X, y_multiclass_2d)))
 
-    assert not(np.all(
+    assert not np.all(
         next(StratifiedKFold(3).split(X, y_multiclass_2d))[0] ==
-        next(KFold(3).split(X, y_multiclass_2d))[0]))
+        next(KFold(3).split(X, y_multiclass_2d))[0])
 
     X = np.ones(5)
     y_multilabel = np.array([[0, 0, 0, 0], [0, 1, 1, 0], [0, 0, 0, 1],
@@ -1239,9 +1239,9 @@ def test_cv_iterable_wrapper():
         splits_are_equal = True
     except AssertionError:
         splits_are_equal = False
-    assert not splits_are_equal, \
-        "If the splits are randomized, " \
-        "successive calls to split should yield different results"
+    assert not splits_are_equal, (
+        "If the splits are randomized, "
+        "successive calls to split should yield different results")
 
 
 def test_group_kfold():

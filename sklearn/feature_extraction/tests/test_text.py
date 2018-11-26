@@ -417,13 +417,13 @@ def test_vectorizer():
         assert_equal(counts_test[0, vocabulary["water"]], 1)
 
         # stop word from the fixed list
-        assert not("the" in vocabulary)
+        assert "the" not in vocabulary
 
         # stop word found automatically by the vectorizer DF thresholding
         # words that are high frequent across the complete corpus are likely
         # to be not informative (either real stop words of extraction
         # artifacts)
-        assert not("copyright" in vocabulary)
+        assert "copyright" not in vocabulary
 
         # not present in the sample
         assert_equal(counts_test[0, vocabulary["coke"]], 0)
@@ -444,7 +444,7 @@ def test_vectorizer():
     # test tf alone
     t2 = TfidfTransformer(norm='l1', use_idf=False)
     tf = t2.fit(counts_train).transform(counts_train).toarray()
-    assert not(hasattr(t2, "idf_"))
+    assert not hasattr(t2, "idf_")
 
     # test idf transform with unlearned idf vector
     t3 = TfidfTransformer(use_idf=True)
@@ -468,7 +468,7 @@ def test_vectorizer():
 
     tv.max_df = v1.max_df
     tfidf2 = tv.fit_transform(train_data).toarray()
-    assert not(tv.fixed_vocabulary_)
+    assert not tv.fixed_vocabulary_
     assert_array_almost_equal(tfidf, tfidf2)
 
     # test the direct tfidf vectorizer with new data
@@ -550,7 +550,7 @@ def test_feature_names():
 
     # test for Value error on unfitted/empty vocabulary
     assert_raises(ValueError, cv.get_feature_names)
-    assert not(cv.fixed_vocabulary_)
+    assert not cv.fixed_vocabulary_
 
     # test for vocabulary learned from data
     X = cv.fit_transform(ALL_FOOD_DOCS)
@@ -811,7 +811,7 @@ def test_vectorizer_pipeline_grid_selection():
     best_vectorizer = grid_search.best_estimator_.named_steps['vect']
     assert_equal(best_vectorizer.ngram_range, (1, 1))
     assert_equal(best_vectorizer.norm, 'l2')
-    assert not(best_vectorizer.fixed_vocabulary_)
+    assert not best_vectorizer.fixed_vocabulary_
 
 
 def test_vectorizer_pipeline_cross_validation():

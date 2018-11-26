@@ -27,7 +27,7 @@ def test_initialize_nn_output():
     data = np.abs(rng.randn(10, 10))
     for init in ('random', 'nndsvd', 'nndsvda', 'nndsvdar'):
         W, H = nmf._initialize_nmf(data, 10, init=init, random_state=0)
-        assert not((W < 0).any() or (H < 0).any())
+        assert not ((W < 0).any() or (H < 0).any())
 
 
 def test_parameter_checking():
@@ -382,8 +382,8 @@ def test_nmf_negative_beta_loss():
         W, H, _ = non_negative_factorization(
             X, n_components=n_components, solver='mu', beta_loss=beta_loss,
             random_state=0, max_iter=1000)
-        assert not(np.any(np.isnan(W)))
-        assert not(np.any(np.isnan(H)))
+        assert not np.any(np.isnan(W))
+        assert not np.any(np.isnan(H))
 
     msg = "When beta_loss <= 0 and X contains zeros, the solver may diverge."
     for beta_loss in (-0.6, 0.):

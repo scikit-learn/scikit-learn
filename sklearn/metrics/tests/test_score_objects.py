@@ -190,7 +190,7 @@ def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
     # usecases
     scorers, is_multi = _check_multimetric_scoring(*args, **kwargs)
     # For all single metric use cases, it should register as not multimetric
-    assert not(is_multi)
+    assert not is_multi
     if args[0] is not None:
         assert scorers is not None
         names, scorers = zip(*scorers.items())
@@ -481,9 +481,9 @@ def test_scorer_sample_weight():
                                                         ignored))
 
         except TypeError as e:
-            assert "sample_weight" in str(e),\
-                        "scorer {0} raises unhelpful exception when called "" \
-                        ""with sample weights: {1}".format(name, str(e))
+            assert "sample_weight" in str(e), (
+                "scorer {0} raises unhelpful exception when called "
+                "with sample weights: {1}".format(name, str(e)))
 
 
 @ignore_warnings  # UndefinedMetricWarning for P / R scores

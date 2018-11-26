@@ -232,10 +232,10 @@ class CommonTest(object):
         clf = self.factory()
         clf.fit(X, Y)
 
-        assert not(hasattr(clf, 'average_coef_'))
-        assert not(hasattr(clf, 'average_intercept_'))
-        assert not(hasattr(clf, 'standard_intercept_'))
-        assert not(hasattr(clf, 'standard_coef_'))
+        assert not hasattr(clf, 'average_coef_')
+        assert not hasattr(clf, 'average_intercept_')
+        assert not hasattr(clf, 'standard_intercept_')
+        assert not hasattr(clf, 'standard_coef_')
 
     def test_late_onset_averaging_not_reached(self):
         clf1 = self.factory(average=600)
@@ -598,8 +598,8 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # anyway.
         clf = SGDClassifier(loss="hinge", alpha=0.01,
                             max_iter=10, tol=None).fit(X, Y)
-        assert not(hasattr(clf, "predict_proba"))
-        assert not(hasattr(clf, "predict_log_proba"))
+        assert not hasattr(clf, "predict_proba")
+        assert not hasattr(clf, "predict_log_proba")
 
         # log and modified_huber losses can output probability estimates
         # binary case

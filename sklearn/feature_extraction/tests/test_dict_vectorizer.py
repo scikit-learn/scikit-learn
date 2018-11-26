@@ -75,7 +75,7 @@ def test_one_of_k():
 
     names = v.get_feature_names()
     assert "version=2" in names
-    assert not("version" in names)
+    assert "version" not in names
 
 
 def test_unseen_or_no_features():

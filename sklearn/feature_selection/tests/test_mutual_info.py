@@ -198,4 +198,4 @@ def test_mutual_info_options():
         assert_array_equal(mi_1, mi_2)
         assert_array_equal(mi_3, mi_4)
 
-    assert not(np.allclose(mi_1, mi_3))
+    assert not np.allclose(mi_1, mi_3)

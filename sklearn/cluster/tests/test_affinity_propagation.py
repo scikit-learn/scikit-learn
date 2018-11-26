@@ -148,16 +148,16 @@ def test_equal_similarities_and_preferences():
     X = np.array([[0, 0], [1, 1], [-2, -2]])
     S = -euclidean_distances(X, squared=True)
 
-    assert not(_equal_similarities_and_preferences(S, np.array(0)))
-    assert not(_equal_similarities_and_preferences(S, np.array([0, 0])))
-    assert not(_equal_similarities_and_preferences(S, np.array([0, 1])))
+    assert not _equal_similarities_and_preferences(S, np.array(0))
+    assert not _equal_similarities_and_preferences(S, np.array([0, 0]))
+    assert not _equal_similarities_and_preferences(S, np.array([0, 1]))
 
     # Equal distances
     X = np.array([[0, 0], [1, 1]])
     S = -euclidean_distances(X, squared=True)
 
     # Different preferences
-    assert not(_equal_similarities_and_preferences(S, np.array([0, 1])))
+    assert not _equal_similarities_and_preferences(S, np.array([0, 1]))
 
     # Same preferences
     assert _equal_similarities_and_preferences(S, np.array([0, 0]))

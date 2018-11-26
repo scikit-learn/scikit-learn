@@ -336,17 +336,17 @@ def test_classes__property():
     # Test that regressors do not have a classes_ attribute
     grid_search = GridSearchCV(Ridge(), {'alpha': [1.0, 2.0]})
     grid_search.fit(X, y)
-    assert not(hasattr(grid_search, 'classes_'))
+    assert not hasattr(grid_search, 'classes_')
 
     # Test that the grid searcher has no classes_ attribute before it's fit
     grid_search = GridSearchCV(LinearSVC(random_state=0), {'C': Cs})
-    assert not(hasattr(grid_search, 'classes_'))
+    assert not hasattr(grid_search, 'classes_')
 
     # Test that the grid searcher has no classes_ attribute without a refit
     grid_search = GridSearchCV(LinearSVC(random_state=0),
                                {'C': Cs}, refit=False)
     grid_search.fit(X, y)
-    assert not(hasattr(grid_search, 'classes_'))
+    assert not hasattr(grid_search, 'classes_')
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
@@ -743,8 +743,8 @@ def check_cv_results_array_types(search, param_keys, score_keys):
     assert all(isinstance(cv_results[param], np.ma.MaskedArray)
                for param in param_keys)
     assert all(cv_results[key].dtype == object for key in param_keys)
-    assert not(any(isinstance(cv_results[key], np.ma.MaskedArray)
-                   for key in score_keys))
+    assert not any(isinstance(cv_results[key], np.ma.MaskedArray)
+                   for key in score_keys)
     assert all(cv_results[key].dtype == np.float64
                for key in score_keys if not key.startswith('rank'))
 
@@ -920,7 +920,7 @@ def test_search_iid_param():
 
     for search in (grid_search, random_search):
         search.fit(X, y)
-        assert not(search.iid)
+        assert not search.iid
 
         test_cv_scores = np.array(list(search.cv_results_['split%d_test_score'
                                                           % s][0]
@@ -1037,7 +1037,7 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
     if refit:
         assert_equal(search_multi.refit, 'accuracy')
     else:
-        assert not(search_multi.refit)
+        assert not search_multi.refit
     assert_equal(search_acc.refit, refit)
 
     X, y = make_blobs(n_samples=100, n_features=4, random_state=42)
@@ -1074,10 +1074,10 @@ def test_search_cv_results_rank_tie_breaking():
                             cv_results['mean_test_score'][1])
         assert_almost_equal(cv_results['mean_train_score'][0],
                             cv_results['mean_train_score'][1])
-        assert not(np.allclose(cv_results['mean_test_score'][1],
-                               cv_results['mean_test_score'][2]))
-        assert not(np.allclose(cv_results['mean_train_score'][1],
-                               cv_results['mean_train_score'][2]))
+        assert not np.allclose(cv_results['mean_test_score'][1],
+                               cv_results['mean_test_score'][2])
+        assert not np.allclose(cv_results['mean_train_score'][1],
+                               cv_results['mean_train_score'][2])
         # 'min' rank should be assigned to the tied candidates
         assert_almost_equal(search.cv_results_['rank_test_score'], [1, 1, 3])
 
@@ -1263,7 +1263,7 @@ def test_predict_proba_disabled():
     y = [0, 0, 1, 1, 1]
     clf = SVC(gamma='scale', probability=False)
     gs = GridSearchCV(clf, {}, cv=2).fit(X, y)
-    assert not(hasattr(gs, "predict_proba"))
+    assert not hasattr(gs, "predict_proba")
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
@@ -1414,7 +1414,7 @@ def test_stochastic_gradient_loss_param():
 
     # When the estimator is not fitted, `predict_proba` is not available as the
     # loss is 'hinge'.
-    assert not(hasattr(clf, "predict_proba"))
+    assert not hasattr(clf, "predict_proba")
     clf.fit(X, y)
     clf.predict_proba(X)
     clf.predict_log_proba(X)
@@ -1426,9 +1426,9 @@ def test_stochastic_gradient_loss_param():
     }
     clf = GridSearchCV(estimator=SGDClassifier(tol=1e-3, loss='hinge'),
                        param_grid=param_grid)
-    assert not(hasattr(clf, "predict_proba"))
+    assert not hasattr(clf, "predict_proba")
     clf.fit(X, y)
-    assert not(hasattr(clf, "predict_proba"))
+    assert not hasattr(clf, "predict_proba")
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22

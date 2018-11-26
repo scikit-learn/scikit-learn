@@ -306,8 +306,8 @@ def test_extract_patches_strided():
         assert patches.shape[:ndim] == expected_view
         last_patch_slices = tuple(slice(i, i + j, None) for i, j in
                                   zip(last_patch, patch_size))
-        assert ((patches[(-1, None, None) * ndim] ==
-                 image[last_patch_slices].squeeze()).all())
+        assert (patches[(-1, None, None) * ndim] ==
+                image[last_patch_slices].squeeze()).all()
 
 
 def test_extract_patches_square():

@@ -76,7 +76,7 @@ def test_data_home(data_home):
 
     # clear_data_home will delete both the content and the folder it-self
     clear_data_home(data_home=data_home)
-    assert not(os.path.exists(data_home))
+    assert not os.path.exists(data_home)
 
     # if the folder is missing it will be created again
     data_home = get_data_home(data_home=data_home)

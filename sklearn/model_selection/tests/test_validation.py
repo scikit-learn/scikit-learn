@@ -151,7 +151,7 @@ class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
     """Dummy classifier that disallows repeated calls of fit method"""
 
     def fit(self, X_subset, y_subset):
-        assert not(hasattr(self, 'fit_called_')), \
+        assert not hasattr(self, 'fit_called_'), \
                    'fit is called the second time'
         self.fit_called_ = True
         return super(type(self), self).fit(X_subset, y_subset)
@@ -188,16 +188,16 @@ class MockClassifier(object):
         if X.ndim >= 3 and not self.allow_nd:
             raise ValueError('X cannot be d')
         if sample_weight is not None:
-            assert sample_weight.shape[0] == X.shape[0], \
-                        'MockClassifier extra fit_param ' \
-                        'sample_weight.shape[0]' \
-                        ' is {0}, should be {1}'.format(sample_weight.shape[0],
-                                                        X.shape[0])
+            assert sample_weight.shape[0] == X.shape[0], (
+                'MockClassifier extra fit_param ' 
+                'sample_weight.shape[0]' 
+                ' is {0}, should be {1}'.format(sample_weight.shape[0],
+                                                X.shape[0]))
         if class_prior is not None:
-            assert class_prior.shape[0] == len(np.unique(y)),\
-                        'MockClassifier extra fit_param class_prior.shape[0]' \
-                        ' is {0}, should be {1}'.format(class_prior.shape[0],
-                                                        len(np.unique(y)))
+            assert class_prior.shape[0] == len(np.unique(y)), (
+                'MockClassifier extra fit_param class_prior.shape[0]'
+                ' is {0}, should be {1}'.format(class_prior.shape[0],
+                                                len(np.unique(y))))
         if sparse_sample_weight is not None:
             fmt = ('MockClassifier extra fit_param sparse_sample_weight'
                    '.shape[0] is {0}, should be {1}')
@@ -206,10 +206,10 @@ class MockClassifier(object):
         if sparse_param is not None:
             fmt = ('MockClassifier extra fit_param sparse_param.shape '
                    'is ({0}, {1}), should be ({2}, {3})')
-            assert sparse_param.shape == P_sparse.shape, \
+            assert sparse_param.shape == P_sparse.shape, (
                 fmt.format(sparse_param.shape[0],
                            sparse_param.shape[1],
-                           P_sparse.shape[0], P_sparse.shape[1])
+                           P_sparse.shape[0], P_sparse.shape[1]))
         return self
 
     def predict(self, T):
@@ -1271,13 +1271,13 @@ def test_check_is_permutation():
     p = np.arange(100)
     rng.shuffle(p)
     assert _check_is_permutation(p, 100)
-    assert not(_check_is_permutation(np.delete(p, 23), 100))
+    assert not _check_is_permutation(np.delete(p, 23), 100)
 
     p[0] = 23
-    assert not(_check_is_permutation(p, 100))
+    assert not _check_is_permutation(p, 100)
 
     # Check if the additional duplicate indices are caught
-    assert not(_check_is_permutation(np.hstack((p, 0)), 100))
+    assert not _check_is_permutation(np.hstack((p, 0)), 100)
 
 
 def test_cross_val_predict_sparse_prediction():

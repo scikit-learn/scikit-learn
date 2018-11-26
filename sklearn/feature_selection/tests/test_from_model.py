@@ -263,7 +263,7 @@ def test_partial_fit():
 
     # check that if est doesn't have partial_fit, neither does SelectFromModel
     transformer = SelectFromModel(estimator=RandomForestClassifier())
-    assert not(hasattr(transformer, "partial_fit"))
+    assert not hasattr(transformer, "partial_fit")
 
 
 def test_calling_fit_reinitializes():

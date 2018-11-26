@@ -95,8 +95,8 @@ def test_meanshift_all_orphans():
 def test_unfitted():
     # Non-regression: before fit, there should be not fitted attributes.
     ms = MeanShift()
-    assert not(hasattr(ms, "cluster_centers_"))
-    assert not(hasattr(ms, "labels_"))
+    assert not hasattr(ms, "cluster_centers_")
+    assert not hasattr(ms, "labels_")
 
 
 def test_cluster_intensity_tie():
