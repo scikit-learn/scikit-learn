@@ -91,7 +91,7 @@ Support for Python 3.4 and below has been officially dropped.
 methods :func:`cross_val_score`, :func:`cross_val_predict`,
 :func:`cross_validate`, now print train scores when `return_train_scores` is
 True and `verbose` > 2. For :func:`learning_curve`, and :func:`validation_curve`
- only the latter is required.
+only the latter is required.
   :issue:`12613` and :issue:`12669` by :user:`Marc Torrellas <marctorrellas>`.
 
 :mod:`sklearn.neighbors`
