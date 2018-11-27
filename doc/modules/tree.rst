@@ -207,6 +207,8 @@ of external libraries:
     |   |---petal width (cm) >  1.75
     |   |   | (class: 2)
     |   |   |---* (weights: [0.0, 1.0, 45.0])
+
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_tree_plot_iris.py`
