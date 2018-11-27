@@ -190,9 +190,8 @@ class MockClassifier(object):
         if sample_weight is not None:
             assert sample_weight.shape[0] == X.shape[0], (
                 'MockClassifier extra fit_param ' 
-                'sample_weight.shape[0]' 
-                ' is {0}, should be {1}'.format(sample_weight.shape[0],
-                                                X.shape[0]))
+                'sample_weight.shape[0] is {0}, should be {1}'
+                .format(sample_weight.shape[0], X.shape[0]))
         if class_prior is not None:
             assert class_prior.shape[0] == len(np.unique(y)), (
                 'MockClassifier extra fit_param class_prior.shape[0]'

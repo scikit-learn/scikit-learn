@@ -237,11 +237,9 @@ def test_check_array():
             assert X is not X_checked
         else:
             # doesn't copy if it was already good
-            if (
-                X.dtype == X_checked.dtype and
-                X_checked.flags['C_CONTIGUOUS'] == X.flags['C_CONTIGUOUS'] and
-                X_checked.flags['F_CONTIGUOUS'] == X.flags['F_CONTIGUOUS']
-            ):
+            if (X.dtype == X_checked.dtype and
+                    X_checked.flags['C_CONTIGUOUS'] == X.flags['C_CONTIGUOUS']
+                    and X_checked.flags['F_CONTIGUOUS'] == X.flags['F_CONTIGUOUS']):
                 assert X is X_checked
 
     # allowed sparse != None

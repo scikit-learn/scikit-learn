@@ -61,8 +61,8 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
 
     clf.C = min_c * 1.01
     clf.fit(X, y)
-    assert (np.asarray(clf.coef_) != 0).any() or \
-           (np.asarray(clf.intercept_) != 0).any()
+    assert ((np.asarray(clf.coef_) != 0).any() or
+            (np.asarray(clf.intercept_) != 0).any())
 
 
 def test_ill_posed_min_c():
