@@ -119,7 +119,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
             lasso_lars = LassoLars(alpha=alpha, fit_intercept=False,
                                    verbose=verbose, normalize=False,
                                    precompute=gram, fit_path=False,
-                                   positive=positive)
+                                   positive=positive, max_iter=max_iter)
             lasso_lars.fit(dictionary.T, X.T, Xy=cov)
             new_code = lasso_lars.coef_
         finally:

@@ -22,6 +22,7 @@ random sampling procedures.
 
 - Decision trees and derived ensembles when both `max_depth` and
   `max_leaf_nodes` are set. |Fix|
+- :class:`decomposition.SparseCoder` with `algorithm='lasso_lars'` |Fix|
 - :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver. |Fix|
 
@@ -54,6 +55,13 @@ Support for Python 3.4 and below has been officially dropped.
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>`,
   :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
+
+:mod:`slkearn.decomposition`
+............................
+
+- |Fix| :class:`decomposition.SparseCoder` now passes `max_iter` to the
+  underlying :class:`linear_model.LassoLars` when algorithm is set to
+  `lasso_lars`. :issue:`12650` by user:`Adrin Jalali <adrinjalali>`.
 
 :mod:`sklearn.linear_model`
 ...........................
