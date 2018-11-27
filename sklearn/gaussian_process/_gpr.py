@@ -255,7 +255,6 @@ class GaussianProcessRegressor(MultiOutputMixin,
                           np.atleast_2d(self.kernel_.theta).T).any():
                 list_param = np.isclose(self.kernel_.bounds,
                                         np.atleast_2d(self.kernel_.theta).T)
-                print(list_param)
                 idx = 0
                 for hyp in self.kernel_.hyperparameters:
                     for i in range(hyp.n_elements):
