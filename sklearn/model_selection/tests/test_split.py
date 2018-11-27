@@ -457,13 +457,13 @@ def test_shuffle_kfold():
 
 
 def test_shuffle_kfold_stratifiedkfold_reproducibility():
-    # Check that when the shuffle is True multiple split calls produce the
-    # same split when random_state is set
     X = np.ones(15)  # Divisible by 3
     y = [0] * 7 + [1] * 8
     X2 = np.ones(16)  # Not divisible by 3
     y2 = [0] * 8 + [1] * 8
 
+    # Check that when the shuffle is True, multiple split calls produce the
+    # same split when random_state is int
     kf = KFold(3, shuffle=True, random_state=0)
     skf = StratifiedKFold(3, shuffle=True, random_state=0)
 
@@ -471,8 +471,12 @@ def test_shuffle_kfold_stratifiedkfold_reproducibility():
         np.testing.assert_equal(list(cv.split(X, y)), list(cv.split(X, y)))
         np.testing.assert_equal(list(cv.split(X2, y2)), list(cv.split(X2, y2)))
 
-    kf = KFold(3, shuffle=True)
-    skf = StratifiedKFold(3, shuffle=True)
+    # Check that when the shuffle is True, multiple split calls often
+    # (not always) produce different splits when random_state is
+    # RandomState instance or None
+    kf = KFold(3, shuffle=True, random_state=np.random.RandomState(0))
+    skf = StratifiedKFold(3, shuffle=True,
+                          random_state=np.random.RandomState(0))
 
     for cv in (kf, skf):
         for data in zip((X, X2), (y, y2)):
