@@ -37,33 +37,33 @@ fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 10), sharey=True)
 
 ax1.plot(X, y_rbf, color='m', lw=lw, label='RBF model')
 ax1.scatter(X[svr_rbf.support_], y[svr_rbf.support_], facecolor="none",
-            edgecolor="m", marker='8', label='rbf support vectors', s=50)
+            edgecolor="m", label='rbf support vectors', s=50)
 ax1.scatter(X[np.setdiff1d(np.arange(len(X)), svr_rbf.support_)],
             y[np.setdiff1d(np.arange(len(X)), svr_rbf.support_)],
             facecolor="none",
-            edgecolor="k", marker='8', label='other training data', s=50)
+            edgecolor="k", label='other training data', s=50)
 ax1.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1),
            ncol=1, fancybox=True, shadow=True)
 
 
 ax2.plot(X, y_lin, color='c', lw=lw, label='Linear model')
 ax2.scatter(X[svr_lin.support_], y[svr_lin.support_], facecolor="none",
-            edgecolor="c", marker='^', label='linear support vectors', s=50)
+            edgecolor="c", label='linear support vectors', s=50)
 ax2.scatter(X[np.setdiff1d(np.arange(len(X)), svr_lin.support_)],
             y[np.setdiff1d(np.arange(len(X)), svr_lin.support_)],
             facecolor="none",
-            edgecolor="k", marker='8', label='other training data', s=50)
+            edgecolor="k", label='other training data', s=50)
 ax2.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1),
            ncol=1, fancybox=True, shadow=True)
 
 
 ax3.plot(X, y_poly, color='g', lw=lw, label='Polynomial model')
 ax3.scatter(X[svr_poly.support_], y[svr_poly.support_], facecolor="none",
-            edgecolor="g", marker='s', label='poly support vectors', s=50)
+            edgecolor="g", label='poly support vectors', s=50)
 ax3.scatter(X[np.setdiff1d(np.arange(len(X)), svr_poly.support_)],
             y[np.setdiff1d(np.arange(len(X)), svr_poly.support_)],
             facecolor="none",
-            edgecolor="k", marker='8', label='other training data', s=50)
+            edgecolor="k", label='other training data', s=50)
 ax3.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1),
            ncol=1, fancybox=True, shadow=True)
 
