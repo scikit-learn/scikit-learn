@@ -1170,7 +1170,7 @@ def check_warm_start_oob(name):
     clf_3 = ForestEstimator(n_estimators=15, max_depth=3, warm_start=True,
                             random_state=1, bootstrap=True, oob_score=False)
     clf_3.fit(X, y)
-    assert not(hasattr(clf_3, 'oob_score_'))
+    assert not hasattr(clf_3, 'oob_score_')
 
     clf_3.set_params(oob_score=True)
     ignore_warnings(clf_3.fit)(X, y)

@@ -316,14 +316,14 @@ def test_imputation_copy():
     imputer = Imputer(missing_values=0, strategy="mean", copy=True)
     Xt = imputer.fit(X).transform(X)
     Xt[0, 0] = -1
-    assert not(np.all(X == Xt))
+    assert not np.all(X == Xt)
 
     # copy=True, sparse csr => copy
     X = X_orig.copy()
     imputer = Imputer(missing_values=X.data[0], strategy="mean", copy=True)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
-    assert not(np.all(X.data == Xt.data))
+    assert not np.all(X.data == Xt.data)
 
     # copy=False, dense => no copy
     X = X_orig.copy().toarray()
@@ -354,7 +354,7 @@ def test_imputation_copy():
                       copy=False, axis=0)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
-    assert not(np.all(X.data == Xt.data))
+    assert not np.all(X.data == Xt.data)
 
     # copy=False, sparse csc, axis=1 => copy
     X = X_orig.copy().tocsc()
@@ -362,14 +362,14 @@ def test_imputation_copy():
                       copy=False, axis=1)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
-    assert not(np.all(X.data == Xt.data))
+    assert not np.all(X.data == Xt.data)
 
     # copy=False, sparse csr, axis=1, missing_values=0 => copy
     X = X_orig.copy()
     imputer = Imputer(missing_values=0, strategy="mean",
                       copy=False, axis=1)
     Xt = imputer.fit(X).transform(X)
-    assert not(sparse.issparse(Xt))
+    assert not sparse.issparse(Xt)
 
     # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
     # made, even if copy=False.

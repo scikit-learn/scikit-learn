@@ -116,9 +116,9 @@ def test_metaestimator_delegation():
             if method in delegator_data.skip_methods:
                 continue
             assert hasattr(delegate, method)
-            assert hasattr(delegator, method), \
-                "%s does not have method %r when its delegate does" \
-                % (delegator_data.name, method)
+            assert hasattr(delegator, method), (
+                    "%s does not have method %r when its delegate does"
+                    % (delegator_data.name, method))
             # delegation before fit raises a NotFittedError
             if method == 'score':
                 assert_raises(NotFittedError, getattr(delegator, method),
@@ -144,7 +144,7 @@ def test_metaestimator_delegation():
                 continue
             delegate = SubEstimator(hidden_method=method)
             delegator = delegator_data.construct(delegate)
-            assert not(hasattr(delegate, method))
-            assert not(hasattr(delegator, method)),\
-                "%s has method %r when its delegate does not" \
-                % (delegator_data.name, method)
+            assert not hasattr(delegate, method)
+            assert not hasattr(delegator, method), (
+                    "%s has method %r when its delegate does not"
+                    % (delegator_data.name, method))

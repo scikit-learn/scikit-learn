@@ -42,7 +42,7 @@ def test_all_estimator_no_base_class():
     for name, Estimator in all_estimators():
         msg = ("Base estimators such as {0} should not be included"
                " in all_estimators").format(name)
-        assert not(name.lower().startswith('base')), msg
+        assert not name.lower().startswith('base'), msg
 
 
 def test_all_estimators():

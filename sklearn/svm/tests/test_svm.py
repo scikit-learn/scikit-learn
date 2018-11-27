@@ -492,11 +492,11 @@ def test_bad_input():
     # Test with arrays that are non-contiguous.
     for clf in (svm.SVC(gamma="scale"), svm.LinearSVC(random_state=0)):
         Xf = np.asfortranarray(X)
-        assert not(Xf.flags['C_CONTIGUOUS'])
+        assert not Xf.flags['C_CONTIGUOUS']
         yf = np.ascontiguousarray(np.tile(Y, (2, 1)).T)
         yf = yf[:, -1]
-        assert not(yf.flags['F_CONTIGUOUS'])
-        assert not(yf.flags['C_CONTIGUOUS'])
+        assert not yf.flags['F_CONTIGUOUS']
+        assert not yf.flags['C_CONTIGUOUS']
         clf.fit(Xf, yf)
         assert_array_equal(clf.predict(T), true_result)
 
@@ -934,9 +934,9 @@ def test_hasattr_predict_proba():
     assert hasattr(G, 'predict_proba')
 
     G = svm.SVC(gamma='scale', probability=False)
-    assert not(hasattr(G, 'predict_proba'))
+    assert not hasattr(G, 'predict_proba')
     G.fit(iris.data, iris.target)
-    assert not(hasattr(G, 'predict_proba'))
+    assert not hasattr(G, 'predict_proba')
 
     # Switching to `probability=True` after fitting should make
     # predict_proba available, but calling it must not work:

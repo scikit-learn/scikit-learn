@@ -228,17 +228,17 @@ def test_unique_labels_mixed_types():
 def test_is_multilabel():
     for group, group_examples in iteritems(EXAMPLES):
         if group in ['multilabel-indicator']:
-            dense_assert_, dense_exp = True, 'True'
+            dense_exp = True
         else:
-            dense_assert_, dense_exp = False, 'False'
+            dense_exp = False
 
         for example in group_examples:
             # Only mark explicitly defined sparse examples as valid sparse
             # multilabel-indicators
             if group == 'multilabel-indicator' and issparse(example):
-                sparse_assert_, sparse_exp = True, 'True'
+                sparse_exp = True
             else:
-                sparse_assert_, sparse_exp = False, 'False'
+                sparse_exp = False
 
             if (issparse(example) or
                 (hasattr(example, '__array__') and
@@ -252,17 +252,17 @@ def test_is_multilabel():
                                                          dok_matrix,
                                                          lil_matrix]]
                 for exmpl_sparse in examples_sparse:
-                    assert sparse_assert_ == is_multilabel(exmpl_sparse),\
-                        'is_multilabel(%r) should be %s' \
-                        % (exmpl_sparse, sparse_exp)
+                    assert sparse_exp == is_multilabel(exmpl_sparse), (
+                            'is_multilabel(%r) should be %s'
+                            % (exmpl_sparse, sparse_exp))
 
             # Densify sparse examples before testing
             if issparse(example):
                 example = example.toarray()
 
-            assert dense_assert_ == is_multilabel(example), \
-                'is_multilabel(%r) should be %s' \
-                % (example, dense_exp)
+            assert dense_exp == is_multilabel(example), (
+                    'is_multilabel(%r) should be %s'
+                    % (example, dense_exp))
 
 
 def test_check_classification_targets():

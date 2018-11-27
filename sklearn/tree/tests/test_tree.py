@@ -804,9 +804,9 @@ def test_min_impurity_split():
         # impurity 1e-7
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
-        assert est.min_impurity_split is None, \
+        assert est.min_impurity_split is None, (
             "Failed, min_impurity_split = {0} > 1e-7".format(
-                est.min_impurity_split)
+                est.min_impurity_split))
         try:
             assert_warns(DeprecationWarning, est.fit, X, y)
         except AssertionError:

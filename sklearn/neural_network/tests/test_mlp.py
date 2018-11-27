@@ -395,7 +395,7 @@ def test_partial_fit_errors():
                   MLPClassifier(solver='sgd').partial_fit, X, y, classes=[2])
 
     # lbfgs doesn't support partial_fit
-    assert not(hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit'))
+    assert not hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit')
 
 
 def test_params_errors():

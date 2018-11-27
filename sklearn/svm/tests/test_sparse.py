@@ -115,8 +115,8 @@ def test_unsorted_indices():
     X_test_unsorted = X_test[np.arange(X_test.shape[0])]
 
     # make sure we scramble the indices
-    assert not(X_sparse_unsorted.has_sorted_indices)
-    assert not(X_test_unsorted.has_sorted_indices)
+    assert not X_sparse_unsorted.has_sorted_indices
+    assert not X_test_unsorted.has_sorted_indices
 
     unsorted_svc = svm.SVC(kernel='linear', probability=True,
                            random_state=0).fit(X_sparse_unsorted, y)

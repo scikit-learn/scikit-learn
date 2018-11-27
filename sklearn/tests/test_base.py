@@ -114,7 +114,7 @@ def test_clone_2():
     selector = SelectFpr(f_classif, alpha=0.1)
     selector.own_attribute = "test"
     new_selector = clone(selector)
-    assert not(hasattr(new_selector, "own_attribute"))
+    assert not hasattr(new_selector, "own_attribute")
 
 
 def test_clone_buggy():
@@ -351,7 +351,7 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
     tree = TreeNoVersion().fit(iris.data, iris.target)
 
     tree_pickle_noversion = pickle.dumps(tree)
-    assert not(b"version" in tree_pickle_noversion)
+    assert b"version" not in tree_pickle_noversion
     message = pickle_error_message.format(estimator="TreeNoVersion",
                                           old_version="pre-0.18",
                                           current_version=sklearn.__version__)

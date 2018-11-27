@@ -19,7 +19,7 @@ class MockMetaEstimator(object):
 def test_delegated_docstring():
     assert "This is a mock delegated function" \
                 in str(MockMetaEstimator.__dict__['func'].__doc__)
-    assert "This is a mock delegated function"\
+    assert "This is a mock delegated function" \
            in str(MockMetaEstimator.func.__doc__)
     assert "This is a mock delegated function" \
            in str(MockMetaEstimator().func.__doc__)
@@ -66,12 +66,12 @@ class HasNoPredict(object):
 
 def test_if_delegate_has_method():
     assert hasattr(MetaEst(HasPredict()), 'predict')
-    assert not(hasattr(MetaEst(HasNoPredict()), 'predict'))
-    assert not(
-        hasattr(MetaEstTestTuple(HasNoPredict(), HasNoPredict()), 'predict'))
+    assert not hasattr(MetaEst(HasNoPredict()), 'predict')
+    assert not \
+        hasattr(MetaEstTestTuple(HasNoPredict(), HasNoPredict()), 'predict')
     assert hasattr(MetaEstTestTuple(HasPredict(), HasNoPredict()), 'predict')
-    assert not(
-        hasattr(MetaEstTestTuple(HasNoPredict(), HasPredict()), 'predict'))
-    assert not(
-        hasattr(MetaEstTestList(HasNoPredict(), HasPredict()), 'predict'))
+    assert not \
+        hasattr(MetaEstTestTuple(HasNoPredict(), HasPredict()), 'predict')
+    assert not \
+        hasattr(MetaEstTestList(HasNoPredict(), HasPredict()), 'predict')
     assert hasattr(MetaEstTestList(HasPredict(), HasPredict()), 'predict')

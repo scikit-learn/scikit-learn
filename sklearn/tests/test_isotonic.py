@@ -59,7 +59,7 @@ def test_check_increasing_down():
 
     # Check that we got increasing=False and no warnings
     is_increasing = assert_no_warnings(check_increasing, x, y)
-    assert not(is_increasing)
+    assert not is_increasing
 
 
 def test_check_increasing_down_extreme():
@@ -68,7 +68,7 @@ def test_check_increasing_down_extreme():
 
     # Check that we got increasing=False and no warnings
     is_increasing = assert_no_warnings(check_increasing, x, y)
-    assert not(is_increasing)
+    assert not is_increasing
 
 
 def test_check_ci_warn():
@@ -80,7 +80,7 @@ def test_check_ci_warn():
                                          check_increasing,
                                          x, y)
 
-    assert not(is_increasing)
+    assert not is_increasing
 
 
 def test_isotonic_regression():

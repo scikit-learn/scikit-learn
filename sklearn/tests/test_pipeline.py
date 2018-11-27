@@ -202,7 +202,7 @@ def test_pipeline_init():
 
     # Test clone
     pipe2 = assert_no_warnings(clone, pipe)
-    assert not(pipe.named_steps['svc'] is pipe2.named_steps['svc'])
+    assert not pipe.named_steps['svc'] is pipe2.named_steps['svc']
 
     # Check that apart from estimators, the parameters are the same
     params = pipe.get_params(deep=True)
@@ -410,7 +410,7 @@ def test_fit_predict_with_intermediate_fit_params():
                      clf__should_succeed=True)
     assert pipe.named_steps['transf'].fit_params['should_get_this']
     assert pipe.named_steps['clf'].successful
-    assert not('should_succeed' in pipe.named_steps['transf'].fit_params)
+    assert 'should_succeed' not in pipe.named_steps['transf'].fit_params
 
 
 def test_predict_with_predict_params():
@@ -450,7 +450,7 @@ def test_feature_union():
 
     # Test clone
     fs2 = assert_no_warnings(clone, fs)
-    assert not(fs.transformer_list[0][1] is fs2.transformer_list[0][1])
+    assert fs.transformer_list[0][1] is not fs2.transformer_list[0][1]
 
     # test setting parameters
     fs.set_params(select__k=2)
@@ -651,25 +651,25 @@ def test_pipeline_ducktyping():
     pipeline.inverse_transform
 
     pipeline = make_pipeline(Transf())
-    assert not(hasattr(pipeline, 'predict'))
+    assert not hasattr(pipeline, 'predict')
     pipeline.transform
     pipeline.inverse_transform
 
     pipeline = make_pipeline('passthrough')
     assert pipeline.steps[0] == ('passthrough', 'passthrough')
-    assert not(hasattr(pipeline, 'predict'))
+    assert not hasattr(pipeline, 'predict')
     pipeline.transform
     pipeline.inverse_transform
 
     pipeline = make_pipeline(Transf(), NoInvTransf())
-    assert not(hasattr(pipeline, 'predict'))
+    assert not hasattr(pipeline, 'predict')
     pipeline.transform
-    assert not(hasattr(pipeline, 'inverse_transform'))
+    assert not hasattr(pipeline, 'inverse_transform')
 
     pipeline = make_pipeline(NoInvTransf(), Transf())
-    assert not(hasattr(pipeline, 'predict'))
+    assert not hasattr(pipeline, 'predict')
     pipeline.transform
-    assert not(hasattr(pipeline, 'inverse_transform'))
+    assert not hasattr(pipeline, 'inverse_transform')
 
 
 def test_make_pipeline():
@@ -982,7 +982,7 @@ def test_pipeline_memory():
         assert_array_equal(pipe.score(X, y), cached_pipe.score(X, y))
         assert_array_equal(pipe.named_steps['transf'].means_,
                            cached_pipe.named_steps['transf'].means_)
-        assert not(hasattr(transf, 'means_'))
+        assert not hasattr(transf, 'means_')
         # Check that we are reading the cache while fitting
         # a second time
         cached_pipe.fit(X, y)
