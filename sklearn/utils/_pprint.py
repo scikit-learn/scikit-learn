@@ -1,6 +1,10 @@
 """This module contains the _EstimatorPrettyPrinter class used in
 BaseEstimator.__repr__ for pretty-printing estimators"""
 
+
+#  Author: Fred L. Drake, Jr. <fdrake@acm.org> (built-in CPython pprint module)
+#          Nicolas Hug
+
 from inspect import signature
 import pprint
 
