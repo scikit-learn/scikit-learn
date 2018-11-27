@@ -253,10 +253,20 @@ class GaussianProcessRegressor(MultiOutputMixin,
             self.kernel_.theta = optima[np.argmin(lml_values)][0]
             if np.isclose(self.kernel_.bounds,
                           np.atleast_2d(self.kernel_.theta).T).any():
-                warnings.warn("Some parameters of the chosen kernel "
-                              "have been optimized to one of their bounds. "
-                              "Please broaden the bounds and re-do the fit",
-                              ConvergenceWarning)
+                list_param = np.isclose(self.kernel_.bounds,
+                                        np.atleast_2d(self.kernel_.theta).T)
+                print(list_param)
+                idx = 0
+                for hyp in self.kernel_.hyperparameters:
+                    for i in range(hyp.n_elements):
+                        if list_param[idx, 0]:
+                            warnings.warn("Dimension %s of parameter %s has been wrongly optimized to its lower bound" %
+                                          (i, hyp.name), ConvergenceWarning)
+                        elif list_param[idx, 1]:
+                            warnings.warn("Dimension %s of parameter %s has been wrongly optimized to its upper bound" %
+                                          (i, hyp.name), ConvergenceWarning)
+                        idx += 1
+
             self.log_marginal_likelihood_value_ = -np.min(lml_values)
         else:
             self.log_marginal_likelihood_value_ = \
