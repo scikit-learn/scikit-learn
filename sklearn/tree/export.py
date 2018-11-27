@@ -23,7 +23,7 @@ from ..utils.validation import check_is_fitted
 from . import _criterion
 from . import _tree
 from ._reingold_tilford import buchheim, Tree
-
+from . import DecisionTreeClassifier, DecisionTreeRegressor
 
 def _color_brew(n):
     """Generate n colors with equally spaced hues.
@@ -784,9 +784,9 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
             out_file.close()
 
 
-def export_ascii(decision_tree, feature_names=None, class_names=None,
-                 max_depth=10, show_value=False, show_class=None,
-                 show_leaves_value=True, spacing=3):
+def export_ascii(decision_tree, feature_names=None,
+                 max_depth=10, show_value='only_leaves',
+                 show_class=True, spacing=3):
     """Build a text report showing the rules of a decision tree.
 
     Parameters
@@ -798,25 +798,20 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
         A list of length n_features containing the feature names.
         If None generic names will be used ("feature_0", "feature_1", ...).
 
-    class_names : list of strings, bool or None, optional (default=None)
-        Names of each of the target classes in ascending numerical order.
-        Only relevant for classification, not supported for multi-output.
-        Ignored if show_class is False.
-
     max_depth : int, optional (default=10)
-        Only the first max_depth levels of the tree are printed.
+        Only the first max_depth levels of the tree are exported.
 
-    show_value : bool, optional (default=False)
-        If True the value of each internal node is printed.
-        Otherwise the value will be reported only for leaves.
+    show_value : string or None, optional (default='only_leaves')
+        Wheter to report the predicted value (for regression) or
+        the class weights (for classification).
+        If 'only_leaves' the value will be exported only for the leaves;
+        If 'all' the value will be exported for all the nodes;
+        If None, no value will be exported.
 
-    show_class : bool, optional (default=None)
-        If False the class label is not printed for each node.
-        The class is printed by default for classification trees.
+    show_class : bool, optional (default=True)
+        If False the class label is not exported for each node.
+        The class is exported by default for classification trees.
         Only relevant for classification.
-
-    show_leaves_value : bool, optional (default=True)
-        If True the value on the leaves is showed.
 
     spacing : int, optional (default=3)
         Number of spaces between edges. The higher it is, the wider the result.
@@ -837,33 +832,35 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
     >>> y = iris['target']
     >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
     >>> decision_tree = decision_tree.fit(X, y)
-    >>> r = export_ascii(decision_tree, feature_names=iris['feature_names'],
-    ...                  class_names=iris['target_names'], show_class=True)
+    >>> r = export_ascii(decision_tree, feature_names=iris['feature_names'])
     >>> print(r)
     |---petal width (cm) <= 0.80
-    |   (class: setosa)
-    |   |---* (value: [50.0, 0.0, 0.0])
+    |   | (class: 0)
+    |   |---* (weights: [50.0, 0.0, 0.0])
     |---petal width (cm) >  0.80
-    |   (class: versicolor)
+    |   | (class: 1)
     |   |---petal width (cm) <= 1.75
-    |   |   (class: versicolor)
-    |   |   |---* (value: [0.0, 49.0, 5.0])
+    |   |   | (class: 1)
+    |   |   |---* (weights: [0.0, 49.0, 5.0])
     |   |---petal width (cm) >  1.75
-    |   |   (class: virginica)
-    |   |   |---* (value: [0.0, 1.0, 45.0])
+    |   |   | (class: 2)
+    |   |   |---* (weights: [0.0, 1.0, 45.0])
     ...
     """
     check_is_fitted(decision_tree, 'tree_')
     tree_ = decision_tree.tree_
+    class_names = decision_tree.classes_
+    right_child_string = "{}{} <= {:.2f}\n"
+    left_child_string = "{}{} >  {:.2f}\n"
+    class_string = "{}{} (class: {})\n"
+    value_string = "{}{} (value: {})\n"
 
     if max_depth <= 0:
         raise ValueError("max_depth bust be > 0, given %d" % max_depth)
 
-    if (class_names is not None and
-            len(class_names) != tree_.n_classes[0]):
-        raise ValueError("class_names must contain "
-                         "%d elements, got %d" % (tree_.n_classes[0],
-                                                  len(class_names)))
+    if (show_value is not None and
+            show_value not in ['only_leaves', 'all']):
+        raise ValueError("show_value must be 'all', 'only_leaves' or None")
 
     if (feature_names is not None and
             len(feature_names) != tree_.n_features):
@@ -874,9 +871,9 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
     if spacing <= 0:
         raise ValueError("spacing must be > 0, given %d" % spacing)
 
-    if tree_.n_classes[0] != 1 and show_class is not False:
-        show_class = True
-    if tree_.n_classes[0] == 1:
+    if isinstance(decision_tree, DecisionTreeClassifier):
+        value_string = "{}{} (weights: {})\n"
+    if isinstance(decision_tree, DecisionTreeRegressor):
         show_class = False
 
     if feature_names:
@@ -893,11 +890,6 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
         indent = indent[:-spacing] + "-" * spacing
         info_indent = indent.replace("-" * spacing, " " * spacing)
 
-        right_child_string = "{}{} <= {:.2f}\n"
-        left_child_string = "{}{} >  {:.2f}\n"
-        class_string = "{}(class: {})\n"
-        value_string = "{}{} (value: {})\n"
-
         if depth <= max_depth:
             value = tree_.value[node][0]
             class_name = np.argmax(value)
@@ -905,15 +897,15 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
             left_child = tree_.children_left[node]
             class_name_right = np.argmax(tree_.value[right_child][0])
             class_name_left = np.argmax(tree_.value[left_child][0])
-            if (class_names is not None and
-                    tree_.n_classes[0] != 1 and
+            if (tree_.n_classes[0] != 1 and
                     tree_.n_outputs == 1):
                 class_name = class_names[class_name]
                 class_name_right = class_names[class_name_right]
                 class_name_left = class_names[class_name_left]
 
             info_string = ""
-            if show_value:
+
+            if show_value == 'all':
                 info_string += value_string.format(info_indent, '|',
                                                    str(value.tolist()))
 
@@ -921,9 +913,9 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
             info_string_right = info_string
 
             if show_class:
-                info_string_left += class_string.format(info_indent,
+                info_string_left += class_string.format(info_indent, '|',
                                                         class_name_left)
-                info_string_right += class_string.format(info_indent,
+                info_string_right += class_string.format(info_indent, '|',
                                                          class_name_right)
 
             if tree_.feature[node] != _tree.TREE_UNDEFINED:
@@ -944,7 +936,7 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
                                    depth+1)
             else:  # leaf
                 # meaningful for classification and regression
-                if show_leaves_value:
+                if show_value in ['all', 'only_leaves']:
                     val = str(value.tolist())
                     export_ascii.report += value_string.format(indent, '*',
                                                                val)

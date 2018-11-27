@@ -182,7 +182,28 @@ render these plots inline automatically::
    :align: center
    :scale: 75
 
-Alternatively, the tree can also be exported in textual format with the function :func:`export_ascii`. This method doesn't require the installation of external libraries.
+Alternatively, the tree can also be exported in textual format with the
+function :func:`export_ascii`. This method doesn't require the installation
+of external libraries:
+
+    >>> iris = load_iris()
+    >>> X = iris['data']
+    >>> y = iris['target']
+    >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
+    >>> decision_tree = decision_tree.fit(X, y)
+    >>> r = export_ascii(decision_tree, feature_names=iris['feature_names'])
+    >>> print(r)
+    |---petal width (cm) <= 0.80
+    |   | (class: 0)
+    |   |---* (weights: [50.0, 0.0, 0.0])
+    |---petal width (cm) >  0.80
+    |   | (class: 1)
+    |   |---petal width (cm) <= 1.75
+    |   |   | (class: 1)
+    |   |   |---* (weights: [0.0, 49.0, 5.0])
+    |   |---petal width (cm) >  1.75
+    |   |   | (class: 2)
+    |   |   |---* (weights: [0.0, 1.0, 45.0])
 
 .. topic:: Examples:
 

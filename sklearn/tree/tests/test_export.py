@@ -317,16 +317,16 @@ def test_export_ascii_errors():
     clf.fit(X, y)
 
     assert_raise_message(ValueError,
-                         'max_depth bust be > 0, given 0',
+                         "max_depth bust be > 0, given 0",
                          export_ascii, clf, max_depth=0)
     assert_raise_message(ValueError,
-                         'feature_names must contain 2 elements, got 1',
+                         "feature_names must contain 2 elements, got 1",
                          export_ascii, clf, feature_names=['a'])
     assert_raise_message(ValueError,
-                         'class_names must contain 2 elements, got 1',
-                         export_ascii, clf, class_names=['a'])
+                         "show_value must be 'all', 'only_leaves' or None",
+                         export_ascii, clf, show_value=["a"])
     assert_raise_message(ValueError,
-                         'spacing must be > 0, given 0',
+                         "spacing must be > 0, given 0",
                          export_ascii, clf, spacing=0)
 
 
@@ -335,53 +335,54 @@ def test_export_ascii():
     clf.fit(X, y)
 
     expected_report = dedent("""|---feature_1 <= 0.00
-|   |---* (value: [3.0, 0.0])
+|   |---* (weights: [3.0, 0.0])
 |---feature_1 >  0.00
-|   |---* (value: [0.0, 3.0])
+|   |---* (weights: [0.0, 3.0])
 """)
     assert export_ascii(clf, show_class=False) == expected_report
 
     expected_report = dedent("""|---feature_1 <= 0.00
-|   | (value: [3.0, 3.0])
-|   |---* (value: [3.0, 0.0])
+|   | (class: -1)
+|   |---* (weights: [3.0, 0.0])
 |---feature_1 >  0.00
-|   | (value: [3.0, 3.0])
-|   |---* (value: [0.0, 3.0])
+|   | (class: 1)
+|   |---* (weights: [0.0, 3.0])
 """)
-    assert export_ascii(clf, show_value=True,
+    assert export_ascii(clf, show_class=True) == expected_report
+
+    expected_report = dedent("""|---feature_1 <= 0.00
+|   | (weights: [3.0, 3.0])
+|   | (class: -1)
+|   |---* (weights: [3.0, 0.0])
+|---feature_1 >  0.00
+|   | (weights: [3.0, 3.0])
+|   | (class: 1)
+|   |---* (weights: [0.0, 3.0])
+""")
+    assert export_ascii(clf, show_value='all') == expected_report
+
+    expected_report = dedent("""|---feature_1 <= 0.00
+|   |---* (weights: [3.0, 0.0])
+|---feature_1 >  0.00
+|   |---* (weights: [0.0, 3.0])
+""")
+    assert export_ascii(clf, show_value='only_leaves',
                         show_class=False) == expected_report
 
     expected_report = dedent("""|---b <= 0.00
-|   |---* (value: [3.0, 0.0])
 |---b >  0.00
-|   |---* (value: [0.0, 3.0])
 """)
-    assert export_ascii(clf, feature_names=['a', 'b'],
+    assert export_ascii(clf, show_value=None,
+                        feature_names=['a', 'b'],
                         show_class=False) == expected_report
 
     expected_report = dedent("""|-feature_1 <= 0.00
-| |-* (value: [3.0, 0.0])
+| |-* (weights: [3.0, 0.0])
 |-feature_1 >  0.00
-| |-* (value: [0.0, 3.0])
+| |-* (weights: [0.0, 3.0])
 """)
-    assert export_ascii(clf, spacing=1,
+    assert export_ascii(clf, show_value='only_leaves', spacing=1,
                         show_class=False) == expected_report
-
-    expected_report = dedent("""|---feature_1 <= 0.00
-|   (class: c1)
-|   |---* (value: [3.0, 0.0])
-|---feature_1 >  0.00
-|   (class: c2)
-|   |---* (value: [0.0, 3.0])
-""")
-    assert export_ascii(clf, class_names=['c1', 'c2'],
-                        show_class=None) == expected_report
-
-    expected_report = dedent("""|---feature_1 <= 0.00
-|---feature_1 >  0.00
-""")
-    assert export_ascii(clf, show_class=False,
-                        show_leaves_value=False) == expected_report
 
     clf = DecisionTreeRegressor(max_depth=2, random_state=0)
     clf.fit(X, y)
