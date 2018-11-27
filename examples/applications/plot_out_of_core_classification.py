@@ -359,9 +359,8 @@ plt.legend(cls_names, loc='best')
 # Plot fitting times
 plt.figure()
 fig = plt.gcf()
-cls_runtime = []
-for cls_name, stats in sorted(cls_stats.items()):
-    cls_runtime.append(stats['total_fit_time'])
+cls_runtime = [stats['total_fit_time']
+               for cls_name, stats in sorted(cls_stats.items())]
 
 cls_runtime.append(total_vect_time)
 cls_names.append('Vectorization')
