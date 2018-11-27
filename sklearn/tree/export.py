@@ -791,8 +791,10 @@ def export_ascii(decision_tree, feature_names=None,
 
     Parameters
     ----------
-    decision_tree : decision tree
-        The decision tree to be exported.
+    decision_tree : object
+        The decision tree estimator to be exported.
+        It can be an instance of 
+        DecisionTreeClassifier or DecisionTreeRegressor.
 
     feature_names : list, optional (default=None)
         A list of length n_features containing the feature names.
