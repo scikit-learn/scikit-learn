@@ -524,7 +524,7 @@ class OneToOneMixin(object):
 
         Parameters
         ----------
-        input_feature : array-like of string
+        input_features : array-like of string
             Input feature names.
 
         Returns
