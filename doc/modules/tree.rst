@@ -207,7 +207,7 @@ of external libraries:
     |   |---petal width (cm) >  1.75
     |   |   | (class: 2)
     |   |   |---* (weights: [0.0, 1.0, 45.0])
-
+    <BLANKLINE>
 
 .. topic:: Examples:
 
