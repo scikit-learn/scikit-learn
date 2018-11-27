@@ -471,10 +471,10 @@ def test_shuffle_kfold_stratifiedkfold_reproducibility():
         np.testing.assert_equal(list(cv.split(X, y)), list(cv.split(X, y)))
         np.testing.assert_equal(list(cv.split(X2, y2)), list(cv.split(X2, y2)))
 
-    kf = KFold(3, shuffle=True)
-    skf = StratifiedKFold(3, shuffle=True)
+    kf = KFold(3, shuffle=True, random_state=np.random.RandomState(0))
+    skf = StratifiedKFold(3, shuffle=True,
+                          random_state=np.random.RandomState(0))
 
-    np.random.seed(0)
     for cv in (kf, skf):
         for data in zip((X, X2), (y, y2)):
             # Test if the two splits are different cv
