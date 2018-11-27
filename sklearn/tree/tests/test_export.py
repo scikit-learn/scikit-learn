@@ -398,6 +398,19 @@ def test_export_ascii():
 """)
     assert export_ascii(clf, max_depth=1) == expected_report
 
+    X_mo = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+    y_mo = [[-1, -1], [-1, -1], [-1, -1], [1, 1], [1, 1], [1, 1]]
+
+    clf = DecisionTreeRegressor(max_depth=2, random_state=0)
+    clf.fit(X_mo, y_mo)
+
+    expected_report = dedent("""|---feature_1 <= 0.00
+|   |---* (value: [-1.0, -1.0])
+|---feature_1 >  0.00
+|   |---* (value: [1.0, 1.0])
+""")
+    assert export_ascii(clf) == expected_report
+
 
 def test_plot_tree():
     # mostly smoke tests

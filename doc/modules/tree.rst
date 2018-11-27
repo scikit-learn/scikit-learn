@@ -186,6 +186,9 @@ Alternatively, the tree can also be exported in textual format with the
 function :func:`export_ascii`. This method doesn't require the installation
 of external libraries:
 
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> from sklearn.tree.export import export_ascii
     >>> iris = load_iris()
     >>> X = iris['data']
     >>> y = iris['target']

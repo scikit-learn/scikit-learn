@@ -25,6 +25,7 @@ from . import _tree
 from ._reingold_tilford import buchheim, Tree
 from . import DecisionTreeClassifier, DecisionTreeRegressor
 
+
 def _color_brew(n):
     """Generate n colors with equally spaced hues.
 
@@ -793,7 +794,7 @@ def export_ascii(decision_tree, feature_names=None,
     ----------
     decision_tree : object
         The decision tree estimator to be exported.
-        It can be an instance of 
+        It can be an instance of
         DecisionTreeClassifier or DecisionTreeRegressor.
 
     feature_names : list, optional (default=None)
@@ -893,7 +894,11 @@ def export_ascii(decision_tree, feature_names=None,
         info_indent = indent.replace("-" * spacing, " " * spacing)
 
         if depth <= max_depth:
-            value = tree_.value[node][0]
+            value = None
+            if tree_.n_outputs == 1:
+                value = tree_.value[node][0]
+            else:
+                value = tree_.value[node].T[0]
             class_name = np.argmax(value)
             right_child = tree_.children_right[node]
             left_child = tree_.children_left[node]
