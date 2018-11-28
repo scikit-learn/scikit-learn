@@ -786,12 +786,6 @@ non-smooth `penalty="l1"`. This is therefore the solver of choice for sparse
 multinomial logistic regression. It is also the only solver that supports
 `penalty="elasticnet"`.
 
-The "lbfgs" is an optimization algorithm that approximates the 'BFGS'_, algortithm
-which belongs to quasi-Newton methods. It performs the best for small datasets
-then other solvers. The "lbfgs" solver is recommended for use for small data-sets
-but for larger datasets its performance suffers.
-`lbfgs performance <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_.
-
 The "lbfgs" is an optimization algorithm that approximates the Broyden–Fletcher–Goldfarb–Shanno algorithm [8]_, algortithm
 which belongs to quasi-Newton methods. It performs the best for small datasets
 than other solvers that use Stochastic Gradient descent. The "lbfgs" solver is recommended for use for small data-sets
@@ -878,7 +872,7 @@ to warm-starting (see :term:`Glossary <warm_start>`).
 
     .. [8] https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm
 
-    .. [9] `"Performance Evaluation of Lbfgs"
+    .. [9] `"Performance Evaluation of Lbfgs vs other solvers"
             <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_
 
 
