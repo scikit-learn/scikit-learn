@@ -4,6 +4,8 @@ BaseEstimator.__repr__ for pretty-printing estimators"""
 
 #  Author: Fred L. Drake, Jr. <fdrake@acm.org> (built-in CPython pprint module)
 #          Nicolas Hug
+#
+# License: see sklearn/utils/LICENSE file
 
 from inspect import signature
 import pprint
