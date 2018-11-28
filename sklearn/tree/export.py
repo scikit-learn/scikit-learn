@@ -814,7 +814,7 @@ def export_ascii(decision_tree, feature_names=None,
     show_class : bool, optional (default=True)
         If False the class label is not exported for each node.
         The class is exported by default for classification trees.
-        Only relevant for classification.
+        Only relevant for classification problems.
 
     spacing : int, optional (default=3)
         Number of spaces between edges. The higher it is, the wider the result.
