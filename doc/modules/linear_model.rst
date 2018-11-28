@@ -338,7 +338,7 @@ the algorithm to fit the coefficients.
 
 .. _elastic_net:
 
-Elastic Net
+Elastic-Net
 ===========
 :class:`ElasticNet` is a linear regression model trained with L1 and L2 prior
 as regularizer. This combination allows for learning a sparse model where
@@ -390,7 +390,7 @@ the duality gap computation used for convergence control.
 
 .. _multi_task_elastic_net:
 
-Multi-task Elastic Net
+Multi-task Elastic-Net
 ======================
 
 The :class:`MultiTaskElasticNet` is an elastic-net model that estimates sparse
@@ -730,7 +730,7 @@ or the log-linear classifier. In this model, the probabilities describing the po
 
 The implementation of logistic regression in scikit-learn can be accessed from
 class :class:`LogisticRegression`. This implementation can fit binary, One-vs-
-Rest, or multinomial logistic regression with optional L2 or L1
+Rest, or multinomial logistic regression with optional L2, L1 or Elastic-Net
 regularization.
 
 As an optimization problem, binary class L2 penalized logistic regression
@@ -739,12 +739,22 @@ minimizes the following cost function:
 .. math:: \min_{w, c} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
 
 Similarly, L1 regularized logistic regression solves the following
-optimization problem
+optimization problem:
 
 .. math:: \min_{w, c} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1).
 
+Elastic-Net regularization is a combination of L1 and L2, and minimizes the
+following cost function:
+
+.. math:: \min_{w, c} \frac{1 - \rho}{2}w^T w + \rho \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1),
+
+where :math:`\rho` controls the strengh of L1 regularization vs L2
+regularization (it corresponds to the `l1_ratio` parameter).
+
 Note that, in this notation, it's assumed that the observation :math:`y_i` takes values in the set
-:math:`{-1, 1}` at trial :math:`i`.
+:math:`{-1, 1}` at trial :math:`i`. We can also see that Elastic-Net is
+equivalent to L1 when :math:`\rho = 1` and equivalent to L2 when
+:math:`\rho=0`.
 
 The solvers implemented in the class :class:`LogisticRegression`
 are "liblinear", "newton-cg", "lbfgs", "sag" and "saga":
@@ -772,8 +782,15 @@ than other solvers for large datasets, when both the number of samples and the
 number of features are large.
 
 The "saga" solver [7]_ is a variant of "sag" that also supports the
-non-smooth `penalty="l1"` option. This is therefore the solver of choice
-for sparse multinomial logistic regression.
+non-smooth `penalty="l1"`. This is therefore the solver of choice for sparse
+multinomial logistic regression. It is also the only solver that supports
+`penalty="elasticnet"`.
+
+The "lbfgs" is an optimization algorithm that approximates the 'BFGS'_, algortithm
+which belongs to quasi-Newton methods. It performs the best for small datasets
+then other solvers. The "lbfgs" solver is recommended for use for small data-sets
+but for larger datasets its performance suffers.
+`lbfgs performance <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_.
 
 The "lbfgs" is an optimization algorithm that approximates the Broyden–Fletcher–Goldfarb–Shanno algorithm [8]_, algortithm
 which belongs to quasi-Newton methods. It performs the best for small datasets
@@ -795,6 +812,8 @@ In a nutshell, the following table summarizes the penalties supported by each so
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 | OVR + L1 penalty             |       yes       |     no      |       no        |    no     |    yes     |
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| Elastic-Net                  |       no        |     no      |       no        |    no     |    yes     |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
 | **Behaviors**                |                                                                          |
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 | Penalize the intercept (bad) |       yes       |     no      |       no        |    no     |    no      |
@@ -804,8 +823,8 @@ In a nutshell, the following table summarizes the penalties supported by each so
 | Robust to unscaled datasets  |       yes       |     yes     |       yes       |    no     |    no      |
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 
-The "saga" solver is often the best choice but requires scaling. The "liblinear" solver is
-used by default for historical reasons.
+The "saga" solver is often the best choice but requires scaling. The
+"liblinear" solver is used by default for historical reasons.
 
 For large dataset, you may also consider using :class:`SGDClassifier`
 with 'log' loss.
@@ -843,14 +862,11 @@ with 'log' loss.
    thus be used to perform feature selection, as detailed in
    :ref:`l1_feature_selection`.
 
-:class:`LogisticRegressionCV` implements Logistic Regression with
-builtin cross-validation to find out the optimal C parameter.
-"newton-cg", "sag", "saga" and "lbfgs" solvers are found to be faster
-for high-dimensional dense data, due to warm-starting. For the
-multiclass case, if `multi_class` option is set to "ovr", an optimal C
-is obtained for each class and if the `multi_class` option is set to
-"multinomial", an optimal C is obtained by minimizing the cross-entropy
-loss.
+:class:`LogisticRegressionCV` implements Logistic Regression with built-in
+cross-validation support, to find the optimal `C` and `l1_ratio` parameters
+according to the ``scoring`` attribute. The "newton-cg", "sag", "saga" and
+"lbfgs" solvers are found to be faster for high-dimensional dense data, due
+to warm-starting (see :term:`Glossary <warm_start>`).
 
 .. topic:: References:
 
