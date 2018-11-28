@@ -78,7 +78,6 @@ def test_max_iter():
     transform_algorithm = 'lasso_cd'
     resolution = 1024
     subsampling = 3  # subsampling factor
-    width = 100
     n_components = resolution // subsampling
 
     # Compute a wavelet dictionary
