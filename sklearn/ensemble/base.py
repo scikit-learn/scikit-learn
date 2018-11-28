@@ -5,6 +5,7 @@ Base class for ensemble-based estimators.
 # Authors: Gilles Louppe
 # License: BSD 3 clause
 
+import copy
 import numpy as np
 import numbers
 
@@ -124,7 +125,7 @@ class BaseEnsemble(six.with_metaclass(ABCMeta, BaseEstimator,
         sub-estimators.
         """
         estimator = clone(self.base_estimator_)
-        estimator.set_params(**dict((p, getattr(self, p))
+        estimator.set_params(**dict((p, copy.deepcopy(getattr(self, p)))
                                     for p in self.estimator_params))
 
         if random_state is not None:
