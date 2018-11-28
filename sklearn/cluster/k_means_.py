@@ -29,9 +29,9 @@ from ..utils import gen_batches
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils import Parallel
-from ..utils import delayed
-from ..utils import effective_n_jobs
+from ..utils._joblib import Parallel
+from ..utils._joblib import delayed
+from ..utils._joblib import effective_n_jobs
 from ..externals.six import string_types
 from ..exceptions import ConvergenceWarning
 from . import _k_means

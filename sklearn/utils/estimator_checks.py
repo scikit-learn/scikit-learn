@@ -14,15 +14,14 @@ from scipy.stats import rankdata
 
 from sklearn.externals.six.moves import zip
 from sklearn.utils import IS_PYPY, _IS_32BIT
-from sklearn.utils._joblib import hash, Memory
+from sklearn.utils import _joblib
+from sklearn.utils._joblib import Memory
 from sklearn.utils.testing import assert_raises, _get_args
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
@@ -719,24 +718,26 @@ def check_dont_overwrite_parameters(name, estimator_orig):
                           if key not in dict_before_fit.keys()]
 
     # check that fit doesn't add any public attribute
-    assert_true(not attrs_added_by_fit,
-                ('Estimator adds public attribute(s) during'
-                 ' the fit method.'
-                 ' Estimators are only allowed to add private attributes'
-                 ' either started with _ or ended'
-                 ' with _ but %s added' % ', '.join(attrs_added_by_fit)))
+    assert not attrs_added_by_fit, (
+            'Estimator adds public attribute(s) during'
+            ' the fit method.'
+            ' Estimators are only allowed to add private attributes'
+            ' either started with _ or ended'
+            ' with _ but %s added'
+            % ', '.join(attrs_added_by_fit))
 
     # check that fit doesn't change any public attribute
     attrs_changed_by_fit = [key for key in public_keys_after_fit
                             if (dict_before_fit[key]
                                 is not dict_after_fit[key])]
 
-    assert_true(not attrs_changed_by_fit,
-                ('Estimator changes public attribute(s) during'
-                 ' the fit method. Estimators are only allowed'
-                 ' to change attributes started'
-                 ' or ended with _, but'
-                 ' %s changed' % ', '.join(attrs_changed_by_fit)))
+    assert not attrs_changed_by_fit, (
+            'Estimator changes public attribute(s) during'
+            ' the fit method. Estimators are only allowed'
+            ' to change attributes started'
+            ' or ended with _, but'
+            ' %s changed'
+            % ', '.join(attrs_changed_by_fit))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -1071,10 +1072,10 @@ def check_fit_score_takes_y(name, estimator_orig):
                 # if_delegate_has_method makes methods into functions
                 # with an explicit "self", so need to shift arguments
                 args = args[1:]
-            assert_true(args[1] in ["y", "Y"],
-                        "Expected y or Y as second argument for method "
-                        "%s of %s. Got arguments: %r."
-                        % (func_name, type(estimator).__name__, args))
+            assert args[1] in ["y", "Y"], (
+                    "Expected y or Y as second argument for method "
+                    "%s of %s. Got arguments: %r."
+                    % (func_name, type(estimator).__name__, args))
 
 
 @ignore_warnings
@@ -1230,7 +1231,7 @@ def check_estimators_pickle(name, estimator_orig):
     # pickle and unpickle!
     pickled_estimator = pickle.dumps(estimator)
     if estimator.__module__.startswith('sklearn.'):
-        assert_true(b"version" in pickled_estimator)
+        assert b"version" in pickled_estimator
     unpickled_estimator = pickle.loads(pickled_estimator)
 
     result = dict()
@@ -1322,7 +1323,7 @@ def check_clustering(name, clusterer_orig, readonly_memmap=False):
                                                 labels_sorted[-1] + 1))
 
     # Labels are expected to start at 0 (no noise) or -1 (if noise)
-    assert_true(labels_sorted[0] in [0, -1])
+    assert labels_sorted[0] in [0, -1]
     # Labels should be less than n_clusters - 1
     if hasattr(clusterer, 'n_clusters'):
         n_clusters = getattr(clusterer, 'n_clusters')
@@ -1416,7 +1417,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
         classifier.fit(X, y)
         # with lists
         classifier.fit(X.tolist(), y.tolist())
-        assert_true(hasattr(classifier, "classes_"))
+        assert hasattr(classifier, "classes_")
         y_pred = classifier.predict(X)
         assert_equal(y_pred.shape, (n_samples,))
         # training set performance
@@ -1581,7 +1582,7 @@ def check_estimators_fit_returns_self(name, estimator_orig,
         X, y = create_memmap_backed_data([X, y])
 
     set_random_state(estimator)
-    assert_true(estimator.fit(X, y) is estimator)
+    assert estimator.fit(X, y) is estimator
 
 
 @ignore_warnings
@@ -1644,8 +1645,8 @@ def check_supervised_y_2d(name, estimator_orig):
     if name not in MULTI_OUTPUT:
         # check that we warned if we don't support multi-output
         assert_greater(len(w), 0, msg)
-        assert_true("DataConversionWarning('A column-vector y"
-                    " was passed when a 1d array was expected" in msg)
+        assert "DataConversionWarning('A column-vector y" \
+               " was passed when a 1d array was expected" in msg
     assert_allclose(y_pred.ravel(), y_pred_2d.ravel())
 
 
@@ -1956,7 +1957,7 @@ def check_estimators_overwrite_params(name, estimator_orig):
         # The only exception to this rule of immutable constructor parameters
         # is possible RandomState instance but in this check we explicitly
         # fixed the random_state params recursively to be integer seeds.
-        assert_equal(hash(new_value), hash(original_value),
+        assert_equal(_joblib.hash(new_value), _joblib.hash(original_value),
                      "Estimator %s should not change or mutate "
                      " the parameter %s from %s to %s during fit."
                      % (name, param_name, original_value, new_value))
@@ -1983,17 +1984,18 @@ def check_no_attributes_set_in_init(name, estimator):
     # Test for no setting apart from parameters during init
     invalid_attr = (set(vars(estimator)) - set(init_params)
                     - set(parents_init_params))
-    assert_false(invalid_attr,
-                 "Estimator %s should not set any attribute apart"
-                 " from parameters during init. Found attributes %s."
-                 % (name, sorted(invalid_attr)))
+    assert not invalid_attr, (
+            "Estimator %s should not set any attribute apart"
+            " from parameters during init. Found attributes %s."
+            % (name, sorted(invalid_attr)))
     # Ensure that each parameter is set in init
     invalid_attr = (set(init_params) - set(vars(estimator))
                     - set(["self"]))
-    assert_false(invalid_attr,
-                 "Estimator %s should store all parameters"
-                 " as an attribute during init. Did not find "
-                 "attributes %s." % (name, sorted(invalid_attr)))
+    assert not invalid_attr, (
+            "Estimator %s should store all parameters"
+            " as an attribute during init. Did not find "
+            "attributes %s."
+            % (name, sorted(invalid_attr)))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -2008,13 +2010,13 @@ def check_sparsify_coefficients(name, estimator_orig):
 
     # test sparsify with dense inputs
     est.sparsify()
-    assert_true(sparse.issparse(est.coef_))
+    assert sparse.issparse(est.coef_)
     pred = est.predict(X)
     assert_array_equal(pred, pred_orig)
 
     # pickle and unpickle with sparse coef_
     est = pickle.loads(pickle.dumps(est))
-    assert_true(sparse.issparse(est.coef_))
+    assert sparse.issparse(est.coef_)
     pred = est.predict(X)
     assert_array_equal(pred, pred_orig)
 
@@ -2074,7 +2076,7 @@ def check_parameters_default_constructible(name, Estimator):
         # test __repr__
         repr(estimator)
         # test that set_params returns self
-        assert_true(estimator.set_params() is estimator)
+        assert estimator.set_params() is estimator
 
         # test if init does nothing but set parameters
         # this is important for grid_search etc.
@@ -2114,7 +2116,7 @@ def check_parameters_default_constructible(name, Estimator):
                        np.float64, types.FunctionType, Memory])
             if init_param.name not in params.keys():
                 # deprecated parameter, not in get_params
-                assert_true(init_param.default is None)
+                assert init_param.default is None
                 continue
 
             if (issubclass(Estimator, BaseSGD) and
@@ -2211,8 +2213,8 @@ def check_get_params_invariance(name, estimator_orig):
     shallow_params = e.get_params(deep=False)
     deep_params = e.get_params(deep=True)
 
-    assert_true(all(item in deep_params.items() for item in
-                    shallow_params.items()))
+    assert all(item in deep_params.items() for item in
+               shallow_params.items())
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

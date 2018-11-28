@@ -1794,7 +1794,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
 
     Notes
     -----
-    In multiclass classification, the Hamming loss correspond to the Hamming
+    In multiclass classification, the Hamming loss corresponds to the Hamming
     distance between ``y_true`` and ``y_pred`` which is equivalent to the
     subset ``zero_one_loss`` function.
 
