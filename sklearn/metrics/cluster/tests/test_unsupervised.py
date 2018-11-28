@@ -4,7 +4,6 @@ import pytest
 from scipy.sparse import csr_matrix
 
 from sklearn import datasets
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
@@ -79,7 +78,7 @@ def test_cluster_size_1():
     #            silhouette    = [1., 1.]
 
     silhouette = silhouette_score(X, labels)
-    assert_false(np.isnan(silhouette))
+    assert not np.isnan(silhouette)
     ss = silhouette_samples(X, labels)
     assert_array_equal(ss, [0, .5, .5, 0, 1, 1])
 

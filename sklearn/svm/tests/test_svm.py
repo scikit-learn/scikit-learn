@@ -17,7 +17,7 @@ from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_equal, assert_true, assert_false
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater, assert_in, assert_less
 from sklearn.utils.testing import assert_raises_regexp, assert_warns
 from sklearn.utils.testing import assert_warns_message, assert_raise_message
@@ -473,8 +473,8 @@ def test_auto_weight():
         clf.set_params(class_weight='balanced')
         y_pred_balanced = clf.fit(X[unbalanced], y[unbalanced],).predict(X)
         assert (metrics.f1_score(y, y_pred, average='macro')
-                    <= metrics.f1_score(y, y_pred_balanced,
-                                        average='macro'))
+                <= metrics.f1_score(y, y_pred_balanced,
+                                    average='macro'))
 
 
 def test_bad_input():
@@ -492,11 +492,11 @@ def test_bad_input():
     # Test with arrays that are non-contiguous.
     for clf in (svm.SVC(gamma="scale"), svm.LinearSVC(random_state=0)):
         Xf = np.asfortranarray(X)
-        assert_false(Xf.flags['C_CONTIGUOUS'])
+        assert not Xf.flags['C_CONTIGUOUS']
         yf = np.ascontiguousarray(np.tile(Y, (2, 1)).T)
         yf = yf[:, -1]
-        assert_false(yf.flags['F_CONTIGUOUS'])
-        assert_false(yf.flags['C_CONTIGUOUS'])
+        assert not yf.flags['F_CONTIGUOUS']
+        assert not yf.flags['C_CONTIGUOUS']
         clf.fit(Xf, yf)
         assert_array_equal(clf.predict(T), true_result)
 
@@ -564,9 +564,9 @@ def test_linearsvc_parameters():
     for loss, penalty, dual in itertools.product(losses, penalties, duals):
         clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
         if ((loss, penalty) == ('hinge', 'l1') or
-                    (loss, penalty, dual) == ('hinge', 'l2', False) or
-                    (penalty, dual) == ('l1', True) or
-                    loss == 'foo' or penalty == 'bar'):
+                (loss, penalty, dual) == ('hinge', 'l2', False) or
+                (penalty, dual) == ('l1', True) or
+                loss == 'foo' or penalty == 'bar'):
 
             assert_raises_regexp(ValueError,
                                  "Unsupported set of arguments.*penalty='%s.*"
@@ -623,8 +623,9 @@ def test_linear_svx_uppercase_loss_penality_raises_error():
     assert_raise_message(ValueError, "loss='SQuared_hinge' is not supported",
                          svm.LinearSVC(loss="SQuared_hinge").fit, X, y)
 
-    assert_raise_message(ValueError, ("The combination of penalty='L2'"
-                                      " and loss='squared_hinge' is not supported"),
+    assert_raise_message(ValueError,
+                         ("The combination of penalty='L2'"
+                          " and loss='squared_hinge' is not supported"),
                          svm.LinearSVC(penalty="L2").fit, X, y)
 
 
@@ -665,8 +666,8 @@ def test_linearsvc_crammer_singer():
     cs_clf.fit(iris.data, iris.target)
 
     # similar prediction for ovr and crammer-singer:
-    assert_true((ovr_clf.predict(iris.data) ==
-                 cs_clf.predict(iris.data)).mean() > .9)
+    assert (ovr_clf.predict(iris.data) ==
+            cs_clf.predict(iris.data)).mean() > .9
 
     # classifiers shouldn't be the same
     assert (ovr_clf.coef_ != cs_clf.coef_).all()
@@ -933,9 +934,9 @@ def test_hasattr_predict_proba():
     assert hasattr(G, 'predict_proba')
 
     G = svm.SVC(gamma='scale', probability=False)
-    assert_false(hasattr(G, 'predict_proba'))
+    assert not hasattr(G, 'predict_proba')
     G.fit(iris.data, iris.target)
-    assert_false(hasattr(G, 'predict_proba'))
+    assert not hasattr(G, 'predict_proba')
 
     # Switching to `probability=True` after fitting should make
     # predict_proba available, but calling it must not work:

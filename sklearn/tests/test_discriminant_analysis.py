@@ -6,7 +6,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
@@ -244,7 +243,7 @@ def test_lda_store_covariance():
 
     # Test for SVD slover, the default is to not set the covariances_ attribute
     clf = LinearDiscriminantAnalysis(solver='svd').fit(X6, y6)
-    assert_false(hasattr(clf, 'covariance_'))
+    assert not hasattr(clf, 'covariance_')
 
     # Test the actual attribute:
     clf = LinearDiscriminantAnalysis(solver=solver,
@@ -299,7 +298,7 @@ def test_qda_priors():
 def test_qda_store_covariance():
     # The default is to not set the covariances_ attribute
     clf = QuadraticDiscriminantAnalysis().fit(X6, y6)
-    assert_false(hasattr(clf, 'covariance_'))
+    assert not hasattr(clf, 'covariance_')
 
     # Test the actual attribute:
     clf = QuadraticDiscriminantAnalysis(store_covariance=True).fit(X6, y6)

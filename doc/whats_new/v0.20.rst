@@ -2,6 +2,27 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_20_2:
+
+Version 0.20.2
+==============
+
+**XX, 2019**
+
+This is a bug-fix release with some minor documentation improvements and
+enhancements to features released in 0.20.0.
+
+Changelog
+---------
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |Fix| Fixed a regression in :class:`pipeline.Pipeline` where the ``steps``
+  parameter may not have been updated correctly when a step is set to ``None``
+  or ``'passthrough'``. :user:`Thomas Fan <thomasjpfan>`.
+
+
 .. _changes_0_20_1:
 
 Version 0.20.1
