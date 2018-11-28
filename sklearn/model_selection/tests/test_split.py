@@ -1479,6 +1479,11 @@ def test_check_cv_default_warn():
     assert_no_warnings(check_cv, cv=5)
 
 
+def test_validate_shuffle_split_type_warn():
+    assert_raises(TypeError, _validate_shuffle_split, 100, test_size='3',
+                  train_size=None)
+
+
 def test_build_repr():
     class MockSplitter:
         def __init__(self, a, b=0, c=None):

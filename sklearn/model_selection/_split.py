@@ -1846,10 +1846,15 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
     if test_size == "default":
         test_size = 0.1
 
-    if np.asarray(test_size).dtype.kind == 'f':
+    if test_size is None:
+        pass
+    elif np.asarray(test_size).dtype.kind == 'f':
         n_test = ceil(test_size * n_samples)
     elif np.asarray(test_size).dtype.kind == 'i':
         n_test = float(test_size)
+    else:
+        raise TypeError('test_size must be of type float or integer; got '
+                        '%s' % (type(test_size)))
 
     if train_size is None:
         n_train = n_samples - n_test
