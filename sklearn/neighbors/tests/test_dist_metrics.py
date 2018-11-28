@@ -103,7 +103,7 @@ def check_pdist(metric, kwargs, D_true):
 def check_pdist_bool(metric, D_true):
     dm = DistanceMetric.get_metric(metric)
     D12 = dm.pairwise(X1_bool)
-    if (metric == 'jaccard' and LooseVersion(scipy_version) < '1.2.0'):
+    if metric == 'jaccard' and LooseVersion(scipy_version) < '1.2.0':
         D_true[np.isnan(D_true)] = 0
     assert_array_almost_equal(D12, D_true)
 
