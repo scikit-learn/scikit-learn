@@ -259,11 +259,23 @@ class GaussianProcessRegressor(MultiOutputMixin,
                 for hyp in self.kernel_.hyperparameters:
                     for i in range(hyp.n_elements):
                         if list_param[idx, 0]:
-                            warnings.warn("Dimension %s of parameter %s has been wrongly optimized to its lower bound" %
-                                          (i, hyp.name), ConvergenceWarning)
+                            warnings.warn("The optimal value found for "
+                                          "dimension %s of parameter %s is "
+                                          "close to the specified lower "
+                                          "bound %s. Decreasing the bound and"
+                                          " calling fit again may find a "
+                                          "better value." % (i, hyp.name,
+                                                             hyp.bounds[i][0]),
+                                          ConvergenceWarning)
                         elif list_param[idx, 1]:
-                            warnings.warn("Dimension %s of parameter %s has been wrongly optimized to its upper bound" %
-                                          (i, hyp.name), ConvergenceWarning)
+                            warnings.warn("The optimal value found for "
+                                          "dimension %s of parameter %s is "
+                                          "close to the specified lower "
+                                          "bound %s. Decreasing the bound and"
+                                          " calling fit again may find a "
+                                          "better value." % (i, hyp.name,
+                                                             hyp.bounds[i][0]),
+                                          ConvergenceWarning)
                         idx += 1
 
             self.log_marginal_likelihood_value_ = -np.min(lml_values)
