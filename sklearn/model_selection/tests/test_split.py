@@ -8,8 +8,6 @@ from scipy import stats
 from itertools import combinations
 from itertools import combinations_with_replacement
 
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -104,27 +102,27 @@ class MockClassifier(object):
         if X.ndim >= 3 and not self.allow_nd:
             raise ValueError('X cannot be d')
         if sample_weight is not None:
-            assert_true(sample_weight.shape[0] == X.shape[0],
-                        'MockClassifier extra fit_param sample_weight.shape[0]'
-                        ' is {0}, should be {1}'.format(sample_weight.shape[0],
-                                                        X.shape[0]))
+            assert sample_weight.shape[0] == X.shape[0], (
+                'MockClassifier extra fit_param sample_weight.shape[0]'
+                ' is {0}, should be {1}'.format(sample_weight.shape[0],
+                                                X.shape[0]))
         if class_prior is not None:
-            assert_true(class_prior.shape[0] == len(np.unique(y)),
+            assert class_prior.shape[0] == len(np.unique(y)), (
                         'MockClassifier extra fit_param class_prior.shape[0]'
                         ' is {0}, should be {1}'.format(class_prior.shape[0],
                                                         len(np.unique(y))))
         if sparse_sample_weight is not None:
             fmt = ('MockClassifier extra fit_param sparse_sample_weight'
                    '.shape[0] is {0}, should be {1}')
-            assert_true(sparse_sample_weight.shape[0] == X.shape[0],
-                        fmt.format(sparse_sample_weight.shape[0], X.shape[0]))
+            assert sparse_sample_weight.shape[0] == X.shape[0], \
+                fmt.format(sparse_sample_weight.shape[0], X.shape[0])
         if sparse_param is not None:
             fmt = ('MockClassifier extra fit_param sparse_param.shape '
                    'is ({0}, {1}), should be ({2}, {3})')
-            assert_true(sparse_param.shape == P_sparse.shape,
-                        fmt.format(sparse_param.shape[0],
-                                   sparse_param.shape[1],
-                                   P_sparse.shape[0], P_sparse.shape[1]))
+            assert sparse_param.shape == P_sparse.shape, (
+                fmt.format(sparse_param.shape[0],
+                           sparse_param.shape[1],
+                           P_sparse.shape[0], P_sparse.shape[1]))
         return self
 
     def predict(self, T):
@@ -653,9 +651,8 @@ def test_stratified_shuffle_split_even():
         bf = stats.binom(n_splits, p)
         for count in idx_counts:
             prob = bf.pmf(count)
-            assert_true(prob > threshold,
-                        "An index is not drawn with chance corresponding "
-                        "to even draws")
+            assert prob > threshold, \
+                "An index is not drawn with chance corresponding to even draws"
 
     for n_samples in (6, 22):
         groups = np.array((n_samples // 2) * [0, 1])
@@ -796,8 +793,8 @@ def test_group_shuffle_split():
             # First test: no train group is in the test set and vice versa
             l_train_unique = np.unique(l[train])
             l_test_unique = np.unique(l[test])
-            assert_false(np.any(np.in1d(l[train], l_test_unique)))
-            assert_false(np.any(np.in1d(l[test], l_train_unique)))
+            assert not np.any(np.in1d(l[train], l_test_unique))
+            assert not np.any(np.in1d(l[test], l_train_unique))
 
             # Second test: train and test add up to all the data
             assert_equal(l[train].size + l[test].size, l.size)
@@ -807,10 +804,10 @@ def test_group_shuffle_split():
 
             # Fourth test:
             # unique train and test groups are correct, +- 1 for rounding error
-            assert_true(abs(len(l_test_unique) -
-                            round(test_size * len(l_unique))) <= 1)
-            assert_true(abs(len(l_train_unique) -
-                            round((1.0 - test_size) * len(l_unique))) <= 1)
+            assert abs(len(l_test_unique) -
+                       round(test_size * len(l_unique))) <= 1
+            assert abs(len(l_train_unique) -
+                       round((1.0 - test_size) * len(l_unique))) <= 1
 
 
 def test_leave_one_p_group_out():
@@ -1207,9 +1204,9 @@ def test_check_cv():
     np.testing.assert_equal(list(StratifiedKFold(3).split(X, y_multiclass_2d)),
                             list(cv.split(X, y_multiclass_2d)))
 
-    assert_false(np.all(
+    assert not np.all(
         next(StratifiedKFold(3).split(X, y_multiclass_2d))[0] ==
-        next(KFold(3).split(X, y_multiclass_2d))[0]))
+        next(KFold(3).split(X, y_multiclass_2d))[0])
 
     X = np.ones(5)
     y_multilabel = np.array([[0, 0, 0, 0], [0, 1, 1, 0], [0, 0, 0, 1],
@@ -1246,8 +1243,9 @@ def test_cv_iterable_wrapper():
         splits_are_equal = True
     except AssertionError:
         splits_are_equal = False
-    assert_false(splits_are_equal, "If the splits are randomized, "
-                 "successive calls to split should yield different results")
+    assert not splits_are_equal, (
+        "If the splits are randomized, "
+        "successive calls to split should yield different results")
 
 
 def test_group_kfold():
