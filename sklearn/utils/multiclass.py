@@ -11,8 +11,7 @@ from itertools import chain
 
 from scipy.sparse import issparse
 from scipy.sparse.base import spmatrix
-from scipy.sparse import dok_matrix
-from scipy.sparse import lil_matrix
+from scipy.sparse import dok_matrix, lil_matrix, bsr_matrix, dia_matrix
 
 import numpy as np
 
@@ -253,7 +252,8 @@ def type_of_target(y):
         # don't transform sparse matrix
         sparse_flag = issparse(y)
         if sparse_flag:
-            if isinstance(y, (dok_matrix, lil_matrix)):
+            if isinstance(y, (dok_matrix, lil_matrix, 
+                              dia_matrix, bsr_matrix)):
                 y = y.tocsr()
         else:
             y = np.asarray(y)
@@ -279,7 +279,7 @@ def type_of_target(y):
 
     if y.ndim == 2 and y.shape[1] == 0:
         return 'unknown'  # [[]]
-    
+
     if y.ndim == 2 and y.shape[1] > 1:
         suffix = "-multioutput"  # [[1, 2], [1, 2]]
     else:
@@ -291,12 +291,13 @@ def type_of_target(y):
             # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
             return 'continuous' + suffix
 
-        # check if there are zero values for unique value count (do not show up in y.data)
+        # check if there are zero values for unique value count
         add = 0
         if y.nnz != (y.shape[0]*y.shape[1]):
             add = 1
-        
-        if (len(np.unique(y.data))+add > 2) or (y.ndim >= 2 and y[0].shape[1] > 1):
+
+        if (len(np.unique(y.data))+add > 2) or 
+           (y.ndim >= 2 and y[0].shape[1] > 1):
             return 'multiclass' + suffix  # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
         else:
             return 'binary'  # [1, 2] or [["a"], ["b"]]
