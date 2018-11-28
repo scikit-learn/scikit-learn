@@ -23,6 +23,8 @@ from sklearn.svm import SVC
 from sklearn.datasets import load_boston, load_iris
 from sklearn.datasets import make_classification, make_regression
 from sklearn.cluster import KMeans
+from sklearn.metrics import r2_score
+from sklearn.preprocessing import PolynomialFeatures
 
 
 # toy sample
@@ -190,6 +192,39 @@ def test_partial_dependence_helpers(est, method, target_feature):
 
     pdp = pdp[0]  # (shape is (1, 2) so make it (2,))
     assert_array_almost_equal(pdp, mean_predictions, decimal=3)
+
+
+@pytest.mark.parametrize('est', (LinearRegression(),
+                                 GradientBoostingRegressor(random_state=0)))
+@pytest.mark.parametrize('power', (1, 2))
+def test_partial_dependence_easy_target(est, power):
+    # If the target y only depends on one feature in an obvious way (linear or
+    # quadratic) then the partial dependence for that feature should reflect
+    # it.
+    # We here fit a linear regression model (with polynomial features if
+    # needed) and compute r_squared to check that the partial dependence
+    # correctly reflects the target.
+
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    target_variable = 2
+    X = rng.normal(size=(n_samples, 5))
+    y = X[:, target_variable]**power
+
+    est.fit(X, y)
+
+    averaged_predictions, values = partial_dependence(
+        est, target_variables=[target_variable], X=X, grid_resolution=1000)
+
+    new_X = values[0].reshape(-1, 1)
+    new_y = averaged_predictions[0]
+    # add polynomial features if needed
+    new_X = PolynomialFeatures(degree=power).fit_transform(new_X)
+
+    lr = LinearRegression().fit(new_X, new_y)
+    r2 = r2_score(new_y, lr.predict(new_X))
+
+    assert r2 > .99
 
 
 @pytest.mark.filterwarnings('ignore:The default value of ')  # 0.22
