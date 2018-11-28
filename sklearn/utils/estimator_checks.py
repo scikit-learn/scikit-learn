@@ -22,8 +22,6 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
@@ -720,24 +718,26 @@ def check_dont_overwrite_parameters(name, estimator_orig):
                           if key not in dict_before_fit.keys()]
 
     # check that fit doesn't add any public attribute
-    assert_true(not attrs_added_by_fit,
-                ('Estimator adds public attribute(s) during'
-                 ' the fit method.'
-                 ' Estimators are only allowed to add private attributes'
-                 ' either started with _ or ended'
-                 ' with _ but %s added' % ', '.join(attrs_added_by_fit)))
+    assert not attrs_added_by_fit, (
+            'Estimator adds public attribute(s) during'
+            ' the fit method.'
+            ' Estimators are only allowed to add private attributes'
+            ' either started with _ or ended'
+            ' with _ but %s added'
+            % ', '.join(attrs_added_by_fit))
 
     # check that fit doesn't change any public attribute
     attrs_changed_by_fit = [key for key in public_keys_after_fit
                             if (dict_before_fit[key]
                                 is not dict_after_fit[key])]
 
-    assert_true(not attrs_changed_by_fit,
-                ('Estimator changes public attribute(s) during'
-                 ' the fit method. Estimators are only allowed'
-                 ' to change attributes started'
-                 ' or ended with _, but'
-                 ' %s changed' % ', '.join(attrs_changed_by_fit)))
+    assert not attrs_changed_by_fit, (
+            'Estimator changes public attribute(s) during'
+            ' the fit method. Estimators are only allowed'
+            ' to change attributes started'
+            ' or ended with _, but'
+            ' %s changed'
+            % ', '.join(attrs_changed_by_fit))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -1072,10 +1072,10 @@ def check_fit_score_takes_y(name, estimator_orig):
                 # if_delegate_has_method makes methods into functions
                 # with an explicit "self", so need to shift arguments
                 args = args[1:]
-            assert_true(args[1] in ["y", "Y"],
-                        "Expected y or Y as second argument for method "
-                        "%s of %s. Got arguments: %r."
-                        % (func_name, type(estimator).__name__, args))
+            assert args[1] in ["y", "Y"], (
+                    "Expected y or Y as second argument for method "
+                    "%s of %s. Got arguments: %r."
+                    % (func_name, type(estimator).__name__, args))
 
 
 @ignore_warnings
@@ -1645,8 +1645,8 @@ def check_supervised_y_2d(name, estimator_orig):
     if name not in MULTI_OUTPUT:
         # check that we warned if we don't support multi-output
         assert_greater(len(w), 0, msg)
-        assert_true("DataConversionWarning('A column-vector y"
-                    " was passed when a 1d array was expected" in msg)
+        assert "DataConversionWarning('A column-vector y" \
+               " was passed when a 1d array was expected" in msg
     assert_allclose(y_pred.ravel(), y_pred_2d.ravel())
 
 
@@ -1984,17 +1984,18 @@ def check_no_attributes_set_in_init(name, estimator):
     # Test for no setting apart from parameters during init
     invalid_attr = (set(vars(estimator)) - set(init_params)
                     - set(parents_init_params))
-    assert_false(invalid_attr,
-                 "Estimator %s should not set any attribute apart"
-                 " from parameters during init. Found attributes %s."
-                 % (name, sorted(invalid_attr)))
+    assert not invalid_attr, (
+            "Estimator %s should not set any attribute apart"
+            " from parameters during init. Found attributes %s."
+            % (name, sorted(invalid_attr)))
     # Ensure that each parameter is set in init
     invalid_attr = (set(init_params) - set(vars(estimator))
                     - set(["self"]))
-    assert_false(invalid_attr,
-                 "Estimator %s should store all parameters"
-                 " as an attribute during init. Did not find "
-                 "attributes %s." % (name, sorted(invalid_attr)))
+    assert not invalid_attr, (
+            "Estimator %s should store all parameters"
+            " as an attribute during init. Did not find "
+            "attributes %s."
+            % (name, sorted(invalid_attr)))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -2212,8 +2213,8 @@ def check_get_params_invariance(name, estimator_orig):
     shallow_params = e.get_params(deep=False)
     deep_params = e.get_params(deep=True)
 
-    assert_true(all(item in deep_params.items() for item in
-                    shallow_params.items()))
+    assert all(item in deep_params.items() for item in
+               shallow_params.items())
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

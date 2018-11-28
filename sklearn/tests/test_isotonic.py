@@ -7,7 +7,7 @@ from sklearn.isotonic import (check_increasing, isotonic_regression,
                               IsotonicRegression)
 
 from sklearn.utils.testing import (assert_raises, assert_array_equal,
-                                   assert_true, assert_false, assert_equal,
+                                   assert_equal,
                                    assert_array_almost_equal,
                                    assert_warns_message, assert_no_warnings)
 from sklearn.utils import shuffle
@@ -59,7 +59,7 @@ def test_check_increasing_down():
 
     # Check that we got increasing=False and no warnings
     is_increasing = assert_no_warnings(check_increasing, x, y)
-    assert_false(is_increasing)
+    assert not is_increasing
 
 
 def test_check_increasing_down_extreme():
@@ -68,7 +68,7 @@ def test_check_increasing_down_extreme():
 
     # Check that we got increasing=False and no warnings
     is_increasing = assert_no_warnings(check_increasing, x, y)
-    assert_false(is_increasing)
+    assert not is_increasing
 
 
 def test_check_ci_warn():
@@ -80,7 +80,7 @@ def test_check_ci_warn():
                                          check_increasing,
                                          x, y)
 
-    assert_false(is_increasing)
+    assert not is_increasing
 
 
 def test_isotonic_regression():
@@ -208,12 +208,12 @@ def test_isotonic_regression_auto_decreasing():
         warnings.simplefilter("always")
         y_ = ir.fit_transform(x, y)
         # work-around for pearson divide warnings in scipy <= 0.17.0
-        assert_true(all(["invalid value encountered in "
-                         in str(warn.message) for warn in w]))
+        assert all(["invalid value encountered in "
+                    in str(warn.message) for warn in w])
 
     # Check that relationship decreases
     is_increasing = y_[0] < y_[-1]
-    assert_false(is_increasing)
+    assert not is_increasing
 
 
 def test_isotonic_regression_auto_increasing():
@@ -227,8 +227,8 @@ def test_isotonic_regression_auto_increasing():
         warnings.simplefilter("always")
         y_ = ir.fit_transform(x, y)
         # work-around for pearson divide warnings in scipy <= 0.17.0
-        assert_true(all(["invalid value encountered in "
-                         in str(warn.message) for warn in w]))
+        assert all(["invalid value encountered in "
+                    in str(warn.message) for warn in w])
 
     # Check that relationship increases
     is_increasing = y_[0] < y_[-1]

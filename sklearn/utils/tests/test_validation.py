@@ -12,7 +12,7 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import __version__ as scipy_version
 
-from sklearn.utils.testing import assert_false, assert_equal
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_no_warnings
@@ -94,7 +94,7 @@ def test_as_float_array():
     for M in matrices:
         N = as_float_array(M, copy=True)
         N[0, 0] = np.nan
-        assert_false(np.isnan(M).any())
+        assert not np.isnan(M).any()
 
 
 @pytest.mark.parametrize(
@@ -112,9 +112,9 @@ def test_np_matrix():
     # Confirm that input validation code does not return np.matrix
     X = np.arange(12).reshape(3, 4)
 
-    assert_false(isinstance(as_float_array(X), np.matrix))
-    assert_false(isinstance(as_float_array(np.matrix(X)), np.matrix))
-    assert_false(isinstance(as_float_array(sp.csc_matrix(X)), np.matrix))
+    assert not isinstance(as_float_array(X), np.matrix)
+    assert not isinstance(as_float_array(np.matrix(X)), np.matrix)
+    assert not isinstance(as_float_array(sp.csc_matrix(X)), np.matrix)
 
 
 def test_memmap():
@@ -145,11 +145,11 @@ def test_ordering():
             B = check_array(A, order='F', copy=copy)
             assert B.flags['F_CONTIGUOUS']
             if copy:
-                assert_false(A is B)
+                assert A is not B
 
     X = sp.csr_matrix(X)
     X.data = X.data[::-1]
-    assert_false(X.data.flags['C_CONTIGUOUS'])
+    assert not X.data.flags['C_CONTIGUOUS']
 
 
 @pytest.mark.parametrize(
@@ -229,12 +229,12 @@ def test_check_array():
             assert_equal(X_checked.dtype, X.dtype)
         if order == 'C':
             assert X_checked.flags['C_CONTIGUOUS']
-            assert_false(X_checked.flags['F_CONTIGUOUS'])
+            assert not X_checked.flags['F_CONTIGUOUS']
         elif order == 'F':
             assert X_checked.flags['F_CONTIGUOUS']
-            assert_false(X_checked.flags['C_CONTIGUOUS'])
+            assert not X_checked.flags['C_CONTIGUOUS']
         if copy:
-            assert_false(X is X_checked)
+            assert X is not X_checked
         else:
             # doesn't copy if it was already good
             if (X.dtype == X_checked.dtype and
@@ -274,10 +274,10 @@ def test_check_array():
             # got converted
             assert_equal(X_checked.format, accept_sparse[0])
         if copy:
-            assert_false(X is X_checked)
+            assert X is not X_checked
         else:
             # doesn't copy if it was already good
-            if (X.dtype == X_checked.dtype and X.format == X_checked.format):
+            if X.dtype == X_checked.dtype and X.format == X_checked.format:
                 assert X is X_checked
 
     # other input formats
@@ -395,14 +395,14 @@ def test_check_array_dtype_warning():
                                        accept_sparse=['csr', 'dok'],
                                        copy=True)
         assert_equal(X_checked.dtype, np.float32)
-        assert_false(X_checked is X)
+        assert X_checked is not X
 
     X_checked = assert_no_warnings(check_array, X_csc_float32,
                                    dtype=[np.float64, np.float32],
                                    accept_sparse=['csr', 'dok'],
                                    copy=False)
     assert_equal(X_checked.dtype, np.float32)
-    assert_false(X_checked is X_csc_float32)
+    assert X_checked is not X_csc_float32
     assert_equal(X_checked.format, 'csr')
 
 
@@ -578,7 +578,7 @@ def test_check_array_complex_data_error():
 
 
 def test_has_fit_parameter():
-    assert_false(has_fit_parameter(KNeighborsClassifier, "sample_weight"))
+    assert not has_fit_parameter(KNeighborsClassifier, "sample_weight")
     assert has_fit_parameter(RandomForestRegressor, "sample_weight")
     assert has_fit_parameter(SVR, "sample_weight")
     assert has_fit_parameter(SVR(), "sample_weight")
