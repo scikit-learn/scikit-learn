@@ -42,12 +42,21 @@ try:
 except NameError:
     WindowsError = None
 
-import sklearn
-from sklearn.base import BaseEstimator
-from sklearn.utils._joblib import joblib
-from sklearn.utils.fixes import signature
-from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
+from numpy.testing import assert_allclose
+from numpy.testing import assert_almost_equal
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_less
+from numpy.testing import assert_approx_equal
+import numpy as np
 
+import sklearn
+from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
+                          RegressorMixin, TransformerMixin)
+from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
+from sklearn.utils._joblib import joblib
+from sklearn.utils._unittest_backport import TestCase
+from sklearn.utils.fixes import signature
 
 additional_names_in_all = []
 try:
@@ -72,18 +81,6 @@ try:
     additional_names_in_all.append('with_setup')
 except ImportError:
     pass
-
-from numpy.testing import assert_allclose
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_less
-from numpy.testing import assert_approx_equal
-import numpy as np
-
-from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
-                          ClusterMixin)
-from sklearn.utils._unittest_backport import TestCase
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "assert_true",
