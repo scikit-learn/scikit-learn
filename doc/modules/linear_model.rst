@@ -862,7 +862,8 @@ loss.
 
     .. [8] https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm
 
-    .. [9] lbfgs performance <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_
+    .. [9] `"Performance Evaluation of Lbfgs"
+            <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_
 
 
 Stochastic Gradient Descent - SGD
