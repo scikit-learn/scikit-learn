@@ -21,8 +21,6 @@ occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
 - :mod:`sklearn.neighbors` when ``metric=='jaccard'`` (bug fix)
-- :mod:`sklearn.metrics.pairwise` when ``metric=='jaccard'` and Scipy >= 1.2.0
-  (bug fix)
 
 Changelog
 ---------
