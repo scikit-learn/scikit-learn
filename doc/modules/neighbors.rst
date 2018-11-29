@@ -512,7 +512,6 @@ the model from 0.81 to 0.82.
     classification using nearest centroid with different shrink thresholds.
 
 
-
 .. _nca:
 
 Neighborhood Components Analysis
@@ -547,7 +546,6 @@ stochastic neighbors from various classes, so the right class is not very
 likely. However, in the embedding space learned by NCA, the only non-negligible
 stochastic neighbors are from the same class as sample 3, guaranteeing that the
 latter will be well classified.
-
 
 
 Classification

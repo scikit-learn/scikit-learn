@@ -36,9 +36,32 @@ def test_simple_example():
     nca = NeighborhoodComponentsAnalysis(n_components=2, init='identity',
                                          random_state=42)
     nca.fit(X, y)
-    Xansformed = nca.transform(X)
-    np.testing.assert_equal(pairwise_distances(Xansformed).argsort()[:, 1],
+    X_t = nca.transform(X)
+    np.testing.assert_equal(pairwise_distances(X_t).argsort()[:, 1],
                             np.array([2, 3, 0, 1]))
+
+
+def test_toy_example_collapse_points():
+    """Test on a toy example of three points that should collapse
+
+    Test that on this simple example, the new points are collapsed:
+    Two same label points with a different label point in the middle.
+    The objective is 2/(1 + exp(d/2)), with d the euclidean distance
+    between the two same labels points. This is maximized for d=0
+    (because d>=0), with an objective equal to 1 (loss=-1.).
+
+    """
+    input_dim = 5
+    two_points = rng.randn(2, input_dim)
+    X = np.vstack([two_points, two_points.mean(axis=0)[np.newaxis, :]])
+    y = [0, 0, 1]
+    nca = NeighborhoodComponentsAnalysis(random_state=42,
+                                         store_opt_result=True)
+    X_t = nca.fit_transform(X, y)
+    print(X_t)
+    # test that points are collapsed into one point
+    assert_array_almost_equal(X_t - X_t[0], 0.)
+    assert nca.opt_result_.fun == -1.
 
 
 def test_finite_differences():
@@ -434,7 +457,6 @@ def test_store_opt_result():
 
 
 def test_convergence_warning():
-
     nca = NeighborhoodComponentsAnalysis(max_iter=2, verbose=1)
     cls_name = nca.__class__.__name__
     assert_warns_message(ConvergenceWarning,
