@@ -39,6 +39,7 @@ Changelog
 
 - |Fix| Fixed :class:`sklearn.neighbors.dist_metrics.JaccardDistance` distance
   function to return 0 when two all-zero vectors are compared.
+  :issue:`12685` by :user:`Thomas Fan <thomasjpfan>`.
 
 .. _changes_0_20_1:
 
