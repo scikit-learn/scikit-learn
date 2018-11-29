@@ -29,6 +29,7 @@ from sklearn.metrics import brier_score_loss
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import coverage_error
+from sklearn.metrics import detection_error_tradeoff_curve
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import fbeta_score
@@ -215,6 +216,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
 CURVE_METRICS = {
     "roc_curve": roc_curve,
     "precision_recall_curve": precision_recall_curve_padded_thresholds,
+    "detection_error_tradeoff_curve": detection_error_tradeoff_curve,
 }
 
 THRESHOLDED_METRICS = {
@@ -311,6 +313,7 @@ METRIC_UNDEFINED_MULTICLASS = {
     # curves
     "roc_curve",
     "precision_recall_curve",
+    "detection_error_tradeoff_curve",
 }
 
 # Metric undefined with "binary" or "multiclass" input
@@ -332,6 +335,7 @@ THRESHOLDED_METRICS_WITH_AVERAGING = {
 METRICS_WITH_POS_LABEL = {
     "roc_curve",
     "precision_recall_curve",
+    "detection_error_tradeoff_curve",
 
     "brier_score_loss",
 
@@ -362,6 +366,7 @@ METRICS_WITH_LABELS = {
     "normalized_confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
+    "detection_error_tradeoff_curve",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
     "jaccard_score",
@@ -474,6 +479,7 @@ NOT_SYMMETRIC_METRICS = {
     "normalized_confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
+    "detection_error_tradeoff_curve",
 
     "precision_score", "recall_score", "f2_score", "f0.5_score",
 
