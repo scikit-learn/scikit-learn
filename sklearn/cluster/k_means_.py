@@ -29,7 +29,7 @@ from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..utils._clibs import get_thread_limits, limit_threads_clibs
-from ..utils import effective_n_jobs
+from ..utils._joblib import effective_n_jobs
 from ..externals.six import string_types
 from ..exceptions import ConvergenceWarning
 from ._k_means import (_inertia_dense,
@@ -373,7 +373,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 
     # limit number of threads in second level of nested parallelism (i.e. BLAS)
     # to avoid oversubsciption
-    limits = get_thread_limits(reload_clib=True)
+    limits = get_thread_limits()
     limit_threads_clibs(limits=1, subset="blas")
 
     for seed in seeds:
