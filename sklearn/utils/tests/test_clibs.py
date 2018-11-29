@@ -12,15 +12,15 @@ def test_limit_threads_clib_dict(clib):
 
     if old_limits[clib] is not None:
         dynamic_scaling = limit_threads_clibs(limits={clib: 1})
-        assert get_thread_limits(reload_clib=False)[clib] == 1
+        assert get_thread_limits()[clib] == 1
         assert dynamic_scaling[clib]
 
         limit_threads_clibs(limits={clib: 3})
-        new_limits = get_thread_limits(reload_clib=False)
+        new_limits = get_thread_limits()
         assert new_limits[clib] in (3, os.cpu_count(), os.cpu_count() / 2)
 
         limit_threads_clibs(limits=old_limits)
-        new_limits = get_thread_limits(reload_clib=False)
+        new_limits = get_thread_limits()
         assert new_limits[clib] == old_limits[clib]
 
 
@@ -36,20 +36,20 @@ def test_limit_threads_clib_subset(subset):
     old_limits = get_thread_limits()
 
     dynamic_scaling = limit_threads_clibs(limits=1, subset=subset)
-    new_limits = get_thread_limits(reload_clib=False)
+    new_limits = get_thread_limits()
     for clib in clibs:
         if old_limits[clib] is not None:
             assert new_limits[clib] == 1
             assert dynamic_scaling[clib]
 
     limit_threads_clibs(limits=3, subset=subset)
-    new_limits = get_thread_limits(reload_clib=False)
+    new_limits = get_thread_limits()
     for clib in clibs:
         if old_limits[clib] is not None:
             assert new_limits[clib] in (3, os.cpu_count(), os.cpu_count() / 2)
 
     limit_threads_clibs(limits=old_limits)
-    new_limits = get_thread_limits(reload_clib=False)
+    new_limits = get_thread_limits()
     for clib in clibs:
         if old_limits[clib] is not None:
             assert new_limits[clib] == old_limits[clib]
