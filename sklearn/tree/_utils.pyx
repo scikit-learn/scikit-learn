@@ -53,7 +53,7 @@ def _realloc_test():
 
 
 # rand_r replacement using a 32bit XorShift generator
-# See http://www.jstatsoft.org/v08/i14/paper for details
+# See https://www.jstatsoft.org/v08/i14/paper for details
 cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
     seed[0] ^= <UINT32_t>(seed[0] << 13)
     seed[0] ^= <UINT32_t>(seed[0] >> 17)
@@ -78,7 +78,7 @@ cdef inline np.ndarray int32_ptr_to_ndarray(INT32_t* data, SIZE_t size):
 
 cdef inline SIZE_t rand_int(SIZE_t low, SIZE_t high,
                             UINT32_t* random_state) nogil:
-    """Generate a random integer in [0; end)."""
+    """Generate a random integer in [low; end)."""
     return low + our_rand_r(random_state) % (high - low)
 
 

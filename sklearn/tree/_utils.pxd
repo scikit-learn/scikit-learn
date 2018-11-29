@@ -11,6 +11,9 @@
 import numpy as np
 cimport numpy as np
 
+from _tree cimport Node
+from sklearn.neighbors.quad_tree cimport Cell
+
 ctypedef np.npy_float32 DTYPE_t          # Type of X
 ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
@@ -60,6 +63,8 @@ ctypedef fused realloc_ptr:
     (WeightedPQueueRecord*)
     (DOUBLE_t*)
     (Node*)
+    (Cell*)
+    (Node**)
     (StackRecord*)
     (PriorityHeapRecord*)
     (void**)

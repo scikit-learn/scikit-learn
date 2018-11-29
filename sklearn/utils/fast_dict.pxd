@@ -11,10 +11,8 @@ from libcpp.map cimport map as cpp_map
 import numpy as np
 cimport numpy as np
 
-DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
 
-ITYPE = np.intp
 ctypedef np.intp_t ITYPE_t
 
 ###############################################################################

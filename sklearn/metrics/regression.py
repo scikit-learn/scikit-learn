@@ -31,6 +31,7 @@ from ..externals.six import string_types
 
 
 __ALL__ = [
+    "max_error",
     "mean_absolute_error",
     "mean_squared_error",
     "mean_squared_log_error",
@@ -45,9 +46,9 @@ def _check_reg_targets(y_true, y_pred, multioutput):
 
     Parameters
     ----------
-    y_true : array-like,
+    y_true : array-like
 
-    y_pred : array-like,
+    y_pred : array-like
 
     multioutput : array-like or string in ['raw_values', uniform_average',
         'variance_weighted'] or None
@@ -161,13 +162,14 @@ def mean_absolute_error(y_true, y_pred,
     >>> mean_absolute_error(y_true, y_pred)
     0.75
     >>> mean_absolute_error(y_true, y_pred, multioutput='raw_values')
-    array([ 0.5,  1. ])
+    array([0.5, 1. ])
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     ... # doctest: +ELLIPSIS
-    0.849...
+    0.85...
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
     output_errors = np.average(np.abs(y_pred - y_true),
                                weights=sample_weight, axis=0)
     if isinstance(multioutput, string_types):
@@ -228,14 +230,15 @@ def mean_squared_error(y_true, y_pred,
     0.708...
     >>> mean_squared_error(y_true, y_pred, multioutput='raw_values')
     ... # doctest: +ELLIPSIS
-    array([ 0.416...,  1.        ])
+    array([0.41666667, 1.        ])
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     ... # doctest: +ELLIPSIS
-    0.824...
+    0.825...
 
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
     output_errors = np.average((y_true - y_pred) ** 2, axis=0,
                                weights=sample_weight)
     if isinstance(multioutput, string_types):
@@ -298,7 +301,7 @@ def mean_squared_log_error(y_true, y_pred,
     0.044...
     >>> mean_squared_log_error(y_true, y_pred, multioutput='raw_values')
     ... # doctest: +ELLIPSIS
-    array([ 0.004...,  0.083...])
+    array([0.00462428, 0.08377444])
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
     ... # doctest: +ELLIPSIS
     0.060...
@@ -306,12 +309,13 @@ def mean_squared_log_error(y_true, y_pred,
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
 
-    if not (y_true >= 0).all() and not (y_pred >= 0).all():
+    if (y_true < 0).any() or (y_pred < 0).any():
         raise ValueError("Mean Squared Logarithmic Error cannot be used when "
                          "targets contain negative values.")
 
-    return mean_squared_error(np.log(y_true + 1), np.log(y_pred + 1),
+    return mean_squared_error(np.log1p(y_true), np.log1p(y_pred),
                               sample_weight, multioutput)
 
 
@@ -409,6 +413,7 @@ def explained_variance_score(y_true, y_pred,
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
 
     y_diff_avg = np.average(y_true - y_pred, weights=sample_weight, axis=0)
     numerator = np.average((y_true - y_pred - y_diff_avg) ** 2,
@@ -528,6 +533,7 @@ def r2_score(y_true, y_pred, sample_weight=None,
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
@@ -568,3 +574,37 @@ def r2_score(y_true, y_pred, sample_weight=None,
         avg_weights = multioutput
 
     return np.average(output_scores, weights=avg_weights)
+
+
+def max_error(y_true, y_pred):
+    """
+    max_error metric calculates the maximum residual error.
+
+    Read more in the :ref:`User Guide <max_error>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape = (n_samples)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape = (n_samples)
+        Estimated target values.
+
+    Returns
+    -------
+    max_error : float
+        A positive floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import max_error
+    >>> y_true = [3, 2, 7, 1]
+    >>> y_pred = [4, 2, 7, 1]
+    >>> max_error(y_true, y_pred)
+    1
+    """
+    y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None)
+    check_consistent_length(y_true, y_pred)
+    if y_type == 'continuous-multioutput':
+        raise ValueError("Multioutput not supported in max_error")
+    return np.max(np.abs(y_true - y_pred))

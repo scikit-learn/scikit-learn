@@ -1,10 +1,11 @@
 import numpy as np
 
+import pytest
+
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
@@ -76,7 +77,7 @@ def test_lda_predict():
         # Primarily test for commit 2f34950 -- "reuse" of priors
         y_pred3 = clf.fit(X, y3).predict(X)
         # LDA shouldn't be able to separate those
-        assert_true(np.any(y_pred3 != y3), 'solver %s' % solver)
+        assert np.any(y_pred3 != y3), 'solver %s' % solver
 
     # Test invalid shrinkages
     clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=-0.2231)
@@ -223,6 +224,38 @@ def test_lda_scaling():
                      'using covariance: %s' % solver)
 
 
+def test_lda_store_covariance():
+    # Test for slover 'lsqr' and 'eigen'
+    # 'store_covariance' has no effect on 'lsqr' and 'eigen' solvers
+    for solver in ('lsqr', 'eigen'):
+        clf = LinearDiscriminantAnalysis(solver=solver).fit(X6, y6)
+        assert hasattr(clf, 'covariance_')
+
+        # Test the actual attribute:
+        clf = LinearDiscriminantAnalysis(solver=solver,
+                                         store_covariance=True).fit(X6, y6)
+        assert hasattr(clf, 'covariance_')
+
+        assert_array_almost_equal(
+            clf.covariance_,
+            np.array([[0.422222, 0.088889], [0.088889, 0.533333]])
+        )
+
+    # Test for SVD slover, the default is to not set the covariances_ attribute
+    clf = LinearDiscriminantAnalysis(solver='svd').fit(X6, y6)
+    assert not hasattr(clf, 'covariance_')
+
+    # Test the actual attribute:
+    clf = LinearDiscriminantAnalysis(solver=solver,
+                                     store_covariance=True).fit(X6, y6)
+    assert hasattr(clf, 'covariance_')
+
+    assert_array_almost_equal(
+        clf.covariance_,
+        np.array([[0.422222, 0.088889], [0.088889, 0.533333]])
+    )
+
+
 def test_qda():
     # QDA classification.
     # This checks that QDA implements fit and predict and returns
@@ -243,7 +276,7 @@ def test_qda():
 
     y_pred3 = clf.fit(X6, y7).predict(X6)
     # QDA shouldn't be able to separate those
-    assert_true(np.any(y_pred3 != y7))
+    assert np.any(y_pred3 != y7)
 
     # Classes should have at least 2 elements
     assert_raises(ValueError, clf.fit, X6, y4)
@@ -262,22 +295,22 @@ def test_qda_priors():
     assert_greater(n_pos2, n_pos)
 
 
-def test_qda_store_covariances():
+def test_qda_store_covariance():
     # The default is to not set the covariances_ attribute
     clf = QuadraticDiscriminantAnalysis().fit(X6, y6)
-    assert_true(not hasattr(clf, 'covariances_'))
+    assert not hasattr(clf, 'covariance_')
 
     # Test the actual attribute:
-    clf = QuadraticDiscriminantAnalysis(store_covariances=True).fit(X6, y6)
-    assert_true(hasattr(clf, 'covariances_'))
+    clf = QuadraticDiscriminantAnalysis(store_covariance=True).fit(X6, y6)
+    assert hasattr(clf, 'covariance_')
 
     assert_array_almost_equal(
-        clf.covariances_[0],
+        clf.covariance_[0],
         np.array([[0.7, 0.45], [0.45, 0.7]])
     )
 
     assert_array_almost_equal(
-        clf.covariances_[1],
+        clf.covariance_[1],
         np.array([[0.33333333, -0.33333333], [-0.33333333, 0.66666667]])
     )
 
@@ -288,7 +321,7 @@ def test_qda_regularization():
     clf = QuadraticDiscriminantAnalysis()
     with ignore_warnings():
         y_pred = clf.fit(X2, y6).predict(X2)
-    assert_true(np.any(y_pred != y6))
+    assert np.any(y_pred != y6)
 
     # adding a little regularization fixes the problem
     clf = QuadraticDiscriminantAnalysis(reg_param=0.01)
@@ -317,3 +350,16 @@ def test_covariance():
 
     c_s = _cov(x, 'auto')
     assert_almost_equal(c_s, c_s.T)
+
+
+@pytest.mark.parametrize("solver", ['svd, lsqr', 'eigen'])
+def test_raises_value_error_on_same_number_of_classes_and_samples(solver):
+    """
+    Tests that if the number of samples equals the number
+    of classes, a ValueError is raised.
+    """
+    X = np.array([[0.5, 0.6], [0.6, 0.5]])
+    y = np.array(["a", "b"])
+    clf = LinearDiscriminantAnalysis(solver=solver)
+    with pytest.raises(ValueError, match="The number of samples must be more"):
+        clf.fit(X, y)

@@ -17,10 +17,9 @@ from scipy.sparse import lil_matrix
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import SkipTest
 
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.multiclass import is_multilabel
@@ -229,17 +228,17 @@ def test_unique_labels_mixed_types():
 def test_is_multilabel():
     for group, group_examples in iteritems(EXAMPLES):
         if group in ['multilabel-indicator']:
-            dense_assert_, dense_exp = assert_true, 'True'
+            dense_exp = True
         else:
-            dense_assert_, dense_exp = assert_false, 'False'
+            dense_exp = False
 
         for example in group_examples:
             # Only mark explicitly defined sparse examples as valid sparse
             # multilabel-indicators
             if group == 'multilabel-indicator' and issparse(example):
-                sparse_assert_, sparse_exp = assert_true, 'True'
+                sparse_exp = True
             else:
-                sparse_assert_, sparse_exp = assert_false, 'False'
+                sparse_exp = False
 
             if (issparse(example) or
                 (hasattr(example, '__array__') and
@@ -253,18 +252,18 @@ def test_is_multilabel():
                                                          dok_matrix,
                                                          lil_matrix]]
                 for exmpl_sparse in examples_sparse:
-                    sparse_assert_(is_multilabel(exmpl_sparse),
-                                   msg=('is_multilabel(%r)'
-                                   ' should be %s')
-                                   % (exmpl_sparse, sparse_exp))
+                    assert sparse_exp == is_multilabel(exmpl_sparse), (
+                            'is_multilabel(%r) should be %s'
+                            % (exmpl_sparse, sparse_exp))
 
             # Densify sparse examples before testing
             if issparse(example):
                 example = example.toarray()
 
-            dense_assert_(is_multilabel(example),
-                          msg='is_multilabel(%r) should be %s'
-                          % (example, dense_exp))
+            assert dense_exp == is_multilabel(example), (
+                    'is_multilabel(%r) should be %s'
+                    % (example, dense_exp))
+
 
 def test_check_classification_targets():
     for y_type in EXAMPLES.keys():
@@ -272,10 +271,11 @@ def test_check_classification_targets():
             for example in EXAMPLES[y_type]:
                 msg = 'Unknown label type: '
                 assert_raises_regex(ValueError, msg,
-                    check_classification_targets, example)
+                                    check_classification_targets, example)
         else:
             for example in EXAMPLES[y_type]:
                 check_classification_targets(example)
+
 
 # @ignore_warnings
 def test_type_of_target():
@@ -286,7 +286,7 @@ def test_type_of_target():
                               % (example, group, type_of_target(example))))
 
     for example in NON_ARRAY_LIKE_EXAMPLES:
-        msg_regex = 'Expected array-like \(array or non-string sequence\).*'
+        msg_regex = r'Expected array-like \(array or non-string sequence\).*'
         assert_raises_regex(ValueError, msg_regex, type_of_target, example)
 
     for example in MULTILABEL_SEQUENCES:
@@ -294,6 +294,15 @@ def test_type_of_target():
                'representation. Sequence of sequences are no longer supported;'
                ' use a binary array or sparse matrix instead.')
         assert_raises_regex(ValueError, msg, type_of_target, example)
+
+    try:
+        from pandas import SparseSeries
+    except ImportError:
+        raise SkipTest("Pandas not found")
+
+    y = SparseSeries([1, 0, 0, 1, 0])
+    msg = "y cannot be class 'SparseSeries'."
+    assert_raises_regex(ValueError, msg, type_of_target, y)
 
 
 def test_class_distribution():

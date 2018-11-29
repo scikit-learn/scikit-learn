@@ -35,13 +35,13 @@ import os
 from time import time
 import argparse
 import numpy as np
+from joblib import Memory
 
 from sklearn.datasets import fetch_mldata
 from sklearn.datasets import get_data_home
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.dummy import DummyClassifier
-from sklearn.externals.joblib import Memory
 from sklearn.kernel_approximation import Nystroem
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.metrics import zero_one_loss
@@ -91,14 +91,17 @@ ESTIMATORS = {
         Nystroem(gamma=0.015, n_components=1000), LinearSVC(C=100)),
     'SampledRBF-SVM': make_pipeline(
         RBFSampler(gamma=0.015, n_components=1000), LinearSVC(C=100)),
-    'LinearRegression-SAG': LogisticRegression(solver='sag', tol=1e-1, C=1e4),
+    'LogisticRegression-SAG': LogisticRegression(solver='sag', tol=1e-1,
+                                                 C=1e4),
+    'LogisticRegression-SAGA': LogisticRegression(solver='saga', tol=1e-1,
+                                                  C=1e4),
     'MultilayerPerceptron': MLPClassifier(
         hidden_layer_sizes=(100, 100), max_iter=400, alpha=1e-4,
-        algorithm='sgd', learning_rate_init=0.2, momentum=0.9, verbose=1,
+        solver='sgd', learning_rate_init=0.2, momentum=0.9, verbose=1,
         tol=1e-4, random_state=1),
     'MLP-adam': MLPClassifier(
         hidden_layer_sizes=(100, 100), max_iter=400, alpha=1e-4,
-        algorithm='adam', learning_rate_init=0.001, verbose=1,
+        solver='adam', learning_rate_init=0.001, verbose=1,
         tol=1e-4, random_state=1)
 }
 

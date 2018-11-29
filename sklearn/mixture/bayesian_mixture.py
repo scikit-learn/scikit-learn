@@ -77,7 +77,6 @@ class BayesianGaussianMixture(BaseMixture):
     The number of components actually used almost always depends on the data.
 
     .. versionadded:: 0.18
-    *BayesianGaussianMixture*.
 
     Read more in the :ref:`User Guide <bgmm>`.
 
@@ -132,7 +131,8 @@ class BayesianGaussianMixture(BaseMixture):
 
     weight_concentration_prior : float | None, optional.
         The dirichlet concentration of each component on the weight
-        distribution (Dirichlet). The higher concentration puts more mass in
+        distribution (Dirichlet). This is commonly called gamma in the
+        literature. The higher concentration puts more mass in
         the center and will lead to more components being active, while a lower
         concentration parameter will lead to more mass at the edge of the
         mixture weights simplex. The value of the parameter must be greater
@@ -163,13 +163,17 @@ class BayesianGaussianMixture(BaseMixture):
                 (n_features)             if 'diag',
                 float                    if 'spherical'
 
-    random_state : RandomState or an int seed, defaults to None.
-        A random number generator instance.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     warm_start : bool, default to False.
         If 'warm_start' is True, the solution of the last fitting is used as
         initialization for the next call of fit(). This can speed up
-        convergence when fit is called several time on similar problems.
+        convergence when fit is called several times on similar problems.
+        See :term:`the Glossary <warm_start>`.
 
     verbose : int, default to 0.
         Enable verbose output. If 1 then it prints the current
@@ -290,7 +294,7 @@ class BayesianGaussianMixture(BaseMixture):
 
     .. [1] `Bishop, Christopher M. (2006). "Pattern recognition and machine
        learning". Vol. 4 No. 4. New York: Springer.
-       <http://www.springer.com/kr/book/9780387310732>`_
+       <https://www.springer.com/kr/book/9780387310732>`_
 
     .. [2] `Hagai Attias. (2000). "A Variational Bayesian Framework for
        Graphical Models". In Advances in Neural Information Processing
@@ -299,7 +303,7 @@ class BayesianGaussianMixture(BaseMixture):
 
     .. [3] `Blei, David M. and Michael I. Jordan. (2006). "Variational
        inference for Dirichlet process mixtures". Bayesian analysis 1.1
-       <http://www.cs.princeton.edu/courses/archive/fall11/cos597C/reading/BleiJordan2005.pdf>`_
+       <https://www.cs.princeton.edu/courses/archive/fall11/cos597C/reading/BleiJordan2005.pdf>`_
     """
 
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,

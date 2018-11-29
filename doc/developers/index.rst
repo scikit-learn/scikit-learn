@@ -10,7 +10,7 @@ Developer's Guide
 .. toctree::
 
    contributing
-   debugging
+   tips
    utilities
    performance
    advanced_installation
