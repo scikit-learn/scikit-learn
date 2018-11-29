@@ -672,6 +672,10 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
+    method_max_iter : int, optional (default=1000)
+        It is passed to the underlying `method` as their `max_iter`
+        parameter.
+
     iter_offset : int, default 0
         Number of previous iterations completed on the dictionary used for
         initialization.
@@ -956,6 +960,10 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
+    transform_max_iter : int, optional (default=1000)
+        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`,
+        `transform_max_iter` is passed to the underlying transformer.
+
     split_sign : bool, False by default
         Whether to split the sparse feature vector into the concatenation of
         its negative part and its positive part. This can improve the
@@ -1086,6 +1094,10 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
+    transform_max_iter : int, optional (default=1000)
+        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`,
+        `transform_max_iter` is passed to the underlying transformer.
+
     n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -1150,14 +1162,14 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     def __init__(self, n_components=None, alpha=1, max_iter=1000, tol=1e-8,
                  fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
-                 n_jobs=None, code_init=None, dict_init=None, verbose=False,
-                 split_sign=False, random_state=None,
-                 positive_code=False, positive_dict=False):
+                 transform_max_iter=1000, n_jobs=None, code_init=None,
+                 dict_init=None, verbose=False, split_sign=False,
+                 random_state=None, positive_code=False, positive_dict=False):
 
         self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,
-                                       transform_alpha, max_iter, split_sign,
-                                       n_jobs, positive_code)
+                                       transform_alpha, transform_max_iter,
+                                       split_sign, n_jobs, positive_code)
         self.alpha = alpha
         self.max_iter = max_iter
         self.tol = tol
@@ -1280,6 +1292,10 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
+
+    transform_max_iter : int, optional (default=1000)
+        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`,
+        `transform_max_iter` is passed to the underlying transformer.
 
     verbose : bool, optional (default: False)
         To control the verbosity of the procedure.
