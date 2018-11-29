@@ -28,6 +28,7 @@ from ..utils import gen_batches
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
+from ..utils._clibs import get_thread_limits, limit_threads_clibs
 from ..utils import effective_n_jobs
 from ..externals.six import string_types
 from ..exceptions import ConvergenceWarning
@@ -370,6 +371,11 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
     n_jobs_ = -1 if n_jobs is None else effective_n_jobs(n_jobs)
     seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
 
+    # limit number of threads in second level of nested parallelism (i.e. BLAS)
+    # to avoid oversubsciption
+    limits = get_thread_limits(reload_clib=True)
+    limit_threads_clibs(limits=1, subset="blas")
+
     for seed in seeds:
         # run a k-means once
         labels, inertia, centers, n_iter_ = kmeans_single(
@@ -382,6 +388,9 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
             best_centers = centers.copy()
             best_inertia = inertia
             best_n_iter = n_iter_
+
+    # release the limit on threads number and reset to initial value
+    limit_threads_clibs(limits=limits)
 
     if not sp.issparse(X):
         if not copy_x:
