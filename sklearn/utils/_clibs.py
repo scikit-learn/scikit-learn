@@ -95,6 +95,8 @@ class _CLibsWrapper:
                     dynamic_threadpool_size[clib] = True
                 else:
                     dynamic_threadpool_size[clib] = False
+            else:
+                dynamic_threadpool_size[clib] = False
         self._unload()
         return dynamic_threadpool_size
 
