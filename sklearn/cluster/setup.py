@@ -4,17 +4,12 @@ import os
 
 import numpy
 
-from sklearn._build_utils import get_blas_info
-
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
 
-    cblas_libs, blas_info = get_blas_info()
-
     libraries = []
     if os.name == 'posix':
-        cblas_libs.append('m')
         libraries.append('m')
 
     config = Configuration('cluster', parent_package, top_path)
