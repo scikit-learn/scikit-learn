@@ -251,7 +251,10 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     distances += YY
     np.maximum(distances, 0, out=distances)
 
-    distances = _set_diagonal_pairwise(distances, X, Y)
+    if X is Y:
+        # Ensure that distances between vectors and themselves are set to 0.0.
+        # This may not be the case due to floating point rounding errors.
+        distances.flat[::distances.shape[0] + 1] = 0.0
 
     return distances if squared else np.sqrt(distances, out=distances)
 
@@ -543,7 +546,11 @@ def cosine_distances(X, Y=None):
     S *= -1
     S += 1
     np.clip(S, 0, 2, out=S)
-    return _set_diagonal_pairwise(S, X, Y)
+    if X is Y or Y is None:
+        # Ensure that distances between vectors and themselves are set to 0.0.
+        # This may not be the case due to floating point rounding errors.
+        S[np.diag_indices_from(S)] = 0.0
+    return S
 
 
 # Paired distances
