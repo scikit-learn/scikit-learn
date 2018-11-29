@@ -270,11 +270,11 @@ class GaussianProcessRegressor(MultiOutputMixin,
                         elif list_param[idx, 1]:
                             warnings.warn("The optimal value found for "
                                           "dimension %s of parameter %s is "
-                                          "close to the specified lower "
-                                          "bound %s. Decreasing the bound and"
+                                          "close to the specified upper "
+                                          "bound %s. Increasing the bound and"
                                           " calling fit again may find a "
                                           "better value." % (i, hyp.name,
-                                                             hyp.bounds[i][0]),
+                                                             hyp.bounds[i][1]),
                                           ConvergenceWarning)
                         idx += 1
 
