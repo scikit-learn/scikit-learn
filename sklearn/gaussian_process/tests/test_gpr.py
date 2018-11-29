@@ -507,8 +507,8 @@ def test_warning_bounds():
                                         " value."
 
     X_tile = np.tile(X, 2)
-    kernel_dims = RBF(length_scale=[1., 1.],
-                      length_scale_bounds=[[1e-2, 1e-1], [1e1, 1e2]])
+    kernel_dims = RBF(length_scale=[1., 2.],
+                      length_scale_bounds=[1e1, 1e2])
     gpr_dims = GaussianProcessRegressor(kernel=kernel_dims)
 
     with pytest.warns(None) as record:
@@ -518,8 +518,8 @@ def test_warning_bounds():
     assert record[0].message.args[0] == "The optimal value found for " \
                                         "dimension 0 of parameter " \
                                         "length_scale is " \
-                                        "close to the specified upper bound " \
-                                        "0.1. Increasing the bound and " \
+                                        "close to the specified lower bound " \
+                                        "10.0. Decreasing the bound and " \
                                         "calling fit again may find a better" \
                                         " value."
 
