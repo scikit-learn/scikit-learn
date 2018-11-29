@@ -1838,7 +1838,8 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
                       " deprecated in version 0.21 and"
                       " and will be removed in version 0.23"
                       " as the number of labels is identical"
-                      " to y_true.shape[1].")
+                      " to y_true.shape[1].",
+                      DeprecationWarning)
 
     if sample_weight is None:
         weight_average = 1.
