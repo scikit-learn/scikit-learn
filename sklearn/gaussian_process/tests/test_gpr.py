@@ -508,7 +508,7 @@ def test_warning_bounds():
 
     X_tile = np.tile(X, 2)
     kernel_dims = RBF(length_scale=[1., 1.],
-                      length_scale_bounds=[[1e-5, 1e-3], [1e3, 1e5]])
+                      length_scale_bounds=[[1e-2, 1e-1], [1e1, 1e2]])
     gpr_dims = GaussianProcessRegressor(kernel=kernel_dims)
 
     with pytest.warns(None) as record:
@@ -519,7 +519,7 @@ def test_warning_bounds():
                                         "dimension 0 of parameter " \
                                         "length_scale is " \
                                         "close to the specified upper bound " \
-                                        "0.001. Increasing the bound and " \
+                                        "0.1. Increasing the bound and " \
                                         "calling fit again may find a better" \
                                         " value."
 
@@ -527,6 +527,6 @@ def test_warning_bounds():
                                         "dimension 1 of parameter " \
                                         "length_scale is " \
                                         "close to the specified lower bound " \
-                                        "1000.0. Decreasing the bound and " \
+                                        "10.0. Decreasing the bound and " \
                                         "calling fit again may find a better" \
                                         " value."
