@@ -1836,7 +1836,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     if labels is not None:
         warnings.warn("This parameter is unused.  It was"
                       " deprecated in version 0.21 and"
-                      " and will be removed in version 0.23"
+                      " will be removed in version 0.23"
                       " as the number of labels is identical"
                       " to y_true.shape[1].",
                       DeprecationWarning)
