@@ -44,8 +44,10 @@ and will store the coefficients :math:`w` of the linear model in its
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
-    >>> reg.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
+    >>> reg.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
+    ...                                       # doctest: +NORMALIZE_WHITESPACE
+    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=None,
+                     normalize=False)
     >>> reg.coef_
     array([0.5, 0.5])
 
@@ -101,8 +103,8 @@ arrays X, y and will store the coefficients :math:`w` of the linear model in
 its ``coef_`` member::
 
     >>> from sklearn import linear_model
-    >>> reg = linear_model.Ridge (alpha = .5)
-    >>> reg.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1]) # doctest: +NORMALIZE_WHITESPACE
+    >>> reg = linear_model.Ridge(alpha=.5)
+    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1]) # doctest: +NORMALIZE_WHITESPACE
     Ridge(alpha=0.5, copy_X=True, fit_intercept=True, max_iter=None,
           normalize=False, random_state=None, solver='auto', tol=0.001)
     >>> reg.coef_
@@ -150,7 +152,7 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
     * "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
       <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
       `course slides
-      <http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
+      <https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
 
 .. _lasso:
@@ -182,7 +184,7 @@ the algorithm to fit the coefficients. See :ref:`least_angle_regression`
 for another implementation::
 
     >>> from sklearn import linear_model
-    >>> reg = linear_model.Lasso(alpha = 0.1)
+    >>> reg = linear_model.Lasso(alpha=0.1)
     >>> reg.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
        normalize=False, positive=False, precompute=False, random_state=None,
@@ -336,7 +338,7 @@ the algorithm to fit the coefficients.
 
 .. _elastic_net:
 
-Elastic Net
+Elastic-Net
 ===========
 :class:`ElasticNet` is a linear regression model trained with L1 and L2 prior
 as regularizer. This combination allows for learning a sparse model where
@@ -388,7 +390,7 @@ the duality gap computation used for convergence control.
 
 .. _multi_task_elastic_net:
 
-Multi-task Elastic Net
+Multi-task Elastic-Net
 ======================
 
 The :class:`MultiTaskElasticNet` is an elastic-net model that estimates sparse
@@ -506,7 +508,7 @@ column is always zero.
 .. topic:: References:
 
  * Original Algorithm is detailed in the paper `Least Angle Regression
-   <http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
+   <https://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
    by Hastie et al.
 
 
@@ -545,7 +547,7 @@ previously chosen dictionary elements.
 
 .. topic:: References:
 
- * http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+ * https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
  * `Matching pursuits with time-frequency dictionaries
    <http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
@@ -644,7 +646,7 @@ Bayesian Ridge Regression is used for regression::
 
 After being fitted, the model can then be used to predict new values::
 
-    >>> reg.predict ([[1, 0.]])
+    >>> reg.predict([[1, 0.]])
     array([0.50000013])
 
 
@@ -708,7 +710,7 @@ ARD is also known in the literature as *Sparse Bayesian Learning* and
 
     .. [1] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 7.2.1
 
-    .. [2] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination <http://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
+    .. [2] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination <https://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
 
     .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
 
@@ -728,7 +730,7 @@ or the log-linear classifier. In this model, the probabilities describing the po
 
 The implementation of logistic regression in scikit-learn can be accessed from
 class :class:`LogisticRegression`. This implementation can fit binary, One-vs-
-Rest, or multinomial logistic regression with optional L2 or L1
+Rest, or multinomial logistic regression with optional L2, L1 or Elastic-Net
 regularization.
 
 As an optimization problem, binary class L2 penalized logistic regression
@@ -737,19 +739,29 @@ minimizes the following cost function:
 .. math:: \min_{w, c} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
 
 Similarly, L1 regularized logistic regression solves the following
-optimization problem
+optimization problem:
 
 .. math:: \min_{w, c} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1).
 
+Elastic-Net regularization is a combination of L1 and L2, and minimizes the
+following cost function:
+
+.. math:: \min_{w, c} \frac{1 - \rho}{2}w^T w + \rho \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1),
+
+where :math:`\rho` controls the strengh of L1 regularization vs L2
+regularization (it corresponds to the `l1_ratio` parameter).
+
 Note that, in this notation, it's assumed that the observation :math:`y_i` takes values in the set
-:math:`{-1, 1}` at trial :math:`i`.
+:math:`{-1, 1}` at trial :math:`i`. We can also see that Elastic-Net is
+equivalent to L1 when :math:`\rho = 1` and equivalent to L2 when
+:math:`\rho=0`.
 
 The solvers implemented in the class :class:`LogisticRegression`
 are "liblinear", "newton-cg", "lbfgs", "sag" and "saga":
 
 The solver "liblinear" uses a coordinate descent (CD) algorithm, and relies
 on the excellent C++ `LIBLINEAR library
-<http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_, which is shipped with
+<https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_, which is shipped with
 scikit-learn. However, the CD algorithm implemented in liblinear cannot learn
 a true multinomial (multiclass) model; instead, the optimization problem is
 decomposed in a "one-vs-rest" fashion so separate binary classifiers are
@@ -770,21 +782,39 @@ than other solvers for large datasets, when both the number of samples and the
 number of features are large.
 
 The "saga" solver [7]_ is a variant of "sag" that also supports the
-non-smooth `penalty="l1"` option. This is therefore the solver of choice
-for sparse multinomial logistic regression.
+non-smooth `penalty="l1"`. This is therefore the solver of choice for sparse
+multinomial logistic regression. It is also the only solver that supports
+`penalty="elasticnet"`.
 
-In a nutshell, one may choose the solver with the following rules:
+In a nutshell, the following table summarizes the penalties supported by
+each solver:
 
-=================================  =====================================
-Case                               Solver
-=================================  =====================================
-L1 penalty                         "liblinear" or "saga"
-Multinomial loss                   "lbfgs", "sag", "saga" or "newton-cg"
-Very Large dataset (`n_samples`)   "sag" or "saga"
-=================================  =====================================
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+|                              |                       **Solvers**                                        |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| **Penalties**                | **'liblinear'** | **'lbfgs'** | **'newton-cg'** | **'sag'** | **'saga'** |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| Multinomial + L2 penalty     |       no        |     yes     |       yes       |    yes    |    yes     |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| OVR + L2 penalty             |       yes       |     yes     |       yes       |    yes    |    yes     |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| Multinomial + L1 penalty     |       no        |     no      |       no        |    no     |    yes     |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| OVR + L1 penalty             |       yes       |     no      |       no        |    no     |    yes     |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| Elastic-Net                  |       no        |     no      |       no        |    no     |    yes     |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| **Behaviors**                |                                                                          |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| Penalize the intercept (bad) |       yes       |     no      |       no        |    no     |    no      |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| Faster for large datasets    |       no        |     no      |       no        |    yes    |    yes     |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| Robust to unscaled datasets  |       yes       |     yes     |       yes       |    no     |    no      |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
 
-The "saga" solver is often the best choice. The "liblinear" solver is
-used by default for historical reasons.
+The "saga" solver is often the best choice but requires scaling. The
+"liblinear" solver is used by default for historical reasons.
 
 For large dataset, you may also consider using :class:`SGDClassifier`
 with 'log' loss.
@@ -822,14 +852,11 @@ with 'log' loss.
    thus be used to perform feature selection, as detailed in
    :ref:`l1_feature_selection`.
 
-:class:`LogisticRegressionCV` implements Logistic Regression with
-builtin cross-validation to find out the optimal C parameter.
-"newton-cg", "sag", "saga" and "lbfgs" solvers are found to be faster
-for high-dimensional dense data, due to warm-starting. For the
-multiclass case, if `multi_class` option is set to "ovr", an optimal C
-is obtained for each class and if the `multi_class` option is set to
-"multinomial", an optimal C is obtained by minimizing the cross-entropy
-loss.
+:class:`LogisticRegressionCV` implements Logistic Regression with built-in
+cross-validation support, to find the optimal `C` and `l1_ratio` parameters
+according to the ``scoring`` attribute. The "newton-cg", "sag", "saga" and
+"lbfgs" solvers are found to be faster for high-dimensional dense data, due
+to warm-starting (see :term:`Glossary <warm_start>`).
 
 .. topic:: References:
 

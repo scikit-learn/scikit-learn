@@ -5,7 +5,7 @@ import numpy as np
 
 from sklearn.utils.testing import assert_array_equal, assert_array_less
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal, assert_true, assert_greater
+from sklearn.utils.testing import assert_equal, assert_greater
 from sklearn.utils.testing import assert_raises, assert_raises_regexp
 
 from sklearn.base import BaseEstimator
@@ -68,7 +68,7 @@ def test_samme_proba():
     samme_proba = weight_boosting._samme_proba(mock, 3, np.ones_like(probs))
 
     assert_array_equal(samme_proba.shape, probs.shape)
-    assert_true(np.isfinite(samme_proba).all())
+    assert np.isfinite(samme_proba).all()
 
     # Make sure that the correct elements come out as smallest --
     # `_samme_proba` should preserve the ordering in each example.
@@ -146,7 +146,7 @@ def test_boston():
     assert score > 0.85
 
     # Check we used multiple estimators
-    assert_true(len(reg.estimators_) > 1)
+    assert len(reg.estimators_) > 1
     # Check for distinct random states (see issue #7408)
     assert_equal(len(set(est.random_state for est in reg.estimators_)),
                  len(reg.estimators_))
