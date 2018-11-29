@@ -4,8 +4,6 @@ import numpy as np
 import warnings
 from scipy.sparse import csr_matrix
 
-import pytest
-
 from sklearn import datasets
 from sklearn import svm
 
