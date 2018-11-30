@@ -1339,11 +1339,16 @@ class _NoSampleWeightWrapper:
         return self.est.predict(X)
 
 
+def _make_multiclass():
+    return make_classification(n_classes=3, n_clusters_per_class=1)
+
+
 @pytest.mark.parametrize(
     "task",
     [(GradientBoostingClassifier, make_classification, DummyClassifier),
+     (GradientBoostingClassifier, _make_multiclass, DummyClassifier),
      (GradientBoostingRegressor, make_regression, DummyRegressor)],
-    ids=["classification", "regression"])
+    ids=["binary classification", "multiclass classification", "regression"])
 def test_gradient_boosting_with_init(task):
     # Check that GradientBoostingRegressor works when init is a sklearn
     # estimator.

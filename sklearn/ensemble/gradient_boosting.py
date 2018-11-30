@@ -1435,6 +1435,16 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             y_pred = self.init_.predict(X).astype(np.float64, copy=False)
             if y_pred.ndim == 1:
                 y_pred = y_pred[:, np.newaxis]
+
+            if self.loss_.K >= 2 and y_pred.shape[1] != self.n_classes_:
+                # multiclass classification needs y_pred to be of shape
+                # (n_samples, K) where K is the number of classes.
+                y_tmp = np.zeros((y_pred.shape[0], self.loss_.K),
+                                 dtype=np.float64)
+                for k, class_ in enumerate(self.classes_):
+                    y_tmp[:, k] = np.ravel(y_pred) == class_
+                y_pred = y_tmp
+
             begin_at_stage = 0
 
             # The rng state must be preserved if warm_start is True
