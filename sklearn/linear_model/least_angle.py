@@ -63,6 +63,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
         matrix is precomputed from the given X, if there are more samples
         than features.
 
+        .. deprecated:: 0.21
+
+            The option is broken and deprecated. It will be removed in v0.23.
+
     max_iter : integer, optional (default=500)
         Maximum number of iterations to perform, set to infinity for no limit.
 
@@ -144,9 +148,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
 
     """
-    if X is None and Gram is None:
+    if X is None and Gram is not None:
         warnings.warn('Use lars_path_gram to avoid passing X and y. '
-                      'The current option will be removed in future versions.',
+                      'The current option will be removed in v0.23.',
                       DeprecationWarning)
     return _lars_path_solver(
         X=X, y=y, Xy=Xy, Gram=Gram, n_samples=None, max_iter=max_iter,
