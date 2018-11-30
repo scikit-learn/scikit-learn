@@ -269,11 +269,11 @@ def detection_error_tradeoff_curve(y_true, y_score, pos_label=None,
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> fpr, fnr, thresholds = detection_error_tradeoff_curve(y_true, y_scores)
     >>> fpr
-    array([0.5,  0.5,  0. ])
+    array([0.5, 0.5, 0. ])
     >>> fnr
-    array([0. ,  0.5,  0.5 ])
+    array([0. , 0.5, 0.5])
     >>> thresholds
-    array([0.35,  0.4 ,  0.8 ])
+    array([0.35, 0.4 , 0.8 ])
 
     """
     if len(np.unique(y_true)) != 2:
