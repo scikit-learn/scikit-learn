@@ -5,8 +5,11 @@ from numpy import linalg
 
 from scipy.sparse import dok_matrix, csr_matrix, issparse
 from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
+from scipy.spatial.distance import cdist, pdist, squareform
 
 import pytest
+
+from sklearn import set_config
 
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
@@ -893,3 +896,33 @@ def test_check_preserve_type():
                                                    XB.astype(np.float))
     assert_equal(XA_checked.dtype, np.float)
     assert_equal(XB_checked.dtype, np.float)
+
+
+@pytest.mark.parametrize("n_jobs", [1, 2, -1])
+@pytest.mark.parametrize("metric", ["seuclidean", "mahalanobis"])
+@pytest.mark.parametrize("dist_function",
+                         [pairwise_distances, pairwise_distances_chunked])
+@pytest.mark.parametrize("y_is_x", [True, False], ids=["Y==X", "Y!=X"])
+def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
+                                                y_is_x):
+    # check that pairwise_distances give the same result in sequential and
+    # parallel, when metric has data-derived parameters.
+    set_config(working_memory=0.1)  # to have more than 1 chunk
+
+    rng = np.random.RandomState(0)
+
+    X = rng.random_sample((1000, 10))
+
+    if y_is_x:
+        Y = X
+        if n_jobs == 1:
+            expected_dist = squareform(pdist(X, metric=metric))
+        else:
+            expected_dist = cdist(X, Y, metric=metric)
+    else:
+        Y = rng.random_sample((1000, 10))
+        expected_dist = cdist(X, Y, metric=metric)
+
+    dist = np.vstack(dist_function(X, Y, metric=metric, n_jobs=n_jobs))
+
+    assert_allclose(dist, expected_dist)
