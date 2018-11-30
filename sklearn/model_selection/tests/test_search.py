@@ -22,7 +22,6 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
@@ -337,17 +336,17 @@ def test_classes__property():
     # Test that regressors do not have a classes_ attribute
     grid_search = GridSearchCV(Ridge(), {'alpha': [1.0, 2.0]})
     grid_search.fit(X, y)
-    assert_false(hasattr(grid_search, 'classes_'))
+    assert not hasattr(grid_search, 'classes_')
 
     # Test that the grid searcher has no classes_ attribute before it's fit
     grid_search = GridSearchCV(LinearSVC(random_state=0), {'C': Cs})
-    assert_false(hasattr(grid_search, 'classes_'))
+    assert not hasattr(grid_search, 'classes_')
 
     # Test that the grid searcher has no classes_ attribute without a refit
     grid_search = GridSearchCV(LinearSVC(random_state=0),
                                {'C': Cs}, refit=False)
     grid_search.fit(X, y)
-    assert_false(hasattr(grid_search, 'classes_'))
+    assert not hasattr(grid_search, 'classes_')
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
@@ -372,9 +371,9 @@ def test_no_refit():
     for scoring in [None, ['accuracy', 'precision']]:
         grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=False)
         grid_search.fit(X, y)
-        assert_true(not hasattr(grid_search, "best_estimator_") and
-                    hasattr(grid_search, "best_index_") and
-                    hasattr(grid_search, "best_params_"))
+        assert not hasattr(grid_search, "best_estimator_") and \
+            hasattr(grid_search, "best_index_") and \
+            hasattr(grid_search, "best_params_")
 
         # Make sure the functions predict/transform etc raise meaningful
         # error messages
@@ -744,10 +743,10 @@ def check_cv_results_array_types(search, param_keys, score_keys):
     assert all(isinstance(cv_results[param], np.ma.MaskedArray)
                for param in param_keys)
     assert all(cv_results[key].dtype == object for key in param_keys)
-    assert_false(any(isinstance(cv_results[key], np.ma.MaskedArray)
-                     for key in score_keys))
-    assert_true(all(cv_results[key].dtype == np.float64
-                    for key in score_keys if not key.startswith('rank')))
+    assert not any(isinstance(cv_results[key], np.ma.MaskedArray)
+                   for key in score_keys)
+    assert all(cv_results[key].dtype == np.float64
+               for key in score_keys if not key.startswith('rank'))
 
     scorer_keys = search.scorer_.keys() if search.multimetric_ else ['score']
 
@@ -792,27 +791,27 @@ def test_grid_search_cv_results():
         cv_results = search.cv_results_
         # Check if score and timing are reasonable
         assert all(cv_results['rank_test_score'] >= 1)
-        assert_true(all(cv_results[k] >= 0) for k in score_keys
-                    if k is not 'rank_test_score')
-        assert_true(all(cv_results[k] <= 1) for k in score_keys
-                    if 'time' not in k and
-                    k is not 'rank_test_score')
+        assert (all(cv_results[k] >= 0) for k in score_keys
+                if k is not 'rank_test_score')
+        assert (all(cv_results[k] <= 1) for k in score_keys
+                if 'time' not in k and
+                k is not 'rank_test_score')
         # Check cv_results structure
         check_cv_results_array_types(search, param_keys, score_keys)
         check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
         # Check masking
         cv_results = search.cv_results_
         n_candidates = len(search.cv_results_['params'])
-        assert_true(all((cv_results['param_C'].mask[i] and
-                         cv_results['param_gamma'].mask[i] and
-                         not cv_results['param_degree'].mask[i])
-                        for i in range(n_candidates)
-                        if cv_results['param_kernel'][i] == 'linear'))
-        assert_true(all((not cv_results['param_C'].mask[i] and
-                         not cv_results['param_gamma'].mask[i] and
-                         cv_results['param_degree'].mask[i])
-                        for i in range(n_candidates)
-                        if cv_results['param_kernel'][i] == 'rbf'))
+        assert all((cv_results['param_C'].mask[i] and
+                    cv_results['param_gamma'].mask[i] and
+                    not cv_results['param_degree'].mask[i])
+                   for i in range(n_candidates)
+                   if cv_results['param_kernel'][i] == 'linear')
+        assert all((not cv_results['param_C'].mask[i] and
+                    not cv_results['param_gamma'].mask[i] and
+                    cv_results['param_degree'].mask[i])
+                   for i in range(n_candidates)
+                   if cv_results['param_kernel'][i] == 'rbf')
 
 
 def test_random_search_cv_results():
@@ -846,8 +845,8 @@ def test_random_search_cv_results():
         check_cv_results_array_types(search, param_keys, score_keys)
         check_cv_results_keys(cv_results, param_keys, score_keys, n_cand)
         # For random_search, all the param array vals should be unmasked
-        assert_false(any(np.ma.getmaskarray(cv_results['param_C'])) or
-                     any(np.ma.getmaskarray(cv_results['param_gamma'])))
+        assert not(any(np.ma.getmaskarray(cv_results['param_C'])) or
+                   any(np.ma.getmaskarray(cv_results['param_gamma'])))
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -921,7 +920,7 @@ def test_search_iid_param():
 
     for search in (grid_search, random_search):
         search.fit(X, y)
-        assert_false(search.iid)
+        assert not search.iid
 
         test_cv_scores = np.array(list(search.cv_results_['split%d_test_score'
                                                           % s][0]
@@ -1020,9 +1019,9 @@ def compare_cv_results_multimetric_with_single(
 
     # Check if score and timing are reasonable, also checks if the keys
     # are present
-    assert_true(all((np.all(cv_results_multi[k] <= 1) for k in (
+    assert all((np.all(cv_results_multi[k] <= 1) for k in (
                     'mean_score_time', 'std_score_time', 'mean_fit_time',
-                    'std_fit_time'))))
+                    'std_fit_time')))
 
     # Compare the keys, other than time keys, among multi-metric and
     # single metric grid search results. np.testing.assert_equal performs a
@@ -1038,7 +1037,7 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
     if refit:
         assert_equal(search_multi.refit, 'accuracy')
     else:
-        assert_false(search_multi.refit)
+        assert not search_multi.refit
     assert_equal(search_acc.refit, refit)
 
     X, y = make_blobs(n_samples=100, n_features=4, random_state=42)
@@ -1075,10 +1074,10 @@ def test_search_cv_results_rank_tie_breaking():
                             cv_results['mean_test_score'][1])
         assert_almost_equal(cv_results['mean_train_score'][0],
                             cv_results['mean_train_score'][1])
-        assert_false(np.allclose(cv_results['mean_test_score'][1],
-                                 cv_results['mean_test_score'][2]))
-        assert_false(np.allclose(cv_results['mean_train_score'][1],
-                                 cv_results['mean_train_score'][2]))
+        assert not np.allclose(cv_results['mean_test_score'][1],
+                               cv_results['mean_test_score'][2])
+        assert not np.allclose(cv_results['mean_train_score'][1],
+                               cv_results['mean_train_score'][2])
         # 'min' rank should be assigned to the tied candidates
         assert_almost_equal(search.cv_results_['rank_test_score'], [1, 1, 3])
 
@@ -1264,7 +1263,7 @@ def test_predict_proba_disabled():
     y = [0, 0, 1, 1, 1]
     clf = SVC(gamma='scale', probability=False)
     gs = GridSearchCV(clf, {}, cv=2).fit(X, y)
-    assert_false(hasattr(gs, "predict_proba"))
+    assert not hasattr(gs, "predict_proba")
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
@@ -1415,7 +1414,7 @@ def test_stochastic_gradient_loss_param():
 
     # When the estimator is not fitted, `predict_proba` is not available as the
     # loss is 'hinge'.
-    assert_false(hasattr(clf, "predict_proba"))
+    assert not hasattr(clf, "predict_proba")
     clf.fit(X, y)
     clf.predict_proba(X)
     clf.predict_log_proba(X)
@@ -1427,9 +1426,9 @@ def test_stochastic_gradient_loss_param():
     }
     clf = GridSearchCV(estimator=SGDClassifier(tol=1e-3, loss='hinge'),
                        param_grid=param_grid)
-    assert_false(hasattr(clf, "predict_proba"))
+    assert not hasattr(clf, "predict_proba")
     clf.fit(X, y)
-    assert_false(hasattr(clf, "predict_proba"))
+    assert not hasattr(clf, "predict_proba")
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
@@ -1463,9 +1462,9 @@ def test_grid_search_cv_splits_consistency():
     gs2.fit(X, y)
 
     # Give generator as a cv parameter
-    assert_true(isinstance(KFold(n_splits=n_splits,
-                                 shuffle=True, random_state=0).split(X, y),
-                           GeneratorType))
+    assert isinstance(KFold(n_splits=n_splits,
+                            shuffle=True, random_state=0).split(X, y),
+                      GeneratorType)
     gs3 = GridSearchCV(LinearSVC(random_state=0),
                        param_grid={'C': [0.1, 0.2, 0.3]},
                        cv=KFold(n_splits=n_splits, shuffle=True,

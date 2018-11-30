@@ -1748,7 +1748,7 @@ symmetric is:
 Then the Davies-Bouldin index is defined as:
 
 .. math::
-   DB = \frac{1}{k} \sum{i=1}^k \max_{i \neq j} R_{ij}
+   DB = \frac{1}{k} \sum_{i=1}^k \max_{i \neq j} R_{ij}
 
 Zero is the lowest possible score. Values closer to zero indicate a better
 partition.
