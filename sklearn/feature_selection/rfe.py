@@ -185,9 +185,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         if step_score:
             self.scores_ = []
-        n_remaining_features = n_features
 
         # Elimination
+        n_remaining_features = n_features
         while n_remaining_features > n_features_to_select:
             # Remaining features
             features = np.arange(n_features)[support_]
@@ -250,7 +250,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
                 self.scores_.append(step_score(estimator, features))
             support_[features[ranks][:threshold]] = False
             ranking_[np.logical_not(support_)] += 1
-            n_remaining_features = np.sum(support_)
+            n_remaining_features = n_remaining_features - threshold
 
         # Set final attributes
         features = np.arange(n_features)[support_]
