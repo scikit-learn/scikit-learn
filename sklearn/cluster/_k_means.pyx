@@ -88,11 +88,11 @@ cpdef floating _inertia_sparse(X,
     return inertia
 
 
-cpdef void _relocate_empty_clusters_dense(np.ndarray[floating, ndim=2, mode='c'] X,
-                                          floating[::1] sample_weight,
-                                          floating[:, ::1] centers,
-                                          floating[::1] weight_in_clusters,
-                                          int[::1] labels):
+cdef void _relocate_empty_clusters_dense(np.ndarray[floating, ndim=2, mode='c'] X,
+                                         floating[::1] sample_weight,
+                                         floating[:, ::1] centers,
+                                         floating[::1] weight_in_clusters,
+                                         int[::1] labels):
     """Relocate centers which have no sample assigned to them"""
     cdef:
         int[::1] empty_clusters = np.where(np.equal(weight_in_clusters,0))[0].astype(np.int32)
@@ -129,13 +129,13 @@ cpdef void _relocate_empty_clusters_dense(np.ndarray[floating, ndim=2, mode='c']
             weight_in_clusters[old_cluster_id] -= weight
 
 
-cpdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
-                                           int[::1] X_indices,
-                                           int[::1] X_indptr,
-                                           floating[::1] sample_weight,
-                                           floating[:, ::1] centers,
-                                           floating[::1] weight_in_clusters,
-                                           int[::1] labels):
+cdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
+                                          int[::1] X_indices,
+                                          int[::1] X_indptr,
+                                          floating[::1] sample_weight,
+                                          floating[:, ::1] centers,
+                                          floating[::1] weight_in_clusters,
+                                          int[::1] labels):
     """Relocate centers which have no sample assigned to them"""
     cdef:
         int[::1] empty_clusters = np.where(np.equal(weight_in_clusters,0))[0].astype(np.int32)
@@ -181,10 +181,10 @@ cpdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
             weight_in_clusters[old_cluster_id] -= weight
 
 
-cpdef void _mean_and_center_shift(floating[:, ::1] centers_old,
-                                  floating[:, ::1] centers_new,
-                                  floating[::1] weight_in_clusters,
-                                  floating[::1] center_shift):
+cdef void _mean_and_center_shift(floating[:, ::1] centers_old,
+                                 floating[:, ::1] centers_new,
+                                 floating[::1] weight_in_clusters,
+                                 floating[::1] center_shift):
     """Average new centers wrt weights and compute center shift"""
     cdef:
         int n_clusters = centers_old.shape[0]

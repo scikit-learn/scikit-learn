@@ -15,7 +15,7 @@ from libc.stdlib cimport malloc, free
 from libc.string cimport memset, memcpy
 
 from ..metrics import euclidean_distances
-from ._k_means import _relocate_empty_clusters_dense, _mean_and_center_shift
+from ._k_means cimport _relocate_empty_clusters_dense, _mean_and_center_shift
 
 
 np.import_array()
