@@ -12,6 +12,16 @@ Version 0.20.2
 This is a bug-fix release with some minor documentation improvements and
 enhancements to features released in 0.20.0.
 
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- :mod:`sklearn.neighbors` when ``metric=='jaccard'`` (bug fix)
+
 Changelog
 ---------
 
@@ -22,6 +32,12 @@ Changelog
   parameter may not have been updated correctly when a step is set to ``None``
   or ``'passthrough'``. :user:`Thomas Fan <thomasjpfan>`.
 
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| Fixed :class:`sklearn.neighbors.DistanceMetric` jaccard distance
+  function to return 0 when two all-zero vectors are compared.
+  :issue:`12685` by :user:`Thomas Fan <thomasjpfan>`.
 
 .. _changes_0_20_1:
 
