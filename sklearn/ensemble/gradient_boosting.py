@@ -1436,10 +1436,11 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             if y_pred.ndim == 1:
                 y_pred = y_pred[:, np.newaxis]
 
-            if self.loss_.K >= 2 and y_pred.shape[1] != self.n_classes_:
+            if (self.loss_.is_multi_class
+                    and y_pred.shape[1] != self.n_classes_):
                 # multiclass classification needs y_pred to be of shape
-                # (n_samples, K) where K is the number of classes.
-                y_tmp = np.zeros((y_pred.shape[0], self.loss_.K),
+                # (n_samples, n_classes).
+                y_tmp = np.zeros((y_pred.shape[0], self.n_classes_),
                                  dtype=np.float64)
                 for k, class_ in enumerate(self.classes_):
                     y_tmp[:, k] = np.ravel(y_pred) == class_
