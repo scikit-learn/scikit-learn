@@ -95,10 +95,10 @@ def test_simple_precomputed_sufficient_stats():
 
 
 def test_x_none_gram_none_raises_value_error():
-    # Test that lars_path with precomputed Gram and Xy gives the right answer
-    G = None
+    # Test that lars_path with no X and Gram raises exception
     Xy = np.dot(X.T, y)
-    assert_raises(ValueError, linear_model.lars_path, None, y, Gram=None, Xy=Xy)
+    assert_raises(ValueError, linear_model.lars_path, None, y, Gram=None,
+                  Xy=Xy)
 
 
 def test_all_precomputed():
