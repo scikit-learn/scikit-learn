@@ -90,8 +90,8 @@ def test_strip_accents():
     assert_equal(strip_accents_unicode(a), expected)
 
     # check some arabic
-    a = '\u0625'  # halef with a hamza below
-    expected = '\u0627'  # simple halef
+    a = '\u0625'  # alef with a hamza below: إ
+    expected = '\u0627'  # simple alef: ا
     assert_equal(strip_accents_unicode(a), expected)
 
     # mix letters accentuated and not
