@@ -28,8 +28,8 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
-- |Fix| Fixed an issue in :class:`compose.ColumnTransformer` which raises
-  unexpected error when columns is pandas Index.
+- |Fix| Fixed an issue in :func:`compose.make_column_transformer` which raises
+  unexpected error when columns is pandas Index or pandas Series.
   :issue:`12704` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 :mod:`sklearn.pipeline`
