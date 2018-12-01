@@ -1271,6 +1271,12 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
             X_chunk = X[sl]
         D_chunk = pairwise_distances(X_chunk, Y, metric=metric,
                                      n_jobs=n_jobs, **kwds)
+        if ((X is Y or Y is None)
+                and PAIRWISE_DISTANCE_FUNCTIONS.get(metric, None)
+                is euclidean_distances):
+            # zeroing diagonal, taking care of aliases of "euclidean",
+            # i.e. "l2"
+            D_chunk.flat[sl.start::_num_samples(X) + 1] = 0
         if reduce_func is not None:
             chunk_size = D_chunk.shape[0]
             D_chunk = reduce_func(D_chunk, sl.start)

@@ -11,6 +11,7 @@ from __future__ import division
 from itertools import chain
 
 import numpy as np
+import warnings
 from scipy import sparse
 
 from ..base import clone, TransformerMixin
@@ -681,14 +682,63 @@ def _is_empty_column_selection(column):
         return False
 
 
+def _validate_transformers(transformers):
+    """Checks if given transformers are valid.
+
+    This is a helper function to support the deprecated tuple order.
+    XXX Remove in v0.22
+    """
+    if not transformers:
+        return True
+
+    for t in transformers:
+        if t in ('drop', 'passthrough'):
+            continue
+        if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
+                hasattr(t, "transform")):
+            return False
+
+    return True
+
+
+def _is_deprecated_tuple_order(tuples):
+    """Checks if the input follows the deprecated tuple order.
+
+    Returns
+    -------
+    Returns true if (transformer, columns) is not a valid assumption for the
+    input, but (columns, transformer) is valid. The latter is deprecated and
+    its support will stop in v0.22.
+
+    XXX Remove in v0.22
+    """
+    transformers, columns = zip(*tuples)
+    if (not _validate_transformers(transformers)
+            and _validate_transformers(columns)):
+        return True
+
+    return False
+
+
 def _get_transformer_list(estimators):
     """
     Construct (name, trans, column) tuples from list
 
     """
-    transformers = [trans[1] for trans in estimators]
-    columns = [trans[0] for trans in estimators]
-    names = [trans[0] for trans in _name_estimators(transformers)]
+    message = ('`make_column_transformer` now expects (transformer, columns) '
+               'as input tuples instead of (columns, transformer). This '
+               'has been introduced in v0.20.1. `make_column_transformer` '
+               'will stop accepting the deprecated (columns, transformer) '
+               'order in v0.22.')
+
+    transformers, columns = zip(*estimators)
+
+    # XXX Remove in v0.22
+    if _is_deprecated_tuple_order(estimators):
+        transformers, columns = columns, transformers
+        warnings.warn(message, DeprecationWarning)
+
+    names, _ = zip(*_name_estimators(transformers))
 
     transformer_list = list(zip(names, transformers, columns))
     return transformer_list
@@ -704,7 +754,7 @@ def make_column_transformer(*transformers, **kwargs):
 
     Parameters
     ----------
-    *transformers : tuples of column selections and transformers
+    *transformers : tuples of transformers and column selections
 
     remainder : {'drop', 'passthrough'} or estimator, default 'drop'
         By default, only the specified columns in `transformers` are
@@ -747,8 +797,8 @@ def make_column_transformer(*transformers, **kwargs):
     >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
     >>> from sklearn.compose import make_column_transformer
     >>> make_column_transformer(
-    ...     (['numerical_column'], StandardScaler()),
-    ...     (['categorical_column'], OneHotEncoder()))
+    ...     (StandardScaler(), ['numerical_column']),
+    ...     (OneHotEncoder(), ['categorical_column']))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
              transformer_weights=None,

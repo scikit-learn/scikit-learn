@@ -17,9 +17,14 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- please add class and reason here (see version 0.20 what's new)
+..
+    please add class and reason here (see version 0.20 what's new)
+
 - Decision trees and derived ensembles when both `max_depth` and
-  `max_leaf_nodes` are set. (bug fix)
+  `max_leaf_nodes` are set. |Fix|
+- :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` with 'saga' solver. |Fix|
+
 
 Details are listed in the changelog below.
 
@@ -85,6 +90,16 @@ Support for Python 3.4 and below has been officially dropped.
   metrics such as recall, specificity, fall out and miss rate.
   :issue:`11179` by :user:`Shangwu Yao <ShangwuYao>` and `Joel Nothman`_.
 
+:mod:`sklearn.model_selection`
+......................
+
+- |Enhancement| Classes :class:`GridSearchCV`, :class:`RandomSearchCV`, and
+  methods :func:`cross_val_score`, :func:`cross_val_predict`,
+  :func:`cross_validate`, now print train scores when `return_train_scores` is
+  True and `verbose` > 2. For :func:`learning_curve`, and
+  :func:`validation_curve` only the latter is required.
+  :issue:`12613` and :issue:`12669` by :user:`Marc Torrellas <marctorrellas>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
@@ -143,6 +158,15 @@ Support for Python 3.4 and below has been officially dropped.
   affects all ensemble methods using decision trees.
   :pr:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Feature| :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
+  with the 'saga' solver. :issue:`11646` by :user:`Nicolas Hug <NicolasHug>`.
+
+- |Fix| Fixed a bug in the 'saga' solver where the weights would not be
+  correctly updated in some cases. :issue:`11646` by `Tom Dupre la Tour`_.
 
 Multiple modules
 ................

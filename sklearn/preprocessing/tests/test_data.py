@@ -47,7 +47,6 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_allclose
@@ -433,7 +432,7 @@ def test_scaler_2d_arrays():
 
     scaler = StandardScaler()
     X_scaled = scaler.fit(X).transform(X, copy=True)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
     assert_equal(scaler.n_samples_seen_, n_samples)
 
     assert_array_almost_equal(X_scaled.mean(axis=0), n_features * [0.0])
@@ -448,17 +447,17 @@ def test_scaler_2d_arrays():
     assert_array_almost_equal(X_scaled_back, X)
 
     X_scaled = scale(X, axis=1, with_std=False)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=1), n_samples * [0.0])
     X_scaled = scale(X, axis=1, with_std=True)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=1), n_samples * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=1), n_samples * [1.0])
     # Check that the data hasn't been modified
     assert X_scaled is not X
 
     X_scaled = scaler.fit(X).transform(X, copy=False)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=0), n_features * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
     # Check that X has not been copied
@@ -468,7 +467,7 @@ def test_scaler_2d_arrays():
     X[:, 0] = 1.0  # first feature is a constant, non zero feature
     scaler = StandardScaler()
     X_scaled = scaler.fit(X).transform(X, copy=True)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=0), n_features * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
     # Check that X has not been copied
@@ -479,7 +478,7 @@ def test_handle_zeros_in_scale():
     s1 = np.array([0, 1, 2, 3])
     s2 = _handle_zeros_in_scale(s1, copy=True)
 
-    assert_false(s1[0] == s2[0])
+    assert not s1[0] == s2[0]
     assert_array_equal(s1, np.array([0, 1, 2, 3]))
     assert_array_equal(s2, np.array([1, 1, 2, 3]))
 
@@ -806,15 +805,15 @@ def test_scaler_without_centering():
 
     scaler = StandardScaler(with_mean=False).fit(X)
     X_scaled = scaler.transform(X, copy=True)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
 
     scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
     X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
-    assert_false(np.any(np.isnan(X_csr_scaled.data)))
+    assert not np.any(np.isnan(X_csr_scaled.data))
 
     scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
     X_csc_scaled = scaler_csc.transform(X_csc, copy=True)
-    assert_false(np.any(np.isnan(X_csc_scaled.data)))
+    assert not np.any(np.isnan(X_csc_scaled.data))
 
     assert_array_almost_equal(scaler.mean_, scaler_csr.mean_)
     assert_array_almost_equal(scaler.var_, scaler_csr.var_)
@@ -952,19 +951,19 @@ def test_scaler_int():
     with warnings.catch_warnings(record=True):
         scaler = StandardScaler(with_mean=False).fit(X)
         X_scaled = scaler.transform(X, copy=True)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
 
     clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
         X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
-    assert_false(np.any(np.isnan(X_csr_scaled.data)))
+    assert not np.any(np.isnan(X_csr_scaled.data))
 
     clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
         X_csc_scaled = scaler_csc.transform(X_csc, copy=True)
-    assert_false(np.any(np.isnan(X_csc_scaled.data)))
+    assert not np.any(np.isnan(X_csc_scaled.data))
 
     assert_array_almost_equal(scaler.mean_, scaler_csr.mean_)
     assert_array_almost_equal(scaler.var_, scaler_csr.var_)
@@ -1539,10 +1538,10 @@ def test_scale_function_without_centering():
     X_csr = sparse.csr_matrix(X)
 
     X_scaled = scale(X, with_mean=False)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
 
     X_csr_scaled = scale(X_csr, with_mean=False)
-    assert_false(np.any(np.isnan(X_csr_scaled.data)))
+    assert not np.any(np.isnan(X_csr_scaled.data))
 
     # test csc has same outcome
     X_csc_scaled = scale(X_csr.tocsc(), with_mean=False)
