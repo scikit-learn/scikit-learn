@@ -546,6 +546,7 @@ def test_make_column_transformer_pandas():
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_df = pd.DataFrame(X_array, columns=['first', 'second'])
     norm = Normalizer()
+    # XXX remove in v0.22
     with pytest.warns(DeprecationWarning,
                       match='`make_column_transformer` now expects'):
         ct1 = make_column_transformer((X_df.columns, norm))

@@ -25,6 +25,13 @@ random sampling procedures.
 Changelog
 ---------
 
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixed an issue in :class:`compose.ColumnTransformer` which raises
+  unexpected error when columns is pandas Index.
+  :issue:`12704` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
