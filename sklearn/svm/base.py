@@ -541,7 +541,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
             in the model.
             If decision_function_shape='ovr', the shape is (n_samples,
             n_classes)
-        
+
         Notes
         ------
         The function values are proportional to the distance of the samples X
