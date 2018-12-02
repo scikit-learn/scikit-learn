@@ -12,7 +12,7 @@ def getRDatasetsIndex(repoName=None, refspec="master"):
         repoName = defaultRepoName
     import csv
     res = {}
-    repoRawPath = GH_RAW_BASE+repoName
+    repoRawPath = GH_RAW_BASE + repoName
     index = requests.get(repoRawPath + "/" + refspec + "/datasets.csv").text
     reader = csv.reader(index.splitlines())
     headers = next(reader)
