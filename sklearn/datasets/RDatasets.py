@@ -11,15 +11,14 @@ def getRDatasetsIndex(repoName=None, refspec="master"):
     if not repoName:
         repoName = defaultRepoName
     import csv
-    res={}
+    res = {}
     repoRawPath = GH_RAW_BASE+repoName
-    index = requests.get(repoRawPath+"/" + refspec + "/datasets.csv").text
+    index = requests.get(repoRawPath + "/" + refspec + "/datasets.csv").text
     reader = csv.reader(index.splitlines())
     headers = next(reader)
-    print(headers)
     
     hasDicMapping = {}
-    hasPrefix="has_"
+    hasPrefix = "has_"
     
     for i in range(len(headers)):
         headers[i] = headers[i].lower()
@@ -46,7 +45,7 @@ def getRDatasetsIndex(repoName=None, refspec="master"):
         if pkg not in res:
             res[pkg] = {}
         
-        helpPath=row["doc"].split("/")
+        helpPath = row["doc"].split("/")
         helpPath.insert(-1, "rst")
         helpPath[-1] = ".".join(helpPath[-1].split(".")[:-1]+["rst"])
         row["doc"] = "/".join(helpPath)
@@ -58,7 +57,7 @@ index = None
 
 
 def getDataset(category, name):
-    """Returns a dataset from """+defaultRepoName
+    """Returns a dataset from """ + defaultRepoName
     
     global index
     if not index:
@@ -91,7 +90,7 @@ def parseInfoFromDocs(desc):
         nm = tit[0].childNodes[0].data
         sections[nm] = s
         
-    parsedParams=getMetaInfoFromDocs(dd)
+    parsedParams = getMetaInfoFromDocs(dd)
     return {"columnsDescriptions": parseColumnsInfo(sections["Format"])}
 
 def parseColumnsInfo(formatSect):
@@ -102,15 +101,15 @@ def parseColumnsInfo(formatSect):
             resNodes = []
             for s in row.childNodes:
                 ps = s.getElementsByTagName("paragraph")
-                if len(ps)==1:
+                if len(ps) == 1:
                     p = ps[0]
                     ts = p.childNodes
-                    assert(len(ts)==1)
+                    assert(len(ts) == 1)
                     resNodes.append(ts[0].data)
             if len(resNodes) == 2:
                 k, v = resNodes
-                if k[-1]==":":
-                    k=k[:-1]
+                if k[-1] == ":":
+                    k = k[:-1]
                 parsedParams[k] = v
     
     return parsedParams
