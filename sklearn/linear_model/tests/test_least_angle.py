@@ -736,7 +736,7 @@ def test_lars_path_positive_constraint_sufficient_stats():
 
     method = 'lasso'
     alpha, active, coefs = \
-    linear_model.lars_path_gram(Xy=Xy, Gram=G, n_samples=n_samples,
+        linear_model.lars_path_gram(Xy=Xy, Gram=G, n_samples=n_samples,
                                     return_path=True, method=method,
                                     positive=False)
     assert coefs.min() < 0
@@ -746,6 +746,7 @@ def test_lars_path_positive_constraint_sufficient_stats():
                                     return_path=True, method=method,
                                     positive=True)
     assert coefs.min() >= 0
+
 
 # now we gonna test the positive option for all estimator classes
 
