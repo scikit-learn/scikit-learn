@@ -418,9 +418,9 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 
 
 def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
-                  method='lars', n_jobs=None, dict_init=None, code_init=None,
-                  callback=None, verbose=False, random_state=None,
-                  return_n_iter=False, positive_dict=False,
+                  method='lars', method_max_iter=1000, n_jobs=None,
+                  dict_init=None, code_init=None, callback=None, verbose=False,
+                  random_state=None, return_n_iter=False, positive_dict=False,
                   positive_code=False):
     """Solves a dictionary learning matrix factorization problem.
 
@@ -458,6 +458,10 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
+
+    method_max_iter : int, optional (default=1000)
+        It is passed to the underlying `method` as their `max_iter`
+        parameter.
 
     n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
@@ -573,7 +577,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         # Update code
         code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
                              init=code, n_jobs=n_jobs, positive=positive_code,
-                             max_iter=max_iter, verbose=verbose)
+                             max_iter=method_max_iter, verbose=verbose)
         # Update dictionary
         dictionary, residuals = _update_dict(dictionary.T, X.T, code.T,
                                              verbose=verbose, return_r2=True,
@@ -1207,6 +1211,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
             X, n_components, self.alpha,
             tol=self.tol, max_iter=self.max_iter,
             method=self.fit_algorithm,
+            method_max_iter=self.transform_max_iter,
             n_jobs=self.n_jobs,
             code_init=self.code_init,
             dict_init=self.dict_init,
