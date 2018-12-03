@@ -231,7 +231,7 @@ partial_fit_classifiers = {
 test_stats = {'n_test': 0, 'n_test_pos': 0}
 
 
-def get_testdata(doc_iter_test, pos_class=positive_class):
+def get_test_data(doc_iter_test, pos_class=positive_class):
     """Extract a minibatch of examples, return a tuple X_text, y.
 
     Note: size is before excluding invalid docs with no topics assigned.
@@ -251,7 +251,7 @@ def get_testdata(doc_iter_test, pos_class=positive_class):
     return X_TextTest, np.asarray(y_test, dtype=int)
 
 tick = time.time()
-X_TextTest, y_test = get_testdata(data_stream_test, positive_class)
+X_TextTest, y_test = get_test_data(data_stream_test, positive_class)
 parsing_time = time.time() - tick
 
 # Vectorized Test Data
