@@ -74,7 +74,7 @@ class ReutersParser(html_parser.HTMLParser):
         method = 'start_' + tag
         for attr in attrs:
             if attr[0] == 'lewissplit':
-                self.LEWisSplit = attr[1]
+                self.lewis_split = attr[1]
         getattr(self, method, lambda x: None)(attrs)
 
     def handle_endtag(self, tag):
@@ -90,7 +90,7 @@ class ReutersParser(html_parser.HTMLParser):
         self.body = ""
         self.topics = []
         self.topic_d = ""
-        self.LEWisSplit = ""
+        self.lewis_split = ""
 
     def parse(self, fd):
         self.docs = []
@@ -117,7 +117,7 @@ class ReutersParser(html_parser.HTMLParser):
         self.docs.append({'title': self.title,
                           'body': self.body,
                           'topics': self.topics,
-                          'lewissplit': self.LEWisSplit})
+                          'lewissplit': self.lewis_split})
         self._reset()
 
     def start_title(self, attributes):
