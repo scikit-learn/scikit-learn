@@ -482,29 +482,26 @@ def test_warning_bounds():
                                              "find a better value.",
                          gpr.fit, X, y)
 
-    kernel_sum = \
-        WhiteKernel(noise_level_bounds=[1e-5, 1e-3]) + \
-        RBF(length_scale_bounds=[1e3, 1e5])
+    kernel_sum = (WhiteKernel(noise_level_bounds=[1e-5, 1e-3]) +
+                  RBF(length_scale_bounds=[1e3, 1e5]))
     gpr_sum = GaussianProcessRegressor(kernel=kernel_sum)
     with pytest.warns(None) as record:
         gpr_sum.fit(X, y)
 
     assert len(record) == 2
-    assert record[0].message.args[0] == "The optimal value found for " \
-                                        "dimension 0 of parameter " \
-                                        "k1__noise_level is " \
-                                        "close to the specified upper bound " \
-                                        "0.001. Increasing the bound and " \
-                                        "calling fit again may find a better" \
-                                        " value."
+    assert record[0].message.args[0] == ("The optimal value found for "
+                                         "dimension 0 of parameter "
+                                         "k1__noise_level is close to the "
+                                         "specified upper bound 0.001. "
+                                         "Increasing the bound and calling "
+                                         "fit again may find a better value.")
 
-    assert record[1].message.args[0] == "The optimal value found for " \
-                                        "dimension 0 of parameter " \
-                                        "k2__length_scale is " \
-                                        "close to the specified lower bound " \
-                                        "1000.0. Decreasing the bound and " \
-                                        "calling fit again may find a better" \
-                                        " value."
+    assert record[1].message.args[0] == ("The optimal value found for "
+                                         "dimension 0 of parameter "
+                                         "k2__length_scale is close to the "
+                                         "specified lower bound 1000.0. "
+                                         "Decreasing the bound and calling "
+                                         "fit again may find a better value.")
 
     X_tile = np.tile(X, 2)
     kernel_dims = RBF(length_scale=[1., 2.],
@@ -515,18 +512,16 @@ def test_warning_bounds():
         gpr_dims.fit(X_tile, y)
 
     assert len(record) == 2
-    assert record[0].message.args[0] == "The optimal value found for " \
-                                        "dimension 0 of parameter " \
-                                        "length_scale is " \
-                                        "close to the specified lower bound " \
-                                        "10.0. Decreasing the bound and " \
-                                        "calling fit again may find a better" \
-                                        " value."
+    assert record[0].message.args[0] == ("The optimal value found for "
+                                         "dimension 0 of parameter "
+                                         "length_scale is close to the "
+                                         "specified lower bound 10.0. "
+                                         "Decreasing the bound and calling "
+                                         "fit again may find a better value.")
 
-    assert record[1].message.args[0] == "The optimal value found for " \
-                                        "dimension 1 of parameter " \
-                                        "length_scale is " \
-                                        "close to the specified lower bound " \
-                                        "10.0. Decreasing the bound and " \
-                                        "calling fit again may find a better" \
-                                        " value."
+    assert record[1].message.args[0] == ("The optimal value found for "
+                                         "dimension 1 of parameter "
+                                         "length_scale is close to the "
+                                         "specified lower bound 10.0. "
+                                         "Decreasing the bound and calling "
+                                         "fit again may find a better value.")
