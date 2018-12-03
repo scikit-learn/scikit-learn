@@ -18,7 +18,7 @@ A more traditional (and possibly better) way to predict on a sparse subset of
 input features would be to use univariate feature selection followed by a
 traditional (l2-penalised) logistic regression model.
 """
-import time
+import timeit
 import warnings
 
 import matplotlib.pyplot as plt
@@ -34,7 +34,7 @@ print(__doc__)
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning,
                         module="sklearn")
-t0 = time.process_time()
+t0 = timeit.default_timer()
 
 # We use SAGA solver
 solver = 'saga'
@@ -82,9 +82,9 @@ for model in models:
                                 max_iter=this_max_iter,
                                 random_state=42,
                                 )
-        t1 = time.process_time()
+        t1 = timeit.default_timer()
         lr.fit(X_train, y_train)
-        train_time = time.process_time() - t1
+        train_time = timeit.default_timer() - t1
 
         y_pred = lr.predict(X_test)
         accuracy = np.sum(y_pred == y_test) / y_test.shape[0]
@@ -117,6 +117,6 @@ fig.suptitle('Multinomial vs One-vs-Rest Logistic L1\n'
              'Dataset %s' % '20newsgroups')
 fig.tight_layout()
 fig.subplots_adjust(top=0.85)
-run_time = time.process_time() - t0
+run_time = timeit.default_timer() - t0
 print('Example run in %.3f s' % run_time)
 plt.show()
