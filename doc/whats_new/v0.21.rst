@@ -59,9 +59,16 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`slkearn.decomposition`
 ............................
 
-- |Fix| :class:`decomposition.SparseCoder` now passes `max_iter` to the
-  underlying :class:`linear_model.LassoLars` when algorithm is set to
-  `lasso_lars`. :issue:`12650` by user:`Adrin Jalali <adrinjalali>`.
+- |Fix| `sparse_encode()` now passes the `max_iter` to the underlying
+  `LassoLarse` when `algorithm='lasso_lars'`. :issue:`12650` by user:`Adrin
+  Jalali <adrinjalali>`.
+- |Enhancement| `dict_learning()` and `dict_learning_online()` now accept
+  `method_max_iter` and pass it to `sparse_encode`. :issue:`12650` by
+  user:`Adrin Jalali <adrinjalali>`.
+- |Enhancement| `SparseCoder`, `DictionaryLearning`, and
+  `MiniBatchDictionaryLearning` now take a `transform_max_iter` parameter and
+  pass it to either `dict_learning()` or `sparse_encode()`. :issue:`12650` by
+  user:`Adrin Jalali <adrinjalali>`.
 
 :mod:`sklearn.linear_model`
 ...........................
