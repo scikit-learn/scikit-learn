@@ -692,7 +692,7 @@ def _validate_transformers(transformers):
         return True
 
     for t in transformers:
-        if t in ('drop', 'passthrough'):
+        if isinstance(t, six.string_types) and t in ('drop', 'passthrough'):
             continue
         if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
                 hasattr(t, "transform")):
