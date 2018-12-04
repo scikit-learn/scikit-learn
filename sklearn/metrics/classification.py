@@ -1836,9 +1836,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     if labels is not None:
         warnings.warn("This parameter is unused.  It was"
                       " deprecated in version 0.21 and"
-                      " will be removed in version 0.23"
-                      " as the number of labels is identical"
-                      " to y_true.shape[1].",
+                      " will be removed in version 0.23",
                       DeprecationWarning)
 
     if sample_weight is None:
@@ -1878,8 +1876,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels for n_samples samples.
 
-    y_pred : array-like of float, \
-        shape = (n_samples, n_classes) or (n_samples,)
+    y_pred : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's
         predict_proba method. If ``y_pred.shape = (n_samples,)``
         the probabilities provided are assumed to be that of the
