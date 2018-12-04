@@ -47,11 +47,11 @@ fig, ax = plt.subplots(2, 2, sharex=True, sharey=True)
 fig.subplots_adjust(hspace=0.05, wspace=0.05)
 
 # histogram 1
-ax[0, 0].hist(X[:, 0], bins=bins, fc='#AAAAFF', normed=True)
+ax[0, 0].hist(X[:, 0], bins=bins, fc='#AAAAFF', density=True)
 ax[0, 0].text(-3.5, 0.31, "Histogram")
 
 # histogram 2
-ax[0, 1].hist(X[:, 0], bins=bins + 0.75, fc='#AAAAFF', normed=True)
+ax[0, 1].hist(X[:, 0], bins=bins + 0.75, fc='#AAAAFF', density=True)
 ax[0, 1].text(-3.5, 0.31, "Histogram, bins shifted")
 
 # tophat KDE
