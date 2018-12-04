@@ -841,7 +841,7 @@ def test_vectorizer_unicode():
 
     vect = CountVectorizer()
     X_counted = vect.fit_transform([document])
-    assert_equal(X_counted.shape, (1, 15))
+    assert_equal(X_counted.shape, (1, 12))
 
     vect = HashingVectorizer(norm=None, non_negative=True)
     X_hashed = vect.transform([document])
