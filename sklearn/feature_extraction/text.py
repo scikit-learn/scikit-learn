@@ -1357,8 +1357,10 @@ class TfidfVectorizer(CountVectorizer):
         preprocessing and n-grams generation steps.
         Only applies if ``analyzer == 'word'``.
 
-    analyzer : string, {'word', 'char'} or callable
+    analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
+        Option 'char_wb' creates character n-grams only from text inside
+        word boundaries; n-grams at the edges of words are padded with space.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
