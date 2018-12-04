@@ -112,11 +112,13 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # the old name for now
 assert_raises_regexp = assert_raises_regex
 
-deprecation_message = "'assert_true' deprecated in version 0.21. " \
+deprecation_message = "'assert_true' deprecated in version 0.21 " \
+                      "and will be removed in version 0.23." \
                       "Please use 'assert' instead."
 assert_true = deprecated(deprecation_message)(_dummy.assertTrue)
 
-deprecation_message = "'assert_false' deprecated in version 0.21. " \
+deprecation_message = "'assert_false' deprecated in version 0.21 " \
+                      "and will be removed in version 0.23." \
                       "Please use 'assert' instead."
 assert_false = deprecated(deprecation_message)(_dummy.assertFalse)
 
