@@ -8,8 +8,8 @@ headers = {
 try:
     import requests
 
-    def setupSession():
-        reqSess = requests.Session()
+    def setup_session():
+        requests_session = requests.Session()
 
         try:
             import hyper.http20.response
@@ -26,20 +26,20 @@ try:
 
             from hyper.contrib import HTTP20Adapter
             ad = HTTP20Adapter()
-            reqSess.mount("https://", ad)
-            reqSess.mount("http://", ad)
+            requests_session.mount("https://", ad)
+            requests_session.mount("http://", ad)
             hyper.h2.settings.ENABLE_PUSH = False
         except:
             pass
 
         headers["Accept-Encoding"] = ", ".join(headers["Accept-Encoding"])
-        reqSess.headers.update(headers)
-        return reqSess
+        requests_session.headers.update(headers)
+        return requests_session
 
-    reqSess = setupSession()
+    requests_session = setup_session()
 
-    def doGet(uri, binary=False):
-        res = reqSess.get(uri)
+    def do_get(uri, binary=False):
+        res = requests_session.get(uri)
         if binary:
             return res.raw
         return res.text
@@ -68,7 +68,7 @@ except:
 
     headers["Accept-Encoding"] = ", ".join(headers["Accept-Encoding"])
 
-    def doGet(uri, binary=False):
+    def do_get(uri, binary=False):
         req = Request(uri)
 
         for k, v in headers.items():
@@ -101,7 +101,7 @@ def get(uri, *args, force=False, binary=False, cacheFile="./scikit-learn_dataset
         if res and not force:
             return res
         else:
-            res = doGet(uri, binary)
+            res = do_get(uri, binary)
             if res:
                 hcache[uri] = res
             return res
