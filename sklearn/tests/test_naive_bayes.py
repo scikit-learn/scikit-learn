@@ -720,10 +720,12 @@ def test_alpha_vector():
     assert_raise_message(ValueError, expected_msg, m_nb.fit, X, y)
 
 
-def test_cnb():
+def test_catnb():
     # Check the ability to predict the learning set.
     clf = CategoricalNB()
     assert_raises(ValueError, clf.fit, -X, y2)
-    y_pred = clf.fit(X2, y2).predict(X2)
+    a = clf.fit(X2, y2)
+    print(type(a))
+    y_pred = a.predict(X2)
 
     assert_array_equal(y_pred, y2)

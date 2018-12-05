@@ -33,7 +33,7 @@ from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted
 from .externals import six
 
-__all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB']
+__all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB', 'CategoricalNB']
 
 
 class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
@@ -536,8 +536,6 @@ class BaseDiscreteNB(BaseNB):
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
 
-        n_samples, n_classes = Y.shape
-
         if X.shape[0] != Y.shape[0]:
             msg = "X.shape[0]=%d and y.shape[0]=%d are incompatible."
             raise ValueError(msg % (X.shape[0], y.shape[0]))
@@ -605,14 +603,19 @@ class BaseDiscreteNB(BaseNB):
         # Count raw events from data before updating the class log prior
         # and feature log probas
         n_effective_classes = Y.shape[1]
-        self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-        self.feature_count_ = np.zeros((n_effective_classes, n_features),
-                                       dtype=np.float64)
+
+        self._init_counters(n_effective_classes, n_features)
+
         self._count(X, Y)
         alpha = self._check_alpha()
         self._update_feature_log_prob(alpha)
         self._update_class_log_prior(class_prior=class_prior)
         return self
+
+    def _init_counters(self, n_effective_classes, n_features):
+        self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
+        self.feature_count_ = np.zeros((n_effective_classes, n_features),
+                                       dtype=np.float64)
 
     # XXX The following is a stopgap measure; we need to set the dimensions
     # of class_log_prior_ and feature_log_prob_ correctly.
@@ -957,11 +960,12 @@ class BernoulliNB(BaseDiscreteNB):
 class CategoricalNB(BaseDiscreteNB):
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+        if np.__version__ < '1.9.0':
+            print('assure X is convertible to int without loss of information and all features are greater equal 0.')
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
-    # is overridden because we use a different implementation for self.feature_count
     def fit(self, X, y, sample_weight=None):
         """Fit Naive Bayes classifier according to X, y
 
@@ -970,7 +974,7 @@ class CategoricalNB(BaseDiscreteNB):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features. Here, each feature of X is
-            assumed to be of a different categorical distribution.
+            assumed to be from a different categorical distribution.
 
         y : array-like, shape = [n_samples]
             Target values.
@@ -982,53 +986,73 @@ class CategoricalNB(BaseDiscreteNB):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, 'csr')
-        _, n_features = X.shape
+        return super(CategoricalNB, self).fit(X, y, sample_weight)
 
-        labelbin = LabelBinarizer()
-        Y = labelbin.fit_transform(y)
-        self.classes_ = labelbin.classes_
-        if Y.shape[1] == 1:
-            Y = np.concatenate((1 - Y, Y), axis=1)
+    def partial_fit(self, X, y, classes=None, sample_weight=None):
+        """Incremental fit on a batch of samples.
 
-        # LabelBinarizer().fit_transform() returns arrays with dtype=np.int64.
-        # We convert it to np.float64 to support sample_weight consistently;
-        # this means we also don't have to cast X to floating point
-        Y = Y.astype(np.float64)
-        if sample_weight is not None:
-            sample_weight = np.atleast_2d(sample_weight)
-            Y *= check_array(sample_weight).T
+        This method is expected to be called several times consecutively
+        on different chunks of a dataset so as to implement out-of-core
+        or online learning.
 
-        class_prior = self.class_prior
+        This is especially useful when the whole dataset is too big to fit in
+        memory at once.
 
-        # Count raw events from data before updating the class log prior
-        # and feature log probas
-        n_effective_classes = Y.shape[1]
+        This method has some performance overhead hence it is better to call
+        partial_fit on chunks of data that are as large as possible
+        (as long as fitting in the memory budget) to hide the overhead.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features. Here, each feature of X is
+            assumed to be from a different categorical distribution.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        classes : array-like, shape = [n_classes] (default=None)
+            List of all the classes that can possibly appear in the y vector.
+
+            Must be provided at the first call to partial_fit, can be omitted
+            in subsequent calls.
+
+        sample_weight : array-like, shape = [n_samples] (default=None)
+            Weights applied to individual samples (1. for unweighted).
+
+        Returns
+        -------
+        self : object
+        """
+        super(CategoricalNB, self).partial_fit(X, y, classes, sample_weight)
+
+    def _init_counters(self, n_effective_classes, n_features):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-
-        self._count(X, Y)
-        alpha = self._check_alpha()
-        self._update_feature_log_prob(alpha)
-        self._update_class_log_prior(class_prior=class_prior)
-        return self
+        self.feature_count_ = {i: None for i in range(n_features)}
+        self.feature_cat_mapping_ = {i: None for i in range(n_features)}
 
     def _count(self, X, Y):
         self.class_count_ += Y.sum(axis=0)
-        feature_count = {}
-        feature_cats = {}
-        n_features = X.shape[1]
-        for i in range(n_features):
+        for i in range(len(self.feature_count_)):
             X_feature = X[:, i]
-            cat_mapping, n_categories = np.unique(X_feature, return_counts=True)
-            feature_cats[i] = {int(category): index for index, category in enumerate(np.nditer(cat_mapping))}
-            feature_count[i] = np.zeros((self.class_count_.shape[0], n_categories.shape[0]))
+            cat_mapping, n_categories = self._count_features(X_feature)
+            self.feature_cat_mapping_[i] = {float(category): index for index, category in
+                                            enumerate(np.nditer(cat_mapping))}
+            self.feature_count_[i] = np.zeros((self.class_count_.shape[0], n_categories.shape[0]))
             for j in range(self.class_count_.shape[0]):
                 X_feature_class = X_feature[Y[:, j] == 1]
-                class_cats, n_feature_class = np.unique(X_feature_class, return_counts=True)
-                indizes = [feature_cats[i][int(category)] for category in np.nditer(class_cats)]
-                feature_count[i][j, indizes] = n_feature_class
-        self.feature_count_ = feature_count
-        self.feature_cat_mapping_ = feature_cats
+                class_cats, n_feature_class = self._count_features(X_feature_class)
+                indizes = [self.feature_cat_mapping_[i][int(category)] for category in np.nditer(class_cats)]
+                self.feature_count_[i][j, indizes] = n_feature_class
+
+    def _count_features(self, X_feature):
+        if np.__version__ >= '1.9.0':
+            return np.unique(X_feature, return_counts=True)
+        else:
+            bins = np.bincount(X_feature.astype(int))
+            non_zero_bins = np.nonzero(bins)[0]
+            return non_zero_bins, bins[non_zero_bins]
 
     def _update_feature_log_prob(self, alpha):
         feature_log_prob = {}
@@ -1049,5 +1073,3 @@ class CategoricalNB(BaseDiscreteNB):
             indizes = [self.feature_cat_mapping_[i][int(category)] for category in np.nditer(X_feature)]
             jll += self.feature_log_prob_[i][:, indizes].T
         return jll + self.class_log_prior_
-
-
