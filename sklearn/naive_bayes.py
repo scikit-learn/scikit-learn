@@ -967,15 +967,72 @@ class BernoulliNB(BaseDiscreteNB):
 
 
 class CategoricalNB(BaseDiscreteNB):
+    """
+    Naive Bayes classifier for categorical features
+
+    The categorical Naive Bayes classifier is suitable for classification with
+    discrete features, that are categorically distributed. Each feature is sampled
+    by its own categorical distribution.
+
+    Read more in the :ref:`User Guide <categorical_naive_bayes>`.
+
+    Parameters
+    ----------
+    alpha : float, optional (default=1.0)
+        Additive (Laplace/Lidstone) smoothing parameter
+        (0 for no smoothing).
+
+    fit_prior : boolean, optional (default=True)
+        Whether to learn class prior probabilities or not.
+        If false, a uniform prior will be used.
+
+    class_prior : array-like, size (n_classes,), optional (default=None)
+        Prior probabilities of the classes. If specified the priors are not
+        adjusted according to the data.
+
+    Attributes
+    ----------
+    class_log_prior_ : array, shape (n_classes, )
+        Smoothed empirical log probability for each class.
+
+    feature_log_prob_ : array, shape (n_classes, n_features)
+        Empirical log probability of features
+        given a class, ``P(x_i|y)``.
+
+    class_count_ : array, shape (n_classes,)
+        Number of samples encountered for each class during fitting. This
+        value is weighted by the sample weight when provided.
+
+    feature_count_ : dict of arrays, len n_features
+        Holds an array of shape () for each feature. Each array provides
+        the number of samples encountered for each class and category
+        of the specific feature.
+
+    n_features_ : int
+        Number of features of each sample.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.random.randint(5, size=(6, 100))
+    >>> y = np.array([1, 2, 3, 4, 5, 6])
+    >>> from sklearn.naive_bayes import CategoricalNB
+    >>> clf = CategoricalNB()
+    >>> clf.fit(X, y)
+    CategoricalNB(alpha=1.0, class_prior=None, fit_prior=True)
+    >>> print(clf.predict(X[2:3]))
+    [3]
+    """
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
         if np.__version__ < '1.9.0':
-            print('assure X is convertible to int without loss of information and all features are greater equal 0.')
+            warnings.warn(('numpy is older than 1.9.0. Therefore assure that X is castable to int without loss of '
+                           'information and all features of X are greater or equal 0.'))
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y):
         """Fit Naive Bayes classifier according to X, y
 
         Parameters
@@ -988,16 +1045,15 @@ class CategoricalNB(BaseDiscreteNB):
         y : array-like, shape = [n_samples]
             Target values.
 
-        sample_weight : array-like, shape = [n_samples], (default=None)
-            Weights applied to individual samples (1. for unweighted).
-
         Returns
         -------
         self : object
         """
-        return super(CategoricalNB, self).fit(X, y, sample_weight)
+        if not np.__version__ >= '1.9.0':
+            check_array(X, accept_large_sparse=False)
+        return super(CategoricalNB, self).fit(X, y, sample_weight=None)
 
-    def partial_fit(self, X, y, classes=None, sample_weight=None):
+    def partial_fit(self, X, y, classes=None):
         """Incremental fit on a batch of samples.
 
         This method is expected to be called several times consecutively
@@ -1027,14 +1083,13 @@ class CategoricalNB(BaseDiscreteNB):
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
-        sample_weight : array-like, shape = [n_samples] (default=None)
-            Weights applied to individual samples (1. for unweighted).
-
         Returns
         -------
         self : object
         """
-        super(CategoricalNB, self).partial_fit(X, y, classes, sample_weight)
+        if not np.__version__ >= '1.9.0':
+            check_array(X, accept_large_sparse=False)
+        return super(CategoricalNB, self).partial_fit(X, y, classes, sample_weight=None)
 
     def _init_counters(self, n_effective_classes, n_features):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
@@ -1042,6 +1097,8 @@ class CategoricalNB(BaseDiscreteNB):
         self.feature_cat_mapping_ = {i: None for i in range(n_features)}
 
     def _count(self, X, Y):
+        if np.any((X.data if issparse(X) else X) < 0):
+            raise ValueError("Input X must be non-negative")
         self.class_count_ += Y.sum(axis=0)
         for i in range(len(self.feature_count_)):
             X_feature = X[:, i]
@@ -1051,8 +1108,10 @@ class CategoricalNB(BaseDiscreteNB):
             self.feature_count_[i] = np.zeros((self.class_count_.shape[0], n_categories.shape[0]))
             for j in range(self.class_count_.shape[0]):
                 X_feature_class = X_feature[Y[:, j] == 1]
+                if len(X_feature_class) == 0:
+                    continue
                 class_cats, n_feature_class = self._count_features(X_feature_class)
-                indizes = [self.feature_cat_mapping_[i][int(category)] for category in np.nditer(class_cats)]
+                indizes = [self.feature_cat_mapping_[i][float(category)] for category in np.nditer(class_cats)]
                 self.feature_count_[i][j, indizes] = n_feature_class
 
     def _count_features(self, X_feature):
@@ -1075,9 +1134,11 @@ class CategoricalNB(BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         check_is_fitted(self, "classes_")
         X = check_array(X, accept_sparse='csr')
+        if not X.shape[1] == self.n_features_:
+            raise ValueError('X has a different number of features than expected.')
 
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
-        for i in range(len(self.feature_count_)):
+        for i in range(self.n_features_):
             X_feature = X[:, i]
             indizes = [self.feature_cat_mapping_[i][int(category)] for category in np.nditer(X_feature)]
             jll += self.feature_log_prob_[i][:, indizes].T
