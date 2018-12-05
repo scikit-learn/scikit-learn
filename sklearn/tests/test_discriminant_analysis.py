@@ -244,7 +244,7 @@ def test_lda_scaling():
 
 
 def test_lda_store_covariance():
-    # Test for slover 'lsqr' and 'eigen'
+    # Test for solver 'lsqr' and 'eigen'
     # 'store_covariance' has no effect on 'lsqr' and 'eigen' solvers
     for solver in ('lsqr', 'eigen'):
         clf = LinearDiscriminantAnalysis(solver=solver).fit(X6, y6)
@@ -260,7 +260,7 @@ def test_lda_store_covariance():
             np.array([[0.422222, 0.088889], [0.088889, 0.533333]])
         )
 
-    # Test for SVD slover, the default is to not set the covariances_ attribute
+    # Test for SVD solver, the default is to not set the covariances_ attribute
     clf = LinearDiscriminantAnalysis(solver='svd').fit(X6, y6)
     assert_false(hasattr(clf, 'covariance_'))
 
