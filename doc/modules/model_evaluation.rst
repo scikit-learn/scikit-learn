@@ -887,8 +887,8 @@ To make this more explicit, consider the following notation:
 * :math:`y_l` the subset of :math:`y` with label :math:`l`
 * similarly, :math:`\hat{y}_s` and :math:`\hat{y}_l` are subsets of
   :math:`\hat{y}`
-* :math:`P(y_l, \hat{y}_l) := \frac{\left| y_l \cap \hat{y}_l \right|}{\left|\hat{y}_l\right|}`
-* :math:`R(y_l, \hat{y}_l) := \frac{\left| y_l \cap \hat{y}_l \right|}{\left|y_l\right|}`
+* :math:`P(y_l, \hat{y}_l) := \frac{\left| y_l \cap \hat{y}_l \right|}{\left|y_l\right|}`
+* :math:`R(y_l, \hat{y}_l) := \frac{\left| y_l \cap \hat{y}_l \right|}{\left|\hat{y}_l\right|}`
   (Conventions vary on handling :math:`\hat{y}_l = \emptyset`; this implementation uses
   :math:`R(y_l, \hat{y}_l):=0`, and similar for :math:`P`.)
 * :math:`F_\beta(y_l, \hat{y}_l) := \left(1 + \beta^2\right) \frac{P(y_l, \hat{y}_l) \times R(y_l, \hat{y}_l)}{\beta^2 P(y_l, \hat{y}_l) + R(y_l, \hat{y}_l)}`
