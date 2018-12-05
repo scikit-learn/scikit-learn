@@ -525,12 +525,11 @@ class BaseDiscreteNB(BaseNB):
             # This is the first call to partial_fit:
             # initialize various cumulative counters
             n_effective_classes = len(classes) if len(classes) > 1 else 2
-            self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-            self.feature_count_ = np.zeros((n_effective_classes, n_features),
-                                           dtype=np.float64)
-        elif n_features != self.coef_.shape[1]:
+            self._init_counters(n_effective_classes, n_features)
+            self.n_features_ = n_features
+        elif n_features != self.n_features_:
             msg = "Number of features %d does not match previous data %d."
-            raise ValueError(msg % (n_features, self.coef_.shape[-1]))
+            raise ValueError(msg % (n_features, self.n_features_))
 
         Y = label_binarize(y, classes=self.classes_)
         if Y.shape[1] == 1:
@@ -583,6 +582,7 @@ class BaseDiscreteNB(BaseNB):
         """
         X, y = check_X_y(X, y, 'csr')
         _, n_features = X.shape
+        self.n_features_ = n_features
 
         labelbin = LabelBinarizer()
         Y = labelbin.fit_transform(y)
@@ -682,6 +682,9 @@ class MultinomialNB(BaseDiscreteNB):
         during fitting. This value is weighted by the sample weight when
         provided.
 
+    n_features_ : int
+        Number of features of each sample.
+
     Examples
     --------
     >>> import numpy as np
@@ -778,6 +781,9 @@ class ComplementNB(BaseDiscreteNB):
     feature_count_ : array, shape (n_classes, n_features)
         Number of samples encountered for each (class, feature) during fitting.
         This value is weighted by the sample weight when provided.
+
+    n_features_ : int
+        Number of features of each sample.
 
     feature_all_ : array, shape (n_features,)
         Number of samples encountered for each feature during fitting. This
@@ -883,6 +889,9 @@ class BernoulliNB(BaseDiscreteNB):
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
         provided.
+
+    n_features_ : int
+        Number of features of each sample.
 
     Examples
     --------
