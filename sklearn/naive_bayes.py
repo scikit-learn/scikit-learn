@@ -969,7 +969,8 @@ class CategoricalNB(BaseDiscreteNB):
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            n_features is the number of features. Here, each feature of X is
+            assumed to be of a different categorical distribution.
 
         y : array-like, shape = [n_samples]
             Target values.
