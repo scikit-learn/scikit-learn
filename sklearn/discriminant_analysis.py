@@ -24,6 +24,7 @@ from .utils.multiclass import unique_labels
 from .utils import check_array, check_X_y
 from .utils.validation import check_is_fitted
 from .utils.multiclass import check_classification_targets
+from .utils.extmath import softmax
 from .preprocessing import StandardScaler
 
 
@@ -506,18 +507,10 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             Estimated probabilities.
         """
         prob = self.decision_function(X)
-        if len(self.classes_) == 2:
-            prob *= -1
-            np.exp(prob, prob)
-            prob += 1
-            np.reciprocal(prob, prob)
-            return np.column_stack([1 - prob, prob])
+        if prob.ndim == 1:
+            return super(LinearDiscriminantAnalysis, self)._predict_proba_lr(X)
         else:
-            # compute the likelihood of the underlying gaussian models
-            # up to a multiplicative constant.
-            likelihood = np.exp(prob - prob.max(axis=1)[:, np.newaxis])
-            # compute posterior probabilities
-            return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
+            return softmax(prob)
 
     def predict_log_proba(self, X):
         """Estimate log probability.
