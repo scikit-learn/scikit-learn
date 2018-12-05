@@ -9,7 +9,7 @@ from cython cimport floating
 from cython.parallel import prange, parallel
 from scipy.linalg.cython_blas cimport sgemm, dgemm
 from libc.math cimport sqrt
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport calloc, free
 from libc.string cimport memset, memcpy
 from libc.float cimport DBL_MAX, FLT_MAX
 
@@ -126,13 +126,10 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
     num_threads = n_jobs if n_jobs != -1 else openmp.omp_get_max_threads()
     with nogil, parallel(num_threads=num_threads):
         # thread local buffers
-        centers_new_chunk = <floating*> malloc(n_clusters * n_features * sizeof(floating))
-        weight_in_clusters_chunk = <floating*> malloc(n_clusters * sizeof(floating))
-        pairwise_distances_chunk = <floating*> malloc(n_samples_chunk * n_clusters * sizeof(floating))
-        # initialize local buffers
-        memset(centers_new_chunk, 0, n_clusters * n_features * sizeof(floating))
-        memset(weight_in_clusters_chunk, 0, n_clusters * sizeof(floating))
-        
+        centers_new_chunk = <floating*> calloc(n_clusters * n_features, sizeof(floating))
+        weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
+        pairwise_distances_chunk = <floating*> calloc(n_samples_chunk * n_clusters, sizeof(floating))
+    
         for chunk_idx in prange(n_chunks):
             if n_samples_r > 0 and chunk_idx == n_chunks - 1:
                 n_samples_chunk_eff = n_samples_r
@@ -330,11 +327,8 @@ cpdef void _lloyd_iter_chunked_sparse(X,
     num_threads = n_jobs if n_jobs != -1 else openmp.omp_get_max_threads()
     with nogil, parallel(num_threads=num_threads):
         # thread local buffers
-        centers_new_chunk = <floating*> malloc(n_clusters * n_features * sizeof(floating))
-        weight_in_clusters_chunk = <floating*> malloc(n_clusters * sizeof(floating))
-        # initialize local buffers
-        memset(centers_new_chunk, 0, n_clusters * n_features * sizeof(floating))
-        memset(weight_in_clusters_chunk, 0, n_clusters * sizeof(floating))
+        centers_new_chunk = <floating*> calloc(n_clusters * n_features, sizeof(floating))
+        weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
 
         for chunk_idx in prange(n_chunks):
             if n_samples_r > 0 and chunk_idx == n_chunks - 1:

@@ -11,7 +11,7 @@ cimport openmp
 from cython cimport floating
 from cython.parallel import prange, parallel
 from libc.math cimport sqrt
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport calloc, free
 from libc.string cimport memset, memcpy
 
 from ..metrics import euclidean_distances
@@ -211,12 +211,9 @@ shape (n_clusters, n_clusters)
 
     with nogil, parallel(num_threads=num_threads):
         # thread local buffers
-        centers_new_chunk = <floating*> malloc(n_clusters * n_features * sizeof(floating))
-        weight_in_clusters_chunk = <floating*> malloc(n_clusters * sizeof(floating))
-        # initialize local buffers
-        memset(centers_new_chunk, 0, n_clusters * n_features * sizeof(floating))
-        memset(weight_in_clusters_chunk, 0, n_clusters * sizeof(floating))
-
+        centers_new_chunk = <floating*> calloc(n_clusters * n_features, sizeof(floating))
+        weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
+        
         for chunk_idx in prange(n_chunks):
             if n_samples_r > 0 and chunk_idx == n_chunks - 1:
                 n_samples_chunk_eff = n_samples_r
