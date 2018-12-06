@@ -147,7 +147,7 @@ class ReutersParser(html_parser.HTMLParser):
         self.topic_d = ""
 
 
-def stream_reuters_documents(data_path=None, train_test="TRAIN"):
+def stream_reuters_documents(data_path=None, subset="TRAIN"):
     """Iterate over documents of the Reuters dataset.
 
     The Reuters archive will automatically be downloaded and uncompressed if
@@ -160,7 +160,7 @@ def stream_reuters_documents(data_path=None, train_test="TRAIN"):
 
     """
 
-    download_url = ('http://archive.ics.uci.edu/ml/machine-learning-databases/'
+    DOWNLOAD_URL = ('http://archive.ics.uci.edu/ml/machine-learning-databases/'
                     'reuters21578-mld/reuters21578.tar.gz')
     archive_filename = 'reuters21578.tar.gz'
 
@@ -180,7 +180,7 @@ def stream_reuters_documents(data_path=None, train_test="TRAIN"):
                     '\rdownloaded %s / %s' % (current_sz_mb, total_sz_mb))
 
         archive_path = os.path.join(data_path, archive_filename)
-        urlretrieve(download_url, filename=archive_path,
+        urlretrieve(DOWNLOAD_URL, filename=archive_path,
                     reporthook=progress)
         if _not_in_sphinx():
             sys.stdout.write('\r')
@@ -191,7 +191,7 @@ def stream_reuters_documents(data_path=None, train_test="TRAIN"):
     parser = ReutersParser()
     for filename in glob(os.path.join(data_path, "*.sgm")):
         for doc in parser.parse(open(filename, 'rb')):
-            if doc['lewissplit'] == train_test:
+            if doc['lewissplit'] == subset:
                 yield doc
 
 ###############################################################################
@@ -207,10 +207,10 @@ vectorizer = HashingVectorizer(
 
 # Iterator over parsed Reuters SGML files.
 # Train Datasets
-data_stream_train = stream_reuters_documents(train_test="TRAIN")
+data_stream_train = stream_reuters_documents(subset="TRAIN")
 
 # Test Datasets
-data_stream_test = stream_reuters_documents(train_test="TEST")
+data_stream_test = stream_reuters_documents(subset="TEST")
 
 # We learn a binary classification between the "acq" class and all the others.
 # "acq" was chosen as it is more or less evenly distributed in the Reuters
