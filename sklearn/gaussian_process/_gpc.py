@@ -231,6 +231,33 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             # likelihood
             lml_values = list(map(itemgetter(1), optima))
             self.kernel_.theta = optima[np.argmin(lml_values)][0]
+            if np.isclose(self.kernel_.bounds,
+                          np.atleast_2d(self.kernel_.theta).T).any():
+                list_param = np.isclose(self.kernel_.bounds,
+                                        np.atleast_2d(self.kernel_.theta).T)
+                idx = 0
+                for hyp in self.kernel_.hyperparameters:
+                    for dim in range(hyp.n_elements):
+                        if list_param[idx, 0]:
+                            warnings.warn("The optimal value found for "
+                                          "dimension %s of parameter %s is "
+                                          "close to the specified lower "
+                                          "bound %s. Decreasing the bound and"
+                                          " calling fit again may find a "
+                                          "better value." % (dim, hyp.name,
+                                                             hyp.bounds[dim][0]),
+                                          ConvergenceWarning)
+                        elif list_param[idx, 1]:
+                            warnings.warn("The optimal value found for "
+                                          "dimension %s of parameter %s is "
+                                          "close to the specified upper "
+                                          "bound %s. Increasing the bound and"
+                                          " calling fit again may find a "
+                                          "better value." % (dim, hyp.name,
+                                                             hyp.bounds[dim][1]),
+                                          ConvergenceWarning)
+                        idx += 1
+
             self.log_marginal_likelihood_value_ = -np.min(lml_values)
         else:
             self.log_marginal_likelihood_value_ = \
