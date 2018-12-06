@@ -61,7 +61,7 @@ def test_toy_example_collapse_points():
     print(X_t)
     # test that points are collapsed into one point
     assert_array_almost_equal(X_t - X_t[0], 0.)
-    assert nca.opt_result_.fun == -1.
+    assert nca.opt_result_.fun + 1 < 1e-10
 
 
 def test_finite_differences():
