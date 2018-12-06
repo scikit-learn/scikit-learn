@@ -456,6 +456,8 @@ def trustworthiness(X, X_embedded, n_neighbors=5,
     dist_X = pairwise_distances(X, metric=metric)
     if metric == 'precomputed':
         dist_X = dist_X.copy()
+    # we set the diagonal to np.inf to exclude the points themselves from
+    # their own neighborhood
     np.fill_diagonal(dist_X, np.inf)
     ind_X = np.argsort(dist_X, axis=1)
     # `ind_X[i]` is the index of sorted distances between i and other samples
