@@ -13,8 +13,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_not_equal
 
@@ -193,7 +191,7 @@ def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
 
     scorers, is_multi = _check_multimetric_scoring(*args, **kwargs)
     # For all single metric use cases, it should register as not multimetric
-    assert_false(is_multi)
+    assert not is_multi
     if args[0] is not None:
         assert scorers is not None
         names, scorers = zip(*scorers.items())
@@ -498,9 +496,9 @@ def test_scorer_sample_weight():
                                                         ignored))
 
         except TypeError as e:
-            assert_true("sample_weight" in str(e),
-                        "scorer {0} raises unhelpful exception when called "
-                        "with sample weights: {1}".format(name, str(e)))
+            assert "sample_weight" in str(e), (
+                "scorer {0} raises unhelpful exception when called "
+                "with sample weights: {1}".format(name, str(e)))
 
 
 @ignore_warnings  # UndefinedMetricWarning for P / R scores

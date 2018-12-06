@@ -342,7 +342,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     Returns
     -------
     score : float
-         Score of this parameter setting on given training / test split.
+         Score of this parameter setting on given test split.
 
     parameters : dict
         The parameters that have been evaluated.

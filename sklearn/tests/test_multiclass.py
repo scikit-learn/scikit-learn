@@ -8,7 +8,6 @@ from re import escape
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_greater
@@ -113,7 +112,7 @@ def test_ovr_partial_fit():
 
     # test partial_fit only exists if estimator has it:
     ovr = OneVsRestClassifier(SVC())
-    assert_false(hasattr(ovr, "partial_fit"))
+    assert not hasattr(ovr, "partial_fit")
 
 
 def test_ovr_partial_fit_exceptions():
@@ -355,21 +354,21 @@ def test_ovr_multilabel_predict_proba():
         # Decision function only estimator.
         decision_only = OneVsRestClassifier(svm.SVR(gamma='scale')
                                             ).fit(X_train, Y_train)
-        assert_false(hasattr(decision_only, 'predict_proba'))
+        assert not hasattr(decision_only, 'predict_proba')
 
         # Estimator with predict_proba disabled, depending on parameters.
         decision_only = OneVsRestClassifier(svm.SVC(gamma='scale',
                                                     probability=False))
-        assert_false(hasattr(decision_only, 'predict_proba'))
+        assert not hasattr(decision_only, 'predict_proba')
         decision_only.fit(X_train, Y_train)
-        assert_false(hasattr(decision_only, 'predict_proba'))
+        assert not hasattr(decision_only, 'predict_proba')
         assert hasattr(decision_only, 'decision_function')
 
         # Estimator which can get predict_proba enabled after fitting
         gs = GridSearchCV(svm.SVC(gamma='scale', probability=False),
                           param_grid={'probability': [True]})
         proba_after_fit = OneVsRestClassifier(gs)
-        assert_false(hasattr(proba_after_fit, 'predict_proba'))
+        assert not hasattr(proba_after_fit, 'predict_proba')
         proba_after_fit.fit(X_train, Y_train)
         assert hasattr(proba_after_fit, 'predict_proba')
 
@@ -392,7 +391,7 @@ def test_ovr_single_label_predict_proba():
     # Decision function only estimator.
     decision_only = OneVsRestClassifier(svm.SVR(gamma='scale')
                                         ).fit(X_train, Y_train)
-    assert_false(hasattr(decision_only, 'predict_proba'))
+    assert not hasattr(decision_only, 'predict_proba')
 
     Y_pred = clf.predict(X_test)
     Y_proba = clf.predict_proba(X_test)
@@ -401,7 +400,7 @@ def test_ovr_single_label_predict_proba():
     # predict assigns a label if the probability that the
     # sample has the label is greater than 0.5.
     pred = np.array([l.argmax() for l in Y_proba])
-    assert_false((pred - Y_pred).any())
+    assert not (pred - Y_pred).any()
 
 
 def test_ovr_multilabel_decision_function():
@@ -558,7 +557,7 @@ def test_ovo_partial_fit_predict():
 
     # test partial_fit only exists if estimator has it:
     ovr = OneVsOneClassifier(SVC())
-    assert_false(hasattr(ovr, "partial_fit"))
+    assert not hasattr(ovr, "partial_fit")
 
 
 def test_ovo_decision_function():
@@ -754,7 +753,7 @@ def test_pairwise_attribute():
 
     for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
         ovr_false = MultiClassClassifier(clf_notprecomputed)
-        assert_false(ovr_false._pairwise)
+        assert not ovr_false._pairwise
 
         ovr_true = MultiClassClassifier(clf_precomputed)
         assert ovr_true._pairwise
