@@ -452,8 +452,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
                           UserWarning)
             self.priors_ = self.priors_ / self.priors_.sum()
 
-        # Get the maximum number of components
-
         # Maximum number of components no matter what n_components is
         # specified:
         max_components = min(len(self.classes_) - 1, X.shape[1])
