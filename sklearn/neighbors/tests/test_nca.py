@@ -332,7 +332,7 @@ def test_warm_start_effectiveness():
 def test_verbose(init_name, capsys):
     # assert there is proper output when verbose = 1, for every initialization
     # except auto because auto will call one of the others
-    regexp_init = '... done in \ *\d+\.\d{2}s'
+    regexp_init = r'... done in \ *\d+\.\d{2}s'
     msgs = {'pca': "Finding principal components" + regexp_init,
             'lda': "Finding most discriminative components" + regexp_init}
     if init_name == 'precomputed':
@@ -359,10 +359,10 @@ def test_verbose(init_name, capsys):
     for line in lines[3:-2]:
         # The following regex will match for instance:
         # '[NeighborhoodComponentsAnalysis]  0    6.988936e+01   0.01'
-        assert re.match(r"\[NeighborhoodComponentsAnalysis\] *\d+ *\d\.\d{6}e"
-                         "[+|-]\d+\ *\d+\.\d{2}", line)
-    assert re.match(r"\[NeighborhoodComponentsAnalysis\] Training took\ *"
-                     "\d+\.\d{2}s\.", lines[-2])
+        assert re.match(r'\[NeighborhoodComponentsAnalysis\] *\d+ *\d\.\d{6}e'
+                        r'[+|-]\d+\ *\d+\.\d{2}', line)
+    assert re.match(r'\[NeighborhoodComponentsAnalysis\] Training took\ *'
+                    r'\d+\.\d{2}s\.', lines[-2])
     assert lines[-1] == ''
 
 
