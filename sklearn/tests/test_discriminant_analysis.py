@@ -263,7 +263,7 @@ def test_lda_store_covariance():
 @pytest.mark.parametrize('n_features', [3, 5])
 @pytest.mark.parametrize('n_classes', [5, 3])
 def test_lda_dimension_warning(n_classes, n_features):
-    # FIXME: Future warning to be removed in 0.22
+    # FIXME: Future warning to be removed in 0.23
     rng = check_random_state(0)
     n_samples = 10
     X = rng.randn(n_samples, n_features)
@@ -289,7 +289,7 @@ def test_lda_dimension_warning(n_classes, n_features):
                "n_classes - 1) = min(%d, %d - 1) = %d components." %
                (n_features, n_classes, max_components))
         assert_warns_message(ChangedBehaviorWarning, msg, lda.fit, X, y)
-        future_msg = ("In version 0.22, setting n_components > min("
+        future_msg = ("In version 0.23, setting n_components > min("
                       "n_features, n_classes - 1) will raise a "
                       "ValueError. You should set n_components to None"
                       " (default), or a value smaller or equal to "
