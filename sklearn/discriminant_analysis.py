@@ -429,7 +429,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         y : array, shape (n_samples,)
             Target values.
         """
-        # FIXME: Future warning to be removed in 0.22
+        # FIXME: Future warning to be removed in 0.23
         X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self)
         self.classes_ = unique_labels(y)
         n_samples, _ = X.shape
@@ -468,7 +468,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
                     "n_classes - 1) = min(%d, %d - 1) = %d components."
                     % (X.shape[1], len(self.classes_), max_components),
                     ChangedBehaviorWarning)
-                future_msg = ("In version 0.22, setting n_components > min("
+                future_msg = ("In version 0.23, setting n_components > min("
                               "n_features, n_classes - 1) will raise a "
                               "ValueError. You should set n_components to None"
                               " (default), or a value smaller or equal to "
