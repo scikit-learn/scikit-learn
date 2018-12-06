@@ -41,7 +41,7 @@ ticket to the
 also welcome to post feature requests or pull requests.
 
 
-=======
+==================
 Ways to contribute
 ==================
 
@@ -79,6 +79,7 @@ link to it from your website, or simply star to say "I use it":
    * `joblib <https://github.com/joblib/joblib/issues>`__
    * `sphinx-gallery <https://github.com/sphinx-gallery/sphinx-gallery/issues>`__
    * `numpydoc <https://github.com/numpy/numpydoc/issues>`__
+   * `liac-arff <https://github.com/renatopp/liac-arff>`__
 
    and larger projects:
 
@@ -127,7 +128,7 @@ feedback:
 
 - The ideal bug report contains a **short reproducible code snippet**, this way
   anyone can try to reproduce the bug easily (see `this
-  <http://stackoverflow.com/help/mcve>`_ for more details). If your snippet is
+  <https://stackoverflow.com/help/mcve>`_ for more details). If your snippet is
   longer than around 50 lines, please link to a `gist
   <https://gist.github.com>`_ or a github repo.
 
@@ -139,6 +140,14 @@ feedback:
 - Please include your **operating system type and version number**, as well as
   your **Python, scikit-learn, numpy, and scipy versions**. This information
   can be found by running the following code snippet::
+
+    >>> import sklearn
+    >>> sklearn.show_versions()  # doctest: +SKIP
+
+  .. note::
+
+    This utility function is only available in scikit-learn v0.20+.
+    For previous versions, one has to explicitly run::
 
      import platform; print(platform.platform())
      import sys; print("Python", sys.version)
@@ -217,7 +226,7 @@ mailing list for more visibility.
 
 If any of the above seems like magic to you, then look up the `Git documentation
 <https://git-scm.com/documentation>`_ and the `Git development workflow
-<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
+<https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
 web.
 
 If some conflicts arise between your branch and the ``master`` branch, you need
@@ -343,16 +352,17 @@ and Cython optimizations.
 
    For two very well documented and more detailed guides on development
    workflow, please pay a visit to the `Scipy Development Workflow
-   <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
+   <https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
    and the `Astropy Workflow for Developers
-   <http://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
+   <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
 
 .. topic:: Continuous Integration (CI)
 
    * Travis is used for testing on Linux platforms
    * Appveyor is used for testing on Windows platforms
-   * CircleCI is used to build the docs for viewing
+   * CircleCI is used to build the docs for viewing, for linting with flake8, and
+     for testing with PyPy on Linux 
 
    Please note that if one of the following markers appear in the latest commit
    message, the following actions are taken.
@@ -422,7 +432,7 @@ Building the documentation
 
 Building the documentation requires installing some additional packages::
 
-    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image
+    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image joblib
 
 To build the documentation, you need to be in the ``doc`` folder::
 
@@ -551,7 +561,7 @@ We expect code coverage of new features to be at least around 90%.
 .. note:: **Workflow to improve test coverage**
 
    To test code coverage, you need to install the `coverage
-   <https://pypi.python.org/pypi/coverage>`_ package in addition to pytest.
+   <https://pypi.org/project/coverage/>`_ package in addition to pytest.
 
    1. Run 'make test-coverage'. The output lists for each file the line
       numbers that are not tested.
@@ -790,17 +800,35 @@ In the following example, k is deprecated and renamed to n_clusters::
 
     import warnings
 
-    def example_function(n_clusters=8, k=None):
-        if k is not None:
+    def example_function(n_clusters=8, k='not_used'):
+        if k != 'not_used':
             warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
                           "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
+
+When the change is in a class, we validate and raise warning in ``fit``::
+
+  import warnings
+
+  class ExampleEstimator(BaseEstimator):
+      def __init__(self, n_clusters=8, k='not_used'):
+          self.n_clusters = n_clusters
+          self.k = k
+
+      def fit(self, X, y):
+          if k != 'not_used':
+              warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
+                            "will be removed in 0.15.", DeprecationWarning)
+              self._n_clusters = k
+          else:
+              self._n_clusters = self.n_clusters
 
 As in these examples, the warning message should always give both the
 version in which the deprecation happened and the version in which the
 old behavior will be removed. If the deprecation happened in version
 0.x-dev, the message should say deprecation occurred in version 0.x and
-the removal will be in 0.(x+2). For example, if the deprecation happened
+the removal will be in 0.(x+2), so that users will have enough time to
+adapt their code to the new behaviour. For example, if the deprecation happened
 in version 0.18-dev, the message should say it happened in version 0.18
 and the old behavior will be removed in version 0.20.
 
@@ -811,6 +839,51 @@ same information as the deprecation warning as explained above. Use the
   .. deprecated:: 0.13
      ``k`` was renamed to ``n_clusters`` in version 0.13 and will be removed
      in 0.15.
+
+What's more, a deprecation requires a test which ensures that the warning is
+raised in relevant cases but not in other cases. The warning should be caught
+in all other tests (using e.g., ``@pytest.mark.filterwarnings``),
+and there should be no warning in the examples.
+
+
+Change the default value of a parameter
+---------------------------------------
+
+If the default value of a parameter needs to be changed, please replace the
+default value with a specific value (e.g., ``warn``) and raise
+``FutureWarning`` when users are using the default value. In the following
+example, we change the default value of ``n_clusters`` from 5 to 10
+(current version is 0.20)::
+
+    import warnings
+
+    def example_function(n_clusters='warn'):
+        if n_clusters == 'warn':
+            warnings.warn("The default value of n_clusters will change from "
+                          "5 to 10 in 0.22.", FutureWarning)
+            n_clusters = 5
+
+When the change is in a class, we validate and raise warning in ``fit``::
+
+  import warnings
+
+  class ExampleEstimator:
+      def __init__(self, n_clusters='warn'):
+          self.n_clusters = n_clusters
+
+      def fit(self, X, y):
+          if self.n_clusters == 'warn':
+            warnings.warn("The default value of n_clusters will change from "
+                          "5 to 10 in 0.22.", FutureWarning)
+            self._n_clusters = 5
+
+Similar to deprecations, the warning message should always give both the
+version in which the change happened and the version in which the old behavior
+will be removed. The docstring needs to be updated accordingly. We need a test
+which ensures that the warning is raised in relevant cases but not in other
+cases. The warning should be caught in all other tests
+(using e.g., ``@pytest.mark.filterwarnings``), and there should be no warning
+in the examples.
 
 
 .. currentmodule:: sklearn
@@ -827,7 +900,7 @@ just remember that ``print`` is a function and
 integer division is written ``//``.
 String handling has been overhauled, though, as have parts of
 the Python standard library.
-The `six <http://pythonhosted.org/six/>`_ package helps with
+The `six <https://pythonhosted.org/six/>`_ package helps with
 cross-compatibility and is included in scikit-learn as
 ``sklearn.externals.six``.
 
@@ -1071,6 +1144,16 @@ data dependent. A tolerance stopping criterion ``tol`` is not directly
 data dependent (although the optimal value according to some scoring
 function probably is).
 
+When ``fit`` is called, any previous call to ``fit`` should be ignored. In
+general, calling ``estimator.fit(X1)`` and then ``estimator.fit(X2)`` should
+be the same as only calling ``estimator.fit(X2)``. However, this may not be
+true in practice when ``fit`` depends on some random process, see
+:term:`random_state`. Another exception to this rule is when the
+hyper-parameter ``warm_start`` is set to ``True`` for estimators that
+support it. ``warm_start=True`` means that the previous state of the
+trainable parameters of the estimator are reused instead of using the
+default initialization strategy.
+
 Estimated Attributes
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -1079,9 +1162,8 @@ ending with trailing underscore, for example the coefficients of
 some regression estimator would be stored in a ``coef_`` attribute after
 ``fit`` has been called.
 
-The last-mentioned attributes are expected to be overridden when
-you call ``fit`` a second time without taking any previous value into
-account: **fit should be idempotent**.
+The estimated attributes are expected to be overridden when you call ``fit``
+a second time.
 
 Optional Arguments
 ^^^^^^^^^^^^^^^^^^
@@ -1123,7 +1205,7 @@ the correct interface more easily.
     * directory structures and scripts to compile documentation and example
       galleries
     * scripts to manage continuous integration (testing on Linux and Windows)
-    * instructions from getting started to publishing on `PyPi <https://pypi.python.org/pypi>`_
+    * instructions from getting started to publishing on `PyPi <https://pypi.org/>`_
 
 .. topic:: ``BaseEstimator`` and mixins:
 
@@ -1137,7 +1219,7 @@ the correct interface more easily.
     and optionally the mixin classes in ``sklearn.base``.
     For example, below is a custom classifier, with more examples included
     in the scikit-learn-contrib
-    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`__.
+    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/_template.py>`__.
 
       >>> import numpy as np
       >>> from sklearn.base import BaseEstimator, ClassifierMixin

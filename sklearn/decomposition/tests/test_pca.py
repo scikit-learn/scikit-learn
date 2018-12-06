@@ -6,14 +6,12 @@ import pytest
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_less
 
@@ -587,7 +585,7 @@ def test_pca_score2():
         pca = PCA(n_components=2, whiten=True, svd_solver=solver)
         pca.fit(X)
         ll2 = pca.score(X)
-        assert_true(ll1 > ll2)
+        assert ll1 > ll2
 
 
 def test_pca_score3():
@@ -604,7 +602,7 @@ def test_pca_score3():
         pca.fit(Xl)
         ll[k] = pca.score(Xt)
 
-    assert_true(ll.argmax() == 1)
+    assert ll.argmax() == 1
 
 
 def test_pca_score_with_different_solvers():
@@ -683,7 +681,6 @@ def test_svd_solver_auto():
     pca_test = PCA(n_components=10, svd_solver='randomized', random_state=0)
     pca_test.fit(X)
     assert_array_almost_equal(pca.components_, pca_test.components_)
-
 
 
 @pytest.mark.parametrize('svd_solver', solver_list)

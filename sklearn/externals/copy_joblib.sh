@@ -11,15 +11,15 @@ else
         JOBLIB=$1
 fi
 
-pip install $JOBLIB --target $INSTALL_FOLDER
-cp -r $INSTALL_FOLDER/joblib _joblib
+pip install --no-cache $JOBLIB --target $INSTALL_FOLDER
+cp -r $INSTALL_FOLDER/joblib joblib
 rm -rf $INSTALL_FOLDER
 
 # Needed to rewrite the doctests
 # Note: BSD sed -i needs an argument unders OSX
 # so first renaming to .bak and then deleting backup files
-find _joblib -name "*.py" | xargs sed -i.bak "s/from joblib/from sklearn.externals.joblib/"
-find _joblib -name "*.bak" | xargs rm
+find joblib -name "*.py" | xargs sed -i.bak "s/from joblib/from sklearn.externals.joblib/"
+find joblib -name "*.bak" | xargs rm
 
 # Remove the tests folders to speed-up test time for scikit-learn.
 # joblib is already tested on its own CI infrastructure upstream.

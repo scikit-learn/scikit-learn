@@ -6,6 +6,7 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils.testing import (assert_equal, assert_array_equal,
                                    assert_allclose_dense_sparse)
 from sklearn.utils.testing import assert_warns_message, assert_no_warnings
+from sklearn.utils.testing import ignore_warnings
 
 
 def _make_func(args_store, kwargs_store, func=lambda X, *a, **k: X):
@@ -25,7 +26,8 @@ def test_delegate_to_func():
     kwargs_store = {}
     X = np.arange(10).reshape((5, 2))
     assert_array_equal(
-        FunctionTransformer(_make_func(args_store, kwargs_store)).transform(X),
+        FunctionTransformer(_make_func(args_store, kwargs_store),
+                            validate=False).transform(X),
         X, 'transform should have returned X unchanged',
     )
 
@@ -48,20 +50,17 @@ def test_delegate_to_func():
     # reset the argument stores.
     args_store[:] = []  # python2 compatible inplace list clear.
     kwargs_store.clear()
-    y = object()
-    transformed = assert_warns_message(
-        DeprecationWarning, "pass_y is deprecated",
-        FunctionTransformer(
-            _make_func(args_store, kwargs_store),
-            pass_y=True).transform, X, y)
+    transformed = FunctionTransformer(
+        _make_func(args_store, kwargs_store),
+        validate=False).transform(X)
 
     assert_array_equal(transformed, X,
                        err_msg='transform should have returned X unchanged')
 
-    # The function should have received X and y.
+    # The function should have received X
     assert_equal(
         args_store,
-        [X, y],
+        [X],
         'Incorrect positional arguments passed to func: {args}'.format(
             args=args_store,
         ),
@@ -75,6 +74,8 @@ def test_delegate_to_func():
     )
 
 
+@ignore_warnings(category=FutureWarning)
+# ignore warning for validate=False 0.22
 def test_np_log():
     X = np.arange(10).reshape((5, 2))
 
@@ -85,6 +86,8 @@ def test_np_log():
     )
 
 
+@ignore_warnings(category=FutureWarning)
+# ignore warning for validate=False 0.22
 def test_kw_arg():
     X = np.linspace(0, 1, num=10).reshape((5, 2))
 
@@ -95,6 +98,8 @@ def test_kw_arg():
                        np.around(X, decimals=3))
 
 
+@ignore_warnings(category=FutureWarning)
+# ignore warning for validate=False 0.22
 def test_kw_arg_update():
     X = np.linspace(0, 1, num=10).reshape((5, 2))
 
@@ -106,6 +111,8 @@ def test_kw_arg_update():
     assert_array_equal(F.transform(X), np.around(X, decimals=1))
 
 
+@ignore_warnings(category=FutureWarning)
+# ignore warning for validate=False 0.22
 def test_kw_arg_reset():
     X = np.linspace(0, 1, num=10).reshape((5, 2))
 
@@ -117,6 +124,8 @@ def test_kw_arg_reset():
     assert_array_equal(F.transform(X), np.around(X, decimals=1))
 
 
+@ignore_warnings(category=FutureWarning)
+# ignore warning for validate=False 0.22
 def test_inverse_transform():
     X = np.array([1, 4, 9, 16]).reshape((2, 2))
 
@@ -131,6 +140,8 @@ def test_inverse_transform():
     )
 
 
+@ignore_warnings(category=FutureWarning)
+# ignore warning for validate=False 0.22
 def test_check_inverse():
     X_dense = np.array([1, 4, 9, 16], dtype=np.float64).reshape((2, 2))
 

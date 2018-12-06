@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import division
 
 import re
@@ -6,6 +7,7 @@ import numpy as np
 from scipy import sparse
 import pytest
 
+from sklearn.exceptions import NotFittedError
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
@@ -249,6 +251,45 @@ def test_one_hot_encoder_handle_unknown():
     assert_raises(ValueError, oh.fit, X)
 
 
+def test_one_hot_encoder_not_fitted():
+    X = np.array([['a'], ['b']])
+    enc = OneHotEncoder(categories=['a', 'b'])
+    msg = ("This OneHotEncoder instance is not fitted yet. "
+           "Call 'fit' with appropriate arguments before using this method.")
+    with pytest.raises(NotFittedError, match=msg):
+        enc.transform(X)
+
+
+def test_one_hot_encoder_no_categorical_features():
+    X = np.array([[3, 2, 1], [0, 1, 1]], dtype='float64')
+
+    cat = [False, False, False]
+    enc = OneHotEncoder(categorical_features=cat)
+    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
+        X_tr = enc.fit_transform(X)
+    expected_features = np.array(list(), dtype='object')
+    assert_array_equal(X, X_tr)
+    assert_array_equal(enc.get_feature_names(), expected_features)
+    assert enc.categories_ == []
+
+
+def test_one_hot_encoder_handle_unknown_strings():
+    X = np.array(['11111111', '22', '333', '4444']).reshape((-1, 1))
+    X2 = np.array(['55555', '22']).reshape((-1, 1))
+    # Non Regression test for the issue #12470
+    # Test the ignore option, when categories are numpy string dtype
+    # particularly when the known category strings are larger
+    # than the unknown category strings
+    oh = OneHotEncoder(handle_unknown='ignore')
+    oh.fit(X)
+    X2_passed = X2.copy()
+    assert_array_equal(
+        oh.transform(X2_passed).toarray(),
+        np.array([[0.,  0.,  0.,  0.], [0.,  1.,  0.,  0.]]))
+    # ensure transformed data was not modified in place
+    assert_array_equal(X2, X2_passed)
+
+
 @pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
 @pytest.mark.parametrize("input_dtype", [np.int32, np.float32, np.float64])
 def test_one_hot_encoder_dtype(input_dtype, output_dtype):
@@ -455,6 +496,66 @@ def test_one_hot_encoder_pandas():
     assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
 
 
+def test_one_hot_encoder_feature_names():
+    enc = OneHotEncoder()
+    X = [['Male', 1, 'girl', 2, 3],
+         ['Female', 41, 'girl', 1, 10],
+         ['Male', 51, 'boy', 12, 3],
+         ['Male', 91, 'girl', 21, 30]]
+
+    enc.fit(X)
+    feature_names = enc.get_feature_names()
+    assert isinstance(feature_names, np.ndarray)
+
+    assert_array_equal(['x0_Female', 'x0_Male',
+                        'x1_1', 'x1_41', 'x1_51', 'x1_91',
+                        'x2_boy', 'x2_girl',
+                        'x3_1', 'x3_2', 'x3_12', 'x3_21',
+                        'x4_3',
+                        'x4_10', 'x4_30'], feature_names)
+
+    feature_names2 = enc.get_feature_names(['one', 'two',
+                                            'three', 'four', 'five'])
+
+    assert_array_equal(['one_Female', 'one_Male',
+                        'two_1', 'two_41', 'two_51', 'two_91',
+                        'three_boy', 'three_girl',
+                        'four_1', 'four_2', 'four_12', 'four_21',
+                        'five_3', 'five_10', 'five_30'], feature_names2)
+
+    with pytest.raises(ValueError, match="input_features should have length"):
+        enc.get_feature_names(['one', 'two'])
+
+
+def test_one_hot_encoder_feature_names_unicode():
+    enc = OneHotEncoder()
+    X = np.array([[u'c❤t1', u'dat2']], dtype=object).T
+    enc.fit(X)
+    feature_names = enc.get_feature_names()
+    assert_array_equal([u'x0_c❤t1', u'x0_dat2'], feature_names)
+    feature_names = enc.get_feature_names(input_features=[u'n👍me'])
+    assert_array_equal([u'n👍me_c❤t1', u'n👍me_dat2'], feature_names)
+
+
+@pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
+                               np.array([['a', np.nan]], dtype=object).T],
+                         ids=['numeric', 'object'])
+@pytest.mark.parametrize("handle_unknown", ['error', 'ignore'])
+def test_one_hot_encoder_raise_missing(X, handle_unknown):
+    ohe = OneHotEncoder(categories='auto', handle_unknown=handle_unknown)
+
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        ohe.fit(X)
+
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        ohe.fit_transform(X)
+
+    ohe.fit(X[:1, :])
+
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        ohe.transform(X)
+
+
 @pytest.mark.parametrize("X", [
     [['abc', 2, 55], ['def', 1, 55]],
     np.array([[10, 2, 55], [20, 1, 55]]),
@@ -469,6 +570,34 @@ def test_ordinal_encoder(X):
     assert_array_equal(enc.fit_transform(X), exp)
 
 
+@pytest.mark.parametrize("X, X2, cats, cat_dtype", [
+    (np.array([['a', 'b']], dtype=object).T,
+     np.array([['a', 'd']], dtype=object).T,
+     [['a', 'b', 'c']], np.object_),
+    (np.array([[1, 2]], dtype='int64').T,
+     np.array([[1, 4]], dtype='int64').T,
+     [[1, 2, 3]], np.int64),
+    (np.array([['a', 'b']], dtype=object).T,
+     np.array([['a', 'd']], dtype=object).T,
+     [np.array(['a', 'b', 'c'])], np.object_),
+    ], ids=['object', 'numeric', 'object-string-cat'])
+def test_ordinal_encoder_specified_categories(X, X2, cats, cat_dtype):
+    enc = OrdinalEncoder(categories=cats)
+    exp = np.array([[0.], [1.]])
+    assert_array_equal(enc.fit_transform(X), exp)
+    assert list(enc.categories[0]) == list(cats[0])
+    assert enc.categories_[0].tolist() == list(cats[0])
+    # manually specified categories should have same dtype as
+    # the data when coerced from lists
+    assert enc.categories_[0].dtype == cat_dtype
+
+    # when specifying categories manually, unknown categories should already
+    # raise when fitting
+    enc = OrdinalEncoder(categories=cats)
+    with pytest.raises(ValueError, match="Found unknown categories"):
+        enc.fit(X2)
+
+
 def test_ordinal_encoder_inverse():
     X = [['abc', 2, 55], ['def', 1, 55]]
     enc = OrdinalEncoder()
@@ -480,6 +609,24 @@ def test_ordinal_encoder_inverse():
     X_tr = np.array([[0, 1, 1, 2], [1, 0, 1, 0]])
     msg = re.escape('Shape of the passed X data is not correct')
     assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
+
+
+@pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
+                               np.array([['a', np.nan]], dtype=object).T],
+                         ids=['numeric', 'object'])
+def test_ordinal_encoder_raise_missing(X):
+    ohe = OrdinalEncoder()
+
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        ohe.fit(X)
+
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        ohe.fit_transform(X)
+
+    ohe.fit(X[:1, :])
+
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        ohe.transform(X)
 
 
 def test_encoder_dtypes():
@@ -529,8 +676,3 @@ def test_one_hot_encoder_warning():
     enc = OneHotEncoder()
     X = [['Male', 1], ['Female', 3]]
     np.testing.assert_no_warnings(enc.fit_transform, X)
-
-
-def test_categorical_encoder_stub():
-    from sklearn.preprocessing import CategoricalEncoder
-    assert_raises(RuntimeError, CategoricalEncoder, encoding='ordinal')
