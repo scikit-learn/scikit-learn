@@ -62,17 +62,34 @@ cdef int init_node(BinaryTree tree, ITYPE_t i_node,
     cdef DTYPE_t* data = &tree.data[0, 0]
     cdef DTYPE_t* centroid = &tree.node_bounds[0, i_node, 0]
 
+    cdef bint with_sample_weight = tree.sample_weight is not None
+    cdef DTYPE_t* sample_weight
+    cdef DTYPE_t sum_weight_node
+    if with_sample_weight:
+        sample_weight = &tree.sample_weight[0]
+
     # determine Node centroid
     for j in range(n_features):
         centroid[j] = 0
 
-    for i in range(idx_start, idx_end):
-        this_pt = data + n_features * idx_array[i]
-        for j from 0 <= j < n_features:
-            centroid[j] += this_pt[j]
+    if with_sample_weight:
+        sum_weight_node = 0
+        for i in range(idx_start, idx_end):
+            sum_weight_node += sample_weight[idx_array[i]]
+            this_pt = data + n_features * idx_array[i]
+            for j from 0 <= j < n_features:
+                centroid[j] += this_pt[j] * sample_weight[idx_array[i]]
 
-    for j in range(n_features):
-        centroid[j] /= n_points
+        for j in range(n_features):
+            centroid[j] /= sum_weight_node
+    else:
+        for i in range(idx_start, idx_end):
+            this_pt = data + n_features * idx_array[i]
+            for j from 0 <= j < n_features:
+                centroid[j] += this_pt[j]
+
+        for j in range(n_features):
+            centroid[j] /= n_points
 
     # determine Node radius
     radius = 0

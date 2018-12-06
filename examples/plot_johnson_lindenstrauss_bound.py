@@ -94,12 +94,20 @@ print(__doc__)
 import sys
 from time import time
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
+from distutils.version import LooseVersion
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.datasets import fetch_20newsgroups_vectorized
 from sklearn.datasets import load_digits
 from sklearn.metrics.pairwise import euclidean_distances
+
+# `normed` is being deprecated in favor of `density` in histograms
+if LooseVersion(matplotlib.__version__) >= '2.1':
+    density_param = {'density': True}
+else:
+    density_param = {'normed': True}
 
 # Part 1: plot the theoretical dependency between n_components_min and
 # n_samples
@@ -187,7 +195,7 @@ for n_components in n_components_range:
           % (np.mean(rates), np.std(rates)))
 
     plt.figure()
-    plt.hist(rates, bins=50, normed=True, range=(0., 2.), edgecolor='k')
+    plt.hist(rates, bins=50, range=(0., 2.), edgecolor='k', **density_param)
     plt.xlabel("Squared distances rate: projected / original")
     plt.ylabel("Distribution of samples pairs")
     plt.title("Histogram of pairwise distance rates for n_components=%d" %

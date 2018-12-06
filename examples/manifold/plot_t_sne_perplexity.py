@@ -1,6 +1,6 @@
 """
 =============================================================================
- t-SNE: The effect of various perplexity values on the shape
+t-SNE: The effect of various perplexity values on the shape
 =============================================================================
 
 An illustration of t-SNE on the two concentric circles and the S-curve
@@ -18,7 +18,7 @@ visually diverge from S-curve topology on the S-curve dataset even for
 larger perplexity values.
 
 For further details, "How to Use t-SNE Effectively"
-http://distill.pub/2016/misread-tsne/ provides a good discussion of the
+https://distill.pub/2016/misread-tsne/ provides a good discussion of the
 effects of various parameters, as well as interactive plots to explore
 those effects.
 """

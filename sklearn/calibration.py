@@ -30,6 +30,8 @@ from .metrics.classification import _check_binary_probabilistic_predictions
 class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     """Probability calibration with isotonic regression or sigmoid.
 
+    See glossary entry for :term:`cross-validation estimator`.
+
     With this class, the base_estimator is fit on the train set of the
     cross-validation generator and the test set is used for calibration.
     The probabilities for each of the folds are then averaged
@@ -61,8 +63,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`sklearn.model_selection.StratifiedKFold` is used. If ``y`` is
@@ -74,6 +76,10 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
 
         If "prefit" is passed, it is assumed that base_estimator has been
         fitted already and all data is used for calibration.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     Attributes
     ----------
@@ -99,7 +105,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator=None, method='sigmoid', cv=3):
+    def __init__(self, base_estimator=None, method='sigmoid', cv='warn'):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv

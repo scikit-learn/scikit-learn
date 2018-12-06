@@ -12,7 +12,7 @@ import pytest
 
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.datasets import make_classification
+from sklearn.datasets import make_classification, fetch_california_housing
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
@@ -28,7 +28,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
@@ -72,7 +71,7 @@ def check_classification_toy(presort, loss):
     assert_equal(10, len(clf.estimators_))
 
     deviance_decrease = (clf.train_score_[:-1] - clf.train_score_[1:])
-    assert_true(np.any(deviance_decrease >= 0.0))
+    assert np.any(deviance_decrease >= 0.0)
 
     leaves = clf.apply(X)
     assert_equal(leaves.shape, (6, 10, 1))
@@ -338,7 +337,7 @@ def test_feature_importances():
                                         min_samples_split=2, random_state=1,
                                         presort=presort)
         clf.fit(X, y)
-        assert_true(hasattr(clf, 'feature_importances_'))
+        assert hasattr(clf, 'feature_importances_')
 
 
 def test_probability_log():
@@ -352,8 +351,8 @@ def test_probability_log():
 
     # check if probabilities are in [0, 1].
     y_proba = clf.predict_proba(T)
-    assert_true(np.all(y_proba >= 0.0))
-    assert_true(np.all(y_proba <= 1.0))
+    assert np.all(y_proba >= 0.0)
+    assert np.all(y_proba <= 1.0)
 
     # derive predictions from probabilities
     y_pred = clf.classes_.take(y_proba.argmax(axis=1), axis=0)
@@ -449,7 +448,36 @@ def test_max_feature_regression():
                                       max_features=2, random_state=1)
     gbrt.fit(X_train, y_train)
     deviance = gbrt.loss_(y_test, gbrt.decision_function(X_test))
-    assert_true(deviance < 0.5, "GB failed with deviance %.4f" % deviance)
+    assert deviance < 0.5, "GB failed with deviance %.4f" % deviance
+
+
+@pytest.mark.network
+def test_feature_importance_regression():
+    """Test that Gini importance is calculated correctly.
+
+    This test follows the example from [1]_ (pg. 373).
+
+    .. [1] Friedman, J., Hastie, T., & Tibshirani, R. (2001). The elements
+       of statistical learning. New York: Springer series in statistics.
+    """
+    california = fetch_california_housing()
+    X, y = california.data, california.target
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    reg = GradientBoostingRegressor(loss='huber', learning_rate=0.1,
+                                    max_leaf_nodes=6, n_estimators=100,
+                                    random_state=0)
+    reg.fit(X_train, y_train)
+    sorted_idx = np.argsort(reg.feature_importances_)[::-1]
+    sorted_features = [california.feature_names[s] for s in sorted_idx]
+
+    # The most important feature is the median income by far.
+    assert sorted_features[0] == 'MedInc'
+
+    # The three subsequent features are the following. Their relative ordering
+    # might change a bit depending on the randomness of the trees and the
+    # train / test split.
+    assert set(sorted_features[1:4]) == {'Longitude', 'AveOccup', 'Latitude'}
 
 
 def test_max_feature_auto():
@@ -552,7 +580,7 @@ def test_staged_functions_defensive(Estimator):
         with warnings.catch_warnings(record=True):
             staged_result = list(staged_func(X))
         staged_result[1][:] = 0
-        assert_true(np.all(staged_result[0] != 0))
+        assert np.all(staged_result[0] != 0)
 
 
 def test_serialization():
@@ -1075,7 +1103,7 @@ def test_max_leaf_nodes_max_depth(GBEstimator):
 
     est = GBEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
     tree = est.estimators_[0, 0].tree_
-    assert_greater(tree.max_depth, 1)
+    assert_equal(tree.max_depth, 1)
 
     est = GBEstimator(max_depth=1).fit(X, y)
     tree = est.estimators_[0, 0].tree_
@@ -1129,8 +1157,8 @@ def test_probability_exponential():
 
     # check if probabilities are in [0, 1].
     y_proba = clf.predict_proba(T)
-    assert_true(np.all(y_proba >= 0.0))
-    assert_true(np.all(y_proba <= 1.0))
+    assert np.all(y_proba >= 0.0)
+    assert np.all(y_proba <= 1.0)
     score = clf.decision_function(T).ravel()
     assert_array_almost_equal(y_proba[:, 1],
                               1.0 / (1.0 + np.exp(-2 * score)))

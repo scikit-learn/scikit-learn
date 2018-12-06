@@ -47,6 +47,8 @@ def get_pdf_size(version):
             return human_readable_data_quantity(path_details['size'], 1000)
 
 
+print(':orphan:')
+print()
 heading = 'Available documentation for Scikit-learn'
 print(heading)
 print('=' * len(heading))

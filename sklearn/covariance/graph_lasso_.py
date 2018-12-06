@@ -19,11 +19,11 @@ from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import check_random_state, check_array
 from ..utils import deprecated
+from ..utils.fixes import _Sequence as Sequence
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
 from ..model_selection import check_cv, cross_val_score
-from ..externals.joblib import Parallel, delayed
-import collections
+from ..utils._joblib import Parallel, delayed
 
 
 # Helper functions to compute the objective and dual objective functions
@@ -243,6 +243,9 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                 coefs = np.dot(sub_covariance, coefs)
                 covariance_[idx, indices != idx] = coefs
                 covariance_[indices != idx, idx] = coefs
+            if not np.isfinite(precision_.sum()):
+                raise FloatingPointError('The system is too ill-conditioned '
+                                         'for this solver')
             d_gap = _dual_gap(emp_cov, precision_, alpha)
             cost = _objective(emp_cov, precision_, alpha)
             if verbose:
@@ -383,6 +386,9 @@ def graphical_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
     alphas : list of positive floats
         The list of regularization parameters, decreasing order.
 
+    cov_init : 2D array (n_features, n_features), optional
+        The initial guess for the covariance.
+
     X_test : 2D array, shape (n_test_samples, n_features), optional
         Optional test matrix to measure generalisation error.
 
@@ -464,7 +470,9 @@ def graphical_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 
 
 class GraphicalLassoCV(GraphicalLasso):
-    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
+    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
@@ -486,13 +494,17 @@ class GraphicalLassoCV(GraphicalLasso):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     tol : positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
@@ -513,8 +525,11 @@ class GraphicalLassoCV(GraphicalLasso):
         than number of samples. Elsewhere prefer cd which is more numerically
         stable.
 
-    n_jobs : int, optional
-        number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : boolean, optional
         If verbose is True, the objective function and duality gap are
@@ -563,8 +578,8 @@ class GraphicalLassoCV(GraphicalLasso):
     be close to these missing values.
     """
 
-    def __init__(self, alphas=4, n_refinements=4, cv=None, tol=1e-4,
-                 enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=1,
+    def __init__(self, alphas=4, n_refinements=4, cv='warn', tol=1e-4,
+                 enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=None,
                  verbose=False, assume_centered=False):
         super(GraphicalLassoCV, self).__init__(
             mode=mode, tol=tol, verbose=verbose, enet_tol=enet_tol,
@@ -573,12 +588,6 @@ class GraphicalLassoCV(GraphicalLasso):
         self.n_refinements = n_refinements
         self.cv = cv
         self.n_jobs = n_jobs
-
-    @property
-    @deprecated("Attribute grid_scores was deprecated in version 0.19 and "
-                "will be removed in 0.21. Use ``grid_scores_`` instead")
-    def grid_scores(self):
-        return self.grid_scores_
 
     def fit(self, X, y=None):
         """Fits the GraphicalLasso covariance model to X.
@@ -605,7 +614,7 @@ class GraphicalLassoCV(GraphicalLasso):
         n_alphas = self.alphas
         inner_verbose = max(0, self.verbose - 1)
 
-        if isinstance(n_alphas, collections.Sequence):
+        if isinstance(n_alphas, Sequence):
             alphas = self.alphas
             n_refinements = 1
         else:
@@ -681,7 +690,7 @@ class GraphicalLassoCV(GraphicalLasso):
                 alpha_1 = path[best_index - 1][0]
                 alpha_0 = path[best_index + 1][0]
 
-            if not isinstance(n_alphas, collections.Sequence):
+            if not isinstance(n_alphas, Sequence):
                 alphas = np.logspace(np.log10(alpha_1), np.log10(alpha_0),
                                      n_alphas + 2)
                 alphas = alphas[1:-1]
@@ -865,7 +874,9 @@ class GraphLasso(GraphicalLasso):
 @deprecated("The 'GraphLassoCV' was renamed to 'GraphicalLassoCV' "
             "in version 0.20 and will be removed in 0.22.")
 class GraphLassoCV(GraphicalLassoCV):
-    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
+    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     This class implements the Graphical Lasso algorithm.
 
@@ -889,13 +900,17 @@ class GraphLassoCV(GraphicalLassoCV):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     tol : positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
@@ -916,8 +931,11 @@ class GraphLassoCV(GraphicalLassoCV):
         than number of samples. Elsewhere prefer cd which is more numerically
         stable.
 
-    n_jobs : int, optional
-        number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : boolean, optional
         If verbose is True, the objective function and duality gap are

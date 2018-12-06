@@ -1,15 +1,13 @@
-Boston House Prices dataset
-===========================
+.. _boston_dataset:
 
-Notes
-------
-Data Set Characteristics:  
+Boston house prices dataset
+---------------------------
+
+**Data Set Characteristics:**  
 
     :Number of Instances: 506 
 
-    :Number of Attributes: 13 numeric/categorical predictive
-    
-    :Median Value (attribute 14) is usually the target
+    :Number of Attributes: 13 numeric/categorical predictive. Median Value (attribute 14) is usually the target.
 
     :Attribute Information (in order):
         - CRIM     per capita crime rate by town
@@ -46,7 +44,7 @@ pages 244-261 of the latter.
 The Boston house-price data has been used in many machine learning papers that address regression
 problems.   
      
-**References**
+.. topic:: References
 
    - Belsley, Kuh & Welsch, 'Regression diagnostics: Identifying Influential Data and Sources of Collinearity', Wiley, 1980. 244-261.
    - Quinlan,R. (1993). Combining Instance-Based and Model-Based Learning. In Proceedings on the Tenth International Conference of Machine Learning, 236-243, University of Massachusetts, Amherst. Morgan Kaufmann.

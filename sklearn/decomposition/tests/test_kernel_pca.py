@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.sparse as sp
+import pytest
 
 from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
                                    assert_equal, assert_not_equal,
@@ -172,6 +173,9 @@ def test_kernel_pca_invalid_kernel():
     assert_raises(ValueError, kpca.fit, X_fit)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model.
@@ -186,6 +190,9 @@ def test_gridsearch_pipeline():
     assert_equal(grid_search.best_score_, 1)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline_precomputed():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model using a precomputed kernel.
@@ -201,6 +208,8 @@ def test_gridsearch_pipeline_precomputed():
     assert_equal(grid_search.best_score_, 1)
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_nested_circles():
     # Test the linear separability of the first 2D KPCA transform
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,

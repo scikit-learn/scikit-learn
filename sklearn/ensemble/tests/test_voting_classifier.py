@@ -1,11 +1,12 @@
 """Testing for the VotingClassifier"""
 
+import pytest
 import numpy as np
+
 from sklearn.utils.testing import assert_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal, assert_true, assert_false
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns_message
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
@@ -26,6 +27,8 @@ iris = datasets.load_iris()
 X, y = iris.data[:, 1:3], iris.target
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_estimator_init():
     eclf = VotingClassifier(estimators=[])
     msg = ('Invalid `estimators` attribute, `estimators` should be'
@@ -57,6 +60,8 @@ def test_estimator_init():
     assert_raise_message(ValueError, msg, eclf.fit, X, y)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_predictproba_hardvoting():
     eclf = VotingClassifier(estimators=[('lr1', LogisticRegression()),
                                         ('lr2', LogisticRegression())],
@@ -65,6 +70,8 @@ def test_predictproba_hardvoting():
     assert_raise_message(AttributeError, msg, eclf.predict_proba, X)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_notfitted():
     eclf = VotingClassifier(estimators=[('lr1', LogisticRegression()),
                                         ('lr2', LogisticRegression())],
@@ -74,6 +81,9 @@ def test_notfitted():
     assert_raise_message(NotFittedError, msg, eclf.predict_proba, X)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_majority_label_iris():
     """Check classification by majority label on dataset iris."""
     clf1 = LogisticRegression(random_state=123)
@@ -86,9 +96,11 @@ def test_majority_label_iris():
     assert_almost_equal(scores.mean(), 0.95, decimal=2)
 
 
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_tie_situation():
     """Check voting classifier selects smaller class label in tie situation."""
-    clf1 = LogisticRegression(random_state=123)
+    clf1 = LogisticRegression(random_state=123, multi_class='ovr',
+                              solver='liblinear')
     clf2 = RandomForestClassifier(random_state=123)
     eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)],
                             voting='hard')
@@ -97,6 +109,9 @@ def test_tie_situation():
     assert_equal(eclf.fit(X, y).predict(X)[73], 1)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_weights_iris():
     """Check classification by average probabilities on dataset iris."""
     clf1 = LogisticRegression(random_state=123)
@@ -110,6 +125,9 @@ def test_weights_iris():
     assert_almost_equal(scores.mean(), 0.93, decimal=2)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_predict_on_toy_problem():
     """Manually check predicted class labels for toy dataset."""
     clf1 = LogisticRegression(random_state=123)
@@ -142,6 +160,9 @@ def test_predict_on_toy_problem():
     assert_equal(all(eclf.fit(X, y).predict(X)), all([1, 1, 1, 2, 2, 2]))
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_predict_proba_on_toy_problem():
     """Calculate predicted probabilities on toy dataset."""
     clf1 = LogisticRegression(random_state=123)
@@ -181,17 +202,13 @@ def test_predict_proba_on_toy_problem():
     assert_almost_equal(t21, eclf_res[2][1], decimal=1)
     assert_almost_equal(t31, eclf_res[3][1], decimal=1)
 
-    try:
+    with pytest.raises(
+            AttributeError,
+            match="predict_proba is not available when voting='hard'"):
         eclf = VotingClassifier(estimators=[
                                 ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                                 voting='hard')
         eclf.fit(X, y).predict_proba(X)
-
-    except AttributeError:
-        pass
-    else:
-        raise AssertionError('AttributeError for voting == "hard"'
-                             ' and with predict_proba not raised')
 
 
 def test_multilabel():
@@ -209,6 +226,9 @@ def test_multilabel():
         return
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_gridsearch():
     """Check GridSearch support."""
     clf1 = LogisticRegression(random_state=1)
@@ -226,6 +246,9 @@ def test_gridsearch():
     grid.fit(iris.data, iris.target)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_parallel_fit():
     """Check parallel backend of VotingClassifier on toy dataset."""
     clf1 = LogisticRegression(random_state=123)
@@ -247,6 +270,9 @@ def test_parallel_fit():
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_sample_weight():
     """Tests sample_weight parameter of VotingClassifier"""
     clf1 = LogisticRegression(random_state=123)
@@ -281,7 +307,7 @@ def test_sample_weight_kwargs():
     class MockClassifier(BaseEstimator, ClassifierMixin):
         """Mock Classifier to check that sample_weight is received as kwargs"""
         def fit(self, X, y, *args, **sample_weight):
-            assert_true('sample_weight' in sample_weight)
+            assert 'sample_weight' in sample_weight
 
     clf = MockClassifier()
     eclf = VotingClassifier(estimators=[('mock', clf)], voting='soft')
@@ -290,6 +316,9 @@ def test_sample_weight_kwargs():
     eclf.fit(X, y, sample_weight=np.ones((len(y),)))
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_set_params():
     """set_params should be able to set estimators"""
     clf1 = LogisticRegression(random_state=123, C=1.0)
@@ -297,18 +326,18 @@ def test_set_params():
     clf3 = GaussianNB()
     eclf1 = VotingClassifier([('lr', clf1), ('rf', clf2)], voting='soft',
                              weights=[1, 2])
-    assert_true('lr' in eclf1.named_estimators)
-    assert_true(eclf1.named_estimators.lr is eclf1.estimators[0][1])
-    assert_true(eclf1.named_estimators.lr is eclf1.named_estimators['lr'])
+    assert 'lr' in eclf1.named_estimators
+    assert eclf1.named_estimators.lr is eclf1.estimators[0][1]
+    assert eclf1.named_estimators.lr is eclf1.named_estimators['lr']
     eclf1.fit(X, y)
-    assert_true('lr' in eclf1.named_estimators_)
-    assert_true(eclf1.named_estimators_.lr is eclf1.estimators_[0])
-    assert_true(eclf1.named_estimators_.lr is eclf1.named_estimators_['lr'])
+    assert 'lr' in eclf1.named_estimators_
+    assert eclf1.named_estimators_.lr is eclf1.estimators_[0]
+    assert eclf1.named_estimators_.lr is eclf1.named_estimators_['lr']
 
     eclf2 = VotingClassifier([('lr', clf1), ('nb', clf3)], voting='soft',
                              weights=[1, 2])
     eclf2.set_params(nb=clf2).fit(X, y)
-    assert_false(hasattr(eclf2, 'nb'))
+    assert not hasattr(eclf2, 'nb')
 
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
@@ -318,12 +347,15 @@ def test_set_params():
     eclf1.set_params(lr__C=10.0)
     eclf2.set_params(nb__max_depth=5)
 
-    assert_true(eclf1.estimators[0][1].get_params()['C'] == 10.0)
-    assert_true(eclf2.estimators[1][1].get_params()['max_depth'] == 5)
+    assert eclf1.estimators[0][1].get_params()['C'] == 10.0
+    assert eclf2.estimators[1][1].get_params()['max_depth'] == 5
     assert_equal(eclf1.get_params()["lr__C"],
                  eclf1.get_params()["lr"].get_params()['C'])
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_set_estimator_none():
     """VotingClassifier set_params should be able to set estimators as None"""
     # Test predict
@@ -340,11 +372,11 @@ def test_set_estimator_none():
     eclf2.set_params(rf=None).fit(X, y)
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
 
-    assert_true(dict(eclf2.estimators)["rf"] is None)
-    assert_true(len(eclf2.estimators_) == 2)
-    assert_true(all([not isinstance(est, RandomForestClassifier) for est in
-                     eclf2.estimators_]))
-    assert_true(eclf2.get_params()["rf"] is None)
+    assert dict(eclf2.estimators)["rf"] is None
+    assert len(eclf2.estimators_) == 2
+    assert all(isinstance(est, (LogisticRegression, GaussianNB))
+               for est in eclf2.estimators_)
+    assert eclf2.get_params()["rf"] is None
 
     eclf1.set_params(voting='soft').fit(X, y)
     eclf2.set_params(voting='soft').fit(X, y)
@@ -359,10 +391,12 @@ def test_set_estimator_none():
     X1 = np.array([[1], [2]])
     y1 = np.array([1, 2])
     eclf1 = VotingClassifier(estimators=[('rf', clf2), ('nb', clf3)],
-                             voting='soft', weights=[0, 0.5]).fit(X1, y1)
+                             voting='soft', weights=[0, 0.5],
+                             flatten_transform=False).fit(X1, y1)
 
     eclf2 = VotingClassifier(estimators=[('rf', clf2), ('nb', clf3)],
-                             voting='soft', weights=[1, 0.5])
+                             voting='soft', weights=[1, 0.5],
+                             flatten_transform=False)
     eclf2.set_params(rf=None).fit(X1, y1)
     assert_array_almost_equal(eclf1.transform(X1),
                               np.array([[[0.7, 0.3], [0.3, 0.7]],
@@ -376,6 +410,9 @@ def test_set_estimator_none():
     assert_array_equal(eclf2.transform(X1), np.array([[0], [1]]))
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_estimator_weights_format():
     # Test estimator weights inputs as list and array
     clf1 = LogisticRegression(random_state=123)
@@ -393,6 +430,9 @@ def test_estimator_weights_format():
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_transform():
     """Check transform method of VotingClassifier on toy dataset."""
     clf1 = LogisticRegression(random_state=123)
@@ -413,16 +453,10 @@ def test_transform():
         voting='soft',
         flatten_transform=False).fit(X, y)
 
-    warn_msg = ("'flatten_transform' default value will be "
-                "changed to True in 0.21. "
-                "To silence this warning you may"
-                " explicitly set flatten_transform=False.")
-    res = assert_warns_message(DeprecationWarning, warn_msg,
-                               eclf1.transform, X)
-    assert_array_equal(res.shape, (3, 4, 2))
+    assert_array_equal(eclf1.transform(X).shape, (4, 6))
     assert_array_equal(eclf2.transform(X).shape, (4, 6))
     assert_array_equal(eclf3.transform(X).shape, (3, 4, 2))
-    assert_array_almost_equal(res.swapaxes(0, 1).reshape((4, 6)),
+    assert_array_almost_equal(eclf1.transform(X),
                               eclf2.transform(X))
     assert_array_almost_equal(
             eclf3.transform(X).swapaxes(0, 1).reshape((4, 6)),

@@ -12,6 +12,9 @@ at which the fixe is no longer needed.
 
 import os
 import errno
+import sys
+
+from distutils.version import LooseVersion
 
 import numpy as np
 import scipy.sparse as sp
@@ -39,6 +42,7 @@ euler_gamma = getattr(np, 'euler_gamma',
 
 np_version = _parse_version(np.__version__)
 sp_version = _parse_version(scipy.__version__)
+PY3_OR_LATER = sys.version_info[0] >= 3
 
 
 # Remove when minimum required NumPy >= 1.10
@@ -68,6 +72,17 @@ except TypeError:
         if out_orig is None and np.isscalar(x1):
             out = np.asscalar(out)
         return out
+
+
+# boxcox ignore NaN in scipy.special.boxcox after 0.14
+if sp_version < (0, 14):
+    from scipy import stats
+
+    def boxcox(x, lmbda):
+        with np.errstate(invalid='ignore'):
+            return stats.boxcox(x, lmbda)
+else:
+    from scipy.special import boxcox  # noqa
 
 
 if sp_version < (0, 15):
@@ -186,7 +201,16 @@ else:
 
 
 def parallel_helper(obj, methodname, *args, **kwargs):
-    """Workaround for Python 2 limitations of pickling instance methods"""
+    """Workaround for Python 2 limitations of pickling instance methods
+
+    Parameters
+    ----------
+    obj
+    methodname
+    *args
+    **kwargs
+
+    """
     return getattr(obj, methodname)(*args, **kwargs)
 
 
@@ -267,3 +291,89 @@ if np_version < (1, 11):
             return np.array([np.nan] * size_q)
 else:
     from numpy import nanpercentile  # noqa
+
+
+if np_version < (1, 9):
+    def nanmedian(a, axis=None):
+        if axis is None:
+            data = a.reshape(-1)
+            return np.median(np.compress(~np.isnan(data), data))
+        else:
+            data = a.T if not axis else a
+            return np.array([np.median(np.compress(~np.isnan(row), row))
+                             for row in data])
+else:
+    from numpy import nanmedian  # noqa
+
+
+# Fix for behavior inconsistency on numpy.equal for object dtypes.
+# For numpy versions < 1.13, numpy.equal tests element-wise identity of objects
+# instead of equality. This fix returns the mask of NaNs in an array of
+# numerical or object values for all numpy versions.
+if np_version < (1, 13):
+    def _object_dtype_isnan(X):
+        return np.frompyfunc(lambda x: x != x, 1, 1)(X).astype(bool)
+else:
+    def _object_dtype_isnan(X):
+        return X != X
+
+
+# To be removed once this fix is included in six
+try:
+    from collections.abc import Sequence as _Sequence  # noqa
+    from collections.abc import Iterable as _Iterable  # noqa
+    from collections.abc import Mapping as _Mapping  # noqa
+    from collections.abc import Sized as _Sized  # noqa
+except ImportError:  # python <3.3
+    from collections import Sequence as _Sequence  # noqa
+    from collections import Iterable as _Iterable  # noqa
+    from collections import Mapping as _Mapping  # noqa
+    from collections import Sized as _Sized  # noqa
+
+
+def _joblib_parallel_args(**kwargs):
+    """Set joblib.Parallel arguments in a compatible way for 0.11 and 0.12+
+
+    For joblib 0.11 this maps both ``prefer`` and ``require`` parameters to
+    a specific ``backend``.
+
+    Parameters
+    ----------
+
+    prefer : str in {'processes', 'threads'} or None
+        Soft hint to choose the default backend if no specific backend
+        was selected with the parallel_backend context manager.
+
+    require : 'sharedmem' or None
+        Hard condstraint to select the backend. If set to 'sharedmem',
+        the selected backend will be single-host and thread-based even
+        if the user asked for a non-thread based backend with
+        parallel_backend.
+
+    See joblib.Parallel documentation for more details
+    """
+    from . import _joblib
+
+    if _joblib.__version__ >= LooseVersion('0.12'):
+        return kwargs
+
+    extra_args = set(kwargs.keys()).difference({'prefer', 'require'})
+    if extra_args:
+        raise NotImplementedError('unhandled arguments %s with joblib %s'
+                                  % (list(extra_args), _joblib.__version__))
+    args = {}
+    if 'prefer' in kwargs:
+        prefer = kwargs['prefer']
+        if prefer not in ['threads', 'processes', None]:
+            raise ValueError('prefer=%s is not supported' % prefer)
+        args['backend'] = {'threads': 'threading',
+                           'processes': 'multiprocessing',
+                           None: None}[prefer]
+
+    if 'require' in kwargs:
+        require = kwargs['require']
+        if require not in [None, 'sharedmem']:
+            raise ValueError('require=%s is not supported' % require)
+        if require == 'sharedmem':
+            args['backend'] = 'threading'
+    return args
