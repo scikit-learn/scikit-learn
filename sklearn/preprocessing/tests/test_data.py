@@ -6,12 +6,31 @@
 from __future__ import division
 
 import warnings
-import re
 import itertools
 
 import numpy as np
 import numpy.linalg as la
 from scipy import sparse, stats
+
+try:
+    from scipy.sparse import random as sparse_random
+except ImportError:
+    from sklearn.utils.validation import check_random_state
+
+    def sparse_random(num_rows, num_cols, density, random_state=None):
+        # Helper function to create sparse random matrices.
+        # TODO: remove once scipy < 0.17 is no longer supported and just use
+        # scipy.sparse.random
+        # Note that this is not strictly equivalent to what scipy.sparse.random
+        # does as in our case the density is only correct in expectation but
+        # this is enough for our tests.
+        rng = check_random_state(random_state)
+        X = rng.uniform(size=(num_rows, num_cols))
+        zero_mask = rng.uniform(size=(num_rows, num_cols)) > density
+        X[zero_mask] = 0
+        return sparse.csr_matrix(X)
+
+
 from distutils.version import LooseVersion
 import pytest
 
@@ -28,8 +47,6 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_allclose
@@ -174,20 +191,128 @@ def test_polynomial_feature_array_order():
                           (2, True, False, np.float32),
                           (2, True, False, np.float64),
                           (3, False, False, np.float64),
-                          (3, False, True, np.float64)])
-def test_polynomial_features_sparse_X(deg, include_bias, interaction_only,
-                                      dtype):
+                          (3, False, True, np.float64),
+                          (4, False, False, np.float64),
+                          (4, False, True, np.float64)])
+def test_polynomial_features_csc_X(deg, include_bias, interaction_only, dtype):
     rng = np.random.RandomState(0)
     X = rng.randint(0, 2, (100, 2))
-    X_sparse = sparse.csr_matrix(X)
+    X_csc = sparse.csc_matrix(X)
 
-    est = PolynomialFeatures(deg, include_bias=include_bias)
-    Xt_sparse = est.fit_transform(X_sparse.astype(dtype))
+    est = PolynomialFeatures(deg, include_bias=include_bias,
+                             interaction_only=interaction_only)
+    Xt_csc = est.fit_transform(X_csc.astype(dtype))
     Xt_dense = est.fit_transform(X.astype(dtype))
 
-    assert isinstance(Xt_sparse, sparse.csc_matrix)
-    assert Xt_sparse.dtype == Xt_dense.dtype
-    assert_array_almost_equal(Xt_sparse.A, Xt_dense)
+    assert isinstance(Xt_csc, sparse.csc_matrix)
+    assert Xt_csc.dtype == Xt_dense.dtype
+    assert_array_almost_equal(Xt_csc.A, Xt_dense)
+
+
+@pytest.mark.parametrize(['deg', 'include_bias', 'interaction_only', 'dtype'],
+                         [(1, True, False, int),
+                          (2, True, False, int),
+                          (2, True, False, np.float32),
+                          (2, True, False, np.float64),
+                          (3, False, False, np.float64),
+                          (3, False, True, np.float64)])
+def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 2, (100, 2))
+    X_csr = sparse.csr_matrix(X)
+
+    est = PolynomialFeatures(deg, include_bias=include_bias,
+                             interaction_only=interaction_only)
+    Xt_csr = est.fit_transform(X_csr.astype(dtype))
+    Xt_dense = est.fit_transform(X.astype(dtype))
+
+    assert isinstance(Xt_csr, sparse.csr_matrix)
+    assert Xt_csr.dtype == Xt_dense.dtype
+    assert_array_almost_equal(Xt_csr.A, Xt_dense)
+
+
+@pytest.mark.parametrize(['deg', 'include_bias', 'interaction_only', 'dtype'],
+                         [(2, True, False, np.float32),
+                          (2, True, False, np.float64),
+                          (3, False, False, np.float64),
+                          (3, False, True, np.float64)])
+def test_polynomial_features_csr_X_floats(deg, include_bias,
+                                          interaction_only, dtype):
+    X_csr = sparse_random(1000, 10, 0.5, random_state=0).tocsr()
+    X = X_csr.toarray()
+
+    est = PolynomialFeatures(deg, include_bias=include_bias,
+                             interaction_only=interaction_only)
+    Xt_csr = est.fit_transform(X_csr.astype(dtype))
+    Xt_dense = est.fit_transform(X.astype(dtype))
+
+    assert isinstance(Xt_csr, sparse.csr_matrix)
+    assert Xt_csr.dtype == Xt_dense.dtype
+    assert_array_almost_equal(Xt_csr.A, Xt_dense)
+
+
+@pytest.mark.parametrize(['zero_row_index', 'deg', 'interaction_only'],
+                         [(0, 2, True), (1, 2, True), (2, 2, True),
+                          (0, 3, True), (1, 3, True), (2, 3, True),
+                          (0, 2, False), (1, 2, False), (2, 2, False),
+                          (0, 3, False), (1, 3, False), (2, 3, False)])
+def test_polynomial_features_csr_X_zero_row(zero_row_index, deg,
+                                            interaction_only):
+    X_csr = sparse_random(3, 10, 1.0, random_state=0).tocsr()
+    X_csr[zero_row_index, :] = 0.0
+    X = X_csr.toarray()
+
+    est = PolynomialFeatures(deg, include_bias=False,
+                             interaction_only=interaction_only)
+    Xt_csr = est.fit_transform(X_csr)
+    Xt_dense = est.fit_transform(X)
+
+    assert isinstance(Xt_csr, sparse.csr_matrix)
+    assert Xt_csr.dtype == Xt_dense.dtype
+    assert_array_almost_equal(Xt_csr.A, Xt_dense)
+
+
+# This degree should always be one more than the highest degree supported by
+# _csr_expansion.
+@pytest.mark.parametrize(['include_bias', 'interaction_only'],
+                         [(True, True), (True, False),
+                          (False, True), (False, False)])
+def test_polynomial_features_csr_X_degree_4(include_bias, interaction_only):
+    X_csr = sparse_random(1000, 10, 0.5, random_state=0).tocsr()
+    X = X_csr.toarray()
+
+    est = PolynomialFeatures(4, include_bias=include_bias,
+                             interaction_only=interaction_only)
+    Xt_csr = est.fit_transform(X_csr)
+    Xt_dense = est.fit_transform(X)
+
+    assert isinstance(Xt_csr, sparse.csr_matrix)
+    assert Xt_csr.dtype == Xt_dense.dtype
+    assert_array_almost_equal(Xt_csr.A, Xt_dense)
+
+
+@pytest.mark.parametrize(['deg', 'dim', 'interaction_only'],
+                         [(2, 1, True),
+                          (2, 2, True),
+                          (3, 1, True),
+                          (3, 2, True),
+                          (3, 3, True),
+                          (2, 1, False),
+                          (2, 2, False),
+                          (3, 1, False),
+                          (3, 2, False),
+                          (3, 3, False)])
+def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
+    X_csr = sparse_random(1000, dim, 0.5, random_state=0).tocsr()
+    X = X_csr.toarray()
+
+    est = PolynomialFeatures(deg, interaction_only=interaction_only)
+    Xt_csr = est.fit_transform(X_csr)
+    Xt_dense = est.fit_transform(X)
+
+    assert isinstance(Xt_csr, sparse.csr_matrix)
+    assert Xt_csr.dtype == Xt_dense.dtype
+    assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
 
 def test_standard_scaler_1d():
@@ -229,6 +354,20 @@ def test_standard_scaler_1d():
     assert_array_almost_equal(X_scaled.mean(axis=0), .0)
     assert_array_almost_equal(X_scaled.std(axis=0), .0)
     assert_equal(scaler.n_samples_seen_, X.shape[0])
+
+
+def test_standard_scaler_dtype():
+    # Ensure scaling does not affect dtype
+    rng = np.random.RandomState(0)
+    n_samples = 10
+    n_features = 3
+    for dtype in [np.float16, np.float32, np.float64]:
+        X = rng.randn(n_samples, n_features).astype(dtype)
+        scaler = StandardScaler()
+        X_scaled = scaler.fit(X).transform(X)
+        assert X.dtype == X_scaled.dtype
+        assert scaler.mean_.dtype == np.float64
+        assert scaler.scale_.dtype == np.float64
 
 
 def test_scale_1d():
@@ -293,53 +432,53 @@ def test_scaler_2d_arrays():
 
     scaler = StandardScaler()
     X_scaled = scaler.fit(X).transform(X, copy=True)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
     assert_equal(scaler.n_samples_seen_, n_samples)
 
     assert_array_almost_equal(X_scaled.mean(axis=0), n_features * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
     # Check that X has been copied
-    assert_true(X_scaled is not X)
+    assert X_scaled is not X
 
     # check inverse transform
     X_scaled_back = scaler.inverse_transform(X_scaled)
-    assert_true(X_scaled_back is not X)
-    assert_true(X_scaled_back is not X_scaled)
+    assert X_scaled_back is not X
+    assert X_scaled_back is not X_scaled
     assert_array_almost_equal(X_scaled_back, X)
 
     X_scaled = scale(X, axis=1, with_std=False)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=1), n_samples * [0.0])
     X_scaled = scale(X, axis=1, with_std=True)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=1), n_samples * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=1), n_samples * [1.0])
     # Check that the data hasn't been modified
-    assert_true(X_scaled is not X)
+    assert X_scaled is not X
 
     X_scaled = scaler.fit(X).transform(X, copy=False)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=0), n_features * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
     # Check that X has not been copied
-    assert_true(X_scaled is X)
+    assert X_scaled is X
 
     X = rng.randn(4, 5)
     X[:, 0] = 1.0  # first feature is a constant, non zero feature
     scaler = StandardScaler()
     X_scaled = scaler.fit(X).transform(X, copy=True)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=0), n_features * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
     # Check that X has not been copied
-    assert_true(X_scaled is not X)
+    assert X_scaled is not X
 
 
 def test_handle_zeros_in_scale():
     s1 = np.array([0, 1, 2, 3])
     s2 = _handle_zeros_in_scale(s1, copy=True)
 
-    assert_false(s1[0] == s2[0])
+    assert not s1[0] == s2[0]
     assert_array_equal(s1, np.array([0, 1, 2, 3]))
     assert_array_equal(s2, np.array([1, 1, 2, 3]))
 
@@ -481,7 +620,7 @@ def test_standard_scaler_partial_fit_numerical_stability():
 
         # Regardless of magnitude, they must not differ more than of 6 digits
         tol = 10 ** (-6)
-        assert_true(scaler.mean_ is not None)
+        assert scaler.mean_ is not None
         assert_allclose(scaler_incr.var_, scaler.var_, rtol=tol)
         assert_allclose(scaler_incr.scale_, scaler.scale_, rtol=tol)
 
@@ -666,15 +805,15 @@ def test_scaler_without_centering():
 
     scaler = StandardScaler(with_mean=False).fit(X)
     X_scaled = scaler.transform(X, copy=True)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
 
     scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
     X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
-    assert_false(np.any(np.isnan(X_csr_scaled.data)))
+    assert not np.any(np.isnan(X_csr_scaled.data))
 
     scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
     X_csc_scaled = scaler_csc.transform(X_csc, copy=True)
-    assert_false(np.any(np.isnan(X_csc_scaled.data)))
+    assert not np.any(np.isnan(X_csc_scaled.data))
 
     assert_array_almost_equal(scaler.mean_, scaler_csr.mean_)
     assert_array_almost_equal(scaler.var_, scaler_csr.var_)
@@ -693,22 +832,22 @@ def test_scaler_without_centering():
     assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
 
     # Check that X has not been modified (copy)
-    assert_true(X_scaled is not X)
-    assert_true(X_csr_scaled is not X_csr)
+    assert X_scaled is not X
+    assert X_csr_scaled is not X_csr
 
     X_scaled_back = scaler.inverse_transform(X_scaled)
-    assert_true(X_scaled_back is not X)
-    assert_true(X_scaled_back is not X_scaled)
+    assert X_scaled_back is not X
+    assert X_scaled_back is not X_scaled
     assert_array_almost_equal(X_scaled_back, X)
 
     X_csr_scaled_back = scaler_csr.inverse_transform(X_csr_scaled)
-    assert_true(X_csr_scaled_back is not X_csr)
-    assert_true(X_csr_scaled_back is not X_csr_scaled)
+    assert X_csr_scaled_back is not X_csr
+    assert X_csr_scaled_back is not X_csr_scaled
     assert_array_almost_equal(X_csr_scaled_back.toarray(), X)
 
     X_csc_scaled_back = scaler_csr.inverse_transform(X_csc_scaled.tocsc())
-    assert_true(X_csc_scaled_back is not X_csc)
-    assert_true(X_csc_scaled_back is not X_csc_scaled)
+    assert X_csc_scaled_back is not X_csc
+    assert X_csc_scaled_back is not X_csc_scaled
     assert_array_almost_equal(X_csc_scaled_back.toarray(), X)
 
 
@@ -812,19 +951,19 @@ def test_scaler_int():
     with warnings.catch_warnings(record=True):
         scaler = StandardScaler(with_mean=False).fit(X)
         X_scaled = scaler.transform(X, copy=True)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
 
     clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
         X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
-    assert_false(np.any(np.isnan(X_csr_scaled.data)))
+    assert not np.any(np.isnan(X_csr_scaled.data))
 
     clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
         X_csc_scaled = scaler_csc.transform(X_csc, copy=True)
-    assert_false(np.any(np.isnan(X_csc_scaled.data)))
+    assert not np.any(np.isnan(X_csc_scaled.data))
 
     assert_array_almost_equal(scaler.mean_, scaler_csr.mean_)
     assert_array_almost_equal(scaler.var_, scaler_csr.var_)
@@ -845,22 +984,22 @@ def test_scaler_int():
     assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
 
     # Check that X has not been modified (copy)
-    assert_true(X_scaled is not X)
-    assert_true(X_csr_scaled is not X_csr)
+    assert X_scaled is not X
+    assert X_csr_scaled is not X_csr
 
     X_scaled_back = scaler.inverse_transform(X_scaled)
-    assert_true(X_scaled_back is not X)
-    assert_true(X_scaled_back is not X_scaled)
+    assert X_scaled_back is not X
+    assert X_scaled_back is not X_scaled
     assert_array_almost_equal(X_scaled_back, X)
 
     X_csr_scaled_back = scaler_csr.inverse_transform(X_csr_scaled)
-    assert_true(X_csr_scaled_back is not X_csr)
-    assert_true(X_csr_scaled_back is not X_csr_scaled)
+    assert X_csr_scaled_back is not X_csr
+    assert X_csr_scaled_back is not X_csr_scaled
     assert_array_almost_equal(X_csr_scaled_back.toarray(), X)
 
     X_csc_scaled_back = scaler_csr.inverse_transform(X_csc_scaled.tocsc())
-    assert_true(X_csc_scaled_back is not X_csc)
-    assert_true(X_csc_scaled_back is not X_csc_scaled)
+    assert X_csc_scaled_back is not X_csc
+    assert X_csc_scaled_back is not X_csc_scaled
     assert_array_almost_equal(X_csc_scaled_back.toarray(), X)
 
 
@@ -1240,7 +1379,7 @@ def test_quantile_transform_subsampling():
         diff = (np.linspace(0, 1, n_quantiles) -
                 np.ravel(transformer.quantiles_))
         inf_norm = np.max(np.abs(diff))
-        assert_true(inf_norm < 1e-2)
+        assert inf_norm < 1e-2
         inf_norm_arr.append(inf_norm)
     # each random subsampling yield a unique approximation to the expected
     # linspace CDF
@@ -1258,7 +1397,7 @@ def test_quantile_transform_subsampling():
         diff = (np.linspace(0, 1, n_quantiles) -
                 np.ravel(transformer.quantiles_))
         inf_norm = np.max(np.abs(diff))
-        assert_true(inf_norm < 1e-1)
+        assert inf_norm < 1e-1
         inf_norm_arr.append(inf_norm)
     # each random subsampling yield a unique approximation to the expected
     # linspace CDF
@@ -1399,10 +1538,10 @@ def test_scale_function_without_centering():
     X_csr = sparse.csr_matrix(X)
 
     X_scaled = scale(X, with_mean=False)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
 
     X_csr_scaled = scale(X_csr, with_mean=False)
-    assert_false(np.any(np.isnan(X_csr_scaled.data)))
+    assert not np.any(np.isnan(X_csr_scaled.data))
 
     # test csc has same outcome
     X_csc_scaled = scale(X_csr.tocsc(), with_mean=False)
@@ -1415,7 +1554,7 @@ def test_scale_function_without_centering():
                               [0., -0.01, 2.24, -0.35, -0.78], 2)
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
     # Check that X has not been copied
-    assert_true(X_scaled is not X)
+    assert X_scaled is not X
 
     X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis(X_csr_scaled, 0)
     assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
@@ -1680,12 +1819,12 @@ def test_normalizer_l1():
 
         normalizer = Normalizer(norm='l1', copy=True)
         X_norm = normalizer.transform(X)
-        assert_true(X_norm is not X)
+        assert X_norm is not X
         X_norm1 = toarray(X_norm)
 
         normalizer = Normalizer(norm='l1', copy=False)
         X_norm = normalizer.transform(X)
-        assert_true(X_norm is X)
+        assert X_norm is X
         X_norm2 = toarray(X_norm)
 
         for X_norm in (X_norm1, X_norm2):
@@ -1699,8 +1838,8 @@ def test_normalizer_l1():
         X = init(X_dense)
         X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
 
-        assert_true(X_norm is not X)
-        assert_true(isinstance(X_norm, sparse.csr_matrix))
+        assert X_norm is not X
+        assert isinstance(X_norm, sparse.csr_matrix)
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -1729,12 +1868,12 @@ def test_normalizer_l2():
 
         normalizer = Normalizer(norm='l2', copy=True)
         X_norm1 = normalizer.transform(X)
-        assert_true(X_norm1 is not X)
+        assert X_norm1 is not X
         X_norm1 = toarray(X_norm1)
 
         normalizer = Normalizer(norm='l2', copy=False)
         X_norm2 = normalizer.transform(X)
-        assert_true(X_norm2 is X)
+        assert X_norm2 is X
         X_norm2 = toarray(X_norm2)
 
         for X_norm in (X_norm1, X_norm2):
@@ -1747,8 +1886,8 @@ def test_normalizer_l2():
         X = init(X_dense)
         X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
 
-        assert_true(X_norm is not X)
-        assert_true(isinstance(X_norm, sparse.csr_matrix))
+        assert X_norm is not X
+        assert isinstance(X_norm, sparse.csr_matrix)
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -1777,12 +1916,12 @@ def test_normalizer_max():
 
         normalizer = Normalizer(norm='max', copy=True)
         X_norm1 = normalizer.transform(X)
-        assert_true(X_norm1 is not X)
+        assert X_norm1 is not X
         X_norm1 = toarray(X_norm1)
 
         normalizer = Normalizer(norm='max', copy=False)
         X_norm2 = normalizer.transform(X)
-        assert_true(X_norm2 is X)
+        assert X_norm2 is X
         X_norm2 = toarray(X_norm2)
 
         for X_norm in (X_norm1, X_norm2):
@@ -1796,8 +1935,8 @@ def test_normalizer_max():
         X = init(X_dense)
         X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
 
-        assert_true(X_norm is not X)
-        assert_true(isinstance(X_norm, sparse.csr_matrix))
+        assert X_norm is not X
+        assert isinstance(X_norm, sparse.csr_matrix)
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -1869,13 +2008,13 @@ def test_binarizer():
 
         binarizer = Binarizer(copy=True).fit(X)
         X_bin = toarray(binarizer.transform(X))
-        assert_true(X_bin is not X)
+        assert X_bin is not X
         assert_equal(np.sum(X_bin == 0), 2)
         assert_equal(np.sum(X_bin == 1), 4)
 
         binarizer = Binarizer(copy=True)
         X_bin = binarizer.transform(X)
-        assert_true(X_bin is not X)
+        assert X_bin is not X
         X_bin = toarray(X_bin)
         assert_equal(np.sum(X_bin == 0), 2)
         assert_equal(np.sum(X_bin == 1), 4)
@@ -1883,13 +2022,13 @@ def test_binarizer():
         binarizer = Binarizer(copy=False)
         X_bin = binarizer.transform(X)
         if init is not list:
-            assert_true(X_bin is X)
+            assert X_bin is X
 
         binarizer = Binarizer(copy=False)
         X_float = np.array([[1, 0, 5], [2, 3, -1]], dtype=np.float64)
         X_bin = binarizer.transform(X_float)
         if init is not list:
-            assert_true(X_bin is X_float)
+            assert X_bin is X_float
 
         X_bin = toarray(X_bin)
         assert_equal(np.sum(X_bin == 0), 2)
@@ -1945,7 +2084,7 @@ def test_cv_pipeline_precomputed():
                         SVR(gamma='scale'))])
 
     # did the pipeline set the _pairwise attribute?
-    assert_true(pipeline._pairwise)
+    assert pipeline._pairwise
 
     # test cross-validation, score should be almost perfect
     # NB: this test is pretty vacuous -- it's mainly to test integration
@@ -1972,21 +2111,21 @@ def test_add_dummy_feature():
 def test_add_dummy_feature_coo():
     X = sparse.coo_matrix([[1, 0], [0, 1], [0, 1]])
     X = add_dummy_feature(X)
-    assert_true(sparse.isspmatrix_coo(X), X)
+    assert sparse.isspmatrix_coo(X), X
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 
 def test_add_dummy_feature_csc():
     X = sparse.csc_matrix([[1, 0], [0, 1], [0, 1]])
     X = add_dummy_feature(X)
-    assert_true(sparse.isspmatrix_csc(X), X)
+    assert sparse.isspmatrix_csc(X), X
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 
 def test_add_dummy_feature_csr():
     X = sparse.csr_matrix([[1, 0], [0, 1], [0, 1]])
     X = add_dummy_feature(X)
-    assert_true(sparse.isspmatrix_csr(X), X)
+    assert sparse.isspmatrix_csr(X), X
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 
@@ -2042,7 +2181,10 @@ def test_power_transformer_1d():
         pt = PowerTransformer(method='box-cox', standardize=standardize)
 
         X_trans = pt.fit_transform(X)
-        X_trans_func = power_transform(X, standardize=standardize)
+        X_trans_func = power_transform(
+            X, method='box-cox',
+            standardize=standardize
+        )
 
         X_expected, lambda_expected = stats.boxcox(X.flatten())
 
@@ -2066,7 +2208,10 @@ def test_power_transformer_2d():
         pt = PowerTransformer(method='box-cox', standardize=standardize)
 
         X_trans_class = pt.fit_transform(X)
-        X_trans_func = power_transform(X, standardize=standardize)
+        X_trans_func = power_transform(
+            X, method='box-cox',
+            standardize=standardize
+        )
 
         for X_trans in [X_trans_class, X_trans_func]:
             for j in range(X_trans.shape[1]):
@@ -2198,6 +2343,16 @@ def test_optimization_power_transformer(method, lmbda):
     assert_almost_equal(1, X_inv_trans.std(), decimal=1)
 
 
+def test_yeo_johnson_darwin_example():
+    # test from original paper "A new family of power transformations to
+    # improve normality or symmetry" by Yeo and Johnson.
+    X = [6.1, -8.4, 1.0, 2.0, 0.7, 2.9, 3.5, 5.1, 1.8, 3.6, 7.0, 3.0, 9.3,
+         7.5, -6.0]
+    X = np.array(X).reshape(-1, 1)
+    lmbda = PowerTransformer(method='yeo-johnson').fit(X).lambdas_
+    assert np.allclose(lmbda, 1.305, atol=1e-3)
+
+
 @pytest.mark.parametrize('method', ['box-cox', 'yeo-johnson'])
 def test_power_transformer_nans(method):
     # Make sure lambda estimation is not influenced by NaN values
@@ -2289,3 +2444,21 @@ def test_power_transformer_copy_False(method, standardize):
 
     X_inv_trans = pt.inverse_transform(X_trans)
     assert X_trans is X_inv_trans
+
+
+def test_power_transform_default_method():
+    X = np.abs(X_2d)
+
+    future_warning_message = (
+        "The default value of 'method' "
+        "will change from 'box-cox'"
+    )
+    assert_warns_message(FutureWarning, future_warning_message,
+                         power_transform, X)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        X_trans_default = power_transform(X)
+
+    X_trans_boxcox = power_transform(X, method='box-cox')
+    assert_array_equal(X_trans_boxcox, X_trans_default)

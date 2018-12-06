@@ -16,7 +16,7 @@ Documentation of scikit-learn |version|
                     <h2><a href="tutorial/basic/tutorial.html">Quick Start</a></h2>
                     <blockquote>A very short introduction into machine learning
                     problems and how to solve them using scikit-learn.
-                    Introduced basic concepts and conventions.
+                    Presents basic concepts and conventions.
                     </blockquote>
                 </div>
                 <div class="span4 box">

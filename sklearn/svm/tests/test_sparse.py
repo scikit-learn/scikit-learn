@@ -10,9 +10,9 @@ from sklearn.datasets import make_classification, load_digits, make_blobs
 from sklearn.svm.tests import test_svm
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils.testing import (assert_raises, assert_true, assert_false,
-                                   assert_warns, assert_raise_message,
-                                   ignore_warnings, skip_if_32bit)
+from sklearn.utils.testing import (assert_raises, assert_warns,
+                                   assert_raise_message, ignore_warnings,
+                                   skip_if_32bit)
 
 
 # test sample 1
@@ -48,14 +48,14 @@ def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
     else:
         X_test_dense = X_test
     sparse_svm.fit(X_train, y_train)
-    assert_true(sparse.issparse(sparse_svm.support_vectors_))
-    assert_true(sparse.issparse(sparse_svm.dual_coef_))
+    assert sparse.issparse(sparse_svm.support_vectors_)
+    assert sparse.issparse(sparse_svm.dual_coef_)
     assert_array_almost_equal(dense_svm.support_vectors_,
                               sparse_svm.support_vectors_.toarray())
     assert_array_almost_equal(dense_svm.dual_coef_,
                               sparse_svm.dual_coef_.toarray())
     if dense_svm.kernel == "linear":
-        assert_true(sparse.issparse(sparse_svm.coef_))
+        assert sparse.issparse(sparse_svm.coef_)
         assert_array_almost_equal(dense_svm.coef_, sparse_svm.coef_.toarray())
     assert_array_almost_equal(dense_svm.support_, sparse_svm.support_)
     assert_array_almost_equal(dense_svm.predict(X_test_dense),
@@ -115,8 +115,8 @@ def test_unsorted_indices():
     X_test_unsorted = X_test[np.arange(X_test.shape[0])]
 
     # make sure we scramble the indices
-    assert_false(X_sparse_unsorted.has_sorted_indices)
-    assert_false(X_test_unsorted.has_sorted_indices)
+    assert not X_sparse_unsorted.has_sorted_indices
+    assert not X_test_unsorted.has_sorted_indices
 
     unsorted_svc = svm.SVC(kernel='linear', probability=True,
                            random_state=0).fit(X_sparse_unsorted, y)
@@ -199,7 +199,7 @@ def test_linearsvc():
     clf = svm.LinearSVC(random_state=0).fit(X, Y)
     sp_clf = svm.LinearSVC(random_state=0).fit(X_sp, Y)
 
-    assert_true(sp_clf.fit_intercept)
+    assert sp_clf.fit_intercept
 
     assert_array_almost_equal(clf.coef_, sp_clf.coef_, decimal=4)
     assert_array_almost_equal(clf.intercept_, sp_clf.intercept_, decimal=4)
@@ -252,7 +252,7 @@ def test_weight():
         clf.set_params(class_weight={0: 5})
         clf.fit(X_[:180], y_[:180])
         y_pred = clf.predict(X_[180:])
-        assert_true(np.sum(y_pred == y_[180:]) >= 11)
+        assert np.sum(y_pred == y_[180:]) >= 11
 
 
 def test_sample_weights():

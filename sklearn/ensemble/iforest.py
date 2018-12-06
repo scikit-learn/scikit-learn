@@ -14,6 +14,7 @@ import numbers
 from ..externals import six
 from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
+from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted
 from ..base import OutlierMixin
 
@@ -185,6 +186,13 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by iforest")
+
+    def _parallel_args(self):
+        # ExtraTreeRegressor releases the GIL, so it's more efficient to use
+        # a thread-based backend rather than a process-based backend so as
+        # to avoid suffering from communication overhead and extra memory
+        # copies.
+        return _joblib_parallel_args(prefer='threads')
 
     def fit(self, X, y=None, sample_weight=None):
         """Fit estimator.

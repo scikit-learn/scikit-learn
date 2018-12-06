@@ -12,8 +12,8 @@ import pytest
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 
-from sklearn.utils.testing import (assert_true, assert_greater,
-                                   assert_almost_equal, assert_array_equal)
+from sklearn.utils.testing import (assert_greater, assert_almost_equal,
+                                   assert_array_equal)
 
 
 def f(x):
@@ -69,9 +69,9 @@ def test_converged_to_local_maximum(kernel):
     lml, lml_gradient = \
         gpc.log_marginal_likelihood(gpc.kernel_.theta, True)
 
-    assert_true(np.all((np.abs(lml_gradient) < 1e-4) |
-                       (gpc.kernel_.theta == gpc.kernel_.bounds[:, 0]) |
-                       (gpc.kernel_.theta == gpc.kernel_.bounds[:, 1])))
+    assert np.all((np.abs(lml_gradient) < 1e-4) |
+                  (gpc.kernel_.theta == gpc.kernel_.bounds[:, 0]) |
+                  (gpc.kernel_.theta == gpc.kernel_.bounds[:, 1]))
 
 
 @pytest.mark.parametrize('kernel', kernels)

@@ -16,19 +16,14 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.fixes import np_version
 
 from sklearn.utils.extmath import density
-from sklearn.utils.extmath import logsumexp
-from sklearn.utils.extmath import norm, squared_norm
 from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
@@ -86,19 +81,6 @@ def test_random_weights():
 
     assert_array_equal(mode, mode_result)
     assert_array_almost_equal(score.ravel(), w[:, :5].sum(1))
-
-
-@ignore_warnings  # Test deprecated backport to be removed in 0.21
-def test_logsumexp():
-    # Try to add some smallish numbers in logspace
-    x = np.array([1e-40] * 1000000)
-    logx = np.log(x)
-    assert_almost_equal(np.exp(logsumexp(logx)), x.sum())
-
-    X = np.vstack([x, x])
-    logX = np.vstack([logx, logx])
-    assert_array_almost_equal(np.exp(logsumexp(logX, axis=0)), X.sum(axis=0))
-    assert_array_almost_equal(np.exp(logsumexp(logX, axis=1)), X.sum(axis=1))
 
 
 def check_randomized_svd_low_rank(dtype):
@@ -177,22 +159,6 @@ def check_randomized_svd_low_rank(dtype):
                          (np.int32, np.int64, np.float32, np.float64))
 def test_randomized_svd_low_rank_all_dtypes(dtype):
     check_randomized_svd_low_rank(dtype)
-
-
-@ignore_warnings  # extmath.norm is deprecated to be removed in 0.21
-def test_norm_squared_norm():
-    X = np.random.RandomState(42).randn(50, 63)
-    X *= 100        # check stability
-    X += 200
-
-    assert_almost_equal(np.linalg.norm(X.ravel()), norm(X))
-    assert_almost_equal(norm(X) ** 2, squared_norm(X), decimal=6)
-    assert_almost_equal(np.linalg.norm(X), np.sqrt(squared_norm(X)), decimal=6)
-    # Check the warning with an int array and np.dot potential overflow
-    assert_warns_message(
-                    UserWarning, 'Array type is integer, np.dot may '
-                    'overflow. Data should be float type to avoid this issue',
-                    squared_norm, X.astype(int))
 
 
 @pytest.mark.parametrize('dtype',
@@ -437,16 +403,16 @@ def test_randomized_svd_sign_flip_with_transpose():
     # Without transpose
     u_flipped, _, v_flipped = randomized_svd(mat, 3, flip_sign=True)
     u_based, v_based = max_loading_is_positive(u_flipped, v_flipped)
-    assert_true(u_based)
-    assert_false(v_based)
+    assert u_based
+    assert not v_based
 
     # With transpose
     u_flipped_with_transpose, _, v_flipped_with_transpose = randomized_svd(
         mat, 3, flip_sign=True, transpose=True)
     u_based, v_based = max_loading_is_positive(
         u_flipped_with_transpose, v_flipped_with_transpose)
-    assert_true(u_based)
-    assert_false(v_based)
+    assert u_based
+    assert not v_based
 
 
 def test_cartesian():

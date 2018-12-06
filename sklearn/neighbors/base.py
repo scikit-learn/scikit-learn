@@ -25,9 +25,9 @@ from ..utils import check_X_y, check_array, gen_even_slices
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..externals import six
-from ..utils import Parallel, delayed, effective_n_jobs
-from ..utils._joblib import __version__ as joblib_version
 from ..exceptions import DataConversionWarning
+from ..utils._joblib import Parallel, delayed, effective_n_jobs
+from ..utils._joblib import __version__ as joblib_version
 
 VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
                      kd_tree=KDTree.valid_metrics,
@@ -283,6 +283,15 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         return self.metric == 'precomputed'
 
 
+def _tree_query_parallel_helper(tree, data, n_neighbors, return_distance):
+    """Helper for the Parallel calls in KNeighborsMixin.kneighbors
+
+    The Cython method tree.query is not directly picklable by cloudpickle
+    under PyPy.
+    """
+    return tree.query(data, n_neighbors, return_distance)
+
+
 class KNeighborsMixin(object):
     """Mixin for k-neighbors searches"""
 
@@ -373,7 +382,7 @@ class KNeighborsMixin(object):
                [2]]...)
 
         """
-        check_is_fitted(self, "_fit_method")
+        check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -420,28 +429,29 @@ class KNeighborsMixin(object):
             kwds = ({'squared': True} if self.effective_metric_ == 'euclidean'
                     else self.effective_metric_params_)
 
-            result = pairwise_distances_chunked(
+            result = list(pairwise_distances_chunked(
                 X, self._fit_X, reduce_func=reduce_func,
                 metric=self.effective_metric_, n_jobs=n_jobs,
-                **kwds)
+                **kwds))
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
-            if (sys.version_info < (3,) or
-                    LooseVersion(joblib_version) < LooseVersion('0.12')):
+            old_joblib = LooseVersion(joblib_version) < LooseVersion('0.12')
+            if sys.version_info < (3,) or old_joblib:
                 # Deal with change of API in joblib
-                delayed_query = delayed(self._tree.query,
-                                        check_pickle=False)
+                check_pickle = False if old_joblib else None
+                delayed_query = delayed(_tree_query_parallel_helper,
+                                        check_pickle=check_pickle)
                 parallel_kwargs = {"backend": "threading"}
             else:
-                delayed_query = delayed(self._tree.query)
+                delayed_query = delayed(_tree_query_parallel_helper)
                 parallel_kwargs = {"prefer": "threads"}
             result = Parallel(n_jobs, **parallel_kwargs)(
                 delayed_query(
-                    X[s], n_neighbors, return_distance)
+                    self._tree, X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
         else:
@@ -526,6 +536,7 @@ class KNeighborsMixin(object):
         --------
         NearestNeighbors.radius_neighbors_graph
         """
+        check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
@@ -559,6 +570,15 @@ class KNeighborsMixin(object):
                                       shape=(n_samples1, n_samples2))
 
         return kneighbors_graph
+
+
+def _tree_query_radius_parallel_helper(tree, data, radius, return_distance):
+    """Helper for the Parallel calls in RadiusNeighborsMixin.radius_neighbors
+
+    The Cython method tree.query_radius is not directly picklable by
+    cloudpickle under PyPy.
+    """
+    return tree.query_radius(data, radius, return_distance)
 
 
 class RadiusNeighborsMixin(object):
@@ -664,7 +684,7 @@ class RadiusNeighborsMixin(object):
         For efficiency, `radius_neighbors` returns arrays of objects, where
         each object is a 1D array of indices or distances.
         """
-        check_is_fitted(self, "_fit_method")
+        check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
 
         if X is not None:
             query_is_train = False
@@ -717,14 +737,14 @@ class RadiusNeighborsMixin(object):
             n_jobs = effective_n_jobs(self.n_jobs)
             if LooseVersion(joblib_version) < LooseVersion('0.12'):
                 # Deal with change of API in joblib
-                delayed_query = delayed(self._tree.query_radius,
+                delayed_query = delayed(_tree_query_radius_parallel_helper,
                                         check_pickle=False)
                 parallel_kwargs = {"backend": "threading"}
             else:
-                delayed_query = delayed(self._tree.query_radius)
+                delayed_query = delayed(_tree_query_radius_parallel_helper)
                 parallel_kwargs = {"prefer": "threads"}
             results = Parallel(n_jobs, **parallel_kwargs)(
-                delayed_query(X[s], radius, return_distance)
+                delayed_query(self._tree, X[s], radius, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
             if return_distance:
@@ -801,6 +821,7 @@ class RadiusNeighborsMixin(object):
         --------
         kneighbors_graph
         """
+        check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
         if X is not None:
             X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 

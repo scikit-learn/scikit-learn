@@ -1211,8 +1211,8 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
         - None, to use the efficient Leave-One-Out cross-validation
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`sklearn.model_selection.StratifiedKFold` is used, else,
@@ -1323,8 +1323,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
         - None, to use the efficient Leave-One-Out cross-validation
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

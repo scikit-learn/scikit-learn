@@ -322,13 +322,6 @@ class LabelPropagation(BaseLabelPropagation):
     n_neighbors : integer > 0
         Parameter for knn kernel
 
-    alpha : float
-        Clamping factor.
-
-        .. deprecated:: 0.19
-            This parameter will be removed in 0.21.
-            'alpha' is fixed to zero in 'LabelPropagation'.
-
     max_iter : integer
         Change maximum number of iterations allowed
 
@@ -388,10 +381,10 @@ class LabelPropagation(BaseLabelPropagation):
     _variant = 'propagation'
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
-                 alpha=None, max_iter=1000, tol=1e-3, n_jobs=None):
+                 max_iter=1000, tol=1e-3, n_jobs=None):
         super(LabelPropagation, self).__init__(
-            kernel=kernel, gamma=gamma, n_neighbors=n_neighbors, alpha=alpha,
-            max_iter=max_iter, tol=tol, n_jobs=n_jobs)
+            kernel=kernel, gamma=gamma, n_neighbors=n_neighbors,
+            max_iter=max_iter, tol=tol, n_jobs=n_jobs, alpha=None)
 
     def _build_graph(self):
         """Matrix representing a fully connected graph between each sample
@@ -410,12 +403,6 @@ class LabelPropagation(BaseLabelPropagation):
         return affinity_matrix
 
     def fit(self, X, y):
-        if self.alpha is not None:
-            warnings.warn(
-                "alpha is deprecated since 0.19 and will be removed in 0.21.",
-                DeprecationWarning
-            )
-            self.alpha = None
         return super(LabelPropagation, self).fit(X, y)
 
 
