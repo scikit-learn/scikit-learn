@@ -1265,13 +1265,13 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
         slices = gen_batches(n_samples_X, chunk_n_rows)
 
     if metric == "seuclidean" and 'V' not in kwds:
-        if X is Y and effective_n_jobs(n_jobs) == 1:
+        if X is Y:
             V = np.var(X, axis=0, ddof=1)
         else:
             V = np.var(np.vstack([X, Y]), axis=0, ddof=1)
         kwds.update({'V': V})
     elif metric == "mahalanobis" and 'VI' not in kwds:
-        if X is Y and effective_n_jobs(n_jobs) == 1:
+        if X is Y:
             VI = np.linalg.inv(np.cov(X.T)).T
         else:
             VI = np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T
@@ -1409,13 +1409,13 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
         X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
 
         if metric == "seuclidean" and 'V' not in kwds:
-            if X is Y and effective_n_jobs(n_jobs) == 1:
+            if X is Y:
                 V = np.var(X, axis=0, ddof=1)
             else:
                 V = np.var(np.vstack([X, Y]), axis=0, ddof=1)
             kwds.update({'V': V})
         elif metric == "mahalanobis" and 'VI' not in kwds:
-            if X is Y and effective_n_jobs(n_jobs) == 1:
+            if X is Y:
                 VI = np.linalg.inv(np.cov(X.T)).T
             else:
                 VI = np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T
