@@ -44,8 +44,15 @@ Support for Python 3.4 and below has been officially dropped.
     section should be ordered according to the label ordering above. Entries
     should end with: :issue:`123456` by :user:`Joe Bloggs <joeongithub>`.
 
-- An entry goes here
-- An entry goes here
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Feature| Add `stratify` parameter to :func:`model_selection.learning_curve`
+  to support stratified splits of training data during each iteration of
+  cross-validation.
+  :issue:`11054` by :user:`Nikita Astrakhantsev <astrakhantsev>`.
+
 
 :mod:`sklearn.cluster`
 ......................

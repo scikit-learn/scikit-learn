@@ -1677,20 +1677,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             n_splits, test_size, train_size, random_state)
 
     def _iter_indices(self, X, y, groups=None):
-        n_samples = _num_samples(X)
-        y = check_array(y, ensure_2d=False, dtype=None)
-        n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
-                                                  self.train_size)
-
-        if y.ndim == 2:
-            # for multi-label y, map each distinct row to a string repr
-            # using join because str(row) uses an ellipsis if len(row) > 1000
-            y = np.array([' '.join(row.astype('str')) for row in y])
-
-        classes, y_indices = np.unique(y, return_inverse=True)
-        n_classes = classes.shape[0]
-
-        class_counts = np.bincount(y_indices)
+        class_counts, n_classes, n_test, n_train, y_indices = self.\
+            _compute_counts(X, y)
         if np.min(class_counts) < 2:
             raise ValueError("The least populated class in y has only 1"
                              " member, which is too few. The minimum"
@@ -1706,13 +1694,31 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                              'equal to the number of classes = %d' %
                              (n_test, n_classes))
 
+        for train, test in self._split_from_counts(class_counts, n_classes,
+                                                   n_test, n_train, y_indices):
+            yield train, test
+
+    def _compute_counts(self, X, y):
+        n_samples = _num_samples(X)
+        y = check_array(y, ensure_2d=False, dtype=None)
+        n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
+                                                  self.train_size)
+        if y.ndim == 2:
+            # for multi-label y, map each distinct row to a string repr
+            # using join because str(row) uses an ellipsis if len(row) > 1000
+            y = np.array([' '.join(row.astype('str')) for row in y])
+        classes, y_indices = np.unique(y, return_inverse=True)
+        n_classes = classes.shape[0]
+        class_counts = np.bincount(y_indices)
+        return class_counts, n_classes, n_test, n_train, y_indices
+
+    def _split_from_counts(self, class_counts, n_classes, n_test, n_train,
+                           y_indices):
         # Find the sorted list of instances for each class:
         # (np.unique above performs a sort, so code is O(n logn) already)
         class_indices = np.split(np.argsort(y_indices, kind='mergesort'),
                                  np.cumsum(class_counts)[:-1])
-
         rng = check_random_state(self.random_state)
-
         for _ in range(self.n_splits):
             # if there are ties in the class-counts, we want
             # to make sure to break them anew in each iteration

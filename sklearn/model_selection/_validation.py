@@ -29,7 +29,7 @@ from ..utils._joblib import logger
 from ..externals.six.moves import zip
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
-from ._split import check_cv
+from ._split import check_cv, StratifiedShuffleSplit
 from ..preprocessing import LabelEncoder
 
 
@@ -1068,7 +1068,8 @@ def learning_curve(estimator, X, y, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv='warn',
                    scoring=None, exploit_incremental_learning=False,
                    n_jobs=None, pre_dispatch="all", verbose=0, shuffle=False,
-                   random_state=None,  error_score='raise-deprecating'):
+                   stratify=False, random_state=None,
+                   error_score='raise-deprecating'):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training
@@ -1156,6 +1157,15 @@ def learning_curve(estimator, X, y, groups=None,
         Whether to shuffle training data before taking prefixes of it
         based on``train_sizes``.
 
+    stratify : boolean, optional
+        Whether to split training data into subsets of varying sizes
+        (during each iteration of cross-validation) in a stratified fashion;
+        when True, each training set will be sampled such that the proportion
+        of each class matches the full training data (for the current iteration
+        of cross-validation) as well as possible.
+        Stratification is done by using y as the class labels.
+        If shuffle=False or y is None, then stratify must be False.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -1193,6 +1203,16 @@ def learning_curve(estimator, X, y, groups=None,
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
         raise ValueError("An estimator must support the partial_fit interface "
                          "to exploit incremental learning")
+    if stratify:
+        if not shuffle:
+            raise ValueError(
+                "Stratification is not implemented for shuffle=False")
+        elif y is None:
+            raise ValueError(
+                "Stratification is meaningless for y=None")
+        # we need to use random_seed, i.e. integer, not RandomState instance,
+        # in order to make training subsets growing, not disjoint
+        random_seed = check_random_state(random_state).randint(2**31)
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
@@ -1214,7 +1234,7 @@ def learning_curve(estimator, X, y, groups=None,
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
 
-    if shuffle:
+    if shuffle and not stratify:  # if stratify, we shuffle at each iteration
         rng = check_random_state(random_state)
         cv_iter = ((rng.permutation(train), test) for train, test in cv_iter)
 
@@ -1227,7 +1247,20 @@ def learning_curve(estimator, X, y, groups=None,
         train_test_proportions = []
         for train, test in cv_iter:
             for n_train_samples in train_sizes_abs:
-                train_test_proportions.append((train[:n_train_samples], test))
+                if stratify and n_train_samples < n_max_training_samples:
+                    cvi = StratifiedShuffleSplit(test_size=None,
+                                                 train_size=n_train_samples,
+                                                 random_state=random_seed)
+                    # Test size can be too small to pass validation checks
+                    # in cv.split() method, therefore we call private methods
+                    class_counts, n_classes, n_test, n_train, y_indices = cvi.\
+                        _compute_counts(X=train, y=y[train])
+                    cur_train_indices, useless = next(cvi._split_from_counts(
+                        class_counts, n_classes, n_test, n_train, y_indices))
+                    cur_train = safe_indexing(train, cur_train_indices)
+                else:
+                    cur_train = train[:n_train_samples]
+                train_test_proportions.append((cur_train, test))
 
         out = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorer, train, test, verbose,

@@ -1203,6 +1203,102 @@ def test_learning_curve_with_shuffle():
                               test_scores_batch.mean(axis=1))
 
 
+def test_learning_curve_with_stratify():
+    def max_diff_in_ones_between_strata(X, y, stratify, folds_count=5,
+                                        iters_count=10, random_state=0):
+        ones_counter = []
+
+        class MockCountingEstimator(BaseEstimator):
+            """ Dummy classifier: it stores (in global var for this class)
+            count of non-zero-labeled elements in passed y (y_subset)"""
+            def fit(self, X_subset, y_subset=None):
+                cur_ones_count = np.count_nonzero(y_subset)
+                ones_counter.append(cur_ones_count)
+                return self
+
+            def score(self, X, y):
+                return 0
+
+        counting_estimator = MockCountingEstimator()
+        cv = StratifiedKFold(folds_count)
+        train_sizes = np.linspace(1.0 / iters_count, 1.0, iters_count)
+
+        learning_curve(counting_estimator, X, y, cv=cv,
+                       train_sizes=train_sizes, shuffle=True,
+                       stratify=stratify, random_state=random_state)
+
+        # Extract max possible diff of ones count between strata
+        # inside each training CV fold
+        ones_counter = np.asarray(ones_counter).reshape(folds_count,
+                                                        iters_count)
+        # ones_counter stores accumulated count, not count in each stratum,
+        # so we need to take this into account: e.g. [1 1 6 8 9] => [1 0 5 2 1]
+        strata_ones = np.hstack((ones_counter[:, [0]], np.diff(ones_counter)))
+        max_diff_ones = np.max(np.max(strata_ones, 1) - np.min(strata_ones, 1))
+        return max_diff_ones
+
+    def check_growing_subsets(X, y, rand_state, folds_count=5, iters_count=10):
+        ids = []
+
+        class MockStoringEstimator(BaseEstimator):
+            """ Dummy classifier: it stores (in global var for this class)
+            ids of instances occurred in training subset (X_subset)"""
+            def fit(self, X_subset, y_subset=None):
+                ids.append(set(X_subset[:, 0].A1))
+                return self
+
+            def score(self, X, y):
+                return 0
+
+        counting_estimator = MockStoringEstimator()
+        cv = StratifiedKFold(folds_count)
+        train_sizes = np.linspace(1.0 / iters_count, 1.0, iters_count)
+
+        learning_curve(counting_estimator, X, y, cv=cv,
+                       train_sizes=train_sizes, shuffle=True,
+                       stratify=True, random_state=rand_state)
+
+        strata_ids = np.diff(np.asarray(ids).reshape(folds_count, iters_count))
+        strata_ids_lengths = [len(x) for xs in strata_ids for x in xs]
+        strata_ids_lengths_diff = np.diff(strata_ids_lengths)
+
+        max_nat_diff = len(y) * (folds_count - 1) / folds_count % iters_count
+        assert max(strata_ids_lengths_diff) <= max_nat_diff
+
+    ones = 25
+    zeros = 2475
+    X_ids = np.matrix(range(ones + zeros))
+    X_features = np.random.rand(ones + zeros, 2)
+    X = np.hstack((X_ids.T, X_features))
+    y = np.array([1] * ones + [0] * zeros)
+    cv = StratifiedKFold(5)
+    estimator = PassiveAggressiveClassifier(max_iter=5, tol=None,
+                                            shuffle=False)
+
+    # Check that with stratify=True it works for all random seeds,
+    # while for some of them we may have just one class in training set
+    for rand_state in range(10):
+        learning_curve(estimator, X, y, cv=cv, train_sizes=[0.1], shuffle=True,
+                       stratify=True, random_state=rand_state)
+
+    # Check that stratify indeed makes strata with almost equal counts of ones
+    # (i.e. differing by not more than 1)
+    assert(max_diff_in_ones_between_strata(X, y, stratify=False) > 1)
+    assert(max_diff_in_ones_between_strata(X, y, stratify=True) <= 1)
+
+    # Check that each iteration contains growing subsets of instances by
+    # comparing actual difference with max natural one, i.e. caused by
+    # uneven split of instances into folds and then into training subsets.
+    # With default test data and folds/iters counts max natural diff is 0
+    check_growing_subsets(X, y, 0)
+    check_growing_subsets(X, y, np.random.RandomState(0))
+
+    # Check that there is no ValueError with too small test size
+    # 1 - 1 / (2500 * 4/5) = 0.9995 => there would be 1 item in test set
+    learning_curve(estimator, X, y, cv=cv, train_sizes=[0.9995],
+                   shuffle=True, stratify=True, random_state=0)
+
+
 def test_validation_curve():
     X, y = make_classification(n_samples=2, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
