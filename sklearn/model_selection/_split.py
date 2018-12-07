@@ -1836,8 +1836,9 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
                 (train_size >= n_samples or train_size <= 0)) or
             (np.asarray(train_size).dtype.kind == 'f' and
                 (train_size <= 0 or train_size >= 1))):
-        raise ValueError("train_size=%d should be smaller than the number of"
-                         " samples %d" % (train_size, n_samples))
+        raise ValueError('train_size=%d should be either positive and smaller '
+                         'than the number of samples %d or a float in the '
+                         '[0,1] range' % (train_size, n_samples))
 
     if test_size == "default":
         test_size = 0.1
