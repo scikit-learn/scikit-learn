@@ -7,6 +7,7 @@
 
 from itertools import count
 import numbers
+import warnings
 
 import numpy as np
 from scipy.stats.mstats import mquantiles
@@ -92,6 +93,13 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
 
 def _partial_dependence_recursion(est, grid, target_variables):
 
+    if est.init is not None:
+        warnings.warn(
+            'Using recursion method with a non-constant init predictor will '
+            'lead to incorrect partial dependence values.',
+            UserWarning
+        )
+
     # grid needs to be DTYPE
     grid = np.asarray(grid, dtype=DTYPE, order='C')
 
@@ -156,6 +164,17 @@ def partial_dependence(est, target_variables, grid=None, X=None,
                        method='auto'):
     """Partial dependence of ``target_variables``.
 
+    .. _warning_recursion_init:
+
+    .. warning::
+        The 'recursion' method only works for gradient boosting estimators,
+        and unlike the 'brute' method, it does not account for the ``init``
+        predictor of the boosting process. In practice this will produce the
+        same values as 'brute' up to a constant offset in the target
+        response, provided that ``init`` is a consant estimator (which is
+        the default). However, as soon as ``init`` is not a constant
+        estimator, the partial dependence values are incorrect.
+
     Read more in the :ref:`User Guide <partial_dependence>`.
 
     Parameters
@@ -187,7 +206,9 @@ def partial_dependence(est, target_variables, grid=None, X=None,
         - 'recursion' is only supported for objects inheriting from
           `BaseGradientBoosting`, but is more efficient in terms of speed.
           With this method, ``X`` is optional and is only used to build the
-          grid.
+          grid. This method does not account for the ``init`` predicor of
+          the boosting process, which may lead to incorrect values (see
+          :ref:`this warning<warning_recursion_init>`).
 
         - 'brute' is supported for any estimator, but is more
           computationally intensive.
@@ -195,11 +216,6 @@ def partial_dependence(est, target_variables, grid=None, X=None,
         - If 'auto', then 'recursion' will be used for
           ``BaseGradientBoosting`` estimators, and 'brute' used for other
           estimators.
-
-        Unlike the 'brute' method, 'recursion' does not account for the
-        ``init`` predictor of the boosting process. In practice this still
-        produces the same values, up to a constant offset in the target
-        response.
 
     Returns
     -------
@@ -311,6 +327,17 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
     columns. Two-way partial dependence plots are plotted as contour plots.
 
+    .. _warning_recursion_init_plot:
+
+    .. warning::
+        The 'recursion' method only works for gradient boosting estimators,
+        and unlike the 'brute' method, it does not account for the ``init``
+        predictor of the boosting process. In practice this will produce the
+        same values as 'brute' up to a constant offset in the target
+        response, provided that ``init`` is a consant estimator (which is
+        the default). However, as soon as ``init`` is not a constant
+        estimator, the partial dependence values are incorrect.
+
     Read more in the :ref:`User Guide <partial_dependence>`.
 
     Parameters
@@ -351,6 +378,10 @@ def plot_partial_dependence(est, X, features, feature_names=None,
 
         - 'recursion' is only supported for objects inheriting from
           `BaseGradientBoosting`, but is more efficient in terms of speed.
+          With this method, ``X`` is optional and is only used to build the
+          grid. This method does not account for the ``init`` predicor of
+          the boosting process, which may lead to incorrect values (see
+          :ref:`this warning<warning_recursion_init_plot>`).
 
         - 'brute' is supported for any estimator, but is more
           computationally intensive.

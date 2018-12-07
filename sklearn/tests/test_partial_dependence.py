@@ -8,6 +8,7 @@ import pytest
 
 import sklearn
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import if_matplotlib
 from sklearn.partial_dependence import partial_dependence
 from sklearn.partial_dependence import plot_partial_dependence
@@ -25,6 +26,7 @@ from sklearn.datasets import make_classification, make_regression
 from sklearn.cluster import KMeans
 from sklearn.metrics import r2_score
 from sklearn.preprocessing import PolynomialFeatures
+from sklearn.dummy import DummyClassifier
 
 
 # toy sample
@@ -451,3 +453,27 @@ def test_plot_partial_dependence_input():
                         plot_partial_dependence, lr, X,
                         features=[123],
                         feature_names=['blah'])
+
+
+@pytest.mark.skip('Passing non-constant init fails. Wait for PR #12436 '
+                  'to be merged to un-skip this test')
+def test_warning_recursion_non_constant_init():
+    # make sure that passing a non-constant init parameter to a GBDT and using
+    # recursion method yields a warning.
+
+    gbc = GradientBoostingClassifier(init=DummyClassifier(), random_state=0)
+    gbc.fit(X, y)
+
+    assert_warns_message(
+        UserWarning,
+        'Using recursion method with a non-constant init predictor',
+        plot_partial_dependence,
+        gbc, X, [0], method='recursion'
+    )
+
+    assert_warns_message(
+        UserWarning,
+        'Using recursion method with a non-constant init predictor',
+        partial_dependence,
+        gbc, [0], X=X, method='recursion'
+    )
