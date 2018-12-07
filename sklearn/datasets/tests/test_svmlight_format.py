@@ -173,7 +173,9 @@ def test_load_zero_based_auto():
 
 
 def test_load_with_qid():
-    # load svmfile with qid attribute
+    """
+    load libsvm / svmlight file with qid attribute.
+    """
     data = b("""
     3 qid:1 1:0.53 2:0.12
     2 qid:1 1:0.13 2:0.1
