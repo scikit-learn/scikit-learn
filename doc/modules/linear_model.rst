@@ -786,12 +786,12 @@ non-smooth `penalty="l1"`. This is therefore the solver of choice for sparse
 multinomial logistic regression. It is also the only solver that supports
 `penalty="elasticnet"`.
 
-The "lbfgs" is an optimization algorithm that approximates the Broyden–Fletcher–Goldfarb–Shanno algorithm [8]_,
-which belongs to quasi-Newton methods. It performs the best for small datasets than other solvers that use
-Stochastic Gradient descent. The "lbfgs" solver is recommended for use for small data-sets but for larger
-datasets its performance suffers. [9]_
+The "lbfgs" is an optimization algorithm that approximates the 
+Broyden–Fletcher–Goldfarb–Shanno algorithm [8]_,which belongs to
+quasi-Newton methods. The "lbfgs" solver is recommended for use for
+small data-sets but for larger datasets its performance suffers. [9]_
 
-In a nutshell, the following table summarizes the penalties supported by each solver:
+The following table summarizes the penalties supported by each solver:
 
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 |                              |                       **Solvers**                                        |
@@ -818,7 +818,7 @@ In a nutshell, the following table summarizes the penalties supported by each so
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 
 The "saga" solver is often the best choice but requires scaling. The
-"liblinear" solver is used by default for historical reasons.
+"lbfgs" solver is used by default for historical reasons.
 
 For large dataset, you may also consider using :class:`SGDClassifier`
 with 'log' loss.
