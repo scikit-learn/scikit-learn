@@ -162,6 +162,15 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| Fixed a bug in the 'saga' solver where the weights would not be
   correctly updated in some cases. :issue:`11646` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.manifold`
+............................
+
+- |Efficiency| Make :func:`tsne.trustworthiness` use an inverted index
+  instead of an `np.where` lookup to find the rank of neighbors in the input
+  space. This improves trustworthiness in particular when computed with
+  lots of neighbors and/or small datasets.
+  :issue:`9907` by :user:`William de Vazelhes <wdevazelhes>`.
+
 Multiple modules
 ................
 
