@@ -374,7 +374,7 @@ def test_svdd():
     assert_array_almost_equal(clf.dual_coef_,
                               [[0.681, 0.139, 0.680, 0.140, 0.680, 0.680]],
                               decimal=3)
-    assert_false(hasattr(clf, "coef_"))
+    assert not hasattr(clf, "coef_")
 
 
 def test_svdd_decision_function():
