@@ -193,6 +193,10 @@ and tasks.
 - `seglearn <https://github.com/dmbee/seglearn>`_ Time series and sequence 
   learning using sliding window segmentation.
 
+- `uis-rnn <https://github.com/google/uis-rnn>`_ Unbounded Interleaved-State
+  Recurrent Neural Network (UIS-RNN) algorithm for segmenting and clustering
+  sequential data by learning from examples.
+
 **Decomposition and clustering**
 
 - `lda <https://github.com/ariddell/lda/>`_: Fast implementation of latent
