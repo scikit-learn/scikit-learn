@@ -1026,6 +1026,27 @@ def test_train_test_split_errors():
     assert_raises(ValueError, train_test_split, range(3), range(42))
     assert_raises(ValueError, train_test_split, range(10),
                   shuffle=False, stratify=True)
+    assert_raises(ValueError, train_test_split, range(10), train_size=1.2)
+    assert_raises(ValueError, train_test_split, range(10), train_size=1.)
+    assert_raises(ValueError, train_test_split, range(10), train_size=0)
+    assert_raises(ValueError, train_test_split, range(10), train_size=-.2)
+    assert_raises(ValueError, train_test_split, range(10), train_size=-10)
+    assert_raises(ValueError, train_test_split, range(10), train_size=0)
+    assert_raises(ValueError, train_test_split, range(10), train_size=11)
+
+    assert_raises(ValueError, train_test_split, range(10), test_size=1.2)
+    assert_raises(ValueError, train_test_split, range(10), test_size=1.)
+    assert_raises(ValueError, train_test_split, range(10), test_size=0)
+    assert_raises(ValueError, train_test_split, range(10), test_size=-.2)
+    assert_raises(ValueError, train_test_split, range(10), test_size=-10)
+    assert_raises(ValueError, train_test_split, range(10), test_size=0)
+    assert_raises(ValueError, train_test_split, range(10), test_size=11)
+
+    assert_raise_message(ValueError,
+                         'train_size=11 should be either positive and smaller '
+                         'than the number of samples 10 or a float in the '
+                         '[0,1] range',
+                         train_test_split, range(10), train_size=11)
 
 
 def test_train_test_split():
