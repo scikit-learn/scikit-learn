@@ -24,7 +24,7 @@ from scipy import linalg
 from scipy import sparse
 
 from ..externals import six
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import check_array, check_X_y
 from ..utils.validation import FLOAT_DTYPES
@@ -399,6 +399,23 @@ class LinearRegression(LinearModel, RegressorMixin):
     intercept_ : array
         Independent term in the linear model.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.linear_model import LinearRegression
+    >>> X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
+    >>> # y = 1 * x_0 + 2 * x_1 + 3
+    >>> y = np.dot(X, np.array([1, 2])) + 3
+    >>> reg = LinearRegression().fit(X, y)
+    >>> reg.score(X, y)
+    1.0
+    >>> reg.coef_
+    array([1., 2.])
+    >>> reg.intercept_ # doctest: +ELLIPSIS
+    3.0000...
+    >>> reg.predict(np.array([[3, 5]]))
+    array([16.])
+
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
@@ -461,8 +478,8 @@ class LinearRegression(LinearModel, RegressorMixin):
                 outs = Parallel(n_jobs=n_jobs_)(
                     delayed(sparse_lsqr)(X, y[:, j].ravel())
                     for j in range(y.shape[1]))
-                self.coef_ = np.vstack(out[0] for out in outs)
-                self._residues = np.vstack(out[3] for out in outs)
+                self.coef_ = np.vstack([out[0] for out in outs])
+                self._residues = np.vstack([out[3] for out in outs])
         else:
             self.coef_, self._residues, self.rank_, self.singular_ = \
                 linalg.lstsq(X, y)

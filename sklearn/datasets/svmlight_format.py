@@ -95,7 +95,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
 
     multilabel : boolean, optional, default False
         Samples may have several labels each (see
-        http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
+        https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 
     zero_based : boolean or "auto", optional, default "auto"
         Whether column indices in f are zero-based (True) or one-based
@@ -141,7 +141,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     --------
     To use joblib.Memory to cache the svmlight file::
 
-        from sklearn.utils import Memory
+        from joblib import Memory
         from sklearn.datasets import load_svmlight_file
         mem = Memory("./mycache")
 
@@ -179,7 +179,6 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id,
         actual_dtype, data, ind, indptr, labels, query = \
             _load_svmlight_file(f, dtype, multilabel, zero_based, query_id,
                                 offset, length)
-    # XXX remove closing when Python 2.7+/3.1+ required
     else:
         with closing(_gen_open(f)) as f:
             actual_dtype, data, ind, indptr, labels, query = \
@@ -239,7 +238,7 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
 
     multilabel : boolean, optional
         Samples may have several labels each (see
-        http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
+        https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 
     zero_based : boolean or "auto", optional
         Whether column indices in f are zero-based (True) or one-based
@@ -426,7 +425,7 @@ def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
 
     multilabel : boolean, optional
         Samples may have several labels each (see
-        http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
+        https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 
         .. versionadded:: 0.17
            parameter *multilabel* to support multilabel datasets.

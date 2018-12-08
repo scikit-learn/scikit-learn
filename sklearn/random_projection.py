@@ -251,7 +251,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
 
     .. [1] Ping Li, T. Hastie and K. W. Church, 2006,
            "Very Sparse Random Projections".
-           http://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
+           https://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
            http://www.cs.ucsc.edu/~optas/papers/jl.pdf
@@ -271,7 +271,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         indices = []
         offset = 0
         indptr = [offset]
-        for i in xrange(n_components):
+        for _ in xrange(n_components):
             # find the indices of the non-zero components for row i
             n_nonzero_i = rng.binomial(n_features, density)
             indices_i = sample_without_replacement(n_features, n_nonzero_i,
@@ -610,7 +610,7 @@ class SparseRandomProjection(BaseRandomProjection):
 
     .. [1] Ping Li, T. Hastie and K. W. Church, 2006,
            "Very Sparse Random Projections".
-           http://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
+           https://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
            https://users.soe.ucsc.edu/~optas/papers/jl.pdf

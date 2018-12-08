@@ -41,16 +41,16 @@ from .base import load_files
 from .base import _pkl_filepath
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
-from ..utils import check_random_state, Bunch
-from ..utils import deprecated
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
-from ..externals import joblib
+from ..utils import deprecated
+from ..utils import _joblib
+from ..utils import check_random_state, Bunch
 
 logger = logging.getLogger(__name__)
 
 # The original data can be found at:
-# http://people.csail.mit.edu/jrennie/20Newsgroups/20news-bydate.tar.gz
+# https://people.csail.mit.edu/jrennie/20Newsgroups/20news-bydate.tar.gz
 ARCHIVE = RemoteFileMetadata(
     filename='20news-bydate.tar.gz',
     url='https://ndownloader.figshare.com/files/5975967',
@@ -403,12 +403,12 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
                                    download_if_missing=download_if_missing)
 
     if os.path.exists(target_file):
-        X_train, X_test = joblib.load(target_file)
+        X_train, X_test = _joblib.load(target_file)
     else:
         vectorizer = CountVectorizer(dtype=np.int16)
         X_train = vectorizer.fit_transform(data_train.data).tocsr()
         X_test = vectorizer.transform(data_test.data).tocsr()
-        joblib.dump((X_train, X_test), target_file, compress=9)
+        _joblib.dump((X_train, X_test), target_file, compress=9)
 
     # the data is stored as int16 for compactness
     # but normalize needs floats

@@ -14,6 +14,7 @@ import numbers
 
 import numpy as np
 import matplotlib.pyplot as plt
+from joblib import Memory
 import pandas
 
 from sklearn.utils.testing import ignore_warnings
@@ -22,7 +23,6 @@ from sklearn.decomposition.nmf import NMF
 from sklearn.decomposition.nmf import _initialize_nmf
 from sklearn.decomposition.nmf import _beta_divergence
 from sklearn.decomposition.nmf import INTEGER_TYPES, _check_init
-from sklearn.utils import Memory
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot, squared_norm
 from sklearn.utils import check_array
@@ -96,7 +96,7 @@ def _nls_subproblem(X, W, H, tol, max_iter, alpha=0., l1_ratio=0.,
     ----------
     C.-J. Lin. Projected gradient methods for non-negative matrix
     factorization. Neural Computation, 19(2007), 2756-2779.
-    http://www.csie.ntu.edu.tw/~cjlin/nmf/
+    https://www.csie.ntu.edu.tw/~cjlin/nmf/
     """
     WtX = safe_sparse_dot(W.T, X)
     WtW = np.dot(W.T, W)
