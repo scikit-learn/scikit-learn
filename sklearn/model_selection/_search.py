@@ -29,7 +29,7 @@ from ._split import check_cv
 from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
 from ..exceptions import NotFittedError
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 from ..externals import six
 from ..utils import check_random_state
 from ..utils.fixes import sp_version
@@ -342,7 +342,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     Returns
     -------
     score : float
-         Score of this parameter setting on given training / test split.
+         Score of this parameter setting on given test split.
 
     parameters : dict
         The parameters that have been evaluated.

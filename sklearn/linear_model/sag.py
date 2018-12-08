@@ -217,7 +217,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
     LogisticRegression(C=1.0, class_weight=None, dual=False,
-        fit_intercept=True, intercept_scaling=1, max_iter=100,
+        fit_intercept=True, intercept_scaling=1, l1_ratio=None, max_iter=100,
         multi_class='multinomial', n_jobs=None, penalty='l2',
         random_state=None, solver='sag', tol=0.0001, verbose=0,
         warm_start=False)
