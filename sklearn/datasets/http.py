@@ -5,94 +5,43 @@ headers = {
     "Connection": "keep-alive",
 }
 
-try:
-    import requests
+import requests
 
-    def setup_session():
-        requests_session = requests.Session()
-
-        try:
-            import hyper.http20.response
-            headers["Accept-Encoding"] = [k.decode("utf-8") for k in hyper.http20.response.decompressors]
-
-            if b"br" not in hyper.http20.response.decompressors:
-                try:
-                    import brotli
-                    hyper.http20.response.decompressors[b"br"] = brotli.Decompressor
-                except:
-                    pass
-            if b"br" in hyper.http20.response.decompressors:
-                headers["Accept-Encoding"].append("br")
-
-            from hyper.contrib import HTTP20Adapter
-            ad = HTTP20Adapter()
-            requests_session.mount("https://", ad)
-            requests_session.mount("http://", ad)
-            hyper.h2.settings.ENABLE_PUSH = False
-        except:
-            pass
-
-        headers["Accept-Encoding"] = ", ".join(headers["Accept-Encoding"])
-        requests_session.headers.update(headers)
-        return requests_session
-
-    requests_session = setup_session()
-
-    def do_get(uri, binary=False):
-        res = requests_session.get(uri)
-        if binary:
-            return res.raw
-        return res.text
-except:
-    try:
-        # Python 3+
-        from urllib.request import urlopen, Request
-    except ImportError:
-        # Python 2
-        from urllib2 import urlopen, Request
-
-    headers["Accept-Encoding"] = ["gzip", "deflate"]
-    import gzip
-    import zlib
-
-    decompressors = {
-        "gzip": gzip.decompress,
-        "deflate": zlib.decompress
-    }
+def setup_session():
+    requests_session = requests.Session()
 
     try:
-        import brotli
-        decompressors["br"] = brotli.Decompressor
+        import hyper.http20.response
+        headers["Accept-Encoding"] = [k.decode("utf-8") for k in hyper.http20.response.decompressors]
+
+        if b"br" not in hyper.http20.response.decompressors:
+            try:
+                import brotli
+                hyper.http20.response.decompressors[b"br"] = brotli.Decompressor
+            except:
+                pass
+        if b"br" in hyper.http20.response.decompressors:
+            headers["Accept-Encoding"].append("br")
+
+        from hyper.contrib import HTTP20Adapter
+        ad = HTTP20Adapter()
+        requests_session.mount("https://", ad)
+        requests_session.mount("http://", ad)
+        hyper.h2.settings.ENABLE_PUSH = False
     except:
         pass
 
     headers["Accept-Encoding"] = ", ".join(headers["Accept-Encoding"])
+    requests_session.headers.update(headers)
+    return requests_session
 
-    def do_get(uri, binary=False):
-        req = Request(uri)
+requests_session = setup_session()
 
-        for k, v in headers.items():
-            req.add_header(k, v)
-
-        res = urlopen(req)
-        enc = res.getheader('Content-Encoding')
-        res = res.read()
-        if enc in decompressors:
-            res = decompressors[enc](res)
-
-        if not binary:
-            ct = a.getheader('Content-Type').split(";")
-            encoding = "utf-8"
-            for p in ct:
-                splitted = p.split("=")
-                if len(splitted) == 2:
-                    k, v = splitted
-                    k = k.strip()
-                    v = v.strip()
-                    if k == "charset":
-                        encoding = v
-            res = res.decode(encoding)
-        return res
+def do_get(uri, binary=False):
+    res = requests_session.get(uri)
+    if binary:
+        return res.raw
+    return res.text
 
 
 def get(uri, *args, force=False, binary=False, cacheFile="./scikit-learn_datasets_HTTP_cache.sqlite", **kwargs):
