@@ -9,7 +9,6 @@ import warnings
 from scipy import sparse
 
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message
@@ -96,8 +95,8 @@ def test_meanshift_all_orphans():
 def test_unfitted():
     # Non-regression: before fit, there should be not fitted attributes.
     ms = MeanShift()
-    assert_false(hasattr(ms, "cluster_centers_"))
-    assert_false(hasattr(ms, "labels_"))
+    assert not hasattr(ms, "cluster_centers_")
+    assert not hasattr(ms, "labels_")
 
 
 def test_cluster_intensity_tie():

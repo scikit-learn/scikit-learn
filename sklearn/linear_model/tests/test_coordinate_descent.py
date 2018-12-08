@@ -12,7 +12,6 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
@@ -162,9 +161,8 @@ def test_lasso_cv():
     lars = LassoLarsCV(normalize=False, max_iter=30).fit(X, y)
     # for this we check that they don't fall in the grid of
     # clf.alphas further than 1
-    assert_true(np.abs(
-        np.searchsorted(clf.alphas_[::-1], lars.alpha_) -
-        np.searchsorted(clf.alphas_[::-1], clf.alpha_)) <= 1)
+    assert np.abs(np.searchsorted(clf.alphas_[::-1], lars.alpha_) -
+                  np.searchsorted(clf.alphas_[::-1], clf.alpha_)) <= 1
     # check that they also give a similar MSE
     mse_lars = interpolate.interp1d(lars.cv_alphas_, lars.mse_path_.T)
     np.testing.assert_approx_equal(mse_lars(clf.alphas_[5]).mean(),
