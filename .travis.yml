@@ -9,7 +9,7 @@ cache:
   - $HOME/.cache/pip
   - $HOME/.ccache
 
-dist: trusty
+dist: xenial
 
 env:
   global:
