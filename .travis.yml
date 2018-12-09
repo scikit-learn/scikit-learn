@@ -34,6 +34,7 @@ matrix:
             # these only required by the DISTRIB="ubuntu" builds:
             - python3-scipy
             - libatlas3-base
+            - libatlas-base-dev
             - libatlas-dev
     # Python 3.5 build
     - env: DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="false"
