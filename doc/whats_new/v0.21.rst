@@ -111,6 +111,10 @@ Support for Python 3.4 and below has been officially dropped.
 Multiple modules
 ................
 
+- The `__repr__()` method of all estimators (used when calling
+  `print(estimator)`) has been entirely re-written. :issue:`11705` by
+  :user:`Nicolas Hug <NicolasHug>`.
+
 Changes to estimator checks
 ---------------------------
 
