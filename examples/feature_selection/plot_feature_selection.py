@@ -47,7 +47,7 @@ X_indices = np.arange(X.shape[-1])
 
 # #############################################################################
 # Univariate feature selection with F-test for feature scoring
-# We use the default selection function to select the four 
+# We use the default selection function to select the four
 # most significant features
 selector = SelectKBest(f_classif, k=4)
 selector.fit(X, y)
