@@ -225,9 +225,35 @@ class BaseEstimator(object):
 
     def __repr__(self):
         from .utils._pprint import _EstimatorPrettyPrinter
-        pp = _EstimatorPrettyPrinter(compact=True, indent=1,
-                                     indent_at_name=True)
-        return '%s' % pp.pformat(self)
+
+        N_CHAR_MAX = 700  # number of non-whitespace or newline chars
+
+        def get_pretty_printers():
+            # Generate PrettyPrinter objects that are more and more
+            # restrictive in the output length.
+            n_max_elements_to_show = 30
+            # start with basic PrettyPrinter
+            yield _EstimatorPrettyPrinter(
+                compact=True, indent=1, indent_at_name=True)
+            # use ellipsis for sequences with a lot of elements
+            yield _EstimatorPrettyPrinter(
+                compact=True, indent=1, indent_at_name=True,
+                n_max_elements_to_show=n_max_elements_to_show)
+            # add change_only constraint
+            yield _EstimatorPrettyPrinter(
+                compact=True, indent=1, indent_at_name=True,
+                n_max_elements_to_show=n_max_elements_to_show,
+                force_change_only=True)
+
+        for pp in get_pretty_printers():
+            candidate = pp.pformat(self)
+            if len(''.join(candidate.split())) <= N_CHAR_MAX:
+                return candidate
+
+        # If all else fails, cut repr right in the middle.
+        lim = N_CHAR_MAX // 2
+        candidate = candidate[:lim] + '...' + candidate[-lim:]
+        return candidate
 
     def __getstate__(self):
         try:

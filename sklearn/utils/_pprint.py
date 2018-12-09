@@ -94,12 +94,19 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
     """
 
     def __init__(self, indent=1, width=80, depth=None, stream=None, *,
-                 compact=False, indent_at_name=True):
+                 compact=False, indent_at_name=True,
+                 n_max_elements_to_show=None, force_change_only=False):
         super().__init__(indent, width, depth, stream, compact=compact)
         self._indent_at_name = indent_at_name
         if self._indent_at_name:
             self._indent_per_level = 1  # ignore indent param
         self._changed_only = get_config()['print_changed_only']
+        if force_change_only:
+            self._changed_only = True
+        # Max number of elements in a list, dict, tuple until we start using
+        # ellipsis. This also affects the number of arguments of an estimators
+        # (they are treated as dicts)
+        self.n_max_elements_to_show = n_max_elements_to_show
 
     def format(self, object, context, maxlevels, level):
         return _safe_repr(object, context, maxlevels, level,
@@ -138,6 +145,8 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
         Dict items will be rendered as <'key': value> while params will be
         rendered as <key=value>. The implementation is mostly copy/pasting from
         the builtin _format_items().
+        This also adds ellipsis if the number of items is greated than
+        self.n_max_elements_to_show.
         """
         write = stream.write
         indent += self._indent_per_level
@@ -150,7 +159,12 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
         except StopIteration:
             return
         last = False
+        n_items = 0
         while not last:
+            if n_items == self.n_max_elements_to_show:
+                write(', ...')
+                break
+            n_items += 1
             ent = next_ent
             try:
                 next_ent = next(it)
@@ -181,6 +195,55 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
             delim = delimnl
             class_ = KeyValTuple if is_dict else KeyValTupleParam
             self._format(class_(ent), stream, indent,
+                         allowance if last else 1, context, level)
+
+    def _format_items(self, items, stream, indent, allowance, context, level):
+        """Format the items of an iterable (list, tuple...). Same as the
+        built-in _format_items, with support for ellipsis if the number of
+        elements is greater than self.n_max_elements_to_show.
+        """
+        write = stream.write
+        indent += self._indent_per_level
+        if self._indent_per_level > 1:
+            write((self._indent_per_level - 1) * ' ')
+        delimnl = ',\n' + ' ' * indent
+        delim = ''
+        width = max_width = self._width - indent + 1
+        it = iter(items)
+        try:
+            next_ent = next(it)
+        except StopIteration:
+            return
+        last = False
+        n_items = 0
+        while not last:
+            if n_items == self.n_max_elements_to_show:
+                write(', ...')
+                break
+            n_items += 1
+            ent = next_ent
+            try:
+                next_ent = next(it)
+            except StopIteration:
+                last = True
+                max_width -= allowance
+                width -= allowance
+            if self._compact:
+                rep = self._repr(ent, context, level)
+                w = len(rep) + 2
+                if width < w:
+                    width = max_width
+                    if delim:
+                        delim = delimnl
+                if width >= w:
+                    width -= w
+                    write(delim)
+                    delim = ', '
+                    write(rep)
+                    continue
+            write(delim)
+            delim = delimnl
+            self._format(ent, stream, indent,
                          allowance if last else 1, context, level)
 
     def _pprint_key_val_tuple(self, object, stream, indent, allowance, context,
