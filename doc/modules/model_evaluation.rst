@@ -1618,7 +1618,7 @@ then the explained variance is estimated as follow:
 
 .. math::
 
-  \texttt{explained_variance}(y, \hat{y}) = 1 - \frac{Var\{ y - \hat{y}\}}{Var\{y\}}
+  \texttt{explained\_{}variance}(y, \hat{y}) = 1 - \frac{Var\{ y - \hat{y}\}}{Var\{y\}}
 
 The best possible score is 1.0, lower values are worse.
 
