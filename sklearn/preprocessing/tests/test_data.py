@@ -370,9 +370,10 @@ def test_standard_scaler_numerical_stability():
     # was empirically found to cause numerical problems with np.mean & np.std.
 
     x = np.full(8, np.log(1e-5), dtype=np.float64)
-    w = "standard deviation of the data is probably very close to 0"
-    x_scaled = assert_warns_message(UserWarning, w, scale, x)
-    assert_array_almost_equal(x_scaled, np.zeros(8))
+    # This does not raise a warning as the number of samples is too low
+    # to trigger the problem in recent numpy
+    x_scaled = assert_no_warnings(scale, x)
+    assert_array_almost_equal(scale(x), np.zeros(8))
 
     # with 2 more samples, the std computation run into numerical issues:
     x = np.full(10, np.log(1e-5), dtype=np.float64)
