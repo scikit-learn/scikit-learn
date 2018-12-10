@@ -14,11 +14,11 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 from distutils.version import LooseVersion
+from inspect import signature
 
 from numpy.core.numeric import ComplexWarning
 
 from ..externals import six
-from .fixes import signature
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
