@@ -22,14 +22,8 @@ import scipy.io
 from functools import wraps
 from operator import itemgetter
 from inspect import signature
-try:
-    # Python 2
-    from urllib2 import urlopen
-    from urllib2 import HTTPError
-except ImportError:
-    # Python 3+
-    from urllib.request import urlopen
-    from urllib.error import HTTPError
+from urllib.request import urlopen
+from urllib.error import HTTPError
 
 import tempfile
 import shutil
