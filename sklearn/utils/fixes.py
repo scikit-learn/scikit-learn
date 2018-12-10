@@ -14,7 +14,6 @@ import os
 import errno
 import sys
 
-from os import makedirs
 from distutils.version import LooseVersion
 
 from collections.abc import Sequence as _Sequence  # noqa
@@ -29,8 +28,6 @@ from scipy.special import boxcox  # noqa
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
 from numpy import nanpercentile  # noqa
 from numpy import nanmedian  # noqa
-
-from inspect import signature
 
 
 def _parse_version(version_string):
