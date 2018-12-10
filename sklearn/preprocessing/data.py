@@ -12,7 +12,6 @@ from __future__ import division
 from itertools import chain, combinations
 import warnings
 from itertools import combinations_with_replacement as combinations_w_r
-from distutils.version import LooseVersion
 
 import numpy as np
 from scipy import sparse
@@ -2099,9 +2098,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         n_samples, n_features = X.shape
         references = self.references_ * 100
-        # numpy < 1.9 bug: np.percentile 2nd argument needs to be a list
-        if LooseVersion(np.__version__) < '1.9':
-            references = references.tolist()
 
         self.quantiles_ = []
         for col in X.T:
@@ -2124,9 +2120,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         """
         n_samples, n_features = X.shape
         references = self.references_ * 100
-        # numpy < 1.9 bug: np.percentile 2nd argument needs to be a list
-        if LooseVersion(np.__version__) < '1.9':
-            references = references.tolist()
 
         self.quantiles_ = []
         for feature_idx in range(n_features):
