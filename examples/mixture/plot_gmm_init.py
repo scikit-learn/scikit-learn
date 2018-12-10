@@ -146,7 +146,7 @@ def test_seed(seed):
     methods = ['random', 'kmeans', 'rand_data', 'k-means++']
     colors = ['navy', 'turquoise', 'cornflowerblue', 'darkorange']
     times_init = {}
-    relative_times_init = {}
+    relative_times = {}
 
     plt.figure(figsize=(3 * len(methods) // 2, 6))
     plt.subplots_adjust(bottom=.1, top=0.9, hspace=.15, wspace=.05,
@@ -154,7 +154,7 @@ def test_seed(seed):
 
     for n, method in enumerate(methods):
         plt.subplot(2, len(methods) // 2, n+1)
-        labels, ini, seed, params, init_time = gen_gmm(method, seed)
+        labels, ini, seed, params, init_time, iters = gen_gmm(method, seed)
         times_init[method] = init_time
         for i, color in enumerate(colors):
             data = X[labels == i]
