@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import re
 import warnings
@@ -29,9 +30,9 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
-from sklearn.utils.testing import (assert_equal, assert_false,
-                                   assert_not_equal, assert_almost_equal,
-                                   assert_in, assert_less, assert_greater,
+from sklearn.utils.testing import (assert_equal, assert_not_equal,
+                                   assert_almost_equal, assert_in,
+                                   assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry, ignore_warnings,
                                    SkipTest, assert_raises, assert_no_warnings,
@@ -67,7 +68,7 @@ def uppercase(s):
 
 
 def strip_eacute(s):
-    return s.replace('\xe9', 'e')
+    return s.replace(u'é', 'e')
 
 
 def split_tokenize(s):
@@ -80,32 +81,32 @@ def lazy_analyze(s):
 
 def test_strip_accents():
     # check some classical latin accentuated symbols
-    a = '\xe0\xe1\xe2\xe3\xe4\xe5\xe7\xe8\xe9\xea\xeb'
+    a = u'àáâãäåçèéêë'
     expected = 'aaaaaaceeee'
     assert_equal(strip_accents_unicode(a), expected)
 
-    a = '\xec\xed\xee\xef\xf1\xf2\xf3\xf4\xf5\xf6\xf9\xfa\xfb\xfc\xfd'
+    a = u'ìíîïñòóôõöùúûüý'
     expected = 'iiiinooooouuuuy'
     assert_equal(strip_accents_unicode(a), expected)
 
     # check some arabic
-    a = '\u0625'  # halef with a hamza below
-    expected = '\u0627'  # simple halef
+    a = '\u0625'  # alef with a hamza below: إ
+    expected = '\u0627'  # simple alef: ا
     assert_equal(strip_accents_unicode(a), expected)
 
     # mix letters accentuated and not
-    a = "this is \xe0 test"
+    a = u"this is à test"
     expected = 'this is a test'
     assert_equal(strip_accents_unicode(a), expected)
 
 
 def test_to_ascii():
     # check some classical latin accentuated symbols
-    a = '\xe0\xe1\xe2\xe3\xe4\xe5\xe7\xe8\xe9\xea\xeb'
+    a = u'àáâãäåçèéêë'
     expected = 'aaaaaaceeee'
     assert_equal(strip_accents_ascii(a), expected)
 
-    a = '\xec\xed\xee\xef\xf1\xf2\xf3\xf4\xf5\xf6\xf9\xfa\xfb\xfc\xfd'
+    a = u"ìíîïñòóôõöùúûüý"
     expected = 'iiiinooooouuuuy'
     assert_equal(strip_accents_ascii(a), expected)
 
@@ -115,7 +116,7 @@ def test_to_ascii():
     assert_equal(strip_accents_ascii(a), expected)
 
     # mix letters accentuated and not
-    a = "this is \xe0 test"
+    a = u"this is à test"
     expected = 'this is a test'
     assert_equal(strip_accents_ascii(a), expected)
 
@@ -123,8 +124,8 @@ def test_to_ascii():
 @pytest.mark.parametrize('Vectorizer', (CountVectorizer, HashingVectorizer))
 def test_word_analyzer_unigrams(Vectorizer):
     wa = Vectorizer(strip_accents='ascii').build_analyzer()
-    text = ("J'ai mang\xe9 du kangourou  ce midi, "
-            "c'\xe9tait pas tr\xeas bon.")
+    text = (u"J'ai mangé du kangourou  ce midi, "
+            u"c'était pas très bon.")
     expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
                 'etait', 'pas', 'tres', 'bon']
     assert_equal(wa(text), expected)
@@ -142,8 +143,8 @@ def test_word_analyzer_unigrams(Vectorizer):
 
     # with custom preprocessor
     wa = Vectorizer(preprocessor=uppercase).build_analyzer()
-    text = ("J'ai mang\xe9 du kangourou  ce midi, "
-            " c'\xe9tait pas tr\xeas bon.")
+    text = (u"J'ai mangé du kangourou  ce midi, "
+            u" c'était pas très bon.")
     expected = ['AI', 'MANGE', 'DU', 'KANGOUROU', 'CE', 'MIDI',
                 'ETAIT', 'PAS', 'TRES', 'BON']
     assert_equal(wa(text), expected)
@@ -151,8 +152,8 @@ def test_word_analyzer_unigrams(Vectorizer):
     # with custom tokenizer
     wa = Vectorizer(tokenizer=split_tokenize,
                     strip_accents='ascii').build_analyzer()
-    text = ("J'ai mang\xe9 du kangourou  ce midi, "
-            "c'\xe9tait pas tr\xeas bon.")
+    text = (u"J'ai mangé du kangourou  ce midi, "
+            u"c'était pas très bon.")
     expected = ["j'ai", 'mange', 'du', 'kangourou', 'ce', 'midi,',
                 "c'etait", 'pas', 'tres', 'bon.']
     assert_equal(wa(text), expected)
@@ -162,7 +163,7 @@ def test_word_analyzer_unigrams_and_bigrams():
     wa = CountVectorizer(analyzer="word", strip_accents='unicode',
                          ngram_range=(1, 2)).build_analyzer()
 
-    text = "J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    text = u"J'ai mangé du kangourou  ce midi, c'était pas très bon."
     expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
                 'etait', 'pas', 'tres', 'bon', 'ai mange', 'mange du',
                 'du kangourou', 'kangourou ce', 'ce midi', 'midi etait',
@@ -173,7 +174,7 @@ def test_word_analyzer_unigrams_and_bigrams():
 def test_unicode_decode_error():
     # decode_error default to strict, so this should fail
     # First, encode (as bytes) a unicode string.
-    text = "J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    text = u"J'ai mangé du kangourou  ce midi, c'était pas très bon."
     text_bytes = text.encode('utf-8')
 
     # Then let the Analyzer try to decode it as ascii. It should fail,
@@ -190,7 +191,7 @@ def test_char_ngram_analyzer():
     cnga = CountVectorizer(analyzer='char', strip_accents='unicode',
                            ngram_range=(3, 6)).build_analyzer()
 
-    text = "J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon"
+    text = u"J'ai mangé du kangourou  ce midi, c'était pas très bon"
     expected = ["j'a", "'ai", 'ai ', 'i m', ' ma']
     assert_equal(cnga(text)[:5], expected)
     expected = ['s tres', ' tres ', 'tres b', 'res bo', 'es bon']
@@ -417,13 +418,13 @@ def test_vectorizer():
         assert_equal(counts_test[0, vocabulary["water"]], 1)
 
         # stop word from the fixed list
-        assert_false("the" in vocabulary)
+        assert "the" not in vocabulary
 
         # stop word found automatically by the vectorizer DF thresholding
         # words that are high frequent across the complete corpus are likely
         # to be not informative (either real stop words of extraction
         # artifacts)
-        assert_false("copyright" in vocabulary)
+        assert "copyright" not in vocabulary
 
         # not present in the sample
         assert_equal(counts_test[0, vocabulary["coke"]], 0)
@@ -444,7 +445,7 @@ def test_vectorizer():
     # test tf alone
     t2 = TfidfTransformer(norm='l1', use_idf=False)
     tf = t2.fit(counts_train).transform(counts_train).toarray()
-    assert_false(hasattr(t2, "idf_"))
+    assert not hasattr(t2, "idf_")
 
     # test idf transform with unlearned idf vector
     t3 = TfidfTransformer(use_idf=True)
@@ -468,7 +469,7 @@ def test_vectorizer():
 
     tv.max_df = v1.max_df
     tfidf2 = tv.fit_transform(train_data).toarray()
-    assert_false(tv.fixed_vocabulary_)
+    assert not tv.fixed_vocabulary_
     assert_array_almost_equal(tfidf, tfidf2)
 
     # test the direct tfidf vectorizer with new data
@@ -550,7 +551,7 @@ def test_feature_names():
 
     # test for Value error on unfitted/empty vocabulary
     assert_raises(ValueError, cv.get_feature_names)
-    assert_false(cv.fixed_vocabulary_)
+    assert not cv.fixed_vocabulary_
 
     # test for vocabulary learned from data
     X = cv.fit_transform(ALL_FOOD_DOCS)
@@ -811,7 +812,7 @@ def test_vectorizer_pipeline_grid_selection():
     best_vectorizer = grid_search.best_estimator_.named_steps['vect']
     assert_equal(best_vectorizer.ngram_range, (1, 1))
     assert_equal(best_vectorizer.norm, 'l2')
-    assert_false(best_vectorizer.fixed_vocabulary_)
+    assert not best_vectorizer.fixed_vocabulary_
 
 
 def test_vectorizer_pipeline_cross_validation():
@@ -833,25 +834,14 @@ def test_vectorizer_pipeline_cross_validation():
 def test_vectorizer_unicode():
     # tests that the count vectorizer works with cyrillic.
     document = (
-        "\xd0\x9c\xd0\xb0\xd1\x88\xd0\xb8\xd0\xbd\xd0\xbd\xd0\xbe\xd0"
-        "\xb5 \xd0\xbe\xd0\xb1\xd1\x83\xd1\x87\xd0\xb5\xd0\xbd\xd0\xb8\xd0"
-        "\xb5 \xe2\x80\x94 \xd0\xbe\xd0\xb1\xd1\x88\xd0\xb8\xd1\x80\xd0\xbd"
-        "\xd1\x8b\xd0\xb9 \xd0\xbf\xd0\xbe\xd0\xb4\xd1\x80\xd0\xb0\xd0\xb7"
-        "\xd0\xb4\xd0\xb5\xd0\xbb \xd0\xb8\xd1\x81\xd0\xba\xd1\x83\xd1\x81"
-        "\xd1\x81\xd1\x82\xd0\xb2\xd0\xb5\xd0\xbd\xd0\xbd\xd0\xbe\xd0\xb3"
-        "\xd0\xbe \xd0\xb8\xd0\xbd\xd1\x82\xd0\xb5\xd0\xbb\xd0\xbb\xd0"
-        "\xb5\xd0\xba\xd1\x82\xd0\xb0, \xd0\xb8\xd0\xb7\xd1\x83\xd1\x87"
-        "\xd0\xb0\xd1\x8e\xd1\x89\xd0\xb8\xd0\xb9 \xd0\xbc\xd0\xb5\xd1\x82"
-        "\xd0\xbe\xd0\xb4\xd1\x8b \xd0\xbf\xd0\xbe\xd1\x81\xd1\x82\xd1\x80"
-        "\xd0\xbe\xd0\xb5\xd0\xbd\xd0\xb8\xd1\x8f \xd0\xb0\xd0\xbb\xd0\xb3"
-        "\xd0\xbe\xd1\x80\xd0\xb8\xd1\x82\xd0\xbc\xd0\xbe\xd0\xb2, \xd1\x81"
-        "\xd0\xbf\xd0\xbe\xd1\x81\xd0\xbe\xd0\xb1\xd0\xbd\xd1\x8b\xd1\x85 "
-        "\xd0\xbe\xd0\xb1\xd1\x83\xd1\x87\xd0\xb0\xd1\x82\xd1\x8c\xd1\x81\xd1"
-        "\x8f.")
+        u"Машинное обучение — обширный подраздел искусственного "
+        u"интеллекта, изучающий методы построения алгоритмов, "
+        u"способных обучаться."
+        )
 
     vect = CountVectorizer()
     X_counted = vect.fit_transform([document])
-    assert_equal(X_counted.shape, (1, 15))
+    assert_equal(X_counted.shape, (1, 12))
 
     vect = HashingVectorizer(norm=None, non_negative=True)
     X_hashed = vect.transform([document])

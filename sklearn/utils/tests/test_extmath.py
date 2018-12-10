@@ -16,7 +16,6 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
@@ -405,7 +404,7 @@ def test_randomized_svd_sign_flip_with_transpose():
     u_flipped, _, v_flipped = randomized_svd(mat, 3, flip_sign=True)
     u_based, v_based = max_loading_is_positive(u_flipped, v_flipped)
     assert u_based
-    assert_false(v_based)
+    assert not v_based
 
     # With transpose
     u_flipped_with_transpose, _, v_flipped_with_transpose = randomized_svd(
@@ -413,7 +412,7 @@ def test_randomized_svd_sign_flip_with_transpose():
     u_based, v_based = max_loading_is_positive(
         u_flipped_with_transpose, v_flipped_with_transpose)
     assert u_based
-    assert_false(v_based)
+    assert not v_based
 
 
 def test_cartesian():

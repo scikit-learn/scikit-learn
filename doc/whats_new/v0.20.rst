@@ -12,11 +12,46 @@ Version 0.20.2
 This is a bug-fix release with some minor documentation improvements and
 enhancements to features released in 0.20.0.
 
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- :mod:`sklearn.neighbors` when ``metric=='jaccard'`` (bug fix)
+
 Changelog
 ---------
 
+:mod:`sklearn.compose`
+......................
 
+- |Fix| Fixed an issue in :func:`compose.make_column_transformer` which raises
+  unexpected error when columns is pandas Index or pandas Series.
+  :issue:`12704` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |Fix| Fixed a regression in :class:`pipeline.Pipeline` where the ``steps``
+  parameter may not have been updated correctly when a step is set to ``None``
+  or ``'passthrough'``. :user:`Thomas Fan <thomasjpfan>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| Fixed :class:`sklearn.neighbors.DistanceMetric` jaccard distance
+  function to return 0 when two all-zero vectors are compared.
+  :issue:`12685` by :user:`Thomas Fan <thomasjpfan>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Calling :func:`utils.check_array` on `pandas.Series` with categorical
+  data, which raised an error in 0.20.0, now returns the expected output again.
+  :issue:`12699` by `Joris Van den Bossche`_.
 
 .. _changes_0_20_1:
 
