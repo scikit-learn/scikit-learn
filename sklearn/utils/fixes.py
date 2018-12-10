@@ -10,10 +10,6 @@ at which the fixe is no longer needed.
 #
 # License: BSD 3 clause
 
-import os
-import errno
-import sys
-
 from distutils.version import LooseVersion
 
 from collections.abc import Sequence as _Sequence  # noqa
