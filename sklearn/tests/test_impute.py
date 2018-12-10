@@ -646,10 +646,10 @@ def test_imputation_add_indicator(marker):
         [1, 2, 9, 4, marker]
     ])
     X_true = np.array([
-        [3., 1., 5., 1., 1., 0., 0., 1.],
-        [2., 2., 1., 2., 0., 1., 0., 1.],
-        [6., 3., 5., 3., 0., 0., 1., 1.],
-        [1., 2., 9., 4., 0., 0., 0., 1.]
+        [3., 1., 5., 1., 1., 0., 0.],
+        [2., 2., 1., 2., 0., 1., 0.],
+        [6., 3., 5., 3., 0., 0., 1.],
+        [1., 2., 9., 4., 0., 0., 0.]
     ])
 
     imputer = SimpleImputer(missing_values=marker, add_indicator=True)
@@ -657,7 +657,7 @@ def test_imputation_add_indicator(marker):
 
     assert_allclose(X_trans, X_true)
     assert_allclose(imputer.statistics_, np.array([3., 2., 5., 2.5, np.nan]))
-    assert_array_equal(imputer.indicator_.features_, np.array([0, 1, 2, 4]))
+    assert_array_equal(imputer.indicator_.features_, np.array([0, 1, 2]))
 
 
 @pytest.mark.parametrize(

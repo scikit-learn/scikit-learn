@@ -281,7 +281,6 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             # for constant strategy, self.statistcs_ is used to store
             # fill_value in each column
             statistics.fill(fill_value)
-
         else:
             for i in range(X.shape[1]):
                 column = X.data[X.indptr[i]:X.indptr[i + 1]]
@@ -540,6 +539,9 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                 np.flatnonzero(np.diff(missing_values_mask.indptr))
                 if missing_values_mask.format == 'csc'
                 else np.unique(missing_values_mask.indices))
+            imputer_mask, features_with_missing = self._drop_constant_columns(
+                imputer_mask, features_with_missing
+            )
 
             if self.sparse is False:
                 imputer_mask = imputer_mask.toarray()
@@ -552,9 +554,39 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                 X = X.toarray()
             imputer_mask = _get_mask(X, self.missing_values)
             features_with_missing = np.flatnonzero(imputer_mask.sum(axis=0))
+            imputer_mask, features_with_missing = self._drop_constant_columns(
+                imputer_mask, features_with_missing
+            )
 
             if self.sparse is True:
                 imputer_mask = sparse.csc_matrix(imputer_mask)
+
+        return imputer_mask, features_with_missing
+
+    @staticmethod
+    def _drop_constant_columns(imputer_mask, features_with_missing):
+        """
+        In case we have a column with totally missing  values, drop it,
+        because constant column is not informative.
+        :param imputer_mask:
+        :param features_with_missing:
+        :return:
+        """
+        is_sparce = sparse.issparse(imputer_mask)
+
+        if is_sparce:
+            imputer_mask = imputer_mask.toarray()
+
+        fully_missing_indexes = np.where(
+            features_with_missing == imputer_mask.shape[0]
+        )[0]
+        features_with_missing = np.delete(
+            features_with_missing, fully_missing_indexes, axis=0
+        )
+        imputer_mask = np.delete(imputer_mask, fully_missing_indexes, axis=1)
+
+        if is_sparce:
+            imputer_mask = sparse.csr_matrix(imputer_mask)
 
         return imputer_mask, features_with_missing
 
