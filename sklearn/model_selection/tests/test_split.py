@@ -1041,13 +1041,20 @@ def test_train_test_split_errors():
     assert_raises(ValueError, train_test_split, range(10),
                   train_size=11, test_size=0.8)
 
-    assert_raises(ValueError, train_test_split, range(10), test_size=1.2)
-    assert_raises(ValueError, train_test_split, range(10), test_size=1.)
-    assert_raises(ValueError, train_test_split, range(10), test_size=0)
-    assert_raises(ValueError, train_test_split, range(10), test_size=-.2)
-    assert_raises(ValueError, train_test_split, range(10), test_size=-10)
-    assert_raises(ValueError, train_test_split, range(10), test_size=0)
-    assert_raises(ValueError, train_test_split, range(10), test_size=11)
+    assert_raises(ValueError, train_test_split, range(10),
+                  test_size=1.2, train_size=0.8)
+    assert_raises(ValueError, train_test_split, range(10),
+                  test_size=1., train_size=0.8)
+    assert_raises(ValueError, train_test_split, range(10),
+                  test_size=0, train_size=0.8)
+    assert_raises(ValueError, train_test_split, range(10),
+                  test_size=-.2, train_size=0.8)
+    assert_raises(ValueError, train_test_split, range(10),
+                  test_size=-10, train_size=0.8)
+    assert_raises(ValueError, train_test_split, range(10),
+                  test_size=0, train_size=0.8)
+    assert_raises(ValueError, train_test_split, range(10),
+                  test_size=11, train_size=0.8)
 
     assert_raise_message(ValueError,
                          'train_size=11 should be either positive and smaller '
