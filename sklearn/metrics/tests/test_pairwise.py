@@ -9,7 +9,7 @@ from scipy.spatial.distance import cdist
 
 import pytest
 
-from sklearn import set_config, get_config
+from sklearn import config_context
 
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
@@ -907,30 +907,26 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
                                                 y_is_x):
     # check that pairwise_distances give the same result in sequential and
     # parallel, when metric has data-derived parameters.
-    wm = get_config()['working_memory']
-    set_config(working_memory=0.1)  # to have more than 1 chunk
+    with config_context(working_memory=0.1):  # to have more than 1 chunk
+        rng = np.random.RandomState(0)
 
-    rng = np.random.RandomState(0)
+        X = rng.random_sample((1000, 10))
 
-    X = rng.random_sample((1000, 10))
-
-    if y_is_x:
-        Y = X
-        if metric == "seuclidean":
-            params = {'V': np.var(X, axis=0, ddof=1)}
+        if y_is_x:
+            Y = X
+            if metric == "seuclidean":
+                params = {'V': np.var(X, axis=0, ddof=1)}
+            else:
+                params = {'VI': np.linalg.inv(np.cov(X.T)).T}
         else:
-            params = {'VI': np.linalg.inv(np.cov(X.T)).T}
-    else:
-        Y = rng.random_sample((1000, 10))
-        if metric == "seuclidean":
-            params = {'V': np.var(np.vstack([X, Y]), axis=0, ddof=1)}
-        else:
-            params = {'VI': np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T}
+            Y = rng.random_sample((1000, 10))
+            if metric == "seuclidean":
+                params = {'V': np.var(np.vstack([X, Y]), axis=0, ddof=1)}
+            else:
+                params = {'VI': np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T}
 
-    expected_dist = cdist(X, Y, metric=metric, **params)
+        expected_dist = cdist(X, Y, metric=metric, **params)
 
-    dist = np.vstack(dist_function(X, Y, metric=metric, n_jobs=n_jobs))
+        dist = np.vstack(dist_function(X, Y, metric=metric, n_jobs=n_jobs))
 
-    assert_allclose(dist, expected_dist)
-
-    set_config(working_memory=wm)  # reset working memory to initial value
+        assert_allclose(dist, expected_dist)
