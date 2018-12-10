@@ -7,20 +7,14 @@ from warnings import warn
 from contextlib import closing
 from functools import wraps
 
-try:
-    # Python 3+
-    from urllib.request import urlopen, Request
-except ImportError:
-    # Python 2
-    from urllib2 import urlopen, Request
-
+from urllib.request import urlopen, Request
 
 import numpy as np
 import scipy.sparse
 
 from sklearn.externals import _arff
 from .base import get_data_home
-from ..externals.six import string_types, PY2, BytesIO
+from ..externals.six import string_types
 from ..externals.six.moves.urllib.error import HTTPError
 from ..utils import Bunch
 
@@ -89,8 +83,6 @@ def _open_openml_url(openml_path, data_home):
     if data_home is None:
         fsrc = urlopen(req)
         if is_gzip(fsrc):
-            if PY2:
-                fsrc = BytesIO(fsrc.read())
             return gzip.GzipFile(fileobj=fsrc, mode='rb')
         return fsrc
 
@@ -357,16 +349,9 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
             else:
                 return_type = _arff.DENSE
 
-            if PY2:
-                arff_file = _arff.load(
-                    response.read(),
-                    encode_nominal=encode_nominal,
-                    return_type=return_type,
-                )
-            else:
-                arff_file = _arff.loads(response.read().decode('utf-8'),
-                                        encode_nominal=encode_nominal,
-                                        return_type=return_type)
+            arff_file = _arff.loads(response.read().decode('utf-8'),
+                                    encode_nominal=encode_nominal,
+                                    return_type=return_type)
         return arff_file
 
     return _arff_load()
