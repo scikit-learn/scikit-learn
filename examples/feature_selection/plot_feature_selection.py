@@ -62,7 +62,7 @@ plt.bar(X_indices - .45, scores, width=.2,
 clf = svm.SVC(kernel='linear')
 clf.fit(X, y)
 
-svm_weights = (np.abs(clf.coef_)).sum(axis=0)
+svm_weights = np.abs(clf.coef_).sum(axis=0)
 svm_weights /= svm_weights.sum()
 
 plt.bar(X_indices - .25, svm_weights, width=.2, label='SVM weight',
@@ -71,7 +71,7 @@ plt.bar(X_indices - .25, svm_weights, width=.2, label='SVM weight',
 clf_selected = svm.SVC(kernel='linear')
 clf_selected.fit(selector.transform(X), y)
 
-svm_weights_selected = (np.abs(clf_selected.coef_)).sum(axis=0)
+svm_weights_selected = np.abs(clf_selected.coef_).sum(axis=0)
 svm_weights_selected /= svm_weights_selected.sum()
 
 plt.bar(X_indices[selector.get_support()] - .05, svm_weights_selected,
