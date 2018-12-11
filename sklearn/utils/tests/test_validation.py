@@ -701,6 +701,11 @@ def test_check_array_series():
                       warn_on_dtype=True)
     assert_array_equal(res, np.array([1, 2, 3]))
 
+    # with categorical dtype (not a numpy dtype) (GH12699)
+    s = pd.Series(['a', 'b', 'c']).astype('category')
+    res = check_array(s, dtype=None, ensure_2d=False)
+    assert_array_equal(res, np.array(['a', 'b', 'c'], dtype=object))
+
 
 def test_check_dataframe_warns_on_dtype():
     # Check that warn_on_dtype also works for DataFrames.
