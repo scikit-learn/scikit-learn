@@ -542,7 +542,8 @@ def test_bnb():
 
     # Check the feature probabilities are correct
     feature_prob = np.array([[0.4, 0.8, 0.2, 0.4, 0.4, 0.2],
-                             [1 / 3.0, 2 / 3.0, 2 / 3.0, 1 / 3.0, 1 / 3.0, 2 / 3.0]])
+                             [1 / 3.0, 2 / 3.0, 2 / 3.0, 1 / 3.0, 1 / 3.0,
+                              2 / 3.0]])
     assert_array_almost_equal(np.exp(clf.feature_log_prob_), feature_prob)
 
     # Testing data point is:

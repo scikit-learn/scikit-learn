@@ -1388,7 +1388,8 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
     y_b = y_m[y_m != 2]
     X_b = X_m[y_m != 2]
 
-    if name in ['BernoulliNB', 'MultinomialNB', 'ComplementNB', 'CategoricalNB']:
+    if name in ['BernoulliNB', 'MultinomialNB', 'ComplementNB',
+                'CategoricalNB']:
         X_m -= X_m.min()
         X_b -= X_b.min()
 
@@ -1418,7 +1419,8 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
         y_pred = classifier.predict(X)
         assert_equal(y_pred.shape, (n_samples,))
         # training set performance
-        if name not in ['BernoulliNB', 'MultinomialNB', 'ComplementNB', 'CategoricalNB']:
+        if name not in ['BernoulliNB', 'MultinomialNB', 'ComplementNB',
+                        'CategoricalNB']:
             assert_greater(accuracy_score(y, y_pred), 0.83)
 
         # raises error on malformed input for predict

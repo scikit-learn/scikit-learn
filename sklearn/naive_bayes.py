@@ -33,7 +33,8 @@ from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted
 from .externals import six
 
-__all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB', 'CategoricalNB']
+__all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
+           'CategoricalNB']
 
 
 class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
@@ -473,7 +474,7 @@ class BaseDiscreteNB(BaseNB):
             raise ValueError('Smoothing parameter alpha = %.1e. '
                              'alpha should be > 0.' % np.min(self.alpha))
         if isinstance(self.alpha, np.ndarray):
-            if not self.alpha.shape[0] == self.feature_count_.shape[1]:
+            if not self.alpha.shape[0] == self.n_features_:
                 raise ValueError("alpha should be a scalar or a numpy array "
                                  "with shape [n_features]")
         if np.min(self.alpha) < _ALPHA_MIN:
@@ -967,12 +968,11 @@ class BernoulliNB(BaseDiscreteNB):
 
 
 class CategoricalNB(BaseDiscreteNB):
-    """
-    Naive Bayes classifier for categorical features
+    """Naive Bayes classifier for categorical features
 
     The categorical Naive Bayes classifier is suitable for classification with
-    discrete features, that are categorically distributed. Each feature is sampled
-    by its own categorical distribution.
+    discrete features, that are categorically distributed. The categories of
+    each feature are drawn from a categorical distribution.
 
     Read more in the :ref:`User Guide <categorical_naive_bayes>`.
 
@@ -1003,10 +1003,10 @@ class CategoricalNB(BaseDiscreteNB):
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
-    feature_count_ : dict of arrays, len n_features
-        Holds an array of shape () for each feature. Each array provides
-        the number of samples encountered for each class and category
-        of the specific feature.
+    category_count_ : dict of arrays, len n_features
+        Holds arrays of shape (n_classes, n_categories of respective feature)
+        for each feature. Each array provides the number of samples
+        encountered for each class and category of the specific feature.
 
     n_features_ : int
         Number of features of each sample.
@@ -1026,8 +1026,10 @@ class CategoricalNB(BaseDiscreteNB):
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
         if np.__version__ < '1.9.0':
-            warnings.warn(('numpy is older than 1.9.0. Therefore assure that X is castable to int without loss of '
-                           'information and all features of X are greater or equal 0.'))
+            warnings.warn(
+                ('numpy is older than 1.9.0. Therefore assure that X is'
+                 'castable to int without loss of information and all '
+                 'features of X are greater or equal 0.'))
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
@@ -1049,7 +1051,7 @@ class CategoricalNB(BaseDiscreteNB):
         -------
         self : object
         """
-        if not np.__version__ >= '1.9.0':
+        if np.__version__ < '1.9.0':
             check_array(X, accept_large_sparse=False)
         return super(CategoricalNB, self).fit(X, y, sample_weight=None)
 
@@ -1087,32 +1089,37 @@ class CategoricalNB(BaseDiscreteNB):
         -------
         self : object
         """
-        if not np.__version__ >= '1.9.0':
+        if np.__version__ < '1.9.0':
             check_array(X, accept_large_sparse=False)
-        return super(CategoricalNB, self).partial_fit(X, y, classes, sample_weight=None)
+        return super(CategoricalNB, self).partial_fit(X, y, classes,
+                                                      sample_weight=None)
 
     def _init_counters(self, n_effective_classes, n_features):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-        self.feature_count_ = {i: None for i in range(n_features)}
+        self.category_count_ = {i: None for i in range(n_features)}
         self.feature_cat_mapping_ = {i: None for i in range(n_features)}
 
     def _count(self, X, Y):
         if np.any((X.data if issparse(X) else X) < 0):
             raise ValueError("Input X must be non-negative")
         self.class_count_ += Y.sum(axis=0)
-        for i in range(len(self.feature_count_)):
+        for i in range(len(self.category_count_)):
             X_feature = X[:, i]
             cat_mapping, n_categories = self._count_features(X_feature)
-            self.feature_cat_mapping_[i] = {float(category): index for index, category in
+            self.feature_cat_mapping_[i] = {float(category): index for
+                                            index, category in
                                             enumerate(np.nditer(cat_mapping))}
-            self.feature_count_[i] = np.zeros((self.class_count_.shape[0], n_categories.shape[0]))
+            self.category_count_[i] = np.zeros(
+                (self.class_count_.shape[0], n_categories.shape[0]))
             for j in range(self.class_count_.shape[0]):
                 X_feature_class = X_feature[Y[:, j] == 1]
                 if len(X_feature_class) == 0:
                     continue
-                class_cats, n_feature_class = self._count_features(X_feature_class)
-                indizes = [self.feature_cat_mapping_[i][float(category)] for category in np.nditer(class_cats)]
-                self.feature_count_[i][j, indizes] = n_feature_class
+                class_cats, n_feature_class = self._count_features(
+                    X_feature_class)
+                indices = [self.feature_cat_mapping_[i][float(category)] for
+                           category in np.nditer(class_cats)]
+                self.category_count_[i][j, indices] = n_feature_class
 
     def _count_features(self, X_feature):
         if np.__version__ >= '1.9.0':
@@ -1124,8 +1131,8 @@ class CategoricalNB(BaseDiscreteNB):
 
     def _update_feature_log_prob(self, alpha):
         feature_log_prob = {}
-        for i in range(len(self.feature_count_)):
-            smoothed_fc = self.feature_count_[i] + alpha
+        for i in range(len(self.category_count_)):
+            smoothed_fc = self.category_count_[i] + alpha
             smoothed_cc = smoothed_fc.sum(axis=1)
             feature_log_prob[i] = (np.log(smoothed_fc) -
                                    np.log(smoothed_cc.reshape(-1, 1)))
@@ -1135,11 +1142,13 @@ class CategoricalNB(BaseDiscreteNB):
         check_is_fitted(self, "classes_")
         X = check_array(X, accept_sparse='csr')
         if not X.shape[1] == self.n_features_:
-            raise ValueError('X has a different number of features than expected.')
+            raise ValueError(
+                'X has a different number of features than expected.')
 
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
         for i in range(self.n_features_):
             X_feature = X[:, i]
-            indizes = [self.feature_cat_mapping_[i][int(category)] for category in np.nditer(X_feature)]
-            jll += self.feature_log_prob_[i][:, indizes].T
+            indices = [self.feature_cat_mapping_[i][int(category)] for category
+                       in np.nditer(X_feature)]
+            jll += self.feature_log_prob_[i][:, indices].T
         return jll + self.class_log_prior_
