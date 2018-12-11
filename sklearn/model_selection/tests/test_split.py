@@ -1026,35 +1026,6 @@ def test_train_test_split_errors():
     assert_raises(ValueError, train_test_split, range(3), range(42))
     assert_raises(ValueError, train_test_split, range(10),
                   shuffle=False, stratify=True)
-    assert_raises(ValueError, train_test_split, range(10),
-                  train_size=1.2, test_size=0.8)
-    assert_raises(ValueError, train_test_split, range(10),
-                  train_size=1., test_size=0.8)
-    assert_raises(ValueError, train_test_split, range(10),
-                  train_size=0, test_size=0.8)
-    assert_raises(ValueError, train_test_split, range(10),
-                  train_size=-.2, test_size=0.8)
-    assert_raises(ValueError, train_test_split, range(10),
-                  train_size=-10, test_size=0.8)
-    assert_raises(ValueError, train_test_split, range(10),
-                  train_size=0, test_size=0.8)
-    assert_raises(ValueError, train_test_split, range(10),
-                  train_size=11, test_size=0.8)
-
-    assert_raises(ValueError, train_test_split, range(10),
-                  test_size=1.2, train_size=0.8)
-    assert_raises(ValueError, train_test_split, range(10),
-                  test_size=1., train_size=0.8)
-    assert_raises(ValueError, train_test_split, range(10),
-                  test_size=0, train_size=0.8)
-    assert_raises(ValueError, train_test_split, range(10),
-                  test_size=-.2, train_size=0.8)
-    assert_raises(ValueError, train_test_split, range(10),
-                  test_size=-10, train_size=0.8)
-    assert_raises(ValueError, train_test_split, range(10),
-                  test_size=0, train_size=0.8)
-    assert_raises(ValueError, train_test_split, range(10),
-                  test_size=11, train_size=0.8)
 
     assert_raise_message(ValueError,
                          'train_size=11 should be either positive and smaller '
@@ -1062,6 +1033,26 @@ def test_train_test_split_errors():
                          '[0,1] range',
                          train_test_split, range(10), train_size=11,
                          test_size=1)
+
+
+@pytest.mark.parametrize("train_size,test_size", [
+    (1.2, 0.8),
+    (1., 0.8),
+    (0.0, 0.8),
+    (-.2, 0.8),
+    (-10, 0.8),
+    (0, 0.8),
+    (11, 0.8),
+    (0.8, 1.2),
+    (0.8, 1.),
+    (0.8, 0.),
+    (0.8, -.2),
+    (0.8, -10),
+    (0.8, 0),
+    (0.8, 11)])
+def test_train_test_split_invalid_sizes(train_size, test_size):
+    assert_raises(ValueError, train_test_split, range(10),
+                  train_size=train_size, test_size=test_size)
 
 
 def test_train_test_split():
