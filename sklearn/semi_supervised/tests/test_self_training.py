@@ -66,13 +66,13 @@ def test_invalid_params(max_iter, threshold):
     message = "threshold must be in [0,1)"
     assert_raise_message(ValueError, message, st.fit, X_train, y_train)
 
+
 def test_invalid_early_stopping():
     base_classifier = SVC(gamma="scale", probability=True)
     st = SelfTrainingClassifier(base_classifier, early_stopping=True,
                                 n_iter_no_change=-10)
     message = "n_iter_no_change must be > 0, got"
     assert_raise_message(ValueError, message, st.fit, X_train, y_train)
-
 
 
 @pytest.mark.parametrize("base_classifier",
