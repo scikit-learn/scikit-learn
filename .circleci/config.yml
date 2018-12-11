@@ -115,6 +115,7 @@ workflows:
   build-doc-and-deploy:
     jobs:
       - python3
+      - python3-min-dependency-versions
       - lint
       - pypy3:
           filters:
