@@ -4,7 +4,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_warns_message
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import NotFittedError, ConvergenceWarning
 
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -179,7 +179,13 @@ def test_zero_iterations(base_classifier, y):
     # same results as fitting a supervised classifier.
     # This also asserts that string arrays work as expected.
 
-    clf1 = SelfTrainingClassifier(base_classifier, max_iter=0).fit(X_train, y)
+    clf1 = SelfTrainingClassifier(base_classifier, max_iter=0)
+
+    assert_warns_message(ConvergenceWarning,
+                         "Maximum number of iterations reached before "
+                         "early stopping. Consider increasing max_iter to "
+                         "improve the fit.",
+                         clf1.fit, X_train, y)
 
     clf2 = base_classifier.fit(X_train[:n_labeled_samples],
                                y[:n_labeled_samples])
@@ -213,7 +219,15 @@ def test_y_labeled_iter(max_iter):
     # Check that the amount of datapoints labeled in iteration 0 is equal to
     # the amount of labeled datapoints we passed.
     st = SelfTrainingClassifier(KNeighborsClassifier(), max_iter=max_iter)
-    st.fit(X_train, y_train_missing_labels)
+
+    # If we look at the output for self.n_iter_ we can see that samples are
+    # labeled only in iteration 1. Therefore early_stopping should only kick in
+    # in iteration 5. This implies we fail to converge for max_iter < 4.
+    assert_warns_message(ConvergenceWarning,
+                         "Maximum number of iterations reached before "
+                         "early stopping. Consider increasing max_iter to "
+                         "improve the fit.",
+                         st.fit, X_train, y_train_missing_labels)
     amount_iter_0 = len(st.y_labeled_iter_[st.y_labeled_iter_ == 0])
     assert amount_iter_0 == n_labeled_samples
     # Check that the max of the iterations is less than the total amount of

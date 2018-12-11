@@ -4,6 +4,7 @@ from ..base import BaseEstimator, clone
 from ..utils.validation import check_X_y, check_array, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils import safe_mask
+from ..exceptions import ConvergenceWarning
 import warnings
 
 __all__ = ["SelfTrainingClassifier"]
@@ -215,6 +216,11 @@ class SelfTrainingClassifier(BaseEstimator):
             self.termination_condition_ = "max_iter"
         if np.all(has_label):
             self.termination_condition_ = "all_labeled"
+        if self.n_iter_ == self.max_iter and self.early_stopping:
+            warnings.warn("Maximum number of iterations reached before "
+                          "early stopping. Consider increasing max_iter to "
+                          "improve the fit.",
+                          ConvergenceWarning)
 
         self.base_classifier_.fit(
             X[safe_mask(X, has_label)],
