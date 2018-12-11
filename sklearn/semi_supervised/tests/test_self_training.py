@@ -66,6 +66,14 @@ def test_invalid_params(max_iter, threshold):
     message = "threshold must be in [0,1)"
     assert_raise_message(ValueError, message, st.fit, X_train, y_train)
 
+def test_invalid_early_stopping():
+    base_classifier = SVC(gamma="scale", probability=True)
+    st = SelfTrainingClassifier(base_classifier, early_stopping=True,
+                                n_iter_no_change=-10)
+    message = "n_iter_no_change must be > 0, got"
+    assert_raise_message(ValueError, message, st.fit, X_train, y_train)
+
+
 
 @pytest.mark.parametrize("base_classifier",
                          [KNeighborsClassifier(),
@@ -92,6 +100,7 @@ def test_classification(base_classifier):
     assert_array_equal(np.vectorize(mapping.get)(pred), pred_string)
     assert_array_equal(proba, proba_string)
 
+    assert st.termination_condition_ == st_string.termination_condition_
     # Check consistency between y_labeled_iter, n_iter and max_iter
     labeled = y_train_missing_labels != -1
     # assert that labeled samples have labeled_iter = 0
@@ -112,7 +121,7 @@ def test_classification(base_classifier):
 
 
 def test_output_depends_on_parameters():
-    base_classifier = SVC(gamma="scale", probability=True)
+    base_classifier = SVC(gamma="scale", probability=True, random_state=42)
 
     st1 = SelfTrainingClassifier(base_classifier, threshold=0.3)
     st2 = SelfTrainingClassifier(base_classifier, threshold=0.7)
@@ -121,6 +130,7 @@ def test_output_depends_on_parameters():
     preds = [st1.fit(X_train, y_train_missing_labels).predict_proba(X_test),
              st2.fit(X_train, y_train_missing_labels).predict_proba(X_test),
              st3.fit(X_train, y_train_missing_labels).predict_proba(X_test)]
+    assert st3.termination_condition_ == "max_iter"
 
     for i, x in enumerate(preds):
         for j, y in enumerate(preds):
@@ -154,6 +164,7 @@ def test_none_iter():
     st.fit(X_train, y_train_missing_labels)
 
     assert st.n_iter_ < 10
+    assert st.termination_condition_ == "all_labeled"
 
 
 @pytest.mark.parametrize("base_classifier",
@@ -174,6 +185,7 @@ def test_zero_iterations(base_classifier, y):
                                y[:n_labeled_samples])
 
     assert_array_equal(clf1.predict(X_test), clf2.predict(X_test))
+    assert clf1.termination_condition_ == "max_iter"
 
 
 def test_notfitted():
@@ -207,6 +219,7 @@ def test_y_labeled_iter(max_iter):
     # Check that the max of the iterations is less than the total amount of
     # iterations
     assert np.max(st.y_labeled_iter_) <= st.n_iter_ <= max_iter
+    assert st.termination_condition_ == "max_iter"
 
 
 def test_no_unlabeled():
@@ -221,3 +234,29 @@ def test_no_unlabeled():
     # Assert that all samples were labeled in iteration 0 (since there were no
     # unlabeled samples).
     assert np.all(st.y_labeled_iter_ == 0)
+    assert st.termination_condition_ == "all_labeled"
+
+
+def test_early_stopping():
+    # if the base_classifier is deterministic, fitting with early_stopping and
+    # n_iter_no_change=1 should produce equivalent results to fitting without
+    # early_stopping
+    base_classifier = KNeighborsClassifier()
+    threshold = 0.75
+    max_iter = 10
+    st = SelfTrainingClassifier(base_classifier,
+                                max_iter=max_iter,
+                                threshold=threshold,
+                                early_stopping=True,
+                                n_iter_no_change=1)
+
+    st_no_stop = SelfTrainingClassifier(base_classifier,
+                                        max_iter=max_iter,
+                                        threshold=threshold,
+                                        early_stopping=False)
+    st.fit(X_train, y_train_missing_labels)
+    st_no_stop.fit(X_train, y_train_missing_labels)
+    assert st.n_iter_ < 5
+    assert_array_equal(st_no_stop.predict(X_test), st.predict(X_test))
+    assert st.termination_condition_ == "early_stopping"
+    assert st_no_stop.termination_condition_ == "max_iter" or "all_labeled"
