@@ -34,7 +34,6 @@ print(__doc__)
 import numpy as np
 from scipy import interp
 import matplotlib.pyplot as plt
-from itertools import cycle
 
 from sklearn import svm, datasets
 from sklearn.metrics import roc_curve, auc
@@ -80,7 +79,7 @@ for train, test in cv.split(X, y):
 
     i += 1
 plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
-         label='Luck', alpha=.8)
+         label='Chance', alpha=.8)
 
 mean_tpr = np.mean(tprs, axis=0)
 mean_tpr[-1] = 1.0

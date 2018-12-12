@@ -18,7 +18,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..exceptions import ConvergenceWarning
 from ..externals import six
 from ..externals.six import moves
-from ..externals.six import string_types
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
@@ -182,10 +181,11 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         or 'cube'.
         You can also provide your own function. It should return a tuple
         containing the value of the function, and of its derivative, in the
-        point. Example:
+        point. The derivative should be averaged along its last dimension.
+        Example:
 
         def my_g(x):
-            return x ** 3, 3 * x ** 2
+            return x ** 3, np.mean(3 * x ** 2, axis=-1)
 
     fun_args : dictionary, optional
         Arguments to send to the functional form.
@@ -442,6 +442,17 @@ class FastICA(BaseEstimator, TransformerMixin):
         maximum number of iterations run across all components. Else
         they are just the number of iterations taken to converge.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import FastICA
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = FastICA(n_components=7,
+    ...         random_state=0)
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> X_transformed.shape
+    (1797, 7)
+
     Notes
     -----
     Implementation based on
@@ -454,6 +465,9 @@ class FastICA(BaseEstimator, TransformerMixin):
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
                  w_init=None, random_state=None):
         super(FastICA, self).__init__()
+        if max_iter < 1:
+            raise ValueError("max_iter should be greater than 1, got "
+                             "(max_iter={})".format(max_iter))
         self.n_components = n_components
         self.algorithm = algorithm
         self.whiten = whiten
@@ -538,7 +552,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         self._fit(X, compute_sources=False)
         return self
 
-    def transform(self, X, y='deprecated', copy=True):
+    def transform(self, X, copy=True):
         """Recover the sources from X (apply the unmixing matrix).
 
         Parameters
@@ -546,9 +560,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Data to transform, where n_samples is the number of samples
             and n_features is the number of features.
-        y : (ignored)
-            .. deprecated:: 0.19
-               This parameter will be removed in 0.21.
+
         copy : bool (optional)
             If False, data passed to fit are overwritten. Defaults to True.
 
@@ -556,11 +568,6 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        if not isinstance(y, string_types) or y != 'deprecated':
-            warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
-
         check_is_fitted(self, 'mixing_')
 
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)

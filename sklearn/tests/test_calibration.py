@@ -2,6 +2,7 @@
 # License: BSD 3 clause
 
 from __future__ import division
+import pytest
 import numpy as np
 from scipy import sparse
 from sklearn.model_selection import LeaveOneOut
@@ -10,8 +11,7 @@ from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_greater, assert_almost_equal,
                                    assert_greater_equal,
                                    assert_array_equal,
-                                   assert_raises,
-                                   ignore_warnings)
+                                   assert_raises)
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -24,7 +24,8 @@ from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_calibration():
     """Test calibration objects with isotonic and sigmoid"""
     n_samples = 100
@@ -100,6 +101,7 @@ def test_calibration():
         assert_raises(RuntimeError, clf_base_regressor.fit, X_train, y_train)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_sample_weight():
     n_samples = 100
     X, y = make_classification(n_samples=2 * n_samples, n_features=6,

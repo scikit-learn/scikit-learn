@@ -93,7 +93,7 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
     connectivity = connectivity.astype('float64')
 
     # Ensure zero distances aren't ignored by setting them to "epsilon"
-    epsilon_value = np.nextafter(0, 1, dtype=connectivity.data.dtype)
+    epsilon_value = np.finfo(dtype=connectivity.data.dtype).eps
     connectivity.data[connectivity.data == 0] = epsilon_value
 
     # Use scipy.sparse.csgraph to generate a minimum spanning tree
@@ -230,6 +230,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
                           'retain the lower branches required '
                           'for the specified number of clusters',
                           stacklevel=2)
+        X = np.require(X, requirements="W")
         out = hierarchy.ward(X)
         children_ = out[:, :2].astype(np.intp)
 
@@ -339,9 +340,8 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
 
 
 # single average and complete linkage
-def linkage_tree(X, connectivity=None, n_components='deprecated',
-                 n_clusters=None, linkage='complete', affinity="euclidean",
-                 return_distance=False):
+def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
+                 affinity="euclidean", return_distance=False):
     """Linkage agglomerative clustering based on a Feature matrix.
 
     The inertia matrix uses a Heapq-based representation.
@@ -361,9 +361,6 @@ def linkage_tree(X, connectivity=None, n_components='deprecated',
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
         Default is None, i.e, the Ward algorithm is unstructured.
-
-    n_components : int (optional)
-        The number of connected components in the graph.
 
     n_clusters : int (optional)
         Stop early the construction of the tree at n_clusters. This is
@@ -420,10 +417,6 @@ def linkage_tree(X, connectivity=None, n_components='deprecated',
     --------
     ward_tree : hierarchical clustering with ward linkage
     """
-    if n_components != 'deprecated':
-        warnings.warn("n_components was deprecated in 0.19"
-                      "will be removed in 0.21", DeprecationWarning)
-
     X = np.asarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
@@ -639,7 +632,7 @@ def _hc_cut(n_clusters, children, n_leaves):
     # are interested in largest elements
     # children[-1] is the root of the tree
     nodes = [-(max(children[-1]) + 1)]
-    for i in xrange(n_clusters - 1):
+    for _ in xrange(n_clusters - 1):
         # As we have a heap, nodes[0] is the smallest element
         these_children = children[-nodes[0] - n_leaves]
         # Insert the 2 children and remove the largest node
@@ -733,6 +726,20 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_samples + i`
 
+    Examples
+    --------
+    >>> from sklearn.cluster import AgglomerativeClustering
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [4, 2], [4, 4], [4, 0]])
+    >>> clustering = AgglomerativeClustering().fit(X)
+    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    AgglomerativeClustering(affinity='euclidean', compute_full_tree='auto',
+                connectivity=None, linkage='ward', memory=None, n_clusters=2,
+                pooling_func='deprecated')
+    >>> clustering.labels_
+    array([1, 1, 1, 0, 0, 0])
+
     """
 
     def __init__(self, n_clusters=2, affinity="euclidean",
@@ -762,7 +769,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         -------
         self
         """
-        if self.pooling_func != 'deprecated':
+        if (self.pooling_func != 'deprecated' and
+                not isinstance(self, AgglomerationTransform)):
             warnings.warn('Agglomerative "pooling_func" parameter is not used.'
                           ' It has been deprecated in version 0.20 and will be'
                           'removed in 0.22', DeprecationWarning)
@@ -902,6 +910,22 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         node and has children `children_[i - n_features]`. Alternatively
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_features + i`
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn import datasets, cluster
+    >>> digits = datasets.load_digits()
+    >>> images = digits.images
+    >>> X = np.reshape(images, (len(images), -1))
+    >>> agglo = cluster.FeatureAgglomeration(n_clusters=32)
+    >>> agglo.fit(X) # doctest: +ELLIPSIS
+    FeatureAgglomeration(affinity='euclidean', compute_full_tree='auto',
+               connectivity=None, linkage='ward', memory=None, n_clusters=32,
+               pooling_func=...)
+    >>> X_reduced = agglo.transform(X)
+    >>> X_reduced.shape
+    (1797, 32)
     """
 
     def __init__(self, n_clusters=2, affinity="euclidean",

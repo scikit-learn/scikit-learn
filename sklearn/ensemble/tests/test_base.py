@@ -10,7 +10,6 @@ from numpy.testing import assert_equal
 
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_true
 
 from sklearn.datasets import load_iris
 from sklearn.ensemble import BaggingClassifier
@@ -40,10 +39,10 @@ def test_base():
     assert_equal(3, len(ensemble))
     assert_equal(3, len(ensemble.estimators_))
 
-    assert_true(isinstance(ensemble[0], Perceptron))
+    assert isinstance(ensemble[0], Perceptron)
     assert_equal(ensemble[0].random_state, None)
-    assert_true(isinstance(ensemble[1].random_state, int))
-    assert_true(isinstance(ensemble[2].random_state, int))
+    assert isinstance(ensemble[1].random_state, int)
+    assert isinstance(ensemble[2].random_state, int)
     assert_not_equal(ensemble[1].random_state, ensemble[2].random_state)
 
     np_int_ensemble = BaggingClassifier(base_estimator=Perceptron(tol=1e-3),
@@ -86,11 +85,11 @@ def test_set_random_states():
     assert_equal(clf1.random_state, None)
     # check random_state is None still sets
     _set_random_states(clf1, None)
-    assert_true(isinstance(clf1.random_state, int))
+    assert isinstance(clf1.random_state, int)
 
     # check random_state fixes results in consistent initialisation
     _set_random_states(clf1, 3)
-    assert_true(isinstance(clf1.random_state, int))
+    assert isinstance(clf1.random_state, int)
     clf2 = Perceptron(tol=1e-3, random_state=None)
     _set_random_states(clf2, 3)
     assert_equal(clf1.random_state, clf2.random_state)
@@ -104,8 +103,8 @@ def test_set_random_states():
 
     est1 = Pipeline(make_steps())
     _set_random_states(est1, 3)
-    assert_true(isinstance(est1.steps[0][1].estimator.random_state, int))
-    assert_true(isinstance(est1.steps[1][1].random_state, int))
+    assert isinstance(est1.steps[0][1].estimator.random_state, int)
+    assert isinstance(est1.steps[1][1].random_state, int)
     assert_not_equal(est1.get_params()['sel__estimator__random_state'],
                      est1.get_params()['clf__random_state'])
 

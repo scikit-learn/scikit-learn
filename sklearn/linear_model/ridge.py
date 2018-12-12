@@ -59,7 +59,12 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
             # w = X.T * inv(X X^t + alpha*Id) y
             C = sp_linalg.LinearOperator(
                 (n_samples, n_samples), matvec=mv, dtype=X.dtype)
-            coef, info = sp_linalg.cg(C, y_column, tol=tol)
+            # FIXME atol
+            try:
+                coef, info = sp_linalg.cg(C, y_column, tol=tol, atol='legacy')
+            except TypeError:
+                # old scipy
+                coef, info = sp_linalg.cg(C, y_column, tol=tol)
             coefs[i] = X1.rmatvec(coef)
         else:
             # linear ridge
@@ -67,8 +72,15 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
             y_column = X1.rmatvec(y_column)
             C = sp_linalg.LinearOperator(
                 (n_features, n_features), matvec=mv, dtype=X.dtype)
-            coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
-                                          tol=tol)
+            # FIXME atol
+            try:
+                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
+                                              tol=tol, atol='legacy')
+            except TypeError:
+                # old scipy
+                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
+                                              tol=tol)
+
         if info < 0:
             raise ValueError("Failed with error code %d" % info)
 
@@ -767,6 +779,15 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.linear_model import RidgeClassifier
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> clf = RidgeClassifier().fit(X, y)
+    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    0.9595...
+
     See also
     --------
     Ridge : Ridge regression
@@ -873,7 +894,7 @@ class _RidgeGCV(LinearModel):
     References
     ----------
     http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
-    http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
+    https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
     def __init__(self, alphas=(0.1, 1.0, 10.0),
@@ -1149,6 +1170,8 @@ class _BaseRidgeCV(LinearModel):
 class RidgeCV(_BaseRidgeCV, RegressorMixin):
     """Ridge regression with built-in cross-validation.
 
+    See glossary entry for :term:`cross-validation estimator`.
+
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation.
 
@@ -1188,8 +1211,8 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
         - None, to use the efficient Leave-One-Out cross-validation
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`sklearn.model_selection.StratifiedKFold` is used, else,
@@ -1214,18 +1237,18 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     store_cv_values : boolean, default=False
         Flag indicating if the cross-validation values corresponding to
-        each alpha should be stored in the `cv_values_` attribute (see
-        below). This flag is only compatible with `cv=None` (i.e. using
+        each alpha should be stored in the ``cv_values_`` attribute (see
+        below). This flag is only compatible with ``cv=None`` (i.e. using
         Generalized Cross-Validation).
 
     Attributes
     ----------
     cv_values_ : array, shape = [n_samples, n_alphas] or \
         shape = [n_samples, n_targets, n_alphas], optional
-        Cross-validation values for each alpha (if `store_cv_values=True` and \
-        `cv=None`). After `fit()` has been called, this attribute will \
-        contain the mean squared errors (by default) or the values of the \
-        `{loss,score}_func` function (if provided in the constructor).
+        Cross-validation values for each alpha (if ``store_cv_values=True``\
+        and ``cv=None``). After ``fit()`` has been called, this attribute \
+        will contain the mean squared errors (by default) or the values \
+        of the ``{loss,score}_func`` function (if provided in the constructor).
 
     coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
@@ -1236,6 +1259,15 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     alpha_ : float
         Estimated regularization parameter.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_diabetes
+    >>> from sklearn.linear_model import RidgeCV
+    >>> X, y = load_diabetes(return_X_y=True)
+    >>> clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
+    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    0.5166...
 
     See also
     --------
@@ -1248,6 +1280,8 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
 class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation. Currently, only the n_features >
@@ -1289,8 +1323,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
         - None, to use the efficient Leave-One-Out cross-validation
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1303,14 +1337,19 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
+    store_cv_values : boolean, default=False
+        Flag indicating if the cross-validation values corresponding to
+        each alpha should be stored in the ``cv_values_`` attribute (see
+        below). This flag is only compatible with ``cv=None`` (i.e. using
+        Generalized Cross-Validation).
+
     Attributes
     ----------
-    cv_values_ : array, shape = [n_samples, n_alphas] or \
-    shape = [n_samples, n_responses, n_alphas], optional
-        Cross-validation values for each alpha (if `store_cv_values=True` and
-    `cv=None`). After `fit()` has been called, this attribute will contain \
-    the mean squared errors (by default) or the values of the \
-    `{loss,score}_func` function (if provided in the constructor).
+    cv_values_ : array, shape = [n_samples, n_targets, n_alphas], optional
+        Cross-validation values for each alpha (if ``store_cv_values=True`` and
+        ``cv=None``). After ``fit()`` has been called, this attribute will
+        contain the mean squared errors (by default) or the values of the
+        ``{loss,score}_func`` function (if provided in the constructor).
 
     coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
@@ -1321,6 +1360,15 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     alpha_ : float
         Estimated regularization parameter
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.linear_model import RidgeClassifierCV
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> clf = RidgeClassifierCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
+    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    0.9630...
 
     See also
     --------
@@ -1336,10 +1384,11 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     """
 
     def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
-                 normalize=False, scoring=None, cv=None, class_weight=None):
+                 normalize=False, scoring=None, cv=None, class_weight=None,
+                 store_cv_values=False):
         super(RidgeClassifierCV, self).__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
-            scoring=scoring, cv=cv)
+            scoring=scoring, cv=cv, store_cv_values=store_cv_values)
         self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=None):

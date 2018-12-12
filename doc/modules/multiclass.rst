@@ -182,7 +182,7 @@ Below is an example of multiclass learning using OvR::
   >>> from sklearn.svm import LinearSVC
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
-  >>> OneVsRestClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
+  >>> OneVsRestClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X) # doctest: +NORMALIZE_WHITESPACE
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -227,7 +227,8 @@ O(n_classes^2) complexity. However, this method may be advantageous for
 algorithms such as kernel algorithms which don't scale well with
 ``n_samples``. This is because each individual learning problem only involves
 a small subset of the data whereas, with one-vs-the-rest, the complete
-dataset is used ``n_classes`` times.
+dataset is used ``n_classes`` times. The decision function is the result
+of a monotonic transformation of the one-versus-one classification.
 
 Multiclass learning
 -------------------
@@ -239,7 +240,7 @@ Below is an example of multiclass learning using OvO::
   >>> from sklearn.svm import LinearSVC
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
-  >>> OneVsOneClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
+  >>> OneVsOneClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X) # doctest: +NORMALIZE_WHITESPACE
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -304,7 +305,7 @@ Below is an example of multiclass learning using Output-Codes::
   >>> X, y = iris.data, iris.target
   >>> clf = OutputCodeClassifier(LinearSVC(random_state=0),
   ...                            code_size=2, random_state=0)
-  >>> clf.fit(X, y).predict(X)
+  >>> clf.fit(X, y).predict(X) # doctest: +NORMALIZE_WHITESPACE
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1,

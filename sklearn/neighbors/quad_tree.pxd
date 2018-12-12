@@ -26,7 +26,7 @@ cdef float EPSILON = 1e-6
 # have is_leaf and max_width consecutive as it permits to avoid padding by
 # the compiler and keep the size coherent for both C and numpy data structures.
 cdef struct Cell:
-    # Base storage stucture for cells in a QuadTree object
+    # Base storage structure for cells in a QuadTree object
 
     # Tree structure
     SIZE_t parent              # Parent cell of this cell

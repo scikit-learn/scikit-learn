@@ -30,7 +30,7 @@ class NotFittedError(ValueError, AttributeError):
     ... except NotFittedError as e:
     ...     print(repr(e))
     ...                        # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    NotFittedError('This LinearSVC instance is not fitted yet',)
+    NotFittedError('This LinearSVC instance is not fitted yet'...)
 
     .. versionchanged:: 0.18
        Moved from sklearn.utils.validation.
@@ -121,7 +121,7 @@ class FitFailedWarning(RuntimeWarning):
     ... # doctest: +NORMALIZE_WHITESPACE
     FitFailedWarning('Estimator fit failed. The score on this train-test
     partition for these parameters will be set to 0.000000.
-    Details: \\nValueError: Penalty term must be positive; got (C=-2)\\n',)
+    Details: \\nValueError: Penalty term must be positive; got (C=-2)\\n'...)
 
     .. versionchanged:: 0.18
        Moved from sklearn.cross_validation.
