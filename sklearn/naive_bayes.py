@@ -52,6 +52,11 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
         predict_proba and predict_log_proba.
         """
 
+    @abstractmethod
+    def _check_input(self, X, Y=None):
+        """Validate inputs X and Y
+        """
+
     def predict(self, X):
         """
         Perform classification on an array of test vectors X.
@@ -65,6 +70,7 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
         C : array, shape = [n_samples]
             Predicted target values for X
         """
+        X = self._check_input(X)
         jll = self._joint_log_likelihood(X)
         return self.classes_[np.argmax(jll, axis=1)]
 
@@ -83,6 +89,7 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute `classes_`.
         """
+        X = self._check_input(X)
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
         log_prob_x = logsumexp(jll, axis=1)
@@ -167,6 +174,12 @@ class GaussianNB(BaseNB):
         self.priors = priors
         self.var_smoothing = var_smoothing
 
+    def _check_input(self, X, Y=None):
+        if Y is None:
+            return check_array(X)
+        else:
+            return check_X_y(X, Y)
+
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
 
@@ -189,7 +202,7 @@ class GaussianNB(BaseNB):
         -------
         self : object
         """
-        X, y = check_X_y(X, y)
+        X, y = self._check_input(X, y)
         return self._partial_fit(X, y, np.unique(y), _refit=True,
                                  sample_weight=sample_weight)
 
@@ -340,7 +353,7 @@ class GaussianNB(BaseNB):
         -------
         self : object
         """
-        X, y = check_X_y(X, y)
+        X, y = self._check_input(X, y)
         if sample_weight is not None:
             sample_weight = check_array(sample_weight, ensure_2d=False)
             check_consistent_length(y, sample_weight)
@@ -431,7 +444,7 @@ class GaussianNB(BaseNB):
     def _joint_log_likelihood(self, X):
         check_is_fitted(self, "classes_")
 
-        X = check_array(X)
+        X = self._check_input(X)
         joint_log_likelihood = []
         for i in range(np.size(self.classes_)):
             jointi = np.log(self.class_prior_[i])
@@ -484,6 +497,12 @@ class BaseDiscreteNB(BaseNB):
             return np.maximum(self.alpha, _ALPHA_MIN)
         return self.alpha
 
+    def _check_input(self, X, Y=None):
+        if Y is None:
+            return check_array(X, accept_sparse='csr')
+        else:
+            return check_X_y(X, Y, 'csr')
+
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
 
@@ -520,7 +539,7 @@ class BaseDiscreteNB(BaseNB):
         -------
         self : object
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._check_input(X)
         _, n_features = X.shape
 
         if _check_partial_fit_first_call(self, classes):
@@ -582,7 +601,7 @@ class BaseDiscreteNB(BaseNB):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, 'csr')
+        X, y = self._check_input(X, y)
         _, n_features = X.shape
         self.n_features_ = n_features
 
@@ -736,7 +755,6 @@ class MultinomialNB(BaseDiscreteNB):
         """Calculate the posterior log probability of the samples X"""
         check_is_fitted(self, "classes_")
 
-        X = check_array(X, accept_sparse='csr')
         return (safe_sparse_dot(X, self.feature_log_prob_.T) +
                 self.class_log_prior_)
 
@@ -841,7 +859,6 @@ class ComplementNB(BaseDiscreteNB):
         """Calculate the class scores for the samples in X."""
         check_is_fitted(self, "classes_")
 
-        X = check_array(X, accept_sparse="csr")
         jll = safe_sparse_dot(X, self.feature_log_prob_.T)
         if len(self.classes_) == 1:
             jll += self.class_log_prior_
@@ -929,10 +946,20 @@ class BernoulliNB(BaseDiscreteNB):
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
+    def _check_input(self, X, Y=None):
+        if Y is None:
+            X = super(BernoulliNB, self)._check_input(X)
+            if self.binarize is not None:
+                X = binarize(X, threshold=self.binarize)
+            return X
+        else:
+            X, Y = super(BernoulliNB, self)._check_input(X, Y)
+            if self.binarize is not None:
+                X = binarize(X, threshold=self.binarize)
+            return X, Y
+
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
-        if self.binarize is not None:
-            X = binarize(X, threshold=self.binarize)
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
 
@@ -947,11 +974,6 @@ class BernoulliNB(BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
         check_is_fitted(self, "classes_")
-
-        X = check_array(X, accept_sparse='csr')
-
-        if self.binarize is not None:
-            X = binarize(X, threshold=self.binarize)
 
         n_classes, n_features = self.feature_log_prob_.shape
         n_samples, n_features_X = X.shape
@@ -991,6 +1013,10 @@ class CategoricalNB(BaseDiscreteNB):
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
+    on_unseen_cats : String
+        Can be 'ignore', 'warn' or 'error'. Determines the behaviour of the
+        classifier, if it encounters unseen categories in the prediction step.
+
     Attributes
     ----------
     class_log_prior_ : array, shape (n_classes, )
@@ -1027,7 +1053,8 @@ class CategoricalNB(BaseDiscreteNB):
 
     old_numpy_ = parse_version(np.__version__) < parse_version('1.9.0')
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,
+                 on_unseen_cats='warn'):
         if CategoricalNB.old_numpy_:
             warnings.warn(
                 ('numpy is older than 1.9.0. Therefore assure that X is'
@@ -1036,6 +1063,8 @@ class CategoricalNB(BaseDiscreteNB):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
+        # ignore warn or raise
+        self.on_unseen_cats = on_unseen_cats
 
     def fit(self, X, y):
         """Fit Naive Bayes classifier according to X, y
@@ -1054,8 +1083,6 @@ class CategoricalNB(BaseDiscreteNB):
         -------
         self : object
         """
-        if CategoricalNB.old_numpy_:
-            X = check_array(X, accept_large_sparse=False, dtype=np.int64)
         return super(CategoricalNB, self).fit(X, y, sample_weight=None)
 
     def partial_fit(self, X, y, classes=None):
@@ -1092,15 +1119,25 @@ class CategoricalNB(BaseDiscreteNB):
         -------
         self : object
         """
-        if CategoricalNB.old_numpy_:
-            X = check_array(X, accept_large_sparse=False, dtype=np.int64)
         return super(CategoricalNB, self).partial_fit(X, y, classes,
                                                       sample_weight=None)
+
+    def _check_input(self, X, Y=None):
+        if Y is None:
+            if CategoricalNB.old_numpy_:
+                return check_array(X, accept_sparse=False, dtype=np.int64)
+            else:
+                return check_array(X, accept_sparse=False)
+        else:
+            if CategoricalNB.old_numpy_:
+                return check_X_y(X, Y, accept_sparse=False, dtype=np.int64)
+            else:
+                return check_X_y(X, Y, accept_sparse=False)
 
     def _init_counters(self, n_effective_classes, n_features):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
         self.category_count_ = {i: None for i in range(n_features)}
-        self.feature_cat_mapping_ = {i: None for i in range(n_features)}
+        self.feature_cat_index_mapping_ = {i: None for i in range(n_features)}
 
     def _count(self, X, Y):
         if np.any((X.data if issparse(X) else X) < 0):
@@ -1109,9 +1146,10 @@ class CategoricalNB(BaseDiscreteNB):
         for i in range(len(self.category_count_)):
             X_feature = X[:, i]
             cat_mapping, n_categories = self._count_features(X_feature)
-            self.feature_cat_mapping_[i] = {float(category): index for
-                                            index, category in
-                                            enumerate(np.nditer(cat_mapping))}
+            self.feature_cat_index_mapping_[i] = {float(category): index for
+                                                  index, category in
+                                                  enumerate(
+                                                      np.nditer(cat_mapping))}
             self.category_count_[i] = np.zeros(
                 (self.class_count_.shape[0], n_categories.shape[0]))
             for j in range(self.class_count_.shape[0]):
@@ -1120,7 +1158,8 @@ class CategoricalNB(BaseDiscreteNB):
                     continue
                 class_cats, n_feature_class = self._count_features(
                     X_feature_class)
-                indices = [self.feature_cat_mapping_[i][float(category)] for
+                indices = [self.feature_cat_index_mapping_[i][float(category)]
+                           for
                            category in np.nditer(class_cats)]
                 self.category_count_[i][j, indices] = n_feature_class
 
@@ -1143,15 +1182,40 @@ class CategoricalNB(BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         check_is_fitted(self, "classes_")
-        X = check_array(X, accept_sparse='csr')
+
         if not X.shape[1] == self.n_features_:
             raise ValueError(
                 'X has a different number of features than expected.')
 
+        samples_prob_zero = []
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
         for i in range(self.n_features_):
             X_feature = X[:, i]
-            indices = [self.feature_cat_mapping_[i][int(category)] for category
-                       in np.nditer(X_feature)]
-            jll += self.feature_log_prob_[i][:, indices].T
-        return jll + self.class_log_prior_
+            indices = []
+            for sample, category in enumerate(np.nditer(X_feature)):
+                try:
+                    indices.append(
+                        self.feature_cat_index_mapping_[i][float(category)])
+                except KeyError:
+                    if self.on_unseen_cats == 'ignore':
+                        pass
+                    elif self.on_unseen_cats == 'warn':
+                        warnings.warn(
+                            "Category {} not expected for feature {} "
+                            "of features 0 - {}. Sample {} has probability 0."
+                                .format(category, i, self.n_features_, sample)
+                        )
+                    else:
+                        raise KeyError(
+                            "Category {} not expected for feature {} "
+                            "of features 0 - {}. Sample {} has probability 0."
+                                .format(category, i, self.n_features_, sample)
+                        )
+                    samples_prob_zero.append(sample)
+            # indices length is 0, if all categories have not been seen in the
+            # training set
+            if len(indices) > 0:
+                jll += self.feature_log_prob_[i][:, indices].T
+        total_ll = jll + self.class_log_prior_
+        total_ll[samples_prob_zero, :] = 0
+        return total_ll
