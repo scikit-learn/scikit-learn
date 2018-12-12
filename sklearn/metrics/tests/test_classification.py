@@ -947,7 +947,7 @@ def test_classification_report_multiclass_with_digits():
   versicolor    0.33333   0.09677   0.15000        31
    virginica    0.41860   0.90000   0.57143        20
 
-   micro avg    0.53333   0.53333   0.53333        75
+    accuracy                        0.53333        75
    macro avg    0.52601   0.59615   0.50998        75
 weighted avg    0.51375   0.53333   0.47310        75
 """
