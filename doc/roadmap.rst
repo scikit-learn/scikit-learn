@@ -52,10 +52,11 @@ on the issue tracker.
 
 Architectural / general goals
 -----------------------------
-The list is numbered not as an indication of order of priority, but to make
-referring to specific points easier. Please add new entries only at the bottom.
+The list is numbered not as an indication of the order of priority, but to
+make referring to specific points easier. Please add new entries only at the
+bottom.
 
-#. Everything in sklearn should conform to our API contract
+#. Everything in Scikit-learn should conform to our API contract
 
    * `Pipeline <pipeline.Pipeline>` and `FeatureUnion` modify their input
      parameters in fit. Fixing this requires making sure we have a good
@@ -73,11 +74,11 @@ referring to specific points easier. Please add new entries only at the bottom.
 
 #. Improved handling of categorical features
 
-   * In trees :issue:`4899`
+   * Tree-based models should be able to handle both continuous and categorical
+     features :issue:`4899`
    * In dataset loaders
    * As generic transformers to be used with ColumnTransforms (e.g. ordinal
-     encoding supervised by correlation with target)
-   * ?
+     encoding supervised by correlation with target variable)
 
 #. Improved handling of missing data
 
@@ -123,14 +124,14 @@ referring to specific points easier. Please add new entries only at the bottom.
 #. Better interfaces for interactive development
 
    * __repr__ and HTML visualisations of estimators :issue:`6323`
-   * Include plotting tools, not just as examples. :issue:`9#73`
+   * Include plotting tools, not just as examples. :issue:`9173`
 
 #. Improved tools for model diagnostics and basic inference
 
    * partial dependence plots :issue:`5653`
    * alternative feature importances implementations (e.g. methods or wrappers)
    * better ways to handle validation sets when fitting
-   * better ways to find thresholds / create decision rules :issue:`86#4`
+   * better ways to find thresholds / create decision rules :issue:`8614`
 
 #. Better tools for selecting hyperparameters with transductive estimators
 
@@ -146,16 +147,15 @@ referring to specific points easier. Please add new entries only at the bottom.
 #. Use scipy BLAS Cython bindings
 
    * This will make it possible to get rid of our partial copy of suboptimal
-     Atlas C-routines
+     Atlas C-routines. :issue:`11638`
    * This should speed up the Windows and Linux wheels
-   * :issue:`#1638`
 
 #. Allow fine-grained parallelism in cython
 
    * Now that we do not use fork-based multiprocessing in joblib anymore it's
      possible to use the prange / openmp thread management which makes it
      possible to have very efficient thread-based parallelism at the Cython
-     level. Example with K-Means: :issue:`#1950`
+     level. Example with K-Means: :issue:`11950`
 
 #. Distributed parallelism
 
@@ -179,8 +179,8 @@ referring to specific points easier. Please add new entries only at the bottom.
 
 #. Support for working with pre-trained models
 
-   * Estimator "freezing". In particular right now it's impossible to clone a
-     `CalibratedClassifierCV` with prefit. :issue:`8370`. :issue:`645#`
+   * Estimator "freezing". In particular, right now it's impossible to clone a
+     `CalibratedClassifierCV` with prefit. :issue:`8370`. :issue:`6451`
 
 #. Backwards-compatible de/serialization of some estimators
 
@@ -197,8 +197,8 @@ referring to specific points easier. Please add new entries only at the bottom.
      deploying a model: snapshot the code versions (numpy, scipy, scikit-learn,
      custom code repo), the training script and an alias on how to retrieve
      historical training data + snapshot a copy of a small validation set +
-     snapshot of the predictions (predict probas for classifier) on that
-     validation set.
+     snapshot of the predictions (predicted probabilities for classifiers)
+     on that validation set.
    * Document and tools to make it easy to manage upgrade of scikit-learn
      versions:
 
@@ -216,16 +216,16 @@ referring to specific points easier. Please add new entries only at the bottom.
    (to be discussed);
 
    * Extend documentation to mention how to deploy models in Python-free
-     environments for instance  `onnx <https://github.com/onnx/onnxmltools>`_.
+     environments for instance  `ONNX <https://github.com/onnx/onnxmltools>`_.
      and use the above best practices to assess predictive consistency between
-     scikit-learn and onnx prediction functions on validation set.
+     scikit-learn and ONNX prediction functions on validation set.
    * Document good practices to detect temporal distribution drift for deployed
      model and good practices for re-training on fresh data without causing
      catastrophic predictive performance regressions.
 
 #. More didactic documentation
 
-   * As more and more options have been added to scikit-learn. As a result the
+   * More and more options have been added to scikit-learn. As a result, the
      documentation is crowded which makes it hard for beginners to get the big
      picture. Some work could be done in prioritizing the information.
 
@@ -268,6 +268,6 @@ Subpackage-specific goals
 :mod:`sklearn.pipeline`
 
 * Performance issues with `Pipeline.memory`
-* see "Everything in sklearn should conform to our API contract" above
-* No verbosity :issue:`10435`
+* see "Everything in Scikit-learn should conform to our API contract" above
+* Add a verbose option :issue:`10435`
 
