@@ -1829,7 +1829,7 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
                 (test_size <= 0 or test_size >= 1))):
         raise ValueError('test_size=%d should be either positive and smaller '
                          'than the number of samples %d or a float in the '
-                         '[0,1] range' % (test_size, n_samples))
+                         '(0,1) range' % (test_size, n_samples))
 
     if (train_size is not None and
             (np.asarray(train_size).dtype.kind == 'i' and
@@ -1838,7 +1838,7 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
                 (train_size <= 0 or train_size >= 1))):
         raise ValueError('train_size=%d should be either positive and smaller '
                          'than the number of samples %d or a float in the '
-                         '[0,1] range' % (train_size, n_samples))
+                         '(0,1) range' % (train_size, n_samples))
 
     if test_size == "default":
         test_size = 0.1
