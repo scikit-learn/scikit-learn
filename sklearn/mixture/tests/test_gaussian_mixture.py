@@ -32,7 +32,6 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 
@@ -1078,5 +1077,6 @@ def test_init_param():
             if i_mean == j_mean:
                 pass
             else:
-                assert_true(np.any(np.not_equal(
-                    default_means_init[i_mean], default_means_init[j_mean])))
+                assert np.any(np.not_equal(
+                    default_means_init[i_mean],
+                    default_means_init[j_mean]))

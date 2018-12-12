@@ -68,6 +68,15 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
         Set to None to make the number of trials depend logarithmically
         on the number of seeds (2+log(k)); this is the default.
 
+    Returns
+    -------
+    centers : array, shape (n_clusters, n_features)
+        The inital centers for k-means.
+
+    indices : array, shape (n_clusters)
+        The location of the chosen centers in the data array X. For a
+        given index and center, X[index] = center.
+
     Notes
     -----
     Selects initial cluster centers for k-mean clustering in a smart way
