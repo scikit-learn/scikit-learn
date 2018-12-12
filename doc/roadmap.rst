@@ -53,13 +53,14 @@ on the issue tracker.
 Architectural / general goals
 -----------------------------
 The list is numbered not as an indication of order of priority, but to make
-referring to specific points easiest. Please add new entries only at the end.
+referring to specific points easier. Please add new entries only at the bottom.
 
 #. Everything in sklearn should conform to our API contract
 
-   * Pipeline and FeatureUnion modify their input parameters in fit. Fixing this
-     requires making sure we have a good grasp of their use cases to make sure
-     all current functionality is maintained. :issue:`8157` :issue:`7382`
+   * `Pipeline <pipeline.Pipeline>` and `FeatureUnion` modify their input
+     parameters in fit. Fixing this requires making sure we have a good
+     grasp of their use cases to make sure all current functionality is
+     maintained. :issue:`8157` :issue:`7382`
 
 #. Improved handling of Pandas DataFrames and SparseDataFrames
 
@@ -156,7 +157,7 @@ referring to specific points easiest. Please add new entries only at the end.
      possible to have very efficient thread-based parallelism at the Cython
      level. Example with K-Means: :issue:`#1950`
 
-#. Larger grain (across computers) parallelism
+#. Distributed parallelism
 
    * Joblib can now plug onto several backends, some of them can distribute the
      computation across computers
@@ -179,13 +180,13 @@ referring to specific points easiest. Please add new entries only at the end.
 #. Support for working with pre-trained models
 
    * Estimator "freezing". In particular right now it's impossible to clone a
-     CalibratedClassifierCV with prefit. :issue:`8370`. :issue:`645#`
+     `CalibratedClassifierCV` with prefit. :issue:`8370`. :issue:`645#`
 
 #. Backwards-compatible de/serialization of some estimators
 
    * Currently serialization (with pickle) breaks across versions. While we may
      not be able to get around other limitations of pickle re security etc, it
-     would be great to offer cross-version safety from version #.0. Note: Gael
+     would be great to offer cross-version safety from version 1.0. Note: Gael
      and Olivier think that this can cause heavy maintenance burden and we
      should manage the trade-offs. A possible alternative is presented in the
      following point.
@@ -249,8 +250,9 @@ Subpackage-specific goals
 * perhaps we want to be able to get back more than multiple metrics
 * the handling of random states in CV splitters is a poor design and
   contradicts the validation of similar parameters in estimators.
-* exploit warm-starting and path algorithms so the benefits of EstimatorCV
-  objects can be accessed via GridSearchCV and used in Pipelines. :issue:`1626`
+* exploit warm-starting and path algorithms so the benefits of `EstimatorCV`
+  objects can be accessed via `GridSearchCV` and used in Pipelines.
+  :issue:`1626`
 * Cross-validation should be able to be replaced by OOB estimates whenever a
   cross-validation iterator is used.
 * Redundant computations in pipelines should be avoided (related to point
@@ -265,7 +267,7 @@ Subpackage-specific goals
 
 :mod:`sklearn.pipeline`
 
-* Performance issues with Pipeline.memory
+* Performance issues with `Pipeline.memory`
 * see "Everything in sklearn should conform to our API contract" above
 * No verbosity :issue:`10435`
 
