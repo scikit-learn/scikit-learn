@@ -431,7 +431,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
             n_components = self.n_components or n_features
             if init == 'auto':
                 n_classes = len(np.unique(y))
-                if n_components <= n_classes:
+                if n_components <= min(n_features, n_classes - 1):
                     init = 'lda'
                 elif n_components < min(n_features, n_samples):
                     init = 'pca'

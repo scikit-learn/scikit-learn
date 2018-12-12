@@ -9,7 +9,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.testing import (assert_raises, assert_equal,
                                    assert_raise_message, assert_warns_message,
                                    assert_true)
-from sklearn.datasets import load_iris, make_classification
+from sklearn.datasets import load_iris, make_classification, make_blobs
 from sklearn.neighbors.nca import NeighborhoodComponentsAnalysis
 from sklearn.metrics import pairwise_distances
 
@@ -182,8 +182,7 @@ def test_n_components():
 
 
 def test_init_transformation():
-    X, y = make_classification(n_samples=30, n_features=5,
-                               n_redundant=0, random_state=0)
+    X, y = make_blobs(n_samples=30, centers=6, n_features=5, random_state=0)
 
     # Start learning from scratch
     nca = NeighborhoodComponentsAnalysis(init='identity')
@@ -260,11 +259,13 @@ def test_auto_init(n_samples, n_features, n_classes, n_components):
         X = rng.randn(n_samples, n_features)
         y = np.tile(range(n_classes), n_samples // n_classes + 1)[:n_samples]
         if n_components > n_features:
+            # this would return a ValueError, which is already tested in
+            # test_params_validation
             pass
         else:
             nca = clone(nca_base)
             nca.fit(X, y)
-            if n_components <= n_classes:
+            if n_components <= min(n_classes - 1, n_features):
                 nca_other = clone(nca_base).set_params(init='lda')
             elif n_components < min(n_features, n_samples):
                 nca_other = clone(nca_base).set_params(init='pca')
@@ -332,15 +333,16 @@ def test_warm_start_effectiveness():
 def test_verbose(init_name, capsys):
     # assert there is proper output when verbose = 1, for every initialization
     # except auto because auto will call one of the others
+    X, y = make_blobs(n_samples=30, centers=6, n_features=5, random_state=0)
     regexp_init = r'... done in \ *\d+\.\d{2}s'
     msgs = {'pca': "Finding principal components" + regexp_init,
             'lda': "Finding most discriminative components" + regexp_init}
     if init_name == 'precomputed':
-        init = rng.randn(iris_data.shape[1], iris_data.shape[1])
+        init = rng.randn(X.shape[1], X.shape[1])
     else:
         init = init_name
     nca = NeighborhoodComponentsAnalysis(verbose=1, init=init)
-    nca.fit(iris_data, iris_target)
+    nca.fit(X, y)
     out, _ = capsys.readouterr()
 
     # check output
