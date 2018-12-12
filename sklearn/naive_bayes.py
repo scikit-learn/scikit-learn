@@ -18,6 +18,7 @@ are supervised learning methods based on applying Bayes' theorem with strong
 import warnings
 
 from abc import ABCMeta, abstractmethod
+from pkg_resources import parse_version
 
 import numpy as np
 from scipy.sparse import issparse
@@ -519,7 +520,7 @@ class BaseDiscreteNB(BaseNB):
         -------
         self : object
         """
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        X = check_array(X, accept_sparse='csr')
         _, n_features = X.shape
 
         if _check_partial_fit_first_call(self, classes):
@@ -1024,8 +1025,10 @@ class CategoricalNB(BaseDiscreteNB):
     [3]
     """
 
+    old_numpy_ = parse_version(np.__version__) < parse_version('1.9.0')
+
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
-        if np.__version__ < '1.9.0':
+        if CategoricalNB.old_numpy_:
             warnings.warn(
                 ('numpy is older than 1.9.0. Therefore assure that X is'
                  'castable to int without loss of information and all '
@@ -1051,8 +1054,8 @@ class CategoricalNB(BaseDiscreteNB):
         -------
         self : object
         """
-        if np.__version__ < '1.9.0':
-            check_array(X, accept_large_sparse=False)
+        if CategoricalNB.old_numpy_:
+            X = check_array(X, accept_large_sparse=False, dtype=np.int64)
         return super(CategoricalNB, self).fit(X, y, sample_weight=None)
 
     def partial_fit(self, X, y, classes=None):
@@ -1089,8 +1092,8 @@ class CategoricalNB(BaseDiscreteNB):
         -------
         self : object
         """
-        if np.__version__ < '1.9.0':
-            check_array(X, accept_large_sparse=False)
+        if CategoricalNB.old_numpy_:
+            X = check_array(X, accept_large_sparse=False, dtype=np.int64)
         return super(CategoricalNB, self).partial_fit(X, y, classes,
                                                       sample_weight=None)
 
@@ -1122,12 +1125,12 @@ class CategoricalNB(BaseDiscreteNB):
                 self.category_count_[i][j, indices] = n_feature_class
 
     def _count_features(self, X_feature):
-        if np.__version__ >= '1.9.0':
-            return np.unique(X_feature, return_counts=True)
-        else:
-            bins = np.bincount(X_feature.astype(int))
+        if CategoricalNB.old_numpy_:
+            bins = np.bincount(X_feature)
             non_zero_bins = np.nonzero(bins)[0]
             return non_zero_bins, bins[non_zero_bins]
+        else:
+            return np.unique(X_feature, return_counts=True)
 
     def _update_feature_log_prob(self, alpha):
         feature_log_prob = {}
