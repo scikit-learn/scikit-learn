@@ -1652,6 +1652,7 @@ Drawbacks
  * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In this example
    the silhouette analysis is used to choose an optimal value for n_clusters.
 
+
 .. _calinski_harabasz_index:
 
 Calinski-Harabasz Index
@@ -1661,25 +1662,9 @@ If the ground truth labels are not known, the Calinski-Harabasz index
 Ratio Criterion - can be used to evaluate the model, where a higher 
 Calinski-Harabasz score relates to a model with better defined clusters.
 
-For :math:`k` clusters, the Calinski-Harabasz score :math:`s` is given as the
-ratio of the between-clusters dispersion mean and the within-cluster
-dispersion:
-
-.. math::
-  s(k) = \frac{\mathrm{Tr}(B_k)}{\mathrm{Tr}(W_k)} \times \frac{N - k}{k - 1}
-
-where :math:`B_K` is the between group dispersion matrix and :math:`W_K`
-is the within-cluster dispersion matrix defined by:
-
-.. math:: W_k = \sum_{q=1}^k \sum_{x \in C_q} (x - c_q) (x - c_q)^T
-
-.. math:: B_k = \sum_q n_q (c_q - c) (c_q - c)^T
-
-with :math:`N` be the number of points in our data, :math:`C_q` be the set of
-points in cluster :math:`q`, :math:`c_q` be the center of cluster
-:math:`q`, :math:`c` be the center of :math:`E`, :math:`n_q` be the number of
-points in cluster :math:`q`.
-
+The index is the ratio of the sum of between-clusters dispersion and of
+inter-cluster dispersion for all clusters (where dispersion is defined as the
+sum of distances squared):
 
   >>> from sklearn import metrics
   >>> from sklearn.metrics import pairwise_distances
@@ -1689,7 +1674,7 @@ points in cluster :math:`q`.
   >>> y = dataset.target
 
 In normal usage, the Calinski-Harabasz index is applied to the results of a
-cluster analysis.
+cluster analysis:
 
   >>> import numpy as np
   >>> from sklearn.cluster import KMeans
@@ -1704,7 +1689,7 @@ Advantages
 - The score is higher when clusters are dense and well separated, which relates
   to a standard concept of a cluster.
 
-- The score is fast to compute
+- The score is fast to compute.
 
 
 Drawbacks
@@ -1713,6 +1698,28 @@ Drawbacks
 - The Calinski-Harabasz index is generally higher for convex clusters than other
   concepts of clusters, such as density based clusters like those obtained
   through DBSCAN.
+
+Mathematical formulation
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+For a set of data :math:`E` of size :math:`n_E` which has been clustered into
+:math:`k` clusters, the Calinski-Harabasz score :math:`s` is defined as the
+ratio of the between-clusters dispersion mean and the within-cluster dispersion:
+
+.. math::
+  s = \frac{\mathrm{tr}(B_k)}{\mathrm{tr}(W_k)} \times \frac{n_E - k}{k - 1}
+
+where :math:`\mathrm{tr}(B_k)` is trace of the between group dispersion matrix
+and :math:`\mathrm{tr}(W_k)` is the trace of the within-cluster dispersion
+matrix defined by:
+
+.. math:: W_k = \sum_{q=1}^k \sum_{x \in C_q} (x - c_q) (x - c_q)^T
+
+.. math:: B_k = \sum_{q=1}^k n_q (c_q - c_E) (c_q - c_E)^T
+
+with :math:`C_q` the set of points in cluster :math:`q`, :math:`c_q` the center
+of cluster :math:`q`, :math:`c_E` the center of :math:`E`, and :math:`n_q` the
+number of points in cluster :math:`q`.
 
 .. topic:: References
 
