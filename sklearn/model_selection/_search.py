@@ -211,11 +211,11 @@ class ParameterSampler(object):
         to sample from them, or can be given as a list of values,
         where a uniform distribution is assumed.
 
-    n_iter : integer or sequence of such
+    n_iter : integer or list of integers
         Number of parameter settings that are produced.
         Or sequence of integers, one per dict of param_distributions
 
-        The list of ints should be of the same lenght as the list of
+        The list of integers must be of the same length as the list of
         param_distributions dictionaries, giving a "budget" for each
         dictionary.
 
@@ -293,7 +293,6 @@ class ParameterSampler(object):
         self.param_distributions = param_distributions
 
     def __iter__(self):
-        param_distributions = self.param_distributions
         n_dists = len(self.param_distributions)
 
         # n_iter can be a sequence containing the number of iters
@@ -308,7 +307,7 @@ class ParameterSampler(object):
             n_iter = [self.n_iter//n_dists] * n_dists
 
         # If a list of dicts is passed evaluate each dict of par_dist
-        for ni, dist in enumerate(param_distributions):
+        for ni, dist in enumerate(self.param_distributions):
             # check if all distributions are given as lists
             # in this case we want to sample without replacement
             all_lists = np.all([not hasattr(v, "rvs")
@@ -1239,7 +1238,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
 
-        The list of ints should be of the same lenght as the list of
+        The list of integers must be of the same length as the list of
         param_distributions dictionaries, giving a "budget" for each
         dictionary.
 
