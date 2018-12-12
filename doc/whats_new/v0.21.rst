@@ -88,6 +88,8 @@ Support for Python 3.4 and below has been officially dropped.
   :func:metrics.classification_report to avoid confusing. `micro-average` is
   only shown for multi-label or multi-class with a subset of classes because
   it is accuracy otherwise.
+  :issue:`12334` by :user:`Emmanuel Arias <eamanu@eamanu.com>`,
+  `Joel Nothman`_ and `Andreas Müller`_
 
 :mod:`sklearn.model_selection`
 ......................
