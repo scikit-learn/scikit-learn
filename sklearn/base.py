@@ -227,33 +227,20 @@ class BaseEstimator(object):
         from .utils._pprint import _EstimatorPrettyPrinter
 
         N_CHAR_MAX = 700  # number of non-whitespace or newline chars
+        N_MAX_ELEMENTS_TO_SHOW = 30  # number of elements to show in sequences
 
-        def get_pretty_printers():
-            # Generate PrettyPrinter objects that are more and more
-            # restrictive in the output length.
-            n_max_elements_to_show = 30
-            # start with basic PrettyPrinter
-            yield _EstimatorPrettyPrinter(
-                compact=True, indent=1, indent_at_name=True)
-            # use ellipsis for sequences with a lot of elements
-            yield _EstimatorPrettyPrinter(
-                compact=True, indent=1, indent_at_name=True,
-                n_max_elements_to_show=n_max_elements_to_show)
-            # add change_only constraint
-            yield _EstimatorPrettyPrinter(
-                compact=True, indent=1, indent_at_name=True,
-                n_max_elements_to_show=n_max_elements_to_show,
-                force_change_only=True)
+        # use ellipsis for sequences with a lot of elements
+        pp = _EstimatorPrettyPrinter(
+            compact=True, indent=1, indent_at_name=True,
+            n_max_elements_to_show=N_MAX_ELEMENTS_TO_SHOW)
 
-        for pp in get_pretty_printers():
-            candidate = pp.pformat(self)
-            if len(''.join(candidate.split())) <= N_CHAR_MAX:
-                return candidate
+        repr_ = pp.pformat(self)
 
-        # If all else fails, cut repr right in the middle.
-        lim = N_CHAR_MAX // 2
-        candidate = candidate[:lim] + '...' + candidate[-lim:]
-        return candidate
+        # Use bruteforce ellipsis if string is very long
+        if len(''.join(repr_.split())) > N_CHAR_MAX:  # check non-blank chars
+            lim = N_CHAR_MAX // 2
+            repr_ = repr_[:lim] + '...' + repr_[-lim:]
+        return repr_
 
     def __getstate__(self):
         try:
