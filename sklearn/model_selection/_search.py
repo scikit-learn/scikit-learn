@@ -204,15 +204,24 @@ class ParameterSampler(object):
 
     Parameters
     ----------
-    param_distributions : dict
+    param_distributions : dict or sequence of such.
         Dictionary where the keys are parameters and values
         are distributions from which a parameter is to be sampled.
         Distributions either have to provide a ``rvs`` function
         to sample from them, or can be given as a list of values,
         where a uniform distribution is assumed.
 
-    n_iter : integer
+    n_iter : integer or sequence of such
         Number of parameter settings that are produced.
+        Or sequence of integers, one per dict of param_distributions
+
+        The list of ints should be of the same lenght as the list of
+        param_distributions dictionaries, giving a "budget" for each
+        dictionary.
+
+        If an int, or a sequence of ints has less elements than number of
+        param_distributions dictionaries, the total sum is divided by the
+        number of dictionaries and assigned as "budget" for each dict.
 
     random_state : int, RandomState instance or None, optional (default=None)
         Pseudo random number generator state used for random uniform sampling
@@ -234,63 +243,112 @@ class ParameterSampler(object):
     >>> from scipy.stats.distributions import expon
     >>> import numpy as np
     >>> np.random.seed(0)
-    >>> param_grid = {'a':[1, 2], 'b': expon()}
-    >>> param_list = list(ParameterSampler(param_grid, n_iter=4))
+    >>> param_dist = {'a':[1, 2], 'b': expon()}
+    >>> param_list = list(ParameterSampler(param_dist, n_iter=4))
     >>> rounded_list = [dict((k, round(v, 6)) for (k, v) in d.items())
     ...                 for d in param_list]
-    >>> rounded_list == [{'b': 0.89856, 'a': 1},
-    ...                  {'b': 0.923223, 'a': 1},
-    ...                  {'b': 1.878964, 'a': 2},
-    ...                  {'b': 1.038159, 'a': 2}]
+    >>> rounded_list == [{'a': 1, 'b': 0.89856},
+    ...                  {'a': 1, 'b': 0.923223},
+    ...                  {'a': 2, 'b': 1.878964},
+    ...                  {'a': 2, 'b': 1.038159}]
+    True
+
+    Or using a list of dictionaries:
+
+    >>> from sklearn.model_selection import ParameterSampler
+    >>> from scipy.stats.distributions import expon, norm
+    >>> import numpy as np
+    >>> np.random.seed(0)
+    >>> param_grid = [{'a':[1, 2], 'b': expon()}, {'c':[3, 4], 'd': expon()}]
+    >>> param_list = list(ParameterSampler(param_grid, n_iter=[4,6]))
+    >>> rounded_list = [dict((k, round(v, 6)) for (k, v) in d.items())
+    ...                 for d in param_list]
+    >>> rounded_list == [{'a': 1, 'b': 0.89856},
+    ...                  {'a': 1, 'b': 0.923223},
+    ...                  {'a': 2, 'b': 1.878964},
+    ...                  {'a': 2, 'b': 1.038159},
+    ...                  {'c': 3, 'd': 0.353159},
+    ...                  {'c': 3, 'd': 3.314912},
+    ...                  {'c': 3, 'd': 0.649446},
+    ...                  {'c': 4, 'd': 0.752674},
+    ...                  {'c': 3, 'd': 0.498872},
+    ...                  {'c': 4, 'd': 0.073685}]
     True
     """
     def __init__(self, param_distributions, n_iter, random_state=None):
-        self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
 
+        if isinstance(param_distributions, Mapping):
+            # wrap dictionary in a singleton list to support either dict
+            # or list of dicts
+            param_distributions = [param_distributions]
+
+        # check if all entries are dictionaries
+        for dist in param_distributions:
+            if not isinstance(dist, dict):
+                raise TypeError('Parameter distributions is not a '
+                                'dict ({!r})'.format(dist))
+
+        self.param_distributions = param_distributions
+
     def __iter__(self):
-        # check if all distributions are given as lists
-        # in this case we want to sample without replacement
-        all_lists = np.all([not hasattr(v, "rvs")
-                            for v in self.param_distributions.values()])
-        rnd = check_random_state(self.random_state)
+        param_distributions = self.param_distributions
+        n_dists = len(self.param_distributions)
 
-        if all_lists:
-            # look up sampled parameter settings in parameter grid
-            param_grid = ParameterGrid(self.param_distributions)
-            grid_size = len(param_grid)
+        # n_iter can be a sequence containing the number of iters
+        # settings that are sampled per par_dist.
+        # If the sequence or int has less elements than number of par_dist,
+        # the total sum is divided by the number of par_dists.
+        if isinstance(self.n_iter, Iterable):
             n_iter = self.n_iter
-
-            if grid_size < n_iter:
-                warnings.warn(
-                    'The total space of parameters %d is smaller '
-                    'than n_iter=%d. Running %d iterations. For exhaustive '
-                    'searches, use GridSearchCV.'
-                    % (grid_size, self.n_iter, grid_size), UserWarning)
-                n_iter = grid_size
-            for i in sample_without_replacement(grid_size, n_iter,
-                                                random_state=rnd):
-                yield param_grid[i]
-
+            if len(self.n_iter) != n_dists:
+                n_iter = [sum(n_iter)//n_dists] * n_dists
         else:
-            # Always sort the keys of a dictionary, for reproducibility
-            items = sorted(self.param_distributions.items())
-            for _ in six.moves.range(self.n_iter):
-                params = dict()
-                for k, v in items:
-                    if hasattr(v, "rvs"):
-                        if sp_version < (0, 16):
-                            params[k] = v.rvs()
+            n_iter = [self.n_iter//n_dists] * n_dists
+
+        # If a list of dicts is passed evaluate each dict of par_dist
+        for ni, dist in enumerate(param_distributions):
+            # check if all distributions are given as lists
+            # in this case we want to sample without replacement
+            all_lists = np.all([not hasattr(v, "rvs")
+                                for v in dist.values()])
+            rnd = check_random_state(self.random_state)
+
+            if all_lists:
+                # look up sampled parameter settings in parameter grid
+                param_grid = ParameterGrid(dist)
+                grid_size = len(param_grid)
+
+                if grid_size < n_iter[ni]:
+                    warnings.warn(
+                        'The total space of parameters %d is smaller '
+                        'than n_iter=%d. Running %d iterations. For '
+                        'exhaustive searches, use GridSearchCV.'
+                        % (grid_size, n_iter[ni], grid_size), UserWarning)
+                    n_iter[ni] = grid_size
+                for i in sample_without_replacement(grid_size, n_iter[ni],
+                                                    random_state=rnd):
+                    yield param_grid[i]
+
+            else:
+                # Always sort the keys of a dictionary, for reproducibility
+                items = sorted(dist.items())
+                for _ in six.moves.range(n_iter[ni]):
+                    params = dict()
+                    for k, v in items:
+                        if hasattr(v, "rvs"):
+                            if sp_version < (0, 16):
+                                params[k] = v.rvs()
+                            else:
+                                params[k] = v.rvs(random_state=rnd)
                         else:
-                            params[k] = v.rvs(random_state=rnd)
-                    else:
-                        params[k] = v[rnd.randint(len(v))]
-                yield params
+                            params[k] = v[rnd.randint(len(v))]
+                    yield params
 
     def __len__(self):
         """Number of points that will be sampled."""
-        return self.n_iter
+        return sum(self.n_iter)
 
 
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
@@ -1168,15 +1226,26 @@ class RandomizedSearchCV(BaseSearchCV):
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
 
-    param_distributions : dict
+    param_distributions : dict or list of dictionaries
         Dictionary with parameters names (string) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
         method for sampling (such as those from scipy.stats.distributions).
-        If a list is given, it is sampled uniformly.
+        If a list of parameters is given, it is sampled uniformly.
 
-    n_iter : int, default=10
+        Or a list of such  dictionaries, in which case the distributions
+        spanned by each dictionary in the list are explored.
+
+    n_iter : int, default=10 or a list of ints
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
+
+        The list of ints should be of the same lenght as the list of
+        param_distributions dictionaries, giving a "budget" for each
+        dictionary.
+
+        If an int, or a sequence of ints has less elements than number of
+        param_distributions dictionaries, the total sum is divided by the
+        number of dictionaries and assigned as "budget" for each dict.
 
     scoring : string, callable, list/tuple, dict or None, default: None
         A single string (see :ref:`scoring_parameter`) or a callable
@@ -1295,6 +1364,43 @@ class RandomizedSearchCV(BaseSearchCV):
         However computing the scores on the training set can be computationally
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
+
+    Examples
+    --------
+    >>> from sklearn import svm, datasets
+    >>> from sklearn.model_selection import RandomizedSearchCV
+    >>> iris = datasets.load_iris()
+    >>> param_dist = [
+    ...     {
+    ...         "kernel": ["rbf"],
+    ...         "gamma": ss.uniform(1e-6, 1e6),
+    ...         "C": ss.uniform(1e-6, 1e6),
+    ...     },
+    ...     {
+    ...         "kernel": ["linear"],
+    ...         "C": ss.uniform(1e-6, 1e6)
+    ...     },
+    ... ]
+    >>> svc = svm.SVC()
+    >>> clf = RandomizedSearchCV(svc, param_dist, [35, 15], cv=5)
+    >>> clf.fit(iris.data, iris.target)
+    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    RandomizedSearchCV(cv=5, error_score=...',
+              estimator=SVC(C=1.0, cache_size=..., class_weight=...,
+                            coef0=..., decision_function_shape='ovr',
+                            degree=..., gamma=..., kernel='rbf', max_iter=-1,
+                            probability=False, random_state=None,
+                            shrinking=True, tol=..., verbose=False),
+              iid=..., n_iter=[35, 15], n_jobs=None,
+              param_distributions=..., pre_dispatch=..., random_state=None,
+              refit=..., return_train_score=..., scoring=..., verbose=...)
+    >>> sorted(clf.cv_results_.keys())
+    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    ['mean_fit_time', 'mean_score_time', 'mean_test_score',...
+     'param_C', 'param_gamma', 'param_kernel',...
+     'params', 'rank_test_score', 'split0_test_score',...
+     'split1_test_score', 'split2_test_score', 'split3_test_score',...
+     'split4_test_score', 'std_fit_time', 'std_score_time', 'std_test_score']
 
     Attributes
     ----------
@@ -1440,3 +1546,4 @@ class RandomizedSearchCV(BaseSearchCV):
         evaluate_candidates(ParameterSampler(
             self.param_distributions, self.n_iter,
             random_state=self.random_state))
+
