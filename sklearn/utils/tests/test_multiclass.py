@@ -418,7 +418,7 @@ def test_ovr_decision_function():
 
     # third and fourth sample have the same vote but third sample
     # has higher confidence, this should reflect on the decision values
-    assert_true(dec_values[2, 2] > dec_values[3, 2])
+    assert (dec_values[2, 2] > dec_values[3, 2])
 
     # assert subset invariance.
     dec_values_one = [_ovr_decision_function(np.array([predictions[i]]),
