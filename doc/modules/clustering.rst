@@ -1740,24 +1740,9 @@ If the ground truth labels are not known, the Davies-Bouldin index
 model, where a lower Davies-Bouldin index relates to a model with better
 separation between the clusters.
 
-The index is defined as the average similarity between each cluster :math:`C_i`
-for :math:`i=1, ..., k` and its most similar one :math:`C_j`. In the context of
-this index, similarity is defined as a measure :math:`R_{ij}` that trades off:
-
-- :math:`s_i`, the average distance between each point of cluster :math:`i` and
-  the centroid of that cluster -- also know as cluster diameter.
-- :math:`d_{ij}`, the distance between cluster centroids :math:`i` and :math:`j`.
-
-A simple choice to construct :math:`R_ij` so that it is nonnegative and
-symmetric is:
-
-.. math::
-   R_{ij} = \frac{s_i + s_j}{d_{ij}}
-
-Then the Davies-Bouldin index is defined as:
-
-.. math::
-   DB = \frac{1}{k} \sum_{i=1}^k \max_{i \neq j} R_{ij}
+This index signifies the average 'similarity' between clusters, where the
+similarity is a measure that compares the distance between clusters with the
+size of the clusters themselves.
 
 Zero is the lowest possible score. Values closer to zero indicate a better
 partition.
@@ -1788,9 +1773,31 @@ Drawbacks
 - The Davies-Boulding index is generally higher for convex clusters than other
   concepts of clusters, such as density based clusters like those obtained from
   DBSCAN.
-
 - The usage of centroid distance limits the distance metric to Euclidean space.
 - A good value reported by this method does not imply the best information retrieval.
+
+Mathematical formulation
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The index is defined as the average similarity between each cluster :math:`C_i`
+for :math:`i=1, ..., k` and its most similar one :math:`C_j`. In the context of
+this index, similarity is defined as a measure :math:`R_{ij}` that trades off:
+
+- :math:`s_i`, the average distance between each point of cluster :math:`i` and
+  the centroid of that cluster -- also know as cluster diameter.
+- :math:`d_{ij}`, the distance between cluster centroids :math:`i` and :math:`j`.
+
+A simple choice to construct :math:`R_ij` so that it is nonnegative and
+symmetric is:
+
+.. math::
+   R_{ij} = \frac{s_i + s_j}{d_{ij}}
+
+Then the Davies-Bouldin index is defined as:
+
+.. math::
+   DB = \frac{1}{k} \sum_{i=1}^k \max_{i \neq j} R_{ij}
+
 
 .. topic:: References
 
