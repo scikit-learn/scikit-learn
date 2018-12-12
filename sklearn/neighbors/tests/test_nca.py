@@ -109,7 +109,7 @@ def test_params_validation():
                          '`max_iter`= -1, must be >= 1.',
                          NCA(max_iter=-1).fit, X, y)
 
-    init = np.random.rand(5, 3)
+    init = rng.rand(5, 3)
     assert_raise_message(ValueError,
                          'The output dimensionality ({}) of the given linear '
                          'transformation `init` cannot be greater than its '
@@ -153,7 +153,7 @@ def test_n_components():
     X = np.arange(12).reshape(4, 3)
     y = [1, 1, 2, 2]
 
-    init = np.random.rand(X.shape[1] - 1, 3)
+    init = rng.rand(X.shape[1] - 1, 3)
 
     # n_components = X.shape[1] != transformation.shape[0]
     n_components = X.shape[1]
@@ -205,12 +205,12 @@ def test_init_transformation():
     nca_lda = NeighborhoodComponentsAnalysis(init='lda')
     nca_lda.fit(X, y)
 
-    init = np.random.rand(X.shape[1], X.shape[1])
+    init = rng.rand(X.shape[1], X.shape[1])
     nca = NeighborhoodComponentsAnalysis(init=init)
     nca.fit(X, y)
 
     # init.shape[1] must match X.shape[1]
-    init = np.random.rand(X.shape[1], X.shape[1] + 1)
+    init = rng.rand(X.shape[1], X.shape[1] + 1)
     nca = NeighborhoodComponentsAnalysis(init=init)
     assert_raise_message(ValueError,
                          'The input dimensionality ({}) of the given '
@@ -220,7 +220,7 @@ def test_init_transformation():
                          nca.fit, X, y)
 
     # init.shape[0] must be <= init.shape[1]
-    init = np.random.rand(X.shape[1] + 1, X.shape[1])
+    init = rng.rand(X.shape[1] + 1, X.shape[1])
     nca = NeighborhoodComponentsAnalysis(init=init)
     assert_raise_message(ValueError,
                          'The output dimensionality ({}) of the given '
@@ -230,7 +230,7 @@ def test_init_transformation():
                          nca.fit, X, y)
 
     # init.shape[0] must match n_components
-    init = np.random.rand(X.shape[1], X.shape[1])
+    init = rng.rand(X.shape[1], X.shape[1])
     n_components = X.shape[1] - 2
     nca = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
     assert_raise_message(ValueError,
