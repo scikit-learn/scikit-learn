@@ -1723,9 +1723,11 @@ number of points in cluster :math:`q`.
 
 .. topic:: References
 
- *  Caliński, T., & Harabasz, J. (1974). "A dendrite method for cluster
-    analysis". Communications in Statistics-theory and Methods 3: 1-27.
-    `doi:10.1080/03610926.2011.560741 <https://doi.org/10.1080/03610926.2011.560741>`_.
+ * Caliński, T., & Harabasz, J. (1974).
+   `"A Dendrite Method for Cluster Analysis"
+   <https://www.researchgate.net/publication/233096619_A_Dendrite_Method_for_Cluster_Analysis>`_.
+   Communications in Statistics-theory and Methods 3: 1-27.
+   `doi:10.1080/03610927408827101 <https://doi.org/10.1080/03610927408827101>`_.
 
 
 .. _davies-bouldin_index:
