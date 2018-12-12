@@ -1369,16 +1369,17 @@ class RandomizedSearchCV(BaseSearchCV):
     --------
     >>> from sklearn import svm, datasets
     >>> from sklearn.model_selection import RandomizedSearchCV
+    >>> from scipy.stats.distributions import uniform
     >>> iris = datasets.load_iris()
     >>> param_dist = [
     ...     {
     ...         "kernel": ["rbf"],
-    ...         "gamma": ss.uniform(1e-6, 1e6),
-    ...         "C": ss.uniform(1e-6, 1e6),
+    ...         "gamma": uniform(1e-6, 1e6),
+    ...         "C": uniform(1e-6, 1e6),
     ...     },
     ...     {
     ...         "kernel": ["linear"],
-    ...         "C": ss.uniform(1e-6, 1e6)
+    ...         "C": uniform(1e-6, 1e6)
     ...     },
     ... ]
     >>> svc = svm.SVC()
@@ -1546,4 +1547,3 @@ class RandomizedSearchCV(BaseSearchCV):
         evaluate_candidates(ParameterSampler(
             self.param_distributions, self.n_iter,
             random_state=self.random_state))
-
