@@ -85,7 +85,7 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`11179` by :user:`Shangwu Yao <ShangwuYao>` and `Joel Nothman`_.
 
 - |Fix| Add label `accuracy` ìnstead `micro-average` on
-  :func:metrics.classification_report to avoid confusing. `micro-average` is
+  :func:`metrics.classification_report` to avoid confusing. `micro-average` is
   only shown for multi-label or multi-class with a subset of classes because
   it is accuracy otherwise.
   :issue:`12334` by :user:`Emmanuel Arias <eamanu@eamanu.com>`,
