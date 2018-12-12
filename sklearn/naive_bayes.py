@@ -1125,12 +1125,19 @@ class CategoricalNB(BaseDiscreteNB):
     def _check_input(self, X, Y=None):
         if Y is None:
             if CategoricalNB.old_numpy_:
-                return check_array(X, accept_sparse=False, dtype=np.int64)
+                X = check_array(X, accept_sparse=False)
+                if not np.isfinite(X).all():
+                    raise ValueError("Input contains NaN or infinity.")
+                return np.asarray(X, dtype=np.int64)
             else:
                 return check_array(X, accept_sparse=False)
         else:
             if CategoricalNB.old_numpy_:
-                return check_X_y(X, Y, accept_sparse=False, dtype=np.int64)
+                X, Y = check_X_y(X, Y, accept_sparse=False)
+                if not np.isfinite(X).all():
+                    raise ValueError("Input contains NaN or infinity.")
+                X = np.asarray(X, dtype=np.int64)
+                return X, Y
             else:
                 return check_X_y(X, Y, accept_sparse=False)
 

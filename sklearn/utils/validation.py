@@ -511,9 +511,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                                       force_all_finite=force_all_finite,
                                       accept_large_sparse=accept_large_sparse)
     else:
-        if force_all_finite:
-            _assert_all_finite(array,
-                               allow_nan=force_all_finite == 'allow-nan')
         # If np.array(..) gives ComplexWarning, then we convert the warning
         # to an error. This is needed because specifying a non complex
         # dtype to the function converts complex to real dtype,
@@ -566,6 +563,10 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         if not allow_nd and array.ndim >= 3:
             raise ValueError("Found array with dim %d. %s expected <= 2."
                              % (array.ndim, estimator_name))
+
+        if force_all_finite:
+            _assert_all_finite(array,
+                               allow_nan=force_all_finite == 'allow-nan')
 
     shape_repr = _shape_repr(array.shape)
     if ensure_min_samples > 0:
