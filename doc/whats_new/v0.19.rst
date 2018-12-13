@@ -811,7 +811,7 @@ Miscellaneous
   Python 2. :issue:`9284` by :user:`Sebastin Santy <SebastinSanty>`.
 
 - Several minor issues were fixed with thanks to the alerts of
-  [lgtm.com](http://lgtm.com). :issue:`9278` by :user:`Jean Helie <jhelie>`,
+  [lgtm.com](https://lgtm.com/). :issue:`9278` by :user:`Jean Helie <jhelie>`,
   among others.
 
 API changes summary

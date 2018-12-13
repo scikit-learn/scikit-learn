@@ -17,7 +17,14 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- please add class and reason here (see version 0.20 what's new)
+..
+    please add class and reason here (see version 0.20 what's new)
+
+- Decision trees and derived ensembles when both `max_depth` and
+  `max_leaf_nodes` are set. |Fix|
+- :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` with 'saga' solver. |Fix|
+
 
 Details are listed in the changelog below.
 
@@ -37,23 +44,141 @@ Support for Python 3.4 and below has been officially dropped.
     section should be ordered according to the label ordering above. Entries
     should end with: :issue:`123456` by :user:`Joe Bloggs <joeongithub>`.
 
-- An entry goes here
-- An entry goes here
-
 :mod:`sklearn.cluster`
 ......................
 
 - |MajorFeature| A new clustering algorithm: :class:`cluster.OPTICS`: an
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
-  to set and that scales better, by :user:`Shane <espg>` and
-  :user:`Adrin Jalali <adrinjalali>`.
+  to set and that scales better, by :user:`Shane <espg>`,
+  :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
+  
+:mod:`sklearn.discriminant_analysis`
+....................................
+
+- |Fix| A ``ChangedBehaviourWarning`` is now raised when
+  :class:`discriminant_analysis.LinearDiscriminantAnalysis` is given as
+  parameter ``n_components > min(n_features, n_classes - 1)``, and
+  ``n_components`` is changed to ``min(n_features, n_classes - 1)`` if so.
+  Previously the change was made, but silently. :issue:`11526` by
+  :user:`William de Vazelhes<wdevazelhes>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Efficiency| Make :class:`ensemble.IsolationForest` prefer threads over
+  processes when running with ``n_jobs > 1`` as the underlying decision tree
+  fit calls do release the GIL. This changes reduces memory usage and
+  communication overhead. :issue:`12543` by :user:`Isaac Storch <istorch>`
+  and `Olivier Grisel`_.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Feature| :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
+  with the 'saga' solver. :issue:`11646` by :user:`Nicolas Hug <NicolasHug>`.
+
+- |Fix| Fixed a bug in :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` with 'saga' solver, where the
+  weights would not be correctly updated in some cases.
+  :issue:`11646` by `Tom Dupre la Tour`_.
+
+- |Fix| Fixed a bug in :class:`linear_model.MultiTaskElasticNet` and
+  :class:`linear_model.MultiTaskLasso` which were breaking when
+  ``warm_start = True``. :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
+
+:mod:`sklearn.manifold`
+............................
+
+- |Efficiency| Make :func:`manifold.tsne.trustworthiness` use an inverted index
+  instead of an `np.where` lookup to find the rank of neighbors in the input
+  space. This improves efficiency in particular when computed with
+  lots of neighbors and/or small datasets.
+  :issue:`9907` by :user:`William de Vazelhes <wdevazelhes>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| Added the :func:`metrics.max_error` metric and a corresponding
+  ``'max_error'`` scorer for single output regression.
+  :issue:`12232` by :user:`Krishna Sangeeth <whiletruelearn>`.
+
+- |Feature| Add :func:`metrics.multilabel_confusion_matrix`, which calculates a
+  confusion matrix with true positive, false positive, false negative and true
+  negative counts for each class. This facilitates the calculation of set-wise
+  metrics such as recall, specificity, fall out and miss rate.
+  :issue:`11179` by :user:`Shangwu Yao <ShangwuYao>` and `Joel Nothman`_.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| Classes :class:`~model_selection.GridSearchCV`,
+  :class:`~model_selection.RandomSearchCV`, and methods
+  :func:`~model_selection.cross_val_score`,
+  :func:`~model_selection.cross_val_predict`,
+  :func:`~model_selection.cross_validate`, now print train scores when
+  `return_train_scores` is True and `verbose` > 2. For
+  :func:`~model_selection.learning_curve`, and
+  :func:`~model_selection.validation_curve` only the latter is required.
+  :issue:`12613` and :issue:`12669` by :user:`Marc Torrellas <marctorrellas>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |API| Methods in :class:`neighbors.NearestNeighbors` :
+  :func:`~neighbors.NearestNeighbors.kneighbors`,
+  :func:`~neighbors.NearestNeighbors.radius_neighbors`,
+  :func:`~neighbors.NearestNeighbors.kneighbors_graph`,
+  :func:`~neighbors.NearestNeighbors.radius_neighbors_graph`
+  now raise ``NotFittedError``, rather than ``AttributeError``,
+  when called before ``fit`` :issue:`12279` by :user:`Krishna Sangeeth
+  <whiletruelearn>`.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |API| :class:`pipeline.Pipeline` now supports using ``'passthrough'`` as a
+  transformer. :issue:`11144` by :user:`Thomas Fan <thomasjpfan>`.
 
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Efficiency| Make :class:`preprocessing.MultiLabelBinarizer` to cache class
+  mappings instead of calculating it every time on the fly.
+  :issue:`12116` by :user:`Ekaterina Krivich <kiote>` and `Joel Nothman`_.
+
+- |Efficiency| :class:`preprocessing.PolynomialFeatures` now supports compressed
+  sparse row (CSR) matrices as input for degrees 2 and 3. This is typically much
+  faster than the dense case as it scales with matrix density and expansion degree
+  (on the order of density^degree), and is much, much faster than the compressed
+  sparse column (CSC) case. :issue:`12197` by :user:`Andrew Nystrom <awnystrom>`.
+
 - |Efficiency| |API| Speed improvement in :class:`preprocessing.PolynomialFeatures`,
   in the dense case. Also added a new parameter ``order`` which controls output
   order for further speed performances. :issue:`12251` by `Tom Dupre la Tour`_.
+
+:mod:`sklearn.tree`
+...................
+- Decision Trees can now be plotted with matplotlib using
+  :func:`tree.plot_tree` without relying on the ``dot`` library,
+  removing a hard-to-install dependency. :issue:`8508` by `Andreas Müller`_.
+
+- |Feature| ``get_n_leaves()`` and ``get_depth()`` have been added to
+  :class:`tree.BaseDecisionTree` and consequently all estimators based
+  on it, including :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
+  and :class:`tree.ExtraTreeRegressor`.
+  :issue:`12300` by :user:`Adrin Jalali <adrinjalali>`.
+
+- |Fix| Fixed an issue with :class:`tree.BaseDecisionTree`
+  and consequently all estimators based
+  on it, including :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
+  and :class:`tree.ExtraTreeRegressor`, where they used to exceed the given
+  ``max_depth`` by 1 while expanding the tree if ``max_leaf_nodes`` and
+  ``max_depth`` were both specified by the user. Please note that this also
+  affects all ensemble methods using decision trees.
+  :pr:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
 
 Multiple modules
@@ -63,3 +188,9 @@ Changes to estimator checks
 ---------------------------
 
 These changes mostly affect library developers.
+
+- Add ``check_fit_idempotent`` to
+  :func:`~utils.estimator_checks.check_estimator`, which checks that
+  when `fit` is called twice with the same data, the ouput of
+  `predict`, `predict_proba`, `transform`, and `decision_function` does not
+  change. :issue:`12328` by :user:`Nicolas Hug <NicolasHug>`

@@ -84,6 +84,7 @@ Scoring                           Function                                      
 
 **Regression**
 'explained_variance'              :func:`metrics.explained_variance_score`
+'max_error'                       :func:`metrics.max_error`
 'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
 'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
 'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
@@ -308,6 +309,7 @@ Some also work in the multilabel case:
    hamming_loss
    jaccard_similarity_score
    log_loss
+   multilabel_confusion_matrix
    precision_recall_fscore_support
    precision_score
    recall_score
@@ -775,7 +777,7 @@ binary classification and multilabel indicator format.
 .. topic:: References:
 
   .. [Manning2008] C.D. Manning, P. Raghavan, H. Schütze, `Introduction to Information Retrieval
-     <http://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html>`_,
+     <https://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html>`_,
      2008.
   .. [Everingham2010] M. Everingham, L. Van Gool, C.K.I. Williams, J. Winn, A. Zisserman,
      `The Pascal Visual Object Classes (VOC) Challenge
@@ -785,7 +787,7 @@ binary classification and multilabel indicator format.
      <http://www.machinelearning.org/proceedings/icml2006/030_The_Relationship_Bet.pdf>`_,
      ICML 2006.
   .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
-     <http://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
+     <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
      NIPS 2015.
 
 
@@ -885,7 +887,8 @@ To make this more explicit, consider the following notation:
 * :math:`y_l` the subset of :math:`y` with label :math:`l`
 * similarly, :math:`\hat{y}_s` and :math:`\hat{y}_l` are subsets of
   :math:`\hat{y}`
-* :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}`
+* :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}` for some
+  sets :math:`A` and :math:`B`
 * :math:`R(A, B) := \frac{\left| A \cap B \right|}{\left|B\right|}`
   (Conventions vary on handling :math:`B = \emptyset`; this implementation uses
   :math:`R(A, B):=0`, and similar for :math:`P`.)
@@ -1118,6 +1121,112 @@ function:
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)  # doctest: +ELLIPSIS
     -0.33...
+
+.. _multilabel_confusion_matrix:
+
+Multi-label confusion matrix
+----------------------------
+
+The :func:`multilabel_confusion_matrix` function computes class-wise (default)
+or sample-wise (samplewise=True) multilabel confusion matrix to evaluate
+the accuracy of a classification. multilabel_confusion_matrix also treats
+multiclass data as if it were multilabel, as this is a transformation commonly
+applied to evaluate multiclass problems with binary classification metrics
+(such as precision, recall, etc.).
+
+When calculating class-wise multilabel confusion matrix :math:`C`, the
+count of true negatives for class :math:`i` is :math:`C_{i,0,0}`, false
+negatives is :math:`C_{i,1,0}`, true positives is :math:`C_{i,1,1}`
+and false positives is :math:`C_{i,0,1}`.
+
+Here is an example demonstrating the use of the
+:func:`multilabel_confusion_matrix` function with
+:term:`multilabel indicator matrix` input::
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import multilabel_confusion_matrix
+    >>> y_true = np.array([[1, 0, 1],
+    ...                    [0, 1, 0]])
+    >>> y_pred = np.array([[1, 0, 0],
+    ...                    [0, 1, 1]])
+    >>> multilabel_confusion_matrix(y_true, y_pred)
+    array([[[1, 0],
+            [0, 1]],
+    <BLANKLINE>
+           [[1, 0],
+            [0, 1]],
+    <BLANKLINE>
+           [[0, 1],
+            [1, 0]]])
+
+Or a confusion matrix can be constructed for each sample's labels:
+
+    >>> multilabel_confusion_matrix(y_true, y_pred, samplewise=True)
+    array([[[1, 0],
+            [1, 1]],
+    <BLANKLINE>
+           [[1, 1],
+            [0, 1]]])
+
+Here is an example demonstrating the use of the
+:func:`multilabel_confusion_matrix` function with
+:term:`multiclass` input::
+
+    >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
+    >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
+    >>> multilabel_confusion_matrix(y_true, y_pred,
+    ...                             labels=["ant", "bird", "cat"])
+    array([[[3, 1],
+            [0, 2]],
+    <BLANKLINE>
+           [[5, 0],
+            [1, 0]],
+    <BLANKLINE>
+           [[2, 1],
+            [1, 2]]])
+
+Here are some examples demonstrating the use of the
+:func:`multilabel_confusion_matrix` function to calculate recall
+(or sensitivity), specificity, fall out and miss rate for each class in a
+problem with multilabel indicator matrix input.
+
+Calculating
+`recall <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`__
+(also called the true positive rate or the sensitivity) for each class::
+
+    >>> y_true = np.array([[0, 0, 1],
+    ...                    [0, 1, 0],
+    ...                    [1, 1, 0]])
+    >>> y_pred = np.array([[0, 1, 0],
+    ...                    [0, 0, 1],
+    ...                    [1, 1, 0]])
+    >>> mcm = multilabel_confusion_matrix(y_true, y_pred)
+    >>> tn = mcm[:, 0, 0]
+    >>> tp = mcm[:, 1, 1]
+    >>> fn = mcm[:, 1, 0]
+    >>> fp = mcm[:, 0, 1]
+    >>> tp / (tp + fn)
+    array([1. , 0.5, 0. ])
+
+Calculating
+`specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`__
+(also called the true negative rate) for each class::
+
+    >>> tn / (tn + fp)
+    array([1. , 0. , 0.5])
+
+Calculating `fall out <https://en.wikipedia.org/wiki/False_positive_rate>`__
+(also called the false positive rate) for each class::
+
+    >>> fp / (fp + tn)
+    array([0. , 1. , 0.5])
+
+Calculating `miss rate
+<https://en.wikipedia.org/wiki/False_positives_and_false_negatives>`__
+(also called the false negative rate) for each class::
+
+    >>> fn / (fn + tp)
+    array([0. , 0.5, 1. ])
 
 .. _roc_metrics:
 
@@ -1529,6 +1638,38 @@ function::
     >>> explained_variance_score(y_true, y_pred, multioutput=[0.3, 0.7])
     ... # doctest: +ELLIPSIS
     0.990...
+
+.. _max_error:
+
+Max error
+-------------------
+
+The :func:`max_error` function computes the maximum `residual error
+<https://en.wikipedia.org/wiki/Errors_and_residuals>`_ , a metric
+that captures the worst case error between the predicted value and
+the true value. In a perfectly fitted single output regression
+model, ``max_error`` would be ``0`` on the training set and though this
+would be highly unlikely in the real world, this metric shows the
+extent of error that the model had when it was fitted.
+
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
+and :math:`y_i` is the corresponding true value, then the max error is
+defined as
+
+.. math::
+
+  \text{Max Error}(y, \hat{y}) = max(| y_i - \hat{y}_i |)
+
+Here is a small example of usage of the :func:`max_error` function::
+
+  >>> from sklearn.metrics import max_error
+  >>> y_true = [3, 2, 7, 1]
+  >>> y_pred = [9, 2, 7, 1]
+  >>> max_error(y_true, y_pred)
+  6
+
+The :func:`max_error` does not support multioutput.
 
 .. _mean_absolute_error:
 

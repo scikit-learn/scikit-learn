@@ -11,6 +11,39 @@ Who is using scikit-learn?
 
 .. to add a testimonials, just XXX
 
+`J.P.Morgan <https://www.jpmorgan.com>`_
+------------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/jpmorgan.png
+    :width: 120pt
+    :target: https://www.jpmorgan.com
+
+.. raw:: html
+
+    </div>
+
+Scikit-learn is an indispensable part of the Python machine learning
+toolkit at JPMorgan. It is very widely used across all parts of the bank
+for classification, predictive analytics, and very many other machine
+learning tasks. Its straightforward API, its breadth of algorithms, and
+the quality of its documentation combine to make scikit-learn
+simultaneously very approachable and very powerful.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Stephen Simmons, VP, Athena Research, JPMorgan
+
+.. raw:: html
+
+   </span>
+
+
 `Spotify <https://www.spotify.com>`_
 ------------------------------------
 
@@ -43,7 +76,7 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
    </span>
 
 `Inria <https://www.inria.fr/>`_
--------------------------------
+--------------------------------
 
 .. raw:: html
 
@@ -222,7 +255,7 @@ Alexandre Gramfort, Assistant Professor
 
 
 `Booking.com <https://www.booking.com>`_
--------------------------------------
+-----------------------------------------
 .. raw:: html
 
   <div class="logo">
@@ -695,7 +728,7 @@ Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
 
 
 `Machinalis <https://www.machinalis.com/>`_
------------------------------------------
+-------------------------------------------
 
 .. raw:: html
 
@@ -775,7 +808,7 @@ Trent McConaghy, founder, Solido Design Automation Inc.
 
 .. image:: images/infonea.jpg
     :width: 120pt
-    :target: http://www.infonea.com/en
+    :target: http://www.infonea.com/en/
 
 .. raw:: html
 
@@ -904,7 +937,7 @@ Vlasios Vasileiou, Head of Data Science, Zopa
   </span>
 
 `MARS <https://www.mars.com/global>`_
-------------------------------------
+--------------------------------------
 
 .. raw:: html
 

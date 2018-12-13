@@ -2,15 +2,78 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_20_2:
+
+Version 0.20.2
+==============
+
+**XX, 2019**
+
+This is a bug-fix release with some minor documentation improvements and
+enhancements to features released in 0.20.0.
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- :mod:`sklearn.neighbors` when ``metric=='jaccard'`` (bug fix)
+
+Changelog
+---------
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixed an issue in :func:`compose.make_column_transformer` which raises
+  unexpected error when columns is pandas Index or pandas Series.
+  :issue:`12704` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |Fix| Fixed a regression in :class:`pipeline.Pipeline` where the ``steps``
+  parameter may not have been updated correctly when a step is set to ``None``
+  or ``'passthrough'``. :user:`Thomas Fan <thomasjpfan>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| Fixed :class:`sklearn.neighbors.DistanceMetric` jaccard distance
+  function to return 0 when two all-zero vectors are compared.
+  :issue:`12685` by :user:`Thomas Fan <thomasjpfan>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Calling :func:`utils.check_array` on `pandas.Series` with categorical
+  data, which raised an error in 0.20.0, now returns the expected output again.
+  :issue:`12699` by `Joris Van den Bossche`_.
+
 .. _changes_0_20_1:
 
 Version 0.20.1
 ==============
 
-**October XX, 2018**
+**November 21, 2018**
 
 This is a bug-fix release with some minor documentation improvements and
-enhancements to features released in 0.20.0.
+enhancements to features released in 0.20.0. Note that we also include some
+API changes in this release, so you might get some extra warnings after
+updating from 0.20.0 to 0.20.1.
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- :class:`decomposition.IncrementalPCA` (bug fix)
 
 Changelog
 ---------
@@ -34,15 +97,42 @@ Changelog
   columns with types not convertible to a numeric.
   :issue:`11912` by :user:`Adrin Jalali <adrinjalali>`.
 
+- |API| :class:`compose.ColumnTransformer` now applies the ``sparse_threshold``
+  even if all transformation results are sparse. :issue:`12304` by `Andreas
+  Müller`_.
+
+- |API| :func:`compose.make_column_transformer` now expects
+  ``(transformer, columns)`` instead of ``(columns, transformer)`` to keep
+  consistent with :class:`compose.ColumnTransformer`.
+  :issue:`12339` by :user:`Adrin Jalali <adrinjalali>`.
+
 :mod:`sklearn.datasets`
 ............................
 
 - |Fix| :func:`datasets.fetch_openml` to correctly use the local cache.
   :issue:`12246` by :user:`Jan N. van Rijn <janvanrijn>`.
 
+- |Fix| :func:`datasets.fetch_openml` to correctly handle ignore attributes and
+  row id attributes. :issue:`12330` by :user:`Jan N. van Rijn <janvanrijn>`.
+
 - |Fix| Fixed integer overflow in :func:`datasets.make_classification`
   for values of ``n_informative`` parameter larger than 64.
-  :issue:10811 by :user:`Roman Feldbauer <VarIr>`.
+  :issue:`10811` by :user:`Roman Feldbauer <VarIr>`.
+
+- |Fix| Fixed olivetti faces dataset ``DESCR`` attribute to point to the right
+  location in :func:`datasets.fetch_olivetti_faces`. :issue:`12441` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`
+
+- |Fix| :func:`datasets.fetch_openml` to retry downloading when reading
+  from local cache fails. :issue:`12517` by :user:`Thomas Fan <thomasjpfan>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a regression in :class:`decomposition.IncrementalPCA` where
+  0.20.0 raised an error if the number of samples in the final batch for
+  fitting IncrementalPCA was smaller than n_components.
+  :issue:`12234` by :user:`Ming Li <minggli>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -51,14 +141,60 @@ Changelog
   where ``class_weight='balanced_subsample'`` failed with more than 32 classes.
   :issue:`12165` by `Joel Nothman`_.
 
+- |Fix| Fixed a bug affecting :class:`ensemble.BaggingClassifier`,
+  :class:`ensemble.BaggingRegressor` and :class:`ensemble.IsolationForest`,
+  where ``max_features`` was sometimes rounded down to zero.
+  :issue:`12388` by :user:`Connor Tann <Connossor>`.
+
+:mod:`sklearn.feature_extraction`
+..................................
+
+- |Fix| Fixed a regression in v0.20.0 where
+  :func:`feature_extraction.text.CountVectorizer` and other text vectorizers
+  could error during stop words validation with custom preprocessors
+  or tokenizers. :issue:`12393` by `Roman Yurchak`_.
+
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Fix| :func:`linear_model.SGDClassifier` and variants
+- |Fix| :class:`linear_model.SGDClassifier` and variants
   with ``early_stopping=True`` would not use a consistent validation
   split in the multiclass case and this would cause a crash when using
   those estimators as part of parallel parameter search or cross-validation.
   :issue:`12122` by :user:`Olivier Grisel <ogrisel>`.
+
+- |Fix| Fixed a bug affecting :class:`SGDClassifier` in the multiclass
+  case. Each one-versus-all step is run in a :class:`joblib.Parallel` call and
+  mutating a common parameter, causing a segmentation fault if called within a
+  backend using processes and not threads. We now use ``require=sharedmem``
+  at the :class:`joblib.Parallel` instance creation. :issue:`12518` by
+  :user:`Pierre Glaser <pierreglaser>` and :user:`Olivier Grisel <ogrisel>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :func:`metrics.pairwise.pairwise_distances_argmin_min`
+  which returned the square root of the distance when the metric parameter was
+  set to "euclidean". :issue:`12481` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :func:`metrics.pairwise.pairwise_distances_chunked`
+  which didn't ensure the diagonal is zero for euclidean distances.
+  :issue:`12612` by :user:`Andreas Müller <amueller>`.
+
+- |API| The :func:`metrics.calinski_harabaz_score` has been renamed to
+  :func:`metrics.calinski_harabasz_score` and will be removed in version 0.23.
+  :issue:`12211` by :user:`Lisa Thomas <LisaThomas9>`,
+  :user:`Mark Hannel <markhannel>` and :user:`Melissa Ferrari <mferrari3>`.
+
+:mod:`sklearn.mixture`
+........................
+
+- |Fix| Ensure that the ``fit_predict`` method of
+  :class:`mixture.GaussianMixture` and :class:`mixture.BayesianGaussianMixture`
+  always yield assignments consistent with ``fit`` followed by ``predict`` even
+  if the convergence criterion is too loose or not met. :issue:`12451`
+  by :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -68,12 +204,96 @@ Changelog
   avoid pickling errors caused by the serialization of their methods.
   :issue:`12171` by :user:`Thomas Moreau <tomMoral>`.
 
+:mod:`sklearn.preprocessing`
+.............................
+
+- |Fix| Fixed bug in :class:`preprocessing.OrdinalEncoder` when passing
+  manually specified categories. :issue:`12365` by `Joris Van den Bossche`_.
+
+- |Fix| Fixed bug in :class:`preprocessing.KBinsDiscretizer` where the
+  ``transform`` method mutates the ``_encoder`` attribute. The ``transform``
+  method is now thread safe. :issue:`12514` by
+  :user:`Hanmin Qin <qinhanmin2014>`.
+
+- |Fix| Fixed a bug in :class:`preprocessing.PowerTransformer` where the
+  Yeo-Johnson transform was incorrect for lambda parameters outside of `[0, 2]`
+  :issue:`12522` by :user:`Nicolas Hug<NicolasHug>`.
+
+- |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where transform
+  failed when set to ignore unknown numpy strings of different lengths 
+  :issue:`12471` by :user:`Gabriel Marzinotto<GMarzinotto>`.
+
+- |API| The default value of the :code:`method` argument in
+  :func:`preprocessing.power_transform` will be changed from :code:`box-cox`
+  to :code:`yeo-johnson` to match :class:`preprocessing.PowerTransformer`
+  in version 0.23. A FutureWarning is raised when the default value is used.
+  :issue:`12317` by :user:`Eric Chang <chang>`.
+
+:mod:`sklearn.utils`
+........................
+
+- |Fix| Use float64 for mean accumulator to avoid floating point
+  precision issues in :class:`preprocessing.StandardScaler` and
+  :class:`decomposition.IncrementalPCA` when using float32 datasets.
+  :issue:`12338` by :user:`bauks <bauks>`.
+
+- |Fix| Calling :func:`utils.check_array` on `pandas.Series`, which
+  raised an error in 0.20.0, now returns the expected output again.
+  :issue:`12625` by `Andreas Müller`_
+  
+Miscellaneous
+.............
+
+- |Fix| When using site joblib by setting the environment variable
+  `SKLEARN_SITE_JOBLIB`, added compatibility with joblib 0.11 in addition
+  to 0.12+. :issue:`12350` by `Joel Nothman`_ and `Roman Yurchak`_.
+
+- |Fix| Make sure to avoid raising ``FutureWarning`` when calling
+  ``np.vstack`` with numpy 1.16 and later (use list comprehensions
+  instead of generator expressions in many locations of the scikit-learn
+  code base). :issue:`12467` by :user:`Olivier Grisel <ogrisel>`.
+
+- |API| Removed all mentions of ``sklearn.externals.joblib``, and deprecated
+  joblib methods exposed in ``sklearn.utils``, except for
+  :func:`utils.parallel_backend` and :func:`utils.register_parallel_backend`,
+  which allow users to configure parallel computation in scikit-learn.
+  Other functionalities are part of `joblib <https://joblib.readthedocs.io/>`_.
+  package and should be used directly, by installing it.
+  The goal of this change is to prepare for
+  unvendoring joblib in future version of scikit-learn.
+  :issue:`12345` by :user:`Thomas Moreau <tomMoral>`
+
+Code and Documentation Contributors
+-----------------------------------
+
+With thanks to:
+
+^__^, Adrin Jalali, Andrea Navarrete, Andreas Mueller,
+bauks, BenjaStudio, Cheuk Ting Ho, Connossor,
+Corey Levinson, Dan Stine, daten-kieker, Denis Kataev,
+Dillon Gardner, Dmitry Vukolov, Dougal J. Sutherland, Edward J Brown,
+Eric Chang, Federico Caselli, Gabriel Marzinotto, Gael Varoquaux,
+GauravAhlawat, Gustavo De Mari Pereira, Hanmin Qin, haroldfox,
+JackLangerman, Jacopo Notarstefano, janvanrijn, jdethurens,
+jeremiedbb, Joel Nothman, Joris Van den Bossche, Koen,
+Kushal Chauhan, Lee Yi Jie Joel, Lily Xiong, mail-liam,
+Mark Hannel, melsyt, Ming Li, Nicholas Smith,
+Nicolas Hug, Nikolay Shebanov, Oleksandr Pavlyk, Olivier Grisel,
+Peter Hausamann, Pierre Glaser, Pulkit Maloo, Quentin Batista,
+Radostin Stoyanov, Ramil Nugmanov, Rebekah Kim, Reshama Shaikh,
+Rohan Singh, Roman Feldbauer, Roman Yurchak, Roopam Sharma,
+Sam Waterbury, Scott Lowe, Sebastian Raschka, Stephen Tierney,
+SylvainLan, TakingItCasual, Thomas Fan, Thomas Moreau,
+Tom Dupré la Tour, Tulio Casagrande, Utkarsh Upadhyay, Xing Han Lu,
+Yaroslav Halchenko, Zach Miller
+
+
 .. _changes_0_20:
 
 Version 0.20.0
 ==============
 
-**September, 2018**
+**September 25, 2018**
 
 This release packs in a mountain of bug fixes, features and enhancements for
 the Scikit-learn library, and improvements to the documentation and examples.
@@ -940,7 +1160,7 @@ Support for Python 3.3 has been officially dropped.
   :issue:`9304` by :user:`Breno Freitas <brenolf>`.
 
 - |API| :class:`pipeline.FeatureUnion` now supports ``'drop'`` as a transformer
-  to drop features. :issue:`11144` by :user:`thomasjpfan`.
+  to drop features. :issue:`11144` by :user:`Thomas Fan <thomasjpfan>`.
 
 
 :mod:`sklearn.preprocessing`
@@ -1217,6 +1437,9 @@ Miscellaneous
   :term:`Glossary <n_jobs>` for additional information). Note that this change
   happens immediately (i.e., without a deprecation cycle).
   :issue:`11741` by `Olivier Grisel`_.
+
+- |Fix| Fixed a bug in validation helpers where passing a Dask DataFrame results
+  in an error. :issue:`12462` by :user:`Zachariah Miller <zwmiller>`
 
 Changes to estimator checks
 ---------------------------

@@ -142,6 +142,21 @@ validation iterator instead, for instance::
   >>> cross_val_score(clf, iris.data, iris.target, cv=cv)  # doctest: +ELLIPSIS
   array([0.977..., 0.977..., 1.  ..., 0.955..., 1.        ])
 
+Another option is to use an iterable yielding (train, test) splits as arrays of
+indices, for example::
+
+  >>> def custom_cv_2folds(X):
+  ...     n = X.shape[0]
+  ...     i = 1
+  ...     while i <= 2:
+  ...         idx = np.arange(n * (i - 1) / 2, n * i / 2, dtype=int)
+  ...         yield idx, idx
+  ...         i += 1
+  ...
+  >>> custom_cv = custom_cv_2folds(iris.data)
+  >>> cross_val_score(clf, iris.data, iris.target, cv=custom_cv)
+  array([1.        , 0.973...])
+
 .. topic:: Data transformation with held out data
 
     Just as it is important to test a predictor on data held-out from
@@ -422,7 +437,7 @@ fold cross validation should be preferred to LOO.
  * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
    <https://people.csail.mit.edu/romer/papers/CrossVal_SDM08.pdf>`_, SIAM 2008;
  * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to
-   Statistical Learning <http://www-bcf.usc.edu/~gareth/ISL>`_, Springer 2013.
+   Statistical Learning <https://www-bcf.usc.edu/~gareth/ISL/>`_, Springer 2013.
 
 
 Leave P Out (LPO)

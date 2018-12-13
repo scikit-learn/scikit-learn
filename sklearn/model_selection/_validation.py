@@ -24,7 +24,7 @@ from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 from ..utils._joblib import logger
 from ..externals.six.moves import zip
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
@@ -82,8 +82,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
 
         - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train, test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -292,8 +292,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
 
         - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train, test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -504,7 +504,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     is_multimetric = not callable(scorer)
     n_scorers = len(scorer.keys()) if is_multimetric else 1
-
     try:
         if y_train is None:
             estimator.fit(X_train, **fit_params)
@@ -554,13 +553,20 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         if return_train_score:
             train_scores = _score(estimator, X_train, y_train, scorer,
                                   is_multimetric)
-
     if verbose > 2:
         if is_multimetric:
-            for scorer_name, score in test_scores.items():
-                msg += ", %s=%s" % (scorer_name, score)
+            for scorer_name in sorted(test_scores):
+                msg += ", %s=" % scorer_name
+                if return_train_score:
+                    msg += "(train=%.3f," % train_scores[scorer_name]
+                    msg += " test=%.3f)" % test_scores[scorer_name]
+                else:
+                    msg += "%.3f" % test_scores[scorer_name]
         else:
-            msg += ", score=%s" % test_scores
+            msg += ", score="
+            msg += ("%.3f" % test_scores if not return_train_score else
+                    "(train=%.3f, test=%.3f)" % (train_scores, test_scores))
+
     if verbose > 1:
         total_time = score_time + fit_time
         end_msg = "%s, total=%s" % (msg, logger.short_format_time(total_time))
@@ -666,8 +672,8 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv='warn',
 
         - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train, test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -957,8 +963,8 @@ def permutation_test_score(estimator, X, y, groups=None, cv='warn',
 
         - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train, test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -1109,8 +1115,8 @@ def learning_curve(estimator, X, y, groups=None,
 
         - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train, test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -1360,8 +1366,8 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
 
         - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train, test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all

@@ -895,7 +895,7 @@ class ParseResults(object):
         """
         Pretty-printer for parsed results as a list, using the C{pprint} module.
         Accepts additional positional or keyword args as defined for the 
-        C{pprint.pprint} method. (U{http://docs.python.org/3/library/pprint.html#pprint.pprint})
+        C{pprint.pprint} method. (U{https://docs.python.org/3/library/pprint.html#pprint.pprint})
 
         Example::
             ident = Word(alphas, alphanums)

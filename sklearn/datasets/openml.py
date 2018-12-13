@@ -4,6 +4,8 @@ import os
 import shutil
 from os.path import join
 from warnings import warn
+from contextlib import closing
+from functools import wraps
 
 try:
     # Python 3+
@@ -33,6 +35,30 @@ _DATA_FILE = "data/v1/download/{}"
 
 def _get_local_path(openml_path, data_home):
     return os.path.join(data_home, 'openml.org', openml_path + ".gz")
+
+
+def _retry_with_clean_cache(openml_path, data_home):
+    """If the first call to the decorated function fails, the local cached
+    file is removed, and the function is called again. If ``data_home`` is
+    ``None``, then the function is called once.
+    """
+    def decorator(f):
+        @wraps(f)
+        def wrapper():
+            if data_home is None:
+                return f()
+            try:
+                return f()
+            except HTTPError:
+                raise
+            except Exception:
+                warn("Invalid cache, redownloading file", RuntimeWarning)
+                local_path = _get_local_path(openml_path, data_home)
+                if os.path.exists(local_path):
+                    os.unlink(local_path)
+                return f()
+        return wrapper
+    return decorator
 
 
 def _open_openml_url(openml_path, data_home):
@@ -70,7 +96,6 @@ def _open_openml_url(openml_path, data_home):
 
     local_path = _get_local_path(openml_path, data_home)
     if not os.path.exists(local_path):
-        fsrc = urlopen(req)
         try:
             os.makedirs(os.path.dirname(local_path))
         except OSError:
@@ -78,16 +103,16 @@ def _open_openml_url(openml_path, data_home):
             pass
 
         try:
-            if is_gzip(fsrc):
-                with open(local_path, 'wb') as fdst:
-                    shutil.copyfileobj(fsrc, fdst)
-                    fsrc.close()
-            else:
-                with gzip.GzipFile(local_path, 'wb') as fdst:
-                    shutil.copyfileobj(fsrc, fdst)
-                    fsrc.close()
+            with closing(urlopen(req)) as fsrc:
+                if is_gzip(fsrc):
+                    with open(local_path, 'wb') as fdst:
+                        shutil.copyfileobj(fsrc, fdst)
+                else:
+                    with gzip.GzipFile(local_path, 'wb') as fdst:
+                        shutil.copyfileobj(fsrc, fdst)
         except Exception:
-            os.unlink(local_path)
+            if os.path.exists(local_path):
+                os.unlink(local_path)
             raise
 
     # XXX: First time, decompression will not be necessary (by using fsrc), but
@@ -126,25 +151,24 @@ def _get_json_content_from_openml_api(url, error_message, raise_if_error,
         None otherwise iff raise_if_error was set to False and the error was
         ``acceptable``
     """
-    data_found = True
+
+    @_retry_with_clean_cache(url, data_home)
+    def _load_json():
+        with closing(_open_openml_url(url, data_home)) as response:
+            return json.loads(response.read().decode("utf-8"))
+
     try:
-        response = _open_openml_url(url, data_home)
+        return _load_json()
     except HTTPError as error:
         # 412 is an OpenML specific error code, indicating a generic error
         # (e.g., data not found)
-        if error.code == 412:
-            data_found = False
-        else:
+        if error.code != 412:
             raise error
-    if not data_found:
-        # not in except for nicer traceback
-        if raise_if_error:
-            raise ValueError(error_message)
-        else:
-            return None
-    json_data = json.loads(response.read().decode("utf-8"))
-    response.close()
-    return json_data
+
+    # 412 error, not in except for nicer traceback
+    if raise_if_error:
+        raise ValueError(error_message)
+    return None
 
 
 def _split_sparse_columns(arff_data, include_columns):
@@ -324,21 +348,28 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
     # encode_nominal argument is to ensure unit testing, do not alter in
     # production!
     url = _DATA_FILE.format(file_id)
-    response = _open_openml_url(url, data_home)
-    if sparse is True:
-        return_type = _arff.COO
-    else:
-        return_type = _arff.DENSE
 
-    if PY2:
-        arff_file = _arff.load(response.read(), encode_nominal=encode_nominal,
-                               return_type=return_type, )
-    else:
-        arff_file = _arff.loads(response.read().decode('utf-8'),
-                                encode_nominal=encode_nominal,
-                                return_type=return_type)
-    response.close()
-    return arff_file
+    @_retry_with_clean_cache(url, data_home)
+    def _arff_load():
+        with closing(_open_openml_url(url, data_home)) as response:
+            if sparse is True:
+                return_type = _arff.COO
+            else:
+                return_type = _arff.DENSE
+
+            if PY2:
+                arff_file = _arff.load(
+                    response.read(),
+                    encode_nominal=encode_nominal,
+                    return_type=return_type,
+                )
+            else:
+                arff_file = _arff.loads(response.read().decode('utf-8'),
+                                        encode_nominal=encode_nominal,
+                                        return_type=return_type)
+        return arff_file
+
+    return _arff_load()
 
 
 def _verify_target_data_type(features_dict, target_columns):
@@ -367,6 +398,20 @@ def _verify_target_data_type(features_dict, target_columns):
         raise ValueError('Can only handle homogeneous multi-target datasets, '
                          'i.e., all targets are either numeric or '
                          'categorical.')
+
+
+def _valid_data_column_names(features_list, target_columns):
+    # logic for determining on which columns can be learned. Note that from the
+    # OpenML guide follows that columns that have the `is_row_identifier` or
+    # `is_ignore` flag, these can not be learned on. Also target columns are
+    # excluded.
+    valid_data_column_names = []
+    for feature in features_list:
+        if (feature['name'] not in target_columns
+                and feature['is_ignore'] != 'true'
+                and feature['is_row_identifier'] != 'true'):
+            valid_data_column_names.append(feature['name'])
+    return valid_data_column_names
 
 
 def fetch_openml(name=None, version='active', data_id=None, data_home=None,
@@ -497,6 +542,12 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                 data_description['version'],
                 data_description['name'],
                 data_description['url']))
+    if 'error' in data_description:
+        warn("OpenML registered a problem with the dataset. It might be "
+             "unusable. Error: {}".format(data_description['error']))
+    if 'warning' in data_description:
+        warn("OpenML raised a warning on the dataset. It might be "
+             "unusable. Warning: {}".format(data_description['warning']))
 
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
@@ -522,10 +573,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         raise TypeError("Did not recognize type of target_column"
                         "Should be six.string_type, list or None. Got: "
                         "{}".format(type(target_column)))
-    data_columns = [feature['name'] for feature in features_list
-                    if (feature['name'] not in target_column and
-                        feature['is_ignore'] != 'true' and
-                        feature['is_row_identifier'] != 'true')]
+    data_columns = _valid_data_column_names(features_list,
+                                            target_column)
 
     # prepare which columns and data types should be returned for the X and y
     features_dict = {feature['name']: feature for feature in features_list}
@@ -555,13 +604,13 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     arff = _download_data_arff(data_description['file_id'], return_sparse,
                                data_home)
     arff_data = arff['data']
+    # nominal attributes is a dict mapping from the attribute name to the
+    # possible values. Includes also the target column (which will be popped
+    # off below, before it will be packed in the Bunch object)
     nominal_attributes = {k: v for k, v in arff['attributes']
-                          if isinstance(v, list)}
-    for feature in features_list:
-        if 'true' in (feature['is_row_identifier'],
-                      feature['is_ignore']) and (feature['name'] not in
-                                                 target_column):
-            del nominal_attributes[feature['name']]
+                          if isinstance(v, list) and
+                          k in data_columns + target_column}
+
     X, y = _convert_arff_data(arff_data, col_slice_x, col_slice_y)
 
     is_classification = {col_name in nominal_attributes

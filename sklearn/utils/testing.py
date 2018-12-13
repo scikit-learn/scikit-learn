@@ -42,12 +42,21 @@ try:
 except NameError:
     WindowsError = None
 
-import sklearn
-from sklearn.base import BaseEstimator
-from sklearn.externals import joblib
-from sklearn.utils.fixes import signature
-from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
+from numpy.testing import assert_allclose
+from numpy.testing import assert_almost_equal
+from numpy.testing import assert_approx_equal
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_less
+import numpy as np
 
+import sklearn
+from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
+                          RegressorMixin, TransformerMixin)
+from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
+from sklearn.utils._joblib import joblib
+from sklearn.utils._unittest_backport import TestCase
+from sklearn.utils.fixes import signature
 
 additional_names_in_all = []
 try:
@@ -73,24 +82,13 @@ try:
 except ImportError:
     pass
 
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_less
-from numpy.testing import assert_approx_equal
-import numpy as np
-
-from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
-                          ClusterMixin)
-from sklearn.utils._unittest_backport import TestCase
-
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
-           "assert_approx_equal", "SkipTest"]
+           "assert_approx_equal", "assert_allclose", "SkipTest"]
 __all__.extend(additional_names_in_all)
 
 _dummy = TestCase('__init__')
@@ -378,11 +376,6 @@ class _IgnoreWarnings(object):
         self.log[:] = []
         clean_warning_registry()
 
-
-assert_less = _dummy.assertLess
-assert_greater = _dummy.assertGreater
-
-assert_allclose = np.testing.assert_allclose
 
 def assert_raise_message(exceptions, message, function, *args, **kwargs):
     """Helper function to test the message raised in an exception.
@@ -763,6 +756,8 @@ try:
                                      reason='skip on travis')
     fails_if_pypy = pytest.mark.xfail(IS_PYPY, raises=NotImplementedError,
                                       reason='not compatible with PyPy')
+    skip_if_no_parallel = pytest.mark.skipif(not joblib.parallel.mp,
+                                             reason="joblib is in serial mode")
 
     #  Decorator for tests involving both BLAS calls and multiprocessing.
     #

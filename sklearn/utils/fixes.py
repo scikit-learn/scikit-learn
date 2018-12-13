@@ -14,6 +14,8 @@ import os
 import errno
 import sys
 
+from distutils.version import LooseVersion
+
 import numpy as np
 import scipy.sparse as sp
 import scipy
@@ -307,18 +309,13 @@ else:
 # Fix for behavior inconsistency on numpy.equal for object dtypes.
 # For numpy versions < 1.13, numpy.equal tests element-wise identity of objects
 # instead of equality. This fix returns the mask of NaNs in an array of
-# numerical or object values for all nupy versions.
-
-_nan_object_array = np.array([np.nan], dtype=object)
-_nan_object_mask = _nan_object_array != _nan_object_array
-
-if np.array_equal(_nan_object_mask, np.array([True])):
-    def _object_dtype_isnan(X):
-        return X != X
-
-else:
+# numerical or object values for all numpy versions.
+if np_version < (1, 13):
     def _object_dtype_isnan(X):
         return np.frompyfunc(lambda x: x != x, 1, 1)(X).astype(bool)
+else:
+    def _object_dtype_isnan(X):
+        return X != X
 
 
 # To be removed once this fix is included in six
@@ -332,3 +329,51 @@ except ImportError:  # python <3.3
     from collections import Iterable as _Iterable  # noqa
     from collections import Mapping as _Mapping  # noqa
     from collections import Sized as _Sized  # noqa
+
+
+def _joblib_parallel_args(**kwargs):
+    """Set joblib.Parallel arguments in a compatible way for 0.11 and 0.12+
+
+    For joblib 0.11 this maps both ``prefer`` and ``require`` parameters to
+    a specific ``backend``.
+
+    Parameters
+    ----------
+
+    prefer : str in {'processes', 'threads'} or None
+        Soft hint to choose the default backend if no specific backend
+        was selected with the parallel_backend context manager.
+
+    require : 'sharedmem' or None
+        Hard condstraint to select the backend. If set to 'sharedmem',
+        the selected backend will be single-host and thread-based even
+        if the user asked for a non-thread based backend with
+        parallel_backend.
+
+    See joblib.Parallel documentation for more details
+    """
+    from . import _joblib
+
+    if _joblib.__version__ >= LooseVersion('0.12'):
+        return kwargs
+
+    extra_args = set(kwargs.keys()).difference({'prefer', 'require'})
+    if extra_args:
+        raise NotImplementedError('unhandled arguments %s with joblib %s'
+                                  % (list(extra_args), _joblib.__version__))
+    args = {}
+    if 'prefer' in kwargs:
+        prefer = kwargs['prefer']
+        if prefer not in ['threads', 'processes', None]:
+            raise ValueError('prefer=%s is not supported' % prefer)
+        args['backend'] = {'threads': 'threading',
+                           'processes': 'multiprocessing',
+                           None: None}[prefer]
+
+    if 'require' in kwargs:
+        require = kwargs['require']
+        if require not in [None, 'sharedmem']:
+            raise ValueError('require=%s is not supported' % require)
+        if require == 'sharedmem':
+            args['backend'] = 'threading'
+    return args

@@ -38,6 +38,12 @@ matrix:
            NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.16.1" CYTHON_VERSION="0.25.2"
            PILLOW_VERSION="4.0.0" COVERAGE=true
       if: type != cron
+    # Python 3.5 build
+    - env: DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="false"
+           NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.16.1" CYTHON_VERSION="0.25.2"
+           PILLOW_VERSION="4.0.0" COVERAGE=true
+           SKLEARN_SITE_JOBLIB=1 JOBLIB_VERSION="0.11"
+      if: type != cron
     # This environment tests the latest available dependencies.
     # It runs tests requiring pandas and PyAMG.
     # It also runs with the site joblib instead of the vendored copy of joblib.
@@ -48,12 +54,6 @@ matrix:
            CHECK_PYTEST_SOFT_DEPENDENCY="true" TEST_DOCSTRINGS="true"
            SKLEARN_SITE_JOBLIB=1 CHECK_WARNINGS="true"
       if: type != cron
-    # flake8 linting on diff wrt common ancestor with upstream/master
-    - env: RUN_FLAKE8="true" SKIP_TESTS="true"
-           DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
-           NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1"
-           CYTHON_VERSION="0.26.1"
-      if: type != cron
     # This environment tests scikit-learn against numpy and scipy master
     # installed from their CI wheels in a virtualenv with the Python
     # interpreter provided by travis.
@@ -62,7 +62,10 @@ matrix:
        if: type = cron OR commit_message =~ /\[scipy-dev\]/
 
 install: source build_tools/travis/install.sh
-script: bash build_tools/travis/test_script.sh
+script: 
+  - bash build_tools/travis/test_script.sh
+  - bash build_tools/travis/test_docs.sh
+  - bash build_tools/travis/test_pytest_soft_dependency.sh
 after_success: source build_tools/travis/after_success.sh
 notifications:
   webhooks:

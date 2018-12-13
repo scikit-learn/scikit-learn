@@ -150,6 +150,9 @@ and tasks.
 
 - `lasagne <https://github.com/Lasagne/Lasagne>`_ A lightweight library to
   build and train neural networks in Theano.
+  
+- `skorch <https://github.com/dnouri/skorch>`_ A scikit-learn compatible 
+  neural network library that wraps PyTorch.
 
 **Broad scope**
 
@@ -244,7 +247,7 @@ Other packages useful for data analysis and machine learning.
 - `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
   organize, log and reproduce experiments
 
-- `Seaborn <http://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
+- `Seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
   matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
 
 - `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning

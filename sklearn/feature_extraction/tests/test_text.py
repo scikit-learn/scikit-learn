@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+import re
 import warnings
 
 import pytest
@@ -28,9 +30,9 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
-from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
-                                   assert_not_equal, assert_almost_equal,
-                                   assert_in, assert_less, assert_greater,
+from sklearn.utils.testing import (assert_equal, assert_not_equal,
+                                   assert_almost_equal, assert_in,
+                                   assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry, ignore_warnings,
                                    SkipTest, assert_raises, assert_no_warnings,
@@ -66,7 +68,7 @@ def uppercase(s):
 
 
 def strip_eacute(s):
-    return s.replace('\xe9', 'e')
+    return s.replace(u'é', 'e')
 
 
 def split_tokenize(s):
@@ -79,32 +81,32 @@ def lazy_analyze(s):
 
 def test_strip_accents():
     # check some classical latin accentuated symbols
-    a = '\xe0\xe1\xe2\xe3\xe4\xe5\xe7\xe8\xe9\xea\xeb'
+    a = u'àáâãäåçèéêë'
     expected = 'aaaaaaceeee'
     assert_equal(strip_accents_unicode(a), expected)
 
-    a = '\xec\xed\xee\xef\xf1\xf2\xf3\xf4\xf5\xf6\xf9\xfa\xfb\xfc\xfd'
+    a = u'ìíîïñòóôõöùúûüý'
     expected = 'iiiinooooouuuuy'
     assert_equal(strip_accents_unicode(a), expected)
 
     # check some arabic
-    a = '\u0625'  # halef with a hamza below
-    expected = '\u0627'  # simple halef
+    a = '\u0625'  # alef with a hamza below: إ
+    expected = '\u0627'  # simple alef: ا
     assert_equal(strip_accents_unicode(a), expected)
 
     # mix letters accentuated and not
-    a = "this is \xe0 test"
+    a = u"this is à test"
     expected = 'this is a test'
     assert_equal(strip_accents_unicode(a), expected)
 
 
 def test_to_ascii():
     # check some classical latin accentuated symbols
-    a = '\xe0\xe1\xe2\xe3\xe4\xe5\xe7\xe8\xe9\xea\xeb'
+    a = u'àáâãäåçèéêë'
     expected = 'aaaaaaceeee'
     assert_equal(strip_accents_ascii(a), expected)
 
-    a = '\xec\xed\xee\xef\xf1\xf2\xf3\xf4\xf5\xf6\xf9\xfa\xfb\xfc\xfd'
+    a = u"ìíîïñòóôõöùúûüý"
     expected = 'iiiinooooouuuuy'
     assert_equal(strip_accents_ascii(a), expected)
 
@@ -114,7 +116,7 @@ def test_to_ascii():
     assert_equal(strip_accents_ascii(a), expected)
 
     # mix letters accentuated and not
-    a = "this is \xe0 test"
+    a = u"this is à test"
     expected = 'this is a test'
     assert_equal(strip_accents_ascii(a), expected)
 
@@ -122,8 +124,8 @@ def test_to_ascii():
 @pytest.mark.parametrize('Vectorizer', (CountVectorizer, HashingVectorizer))
 def test_word_analyzer_unigrams(Vectorizer):
     wa = Vectorizer(strip_accents='ascii').build_analyzer()
-    text = ("J'ai mang\xe9 du kangourou  ce midi, "
-            "c'\xe9tait pas tr\xeas bon.")
+    text = (u"J'ai mangé du kangourou  ce midi, "
+            u"c'était pas très bon.")
     expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
                 'etait', 'pas', 'tres', 'bon']
     assert_equal(wa(text), expected)
@@ -141,8 +143,8 @@ def test_word_analyzer_unigrams(Vectorizer):
 
     # with custom preprocessor
     wa = Vectorizer(preprocessor=uppercase).build_analyzer()
-    text = ("J'ai mang\xe9 du kangourou  ce midi, "
-            " c'\xe9tait pas tr\xeas bon.")
+    text = (u"J'ai mangé du kangourou  ce midi, "
+            u" c'était pas très bon.")
     expected = ['AI', 'MANGE', 'DU', 'KANGOUROU', 'CE', 'MIDI',
                 'ETAIT', 'PAS', 'TRES', 'BON']
     assert_equal(wa(text), expected)
@@ -150,8 +152,8 @@ def test_word_analyzer_unigrams(Vectorizer):
     # with custom tokenizer
     wa = Vectorizer(tokenizer=split_tokenize,
                     strip_accents='ascii').build_analyzer()
-    text = ("J'ai mang\xe9 du kangourou  ce midi, "
-            "c'\xe9tait pas tr\xeas bon.")
+    text = (u"J'ai mangé du kangourou  ce midi, "
+            u"c'était pas très bon.")
     expected = ["j'ai", 'mange', 'du', 'kangourou', 'ce', 'midi,',
                 "c'etait", 'pas', 'tres', 'bon.']
     assert_equal(wa(text), expected)
@@ -161,7 +163,7 @@ def test_word_analyzer_unigrams_and_bigrams():
     wa = CountVectorizer(analyzer="word", strip_accents='unicode',
                          ngram_range=(1, 2)).build_analyzer()
 
-    text = "J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    text = u"J'ai mangé du kangourou  ce midi, c'était pas très bon."
     expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
                 'etait', 'pas', 'tres', 'bon', 'ai mange', 'mange du',
                 'du kangourou', 'kangourou ce', 'ce midi', 'midi etait',
@@ -172,7 +174,7 @@ def test_word_analyzer_unigrams_and_bigrams():
 def test_unicode_decode_error():
     # decode_error default to strict, so this should fail
     # First, encode (as bytes) a unicode string.
-    text = "J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    text = u"J'ai mangé du kangourou  ce midi, c'était pas très bon."
     text_bytes = text.encode('utf-8')
 
     # Then let the Analyzer try to decode it as ascii. It should fail,
@@ -189,7 +191,7 @@ def test_char_ngram_analyzer():
     cnga = CountVectorizer(analyzer='char', strip_accents='unicode',
                            ngram_range=(3, 6)).build_analyzer()
 
-    text = "J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon"
+    text = u"J'ai mangé du kangourou  ce midi, c'était pas très bon"
     expected = ["j'a", "'ai", 'ai ', 'i m', ' ma']
     assert_equal(cnga(text)[:5], expected)
     expected = ['s tres', ' tres ', 'tres b', 'res bo', 'es bon']
@@ -333,7 +335,7 @@ def test_tf_idf_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=True, norm='l2')
     tfidf = tr.fit_transform(X).toarray()
-    assert_true((tfidf >= 0).all())
+    assert (tfidf >= 0).all()
 
     # check normalization
     assert_array_almost_equal((tfidf ** 2).sum(axis=1), [1., 1., 1.])
@@ -344,7 +346,7 @@ def test_tf_idf_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=True, norm='l2')
     tfidf = tr.fit_transform(X).toarray()
-    assert_true((tfidf >= 0).all())
+    assert (tfidf >= 0).all()
 
 
 def test_tfidf_no_smoothing():
@@ -353,7 +355,7 @@ def test_tfidf_no_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
     tfidf = tr.fit_transform(X).toarray()
-    assert_true((tfidf >= 0).all())
+    assert (tfidf >= 0).all()
 
     # check normalization
     assert_array_almost_equal((tfidf ** 2).sum(axis=1), [1., 1., 1.])
@@ -416,13 +418,13 @@ def test_vectorizer():
         assert_equal(counts_test[0, vocabulary["water"]], 1)
 
         # stop word from the fixed list
-        assert_false("the" in vocabulary)
+        assert "the" not in vocabulary
 
         # stop word found automatically by the vectorizer DF thresholding
         # words that are high frequent across the complete corpus are likely
         # to be not informative (either real stop words of extraction
         # artifacts)
-        assert_false("copyright" in vocabulary)
+        assert "copyright" not in vocabulary
 
         # not present in the sample
         assert_equal(counts_test[0, vocabulary["coke"]], 0)
@@ -443,7 +445,7 @@ def test_vectorizer():
     # test tf alone
     t2 = TfidfTransformer(norm='l1', use_idf=False)
     tf = t2.fit(counts_train).transform(counts_train).toarray()
-    assert_false(hasattr(t2, "idf_"))
+    assert not hasattr(t2, "idf_")
 
     # test idf transform with unlearned idf vector
     t3 = TfidfTransformer(use_idf=True)
@@ -467,7 +469,7 @@ def test_vectorizer():
 
     tv.max_df = v1.max_df
     tfidf2 = tv.fit_transform(train_data).toarray()
-    assert_false(tv.fixed_vocabulary_)
+    assert not tv.fixed_vocabulary_
     assert_array_almost_equal(tfidf, tfidf2)
 
     # test the direct tfidf vectorizer with new data
@@ -497,11 +499,11 @@ def test_tfidf_vectorizer_setters():
     tv.norm = 'l1'
     assert_equal(tv._tfidf.norm, 'l1')
     tv.use_idf = True
-    assert_true(tv._tfidf.use_idf)
+    assert tv._tfidf.use_idf
     tv.smooth_idf = True
-    assert_true(tv._tfidf.smooth_idf)
+    assert tv._tfidf.smooth_idf
     tv.sublinear_tf = True
-    assert_true(tv._tfidf.sublinear_tf)
+    assert tv._tfidf.sublinear_tf
 
 
 @fails_if_pypy
@@ -515,10 +517,10 @@ def test_hashing_vectorizer():
 
     # By default the hashed values receive a random sign and l2 normalization
     # makes the feature values bounded
-    assert_true(np.min(X.data) > -1)
-    assert_true(np.min(X.data) < 0)
-    assert_true(np.max(X.data) > 0)
-    assert_true(np.max(X.data) < 1)
+    assert np.min(X.data) > -1
+    assert np.min(X.data) < 0
+    assert np.max(X.data) > 0
+    assert np.max(X.data) < 1
 
     # Check that the rows are normalized
     for i in range(X.shape[0]):
@@ -532,12 +534,12 @@ def test_hashing_vectorizer():
 
     # ngrams generate more non zeros
     ngrams_nnz = X.nnz
-    assert_true(ngrams_nnz > token_nnz)
-    assert_true(ngrams_nnz < 2 * token_nnz)
+    assert ngrams_nnz > token_nnz
+    assert ngrams_nnz < 2 * token_nnz
 
     # makes the feature values bounded
-    assert_true(np.min(X.data) > 0)
-    assert_true(np.max(X.data) < 1)
+    assert np.min(X.data) > 0
+    assert np.max(X.data) < 1
 
     # Check that the rows are normalized
     for i in range(X.shape[0]):
@@ -549,7 +551,7 @@ def test_feature_names():
 
     # test for Value error on unfitted/empty vocabulary
     assert_raises(ValueError, cv.get_feature_names)
-    assert_false(cv.fixed_vocabulary_)
+    assert not cv.fixed_vocabulary_
 
     # test for vocabulary learned from data
     X = cv.fit_transform(ALL_FOOD_DOCS)
@@ -573,7 +575,7 @@ def test_feature_names():
     feature_names = cv.get_feature_names()
     assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza', 'salad',
                         'sparkling', 'tomato', 'water'], feature_names)
-    assert_true(cv.fixed_vocabulary_)
+    assert cv.fixed_vocabulary_
 
     for idx, name in enumerate(feature_names):
         assert_equal(idx, cv.vocabulary_.get(name))
@@ -622,22 +624,22 @@ def test_vectorizer_max_df():
     test_data = ['abc', 'dea', 'eat']
     vect = CountVectorizer(analyzer='char', max_df=1.0)
     vect.fit(test_data)
-    assert_true('a' in vect.vocabulary_.keys())
+    assert 'a' in vect.vocabulary_.keys()
     assert_equal(len(vect.vocabulary_.keys()), 6)
     assert_equal(len(vect.stop_words_), 0)
 
     vect.max_df = 0.5  # 0.5 * 3 documents -> max_doc_count == 1.5
     vect.fit(test_data)
-    assert_true('a' not in vect.vocabulary_.keys())  # {ae} ignored
+    assert 'a' not in vect.vocabulary_.keys()  # {ae} ignored
     assert_equal(len(vect.vocabulary_.keys()), 4)    # {bcdt} remain
-    assert_true('a' in vect.stop_words_)
+    assert 'a' in vect.stop_words_
     assert_equal(len(vect.stop_words_), 2)
 
     vect.max_df = 1
     vect.fit(test_data)
-    assert_true('a' not in vect.vocabulary_.keys())  # {ae} ignored
+    assert 'a' not in vect.vocabulary_.keys()  # {ae} ignored
     assert_equal(len(vect.vocabulary_.keys()), 4)    # {bcdt} remain
-    assert_true('a' in vect.stop_words_)
+    assert 'a' in vect.stop_words_
     assert_equal(len(vect.stop_words_), 2)
 
 
@@ -645,22 +647,22 @@ def test_vectorizer_min_df():
     test_data = ['abc', 'dea', 'eat']
     vect = CountVectorizer(analyzer='char', min_df=1)
     vect.fit(test_data)
-    assert_true('a' in vect.vocabulary_.keys())
+    assert 'a' in vect.vocabulary_.keys()
     assert_equal(len(vect.vocabulary_.keys()), 6)
     assert_equal(len(vect.stop_words_), 0)
 
     vect.min_df = 2
     vect.fit(test_data)
-    assert_true('c' not in vect.vocabulary_.keys())  # {bcdt} ignored
+    assert 'c' not in vect.vocabulary_.keys()  # {bcdt} ignored
     assert_equal(len(vect.vocabulary_.keys()), 2)    # {ae} remain
-    assert_true('c' in vect.stop_words_)
+    assert 'c' in vect.stop_words_
     assert_equal(len(vect.stop_words_), 4)
 
     vect.min_df = 0.8  # 0.8 * 3 documents -> min_doc_count == 2.4
     vect.fit(test_data)
-    assert_true('c' not in vect.vocabulary_.keys())  # {bcdet} ignored
+    assert 'c' not in vect.vocabulary_.keys()  # {bcdet} ignored
     assert_equal(len(vect.vocabulary_.keys()), 1)    # {a} remains
-    assert_true('c' in vect.stop_words_)
+    assert 'c' in vect.stop_words_
     assert_equal(len(vect.stop_words_), 5)
 
 
@@ -810,7 +812,7 @@ def test_vectorizer_pipeline_grid_selection():
     best_vectorizer = grid_search.best_estimator_.named_steps['vect']
     assert_equal(best_vectorizer.ngram_range, (1, 1))
     assert_equal(best_vectorizer.norm, 'l2')
-    assert_false(best_vectorizer.fixed_vocabulary_)
+    assert not best_vectorizer.fixed_vocabulary_
 
 
 def test_vectorizer_pipeline_cross_validation():
@@ -832,25 +834,14 @@ def test_vectorizer_pipeline_cross_validation():
 def test_vectorizer_unicode():
     # tests that the count vectorizer works with cyrillic.
     document = (
-        "\xd0\x9c\xd0\xb0\xd1\x88\xd0\xb8\xd0\xbd\xd0\xbd\xd0\xbe\xd0"
-        "\xb5 \xd0\xbe\xd0\xb1\xd1\x83\xd1\x87\xd0\xb5\xd0\xbd\xd0\xb8\xd0"
-        "\xb5 \xe2\x80\x94 \xd0\xbe\xd0\xb1\xd1\x88\xd0\xb8\xd1\x80\xd0\xbd"
-        "\xd1\x8b\xd0\xb9 \xd0\xbf\xd0\xbe\xd0\xb4\xd1\x80\xd0\xb0\xd0\xb7"
-        "\xd0\xb4\xd0\xb5\xd0\xbb \xd0\xb8\xd1\x81\xd0\xba\xd1\x83\xd1\x81"
-        "\xd1\x81\xd1\x82\xd0\xb2\xd0\xb5\xd0\xbd\xd0\xbd\xd0\xbe\xd0\xb3"
-        "\xd0\xbe \xd0\xb8\xd0\xbd\xd1\x82\xd0\xb5\xd0\xbb\xd0\xbb\xd0"
-        "\xb5\xd0\xba\xd1\x82\xd0\xb0, \xd0\xb8\xd0\xb7\xd1\x83\xd1\x87"
-        "\xd0\xb0\xd1\x8e\xd1\x89\xd0\xb8\xd0\xb9 \xd0\xbc\xd0\xb5\xd1\x82"
-        "\xd0\xbe\xd0\xb4\xd1\x8b \xd0\xbf\xd0\xbe\xd1\x81\xd1\x82\xd1\x80"
-        "\xd0\xbe\xd0\xb5\xd0\xbd\xd0\xb8\xd1\x8f \xd0\xb0\xd0\xbb\xd0\xb3"
-        "\xd0\xbe\xd1\x80\xd0\xb8\xd1\x82\xd0\xbc\xd0\xbe\xd0\xb2, \xd1\x81"
-        "\xd0\xbf\xd0\xbe\xd1\x81\xd0\xbe\xd0\xb1\xd0\xbd\xd1\x8b\xd1\x85 "
-        "\xd0\xbe\xd0\xb1\xd1\x83\xd1\x87\xd0\xb0\xd1\x82\xd1\x8c\xd1\x81\xd1"
-        "\x8f.")
+        u"Машинное обучение — обширный подраздел искусственного "
+        u"интеллекта, изучающий методы построения алгоритмов, "
+        u"способных обучаться."
+        )
 
     vect = CountVectorizer()
     X_counted = vect.fit_transform([document])
-    assert_equal(X_counted.shape, (1, 15))
+    assert_equal(X_counted.shape, (1, 12))
 
     vect = HashingVectorizer(norm=None, non_negative=True)
     X_hashed = vect.transform([document])
@@ -871,7 +862,7 @@ def test_tfidf_vectorizer_with_fixed_vocabulary():
     X_1 = vect.fit_transform(ALL_FOOD_DOCS)
     X_2 = vect.transform(ALL_FOOD_DOCS)
     assert_array_almost_equal(X_1.toarray(), X_2.toarray())
-    assert_true(vect.fixed_vocabulary_)
+    assert vect.fixed_vocabulary_
 
 
 def test_pickling_vectorizer():
@@ -1019,7 +1010,7 @@ def test_hashingvectorizer_nan_in_docs():
 def test_tfidfvectorizer_binary():
     # Non-regression test: TfidfVectorizer used to ignore its "binary" param.
     v = TfidfVectorizer(binary=True, use_idf=False, norm=None)
-    assert_true(v.binary)
+    assert v.binary
 
     X = v.fit_transform(['hello world', 'hello hello']).toarray()
     assert_array_equal(X.ravel(), [1, 1, 1, 0])
@@ -1121,6 +1112,14 @@ def test_vectorizers_invalid_ngram_range(vec):
             ValueError, message, vec.transform, ["good news everyone"])
 
 
+def _check_stop_words_consistency(estimator):
+    stop_words = estimator.get_stop_words()
+    tokenize = estimator.build_tokenizer()
+    preprocess = estimator.build_preprocessor()
+    return estimator._check_stop_words_consistency(stop_words, preprocess,
+                                                   tokenize)
+
+
 @fails_if_pypy
 def test_vectorizer_stop_words_inconsistent():
     if PY2:
@@ -1135,11 +1134,44 @@ def test_vectorizer_stop_words_inconsistent():
         vec.set_params(stop_words=["you've", "you", "you'll", 'AND'])
         assert_warns_message(UserWarning, message, vec.fit_transform,
                              ['hello world'])
+        # reset stop word validation
+        del vec._stop_words_id
+        assert _check_stop_words_consistency(vec) is False
 
     # Only one warning per stop list
     assert_no_warnings(vec.fit_transform, ['hello world'])
+    assert _check_stop_words_consistency(vec) is None
 
     # Test caching of inconsistency assessment
     vec.set_params(stop_words=["you've", "you", "you'll", 'blah', 'AND'])
     assert_warns_message(UserWarning, message, vec.fit_transform,
                          ['hello world'])
+
+
+@fails_if_pypy
+@pytest.mark.parametrize('Estimator',
+                         [CountVectorizer, TfidfVectorizer, HashingVectorizer])
+def test_stop_word_validation_custom_preprocessor(Estimator):
+    data = [{'text': 'some text'}]
+
+    vec = Estimator()
+    assert _check_stop_words_consistency(vec) is True
+
+    vec = Estimator(preprocessor=lambda x: x['text'],
+                    stop_words=['and'])
+    assert _check_stop_words_consistency(vec) == 'error'
+    # checks are cached
+    assert _check_stop_words_consistency(vec) is None
+    vec.fit_transform(data)
+
+    class CustomEstimator(Estimator):
+        def build_preprocessor(self):
+            return lambda x: x['text']
+
+    vec = CustomEstimator(stop_words=['and'])
+    assert _check_stop_words_consistency(vec) == 'error'
+
+    vec = Estimator(tokenizer=lambda doc: re.compile(r'\w{1,}')
+                                            .findall(doc),
+                    stop_words=['and'])
+    assert _check_stop_words_consistency(vec) is True
