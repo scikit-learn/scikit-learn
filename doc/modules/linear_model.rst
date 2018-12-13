@@ -786,8 +786,12 @@ non-smooth `penalty="l1"`. This is therefore the solver of choice for sparse
 multinomial logistic regression. It is also the only solver that supports
 `penalty="elasticnet"`.
 
-In a nutshell, the following table summarizes the penalties supported by
-each solver:
+The "lbfgs" is an optimization algorithm that approximates the 
+Broyden–Fletcher–Goldfarb–Shanno algorithm [8]_, which belongs to
+quasi-Newton methods. The "lbfgs" solver is recommended for use for
+small data-sets but for larger datasets its performance suffers. [9]_
+
+The following table summarizes the penalties supported by each solver:
 
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 |                              |                       **Solvers**                                        |
@@ -814,7 +818,7 @@ each solver:
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 
 The "saga" solver is often the best choice but requires scaling. The
-"liblinear" solver is used by default for historical reasons.
+"lbfgs" solver is used by default for historical reasons.
 
 For large dataset, you may also consider using :class:`SGDClassifier`
 with 'log' loss.
@@ -865,6 +869,12 @@ to warm-starting (see :term:`Glossary <warm_start>`).
     .. [6] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <https://hal.inria.fr/hal-00860051/document>`_
 
     .. [7] Aaron Defazio, Francis Bach, Simon Lacoste-Julien: `SAGA: A Fast Incremental Gradient Method With Support for Non-Strongly Convex Composite Objectives. <https://arxiv.org/abs/1407.0202>`_
+
+    .. [8] https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm
+
+    .. [9] `"Performance Evaluation of Lbfgs vs other solvers"
+            <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_
+
 
 Stochastic Gradient Descent - SGD
 =================================

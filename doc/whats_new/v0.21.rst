@@ -109,6 +109,13 @@ Support for Python 3.4 and below has been officially dropped.
   metrics such as recall, specificity, fall out and miss rate.
   :issue:`11179` by :user:`Shangwu Yao <ShangwuYao>` and `Joel Nothman`_.
 
+- |Enhancement| Use label `accuracy` instead of `micro-average` on
+  :func:`metrics.classification_report` to avoid confusion. `micro-average` is
+  only shown for multi-label or multi-class with a subset of classes because
+  it is otherwise identical to accuracy.
+  :issue:`12334` by :user:`Emmanuel Arias <eamanu@eamanu.com>`,
+  `Joel Nothman`_ and `Andreas Müller`_
+
 :mod:`sklearn.model_selection`
 ..............................
 
