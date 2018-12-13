@@ -1790,7 +1790,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         return report
 
 
-def hamming_loss(y_true, y_pred, labels='deprecated', sample_weight=None):
+def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
