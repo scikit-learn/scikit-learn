@@ -1,7 +1,7 @@
 version: 2
 
 jobs:
-  python3-min-dependency-versions:
+  doc-min-dependencies:
     docker:
       - image: circleci/python:3.6.1
     environment:
@@ -35,7 +35,7 @@ jobs:
           root: doc/_build/html
           paths: .
 
-  python3:
+  doc:
     docker:
       - image: circleci/python:3.6.1
     environment:
@@ -114,8 +114,8 @@ workflows:
   version: 2
   build-doc-and-deploy:
     jobs:
-      - python3
-      - python3-min-dependency-versions
+      - doc
+      - doc-min-dependencies
       - lint
       - pypy3:
           filters:
