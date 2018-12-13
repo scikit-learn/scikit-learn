@@ -243,22 +243,27 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
 
 def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
                   sample_weight=None, max_fpr=None):
-    """Compute Area Under the Curve (AUC) from prediction scores.
+    """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
+    from prediction scores.
+
+    Note: this implementation is restricted to the binary classification task
+    or multilabel classification task in label indicator format.
 
     Read more in the :ref:`User Guide <roc_metrics>`.
 
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels in binary label indicators.
+        True binary labels or binary label indicators.
         The multiclass case expects shape = [n_samples] and labels
         with values from 0 to (n_classes-1), inclusive.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
-        The multiclass case expects shape = [n_samples, n_classes]
+        (as returned by "decision_function" on some classifiers). For binary
+        y_true, y_score is supposed to be the score of the class with greater
+        label. The multiclass case expects shape = [n_samples, n_classes]
         where the scores correspond to probability estimates.
 
     multiclass : string, 'ovr' or 'ovo', default 'ovr'
@@ -272,8 +277,7 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
             Calculate metrics for the multiclass case using the one-vs-one
             approach.
 
-    average : string, {None, 'micro', 'macro', 'samples', 'weighted'},
-              default 'macro'
+    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
 
