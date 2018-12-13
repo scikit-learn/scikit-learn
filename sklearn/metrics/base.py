@@ -13,7 +13,7 @@ Common code for all metrics
 # License: BSD 3 clause
 
 from __future__ import division
-import itertools
+from itertools import combinations
 
 import numpy as np
 
@@ -172,7 +172,7 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
     if is_weighted:
         prevalence = np.empty(n_pairs)
 
-    for ix, (a, b) in enumerate(itertools.combinations(range(n_classes), 2)):
+    for ix, (a, b) in enumerate(combinations(range(n_classes), 2)):
         a_mask = y_true == a
         ab_mask = np.logical_or(a_mask, y_true == b)
 

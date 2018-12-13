@@ -3,6 +3,7 @@ from __future__ import division, print_function
 from functools import partial
 from itertools import product
 from itertools import chain
+from itertools import permutations
 
 import numpy as np
 import scipy.sparse as sp
@@ -17,6 +18,7 @@ from sklearn.utils.validation import check_random_state
 from sklearn.utils import shuffle
 
 from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_equal
@@ -1205,3 +1207,30 @@ def test_no_averaging_labels():
             score_labels = metric(y_true, y_pred, labels=labels, average=None)
             score = metric(y_true, y_pred, average=None)
             assert_array_equal(score_labels, score[inverse_labels])
+
+
+@pytest.mark.parametrize(
+    'name',
+    set(ALL_METRICS) - set(CLASSIFICATION_METRICS) - set(REGRESSION_METRICS) -
+    METRIC_UNDEFINED_BINARY_MULTICLASS)
+def test_multiclass_score_permutation_invariance(name):
+    y_score = np.random.rand(100, 3)
+    y_score = y_score / y_score.sum(axis=1, keepdims=True)
+    y_true = np.argmax(y_score, axis=1)
+    y_true[np.random.randint(len(y_score), size=20)] = np.random.randint(
+        2, size=20)
+
+    metric = ALL_METRICS[name]
+    current_score = None
+    for perm in permutations(range(3), 3):
+        perm = list(perm)
+        inv_perm = np.zeros(3, dtype=int)
+        inv_perm[perm] = np.arange(3)
+        y_score_perm = y_score[:, inv_perm]
+        y_true_perm = np.take(perm, y_true)
+
+        score = metric(y_true_perm, y_score_perm)
+        if current_score is None:
+            current_score = score
+        else:
+            assert_almost_equal(score, current_score)

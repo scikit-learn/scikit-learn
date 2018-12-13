@@ -540,32 +540,6 @@ def test_multi_ovr_auc_toydata():
         result_weighted)
 
 
-def test_multi_auc_score_under_permutation():
-    y_score = np.random.rand(100, 3)
-    # Normalize the scores for each row
-    row_sums = y_score.sum(axis=1)
-    y_score = y_score / row_sums[:, np.newaxis]
-    # Generate the true labels
-    y_true = np.argmax(y_score, axis=1)
-    y_true[np.random.randint(len(y_score), size=20)] = np.random.randint(
-        2, size=20)
-    for multiclass in ['ovr', 'ovo']:
-        for average in ['macro', 'weighted']:
-            same_score_under_permutation = None
-            for perm in [[0, 1, 2], [0, 2, 1], [1, 0, 2],
-                         [1, 2, 0], [2, 0, 1], [2, 1, 0]]:
-                inv_perm = np.zeros(3, dtype=int)
-                inv_perm[perm] = np.arange(3)
-                y_score_perm = y_score[:, inv_perm]
-                y_true_perm = np.take(perm, y_true)
-                score = roc_auc_score(y_true_perm, y_score_perm,
-                                      multiclass=multiclass, average=average)
-                if same_score_under_permutation is None:
-                    same_score_under_permutation = score
-                else:
-                    assert_almost_equal(score, same_score_under_permutation)
-
-
 def test_auc_score_multi_error():
     # Test that roc_auc_score function returns an error when trying
     # to compute multiclass AUC for parameters where an output
