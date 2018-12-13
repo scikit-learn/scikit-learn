@@ -441,8 +441,6 @@ NOT_SYMMETRIC_METRICS = {
 METRICS_WITHOUT_SAMPLE_WEIGHT = {
     "median_absolute_error",
     "max_error",
-    "roc_auc_score",
-    "weighted_roc_auc",
     "ovo_roc_auc",
     "ovo_roc_auc_weighted"
 }
@@ -1155,7 +1153,8 @@ def test_multiclass_sample_weight_invariance(name):
     y_score = random_state.random_sample(size=(n_samples, 5))
     metric = ALL_METRICS[name]
     if name in THRESHOLDED_METRICS:
-        check_sample_weight_invariance(name, metric, y_true, y_score)
+        y_score_norm = y_score / y_score.sum(1, keepdims=True)
+        check_sample_weight_invariance(name, metric, y_true, y_score_norm)
     else:
         check_sample_weight_invariance(name, metric, y_true, y_pred)
 
