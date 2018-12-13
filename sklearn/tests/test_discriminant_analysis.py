@@ -2,6 +2,10 @@ import numpy as np
 
 import pytest
 
+from sklearn.exceptions import ChangedBehaviorWarning
+from sklearn.utils import check_random_state
+from sklearn.utils.testing import (assert_array_equal, assert_no_warnings,
+                                   assert_warns_message)
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -254,6 +258,43 @@ def test_lda_store_covariance():
         clf.covariance_,
         np.array([[0.422222, 0.088889], [0.088889, 0.533333]])
     )
+
+
+@pytest.mark.parametrize('n_features', [3, 5])
+@pytest.mark.parametrize('n_classes', [5, 3])
+def test_lda_dimension_warning(n_classes, n_features):
+    # FIXME: Future warning to be removed in 0.23
+    rng = check_random_state(0)
+    n_samples = 10
+    X = rng.randn(n_samples, n_features)
+    # we create n_classes labels by repeating and truncating a
+    # range(n_classes) until n_samples
+    y = np.tile(range(n_classes), n_samples // n_classes + 1)[:n_samples]
+    max_components = min(n_features, n_classes - 1)
+
+    for n_components in [max_components - 1, None, max_components]:
+        # if n_components <= min(n_classes - 1, n_features), no warning
+        lda = LinearDiscriminantAnalysis(n_components=n_components)
+        assert_no_warnings(lda.fit, X, y)
+
+    for n_components in [max_components + 1,
+                         max(n_features, n_classes - 1) + 1]:
+        # if n_components > min(n_classes - 1, n_features), raise warning
+        # We test one unit higher than max_components, and then something
+        # larger than both n_features and n_classes - 1 to ensure the test
+        # works for any value of n_component
+        lda = LinearDiscriminantAnalysis(n_components=n_components)
+        msg = ("n_components cannot be larger than min(n_features, "
+               "n_classes - 1). Using min(n_features, "
+               "n_classes - 1) = min(%d, %d - 1) = %d components." %
+               (n_features, n_classes, max_components))
+        assert_warns_message(ChangedBehaviorWarning, msg, lda.fit, X, y)
+        future_msg = ("In version 0.23, setting n_components > min("
+                      "n_features, n_classes - 1) will raise a "
+                      "ValueError. You should set n_components to None"
+                      " (default), or a value smaller or equal to "
+                      "min(n_features, n_classes - 1).")
+        assert_warns_message(FutureWarning, future_msg, lda.fit, X, y)
 
 
 def test_qda():

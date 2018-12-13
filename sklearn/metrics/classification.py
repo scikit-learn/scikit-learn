@@ -1645,12 +1645,14 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
               ...
             }
 
-        The reported averages include micro average (averaging the
-        total true positives, false negatives and false positives), macro
-        average (averaging the unweighted mean per label), weighted average
-        (averaging the support-weighted mean per label) and sample average
-        (only for multilabel classification). See also
-        :func:`precision_recall_fscore_support` for more details on averages.
+        The reported averages include macro average (averaging the unweighted
+        mean per label), weighted average (averaging the support-weighted mean
+        per label), sample average (only for multilabel classification) and
+        micro average (averaging the total true positives, false negatives and
+        false positives) it is only shown for multi-label or multi-class
+        with a subset of classes because it is accuracy otherwise.
+        See also:func:`precision_recall_fscore_support` for more details
+        on averages.
 
         Note that in binary classification, recall of the positive class
         is also known as "sensitivity"; recall of the negative class is
@@ -1674,9 +1676,22 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
          class 1       0.00      0.00      0.00         1
          class 2       1.00      0.67      0.80         3
     <BLANKLINE>
-       micro avg       0.60      0.60      0.60         5
+        accuracy                           0.60         5
        macro avg       0.50      0.56      0.49         5
     weighted avg       0.70      0.60      0.61         5
+    <BLANKLINE>
+    >>> y_pred = [1, 1, 0]
+    >>> y_true = [1, 1, 1]
+    >>> print(classification_report(y_true, y_pred, labels=[1, 2, 3]))
+                  precision    recall  f1-score   support
+    <BLANKLINE>
+               1       1.00      0.67      0.80         3
+               2       0.00      0.00      0.00         0
+               3       0.00      0.00      0.00         0
+    <BLANKLINE>
+       micro avg       1.00      0.67      0.80         3
+       macro avg       0.33      0.22      0.27         3
+    weighted avg       1.00      0.67      0.80         3
     <BLANKLINE>
     """
 
@@ -1688,6 +1703,11 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         labels_given = False
     else:
         labels = np.asarray(labels)
+
+    # labelled micro average
+    micro_is_accuracy = ((y_type == 'multiclass' or y_type == 'binary') and
+                         (not labels_given or
+                          (set(labels) == set(unique_labels(y_true, y_pred)))))
 
     if target_names is not None and len(labels) != len(target_names):
         if labels_given:
@@ -1736,7 +1756,11 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     # compute all applicable averages
     for average in average_options:
-        line_heading = average + ' avg'
+        if average.startswith('micro') and micro_is_accuracy:
+            line_heading = 'accuracy'
+        else:
+            line_heading = average + ' avg'
+
         # compute averages with specified averaging method
         avg_p, avg_r, avg_f1, _ = precision_recall_fscore_support(
             y_true, y_pred, labels=labels,
@@ -1747,10 +1771,20 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
             report_dict[line_heading] = dict(
                 zip(headers, [i.item() for i in avg]))
         else:
-            report += row_fmt.format(line_heading, *avg,
-                                     width=width, digits=digits)
+            if line_heading == 'accuracy':
+                row_fmt_accuracy = u'{:>{width}s} ' + \
+                        u' {:>9.{digits}}' * 2 + u' {:>9.{digits}f}' + \
+                        u' {:>9}\n'
+                report += row_fmt_accuracy.format(line_heading, '', '',
+                                                  *avg[2:], width=width,
+                                                  digits=digits)
+            else:
+                report += row_fmt.format(line_heading, *avg,
+                                         width=width, digits=digits)
 
     if output_dict:
+        if 'accuracy' in report_dict.keys():
+            report_dict['accuracy'] = report_dict['accuracy']['precision']
         return report_dict
     else:
         return report
