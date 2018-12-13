@@ -235,7 +235,7 @@ def test_davies_bouldin_score():
     pytest.approx(davies_bouldin_score(X, labels), 2 * np.sqrt(0.5) / 3)
 
     # Ensure divide by zero warning is not raised in general case
-    with pytest.warns(RuntimeWarning) as record:
+    with pytest.warns(None) as record:
         davies_bouldin_score(X, labels)
     for warning in record:
         assert "divide by zero encountered" not in warning.message.args[0]
