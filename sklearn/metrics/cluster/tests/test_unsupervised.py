@@ -234,6 +234,12 @@ def test_davies_bouldin_score():
     labels = [0] * 10 + [1] * 10 + [2] * 10 + [3] * 10
     pytest.approx(davies_bouldin_score(X, labels), 2 * np.sqrt(0.5) / 3)
 
+    # Ensure divide by zero warning is not raised in general case
+    with pytest.warns(RuntimeWarning) as record:
+        davies_bouldin_score(X, labels)
+    for warning in record:
+        assert "divide by zero encountered" not in warning.message.args[0]
+
     # General case - cluster have one sample
     X = ([[0, 0], [2, 2], [3, 3], [5, 5]])
     labels = [0, 0, 1, 2]
