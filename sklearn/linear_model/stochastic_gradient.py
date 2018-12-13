@@ -671,7 +671,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         Internally, this method uses ``max_iter = 1``. Therefore, it is not
         guaranteed that a minimum of the cost function is reached after calling
-        it once.  Ojective convergence and callbacks such as early stopping
+        it once. Objective convergence and callbacks such as early stopping
         should be monitored by the user.
 
         Parameters
@@ -1169,7 +1169,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         Internally, this method uses ``max_iter = 1``. Therefore, it is not
         guaranteed that a minimum of the cost function is reached after calling
-        it once.  Ojective convergence and callbacks such as early stopping
+        it once. Objective convergence and callbacks such as early stopping
         should be monitored by the user.
 
         Parameters
