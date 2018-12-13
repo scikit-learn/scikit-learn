@@ -211,7 +211,7 @@ THRESHOLDED_METRICS = {
     "samples_roc_auc": partial(roc_auc_score, average="samples"),
     "micro_roc_auc": partial(roc_auc_score, average="micro"),
     "ovo_roc_auc": partial(roc_auc_score, average="macro", multiclass='ovo'),
-    "ovo_roc_auc_weighted": partial(roc_auc_score, average="weighted",
+    "weighted_ovo_roc_auc": partial(roc_auc_score, average="weighted",
                                     multiclass='ovo'),
     "partial_roc_auc": partial(roc_auc_score, max_fpr=0.5),
 
@@ -442,7 +442,7 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = {
     "median_absolute_error",
     "max_error",
     "ovo_roc_auc",
-    "ovo_roc_auc_weighted"
+    "weighted_ovo_roc_auc"
 }
 
 
