@@ -1046,7 +1046,8 @@ class CategoricalNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import CategoricalNB
     >>> clf = CategoricalNB()
     >>> clf.fit(X, y)
-    CategoricalNB(alpha=1.0, class_prior=None, fit_prior=True)
+    CategoricalNB(alpha=1.0, class_prior=None, fit_prior=True,
+           on_unseen_cats='warn')
     >>> print(clf.predict(X[2:3]))
     [3]
     """
@@ -1210,13 +1211,13 @@ class CategoricalNB(BaseDiscreteNB):
                         warnings.warn(
                             "Category {} not expected for feature {} "
                             "of features 0 - {}. Sample {} has probability 0."
-                                .format(category, i, self.n_features_, sample)
+                            .format(category, i, self.n_features_, sample)
                         )
                     else:
                         raise KeyError(
                             "Category {} not expected for feature {} "
                             "of features 0 - {}. Sample {} has probability 0."
-                                .format(category, i, self.n_features_, sample)
+                            .format(category, i, self.n_features_, sample)
                         )
                     samples_prob_zero.append(sample)
             # indices length is 0, if all categories have not been seen in the
