@@ -159,8 +159,7 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
-    average : string, {None, 'micro', 'macro', 'samples', 'weighted'},
-              default 'macro'
+    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
 
@@ -934,7 +933,7 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
             unique_inverse[y_true.indices[start:stop]],
             minlength=len(unique_scores))
         all_at_reversed_rank = np.bincount(unique_inverse,
-                                           minlength=len(unique_scores))
+                                        minlength=len(unique_scores))
         false_at_reversed_rank = all_at_reversed_rank - true_at_reversed_rank
 
         # if the scores are ordered, it's possible to count the number of
