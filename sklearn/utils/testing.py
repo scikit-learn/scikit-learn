@@ -58,7 +58,6 @@ from sklearn.utils._joblib import joblib
 from sklearn.utils._unittest_backport import TestCase
 from sklearn.utils.fixes import signature
 
-
 additional_names_in_all = []
 try:
     from nose.tools import raises as _nose_raises
@@ -95,7 +94,6 @@ __all__.extend(additional_names_in_all)
 _dummy = TestCase('__init__')
 assert_equal = _dummy.assertEqual
 assert_not_equal = _dummy.assertNotEqual
-
 assert_raises = _dummy.assertRaises
 SkipTest = unittest.case.SkipTest
 assert_dict_equal = _dummy.assertDictEqual
@@ -112,12 +110,12 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # the old name for now
 assert_raises_regexp = assert_raises_regex
 
-deprecation_message = "'assert_true' deprecated in version 0.21 " \
+deprecation_message = "'assert_true' is deprecated in version 0.21 " \
                       "and will be removed in version 0.23. " \
                       "Please use 'assert' instead."
 assert_true = deprecated(deprecation_message)(_dummy.assertTrue)
 
-deprecation_message = "'assert_false' deprecated in version 0.21 " \
+deprecation_message = "'assert_false' is deprecated in version 0.21 " \
                       "and will be removed in version 0.23. " \
                       "Please use 'assert' instead."
 assert_false = deprecated(deprecation_message)(_dummy.assertFalse)
