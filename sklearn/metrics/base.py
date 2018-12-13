@@ -179,15 +179,12 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
         if is_weighted:
             prevalence[ix] = np.sum(ab_mask) / len(y_true)
 
-        y_score_filtered = y_score[ab_mask]
-
         a_true = a_mask[ab_mask]
         b_true = np.logical_not(a_true)
 
-        a_true_score = binary_metric(a_true, y_score_filtered[:, a])
-        b_true_score = binary_metric(b_true, y_score_filtered[:, b])
-        binary_avg_score = (a_true_score + b_true_score) / 2
-        pair_scores[ix] = binary_avg_score
+        a_true_score = binary_metric(a_true, y_score[ab_mask, a])
+        b_true_score = binary_metric(b_true, y_score[ab_mask, b])
+        pair_scores[ix] = (a_true_score + b_true_score) / 2
 
     return (np.average(pair_scores, weights=prevalence)
             if is_weighted else np.average(pair_scores))
