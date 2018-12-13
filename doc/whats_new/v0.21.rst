@@ -116,6 +116,11 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`12334` by :user:`Emmanuel Arias <eamanu@eamanu.com>`,
   `Joel Nothman`_ and `Andreas Müller`_
 
+  -|Fix| A `DecprecationWarning`` is now raised when :func:`metrics.hamming_loss` 
+  is given a labels parameter.
+  :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra 
+  Mitrovic <SandraMNE>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
