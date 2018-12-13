@@ -1006,25 +1006,25 @@ def test_repeated_stratified_kfold_determinstic_split():
 
 
 def test_train_test_split_errors():
-    assert_raises(ValueError, train_test_split)
+    pytest.raises(ValueError, train_test_split)
     with warnings.catch_warnings():
         # JvR: Currently, a future warning is raised if test_size is not
         # given. As that is the point of this test, ignore the future warning
         warnings.filterwarnings("ignore", category=FutureWarning)
-        assert_raises(ValueError, train_test_split, range(3), train_size=1.1)
+        pytest.raises(ValueError, train_test_split, range(3), train_size=1.1)
 
-    assert_raises(ValueError, train_test_split, range(3), test_size=0.6,
+    pytest.raises(ValueError, train_test_split, range(3), test_size=0.6,
                   train_size=0.6)
-    assert_raises(ValueError, train_test_split, range(3),
+    pytest.raises(ValueError, train_test_split, range(3),
                   test_size=np.float32(0.6), train_size=np.float32(0.6))
-    assert_raises(ValueError, train_test_split, range(3),
+    pytest.raises(ValueError, train_test_split, range(3),
                   test_size="wrong_type")
-    assert_raises(ValueError, train_test_split, range(3), test_size=2,
+    pytest.raises(ValueError, train_test_split, range(3), test_size=2,
                   train_size=4)
-    assert_raises(TypeError, train_test_split, range(3),
+    pytest.raises(TypeError, train_test_split, range(3),
                   some_argument=1.1)
-    assert_raises(ValueError, train_test_split, range(3), range(42))
-    assert_raises(ValueError, train_test_split, range(10),
+    pytest.raises(ValueError, train_test_split, range(3), range(42))
+    pytest.raises(ValueError, train_test_split, range(10),
                   shuffle=False, stratify=True)
 
     assert_raise_message(ValueError,
@@ -1051,8 +1051,8 @@ def test_train_test_split_errors():
     (0.8, 0),
     (0.8, 11)])
 def test_train_test_split_invalid_sizes(train_size, test_size):
-    assert_raises(ValueError, train_test_split, range(10),
-                  train_size=train_size, test_size=test_size)
+    with pytest.raises(ValueError):
+        train_test_split(range(10), train_size=train_size, test_size=test_size)
 
 
 def test_train_test_split():
