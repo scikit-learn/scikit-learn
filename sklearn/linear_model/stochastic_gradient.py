@@ -667,7 +667,12 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                 self.intercept_ = self.standard_intercept_
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
-        """Fit linear model with Stochastic Gradient Descent.
+        """Carry out stochastic gradient descent on one pass of X, y.
+
+        Internally, this method uses ``max_iter = 1``. Therefore, it is not
+        guaranteed that a minimum of the cost function is reached after calling
+        it once.  Ojective convergence and callbacks such as early stopping
+        should be monitored by the user.
 
         Parameters
         ----------
@@ -1160,7 +1165,12 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         return self
 
     def partial_fit(self, X, y, sample_weight=None):
-        """Fit linear model with Stochastic Gradient Descent.
+        """Carry out stochastic gradient descent on one pass of X, y.
+
+        Internally, this method uses ``max_iter = 1``. Therefore, it is not
+        guaranteed that a minimum of the cost function is reached after calling
+        it once.  Ojective convergence and callbacks such as early stopping
+        should be monitored by the user.
 
         Parameters
         ----------
