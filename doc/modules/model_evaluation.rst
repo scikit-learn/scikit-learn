@@ -313,6 +313,7 @@ Some also work in the multilabel case:
    precision_recall_fscore_support
    precision_score
    recall_score
+   roc_auc_score
    zero_one_loss
 
 And some work with binary and multilabel (but not multiclass) problems:
@@ -321,7 +322,6 @@ And some work with binary and multilabel (but not multiclass) problems:
    :template: function.rst
 
    average_precision_score
-   roc_auc_score
 
 
 In the following sub-sections, we will describe each of those functions,
@@ -1287,9 +1287,48 @@ In multi-label classification, the :func:`roc_auc_score` function is
 extended by averaging over the labels as :ref:`above <average>`.
 
 Compared to metrics such as the subset accuracy, the Hamming loss, or the
-F1 score, ROC doesn't require optimizing a threshold for each label. The
-:func:`roc_auc_score` function can also be used in multi-class classification,
-if the predicted outputs have been binarized.
+F1 score, ROC doesn't require optimizing a threshold for each label.
+
+The :func:`roc_auc_score` function can also be used in mult-class
+classification. Two averaging strategies are currently supported: the
+one-vs-one algorithm computes the average of the pairwise ROC AUC scores, and
+the one-vs-rest algorithm computes the average of the ROC AUC scores for each
+class against all other classes. In both cases, the predicted labels are
+provided in an array with values from 0 to ``n_classes``, and the scores
+correspond to the probability estimates that a sample belongs to a particular
+class.
+
+**One-vs-one Algorithm**: Computes the AUC of all possible pairwise
+combinations of classes. [HT2001]_ defines a multiclass AUC metric weighted
+uniformly:
+
+.. math::
+
+   \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k \neq j}^c (\textnormal{AUC}(j | k) +
+   \textnormal{AUC}(k | j))
+
+where :math:`c` is the number of classes and ``\textnormal{AUC}(j | k)`` is the
+auc with class :math:`j` as the positive class and class :math:`k` as the
+negative class. In general,
+:math:`\textnormal{AUC}(j | k) \neq \textnormal{AUC}(k | j))` in the multiclass
+case. This algorithm is used by setting the keyword argument ``multiclass``
+to ``'ovo'`` and ``average`` to ``'macro'``.
+
+The [HT2001]_ multiclass AUC metric can be extended to be weighted by the
+prevalence:
+
+.. math::
+
+   \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k \neq j}^c p(j \cup k)(
+   \textnormal{AUC}(j | k) + \textnormal{AUC}(k | j))
+
+where :math:`c` is the number of classes. This algorithm is used by setting
+the keyword argument ``multiclass`` to ``'ovo'`` and ``average`` to
+``'weighted'``.
+
+**One-vs-rest Algorithm**: Computes the AUC of each class against the rest.
+The algorithm is functionally the same as the multilabel case. To enable this
+algorithm set the keyword argument ``multiclass`` to ``'ovr'``.
 
 In applications where a high false positive rate is not tolerable the parameter
 ``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
@@ -1314,6 +1353,13 @@ to the given limit.
   * See :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
     for an example of using ROC to
     model species distribution.
+
+.. topic:: References:
+
+    .. [HT2001] Hand, D.J. and Till, R.J., 2001. `A simple generalisation
+       of the area under the ROC curve for multiple class classification problems.
+       <http://link.springer.com/article/10.1023/A:1010920819831>`_
+       Machine learning, 45(2), pp.171-186.
 
 .. _zero_one_loss:
 
