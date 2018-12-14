@@ -13,13 +13,12 @@ import numbers
 
 import numpy as np
 import scipy.sparse as sp
-from scipy import __version__ as scipy_version
 from distutils.version import LooseVersion
+from inspect import signature
 
 from numpy.core.numeric import ComplexWarning
 
 from ..externals import six
-from .fixes import signature
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
@@ -32,9 +31,6 @@ FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 # Silenced by default to reduce verbosity. Turn on at runtime for
 # performance profiling.
 warnings.simplefilter('ignore', NonBLASDotWarning)
-
-# checking whether large sparse are supported by scipy or not
-LARGE_SPARSE_SUPPORTED = LooseVersion(scipy_version) >= '0.14.0'
 
 
 def _assert_all_finite(X, allow_nan=False):
@@ -613,7 +609,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
 def _check_large_sparse(X, accept_large_sparse=False):
     """Raise a ValueError if X has 64bit indices and accept_large_sparse=False
     """
-    if not (accept_large_sparse and LARGE_SPARSE_SUPPORTED):
+    if not accept_large_sparse:
         supported_indices = ["int32"]
         if X.getformat() == "coo":
             index_keys = ['col', 'row']
@@ -624,10 +620,6 @@ def _check_large_sparse(X, accept_large_sparse=False):
         for key in index_keys:
             indices_datatype = getattr(X, key).dtype
             if (indices_datatype not in supported_indices):
-                if not LARGE_SPARSE_SUPPORTED:
-                    raise ValueError("Scipy version %s does not support large"
-                                     " indices, please upgrade your scipy"
-                                     " to 0.14.0 or above" % scipy_version)
                 raise ValueError("Only sparse matrices with 32-bit integer"
                                  " indices are accepted. Got %s indices."
                                  % indices_datatype)
