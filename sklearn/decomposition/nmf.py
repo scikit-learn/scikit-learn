@@ -5,10 +5,6 @@
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Tom Dupre la Tour
 # License: BSD 3 clause
-
-
-from __future__ import division
-
 from math import sqrt
 import warnings
 import numbers

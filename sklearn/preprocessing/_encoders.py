@@ -1,9 +1,6 @@
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
-
-from __future__ import division
-
 import numbers
 import warnings
 

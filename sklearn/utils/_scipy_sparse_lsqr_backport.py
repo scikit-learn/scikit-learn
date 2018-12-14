@@ -48,9 +48,6 @@ Kline with contributions by Mridul Aanjaneya and Bob Myhill.
 Adapted for SciPy by Stefan van der Walt.
 
 """
-
-from __future__ import division, absolute_import
-
 __all__ = ['lsqr']
 
 import numpy as np

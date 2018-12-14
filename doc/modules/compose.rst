@@ -256,7 +256,6 @@ variable::
 For simple transformations, instead of a Transformer object, a pair of
 functions can be passed, defining the transformation and its inverse mapping::
 
-  >>> from __future__ import division
   >>> def func(x):
   ...     return np.log(x)
   >>> def inverse_func(x):

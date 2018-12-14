@@ -6,9 +6,6 @@ A Theil-Sen Estimator for Multiple Linear Regression Model
 # Author: Florian Wilhelm <florian.wilhelm@gmail.com>
 #
 # License: BSD 3 clause
-
-from __future__ import division, absolute_import
-
 import warnings
 from itertools import combinations
 

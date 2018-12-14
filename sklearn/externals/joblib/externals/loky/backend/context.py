@@ -10,8 +10,6 @@
 #    used with multiprocessing.set_start_method
 #  * Add some compat function for python2.7 and 3.3.
 #
-from __future__ import division
-
 import os
 import sys
 import warnings

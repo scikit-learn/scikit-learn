@@ -19,9 +19,6 @@ The module structure is the following:
 # Authors: Peter Prettenhofer, Scott White, Gilles Louppe, Emanuele Olivetti,
 #          Arnaud Joly, Jacob Schreiber
 # License: BSD 3 clause
-
-from __future__ import division
-
 from abc import ABCMeta
 from abc import abstractmethod
 

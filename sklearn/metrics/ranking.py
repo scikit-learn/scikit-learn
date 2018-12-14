@@ -16,9 +16,6 @@ the lower the better
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Noel Dawe <noel@dawe.me>
 # License: BSD 3 clause
-
-from __future__ import division
-
 import warnings
 from functools import partial
 

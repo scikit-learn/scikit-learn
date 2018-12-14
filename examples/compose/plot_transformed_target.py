@@ -16,9 +16,6 @@ example is based on the Boston housing data set.
 
 # Author: Guillaume Lemaitre <guillaume.lemaitre@inria.fr>
 # License: BSD 3 clause
-
-from __future__ import division
-
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt

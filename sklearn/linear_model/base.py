@@ -13,7 +13,6 @@ Generalized Linear models.
 #         Giorgio Patrini <giorgio.patrini@anu.edu.au>
 # License: BSD 3 clause
 
-from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numbers
 import warnings

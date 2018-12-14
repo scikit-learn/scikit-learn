@@ -7,9 +7,6 @@ This module needs much love to become useful.
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2008 Gael Varoquaux
 # License: BSD Style, 3 clauses.
-
-from __future__ import print_function
-
 import time
 import sys
 import os

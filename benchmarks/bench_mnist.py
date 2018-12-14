@@ -25,8 +25,6 @@ Example of output :
     CART                         20.69s       0.02s       0.1219
     dummy                         0.00s       0.01s       0.8973
 """
-from __future__ import division
-
 # Author: Issam H. Laradji
 #         Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: BSD 3 clause

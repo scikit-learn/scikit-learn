@@ -10,7 +10,6 @@ Maximum likelihood covariance estimator.
 # License: BSD 3 clause
 
 # avoid division truncation
-from __future__ import division
 import warnings
 import numpy as np
 from scipy import linalg

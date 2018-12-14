@@ -4,9 +4,6 @@
 #         Tom Dupré la Tour
 
 # License: BSD
-
-from __future__ import division, absolute_import
-
 import numbers
 import numpy as np
 import warnings

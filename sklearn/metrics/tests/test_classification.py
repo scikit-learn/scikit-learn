@@ -1,5 +1,3 @@
-from __future__ import division
-
 from functools import partial
 from itertools import product
 import warnings

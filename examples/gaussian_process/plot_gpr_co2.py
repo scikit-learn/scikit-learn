@@ -60,9 +60,6 @@ confident predictions until around 2015.
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #
 # License: BSD 3 clause
-
-from __future__ import division
-
 import numpy as np
 
 from matplotlib import pyplot as plt

@@ -6,8 +6,6 @@
 #         Mathieu Blondel <mathieu@mblondel.org>
 #
 # License: BSD 3 clause
-
-from __future__ import division
 import warnings
 from inspect import signature
 

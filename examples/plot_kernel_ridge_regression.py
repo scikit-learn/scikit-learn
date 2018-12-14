@@ -33,9 +33,6 @@ on the parameters epsilon and C of the SVR.
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
-
-
-from __future__ import division
 import time
 
 import numpy as np

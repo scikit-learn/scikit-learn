@@ -29,8 +29,6 @@ fitting of a transformer is costly.
 
 # Authors: Robert McGibbon, Joel Nothman, Guillaume Lemaitre
 
-from __future__ import division
-
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits

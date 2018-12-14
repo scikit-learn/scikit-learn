@@ -2,7 +2,6 @@
 Benchmarks for sampling without replacement of integer.
 
 """
-from __future__ import division
 import gc
 import sys
 import optparse
