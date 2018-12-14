@@ -23,9 +23,10 @@ def test_basic():
     lr = LogisticRegression()
     expected = """
 LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-                   intercept_scaling=1, max_iter=100, multi_class='warn',
-                   n_jobs=None, penalty='l2', random_state=None, solver='warn',
-                   tol=0.0001, verbose=0, warm_start=False)"""
+                   intercept_scaling=1, l1_ratio=None, max_iter=100,
+                   multi_class='warn', n_jobs=None, penalty='l2',
+                   random_state=None, solver='warn', tol=0.0001, verbose=0,
+                   warm_start=False)"""
 
     expected = expected[1:]  # remove first \n
     assert lr.__repr__() == expected
@@ -67,10 +68,12 @@ Pipeline(memory=None,
                 ('logisticregression',
                  LogisticRegression(C=999, class_weight=None, dual=False,
                                     fit_intercept=True, intercept_scaling=1,
-                                    max_iter=100, multi_class='warn',
-                                    n_jobs=None, penalty='l2',
-                                    random_state=None, solver='warn',
-                                    tol=0.0001, verbose=0, warm_start=False))])"""
+                                    l1_ratio=None, max_iter=100,
+                                    multi_class='warn', n_jobs=None,
+                                    penalty='l2', random_state=None,
+                                    solver='warn', tol=0.0001, verbose=0,
+                                    warm_start=False))])"""
+
     expected = expected[1:]  # remove first \n
     assert pipeline.__repr__() == expected
 
@@ -84,6 +87,7 @@ RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estima
                                                                                                                      dual=False,
                                                                                                                      fit_intercept=True,
                                                                                                                      intercept_scaling=1,
+                                                                                                                     l1_ratio=None,
                                                                                                                      max_iter=100,
                                                                                                                      multi_class='warn',
                                                                                                                      n_jobs=None,
