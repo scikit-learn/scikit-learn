@@ -17,7 +17,6 @@ from sklearn.neighbors.base import VALID_METRICS_SPARSE, VALID_METRICS
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
@@ -1053,7 +1052,7 @@ def test_valid_brute_metric_for_auto_algorithm():
     # check that there is a metric that is valid for brute
     # but not ball_tree (so we actually test something)
     assert_in("cosine", VALID_METRICS['brute'])
-    assert_false("cosine" in VALID_METRICS['ball_tree'])
+    assert "cosine" not in VALID_METRICS['ball_tree']
 
     # Metric which don't required any additional parameter
     require_params = ['mahalanobis', 'wminkowski', 'seuclidean']

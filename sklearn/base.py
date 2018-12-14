@@ -6,10 +6,11 @@
 import copy
 import warnings
 from collections import defaultdict
+from inspect import signature
 
 import numpy as np
 from scipy import sparse
-from .utils.fixes import signature
+
 from . import __version__
 
 

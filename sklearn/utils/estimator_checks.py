@@ -7,6 +7,7 @@ import traceback
 import pickle
 from copy import deepcopy
 from functools import partial
+from inspect import signature
 
 import numpy as np
 from scipy import sparse
@@ -21,8 +22,6 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
@@ -59,9 +58,7 @@ from sklearn.metrics.pairwise import (rbf_kernel, linear_kernel,
                                       pairwise_distances)
 
 from sklearn.utils import shuffle
-from sklearn.utils.fixes import signature
-from sklearn.utils.validation import (has_fit_parameter, _num_samples,
-                                      LARGE_SPARSE_SUPPORTED)
+from sklearn.utils.validation import has_fit_parameter, _num_samples
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris, load_boston, make_blobs
 
@@ -469,18 +466,17 @@ def _generate_sparse_matrix(X_csr):
     for sparse_format in ['dok', 'lil', 'dia', 'bsr', 'csc', 'coo']:
         yield sparse_format, X_csr.asformat(sparse_format)
 
-    if LARGE_SPARSE_SUPPORTED:
-        # Generate large indices matrix only if its supported by scipy
-        X_coo = X_csr.asformat('coo')
-        X_coo.row = X_coo.row.astype('int64')
-        X_coo.col = X_coo.col.astype('int64')
-        yield "coo_64", X_coo
+    # Generate large indices matrix only if its supported by scipy
+    X_coo = X_csr.asformat('coo')
+    X_coo.row = X_coo.row.astype('int64')
+    X_coo.col = X_coo.col.astype('int64')
+    yield "coo_64", X_coo
 
-        for sparse_format in ['csc', 'csr']:
-            X = X_csr.asformat(sparse_format)
-            X.indices = X.indices.astype('int64')
-            X.indptr = X.indptr.astype('int64')
-            yield sparse_format + "_64", X
+    for sparse_format in ['csc', 'csr']:
+        X = X_csr.asformat(sparse_format)
+        X.indices = X.indices.astype('int64')
+        X.indptr = X.indptr.astype('int64')
+        yield sparse_format + "_64", X
 
 
 def check_estimator_sparse_data(name, estimator_orig):
@@ -719,24 +715,26 @@ def check_dont_overwrite_parameters(name, estimator_orig):
                           if key not in dict_before_fit.keys()]
 
     # check that fit doesn't add any public attribute
-    assert_true(not attrs_added_by_fit,
-                ('Estimator adds public attribute(s) during'
-                 ' the fit method.'
-                 ' Estimators are only allowed to add private attributes'
-                 ' either started with _ or ended'
-                 ' with _ but %s added' % ', '.join(attrs_added_by_fit)))
+    assert not attrs_added_by_fit, (
+            'Estimator adds public attribute(s) during'
+            ' the fit method.'
+            ' Estimators are only allowed to add private attributes'
+            ' either started with _ or ended'
+            ' with _ but %s added'
+            % ', '.join(attrs_added_by_fit))
 
     # check that fit doesn't change any public attribute
     attrs_changed_by_fit = [key for key in public_keys_after_fit
                             if (dict_before_fit[key]
                                 is not dict_after_fit[key])]
 
-    assert_true(not attrs_changed_by_fit,
-                ('Estimator changes public attribute(s) during'
-                 ' the fit method. Estimators are only allowed'
-                 ' to change attributes started'
-                 ' or ended with _, but'
-                 ' %s changed' % ', '.join(attrs_changed_by_fit)))
+    assert not attrs_changed_by_fit, (
+            'Estimator changes public attribute(s) during'
+            ' the fit method. Estimators are only allowed'
+            ' to change attributes started'
+            ' or ended with _, but'
+            ' %s changed'
+            % ', '.join(attrs_changed_by_fit))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -1071,10 +1069,10 @@ def check_fit_score_takes_y(name, estimator_orig):
                 # if_delegate_has_method makes methods into functions
                 # with an explicit "self", so need to shift arguments
                 args = args[1:]
-            assert_true(args[1] in ["y", "Y"],
-                        "Expected y or Y as second argument for method "
-                        "%s of %s. Got arguments: %r."
-                        % (func_name, type(estimator).__name__, args))
+            assert args[1] in ["y", "Y"], (
+                    "Expected y or Y as second argument for method "
+                    "%s of %s. Got arguments: %r."
+                    % (func_name, type(estimator).__name__, args))
 
 
 @ignore_warnings
@@ -1644,8 +1642,8 @@ def check_supervised_y_2d(name, estimator_orig):
     if name not in MULTI_OUTPUT:
         # check that we warned if we don't support multi-output
         assert_greater(len(w), 0, msg)
-        assert_true("DataConversionWarning('A column-vector y"
-                    " was passed when a 1d array was expected" in msg)
+        assert "DataConversionWarning('A column-vector y" \
+               " was passed when a 1d array was expected" in msg
     assert_allclose(y_pred.ravel(), y_pred_2d.ravel())
 
 
@@ -1983,17 +1981,18 @@ def check_no_attributes_set_in_init(name, estimator):
     # Test for no setting apart from parameters during init
     invalid_attr = (set(vars(estimator)) - set(init_params)
                     - set(parents_init_params))
-    assert_false(invalid_attr,
-                 "Estimator %s should not set any attribute apart"
-                 " from parameters during init. Found attributes %s."
-                 % (name, sorted(invalid_attr)))
+    assert not invalid_attr, (
+            "Estimator %s should not set any attribute apart"
+            " from parameters during init. Found attributes %s."
+            % (name, sorted(invalid_attr)))
     # Ensure that each parameter is set in init
     invalid_attr = (set(init_params) - set(vars(estimator))
                     - set(["self"]))
-    assert_false(invalid_attr,
-                 "Estimator %s should store all parameters"
-                 " as an attribute during init. Did not find "
-                 "attributes %s." % (name, sorted(invalid_attr)))
+    assert not invalid_attr, (
+            "Estimator %s should store all parameters"
+            " as an attribute during init. Did not find "
+            "attributes %s."
+            % (name, sorted(invalid_attr)))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -2211,8 +2210,8 @@ def check_get_params_invariance(name, estimator_orig):
     shallow_params = e.get_params(deep=False)
     deep_params = e.get_params(deep=True)
 
-    assert_true(all(item in deep_params.items() for item in
-                    shallow_params.items()))
+    assert all(item in deep_params.items() for item in
+               shallow_params.items())
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

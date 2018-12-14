@@ -237,10 +237,6 @@ def test_k_means_new_centers():
 
 @if_safe_multiprocessing_with_blas
 def test_k_means_plus_plus_init_2_jobs():
-    if sys.version_info[:2] < (3, 4):
-        raise SkipTest(
-            "Possible multi-process bug with some BLAS under Python < 3.4")
-
     km = KMeans(init="k-means++", n_clusters=n_clusters, n_jobs=2,
                 random_state=42).fit(X)
     _check_fitted_model(km)

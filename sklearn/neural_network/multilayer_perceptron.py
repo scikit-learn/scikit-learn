@@ -618,7 +618,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
     @property
     def partial_fit(self):
-        """Fit the model to data matrix X and target y.
+        """Update the model with a single iteration over the given data.
 
         Parameters
         ----------
@@ -977,7 +977,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     @property
     def partial_fit(self):
-        """Fit the model to data matrix X and target y.
+        """Update the model with a single iteration over the given data.
 
         Parameters
         ----------

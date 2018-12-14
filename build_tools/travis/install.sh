@@ -70,11 +70,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
     fi
 	  make_conda $TO_INSTALL
 
-    # for python 3.4, conda does not have recent pytest packages
-    if [[ "$PYTHON_VERSION" == "3.4" ]]; then
-        pip install pytest==3.5
-    fi
-
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
     # virtualenv but we want to use the numpy installed through apt-get
@@ -82,9 +77,9 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     deactivate
     # Create a new virtualenv using system site packages for python, numpy
     # and scipy
-    virtualenv --system-site-packages testvenv
+    virtualenv --system-site-packages --python=python3 testvenv
     source testvenv/bin/activate
-    pip install pytest pytest-cov cython==$CYTHON_VERSION
+    pip install pytest pytest-cov cython==$CYTHON_VERSION joblib==$JOBLIB_VERSION
 
 elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     make_conda python=3.7

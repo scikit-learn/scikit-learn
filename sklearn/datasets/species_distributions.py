@@ -103,7 +103,6 @@ def _load_csv(F):
     rec : np.ndarray
         record array representing the data
     """
-    # Numpy recarray wants Python 3 str but not bytes...
     names = F.readline().decode('ascii').strip().split(',')
 
     rec = np.loadtxt(F, skiprows=0, delimiter=',', dtype='a22,f4,f4')

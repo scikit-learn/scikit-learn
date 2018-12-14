@@ -383,7 +383,7 @@ TODO: give a simple teaser example here.
 
 Checkout the official joblib documentation:
 
-- https://pythonhosted.org/joblib
+- https://joblib.readthedocs.io
 
 
 .. _warm-restarts:

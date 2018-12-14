@@ -22,8 +22,8 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
-from sklearn.utils.testing import (assert_raises, assert_greater, assert_equal,
-                                   assert_false, ignore_warnings)
+from sklearn.utils.testing import (assert_raises, assert_greater,
+                                   assert_equal, ignore_warnings)
 from sklearn.utils.testing import assert_raise_message
 
 
@@ -395,7 +395,7 @@ def test_partial_fit_errors():
                   MLPClassifier(solver='sgd').partial_fit, X, y, classes=[2])
 
     # lbfgs doesn't support partial_fit
-    assert_false(hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit'))
+    assert not hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit')
 
 
 def test_params_errors():

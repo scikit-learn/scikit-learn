@@ -10,7 +10,7 @@ from sklearn.datasets import make_classification, load_digits, make_blobs
 from sklearn.svm.tests import test_svm
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils.testing import (assert_raises, assert_false, assert_warns,
+from sklearn.utils.testing import (assert_raises, assert_warns,
                                    assert_raise_message, ignore_warnings,
                                    skip_if_32bit)
 
@@ -115,8 +115,8 @@ def test_unsorted_indices():
     X_test_unsorted = X_test[np.arange(X_test.shape[0])]
 
     # make sure we scramble the indices
-    assert_false(X_sparse_unsorted.has_sorted_indices)
-    assert_false(X_test_unsorted.has_sorted_indices)
+    assert not X_sparse_unsorted.has_sorted_indices
+    assert not X_test_unsorted.has_sorted_indices
 
     unsorted_svc = svm.SVC(kernel='linear', probability=True,
                            random_state=0).fit(X_sparse_unsorted, y)

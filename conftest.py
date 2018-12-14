@@ -45,8 +45,7 @@ def pytest_collection_modifyitems(config, items):
                 item.add_marker(skip_network)
 
     # numpy changed the str/repr formatting of numpy arrays in 1.14. We want to
-    # run doctests only for numpy >= 1.14. We want to skip the doctest for
-    # python 2 due to unicode.
+    # run doctests only for numpy >= 1.14.
     skip_doctests = False
     try:
         import numpy as np
