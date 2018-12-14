@@ -137,4 +137,33 @@ workflows:
 >>>>>>> drop python 2 CI
 =======
             fi
+<<<<<<< 5c998549df27cfb3dd21d7ce54b04229c24bd5cc
 >>>>>>> fix merge conflict
+=======
+
+workflows:
+  version: 2
+  build-doc-and-deploy:
+    jobs:
+      - doc
+      - doc-min-dependencies
+      - lint
+      - pypy3:
+          filters:
+            branches:
+              only:
+                - 0.20.X
+      - deploy:
+          requires:
+            - python3
+  pypy:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - pypy3
+>>>>>>> fix merge conflicts
