@@ -1027,12 +1027,11 @@ def test_train_test_split_errors():
     pytest.raises(ValueError, train_test_split, range(10),
                   shuffle=False, stratify=True)
 
-    assert_raise_message(ValueError,
-                         'train_size=11 should be either positive and smaller '
-                         'than the number of samples 10 or a float in the '
-                         '(0,1) range',
-                         train_test_split, range(10), train_size=11,
-                         test_size=1)
+    with pytest.raises(ValueError,
+                       match=r'train_size=11 should be either positive and '
+                             r'smaller than the number of samples 10 or a '
+                             r'float in the \(0,1\) range'):
+        train_test_split(range(10), train_size=11, test_size=1)
 
 
 @pytest.mark.parametrize("train_size,test_size", [
