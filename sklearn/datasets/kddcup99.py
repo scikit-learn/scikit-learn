@@ -205,14 +205,7 @@ def _fetch_brute_kddcup99(data_home=None,
     """
 
     data_home = get_data_home(data_home=data_home)
-    if sys.version_info[0] == 3:
-        # The zlib compression format use by joblib is not compatible when
-        # switching from Python 2 to Python 3, let us use a separate folder
-        # under Python 3:
-        dir_suffix = "-py3"
-    else:
-        # Backward compat for Python 2 users
-        dir_suffix = ""
+    dir_suffix = "-py3"
 
     if percent10:
         kddcup_dir = join(data_home, "kddcup99_10" + dir_suffix)
