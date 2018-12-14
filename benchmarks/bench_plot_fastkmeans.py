@@ -48,6 +48,7 @@ def compute_bench(samples_range, features_range):
             print("Speed: %0.3fs" % delta)
             print("Inertia: %f" % mbkmeans.inertia_)
             print('\n\n')
+            
             results['MiniBatchKMeans Speed'].append(delta)
             results['MiniBatchKMeans Quality'].append(mbkmeans.inertia_)
 
@@ -69,12 +70,13 @@ def compute_bench_2(chunks):
         print('==============================')
         print('Iteration %03d of %03d' % (it, max_it))
         print('==============================\n')
+        
         print('Fast K-Means')
         tstart = time()
         mbkmeans = MiniBatchKMeans(init='k-means++',
                                    n_clusters=8,
                                    batch_size=chunk)
-        
+
         mbkmeans.fit(X)
         delta = time() - tstart
         print("Speed: %0.3fs" % delta)
