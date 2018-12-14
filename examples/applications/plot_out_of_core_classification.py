@@ -27,7 +27,6 @@ feeding them to the learner.
 #          @FedericoV <https://github.com/FedericoV/>
 # License: BSD 3 clause
 
-from __future__ import print_function
 from glob import glob
 import itertools
 import os.path

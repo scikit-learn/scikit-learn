@@ -13,7 +13,7 @@ negative examples click the right button.
 If all examples are from the same class, it uses a one-class SVM.
 
 """
-from __future__ import division, print_function
+from __future__ import division
 
 print(__doc__)
 

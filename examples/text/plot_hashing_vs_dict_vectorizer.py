@@ -18,7 +18,6 @@ for FeatureHasher is to be expected due to hash collisions.
 # Author: Lars Buitinck
 # License: BSD 3 clause
 
-from __future__ import print_function
 from collections import defaultdict
 import re
 import sys
@@ -66,8 +65,7 @@ categories = [
 
 print(__doc__)
 print("Usage: %s [n_features_for_hashing]" % sys.argv[0])
-print("    The default number of features is 2**18.")
-print()
+print("    The default number of features is 2**18.\n")
 
 try:
     n_features = int(sys.argv[1])
@@ -82,7 +80,7 @@ print("Loading 20 newsgroups training data")
 raw_data = fetch_20newsgroups(subset='train', categories=categories).data
 data_size_mb = sum(len(s.encode('utf-8')) for s in raw_data) / 1e6
 print("%d documents - %0.3fMB" % (len(raw_data), data_size_mb))
-print()
+print('\n')
 
 print("DictVectorizer")
 t0 = time()
@@ -91,7 +89,7 @@ vectorizer.fit_transform(token_freqs(d) for d in raw_data)
 duration = time() - t0
 print("done in %fs at %0.3fMB/s" % (duration, data_size_mb / duration))
 print("Found %d unique terms" % len(vectorizer.get_feature_names()))
-print()
+print('\n')
 
 print("FeatureHasher on frequency dicts")
 t0 = time()
@@ -100,7 +98,7 @@ X = hasher.transform(token_freqs(d) for d in raw_data)
 duration = time() - t0
 print("done in %fs at %0.3fMB/s" % (duration, data_size_mb / duration))
 print("Found %d unique terms" % n_nonzero_columns(X))
-print()
+print('\n')
 
 print("FeatureHasher on raw tokens")
 t0 = time()

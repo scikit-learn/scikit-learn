@@ -61,7 +61,7 @@ confident predictions until around 2015.
 #
 # License: BSD 3 clause
 
-from __future__ import division, print_function
+from __future__ import division
 
 import numpy as np
 

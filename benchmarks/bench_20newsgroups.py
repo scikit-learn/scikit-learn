@@ -1,4 +1,4 @@
-from __future__ import print_function, division
+from __future__ import division
 from time import time
 import argparse
 import numpy as np
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     print("X_test.format = {0}".format(X_test.format))
     print("X_test.dtype = {0}".format(X_test.dtype))
     print("y_test {0}".format(y_test.shape))
-    print()
+    print('\n')
 
     print("Classifier Training")
     print("===================")
@@ -81,10 +81,10 @@ if __name__ == "__main__":
         accuracy[name] = accuracy_score(y_test, y_pred)
         print("done")
 
-    print()
+    print('\n')
     print("Classification performance:")
     print("===========================")
-    print()
+    print('\n')
     print("%s %s %s %s" % ("Classifier  ", "train-time", "test-time",
                            "Accuracy"))
     print("-" * 44)
@@ -94,4 +94,4 @@ if __name__ == "__main__":
                                ("%.4fs" % test_time[name]).center(10),
                                ("%.4f" % accuracy[name]).center(10)))
 
-    print()
+    print('\n')

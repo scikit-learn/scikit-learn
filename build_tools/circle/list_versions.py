@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 # List all available versions of the documentation
-from __future__ import print_function
-
 import json
 import re
 import sys
@@ -48,13 +46,13 @@ def get_pdf_size(version):
 
 
 print(':orphan:')
-print()
+print('\n')
 heading = 'Available documentation for Scikit-learn'
 print(heading)
 print('=' * len(heading))
-print()
+print('\n')
 print('Web-based documentation is available for versions listed below:')
-print()
+print('\n')
 
 ROOT_URL = 'https://api.github.com/repos/scikit-learn/scikit-learn.github.io/contents/'  # noqa
 RAW_FMT = 'https://raw.githubusercontent.com/scikit-learn/scikit-learn.github.io/master/%s/documentation.html'  # noqa

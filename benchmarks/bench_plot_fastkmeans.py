@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from collections import defaultdict
 from time import time
 
@@ -24,7 +22,7 @@ def compute_bench(samples_range, features_range):
             print('==============================')
             print('Iteration %03d of %03d' % (it, max_it))
             print('==============================')
-            print()
+            print('\n')
             data = nr.randint(-50, 51, (n_samples, n_features))
 
             print('K-Means')
@@ -34,7 +32,7 @@ def compute_bench(samples_range, features_range):
             delta = time() - tstart
             print("Speed: %0.3fs" % delta)
             print("Inertia: %0.5f" % kmeans.inertia_)
-            print()
+            print('\n')
 
             results['kmeans_speed'].append(delta)
             results['kmeans_quality'].append(kmeans.inertia_)
@@ -49,9 +47,8 @@ def compute_bench(samples_range, features_range):
             delta = time() - tstart
             print("Speed: %0.3fs" % delta)
             print("Inertia: %f" % mbkmeans.inertia_)
-            print()
-            print()
-
+            print('\n\n')
+            
             results['MiniBatchKMeans Speed'].append(delta)
             results['MiniBatchKMeans Quality'].append(mbkmeans.inertia_)
 
@@ -72,9 +69,8 @@ def compute_bench_2(chunks):
         it += 1
         print('==============================')
         print('Iteration %03d of %03d' % (it, max_it))
-        print('==============================')
-        print()
-
+        print('==============================\n')
+        
         print('Fast K-Means')
         tstart = time()
         mbkmeans = MiniBatchKMeans(init='k-means++',
@@ -85,7 +81,7 @@ def compute_bench_2(chunks):
         delta = time() - tstart
         print("Speed: %0.3fs" % delta)
         print("Inertia: %0.3fs" % mbkmeans.inertia_)
-        print()
+        print('\n')
 
         results['MiniBatchKMeans Speed'].append(delta)
         results['MiniBatchKMeans Quality'].append(mbkmeans.inertia_)

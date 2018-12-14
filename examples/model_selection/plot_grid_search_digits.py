@@ -15,9 +15,6 @@ More details on tools available for model selection can be found in the
 sections on :ref:`cross_validation` and :ref:`grid_search`.
 
 """
-
-from __future__ import print_function
-
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
@@ -47,34 +44,34 @@ tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
 scores = ['precision', 'recall']
 
 for score in scores:
-    print("# Tuning hyper-parameters for %s" % score)
-    print()
+    print("# Tuning hyper-parameters for %s \n" % score)
+    
 
     clf = GridSearchCV(SVC(), tuned_parameters, cv=5,
                        scoring='%s_macro' % score)
     clf.fit(X_train, y_train)
 
-    print("Best parameters set found on development set:")
-    print()
+    print("Best parameters set found on development set: \n")
+    
     print(clf.best_params_)
-    print()
-    print("Grid scores on development set:")
-    print()
+    print('\n')
+    print("Grid scores on development set:\n")
+    
     means = clf.cv_results_['mean_test_score']
     stds = clf.cv_results_['std_test_score']
     for mean, std, params in zip(means, stds, clf.cv_results_['params']):
         print("%0.3f (+/-%0.03f) for %r"
               % (mean, std * 2, params))
-    print()
+    print('\n')
 
-    print("Detailed classification report:")
-    print()
+    print("Detailed classification report:\n")
+    
     print("The model is trained on the full development set.")
-    print("The scores are computed on the full evaluation set.")
-    print()
+    print("The scores are computed on the full evaluation set.\n")
+    
     y_true, y_pred = y_test, clf.predict(X_test)
     print(classification_report(y_true, y_pred))
-    print()
+    print('\n')
 
 # Note the problem is too easy: the hyperparameter plateau is too flat and the
 # output model is the same for precision and recall with ties in quality.

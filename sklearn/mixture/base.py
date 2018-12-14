@@ -4,8 +4,6 @@
 # Modified by Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import print_function
-
 import warnings
 from abc import ABCMeta, abstractmethod
 from time import time

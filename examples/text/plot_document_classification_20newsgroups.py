@@ -22,8 +22,6 @@ The bar plot indicates the accuracy, training time (normalized) and test time
 #         Lars Buitinck
 # License: BSD 3 clause
 
-from __future__ import print_function
-
 import logging
 import numpy as np
 from optparse import OptionParser
@@ -98,7 +96,7 @@ if len(args) > 0:
 
 print(__doc__)
 op.print_help()
-print()
+print('\n')
 
 
 # #############################################################################
@@ -147,7 +145,7 @@ print("%d documents - %0.3fMB (test set)" % (
     len(data_test.data), data_test_size_mb))
 
 print("%d categories" % len(categories))
-print()
+print('\n')
 
 # split a training set and a test set
 y_train, y_test = data_train.target, data_test.target
@@ -165,7 +163,7 @@ else:
 duration = time() - t0
 print("done in %fs at %0.3fMB/s" % (duration, data_train_size_mb / duration))
 print("n_samples: %d, n_features: %d" % X_train.shape)
-print()
+print('\n')
 
 print("Extracting features from the test data using the same vectorizer")
 t0 = time()
@@ -173,7 +171,7 @@ X_test = vectorizer.transform(data_test.data)
 duration = time() - t0
 print("done in %fs at %0.3fMB/s" % (duration, data_test_size_mb / duration))
 print("n_samples: %d, n_features: %d" % X_test.shape)
-print()
+print('\n')
 
 # mapping from integer feature name to original token string
 if opts.use_hashing:
@@ -193,7 +191,7 @@ if opts.select_chi2:
         feature_names = [feature_names[i] for i
                          in ch2.get_support(indices=True)]
     print("done in %fs" % (time() - t0))
-    print()
+    print('\n')
 
 if feature_names:
     feature_names = np.asarray(feature_names)
@@ -232,7 +230,7 @@ def benchmark(clf):
             for i, label in enumerate(target_names):
                 top10 = np.argsort(clf.coef_[i])[-10:]
                 print(trim("%s: %s" % (label, " ".join(feature_names[top10]))))
-        print()
+        print('\n')
 
     if opts.print_report:
         print("classification report:")
@@ -243,7 +241,7 @@ def benchmark(clf):
         print("confusion matrix:")
         print(metrics.confusion_matrix(y_test, pred))
 
-    print()
+    print('\n')
     clf_descr = str(clf).split('(')[0]
     return clf_descr, score, train_time, test_time
 
