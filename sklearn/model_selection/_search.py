@@ -280,10 +280,7 @@ class ParameterSampler(object):
                 params = dict()
                 for k, v in items:
                     if hasattr(v, "rvs"):
-                        if sp_version < (0, 16):
-                            params[k] = v.rvs()
-                        else:
-                            params[k] = v.rvs(random_state=rnd)
+                        params[k] = v.rvs(random_state=rnd)
                     else:
                         params[k] = v[rnd.randint(len(v))]
                 yield params
