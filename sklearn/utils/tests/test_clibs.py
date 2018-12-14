@@ -3,16 +3,16 @@ import os
 import pytest
 
 from sklearn.utils.testing import SkipTest
-from sklearn.utils._clibs import get_thread_limits, limit_threads_clibs
-from sklearn.utils._clibs import get_openblas_version
-from sklearn.utils._clibs import _CLibsWrapper
+from sklearn.utils._clibs import (get_thread_limits, set_thread_limits,
+                                  get_openblas_version, thread_limits_context,
+                                  _CLibsWrapper)
 
 
 SKIP_OPENBLAS = get_openblas_version() is None
 
 
 @pytest.mark.parametrize("clib", _CLibsWrapper.SUPPORTED_CLIBS)
-def test_limit_threads_clib_dict(clib):
+def test_set_thread_limits_dict(clib):
     # Check that the number of threads used by the multithreaded C-libs can be
     # modified dynamically.
 
@@ -24,21 +24,21 @@ def test_limit_threads_clib_dict(clib):
     old_limits = get_thread_limits()
 
     if old_limits[clib] is not None:
-        dynamic_scaling = limit_threads_clibs(limits={clib: 1})
+        dynamic_scaling = set_thread_limits(limits={clib: 1})
         assert get_thread_limits()[clib] == 1
         assert dynamic_scaling[clib]
 
-        limit_threads_clibs(limits={clib: 3})
+        set_thread_limits(limits={clib: 3})
         new_limits = get_thread_limits()
         assert new_limits[clib] in (3, os.cpu_count(), os.cpu_count() / 2)
 
-        limit_threads_clibs(limits=old_limits)
+        set_thread_limits(limits=old_limits)
         new_limits = get_thread_limits()
         assert new_limits[clib] == old_limits[clib]
 
 
 @pytest.mark.parametrize("subset", ("all", "blas", "openmp"))
-def test_limit_threads_clib_subset(subset):
+def test_set_thread_limits_subset(subset):
     # Check that the number of threads used by the multithreaded C-libs can be
     # modified dynamically.
 
@@ -54,34 +54,48 @@ def test_limit_threads_clib_subset(subset):
 
     old_limits = get_thread_limits()
 
-    dynamic_scaling = limit_threads_clibs(limits=1, subset=subset)
+    dynamic_scaling = set_thread_limits(limits=1, subset=subset)
     new_limits = get_thread_limits()
     for clib in clibs:
         if old_limits[clib] is not None:
             assert new_limits[clib] == 1
             assert dynamic_scaling[clib]
 
-    limit_threads_clibs(limits=3, subset=subset)
+    set_thread_limits(limits=3, subset=subset)
     new_limits = get_thread_limits()
     for clib in clibs:
         if old_limits[clib] is not None:
             assert new_limits[clib] in (3, os.cpu_count(), os.cpu_count() / 2)
 
-    limit_threads_clibs(limits=old_limits)
+    set_thread_limits(limits=old_limits)
     new_limits = get_thread_limits()
     for clib in clibs:
         if old_limits[clib] is not None:
             assert new_limits[clib] == old_limits[clib]
 
 
-def test_limit_threads_clib_bad_input():
+def test_set_thread_limits_bad_input():
     # Check that appropriate errors are raised for invalid arguments
 
     with pytest.raises(ValueError,
                        match="subset must be either 'all', 'blas' "
                              "or 'openmp'"):
-        limit_threads_clibs(limits=1, subset="wrong")
+        set_thread_limits(limits=1, subset="wrong")
 
     with pytest.raises(TypeError,
                        match="limits must either be an int or a dict"):
-        limit_threads_clibs(limits=(1, 2, 3))
+        set_thread_limits(limits=(1, 2, 3))
+
+
+def test_thread_limit_context():
+    old_limits = get_thread_limits()
+
+    with thread_limits_context(limits=1):
+        limits = get_thread_limits()
+        for clib in limits:
+            if old_limits[clib] is None:
+                assert limits[clib] is None
+            else:
+                assert limits[clib] == 1
+
+    assert get_thread_limits() == old_limits

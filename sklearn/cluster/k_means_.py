@@ -28,7 +28,7 @@ from ..utils import gen_batches
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils._clibs import get_thread_limits, limit_threads_clibs
+from ..utils._clibs import thread_limits_context
 from ..utils._joblib import effective_n_jobs
 from ..externals.six import string_types
 from ..exceptions import ConvergenceWarning
@@ -373,24 +373,19 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 
     # limit number of threads in second level of nested parallelism (i.e. BLAS)
     # to avoid oversubsciption
-    limits = get_thread_limits()
-    limit_threads_clibs(limits=1, subset="blas")
-
-    for seed in seeds:
-        # run a k-means once
-        labels, inertia, centers, n_iter_ = kmeans_single(
-            X, sample_weight, n_clusters, max_iter=max_iter, init=init,
-            verbose=verbose, tol=tol, x_squared_norms=x_squared_norms,
-            random_state=seed, n_jobs=n_jobs_)
-        # determine if these results are the best so far
-        if best_inertia is None or inertia < best_inertia:
-            best_labels = labels.copy()
-            best_centers = centers.copy()
-            best_inertia = inertia
-            best_n_iter = n_iter_
-
-    # release the limit on threads number and reset to initial value
-    limit_threads_clibs(limits=limits)
+    with thread_limits_context(limits=1, subset="blas"):
+        for seed in seeds:
+            # run a k-means once
+            labels, inertia, centers, n_iter_ = kmeans_single(
+                X, sample_weight, n_clusters, max_iter=max_iter, init=init,
+                verbose=verbose, tol=tol, x_squared_norms=x_squared_norms,
+                random_state=seed, n_jobs=n_jobs_)
+            # determine if these results are the best so far
+            if best_inertia is None or inertia < best_inertia:
+                best_labels = labels.copy()
+                best_centers = centers.copy()
+                best_inertia = inertia
+                best_n_iter = n_iter_
 
     if not sp.issparse(X):
         if not copy_x:

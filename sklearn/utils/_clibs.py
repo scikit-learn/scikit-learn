@@ -12,6 +12,7 @@ import os
 import threading
 import ctypes
 from ctypes.util import find_library
+from contextlib import contextmanager as contextmanager
 
 
 # Structure to cast the info on dynamically loaded library. See
@@ -66,7 +67,7 @@ class _CLibsWrapper:
         for clib, (module_name, _, _) in self.SUPPORTED_CLIBS.items():
             delattr(self, clib)
 
-    def limit_threads_clibs(self, limits=1, subset=None):
+    def set_thread_limits(self, limits=1, subset=None):
         """Limit maximal number of threads used by supported C-libraries"""
         if isinstance(limits, int):
             if subset in ("all", None):
@@ -293,7 +294,7 @@ def _get_wrapper(reload_clib=False):
     return _clibs_wrapper
 
 
-def limit_threads_clibs(limits=1, subset=None, reload_clib=False):
+def set_thread_limits(limits=1, subset=None, reload_clib=False):
     """Limit the number of threads available for threadpools in supported C-lib
 
     Set the maximal number of thread that can be used in thread pools used in
@@ -333,7 +334,7 @@ def limit_threads_clibs(limits=1, subset=None, reload_clib=False):
         dynamically.
     """
     wrapper = _get_wrapper(reload_clib)
-    return wrapper.limit_threads_clibs(limits, subset)
+    return wrapper.set_thread_limits(limits, subset)
 
 
 def get_thread_limits(reload_clib=True):
@@ -355,6 +356,40 @@ def get_thread_limits(reload_clib=True):
     """
     wrapper = _get_wrapper(reload_clib)
     return wrapper.get_thread_limits()
+
+
+@contextmanager
+def thread_limits_context(limits=1, subset=None):
+    """Context manager for C-libs thread limits
+
+    Parameters
+    ----------
+    limits : int or dict, (default=1)
+        Maximum number of thread that can be used in thread pools
+
+        If int, sets the maximum number of thread to `limits` for each C-lib
+        selected by `subset`.
+
+        If dict(supported_libraries: max_threads), sets a custom maximum number
+        of thread for each C-lib.
+
+    subset : string or None, optional (default="all")
+        Subset of C-libs to limit. Used only if `limits` is an int
+
+        "all" : limit all supported C-libs.
+
+        "blas" : limit only BLAS supported C-libs.
+
+        "openmp" : limit only OpenMP supported C-libs. It can affect the number
+                   of threads used by the BLAS C-libs if they rely on OpenMP.
+    """
+    old_limits = get_thread_limits()
+    set_thread_limits(limits=limits, subset=subset)
+
+    try:
+        yield
+    finally:
+        set_thread_limits(limits=old_limits)
 
 
 def get_openblas_version(reload_clib=True):
