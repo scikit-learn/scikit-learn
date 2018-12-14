@@ -48,6 +48,7 @@ matrix:
            NUMPY_VERSION="1.11.0" SCIPY_VERSION="0.17.0" CYTHON_VERSION="*"
            PILLOW_VERSION="4.0.0" COVERAGE=true
       if: type != cron
+<<<<<<< 8337ef1d2fffb8cdd6ab8a42e404ecf901c6f912
 <<<<<<< 91f39bd55a48e487720306b974f29c7de46d2209
     # Linux environment to test the latest available dependencies and MKL.
 =======
@@ -57,6 +58,8 @@ matrix:
            PILLOW_VERSION="4.0.0" COVERAGE=true 
            SKLEARN_SITE_JOBLIB=1 JOBLIB_VERSION="0.11"
       if: type != cron
+=======
+>>>>>>> fix merge conflicts
     # This environment tests the latest available dependencies.
 >>>>>>> tst build
     # It runs tests requiring pandas and PyAMG.
