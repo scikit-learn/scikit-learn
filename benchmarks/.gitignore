@@ -1,4 +1,0 @@
-/bhtsne
-*.npy
-*.json
-/mnist_tsne_output/

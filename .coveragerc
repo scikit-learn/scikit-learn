@@ -1,8 +1,0 @@
-[run]
-branch = True
-source = sklearn
-include = */sklearn/*
-omit =
-    */sklearn/externals/*
-    */benchmarks/*
-    */setup.py
