@@ -31,7 +31,6 @@ from ._validation import _aggregate_score_dicts
 from ..exceptions import NotFittedError
 from ..utils._joblib import Parallel, delayed
 from ..utils import check_random_state
-from ..utils.fixes import sp_version
 from ..utils.fixes import MaskedArray
 from ..utils.fixes import _Mapping as Mapping, _Sequence as Sequence
 from ..utils.fixes import _Iterable as Iterable

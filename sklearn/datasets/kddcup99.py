@@ -8,7 +8,6 @@ https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.da
 
 """
 
-import sys
 import errno
 from gzip import GzipFile
 import logging

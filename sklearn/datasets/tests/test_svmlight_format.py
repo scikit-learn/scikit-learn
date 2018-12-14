@@ -17,7 +17,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import fails_if_pypy
-from sklearn.utils.fixes import sp_version
 
 import sklearn
 from sklearn.datasets import (load_svmlight_file, load_svmlight_files,
@@ -43,8 +42,8 @@ def test_load_svmlight_file():
 
     # test X's non-zero values
     for i, j, val in ((0, 2, 2.5), (0, 10, -5.2), (0, 15, 1.5),
-                     (1, 5, 1.0), (1, 12, -3),
-                     (2, 20, 27)):
+                      (1, 5, 1.0), (1, 12, -3),
+                      (2, 20, 27)):
 
         assert_equal(X[i, j], val)
 
@@ -106,7 +105,7 @@ def test_load_svmlight_file_n_features():
 
     # test X's non-zero values
     for i, j, val in ((0, 2, 2.5), (0, 10, -5.2),
-                     (1, 5, 1.0), (1, 12, -3)):
+                      (1, 5, 1.0), (1, 12, -3)):
 
         assert_equal(X[i, j], val)
 
@@ -376,9 +375,9 @@ def test_load_with_long_qid():
     X, y, qid = load_svmlight_file(BytesIO(data), query_id=True)
 
     true_X = [[1,          2,                 3],
-             [1440446648, 72048431380967004, 236784985],
-             [1440446648, 72048431380967004, 236784985],
-             [1440446648, 72048431380967004, 236784985]]
+              [1440446648, 72048431380967004, 236784985],
+              [1440446648, 72048431380967004, 236784985],
+              [1440446648, 72048431380967004, 236784985]]
 
     true_y = [1, 0, 0, 3]
     trueQID = [0, 72048431380967004, -9223372036854775807, 9223372036854775807]

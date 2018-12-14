@@ -2,13 +2,11 @@
 # License: BSD 3 clause
 
 
-import sys
 import pickle
 
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import SkipTest
 
 
 @deprecated('qwerty')

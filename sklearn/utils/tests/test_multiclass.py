@@ -224,7 +224,7 @@ def test_unique_labels_mixed_types():
 
 
 def test_is_multilabel():
-    for group, group_examples in iteritems(EXAMPLES):
+    for group, group_examples in EXAMPLES.items():
         if group in ['multilabel-indicator']:
             dense_exp = True
         else:
@@ -277,7 +277,7 @@ def test_check_classification_targets():
 
 # @ignore_warnings
 def test_type_of_target():
-    for group, group_examples in iteritems(EXAMPLES):
+    for group, group_examples in EXAMPLES.items():
         for example in group_examples:
             assert_equal(type_of_target(example), group,
                          msg=('type_of_target(%r) should be %r, got %r'
