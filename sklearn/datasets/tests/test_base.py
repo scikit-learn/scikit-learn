@@ -54,7 +54,7 @@ def test_category_dir_1(load_files_root):
     test_category_dir1 = tempfile.mkdtemp(dir=load_files_root)
     sample_file = tempfile.NamedTemporaryFile(dir=test_category_dir1,
                                               delete=False)
-    sample_file.write("Hello World!\n")
+    sample_file.write("Hello World!\n".encode())
     sample_file.close()
     yield str(test_category_dir1)
     _remove_dir(test_category_dir1)
@@ -95,7 +95,7 @@ def test_default_load_files(test_category_dir_1, test_category_dir_2,
     assert_equal(len(res.filenames), 1)
     assert_equal(len(res.target_names), 2)
     assert_equal(res.DESCR, None)
-    assert_equal(res.data, ["Hello World!\n"])
+    assert_equal(res.data, ["Hello World!\n".encode()])
 
 
 def test_load_files_w_categories_desc_and_encoding(

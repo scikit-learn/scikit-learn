@@ -74,13 +74,13 @@ def setup_module():
 
     # generate some pairing metadata files using the same format as LFW
     with open(os.path.join(LFW_HOME, 'pairsDevTrain.txt'), 'wb') as f:
-        f.write("10\n").encode()
+        f.write("10\n".encode())
         more_than_two = [name for name, count in counts.items()
                          if count >= 2]
         for i in range(5):
             name = random_state.choice(more_than_two)
             first, second = random_state.sample(range(counts[name]), 2)
-            f.write('%s\t%d\t%d\n' % (name, first, second).encode())
+            f.write(('%s\t%d\t%d\n' % (name, first, second)).encode())
 
         for i in range(5):
             first_name, second_name = random_state.sample(FAKE_NAMES, 2)
