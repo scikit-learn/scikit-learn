@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+from __future__ import division,
+
+>>>>>>> parent of a5432c720... travis checked
 from functools import partial
 from itertools import product
 import warnings

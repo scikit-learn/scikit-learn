@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+from __future__ import division,
+
+>>>>>>> parent of a5432c720... travis checked
 import numpy as np
 from itertools import product
 

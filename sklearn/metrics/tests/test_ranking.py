@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+from __future__ import division,
+
+>>>>>>> parent of a5432c720... travis checked
 import pytest
 import numpy as np
 import warnings
