@@ -29,11 +29,6 @@ jobs:
       - store_artifacts:
           path: ~/log.txt
           destination: log.txt
-      # Persists generated documentation so that it can be attached and deployed
-      # in the 'deploy' step.
-      - persist_to_workspace:
-          root: doc/_build/html
-          paths: .
 
   doc:
     docker:
@@ -99,7 +94,7 @@ jobs:
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
-      # Attach documentation generated in the 'python3' step so that it can be
+      # Attach documentation generated in the 'doc' step so that it can be
       # deployed.
       - attach_workspace:
           at: doc/_build/html

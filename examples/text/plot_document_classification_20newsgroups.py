@@ -143,6 +143,7 @@ print("%d documents - %0.3fMB (training set)" % (
     len(data_train.data), data_train_size_mb))
 print("%d documents - %0.3fMB (test set)" % (
     len(data_test.data), data_test_size_mb))
+<<<<<<< HEAD
 print("%d categories" % len(categories))
 print('\n')
 
