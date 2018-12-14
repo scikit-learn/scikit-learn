@@ -25,8 +25,6 @@ example shows that the features extracted by the BernoulliRBM help improve the
 classification accuracy.
 """
 
-from __future__ import print_function
-
 print(__doc__)
 
 # Authors: Yann N. Dauphin, Vlad Niculae, Gabriel Synnaeve

@@ -26,7 +26,6 @@ proportional to (n_samples * iterations).
 #         Chyi-Kwei Yau <chyikwei.yau@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import print_function
 from time import time
 
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
@@ -45,7 +44,7 @@ def print_top_words(model, feature_names, n_top_words):
         message += " ".join([feature_names[i]
                              for i in topic.argsort()[:-n_top_words - 1:-1]])
         print(message)
-    print()
+    print('\n')
 
 
 # Load the 20 newsgroups dataset and vectorize it. We use a few heuristics

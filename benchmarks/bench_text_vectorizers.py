@@ -8,9 +8,6 @@ To run this benchmark, you will need,
  * psutil (optional, but recommended)
 
 """
-
-from __future__ import print_function
-
 import timeit
 import itertools
 
