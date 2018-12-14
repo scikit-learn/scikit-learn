@@ -169,6 +169,8 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
         else:
             params = object.get_params(deep=False)
 
+        params = {name: val for (name, val) in sorted(params.items())}
+
         self._format_params(params.items(), stream, indent, allowance + 1,
                             context, level)
         stream.write(')')
