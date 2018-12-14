@@ -18,6 +18,8 @@ dataset and is only used to illustrate the usage of FeatureUnion.
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #
 # License: BSD 3 clause
+
+from __future__ import print_function
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC

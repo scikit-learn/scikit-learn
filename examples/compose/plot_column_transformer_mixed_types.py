@@ -24,6 +24,8 @@ together with a simple classification model.
 #
 # License: BSD 3 clause
 
+from __future__ import print_function
+
 import pandas as pd
 import numpy as np
 

@@ -9,6 +9,7 @@ This exercise is used in the :ref:`cv_estimators_tut` part of the
 :ref:`model_selection_tut` section of the :ref:`stat_learn_tut_index`.
 """
 
+from __future__ import print_function
 print(__doc__)
 
 import numpy as np
@@ -64,14 +65,14 @@ k_fold = KFold(3)
 
 print("Answer to the bonus question:",
       "how much can you trust the selection of alpha?")
-print('\n')
+print()
 print("Alpha parameters maximising the generalization score on different")
 print("subsets of the data:")
 for k, (train, test) in enumerate(k_fold.split(X, y)):
     lasso_cv.fit(X[train], y[train])
     print("[fold {0}] alpha: {1:.5f}, score: {2:.5f}".
           format(k, lasso_cv.alpha_, lasso_cv.score(X[test], y[test])))
-print('\n')
+print()
 print("Answer: Not very much since we obtained different alphas for different")
 print("subsets of the data and moreover, the scores for these alphas differ")
 print("quite substantially.")

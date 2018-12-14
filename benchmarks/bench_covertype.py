@@ -40,7 +40,7 @@ The same task has been used in a number of papers including:
 [1] https://archive.ics.uci.edu/ml/datasets/Covertype
 
 """
-from __future__ import division
+from __future__ import division, print_function
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Arnaud Joly <arnaud.v.joly@gmail.com>
@@ -147,7 +147,7 @@ if __name__ == "__main__":
              X_test.shape[0], np.sum(y_test == 1),
              np.sum(y_test == 0), int(X_test.nbytes / 1e6)))
 
-    print('\n')
+    print()
     print("Training Classifiers")
     print("====================")
     error, train_time, test_time = {}, {}, {}
@@ -175,7 +175,7 @@ if __name__ == "__main__":
 
         print("done")
 
-    print('\n')
+    print()
     print("Classification performance:")
     print("===========================")
     print("%s %s %s %s"
@@ -187,4 +187,4 @@ if __name__ == "__main__":
                                ("%.4fs" % test_time[name]).center(10),
                                ("%.4f" % error[name]).center(10)))
 
-    print('\n')
+    print()

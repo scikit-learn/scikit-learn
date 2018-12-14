@@ -16,6 +16,7 @@ The plots represent the distribution of the prediction latency as a boxplot.
 # Authors: Eustache Diemert <eustache@diemert.fr>
 # License: BSD 3 clause
 
+from __future__ import print_function
 from collections import defaultdict
 
 import time

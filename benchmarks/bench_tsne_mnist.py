@@ -4,7 +4,7 @@ MNIST dataset T-SNE benchmark
 =============================
 
 """
-from __future__ import division
+from __future__ import division, print_function
 
 # License: BSD 3 clause
 

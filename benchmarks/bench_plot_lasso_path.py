@@ -2,6 +2,8 @@
 
 The input data is mostly low rank but is a fat infinite tail.
 """
+from __future__ import print_function
+
 from collections import defaultdict
 import gc
 import sys

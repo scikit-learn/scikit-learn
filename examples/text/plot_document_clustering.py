@@ -53,6 +53,8 @@ necessary to get a good convergence.
 #         Lars Buitinck
 # License: BSD 3 clause
 
+from __future__ import print_function
+
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -132,7 +134,7 @@ dataset = fetch_20newsgroups(subset='all', categories=categories,
 
 print("%d documents" % len(dataset.data))
 print("%d categories" % len(dataset.target_names))
-print('\n')
+print()
 
 labels = dataset.target
 true_k = np.unique(labels).shape[0]
@@ -160,7 +162,7 @@ X = vectorizer.fit_transform(dataset.data)
 
 print("done in %fs" % (time() - t0))
 print("n_samples: %d, n_features: %d" % X.shape)
-print('\n')
+print()
 
 if opts.n_components:
     print("Performing dimensionality reduction using LSA")
@@ -180,7 +182,7 @@ if opts.n_components:
     print("Explained variance of the SVD step: {}%".format(
         int(explained_variance * 100)))
 
-    print('\n')
+    print()
 
 
 # #############################################################################
@@ -197,7 +199,7 @@ print("Clustering sparse data with %s" % km)
 t0 = time()
 km.fit(X)
 print("done in %0.3fs" % (time() - t0))
-print('\n')
+print()
 
 print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_))
 print("Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_))
@@ -207,7 +209,7 @@ print("Adjusted Rand-Index: %.3f"
 print("Silhouette Coefficient: %0.3f"
       % metrics.silhouette_score(X, km.labels_, sample_size=1000))
 
-print('\n')
+print()
 
 
 if not opts.use_hashing:
@@ -224,4 +226,4 @@ if not opts.use_hashing:
         print("Cluster %d:" % i, end='')
         for ind in order_centroids[i, :10]:
             print(' %s' % terms[ind], end='')
-        print('\n')
+        print()

@@ -3,6 +3,8 @@ regression (:ref:`least_angle_regression`)
 
 The input data is mostly low rank but is a fat infinite tail.
 """
+from __future__ import print_function
+
 import gc
 import sys
 from time import time

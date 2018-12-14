@@ -41,6 +41,8 @@ References
 #
 # License: BSD 3 clause
 
+from __future__ import print_function
+
 from time import time
 
 import numpy as np

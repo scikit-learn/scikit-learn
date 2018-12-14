@@ -22,6 +22,8 @@ MiniBatchKMeans. The document clusters derived from the biclusters
 achieve a better V-measure than clusters found by MiniBatchKMeans.
 
 """
+from __future__ import print_function
+
 from collections import defaultdict
 import operator
 from time import time
@@ -121,7 +123,7 @@ bicluster_ncuts = list(bicluster_ncut(i)
                        for i in range(len(newsgroups.target_names)))
 best_idx = np.argsort(bicluster_ncuts)[:5]
 
-print('\n')
+print()
 print("Best biclusters:")
 print("----------------")
 for idx, cluster in enumerate(best_idx):

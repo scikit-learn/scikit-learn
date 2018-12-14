@@ -31,6 +31,9 @@ of the latent structured data of the Wikipedia content.
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
+
+from __future__ import print_function
+
 from bz2 import BZ2File
 import os
 from datetime import datetime
@@ -68,7 +71,7 @@ for url, filename in resources:
         print("Downloading data from '%s', please wait..." % url)
         opener = urlopen(url)
         open(filename, 'wb').write(opener.read())
-        print('\n')
+        print()
 
 
 # #############################################################################

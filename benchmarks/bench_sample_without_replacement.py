@@ -3,6 +3,8 @@ Benchmarks for sampling without replacement of integer.
 
 """
 from __future__ import division
+from __future__ import print_function
+
 import gc
 import sys
 import optparse

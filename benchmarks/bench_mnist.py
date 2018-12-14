@@ -25,7 +25,7 @@ Example of output :
     CART                         20.69s       0.02s       0.1219
     dummy                         0.00s       0.01s       0.8973
 """
-from __future__ import division
+from __future__ import division, print_function
 
 # Author: Issam H. Laradji
 #         Arnaud Joly <arnaud.v.joly@gmail.com>
@@ -138,7 +138,7 @@ if __name__ == "__main__":
     print("%s %d (size=%dMB)" % ("number of test samples:".ljust(25),
                                  X_test.shape[0], int(X_test.nbytes / 1e6)))
 
-    print('\n')
+    print()
     print("Training Classifiers")
     print("====================")
     error, train_time, test_time = {}, {}, {}
@@ -166,7 +166,7 @@ if __name__ == "__main__":
 
         print("done")
 
-    print('\n')
+    print()
     print("Classification performance:")
     print("===========================")
     print("{0: <24} {1: >10} {2: >11} {3: >12}"
@@ -177,4 +177,4 @@ if __name__ == "__main__":
         print("{0: <23} {1: >10.2f}s {2: >10.2f}s {3: >12.4f}"
               "".format(name, train_time[name], test_time[name], error[name]))
 
-    print('\n')
+    print()
