@@ -55,6 +55,7 @@ BaseEstimator.__repr__ for pretty-printing estimators"""
 
 from inspect import signature
 import pprint
+from collections import OrderedDict
 
 from ..base import BaseEstimator
 from .._config import get_config
@@ -169,7 +170,8 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
         else:
             params = object.get_params(deep=False)
 
-        params = {name: val for (name, val) in sorted(params.items())}
+        params = OrderedDict((name, val)
+                             for (name, val) in sorted(params.items()))
 
         self._format_params(params.items(), stream, indent, allowance + 1,
                             context, level)
