@@ -6,11 +6,11 @@
 import copy
 import warnings
 from collections import defaultdict
+from inspect import signature
 
 import numpy as np
 from scipy import sparse
 from .externals import six
-from .utils.fixes import signature
 from . import __version__
 
 
@@ -48,7 +48,7 @@ def clone(estimator, safe=True):
     # XXX: not handling dictionaries
     if estimator_type in (list, tuple, set, frozenset):
         return estimator_type([clone(e, safe=safe) for e in estimator])
-    elif not hasattr(estimator, 'get_params'):
+    elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):
         if not safe:
             return copy.deepcopy(estimator)
         else:

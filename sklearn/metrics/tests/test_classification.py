@@ -46,6 +46,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
+from sklearn.metrics import multilabel_confusion_matrix
 
 from sklearn.metrics.classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
@@ -126,10 +127,7 @@ def test_classification_report_dictionary_output():
                                      'precision': 0.5260083136726211,
                                      'recall': 0.596146953405018,
                                      'support': 75},
-                       'micro avg': {'f1-score': 0.5333333333333333,
-                                     'precision': 0.5333333333333333,
-                                     'recall': 0.5333333333333333,
-                                     'support': 75},
+                       'accuracy': 0.5333333333333333,
                        'weighted avg': {'f1-score': 0.47310435663627154,
                                         'precision': 0.5137535108414785,
                                         'recall': 0.5333333333333333,
@@ -142,10 +140,14 @@ def test_classification_report_dictionary_output():
     # assert the 2 dicts are equal.
     assert(report.keys() == expected_report.keys())
     for key in expected_report:
-        assert report[key].keys() == expected_report[key].keys()
-        for metric in expected_report[key]:
-            assert_almost_equal(expected_report[key][metric],
-                                report[key][metric])
+        if key == 'accuracy':
+            assert isinstance(report[key], float)
+            assert report[key] == expected_report[key]
+        else:
+            assert report[key].keys() == expected_report[key].keys()
+            for metric in expected_report[key]:
+                assert_almost_equal(expected_report[key][metric],
+                                    report[key][metric])
 
     assert type(expected_report['setosa']['precision']) == float
     assert type(expected_report['macro avg']['precision']) == float
@@ -368,6 +370,138 @@ def test_confusion_matrix_binary():
     test(y_true, y_pred)
     test([str(y) for y in y_true],
          [str(y) for y in y_pred])
+
+
+def test_multilabel_confusion_matrix_binary():
+    # Test multilabel confusion matrix - binary classification case
+    y_true, y_pred, _ = make_prediction(binary=True)
+
+    def test(y_true, y_pred):
+        cm = multilabel_confusion_matrix(y_true, y_pred)
+        assert_array_equal(cm, [[[17, 8], [3, 22]],
+                                [[22, 3], [8, 17]]])
+
+    test(y_true, y_pred)
+    test([str(y) for y in y_true],
+         [str(y) for y in y_pred])
+
+
+def test_multilabel_confusion_matrix_multiclass():
+    # Test multilabel confusion matrix - multi-class case
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    def test(y_true, y_pred, string_type=False):
+        # compute confusion matrix with default labels introspection
+        cm = multilabel_confusion_matrix(y_true, y_pred)
+        assert_array_equal(cm, [[[47, 4], [5, 19]],
+                                [[38, 6], [28, 3]],
+                                [[30, 25], [2, 18]]])
+
+        # compute confusion matrix with explicit label ordering
+        labels = ['0', '2', '1'] if string_type else [0, 2, 1]
+        cm = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
+        assert_array_equal(cm, [[[47, 4], [5, 19]],
+                                [[30, 25], [2, 18]],
+                                [[38, 6], [28, 3]]])
+
+        # compute confusion matrix with super set of present labels
+        labels = ['0', '2', '1', '3'] if string_type else [0, 2, 1, 3]
+        cm = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
+        assert_array_equal(cm, [[[47, 4], [5, 19]],
+                                [[30, 25], [2, 18]],
+                                [[38, 6], [28, 3]],
+                                [[75, 0], [0, 0]]])
+
+    test(y_true, y_pred)
+    test(list(str(y) for y in y_true),
+         list(str(y) for y in y_pred),
+         string_type=True)
+
+
+def test_multilabel_confusion_matrix_multilabel():
+    # Test multilabel confusion matrix - multilabel-indicator case
+    from scipy.sparse import csc_matrix, csr_matrix
+
+    y_true = np.array([[1, 0, 1], [0, 1, 0], [1, 1, 0]])
+    y_pred = np.array([[1, 0, 0], [0, 1, 1], [0, 0, 1]])
+    y_true_csr = csr_matrix(y_true)
+    y_pred_csr = csr_matrix(y_pred)
+    y_true_csc = csc_matrix(y_true)
+    y_pred_csc = csc_matrix(y_pred)
+
+    # cross test different types
+    sample_weight = np.array([2, 1, 3])
+    real_cm = [[[1, 0], [1, 1]],
+               [[1, 0], [1, 1]],
+               [[0, 2], [1, 0]]]
+    trues = [y_true, y_true_csr, y_true_csc]
+    preds = [y_pred, y_pred_csr, y_pred_csc]
+
+    for y_true_tmp in trues:
+        for y_pred_tmp in preds:
+            cm = multilabel_confusion_matrix(y_true_tmp, y_pred_tmp)
+            assert_array_equal(cm, real_cm)
+
+    # test support for samplewise
+    cm = multilabel_confusion_matrix(y_true, y_pred, samplewise=True)
+    assert_array_equal(cm, [[[1, 0], [1, 1]],
+                            [[1, 1], [0, 1]],
+                            [[0, 1], [2, 0]]])
+
+    # test support for labels
+    cm = multilabel_confusion_matrix(y_true, y_pred, labels=[2, 0])
+    assert_array_equal(cm, [[[0, 2], [1, 0]],
+                            [[1, 0], [1, 1]]])
+
+    # test support for labels with samplewise
+    cm = multilabel_confusion_matrix(y_true, y_pred, labels=[2, 0],
+                                     samplewise=True)
+    assert_array_equal(cm, [[[0, 0], [1, 1]],
+                            [[1, 1], [0, 0]],
+                            [[0, 1], [1, 0]]])
+
+    # test support for sample_weight with sample_wise
+    cm = multilabel_confusion_matrix(y_true, y_pred,
+                                     sample_weight=sample_weight,
+                                     samplewise=True)
+    assert_array_equal(cm, [[[2, 0], [2, 2]],
+                            [[1, 1], [0, 1]],
+                            [[0, 3], [6, 0]]])
+
+
+def test_multilabel_confusion_matrix_errors():
+    y_true = np.array([[1, 0, 1], [0, 1, 0], [1, 1, 0]])
+    y_pred = np.array([[1, 0, 0], [0, 1, 1], [0, 0, 1]])
+
+    # Bad sample_weight
+    assert_raise_message(ValueError, "inconsistent numbers of samples",
+                         multilabel_confusion_matrix,
+                         y_true, y_pred, sample_weight=[1, 2])
+    assert_raise_message(ValueError, "bad input shape",
+                         multilabel_confusion_matrix,
+                         y_true, y_pred,
+                         sample_weight=[[1, 2, 3],
+                                        [2, 3, 4],
+                                        [3, 4, 5]])
+
+    # Bad labels
+    assert_raise_message(ValueError, "All labels must be in [0, n labels)",
+                         multilabel_confusion_matrix,
+                         y_true, y_pred, labels=[-1])
+    assert_raise_message(ValueError, "All labels must be in [0, n labels)",
+                         multilabel_confusion_matrix,
+                         y_true, y_pred, labels=[3])
+
+    # Using samplewise outside multilabel
+    assert_raise_message(ValueError, "Samplewise metrics",
+                         multilabel_confusion_matrix,
+                         [0, 1, 2], [1, 2, 0], samplewise=True)
+
+    # Bad y_type
+    assert_raise_message(ValueError, "multiclass-multioutput is not supported",
+                         multilabel_confusion_matrix,
+                         [[0, 1, 2], [2, 1, 0]],
+                         [[1, 2, 0], [1, 0, 2]])
 
 
 def test_cohen_kappa():
@@ -752,7 +886,7 @@ def test_classification_report_multiclass():
   versicolor       0.33      0.10      0.15        31
    virginica       0.42      0.90      0.57        20
 
-   micro avg       0.53      0.53      0.53        75
+    accuracy                           0.53        75
    macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
@@ -772,7 +906,7 @@ def test_classification_report_multiclass_balanced():
            1       0.33      0.33      0.33         3
            2       0.33      0.33      0.33         3
 
-   micro avg       0.33      0.33      0.33         9
+    accuracy                           0.33         9
    macro avg       0.33      0.33      0.33         9
 weighted avg       0.33      0.33      0.33         9
 """
@@ -792,7 +926,7 @@ def test_classification_report_multiclass_with_label_detection():
            1       0.33      0.10      0.15        31
            2       0.42      0.90      0.57        20
 
-   micro avg       0.53      0.53      0.53        75
+    accuracy                           0.53        75
    macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
@@ -813,7 +947,7 @@ def test_classification_report_multiclass_with_digits():
   versicolor    0.33333   0.09677   0.15000        31
    virginica    0.41860   0.90000   0.57143        20
 
-   micro avg    0.53333   0.53333   0.53333        75
+    accuracy                        0.53333        75
    macro avg    0.52601   0.59615   0.50998        75
 weighted avg    0.51375   0.53333   0.47310        75
 """
@@ -836,7 +970,7 @@ def test_classification_report_multiclass_with_string_label():
        green       0.33      0.10      0.15        31
          red       0.42      0.90      0.57        20
 
-   micro avg       0.53      0.53      0.53        75
+    accuracy                           0.53        75
    macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
@@ -850,7 +984,7 @@ weighted avg       0.51      0.53      0.47        75
            b       0.33      0.10      0.15        31
            c       0.42      0.90      0.57        20
 
-   micro avg       0.53      0.53      0.53        75
+    accuracy                           0.53        75
    macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
@@ -873,7 +1007,7 @@ def test_classification_report_multiclass_with_unicode_label():
       green\xa2       0.33      0.10      0.15        31
         red\xa2       0.42      0.90      0.57        20
 
-   micro avg       0.53      0.53      0.53        75
+    accuracy                           0.53        75
    macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
@@ -895,7 +1029,7 @@ def test_classification_report_multiclass_with_long_string_label():
 greengreengreengreengreen       0.33      0.10      0.15        31
                       red       0.42      0.90      0.57        20
 
-                micro avg       0.53      0.53      0.53        75
+                 accuracy                           0.53        75
                 macro avg       0.53      0.60      0.51        75
              weighted avg       0.51      0.53      0.47        75
 """

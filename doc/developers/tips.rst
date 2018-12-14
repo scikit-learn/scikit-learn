@@ -192,7 +192,7 @@ PR-WIP: Regression test needed
 PR-WIP: PEP8
     ::
 
-        You have some [PEP8](https://www.python.org/dev/peps/pep-0008/) violations, whose details you can see in Travis CI. It might be worth configuring your code editor to check for such errors on the fly, so you can catch them before committing.
+        You have some [PEP8](https://www.python.org/dev/peps/pep-0008/) violations, whose details you can see in the Circle CI `lint` job. It might be worth configuring your code editor to check for such errors on the fly, so you can catch them before committing.
 
 PR-MRG: Patience
     ::

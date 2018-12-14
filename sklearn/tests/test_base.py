@@ -6,8 +6,6 @@ import scipy.sparse as sp
 
 import sklearn
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
@@ -97,12 +95,12 @@ def test_clone():
 
     selector = SelectFpr(f_classif, alpha=0.1)
     new_selector = clone(selector)
-    assert_true(selector is not new_selector)
+    assert selector is not new_selector
     assert_equal(selector.get_params(), new_selector.get_params())
 
     selector = SelectFpr(f_classif, alpha=np.zeros((10, 2)))
     new_selector = clone(selector)
-    assert_true(selector is not new_selector)
+    assert selector is not new_selector
 
 
 def test_clone_2():
@@ -116,7 +114,7 @@ def test_clone_2():
     selector = SelectFpr(f_classif, alpha=0.1)
     selector.own_attribute = "test"
     new_selector = clone(selector)
-    assert_false(hasattr(new_selector, "own_attribute"))
+    assert not hasattr(new_selector, "own_attribute")
 
 
 def test_clone_buggy():
@@ -151,7 +149,7 @@ def test_clone_nan():
     clf = MyEstimator(empty=np.nan)
     clf2 = clone(clf)
 
-    assert_true(clf.empty is clf2.empty)
+    assert clf.empty is clf2.empty
 
 
 def test_clone_sparse_matrices():
@@ -163,8 +161,17 @@ def test_clone_sparse_matrices():
         sparse_matrix = cls(np.eye(5))
         clf = MyEstimator(empty=sparse_matrix)
         clf_cloned = clone(clf)
-        assert_true(clf.empty.__class__ is clf_cloned.empty.__class__)
+        assert clf.empty.__class__ is clf_cloned.empty.__class__
         assert_array_equal(clf.empty.toarray(), clf_cloned.empty.toarray())
+
+
+def test_clone_estimator_types():
+    # Check that clone works for parameters that are types rather than
+    # instances
+    clf = MyEstimator(empty=MyEstimator)
+    clf2 = clone(clf)
+
+    assert clf.empty is clf2.empty
 
 
 def test_repr():
@@ -190,21 +197,21 @@ def test_str():
 def test_get_params():
     test = T(K(), K())
 
-    assert_true('a__d' in test.get_params(deep=True))
-    assert_true('a__d' not in test.get_params(deep=False))
+    assert 'a__d' in test.get_params(deep=True)
+    assert 'a__d' not in test.get_params(deep=False)
 
     test.set_params(a__d=2)
-    assert_true(test.a.d == 2)
+    assert test.a.d == 2
     assert_raises(ValueError, test.set_params, a__a=2)
 
 
 def test_is_classifier():
     svc = SVC()
-    assert_true(is_classifier(svc))
-    assert_true(is_classifier(GridSearchCV(svc, {'C': [0.1, 1]})))
-    assert_true(is_classifier(Pipeline([('svc', svc)])))
-    assert_true(is_classifier(Pipeline(
-        [('svc_cv', GridSearchCV(svc, {'C': [0.1, 1]}))])))
+    assert is_classifier(svc)
+    assert is_classifier(GridSearchCV(svc, {'C': [0.1, 1]}))
+    assert is_classifier(Pipeline([('svc', svc)]))
+    assert is_classifier(Pipeline(
+        [('svc_cv', GridSearchCV(svc, {'C': [0.1, 1]}))]))
 
 
 def test_set_params():
@@ -302,7 +309,7 @@ def test_clone_pandas_dataframe():
     cloned_e = clone(e)
 
     # the test
-    assert_true((e.df == cloned_e.df).values.all())
+    assert (e.df == cloned_e.df).values.all()
     assert_equal(e.scalar_param, cloned_e.scalar_param)
 
 
@@ -310,7 +317,7 @@ def test_pickle_version_warning_is_not_raised_with_matching_version():
     iris = datasets.load_iris()
     tree = DecisionTreeClassifier().fit(iris.data, iris.target)
     tree_pickle = pickle.dumps(tree)
-    assert_true(b"version" in tree_pickle)
+    assert b"version" in tree_pickle
     tree_restored = assert_no_warnings(pickle.loads, tree_pickle)
 
     # test that we can predict with the restored decision tree classifier
@@ -353,7 +360,7 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
     tree = TreeNoVersion().fit(iris.data, iris.target)
 
     tree_pickle_noversion = pickle.dumps(tree)
-    assert_false(b"version" in tree_pickle_noversion)
+    assert b"version" not in tree_pickle_noversion
     message = pickle_error_message.format(estimator="TreeNoVersion",
                                           old_version="pre-0.18",
                                           current_version=sklearn.__version__)
@@ -399,7 +406,7 @@ def test_pickling_when_getstate_is_overwritten_by_mixin():
     estimator_restored = pickle.loads(serialized)
     assert_equal(estimator_restored.attribute_pickled, 5)
     assert_equal(estimator_restored._attribute_not_pickled, None)
-    assert_true(estimator_restored._restored)
+    assert estimator_restored._restored
 
 
 def test_pickling_when_getstate_is_overwritten_by_mixin_outside_of_sklearn():
@@ -417,7 +424,7 @@ def test_pickling_when_getstate_is_overwritten_by_mixin_outside_of_sklearn():
         serialized['attribute_pickled'] = 4
         estimator.__setstate__(serialized)
         assert_equal(estimator.attribute_pickled, 4)
-        assert_true(estimator._restored)
+        assert estimator._restored
     finally:
         type(estimator).__module__ = old_mod
 

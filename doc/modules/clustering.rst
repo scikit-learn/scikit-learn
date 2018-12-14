@@ -387,7 +387,7 @@ is updated according to the following equation:
 
 .. math::
 
-    x_i^{t+1} = x_i^t + m(x_i^t)
+    x_i^{t+1} = m(x_i^t)
 
 Where :math:`N(x_i)` is the neighborhood of samples within a given distance
 around :math:`x_i` and :math:`m` is the *mean shift* vector that is computed for each
@@ -1748,7 +1748,7 @@ symmetric is:
 Then the Davies-Bouldin index is defined as:
 
 .. math::
-   DB = \frac{1}{k} \sum{i=1}^k \max_{i \neq j} R_{ij}
+   DB = \frac{1}{k} \sum_{i=1}^k \max_{i \neq j} R_{ij}
 
 Zero is the lowest possible score. Values closer to zero indicate a better
 partition.

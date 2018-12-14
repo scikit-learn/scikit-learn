@@ -9,6 +9,7 @@
 
 from __future__ import division
 import warnings
+from inspect import signature
 
 from math import log
 import numpy as np
@@ -20,7 +21,6 @@ from .base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_X_y, check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
-from .utils.fixes import signature
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv
@@ -63,8 +63,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`sklearn.model_selection.StratifiedKFold` is used. If ``y`` is

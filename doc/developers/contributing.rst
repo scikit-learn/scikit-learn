@@ -361,7 +361,8 @@ and Cython optimizations.
 
    * Travis is used for testing on Linux platforms
    * Appveyor is used for testing on Windows platforms
-   * CircleCI is used to build the docs for viewing and for testing with PyPy on Linux
+   * CircleCI is used to build the docs for viewing, for linting with flake8, and
+     for testing with PyPy on Linux 
 
    Please note that if one of the following markers appear in the latest commit
    message, the following actions are taken.
@@ -431,7 +432,7 @@ Building the documentation
 
 Building the documentation requires installing some additional packages::
 
-    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image
+    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image joblib
 
 To build the documentation, you need to be in the ``doc`` folder::
 
@@ -890,18 +891,8 @@ in the examples.
 Python versions supported
 -------------------------
 
-All scikit-learn code should work unchanged in both Python 2.7 and 3.4 or
-newer. Since Python 3.x is not backwards compatible, that may require changes
-to code and it certainly requires testing on both 2.7 and 3.4 or newer.
-
-For most numerical algorithms, Python 3.x support is easy:
-just remember that ``print`` is a function and
-integer division is written ``//``.
-String handling has been overhauled, though, as have parts of
-the Python standard library.
-The `six <https://pythonhosted.org/six/>`_ package helps with
-cross-compatibility and is included in scikit-learn as
-``sklearn.externals.six``.
+All scikit-learn code should work unchanged in Python 3.5 or
+newer.
 
 
 .. _code_review:
@@ -1218,7 +1209,7 @@ the correct interface more easily.
     and optionally the mixin classes in ``sklearn.base``.
     For example, below is a custom classifier, with more examples included
     in the scikit-learn-contrib
-    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`__.
+    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/_template.py>`__.
 
       >>> import numpy as np
       >>> from sklearn.base import BaseEstimator, ClassifierMixin

@@ -29,7 +29,7 @@ from ._split import check_cv
 from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
 from ..exceptions import NotFittedError
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 from ..externals import six
 from ..utils import check_random_state
 from ..utils.fixes import sp_version
@@ -280,10 +280,7 @@ class ParameterSampler(object):
                 params = dict()
                 for k, v in items:
                     if hasattr(v, "rvs"):
-                        if sp_version < (0, 16):
-                            params[k] = v.rvs()
-                        else:
-                            params[k] = v.rvs(random_state=rnd)
+                        params[k] = v.rvs(random_state=rnd)
                     else:
                         params[k] = v[rnd.randint(len(v))]
                 yield params
@@ -342,7 +339,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     Returns
     -------
     score : float
-         Score of this parameter setting on given training / test split.
+         Score of this parameter setting on given test split.
 
     parameters : dict
         The parameters that have been evaluated.
@@ -901,8 +898,8 @@ class GridSearchCV(BaseSearchCV):
 
         - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train, test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -1235,8 +1232,8 @@ class RandomizedSearchCV(BaseSearchCV):
 
         - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train, test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
