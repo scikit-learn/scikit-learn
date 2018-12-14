@@ -92,6 +92,9 @@ def test_thread_limit_context():
 
     with thread_limits_context(limits=1):
         limits = get_thread_limits()
+        if SKIP_OPENBLAS:
+            del limits["openblas"]
+
         for clib in limits:
             if old_limits[clib] is None:
                 assert limits[clib] is None
