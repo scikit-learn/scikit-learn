@@ -1304,13 +1304,13 @@ uniformly:
 
 .. math::
 
-   \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k \neq j}^c (\textnormal{AUC}(j | k) +
-   \textnormal{AUC}(k | j))
+   \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k \neq j}^c (\text{AUC}(j | k) +
+   \text{AUC}(k | j))
 
-where :math:`c` is the number of classes and ``\textnormal{AUC}(j | k)`` is the
+where :math:`c` is the number of classes and :math:`\text{AUC}(j | k)` is the
 auc with class :math:`j` as the positive class and class :math:`k` as the
 negative class. In general,
-:math:`\textnormal{AUC}(j | k) \neq \textnormal{AUC}(k | j))` in the multiclass
+:math:`\text{AUC}(j | k) \neq \text{AUC}(k | j))` in the multiclass
 case. This algorithm is used by setting the keyword argument ``multiclass``
 to ``'ovo'`` and ``average`` to ``'macro'``.
 
@@ -1320,7 +1320,7 @@ prevalence:
 .. math::
 
    \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k \neq j}^c p(j \cup k)(
-   \textnormal{AUC}(j | k) + \textnormal{AUC}(k | j))
+   \text{AUC}(j | k) + \text{AUC}(k | j))
 
 where :math:`c` is the number of classes. This algorithm is used by setting
 the keyword argument ``multiclass`` to ``'ovo'`` and ``average`` to
