@@ -115,6 +115,17 @@ class _CLibsWrapper:
         self._unload()
         return limits
 
+    def get_openblas_version(self):
+        module = getattr(self, "openblas", None)
+        if module is not None:
+            get_config = getattr(module, "openblas_get_config")
+            get_config.restype = ctypes.c_char_p
+            config = get_config().split()
+            if config[0] == b"OpenBLAS":
+                return config[1].decode('utf-8')
+            return
+        return
+
     def _load_lib(self, module_name):
         """Return a binder on module_name by looping through loaded libraries
         """
@@ -344,3 +355,22 @@ def get_thread_limits(reload_clib=True):
     """
     wrapper = _get_wrapper(reload_clib)
     return wrapper.get_thread_limits()
+
+
+def get_openblas_version(reload_clib=True):
+    """Return the OpenBLAS version
+
+    Parameters
+    ----------
+    reload_clib : bool, (default=True)
+        If `reload_clib` is `True`, first loop through the loaded libraries to
+        ensure that this function is called on all available libraries.
+
+    Returns
+    -------
+    version : string or None
+        None means OpenBLAS is not loaded or version < 0.3.4, since OpenBLAS
+        did not expose it's verion before that.
+    """
+    wrapper = _get_wrapper(reload_clib)
+    return wrapper.get_openblas_version()
