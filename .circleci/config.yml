@@ -124,7 +124,7 @@ workflows:
                 - 0.20.X
       - deploy:
           requires:
-            - python3
+            - doc
   pypy:
     triggers:
       - schedule:
