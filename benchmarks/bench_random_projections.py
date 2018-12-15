@@ -6,7 +6,6 @@ Random projection benchmark
 Benchmarks for random projections.
 
 """
-from __future__ import division
 import gc
 import sys
 import optparse

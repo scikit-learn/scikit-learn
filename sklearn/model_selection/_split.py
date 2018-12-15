@@ -9,7 +9,6 @@ functions to split the data based on a preset strategy.
 #         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import division
 
 import warnings
 from itertools import chain, combinations

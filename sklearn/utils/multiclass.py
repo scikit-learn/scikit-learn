@@ -6,7 +6,6 @@ Multi-class / multi-label utility function
 ==========================================
 
 """
-from __future__ import division
 from itertools import chain
 
 from scipy.sparse import issparse

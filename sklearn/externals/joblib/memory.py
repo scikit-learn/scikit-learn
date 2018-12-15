@@ -9,7 +9,6 @@ is called with the same input arguments.
 # License: BSD Style, 3 clauses.
 
 
-from __future__ import with_statement
 import os
 import time
 import pydoc

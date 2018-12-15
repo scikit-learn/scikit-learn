@@ -2,7 +2,6 @@
 """
 A comparison of multilabel target formats and metrics over them
 """
-from __future__ import division
 
 from timeit import timeit
 from functools import partial
