@@ -1211,8 +1211,7 @@ def test_no_averaging_labels():
 
 @pytest.mark.parametrize(
     'name',
-    set(ALL_METRICS) - set(CLASSIFICATION_METRICS) - set(REGRESSION_METRICS) -
-    METRIC_UNDEFINED_BINARY_MULTICLASS)
+    set(THRESHOLDED_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS)
 def test_multiclass_score_permutation_invariance(name):
     y_score = np.random.rand(100, 3)
     y_score = y_score / y_score.sum(axis=1, keepdims=True)
