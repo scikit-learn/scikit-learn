@@ -1812,8 +1812,9 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
         .. versionadded:: 0.18
         .. deprecated:: 0.21
            This parameter ``labels`` is deprecated in version 0.21 and will
-           be removed in version 0.23. Hamming loss uses `y_true.shape[1]`
-           for the number of labels, so it unnecessary for the user to specify.
+           be removed in version 0.23. Hamming loss uses ``y_true.shape[1]``
+           for the number of labels when y_true is binary, so it is unnecessary
+           for the user to specify.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -1872,7 +1873,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if labels is not None:
-        warnings.warn("This parameter is unused. It was"
+        warnings.warn("The labels parameter is unused. It was"
                       " deprecated in version 0.21 and"
                       " will be removed in version 0.23",
                       DeprecationWarning)
