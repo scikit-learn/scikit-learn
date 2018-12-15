@@ -215,6 +215,10 @@ the following two rules:
   Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
 
+In case you require the use of parallelisation (using ``n_jobs=-1``) with a 
+custom scoring function, please make sure to define the custom function in a 
+module and import it for usage. 
+
 .. _multimetric_scoring:
 
 Using multiple metric evaluation
