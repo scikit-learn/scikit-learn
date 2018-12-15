@@ -7,8 +7,6 @@ Benchmarks for random projections.
 
 """
 from __future__ import division
-from __future__ import print_function
-
 import gc
 import sys
 import optparse

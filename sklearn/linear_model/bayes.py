@@ -1,7 +1,6 @@
 """
 Various bayesian regression
 """
-from __future__ import print_function
 
 # Authors: V. Michel, F. Pedregosa, A. Gramfort
 # License: BSD 3 clause

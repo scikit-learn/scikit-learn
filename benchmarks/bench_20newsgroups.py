@@ -1,4 +1,4 @@
-from __future__ import print_function, division
+from __future__ import division
 from time import time
 import argparse
 import numpy as np

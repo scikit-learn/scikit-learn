@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 # List all available versions of the documentation
-from __future__ import print_function
-
 import json
 import re
 import sys
