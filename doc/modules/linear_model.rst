@@ -817,11 +817,10 @@ The following table summarizes the penalties supported by each solver:
 | Robust to unscaled datasets  |       yes       |     yes     |       yes       |    no     |    no      |
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 
-The "saga" solver is often the best choice but requires scaling. The
-"lbfgs" solver is used by default for historical reasons.
-
+The "lbfgs" solver is used by default for its robustness. For large datasets
+the "saga" solver is usually faster.
 For large dataset, you may also consider using :class:`SGDClassifier`
-with 'log' loss.
+with 'log' loss, which might be even faster but require more tuning.
 
 .. topic:: Examples:
 
