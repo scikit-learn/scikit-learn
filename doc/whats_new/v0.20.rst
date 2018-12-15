@@ -32,7 +32,6 @@ Changelog
   unexpected error when columns is pandas Index or pandas Series.
   :issue:`12704` by :user:`Hanmin Qin <qinhanmin2014>`.
 
-
 :mod:`sklearn.neighbors`
 ........................
 
