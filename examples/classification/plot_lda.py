@@ -5,8 +5,6 @@ Normal and Shrinkage Linear Discriminant Analysis for classification
 
 Shows how shrinkage improves classification.
 """
-
-
 import numpy as np
 import matplotlib.pyplot as plt
 
