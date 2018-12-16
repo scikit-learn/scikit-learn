@@ -4,8 +4,6 @@ Helpers for embarrassingly parallel code.
 # Author: Gael Varoquaux < gael dot varoquaux at normalesup dot org >
 # Copyright: 2010, Gael Varoquaux
 # License: BSD 3 clause
-
-
 import os
 import sys
 from math import sqrt
