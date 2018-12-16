@@ -6,8 +6,6 @@
 #         Tom Dupre la Tour
 # License: BSD 3 clause
 
-
-
 from math import sqrt
 import warnings
 import numbers
