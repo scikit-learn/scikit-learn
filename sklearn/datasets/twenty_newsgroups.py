@@ -374,7 +374,7 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
     bunch : Bunch object with the following attribute:
         - bunch.data: sparse matrix, shape [n_samples, n_features]
         - bunch.target: array, shape [n_samples]
-        - bunch.target_names: list, length [n_classes]
+        - bunch.target_names: list, length [n_samples]
         - bunch.DESCR: a description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
