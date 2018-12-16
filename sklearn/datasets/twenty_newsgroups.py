@@ -217,7 +217,6 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     Returns
     -------
     bunch : Bunch object with the following attribute:
-
         - bunch.data: list, length [n_samples]
 
         - bunch.target: array, shape [n_samples]
@@ -377,7 +376,6 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
     Returns
     -------
     bunch : Bunch object with the following attribute:
-
         - bunch.data: sparse matrix, shape [n_samples, n_features]
 
         - bunch.target: array, shape [n_samples]
