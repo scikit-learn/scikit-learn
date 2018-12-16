@@ -1,4 +1,4 @@
-""" Dictionary learning 
+""" Dictionary learning
 """
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
