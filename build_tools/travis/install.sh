@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script is meant to be called by the "install" step defined in
-# .travis.yml. See http://docs.travis-ci.com/ for more details.
+# .travis.yml. See https://docs.travis-ci.com/ for more details.
 # The behavior of the script is controlled by environment variabled defined
 # in the .travis.yml in the top level folder of the project.
 
@@ -70,11 +70,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
     fi
 	  make_conda $TO_INSTALL
 
-    # for python 3.4, conda does not have recent pytest packages
-    if [[ "$PYTHON_VERSION" == "3.4" ]]; then
-        pip install pytest==3.5
-    fi
-
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
     # virtualenv but we want to use the numpy installed through apt-get
@@ -82,9 +77,9 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     deactivate
     # Create a new virtualenv using system site packages for python, numpy
     # and scipy
-    virtualenv --system-site-packages testvenv
+    virtualenv --system-site-packages --python=python3 testvenv
     source testvenv/bin/activate
-    pip install pytest pytest-cov cython==$CYTHON_VERSION
+    pip install pytest pytest-cov cython==$CYTHON_VERSION joblib==$JOBLIB_VERSION
 
 elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     make_conda python=3.7
@@ -107,27 +102,19 @@ if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
     pip install sphinx numpydoc  # numpydoc requires sphinx
 fi
 
-if [[ "$SKIP_TESTS" == "true" && "$CHECK_PYTEST_SOFT_DEPENDENCY" != "true" ]]; then
-    echo "No need to build scikit-learn"
-else
-    # Build scikit-learn in the install.sh script to collapse the verbose
-    # build output in the travis output when it succeeds.
-    python --version
-    python -c "import numpy; print('numpy %s' % numpy.__version__)"
-    python -c "import scipy; print('scipy %s' % scipy.__version__)"
-    python -c "\
+# Build scikit-learn in the install.sh script to collapse the verbose
+# build output in the travis output when it succeeds.
+python --version
+python -c "import numpy; print('numpy %s' % numpy.__version__)"
+python -c "import scipy; print('scipy %s' % scipy.__version__)"
+python -c "\
 try:
     import pandas
     print('pandas %s' % pandas.__version__)
 except ImportError:
     pass
 "
-    python setup.py develop
-    ccache --show-stats
-    # Useful for debugging how ccache is used
-    # cat $CCACHE_LOGFILE
-fi
-
-if [[ "$RUN_FLAKE8" == "true" ]]; then
-    conda install flake8 -y
-fi
+python setup.py develop
+ccache --show-stats
+# Useful for debugging how ccache is used
+# cat $CCACHE_LOGFILE

@@ -20,10 +20,10 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import arrayfuncs, as_float_array, check_X_y, deprecated
+from ..utils import arrayfuncs, as_float_array, check_X_y
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 from ..externals.six.moves import xrange
 from ..externals.six import string_types
 
@@ -135,7 +135,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     References
     ----------
     .. [1] "Least Angle Regression", Effron et al.
-           http://statweb.stanford.edu/~tibs/ftp/lars.pdf
+           https://statweb.stanford.edu/~tibs/ftp/lars.pdf
 
     .. [2] `Wikipedia entry on the Least-angle regression
            <https://en.wikipedia.org/wiki/Least-angle_regression>`_
@@ -431,7 +431,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 idx]
 
             n_active -= 1
-            m, n = idx, n_active
             # handle the case when idx is not length of 1
             drop_idx = [active.pop(ii) for ii in idx]
 
@@ -970,7 +969,9 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
 
 class LarsCV(Lars):
-    """Cross-validated Least Angle Regression model
+    """Cross-validated Least Angle Regression model.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -1006,8 +1007,8 @@ class LarsCV(Lars):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 
@@ -1185,16 +1186,11 @@ class LarsCV(Lars):
                   Xy=None, fit_path=True)
         return self
 
-    @property
-    @deprecated("Attribute alpha is deprecated in 0.19 and "
-                "will be removed in 0.21. See ``alpha_`` instead")
-    def alpha(self):
-        # impedance matching for the above Lars.fit (should not be documented)
-        return self.alpha_
-
 
 class LassoLarsCV(LarsCV):
-    """Cross-validated Lasso, using the LARS algorithm
+    """Cross-validated Lasso, using the LARS algorithm.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     The optimization objective for Lasso is::
 
@@ -1234,8 +1230,8 @@ class LassoLarsCV(LarsCV):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 

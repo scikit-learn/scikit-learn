@@ -1,4 +1,3 @@
-from sklearn.utils.testing import assert_true, assert_false
 from sklearn.utils.metaestimators import if_delegate_has_method
 
 
@@ -18,12 +17,12 @@ class MockMetaEstimator(object):
 
 
 def test_delegated_docstring():
-    assert_true("This is a mock delegated function"
-                in str(MockMetaEstimator.__dict__['func'].__doc__))
-    assert_true("This is a mock delegated function"
-                in str(MockMetaEstimator.func.__doc__))
-    assert_true("This is a mock delegated function"
-                in str(MockMetaEstimator().func.__doc__))
+    assert "This is a mock delegated function" \
+                in str(MockMetaEstimator.__dict__['func'].__doc__)
+    assert "This is a mock delegated function" \
+           in str(MockMetaEstimator.func.__doc__)
+    assert "This is a mock delegated function" \
+           in str(MockMetaEstimator().func.__doc__)
 
 
 class MetaEst(object):
@@ -66,15 +65,13 @@ class HasNoPredict(object):
 
 
 def test_if_delegate_has_method():
-    assert_true(hasattr(MetaEst(HasPredict()), 'predict'))
-    assert_false(hasattr(MetaEst(HasNoPredict()), 'predict'))
-    assert_false(
-        hasattr(MetaEstTestTuple(HasNoPredict(), HasNoPredict()), 'predict'))
-    assert_true(
-        hasattr(MetaEstTestTuple(HasPredict(), HasNoPredict()), 'predict'))
-    assert_false(
-        hasattr(MetaEstTestTuple(HasNoPredict(), HasPredict()), 'predict'))
-    assert_false(
-        hasattr(MetaEstTestList(HasNoPredict(), HasPredict()), 'predict'))
-    assert_true(
-        hasattr(MetaEstTestList(HasPredict(), HasPredict()), 'predict'))
+    assert hasattr(MetaEst(HasPredict()), 'predict')
+    assert not hasattr(MetaEst(HasNoPredict()), 'predict')
+    assert not hasattr(MetaEstTestTuple(HasNoPredict(), HasNoPredict()),
+                       'predict')
+    assert hasattr(MetaEstTestTuple(HasPredict(), HasNoPredict()), 'predict')
+    assert not hasattr(MetaEstTestTuple(HasNoPredict(), HasPredict()),
+                       'predict')
+    assert not hasattr(MetaEstTestList(HasNoPredict(), HasPredict()),
+                       'predict')
+    assert hasattr(MetaEstTestList(HasPredict(), HasPredict()), 'predict')

@@ -203,95 +203,29 @@ if hasattr(mp, 'get_context'):
         DEFAULT_MP_CONTEXT = mp.get_context(method=method)
 
 
-class CloudpickledObjectWrapper(object):
-    def __init__(self, obj):
-        self.pickled_obj = dumps(obj)
-
-    def __reduce__(self):
-        return loads, (self.pickled_obj,)
-
-
-def _need_pickle_wrapping(obj):
-    if isinstance(obj, list) and len(obj) >= 1:
-        # Make the assumption that the content of the list is homogeneously
-        # typed.
-        return _need_pickle_wrapping(obj[0])
-    elif isinstance(obj, dict) and len(obj) >= 1:
-        # Make the assumption that the content of the dict is homogeneously
-        # typed.
-        k, v = next(iter(obj.items()))
-        return _need_pickle_wrapping(v) or _need_pickle_wrapping(k)
-    elif isinstance(obj, partial):
-        return _need_pickle_wrapping(obj.func)
-
-    # Warning: obj.__module__ can be defined and set to None
-    module = getattr(obj, "__module__", None)
-    need_wrap = module is not None and "__main__" in module
-    if callable(obj):
-        # Need wrap if the object is a function defined in a local scope of
-        # another function.
-        func_code = getattr(obj, "__code__", "")
-        need_wrap |= getattr(func_code, "co_flags", 0) & inspect.CO_NESTED
-
-        # Need wrap if the obj is a lambda expression
-        func_name = getattr(obj, "__name__", "")
-        need_wrap |= "<lambda>" in func_name
-
-        # Need wrap if obj is a bound method of an instance of an
-        # interactively defined class
-        method_self = getattr(obj, '__self__', None)
-        if not need_wrap and method_self is not None:
-            # Recursively introspect the instanc of the method
-            return _need_pickle_wrapping(method_self)
-    return need_wrap
-
-
 class BatchedCalls(object):
     """Wrap a sequence of (func, args, kwargs) tuples as a single callable"""
 
-    def __init__(self, iterator_slice, backend, pickle_cache=None):
+    def __init__(self, iterator_slice, backend_and_jobs, pickle_cache=None):
         self.items = list(iterator_slice)
         self._size = len(self.items)
-        self._backend = backend
+        if isinstance(backend_and_jobs, tuple):
+            self._backend, self._n_jobs = backend_and_jobs
+        else:
+            # this is for backward compatibility purposes. Before 0.12.6,
+            # nested backends were returned without n_jobs indications.
+            self._backend, self._n_jobs = backend_and_jobs, None
         self._pickle_cache = pickle_cache if pickle_cache is not None else {}
 
     def __call__(self):
-        with parallel_backend(self._backend):
+        # Set the default nested backend to self._backend but do not set the
+        # change the default number of processes to -1
+        with parallel_backend(self._backend, n_jobs=self._n_jobs):
             return [func(*args, **kwargs)
                     for func, args, kwargs in self.items]
 
     def __len__(self):
         return self._size
-
-    @staticmethod
-    def _wrap_non_picklable_objects(obj, pickle_cache):
-        if not _need_pickle_wrapping(obj):
-            return obj
-        try:
-            wrapped_obj = pickle_cache.get(obj)
-            hashable = True
-        except TypeError:
-            # obj is not hashable: cannot be cached
-            wrapped_obj = None
-            hashable = False
-        if wrapped_obj is None:
-            wrapped_obj = CloudpickledObjectWrapper(obj)
-            if hashable:
-                pickle_cache[obj] = wrapped_obj
-        return wrapped_obj
-
-    def __getstate__(self):
-        items = [(self._wrap_non_picklable_objects(func, self._pickle_cache),
-                  [self._wrap_non_picklable_objects(a, self._pickle_cache)
-                   for a in args],
-                  {k: self._wrap_non_picklable_objects(a, self._pickle_cache)
-                   for k, a in kwargs.items()}
-                  )
-                 for func, args, kwargs in self.items]
-        return (items, self._size, self._backend)
-
-    def __setstate__(self, state):
-        self.items, self._size, self._backend = state
 
 
 ###############################################################################

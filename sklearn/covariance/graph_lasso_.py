@@ -23,7 +23,7 @@ from ..utils.fixes import _Sequence as Sequence
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
 from ..model_selection import check_cv, cross_val_score
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 
 
 # Helper functions to compute the objective and dual objective functions
@@ -243,6 +243,9 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                 coefs = np.dot(sub_covariance, coefs)
                 covariance_[idx, indices != idx] = coefs
                 covariance_[indices != idx, idx] = coefs
+            if not np.isfinite(precision_.sum()):
+                raise FloatingPointError('The system is too ill-conditioned '
+                                         'for this solver')
             d_gap = _dual_gap(emp_cov, precision_, alpha)
             cost = _objective(emp_cov, precision_, alpha)
             if verbose:
@@ -467,7 +470,9 @@ def graphical_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 
 
 class GraphicalLassoCV(GraphicalLasso):
-    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
+    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
@@ -489,8 +494,8 @@ class GraphicalLassoCV(GraphicalLasso):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs :class:`KFold` is used.
 
@@ -583,12 +588,6 @@ class GraphicalLassoCV(GraphicalLasso):
         self.n_refinements = n_refinements
         self.cv = cv
         self.n_jobs = n_jobs
-
-    @property
-    @deprecated("Attribute grid_scores was deprecated in version 0.19 and "
-                "will be removed in 0.21. Use ``grid_scores_`` instead")
-    def grid_scores(self):
-        return self.grid_scores_
 
     def fit(self, X, y=None):
         """Fits the GraphicalLasso covariance model to X.
@@ -875,7 +874,9 @@ class GraphLasso(GraphicalLasso):
 @deprecated("The 'GraphLassoCV' was renamed to 'GraphicalLassoCV' "
             "in version 0.20 and will be removed in 0.22.")
 class GraphLassoCV(GraphicalLassoCV):
-    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
+    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     This class implements the Graphical Lasso algorithm.
 
@@ -899,8 +900,8 @@ class GraphLassoCV(GraphicalLassoCV):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs :class:`KFold` is used.
 

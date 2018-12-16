@@ -13,28 +13,24 @@ import numbers
 
 import numpy as np
 import scipy.sparse as sp
-from scipy import __version__ as scipy_version
 from distutils.version import LooseVersion
+from inspect import signature
 
 from numpy.core.numeric import ComplexWarning
 
 from ..externals import six
-from ..utils.fixes import signature
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
-from ..utils._joblib import Memory
-from ..utils._joblib import __version__ as joblib_version
+from ._joblib import Memory
+from ._joblib import __version__ as joblib_version
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 # Silenced by default to reduce verbosity. Turn on at runtime for
 # performance profiling.
 warnings.simplefilter('ignore', NonBLASDotWarning)
-
-# checking whether large sparse are supported by scipy or not
-LARGE_SPARSE_SUPPORTED = LooseVersion(scipy_version) >= '0.14.0'
 
 
 def _assert_all_finite(X, allow_nan=False):
@@ -89,7 +85,7 @@ def as_float_array(X, copy=True, force_all_finite=True):
 
         - True: Force all values of X to be finite.
         - False: accept both np.inf and np.nan in X.
-        - 'allow-nan':  accept  only  np.nan  values in  X.  Values  cannot  be
+        - 'allow-nan': accept only np.nan values in X. Values cannot be
           infinite.
 
         .. versionadded:: 0.20
@@ -140,7 +136,12 @@ def _num_samples(x):
         if len(x.shape) == 0:
             raise TypeError("Singleton array %r cannot be considered"
                             " a valid collection." % x)
-        return x.shape[0]
+        # Check that shape is returning an integer or default to len
+        # Dask dataframes may not return numeric shape[0] value
+        if isinstance(x.shape[0], numbers.Integral):
+            return x.shape[0]
+        else:
+            return len(x)
     else:
         return len(x)
 
@@ -183,8 +184,8 @@ def check_memory(memory):
     """Check that ``memory`` is joblib.Memory-like.
 
     joblib.Memory-like means that ``memory`` can be converted into a
-    sklearn.utils.Memory instance (typically a str denoting the
-    ``cachedir``) or has the same interface (has a ``cache`` method).
+    joblib.Memory instance (typically a str denoting the ``location``)
+    or has the same interface (has a ``cache`` method).
 
     Parameters
     ----------
@@ -207,7 +208,7 @@ def check_memory(memory):
             memory = Memory(location=memory, verbose=0)
     elif not hasattr(memory, 'cache'):
         raise ValueError("'memory' should be None, a string or have the same"
-                         " interface as sklearn.utils.Memory."
+                         " interface as joblib.Memory."
                          " Got memory='{}' instead.".format(memory))
     return memory
 
@@ -287,7 +288,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
 
         - True: Force all values of X to be finite.
         - False: accept both np.inf and np.nan in X.
-        - 'allow-nan':  accept  only  np.nan  values in  X.  Values  cannot  be
+        - 'allow-nan': accept only np.nan values in X. Values cannot be
           infinite.
 
         .. versionadded:: 0.20
@@ -361,9 +362,9 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
 
     """Input validation on an array, list, sparse matrix or similar.
 
-    By default, the input is converted to an at least 2D numpy array.
-    If the dtype of the array is object, attempt converting to float,
-    raising on failure.
+    By default, the input is checked to be a non-empty 2D array containing
+    only finite values. If the dtype of the array is object, attempt
+    converting to float, raising on failure.
 
     Parameters
     ----------
@@ -407,22 +408,22 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         be triggered by a conversion.
 
     force_all_finite : boolean or 'allow-nan', (default=True)
-        Whether to raise an error on np.inf and np.nan in X. The possibilities
-        are:
+        Whether to raise an error on np.inf and np.nan in array. The
+        possibilities are:
 
-        - True: Force all values of X to be finite.
-        - False: accept both np.inf and np.nan in X.
-        - 'allow-nan':  accept  only  np.nan  values in  X.  Values  cannot  be
-          infinite.
+        - True: Force all values of array to be finite.
+        - False: accept both np.inf and np.nan in array.
+        - 'allow-nan': accept only np.nan values in array. Values cannot
+          be infinite.
 
         .. versionadded:: 0.20
            ``force_all_finite`` accepts the string ``'allow-nan'``.
 
     ensure_2d : boolean (default=True)
-        Whether to raise a value error if X is not 2d.
+        Whether to raise a value error if array is not 2D.
 
     allow_nd : boolean (default=False)
-        Whether to allow X.ndim > 2.
+        Whether to allow array.ndim > 2.
 
     ensure_min_samples : int (default=1)
         Make sure that the array has a minimum number of samples in its first
@@ -444,8 +445,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
 
     Returns
     -------
-    X_converted : object
-        The converted and validated X.
+    array_converted : object
+        The converted and validated array.
 
     """
     # accept_sparse 'None' deprecation check
@@ -472,7 +473,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # check if the object contains several dtypes (typically a pandas
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
-    if hasattr(array, "dtypes") and hasattr(array, "__array__"):
+    if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
         dtypes_orig = np.array(array.dtypes)
 
     if dtype_numeric:
@@ -608,7 +609,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
 def _check_large_sparse(X, accept_large_sparse=False):
     """Raise a ValueError if X has 64bit indices and accept_large_sparse=False
     """
-    if not (accept_large_sparse and LARGE_SPARSE_SUPPORTED):
+    if not accept_large_sparse:
         supported_indices = ["int32"]
         if X.getformat() == "coo":
             index_keys = ['col', 'row']
@@ -619,10 +620,6 @@ def _check_large_sparse(X, accept_large_sparse=False):
         for key in index_keys:
             indices_datatype = getattr(X, key).dtype
             if (indices_datatype not in supported_indices):
-                if not LARGE_SPARSE_SUPPORTED:
-                    raise ValueError("Scipy version %s does not support large"
-                                     " indices, please upgrade your scipy"
-                                     " to 0.14.0 or above" % scipy_version)
                 raise ValueError("Only sparse matrices with 32-bit integer"
                                  " indices are accepted. Got %s indices."
                                  % indices_datatype)
@@ -635,10 +632,11 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
               warn_on_dtype=False, estimator=None):
     """Input validation for standard estimators.
 
-    Checks X and y for consistent length, enforces X 2d and y 1d.
-    Standard input checks are only applied to y, such as checking that y
+    Checks X and y for consistent length, enforces X to be 2D and y 1D. By
+    default, X is checked to be non-empty and containing only finite values.
+    Standard input checks are also applied to y, such as checking that y
     does not have np.nan or np.inf targets. For multi-label y, set
-    multi_output=True to allow 2d and sparse y.  If the dtype of X is
+    multi_output=True to allow 2D and sparse y. If the dtype of X is
     object, attempt converting to float, raising on failure.
 
     Parameters
@@ -688,20 +686,20 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
 
         - True: Force all values of X to be finite.
         - False: accept both np.inf and np.nan in X.
-        - 'allow-nan':  accept  only  np.nan  values in  X.  Values  cannot  be
+        - 'allow-nan': accept only np.nan values in X. Values cannot be
           infinite.
 
         .. versionadded:: 0.20
            ``force_all_finite`` accepts the string ``'allow-nan'``.
 
     ensure_2d : boolean (default=True)
-        Whether to make X at least 2d.
+        Whether to raise a value error if X is not 2D.
 
     allow_nd : boolean (default=False)
         Whether to allow X.ndim > 2.
 
     multi_output : boolean (default=False)
-        Whether to allow 2-d y (array or sparse matrix). If false, y will be
+        Whether to allow 2D y (array or sparse matrix). If false, y will be
         validated as a vector. y cannot have np.nan or np.inf values if
         multi_output=True.
 
@@ -736,6 +734,9 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
     y_converted : object
         The converted and validated y.
     """
+    if y is None:
+        raise ValueError("y cannot be None")
+
     X = check_array(X, accept_sparse=accept_sparse,
                     accept_large_sparse=accept_large_sparse,
                     dtype=dtype, order=order, copy=copy,

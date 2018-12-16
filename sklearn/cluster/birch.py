@@ -404,7 +404,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     ----------
     * Tian Zhang, Raghu Ramakrishnan, Maron Livny
       BIRCH: An efficient data clustering method for large databases.
-      http://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
+      https://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
 
     * Roberto Perdisci
       JBirch - Java implementation of BIRCH clustering algorithm

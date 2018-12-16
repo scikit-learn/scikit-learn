@@ -7,7 +7,7 @@ from sklearn.externals.six import b, u
 from sklearn.utils.murmurhash import murmurhash3_32
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal, assert_true
+from sklearn.utils.testing import assert_equal
 
 
 def test_mmhash3_int():
@@ -63,8 +63,8 @@ def test_no_collision_on_byte_range():
     previous_hashes = set()
     for i in range(100):
         h = murmurhash3_32(' ' * i, 0)
-        assert_true(h not in previous_hashes,
-                    "Found collision on growing empty string")
+        assert h not in previous_hashes, \
+            "Found collision on growing empty string"
 
 
 def test_uniform_distribution():

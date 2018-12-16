@@ -5,7 +5,6 @@
 from __future__ import division
 
 import numpy as np
-import warnings
 from warnings import warn
 from sklearn.utils.fixes import euler_gamma
 
@@ -15,6 +14,7 @@ import numbers
 from ..externals import six
 from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
+from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted
 from ..base import OutlierMixin
 
@@ -187,6 +187,13 @@ class IsolationForest(BaseBagging, OutlierMixin):
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by iforest")
 
+    def _parallel_args(self):
+        # ExtraTreeRegressor releases the GIL, so it's more efficient to use
+        # a thread-based backend rather than a process-based backend so as
+        # to avoid suffering from communication overhead and extra memory
+        # copies.
+        return _joblib_parallel_args(prefer='threads')
+
     def fit(self, X, y=None, sample_weight=None):
         """Fit estimator.
 
@@ -208,20 +215,20 @@ class IsolationForest(BaseBagging, OutlierMixin):
         self : object
         """
         if self.contamination == "legacy":
-            warnings.warn('default contamination parameter 0.1 will change '
-                          'in version 0.22 to "auto". This will change the '
-                          'predict method behavior.',
-                          FutureWarning)
+            warn('default contamination parameter 0.1 will change '
+                 'in version 0.22 to "auto". This will change the '
+                 'predict method behavior.',
+                 FutureWarning)
             self._contamination = 0.1
         else:
             self._contamination = self.contamination
 
         if self.behaviour == 'old':
-            warnings.warn('behaviour="old" is deprecated and will be removed '
-                          'in version 0.22. Please use behaviour="new", which '
-                          'makes the decision_function change to match '
-                          'other anomaly detection algorithm API.',
-                          FutureWarning)
+            warn('behaviour="old" is deprecated and will be removed '
+                 'in version 0.22. Please use behaviour="new", which '
+                 'makes the decision_function change to match '
+                 'other anomaly detection algorithm API.',
+                 FutureWarning)
 
         X = check_array(X, accept_sparse=['csc'])
         if issparse(X):
@@ -414,8 +421,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
         if self.behaviour != 'old':
             raise AttributeError("threshold_ attribute does not exist when "
                                  "behaviour != 'old'")
-        warnings.warn("threshold_ attribute is deprecated in 0.20 and will"
-                      " be removed in 0.22.", DeprecationWarning)
+        warn("threshold_ attribute is deprecated in 0.20 and will"
+             " be removed in 0.22.", DeprecationWarning)
         return self._threshold_
 
 

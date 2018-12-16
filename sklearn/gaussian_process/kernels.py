@@ -22,6 +22,7 @@ optimization.
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 import math
+from inspect import signature
 
 import numpy as np
 from scipy.special import kv, gamma
@@ -30,7 +31,6 @@ from scipy.spatial.distance import pdist, cdist, squareform
 from ..metrics.pairwise import pairwise_kernels
 from ..externals import six
 from ..base import clone
-from ..utils.fixes import signature
 
 
 def _check_length_scale(X, length_scale):
