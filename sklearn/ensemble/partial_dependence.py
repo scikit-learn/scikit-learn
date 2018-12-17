@@ -10,7 +10,7 @@ import numpy as np
 from scipy.stats.mstats import mquantiles
 
 from ..utils.extmath import cartesian
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import map, range, zip
 from ..utils import check_array

@@ -230,6 +230,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
                           'retain the lower branches required '
                           'for the specified number of clusters',
                           stacklevel=2)
+        X = np.require(X, requirements="W")
         out = hierarchy.ward(X)
         children_ = out[:, :2].astype(np.intp)
 
@@ -339,9 +340,8 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
 
 
 # single average and complete linkage
-def linkage_tree(X, connectivity=None, n_components='deprecated',
-                 n_clusters=None, linkage='complete', affinity="euclidean",
-                 return_distance=False):
+def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
+                 affinity="euclidean", return_distance=False):
     """Linkage agglomerative clustering based on a Feature matrix.
 
     The inertia matrix uses a Heapq-based representation.
@@ -361,9 +361,6 @@ def linkage_tree(X, connectivity=None, n_components='deprecated',
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
         Default is None, i.e, the Ward algorithm is unstructured.
-
-    n_components : int (optional)
-        The number of connected components in the graph.
 
     n_clusters : int (optional)
         Stop early the construction of the tree at n_clusters. This is
@@ -420,10 +417,6 @@ def linkage_tree(X, connectivity=None, n_components='deprecated',
     --------
     ward_tree : hierarchical clustering with ward linkage
     """
-    if n_components != 'deprecated':
-        warnings.warn("n_components was deprecated in 0.19"
-                      "will be removed in 0.21", DeprecationWarning)
-
     X = np.asarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
@@ -639,7 +632,7 @@ def _hc_cut(n_clusters, children, n_leaves):
     # are interested in largest elements
     # children[-1] is the root of the tree
     nodes = [-(max(children[-1]) + 1)]
-    for i in xrange(n_clusters - 1):
+    for _ in xrange(n_clusters - 1):
         # As we have a heap, nodes[0] is the smallest element
         these_children = children[-nodes[0] - n_leaves]
         # Insert the 2 children and remove the largest node

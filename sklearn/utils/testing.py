@@ -21,14 +21,9 @@ import scipy as sp
 import scipy.io
 from functools import wraps
 from operator import itemgetter
-try:
-    # Python 2
-    from urllib2 import urlopen
-    from urllib2 import HTTPError
-except ImportError:
-    # Python 3+
-    from urllib.request import urlopen
-    from urllib.error import HTTPError
+from inspect import signature
+from urllib.request import urlopen
+from urllib.error import HTTPError
 
 import tempfile
 import shutil
@@ -42,12 +37,20 @@ try:
 except NameError:
     WindowsError = None
 
-import sklearn
-from sklearn.base import BaseEstimator
-from sklearn.externals import joblib
-from sklearn.utils.fixes import signature
-from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
+from numpy.testing import assert_allclose
+from numpy.testing import assert_almost_equal
+from numpy.testing import assert_approx_equal
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_less
+import numpy as np
 
+import sklearn
+from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
+                          RegressorMixin, TransformerMixin)
+from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
+from sklearn.utils._joblib import joblib
+from sklearn.utils._unittest_backport import TestCase
 
 additional_names_in_all = []
 try:
@@ -73,31 +76,18 @@ try:
 except ImportError:
     pass
 
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_less
-from numpy.testing import assert_approx_equal
-import numpy as np
-
-from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
-                          ClusterMixin)
-from sklearn.utils._unittest_backport import TestCase
-
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
-           "assert_approx_equal", "SkipTest"]
+           "assert_approx_equal", "assert_allclose", "SkipTest"]
 __all__.extend(additional_names_in_all)
 
 _dummy = TestCase('__init__')
 assert_equal = _dummy.assertEqual
 assert_not_equal = _dummy.assertNotEqual
-assert_true = _dummy.assertTrue
-assert_false = _dummy.assertFalse
 assert_raises = _dummy.assertRaises
 SkipTest = unittest.case.SkipTest
 assert_dict_equal = _dummy.assertDictEqual
@@ -113,6 +103,16 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
+
+deprecation_message = "'assert_true' is deprecated in version 0.21 " \
+                      "and will be removed in version 0.23. " \
+                      "Please use 'assert' instead."
+assert_true = deprecated(deprecation_message)(_dummy.assertTrue)
+
+deprecation_message = "'assert_false' is deprecated in version 0.21 " \
+                      "and will be removed in version 0.23. " \
+                      "Please use 'assert' instead."
+assert_false = deprecated(deprecation_message)(_dummy.assertFalse)
 
 
 def assert_warns(warning_class, func, *args, **kw):
@@ -378,11 +378,6 @@ class _IgnoreWarnings(object):
         self.log[:] = []
         clean_warning_registry()
 
-
-assert_less = _dummy.assertLess
-assert_greater = _dummy.assertGreater
-
-assert_allclose = np.testing.assert_allclose
 
 def assert_raise_message(exceptions, message, function, *args, **kwargs):
     """Helper function to test the message raised in an exception.
@@ -763,6 +758,8 @@ try:
                                      reason='skip on travis')
     fails_if_pypy = pytest.mark.xfail(IS_PYPY, raises=NotImplementedError,
                                       reason='not compatible with PyPy')
+    skip_if_no_parallel = pytest.mark.skipif(not joblib.parallel.mp,
+                                             reason="joblib is in serial mode")
 
     #  Decorator for tests involving both BLAS calls and multiprocessing.
     #

@@ -18,10 +18,11 @@ from .base import _preprocess_data
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
-from ..utils import Parallel, delayed, effective_n_jobs
+from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
+from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
 from ..exceptions import ConvergenceWarning
@@ -619,7 +620,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     --------
     >>> from sklearn.linear_model import ElasticNet
     >>> from sklearn.datasets import make_regression
-    >>>
+
     >>> X, y = make_regression(n_features=2, random_state=0)
     >>> regr = ElasticNet(random_state=0)
     >>> regr.fit(X, y)
@@ -1203,7 +1204,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                 for this_l1_ratio, this_alphas in zip(l1_ratios, alphas)
                 for train, test in folds)
         mse_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                             prefer="threads")(jobs)
+                             **_joblib_parallel_args(prefer="threads"))(jobs)
         mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
         mean_mse = np.mean(mse_paths, axis=1)
         self.mse_path_ = np.squeeze(np.rollaxis(mse_paths, 2, 1))
@@ -1246,7 +1247,9 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
 
 
 class LassoCV(LinearModelCV, RegressorMixin):
-    """Lasso linear model with iterative fitting along a regularization path
+    """Lasso linear model with iterative fitting along a regularization path.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     The best model is selected by cross-validation.
 
@@ -1305,8 +1308,8 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 
@@ -1411,9 +1414,9 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
-    """Elastic Net model with iterative fitting along a regularization path
+    """Elastic Net model with iterative fitting along a regularization path.
 
-    The best model is selected by cross-validation.
+    See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <elastic_net>`.
 
@@ -1475,8 +1478,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 
@@ -1546,7 +1549,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     --------
     >>> from sklearn.linear_model import ElasticNetCV
     >>> from sklearn.datasets import make_regression
-    >>>
+
     >>> X, y = make_regression(n_features=2, random_state=0)
     >>> regr = ElasticNetCV(cv=5, random_state=0)
     >>> regr.fit(X, y)
@@ -1793,7 +1796,7 @@ class MultiTaskElasticNet(Lasso):
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, self.fit_intercept, self.normalize, copy=False)
 
-        if not self.warm_start or self.coef_ is None:
+        if not self.warm_start or not hasattr(self, "coef_"):
             self.coef_ = np.zeros((n_tasks, n_features), dtype=X.dtype.type,
                                   order='F')
 
@@ -1823,7 +1826,7 @@ class MultiTaskElasticNet(Lasso):
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
-    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
+    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
 
     The optimization objective for Lasso is::
 
@@ -1944,6 +1947,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     """Multi-task L1/L2 ElasticNet with built-in cross-validation.
 
+    See glossary entry for :term:`cross-validation estimator`.
+
     The optimization objective for MultiTaskElasticNet is::
 
         (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
@@ -2011,8 +2016,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 
@@ -2130,7 +2135,9 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
-    """Multi-task L1/L2 Lasso with built-in cross-validation.
+    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     The optimization objective for MultiTaskLasso is::
 
@@ -2188,8 +2195,8 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 

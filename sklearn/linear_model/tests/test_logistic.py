@@ -11,6 +11,8 @@ from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
 from sklearn.metrics.scorer import get_scorer
 from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import compute_class_weight, _IS_32BIT
 from sklearn.utils.testing import assert_almost_equal
@@ -21,11 +23,13 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
+from sklearn.linear_model import SGDClassifier
+from sklearn.preprocessing import scale
+from sklearn.utils.testing import skip_if_no_parallel
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import ChangedBehaviorWarning
@@ -78,6 +82,7 @@ def test_predict_2_classes():
                                          random_state=0), X_sp, Y1)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_error():
     # Test for appropriate exception on errors
@@ -146,6 +151,7 @@ def test_logistic_cv_score_does_not_warn_by_default():
     assert len(record) == 0
 
 
+@skip_if_no_parallel
 def test_lr_liblinear_warning():
     n_samples, n_features = iris.data.shape
     target = iris.target_names[iris.target]
@@ -205,6 +211,7 @@ def test_multinomial_validation(solver):
     assert_raises(ValueError, lr.fit, [[0, 1], [1, 0]], [0, 1])
 
 
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.parametrize('LR', [LogisticRegression, LogisticRegressionCV])
 def test_check_solver_option(LR):
     X, y = iris.data, iris.target
@@ -224,7 +231,7 @@ def test_check_solver_option(LR):
     lr = LR(solver='liblinear', multi_class='multinomial')
     assert_raise_message(ValueError, msg, lr.fit, X, y)
 
-    # all solvers except 'liblinear'
+    # all solvers except 'liblinear' and 'saga'
     for solver in ['newton-cg', 'lbfgs', 'sag']:
         msg = ("Solver %s supports only l2 penalties, got l1 penalty." %
                solver)
@@ -234,6 +241,15 @@ def test_check_solver_option(LR):
         msg = ("Solver %s supports only dual=False, got dual=True" %
                solver)
         lr = LR(solver=solver, dual=True, multi_class='ovr')
+        assert_raise_message(ValueError, msg, lr.fit, X, y)
+
+    # only saga supports elasticnet. We only test for liblinear because the
+    # error is raised before for the other solvers (solver %s supports only l2
+    # penalties)
+    for solver in ['liblinear']:
+        msg = ("Only 'saga' solver supports elasticnet penalty, got "
+               "solver={}.".format(solver))
+        lr = LR(solver=solver, penalty='elasticnet')
         assert_raise_message(ValueError, msg, lr.fit, X, y)
 
 
@@ -312,7 +328,7 @@ def test_sparsify():
     pred_d_d = clf.decision_function(iris.data)
 
     clf.sparsify()
-    assert_true(sp.issparse(clf.coef_))
+    assert sp.issparse(clf.coef_)
     pred_s_d = clf.decision_function(iris.data)
 
     sp_data = sp.coo_matrix(iris.data)
@@ -1149,14 +1165,31 @@ def test_logreg_l1_sparse_data():
 
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
-def test_logreg_cv_penalty():
-    # Test that the correct penalty is passed to the final fit.
-    X, y = make_classification(n_samples=50, n_features=20, random_state=0)
-    lr_cv = LogisticRegressionCV(penalty="l1", Cs=[1.0], solver='saga')
+@pytest.mark.parametrize("random_seed", [42])
+@pytest.mark.parametrize("penalty", ["l1", "l2"])
+def test_logistic_regression_cv_refit(random_seed, penalty):
+    # Test that when refit=True, logistic regression cv with the saga solver
+    # converges to the same solution as logistic regression with a fixed
+    # regularization parameter.
+    # Internally the LogisticRegressionCV model uses a warm start to refit on
+    # the full data model with the optimal C found by CV. As the penalized
+    # logistic regression loss is convex, we should still recover exactly
+    # the same solution as long as the stopping criterion is strict enough (and
+    # that there are no exactly duplicated features when penalty='l1').
+    X, y = make_classification(n_samples=50, n_features=20,
+                               random_state=random_seed)
+    common_params = dict(
+        solver='saga',
+        penalty=penalty,
+        random_state=random_seed,
+        max_iter=10000,
+        tol=1e-12,
+    )
+    lr_cv = LogisticRegressionCV(Cs=[1.0], refit=True, **common_params)
     lr_cv.fit(X, y)
-    lr = LogisticRegression(penalty="l1", C=1.0, solver='saga')
+    lr = LogisticRegression(C=1.0, **common_params)
     lr.fit(X, y)
-    assert_equal(np.count_nonzero(lr_cv.coef_), np.count_nonzero(lr.coef_))
+    assert_array_almost_equal(lr_cv.coef_, lr.coef_)
 
 
 def test_logreg_predict_proba_multinomial():
@@ -1377,6 +1410,275 @@ def test_warm_start_converge_LR():
         lr_ws.fit(X, y)
     lr_ws_loss = log_loss(y, lr_ws.predict_proba(X))
     assert_allclose(lr_no_ws_loss, lr_ws_loss, rtol=1e-5)
+
+
+def test_elastic_net_coeffs():
+    # make sure elasticnet penalty gives different coefficients from l1 and l2
+    # with saga solver (l1_ratio different from 0 or 1)
+    X, y = make_classification(random_state=0)
+
+    C = 2.
+    l1_ratio = .5
+    coeffs = list()
+    for penalty in ('elasticnet', 'l1', 'l2'):
+        lr = LogisticRegression(penalty=penalty, C=C, solver='saga',
+                                random_state=0, l1_ratio=l1_ratio)
+        lr.fit(X, y)
+        coeffs.append(lr.coef_)
+
+    elastic_net_coeffs, l1_coeffs, l2_coeffs = coeffs
+    # make sure coeffs differ by at least .1
+    assert not np.allclose(elastic_net_coeffs, l1_coeffs, rtol=0, atol=.1)
+    assert not np.allclose(elastic_net_coeffs, l2_coeffs, rtol=0, atol=.1)
+    assert not np.allclose(l2_coeffs, l1_coeffs, rtol=0, atol=.1)
+
+
+@pytest.mark.parametrize('C', [.001, .1, 1, 10, 100, 1000, 1e6])
+@pytest.mark.parametrize('penalty, l1_ratio',
+                         [('l1', 1),
+                          ('l2', 0)])
+def test_elastic_net_l1_l2_equivalence(C, penalty, l1_ratio):
+    # Make sure elasticnet is equivalent to l1 when l1_ratio=1 and to l2 when
+    # l1_ratio=0.
+    X, y = make_classification(random_state=0)
+
+    lr_enet = LogisticRegression(penalty='elasticnet', C=C, l1_ratio=l1_ratio,
+                                 solver='saga', random_state=0)
+    lr_expected = LogisticRegression(penalty=penalty, C=C, solver='saga',
+                                     random_state=0)
+    lr_enet.fit(X, y)
+    lr_expected.fit(X, y)
+
+    assert_array_almost_equal(lr_enet.coef_, lr_expected.coef_)
+
+
+@pytest.mark.parametrize('C', [.001, 1, 100, 1e6])
+def test_elastic_net_vs_l1_l2(C):
+    # Make sure that elasticnet with grid search on l1_ratio gives same or
+    # better results than just l1 or just l2.
+
+    X, y = make_classification(500, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    param_grid = {'l1_ratio': np.linspace(0, 1, 5)}
+
+    enet_clf = LogisticRegression(penalty='elasticnet', C=C, solver='saga',
+                                  random_state=0)
+    gs = GridSearchCV(enet_clf, param_grid, cv=5, iid=False, refit=True)
+
+    l1_clf = LogisticRegression(penalty='l1', C=C, solver='saga',
+                                random_state=0)
+    l2_clf = LogisticRegression(penalty='l2', C=C, solver='saga',
+                                random_state=0)
+
+    for clf in (gs, l1_clf, l2_clf):
+        clf.fit(X_train, y_train)
+
+    assert gs.score(X_test, y_test) >= l1_clf.score(X_test, y_test)
+    assert gs.score(X_test, y_test) >= l2_clf.score(X_test, y_test)
+
+
+@pytest.mark.parametrize('C', np.logspace(-3, 2, 4))
+@pytest.mark.parametrize('l1_ratio', [.1, .5, .9])
+def test_LogisticRegression_elastic_net_objective(C, l1_ratio):
+    # Check that training with a penalty matching the objective leads
+    # to a lower objective.
+    # Here we train a logistic regression with l2 (a) and elasticnet (b)
+    # penalties, and compute the elasticnet objective. That of a should be
+    # greater than that of b (both objectives are convex).
+    X, y = make_classification(n_samples=1000, n_classes=2, n_features=20,
+                               n_informative=10, n_redundant=0,
+                               n_repeated=0, random_state=0)
+    X = scale(X)
+
+    lr_enet = LogisticRegression(penalty='elasticnet', solver='saga',
+                                 random_state=0, C=C, l1_ratio=l1_ratio,
+                                 fit_intercept=False)
+    lr_l2 = LogisticRegression(penalty='l2', solver='saga', random_state=0,
+                               C=C, fit_intercept=False)
+    lr_enet.fit(X, y)
+    lr_l2.fit(X, y)
+
+    def enet_objective(lr):
+        coef = lr.coef_.ravel()
+        obj = C * log_loss(y, lr.predict_proba(X))
+        obj += l1_ratio * np.sum(np.abs(coef))
+        obj += (1. - l1_ratio) * 0.5 * np.dot(coef, coef)
+        return obj
+
+    assert enet_objective(lr_enet) < enet_objective(lr_l2)
+
+
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.parametrize('multi_class', ('ovr', 'multinomial'))
+def test_LogisticRegressionCV_GridSearchCV_elastic_net(multi_class):
+    # make sure LogisticRegressionCV gives same best params (l1 and C) as
+    # GridSearchCV when penalty is elasticnet
+
+    if multi_class == 'ovr':
+        # This is actually binary classification, ovr multiclass is treated in
+        # test_LogisticRegressionCV_GridSearchCV_elastic_net_ovr
+        X, y = make_classification(random_state=0)
+    else:
+        X, y = make_classification(n_samples=200, n_classes=3, n_informative=3,
+                                   random_state=0)
+
+    cv = StratifiedKFold(5, random_state=0)
+
+    l1_ratios = np.linspace(0, 1, 5)
+    Cs = np.logspace(-4, 4, 5)
+
+    lrcv = LogisticRegressionCV(penalty='elasticnet', Cs=Cs, solver='saga',
+                                cv=cv, l1_ratios=l1_ratios, random_state=0,
+                                multi_class=multi_class)
+    lrcv.fit(X, y)
+
+    param_grid = {'C': Cs, 'l1_ratio': l1_ratios}
+    lr = LogisticRegression(penalty='elasticnet', solver='saga',
+                            random_state=0, multi_class=multi_class)
+    gs = GridSearchCV(lr, param_grid, cv=cv)
+    gs.fit(X, y)
+
+    assert gs.best_params_['l1_ratio'] == lrcv.l1_ratio_[0]
+    assert gs.best_params_['C'] == lrcv.C_[0]
+
+
+def test_LogisticRegressionCV_GridSearchCV_elastic_net_ovr():
+    # make sure LogisticRegressionCV gives same best params (l1 and C) as
+    # GridSearchCV when penalty is elasticnet and multiclass is ovr. We can't
+    # compare best_params like in the previous test because
+    # LogisticRegressionCV with multi_class='ovr' will have one C and one
+    # l1_param for each class, while LogisticRegression will share the
+    # parameters over the *n_classes* classifiers.
+
+    X, y = make_classification(n_samples=200, n_classes=3, n_informative=3,
+                               random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    cv = StratifiedKFold(5, random_state=0)
+
+    l1_ratios = np.linspace(0, 1, 5)
+    Cs = np.logspace(-4, 4, 5)
+
+    lrcv = LogisticRegressionCV(penalty='elasticnet', Cs=Cs, solver='saga',
+                                cv=cv, l1_ratios=l1_ratios, random_state=0,
+                                multi_class='ovr')
+    lrcv.fit(X_train, y_train)
+
+    param_grid = {'C': Cs, 'l1_ratio': l1_ratios}
+    lr = LogisticRegression(penalty='elasticnet', solver='saga',
+                            random_state=0, multi_class='ovr')
+    gs = GridSearchCV(lr, param_grid, cv=cv, iid=False)
+    gs.fit(X_train, y_train)
+
+    # Check that predictions are 80% the same
+    assert (lrcv.predict(X_train) == gs.predict(X_train)).mean() >= .8
+    assert (lrcv.predict(X_test) == gs.predict(X_test)).mean() >= .8
+
+
+@pytest.mark.parametrize('multi_class', ('ovr', 'multinomial'))
+def test_LogisticRegressionCV_no_refit(multi_class):
+    # Test LogisticRegressionCV attribute shapes when refit is False
+
+    n_classes = 3
+    n_features = 20
+    X, y = make_classification(n_samples=200, n_classes=n_classes,
+                               n_informative=n_classes, n_features=n_features,
+                               random_state=0)
+
+    Cs = np.logspace(-4, 4, 3)
+    l1_ratios = np.linspace(0, 1, 2)
+
+    lrcv = LogisticRegressionCV(penalty='elasticnet', Cs=Cs, solver='saga',
+                                cv=5, l1_ratios=l1_ratios, random_state=0,
+                                multi_class=multi_class, refit=False)
+    lrcv.fit(X, y)
+    assert lrcv.C_.shape == (n_classes,)
+    assert lrcv.l1_ratio_.shape == (n_classes,)
+    assert lrcv.coef_.shape == (n_classes, n_features)
+
+
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+def test_LogisticRegressionCV_elasticnet_attribute_shapes():
+    # Make sure the shapes of scores_ and coefs_paths_ attributes are correct
+    # when using elasticnet (added one dimension for l1_ratios)
+
+    n_classes = 3
+    n_features = 20
+    X, y = make_classification(n_samples=200, n_classes=n_classes,
+                               n_informative=n_classes, n_features=n_features,
+                               random_state=0)
+
+    Cs = np.logspace(-4, 4, 3)
+    l1_ratios = np.linspace(0, 1, 2)
+
+    n_folds = 2
+    lrcv = LogisticRegressionCV(penalty='elasticnet', Cs=Cs, solver='saga',
+                                cv=n_folds, l1_ratios=l1_ratios,
+                                random_state=0)
+    lrcv.fit(X, y)
+    coefs_paths = np.asarray(list(lrcv.coefs_paths_.values()))
+    assert coefs_paths.shape == (n_classes, n_folds, Cs.size,
+                                 l1_ratios.size, n_features + 1)
+    scores = np.asarray(list(lrcv.scores_.values()))
+    assert scores.shape == (n_classes, n_folds, Cs.size, l1_ratios.size)
+
+    assert lrcv.n_iter_.shape == (n_classes, n_folds, Cs.size, l1_ratios.size)
+
+
+@pytest.mark.parametrize('l1_ratio', (-1, 2, None, 'something_wrong'))
+def test_l1_ratio_param(l1_ratio):
+
+    msg = "l1_ratio must be between 0 and 1; got (l1_ratio=%r)" % l1_ratio
+    assert_raise_message(ValueError, msg,
+                         LogisticRegression(penalty='elasticnet',
+                                            solver='saga',
+                                            l1_ratio=l1_ratio).fit, X, Y1)
+    if l1_ratio is not None:
+        msg = ("l1_ratio parameter is only used when penalty is 'elasticnet'."
+               " Got (penalty=l1)")
+        assert_warns_message(UserWarning, msg,
+                             LogisticRegression(penalty='l1', solver='saga',
+                                                l1_ratio=l1_ratio).fit, X, Y1)
+
+
+@pytest.mark.parametrize('l1_ratios', ([], [.5, 2], None, 'something_wrong'))
+def test_l1_ratios_param(l1_ratios):
+
+    msg = ("l1_ratios must be a list of numbers between 0 and 1; got "
+           "(l1_ratios=%r)" % l1_ratios)
+    assert_raise_message(ValueError, msg,
+                         LogisticRegressionCV(penalty='elasticnet',
+                                              solver='saga',
+                                              l1_ratios=l1_ratios, cv=2).fit,
+                         X, Y1)
+    if l1_ratios is not None:
+        msg = ("l1_ratios parameter is only used when penalty is "
+               "'elasticnet'. Got (penalty=l1)")
+        function = LogisticRegressionCV(penalty='l1', solver='saga',
+                                        l1_ratios=l1_ratios, cv=2).fit
+        assert_warns_message(UserWarning, msg, function, X, Y1)
+
+
+@pytest.mark.parametrize('C', np.logspace(-3, 2, 4))
+@pytest.mark.parametrize('l1_ratio', [.1, .5, .9])
+def test_elastic_net_versus_sgd(C, l1_ratio):
+    # Compare elasticnet penalty in LogisticRegression() and SGD(loss='log')
+    n_samples = 500
+    X, y = make_classification(n_samples=n_samples, n_classes=2, n_features=5,
+                               n_informative=5, n_redundant=0, n_repeated=0,
+                               random_state=0)
+    X = scale(X)
+
+    sgd = SGDClassifier(
+        penalty='elasticnet', random_state=0, fit_intercept=False, tol=-np.inf,
+        max_iter=2000, l1_ratio=l1_ratio, alpha=1. / C / n_samples, loss='log')
+    log = LogisticRegression(
+        penalty='elasticnet', random_state=0, fit_intercept=False, tol=1e-5,
+        max_iter=1000, l1_ratio=l1_ratio, C=C, solver='saga')
+
+    sgd.fit(X, y)
+    log.fit(X, y)
+    assert_array_almost_equal(sgd.coef_, log.coef_, decimal=1)
 
 
 def test_logistic_regression_path_coefs_multinomial():

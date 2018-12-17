@@ -35,7 +35,8 @@ from ..utils.fixes import sp_version
 from ..utils.fixes import _Mapping as Mapping  # noqa
 
 
-__all__ = ['CountVectorizer',
+__all__ = ['HashingVectorizer',
+           'CountVectorizer',
            'ENGLISH_STOP_WORDS',
            'TfidfTransformer',
            'TfidfVectorizer',
@@ -269,8 +270,22 @@ class VectorizerMixin(object):
         return _check_stop_list(self.stop_words)
 
     def _check_stop_words_consistency(self, stop_words, preprocess, tokenize):
+        """Check if stop words are consistent
+
+        Returns
+        -------
+        is_consistent : True if stop words are consistent with the preprocessor
+                        and tokenizer, False if they are not, None if the check
+                        was previously performed, "error" if it could not be
+                        performed (e.g. because of the use of a custom
+                        preprocessor / tokenizer)
+        """
+        if id(self.stop_words) == getattr(self, '_stop_words_id', None):
+            # Stop words are were previously validated
+            return None
+
         # NB: stop_words is validated, unlike self.stop_words
-        if id(self.stop_words) != getattr(self, '_stop_words_id', None):
+        try:
             inconsistent = set()
             for w in stop_words or ():
                 tokens = list(tokenize(preprocess(w)))
@@ -280,10 +295,16 @@ class VectorizerMixin(object):
             self._stop_words_id = id(self.stop_words)
 
             if inconsistent:
-                warnings.warn('Your stop_words may be inconsistent with your '
-                              'preprocessing. Tokenizing the stop words '
-                              'generated tokens %r not in stop_words.' %
-                              sorted(inconsistent))
+                warnings.warn('Your stop_words may be inconsistent with '
+                              'your preprocessing. Tokenizing the stop '
+                              'words generated tokens %r not in '
+                              'stop_words.' % sorted(inconsistent))
+            return not inconsistent
+        except Exception:
+            # Failed to check stop words consistency (e.g. because a custom
+            # preprocessor or tokenizer was used)
+            self._stop_words_id = id(self.stop_words)
+            return 'error'
 
     def build_analyzer(self):
         """Return a callable that handles preprocessing and tokenization"""
@@ -1336,8 +1357,10 @@ class TfidfVectorizer(CountVectorizer):
         preprocessing and n-grams generation steps.
         Only applies if ``analyzer == 'word'``.
 
-    analyzer : string, {'word', 'char'} or callable
+    analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
+        Option 'char_wb' creates character n-grams only from text inside
+        word boundaries; n-grams at the edges of words are padded with space.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.

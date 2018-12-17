@@ -619,7 +619,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     @property
     def partial_fit(self):
-        """Fit the model to data matrix X and target y.
+        """Update the model with a single iteration over the given data.
 
         Parameters
         ----------
@@ -738,8 +738,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         - 'constant' is a constant learning rate given by
           'learning_rate_init'.
 
-        - 'invscaling' gradually decreases the learning rate ``learning_rate_``
-          at each time step 't' using an inverse scaling exponent of 'power_t'.
+        - 'invscaling' gradually decreases the learning rate at each
+          time step 't' using an inverse scaling exponent of 'power_t'.
           effective_learning_rate = learning_rate_init / pow(t, power_t)
 
         - 'adaptive' keeps the learning rate constant to
@@ -978,7 +978,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     @property
     def partial_fit(self):
-        """Fit the model to data matrix X and target y.
+        """Update the model with a single iteration over the given data.
 
         Parameters
         ----------
