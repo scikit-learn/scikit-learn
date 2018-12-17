@@ -265,42 +265,26 @@ def test_partial_dependence_input():
 
     assert_raises_regex(ValueError,
                         "est must be a fitted regressor or classifier",
-                        partial_dependence, KMeans(), [0])
+                        partial_dependence, KMeans(), [0], X)
 
     assert_raises_regex(ValueError,
                         "method blahblah is invalid. Accepted method names "
                         "are brute, recursion, auto.",
-                        partial_dependence, lr, [0], method='blahblah')
+                        partial_dependence, lr, [0], X, method='blahblah')
 
     assert_raises_regex(ValueError,
                         'est must be an instance of BaseGradientBoosting '
                         'for the "recursion" method',
-                        partial_dependence, lr, [0], method='recursion')
-
-    assert_raises_regex(ValueError, "X is required for brute method",
-                        partial_dependence, lr, [0], grid=[[[1]]])
+                        partial_dependence, lr, [0], X, method='recursion')
 
     assert_raises_regex(ValueError, "est requires a predict_proba()",
-                        partial_dependence, SVC(), [0], X=X)
+                        partial_dependence, SVC(), [0], X)
 
     for feature in (-1, 1000000):
         for est in (lr, gbc):
             assert_raises_regex(ValueError,
                                 "all target_variables must be in",
                                 partial_dependence, est, [feature], X=X)
-
-    assert_raises_regex(ValueError, "Either grid or X must be specified",
-                        partial_dependence, gbc, [0], grid=None, X=None)
-
-    assert_raises_regex(ValueError, "grid must be 1d or 2d",
-                        partial_dependence, lr, [0], grid=[[[1]]], X=X)
-
-    for target_variables in ([0], [0, 1, 0]):
-        assert_raises_regex(ValueError,
-                            r'grid.shape\[1\] \(2\) must be equal '
-                            r'to the number of target variables',
-                            partial_dependence, lr, target_variables,
-                            grid=[[30, -123]], X=X)
 
     for unfitted_est in (LinearRegression(), GradientBoostingRegressor()):
         assert_raises_regex(ValueError,
@@ -309,10 +293,7 @@ def test_partial_dependence_input():
 
     # check that array-like objects are accepted
     for est in (lr, gbc):
-        partial_dependence(est, [0], grid=[1, 2], X=list(X))
-        partial_dependence(est, [0], grid=[[1], [2]], X=list(X))
-
-    partial_dependence(gbc, [0], grid=[1, 2])
+        partial_dependence(est, [0],  X=list(X))
 
 
 @if_matplotlib

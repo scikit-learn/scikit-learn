@@ -79,13 +79,11 @@ the plots, you can use the :func:`partial_dependence` function::
     >>> axes  # doctest: +ELLIPSIS
     [array([-1.624..., -1.592..., ...
 
-You can specify the argument ``grid`` which defines the values of the target
-features on which the partial dependence function should be evaluated, or
-the argument ``X`` which is a convenience mode for automatically creating
-the grid from the training data. If ``grid`` is not specified, the
-``values`` field returned by :func:`partial_dependence` gives the actual
-values used in the grid for each target feature. They also correspond to the
-axis of the plots.
+The values at which the partial dependence should be evaluated are directly
+generated from ``X``. For 2-way partial dependence, a 2D-grid of values is
+generated. The ``values`` field returned by :func:`partial_dependence` gives
+the actual values used in the grid for each target feature. They also
+correspond to the axis of the plots.
 
 For each value of the 'target' features in the ``grid`` the partial
 dependence function needs to marginalize the predictions of the estimator

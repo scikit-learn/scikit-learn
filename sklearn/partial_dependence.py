@@ -159,9 +159,8 @@ def _partial_dependence_brute(est, grid, target_variables, X):
     return averaged_predictions
 
 
-def partial_dependence(est, target_variables, grid=None, X=None,
-                       percentiles=(0.05, 0.95), grid_resolution=100,
-                       method='auto'):
+def partial_dependence(est, target_variables, X, percentiles=(0.05, 0.95),
+                       grid_resolution=100, method='auto'):
     """Partial dependence of ``target_variables``.
 
     .. _warning_recursion_init:
@@ -185,27 +184,22 @@ def partial_dependence(est, target_variables, grid=None, X=None,
     target_variables : list or array-like of int
         The target features for which the partial dependency should be
         computed.
-    grid : array-like, shape=(n_points, len(target_variables)), optional
-        The grid of values for which the partial dependence should be
-        evaluated. If `None`, the grid will be generated from the values in
-        ``X``.
     X : array-like, shape=(n_samples, n_features)
-        ``X`` is used both to generate a grid for the ``target_variables``
-        (if ``grid`` is None), and to compute the averaged predictions for
-        the 'brute' method. Optional if ``grid`` is not None and ``method``
-        is 'recursion'.
+        ``X`` is used both to generate a grid of values for the
+        ``target_variables``, and to compute the averaged predictions when
+        method is 'brute'.
     percentiles : tuple of float, optional (default=(0.05, 0.95))
         The lower and upper percentile used to create the extreme values
-        for the ``grid``. Only used if ``grid`` is None.
+        for the ``grid``.
     grid_resolution : int, optional (default=100)
         The number of equally spaced points on the grid, for each target
-        feature. Only used if ``grid`` is None.
+        feature.
     method : str, optional (default='auto')
         The method used to calculate the averaged predictions:
 
         - 'recursion' is only supported for objects inheriting from
           `BaseGradientBoosting`, but is more efficient in terms of speed.
-          With this method, ``X`` is optional and is only used to build the
+          With this method, ``X`` is only used to build the
           grid. This method does not account for the ``init`` predicor of
           the boosting process, which may lead to incorrect values (see
           :ref:`this warning<warning_recursion_init>`).
@@ -226,10 +220,10 @@ def partial_dependence(est, target_variables, grid=None, X=None,
         a multi-class setting, or to the number of tasks for multi-output
         regression. For classical regression and binary classification
         ``n_targets==1``.
-    values : seq of ndarray or None
-        The values with which the grid has been created, or None if
-        the grid has been given. The generated grid is a cartesian product
-        of the arrays in ``values``
+    values : seq of ndarray
+        The values with which the grid has been created. The generated grid
+        is a cartesian product of the arrays in ``values``. ``len(values) ==
+        len(target_variables)``.
 
     Examples
     --------
@@ -287,26 +281,8 @@ def partial_dependence(est, target_variables, grid=None, X=None,
         raise ValueError('all target_variables must be in [0, %d]'
                          % (n_features - 1))
 
-    if (grid is None and X is None):
-        raise ValueError('Either grid or X must be specified.')
-
-    if grid is None:
-        grid, values = _grid_from_X(X[:, target_variables], percentiles,
-                                    grid_resolution)
-    else:
-        grid = np.asarray(grid)
-        values = None  # don't return values if grid is given
-        # grid must be 2d
-        if grid.ndim == 1:
-            grid = grid[:, np.newaxis]
-        if grid.ndim != 2:
-            raise ValueError('grid must be 1d or 2d, got %dd dimensions' %
-                             grid.ndim)
-        if grid.shape[1] != target_variables.shape[0]:
-            raise ValueError('grid.shape[1] ({}) must be equal to the number '
-                             'of target variables ({})'.format(
-                                 grid.shape[1], target_variables.shape[0]))
-
+    grid, values = _grid_from_X(X[:, target_variables], percentiles,
+                                grid_resolution)
     if method == 'brute':
         averaged_predictions = _partial_dependence_brute(est, grid,
                                                          target_variables, X)
