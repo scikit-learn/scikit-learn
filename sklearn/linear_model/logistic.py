@@ -1506,9 +1506,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     Parameters
     ----------
-    classes_ : array, shape (n_classes, )
-        A list of class labels known to the classifier.
-
     Cs : list of floats or int, optional (default=10)
         Each of the values in Cs describes the inverse of regularization
         strength. If Cs is as an int, then a grid of Cs values are chosen
@@ -1649,6 +1646,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     Attributes
     ----------
+    classes_ : array, shape (n_classes, )
+        A list of class labels known to the classifier.
     coef_ : array, shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
