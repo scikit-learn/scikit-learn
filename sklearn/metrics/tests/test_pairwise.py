@@ -5,7 +5,7 @@ from numpy import linalg
 
 from scipy.sparse import dok_matrix, csr_matrix, issparse
 from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
-from scipy.spatial.distance import cdist
+from scipy.spatial.distance import cdist, pdist, squareform
 
 import pytest
 
@@ -914,19 +914,22 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
 
         if y_is_x:
             Y = X
+            expected_dist_default_params = squareform(pdist(X, metric=metric))
             if metric == "seuclidean":
                 params = {'V': np.var(X, axis=0, ddof=1)}
             else:
                 params = {'VI': np.linalg.inv(np.cov(X.T)).T}
         else:
             Y = rng.random_sample((1000, 10))
+            expected_dist_default_params = cdist(X, Y, metric=metric)
             if metric == "seuclidean":
                 params = {'V': np.var(np.vstack([X, Y]), axis=0, ddof=1)}
             else:
                 params = {'VI': np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T}
 
-        expected_dist = cdist(X, Y, metric=metric, **params)
+        expected_dist_explicit_params = cdist(X, Y, metric=metric, **params)
 
         dist = np.vstack(dist_function(X, Y, metric=metric, n_jobs=n_jobs))
 
-        assert_allclose(dist, expected_dist)
+        assert_allclose(dist, expected_dist_explicit_params)
+        assert_allclose(dist, expected_dist_default_params)
