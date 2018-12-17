@@ -50,10 +50,10 @@ Changelog
 ......................
 
 - |Fix| Fixed a bug in :func:`metrics.pairwise_distances` and
-  :func:`metrics.pairwise_distances_chunked` where parameters of
-  ``"seuclidean"`` and ``"mahalanobis"`` metrics need to be pre-computed
-  before the data is split into chunks. :issue:`12701` by
-  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+  :func:`metrics.pairwise_distances_chunked` where parameters ``V`` of
+  ``"seuclidean"`` and ``VI`` of ``"mahalanobis"`` metrics were computed after
+  the data was split into chunks instead of being pre-computed on whole data.
+  :issue:`12701` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 
 .. _changes_0_20_1:
