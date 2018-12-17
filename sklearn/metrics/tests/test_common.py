@@ -1213,22 +1213,22 @@ def test_no_averaging_labels():
     'name',
     set(THRESHOLDED_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS)
 def test_multiclass_score_permutation_invariance(name):
-    y_score = np.random.rand(100, 3)
+    n_samples, n_classes = 100, 3
+    random_state = check_random_state(0)
+
+    y_score = random_state.rand(n_samples, n_classes)
     y_score = y_score / y_score.sum(axis=1, keepdims=True)
     y_true = np.argmax(y_score, axis=1)
-    y_true[np.random.randint(len(y_score), size=20)] = np.random.randint(
+    y_true[np.random.randint(n_samples, size=20)] = np.random.randint(
         2, size=20)
 
     metric = ALL_METRICS[name]
-    current_score = None
-    for perm in permutations(range(3), 3):
-        inv_perm = np.zeros(3, dtype=int)
-        inv_perm[list(perm)] = np.arange(3)
+    current_score = metric(y_true, y_score)
+    for perm in permutations(range(n_classes), n_classes):
+        inv_perm = np.zeros(n_classes, dtype=int)
+        inv_perm[list(perm)] = np.arange(n_classes)
         y_score_perm = y_score[:, inv_perm]
         y_true_perm = np.take(perm, y_true)
 
         score = metric(y_true_perm, y_score_perm)
-        if current_score is None:
-            current_score = score
-        else:
-            assert_almost_equal(score, current_score)
+        assert_almost_equal(current_score, score)
