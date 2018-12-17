@@ -71,6 +71,12 @@ Support for Python 3.4 and below has been officially dropped.
   communication overhead. :issue:`12543` by :user:`Isaac Storch <istorch>`
   and `Olivier Grisel`_.
 
+- |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor`, which didn't support
+  scikit-learn estimators as inital estimator. Also added support of initial
+  estimator which does not support sample weights. :issue:`12436` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -118,7 +124,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
   in version 0.21 and will be removed in version 0.23.
-  :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra 
+  :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and :user:`Sandra 
   Mitrovic <SandraMNE>`.
 
 :mod:`sklearn.model_selection`
@@ -182,7 +188,6 @@ Support for Python 3.4 and below has been officially dropped.
   and :class:`tree.ExtraTreeRegressor`.
   :issue:`12300` by :user:`Adrin Jalali <adrinjalali>`.
 
-<<<<<<< 048dd794c301ac6bee38790b26da3e3f758ee042
 - |Fix| Fixed an issue with :class:`tree.BaseDecisionTree`
   and consequently all estimators based
   on it, including :class:`tree.DecisionTreeClassifier`,
@@ -194,8 +199,6 @@ Support for Python 3.4 and below has been officially dropped.
   :pr:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
 
-=======
->>>>>>> fix merge conflicts
 Multiple modules
 ................
 
