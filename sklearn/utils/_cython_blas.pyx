@@ -13,6 +13,13 @@ from scipy.linalg.cython_blas cimport sger, dger
 from scipy.linalg.cython_blas cimport sgemm, dgemm
 
 
+cdef:
+    char ColMajor = b'F'
+    char RowMajor = b'C'
+    char Trans = b't'
+    char NoTrans = b'n'
+
+
 ################
 # BLAS Level 1 #
 ################
@@ -99,13 +106,13 @@ cdef void _xgemv(char layout, char ta, int m, int n, floating alpha,
                  floating *A, int lda, floating *x, int incx,
                  floating beta, floating *y, int incy) nogil:
     """y := alpha * op(A).x + beta * y"""
-    if layout == 'C':
-        ta = 'n' if ta == 't' else 't' 
+    if layout == RowMajor:
+        ta = NoTrans if ta == Trans else Trans 
         if floating is float:
             sgemv(&ta, &n, &m, &alpha, A, &lda, x, &incx, &beta, y, &incy)
         else:
             dgemv(&ta, &n, &m, &alpha, A, &lda, x, &incx, &beta, y, &incy)
-    elif layout == 'F':
+    elif layout == ColMajor:
         if floating is float:
             sgemv(&ta, &m, &n, &alpha, A, &lda, x, &incx, &beta, y, &incy)
         else:
@@ -115,8 +122,8 @@ cdef void _xgemv(char layout, char ta, int m, int n, floating alpha,
 cpdef _xgemv_memview(layout, ta, floating alpha, floating[:, :] A,
                      floating[::1] x, floating beta, floating[::1] y):
     cdef:
-        char layout_ = 'F' if layout == 'F' else 'C'
-        char ta_ = 'n' if ta == 'n' else 't'
+        char layout_ = ColMajor if layout == 'F' else RowMajor
+        char ta_ = NoTrans if ta == 'n' else Trans
         int m = A.shape[0]
         int n = A.shape[1]
         int lda = m if layout == 'F' else n
@@ -128,12 +135,12 @@ cpdef _xgemv_memview(layout, ta, floating alpha, floating[:, :] A,
 cdef void _xger(char layout, int m, int n, floating alpha, floating *x,
                 int incx, floating *y, int incy, floating *A, int lda) nogil:
     """A := alpha * x.y.T + A"""
-    if layout == 'C':
+    if layout == RowMajor:
         if floating is float:
             sger(&n, &m, &alpha, y, &incy, x, &incx, A, &lda)
         else:
             dger(&n, &m, &alpha, y, &incy, x, &incx, A, &lda)
-    elif layout == 'F':
+    elif layout == ColMajor:
         if floating is float:
             sger(&m, &n, &alpha, x, &incx, y, &incy, A, &lda)
         else:
@@ -143,10 +150,10 @@ cdef void _xger(char layout, int m, int n, floating alpha, floating *x,
 cpdef _xger_memview(layout, floating alpha, floating[::1] x, floating[::] y,
                     floating[:, :] A):
     cdef:
-        char layout_ = 'F' if layout == 'F' else 'C'
+        char layout_ = ColMajor if layout == 'F' else RowMajor
         int m = A.shape[0]
         int n = A.shape[1]
-        int lda = m if layout[0] == 'F' else n
+        int lda = m if layout == 'F' else n
     
     _xger(layout_, m, n, alpha, &x[0], 1, &y[0], 1, &A[0, 0], lda)
 
@@ -159,12 +166,12 @@ cdef void _xgemm(char layout, char ta, char tb, int m, int n, int k,
                  floating alpha, floating *A, int lda, floating *B, int ldb,
                  floating beta, floating *C, int ldc) nogil:
     """C := alpha * op(A).op(B) + beta * C"""
-    if layout == 'C':
+    if layout == RowMajor:
         if floating is float:
             sgemm(&tb, &ta, &n, &m, &k, &alpha, B, &ldb, A, &lda, &beta, C, &ldc)
         else:
             dgemm(&tb, &ta, &n, &m, &k, &alpha, B, &ldb, A, &lda, &beta, C, &ldc)
-    elif layout == 'F':
+    elif layout == ColMajor:
         if floating is float:
             sgemm(&ta, &tb, &m, &n, &k, &alpha, A, &lda, B, &ldb, &beta, C, &ldc)
         else:
@@ -174,12 +181,12 @@ cdef void _xgemm(char layout, char ta, char tb, int m, int n, int k,
 cpdef _xgemm_memview(layout, ta, tb, floating alpha, floating[:, :] A,
                      floating[:, :] B, floating beta, floating[:, :] C):
     cdef:
-        char layout_ = 'F' if layout == 'F' else 'C'
-        char ta_ = 'n' if ta == 'n' else 't'
-        char tb_ = 'n' if tb == 'n' else 't'
-        int m = A.shape[0] if ta[0] == 'n' else A.shape[1]
-        int n = B.shape[1] if tb[0] == 'n' else B.shape[0]
-        int k = A.shape[1] if ta[0] == 'n' else A.shape[0]
+        char layout_ = ColMajor if layout == 'F' else RowMajor
+        char ta_ = NoTrans if ta == 'n' else Trans
+        char tb_ = NoTrans if tb == 'n' else Trans
+        int m = A.shape[0] if ta == 'n' else A.shape[1]
+        int n = B.shape[1] if tb == 'n' else B.shape[0]
+        int k = A.shape[1] if ta == 'n' else A.shape[0]
         int lda, ldb, ldc
 
     if layout == 'F':

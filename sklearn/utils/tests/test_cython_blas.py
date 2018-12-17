@@ -17,6 +17,7 @@ from sklearn.utils._cython_blas import _xgemm_memview
 
 
 NUMPY_TO_CYTHON = {np.float32: cython.float, np.float64: cython.double}
+RTOL = {np.float32: 1e-4, np.float64: 1e-13}
 
 
 def _no_op(x):
@@ -124,7 +125,7 @@ def test_gemv(dtype, opA, transA, layout):
     expected = alpha * opA(A).dot(x) + beta * y
     gemv(layout, transA, alpha, A, x, beta, y)
 
-    assert_allclose(y, expected, rtol=1e-4)
+    assert_allclose(y, expected, rtol=RTOL[dtype])
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -142,7 +143,7 @@ def test_ger(dtype, layout):
     expected = alpha * np.outer(x, y) + A
     ger(layout, alpha, x, y, A)
 
-    assert_allclose(A, expected, rtol=1e-4)
+    assert_allclose(A, expected, rtol=RTOL[dtype])
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -168,4 +169,4 @@ def test_gemm(dtype, opA, transA, opB, transB, layout):
     expected = alpha * opA(A).dot(opB(B)) + beta * C
     gemm(layout, transA, transB, alpha, A, B, beta, C)
 
-    assert_allclose(C, expected, rtol=1e-4)
+    assert_allclose(C, expected, rtol=RTOL[dtype])
