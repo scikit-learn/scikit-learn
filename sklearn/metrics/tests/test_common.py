@@ -1218,9 +1218,7 @@ def test_multiclass_score_permutation_invariance(name):
 
     y_score = random_state.rand(n_samples, n_classes)
     y_score = y_score / y_score.sum(axis=1, keepdims=True)
-    y_true = np.argmax(y_score, axis=1)
-    y_true[np.random.randint(n_samples, size=20)] = np.random.randint(
-        2, size=20)
+    y_true = random_state.randint(0, n_classes, size=n_samples)
 
     metric = ALL_METRICS[name]
     score = metric(y_true, y_score)
