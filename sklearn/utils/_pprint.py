@@ -1,11 +1,15 @@
 """This module contains the _EstimatorPrettyPrinter class used in
 BaseEstimator.__repr__ for pretty-printing estimators"""
 
+# Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
+# 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018 Python Software Foundation;
+# All Rights Reserved
 
-# Author: Fred L. Drake, Jr. <fdrake@acm.org> (built-in CPython pprint module)
-#         Nicolas Hug
+# Authors: Fred L. Drake, Jr. <fdrake@acm.org> (built-in CPython pprint module)
+#          Nicolas Hug (scikit-learn specific changes)
+
 # License: PSF License version 2 (see below)
-#
+
 # PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2
 # --------------------------------------------
 
@@ -53,23 +57,30 @@ BaseEstimator.__repr__ for pretty-printing estimators"""
 # bound by the terms and conditions of this License Agreement.
 
 
+# Brief summary of changes to original code:
+# - "compact" parameter is supported for dicts, not just lists or tuples
+# - estimators have a custom handler, they're not just treated as objects
+# - long sequences (lists, tuples, dict items) with more than N elements are
+#   shortened using ellipsis (', ...') at the end.
+
 from inspect import signature
 import pprint
 from collections import OrderedDict
 
 from ..base import BaseEstimator
 from .._config import get_config
+from . import is_scalar_nan
 
 
-# Dummy classes for correctly rendering key-value tuples from dicts or
-# parameters
 class KeyValTuple(tuple):
+    """Dummy class for correctly rendering key-value tuples from dicts."""
     def __repr__(self):
         # needed for _dispatch[tuple.__repr__] not to be overridden
         return super().__repr__()
 
 
 class KeyValTupleParam(KeyValTuple):
+    """Dummy class for correctly rendering key-value tuples from parameters."""
     pass
 
 
@@ -82,10 +93,10 @@ def _changed_params(estimator):
     init_func = getattr(estimator.__init__, 'deprecated_original',
                         estimator.__init__)
     init_params = signature(init_func).parameters
-    init_params = {name: param.default for (name, param) in
-                   init_params.items()}
+    init_params = {name: param.default for name, param in init_params.items()}
     for k, v in params.items():
-        if v != init_params[k]:
+        if (v != init_params[k] and
+                not (is_scalar_nan(init_params[k]) and is_scalar_nan(v))):
             filtered_params[k] = v
     return filtered_params
 
@@ -125,6 +136,7 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
     - _safe_repr to support printing of estimators (for when they fit on a
       single line)
     - _format_dict_items so that dict are correctly 'compacted'
+    - _format_items so that ellipsis is used on long lists and tuples
 
     When estimators cannot be printed on a single line, the builtin _format()
     will call _pprint_estimator() because it was registered to do so (see
@@ -142,14 +154,12 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
 
     def __init__(self, indent=1, width=80, depth=None, stream=None, *,
                  compact=False, indent_at_name=True,
-                 n_max_elements_to_show=None, force_change_only=False):
+                 n_max_elements_to_show=None):
         super().__init__(indent, width, depth, stream, compact=compact)
         self._indent_at_name = indent_at_name
         if self._indent_at_name:
             self._indent_per_level = 1  # ignore indent param
         self._changed_only = get_config()['print_changed_only']
-        if force_change_only:
-            self._changed_only = True
         # Max number of elements in a list, dict, tuple until we start using
         # ellipsis. This also affects the number of arguments of an estimators
         # (they are treated as dicts)
@@ -195,7 +205,7 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
         Dict items will be rendered as <'key': value> while params will be
         rendered as <key=value>. The implementation is mostly copy/pasting from
         the builtin _format_items().
-        This also adds ellipsis if the number of items is greated than
+        This also adds ellipsis if the number of items is greater than
         self.n_max_elements_to_show.
         """
         write = stream.write

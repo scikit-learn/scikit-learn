@@ -39,7 +39,7 @@ def test_changed_only():
     expected = """LogisticRegression(C=99)"""
     assert lr.__repr__() == expected
 
-    # check with a repr that doesn't fit on a single line
+    # Check with a repr that doesn't fit on a single line
     lr = LogisticRegression(C=99, class_weight=.4, fit_intercept=False,
                             tol=1234, verbose=True)
     expected = """
@@ -48,14 +48,7 @@ LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
     expected = expected[1:]  # remove first \n
     assert lr.__repr__() == expected
 
-    # check change_only=False and force_change_only=True
     set_config(print_changed_only=False)
-    pp = _EstimatorPrettyPrinter(
-        compact=True, indent=1, indent_at_name=True, force_change_only=True)
-    lr = LogisticRegression(C=99)
-    expected = """LogisticRegression(C=99)"""
-    assert pp.pformat(lr) == expected
-
 
 
 def test_pipeline():
