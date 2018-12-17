@@ -1039,18 +1039,25 @@ def test_train_test_split_errors():
     (1., 0.8),
     (0.0, 0.8),
     (-.2, 0.8),
-    (-10, 0.8),
-    (0, 0.8),
-    (11, 0.8),
     (0.8, 1.2),
     (0.8, 1.),
     (0.8, 0.),
-    (0.8, -.2),
+    (0.8, -.2)])
+def test_train_test_split_invalid_sizes1(train_size, test_size):
+    with pytest.raises(ValueError, match=r'should be in the \(0, 1\) range'):
+        train_test_split(range(10), train_size=train_size, test_size=test_size)
+
+
+@pytest.mark.parametrize("train_size,test_size", [
+    (-10, 0.8),
+    (0, 0.8),
+    (11, 0.8),
     (0.8, -10),
     (0.8, 0),
     (0.8, 11)])
-def test_train_test_split_invalid_sizes(train_size, test_size):
-    with pytest.raises(ValueError):
+def test_train_test_split_invalid_sizes2(train_size, test_size):
+    with pytest.raises(ValueError,
+                       match=r'should be either positive and smaller'):
         train_test_split(range(10), train_size=train_size, test_size=test_size)
 
 
