@@ -1223,12 +1223,12 @@ def test_multiclass_score_permutation_invariance(name):
         2, size=20)
 
     metric = ALL_METRICS[name]
-    current_score = metric(y_true, y_score)
+    score = metric(y_true, y_score)
     for perm in permutations(range(n_classes), n_classes):
         inv_perm = np.zeros(n_classes, dtype=int)
         inv_perm[list(perm)] = np.arange(n_classes)
         y_score_perm = y_score[:, inv_perm]
         y_true_perm = np.take(perm, y_true)
 
-        score = metric(y_true_perm, y_score_perm)
-        assert_almost_equal(current_score, score)
+        current_score = metric(y_true_perm, y_score_perm)
+        assert_almost_equal(score, current_score)
