@@ -33,6 +33,7 @@ import matplotlib.pyplot as plt
 from sklearn import svm, datasets
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
+from sklearn.utils.multiclass import unique_labels
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -95,7 +96,7 @@ plot_confusion_matrix(cnf_matrix, classes=class_names,
 
 # Plot normalized confusion matrix
 plt.figure()
-plot_confusion_matrix(cnf_matrix, classes=class_names, normalize=True,
+plot_confusion_matrix(cnf_matrix, classes=class_names[unique_labels(y_test,y_pred)], normalize=True,
                       title='Normalized confusion matrix')
 
 plt.show()
