@@ -1222,9 +1222,8 @@ def test_multiclass_score_permutation_invariance(name):
     metric = ALL_METRICS[name]
     current_score = None
     for perm in permutations(range(3), 3):
-        perm = list(perm)
         inv_perm = np.zeros(3, dtype=int)
-        inv_perm[perm] = np.arange(3)
+        inv_perm[list(perm)] = np.arange(3)
         y_score_perm = y_score[:, inv_perm]
         y_true_perm = np.take(perm, y_true)
 
