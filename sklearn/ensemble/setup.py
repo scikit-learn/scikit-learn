@@ -8,6 +8,10 @@ def configuration(parent_package="", top_path=None):
                          sources=["_gradient_boosting.pyx"],
                          include_dirs=[numpy.get_include()])
 
+    config.add_extension("gbm.histogram",
+                         sources=["gbm/histogram.pyx"],
+                         include_dirs=[numpy.get_include()])
+
     config.add_subpackage("tests")
 
     return config
