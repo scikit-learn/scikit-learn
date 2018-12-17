@@ -1206,7 +1206,7 @@ def test_no_averaging_labels():
 
 
 @pytest.mark.parametrize(
-    'name', MULTILABELS_METRICS - set(NOT_SYMMETRIC_METRICS))
+    'name', MULTILABELS_METRICS - NOT_SYMMETRIC_METRICS)
 def test_multilabel_label_permutations_invariance(name):
     random_state = check_random_state(0)
     n_samples, n_classes = 20, 4
@@ -1229,7 +1229,7 @@ def test_multilabel_label_permutations_invariance(name):
 
 
 @pytest.mark.parametrize(
-    'name', THRESHOLDED_MULTILABEL_METRICS | set(MULTIOUTPUT_METRICS))
+    'name', THRESHOLDED_MULTILABEL_METRICS | MULTIOUTPUT_METRICS)
 def test_thresholded_multilabel_multioutput_permutations_invariance(name):
     random_state = check_random_state(0)
     n_samples, n_classes = 20, 4
