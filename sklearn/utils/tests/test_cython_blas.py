@@ -17,7 +17,7 @@ from sklearn.utils._cython_blas import _xgemm_memview
 
 
 NUMPY_TO_CYTHON = {np.float32: cython.float, np.float64: cython.double}
-RTOL = {np.float32: 1e-4, np.float64: 1e-12}
+RTOL = {np.float32: 1e-3, np.float64: 1e-12}
 
 
 def _no_op(x):
