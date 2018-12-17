@@ -11,6 +11,7 @@ from sklearn.svm import SVC
 from sklearn.svm import LinearSVC
 from sklearn.decomposition import PCA
 from sklearn.decomposition import NMF
+from sklearn.impute import SimpleImputer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn import set_config
 
@@ -47,6 +48,15 @@ LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
                    verbose=True)"""
     expected = expected[1:]  # remove first \n
     assert lr.__repr__() == expected
+
+    imputer = SimpleImputer(missing_values=0)
+    expected = """SimpleImputer(missing_values=0)"""
+    assert imputer.__repr__() == expected
+
+    # Defaults to np.NaN, trying with float('NaN')
+    imputer = SimpleImputer(missing_values=float('NaN'))
+    expected = """SimpleImputer()"""
+    assert imputer.__repr__() == expected
 
     set_config(print_changed_only=False)
 
