@@ -233,13 +233,8 @@ then submit a "pull request" (PR):
 
 If any of the above seems like magic to you, then look up the `Git documentation
 <https://git-scm.com/documentation>`_ and the `Git development workflow
-<<<<<<< HEAD
 <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
 web, or ask a friend or another contributor for help.
-=======
-<https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
-web.
->>>>>>> cd8fe168fbc2c5cfe1cb11a1cfbd7a1b7aec0acc
 
 If some conflicts arise between your branch and the ``master`` branch, you need
 to merge ``master``. The command will be::
