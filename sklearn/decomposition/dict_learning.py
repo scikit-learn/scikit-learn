@@ -722,14 +722,13 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     >>> import numpy as np
     >>> from sklearn.decomposition import DictionaryLearning
     >>> X = np.array([[0., 0., 1.],
-    ...     [1.,0.,0.],
-    ...     [2.,2.,2.],
-    ...     [2.,5.,4.]])
+    ...               [1.,0.,0.],
+    ...               [2.,2.,2.],
+    ...               [2.,5.,4.]])
     >>> dico = DictionaryLearning(n_components=2, alpha=1, random_state=1)
-    >>> V = dico.fit(X).components_
-    >>> V
-    array([[-0.2981424 , -0.74535599, -0.59628479],
-           [ 0.57735027,  0.57735027,  0.57735027]])
+    >>> dico.fit(X).components_
+    array([[-0.2981... , -0.7453..., -0.5962...],
+           [ 0.5773...,  0.5773...,  0.5773...]])
 
     See also
     --------
