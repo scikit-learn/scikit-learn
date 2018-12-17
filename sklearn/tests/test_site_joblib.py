@@ -2,7 +2,7 @@ import os
 import pytest
 from sklearn import externals
 from sklearn.externals import joblib as joblib_vendored
-from sklearn.utils import Parallel, delayed, Memory, parallel_backend
+from sklearn.utils._joblib import Parallel, delayed, Memory, parallel_backend
 
 if os.environ.get('SKLEARN_SITE_JOBLIB', False):
     import joblib as joblib_site

@@ -3,8 +3,7 @@ import re
 
 import numpy as np
 from scipy.sparse import csc_matrix, csr_matrix, lil_matrix
-from sklearn.utils.testing import (assert_almost_equal, assert_array_equal,
-                                   assert_true)
+from sklearn.utils.testing import (assert_almost_equal, assert_array_equal)
 
 from sklearn.datasets import load_digits
 from sklearn.externals.six.moves import cStringIO as StringIO
@@ -136,7 +135,7 @@ def test_gibbs_smoke():
     X_sampled = rbm1.gibbs(X)
     assert_all_finite(X_sampled)
     X_sampled2 = rbm1.gibbs(X)
-    assert_true(np.all((X_sampled != X_sampled2).max(axis=1)))
+    assert np.all((X_sampled != X_sampled2).max(axis=1))
 
 
 def test_score_samples():
@@ -148,7 +147,7 @@ def test_score_samples():
     rbm1 = BernoulliRBM(n_components=10, batch_size=2,
                         n_iter=10, random_state=rng)
     rbm1.fit(X)
-    assert_true((rbm1.score_samples(X) < -300).all())
+    assert (rbm1.score_samples(X) < -300).all()
 
     # Sparse vs. dense should not affect the output. Also test sparse input
     # validation.
@@ -186,9 +185,8 @@ def test_sparse_and_verbose():
         rbm.fit(X)
         s = sys.stdout.getvalue()
         # make sure output is sound
-        assert_true(re.match(r"\[BernoulliRBM\] Iteration 1,"
-                             r" pseudo-likelihood = -?(\d)+(\.\d+)?,"
-                             r" time = (\d|\.)+s",
-                             s))
+        assert re.match(r"\[BernoulliRBM\] Iteration 1,"
+                        r" pseudo-likelihood = -?(\d)+(\.\d+)?,"
+                        r" time = (\d|\.)+s", s)
     finally:
         sys.stdout = old_stdout

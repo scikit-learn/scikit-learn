@@ -34,10 +34,10 @@ The same task has been used in a number of papers including:
    S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
 
  * `"Training Linear SVMs in Linear Time"
-   <www.cs.cornell.edu/People/tj/publications/joachims_06a.pdf>`_
+   <https://www.cs.cornell.edu/people/tj/publications/joachims_06a.pdf>`_
    T. Joachims - In SIGKDD '06
 
-[1] http://archive.ics.uci.edu/ml/datasets/Covertype
+[1] https://archive.ics.uci.edu/ml/datasets/Covertype
 
 """
 from __future__ import division, print_function
@@ -50,6 +50,7 @@ import os
 from time import time
 import argparse
 import numpy as np
+from joblib import Memory
 
 from sklearn.datasets import fetch_covtype, get_data_home
 from sklearn.svm import LinearSVC
@@ -59,7 +60,6 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import zero_one_loss
-from sklearn.utils import Memory
 from sklearn.utils import check_array
 
 # Memoize the data extraction and memory map the resulting

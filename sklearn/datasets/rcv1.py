@@ -10,7 +10,7 @@ The dataset page is available at
 
 import logging
 
-from os import remove
+from os import remove, makedirs
 from os.path import dirname, exists, join
 from gzip import GzipFile
 
@@ -21,8 +21,7 @@ from .base import get_data_home
 from .base import _pkl_filepath
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
-from ..utils.fixes import makedirs
-from ..externals import joblib
+from ..utils import _joblib
 from .svmlight_format import load_svmlight_files
 from ..utils import shuffle as shuffle_
 from ..utils import Bunch
@@ -182,16 +181,16 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         sample_id = np.hstack((Xy[9], Xy[1], Xy[3], Xy[5], Xy[7]))
         sample_id = sample_id.astype(np.uint32)
 
-        joblib.dump(X, samples_path, compress=9)
-        joblib.dump(sample_id, sample_id_path, compress=9)
+        _joblib.dump(X, samples_path, compress=9)
+        _joblib.dump(sample_id, sample_id_path, compress=9)
 
         # delete archives
         for f in files:
             f.close()
             remove(f.name)
     else:
-        X = joblib.load(samples_path)
-        sample_id = joblib.load(sample_id_path)
+        X = _joblib.load(samples_path)
+        sample_id = _joblib.load(sample_id_path)
 
     # load target (y), categories, and sample_id_bis
     if download_if_missing and (not exists(sample_topics_path) or
@@ -241,11 +240,11 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         categories = categories[order]
         y = sp.csr_matrix(y[:, order])
 
-        joblib.dump(y, sample_topics_path, compress=9)
-        joblib.dump(categories, topics_path, compress=9)
+        _joblib.dump(y, sample_topics_path, compress=9)
+        _joblib.dump(categories, topics_path, compress=9)
     else:
-        y = joblib.load(sample_topics_path)
-        categories = joblib.load(topics_path)
+        y = _joblib.load(sample_topics_path)
+        categories = _joblib.load(topics_path)
 
     if subset == 'all':
         pass

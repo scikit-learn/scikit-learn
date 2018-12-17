@@ -32,7 +32,8 @@ from ..utils.validation import check_X_y
 from ..exceptions import (NotFittedError, ConvergenceWarning,
                           ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
-from ..utils import Parallel, delayed, effective_n_jobs
+from ..utils._joblib import Parallel, delayed, effective_n_jobs
+from ..utils.fixes import _joblib_parallel_args
 from ..model_selection import check_cv
 from ..externals import six
 from ..metrics import get_scorer
@@ -436,7 +437,7 @@ def _check_solver(solver, penalty, dual):
         raise ValueError("Logistic Regression supports only solvers in %s, got"
                          " %s." % (all_solvers, solver))
 
-    all_penalties = ['l1', 'l2']
+    all_penalties = ['l1', 'l2', 'elasticnet']
     if penalty not in all_penalties:
         raise ValueError("Logistic Regression supports only penalties in %s,"
                          " got %s." % (all_penalties, penalty))
@@ -447,6 +448,10 @@ def _check_solver(solver, penalty, dual):
     if solver != 'liblinear' and dual:
         raise ValueError("Solver %s supports only "
                          "dual=False, got dual=%s" % (solver, dual))
+
+    if penalty == 'elasticnet' and solver != 'saga':
+        raise ValueError("Only 'saga' solver supports elasticnet penalty,"
+                         " got solver={}.".format(solver))
     return solver
 
 
@@ -473,14 +478,14 @@ def _check_multi_class(multi_class, solver, n_classes):
     return multi_class
 
 
-
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
                              solver='lbfgs', coef=None,
                              class_weight=None, dual=False, penalty='l2',
                              intercept_scaling=1., multi_class='warn',
                              random_state=None, check_input=True,
-                             max_squared_sum=None, sample_weight=None):
+                             max_squared_sum=None, sample_weight=None,
+                             l1_ratio=None):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
@@ -549,9 +554,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
-    penalty : str, 'l1' or 'l2'
+    penalty : str, 'l1', 'l2', or 'elasticnet'
         Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties.
+        'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
+        only supported by the 'saga' solver.
 
     intercept_scaling : float, default 1.
         Useful only when the solver 'liblinear' is used
@@ -598,6 +604,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     sample_weight : array-like, shape(n_samples,) optional
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
+
+    l1_ratio : float or None, optional (default=None)
+        The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
+        used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
+        to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
+        to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
+        combination of L1 and L2.
 
     Returns
     -------
@@ -778,12 +791,17 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 loss = 'multinomial'
             else:
                 loss = 'log'
+            # alpha is for L2-norm, beta is for L1-norm
             if penalty == 'l1':
                 alpha = 0.
                 beta = 1. / C
-            else:
+            elif penalty == 'l2':
                 alpha = 1. / C
                 beta = 0.
+            else:  # Elastic-Net penalty
+                alpha = (1. / C) * (1 - l1_ratio)
+                beta = (1. / C) * l1_ratio
+
             w0, n_iter_i, warm_start_sag = sag_solver(
                 X, target, sample_weight, loss, alpha,
                 beta, max_iter, tol,
@@ -815,7 +833,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           verbose=0, solver='lbfgs', penalty='l2',
                           dual=False, intercept_scaling=1.,
                           multi_class='warn', random_state=None,
-                          max_squared_sum=None, sample_weight=None):
+                          max_squared_sum=None, sample_weight=None,
+                          l1_ratio=None):
     """Computes scores across logistic_regression_path
 
     Parameters
@@ -877,9 +896,10 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     solver : {'lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'}
         Decides which solver to use.
 
-    penalty : str, 'l1' or 'l2'
+    penalty : str, 'l1', 'l2', or 'elasticnet'
         Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties.
+        'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
+        only supported by the 'saga' solver.
 
     dual : bool
         Dual or primal formulation. Dual formulation is only implemented for
@@ -921,6 +941,13 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
 
+    l1_ratio : float or None, optional (default=None)
+        The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
+        used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
+        to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
+        to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
+        combination of L1 and L2.
+
     Returns
     -------
     coefs : ndarray, shape (n_cs, n_features) or (n_cs, n_features + 1)
@@ -949,13 +976,13 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         sample_weight = sample_weight[train]
 
     coefs, Cs, n_iter = logistic_regression_path(
-        X_train, y_train, Cs=Cs, fit_intercept=fit_intercept,
-        solver=solver, max_iter=max_iter, class_weight=class_weight,
-        pos_class=pos_class, multi_class=multi_class,
-        tol=tol, verbose=verbose, dual=dual, penalty=penalty,
-        intercept_scaling=intercept_scaling, random_state=random_state,
-        check_input=False, max_squared_sum=max_squared_sum,
-        sample_weight=sample_weight)
+        X_train, y_train, Cs=Cs, l1_ratio=l1_ratio,
+        fit_intercept=fit_intercept, solver=solver, max_iter=max_iter,
+        class_weight=class_weight, pos_class=pos_class,
+        multi_class=multi_class, tol=tol, verbose=verbose, dual=dual,
+        penalty=penalty, intercept_scaling=intercept_scaling,
+        random_state=random_state, check_input=False,
+        max_squared_sum=max_squared_sum, sample_weight=sample_weight)
 
     log_reg = LogisticRegression(solver=solver, multi_class=multi_class)
 
@@ -991,6 +1018,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
             scores.append(log_reg.score(X_test, y_test))
         else:
             scores.append(scoring(log_reg, X_test, y_test))
+
     return coefs, Cs, np.array(scores), n_iter
 
 
@@ -1002,47 +1030,49 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     scheme if the 'multi_class' option is set to 'ovr', and uses the cross-
     entropy loss if the 'multi_class' option is set to 'multinomial'.
     (Currently the 'multinomial' option is supported only by the 'lbfgs',
-    'sag' and 'newton-cg' solvers.)
+    'sag', 'saga' and 'newton-cg' solvers.)
 
     This class implements regularized logistic regression using the
-    'liblinear' library, 'newton-cg', 'sag' and 'lbfgs' solvers. It can handle
-    both dense and sparse input. Use C-ordered arrays or CSR matrices
+    'liblinear' library, 'newton-cg', 'sag', 'saga' and 'lbfgs' solvers. It can
+    handle both dense and sparse input. Use C-ordered arrays or CSR matrices
     containing 64-bit floats for optimal performance; any other input format
     will be converted (and copied).
 
     The 'newton-cg', 'sag', and 'lbfgs' solvers support only L2 regularization
     with primal formulation. The 'liblinear' solver supports both L1 and L2
-    regularization, with a dual formulation only for the L2 penalty.
+    regularization, with a dual formulation only for the L2 penalty. The
+    Elastic-Net regularization is only supported by the 'saga' solver.
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
     Parameters
     ----------
-    penalty : str, 'l1' or 'l2', default: 'l2'
+    penalty : str, 'l1', 'l2', or 'elasticnet', optional (default='l2')
         Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties.
+        'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
+        only supported by the 'saga' solver.
 
         .. versionadded:: 0.19
            l1 penalty with SAGA solver (allowing 'multinomial' + L1)
 
-    dual : bool, default: False
+    dual : bool, optional (default=False)
         Dual or primal formulation. Dual formulation is only implemented for
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
-    tol : float, default: 1e-4
+    tol : float, optional (default=1e-4)
         Tolerance for stopping criteria.
 
-    C : float, default: 1.0
+    C : float, optional (default=1.0)
         Inverse of regularization strength; must be a positive float.
         Like in support vector machines, smaller values specify stronger
         regularization.
 
-    fit_intercept : bool, default: True
+    fit_intercept : bool, optional (default=True)
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the decision function.
 
-    intercept_scaling : float, default 1.
+    intercept_scaling : float, optional (default=1)
         Useful only when the solver 'liblinear' is used
         and self.fit_intercept is set to True. In this case, x becomes
         [x, self.intercept_scaling],
@@ -1055,7 +1085,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    class_weight : dict or 'balanced', default: None
+    class_weight : dict or 'balanced', optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one.
 
@@ -1069,7 +1099,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionadded:: 0.17
            *class_weight='balanced'*
 
-    random_state : int, RandomState instance or None, optional, default: None
+    random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
@@ -1078,7 +1108,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         'liblinear'.
 
     solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
-             default: 'liblinear'.
+             optional (default='liblinear').
 
         Algorithm to use in the optimization problem.
 
@@ -1101,11 +1131,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionchanged:: 0.20
             Default will change from 'liblinear' to 'lbfgs' in 0.22.
 
-    max_iter : int, default: 100
+    max_iter : int, optional (default=100)
         Useful only for the newton-cg, sag and lbfgs solvers.
         Maximum number of iterations taken for the solvers to converge.
 
-    multi_class : str, {'ovr', 'multinomial', 'auto'}, default: 'ovr'
+    multi_class : str, {'ovr', 'multinomial', 'auto'}, optional (default='ovr')
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
@@ -1118,11 +1148,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionchanged:: 0.20
             Default will change from 'ovr' to 'auto' in 0.22.
 
-    verbose : int, default: 0
+    verbose : int, optional (default=0)
         For the liblinear and lbfgs solvers set verbose to any positive
         number for verbosity.
 
-    warm_start : bool, default: False
+    warm_start : bool, optional (default=False)
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         Useless for liblinear solver. See :term:`the Glossary <warm_start>`.
@@ -1138,8 +1168,18 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         context. ``-1`` means using all processors.
         See :term:`Glossary <n_jobs>` for more details.
 
+    l1_ratio : float or None, optional (default=None)
+        The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
+        used if ``penalty='elasticnet'`. Setting ``l1_ratio=0`` is equivalent
+        to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
+        to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
+        combination of L1 and L2.
+
     Attributes
     ----------
+
+    classes_ : array, shape (n_classes, )
+        A list of class labels known to the classifier.
 
     coef_ : array, shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features in the decision function.
@@ -1203,7 +1243,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     ----------
 
     LIBLINEAR -- A Library for Large Linear Classification
-        http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+        https://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
     SAG -- Mark Schmidt, Nicolas Le Roux, and Francis Bach
         Minimizing Finite Sums with the Stochastic Average Gradient
@@ -1217,13 +1257,14 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     Hsiang-Fu Yu, Fang-Lan Huang, Chih-Jen Lin (2011). Dual coordinate descent
         methods for logistic regression and maximum entropy models.
         Machine Learning 85(1-2):41-75.
-        http://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
+        https://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='warn', max_iter=100,
-                 multi_class='warn', verbose=0, warm_start=False, n_jobs=None):
+                 multi_class='warn', verbose=0, warm_start=False, n_jobs=None,
+                 l1_ratio=None):
 
         self.penalty = penalty
         self.dual = dual
@@ -1239,6 +1280,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.verbose = verbose
         self.warm_start = warm_start
         self.n_jobs = n_jobs
+        self.l1_ratio = l1_ratio
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -1249,7 +1291,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_targets)
+        y : array-like, shape (n_samples,)
             Target vector relative to X.
 
         sample_weight : array-like, shape (n_samples,) optional
@@ -1263,17 +1305,26 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         -------
         self : object
         """
+        solver = _check_solver(self.solver, self.penalty, self.dual)
+
         if not isinstance(self.C, numbers.Number) or self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
+        if self.penalty == 'elasticnet':
+            if (not isinstance(self.l1_ratio, numbers.Number) or
+                    self.l1_ratio < 0 or self.l1_ratio > 1):
+                        raise ValueError("l1_ratio must be between 0 and 1;"
+                                         " got (l1_ratio=%r)" % self.l1_ratio)
+        elif self.l1_ratio is not None:
+            warnings.warn("l1_ratio parameter is only used when penalty is "
+                          "'elasticnet'. Got "
+                          "(penalty={})".format(self.penalty))
         if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
             raise ValueError("Maximum number of iteration must be positive;"
                              " got (max_iter=%r)" % self.max_iter)
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
-
-        solver = _check_solver(self.solver, self.penalty, self.dual)
 
         if solver in ['newton-cg']:
             _dtype = [np.float64, np.float32]
@@ -1346,15 +1397,14 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         else:
             prefer = 'processes'
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                               prefer=prefer)(
+                               **_joblib_parallel_args(prefer=prefer))(
             path_func(X, y, pos_class=class_, Cs=[self.C],
-                      fit_intercept=self.fit_intercept, tol=self.tol,
-                      verbose=self.verbose, solver=solver,
+                      l1_ratio=self.l1_ratio, fit_intercept=self.fit_intercept,
+                      tol=self.tol, verbose=self.verbose, solver=solver,
                       multi_class=multi_class, max_iter=self.max_iter,
                       class_weight=self.class_weight, check_input=False,
                       random_state=self.random_state, coef=warm_start_coef_,
-                      penalty=self.penalty,
-                      max_squared_sum=max_squared_sum,
+                      penalty=self.penalty, max_squared_sum=max_squared_sum,
                       sample_weight=sample_weight)
             for class_, warm_start_coef_ in zip(classes_, warm_start_coef))
 
@@ -1438,39 +1488,36 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                            LinearClassifierMixin):
     """Logistic Regression CV (aka logit, MaxEnt) classifier.
 
+    See glossary entry for :term:`cross-validation estimator`.
+
     This class implements logistic regression using liblinear, newton-cg, sag
     of lbfgs optimizer. The newton-cg, sag and lbfgs solvers support only L2
     regularization with primal formulation. The liblinear solver supports both
     L1 and L2 regularization, with a dual formulation only for the L2 penalty.
+    Elastic-Net penalty is only supported by the saga solver.
 
-    For the grid of Cs values (that are set by default to be ten values in
-    a logarithmic scale between 1e-4 and 1e4), the best hyperparameter is
-    selected by the cross-validator StratifiedKFold, but it can be changed
-    using the cv parameter. In the case of newton-cg and lbfgs solvers,
-    we warm start along the path i.e guess the initial coefficients of the
-    present fit to be the coefficients got after convergence in the previous
-    fit, so it is supposed to be faster for high-dimensional dense data.
-
-    For a multiclass problem, the hyperparameters for each class are computed
-    using the best scores got by doing a one-vs-rest in parallel across all
-    folds and classes. Hence this is not the true multinomial loss.
+    For the grid of `Cs` values and `l1_ratios` values, the best
+    hyperparameter is selected by the cross-validator `StratifiedKFold`, but
+    it can be changed using the `cv` parameter. The 'newton-cg', 'sag',
+    'saga' and 'lbfgs' solvers can warm-start the coefficients (see
+    :term:`Glossary<warm_start>`).
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
     Parameters
     ----------
-    Cs : list of floats | int
+    Cs : list of floats or int, optional (default=10)
         Each of the values in Cs describes the inverse of regularization
         strength. If Cs is as an int, then a grid of Cs values are chosen
         in a logarithmic scale between 1e-4 and 1e4.
         Like in support vector machines, smaller values specify stronger
         regularization.
 
-    fit_intercept : bool, default: True
+    fit_intercept : bool, optional (default=True)
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the decision function.
 
-    cv : integer or cross-validation generator, default: None
+    cv : int or cross-validation generator, optional (default=None)
         The default cross-validation generator used is Stratified K-Folds.
         If an integer is provided, then it is the number of folds used.
         See the module :mod:`sklearn.model_selection` module for the
@@ -1480,16 +1527,17 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    dual : bool
+    dual : bool, optional (default=False)
         Dual or primal formulation. Dual formulation is only implemented for
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
-    penalty : str, 'l1' or 'l2'
+    penalty : str, 'l1', 'l2', or 'elasticnet', optional (default='l2')
         Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties.
+        'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
+        only supported by the 'saga' solver.
 
-    scoring : string, callable, or None
+    scoring : string, callable, or None, optional (default=None)
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``. For a list of scoring functions
@@ -1497,7 +1545,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         default scoring option used is 'accuracy'.
 
     solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
-             default: 'lbfgs'.
+             optional (default='lbfgs')
 
         Algorithm to use in the optimization problem.
 
@@ -1520,13 +1568,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         .. versionadded:: 0.19
            SAGA solver.
 
-    tol : float, optional
+    tol : float, optional (default=1e-4)
         Tolerance for stopping criteria.
 
-    max_iter : int, optional
+    max_iter : int, optional (default=100)
         Maximum number of iterations of the optimization algorithm.
 
-    class_weight : dict or 'balanced', optional
+    class_weight : dict or 'balanced', optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one.
 
@@ -1546,18 +1594,18 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : int
+    verbose : int, optional (default=0)
         For the 'liblinear', 'sag' and 'lbfgs' solvers set verbose to any
         positive number for verbosity.
 
-    refit : bool
+    refit : bool, optional (default=True)
         If set to True, the scores are averaged across all folds, and the
         coefs and the C that corresponds to the best score is taken, and a
         final refit is done using these parameters.
         Otherwise the coefs, intercepts and C that correspond to the
         best scores across folds are averaged.
 
-    intercept_scaling : float, default 1.
+    intercept_scaling : float, optional (default=1)
         Useful only when the solver 'liblinear' is used
         and self.fit_intercept is set to True. In this case, x becomes
         [x, self.intercept_scaling],
@@ -1570,7 +1618,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    multi_class : str, {'ovr', 'multinomial', 'auto'}, default: 'ovr'
+    multi_class : str, {'ovr', 'multinomial', 'auto'}, optional (default='ovr')
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
@@ -1583,14 +1631,24 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         .. versionchanged:: 0.20
             Default will change from 'ovr' to 'auto' in 0.22.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    l1_ratios : list of float or None, optional (default=None)
+        The list of Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``.
+        Only used if ``penalty='elasticnet'``. A value of 0 is equivalent to
+        using ``penalty='l2'``, while 1 is equivalent to using
+        ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a combination
+        of L1 and L2.
+
     Attributes
     ----------
+    classes_ : array, shape (n_classes, )
+        A list of class labels known to the classifier.
+
     coef_ : array, shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
@@ -1603,28 +1661,35 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         If `fit_intercept` is set to False, the intercept is set to zero.
         `intercept_` is of shape(1,) when the problem is binary.
 
-    Cs_ : array
+    Cs_ : array, shape (n_cs)
         Array of C i.e. inverse of regularization parameter values used
         for cross-validation.
 
-    coefs_paths_ : array, shape ``(n_folds, len(Cs_), n_features)`` or \
-                   ``(n_folds, len(Cs_), n_features + 1)``
+    l1_ratios_ : array, shape (n_l1_ratios)
+        Array of l1_ratios used for cross-validation. If no l1_ratio is used
+        (i.e. penalty is not 'elasticnet'), this is set to ``[None]``
+
+    coefs_paths_ : array, shape (n_folds, n_cs, n_features) or \
+                   (n_folds, n_cs, n_features + 1)
         dict with classes as the keys, and the path of coefficients obtained
         during cross-validating across each fold and then across each Cs
         after doing an OvR for the corresponding class as values.
         If the 'multi_class' option is set to 'multinomial', then
         the coefs_paths are the coefficients corresponding to each class.
-        Each dict value has shape ``(n_folds, len(Cs_), n_features)`` or
-        ``(n_folds, len(Cs_), n_features + 1)`` depending on whether the
-        intercept is fit or not.
+        Each dict value has shape ``(n_folds, n_cs, n_features)`` or
+        ``(n_folds, n_cs, n_features + 1)`` depending on whether the
+        intercept is fit or not. If ``penalty='elasticnet'``, the shape is
+        ``(n_folds, n_cs, n_l1_ratios_, n_features)`` or
+        ``(n_folds, n_cs, n_l1_ratios_, n_features + 1)``.
 
     scores_ : dict
         dict with classes as the keys, and the values as the
         grid of scores obtained during cross-validating each fold, after doing
         an OvR for the corresponding class. If the 'multi_class' option
         given is 'multinomial' then the same scores are repeated across
-        all classes, since this is the multinomial class.
-        Each dict value has shape (n_folds, len(Cs))
+        all classes, since this is the multinomial class. Each dict value
+        has shape ``(n_folds, n_cs`` or ``(n_folds, n_cs, n_l1_ratios)`` if
+        ``penalty='elasticnet'``.
 
     C_ : array, shape (n_classes,) or (n_classes - 1,)
         Array of C that maps to the best scores across every class. If refit is
@@ -1632,9 +1697,18 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         C's that correspond to the best scores for each fold.
         `C_` is of shape(n_classes,) when the problem is binary.
 
+    l1_ratio_ : array, shape (n_classes,) or (n_classes - 1,)
+        Array of l1_ratio that maps to the best scores across every class. If
+        refit is set to False, then for each class, the best l1_ratio is the
+        average of the l1_ratio's that correspond to the best scores for each
+        fold.  `l1_ratio_` is of shape(n_classes,) when the problem is binary.
+
     n_iter_ : array, shape (n_classes, n_folds, n_cs) or (1, n_folds, n_cs)
         Actual number of iterations for all classes, folds and Cs.
         In the binary or multinomial cases, the first dimension is equal to 1.
+        If ``penalty='elasticnet'``, the shape is ``(n_classes, n_folds,
+        n_cs, n_l1_ratios)`` or ``(1, n_folds, n_cs, n_l1_ratios)``.
+
 
     Examples
     --------
@@ -1659,7 +1733,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=None, verbose=0,
                  refit=True, intercept_scaling=1., multi_class='warn',
-                 random_state=None):
+                 random_state=None, l1_ratios=None):
         self.Cs = Cs
         self.fit_intercept = fit_intercept
         self.cv = cv
@@ -1676,6 +1750,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
         self.random_state = random_state
+        self.l1_ratios = l1_ratios
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -1686,7 +1761,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_targets)
+        y : array-like, shape (n_samples,)
             Target vector relative to X.
 
         sample_weight : array-like, shape (n_samples,) optional
@@ -1705,6 +1780,21 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
+        if self.penalty == 'elasticnet':
+            if self.l1_ratios is None or len(self.l1_ratios) == 0 or any(
+                    (not isinstance(l1_ratio, numbers.Number) or l1_ratio < 0
+                     or l1_ratio > 1) for l1_ratio in self.l1_ratios):
+                raise ValueError("l1_ratios must be a list of numbers between "
+                                 "0 and 1; got (l1_ratios=%r)" %
+                                 self.l1_ratios)
+            l1_ratios_ = self.l1_ratios
+        else:
+            if self.l1_ratios is not None:
+                warnings.warn("l1_ratios parameter is only used when penalty "
+                              "is 'elasticnet'. Got (penalty={})".format(
+                                  self.penalty))
+
+            l1_ratios_ = [None]
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
                          order="C",
@@ -1774,8 +1864,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             prefer = 'threads'
         else:
             prefer = 'processes'
+
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                               prefer=prefer)(
+                               **_joblib_parallel_args(prefer=prefer))(
             path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
                       fit_intercept=self.fit_intercept, penalty=self.penalty,
                       dual=self.dual, solver=solver, tol=self.tol,
@@ -1785,69 +1876,90 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                       intercept_scaling=self.intercept_scaling,
                       random_state=self.random_state,
                       max_squared_sum=max_squared_sum,
-                      sample_weight=sample_weight
+                      sample_weight=sample_weight,
+                      l1_ratio=l1_ratio
                       )
             for label in iter_encoded_labels
-            for train, test in folds)
+            for train, test in folds
+            for l1_ratio in l1_ratios_)
 
+        # _log_reg_scoring_path will output different shapes depending on the
+        # multi_class param, so we need to reshape the outputs accordingly.
+        # Cs is of shape (n_classes . n_folds . n_l1_ratios, n_Cs) and all the
+        # rows are equal, so we just take the first one.
+        # After reshaping,
+        # - scores is of shape (n_classes, n_folds, n_Cs . n_l1_ratios)
+        # - coefs_paths is of shape
+        #  (n_classes, n_folds, n_Cs . n_l1_ratios, n_features)
+        # - n_iter is of shape
+        #  (n_classes, n_folds, n_Cs . n_l1_ratios) or
+        #  (1, n_folds, n_Cs . n_l1_ratios)
+        coefs_paths, Cs, scores, n_iter_ = zip(*fold_coefs_)
+        self.Cs_ = Cs[0]
         if multi_class == 'multinomial':
-            multi_coefs_paths, Cs, multi_scores, n_iter_ = zip(*fold_coefs_)
-            multi_coefs_paths = np.asarray(multi_coefs_paths)
-            multi_scores = np.asarray(multi_scores)
-
-            # This is just to maintain API similarity between the ovr and
-            # multinomial option.
-            # Coefs_paths in now n_folds X len(Cs) X n_classes X n_features
-            # we need it to be n_classes X len(Cs) X n_folds X n_features
-            # to be similar to "ovr".
-            coefs_paths = np.rollaxis(multi_coefs_paths, 2, 0)
-
-            # Multinomial has a true score across all labels. Hence the
-            # shape is n_folds X len(Cs). We need to repeat this score
-            # across all labels for API similarity.
-            scores = np.tile(multi_scores, (n_classes, 1, 1))
-            self.Cs_ = Cs[0]
-            self.n_iter_ = np.reshape(n_iter_, (1, len(folds),
-                                                len(self.Cs_)))
-
+            coefs_paths = np.reshape(
+                coefs_paths,
+                (len(folds),  len(l1_ratios_) * len(self.Cs_), n_classes, -1)
+            )
+            # equiv to coefs_paths = np.moveaxis(coefs_paths, (0, 1, 2, 3),
+            #                                                 (1, 2, 0, 3))
+            coefs_paths = np.swapaxes(coefs_paths, 0, 1)
+            coefs_paths = np.swapaxes(coefs_paths, 0, 2)
+            self.n_iter_ = np.reshape(
+                n_iter_,
+                (1, len(folds), len(self.Cs_) * len(l1_ratios_))
+            )
+            # repeat same scores across all classes
+            scores = np.tile(scores, (n_classes, 1, 1))
         else:
-            coefs_paths, Cs, scores, n_iter_ = zip(*fold_coefs_)
-            self.Cs_ = Cs[0]
-            coefs_paths = np.reshape(coefs_paths, (n_classes, len(folds),
-                                                   len(self.Cs_), -1))
-            self.n_iter_ = np.reshape(n_iter_, (n_classes, len(folds),
-                                                len(self.Cs_)))
-
-        self.coefs_paths_ = dict(zip(classes, coefs_paths))
+            coefs_paths = np.reshape(
+                coefs_paths,
+                (n_classes, len(folds), len(self.Cs_) * len(l1_ratios_),
+                 -1)
+            )
+            self.n_iter_ = np.reshape(
+                n_iter_,
+                (n_classes, len(folds), len(self.Cs_) * len(l1_ratios_))
+            )
         scores = np.reshape(scores, (n_classes, len(folds), -1))
         self.scores_ = dict(zip(classes, scores))
+        self.coefs_paths_ = dict(zip(classes, coefs_paths))
 
         self.C_ = list()
+        self.l1_ratio_ = list()
         self.coef_ = np.empty((n_classes, X.shape[1]))
         self.intercept_ = np.zeros(n_classes)
-
-        # hack to iterate only once for multinomial case.
-        if multi_class == 'multinomial':
-            scores = multi_scores
-            coefs_paths = multi_coefs_paths
-
         for index, (cls, encoded_label) in enumerate(
                 zip(iter_classes, iter_encoded_labels)):
 
             if multi_class == 'ovr':
-                # The scores_ / coefs_paths_ dict have unencoded class
-                # labels as their keys
                 scores = self.scores_[cls]
                 coefs_paths = self.coefs_paths_[cls]
+            else:
+                # For multinomial, all scores are the same across classes
+                scores = scores[0]
+                # coefs_paths will keep its original shape because
+                # logistic_regression_path expects it this way
 
             if self.refit:
+                # best_index is between 0 and (n_Cs . n_l1_ratios - 1)
+                # for example, with n_cs=2 and n_l1_ratios=3
+                # the layout of scores is
+                # [c1, c2, c1, c2, c1, c2]
+                #   l1_1 ,  l1_2 ,  l1_3
                 best_index = scores.sum(axis=0).argmax()
 
-                C_ = self.Cs_[best_index]
+                best_index_C = best_index % len(self.Cs_)
+                C_ = self.Cs_[best_index_C]
                 self.C_.append(C_)
+
+                best_index_l1 = best_index // len(self.Cs_)
+                l1_ratio_ = l1_ratios_[best_index_l1]
+                self.l1_ratio_.append(l1_ratio_)
+
                 if multi_class == 'multinomial':
-                    coef_init = np.mean(coefs_paths[:, best_index, :, :],
-                                        axis=0)
+                    coef_init = np.mean(coefs_paths[:, :, best_index, :],
+                                        axis=1)
                 else:
                     coef_init = np.mean(coefs_paths[:, best_index, :], axis=0)
 
@@ -1863,19 +1975,30 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                     verbose=max(0, self.verbose - 1),
                     random_state=self.random_state,
                     check_input=False, max_squared_sum=max_squared_sum,
-                    sample_weight=sample_weight)
+                    sample_weight=sample_weight,
+                    l1_ratio=l1_ratio_)
                 w = w[0]
 
             else:
-                # Take the best scores across every fold and the average of all
-                # coefficients corresponding to the best scores.
+                # Take the best scores across every fold and the average of
+                # all coefficients corresponding to the best scores.
                 best_indices = np.argmax(scores, axis=1)
-                w = np.mean([coefs_paths[i][best_indices[i]]
-                             for i in range(len(folds))], axis=0)
-                self.C_.append(np.mean(self.Cs_[best_indices]))
+                if self.multi_class == 'ovr':
+                    w = np.mean([coefs_paths[i, best_indices[i], :]
+                                 for i in range(len(folds))], axis=0)
+                else:
+                    w = np.mean([coefs_paths[:, i, best_indices[i], :]
+                                 for i in range(len(folds))], axis=0)
+
+                best_indices_C = best_indices % len(self.Cs_)
+                self.C_.append(np.mean(self.Cs_[best_indices_C]))
+
+                best_indices_l1 = best_indices // len(self.Cs_)
+                self.l1_ratio_.append(np.mean(l1_ratios_[best_indices_l1]))
 
             if multi_class == 'multinomial':
                 self.C_ = np.tile(self.C_, n_classes)
+                self.l1_ratio_ = np.tile(self.l1_ratio_, n_classes)
                 self.coef_ = w[:, :X.shape[1]]
                 if self.fit_intercept:
                     self.intercept_ = w[:, -1]
@@ -1885,6 +2008,20 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                     self.intercept_[index] = w[-1]
 
         self.C_ = np.asarray(self.C_)
+        self.l1_ratio_ = np.asarray(self.l1_ratio_)
+        self.l1_ratios_ = np.asarray(l1_ratios_)
+        # if elasticnet was used, add the l1_ratios dimension to some
+        # attributes
+        if self.l1_ratios is not None:
+            for cls, coefs_path in self.coefs_paths_.items():
+                self.coefs_paths_[cls] = coefs_path.reshape(
+                    (len(folds), self.Cs_.size, self.l1_ratios_.size, -1))
+            for cls, score in self.scores_.items():
+                self.scores_[cls] = score.reshape(
+                    (len(folds), self.Cs_.size, self.l1_ratios_.size))
+            self.n_iter_ = self.n_iter_.reshape(
+                (-1, len(folds), self.Cs_.size, self.l1_ratios_.size))
+
         return self
 
     def score(self, X, y, sample_weight=None):

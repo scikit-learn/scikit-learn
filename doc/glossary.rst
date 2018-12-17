@@ -170,7 +170,7 @@ General Concepts
         :class:`~sklearn.preprocessing.OneHotEncoder` can be used to
         one-hot encode categorical features.
         See also :ref:`preprocessing_categorical_features` and the
-        `http://contrib.scikit-learn.org/categorical-encoding
+        `https://contrib.scikit-learn.org/categorical-encoding/
         <category_encoders>`_ package for tools related to encoding
         categorical features.
 
@@ -225,8 +225,8 @@ General Concepts
         accessible as the object's ``__doc__`` attribute.
 
         We try to adhere to `PEP257
-        <http://www.python.org/dev/peps/pep-0257/>`_, and follow `NumpyDoc
-        conventions <numpydoc.readthedocs.io/en/latest/format.html>`_.
+        <https://www.python.org/dev/peps/pep-0257/>`_, and follow `NumpyDoc
+        conventions <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
 
     double underscore
     double underscore notation
@@ -461,7 +461,7 @@ General Concepts
         and/or :term:`transform` methods.
 
     joblib
-        A Python library (http://joblib.readthedocs.io) used in Scikit-learn to
+        A Python library (https://joblib.readthedocs.io) used in Scikit-learn to
         facilite simple parallelism and caching.  Joblib is oriented towards
         efficiently working with numpy arrays, such as through use of
         :term:`memory mapping`. See :ref:`parallelism` for more
@@ -620,7 +620,7 @@ General Concepts
         structures.
 
     pd
-        A shorthand for `Pandas <http://pandas.pydata.org>`_ due to the
+        A shorthand for `Pandas <https://pandas.pydata.org>`_ due to the
         conventional import statement::
 
             import pandas as pd
@@ -673,7 +673,7 @@ General Concepts
         A venue for publishing Scikit-learn-compatible libraries that are
         broadly authorized by the core developers and the contrib community,
         but not maintained by the core developer team.
-        See http://scikit-learn-contrib.github.io.
+        See https://scikit-learn-contrib.github.io.
 
     semi-supervised
     semi-supervised learning
@@ -954,6 +954,22 @@ such as:
         Note that unlike estimators, these do not have :term:`fit` methods
         and do not provide :term:`set_params` or :term:`get_params`.
         Parameter validation may be performed in ``__init__``.
+
+    cross-validation estimator
+        An estimator that has built-in cross-validation capabilities to
+        automatically select the best hyper-parameters (see the :ref:`User
+        Guide <grid_search>`). Some example of cross-validation estimators
+        are :class:`ElasticNetCV <linear_model.ElasticNetCV>` and
+        :class:`LogisticRegressionCV <linear_model.LogisticRegressionCV>`.
+        Cross-validation estimators are named `EstimatorCV` and tend to be
+        roughly equivalent to `GridSearchCV(Estimator(), ...)`. The
+        advantage of using a cross-validation estimator over the canonical
+        `Estimator` class along with :ref:`grid search <grid_search>` is
+        that they can take advantage of warm-starting by reusing precomputed
+        results in the previous steps of the cross-validation process. This
+        generally leads to speed improvements. An exception is the
+        :class:`RidgeCV <linear_model.RidgeCV>` class, which can instead
+        perform efficient Leave-One-Out CV.
 
     scorer
         A non-estimator callable object which evaluates an estimator on given
@@ -1531,7 +1547,7 @@ functions or non-estimator constructors.
             worthwhile checking that your results are stable across a
             number of different distinct random seeds. Popular integer
             random seeds are 0 and `42
-            <http://en.wikipedia.org/wiki/Answer_to_the_Ultimate_Question_of_Life%2C_the_Universe%2C_and_Everything>`_.
+            <https://en.wikipedia.org/wiki/Answer_to_the_Ultimate_Question_of_Life%2C_the_Universe%2C_and_Everything>`_.
 
         A :class:`numpy.random.RandomState` instance
             Use the provided random state, only affecting other users
