@@ -336,6 +336,10 @@ def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
     # There's a very small chance of failure with elkan on unstructured dataset
     # because predict method uses fast euclidean distances computation which
     # may cause small numerical instabilities.
+    if sys.platform == "darwin":
+        pytest.xfail(
+            "Known failures on MacOS, See "
+            "https://github.com/scikit-learn/scikit-learn/issues/12644")
     if not (algo == 'elkan' and constructor is sp.csr_matrix):
         rng = np.random.RandomState(seed)
 
