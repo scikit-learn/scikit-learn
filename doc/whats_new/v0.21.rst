@@ -51,7 +51,7 @@ Support for Python 3.4 and below has been officially dropped.
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>`,
   :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
-  
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
@@ -115,6 +115,11 @@ Support for Python 3.4 and below has been officially dropped.
   it is otherwise identical to accuracy.
   :issue:`12334` by :user:`Emmanuel Arias <eamanu@eamanu.com>`,
   `Joel Nothman`_ and `Andreas Müller`_
+
+- |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
+  in version 0.21 and will be removed in version 0.23.
+  :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra
+  Mitrovic <SandraMNE>`.
 
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score`.
   :issue:`3298` by :user:`Thomas Fan <thomasjpfan>`.

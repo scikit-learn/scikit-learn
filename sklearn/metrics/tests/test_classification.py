@@ -529,8 +529,10 @@ def test_cohen_kappa():
     y1 = np.array([0] * 46 + [1] * 44 + [2] * 10)
     y2 = np.array([0] * 50 + [1] * 40 + [2] * 10)
     assert_almost_equal(cohen_kappa_score(y1, y2), .9315, decimal=4)
-    assert_almost_equal(cohen_kappa_score(y1, y2, weights="linear"), .9412, decimal=4)
-    assert_almost_equal(cohen_kappa_score(y1, y2, weights="quadratic"), .9541, decimal=4)
+    assert_almost_equal(cohen_kappa_score(y1, y2,
+                        weights="linear"), 0.9412, decimal=4)
+    assert_almost_equal(cohen_kappa_score(y1, y2,
+                        weights="quadratic"), 0.9541, decimal=4)
 
 
 @ignore_warnings
@@ -1128,6 +1130,11 @@ def test_multilabel_hamming_loss():
     assert_equal(hamming_loss(y1, np.zeros_like(y1), sample_weight=w), 2. / 3)
     # sp_hamming only works with 1-D arrays
     assert_equal(hamming_loss(y1[0], y2[0]), sp_hamming(y1[0], y2[0]))
+    assert_warns_message(DeprecationWarning,
+                         "The labels parameter is unused. It was"
+                         " deprecated in version 0.21 and"
+                         " will be removed in version 0.23",
+                         hamming_loss, y1, y2, labels=[0, 1])
 
 
 def test_multilabel_jaccard_similarity_score():
