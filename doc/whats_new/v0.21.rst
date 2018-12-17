@@ -116,6 +116,11 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`12334` by :user:`Emmanuel Arias <eamanu@eamanu.com>`,
   `Joel Nothman`_ and `Andreas Müller`_
 
+- |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
+  in version 0.21 and will be removed in version 0.23.
+  :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra 
+  Mitrovic <SandraMNE>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
