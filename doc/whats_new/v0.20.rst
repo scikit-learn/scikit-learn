@@ -21,6 +21,7 @@ occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
 - :mod:`sklearn.neighbors` when ``metric=='jaccard'`` (bug fix)
+- use of ``'seuclidean'`` or ``'mahalanobis'`` metrics in some cases (bug fix)
 
 Changelog
 ---------
