@@ -237,8 +237,11 @@ def test_davies_bouldin_score():
     # Ensure divide by zero warning is not raised in general case
     with pytest.warns(None) as record:
         davies_bouldin_score(X, labels)
-    for warning in record:
-        assert "divide by zero encountered" not in warning.message.args[0]
+    div_zero_warnings = [
+        warning for warning in record
+        if "divide by zero encountered" in warning.message.args[0]
+    ]
+    assert len(div_zero_warnings) == 0
 
     # General case - cluster have one sample
     X = ([[0, 0], [2, 2], [3, 3], [5, 5]])
