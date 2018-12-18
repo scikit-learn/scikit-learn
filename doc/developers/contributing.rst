@@ -192,13 +192,17 @@ then submit a "pull request" (PR):
 
         $ git clone git@github.com:YourLogin/scikit-learn.git
 
- 4. Create a branch to hold your changes::
+ 4. Install library in editable mode::
+
+        $ pip install --editable .
+
+ 5. Create a branch to hold your changes::
 
         $ git checkout -b my-feature
 
     and start making changes. Never work in the ``master`` branch!
 
- 5. Work on this copy, on your computer, using Git to do the version
+ 6. Work on this copy, on your computer, using Git to do the version
     control. When you're done editing, do::
 
         $ git add modified_files
