@@ -51,7 +51,7 @@ def _make_edges_3d(n_x, n_y, n_z=1):
 
 
 def _compute_gradient_3d(edges, img):
-    n_x, n_y, n_z = img.shape
+    _, n_y, n_z = img.shape
     gradient = np.abs(img[edges[0] // (n_y * n_z),
                       (edges[0] % (n_y * n_z)) // n_z,
                       (edges[0] % (n_y * n_z)) % n_z] -
@@ -499,6 +499,45 @@ class PatchExtractor(BaseEstimator):
              `n_patches` is either `n_samples * max_patches` or the total
              number of patches that can be extracted.
 
+        Example
+        --------
+            from sklearn.datasets import load_sample_images
+            from sklearn.feature_extraction import image
+
+            # Use the array data from the second image in this dataset:
+            X = load_sample_images().images[1]
+            print(f'Image shape: {X.shape}')
+
+            pe = image.PatchExtractor(patch_size=(2, 2))
+            pe_fit = pe.fit(X)
+            pe_trans = pe.transform(X)
+
+            print(f'Patches shape: {pe_trans.shape}')
+            print(f'Shapes arrays:\n{pe_trans}')
+
+        output:
+            Image shape: (427, 640, 3)
+            Patches shape: (545706, 2, 2)
+            Shapes arrays:
+            [[[ 2. 19.]
+            [ 3. 18.]]
+
+            [[19. 13.]
+            [18. 13.]]
+
+            [[ 3. 18.]
+            [ 7. 20.]]
+
+            ...
+
+            [[46. 28.]
+            [45. 28.]]
+
+            [[ 8. 45.]
+            [ 9. 43.]]
+
+            [[45. 28.]
+            [43. 27.]]]
         """
         self.random_state = check_random_state(self.random_state)
         n_images, i_h, i_w = X.shape[:3]
