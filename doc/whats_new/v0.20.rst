@@ -21,6 +21,10 @@ occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
 - :mod:`sklearn.neighbors` when ``metric=='jaccard'`` (bug fix)
+- :class:`metrics.pairwise_distances` when ``n_jobs > 1`` and
+  ``metric == 'seuclidean'/'mahalanobis'`` (bug fix)
+- :class:`metrics.pairwise_distances_chunked` when data is splitted
+  into multiple chunks and metric == 'seuclidean'/'mahalanobis'``(bug fix) 
 
 Changelog
 ---------
