@@ -440,7 +440,6 @@ def reconstruct_from_patches_2d(patches, image_size):
     -------
     image : array, shape = image_size
         the reconstructed image
-
     """
     i_h, i_w = image_size[:2]
     p_h, p_w = patches.shape[1:3]
@@ -496,9 +495,8 @@ class PatchExtractor(BaseEstimator):
 
             print(f'Patches shape: {pe_trans.shape}')
             print(f'Shapes arrays:\n{pe_trans}')
-            
-            # output:
 
+            # output:
             Image shape: (427, 640, 3)
             Patches shape: (545706, 2, 2)
             Shapes arrays:
