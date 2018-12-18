@@ -1131,6 +1131,19 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
     for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.decomposition import DictionaryLearning
+    >>> X = np.array([[0., 0., 1.],
+    ...               [1., 0., 0.],
+    ...               [2., 2., 2.],
+    ...               [2., 5., 4.]])
+    >>> dico = DictionaryLearning(n_components=2, random_state=42)
+    >>> dico.fit(X).components_  # doctest: +ELLIPSIS
+    array([[-0.2981..., -0.7453..., -0.5962...],
+           [ 0.5773...,  0.5773...,  0.5773...]])
+
     See also
     --------
     SparseCoder
