@@ -338,21 +338,20 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
 
     Examples
     --------
+        >>> from sklearn.datasets import load_sample_images
+        >>> from sklearn.feature_extraction import image
 
-        from sklearn.datasets import load_sample_images
-        from sklearn.feature_extraction import image
+        >>> # Use the array data from the first image in this dataset:
+        >>> one_image = load_sample_images().images[0]
 
-        # Use the array data from the first image in this dataset:
-        one_image = load_sample_images().images[0]
-        print(f'Image shape: {one_image.shape}')
+        >>> print('Image shape: {}'.format(one_image.shape))
 
-        patches = image.extract_patches_2d(one_image, (2, 2))
+        >>> patches = image.extract_patches_2d(one_image, (2, 2))
 
-        print(f'Patches shape: {patches.shape}')
-
-        print(f'\nPatches 0:\n{patches[0]}')
-        print(f'\nPatches 1:\n{patches[1]}')
-        print(f'\nPatches 800:\n{patches[800]}')
+        >>> print('Patches shape: {}'.format(patches.shape))
+        >>> print('\nPatches 0:\n{}'.format(patches[0]))
+        >>> print('\nPatches 1:\n{}'.format(patches[1]))
+        >>> print('\nPatches 800:\n{}'.format(patches[800]))
 
         # output:
         Image shape: (427, 640, 3)
@@ -482,43 +481,43 @@ class PatchExtractor(BaseEstimator):
 
     Examples
     --------
-            from sklearn.datasets import load_sample_images
-            from sklearn.feature_extraction import image
+        >>> from sklearn.datasets import load_sample_images
+        >>> from sklearn.feature_extraction import image
 
-            # Use the array data from the second image in this dataset:
-            X = load_sample_images().images[1]
-            print(f'Image shape: {X.shape}')
+        >>> # Use the array data from the second image in this dataset:
+        >>> X = load_sample_images().images[1]
+        >>> print(f'Image shape: {X.shape}')
 
-            pe = image.PatchExtractor(patch_size=(2, 2))
-            pe_fit = pe.fit(X)
-            pe_trans = pe.transform(X)
+        >>> pe = image.PatchExtractor(patch_size=(2, 2))
+        >>> pe_fit = pe.fit(X)
+        >>> pe_trans = pe.transform(X)
 
-            print(f'Patches shape: {pe_trans.shape}')
-            print(f'Shapes arrays:\n{pe_trans}')
+        >>> print('Patches shape: {}'.format(pe_trans.shape))
+        >>> print('Shapes arrays:\n{}'.format(pe_trans))
 
-            # output:
-            Image shape: (427, 640, 3)
-            Patches shape: (545706, 2, 2)
-            Shapes arrays:
-            [[[ 2. 19.]
-            [ 3. 18.]]
+        # output:
+        Image shape: (427, 640, 3)
+        Patches shape: (545706, 2, 2)
+        Shapes arrays:
+        [[[ 2. 19.]
+        [ 3. 18.]]
 
-            [[19. 13.]
-            [18. 13.]]
+        [[19. 13.]
+        [18. 13.]]
 
-            [[ 3. 18.]
-            [ 7. 20.]]
+        [[ 3. 18.]
+        [ 7. 20.]]
 
-            ...
+        ...
 
-            [[46. 28.]
-            [45. 28.]]
+        [[46. 28.]
+        [45. 28.]]
 
-            [[ 8. 45.]
-            [ 9. 43.]]
+        [[ 8. 45.]
+        [ 9. 43.]]
 
-            [[45. 28.]
-            [43. 27.]]]
+        [[45. 28.]
+        [43. 27.]]]
     """
     def __init__(self, patch_size=None, max_patches=None, random_state=None):
         self.patch_size = patch_size
