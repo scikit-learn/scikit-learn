@@ -53,22 +53,6 @@ def set_config(assume_finite=None, working_memory=None,
         all the non-changed parameters.
 
         .. versionadded:: 0.21
-
-    Examples
-    --------
-    >>> import sklearn
-    >>> from sklearn.linear_model import LogisticRegression
-    >>> lr = LogisticRegression(penalty='l1')
-    >>> lr
-    ... # doctest: +NORMALIZE_WHITESPACE
-    LogisticRegression(C=1.0, class_weight=None, dual=False,
-                       fit_intercept=True, intercept_scaling=1, l1_ratio=None,
-                       max_iter=100, multi_class='warn', n_jobs=None,
-                       penalty='l1', random_state=None, solver='warn',
-                       tol=0.0001, verbose=0, warm_start=False)
-    >>> set_config(print_changed_only=True)
-    >>> lr
-    LogisticRegression(penalty='l1')
     """
     if assume_finite is not None:
         _global_config['assume_finite'] = assume_finite
