@@ -520,7 +520,7 @@ class PatchExtractor(BaseEstimator):
             [ 9. 43.]]
 
             [[45. 28.]
-            [43. 27.]]] 
+            [43. 27.]]]
     """
     def __init__(self, patch_size=None, max_patches=None, random_state=None):
         self.patch_size = patch_size
