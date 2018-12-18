@@ -7,7 +7,7 @@ being contribution of code or documentation to the project. Improving the
 documentation is no less important than improving the library itself. If you
 find a typo in the documentation, or have made improvements, do not hesitate to
 send an email to the mailing list or preferably submit a GitHub pull request.
-Full documentation can be found under the
+Documentation can be found under the
 [doc/](https://github.com/scikit-learn/scikit-learn/tree/master/doc) directory.
 
 But there are many other ways to help. In particular answering queries on the
@@ -25,8 +25,8 @@ link to it from your website, or simply star it in GitHub to say "I use it".
 Guideline
 ---------
 
-Full contribution guidelines are available in the repository at `doc\`, or
-online at:
+Full contribution guidelines are available in the repository at
+`doc/developers/contributing.rst`, or online at:
 
 http://scikit-learn.org/dev/developers/contributing.html
 
