@@ -1218,11 +1218,8 @@ def test_multilabel_label_permutations_invariance(name):
     score = metric(y_true, y_score)
 
     for perm in permutations(range(n_classes), n_classes):
-        inv_perm = np.zeros(n_classes, dtype=int)
-        inv_perm[list(perm)] = np.arange(n_classes)
-
-        y_score_perm = y_score[:, inv_perm]
-        y_true_perm = y_true[:, inv_perm]
+        y_score_perm = y_score[:, perm]
+        y_true_perm = y_true[:, perm]
 
         current_score = metric(y_true_perm, y_score_perm)
         assert_almost_equal(score, current_score)
@@ -1245,11 +1242,8 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
     score = metric(y_true, y_score)
 
     for perm in permutations(range(n_classes), n_classes):
-        inv_perm = np.zeros(n_classes, dtype=int)
-        inv_perm[list(perm)] = np.arange(n_classes)
-
-        y_score_perm = y_score[:, inv_perm]
-        y_true_perm = y_true[:, inv_perm]
+        y_score_perm = y_score[:, perm]
+        y_true_perm = y_true[:, perm]
 
         current_score = metric(y_true_perm, y_score_perm)
         assert_almost_equal(score, current_score)
