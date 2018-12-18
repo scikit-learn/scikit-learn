@@ -927,7 +927,8 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
                 params = {'VI': np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T}
 
         expected_dist_explicit_params = cdist(X, Y, metric=metric, **params)
-        dist = np.vstack(dist_function(X, Y, metric=metric, n_jobs=n_jobs))
+        dist = np.vstack(tuple(dist_function(X, Y,
+                                             metric=metric, n_jobs=n_jobs)))
 
         assert_allclose(dist, expected_dist_explicit_params)
         assert_allclose(dist, expected_dist_default_params)
