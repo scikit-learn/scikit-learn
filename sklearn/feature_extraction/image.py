@@ -331,10 +331,10 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     Returns
     -------
     patches : array, shape = (n_patches, patch_height, patch_width) or
-         (n_patches, patch_height, patch_width, n_channels)
-         The collection of patches extracted from the image, where `n_patches`
-         is either `max_patches` or the total number of patches that can be
-         extracted.
+        (n_patches, patch_height, patch_width, n_channels)
+        The collection of patches extracted from the image, where `n_patches`
+        is either `max_patches` or the total number of patches that can be
+        extracted.
 
     Examples
     --------
