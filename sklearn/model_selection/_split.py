@@ -18,6 +18,7 @@ from itertools import chain, combinations
 from math import ceil, floor
 import numbers
 from abc import ABCMeta, abstractmethod
+from inspect import signature
 
 import numpy as np
 
@@ -27,7 +28,7 @@ from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
-from ..utils.fixes import signature, comb
+from ..utils.fixes import comb
 from ..utils.fixes import _Iterable as Iterable
 from ..base import _pprint
 

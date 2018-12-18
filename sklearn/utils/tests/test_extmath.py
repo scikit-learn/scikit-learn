@@ -634,8 +634,6 @@ def test_softmax():
 
 
 def test_stable_cumsum():
-    if np_version < (1, 9):
-        raise SkipTest("Sum is as unstable as cumsum for numpy < 1.9")
     assert_array_equal(stable_cumsum([1, 2, 3]), np.cumsum([1, 2, 3]))
     r = np.random.RandomState(0).rand(100000)
     assert_warns(RuntimeWarning, stable_cumsum, r, rtol=0, atol=0)

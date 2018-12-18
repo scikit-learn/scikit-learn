@@ -233,18 +233,12 @@ def test_dump():
                     f.seek(0)
 
                     comment = f.readline()
-                    try:
-                        comment = str(comment, "utf-8")
-                    except TypeError:  # fails in Python 2.x
-                        pass
+                    comment = str(comment, "utf-8")
 
                     assert_in("scikit-learn %s" % sklearn.__version__, comment)
 
                     comment = f.readline()
-                    try:
-                        comment = str(comment, "utf-8")
-                    except TypeError:  # fails in Python 2.x
-                        pass
+                    comment = str(comment, "utf-8")
 
                     assert_in(["one", "zero"][zero_based] + "-based", comment)
 
@@ -484,9 +478,6 @@ def test_load_offset_exhaustive_splits():
     # load the same data in 2 parts with all the possible byte offsets to
     # locate the split so has to test for particular boundary cases
     for mark in range(size):
-        if sp_version < (0, 14) and (mark == 0 or mark > size - 100):
-            # old scipy does not support sparse matrices with 0 rows.
-            continue
         f.seek(0)
         X_0, y_0, q_0 = load_svmlight_file(f, n_features=n_features,
                                            query_id=True, offset=0,
