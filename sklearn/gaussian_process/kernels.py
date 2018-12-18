@@ -389,7 +389,8 @@ class Kernel(metaclass=ABCMeta):
         compatibility."""
         return True
 
-    def check_bounds_params(self):
+    def _check_bounds_params(self):
+        """Called after fitting to warn if bounds may have been too tight."""
         list_close = np.isclose(self.bounds,
                                 np.atleast_2d(self.theta).T)
         idx = 0
