@@ -353,30 +353,30 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
         >>> print('\nPatches 1:\n{}'.format(patches[1]))
         >>> print('\nPatches 800:\n{}'.format(patches[800]))
 
-        # output:
-        Image shape: (427, 640, 3)
-        Patches shape: (272214, 2, 2, 3)
+        >>> # output:
+            Image shape: (427, 640, 3)
+            Patches shape: (272214, 2, 2, 3)
 
-        Patches 0:
-        [[[174 201 231]
-        [174 201 231]]
+            Patches 0:
+            [[[174 201 231]
+            [174 201 231]]
 
-        [[172 199 229]
-        [173 200 230]]]
+            [[172 199 229]
+            [173 200 230]]]
 
-        Patches 1:
-        [[[174 201 231]
-        [174 201 231]]
+            Patches 1:
+            [[[174 201 231]
+            [174 201 231]]
 
-        [[173 200 230]
-        [173 200 230]]]
+            [[173 200 230]
+            [173 200 230]]]
 
-        Patches 800:
-        [[[187 214 243]
-        [188 215 244]]
+            Patches 800:
+            [[[187 214 243]
+            [188 215 244]]
 
-        [[187 214 243]
-        [188 215 244]]]
+            [[187 214 243]
+            [188 215 244]]]
     """
     i_h, i_w = image.shape[:2]
     p_h, p_w = patch_size
@@ -495,29 +495,29 @@ class PatchExtractor(BaseEstimator):
         >>> print('Patches shape: {}'.format(pe_trans.shape))
         >>> print('Shapes arrays:\n{}'.format(pe_trans))
 
-        # output:
-        Image shape: (427, 640, 3)
-        Patches shape: (545706, 2, 2)
-        Shapes arrays:
-        [[[ 2. 19.]
-        [ 3. 18.]]
+        >>> # output:
+            Image shape: (427, 640, 3)
+            Patches shape: (545706, 2, 2)
+            Shapes arrays:
+            [[[ 2. 19.]
+            [ 3. 18.]]
 
-        [[19. 13.]
-        [18. 13.]]
+            [[19. 13.]
+            [18. 13.]]
 
-        [[ 3. 18.]
-        [ 7. 20.]]
+            [[ 3. 18.]
+            [ 7. 20.]]
 
-        ...
+            ...
 
-        [[46. 28.]
-        [45. 28.]]
+            [[46. 28.]
+            [45. 28.]]
 
-        [[ 8. 45.]
-        [ 9. 43.]]
+            [[ 8. 45.]
+            [ 9. 43.]]
 
-        [[45. 28.]
-        [43. 27.]]]
+            [[45. 28.]
+            [43. 27.]]]
     """
     def __init__(self, patch_size=None, max_patches=None, random_state=None):
         self.patch_size = patch_size
