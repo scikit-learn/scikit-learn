@@ -538,6 +538,7 @@ class PatchExtractor(BaseEstimator):
 
             [[45. 28.]
             [43. 27.]]]
+            
         """
         self.random_state = check_random_state(self.random_state)
         n_images, i_h, i_w = X.shape[:3]
