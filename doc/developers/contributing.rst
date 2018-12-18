@@ -502,7 +502,7 @@ start with a small paragraph with a hand-waving explanation of what the
 method does to the data. Then, it is very helpful to point out why the feature is 
 useful and when it should be used - the latter also including "big O"
 (:math:`O\left(g\left(n\right)\right)`) complexities of the algorithm, as opposed 
-to just *rules of thumb*,as the latter can be very machine-dependent. If those 
+to just *rules of thumb*, as the latter can be very machine-dependent. If those 
 complexities are not available, then rules of thumb may be provided instead.
 
 Secondly, a generated figure from an example (as mentioned in the previous
