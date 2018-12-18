@@ -726,7 +726,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     ...               [2., 2., 2.],
     ...               [2., 5., 4.]])
     >>> dico = DictionaryLearning(n_components=2, alpha=1, random_state=1)
-    >>> dico.fit(X).components_ # doctest: +ELLIPSIS
+    >>> dico.fit(X).components_  # doctest: +ELLIPSIS
     array([[-0.2981..., -0.7453..., -0.5962...],
            [ 0.5773...,  0.5773...,  0.5773...]])
 
