@@ -17,7 +17,7 @@ from sklearn.utils._cython_blas import _xgemm_memview
 
 
 NUMPY_TO_CYTHON = {np.float32: cython.float, np.float64: cython.double}
-RTOL = {np.float32: 1e-3, np.float64: 1e-12}
+RTOL = {np.float32: 1e-6, np.float64: 1e-12}
 
 
 def _no_op(x):
@@ -35,7 +35,7 @@ def test_dot(dtype):
     expected = x.dot(y)
     actual = dot(x, y)
 
-    assert_allclose(actual, expected)
+    assert_allclose(actual, expected, rtol=RTOL[dtype])
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -48,7 +48,7 @@ def test_asum(dtype):
     expected = np.abs(x).sum()
     actual = asum(x)
 
-    assert_allclose(actual, expected)
+    assert_allclose(actual, expected, rtol=RTOL[dtype])
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -58,12 +58,12 @@ def test_axpy(dtype):
     rng = np.random.RandomState(0)
     x = rng.random_sample(10).astype(dtype, copy=False)
     y = rng.random_sample(10).astype(dtype, copy=False)
-    alpha = 1.23
+    alpha = 2.5
 
     expected = alpha * x + y
     axpy(alpha, x, y)
 
-    assert_allclose(y, expected)
+    assert_allclose(y, expected, rtol=RTOL[dtype])
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -76,7 +76,7 @@ def test_nrm2(dtype):
     expected = np.linalg.norm(x)
     actual = nrm2(x)
 
-    assert_allclose(actual, expected)
+    assert_allclose(actual, expected, rtol=RTOL[dtype])
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -90,7 +90,7 @@ def test_copy(dtype):
     expected = x.copy()
     copy(x, y)
 
-    assert_allclose(y, expected)
+    assert_allclose(y, expected, rtol=RTOL[dtype])
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -99,12 +99,12 @@ def test_scal(dtype):
 
     rng = np.random.RandomState(0)
     x = rng.random_sample(10).astype(dtype, copy=False)
-    alpha = 1.23
+    alpha = 2.5
 
     expected = alpha * x
     scal(alpha, x)
 
-    assert_allclose(x, expected)
+    assert_allclose(x, expected, rtol=RTOL[dtype])
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -120,7 +120,7 @@ def test_gemv(dtype, opA, transA, layout):
                    order=layout)
     x = rng.random_sample(10).astype(dtype, copy=False)
     y = rng.random_sample(20).astype(dtype, copy=False)
-    alpha, beta = 1.23, -3.21
+    alpha, beta = 2.5, -0.5
 
     expected = alpha * opA(A).dot(x) + beta * y
     gemv(layout, transA, alpha, A, x, beta, y)
@@ -138,7 +138,7 @@ def test_ger(dtype, layout):
     y = rng.random_sample(20).astype(dtype, copy=False)
     A = np.asarray(rng.random_sample((10, 20)).astype(dtype, copy=False),
                    order=layout)
-    alpha = 1.23
+    alpha = 2.5
 
     expected = alpha * np.outer(x, y) + A
     ger(layout, alpha, x, y, A)
@@ -164,7 +164,7 @@ def test_gemm(dtype, opA, transA, opB, transB, layout):
                    order=layout)
     C = np.asarray(rng.random_sample((30, 20)).astype(dtype, copy=False),
                    order=layout)
-    alpha, beta = 1.23, -3.21
+    alpha, beta = 2.5, -0.5
 
     expected = alpha * opA(A).dot(opB(B)) + beta * C
     gemm(layout, transA, transB, alpha, A, B, beta, C)

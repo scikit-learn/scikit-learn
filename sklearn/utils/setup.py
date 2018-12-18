@@ -34,8 +34,7 @@ def configuration(parent_package='', top_path=None):
                          libraries=cblas_libs,
                          include_dirs=cblas_includes,
                          extra_compile_args=cblas_compile_args,
-                         **blas_info
-                         )
+                         **blas_info)
 
     config.add_extension('murmurhash',
                          sources=['murmurhash.pyx', join(
