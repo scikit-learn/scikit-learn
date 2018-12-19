@@ -1163,11 +1163,17 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         loss = self.loss_
         original_y = y
 
+        # Need to pass a copy of y_pred to negative_gradient() because y_pred
+        # is partially updated at the end of the loop in
+        # update_terminal_regions(), and gradients need to be evaluated at
+        # iteration i - 1.
+        y_pred_copy = y_pred.copy()
+
         for k in range(loss.K):
             if loss.is_multi_class:
                 y = np.array(original_y == k, dtype=np.float64)
 
-            residual = loss.negative_gradient(y, y_pred, k=k,
+            residual = loss.negative_gradient(y, y_pred_copy, k=k,
                                               sample_weight=sample_weight)
 
             # induce regression tree on residuals
