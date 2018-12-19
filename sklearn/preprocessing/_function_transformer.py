@@ -1,4 +1,5 @@
 import warnings
+from copy import deepcopy
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
@@ -80,14 +81,17 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, func=None, inverse_func=None, validate=None,
                  accept_sparse=False, pass_y='deprecated', check_inverse=True,
                  kw_args=None, inv_kw_args=None):
-        self.func = func
-        self.inverse_func = inverse_func
+        self.func = deepcopy(func)
+        self.inverse_func = deepcopy(inverse_func)
         self.validate = validate
         self.accept_sparse = accept_sparse
         self.pass_y = pass_y
         self.check_inverse = check_inverse
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
+
+    def __call__(self, X):
+        return self.func(X)
 
     def _check_input(self, X):
         # FIXME: Future warning to be removed in 0.22
