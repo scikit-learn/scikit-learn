@@ -20,6 +20,7 @@ from sklearn.utils._cython_blas import Trans, NoTrans
 
 NUMPY_TO_CYTHON = {np.float32: cython.float, np.float64: cython.double}
 RTOL = {np.float32: 1e-6, np.float64: 1e-12}
+ORDER = {RowMajor: 'C', ColMajor: 'F'}
 
 
 def _no_op(x):
@@ -120,7 +121,7 @@ def test_gemv(dtype, opA, transA, order):
 
     rng = np.random.RandomState(0)
     A = np.asarray(opA(rng.random_sample((20, 10)).astype(dtype, copy=False)),
-                   order=order)
+                   order=ORDER[order])
     x = rng.random_sample(10).astype(dtype, copy=False)
     y = rng.random_sample(20).astype(dtype, copy=False)
     alpha, beta = 2.5, -0.5
@@ -141,7 +142,7 @@ def test_ger(dtype, order):
     x = rng.random_sample(10).astype(dtype, copy=False)
     y = rng.random_sample(20).astype(dtype, copy=False)
     A = np.asarray(rng.random_sample((10, 20)).astype(dtype, copy=False),
-                   order=order)
+                   order=ORDER[order])
     alpha = 2.5
 
     expected = alpha * np.outer(x, y) + A
@@ -164,11 +165,11 @@ def test_gemm(dtype, opA, transA, opB, transB, order):
 
     rng = np.random.RandomState(0)
     A = np.asarray(opA(rng.random_sample((30, 10)).astype(dtype, copy=False)),
-                   order=order)
+                   order=ORDER[order])
     B = np.asarray(opB(rng.random_sample((10, 20)).astype(dtype, copy=False)),
-                   order=order)
+                   order=ORDER[order])
     C = np.asarray(rng.random_sample((30, 20)).astype(dtype, copy=False),
-                   order=order)
+                   order=ORDER[order])
     alpha, beta = 2.5, -0.5
 
     expected = alpha * opA(A).dot(opB(B)) + beta * C

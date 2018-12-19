@@ -9,8 +9,8 @@ cpdef enum BLAS_Order:
 
 
 cpdef enum BLAS_Trans:
-    Trans = 116
-    NoTrans = 110
+    Trans = 116    # correspond to 'n'
+    NoTrans = 110  # correspond to 't'
 
 
 # BLAS Level 1 ################################################################
