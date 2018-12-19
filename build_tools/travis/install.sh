@@ -17,12 +17,15 @@ echo 'List files from cached directories'
 echo 'pip:'
 ls $HOME/.cache/pip
 
-export CC=/usr/lib/ccache/gcc
-export CXX=/usr/lib/ccache/g++
-# Useful for debugging how ccache is used
-# export CCACHE_LOGFILE=/tmp/ccache.log
-# ~60M is used by .ccache when compiling from scratch at the time of writing
-ccache --max-size 100M --show-stats
+if [ $TRAVIS_OS_NAME = "linux" ]
+then
+	export CC=/usr/lib/ccache/gcc
+	export CXX=/usr/lib/ccache/g++
+	# Useful for debugging how ccache is used
+	# export CCACHE_LOGFILE=/tmp/ccache.log
+	# ~60M is used by .ccache when compiling from scratch at the time of writing
+	ccache --max-size 100M --show-stats
+fi
 
 make_conda() {
 	TO_INSTALL="$@"
