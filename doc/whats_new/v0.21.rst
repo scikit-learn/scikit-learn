@@ -435,6 +435,7 @@ Support for Python 3.4 and below has been officially dropped.
   communication overhead. :pr:`12543` by :user:`Isaac Storch <istorch>`
   and `Olivier Grisel`_.
 
+<<<<<<< HEAD
 - |Efficiency| Make :class:`ensemble.IsolationForest` more memory efficient
   by avoiding keeping in memory each tree prediction. :pr:`13260` by
   `Nicolas Goix`_.
