@@ -296,7 +296,7 @@ def partial_dependence(est, target_variables, X, percentiles=(0.05, 0.95),
 def plot_partial_dependence(est, X, features, feature_names=None,
                             target=None, n_cols=3, grid_resolution=100,
                             percentiles=(0.05, 0.95), method='auto',
-                            n_jobs=1, verbose=0, ax=None, line_kw=None,
+                            n_jobs=1, verbose=0, fig=None, line_kw=None,
                             contour_kw=None, **fig_kw):
     """Partial dependence plots.
 
@@ -375,8 +375,9 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         See :term:`Glossary <n_jobs>` for more details.
     verbose : int, optional (default=0)
         Verbose output during PD computations.
-    ax : Matplotlib axis object, optional (default=None)
-        An axis object onto which the plots will be drawn.
+    fig : Matplotlib figure object, optional (default=None)
+        A figure object onto which the plots will be drawn, after the figure
+        has been cleared.
     line_kw : dict, optional
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For one-way partial dependence plots.
@@ -510,10 +511,9 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     if 2 in pdp_lim:
         Z_level = np.linspace(*pdp_lim[2], num=8)
 
-    if ax is None:
+    if fig is None:
         fig = plt.figure(**fig_kw)
     else:
-        fig = ax.get_figure()
         fig.clear()
 
     if line_kw is None:

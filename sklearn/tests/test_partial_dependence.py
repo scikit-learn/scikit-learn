@@ -458,3 +458,21 @@ def test_warning_recursion_non_constant_init():
         partial_dependence,
         gbc, [0], X=X, method='recursion'
     )
+
+
+@if_matplotlib
+def test_plot_partial_dependence_fig():
+    # Make sure fig object is correctly used if not None
+
+    import matplotlib.pyplot as plt
+
+    (X, y), _ = regression()
+    clf = LinearRegression()
+    clf.fit(X, y)
+
+    fig = plt.figure()
+    grid_resolution = 25
+    returned_fig, axs = plot_partial_dependence(
+        clf, X, [0, 1], target=0, grid_resolution=grid_resolution, fig=fig)
+
+    assert returned_fig is fig
