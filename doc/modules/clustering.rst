@@ -1774,7 +1774,6 @@ Drawbacks
   concepts of clusters, such as density based clusters like those obtained from
   DBSCAN.
 - The usage of centroid distance limits the distance metric to Euclidean space.
-- A good value reported by this method does not imply the best information retrieval.
 
 Mathematical formulation
 ~~~~~~~~~~~~~~~~~~~~~~~~
