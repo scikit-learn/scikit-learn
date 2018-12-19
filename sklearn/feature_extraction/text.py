@@ -235,10 +235,11 @@ class VectorizerMixin(object):
 
         # unfortunately python functools package does not have an efficient
         # `compose` function that would have allowed us to chain a dynamic
-        # number of functions. However the cost of a lambda call is a few
+        # number of functions. However the cost of a noop call is a few
         # hundreds of nanoseconds which is negligible when compared to the
         # cost of tokenizing a string of 1000 chars for instance.
-        noop = lambda x: x
+        def noop(x):
+            return x
 
         # accent stripping
         if not self.strip_accents:
@@ -254,7 +255,9 @@ class VectorizerMixin(object):
                              self.strip_accents)
 
         if self.lowercase:
-            return lambda x: strip_accents(x.lower())
+            def lower_and_strip(x):
+                return strip_accents(x.lower())
+            return lower_and_strip
         else:
             return strip_accents
 
@@ -263,7 +266,10 @@ class VectorizerMixin(object):
         if self.tokenizer is not None:
             return self.tokenizer
         token_pattern = re.compile(self.token_pattern)
-        return lambda doc: token_pattern.findall(doc)
+
+        def apply_token_pattern(doc):
+            return token_pattern.findall(doc)
+        return apply_token_pattern
 
     def get_stop_words(self):
         """Build or fetch the effective stop words list"""
@@ -314,19 +320,26 @@ class VectorizerMixin(object):
         preprocess = self.build_preprocessor()
 
         if self.analyzer == 'char':
-            return lambda doc: self._char_ngrams(preprocess(self.decode(doc)))
+            def char_analyzer(doc):
+                return self._char_ngrams(preprocess(self.decode(doc)))
+            return char_analyzer
 
         elif self.analyzer == 'char_wb':
-            return lambda doc: self._char_wb_ngrams(
-                preprocess(self.decode(doc)))
+            def binary_char_analyzer(doc):
+                return self._char_wb_ngrams(preprocess(self.decode(doc)))
+            return binary_char_analyzer
 
         elif self.analyzer == 'word':
             stop_words = self.get_stop_words()
             tokenize = self.build_tokenizer()
             self._check_stop_words_consistency(stop_words, preprocess,
                                                tokenize)
-            return lambda doc: self._word_ngrams(
-                tokenize(preprocess(self.decode(doc))), stop_words)
+
+            def word_analyzer(doc):
+                return self._word_ngrams(
+                                    tokenize(preprocess(self.decode(doc))),
+                                    stop_words)
+            return word_analyzer
 
         else:
             raise ValueError('%s is not a valid tokenization scheme/analyzer' %
