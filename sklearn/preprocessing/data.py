@@ -1995,10 +1995,12 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     to spread out the most frequent values. It also reduces the impact of
     (marginal) outliers: this is therefore a robust preprocessing scheme.
 
-    The transformation is applied on each feature independently.
-    The cumulative distribution function of a feature is used to project the
-    original values. Features values of new/unseen data that fall below
-    or above the fitted range will be mapped to the bounds of the output
+    The transformation is applied on each feature independently. First an
+    estimate of the cumulative distribution function of a feature is
+    used to map the original values to a uniform distribution. The obtained
+    values are then mapped to the desired output distribution using the
+    associated quantile function. Features values of new/unseen data that fall
+    below or above the fitted range will be mapped to the bounds of the output
     distribution. Note that this transform is non-linear. It may distort linear
     correlations between variables measured at the same scale but renders
     variables measured at different scales more directly comparable.
@@ -2273,7 +2275,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 raise ValueError('QuantileTransformer only accepts'
                                  ' non-negative sparse matrices.')
 
-        # check the output PDF
+        # check the output distribution
         if self.output_distribution not in ('normal', 'uniform'):
             raise ValueError("'output_distribution' has to be either 'normal'"
                              " or 'uniform'. Got '{}' instead.".format(
@@ -2380,10 +2382,12 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     to spread out the most frequent values. It also reduces the impact of
     (marginal) outliers: this is therefore a robust preprocessing scheme.
 
-    The transformation is applied on each feature independently.
-    The cumulative distribution function of a feature is used to project the
-    original values. Features values of new/unseen data that fall below
-    or above the fitted range will be mapped to the bounds of the output
+    The transformation is applied on each feature independently. First an
+    estimate of the cumulative distribution function of a feature is
+    used to map the original values to a uniform distribution. The obtained
+    values are then mapped to the desired output distribution using the
+    associated quantile function. Features values of new/unseen data that fall
+    below or above the fitted range will be mapped to the bounds of the output
     distribution. Note that this transform is non-linear. It may distort linear
     correlations between variables measured at the same scale but renders
     variables measured at different scales more directly comparable.
