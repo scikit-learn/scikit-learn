@@ -722,7 +722,7 @@ def check_pca_float_dtype_preservation(svd_solver):
     assert pca_32.transform(X_32).dtype == np.float32
 
     assert_array_almost_equal(pca_64.components_, pca_32.components_,
-                              decimal=5)
+                              decimal=4)
 
 
 def check_pca_int_dtype_upcast_to_double(svd_solver):
