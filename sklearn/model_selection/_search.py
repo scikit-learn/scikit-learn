@@ -54,7 +54,7 @@ class ParameterGrid(object):
     Can be used to iterate over parameter value combinations with the
     Python built-in function iter.
 
-    Read more in the :ref:`User Guide <search>`.
+    Read more in the :ref:`User Guide <grid_search>`.
 
     Parameters
     ----------
