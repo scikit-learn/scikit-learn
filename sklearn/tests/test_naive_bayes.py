@@ -148,7 +148,7 @@ def test_gnb_prior_large_bias():
     assert_equal(clf.predict([[-0.1, -0.1]]), np.array([2]))
 
 
-def test_check_update_with_no_data():
+def test_gnb_check_update_with_no_data():
     """ Test when the partial fit is called without any data"""
     # Create an empty array
     prev_points = 100
@@ -171,67 +171,40 @@ def test_gnb_pfit_wrong_nb_features():
     assert_raises(ValueError, clf.partial_fit, np.hstack((X, X)), y)
 
 
-def test_discrete_prior():
+def test_gnb_partial_fit():
+    clf = GaussianNB().fit(X, y)
+    clf_pf = GaussianNB().partial_fit(X, y, np.unique(y))
+    assert_array_almost_equal(clf.theta_, clf_pf.theta_)
+    assert_array_almost_equal(clf.sigma_, clf_pf.sigma_)
+    assert_array_almost_equal(clf.class_prior_, clf_pf.class_prior_)
+
+    clf_pf2 = GaussianNB().partial_fit(X[0::2, :], y[0::2], np.unique(y))
+    clf_pf2.partial_fit(X[1::2], y[1::2])
+    assert_array_almost_equal(clf.theta_, clf_pf2.theta_)
+    assert_array_almost_equal(clf.sigma_, clf_pf2.sigma_)
+    assert_array_almost_equal(clf.class_prior_, clf_pf2.class_prior_)
+
+
+def test_gnb_naive_bayes_scale_invariance():
+    # Scaling the data should not change the prediction results
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    labels = [GaussianNB().fit(f * X, y).predict(f * X)
+              for f in [1E-10, 1, 1E10]]
+    assert_array_equal(labels[0], labels[1])
+    assert_array_equal(labels[1], labels[2])
+
+
+@pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
+def test_discretenb_prior(cls):
     # Test whether class priors are properly set.
-    for cls in [BernoulliNB, MultinomialNB]:
-        clf = cls().fit(X2, y2)
-        assert_array_almost_equal(np.log(np.array([2, 2, 2]) / 6.0),
-                                  clf.class_log_prior_, 8)
+    clf = cls().fit(X2, y2)
+    assert_array_almost_equal(np.log(np.array([2, 2, 2]) / 6.0),
+                              clf.class_log_prior_, 8)
 
 
-@pytest.mark.parametrize('kind', ('dense', 'sparse'))
-def test_mnnb(kind):
-    # Test Multinomial Naive Bayes classification.
-    # This checks that MultinomialNB implements fit and predict and returns
-    # correct values for a simple toy dataset.
-
-    if kind == 'dense':
-        X = X2
-    elif kind == 'sparse':
-        X = scipy.sparse.csr_matrix(X2)
-
-    # Check the ability to predict the learning set.
-    clf = MultinomialNB()
-    assert_raises(ValueError, clf.fit, -X, y2)
-    y_pred = clf.fit(X, y2).predict(X)
-
-    assert_array_equal(y_pred, y2)
-
-    # Verify that np.log(clf.predict_proba(X)) gives the same results as
-    # clf.predict_log_proba(X)
-    y_pred_proba = clf.predict_proba(X)
-    y_pred_log_proba = clf.predict_log_proba(X)
-    assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
-
-    # Check that incremental fitting yields the same results
-    clf2 = MultinomialNB()
-    clf2.partial_fit(X[:2], y2[:2], classes=np.unique(y2))
-    clf2.partial_fit(X[2:5], y2[2:5])
-    clf2.partial_fit(X[5:], y2[5:])
-
-    y_pred2 = clf2.predict(X)
-    assert_array_equal(y_pred2, y2)
-
-    y_pred_proba2 = clf2.predict_proba(X)
-    y_pred_log_proba2 = clf2.predict_log_proba(X)
-    assert_array_almost_equal(np.log(y_pred_proba2), y_pred_log_proba2, 8)
-    assert_array_almost_equal(y_pred_proba2, y_pred_proba)
-    assert_array_almost_equal(y_pred_log_proba2, y_pred_log_proba)
-
-    # Partial fit on the whole data at once should be the same as fit too
-    clf3 = MultinomialNB()
-    clf3.partial_fit(X, y2, classes=np.unique(y2))
-
-    y_pred3 = clf3.predict(X)
-    assert_array_equal(y_pred3, y2)
-    y_pred_proba3 = clf3.predict_proba(X)
-    y_pred_log_proba3 = clf3.predict_log_proba(X)
-    assert_array_almost_equal(np.log(y_pred_proba3), y_pred_log_proba3, 8)
-    assert_array_almost_equal(y_pred_proba3, y_pred_proba)
-    assert_array_almost_equal(y_pred_log_proba3, y_pred_log_proba)
-
-
-def check_partial_fit(cls):
+@pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
+def test_discretenb_partial_fit(cls):
     clf1 = cls()
     clf1.fit([[0, 1], [1, 0]], [0, 1])
 
@@ -262,25 +235,6 @@ def check_partial_fit(cls):
         assert_array_equal(clf1.feature_count_, clf3.feature_count_)
 
 
-@pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
-def test_discretenb_partial_fit(cls):
-    check_partial_fit(cls)
-
-
-def test_gnb_partial_fit():
-    clf = GaussianNB().fit(X, y)
-    clf_pf = GaussianNB().partial_fit(X, y, np.unique(y))
-    assert_array_almost_equal(clf.theta_, clf_pf.theta_)
-    assert_array_almost_equal(clf.sigma_, clf_pf.sigma_)
-    assert_array_almost_equal(clf.class_prior_, clf_pf.class_prior_)
-
-    clf_pf2 = GaussianNB().partial_fit(X[0::2, :], y[0::2], np.unique(y))
-    clf_pf2.partial_fit(X[1::2], y[1::2])
-    assert_array_almost_equal(clf.theta_, clf_pf2.theta_)
-    assert_array_almost_equal(clf.sigma_, clf_pf2.sigma_)
-    assert_array_almost_equal(clf.class_prior_, clf_pf2.class_prior_)
-
-
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, GaussianNB,
                                  CategoricalNB])
 def test_discretenb_pickle(cls):
@@ -309,7 +263,7 @@ def test_discretenb_pickle(cls):
 
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, GaussianNB,
                                  CategoricalNB])
-def test_input_check_fit(cls):
+def test_discretenb_input_check_fit(cls):
     # Test input checks for the fit method
 
     # check shape consistency for number of samples at fit time
@@ -321,7 +275,7 @@ def test_input_check_fit(cls):
 
 
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
-def test_input_check_partial_fit(cls):
+def test_discretenb_input_check_partial_fit(cls):
     # check shape consistency
     assert_raises(ValueError, cls().partial_fit, X2, y2[:-1],
                   classes=np.unique(y2))
@@ -421,12 +375,8 @@ def test_discretenb_provide_prior_with_partial_fit(cls):
 
 
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
-def test_sample_weight_multiclass(cls):
+def test_discretenb_sample_weight_multiclass(cls):
     # check shape consistency for number of samples at fit time
-    check_sample_weight_multiclass(cls)
-
-
-def check_sample_weight_multiclass(cls):
     X = [
         [0, 0, 1],
         [0, 1, 1],
@@ -448,7 +398,72 @@ def check_sample_weight_multiclass(cls):
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
 
 
-def test_sample_weight_mnb():
+@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
+def test_discretenb_coef_intercept_shape(cls):
+    # coef_ and intercept_ should have shapes as in other linear models.
+    # Non-regression test for issue #2127.
+    X = [[1, 0, 0], [1, 1, 1]]
+    y = [1, 2]  # binary classification
+    clf = cls()
+
+    clf.fit(X, y)
+    assert_equal(clf.coef_.shape, (1, 3))
+    assert_equal(clf.intercept_.shape, (1,))
+
+
+@pytest.mark.parametrize('kind', ('dense', 'sparse'))
+def test_mnnb(kind):
+    # Test Multinomial Naive Bayes classification.
+    # This checks that MultinomialNB implements fit and predict and returns
+    # correct values for a simple toy dataset.
+
+    if kind == 'dense':
+        X = X2
+    elif kind == 'sparse':
+        X = scipy.sparse.csr_matrix(X2)
+
+    # Check the ability to predict the learning set.
+    clf = MultinomialNB()
+    assert_raises(ValueError, clf.fit, -X, y2)
+    y_pred = clf.fit(X, y2).predict(X)
+
+    assert_array_equal(y_pred, y2)
+
+    # Verify that np.log(clf.predict_proba(X)) gives the same results as
+    # clf.predict_log_proba(X)
+    y_pred_proba = clf.predict_proba(X)
+    y_pred_log_proba = clf.predict_log_proba(X)
+    assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
+
+    # Check that incremental fitting yields the same results
+    clf2 = MultinomialNB()
+    clf2.partial_fit(X[:2], y2[:2], classes=np.unique(y2))
+    clf2.partial_fit(X[2:5], y2[2:5])
+    clf2.partial_fit(X[5:], y2[5:])
+
+    y_pred2 = clf2.predict(X)
+    assert_array_equal(y_pred2, y2)
+
+    y_pred_proba2 = clf2.predict_proba(X)
+    y_pred_log_proba2 = clf2.predict_log_proba(X)
+    assert_array_almost_equal(np.log(y_pred_proba2), y_pred_log_proba2, 8)
+    assert_array_almost_equal(y_pred_proba2, y_pred_proba)
+    assert_array_almost_equal(y_pred_log_proba2, y_pred_log_proba)
+
+    # Partial fit on the whole data at once should be the same as fit too
+    clf3 = MultinomialNB()
+    clf3.partial_fit(X, y2, classes=np.unique(y2))
+
+    y_pred3 = clf3.predict(X)
+    assert_array_equal(y_pred3, y2)
+    y_pred_proba3 = clf3.predict_proba(X)
+    y_pred_log_proba3 = clf3.predict_log_proba(X)
+    assert_array_almost_equal(np.log(y_pred_proba3), y_pred_log_proba3, 8)
+    assert_array_almost_equal(y_pred_proba3, y_pred_proba)
+    assert_array_almost_equal(y_pred_log_proba3, y_pred_log_proba)
+
+
+def test_mnb_sample_weight():
     clf = MultinomialNB()
     clf.fit([[1, 2], [1, 2], [1, 0]],
             [0, 0, 1],
@@ -457,75 +472,6 @@ def test_sample_weight_mnb():
     positive_prior = np.exp(clf.intercept_[0])
     assert_array_almost_equal([1 - positive_prior, positive_prior],
                               [1 / 3., 2 / 3.])
-
-
-def test_coef_intercept_shape():
-    # coef_ and intercept_ should have shapes as in other linear models.
-    # Non-regression test for issue #2127.
-    X = [[1, 0, 0], [1, 1, 1]]
-    y = [1, 2]  # binary classification
-
-    for clf in [MultinomialNB(), BernoulliNB()]:
-        clf.fit(X, y)
-        assert_equal(clf.coef_.shape, (1, 3))
-        assert_equal(clf.intercept_.shape, (1,))
-
-
-def test_check_accuracy_on_digits():
-    # Non regression test to make sure that any further refactoring / optim
-    # of the NB models do not harm the performance on a slightly non-linearly
-    # separable dataset
-    digits = load_digits()
-    X, y = digits.data, digits.target
-    binary_3v8 = np.logical_or(digits.target == 3, digits.target == 8)
-    X_3v8, y_3v8 = X[binary_3v8], y[binary_3v8]
-
-    # Multinomial NB
-    scores = cross_val_score(MultinomialNB(alpha=10), X, y, cv=10)
-    assert_greater(scores.mean(), 0.86)
-
-    scores = cross_val_score(MultinomialNB(alpha=10), X_3v8, y_3v8, cv=10)
-    assert_greater(scores.mean(), 0.94)
-
-    # Bernoulli NB
-    scores = cross_val_score(BernoulliNB(alpha=10), X > 4, y, cv=10)
-    assert_greater(scores.mean(), 0.83)
-
-    scores = cross_val_score(BernoulliNB(alpha=10), X_3v8 > 4, y_3v8, cv=10)
-    assert_greater(scores.mean(), 0.92)
-
-    # Gaussian NB
-    scores = cross_val_score(GaussianNB(), X, y, cv=10)
-    assert_greater(scores.mean(), 0.77)
-
-    scores = cross_val_score(GaussianNB(var_smoothing=0.1), X, y, cv=10)
-    assert_greater(scores.mean(), 0.89)
-
-    scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
-    assert_greater(scores.mean(), 0.86)
-
-
-def test_feature_log_prob_bnb():
-    # Test for issue #4268.
-    # Tests that the feature log prob value computed by BernoulliNB when
-    # alpha=1.0 is equal to the expression given in Manning, Raghavan,
-    # and Schuetze's "Introduction to Information Retrieval" book:
-    # http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
-
-    X = np.array([[0, 0, 0], [1, 1, 0], [0, 1, 0], [1, 0, 1], [0, 1, 0]])
-    Y = np.array([0, 0, 1, 2, 2])
-
-    # Fit Bernoulli NB w/ alpha = 1.0
-    clf = BernoulliNB(alpha=1.0)
-    clf.fit(X, Y)
-
-    # Manually form the (log) numerator and denominator that
-    # constitute P(feature presence | class)
-    num = np.log(clf.feature_count_ + 1.0)
-    denom = np.tile(np.log(clf.class_count_ + 2.0), (X.shape[1], 1)).T
-
-    # Check manual estimate matches
-    assert_array_almost_equal(clf.feature_log_prob_, (num - denom))
 
 
 def test_bnb():
@@ -572,6 +518,29 @@ def test_bnb():
                                       0.02194787379972565]])
     predict_proba = unnorm_predict_proba / np.sum(unnorm_predict_proba)
     assert_array_almost_equal(clf.predict_proba(X_test), predict_proba)
+
+
+def test_bnb_feature_log_prob():
+    # Test for issue #4268.
+    # Tests that the feature log prob value computed by BernoulliNB when
+    # alpha=1.0 is equal to the expression given in Manning, Raghavan,
+    # and Schuetze's "Introduction to Information Retrieval" book:
+    # http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
+
+    X = np.array([[0, 0, 0], [1, 1, 0], [0, 1, 0], [1, 0, 1], [0, 1, 0]])
+    Y = np.array([0, 0, 1, 2, 2])
+
+    # Fit Bernoulli NB w/ alpha = 1.0
+    clf = BernoulliNB(alpha=1.0)
+    clf.fit(X, Y)
+
+    # Manually form the (log) numerator and denominator that
+    # constitute P(feature presence | class)
+    num = np.log(clf.feature_count_ + 1.0)
+    denom = np.tile(np.log(clf.class_count_ + 2.0), (X.shape[1], 1)).T
+
+    # Check manual estimate matches
+    assert_array_almost_equal(clf.feature_log_prob_, (num - denom))
 
 
 def test_cnb():
@@ -640,14 +609,15 @@ def test_cnb():
     assert_array_almost_equal(clf.feature_log_prob_, normed_weights)
 
 
-def test_naive_bayes_scale_invariance():
-    # Scaling the data should not change the prediction results
-    iris = load_iris()
-    X, y = iris.data, iris.target
-    labels = [GaussianNB().fit(f * X, y).predict(f * X)
-              for f in [1E-10, 1, 1E10]]
-    assert_array_equal(labels[0], labels[1])
-    assert_array_equal(labels[1], labels[2])
+def test_catnb():
+    # Check the ability to predict the learning set.
+    clf = CategoricalNB()
+    assert_raises(ValueError, clf.fit, -X, y2)
+    a = clf.fit(X2, y2)
+    print(type(a))
+    y_pred = a.predict(X2)
+
+    assert_array_equal(y_pred, y2)
 
 
 def test_alpha():
@@ -738,12 +708,35 @@ def test_alpha_vector():
     assert_raise_message(ValueError, expected_msg, m_nb.fit, X, y)
 
 
-def test_catnb():
-    # Check the ability to predict the learning set.
-    clf = CategoricalNB()
-    assert_raises(ValueError, clf.fit, -X, y2)
-    a = clf.fit(X2, y2)
-    print(type(a))
-    y_pred = a.predict(X2)
+def test_check_accuracy_on_digits():
+    # Non regression test to make sure that any further refactoring / optim
+    # of the NB models do not harm the performance on a slightly non-linearly
+    # separable dataset
+    digits = load_digits()
+    X, y = digits.data, digits.target
+    binary_3v8 = np.logical_or(digits.target == 3, digits.target == 8)
+    X_3v8, y_3v8 = X[binary_3v8], y[binary_3v8]
 
-    assert_array_equal(y_pred, y2)
+    # Multinomial NB
+    scores = cross_val_score(MultinomialNB(alpha=10), X, y, cv=10)
+    assert_greater(scores.mean(), 0.86)
+
+    scores = cross_val_score(MultinomialNB(alpha=10), X_3v8, y_3v8, cv=10)
+    assert_greater(scores.mean(), 0.94)
+
+    # Bernoulli NB
+    scores = cross_val_score(BernoulliNB(alpha=10), X > 4, y, cv=10)
+    assert_greater(scores.mean(), 0.83)
+
+    scores = cross_val_score(BernoulliNB(alpha=10), X_3v8 > 4, y_3v8, cv=10)
+    assert_greater(scores.mean(), 0.92)
+
+    # Gaussian NB
+    scores = cross_val_score(GaussianNB(), X, y, cv=10)
+    assert_greater(scores.mean(), 0.77)
+
+    scores = cross_val_score(GaussianNB(var_smoothing=0.1), X, y, cv=10)
+    assert_greater(scores.mean(), 0.89)
+
+    scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
+    assert_greater(scores.mean(), 0.86)
