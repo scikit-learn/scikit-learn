@@ -3,7 +3,7 @@
 Compact estimator representations
 =================================
 
-This example illustrate the use of the print_changed_only global parameter.
+This example illustrates the use of the print_changed_only global parameter.
 
 Setting print_changed_only to True will alterate the representation of
 estimators to only show the parameters that have been set to non-default
