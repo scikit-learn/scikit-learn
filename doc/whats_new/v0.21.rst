@@ -93,6 +93,10 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`linear_model.MultiTaskLasso` which were breaking when
   ``warm_start = True``. :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
 
+- |API| :func:`linear_model.logistic_regression_path` is deprecated
+  in version 0.21 and will be removed in version 0.23.
+  :issue:`12821` by :user:`Nicolas Hug <NicolasHug>`.
+
 :mod:`sklearn.manifold`
 ............................
 
