@@ -13,7 +13,7 @@ cimport numpy as np
 from cython cimport floating
 
 
-from ..utils._cython_blas cimport _xasum
+from ..utils._cython_blas cimport _asum
 
 
 np.import_array()
@@ -66,4 +66,4 @@ def _sparse_manhattan(floating[::1] X_data, int[:] X_indices, int[:] X_indptr,
                 for j in range(Y_indptr[iy], Y_indptr[iy + 1]):
                     row[Y_indices[j]] -= Y_data[j]
 
-                D[ix, iy] = _xasum(n_features, &row[0], 1)
+                D[ix, iy] = _asum(n_features, &row[0], 1)

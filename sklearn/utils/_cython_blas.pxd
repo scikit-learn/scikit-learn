@@ -14,20 +14,20 @@ cpdef enum BLAS_Trans:
 
 
 # BLAS Level 1 ################################################################
-cdef floating _xdot(int, floating*, int, floating*, int) nogil
-cdef floating _xasum(int, floating*, int) nogil
-cdef void _xaxpy(int, floating, floating*, int, floating*, int) nogil
-cdef floating _xnrm2(int, floating*, int) nogil
-cdef void _xcopy(int, floating*, int, floating*, int) nogil
-cdef void _xscal(int, floating, floating*, int) nogil
+cdef floating _dot(int, floating*, int, floating*, int) nogil
+cdef floating _asum(int, floating*, int) nogil
+cdef void _axpy(int, floating, floating*, int, floating*, int) nogil
+cdef floating _nrm2(int, floating*, int) nogil
+cdef void _copy(int, floating*, int, floating*, int) nogil
+cdef void _scal(int, floating, floating*, int) nogil
 
 # BLAS Level 2 ################################################################
-cdef void _xgemv(BLAS_Order, BLAS_Trans, int, int, floating, floating*, int,
+cdef void _gemv(BLAS_Order, BLAS_Trans, int, int, floating, floating*, int,
                  floating*, int, floating, floating*, int) nogil
-cdef void _xger(BLAS_Order, int, int, floating, floating*, int, floating*, int,
+cdef void _ger(BLAS_Order, int, int, floating, floating*, int, floating*, int,
                 floating*, int) nogil
 
 # BLASLevel 3 ################################################################
-cdef void _xgemm(BLAS_Order, BLAS_Trans, BLAS_Trans, int, int, int, floating,
+cdef void _gemm(BLAS_Order, BLAS_Trans, BLAS_Trans, int, int, int, floating,
                  floating*, int, floating*, int, floating, floating*,
                  int) nogil
