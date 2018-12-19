@@ -124,6 +124,9 @@ except ImportError:
     pass
 "
 python setup.py develop
-ccache --show-stats
+if [ $TRAVIS_OS_NAME = "linux" ]
+then
+	ccache --show-stats
+fi
 # Useful for debugging how ccache is used
 # cat $CCACHE_LOGFILE
