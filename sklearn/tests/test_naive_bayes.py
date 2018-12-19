@@ -238,16 +238,31 @@ def check_partial_fit(cls):
     clf2 = cls()
     clf2.partial_fit([[0, 1], [1, 0]], [0, 1], classes=[0, 1])
     assert_array_equal(clf1.class_count_, clf2.class_count_)
-    assert_array_equal(clf1.feature_count_, clf2.feature_count_)
+    if cls == CategoricalNB:
+        for i in range(len(clf1.category_count_)):
+            assert_array_equal(clf1.category_count_[i],
+                               clf2.category_count_[i])
+    else:
+        assert_array_equal(clf1.feature_count_, clf2.feature_count_)
 
     clf3 = cls()
     clf3.partial_fit([[0, 1]], [0], classes=[0, 1])
     clf3.partial_fit([[1, 0]], [1])
     assert_array_equal(clf1.class_count_, clf3.class_count_)
-    assert_array_equal(clf1.feature_count_, clf3.feature_count_)
+    # an exact comparison as above for CategoricalNB does not make sense
+    # because the categories are not necessarily numerically ordered with
+    # subsequent calls of partial_fit
+    if cls == CategoricalNB:
+        for i in range(len(clf1.category_count_)):
+            assert_array_equal(clf1.category_count_[i].shape,
+                               clf3.category_count_[i].shape)
+            assert_array_equal(np.sum(clf1.category_count_[i], axis=1),
+                               np.sum(clf3.category_count_[i], axis=1))
+    else:
+        assert_array_equal(clf1.feature_count_, clf3.feature_count_)
 
 
-@pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB])
+@pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
 def test_discretenb_partial_fit(cls):
     check_partial_fit(cls)
 
@@ -266,7 +281,8 @@ def test_gnb_partial_fit():
     assert_array_almost_equal(clf.class_prior_, clf_pf2.class_prior_)
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, GaussianNB])
+@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, GaussianNB,
+                                 CategoricalNB])
 def test_discretenb_pickle(cls):
     # Test picklability of discrete naive Bayes classifiers
 
@@ -291,7 +307,8 @@ def test_discretenb_pickle(cls):
         assert_array_equal(y_pred, clf2.predict(X2))
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, GaussianNB])
+@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, GaussianNB,
+                                 CategoricalNB])
 def test_input_check_fit(cls):
     # Test input checks for the fit method
 
@@ -303,7 +320,7 @@ def test_input_check_fit(cls):
     assert_raises(ValueError, clf.predict, X2[:, :-1])
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
+@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
 def test_input_check_partial_fit(cls):
     # check shape consistency
     assert_raises(ValueError, cls().partial_fit, X2, y2[:-1],
@@ -356,7 +373,7 @@ def test_discretenb_predict_proba():
         assert_almost_equal(np.sum(np.exp(clf.intercept_)), 1)
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
+@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
 def test_discretenb_uniform_prior(cls):
     # Test whether discrete NB classes fit a uniform prior
     # when fit_prior=False and class_prior=None
@@ -368,7 +385,7 @@ def test_discretenb_uniform_prior(cls):
     assert_array_almost_equal(prior, np.array([.5, .5]))
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
+@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
 def test_discretenb_provide_prior(cls):
     # Test whether discrete NB classes use provided prior
 
@@ -383,7 +400,7 @@ def test_discretenb_provide_prior(cls):
                   classes=[0, 1, 1])
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
+@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
 def test_discretenb_provide_prior_with_partial_fit(cls):
     # Test whether discrete NB classes use provided prior
     # when using partial_fit
