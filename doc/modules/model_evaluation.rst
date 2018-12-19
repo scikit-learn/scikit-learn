@@ -442,10 +442,10 @@ the total number of predictions).
 
 In contrast, if the conventional accuracy is above chance only because the
 classifier takes advantage of an imbalanced test set, then the balanced
-accuracy, as appropriate, will drop to :math:`\frac{1}{\text{n\_classes}}`.
+accuracy, as appropriate, will drop to :math:`\frac{1}{n\_classes}`.
 
 The score ranges from 0 to 1, or when ``adjusted=True`` is used, it rescaled to
-the range :math:`\frac{1}{1 - \text{n\_classes}}` to 1, inclusive, with
+the range :math:`\frac{1}{1 - n\_classes}` to 1, inclusive, with
 performance at random scoring 0.
 
 If :math:`y_i` is the true value of the :math:`i`-th sample, and :math:`w_i`
@@ -465,7 +465,7 @@ defined as:
 
 With ``adjusted=True``, balanced accuracy reports the relative increase from
 :math:`\texttt{balanced-accuracy}(y, \mathbf{0}, w) =
-\frac{1}{\text{n\_classes}}`.  In the binary case, this is also known as
+\frac{1}{n\_classes}`.  In the binary case, this is also known as
 `*Youden's J statistic* <https://en.wikipedia.org/wiki/Youden%27s_J_statistic>`_,
 or *informedness*.
 
@@ -1542,7 +1542,7 @@ score associated with each label
 the ranking loss is defined as
 
 .. math::
-  \text{ranking\_loss}(y, \hat{f}) =  \frac{1}{n_{\text{samples}}}
+  ranking\_loss(y, \hat{f}) =  \frac{1}{n_{\text{samples}}}
     \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{||y_i||_0(n_\text{labels} - ||y_i||_0)}
     \left|\left\{(k, l): \hat{f}_{ik} \leq \hat{f}_{il}, y_{ik} = 1, y_{il} = 0 \right\}\right|
 
@@ -1618,7 +1618,7 @@ then the explained variance is estimated as follow:
 
 .. math::
 
-  \texttt{explained\_{}variance}(y, \hat{y}) = 1 - \frac{Var\{ y - \hat{y}\}}{Var\{y\}}
+  explained\_{}variance(y, \hat{y}) = 1 - \frac{Var\{ y - \hat{y}\}}{Var\{y\}}
 
 The best possible score is 1.0, lower values are worse.
 
