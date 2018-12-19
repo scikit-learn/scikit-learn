@@ -721,6 +721,7 @@ def check_pca_float_dtype_preservation(svd_solver):
     assert pca_64.transform(X_64).dtype == np.float64
     assert pca_32.transform(X_32).dtype == np.float32
 
+    # decimal=5 fails on mac with scipy = 1.1.0
     assert_array_almost_equal(pca_64.components_, pca_32.components_,
                               decimal=4)
 
