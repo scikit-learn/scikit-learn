@@ -42,7 +42,7 @@ make_conda() {
 	fi
     wget https://repo.continuum.io/miniconda/$fname \
         -O miniconda.sh
-    MINICONDA_PATH=/home/travis/miniconda
+    MINICONDA_PATH=$HOME/miniconda
     chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
     export PATH=$MINICONDA_PATH/bin:$PATH
     conda update --yes conda
