@@ -11,7 +11,7 @@ jobs:
       py36:
         CONDA_PY: "35"
 
-steps:
-- script: |
-    echo "Installing Miniconda"
-    build_tools/azure/install_miniconda.sh
+  steps:
+    - script: |
+        echo "Installing Miniconda"
+        build_tools/azure/install_miniconda.sh
