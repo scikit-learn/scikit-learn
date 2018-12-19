@@ -1,0 +1,5 @@
+jobs:
+- template: ci/azure/posix.yml
+  parameters:
+    name: macOS
+    vmImage: xcode9-macos10.13
