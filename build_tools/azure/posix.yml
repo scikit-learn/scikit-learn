@@ -1,0 +1,17 @@
+parameters:
+  name: ''
+  vmImage: ''
+
+jobs:
+- job: ${{ parameters.name }}
+  pool:
+    vmImage: ${{ parameters.vmImage }}
+  strategy:
+    matrix:
+      py36:
+        CONDA_PY: "35"
+
+steps:
+- script: |
+    echo "Installing Miniconda"
+    build_tools/azure/install_miniconda.sh
