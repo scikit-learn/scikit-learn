@@ -322,6 +322,8 @@ and::
 
 
 You can also install a symlink named ``site-packages/scikit-learn.egg-link``
-to the development folder of scikit-learn with in the folder /$YourPath/scikit-learn::
+to the development folder of scikit-learn with:
+    pip install --editable.
 
+In case you want to install the editable package in a specific folder /$YourPath/scikit-learn, use:
     pip install --editable --prefix=/$YourPath/scikit-learn.
