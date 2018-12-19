@@ -50,7 +50,7 @@ matrix:
     # latest dependencies on Mac
     - env: DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="false"
            NUMPY_VERSION="*" SCIPY_VERSION="*" CYTHON_VERSION="*"
-           PILLOW_VERSION="*" COVERAGE=true
+           PILLOW_VERSION="*" JOBLIB_VERSION="*" COVERAGE=true
       language: generic
       if: type != cron
       os: osx
