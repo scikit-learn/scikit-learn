@@ -47,11 +47,10 @@ matrix:
            PILLOW_VERSION="4.0.0" COVERAGE=true
            SKLEARN_SITE_JOBLIB=1 JOBLIB_VERSION="0.11"
       if: type != cron
-    # equivalent on Mac
+    # latest depnedencies on Mac
     - env: DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="false"
-           NUMPY_VERSION="1.11.0" SCIPY_VERSION="1.1.0" CYTHON_VERSION="0.25.2"
-           PILLOW_VERSION="4.0.0" COVERAGE=true
-           SKLEARN_SITE_JOBLIB=1 JOBLIB_VERSION="0.11"
+           NUMPY_VERSION="*" SCIPY_VERSION="*" CYTHON_VERSION="*"
+           PILLOW_VERSION="*" COVERAGE=true
       language: generic
       if: type != cron
       os: osx
