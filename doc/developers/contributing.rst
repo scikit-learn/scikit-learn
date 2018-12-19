@@ -96,6 +96,9 @@ link to it from your website, or simply star to say "I use it":
 Submitting a bug report or a feature request
 ============================================
 
+We use GitHub issues to track all bugs and feature requests; feel free to open
+an issue if you have found a bug or wish to see a feature implemented.
+
 In case you experience issues using this package, do not hesitate to submit a
 ticket to the
 `Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
@@ -185,34 +188,38 @@ then submit a "pull request" (PR):
  2. Fork the `project repository
     <https://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
     button near the top of the page. This creates a copy of the code under your
-    account on the GitHub server. For more details on how to fork a
+    account on the GitHub user account. For more details on how to fork a
     repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
 
- 3. Clone this copy to your local disk::
+ 3. Clone your fork of the scikit-learn repo from your GitHub account to your 
+    local disk::
 
         $ git clone git@github.com:YourLogin/scikit-learn.git
+        $ cd scikit-learn
 
- 4. Create a branch to hold your changes::
+ 4. Create a branch to hold your development changes::
 
         $ git checkout -b my-feature
 
-    and start making changes. Never work in the ``master`` branch!
+    and start making changes. Always use a ``feature`` branch. It's good practice to
+    never work on the ``master`` branch!
 
- 5. Work on this copy, on your computer, using Git to do the version
-    control. When you're done editing, do::
+ 5. Develop the feature on your feature branch on your computer, using Git to do the 
+    version control. When you're done editing, add changed files using ``git add`` 
+    and then ``git commit`` files::
 
         $ git add modified_files
         $ git commit
 
-    to record your changes in Git, then push them to GitHub with::
+    to record your changes in Git, then push the changes to your GitHub account with::
 
         $ git push -u origin my-feature
 
-Finally, follow `these
-<https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
-instructions to create a pull request from your fork. This will send an
-email to the committers. You may want to consider sending an email to the
-mailing list for more visibility.
+ 6. Follow `these
+    <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
+    instructions to create a pull request from your fork. This will send an
+    email to the committers. You may want to consider sending an email to the
+    mailing list for more visibility.
 
 .. note::
 
@@ -226,8 +233,8 @@ mailing list for more visibility.
 
 If any of the above seems like magic to you, then look up the `Git documentation
 <https://git-scm.com/documentation>`_ and the `Git development workflow
-<https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
-web.
+<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
+web, or ask a friend or another contributor for help.
 
 If some conflicts arise between your branch and the ``master`` branch, you need
 to merge ``master``. The command will be::
@@ -250,7 +257,7 @@ documentation related to resolving merge conflict using the command line
 Contributing pull requests
 --------------------------
 
-It is recommended to check that your contribution complies with the following
+We recommend that that your contribution complies with the following
 rules before submitting a pull request:
 
 * Follow the `coding-guidelines`_ (see below). To make sure that
@@ -258,7 +265,7 @@ rules before submitting a pull request:
   `./build_tools/travis/flake8_diff.sh` or `make flake8-diff` on a
   Unix-like system.
 
-* When applicable, use the validation tools and other code in the
+* When applicable, use the validation tools and scripts in the
   ``sklearn.utils`` submodule.  A list of utility routines available
   for developers can be found in the :ref:`developers-utils` page.
 
@@ -308,7 +315,8 @@ rules before submitting a pull request:
   accepted. Bug-fixes or new features should be provided with
   `non-regression tests
   <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
-  verify the correct behavior of the fix or feature. In this manner, further
+  verify the correct behavior of the fix or feature. These tests verify the
+  correct behavior of the fix or feature. In this manner, further
   modifications on the code base are granted to be consistent with the
   desired behavior. For the case of bug fixes, at the time of the PR, the
   non-regression tests should fail for the code base in the master branch
@@ -319,9 +327,14 @@ rules before submitting a pull request:
   the example. For more details on writing and building the
   documentation, see the :ref:`contribute_documentation` section.
 
+* The documentation should also include expected time and space complexity
+  of the algorithm and scalability, e.g. "this algorithm can scale to a 
+  large number of samples > 100000, but does not scale in dimensionality: 
+  n_features is expected to be lower than 100".
+
 You can also check for common programming errors with the following tools:
 
-* Code with a good unittest coverage (at least 90%, better 100%), check
+* Code with a good unittest coverage (at least 80%, better 100%), check
   with::
 
     $ pip install pytest pytest-cov
@@ -336,7 +349,7 @@ You can also check for common programming errors with the following tools:
 
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing
-list or on the GitHub wiki).
+list or on the GitHub issue).
 
 Also check out the :ref:`performance-howto` guide for more details on profiling
 and Cython optimizations.
@@ -399,10 +412,10 @@ underestimate how easy an issue is to solve!
 
 .. topic:: Easy tag
 
-    Another great way to contribute to scikit-learn is to pick an item from the
-    list of `Easy issues
+    If you have already contributed to scikit-learn, another great way to contribute
+    to scikit-learn is to pick an item from the list of `Easy issues
     <https://github.com/scikit-learn/scikit-learn/labels/Easy>`_ in the issue
-    tracker.  Your assistance in this area will be greatly appreciated by the
+    tracker. Your assistance in this area will be greatly appreciated by the
     more experienced developers as it helps free up their time to concentrate on
     other issues.
 
@@ -424,8 +437,13 @@ Documentation
 We are glad to accept any sort of documentation: function docstrings,
 reStructuredText documents (like this one), tutorials, etc. reStructuredText
 documents live in the source code repository under the ``doc/`` directory.
+
 You can edit the documentation using any text editor, and then generate the
-HTML output by building the documentation website.
+HTML output by typing ``make html`` from the ``doc/`` directory. Alternatively,
+``make`` can be used to quickly generate the documentation without the example 
+gallery. The resulting HTML files will be placed in ``_build/html/stable`` and are viewable
+in a web browser. See the ``README``file in the ``doc/`` directory for more information.
+
 
 Building the documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -481,18 +499,14 @@ details, and give intuition to the reader on what the algorithm does.
 
 Basically, to elaborate on the above, it is best to always
 start with a small paragraph with a hand-waving explanation of what the
-method does to the data. Then, it is very helpful
-to point out why the feature is useful and when it should be used -
-the latter also including "big O"
-(:math:`O\left(g\left(n\right)\right)`)
-complexities of the algorithm, as opposed to just *rules of thumb*,
-as the latter can be very machine-dependent.
-If those complexities are not available, then rules of thumb
-may be provided instead.
+method does to the data. Then, it is very helpful to point out why the feature is 
+useful and when it should be used - the latter also including "big O"
+(:math:`O\left(g\left(n\right)\right)`) complexities of the algorithm, as opposed 
+to just *rules of thumb*, as the latter can be very machine-dependent. If those 
+complexities are not available, then rules of thumb may be provided instead.
 
 Secondly, a generated figure from an example (as mentioned in the previous
-paragraph) should then be included to further provide some
-intuition.
+paragraph) should then be included to further provide some intuition.
 
 Next, one or two small code examples to show its use can be added.
 
