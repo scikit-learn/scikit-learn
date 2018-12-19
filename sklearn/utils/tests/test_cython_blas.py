@@ -14,6 +14,8 @@ from sklearn.utils._cython_blas import _xscal_memview
 from sklearn.utils._cython_blas import _xgemv_memview
 from sklearn.utils._cython_blas import _xger_memview
 from sklearn.utils._cython_blas import _xgemm_memview
+from sklearn.utils._cython_blas import RowMajor, ColMajor
+from sklearn.utils._cython_blas import Trans, NoTrans
 
 
 NUMPY_TO_CYTHON = {np.float32: cython.float, np.float64: cython.double}
@@ -109,64 +111,67 @@ def test_scal(dtype):
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("opA, transA",
-                         [(_no_op, 'n'), (np.transpose, 't')],
-                         ids=["A", "A.T"])
-@pytest.mark.parametrize("layout", ['C', 'F'])
-def test_gemv(dtype, opA, transA, layout):
+                         [(_no_op, NoTrans), (np.transpose, Trans)],
+                         ids=["NoTrans", "Trans"])
+@pytest.mark.parametrize("order", [RowMajor, ColMajor],
+                         ids=["RowMajor", "ColMajor"])
+def test_gemv(dtype, opA, transA, order):
     gemv = _xgemv_memview[NUMPY_TO_CYTHON[dtype]]
 
     rng = np.random.RandomState(0)
     A = np.asarray(opA(rng.random_sample((20, 10)).astype(dtype, copy=False)),
-                   order=layout)
+                   order=order)
     x = rng.random_sample(10).astype(dtype, copy=False)
     y = rng.random_sample(20).astype(dtype, copy=False)
     alpha, beta = 2.5, -0.5
 
     expected = alpha * opA(A).dot(x) + beta * y
-    gemv(layout, transA, alpha, A, x, beta, y)
+    gemv(order, transA, alpha, A, x, beta, y)
 
     assert_allclose(y, expected, rtol=RTOL[dtype])
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("layout", ['C', 'F'])
-def test_ger(dtype, layout):
+@pytest.mark.parametrize("order", [RowMajor, ColMajor],
+                         ids=["RowMajor", "ColMajor"])
+def test_ger(dtype, order):
     ger = _xger_memview[NUMPY_TO_CYTHON[dtype]]
 
     rng = np.random.RandomState(0)
     x = rng.random_sample(10).astype(dtype, copy=False)
     y = rng.random_sample(20).astype(dtype, copy=False)
     A = np.asarray(rng.random_sample((10, 20)).astype(dtype, copy=False),
-                   order=layout)
+                   order=order)
     alpha = 2.5
 
     expected = alpha * np.outer(x, y) + A
-    ger(layout, alpha, x, y, A)
+    ger(order, alpha, x, y, A)
 
     assert_allclose(A, expected, rtol=RTOL[dtype])
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("opB, transB",
-                         [(_no_op, 'n'), (np.transpose, 't')],
-                         ids=["B", "B.T"])
+                         [(_no_op, NoTrans), (np.transpose, Trans)],
+                         ids=["NoTrans", "Trans"])
 @pytest.mark.parametrize("opA, transA",
-                         [(_no_op, 'n'), (np.transpose, 't')],
-                         ids=["A", "A.T"])
-@pytest.mark.parametrize("layout", ['C', 'F'])
-def test_gemm(dtype, opA, transA, opB, transB, layout):
+                         [(_no_op, NoTrans), (np.transpose, Trans)],
+                         ids=["NoTrans", "Trans"])
+@pytest.mark.parametrize("order", [RowMajor, ColMajor],
+                         ids=["RowMajor", "ColMajor"])
+def test_gemm(dtype, opA, transA, opB, transB, order):
     gemm = _xgemm_memview[NUMPY_TO_CYTHON[dtype]]
 
     rng = np.random.RandomState(0)
     A = np.asarray(opA(rng.random_sample((30, 10)).astype(dtype, copy=False)),
-                   order=layout)
+                   order=order)
     B = np.asarray(opB(rng.random_sample((10, 20)).astype(dtype, copy=False)),
-                   order=layout)
+                   order=order)
     C = np.asarray(rng.random_sample((30, 20)).astype(dtype, copy=False),
-                   order=layout)
+                   order=order)
     alpha, beta = 2.5, -0.5
 
     expected = alpha * opA(A).dot(opB(B)) + beta * C
-    gemm(layout, transA, transB, alpha, A, B, beta, C)
+    gemm(order, transA, transB, alpha, A, B, beta, C)
 
     assert_allclose(C, expected, rtol=RTOL[dtype])
