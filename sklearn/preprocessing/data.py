@@ -2213,8 +2213,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             #  for inverse transform, match a uniform distribution
             with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
                 if output_distribution == 'normal':
-                    output_distribution = getattr(stats, 'norm')
-                    X_col = output_distribution.cdf(X_col)
+                    X_col = stats.norm.cdf(X_col)
                 # else output distribution is already a uniform distribution
 
         # find index for lower and higher bounds
@@ -2248,14 +2247,13 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         if not inverse:
             with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
                 if output_distribution == 'normal':
-                    output_distribution = getattr(stats, 'norm')
-                    X_col = output_distribution.ppf(X_col)
+                    X_col = stats.norm.ppf(X_col)
                     # find the value to clip the data to avoid mapping to
                     # infinity. Clip such that the inverse transform will be
                     # consistent
-                    clip_min = output_distribution.ppf(BOUNDS_THRESHOLD -
+                    clip_min = stats.norm.ppf(BOUNDS_THRESHOLD -
                                                        np.spacing(1))
-                    clip_max = output_distribution.ppf(1 - (BOUNDS_THRESHOLD -
+                    clip_max = stats.norm.ppf(1 - (BOUNDS_THRESHOLD -
                                                             np.spacing(1)))
                     X_col = np.clip(X_col, clip_min, clip_max)
                 # else output distribution is uniform and the ppf is the
