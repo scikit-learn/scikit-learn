@@ -24,6 +24,8 @@ random sampling procedures.
   `max_leaf_nodes` are set. |Fix|
 - :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver. |Fix|
+- :class:`ensemble.GradientBoostingClassifier` for multiclass
+  classification. |Fix|
 
 
 Details are listed in the changelog below.
@@ -70,6 +72,10 @@ Support for Python 3.4 and below has been officially dropped.
   fit calls do release the GIL. This changes reduces memory usage and
   communication overhead. :issue:`12543` by :user:`Isaac Storch <istorch>`
   and `Olivier Grisel`_.
+
+- |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
+  the gradients would be incorrectly computed in multiclass classification
+  problems. :issue:`12715` by :user:`Nicolas Hug<NicolasHug>`.
 
 :mod:`sklearn.linear_model`
 ...........................
