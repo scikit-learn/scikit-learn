@@ -31,7 +31,7 @@ make_conda() {
 	TO_INSTALL="$@"
     # Deactivate the travis-provided virtual environment and setup a
     # conda-based environment instead
-    deactivate
+    deactivate || :
 
     # Install miniconda
     if [ $TRAVIS_OS_NAME = "osx" ]
