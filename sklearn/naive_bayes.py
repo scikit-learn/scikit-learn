@@ -1013,7 +1013,7 @@ class CategoricalNB(BaseDiscreteNB):
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
-    on_unseen_cats : String
+    on_unseen_cats : String, (default='warn')
         Can be 'ignore', 'warn' or 'error'. Determines the behaviour of the
         classifier, if it encounters unseen categories in the prediction step.
 
@@ -1064,7 +1064,10 @@ class CategoricalNB(BaseDiscreteNB):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
-        # ignore warn or raise
+        if on_unseen_cats not in ('ignore', 'warn', 'raise'):
+            raise ValueError("The attribute 'on_unseen_cats' is '{}' and "
+                             "should either be 'ignore', 'warn' or 'raise'"
+                             .format(on_unseen_cats))
         self.on_unseen_cats = on_unseen_cats
 
     def fit(self, X, y):
@@ -1181,7 +1184,7 @@ class CategoricalNB(BaseDiscreteNB):
 
     def _update_feature_log_prob(self, alpha):
         feature_log_prob = {}
-        for i in range(len(self.category_count_)):
+        for i in range(self.n_features_):
             smoothed_fc = self.category_count_[i] + alpha
             smoothed_cc = smoothed_fc.sum(axis=1)
             feature_log_prob[i] = (np.log(smoothed_fc) -
