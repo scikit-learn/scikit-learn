@@ -12,6 +12,7 @@ from sklearn.utils.multiclass import check_classification_targets
 from sklearn.metrics import check_scoring
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
+from ._gradient_boosting import _update_raw_predictions__
 
 from .binning import BinMapper
 from .grower import TreeGrower
@@ -167,6 +168,7 @@ class BaseGradientBoostingMachine(BaseEstimator, ABC):
             shape=(n_samples, self.n_trees_per_iteration_),
             dtype=self.baseline_prediction_.dtype
         )
+        print(raw_predictions.dtype)
         raw_predictions += self.baseline_prediction_
 
         # gradients and hessians are 1D arrays of size
@@ -236,11 +238,15 @@ class BaseGradientBoostingMachine(BaseEstimator, ABC):
 
                 tic_pred = time()
 
-                # prepare leaves_data so that _update_raw_predictions can be
-                # @njitted
-                leaves_data = [(l.value, l.sample_indices)
-                               for l in grower.finalized_leaves]
-                _update_raw_predictions(leaves_data, raw_predictions[:, k])
+                leaves_values = [l.value for l in grower.finalized_leaves]
+                samples_indices_in_leaves = [l.sample_indices for l in grower.finalized_leaves]
+                leaves_values = np.array(leaves_values, dtype=np.float32)
+                _update_raw_predictions__(leaves_values, samples_indices_in_leaves, raw_predictions[:, k])
+                # leaves_data = [(l.value, l.sample_indices)
+                #                for l in grower.finalized_leaves]
+                # _update_raw_predictions(leaves_data, raw_predictions[:, k])
+
+
                 toc_pred = time()
                 acc_prediction_time += toc_pred - tic_pred
 
@@ -678,22 +684,7 @@ class GradientBoostingClassifier(BaseGradientBoostingMachine, ClassifierMixin):
 
         return _LOSSES[self.loss]()
 
-
 def _update_raw_predictions(leaves_data, raw_predictions):
-    """Update raw_predictions by reading the predictions of the ith tree
-    directly form the leaves.
-
-    Can only be used for predicting the training data. raw_predictions
-    contains the sum of the tree values from iteration 0 to i - 1. This adds
-    the predictions of the ith tree to raw_predictions.
-
-    Parameters
-    ----------
-    leaves_data: list of tuples (leaf.value, leaf.sample_indices)
-        The leaves data used to update raw_predictions.
-    raw_predictions : array-like, shape=(n_samples,)
-        The raw predictions for the training data.
-    """
     for leaf_idx in range(len(leaves_data)):
         leaf_value, sample_indices = leaves_data[leaf_idx]
         for sample_idx in sample_indices:

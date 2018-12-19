@@ -360,7 +360,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                                 self.presort)
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
-
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
             builder = DepthFirstTreeBuilder(splitter, min_samples_split,
@@ -379,6 +378,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                            min_impurity_split)
 
         builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
+
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]

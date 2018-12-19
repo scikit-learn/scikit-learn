@@ -8,11 +8,28 @@ def configuration(parent_package="", top_path=None):
                          sources=["_gradient_boosting.pyx"],
                          include_dirs=[numpy.get_include()])
 
+    config.add_extension("gbm._gradient_boosting",
+                         sources=["gbm/_gradient_boosting.pyx"],
+                         include_dirs=[numpy.get_include()])
+
     config.add_extension("gbm.histogram",
                          sources=["gbm/histogram.pyx"],
                          include_dirs=[numpy.get_include()])
 
+    config.add_extension("gbm.splitting",
+                         sources=["gbm/splitting.pyx"],
+                         include_dirs=[numpy.get_include()])
+
+    config.add_extension("gbm.binning",
+                         sources=["gbm/binning.pyx"],
+                         include_dirs=[numpy.get_include()])
+
+    config.add_extension("gbm.playground",
+                         sources=["gbm/playground.pyx"],
+                         include_dirs=[numpy.get_include()])
+
     config.add_subpackage("tests")
+    config.add_data_files("gbm/slitting.pxd")
 
     return config
 

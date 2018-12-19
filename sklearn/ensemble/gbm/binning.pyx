@@ -1,10 +1,15 @@
+# cython: profile=True
 """
 This module contains the BinMapper class.
 
 BinMapper is used for mapping a real-valued dataset into integer-valued bins
 with equally-spaced thresholds.
 """
+cimport cython
+
 import numpy as np
+cimport numpy as np
+
 from sklearn.utils import check_random_state, check_array
 from sklearn.base import BaseEstimator, TransformerMixin
 
@@ -51,7 +56,7 @@ def _find_binning_thresholds(data, max_bins=256, subsample=int(2e5),
     return tuple(binning_thresholds)
 
 
-def _map_to_bins(data, binning_thresholds=None, out=None):
+cdef _map_to_bins(np.ndarray[np.float_t, ndim=2] data, binning_thresholds):
     """Bin numerical values to discrete integer-coded levels.
 
     Parameters
@@ -71,26 +76,32 @@ def _map_to_bins(data, binning_thresholds=None, out=None):
     """
     # TODO: add support for categorical data encoded as integers
     # TODO: add support for sparse data (numerical or categorical)
-    if out is not None:
-        assert out.shape == data.shape
-        assert out.dtype == np.uint8
-        assert out.flags.f_contiguous
-        binned = out
-    else:
-        binned = np.zeros_like(data, dtype=np.uint8, order='F')
+    cdef:
+        np.ndarray[np.uint8_t, ndim=2] binned
+        np.ndarray[np.float32_t, ndim=2] binning_thresholds_
+        int feature_idx
 
-    binning_thresholds = tuple(np.ascontiguousarray(bt, dtype=np.float32)
-                               for bt in binning_thresholds)
+    binned = np.zeros_like(data, dtype=np.uint8, order='F')
+
+    # binning_thresholds = tuple(np.ascontiguousarray(bt, dtype=np.float32)
+    #                            for bt in binning_thresholds)
+    binning_thresholds_ = np.array(binning_thresholds, dtype=np.float32)
 
     for feature_idx in range(data.shape[1]):
         _map_num_col_to_bins(data[:, feature_idx],
-                             binning_thresholds[feature_idx],
+                             binning_thresholds_[feature_idx],
                              binned[:, feature_idx])
     return binned
 
 
-def _map_num_col_to_bins(data, binning_thresholds, binned):
+cdef _map_num_col_to_bins(np.ndarray[np.float_t] data, np.ndarray[np.float32_t] binning_thresholds, np.ndarray[np.uint8_t] binned):
     """Binary search to the find the bin index for each value in data."""
+    cdef:
+        int i
+        int left
+        int right
+        int middle
+
     for i in range(data.shape[0]):
         # TODO: add support for missing values (NaN or custom marker)
         left, right = 0, binning_thresholds.shape[0]

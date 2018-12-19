@@ -17,7 +17,7 @@ from .weight_boosting import AdaBoostRegressor
 from .gradient_boosting import GradientBoostingClassifier
 from .gradient_boosting import GradientBoostingRegressor
 from .voting_classifier import VotingClassifier
-from .gbm.gradient_boosting import GradientBoostingClassifier as GBMCLassifier
+from .gbm.gradient_boosting import GradientBoostingClassifier as GBMClassifier
 from .gbm.gradient_boosting import GradientBoostingRegressor as GBMRegressor
 
 from . import bagging

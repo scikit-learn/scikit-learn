@@ -240,11 +240,13 @@ class TreeGrower:
         if self.splitting_context.constant_hessian:
             hessian = self.splitting_context.hessians[0] * n_samples
         else:
-            hessian = self.splitting_context.hessians.sum()
+            hessian = np.sum(self.splitting_context.hessians)
         self.root = TreeNode(
             depth=depth,
-            sample_indices=self.splitting_context.partition.view(),
-            sum_gradients=self.splitting_context.gradients.sum(),
+            #sample_indices=self.splitting_context.partition.view(),
+            sample_indices=self.splitting_context.partition,
+            #sum_gradients=self.splitting_context.gradients.sum(),
+            sum_gradients=np.sum(self.splitting_context.gradients),
             sum_hessians=hessian
         )
         if (self.max_leaf_nodes is not None and self.max_leaf_nodes == 1):

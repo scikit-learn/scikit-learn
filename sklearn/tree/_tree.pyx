@@ -604,6 +604,10 @@ cdef class Tree:
         def __get__(self):
             return self._get_value_ndarray()[:self.node_count]
 
+    property nodes:
+        def __get__(self):
+            return self._get_node_ndarray()
+
     def __cinit__(self, int n_features, np.ndarray[SIZE_t, ndim=1] n_classes,
                   int n_outputs):
         """Constructor."""
