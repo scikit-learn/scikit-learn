@@ -2198,11 +2198,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     def _transform_col(self, X_col, quantiles, inverse):
         """Private function to transform a single feature"""
 
-        if self.output_distribution == 'normal':
-            output_distribution = 'norm'
-        else:
-            output_distribution = self.output_distribution
-        output_distribution = getattr(stats, output_distribution)
+        output_distribution = self.output_distribution
 
         if not inverse:
             lower_bound_x = quantiles[0]
@@ -2214,9 +2210,13 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             upper_bound_x = 1
             lower_bound_y = quantiles[0]
             upper_bound_y = quantiles[-1]
-            #  for inverse transform, match a uniform PDF
+            #  for inverse transform, match a uniform distribution
             with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
-                X_col = output_distribution.cdf(X_col)
+                if output_distribution == 'normal':
+                    output_distribution = getattr(stats, 'norm')
+                    X_col = output_distribution.cdf(X_col)
+                # else output distribution is already a uniform distribution
+
         # find index for lower and higher bounds
         with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
             lower_bounds_idx = (X_col - BOUNDS_THRESHOLD <
@@ -2244,18 +2244,22 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         X_col[upper_bounds_idx] = upper_bound_y
         X_col[lower_bounds_idx] = lower_bound_y
-        # for forward transform, match the output PDF
+        # for forward transform, match the output distribution
         if not inverse:
             with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
-                X_col = output_distribution.ppf(X_col)
-            # find the value to clip the data to avoid mapping to
-            # infinity. Clip such that the inverse transform will be
-            # consistent
-            clip_min = output_distribution.ppf(BOUNDS_THRESHOLD -
-                                               np.spacing(1))
-            clip_max = output_distribution.ppf(1 - (BOUNDS_THRESHOLD -
-                                                    np.spacing(1)))
-            X_col = np.clip(X_col, clip_min, clip_max)
+                if output_distribution == 'normal':
+                    output_distribution = getattr(stats, 'norm')
+                    X_col = output_distribution.ppf(X_col)
+                    # find the value to clip the data to avoid mapping to
+                    # infinity. Clip such that the inverse transform will be
+                    # consistent
+                    clip_min = output_distribution.ppf(BOUNDS_THRESHOLD -
+                                                       np.spacing(1))
+                    clip_max = output_distribution.ppf(1 - (BOUNDS_THRESHOLD -
+                                                            np.spacing(1)))
+                    X_col = np.clip(X_col, clip_min, clip_max)
+                # else output distribution is uniform and the ppf is the
+                # identity function so we let X_col unchanged
 
         return X_col
 
