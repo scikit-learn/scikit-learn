@@ -4,7 +4,7 @@
 
 # License: 3-clause BSD
 
-set -ex
+set -e
 
 if [[ "$COVERAGE" == "true" ]]; then
     # Need to run codecov from a git checkout, so we copy .coverage
