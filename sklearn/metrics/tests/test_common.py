@@ -1233,7 +1233,7 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
     y_true = random_state.randint(0, 2, size=(n_samples, n_classes))
     y_score = random_state.normal(size=y_true.shape)
 
-    # Makes sure all samples have multiple classes. This works around errors
+    # Makes sure all samples have at least one label. This works around errors
     # when running metrics where average="sample"
     y_true[y_true.sum(1) == 4, 0] = 0
     y_true[y_true.sum(1) == 0, 0] = 1
