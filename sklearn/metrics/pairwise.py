@@ -249,7 +249,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
 
     See also
     --------
-    paired_distances : distances between pairs of elements of X and Y.
+    paired_distances : distances betweens pairs of elements of X and Y.
     """
     X, Y = check_pairwise_arrays(X, Y)
 
