@@ -381,8 +381,7 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     not_X = (~mask_X).astype(np.int32)
     X[mask_X] = 0
 
-    # Calculate distances
-    # The following formula derived by:
+    # Calculate distances, the following formula derived by:
     # Shreya Bhattarai <shreya.bhattarai@gmail.com>
 
     distances = (
