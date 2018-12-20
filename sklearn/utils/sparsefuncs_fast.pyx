@@ -55,13 +55,18 @@ def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
     return norms
 
 
-def csr_mean_variance_axis0(X):
+def csr_mean_variance_axis0(X, ddof=0):
     """Compute mean and variance along axis 0 on a CSR matrix
 
     Parameters
     ----------
     X : CSR sparse matrix, shape (n_samples, n_features)
         Input data.
+
+    ddof : int, optional
+        “Delta Degrees of Freedom”: the divisor used in the calculation is
+        ``N - ddof``, where ``N`` represents the number of elements. By default
+        ddof is zero.
 
     Returns
     -------
@@ -74,15 +79,17 @@ def csr_mean_variance_axis0(X):
     """
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
-    means, variances, _ =  _csr_mean_variance_axis0(X.data, X.shape[0],
-                                                    X.shape[1], X.indices)
+    means, variances, _ =  _csr_mean_variance_axis0(
+        X.data, X.shape[0], X.shape[1], X.indices, ddof
+    )
     return means, variances
 
 
 def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
                              unsigned long long n_samples,
                              unsigned long long n_features,
-                             np.ndarray[integral, ndim=1] X_indices):
+                             np.ndarray[integral, ndim=1] X_indices,
+                             unsigned long long ddof=0):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
@@ -130,18 +137,23 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
 
     for i in xrange(n_features):
         variances[i] += (n_samples - counts_nan[i] - counts[i]) * means[i]**2
-        variances[i] /= (n_samples - counts_nan[i])
+        variances[i] /= (n_samples - ddof - counts_nan[i])
 
     return means, variances, counts_nan
 
 
-def csc_mean_variance_axis0(X):
+def csc_mean_variance_axis0(X, ddof=0):
     """Compute mean and variance along axis 0 on a CSC matrix
 
     Parameters
     ----------
     X : CSC sparse matrix, shape (n_samples, n_features)
         Input data.
+
+    ddof : int, optional
+        “Delta Degrees of Freedom”: the divisor used in the calculation is
+        ``N - ddof``, where ``N`` represents the number of elements. By default
+        ddof is zero.
 
     Returns
     -------
@@ -154,9 +166,9 @@ def csc_mean_variance_axis0(X):
     """
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
-    means, variances, _ = _csc_mean_variance_axis0(X.data, X.shape[0],
-                                                   X.shape[1], X.indices,
-                                                  X.indptr)
+    means, variances, _ = _csc_mean_variance_axis0(
+        X.data, X.shape[0], X.shape[1], X.indices, X.indptr, ddof
+    )
     return means, variances
 
 
@@ -164,7 +176,8 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
                              unsigned long long n_samples,
                              unsigned long long n_features,
                              np.ndarray[integral, ndim=1] X_indices,
-                             np.ndarray[integral, ndim=1] X_indptr):
+                             np.ndarray[integral, ndim=1] X_indptr,
+                             unsigned long long ddof=0):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
@@ -209,7 +222,7 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
                 variances[i] += diff * diff
 
         variances[i] += (n_samples - counts_nan[i] - counts) * means[i]**2
-        variances[i] /= (n_samples - counts_nan[i])
+        variances[i] /= (n_samples - ddof - counts_nan[i])
 
     return means, variances, counts_nan
 

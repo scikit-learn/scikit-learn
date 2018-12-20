@@ -85,6 +85,39 @@ def test_mean_variance_axis1():
             assert_array_almost_equal(X_vars, np.var(X_test, axis=0))
 
 
+@pytest.mark.parametrize('axis', (0, 1))
+def test_mean_variance_with_ddof(axis):
+    X, _ = make_classification(5, 4, random_state=0)
+    # Sparsify the array a little bit
+    X[[0, 2, 4], [0, 1, 3]] = 0
+
+    # Test on csr matrices
+    X_csr = sp.csr_matrix(X)
+    mean, variance = mean_variance_axis(X_csr, axis=axis, ddof=1)
+    assert_allclose(mean, np.mean(X, axis=axis))
+    assert_allclose(variance, np.var(X, axis=axis, ddof=1))
+
+    # Test on csc matrices
+    X_csc = sp.csc_matrix(X)
+    mean, variance = mean_variance_axis(X_csc, axis=axis, ddof=1)
+    assert_allclose(mean, np.mean(X, axis=axis))
+    assert_allclose(variance, np.var(X, axis=axis, ddof=1))
+
+
+def test_negative_ddof():
+    X, _ = make_classification(5, 4, random_state=0)
+    X = sp.csr_matrix(X)
+
+    assert_raises(ValueError, mean_variance_axis, X, axis=0, ddof=-5)
+
+
+def test_too_large_ddof():
+    X, _ = make_classification(5, 4, random_state=0)
+    X = sp.csr_matrix(X)
+
+    assert_raises(ValueError, mean_variance_axis, X, axis=0, ddof=10)
+
+
 def test_incr_mean_variance_axis():
     for axis in [0, 1]:
         rng = np.random.RandomState(0)
