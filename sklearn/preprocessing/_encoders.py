@@ -36,17 +36,19 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
     """
 
-    def _check_X(self, X):
+    def _check_X(self, X, force_all_finite=True):
         """
         Perform custom check_array:
         - convert list of strings to object dtype
         - check for missing values for object dtype data (check_array does
           not do that)
-
+        - by default, raise error if NaN's found
+        - if handle_unknown='allow-nan', no error raised for NaN's found
         """
-        X_temp = check_array(X, dtype=None)
+        X_temp = check_array(X, dtype=None, force_all_finite=force_all_finite)
         if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
-            X = check_array(X, dtype=np.object)
+            X = check_array(X, dtype=np.object,
+                            force_all_finite=force_all_finite)
         else:
             X = X_temp
 
@@ -57,8 +59,8 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
         return X
 
-    def _fit(self, X, handle_unknown='error'):
-        X = self._check_X(X)
+    def _fit(self, X, handle_unknown='error', force_all_finite=True):
+        X = self._check_X(X, force_all_finite=force_all_finite)
 
         n_samples, n_features = X.shape
 
@@ -791,7 +793,7 @@ class OrdinalEncoder(_BaseEncoder):
         # base classes uses _categories to deal with deprecations in
         # OneHoteEncoder: can be removed once deprecations are removed
         self._categories = self.categories
-        self._fit(X)
+        self._fit(X, force_all_finite=False)
 
         return self
 
