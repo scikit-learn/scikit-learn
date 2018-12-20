@@ -1206,7 +1206,7 @@ def test_no_averaging_labels():
 
 
 @pytest.mark.parametrize(
-    'name', MULTILABELS_METRICS - NOT_SYMMETRIC_METRICS)
+    'name', MULTILABELS_METRICS - {"unnormalized_multilabel_confusion_matrix"})
 def test_multilabel_label_permutations_invariance(name):
     random_state = check_random_state(0)
     n_samples, n_classes = 20, 4
