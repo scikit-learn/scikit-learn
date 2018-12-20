@@ -18,7 +18,7 @@ from scipy.linalg.cython_blas cimport sgemm, dgemm
 ################
 
 cdef floating _dot(int n, floating *x, int incx,
-                    floating *y, int incy) nogil:
+                   floating *y, int incy) nogil:
     """x.T.y"""
     if floating is float:
         return sdot(&n, x, &incx, y, &incy)
@@ -43,7 +43,7 @@ cpdef _asum_memview(floating[::1] x):
 
 
 cdef void _axpy(int n, floating alpha, floating *x, int incx,
-                 floating *y, int incy) nogil:
+                floating *y, int incy) nogil:
     """y := alpha * x + y"""
     if floating is float:
         saxpy(&n, &alpha, x, &incx, y, &incy)
@@ -96,12 +96,12 @@ cpdef _scal_memview(floating alpha, floating[::1] x):
 ################
 
 cdef void _gemv(BLAS_Order order, BLAS_Trans ta, int m, int n, floating alpha,
-                 floating *A, int lda, floating *x, int incx,
-                 floating beta, floating *y, int incy) nogil:
+                floating *A, int lda, floating *x, int incx,
+                floating beta, floating *y, int incy) nogil:
     """y := alpha * op(A).x + beta * y"""
     cdef char ta_ = ta
     if order == RowMajor:
-        ta_ = NoTrans if ta == Trans else Trans 
+        ta_ = NoTrans if ta == Trans else Trans
         if floating is float:
             sgemv(&ta_, &n, &m, &alpha, A, &lda, x, &incx, &beta, y, &incy)
         else:
@@ -114,8 +114,8 @@ cdef void _gemv(BLAS_Order order, BLAS_Trans ta, int m, int n, floating alpha,
 
 
 cpdef _gemv_memview(BLAS_Order order, BLAS_Trans ta, floating alpha,
-                     floating[:, :] A, floating[::1] x, floating beta,
-                     floating[::1] y):
+                    floating[:, :] A, floating[::1] x, floating beta,
+                    floating[::1] y):
     cdef:
         int m = A.shape[0]
         int n = A.shape[1]
@@ -125,7 +125,7 @@ cpdef _gemv_memview(BLAS_Order order, BLAS_Trans ta, floating alpha,
 
 
 cdef void _ger(BLAS_Order order, int m, int n, floating alpha, floating *x,
-                int incx, floating *y, int incy, floating *A, int lda) nogil:
+               int incx, floating *y, int incy, floating *A, int lda) nogil:
     """A := alpha * x.y.T + A"""
     if order == RowMajor:
         if floating is float:
@@ -139,14 +139,14 @@ cdef void _ger(BLAS_Order order, int m, int n, floating alpha, floating *x,
             dger(&m, &n, &alpha, x, &incx, y, &incy, A, &lda)
 
 
-cpdef _ger_memview(BLAS_Order order, floating alpha, floating[::1] x, floating[::] y,
-                    floating[:, :] A):
+cpdef _ger_memview(BLAS_Order order, floating alpha, floating[::1] x,
+                   floating[::] y, floating[:, :] A):
     cdef:
         BLAS_Order order_ = ColMajor if order == ColMajor else RowMajor
         int m = A.shape[0]
         int n = A.shape[1]
         int lda = m if order == ColMajor else n
-    
+
     _ger(order_, m, n, alpha, &x[0], 1, &y[0], 1, &A[0, 0], lda)
 
 
@@ -155,8 +155,8 @@ cpdef _ger_memview(BLAS_Order order, floating alpha, floating[::1] x, floating[:
 ################
 
 cdef void _gemm(BLAS_Order order, BLAS_Trans ta, BLAS_Trans tb, int m, int n,
-                 int k, floating alpha, floating *A, int lda, floating *B,
-                 int ldb, floating beta, floating *C, int ldc) nogil:
+                int k, floating alpha, floating *A, int lda, floating *B,
+                int ldb, floating beta, floating *C, int ldc) nogil:
     """C := alpha * op(A).op(B) + beta * C"""
     cdef:
         char ta_ = ta
@@ -178,8 +178,8 @@ cdef void _gemm(BLAS_Order order, BLAS_Trans ta, BLAS_Trans tb, int m, int n,
 
 
 cpdef _gemm_memview(BLAS_Order order, BLAS_Trans ta, BLAS_Trans tb,
-                     floating alpha, floating[:, :] A, floating[:, :] B,
-                     floating beta, floating[:, :] C):
+                    floating alpha, floating[:, :] A, floating[:, :] B,
+                    floating beta, floating[:, :] C):
     cdef:
         int m = A.shape[0] if ta == NoTrans else A.shape[1]
         int n = B.shape[1] if tb == NoTrans else B.shape[0]
@@ -196,4 +196,4 @@ cpdef _gemm_memview(BLAS_Order order, BLAS_Trans ta, BLAS_Trans tb,
         ldc = n
 
     _gemm(order, ta, tb, m, n, k, alpha, &A[0, 0],
-           lda, &B[0, 0], ldb, beta, &C[0, 0], ldc)
+          lda, &B[0, 0], ldb, beta, &C[0, 0], ldc)

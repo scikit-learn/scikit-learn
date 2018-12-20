@@ -23,11 +23,11 @@ cdef void _scal(int, floating, floating*, int) nogil
 
 # BLAS Level 2 ################################################################
 cdef void _gemv(BLAS_Order, BLAS_Trans, int, int, floating, floating*, int,
-                 floating*, int, floating, floating*, int) nogil
+                floating*, int, floating, floating*, int) nogil
 cdef void _ger(BLAS_Order, int, int, floating, floating*, int, floating*, int,
-                floating*, int) nogil
+               floating*, int) nogil
 
 # BLASLevel 3 ################################################################
 cdef void _gemm(BLAS_Order, BLAS_Trans, BLAS_Trans, int, int, int, floating,
-                 floating*, int, floating*, int, floating, floating*,
-                 int) nogil
+                floating*, int, floating*, int, floating, floating*,
+                int) nogil
