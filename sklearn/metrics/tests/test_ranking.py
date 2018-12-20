@@ -550,7 +550,9 @@ def test_multi_ovr_auc_toydata():
      {"multiclass": "ovo", "sample_weight": []}),
     (("Partial AUC computation not available in multiclass setting. "
       "Parameter 'max_fpr' must be set to `None`. Received `max_fpr=0.5` "
-      "instead."), {"multiclass": "ovo", "max_fpr": 0.5})
+      "instead."), {"multiclass": "ovo", "max_fpr": 0.5}),
+    (("Parameter multiclass='ovp' is not supported for multiclass ROC AUC. "
+      "'multiclass' must be one of ('ovo', 'ovr')."), {"multiclass": "ovp"})
 ])
 def test_auc_score_multi_error(msg, kwargs):
     # Test that roc_auc_score function returns an error when trying
