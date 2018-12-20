@@ -677,22 +677,25 @@ def test_one_hot_encoder_warning():
     X = [['Male', 1], ['Female', 3]]
     np.testing.assert_no_warnings(enc.fit_transform, X)
     
-    # TODO:
-    # -- Pass NaN's to ordinal_encoder fit,
-    #    NaN's aren't added to categories (default),
-    #    and NaN's are passed through to transform
-    # -- Pass NaN's to ordinal_encoder fit,
-    #    user specifies, "encode_missing"(?)
-    #    NaN (or None?) is added to categories,
-    #    and encoded as largest nominal category
+# TODO:
+# -- Pass missing vals to ordinal_encoder fit,
+#    missing vals aren't added to categories (default),
+#    and missing vals are passed through to transform
+# -- Pass missing vals to ordinal_encoder fit,
+#    user specifies, "encode_missing"(?)
+#    missing val is added to categories,
+#    and encoded as largest nominal category
 
-    # Parameters:
-    #   * handle_missing=["passthrough", "encode"]
-    #   * missing_values=np.nan (or None?)
+# Parameters:
+#   * handle_missing=["passthrough", "encode"]
+#   * missing_values=np.nan (or None?)
 
 
-def test_ordinal_encoder_allow_nan():
-    X = np.array([[1, np.nan]])
+@pytest.mark.parametrize("X", [
+    np.array([[1, 2, np.nan]]),
+    np.array([['a', 'b', np.nan]], dtype=np.object_),
+    ], ids=['numeric', 'object'])
+def test_ordinal_encoder_allow_nan(X):
     enc = OrdinalEncoder()
     enc.fit(X)
 
@@ -703,16 +706,17 @@ def test_ordinal_all_nan_raises_error():
     assert_raises(ValueError, enc.fit(X))
 
 
-@pytest.mark.parametrize("X", [
-    np.array([[1, 2, np.nan]]),
-    np.array([['a', 'b', np.nan]], dtype=np.object_),
+@pytest.mark.parametrize("X, exp_cats", [
+    (np.array([[1, 2, np.nan]]),
+    np.array([[1, 2]]).T),
+    (np.array([['a', 'b', np.nan]], dtype=np.object_),
+    np.array([['a', 'b']]).T),
     ], ids=['numeric', 'object'])
-def test_ordinal_encoder_nan_not_in_categories(X):
+def test_ordinal_encoder_nan_not_in_categories(X, exp_cats):
     enc = OrdinalEncoder()
     enc.fit(X)
-    X_cats = enc._categories
-    X_cats_expected = np.array([[0, 1, np.nan]])
-    assert_array_equal(X_cats, X_cats_expected)
+    X_cats = enc.categories_
+    assert_array_equal(X_cats, exp_cats)
 
 
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]),
