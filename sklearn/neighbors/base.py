@@ -837,7 +837,12 @@ class RadiusNeighborsMixin(object):
         """
         check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
         if X is not None:
-            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+            allow_nan = (callable(self.effective_metric_)
+                         or self.effective_metric_ in _NAN_METRICS)
+            X = check_array(
+                X,
+                accept_sparse=['csr', 'csc', 'coo'],
+                force_all_finite='allow-nan' if allow_nan else True)
 
         n_samples2 = self._fit_X.shape[0]
         if radius is None:
