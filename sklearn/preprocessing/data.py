@@ -1088,7 +1088,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     ...      [ -2.,  1.,  3.],
     ...      [ 4.,  1., -2.]]
     >>> transformer = RobustScaler().fit(X)
-    >>> transformer
+    >>> transformer  # doctest: +NORMALIZE_WHITESPACE
     RobustScaler(copy=True, quantile_range=(25.0, 75.0), with_centering=True,
            with_scaling=True)
     >>> transformer.transform(X)
