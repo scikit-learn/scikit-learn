@@ -464,7 +464,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     ...                [np.nan, 2, 3],
     ...                [2, 4, 0]])
     >>> indicator = MissingIndicator()
-    >>> indicator.fit(X1)
+    >>> indicator.fit(X1)  # doctest: +NORMALIZE_WHITESPACE
     MissingIndicator(error_on_new=True, features='missing-only',
              missing_values=nan, sparse='auto')
     >>> X2_tr = indicator.transform(X2)

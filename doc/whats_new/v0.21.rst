@@ -200,11 +200,18 @@ Support for Python 3.4 and below has been officially dropped.
   ``max_depth`` by 1 while expanding the tree if ``max_leaf_nodes`` and
   ``max_depth`` were both specified by the user. Please note that this also
   affects all ensemble methods using decision trees.
-  :pr:`12344` by :user:`Adrin Jalali <adrinjalali>`.
+  :issue:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
 
 Multiple modules
 ................
+
+- The `__repr__()` method of all estimators (used when calling
+  `print(estimator)`) has been entirely re-written, building on Python's
+  pretty printing standard library. All parameters are printed by default,
+  but this can be altered with the ``print_changed_only`` option in
+  :func:`sklearn.set_config`. :issue:`11705` by :user:`Nicolas Hug
+  <NicolasHug>`.
 
 Changes to estimator checks
 ---------------------------
