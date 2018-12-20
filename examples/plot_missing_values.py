@@ -23,6 +23,7 @@ carry some information.
 """
 import numpy as np
 import matplotlib.pyplot as plt
+
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
@@ -84,8 +85,7 @@ def get_results(dataset):
     return ((full_scores.mean(), full_scores.std()),
             (zero_impute_scores.mean(), zero_impute_scores.std()),
             (mean_impute_scores.mean(), mean_impute_scores.std()),
-            (knn_impute_scores.mean(), knn_impute_scores.std()),
-            )
+            (knn_impute_scores.mean(), knn_impute_scores.std()))
 
 
 results_diabetes = np.array(get_results(load_diabetes()))
@@ -102,8 +102,7 @@ xval = np.arange(n_bars)
 x_labels = ['Full data',
             'Zero imputation',
             'Mean Imputation',
-            'KNN Imputation',
-            ]
+            'KNN Imputation']
 colors = ['r', 'g', 'b', 'orange', 'black']
 
 # plot diabetes results

@@ -1,7 +1,6 @@
 """Transformers for missing value imputation"""
 # Authors: Nicolas Tresegnie <nicolas.tresegnie@gmail.com>
 #          Sergey Feldman <sergeyfeldman@gmail.com>
-#          Ashim Bhattarai <"ashimb9" + "\100gmail\56com">
 # License: BSD 3 clause
 
 import warnings
@@ -800,7 +799,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like}, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Input data, where ``n_samples`` is the number of samples and
             ``n_features`` is the number of features.
 
@@ -855,12 +854,12 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like}, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             The input data to complete.
 
         Returns
         -------
-        X : {array-like}, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             The imputed dataset.
         """
 
@@ -928,13 +927,13 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like}, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Input data, where ``n_samples`` is the number of samples and
             ``n_features`` is the number of features.
 
         Returns
         -------
-        X : {array-like}, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Returns imputed dataset.
         """
         return self.fit(X).transform(X)

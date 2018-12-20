@@ -672,7 +672,6 @@ Imputation of missing values
 
 Tools for imputing missing values are discussed at :ref:`impute`.
 
-
 .. _polynomial_features:
 
 Generating polynomial features
