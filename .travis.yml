@@ -23,7 +23,7 @@ matrix:
     # This environment tests that scikit-learn can be built against
     # versions of numpy, scipy with ATLAS that comes with Ubuntu Xenial 16.04
     # i.e. numpy 1.11 and scipy 0.17
-    - env: DISTRIB="ubuntu" PYTHON_VERSION="3.5" CYTHON_VERSION="0.28.6"
+    - env: DISTRIB="ubuntu" PYTHON_VERSION="3.5"
            NUMPY_VERSION="1.11.0" SCIPY_VERSION="0.17.0"
            PILLOW_VERSION="4.0.0" COVERAGE=true
            SKLEARN_SITE_JOBLIB=1 JOBLIB_VERSION="0.11"
@@ -38,12 +38,12 @@ matrix:
             - libatlas-dev
     # Python 3.5 build without SITE_JOBLIB
     - env: DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="false"
-           NUMPY_VERSION="1.11.0" SCIPY_VERSION="0.17.0" CYTHON_VERSION="0.25.2"
+           NUMPY_VERSION="1.11.0" SCIPY_VERSION="0.17.0" CYTHON_VERSION="*"
            PILLOW_VERSION="4.0.0" COVERAGE=true
       if: type != cron
     # Python 3.5 build
     - env: DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="false"
-           NUMPY_VERSION="1.11.0" SCIPY_VERSION="0.17.0" CYTHON_VERSION="0.25.2"
+           NUMPY_VERSION="1.11.0" SCIPY_VERSION="0.17.0" CYTHON_VERSION="*"
            PILLOW_VERSION="4.0.0" COVERAGE=true
            SKLEARN_SITE_JOBLIB=1 JOBLIB_VERSION="0.11"
       if: type != cron

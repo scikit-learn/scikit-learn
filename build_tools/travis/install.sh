@@ -79,7 +79,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # and scipy
     virtualenv --system-site-packages --python=python3 testvenv
     source testvenv/bin/activate
-    pip install pytest pytest-cov cython==$CYTHON_VERSION joblib==$JOBLIB_VERSION
+    pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
 
 elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     make_conda python=3.7
