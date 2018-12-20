@@ -37,7 +37,7 @@ text = fetch_20newsgroups(subset='train').data[:1000]
 print("="*80 + '\n#' + "    Text vectorizers benchmark" + '\n' + '='*80 + '\n')
 print("Using a subset of the 20 newsrgoups dataset ({} documents)."
       .format(len(text)))
-print("This benchmarks runs in ~2 min ...")
+print("This benchmarks runs in ~1 min ...")
 
 res = []
 
@@ -55,7 +55,7 @@ for Vectorizer, (analyzer, ngram_range) in itertools.product(
     dt = timeit.repeat(run_vectorizer(Vectorizer, text, **params),
                        number=1,
                        repeat=n_repeat)
-    bench['time'] = "{:.2f} (+-{:.2f})".format(np.mean(dt), np.std(dt))
+    bench['time'] = "{:.3f} (+-{:.3f})".format(np.mean(dt), np.std(dt))
 
     mem_usage = memory_usage(run_vectorizer(Vectorizer, text, **params))
 
