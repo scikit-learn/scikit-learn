@@ -590,6 +590,8 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
 
     Examples
     --------
+
+    >>> import numpy as np
     >>> from sklearn.metrics import zero_one_loss
     >>> y_pred = [1, 2, 3, 4]
     >>> y_true = [2, 2, 3, 4]
@@ -1628,6 +1630,8 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
 
     Examples
     --------
+
+    >>> import numpy as np
     >>> from sklearn.metrics import hamming_loss
     >>> y_pred = [1, 2, 3, 4]
     >>> y_true = [2, 2, 3, 4]
@@ -1716,9 +1720,11 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
 
     Examples
     --------
-    >>> log_loss(["spam", "ham", "ham", "spam"],  # doctest: +ELLIPSIS
-    ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
-    0.21616...
+
+    >>> from sklearn.metrics import log_loss
+    >>> print(log_loss(["spam", "ham", "ham", "spam"],  # doctest: +ELLIPSIS
+    ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]]))
+    0.21616187468057912
 
     References
     ----------
@@ -1859,6 +1865,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
 
     In the multiclass case:
 
+    >>> import numpy as np
     >>> X = np.array([[0], [1], [2], [3]])
     >>> Y = np.array([0, 1, 2, 3])
     >>> labels = np.array([0, 1, 2, 3])
