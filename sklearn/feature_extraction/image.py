@@ -339,6 +339,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     Examples
     --------
 
+    >>> import numpy as np
     >>> from sklearn.feature_extraction import image
     >>> one_image = np.arange(16).reshape((4, 4))
     >>> one_image
