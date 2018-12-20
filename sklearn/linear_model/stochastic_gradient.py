@@ -668,7 +668,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
-		Note: partial_fit often only performs a single iteration
 
         Parameters
         ----------
