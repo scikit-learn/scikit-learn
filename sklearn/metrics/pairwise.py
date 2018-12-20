@@ -1214,6 +1214,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     --------
     Without reduce_func:
 
+    >>> import numpy as np
     >>> X = np.random.RandomState(0).rand(5, 3)
     >>> D_chunk = next(pairwise_distances_chunked(X))
     >>> D_chunk  # doctest: +ELLIPSIS
