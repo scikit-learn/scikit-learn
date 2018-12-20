@@ -185,7 +185,7 @@ for another implementation::
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.Lasso(alpha=0.1)
-    >>> reg.fit([[0, 0], [1, 1]], [0, 1])
+    >>> reg.fit([[0, 0], [1, 1]], [0, 1])  # doctest: +NORMALIZE_WHITESPACE
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
        normalize=False, positive=False, precompute=False, random_state=None,
        selection='cyclic', tol=0.0001, warm_start=False)
@@ -639,7 +639,7 @@ Bayesian Ridge Regression is used for regression::
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
     >>> Y = [0., 1., 2., 3.]
     >>> reg = linear_model.BayesianRidge()
-    >>> reg.fit(X, Y)
+    >>> reg.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
     BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False, copy_X=True,
            fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06, n_iter=300,
            normalize=False, tol=0.001, verbose=False)

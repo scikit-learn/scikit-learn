@@ -2076,7 +2076,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     >>> X = [[0], [1]]
     >>> y = [-1, 1]
     >>> est = svm.LinearSVC(random_state=0)
-    >>> est.fit(X, y)
+    >>> est.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
          intercept_scaling=1, loss='squared_hinge', max_iter=1000,
          multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
@@ -2093,7 +2093,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     >>> Y = np.array([0, 1, 2, 3])
     >>> labels = np.array([0, 1, 2, 3])
     >>> est = svm.LinearSVC()
-    >>> est.fit(X, Y)
+    >>> est.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
          intercept_scaling=1, loss='squared_hinge', max_iter=1000,
          multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
