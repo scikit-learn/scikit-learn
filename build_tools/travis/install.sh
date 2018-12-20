@@ -31,6 +31,7 @@ make_conda() {
 	TO_INSTALL="$@"
     # Deactivate the travis-provided virtual environment and setup a
     # conda-based environment instead
+    # If Travvis has language=generic, deactivate does not exist. `|| :` will pass.
     deactivate || :
 
     # Install miniconda
