@@ -405,7 +405,8 @@ def test_multi_task_lasso_and_enet():
     assert 0 < clf.dual_gap_ < 1e-5
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
-    clf = MultiTaskElasticNet(alpha=1.0, tol=1e-8, max_iter=1)
+    clf = MultiTaskElasticNet(alpha=1.0, tol=1e-8, max_iter=1, warm_start=True)
+    clf.coef_ = None  # ensure that this is still supported with warm_start
     assert_warns_message(ConvergenceWarning, 'did not converge', clf.fit, X, Y)
 
 
