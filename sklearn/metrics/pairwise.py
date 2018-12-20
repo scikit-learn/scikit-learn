@@ -106,8 +106,17 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None,
         to be any format. False means that a sparse matrix input will
         raise an error.
 
-    force_all_finite : bool
-        Whether to raise an error on np.inf and np.nan in X (or Y if it exists)
+    force_all_finite : boolean or 'allow-nan', (default=True)
+        Whether to raise an error on np.inf and np.nan in array. The
+        possibilities are:
+
+        - True: Force all values of array to be finite.
+        - False: accept both np.inf and np.nan in array.
+        - 'allow-nan': accept only np.nan values in array. Values cannot
+          be infinite.
+
+        .. versionadded:: 0.20
+           ``force_all_finite`` accepts the string ``'allow-nan'``.
 
     copy : bool
         Whether a forced copy will be triggered. If copy=False, a copy might
@@ -356,10 +365,6 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     force_all_finite = 'allow-nan' if is_scalar_nan(missing_values) else True
     X, Y = check_pairwise_arrays(X, Y, accept_sparse=False,
                                  force_all_finite=force_all_finite, copy=copy)
-    if (np.any(np.isinf(X)) or
-            (Y is not X and np.any(np.isinf(Y)))):
-        raise ValueError(
-            "+/- Infinite values are not allowed.")
 
     # Get missing mask for X and Y.T
     mask_X = _get_mask(X, missing_values)
