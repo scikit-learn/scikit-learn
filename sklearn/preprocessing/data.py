@@ -258,7 +258,6 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> from sklearn.preprocessing import MinMaxScaler
-    >>>
     >>> data = [[-1, 2], [-0.5, 6], [0, 10], [1, 18]]
     >>> scaler = MinMaxScaler()
     >>> print(scaler.fit(data))
@@ -1286,6 +1285,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     Examples
     --------
+
+    >>> import numpy as np
     >>> X = np.arange(6).reshape(3, 2)
     >>> X
     array([[0, 1],
@@ -1939,6 +1940,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     Examples
     --------
+
     >>> import numpy as np
     >>> from sklearn.preprocessing import QuantileTransformer
     >>> rng = np.random.RandomState(0)
@@ -2336,6 +2338,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
 
     Examples
     --------
+
     >>> import numpy as np
     >>> from sklearn.preprocessing import quantile_transform
     >>> rng = np.random.RandomState(0)
@@ -2418,6 +2421,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
     Examples
     --------
+
     >>> import numpy as np
     >>> from sklearn.preprocessing import PowerTransformer
     >>> pt = PowerTransformer()
@@ -2626,6 +2630,7 @@ def power_transform(X, method='box-cox', standardize=True, copy=True):
 
     Examples
     --------
+
     >>> import numpy as np
     >>> from sklearn.preprocessing import power_transform
     >>> data = [[1, 2], [3, 2], [4, 5]]
