@@ -764,7 +764,8 @@ class OrdinalEncoder(_BaseEncoder):
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
     ... # doctest: +ELLIPSIS
-    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>)
+    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
+                   force_all_finite=False)
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> enc.transform([['Female', 3], ['Male', 1]])
