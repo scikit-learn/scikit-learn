@@ -737,6 +737,16 @@ class OrdinalEncoder(_BaseEncoder):
     dtype : number type, default np.float64
         Desired dtype of output.
 
+    force_all_finite : boolean or 'allow-nan', (default=False)
+        Whether to raise an error on np.inf and np.nan in array. The
+        possibilities are:
+
+        - True: Force all values of array to be finite.
+        - False: accept both np.inf and np.nan in array.
+        - 'allow-nan': accept only np.nan values in array. Values cannot
+          be infinite.
+
+
     Attributes
     ----------
     categories_ : list of arrays
@@ -773,9 +783,11 @@ class OrdinalEncoder(_BaseEncoder):
       between 0 and n_classes-1.
     """
 
-    def __init__(self, categories='auto', dtype=np.float64):
+    def __init__(self, categories='auto', dtype=np.float64,
+                 force_all_finite=False):
         self.categories = categories
         self.dtype = dtype
+        self.force_all_finite = force_all_finite
 
     def fit(self, X, y=None):
         """Fit the OrdinalEncoder to X.
@@ -793,7 +805,7 @@ class OrdinalEncoder(_BaseEncoder):
         # base classes uses _categories to deal with deprecations in
         # OneHoteEncoder: can be removed once deprecations are removed
         self._categories = self.categories
-        self._fit(X, force_all_finite=False)
+        self._fit(X, force_all_finite=self.force_all_finite)
 
         return self
 
