@@ -8,7 +8,7 @@
 #          Lars Buitinck
 #          Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
-from __future__ import division
+
 import itertools
 from functools import partial
 import warnings
@@ -295,8 +295,8 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     Computes the euclidean distance between each pair of samples (rows) in X
     and Y, where Y=X is assumed if Y=None.
     When calculating the distance between a pair of samples, this formulation
-    essentially zero-weights feature coordinates with a missing value in either
-    sample and scales up the weight of the remaining coordinates:
+    zero-weights feature coordinates with a missing value in either sample and
+    scales up the weight of the remaining coordinates:
 
         dist(x,y) = sqrt(weight * sq. distance from non-missing coordinates)
         where,
@@ -1471,7 +1471,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
     - From scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
       'manhattan']. These metrics support sparse matrix
       inputs.
-      Also, ['masked_euclidean'] but it does not yet support sparse matrices.
+      ['masked_euclidean'] but it does not yet support sparse matrices.
 
     - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
