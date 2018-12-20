@@ -32,12 +32,12 @@ def run_vectorizer(Vectorizer, X, **params):
     return f
 
 
-text = fetch_20newsgroups(subset='train').data
+text = fetch_20newsgroups(subset='train').data[:1000]
 
 print("="*80 + '\n#' + "    Text vectorizers benchmark" + '\n' + '='*80 + '\n')
 print("Using a subset of the 20 newsrgoups dataset ({} documents)."
       .format(len(text)))
-print("This benchmarks runs in ~20 min ...")
+print("This benchmarks runs in ~2 min ...")
 
 res = []
 
@@ -45,7 +45,6 @@ for Vectorizer, (analyzer, ngram_range) in itertools.product(
             [CountVectorizer, TfidfVectorizer, HashingVectorizer],
             [('word', (1, 1)),
              ('word', (1, 2)),
-             ('word', (1, 4)),
              ('char', (4, 4)),
              ('char_wb', (4, 4))
              ]):
