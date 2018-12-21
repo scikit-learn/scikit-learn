@@ -144,7 +144,6 @@ boolean mask array or callable
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.compose import ColumnTransformer
     >>> from sklearn.preprocessing import Normalizer
     >>> ct = ColumnTransformer(
