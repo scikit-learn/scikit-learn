@@ -196,6 +196,8 @@ then submit a "pull request" (PR):
 
         $ pip install --editable .
 
+    for more details about advanced installation, see the Building from source section :ref:`install_bleeding_edge`.
+
  5. Create a branch to hold your changes::
 
         $ git checkout -b my-feature
