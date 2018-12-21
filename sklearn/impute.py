@@ -135,8 +135,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         - If add_indicator=True.
 
     add_indicator : boolean, optional (default=False)
-        If True, a MissingIndicator transform will stack into output
-        of the imputer's transform.
+        If True, a `MissingIndicator` transform will stack into output
+        of the imputer's transform. That allowing a predictive estimator
+        to account for missingness.
 
     Attributes
     ----------
