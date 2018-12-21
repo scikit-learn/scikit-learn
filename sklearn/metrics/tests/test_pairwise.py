@@ -612,7 +612,7 @@ def test_masked_euclidean_distances_infinite_values(X, Y):
     (np.array([[-1, 1], [-1, 0]]), np.sqrt(2), -1),
     (np.array([[0, -1], [1, -1]]), np.sqrt(2), -1)
 ])
-def test_masked_euclidean_distances(X, X_diag, missing_value):
+def test_masked_euclidean_distances_2x2(X, X_diag, missing_value):
     exp_dist = np.array([[0., X_diag], [X_diag, 0]])
 
     dist = masked_euclidean_distances(X, missing_values=missing_value)
@@ -644,8 +644,7 @@ def test_masked_euclidean_distances_complete_nan(missing_value):
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, -1])
-def test_masked_euclidean_distances_symmetry(missing_value):
-    # Check with pairs of matrices with missing values
+def test_masked_euclidean_distances(missing_value):
     X = np.array([[1., missing_value, 3., 4., 2.],
                   [missing_value, 4., 6., 1., missing_value],
                   [3., missing_value, missing_value, missing_value, 1.]])
@@ -654,10 +653,29 @@ def test_masked_euclidean_distances_symmetry(missing_value):
                   [missing_value, missing_value, 5., 4., 7.],
                   [missing_value, missing_value, missing_value, 4., 5.]])
 
+    # Check for symmetry
     D1 = masked_euclidean_distances(X, Y,  missing_values=missing_value)
     D2 = masked_euclidean_distances(Y, X, missing_values=missing_value)
 
     assert_almost_equal(D1, D2.T)
+
+    # Check with explicit formula and squared=True
+    assert_array_almost_equal(
+        masked_euclidean_distances(
+            X[:1], Y[:1], squared=True, missing_values=missing_value),
+        [[5.0 / 2.0 * ((7 - 3)**2 + (2 - 2)**2)]])
+
+    # Check when Y = X is explicitly passed
+    D3 = masked_euclidean_distances(X, missing_values=missing_value)
+    D4 = masked_euclidean_distances(X, X, missing_values=missing_value)
+    D5 = masked_euclidean_distances(X, X.copy(), missing_values=missing_value)
+    assert_array_almost_equal(D3, D4)
+    assert_array_almost_equal(D4, D5)
+
+    # Check copy = True against copy = False
+    D6 = masked_euclidean_distances(X, Y, copy=True)
+    D7 = masked_euclidean_distances(X, Y, copy=False)
+    assert_array_almost_equal(D6, D7)
 
 
 def test_cosine_distances():
