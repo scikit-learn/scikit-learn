@@ -16,8 +16,6 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_raise_message
@@ -34,7 +32,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SelectKBest
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
-from sklearn.utils import check_random_state, hash
+from sklearn.utils import check_random_state
+from sklearn.utils import _joblib
 from sklearn.preprocessing import FunctionTransformer
 
 from scipy.sparse import csc_matrix, csr_matrix
@@ -227,7 +226,7 @@ class DummySizeEstimator(BaseEstimator):
 
     def fit(self, X, y):
         self.training_size_ = X.shape[0]
-        self.training_hash_ = hash(X)
+        self.training_hash_ = _joblib.hash(X)
 
 
 def test_bootstrap_samples():
@@ -434,7 +433,7 @@ def test_error():
                   BaggingClassifier(base, max_features="foobar").fit, X, y)
 
     # Test support of decision_function
-    assert_false(hasattr(BaggingClassifier(base).fit(X, y), 'decision_function'))
+    assert not hasattr(BaggingClassifier(base).fit(X, y), 'decision_function')
 
 
 def test_parallel_classification():
@@ -548,19 +547,19 @@ def test_base_estimator():
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 
-    assert_true(isinstance(ensemble.base_estimator_, DecisionTreeClassifier))
+    assert isinstance(ensemble.base_estimator_, DecisionTreeClassifier)
 
     ensemble = BaggingClassifier(DecisionTreeClassifier(),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 
-    assert_true(isinstance(ensemble.base_estimator_, DecisionTreeClassifier))
+    assert isinstance(ensemble.base_estimator_, DecisionTreeClassifier)
 
     ensemble = BaggingClassifier(Perceptron(tol=1e-3),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 
-    assert_true(isinstance(ensemble.base_estimator_, Perceptron))
+    assert isinstance(ensemble.base_estimator_, Perceptron)
 
     # Regression
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
@@ -571,18 +570,18 @@ def test_base_estimator():
                                 n_jobs=3,
                                 random_state=0).fit(X_train, y_train)
 
-    assert_true(isinstance(ensemble.base_estimator_, DecisionTreeRegressor))
+    assert isinstance(ensemble.base_estimator_, DecisionTreeRegressor)
 
     ensemble = BaggingRegressor(DecisionTreeRegressor(),
                                 n_jobs=3,
                                 random_state=0).fit(X_train, y_train)
 
-    assert_true(isinstance(ensemble.base_estimator_, DecisionTreeRegressor))
+    assert isinstance(ensemble.base_estimator_, DecisionTreeRegressor)
 
     ensemble = BaggingRegressor(SVR(gamma='scale'),
                                 n_jobs=3,
                                 random_state=0).fit(X_train, y_train)
-    assert_true(isinstance(ensemble.base_estimator_, SVR))
+    assert isinstance(ensemble.base_estimator_, SVR)
 
 
 def test_bagging_with_pipeline():
@@ -590,8 +589,7 @@ def test_bagging_with_pipeline():
                                                 DecisionTreeClassifier()),
                                   max_features=2)
     estimator.fit(iris.data, iris.target)
-    assert_true(isinstance(estimator[0].steps[-1][1].random_state,
-                           int))
+    assert isinstance(estimator[0].steps[-1][1].random_state, int)
 
 
 class DummyZeroEstimator(BaseEstimator):
@@ -884,3 +882,16 @@ def test_bagging_classifier_with_missing_inputs():
     assert_raises(ValueError, pipeline.fit, X, y)
     bagging_classifier = BaggingClassifier(pipeline)
     assert_raises(ValueError, bagging_classifier.fit, X, y)
+
+
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+def test_bagging_small_max_features():
+    # Check that Bagging estimator can accept low fractional max_features
+
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+
+    bagging = BaggingClassifier(LogisticRegression(),
+                                max_features=0.3, random_state=1)
+    bagging.fit(X, y)

@@ -29,7 +29,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_less_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
@@ -805,9 +804,9 @@ def test_min_impurity_split():
         # impurity 1e-7
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
-        assert_true(est.min_impurity_split is None,
-                    "Failed, min_impurity_split = {0} > 1e-7".format(
-                        est.min_impurity_split))
+        assert est.min_impurity_split is None, (
+            "Failed, min_impurity_split = {0} > 1e-7".format(
+                est.min_impurity_split))
         try:
             assert_warns(DeprecationWarning, est.fit, X, y)
         except AssertionError:
@@ -1210,13 +1209,11 @@ def test_class_weight_errors(name):
 
 def test_max_leaf_nodes():
     # Test greedy trees with max_depth + 1 leafs.
-    from sklearn.tree._tree import TREE_LEAF
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
-        tree = est.tree_
-        assert_equal((tree.children_left == TREE_LEAF).sum(), k + 1)
+        assert_equal(est.get_n_leaves(), k + 1)
 
         # max_leaf_nodes in (0, 1) should raise ValueError
         est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
@@ -1233,8 +1230,7 @@ def test_max_leaf_nodes_max_depth():
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
-        tree = est.tree_
-        assert_greater(tree.max_depth, 1)
+        assert_equal(est.get_depth(), 1)
 
 
 def test_arrays_persist():
@@ -1245,8 +1241,8 @@ def test_arrays_persist():
         value = getattr(DecisionTreeClassifier().fit([[0], [1]],
                                                      [0, 1]).tree_, attr)
         # if pointing to freed memory, contents may be arbitrary
-        assert_true(-3 <= value.flat[0] < 3,
-                    'Array points to arbitrary memory')
+        assert -3 <= value.flat[0] < 3, \
+            'Array points to arbitrary memory'
 
 
 def test_only_constant_features():

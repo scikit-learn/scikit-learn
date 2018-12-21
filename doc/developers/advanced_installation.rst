@@ -86,7 +86,7 @@ builds the extension in place and creates a link to the development directory
 .. note::
 
     This is fundamentally similar to using the command ``python setup.py develop``
-    (see `the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_).
+    (see `the setuptool docs <https://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_).
     It is however preferred to use pip.
 
 .. note::
@@ -180,10 +180,28 @@ The above commands assume that you have the Python installation folder in your
 PATH environment variable.
 
 
-32-bit Python
+Python >= 3.5
 -------------
 
-For 32-bit Python use Microsoft Visual C++ Express 2010.
+For Python versions as of 3.5, you need `Build Tools for Visual Studio 2017
+<https://visualstudio.microsoft.com/de/downloads/>`_.
+
+For 64-bit Python, configure the build environment with::
+
+    SET DISTUTILS_USE_SDK=1
+    "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+
+And build scikit-learn from this environment::
+
+    python setup.py install
+
+Replace ``x64`` by ``x86`` to build for 32-bit Python.
+
+
+32-bit Python (<= 3.4)
+----------------------
+
+For 32-bit Python versions up to 3.4 use Microsoft Visual C++ Express 2010.
 
 Once installed you should be able to build scikit-learn without any
 particular configuration by running the following command in the scikit-learn
@@ -192,10 +210,10 @@ folder::
    python setup.py install
 
 
-64-bit Python
--------------
+64-bit Python (<= 3.4)
+----------------------
 
-For the 64-bit architecture, you either need the full Visual Studio or
+For 64-bit Python versions up to 3.4, you either need the full Visual Studio or
 the free Windows SDKs that can be downloaded from the links below.
 
 The Windows SDKs include the MSVC compilers both for 32 and 64-bit
@@ -223,7 +241,7 @@ Finally you can build scikit-learn in the same ``cmd`` console::
 
     python setup.py install
 
-Replace ``/x64`` by ``/x86``  to build for 32-bit Python instead of 64-bit
+Replace ``/x64`` by ``/x86`` to build for 32-bit Python instead of 64-bit
 Python.
 
 

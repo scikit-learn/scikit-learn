@@ -197,7 +197,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self.error_ = E
         return self
 
-    def transform(self, X, ridge_alpha='deprecated'):
+    def transform(self, X):
         """Least Squares projection of the data onto the sparse components.
 
         To avoid instability issues in case the system is under-determined,
@@ -213,14 +213,6 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
-        ridge_alpha : float, default: 0.01
-            Amount of ridge shrinkage to apply in order to improve
-            conditioning.
-
-            .. deprecated:: 0.19
-               This parameter will be removed in 0.21.
-               Specify ``ridge_alpha`` in the ``SparsePCA`` constructor.
-
         Returns
         -------
         X_new array, shape (n_samples, n_components)
@@ -229,20 +221,11 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'components_')
 
         X = check_array(X)
-        if ridge_alpha != 'deprecated':
-            warnings.warn("The ridge_alpha parameter on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21. "
-                          "Specify ridge_alpha in the SparsePCA constructor.",
-                          DeprecationWarning)
-            if ridge_alpha is None:
-                ridge_alpha = self.ridge_alpha
-        else:
-            ridge_alpha = self.ridge_alpha
 
         if self.normalize_components:
             X = X - self.mean_
 
-        U = ridge_regression(self.components_.T, X.T, ridge_alpha,
+        U = ridge_regression(self.components_.T, X.T, self.ridge_alpha,
                              solver='cholesky')
 
         if not self.normalize_components:

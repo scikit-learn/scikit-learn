@@ -81,7 +81,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     >>> from sklearn.neural_network import BernoulliRBM
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = BernoulliRBM(n_components=2)
-    >>> model.fit(X)
+    >>> model.fit(X)  # doctest: +NORMALIZE_WHITESPACE
     BernoulliRBM(batch_size=10, learning_rate=0.1, n_components=2, n_iter=10,
            random_state=None, verbose=0)
 
@@ -90,7 +90,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
     [1] Hinton, G. E., Osindero, S. and Teh, Y. A fast learning algorithm for
         deep belief nets. Neural Computation 18, pp 1527-1554.
-        http://www.cs.toronto.edu/~hinton/absps/fastnc.pdf
+        https://www.cs.toronto.edu/~hinton/absps/fastnc.pdf
 
     [2] Tieleman, T. Training Restricted Boltzmann Machines using
         Approximations to the Likelihood Gradient. International Conference

@@ -21,13 +21,14 @@ import numpy as np
 from .base import _fetch_remote
 from .base import get_data_home
 from .base import RemoteFileMetadata
+from ..externals import six
 from ..utils import Bunch
-from ..externals import joblib, six
+from ..utils import _joblib
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
 
 # The original data can be found at:
-# http://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data.gz
+# https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data.gz
 ARCHIVE = RemoteFileMetadata(
     filename='kddcup99_data',
     url='https://ndownloader.figshare.com/files/5976045',
@@ -35,7 +36,7 @@ ARCHIVE = RemoteFileMetadata(
               '343652c9db428893e7494f837b274292'))
 
 # The original data can be found at:
-# http://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data_10_percent.gz
+# https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data_10_percent.gz
 ARCHIVE_10_PERCENT = RemoteFileMetadata(
     filename='kddcup99_10_data',
     url='https://ndownloader.figshare.com/files/5976042',
@@ -204,14 +205,7 @@ def _fetch_brute_kddcup99(data_home=None,
     """
 
     data_home = get_data_home(data_home=data_home)
-    if sys.version_info[0] == 3:
-        # The zlib compression format use by joblib is not compatible when
-        # switching from Python 2 to Python 3, let us use a separate folder
-        # under Python 3:
-        dir_suffix = "-py3"
-    else:
-        # Backward compat for Python 2 users
-        dir_suffix = ""
+    dir_suffix = "-py3"
 
     if percent10:
         kddcup_dir = join(data_home, "kddcup99_10" + dir_suffix)
@@ -293,8 +287,8 @@ def _fetch_brute_kddcup99(data_home=None,
         # (error: 'Incorrect data length while decompressing[...] the file
         #  could be corrupted.')
 
-        joblib.dump(X, samples_path, compress=0)
-        joblib.dump(y, targets_path, compress=0)
+        _joblib.dump(X, samples_path, compress=0)
+        _joblib.dump(y, targets_path, compress=0)
     elif not available:
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
@@ -302,8 +296,8 @@ def _fetch_brute_kddcup99(data_home=None,
     try:
         X, y
     except NameError:
-        X = joblib.load(samples_path)
-        y = joblib.load(targets_path)
+        X = _joblib.load(samples_path)
+        y = _joblib.load(targets_path)
 
     return Bunch(data=X, target=y)
 

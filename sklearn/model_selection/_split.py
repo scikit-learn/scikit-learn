@@ -18,6 +18,7 @@ from itertools import chain, combinations
 from math import ceil, floor
 import numbers
 from abc import ABCMeta, abstractmethod
+from inspect import signature
 
 import numpy as np
 
@@ -27,7 +28,7 @@ from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
-from ..utils.fixes import signature, comb
+from ..utils.fixes import comb
 from ..utils.fixes import _Iterable as Iterable
 from ..base import _pprint
 
@@ -536,6 +537,32 @@ class GroupKFold(_BaseKFold):
         for f in range(self.n_splits):
             yield np.where(indices == f)[0]
 
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape (n_samples,), optional
+            The target variable for supervised learning problems.
+
+        groups : array-like, with shape (n_samples,)
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        return super(GroupKFold, self).split(X, y, groups)
+
 
 class StratifiedKFold(_BaseKFold):
     """Stratified K-Folds cross-validator
@@ -768,7 +795,7 @@ class TimeSeriesSplit(_BaseKFold):
         y : array-like, shape (n_samples,)
             Always ignored, exists for compatibility.
 
-        groups : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,)
             Always ignored, exists for compatibility.
 
         Yields
@@ -860,13 +887,13 @@ class LeaveOneGroupOut(BaseCrossValidator):
 
         Parameters
         ----------
-        X : object, optional
+        X : object
             Always ignored, exists for compatibility.
 
-        y : object, optional
+        y : object
             Always ignored, exists for compatibility.
 
-        groups : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set. This 'groups' parameter must always be specified to
             calculate the number of splits, though the other parameters can be
@@ -881,6 +908,32 @@ class LeaveOneGroupOut(BaseCrossValidator):
             raise ValueError("The 'groups' parameter should not be None.")
         groups = check_array(groups, ensure_2d=False, dtype=None)
         return len(np.unique(groups))
+
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, of length n_samples, optional
+            The target variable for supervised learning problems.
+
+        groups : array-like, with shape (n_samples,)
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        return super(LeaveOneGroupOut, self).split(X, y, groups)
 
 
 class LeavePGroupsOut(BaseCrossValidator):
@@ -964,13 +1017,13 @@ class LeavePGroupsOut(BaseCrossValidator):
 
         Parameters
         ----------
-        X : object, optional
+        X : object
             Always ignored, exists for compatibility.
 
-        y : object, optional
+        y : object
             Always ignored, exists for compatibility.
 
-        groups : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set. This 'groups' parameter must always be specified to
             calculate the number of splits, though the other parameters can be
@@ -985,6 +1038,32 @@ class LeavePGroupsOut(BaseCrossValidator):
             raise ValueError("The 'groups' parameter should not be None.")
         groups = check_array(groups, ensure_2d=False, dtype=None)
         return int(comb(len(np.unique(groups)), self.n_groups, exact=True))
+
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, of length n_samples, optional
+            The target variable for supervised learning problems.
+
+        groups : array-like, with shape (n_samples,)
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        return super(LeavePGroupsOut, self).split(X, y, groups)
 
 
 class _RepeatedSplits(with_metaclass(ABCMeta)):
@@ -1430,6 +1509,38 @@ class GroupShuffleSplit(ShuffleSplit):
 
             yield train, test
 
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape (n_samples,), optional
+            The target variable for supervised learning problems.
+
+        groups : array-like, with shape (n_samples,)
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+
+        Notes
+        -----
+        Randomized CV splitters may return different results for each call of
+        split. You can make the results identical by setting ``random_state``
+        to an integer.
+        """
+        return super(GroupShuffleSplit, self).split(X, y, groups)
+
 
 def _approximate_mode(class_counts, n_draws, rng):
     """Computes approximate mode of multivariate hypergeometric.
@@ -1683,23 +1794,25 @@ def _validate_shuffle_split_init(test_size, train_size):
 
     if test_size is not None:
         if np.asarray(test_size).dtype.kind == 'f':
-            if test_size >= 1.:
+            if test_size >= 1. or test_size <= 0:
                 raise ValueError(
-                    'test_size=%f should be smaller '
-                    'than 1.0 or be an integer' % test_size)
+                    'test_size=%f should be in the (0, 1) range '
+                    'or be an integer' % test_size)
         elif np.asarray(test_size).dtype.kind != 'i':
             # int values are checked during split based on the input
             raise ValueError("Invalid value for test_size: %r" % test_size)
 
     if train_size is not None:
         if np.asarray(train_size).dtype.kind == 'f':
-            if train_size >= 1.:
-                raise ValueError("train_size=%f should be smaller "
-                                 "than 1.0 or be an integer" % train_size)
+            if train_size >= 1. or train_size <= 0:
+                raise ValueError('train_size=%f should be in the (0, 1) range '
+                                 'or be an integer' % train_size)
             elif (np.asarray(test_size).dtype.kind == 'f' and
-                    (train_size + test_size) > 1.):
+                    (
+                        (train_size + test_size) > 1. or
+                        (train_size + test_size) < 0)):
                 raise ValueError('The sum of test_size and train_size = %f, '
-                                 'should be smaller than 1.0. Reduce '
+                                 'should be in the (0, 1) range. Reduce '
                                  'test_size and/or train_size.' %
                                  (train_size + test_size))
         elif np.asarray(train_size).dtype.kind != 'i':
@@ -1713,16 +1826,22 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
     size of the data (n_samples)
     """
     if (test_size is not None and
-            np.asarray(test_size).dtype.kind == 'i' and
-            test_size >= n_samples):
-        raise ValueError('test_size=%d should be smaller than the number of '
-                         'samples %d' % (test_size, n_samples))
+            (np.asarray(test_size).dtype.kind == 'i' and
+                (test_size >= n_samples or test_size <= 0)) or
+            (np.asarray(test_size).dtype.kind == 'f' and
+                (test_size <= 0 or test_size >= 1))):
+        raise ValueError('test_size=%d should be either positive and smaller '
+                         'than the number of samples %d or a float in the '
+                         '(0,1) range' % (test_size, n_samples))
 
     if (train_size is not None and
-            np.asarray(train_size).dtype.kind == 'i' and
-            train_size >= n_samples):
-        raise ValueError("train_size=%d should be smaller than the number of"
-                         " samples %d" % (train_size, n_samples))
+            (np.asarray(train_size).dtype.kind == 'i' and
+                (train_size >= n_samples or train_size <= 0)) or
+            (np.asarray(train_size).dtype.kind == 'f' and
+                (train_size <= 0 or train_size >= 1))):
+        raise ValueError('train_size=%d should be either positive and smaller '
+                         'than the number of samples %d or a float in the '
+                         '(0,1) range' % (train_size, n_samples))
 
     if test_size == "default":
         test_size = 0.1
@@ -1913,8 +2032,8 @@ def check_cv(cv='warn', y=None, classifier=False):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if classifier is True and ``y`` is either
         binary or multiclass, :class:`StratifiedKFold` is used. In all other

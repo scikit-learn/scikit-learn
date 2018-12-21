@@ -31,6 +31,7 @@ from ..externals.six import string_types
 
 
 __ALL__ = [
+    "max_error",
     "mean_absolute_error",
     "mean_squared_error",
     "mean_squared_log_error",
@@ -514,19 +515,19 @@ def r2_score(y_true, y_pred, sample_weight=None,
     0.948...
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-    >>> r2_score(y_true, y_pred, multioutput='variance_weighted')
-    ... # doctest: +ELLIPSIS
+    >>> r2_score(y_true, y_pred,
+    ...          multioutput='variance_weighted') # doctest: +ELLIPSIS
     0.938...
-    >>> y_true = [1,2,3]
-    >>> y_pred = [1,2,3]
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [1, 2, 3]
     >>> r2_score(y_true, y_pred)
     1.0
-    >>> y_true = [1,2,3]
-    >>> y_pred = [2,2,2]
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [2, 2, 2]
     >>> r2_score(y_true, y_pred)
     0.0
-    >>> y_true = [1,2,3]
-    >>> y_pred = [3,2,1]
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [3, 2, 1]
     >>> r2_score(y_true, y_pred)
     -3.0
     """
@@ -573,3 +574,37 @@ def r2_score(y_true, y_pred, sample_weight=None,
         avg_weights = multioutput
 
     return np.average(output_scores, weights=avg_weights)
+
+
+def max_error(y_true, y_pred):
+    """
+    max_error metric calculates the maximum residual error.
+
+    Read more in the :ref:`User Guide <max_error>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape = (n_samples)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape = (n_samples)
+        Estimated target values.
+
+    Returns
+    -------
+    max_error : float
+        A positive floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import max_error
+    >>> y_true = [3, 2, 7, 1]
+    >>> y_pred = [4, 2, 7, 1]
+    >>> max_error(y_true, y_pred)
+    1
+    """
+    y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None)
+    check_consistent_length(y_true, y_pred)
+    if y_type == 'continuous-multioutput':
+        raise ValueError("Multioutput not supported in max_error")
+    return np.max(np.abs(y_true - y_pred))
