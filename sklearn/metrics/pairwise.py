@@ -381,8 +381,8 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     X[mask_X] = 0
 
     # Calculate distances
-    distances = ((np.dot(X * X, not_YT) - 2 * (np.dot(X, YT)) +
-                  np.dot(not_X, YT * YT)))
+    distances = (np.dot(X * X, not_YT) - 2 * (np.dot(X, YT)) +
+                 np.dot(not_X, YT * YT))
 
     non_missing_coords = np.dot(not_X, not_YT)
     non_missing_coords_mask = non_missing_coords != 0
