@@ -27,6 +27,11 @@ then
 	ccache --max-size 100M --show-stats
 fi
 
+if [ $TRAVIS_OS_NAME = "osx" ]
+then
+    which gcc
+    gcc --version
+
 make_conda() {
 	TO_INSTALL="$@"
     # Deactivate the travis-provided virtual environment and setup a
