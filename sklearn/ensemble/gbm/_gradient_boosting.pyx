@@ -4,8 +4,11 @@ cimport cython
 import numpy as np
 cimport numpy as np
 
+ctypedef fused float_or_double:
+    float
+    double
 
-def _update_raw_predictions__(float [:] leaves_values, list samples_indices_at_leaf, np.float_t [:] raw_predictions):
+def _update_raw_predictions__(float [:] leaves_values, list samples_indices_at_leaf, float_or_double [:] raw_predictions):
     """Update raw_predictions by reading the predictions of the ith tree
     directly form the leaves.
 
