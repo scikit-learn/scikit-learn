@@ -160,6 +160,11 @@ Support for Python 3.4 and below has been officially dropped.
   and now it returns NaN and raises :class:`exceptions.UndefinedMetricWarning`.
   :issue:`12855` by :user:`Pawel Sendyk <psendyk>.`
 
+- |Feature| Added the :func:`metrics.masked_euclidean_distances` metirc, which
+  calculates euclidean distances in the presence of missing values. This
+  metric can be used with :class:`neighbors.NearestNeighbors`.
+  by :user:`Thomas Fan <thomasjpfan>` and :user:`Ashim Bhattarai <ashimb9>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
