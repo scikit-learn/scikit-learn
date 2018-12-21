@@ -163,7 +163,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |Feature| Added the :func:`metrics.masked_euclidean_distances` metirc, which
   calculates euclidean distances in the presence of missing values. This
   metric can be used with :class:`neighbors.NearestNeighbors`.
-  by :user:`Thomas Fan <thomasjpfan>` and :user:`Ashim Bhattarai <ashimb9>`.
+  by :user:`Ashim Bhattarai <ashimb9>` and :user:`Thomas Fan <thomasjpfan>`.
 
 :mod:`sklearn.model_selection`
 ..............................
