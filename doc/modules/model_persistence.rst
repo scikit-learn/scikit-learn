@@ -35,25 +35,25 @@ persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html
   >>> y[0]
   0
 
-In the specific case of scikit-learn, it may be better to use
-joblib's replacement of pickle (``joblib.dump`` & ``joblib.load``),
-which is more efficient on objects that carry large numpy arrays internally as
-is often the case for fitted scikit-learn estimators, but can only pickle to the
-disk and not to a string::
+In the specific case of scikit-learn, it may be better to use joblib's
+replacement of pickle (``dump`` & ``load``), which is more efficient on
+objects that carry large numpy arrays internally as is often the case for
+fitted scikit-learn estimators, but can only pickle to the disk and not to a
+string::
 
-  >>> from sklearn.externals import joblib
-  >>> joblib.dump(clf, 'filename.joblib') # doctest: +SKIP
+  >>> from joblib import dump, load
+  >>> dump(clf, 'filename.joblib') # doctest: +SKIP
 
 Later you can load back the pickled model (possibly in another Python process)
 with::
 
-  >>> clf = joblib.load('filename.joblib') # doctest:+SKIP
+  >>> clf = load('filename.joblib') # doctest:+SKIP
 
 .. note::
 
-   ``joblib.dump`` and ``joblib.load`` functions also accept file-like object
+   ``dump`` and ``load`` functions also accept file-like object
    instead of filenames. More information on data persistence with Joblib is
-   available `here <https://pythonhosted.org/joblib/persistence.html>`_.
+   available `here <https://joblib.readthedocs.io/en/latest/persistence.html>`_.
 
 .. _persistence_limitations:
 
@@ -87,4 +87,4 @@ another architecture is not supported.
 
 If you want to know more about these issues and explore other possible
 serialization methods, please refer to this
-`talk by Alex Gaynor <http://pyvideo.org/video/2566/pickles-are-for-delis-not-software>`_.
+`talk by Alex Gaynor <https://pyvideo.org/video/2566/pickles-are-for-delis-not-software>`_.

@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from scipy import optimize, sparse
+from scipy import optimize
 
 from ..base import BaseEstimator, RegressorMixin
 from .base import LinearModel
@@ -48,7 +48,6 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
         Returns the derivative of the Huber loss with respect to each
         coefficient, intercept and the scale as a vector.
     """
-    X_is_sparse = sparse.issparse(X)
     _, n_features = X.shape
     fit_intercept = (n_features + 2 == w.shape[0])
     if fit_intercept:
@@ -220,7 +219,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     .. [1] Peter J. Huber, Elvezio M. Ronchetti, Robust Statistics
            Concomitant scale estimates, pg 172
     .. [2] Art B. Owen (2006), A robust hybrid of lasso and ridge regression.
-           http://statweb.stanford.edu/~owen/reports/hhu.pdf
+           https://statweb.stanford.edu/~owen/reports/hhu.pdf
     """
 
     def __init__(self, epsilon=1.35, max_iter=100, alpha=0.0001,

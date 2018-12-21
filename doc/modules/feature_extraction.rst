@@ -207,7 +207,7 @@ otherwise the features will not be mapped evenly to the columns.
 
  * Kilian Weinberger, Anirban Dasgupta, John Langford, Alex Smola and
    Josh Attenberg (2009). `Feature hashing for large scale multitask learning
-   <http://alex.smola.org/papers/2009/Weinbergeretal09.pdf>`_. Proc. ICML.
+   <https://alex.smola.org/papers/2009/Weinbergeretal09.pdf>`_. Proc. ICML.
 
  * `MurmurHash3 <https://github.com/aappleby/smhasher>`_.
 
@@ -409,7 +409,7 @@ identify and warn about some kinds of inconsistencies.
 
     .. [NQY18] J. Nothman, H. Qin and R. Yurchak (2018).
                `"Stop Word Lists in Free Open-source Software Packages"
-               <http://aclweb.org/anthology/W18-2502>`__.
+               <https://aclweb.org/anthology/W18-2502>`__.
                In *Proc. Workshop for NLP Open Source Software*.
 
 .. _tfidf:
@@ -673,7 +673,7 @@ The output is not shown here.
 
 For an introduction to Unicode and character encodings in general,
 see Joel Spolsky's `Absolute Minimum Every Software Developer Must Know
-About Unicode <http://www.joelonsoftware.com/articles/Unicode.html>`_.
+About Unicode <https://www.joelonsoftware.com/articles/Unicode.html>`_.
 
 .. _`ftfy`: https://github.com/LuminosoInsight/python-ftfy
 
@@ -932,7 +932,7 @@ Some tips and tricks:
     scikit-learn codebase, but can be added by customizing either the
     tokenizer or the analyzer.
     Here's a ``CountVectorizer`` with a tokenizer and lemmatizer using
-    `NLTK <http://www.nltk.org>`_::
+    `NLTK <https://www.nltk.org/>`_::
 
         >>> from nltk import word_tokenize          # doctest: +SKIP
         >>> from nltk.stem import WordNetLemmatizer # doctest: +SKIP

@@ -29,9 +29,9 @@ from ..utils import gen_batches
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils import Parallel
-from ..utils import delayed
-from ..utils import effective_n_jobs
+from ..utils._joblib import Parallel
+from ..utils._joblib import delayed
+from ..utils._joblib import effective_n_jobs
 from ..externals.six import string_types
 from ..exceptions import ConvergenceWarning
 from . import _k_means
@@ -850,7 +850,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     Attributes
     ----------
     cluster_centers_ : array, [n_clusters, n_features]
-        Coordinates of cluster centers
+        Coordinates of cluster centers. If the algorithm stops before fully
+        converging (see ``tol`` and ``max_iter``), these will not be
+        consistent with ``labels_``.
 
     labels_ :
         Labels of each point
@@ -901,11 +903,12 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     clustering algorithms available), but it falls in local minima. That's why
     it can be useful to restart it several times.
 
-    If the algorithm stops before fully converging (because of ``tol`` of
-    ``max_iter``), ``labels_`` and ``means_`` will not be consistent, i.e. the
-    ``means_`` will not be the means of the points in each cluster.
-    Also, the estimator will reassign ``labels_`` after the last iteration to
-    make ``labels_`` consistent with ``predict`` on the training set.
+    If the algorithm stops before fully converging (because of ``tol`` or
+    ``max_iter``), ``labels_`` and ``cluster_centers_`` will not be consistent,
+    i.e. the ``cluster_centers_`` will not be the means of the points in each
+    cluster. Also, the estimator will reassign ``labels_`` after the last
+    iteration to make ``labels_`` consistent with ``predict`` on the training
+    set.
 
     """
 
@@ -1447,7 +1450,7 @@ class MiniBatchKMeans(KMeans):
 
     Notes
     -----
-    See http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
+    See https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
 
     """
 
@@ -1556,7 +1559,7 @@ class MiniBatchKMeans(KMeans):
                 init_size=init_size)
 
             # Compute the label assignment on the init dataset
-            batch_inertia, centers_squared_diff = _mini_batch_step(
+            _mini_batch_step(
                 X_valid, sample_weight_valid,
                 x_squared_norms[validation_indices], cluster_centers,
                 weight_sums, old_center_buffer, False, distances=None,

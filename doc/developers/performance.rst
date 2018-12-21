@@ -40,7 +40,7 @@ this means trying to **replace any nested for loops by calls to equivalent
 Numpy array methods**. The goal is to avoid the CPU wasting time in the
 Python interpreter rather than crunching numbers to fit your statistical
 model. It's generally a good idea to consider NumPy and SciPy performance tips:
-http://scipy.github.io/old-wiki/pages/PerformanceTips
+https://scipy.github.io/old-wiki/pages/PerformanceTips
 
 Sometimes however an algorithm cannot be expressed efficiently in simple
 vectorized Numpy code. In this case, the recommended strategy is the
@@ -250,7 +250,7 @@ Memory usage profiling
 ======================
 
 You can analyze in detail the memory usage of any Python code with the help of
-`memory_profiler <https://pypi.python.org/pypi/memory_profiler>`_. First,
+`memory_profiler <https://pypi.org/project/memory_profiler/>`_. First,
 install the latest version::
 
     $ pip install -U memory_profiler
@@ -344,7 +344,7 @@ Using yep and google-perftools
 
 Easy profiling without special compilation options use yep:
 
-- https://pypi.python.org/pypi/yep
+- https://pypi.org/project/yep/
 - http://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
 
 .. note::
@@ -383,7 +383,7 @@ TODO: give a simple teaser example here.
 
 Checkout the official joblib documentation:
 
-- https://pythonhosted.org/joblib
+- https://joblib.readthedocs.io
 
 
 .. _warm-restarts:

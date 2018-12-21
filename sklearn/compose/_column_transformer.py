@@ -11,10 +11,11 @@ from __future__ import division
 from itertools import chain
 
 import numpy as np
+import warnings
 from scipy import sparse
 
 from ..base import clone, TransformerMixin
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 from ..externals import six
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
@@ -85,12 +86,11 @@ boolean mask array or callable
         estimator must support `fit` and `transform`.
 
     sparse_threshold : float, default = 0.3
-        If the transformed output consists of a mix of sparse and dense data,
-        it will be stacked as a sparse matrix if the density is lower than this
-        value. Use ``sparse_threshold=0`` to always return dense.
-        When the transformed output consists of all sparse or all dense data,
-        the stacked result will be sparse or dense, respectively, and this
-        keyword will be ignored.
+        If the output of the different transfromers contains sparse matrices,
+        these will be stacked as a sparse matrix if the overall density is
+        lower than this value. Use ``sparse_threshold=0`` to always return
+        dense.  When the transformed output consists of all dense data, the
+        stacked result will be dense, and this keyword will be ignored.
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
@@ -456,9 +456,7 @@ boolean mask array or callable
         Xs, transformers = zip(*result)
 
         # determine if concatenated output will be sparse or not
-        if all(sparse.issparse(X) for X in Xs):
-            self.sparse_output_ = True
-        elif any(sparse.issparse(X) for X in Xs):
+        if any(sparse.issparse(X) for X in Xs):
             nnz = sum(X.nnz if sparse.issparse(X) else X.size for X in Xs)
             total = sum(X.shape[0] * X.shape[1] if sparse.issparse(X)
                         else X.size for X in Xs)
@@ -512,7 +510,19 @@ boolean mask array or callable
         Xs : List of numpy arrays, sparse arrays, or DataFrames
         """
         if self.sparse_output_:
-            return sparse.hstack(Xs).tocsr()
+            try:
+                # since all columns should be numeric before stacking them
+                # in a sparse matrix, `check_array` is used for the
+                # dtype conversion if necessary.
+                converted_Xs = [check_array(X,
+                                            accept_sparse=True,
+                                            force_all_finite=False)
+                                for X in Xs]
+            except ValueError:
+                raise ValueError("For a sparse output, all columns should"
+                                 " be a numeric or convertible to a numeric.")
+
+            return sparse.hstack(converted_Xs).tocsr()
         else:
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
             return np.hstack(Xs)
@@ -672,14 +682,63 @@ def _is_empty_column_selection(column):
         return False
 
 
+def _validate_transformers(transformers):
+    """Checks if given transformers are valid.
+
+    This is a helper function to support the deprecated tuple order.
+    XXX Remove in v0.22
+    """
+    if not transformers:
+        return True
+
+    for t in transformers:
+        if isinstance(t, six.string_types) and t in ('drop', 'passthrough'):
+            continue
+        if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
+                hasattr(t, "transform")):
+            return False
+
+    return True
+
+
+def _is_deprecated_tuple_order(tuples):
+    """Checks if the input follows the deprecated tuple order.
+
+    Returns
+    -------
+    Returns true if (transformer, columns) is not a valid assumption for the
+    input, but (columns, transformer) is valid. The latter is deprecated and
+    its support will stop in v0.22.
+
+    XXX Remove in v0.22
+    """
+    transformers, columns = zip(*tuples)
+    if (not _validate_transformers(transformers)
+            and _validate_transformers(columns)):
+        return True
+
+    return False
+
+
 def _get_transformer_list(estimators):
     """
     Construct (name, trans, column) tuples from list
 
     """
-    transformers = [trans[1] for trans in estimators]
-    columns = [trans[0] for trans in estimators]
-    names = [trans[0] for trans in _name_estimators(transformers)]
+    message = ('`make_column_transformer` now expects (transformer, columns) '
+               'as input tuples instead of (columns, transformer). This '
+               'has been introduced in v0.20.1. `make_column_transformer` '
+               'will stop accepting the deprecated (columns, transformer) '
+               'order in v0.22.')
+
+    transformers, columns = zip(*estimators)
+
+    # XXX Remove in v0.22
+    if _is_deprecated_tuple_order(estimators):
+        transformers, columns = columns, transformers
+        warnings.warn(message, DeprecationWarning)
+
+    names, _ = zip(*_name_estimators(transformers))
 
     transformer_list = list(zip(names, transformers, columns))
     return transformer_list
@@ -695,7 +754,7 @@ def make_column_transformer(*transformers, **kwargs):
 
     Parameters
     ----------
-    *transformers : tuples of column selections and transformers
+    *transformers : tuples of transformers and column selections
 
     remainder : {'drop', 'passthrough'} or estimator, default 'drop'
         By default, only the specified columns in `transformers` are
@@ -738,8 +797,8 @@ def make_column_transformer(*transformers, **kwargs):
     >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
     >>> from sklearn.compose import make_column_transformer
     >>> make_column_transformer(
-    ...     (['numerical_column'], StandardScaler()),
-    ...     (['categorical_column'], OneHotEncoder()))
+    ...     (StandardScaler(), ['numerical_column']),
+    ...     (OneHotEncoder(), ['categorical_column']))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
              transformer_weights=None,

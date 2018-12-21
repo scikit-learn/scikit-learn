@@ -12,7 +12,7 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import __version__ as scipy_version
 
-from sklearn.utils.testing import assert_true, assert_false, assert_equal
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_no_warnings
@@ -40,7 +40,7 @@ from sklearn.utils.validation import (
     assert_all_finite,
     check_memory,
     check_non_negative,
-    LARGE_SPARSE_SUPPORTED,
+    _num_samples
 )
 import sklearn
 
@@ -61,7 +61,7 @@ def test_as_float_array():
     X = X.astype(np.int64)
     X2 = as_float_array(X, copy=True)
     # Checking that the array wasn't overwritten
-    assert_true(as_float_array(X, False) is not X)
+    assert as_float_array(X, False) is not X
     assert_equal(X2.dtype, np.float64)
     # Test int dtypes <= 32bit
     tested_dtypes = [np.bool,
@@ -79,10 +79,10 @@ def test_as_float_array():
 
     # Here, X is of the right type, it shouldn't be modified
     X = np.ones((3, 2), dtype=np.float32)
-    assert_true(as_float_array(X, copy=False) is X)
+    assert as_float_array(X, copy=False) is X
     # Test that if X is fortran ordered it stays
     X = np.asfortranarray(X)
-    assert_true(np.isfortran(as_float_array(X, copy=True)))
+    assert np.isfortran(as_float_array(X, copy=True))
 
     # Test the copy parameter with some matrices
     matrices = [
@@ -93,7 +93,7 @@ def test_as_float_array():
     for M in matrices:
         N = as_float_array(M, copy=True)
         N[0, 0] = np.nan
-        assert_false(np.isnan(M).any())
+        assert not np.isnan(M).any()
 
 
 @pytest.mark.parametrize(
@@ -111,9 +111,9 @@ def test_np_matrix():
     # Confirm that input validation code does not return np.matrix
     X = np.arange(12).reshape(3, 4)
 
-    assert_false(isinstance(as_float_array(X), np.matrix))
-    assert_false(isinstance(as_float_array(np.matrix(X)), np.matrix))
-    assert_false(isinstance(as_float_array(sp.csc_matrix(X)), np.matrix))
+    assert not isinstance(as_float_array(X), np.matrix)
+    assert not isinstance(as_float_array(np.matrix(X)), np.matrix)
+    assert not isinstance(as_float_array(sp.csc_matrix(X)), np.matrix)
 
 
 def test_memmap():
@@ -140,15 +140,15 @@ def test_ordering():
     for A in X, X.T:
         for copy in (True, False):
             B = check_array(A, order='C', copy=copy)
-            assert_true(B.flags['C_CONTIGUOUS'])
+            assert B.flags['C_CONTIGUOUS']
             B = check_array(A, order='F', copy=copy)
-            assert_true(B.flags['F_CONTIGUOUS'])
+            assert B.flags['F_CONTIGUOUS']
             if copy:
-                assert_false(A is B)
+                assert A is not B
 
     X = sp.csr_matrix(X)
     X.data = X.data[::-1]
-    assert_false(X.data.flags['C_CONTIGUOUS'])
+    assert not X.data.flags['C_CONTIGUOUS']
 
 
 @pytest.mark.parametrize(
@@ -227,19 +227,19 @@ def test_check_array():
         else:
             assert_equal(X_checked.dtype, X.dtype)
         if order == 'C':
-            assert_true(X_checked.flags['C_CONTIGUOUS'])
-            assert_false(X_checked.flags['F_CONTIGUOUS'])
+            assert X_checked.flags['C_CONTIGUOUS']
+            assert not X_checked.flags['F_CONTIGUOUS']
         elif order == 'F':
-            assert_true(X_checked.flags['F_CONTIGUOUS'])
-            assert_false(X_checked.flags['C_CONTIGUOUS'])
+            assert X_checked.flags['F_CONTIGUOUS']
+            assert not X_checked.flags['C_CONTIGUOUS']
         if copy:
-            assert_false(X is X_checked)
+            assert X is not X_checked
         else:
             # doesn't copy if it was already good
             if (X.dtype == X_checked.dtype and
                     X_checked.flags['C_CONTIGUOUS'] == X.flags['C_CONTIGUOUS']
                     and X_checked.flags['F_CONTIGUOUS'] == X.flags['F_CONTIGUOUS']):
-                assert_true(X is X_checked)
+                assert X is X_checked
 
     # allowed sparse != None
     X_csc = sp.csc_matrix(X_C)
@@ -259,7 +259,7 @@ def test_check_array():
             message = str(w[0].message)
             messages = ["object dtype is not supported by sparse matrices",
                         "Can't check dok sparse matrix for nan or inf."]
-            assert_true(message in messages)
+            assert message in messages
         else:
             assert_equal(len(w), 0)
         if dtype is not None:
@@ -273,23 +273,23 @@ def test_check_array():
             # got converted
             assert_equal(X_checked.format, accept_sparse[0])
         if copy:
-            assert_false(X is X_checked)
+            assert X is not X_checked
         else:
             # doesn't copy if it was already good
-            if (X.dtype == X_checked.dtype and X.format == X_checked.format):
-                assert_true(X is X_checked)
+            if X.dtype == X_checked.dtype and X.format == X_checked.format:
+                assert X is X_checked
 
     # other input formats
     # convert lists to arrays
     X_dense = check_array([[1, 2], [3, 4]])
-    assert_true(isinstance(X_dense, np.ndarray))
+    assert isinstance(X_dense, np.ndarray)
     # raise on too deep lists
     assert_raises(ValueError, check_array, X_ndim.tolist())
     check_array(X_ndim.tolist(), allow_nd=True)  # doesn't raise
     # convert weird stuff to arrays
     X_no_array = NotAnArray(X_dense)
     result = check_array(X_no_array)
-    assert_true(isinstance(result, np.ndarray))
+    assert isinstance(result, np.ndarray)
 
     # deprecation warning if string-like array with dtype="numeric"
     expected_warn_regex = r"converted to decimal numbers if dtype='numeric'"
@@ -387,21 +387,21 @@ def test_check_array_dtype_warning():
                                        dtype=[np.float64, np.float32],
                                        accept_sparse=True)
         assert_equal(X_checked.dtype, np.float32)
-        assert_true(X_checked is X)
+        assert X_checked is X
 
         X_checked = assert_no_warnings(check_array, X,
                                        dtype=[np.float64, np.float32],
                                        accept_sparse=['csr', 'dok'],
                                        copy=True)
         assert_equal(X_checked.dtype, np.float32)
-        assert_false(X_checked is X)
+        assert X_checked is not X
 
     X_checked = assert_no_warnings(check_array, X_csc_float32,
                                    dtype=[np.float64, np.float32],
                                    accept_sparse=['csr', 'dok'],
                                    copy=False)
     assert_equal(X_checked.dtype, np.float32)
-    assert_false(X_checked is X_csc_float32)
+    assert X_checked is not X_csc_float32
     assert_equal(X_checked.format, 'csr')
 
 
@@ -458,29 +458,17 @@ def X_64bit(request):
 
 def test_check_array_accept_large_sparse_no_exception(X_64bit):
     # When large sparse are allowed
-    if LARGE_SPARSE_SUPPORTED:
-        check_array(X_64bit, accept_large_sparse=True, accept_sparse=True)
+    check_array(X_64bit, accept_large_sparse=True, accept_sparse=True)
 
 
 def test_check_array_accept_large_sparse_raise_exception(X_64bit):
     # When large sparse are not allowed
-    if LARGE_SPARSE_SUPPORTED:
-        msg = ("Only sparse matrices with 32-bit integer indices "
-               "are accepted. Got int64 indices.")
-        assert_raise_message(ValueError, msg,
-                             check_array, X_64bit,
-                             accept_sparse=True,
-                             accept_large_sparse=False)
-
-
-def test_check_array_large_indices_non_supported_scipy_version(X_64bit):
-    # Large indices should not be allowed for scipy<0.14.0
-    if not LARGE_SPARSE_SUPPORTED:
-        msg = ("Scipy version %s does not support large"
-               " indices, please upgrade your scipy"
-               " to 0.14.0 or above" % scipy_version)
-        assert_raise_message(ValueError, msg, check_array,
-                             X_64bit, accept_sparse='csc')
+    msg = ("Only sparse matrices with 32-bit integer indices "
+           "are accepted. Got int64 indices.")
+    assert_raise_message(ValueError, msg,
+                         check_array, X_64bit,
+                         accept_sparse=True,
+                         accept_large_sparse=False)
 
 
 def test_check_array_min_samples_and_features_messages():
@@ -577,10 +565,10 @@ def test_check_array_complex_data_error():
 
 
 def test_has_fit_parameter():
-    assert_false(has_fit_parameter(KNeighborsClassifier, "sample_weight"))
-    assert_true(has_fit_parameter(RandomForestRegressor, "sample_weight"))
-    assert_true(has_fit_parameter(SVR, "sample_weight"))
-    assert_true(has_fit_parameter(SVR(), "sample_weight"))
+    assert not has_fit_parameter(KNeighborsClassifier, "sample_weight")
+    assert has_fit_parameter(RandomForestRegressor, "sample_weight")
+    assert has_fit_parameter(SVR, "sample_weight")
+    assert has_fit_parameter(SVR(), "sample_weight")
 
     class TestClassWithDeprecatedFitMethod:
         @deprecated("Deprecated for the purpose of testing has_fit_parameter")
@@ -693,6 +681,19 @@ def test_suppress_validation():
     assert_raises(ValueError, assert_all_finite, X)
 
 
+def test_check_array_series():
+    # regression test that check_array works on pandas Series
+    pd = importorskip("pandas")
+    res = check_array(pd.Series([1, 2, 3]), ensure_2d=False,
+                      warn_on_dtype=True)
+    assert_array_equal(res, np.array([1, 2, 3]))
+
+    # with categorical dtype (not a numpy dtype) (GH12699)
+    s = pd.Series(['a', 'b', 'c']).astype('category')
+    res = check_array(s, dtype=None, ensure_2d=False)
+    assert_array_equal(res, np.array(['a', 'b', 'c'], dtype=object))
+
+
 def test_check_dataframe_warns_on_dtype():
     # Check that warn_on_dtype also works for DataFrames.
     # https://github.com/scikit-learn/scikit-learn/issues/10948
@@ -744,14 +745,13 @@ def test_check_memory():
     memory = check_memory(dummy)
     assert memory is dummy
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
-                        " have the same interface as "
-                        "sklearn.utils.Memory."
+                        " have the same interface as joblib.Memory."
                         " Got memory='1' instead.", check_memory, 1)
     dummy = WrongDummyMemory()
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
-                        " have the same interface as "
-                        "sklearn.utils.Memory. Got memory='{}' "
-                        "instead.".format(dummy), check_memory, dummy)
+                        " have the same interface as joblib.Memory."
+                        " Got memory='{}' instead.".format(dummy),
+                        check_memory, dummy)
 
 
 @pytest.mark.parametrize('copy', [True, False])
@@ -780,3 +780,21 @@ def test_check_non_negative(retype):
     A[0, 0] = -1
     X = retype(A)
     assert_raises_regex(ValueError, "Negative ", check_non_negative, X, "")
+
+
+def test_check_X_y_informative_error():
+    X = np.ones((2, 2))
+    y = None
+    assert_raise_message(ValueError, "y cannot be None", check_X_y, X, y)
+
+
+def test_retrieve_samples_from_non_standard_shape():
+    class TestNonNumericShape:
+        def __init__(self):
+            self.shape = ("not numeric",)
+
+        def __len__(self):
+            return len([1, 2, 3])
+
+    X = TestNonNumericShape()
+    assert _num_samples(X) == len(X)
