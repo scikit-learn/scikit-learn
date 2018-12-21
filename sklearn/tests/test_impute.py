@@ -530,15 +530,15 @@ def test_missing_indicator_error(X_fit, X_trans, params, msg_err):
      sparse.lil_matrix, sparse.bsr_matrix])
 @pytest.mark.parametrize(
     "param_features, n_features, features_indices",
-    [('missing-only', 2, np.array([0, 1])),
+    [('missing-only', 3, np.array([0, 1, 2])),
      ('all', 3, np.array([0, 1, 2]))])
 def test_missing_indicator_new(missing_values, arr_type, dtype, param_features,
                                n_features, features_indices):
     X_fit = np.array([[missing_values, missing_values, 1],
-                      [4, missing_values, 2]])
+                      [4, 2, missing_values]])
     X_trans = np.array([[missing_values, missing_values, 1],
                         [4, 12, 10]])
-    X_fit_expected = np.array([[1, 1, 0], [0, 1, 0]])
+    X_fit_expected = np.array([[1, 1, 0], [0, 0, 1]])
     X_trans_expected = np.array([[1, 1, 0], [0, 0, 0]])
 
     # convert the input to the right array format and right dtype
@@ -640,10 +640,10 @@ def test_inconsistent_dtype_X_missing_values(imputer_constructor,
 @pytest.mark.parametrize("marker", [np.nan, -1, 0])
 def test_imputation_add_indicator(marker):
     X = np.array([
-        [marker, 1, 5, 1, marker],
-        [2, marker, 1, 2, marker],
-        [6, 3, marker, 3, marker],
-        [1, 2, 9, 4, marker]
+        [marker, 1, 5, marker, 1],
+        [2, marker, 1, marker, 2],
+        [6, 3, marker, marker, 3],
+        [1, 2, 9, marker, 4]
     ])
     X_true = np.array([
         [3., 1., 5., 1., 1., 0., 0.],
@@ -656,7 +656,7 @@ def test_imputation_add_indicator(marker):
     X_trans = imputer.fit_transform(X)
 
     assert_allclose(X_trans, X_true)
-    assert_allclose(imputer.statistics_, np.array([3., 2., 5., 2.5, np.nan]))
+    assert_allclose(imputer.statistics_, np.array([3., 2., 5., np.nan, 2.5]))
     assert_array_equal(imputer.indicator_.features_, np.array([0, 1, 2]))
 
 
@@ -686,4 +686,4 @@ def test_imputation_add_indicator_sparse_matrix(arr_type):
 
     assert sparse.issparse(X_trans)
     assert X_trans.shape == X_true.shape
-    assert_allclose_dense_sparse(X_trans.toarray(), X_true)
+    assert_allclose(X_trans.toarray(), X_true)
