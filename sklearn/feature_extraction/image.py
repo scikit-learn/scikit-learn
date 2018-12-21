@@ -369,7 +369,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
             [[187 214 243]
             [188 215 244]]]
     """
-    
+
     i_h, i_w = image.shape[:2]
     p_h, p_w = patch_size
 
