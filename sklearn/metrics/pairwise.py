@@ -36,7 +36,7 @@ from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 # Get mask for missing values
 def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
-    if value_to_mask == "NaN" or np.isnan(value_to_mask):
+    if np.isnan(value_to_mask) or value_to_mask == "NaN":
         return np.isnan(X)
     else:
         return X == value_to_mask
@@ -322,13 +322,13 @@ def masked_euclidean_distances(X, Y=None, squared=False,
 
     Y : {array-like, sparse matrix}, shape (n_samples_2, n_features)
 
-    squared : boolean, optional
+    squared : boolean, default=False
         Return squared Euclidean distances.
 
-    missing_values : np.nan or integer, optional
+    missing_values : np.nan or integer, default=np.nan
         Representation of missing value
 
-    copy : boolean, optional
+    copy : boolean, default=True
         Make and use a deep copy of X and Y (if Y exists)
 
     Returns
@@ -368,13 +368,12 @@ def masked_euclidean_distances(X, Y=None, squared=False,
 
     # Get missing mask for X and Y.T
     mask_X = _get_mask(X, missing_values)
-
     YT = Y.T
     mask_YT = mask_X.T if Y is X else _get_mask(YT, missing_values)
 
     # Check if any rows have only missing value
-    if np.any(mask_X.sum(axis=1) == X.shape[1])\
-            or (Y is not X and np.any(mask_YT.sum(axis=0) == Y.shape[1])):
+    if (np.any(mask_X.sum(axis=1) == X.shape[1])
+       or (Y is not X and np.any(mask_YT.sum(axis=0) == Y.shape[1]))):
         raise ValueError("One or more rows only contain missing values.")
 
     # Get mask of non-missing values set Y.T's missing to zero.

@@ -587,6 +587,19 @@ def test_euclidean_distances():
     assert_greater(np.max(np.abs(wrong_D - D1)), .01)
 
 
+@pytest.mark.parametrize(
+    "X", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]])])
+@pytest.mark.parametrize(
+    "Y", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]]), None])
+def test_masked_euclidean_distances_infinite_values(X, Y):
+    with pytest.raises(ValueError) as excinfo:
+        masked_euclidean_distances(X, Y=Y)
+
+    exp_msg = ("Input contains infinity or a value too large for "
+               "dtype('float64').")
+    assert exp_msg == str(excinfo.value)
+
+
 def test_masked_euclidean_distances():
     # Check with pairs of matrices with missing values
     X = np.array([[1., np.nan, 3., 4., 2.],
