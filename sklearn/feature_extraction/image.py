@@ -345,25 +345,15 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
         >>> one_image = load_sample_images().images[0]
 
         >>> print('Image shape: {}'.format(one_image.shape))
+        Image shape: (427, 640, 3)
 
         >>> patches = image.extract_patches_2d(one_image, (2, 2))
 
         >>> print('Patches shape: {}'.format(patches.shape))
-        >>> print('\nPatches 0:\n{}'.format(patches[0]))
+        Patches shape: (272214, 2, 2, 3)
+
+        >>> # Here are just two of these patches:
         >>> print('\nPatches 1:\n{}'.format(patches[1]))
-        >>> print('\nPatches 800:\n{}'.format(patches[800]))
-
-        >>> # output:
-            Image shape: (427, 640, 3)
-            Patches shape: (272214, 2, 2, 3)
-
-            Patches 0:
-            [[[174 201 231]
-            [174 201 231]]
-
-            [[172 199 229]
-            [173 200 230]]]
-
             Patches 1:
             [[[174 201 231]
             [174 201 231]]
@@ -371,6 +361,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
             [[173 200 230]
             [173 200 230]]]
 
+        >>> print('\nPatches 800:\n{}'.format(patches[800]))
             Patches 800:
             [[[187 214 243]
             [188 215 244]]
@@ -378,6 +369,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
             [[187 214 243]
             [188 215 244]]]
     """
+    
     i_h, i_w = image.shape[:2]
     p_h, p_w = patch_size
 
@@ -486,39 +478,40 @@ class PatchExtractor(BaseEstimator):
 
         >>> # Use the array data from the second image in this dataset:
         >>> X = load_sample_images().images[1]
+
         >>> print(f'Image shape: {X.shape}')
+        Image shape: (427, 640, 3)
 
         >>> pe = image.PatchExtractor(patch_size=(2, 2))
         >>> pe_fit = pe.fit(X)
         >>> pe_trans = pe.transform(X)
 
         >>> print('Patches shape: {}'.format(pe_trans.shape))
+        Patches shape: (545706, 2, 2)
+
         >>> print('Shapes arrays:\n{}'.format(pe_trans))
+        Shapes arrays:
+        [[[ 2. 19.]
+        [ 3. 18.]]
 
-        >>> # output:
-            Image shape: (427, 640, 3)
-            Patches shape: (545706, 2, 2)
-            Shapes arrays:
-            [[[ 2. 19.]
-            [ 3. 18.]]
+        [[19. 13.]
+        [18. 13.]]
 
-            [[19. 13.]
-            [18. 13.]]
+        [[ 3. 18.]
+        [ 7. 20.]]
 
-            [[ 3. 18.]
-            [ 7. 20.]]
+        ...
 
-            ...
+        [[46. 28.]
+        [45. 28.]]
 
-            [[46. 28.]
-            [45. 28.]]
+        [[ 8. 45.]
+        [ 9. 43.]]
 
-            [[ 8. 45.]
-            [ 9. 43.]]
-
-            [[45. 28.]
-            [43. 27.]]]
+        [[45. 28.]
+        [43. 27.]]]
     """
+
     def __init__(self, patch_size=None, max_patches=None, random_state=None):
         self.patch_size = patch_size
         self.max_patches = max_patches
