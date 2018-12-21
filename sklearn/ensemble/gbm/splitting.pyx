@@ -17,12 +17,37 @@ from .histogram import _build_histogram_no_hessian
 from .histogram import _build_histogram_root
 from .histogram import _build_histogram_root_no_hessian
 from .histogram import HISTOGRAM_DTYPE
-from .utils import get_threads_chunks
 
 cdef struct hist_struct:
     float sum_gradients
     float sum_hessians
     unsigned int count
+
+
+cdef get_threads_chunks(unsigned int total_size):
+    """Get start and end indices of threads in an array of size total_size.
+
+    The interval [0, total_size - 1] is divided into n_threads contiguous
+    regions, and the starts and ends of each region are returned. Used to
+    simulate a 'static' scheduling.
+    """
+    cdef:
+        np.ndarray[np.uint32_t] sizes
+        np.ndarray[np.uint32_t] starts
+        np.ndarray[np.uint32_t] ends
+        unsigned int n_threads
+
+    n_threads = 4  # TODO: change this
+    sizes = np.full(n_threads, total_size // n_threads, dtype=np.uint32)
+    if total_size % n_threads > 0:
+        # array[:0] will cause a bug in numba 0.41 so we need the if.
+        # Remove once issue numba 3554 is fixed.
+        sizes[:total_size % n_threads] += 1
+    starts = np.zeros(n_threads, dtype=np.uint32)
+    starts[1:] = np.cumsum(sizes[:-1])
+    ends = starts + sizes
+
+    return starts, ends, n_threads
 
 @cython.freelist(100)
 cdef class SplitInfo:
@@ -49,15 +74,16 @@ cdef class SplitInfo:
     n_samples_right : int
         The number of samples in the right child
     """
-    cdef public float gain
-    cdef public unsigned int feature_idx
-    cdef public unsigned int bin_idx
-    cdef public float gradient_left
-    cdef public float gradient_right
-    cdef public float hessian_left
-    cdef public float hessian_right
-    cdef public unsigned int n_samples_left
-    cdef public unsigned int n_samples_right
+    cdef public:
+        float gain
+        unsigned int feature_idx
+        unsigned int bin_idx
+        float gradient_left
+        float gradient_right
+        float hessian_left
+        float hessian_right
+        unsigned int n_samples_left
+        unsigned int n_samples_right
 
     def __cinit__(self, float gain=-1., unsigned int feature_idx=0, unsigned
                   int bin_idx=0,
@@ -111,26 +137,27 @@ cdef class SplittingContext:
         The minimum gain needed to split a node. Splits with lower gain will
         be ignored.
     """
-    cdef public unsigned char [:, :] X_binned
-    cdef public unsigned int n_features
-    cdef public unsigned int max_bins
-    cdef public unsigned int [:] n_bins_per_feature
-    cdef public float [:] gradients
-    cdef public float [:] hessians
-    cdef public float [:] ordered_gradients
-    cdef public float [:] ordered_hessians
-    cdef public float sum_gradients
-    cdef public float sum_hessians
-    cdef public unsigned char constant_hessian
-    cdef public float constant_hessian_value
-    cdef public float l2_regularization
-    cdef public float min_hessian_to_split
-    cdef public unsigned int min_samples_leaf
-    cdef public float min_gain_to_split
+    cdef public:
+        unsigned char [:, :] X_binned
+        unsigned int n_features
+        unsigned int max_bins
+        unsigned int [:] n_bins_per_feature
+        float [:] gradients
+        float [:] hessians
+        float [:] ordered_gradients
+        float [:] ordered_hessians
+        float sum_gradients
+        float sum_hessians
+        unsigned char constant_hessian
+        float constant_hessian_value
+        float l2_regularization
+        float min_hessian_to_split
+        unsigned int min_samples_leaf
+        float min_gain_to_split
 
-    cdef public unsigned int [:] partition
-    cdef public unsigned int [:] left_indices_buffer
-    cdef public unsigned int [:] right_indices_buffer
+        unsigned int [:] partition
+        unsigned int [:] left_indices_buffer
+        unsigned int [:] right_indices_buffer
 
     def __cinit__(self, np.ndarray[np.uint8_t, ndim=2] X_binned, unsigned int max_bins,
                  np.ndarray[np.uint32_t] n_bins_per_feature,
@@ -157,9 +184,9 @@ cdef class SplittingContext:
         self.min_samples_leaf = min_samples_leaf
         self.min_gain_to_split = min_gain_to_split
         if self.constant_hessian:
-            self.constant_hessian_value = self.hessians[0]  # 1 scalar
+            self.constant_hessian_value = hessians[0]  # 1 scalar
         else:
-            self.constant_hessian_value = np.float32(1.)  # won't be used anyway
+            self.constant_hessian_value = 1.  # won't be used anyway
 
         # The partition array maps each sample index into the leaves of the
         # tree (a leaf in this context is a node that isn't splitted yet, not
@@ -170,7 +197,7 @@ cdef class SplittingContext:
         # partition = [cef|abdghijkl]
         # we have 2 leaves, the left one is at position 0 and the second one at
         # position 3. The order of the samples is irrelevant.
-        self.partition = np.arange(0, X_binned.shape[0], 1, np.uint32)
+        self.partition = np.arange(X_binned.shape[0], dtype=np.uint32)
         # buffers used in split_indices to support parallel splitting.
         self.left_indices_buffer = np.empty_like(self.partition)
         self.right_indices_buffer = np.empty_like(self.partition)
@@ -228,19 +255,22 @@ def find_node_split(SplittingContext context, unsigned int [:] sample_indices):
         HISTOGRAM_DTYPE of size ``max_bins`` (only
         ``n_bins_per_features[feature]`` entries are relevant).
     """
-    cdef hist_struct [:, :] view
-    cdef hist_struct [:] histogram
-    cdef unsigned int feature_idx
-    cdef unsigned int i
-    cdef unsigned int thread_idx
+    cdef:
+        unsigned int n_samples
+        hist_struct [:, :] view
+        hist_struct [:] histogram
+        unsigned int feature_idx
+        unsigned int i
+        unsigned int thread_idx
+        SplittingContext ctx
+        unsigned int [:] starts
+        unsigned int [:] ends
+        unsigned int n_threads
+        SplitInfo split_info
+        list split_infos
 
     ctx = context  # shorter name to avoid various line breaks
     n_samples = sample_indices.shape[0]
-
-    # Need to declare local variables, else they're not updated
-    # (see numba issue 3459)
-    ordered_gradients = ctx.ordered_gradients
-    ordered_hessians = ctx.ordered_hessians
 
     # Populate ordered_gradients and ordered_hessians. (Already done for root)
     # Ordering the gradients and hessians helps to improve cache hit.
@@ -252,12 +282,12 @@ def find_node_split(SplittingContext context, unsigned int [:] sample_indices):
         if ctx.constant_hessian:
             for thread_idx in range(n_threads):
                 for i in range(starts[thread_idx], ends[thread_idx]):
-                    ordered_gradients[i] = ctx.gradients[sample_indices[i]]
+                    ctx.ordered_gradients[i] = ctx.gradients[sample_indices[i]]
         else:
             for thread_idx in range(n_threads):
                 for i in range(starts[thread_idx], ends[thread_idx]):
-                    ordered_gradients[i] = ctx.gradients[sample_indices[i]]
-                    ordered_hessians[i] = ctx.hessians[sample_indices[i]]
+                    ctx.ordered_gradients[i] = ctx.gradients[sample_indices[i]]
+                    ctx.ordered_hessians[i] = ctx.hessians[sample_indices[i]]
 
     # ctx.sum_gradients = ctx.ordered_gradients[:n_samples].sum()
     ctx.sum_gradients = np.sum(ctx.ordered_gradients[:n_samples])
@@ -267,8 +297,6 @@ def find_node_split(SplittingContext context, unsigned int [:] sample_indices):
         # ctx.sum_hessians = ctx.ordered_hessians[:n_samples].sum()
         ctx.sum_hessians = np.sum(ctx.ordered_hessians[:n_samples])
 
-    # Pre-allocate the results datastructure to be able to use prange:
-    # numba jitclass do not seem to properly support default values for kwargs.
     split_infos = [SplitInfo(-1., 0, 0, 0., 0., 0., 0., 0, 0)
                    for i in range(context.n_features)]
     histograms = np.empty(
@@ -325,9 +353,13 @@ def find_node_split_subtraction(SplittingContext context, unsigned int [:]
         ``n_bins_per_features[feature]`` entries are relevant).
     """
 
-    cdef hist_struct [:, :] view
-    cdef hist_struct [:] histogram
-    cdef unsigned int feature_idx
+    cdef:
+        hist_struct [:, :] view
+        hist_struct [:] histogram
+        unsigned int feature_idx
+        unsigned int n_samples
+        SplitInfo split_info
+        list split_infos
 
     # We can pick any feature (here the first) in the histograms to
     # compute the gradients: they must be the same across all features
@@ -339,7 +371,7 @@ def find_node_split_subtraction(SplittingContext context, unsigned int [:]
     n_samples = sample_indices.shape[0]
     if context.constant_hessian:
         context.sum_hessians = \
-            context.constant_hessian_value * np.float32(n_samples)
+            context.constant_hessian_value * float(n_samples)
     else:
         context.sum_hessians = (parent_histograms[0]['sum_hessians'].sum() -
                                 sibling_histograms[0]['sum_hessians'].sum())
@@ -363,11 +395,18 @@ def find_node_split_subtraction(SplittingContext context, unsigned int [:]
     return split_info, histograms
 
 
-def _find_best_feature_to_split_helper(split_infos):
-    best_gain = None
+cdef SplitInfo _find_best_feature_to_split_helper(list split_infos):
+    cdef:
+        float gain
+        float best_gain
+        SplitInfo split_info
+        SplitInfo best_split_info
+        unsigned int i
+
+    best_gain = -1.
     for i, split_info in enumerate(split_infos):
         gain = split_info.gain
-        if best_gain is None or gain > best_gain:
+        if gain > best_gain:
             best_gain = gain
             best_split_info = split_info
     return best_split_info
@@ -380,12 +419,13 @@ cdef _find_histogram_split(SplittingContext context, unsigned int feature_idx,
     Returns the best SplitInfo among all the possible bins of the feature.
     """
 
-    cdef unsigned int n_samples = sample_indices.shape[0]
-    cdef unsigned char [:] X_binned = context.X_binned.T[feature_idx]
-    cdef unsigned int root_node = X_binned.shape[0] == n_samples
-    cdef float [:] ordered_gradients = context.ordered_gradients[:n_samples]
-    cdef float [:] ordered_hessians = context.ordered_hessians[:n_samples]
-    cdef np.ndarray histogram
+    cdef:
+        unsigned int n_samples = sample_indices.shape[0]
+        unsigned char [:] X_binned = context.X_binned.T[feature_idx]
+        unsigned int root_node = X_binned.shape[0] == n_samples
+        float [:] ordered_gradients = context.ordered_gradients[:n_samples]
+        float [:] ordered_hessians = context.ordered_hessians[:n_samples]
+        np.ndarray histogram
 
     if root_node:
         if context.constant_hessian:
@@ -416,7 +456,9 @@ cdef _find_histogram_split_subtraction(SplittingContext context, unsigned int fe
     Uses the identity: hist(parent) = hist(left) + hist(right).
     Returns the best SplitInfo among all the possible bins of the feature.
     """
-    cdef np.ndarray histogram
+    cdef:
+        np.ndarray histogram
+
     histogram = _subtract_histograms(
         context.max_bins,
         parent_histograms[feature_idx], sibling_histograms[feature_idx])

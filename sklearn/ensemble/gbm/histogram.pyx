@@ -29,15 +29,23 @@ cdef struct hist_struct:
 
 @cython.boundscheck(False)  # Deactivate bounds checking
 @cython.wraparound(False)   # Deactivate negative indexing.
-def _build_histogram_naive(n_bins, sample_indices, binned_feature,
-                           ordered_gradients, ordered_hessians):
+cdef _build_histogram_naive(unsigned int n_bins, unsigned int [:]
+                                sample_indices, unsigned char [:]
+                                binned_feature, float [:] ordered_gradients,
+                                float[:] ordered_hessians):
     """Build histogram in a naive way, without optimizing for cache hit."""
     histogram = np.zeros(n_bins, dtype=HISTOGRAM_DTYPE)
+    cdef:
+        hist_struct [:] view = histogram
+        unsigned int i
+        unsigned int sample_idx
+        unsigned char bin_idx
+
     for i, sample_idx in enumerate(sample_indices):
         bin_idx = binned_feature[sample_idx]
-        histogram[bin_idx].sum_gradients += ordered_gradients[i]
-        histogram[bin_idx].sum_hessians += ordered_hessians[i]
-        histogram[bin_idx].count += 1
+        view[bin_idx].sum_gradients += ordered_gradients[i]
+        view[bin_idx].sum_hessians += ordered_hessians[i]
+        view[bin_idx].count += 1
     return histogram
 
 
