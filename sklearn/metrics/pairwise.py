@@ -371,11 +371,6 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     YT = Y.T
     mask_YT = mask_X.T if Y is X else _get_mask(YT, missing_values)
 
-    # Check if any rows have only missing value
-    if (np.any(mask_X.sum(axis=1) == X.shape[1])
-       or (Y is not X and np.any(mask_YT.sum(axis=0) == Y.shape[1]))):
-        raise ValueError("One or more rows only contain missing values.")
-
     # Get mask of non-missing values set Y.T's missing to zero.
     # Further, casting the mask to int to be used in formula later.
     not_YT = (~mask_YT).astype(np.int32)
@@ -385,18 +380,24 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     not_X = (~mask_X).astype(np.int32)
     X[mask_X] = 0
 
-    # Calculate distances, the following formula derived by:
-    # Shreya Bhattarai <shreya.bhattarai@gmail.com>
+    # Calculate distances
+    distances = ((np.dot(X * X, not_YT) - 2 * (np.dot(X, YT)) +
+                  np.dot(not_X, YT * YT)))
 
-    distances = (
-            (X.shape[1] / (np.dot(not_X, not_YT))) *
-            (np.dot(X * X, not_YT) - 2 * (np.dot(X, YT)) +
-             np.dot(not_X, YT * YT)))
+    non_missing_coords = np.dot(not_X, not_YT)
+    non_missing_coords_mask = non_missing_coords != 0
+
+    distances[non_missing_coords_mask] = (
+        distances[non_missing_coords_mask] * X.shape[1] /
+        non_missing_coords[non_missing_coords_mask]
+    )
 
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
-        distances.flat[::distances.shape[0] + 1] = 0.0
+        np.fill_diagonal(distances, 0.0)
+
+    distances[~non_missing_coords_mask] = np.nan
 
     return distances if squared else np.sqrt(distances, out=distances)
 
