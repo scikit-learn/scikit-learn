@@ -389,8 +389,7 @@ def masked_euclidean_distances(X, Y=None, squared=False,
 
     distances[non_missing_coords_mask] = (
         distances[non_missing_coords_mask] * X.shape[1] /
-        non_missing_coords[non_missing_coords_mask]
-    )
+        non_missing_coords[non_missing_coords_mask])
 
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.
