@@ -424,6 +424,10 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
         Whether score_func requires predict_proba to get probability estimates
         out of a classifier.
 
+        When using the binary classification for the ``score_func function``,
+        a array of ground truth (correct) labels probability estimates is
+        passed.
+
     needs_threshold : boolean, default=False
         Whether score_func takes a continuous decision certainty.
         This only works for binary classification using estimators that
