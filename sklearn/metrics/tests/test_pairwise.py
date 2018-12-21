@@ -665,6 +665,12 @@ def test_masked_euclidean_distances(missing_value):
             X[:1], Y[:1], squared=True, missing_values=missing_value),
         [[5.0 / 2.0 * ((7 - 3)**2 + (2 - 2)**2)]])
 
+    # Check with explicit formula and squared=False
+    assert_array_almost_equal(
+        masked_euclidean_distances(
+            X[1:2], Y[1:2], squared=False, missing_values=missing_value),
+        [[np.sqrt(5.0 / 2.0 * ((6 - 5)**2 + (1 - 4)**2))]])
+
     # Check when Y = X is explicitly passed
     D3 = masked_euclidean_distances(X, missing_values=missing_value)
     D4 = masked_euclidean_distances(X, X, missing_values=missing_value)
