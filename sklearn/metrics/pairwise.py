@@ -359,7 +359,7 @@ def masked_euclidean_distances(X, Y=None, squared=False,
 
     See also
     --------
-    paired_distances : distances betweens pairs of elements of X and Y.
+    paired_distances : distances between pairs of elements of X and Y.
     """
 
     force_all_finite = 'allow-nan' if is_scalar_nan(missing_values) else True
