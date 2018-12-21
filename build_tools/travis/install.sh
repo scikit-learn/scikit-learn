@@ -31,6 +31,7 @@ if [ $TRAVIS_OS_NAME = "osx" ]
 then
     which gcc
     gcc --version
+fi
 
 make_conda() {
 	TO_INSTALL="$@"
