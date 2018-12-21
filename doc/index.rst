@@ -22,7 +22,7 @@
         <strong>Applications</strong>: Spam detection, Image recognition.</br>
         <strong>Algorithms</strong>:&nbsp;
 
-    :ref:`SVM<svm>`, :ref:`nearest neighbors<classification>`, :ref:`random forest<forest>`, ...
+    :ref:`SVM<svm_classification>`, :ref:`nearest neighbors<classification>`, :ref:`random forest<forest>`, ...
 
     .. raw:: html
 
@@ -52,7 +52,7 @@
         <strong>Applications</strong>: Drug response, Stock prices.</br>
         <strong>Algorithms</strong>:&nbsp;
 
-    :ref:`SVR<svm>`, :ref:`ridge regression<ridge_regression>`, :ref:`Lasso<lasso>`, ...
+    :ref:`SVR<svm_regression>`, :ref:`ridge regression<ridge_regression>`, :ref:`Lasso<lasso>`, ...
 
     .. raw:: html
 
@@ -207,17 +207,19 @@
                     <li><em>On-going development:</em>
                     <a href="/dev/whats_new.html"><em>What's new</em> (Changelog)</a>
                     </li>
-                    <li><em>October 2017.</em> scikit-learn 0.19.1 is available for download (<a href="whats_new.html#version-0-19">Changelog</a>).
+                    <li><strong>Scikit-learn 0.21 will drop support for Python 2.7 and Python 3.4.</strong>
+                    </li>
+                    <li><em>December 2018.</em> scikit-learn 0.20.2 is available for download (<a href="whats_new.html#version-0-20-2">Changelog</a>).
+                    </li>
+                    <li><em>November 2018.</em> scikit-learn 0.20.1 is available for download (<a href="whats_new.html#version-0-20-1">Changelog</a>).
+                    </li>
+                    <li><em>September 2018.</em> scikit-learn 0.20.0 is available for download (<a href="whats_new.html#version-0-20-0">Changelog</a>).
+                    </li>
+                    <li><em>July 2018.</em> scikit-learn 0.19.2 is available for download (<a href="whats_new.html#version-0-19">Changelog</a>).
                     </li>
                     <li><em>July 2017.</em> scikit-learn 0.19.0 is available for download (<a href="whats_new/v0.19.html#version-0-19">Changelog</a>).
                     </li>
                     <li><em>June 2017.</em> scikit-learn 0.18.2 is available for download (<a href="whats_new/v0.18.html#version-0-18-2">Changelog</a>).
-                    </li>
-                    <li><em>September 2016.</em> scikit-learn 0.18.0 is available for download (<a href="whats_new/v0.18.html#version-0-18">Changelog</a>).
-                    </li>
-                    <li><em>November 2015.</em> scikit-learn 0.17.0 is available for download (<a href="whats_new/v0.17.html">Changelog</a>).
-                    </li>
-                    <li><em>March 2015.</em> scikit-learn 0.16.0 is available for download (<a href="whats_new/v0.16.html">Changelog</a>).
                     </li>
                     </ul>
                 </div>
@@ -228,9 +230,9 @@
                     <ul>
                     <li><em>About us</em> See <a href="about.html#people">authors</a> and <a href="developers/contributing.html">contributing</a></li>
                     <li><em>More Machine Learning</em> Find <a href="related_projects.html">related projects</a></li>
-                    <li><em>Questions?</em> See <a href="faq.html">FAQ</a> and <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a></li>
+                    <li><em>Questions?</em> See <a href="faq.html">FAQ</a> and <a href="https://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a></li>
                     <li><em>Mailing list:</em> <a href="https://mail.python.org/mailman/listinfo/scikit-learn">scikit-learn@python.org</a></li>
-                    <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>
+                    <li><em>IRC:</em> #scikit-learn @ <a href="https://webchat.freenode.net/">freenode</a></li>
                     </ul>
 
                     <form target="_top" id="paypal-form" method="post" action="https://www.paypal.com/cgi-bin/webscr">
@@ -348,6 +350,7 @@
     preface
     tutorial/index
     user_guide
+    glossary
     auto_examples/index
     modules/classes
     developers/index

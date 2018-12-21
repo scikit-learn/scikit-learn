@@ -10,14 +10,22 @@ Installing scikit-learn
     :ref:`install the latest development version<install_bleeding_edge>`.
 
 
+.. _install_official_release:
+
 Installing the latest release
 =============================
 
 Scikit-learn requires:
 
-- Python (>= 2.7 or >= 3.4),
-- NumPy (>= 1.8.2),
-- SciPy (>= 0.13.3).
+- Python (>= 3.5),
+- NumPy (>= 1.11.0),
+- SciPy (>= 0.17.0).
+
+
+.. warning::
+
+    Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.
+    Scikit-learn now requires Python 3.5 or newer.
 
 If you already have a working installation of numpy and scipy,
 the easiest way to install scikit-learn is using ``pip`` ::
@@ -44,6 +52,18 @@ it as ``scikit-learn[alldeps]``. The most common use case for this is in a
 application or a Docker image. This option is not intended for manual
 installation from the command line.
 
+.. note::
+
+   For installing on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
+   are required.
+
+
+For installation instructions for more distributions see
+:ref:`other distributions <install_by_distribution>`.
+For compiling the development version from source, or building the package
+if no distribution is available for your architecture, see the
+:ref:`advanced-installation`.
+
 Third-party Distributions
 ==========================
 If you don't already have a python installation with numpy and scipy, we
@@ -58,7 +78,7 @@ Canopy and Anaconda for all supported platforms
 
 `Canopy
 <https://www.enthought.com/products/canopy>`_ and `Anaconda
-<https://www.continuum.io/downloads>`_ both ship a recent
+<https://www.anaconda.com/download>`_ both ship a recent
 version of scikit-learn, in addition to a large set of scientific python
 library for Windows, Mac OSX and Linux.
 
@@ -92,6 +112,3 @@ WinPython for Windows
 The `WinPython <https://winpython.github.io/>`_ project distributes
 scikit-learn as an additional plugin.
 
-
-For installation instructions for particular operating systems or for compiling
-the bleeding edge version, see the :ref:`advanced-installation`.

@@ -23,16 +23,16 @@ class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
         pass
 
     def _get_params(self, attr, deep=True):
-        out = super(_BaseComposition, self).get_params(deep=False)
+        out = super(_BaseComposition, self).get_params(deep=deep)
         if not deep:
             return out
         estimators = getattr(self, attr)
         out.update(estimators)
         for name, estimator in estimators:
-            if estimator is None:
-                continue
-            for key, value in six.iteritems(estimator.get_params(deep=True)):
-                out['%s__%s' % (name, key)] = value
+            if hasattr(estimator, 'get_params'):
+                for key, value in six.iteritems(
+                        estimator.get_params(deep=True)):
+                    out['%s__%s' % (name, key)] = value
         return out
 
     def _set_params(self, attr, **params):
@@ -41,11 +41,14 @@ class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
         if attr in params:
             setattr(self, attr, params.pop(attr))
         # 2. Step replacement
-        names, _ = zip(*getattr(self, attr))
+        items = getattr(self, attr)
+        names = []
+        if items:
+            names, _ = zip(*items)
         for name in list(six.iterkeys(params)):
             if '__' not in name and name in names:
                 self._replace_estimator(attr, name, params.pop(name))
-        # 3. Step parameters and other initilisation arguments
+        # 3. Step parameters and other initialisation arguments
         super(_BaseComposition, self).set_params(**params)
         return self
 
@@ -152,7 +155,7 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
     we slice rows using ``indices`` (assumed the test set) and columns
     using ``train_indices``, indicating the training set.
 
-    Labels y will always be sliced only along the last axis.
+    Labels y will always be indexed only along the first axis.
 
     Parameters
     ----------
@@ -161,11 +164,11 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         columns.
 
     X : array-like, sparse matrix or iterable
-        Data to be sliced. If ``estimator._pairwise is True``,
+        Data to be indexed. If ``estimator._pairwise is True``,
         this needs to be a square array-like or sparse matrix.
 
     y : array-like, sparse matrix or iterable
-        Targets to be sliced.
+        Targets to be indexed.
 
     indices : array of int
         Rows to select from X and y.
@@ -178,11 +181,11 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
 
     Returns
     -------
-    X_sliced : array-like, sparse matrix or list
-        Sliced data.
+    X_subset : array-like, sparse matrix or list
+        Indexed data.
 
-    y_sliced : array-like, sparse matrix or list
-        Sliced targets.
+    y_subset : array-like, sparse matrix or list
+        Indexed targets.
 
     """
     if getattr(estimator, "_pairwise", False):
