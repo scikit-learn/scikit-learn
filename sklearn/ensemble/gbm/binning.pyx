@@ -9,6 +9,7 @@ cimport cython
 
 import numpy as np
 cimport numpy as np
+from cython.parallel import prange
 
 from sklearn.utils import check_random_state, check_array
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -94,7 +95,9 @@ cdef _map_to_bins(np.ndarray[np.float_t, ndim=2] data, binning_thresholds):
     return binned
 
 
-cdef _map_num_col_to_bins(np.ndarray[np.float_t] data, np.ndarray[np.float32_t] binning_thresholds, np.ndarray[np.uint8_t] binned):
+@cython.boundscheck(False)  # Deactivate bounds checking
+@cython.wraparound(False)   # Deactivate negative indexing.
+cdef void _map_num_col_to_bins(double [:] data, float [:] binning_thresholds, unsigned char [:] binned)nogil:
     """Binary search to the find the bin index for each value in data."""
     cdef:
         int i
@@ -102,7 +105,7 @@ cdef _map_num_col_to_bins(np.ndarray[np.float_t] data, np.ndarray[np.float32_t] 
         int right
         int middle
 
-    for i in range(data.shape[0]):
+    for i in prange(data.shape[0], schedule='static'):
         # TODO: add support for missing values (NaN or custom marker)
         left, right = 0, binning_thresholds.shape[0]
         while left < right:

@@ -8,6 +8,8 @@ ctypedef fused float_or_double:
     float
     double
 
+@cython.boundscheck(False)  # Deactivate bounds checking
+@cython.wraparound(False)   # Deactivate negative indexing.
 def _update_raw_predictions__(float [:] leaves_values, list samples_indices_at_leaf, float_or_double [:] raw_predictions):
     """Update raw_predictions by reading the predictions of the ith tree
     directly form the leaves.

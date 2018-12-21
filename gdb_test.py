@@ -10,7 +10,7 @@ import pstats
 import cProfile
 
 classif = False
-n_samples = 500000
+n_samples = 100000
 max_iter = 5
 
 if classif:
@@ -30,22 +30,22 @@ gbm = GBM(max_iter=max_iter,
                    n_iter_no_change=None,
                    random_state=0,
                    verbose=True)
-gbm.fit(X, y)
-print(f'score: {gbm.score(X, y)}')
-duration = time() - tic
-print(f'Took {duration:.3f}s\n')
+# gbm.fit(X, y)
+# print(f'score: {gbm.score(X, y)}')
+# duration = time() - tic
+# print(f'Took {duration:.3f}s\n')
 
-# cProfile.runctx("gbm.fit(X, y).predict(X)", globals(), locals(), "Profile.prof")
+cProfile.runctx("gbm.fit(X, y).predict(X)", globals(), locals(), "Profile.prof")
 
-# s = pstats.Stats("Profile.prof")
-# s.strip_dirs().sort_stats("time").print_stats(.2)
+s = pstats.Stats("Profile.prof")
+s.strip_dirs().sort_stats("time").print_stats(.2)
 
-tic = time()
-gbdt = GBDT(n_estimators=max_iter,
-            n_iter_no_change=None,  # no early stopping
-            random_state=0,
-            verbose=True).fit(X, y)
-print(gbdt.n_estimators_)
-print(f'score: {gbdt.score(X, y)}')
-duration = time() - tic
-print(f'Took {duration:.3f}s')
+# tic = time()
+# gbdt = GBDT(n_estimators=max_iter,
+#             n_iter_no_change=None,  # no early stopping
+#             random_state=0,
+#             verbose=True).fit(X, y)
+# print(gbdt.n_estimators_)
+# print(f'score: {gbdt.score(X, y)}')
+# duration = time() - tic
+# print(f'Took {duration:.3f}s')
