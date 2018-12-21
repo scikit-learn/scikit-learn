@@ -20,10 +20,17 @@ env:
 
 matrix:
   include:
-    # This environment tests that scikit-learn can be built against
+    # Latest dependencies on macOS with MKL
+    - env: DISTRIB="conda" PYTHON_VERSION="*" INSTALL_MKL="true"
+           NUMPY_VERSION="*" SCIPY_VERSION="*" CYTHON_VERSION="*"
+           PILLOW_VERSION="*" JOBLIB_VERSION="*" COVERAGE=true
+      language: generic
+      if: type != cron
+      os: osx
+    # Linux environment to test that scikit-learn can be built against
     # versions of numpy, scipy with ATLAS that comes with Ubuntu Xenial 16.04
     # i.e. numpy 1.11 and scipy 0.17
-    - env: DISTRIB="ubuntu" PYTHON_VERSION="3.5" CYTHON_VERSION="0.28.6"
+    - env: DISTRIB="ubuntu" PYTHON_VERSION="3.5"
            NUMPY_VERSION="1.11.0" SCIPY_VERSION="0.17.0"
            PILLOW_VERSION="4.0.0" COVERAGE=true
            SKLEARN_SITE_JOBLIB=1 JOBLIB_VERSION="0.11"
@@ -36,18 +43,12 @@ matrix:
             - libatlas3-base
             - libatlas-base-dev
             - libatlas-dev
-    # Python 3.5 build without SITE_JOBLIB
+    # Linux + Python 3.5 build with OpenBLAS and without SITE_JOBLIB
     - env: DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="false"
-           NUMPY_VERSION="1.11.0" SCIPY_VERSION="0.17.0" CYTHON_VERSION="0.25.2"
+           NUMPY_VERSION="1.11.0" SCIPY_VERSION="0.17.0" CYTHON_VERSION="*"
            PILLOW_VERSION="4.0.0" COVERAGE=true
       if: type != cron
-    # Python 3.5 build
-    - env: DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="false"
-           NUMPY_VERSION="1.11.0" SCIPY_VERSION="0.17.0" CYTHON_VERSION="0.25.2"
-           PILLOW_VERSION="4.0.0" COVERAGE=true
-           SKLEARN_SITE_JOBLIB=1 JOBLIB_VERSION="0.11"
-      if: type != cron
-    # This environment tests the latest available dependencies.
+    # Linux environment to test the latest available dependencies and MKL.
     # It runs tests requiring pandas and PyAMG.
     # It also runs with the site joblib instead of the vendored copy of joblib.
     - env: DISTRIB="conda" PYTHON_VERSION="*" INSTALL_MKL="true"
@@ -57,7 +58,7 @@ matrix:
            CHECK_PYTEST_SOFT_DEPENDENCY="true" TEST_DOCSTRINGS="true"
            SKLEARN_SITE_JOBLIB=1 CHECK_WARNINGS="true"
       if: type != cron
-    # This environment tests scikit-learn against numpy and scipy master
+    # Linux environment to test scikit-learn against numpy and scipy master
     # installed from their CI wheels in a virtualenv with the Python
     # interpreter provided by travis.
     -  python: 3.7
