@@ -501,6 +501,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         self.features = features
         self.sparse = sparse
         self.error_on_new = error_on_new
+        self.fully_missing_indexes = None
 
     def _get_missing_features_info(self, X):
         """Compute the imputer mask and the indices of the features
@@ -539,9 +540,6 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                 np.flatnonzero(np.diff(missing_values_mask.indptr))
                 if missing_values_mask.format == 'csc'
                 else np.unique(missing_values_mask.indices))
-            imputer_mask, features_with_missing = self._drop_constant_columns(
-                imputer_mask, features_with_missing
-            )
 
             if self.sparse is False:
                 imputer_mask = imputer_mask.toarray()
@@ -554,41 +552,43 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                 X = X.toarray()
             imputer_mask = _get_mask(X, self.missing_values)
             features_with_missing = np.flatnonzero(imputer_mask.sum(axis=0))
-            imputer_mask, features_with_missing = self._drop_constant_columns(
-                imputer_mask, features_with_missing
-            )
 
             if self.sparse is True:
                 imputer_mask = sparse.csc_matrix(imputer_mask)
 
         return imputer_mask, features_with_missing
 
-    @staticmethod
-    def _drop_constant_columns(imputer_mask, features_with_missing):
+    def _drop_constant_columns(self, X):
         """
-        In case we have a column with totally missing  values, drop it,
+        In case we have a column with totally missing values, drop it,
         because constant column is not informative.
-        :param imputer_mask:
-        :param features_with_missing:
-        :return:
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data.
+
+        Returns
+        -------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data without a column with totally missing values.
         """
-        is_sparce = sparse.issparse(imputer_mask)
+        is_sparse = sparse.issparse(X)
 
-        if is_sparce:
-            imputer_mask = imputer_mask.toarray()
+        if is_sparse:
+            sparse_format = X.format
+            X = X.toarray()
 
-        fully_missing_indexes = np.where(
-            features_with_missing == imputer_mask.shape[0]
-        )[0]
-        features_with_missing = np.delete(
-            features_with_missing, fully_missing_indexes, axis=0
-        )
-        imputer_mask = np.delete(imputer_mask, fully_missing_indexes, axis=1)
+        if not self.fully_missing_indexes:
+            ix = _get_mask(X, self.missing_values)
+            self.fully_missing_indexes = np.where(ix.all(axis=0))[0]
 
-        if is_sparce:
-            imputer_mask = sparse.csr_matrix(imputer_mask)
+        X = np.delete(X, self.fully_missing_indexes, axis=1)
 
-        return imputer_mask, features_with_missing
+        if is_sparse:
+            X = sparse.csr_matrix(X) if sparse_format is 'csr' else sparse.csc_matrix(X)
+
+        return X
 
     def fit(self, X, y=None):
         """Fit the transformer on X.
@@ -611,6 +611,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse=('csc', 'csr'),
                         force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)
+        X = self._drop_constant_columns(X)
 
         self._n_features = X.shape[1]
 
@@ -653,6 +654,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse=('csc', 'csr'),
                         force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)
+        X = self._drop_constant_columns(X)
 
         if X.shape[1] != self._n_features:
             raise ValueError("X has a different number of features "
@@ -669,6 +671,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
             if (self.features_.size > 0 and
                     self.features_.size < self._n_features):
+
                 imputer_mask = imputer_mask[:, self.features_]
 
         return imputer_mask
