@@ -109,6 +109,7 @@ plt.ylabel('True Positive Rate')
 plt.title('Receiver operating characteristic example for {}'
           .format(iris.target_names[2]))
 plt.legend(loc="lower right")
+plt.show()
 
 ###############################################################################
 # Plot ROC curves for the multiclass problem using One-vs-Rest
@@ -162,6 +163,7 @@ plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
 plt.title('An extension of ROC to multi-class using One-vs-Rest')
 plt.legend(loc="lower right")
+plt.show()
 
 ###############################################################################
 # One-vs-One
@@ -213,3 +215,4 @@ plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
 plt.title('An extension of ROC to multi-class using One-vs-One')
 plt.legend(loc="lower right")
+plt.show()
