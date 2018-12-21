@@ -1,3 +1,4 @@
+# cython: profile=True
 """
 This module contains the TreePredictor class which is used for prediction.
 """
@@ -5,18 +6,34 @@ import numpy as np
 
 
 PREDICTOR_RECORD_DTYPE = np.dtype([
-    ('is_leaf', np.uint8),
     ('value', np.float32),
     ('count', np.uint32),
     ('feature_idx', np.uint32),
-    ('bin_threshold', np.uint8),
     ('threshold', np.float32),
     ('left', np.uint32),
     ('right', np.uint32),
     ('gain', np.float32),
     ('depth', np.uint32),
+    ('is_leaf', np.uint8),
+    ('bin_threshold', np.uint8),
     # TODO: shrinkage in leaf for feature importance error bar?
 ])
+
+ctypedef fused float_or_double:
+    float
+    double
+
+cdef packed struct node_struct:
+    float value
+    unsigned int count
+    unsigned int feature_idx
+    float threshold
+    unsigned int left
+    unsigned int right
+    float gain
+    unsigned int depth
+    unsigned char is_leaf
+    unsigned char bin_threshold
 
 
 class TreePredictor:
@@ -94,17 +111,22 @@ def _predict_binned(nodes, binned_data, out):
         out[i] = _predict_one_binned(nodes, binned_data[i])
 
 
-def _predict_one_from_numeric_data(nodes, numeric_data):
-    node = nodes[0]
+cdef float _predict_one_from_numeric_data(node_struct [:] nodes, float_or_double [:] numeric_data) nogil:
+    cdef node_struct node = nodes[0]
     while True:
-        if node['is_leaf']:
-            return node['value']
-        if numeric_data[node['feature_idx']] <= node['threshold']:
-            node = nodes[node['left']]
+        if node.is_leaf:
+            return node.value
+        if numeric_data[node.feature_idx] <= node.threshold:
+            node = nodes[node.left]
         else:
-            node = nodes[node['right']]
+            node = nodes[node.right]
 
 
-def _predict_from_numeric_data(nodes, numeric_data, out):
+# TODO: having a view on numeric_data (passed by user) may not be supported,
+# see sklearn issue 10624
+def _predict_from_numeric_data(node_struct [:] nodes, float_or_double [:, :] numeric_data, float [:] out):
+
+    cdef int i
+
     for i in range(numeric_data.shape[0]):
         out[i] = _predict_one_from_numeric_data(nodes, numeric_data[i])

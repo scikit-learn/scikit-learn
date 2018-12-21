@@ -9,8 +9,8 @@ from sklearn.ensemble import GBMClassifier
 import pstats
 import cProfile
 
-classif = True
-n_samples = 100000
+classif = False
+n_samples = 500000
 max_iter = 5
 
 if classif:
@@ -31,11 +31,11 @@ gbm = GBM(max_iter=max_iter,
                    random_state=0,
                    verbose=True)
 gbm.fit(X, y)
-duration = time() - tic
 print(f'score: {gbm.score(X, y)}')
+duration = time() - tic
 print(f'Took {duration:.3f}s\n')
 
-# cProfile.runctx("gbm.fit(X, y)", globals(), locals(), "Profile.prof")
+# cProfile.runctx("gbm.fit(X, y).predict(X)", globals(), locals(), "Profile.prof")
 
 # s = pstats.Stats("Profile.prof")
 # s.strip_dirs().sort_stats("time").print_stats(.2)
@@ -46,6 +46,6 @@ gbdt = GBDT(n_estimators=max_iter,
             random_state=0,
             verbose=True).fit(X, y)
 print(gbdt.n_estimators_)
-duration = time() - tic
 print(f'score: {gbdt.score(X, y)}')
+duration = time() - tic
 print(f'Took {duration:.3f}s')

@@ -24,6 +24,10 @@ def configuration(parent_package="", top_path=None):
                          sources=["gbm/binning.pyx"],
                          include_dirs=[numpy.get_include()])
 
+    config.add_extension("gbm.predictor",
+                         sources=["gbm/predictor.pyx"],
+                         include_dirs=[numpy.get_include()])
+
     config.add_extension("gbm.playground",
                          sources=["gbm/playground.pyx"],
                          include_dirs=[numpy.get_include()])
