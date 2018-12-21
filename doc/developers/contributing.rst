@@ -197,31 +197,22 @@ then submit a "pull request" (PR):
         $ git clone git@github.com:YourLogin/scikit-learn.git
         $ cd scikit-learn
 
-<<<<<<< HEAD
  4. Install library in editable mode::
 
         $ pip install --editable .
 
     for more details about advanced installation, see the :ref:`install_bleeding_edge` section.
 
- 5. Create a branch to hold your changes::
-=======
- 4. Create a branch to hold your development changes::
->>>>>>> 951c4f1a51ff57968d9b13581c6dbfd0cc8fe150
+ 5. Create a branch to hold your development changes::
 
         $ git checkout -b my-feature
 
     and start making changes. Always use a ``feature`` branch. It's good practice to
     never work on the ``master`` branch!
 
-<<<<<<< HEAD
- 6. Work on this copy, on your computer, using Git to do the version
-    control. When you're done editing, do::
-=======
- 5. Develop the feature on your feature branch on your computer, using Git to do the 
+ 6. Develop the feature on your feature branch on your computer, using Git to do the
     version control. When you're done editing, add changed files using ``git add`` 
     and then ``git commit`` files::
->>>>>>> 951c4f1a51ff57968d9b13581c6dbfd0cc8fe150
 
         $ git add modified_files
         $ git commit
@@ -230,7 +221,7 @@ then submit a "pull request" (PR):
 
         $ git push -u origin my-feature
 
- 6. Follow `these
+ 7. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
     instructions to create a pull request from your fork. This will send an
     email to the committers. You may want to consider sending an email to the
