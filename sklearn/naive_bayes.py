@@ -1239,7 +1239,7 @@ class CategoricalNB(BaseDiscreteNB):
                         raise KeyError(
                             "Category {} not expected for feature {} "
                             "of features 0 - {}. Sample {} has probability 0."
-                                .format(category, i, self.n_features_, sample)
+                            .format(category, i, self.n_features_, sample)
                         )
                     samples_prob_zero.append(sample)
             # indices length is 0, if all categories have not been seen in the
