@@ -1,4 +1,3 @@
-# cython: profile=True
 """
 This module contains the BinMapper class.
 

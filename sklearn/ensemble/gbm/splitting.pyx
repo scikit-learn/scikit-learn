@@ -1,4 +1,3 @@
-# cython: profile=True
 """This module contains njitted routines and data structures to:
 
 - Find the best possible split of a node. For a given node, a split is
@@ -37,12 +36,9 @@ cdef get_threads_chunks(unsigned int total_size):
         np.ndarray[np.uint32_t] ends
         unsigned int n_threads
 
-    n_threads = 4  # TODO: change this
+    n_threads = 1  # TODO: change this
     sizes = np.full(n_threads, total_size // n_threads, dtype=np.uint32)
-    if total_size % n_threads > 0:
-        # array[:0] will cause a bug in numba 0.41 so we need the if.
-        # Remove once issue numba 3554 is fixed.
-        sizes[:total_size % n_threads] += 1
+    sizes[:total_size % n_threads] += 1
     starts = np.zeros(n_threads, dtype=np.uint32)
     starts[1:] = np.cumsum(sizes[:-1])
     ends = starts + sizes
@@ -406,7 +402,7 @@ cdef SplitInfo _find_best_feature_to_split_helper(list split_infos):
     best_gain = -1.
     for i, split_info in enumerate(split_infos):
         gain = split_info.gain
-        if gain > best_gain:
+        if best_gain == -1 or gain > best_gain:
             best_gain = gain
             best_split_info = split_info
     return best_split_info

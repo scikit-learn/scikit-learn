@@ -1,4 +1,3 @@
-# cython: profile=True
 """This module contains njitted routines for building histograms.
 
 A histogram is an array with n_bins entry of type HISTOGRAM_DTYPE. Each

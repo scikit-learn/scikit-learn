@@ -28,6 +28,10 @@ def configuration(parent_package="", top_path=None):
                          sources=["gbm/predictor.pyx"],
                          include_dirs=[numpy.get_include()])
 
+    config.add_extension("gbm.loss",
+                         sources=["gbm/loss.pyx"],
+                         include_dirs=[numpy.get_include()])
+
     config.add_extension("gbm.playground",
                          sources=["gbm/playground.pyx"],
                          include_dirs=[numpy.get_include()])

@@ -9,12 +9,13 @@ from sklearn.ensemble import GBMClassifier
 import pstats
 import cProfile
 
-classif = False
+classif = True
+n_classes = 3
 n_samples = 100000
 max_iter = 5
 
 if classif:
-    X, y = make_classification(n_samples=n_samples, random_state=0)
+    X, y = make_classification(n_samples=n_samples, random_state=0, n_classes=n_classes, n_clusters_per_class=1)
     GBM = GBMClassifier
     GBDT = GradientBoostingClassifier
 else:
