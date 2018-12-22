@@ -20,6 +20,7 @@ annotate_and_copy_files() {
   # files in TARGET_DIR/COMMIT_HASH/
 
   git co $1  # checkout commit
+  rm -f $SOURCE_DIR/*.html  # remove any previous file just in case
   for pyx_file in `ls $SOURCE_DIR/*.pyx`
   do
     echo 'annotating' $1 $pyx_file
@@ -29,9 +30,9 @@ annotate_and_copy_files() {
   for html_file in `ls $SOURCE_DIR/*.html`
   do
     mkdir -p $TARGET_DIR/$1
-    cp $html_file $TARGET_DIR/$1
+    mv $html_file $TARGET_DIR/$1
     html_file_name=$(basename -- "$html_file")  # without path
-    echo Copied $html_file_name to $TARGET_DIR/$1
+    echo moved $html_file_name to $TARGET_DIR/$1
   done
 }
 
