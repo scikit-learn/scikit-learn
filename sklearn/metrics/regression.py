@@ -26,7 +26,8 @@ from __future__ import division
 import numpy as np
 import warnings
 
-from ..utils.validation import check_array, check_consistent_length, _num_samples
+from ..utils.validation import (check_array, check_consistent_length,
+    _num_samples)
 from ..utils.validation import column_or_1d
 from ..externals.six import string_types
 from ..exceptions import DataDimensionalityWarning
