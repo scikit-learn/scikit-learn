@@ -828,3 +828,11 @@ def test_warm_start_multitask_lasso():
     clf2 = MultiTaskLasso(alpha=0.1, max_iter=10)
     ignore_warnings(clf2.fit)(X, Y)
     assert_array_almost_equal(clf2.coef_, clf.coef_)
+
+
+def test_multi_task_lasso_warm_start():
+    X = np.array([[1, 2, 4, 5, 8], [3, 5, 7, 7, 8]]).T
+    y = np.array([12, 10, 11, 21, 5])[:, np.newaxis]
+
+    est = MultiTaskLasso(warm_start=True)
+    est.fit(X, y)
