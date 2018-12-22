@@ -24,10 +24,12 @@ the lower the better
 from __future__ import division
 
 import numpy as np
+import warnings
 
-from ..utils.validation import check_array, check_consistent_length
+from ..utils.validation import check_array, check_consistent_length, _num_samples
 from ..utils.validation import column_or_1d
 from ..externals.six import string_types
+from ..exceptions import DataDimensionalityWarning
 
 
 __ALL__ = [
@@ -534,6 +536,12 @@ def r2_score(y_true, y_pred, sample_weight=None,
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
     check_consistent_length(y_true, y_pred, sample_weight)
+
+    if _num_samples(y_pred) < 2:
+        msg = "Found an array of {0} sample(s), while the minimum number is 2."
+        msg = msg.format(_num_samples(y_pred))
+        warnings.warn(msg, DataDimensionalityWarning)
+        return float('nan')
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
