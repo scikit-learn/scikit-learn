@@ -2,7 +2,6 @@ from __future__ import division, print_function
 
 import numpy as np
 from itertools import product
-import warnings
 import pytest
 
 from sklearn.utils.testing import assert_raises, assert_raises_regex
