@@ -502,7 +502,10 @@ def r2_score(y_true, y_pred, sample_weight=None,
     This is not a symmetric function.
 
     Unlike most other scores, R^2 score may be negative (it need not actually
-    be the square of a quantity R).
+    be the square of a quantity R). 
+
+    This metric is not well-defined for single samples and will return a NaN
+    value if n_samples is less than two.
 
     References
     ----------
@@ -539,8 +542,7 @@ def r2_score(y_true, y_pred, sample_weight=None,
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if _num_samples(y_pred) < 2:
-        msg = "Found an array of {0} sample(s), while the minimum number is 2."
-        msg = msg.format(_num_samples(y_pred))
+        msg = "R^2 score is not well-defined with less than two samples."
         warnings.warn(msg, DataDimensionalityWarning)
         return float('nan')
 
