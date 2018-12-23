@@ -20,8 +20,6 @@ from sklearn.metrics import r2_score
 
 from sklearn.metrics.regression import _check_reg_targets
 
-from ...exceptions import DataDimensionalityWarning
-
 
 def test_regression_metrics(n_samples=50):
     y_true = np.arange(n_samples)
@@ -193,6 +191,7 @@ def test_regression_custom_weights():
     msle2 = mean_squared_error(np.log(1 + y_true), np.log(1 + y_pred),
                                multioutput=[0.3, 0.7])
     assert_almost_equal(msle, msle2, decimal=2)
+
 
 def test_regression_single_sample():
     y_true = [0]
