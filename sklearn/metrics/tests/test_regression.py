@@ -3,6 +3,7 @@ from __future__ import division, print_function
 import numpy as np
 from itertools import product
 import warnings
+import pytest
 
 from sklearn.utils.testing import assert_raises, assert_raises_regex
 from sklearn.utils.testing import assert_equal
@@ -19,6 +20,8 @@ from sklearn.metrics import max_error
 from sklearn.metrics import r2_score
 
 from sklearn.metrics.regression import _check_reg_targets
+
+from ...exceptions import DataDimensionalityWarning
 
 
 def test_regression_metrics(n_samples=50):
@@ -193,14 +196,13 @@ def test_regression_custom_weights():
     assert_almost_equal(msle, msle2, decimal=2)
 
 
-def test_regression_single_sample():
+@pytest.mark.parametrize('metric', [r2_score])
+def test_regression_single_sample(metric):
     y_true = [0]
     y_pred = [1]
-    warning_msg = "not well-defined with less than two samples."
+    warning_msg = 'not well-defined with less than two samples.'
 
-    # Check all metrics which are degenerate when passed a single sample.
-    for metric in [r2_score]:
-        with warnings.catch_warnings(record=True) as w:
-            score = metric(y_true, y_pred)
-            assert warning_msg in str(w[-1].message)
-            assert np.isnan(score)
+    # Trigger the warning
+    with pytest.warns(DataDimensionalityWarning, match=warning_msg):
+        score = metric(y_true, y_pred)
+        assert np.isnan(score)
