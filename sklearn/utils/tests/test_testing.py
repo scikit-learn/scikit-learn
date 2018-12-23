@@ -504,37 +504,39 @@ def test_check_docstring_parameters():
 
     messages = [
             ["In function: sklearn.utils.tests.test_testing.f_bad_order",
-             "At index 0 diff: 'b' != 'a'",
+             "There's a parameter name mismatch in function docstring w.r.t."
+             " function signature, at index 0 diff: 'b' != 'a'",
              "Full diff:",
              "- ['b', 'a']",
              "+ ['a', 'b']"],
 
             ["In function: " +
                 "sklearn.utils.tests.test_testing.f_too_many_param_docstring",
-             "Parameters in function docstring have more items, first extra"
-             + " item: c",
+             "Parameters in function docstring have more items w.r.t. function"
+             " signature, first extra item: c",
              "Full diff:",
              "- ['a', 'b']",
              "+ ['a', 'b', 'c']",
              "?          +++++"],
 
             ["In function: sklearn.utils.tests.test_testing.f_missing",
-             "Parameters in function signature have more items, first extra"
-             + " item: b",
+             "Parameters in function docstring have less items w.r.t. function"
+             " signature, first missing item: b",
              "Full diff:",
              "- ['a', 'b']",
              "+ ['a']"],
 
             ["In function: sklearn.utils.tests.test_testing.Klass.f_missing",
-             "Parameters in function signature have more items, first extra"
-             + " item: X",
+             "Parameters in function docstring have less items w.r.t. function"
+             " signature, first missing item: X",
              "Full diff:",
              "- ['X', 'y']",
              "+ []"],
 
             ["In function: " +
-                "sklearn.utils.tests.test_testing.MockMetaEstimator.predict",
-             "At index 0 diff: 'X' != 'y'",
+             "sklearn.utils.tests.test_testing.MockMetaEstimator.predict",
+             "There's a parameter name mismatch in function docstring w.r.t."
+             " function signature, at index 0 diff: 'X' != 'y'",
              "Full diff:",
              "- ['X']",
              "?   ^",
@@ -542,26 +544,26 @@ def test_check_docstring_parameters():
              "?   ^"],
 
             ["In function: " +
-                "sklearn.utils.tests.test_testing.MockMetaEstimator."
-                + "predict_proba",
-             "Parameters in function signature have more items, first extra"
-             + " item: X",
+             "sklearn.utils.tests.test_testing.MockMetaEstimator."
+             + "predict_proba",
+             "Parameters in function docstring have less items w.r.t. function"
+             " signature, first missing item: X",
              "Full diff:",
              "- ['X']",
              "+ []"],
 
             ["In function: " +
                 "sklearn.utils.tests.test_testing.MockMetaEstimator.score",
-             "Parameters in function signature have more items, first extra"
-             + " item: X",
+             "Parameters in function docstring have less items w.r.t. function"
+             " signature, first missing item: X",
              "Full diff:",
              "- ['X']",
              "+ []"],
 
             ["In function: " +
                 "sklearn.utils.tests.test_testing.MockMetaEstimator.fit",
-             "Parameters in function signature have more items, first extra"
-             + " item: X",
+             "Parameters in function docstring have less items w.r.t. function"
+             " signature, first missing item: X",
              "Full diff:",
              "- ['X', 'y']",
              "+ []"],

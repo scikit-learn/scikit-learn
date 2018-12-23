@@ -999,16 +999,20 @@ def check_docstring_parameters(func, doc=None, ignore=None):
     message = []
     for i in range(min(len(param_docs), len(param_signature))):
         if param_signature[i] != param_docs[i]:
-            message += ["At index %s diff: %r != %r" % (i, param_signature[i],
-                                                        param_docs[i])]
+            message += ["There's a parameter name mismatch in function"
+                        " docstring w.r.t. function signature, at index %s"
+                        " diff: %r != %r" %
+                        (i, param_signature[i], param_docs[i])]
             break
     if len(param_signature) > len(param_docs):
-        message += ["Parameters in function signature have more items,"
-                    " first extra item: %s" % param_signature[len(param_docs)]]
+        message += ["Parameters in function docstring have less items w.r.t."
+                    " function signature, first missing item: %s" %
+                    param_signature[len(param_docs)]]
 
     elif len(param_signature) < len(param_docs):
-        message += ["Parameters in function docstring have more items,"
-                    " first extra item: %s" % param_docs[len(param_signature)]]
+        message += ["Parameters in function docstring have more items w.r.t."
+                    " function signature, first extra item: %s" %
+                    param_docs[len(param_signature)]]
 
     # If there wasn't any difference in the parameters themselves between
     # docstring and signature including having the same length then return
