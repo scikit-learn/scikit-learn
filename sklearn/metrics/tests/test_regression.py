@@ -2,7 +2,6 @@ from __future__ import division, print_function
 
 import numpy as np
 from itertools import product
-import warnings
 import pytest
 
 from sklearn.utils.testing import assert_raises, assert_raises_regex
@@ -77,7 +76,6 @@ def test_regression_metrics_at_limits():
     assert_raises_regex(ValueError, "Mean Squared Logarithmic Error cannot be "
                         "used when targets contain negative values.",
                         mean_squared_log_error, [1., -2., 3.], [1., 2., 3.])
-
 
 
 def test__check_reg_targets():
