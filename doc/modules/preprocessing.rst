@@ -271,7 +271,7 @@ distribution function of the feature and :math:`G^{-1}` the
 `quantile function <https://en.wikipedia.org/wiki/Quantile_function>`_ of the
 desired output distribution :math:`G`. This formula is using the two following
 facts: (i) if :math:`X` is a random variable with a continuous cumulative
-distribution :math:`F` then :math:`F(X)` is uniformly distributed on
+distribution function :math:`F` then :math:`F(X)` is uniformly distributed on
 :math:`[0,1]`; (ii) if :math:`U` is a random variable with uniform distribution
 on :math:`[0,1]` then :math:`G^{-1}(U)` has distribution :math:`G`. By performing
 a rank transformation, a quantile transform smooths out unusual distributions
