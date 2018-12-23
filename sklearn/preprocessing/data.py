@@ -258,7 +258,6 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> from sklearn.preprocessing import MinMaxScaler
-
     >>> data = [[-1, 2], [-0.5, 6], [0, 10], [1, 18]]
     >>> scaler = MinMaxScaler()
     >>> print(scaler.fit(data))
@@ -1330,6 +1329,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import PolynomialFeatures
     >>> X = np.arange(6).reshape(3, 2)
     >>> X
     array([[0, 1],

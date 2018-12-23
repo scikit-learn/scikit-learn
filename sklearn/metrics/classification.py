@@ -158,7 +158,6 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.metrics import accuracy_score
     >>> y_pred = [0, 2, 1, 3]
     >>> y_true = [0, 1, 2, 3]
@@ -169,6 +168,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
 
     In the multilabel case with binary label indicators:
 
+    >>> import numpy as np
     >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
@@ -633,7 +633,6 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.metrics import jaccard_similarity_score
     >>> y_pred = [0, 2, 1, 3]
     >>> y_true = [0, 1, 2, 3]
@@ -644,6 +643,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
 
     In the multilabel case with binary label indicators:
 
+    >>> import numpy as np
     >>> jaccard_similarity_score(np.array([[0, 1], [1, 1]]),\
         np.ones((2, 2)))
     0.75
@@ -804,6 +804,7 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
 
     In the multilabel case with binary label indicators:
 
+    >>> import numpy as np
     >>> zero_one_loss(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
@@ -1209,6 +1210,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.metrics import precision_recall_fscore_support
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
@@ -1396,7 +1398,6 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     Examples
     --------
-
     >>> from sklearn.metrics import precision_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -1865,6 +1866,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
 
     In the multilabel case with binary label indicators:
 
+    >>> import numpy as np
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
     """
@@ -1946,6 +1948,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
 
     Examples
     --------
+    >>> from sklearn.metrics import log_loss
     >>> log_loss(["spam", "ham", "ham", "spam"],  # doctest: +ELLIPSIS
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616...
@@ -2089,6 +2092,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
 
     In the multiclass case:
 
+    >>> import numpy as np
     >>> X = np.array([[0], [1], [2], [3]])
     >>> Y = np.array([0, 1, 2, 3])
     >>> labels = np.array([0, 1, 2, 3])
