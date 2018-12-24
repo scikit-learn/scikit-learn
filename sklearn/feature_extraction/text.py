@@ -1309,35 +1309,6 @@ class TfidfVectorizer(CountVectorizer):
 
     Equivalent to CountVectorizer followed by TfidfTransformer.
 
-    CountVectorizer converts a collection of text documents to a matrix of
-    token counts.
-
-    TfidfTransformer then converts the count matrix from CountVectorizer to a
-    normalized tf-idf representation. Tf is term frequency, and idf is inverse
-    document frequency. This is a common way to calculate the count of a word
-    relative to the appearance of a document.
-
-    The formula that is used to compute the tf-idf of term t is​:
-
-    .. math::
-​        ​tf-idf(d, t) = tf(t) * idf(d, t)
-
-​    ​and the idf is computed as​:
-
-    .. math::
-        idf(d, t) = log [ n / df(d, t) ] + 1
-
-​    ​(if ``smooth_idf=False``), where n is the total number of documents
-    and ​df(d, t)​`​ is the document frequency; the document frequency is the
-    number of documents ​`​d​`​ that contain term ​`​t​`​. The effect of adding
-    "1" to the idf in the equation above is that terms with zero idf, i.e.,
-    terms  that occur in all documents in a training set, will not be
-    entirely ignored. (Note that the idf formula above differs from the
-    standard textbook notation that defines the idf as​:
-
-​​    .. math::​
-        idf(d, t) = log [ n / (df(d, t) + 1) ])
-
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
     Parameters
@@ -1469,6 +1440,37 @@ class TfidfVectorizer(CountVectorizer):
     sublinear_tf : boolean, default=False
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
+    CountVectorizer
+        Produces a sparse representation of the counts using
+        scipy.sparse.csr_matrix.
+
+    TfidfTransformer
+        Converts the count matrix from CountVectorizer to a normalized tf-idf
+        representation. Tf is term frequency, and idf is inverse document
+        frequency. This is a common way to calculate the count of a word
+        relative to the appearance of a document.
+
+        The formula that is used to compute the tf-idf of term t is​:
+
+        .. math::
+​           tf-idf(d, t) = tf(t) * idf(d, t)
+
+​    ​    and the idf is computed as​:
+
+        .. math::
+            idf(d, t) = log [ n / df(d, t) ] + 1
+
+​    ​    (if ``smooth_idf=False``), where n is the total number of documents
+        and ​df(d, t)​`​ is the document frequency; the document frequency is
+        the number of documents ​`​d​`​ that contain term ​`​t​`​. The effect
+        of adding "1" to the idf in the equation above is that terms with zero
+        idf, i.e., terms  that occur in all documents in a training set,
+        will not be entirely ignored. (Note that the idf formula above differs
+        from the standard textbook notation that defines the idf as​:
+
+​​         .. math::​
+            idf(d, t) = log [ n / (df(d, t) + 1) ])
+
     Attributes
     ----------
     vocabulary_ : dict
@@ -1502,16 +1504,6 @@ class TfidfVectorizer(CountVectorizer):
     ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
     >>> print(X.shape)
     (4, 9)
-
-    See also
-    --------
-    CountVectorizer
-        Tokenize the documents and count the occurrences of token and return
-        them as a sparse matrix
-
-    TfidfTransformer
-        Apply Term Frequency Inverse Document Frequency normalization to a
-        sparse matrix of occurrence counts.
 
     Notes
     -----
