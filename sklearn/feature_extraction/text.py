@@ -1451,12 +1451,9 @@ class TfidfVectorizer(CountVectorizer):
         relative to the appearance of a document.
 
         The formula that is used to compute the tf-idf of term t is​:
-
         .. math::
 ​           tf-idf(d, t) = tf(t) * idf(d, t)
-
 ​    ​    and the idf is computed as​:
-
         .. math::
             idf(d, t) = log [ n / df(d, t) ] + 1
 
@@ -1467,7 +1464,6 @@ class TfidfVectorizer(CountVectorizer):
         idf, i.e., terms  that occur in all documents in a training set,
         will not be entirely ignored. (Note that the idf formula above differs
         from the standard textbook notation that defines the idf as​:
-
 ​​         .. math::​
             idf(d, t) = log [ n / (df(d, t) + 1) ])
 
