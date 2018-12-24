@@ -1353,7 +1353,6 @@ Methods
 
         :term:`transform` does not preserve the order (memory layout) of the input array.
 
-
 .. _glossary_parameters:
 
 Parameters
