@@ -11,6 +11,7 @@ from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
 from sklearn.metrics.scorer import get_scorer
 from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import KFold
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
@@ -1768,11 +1769,12 @@ def test_penalty_none(solver):
     # - Make sure setting penalty='none' is equivalent to setting C=np.inf with
     #   l2 penalty.
     X, y = make_classification(n_samples=1000)
+    cv = KFold(n_splits=2, random_state=0)
 
     msg = "Setting penalty='none' will ignore the C"
     lr = LogisticRegression(penalty='none', solver=solver, C=4)
     assert_warns_message(UserWarning, msg, lr.fit, X, y)
-    lr = LogisticRegressionCV(penalty='none', solver=solver, Cs=4)
+    lr = LogisticRegressionCV(penalty='none', solver=solver, Cs=4, cv=cv)
     assert_warns_message(UserWarning, msg, lr.fit, X, y)
 
     lr_none = LogisticRegression(penalty='none', solver=solver)
@@ -1781,9 +1783,9 @@ def test_penalty_none(solver):
     pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
     assert_array_almost_equal(pred_none, pred_l2_C_inf)
 
-    lr_none = LogisticRegressionCV(penalty='none', solver=solver)
+    lr_none = LogisticRegressionCV(penalty='none', solver=solver, cv=cv)
     lr_l2_C_inf = LogisticRegressionCV(penalty='l2', Cs=[np.inf],
-                                       solver=solver)
+                                       solver=solver, cv=cv)
     pred_none = lr_none.fit(X, y).predict(X)
     pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
     assert_array_almost_equal(pred_none, pred_l2_C_inf)
