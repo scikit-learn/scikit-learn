@@ -272,7 +272,7 @@ Preservation of Input Ordering
   >>> from sklearn.decomposition import PCA
 
   >>> X = np.random.uniform(-1, 1, size=(10, 10))
-  >>> print(x.flags.c_contiguous)
+  >>> print(X.flags.c_contiguous)
   >>> True
 
   >>> X_transformed = PCA().fit_transform(x)
