@@ -599,7 +599,7 @@ class SVC(BaseSVC):
         A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>
     [2] "Probabilistic outputs for support vector machines and 
-        comparison to regularizedlikelihood methods.""
+        comparison to regularizedlikelihood methods."
         Platt (1999)
     """
 
