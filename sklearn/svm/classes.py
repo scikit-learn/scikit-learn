@@ -593,7 +593,7 @@ class SVC(BaseSVC):
         LinearSVC for more comparison element.
 
     References
-    -----
+    ----------
     .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
