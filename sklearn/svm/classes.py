@@ -593,14 +593,15 @@ class SVC(BaseSVC):
         implemented using liblinear. Check the See also section of
         LinearSVC for more comparison element.
 
+
     References
-    --------
-    [1] LIBSVM
-        A Library for Support Vector Machines
-        <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>
-    [2] Probabilistic outputs for support vector machines and
-        comparison to regularizedlikelihood methods.
-        Platt (1999)
+    -----
+    .. [1]`LIBSVM: A Library for Support Vector Machines
+        <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
+
+    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
+        machines and comparison to regularizedlikelihood methods."
+        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
     """
 
     _impl = 'c_svc'
