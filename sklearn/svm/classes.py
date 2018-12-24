@@ -558,7 +558,6 @@ class SVC(BaseSVC):
 
     probA_ : array, shape = [n_class * (n_class-1) / 2]
     probB_ : array, shape = [n_class * (n_class-1) / 2]
-
         If probability=True, the parameters learned in Platt scaling to
         produce probability estimates from decision values. If
         probability=False, an empty array. Platt scaling uses the logistic
@@ -593,10 +592,9 @@ class SVC(BaseSVC):
         implemented using liblinear. Check the See also section of
         LinearSVC for more comparison element.
 
-
     References
     -----
-    .. [1]`LIBSVM: A Library for Support Vector Machines
+    .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
     .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
