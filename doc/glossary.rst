@@ -1351,21 +1351,8 @@ Methods
         If the estimator was not already :term:`fitted`, calling this method
         should raise a :class:`exceptions.NotFittedError`.
 
-        ``transform`` does not preserve the memory order of the input array::
+        :term:`transform` does not preserve the order (memory layout) of the input array.
 
-          >>> import numpy as np
-          >>> from sklearn.decomposition import PCA
-
-          >>> X = np.random.uniform(-1, 1, size=(10, 10))
-          >>> print(X.flags.c_contiguous)
-          True
-
-          >>> X_transformed = PCA().fit_transform(X)
-          >>> print(X_transformed.flags.c_contiguous)
-          False
-
-        In this example, ``X`` is c_contiguous, while ``X_transformed`` 
-        is not c_contiguous after transformation.
 
 .. _glossary_parameters:
 
