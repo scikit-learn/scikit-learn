@@ -1374,11 +1374,11 @@ Methods
 
           >>> X = np.random.uniform(-1, 1, size=(10, 10))
           >>> print(X.flags.c_contiguous)
-          >>> True
+          True
 
-          >>> X_transformed = PCA().fit_transform(x)
+          >>> X_transformed = PCA().fit_transform(X)
           >>> print(X_transformed.flags.c_contiguous)
-          >>> False
+          False
 
         In this example, ``X`` is c_contiguous, while ``X_transformed`` 
         is not c_contiguous after transformation.
