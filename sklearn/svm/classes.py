@@ -558,6 +558,7 @@ class SVC(BaseSVC):
 
     probA_ : array, shape = [n_class * (n_class-1) / 2]
     probB_ : array, shape = [n_class * (n_class-1) / 2]
+
         If probability=True, the parameters learned in Platt scaling to
         produce probability estimates from decision values. If
         probability=False, an empty array. Platt scaling uses the logistic
