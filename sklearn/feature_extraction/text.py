@@ -1450,9 +1450,8 @@ class TfidfVectorizer(CountVectorizer):
         frequency. This is a common way to calculate the count of a word
         relative to the appearance of a document.
 
-        The formula that is used to compute the tf-idf of term t is​:
-        :math:`tf-idf(d, t) = tf(t) * idf(d, t)`
-​    ​    and the idf is computed as​:
+        The formula that is used to compute the tf-idf of term t is​
+        :math:`tf-idf(d, t) = tf(t) * idf(d, t)` and the idf is computed as​:
         `idf(d, t) = log [ n / df(d, t) ] + 1`
 
 ​    ​    (if ``smooth_idf=False``), where `n` is the total number of
