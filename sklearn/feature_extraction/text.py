@@ -1440,7 +1440,7 @@ class TfidfVectorizer(CountVectorizer):
     sublinear_tf : boolean, default=False
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
-    CountVectorizer
+    CountVectorizer : sparse matrix, [n_samples, n_features]
         Produces a sparse representation of the counts using
         scipy.sparse.csr_matrix.
 
