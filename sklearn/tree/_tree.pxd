@@ -19,7 +19,11 @@ ctypedef np.npy_intp SIZE_t              # Type for indices and counters
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
-from ._utils cimport SplitValue
+#from ._utils cimport SplitValue
+ctypedef union SplitValue:
+    np.npy_float64 threshold
+    np.npy_uint64 cat_split
+
 
 from ._splitter cimport Splitter
 from ._splitter cimport SplitRecord

@@ -1,3 +1,4 @@
+# cython: language_level=3
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
@@ -1544,10 +1545,10 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                                 # sum of halves used to avoid infinite values
                                 current.split_value.threshold = Xf[p_prev] / 2.0 + Xf[p] / 2.0
 
-                                if ((current.threshold == Xf[p]) or
-                                    (current.threshold == INFINITY) or
-                                    (current.threshold == -INFINITY)):
-                                    current.threshold = Xf[p_prev]
+                                if ((current.split_value.threshold == Xf[p]) or
+                                    (current.split_value.threshold == INFINITY) or
+                                    (current.split_value.threshold == -INFINITY)):
+                                    current.split_value.threshold = Xf[p_prev]
 
                                 best = current
 

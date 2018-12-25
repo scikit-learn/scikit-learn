@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Brian Holt <bdholt1@gmail.com>
@@ -12,7 +14,7 @@
 import numpy as np
 cimport numpy as np
 
-from ._utils cimport SplitValue
+#from ._utils cimport SplitValue
 
 from ._criterion cimport Criterion
 
@@ -23,7 +25,11 @@ ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 ctypedef np.npy_uint64 UINT64_t          # Unsigned 64 bit integer
 
-cdef struct SplitRecord:
+ctypedef union SplitValue:
+    DOUBLE_t threshold
+    UINT64_t cat_split
+
+ctypedef struct SplitRecord:
     # Data to track sample split
     SIZE_t feature         # Which feature to split on.
     SIZE_t pos             # Split samples array at the given position,
