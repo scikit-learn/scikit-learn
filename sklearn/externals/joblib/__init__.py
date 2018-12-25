@@ -58,7 +58,7 @@ Main features
    inputs and  outputs: Python functions. Joblib can save their
    computation to disk and rerun it only if necessary::
 
-      >>> from sklearn.externals.joblib import Memory
+      >>> from sklearn.utils import Memory
       >>> mem = Memory(cachedir='/tmp/joblib')
       >>> import numpy as np
       >>> a = np.vander(np.arange(3)).astype(np.float)
@@ -77,7 +77,7 @@ Main features
 2) **Embarrassingly parallel helper:** to make it easy to write readable
    parallel code and debug it quickly::
 
-      >>> from sklearn.externals.joblib import Parallel, delayed
+      >>> from sklearn.utils import Parallel, delayed
       >>> from math import sqrt
       >>> Parallel(n_jobs=1)(delayed(sqrt)(i**2) for i in range(10))
       [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]

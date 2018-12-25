@@ -223,6 +223,8 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     ----------
     .. [1] `Wikipedia entry for the Confusion matrix
            <https://en.wikipedia.org/wiki/Confusion_matrix>`_
+           (Wikipedia and other references may use a different
+           convention for axes)
 
     Examples
     --------
@@ -499,7 +501,7 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     ----------
     .. [1] `Baldi, Brunak, Chauvin, Andersen and Nielsen, (2000). Assessing the
        accuracy of prediction algorithms for classification: an overview
-       <http://dx.doi.org/10.1093/bioinformatics/16.5.412>`_
+       <https://doi.org/10.1093/bioinformatics/16.5.412>`_
 
     .. [2] `Wikipedia entry for the Matthews Correlation Coefficient
        <https://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_
@@ -673,7 +675,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
         ``'weighted'``:
-            Calculate metrics for each label, and find their average, weighted
+            Calculate metrics for each label, and find their average weighted
             by support (the number of true instances for each label). This
             alters 'macro' to account for label imbalance; it can result in an
             F-score that is not between precision and recall.
@@ -776,7 +778,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
         ``'weighted'``:
-            Calculate metrics for each label, and find their average, weighted
+            Calculate metrics for each label, and find their average weighted
             by support (the number of true instances for each label). This
             alters 'macro' to account for label imbalance; it can result in an
             F-score that is not between precision and recall.
@@ -948,7 +950,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
         ``'weighted'``:
-            Calculate metrics for each label, and find their average, weighted
+            Calculate metrics for each label, and find their average weighted
             by support (the number of true instances for each label). This
             alters 'macro' to account for label imbalance; it can result in an
             F-score that is not between precision and recall.
@@ -1009,6 +1011,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     It is possible to compute per-label precisions, recalls, F1-scores and
     supports instead of averaging:
+
     >>> precision_recall_fscore_support(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
     ... # doctest: +ELLIPSIS,+NORMALIZE_WHITESPACE
@@ -1221,7 +1224,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
         ``'weighted'``:
-            Calculate metrics for each label, and find their average, weighted
+            Calculate metrics for each label, and find their average weighted
             by support (the number of true instances for each label). This
             alters 'macro' to account for label imbalance; it can result in an
             F-score that is not between precision and recall.
@@ -1320,7 +1323,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
         ``'weighted'``:
-            Calculate metrics for each label, and find their average, weighted
+            Calculate metrics for each label, and find their average weighted
             by support (the number of true instances for each label). This
             alters 'macro' to account for label imbalance; it can result in an
             F-score that is not between precision and recall.
@@ -1364,16 +1367,15 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     return r
 
 
-def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
+def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
+                            adjusted=False):
     """Compute the balanced accuracy
 
-    The balanced accuracy is used in binary classification problems to deal
-    with imbalanced datasets. It is defined as the arithmetic mean of
-    sensitivity (true positive rate) and specificity (true negative rate),
-    or the average recall obtained on either class. It is also equal to the
-    ROC AUC score given binary inputs.
+    The balanced accuracy in binary and multiclass classification problems to
+    deal with imbalanced datasets. It is defined as the average of recall
+    obtained on each class.
 
-    The best value is 1 and the worst value is 0.
+    The best value is 1 and the worst value is 0 when ``adjusted=False``.
 
     Read more in the :ref:`User Guide <balanced_accuracy_score>`.
 
@@ -1388,10 +1390,13 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+    adjusted : bool, default=False
+        When true, the result is adjusted for chance, so that random
+        performance would score 0, and perfect performance scores 1.
+
     Returns
     -------
-    balanced_accuracy : float.
-        The average of sensitivity and specificity
+    balanced_accuracy : float
 
     See also
     --------
@@ -1403,6 +1408,10 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
            The balanced accuracy and its posterior distribution.
            Proceedings of the 20th International Conference on Pattern
            Recognition, 3121-24.
+    .. [2] John. D. Kelleher, Brian Mac Namee, Aoife D'Arcy, (2015).
+           `Fundamentals of Machine Learning for Predictive Data Analytics:
+           Algorithms, Worked Examples, and Case Studies
+           <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_.
 
     Examples
     --------
@@ -1413,20 +1422,23 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
     0.625
 
     """
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-
-    if y_type != 'binary':
-        raise ValueError('Balanced accuracy is only meaningful '
-                         'for binary classification problems.')
-    # simply wrap the ``recall_score`` function
-    return recall_score(y_true, y_pred,
-                        pos_label=None,
-                        average='macro',
-                        sample_weight=sample_weight)
+    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        per_class = np.diag(C) / C.sum(axis=1)
+    if np.any(np.isnan(per_class)):
+        warnings.warn('y_pred contains classes not in y_true')
+        per_class = per_class[~np.isnan(per_class)]
+    score = np.mean(per_class)
+    if adjusted:
+        n_classes = len(per_class)
+        chance = 1 / n_classes
+        score -= chance
+        score /= 1 - chance
+    return score
 
 
 def classification_report(y_true, y_pred, labels=None, target_names=None,
-                          sample_weight=None, digits=2):
+                          sample_weight=None, digits=2, output_dict=False):
     """Build a text report showing the main classification metrics
 
     Read more in the :ref:`User Guide <classification_report>`.
@@ -1449,12 +1461,27 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         Sample weights.
 
     digits : int
-        Number of digits for formatting output floating point values
+        Number of digits for formatting output floating point values.
+        When ``output_dict`` is ``True``, this will be ignored and the
+        returned values will not be rounded.
+
+    output_dict : bool (default = False)
+        If True, return output as dict
 
     Returns
     -------
-    report : string
+    report : string / dict
         Text summary of the precision, recall, F1 score for each class.
+        Dictionary returned if output_dict is True. Dictionary has the
+        following structure::
+
+            {'label 1': {'precision':0.5,
+                         'recall':1.0,
+                         'f1-score':0.67,
+                         'support':1},
+             'label 2': { ... },
+              ...
+            }
 
         The reported averages are a prevalence-weighted macro-average across
         classes (equivalent to :func:`precision_recall_fscore_support` with
@@ -1521,24 +1548,36 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     row_fmt = u'{:>{width}s} ' + u' {:>9.{digits}f}' * 3 + u' {:>9}\n'
     rows = zip(target_names, p, r, f1, s)
+
+    avg_total = [np.average(p, weights=s),
+                 np.average(r, weights=s),
+                 np.average(f1, weights=s),
+                 np.sum(s)]
+
+    if output_dict:
+        report_dict = {label[0]: label[1:] for label in rows}
+
+        for label, scores in report_dict.items():
+            report_dict[label] = dict(zip(headers, scores))
+
+        report_dict['avg / total'] = dict(zip(headers, avg_total))
+
+        return report_dict
+
     for row in rows:
         report += row_fmt.format(*row, width=width, digits=digits)
 
     report += u'\n'
 
-    # compute averages
+    # append averages
     report += row_fmt.format(last_line_heading,
-                             np.average(p, weights=s),
-                             np.average(r, weights=s),
-                             np.average(f1, weights=s),
-                             np.sum(s),
+                             *avg_total,
                              width=width, digits=digits)
 
     return report
 
 
-def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
-                 classes=None):
+def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -1563,13 +1602,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
         Sample weights.
 
         .. versionadded:: 0.18
-
-    classes : array, shape = [n_labels], optional
-        Integer array of labels.
-
-        .. deprecated:: 0.18
-           This parameter has been deprecated in favor of ``labels`` in
-           version 0.18 and will be removed in 0.20. Use ``labels`` instead.
 
     Returns
     -------
@@ -1618,10 +1650,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
     """
-    if classes is not None:
-        warnings.warn("'classes' was renamed to 'labels' in version 0.18 and "
-                      "will be removed in 0.20.", DeprecationWarning)
-        labels = classes
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
@@ -1893,7 +1921,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
 
     losses = 1 - margin
     # The hinge_loss doesn't penalize good enough predictions.
-    losses[losses <= 0] = 0
+    np.clip(losses, 0, None, out=losses)
     return np.average(losses, weights=sample_weight)
 
 
@@ -1918,9 +1946,7 @@ def _check_binary_probabilistic_predictions(y_true, y_prob):
 
 def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     """Compute the Brier score.
-
     The smaller the Brier score, the better, hence the naming with "loss".
-
     Across all items in a set N predictions, the Brier score measures the
     mean squared difference between (1) the predicted probability assigned
     to the possible outcomes for item i, and (2) the actual outcome.
@@ -1929,15 +1955,14 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     takes on a value between zero and one, since this is the largest
     possible difference between a predicted probability (which must be
     between zero and one) and the actual outcome (which can take on values
-    of only 0 and 1).
-
+    of only 0 and 1). The Brier loss is composed of refinement loss and
+    calibration loss.
     The Brier score is appropriate for binary and categorical outcomes that
     can be structured as true or false, but is inappropriate for ordinal
     variables which can take on three or more values (this is because the
     Brier score assumes that all possible outcomes are equivalently
     "distant" from one another). Which label is considered to be the positive
     label is controlled via the parameter pos_label, which defaults to 1.
-
     Read more in the :ref:`User Guide <calibration>`.
 
     Parameters

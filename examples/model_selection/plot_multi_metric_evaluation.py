@@ -47,7 +47,7 @@ scoring = {'AUC': 'roc_auc', 'Accuracy': make_scorer(accuracy_score)}
 # ``gs.best_index_``
 gs = GridSearchCV(DecisionTreeClassifier(random_state=42),
                   param_grid={'min_samples_split': range(2, 403, 10)},
-                  scoring=scoring, cv=5, refit='AUC')
+                  scoring=scoring, cv=5, refit='AUC', return_train_score=True)
 gs.fit(X, y)
 results = gs.cv_results_
 
@@ -61,9 +61,8 @@ plt.title("GridSearchCV evaluating using multiple scorers simultaneously",
 
 plt.xlabel("min_samples_split")
 plt.ylabel("Score")
-plt.grid()
 
-ax = plt.axes()
+ax = plt.gca()
 ax.set_xlim(0, 402)
 ax.set_ylim(0.73, 1)
 

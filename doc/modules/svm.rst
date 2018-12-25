@@ -336,27 +336,10 @@ floating point values instead of integer values::
 Density estimation, novelty detection
 =======================================
 
-One-class SVM is used for novelty detection, that is, given a set of
-samples, it will detect the soft boundary of that set so as to
-classify new points as belonging to that set or not. The class that
-implements this is called :class:`OneClassSVM`.
+The class :class:`OneClassSVM` implements a One-Class SVM which is used in
+outlier detection. 
 
-In this case, as it is a type of unsupervised learning, the fit method
-will only take as input an array X, as there are no class labels.
-
-See, section :ref:`outlier_detection` for more details on this usage.
-
-.. figure:: ../auto_examples/svm/images/sphx_glr_plot_oneclass_001.png
-   :target: ../auto_examples/svm/plot_oneclass.html
-   :align: center
-   :scale: 75
-
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_svm_plot_oneclass.py`
- * :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
-
+See :ref:`outlier_detection` for the description and usage of OneClassSVM.
 
 Complexity
 ==========

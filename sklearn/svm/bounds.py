@@ -61,7 +61,8 @@ def l1_min_c(X, y, loss='squared_hinge', fit_intercept=True,
     # maximum absolute value over classes and features
     den = np.max(np.abs(safe_sparse_dot(Y, X)))
     if fit_intercept:
-        bias = intercept_scaling * np.ones((np.size(y), 1))
+        bias = np.full((np.size(y), 1), intercept_scaling,
+                       dtype=np.array(intercept_scaling).dtype)
         den = max(den, abs(np.dot(Y, bias)).max())
 
     if den == 0.0:

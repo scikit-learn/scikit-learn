@@ -25,7 +25,8 @@ from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.deprecation import DeprecationDict
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
-from ..externals.joblib import Parallel, delayed, logger
+from ..utils import Parallel, delayed
+from ..utils._joblib import logger
 from ..externals.six.moves import zip
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
@@ -37,10 +38,10 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
            'permutation_test_score', 'learning_curve', 'validation_curve']
 
 
-def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
+def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
                    n_jobs=1, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score="warn",
-                   return_estimator=False):
+                   return_estimator=False, error_score='raise-deprecating'):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
     Read more in the :ref:`User Guide <multimetric_cross_validation>`.
@@ -79,10 +80,11 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train, test splits.
+
+        - None, to use the default 3-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -90,6 +92,10 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -133,6 +139,16 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     return_estimator : boolean, default False
         Whether to return the estimators fitted on each split.
 
+    error_score : 'raise' | 'raise-deprecating' or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised.
+        If set to 'raise-deprecating', a FutureWarning is printed before the
+        error is raised.
+        If a numeric value is given, FitFailedWarning is raised. This parameter
+        does not affect the refit step, which will always raise the error.
+        Default is 'raise-deprecating' but from version 0.22 it will change
+        to np.nan.
+
     Returns
     -------
     scores : dict of float arrays of shape=(n_splits,)
@@ -173,7 +189,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     Single metric evaluation using ``cross_validate``
 
-    >>> cv_results = cross_validate(lasso, X, y, return_train_score=False)
+    >>> cv_results = cross_validate(lasso, X, y, cv=3,
+    ...                             return_train_score=False)
     >>> sorted(cv_results.keys())                         # doctest: +ELLIPSIS
     ['fit_time', 'score_time', 'test_score']
     >>> cv_results['test_score']    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -182,8 +199,9 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     Multiple metric evaluation using ``cross_validate``
     (please refer the ``scoring`` parameter doc for more information)
 
-    >>> scores = cross_validate(lasso, X, y,
-    ...                         scoring=('r2', 'neg_mean_squared_error'))
+    >>> scores = cross_validate(lasso, X, y, cv=3,
+    ...                         scoring=('r2', 'neg_mean_squared_error'),
+    ...                         return_train_score=True)
     >>> print(scores['test_neg_mean_squared_error'])      # doctest: +ELLIPSIS
     [-3635.5... -3573.3... -6114.7...]
     >>> print(scores['train_r2'])                         # doctest: +ELLIPSIS
@@ -193,6 +211,10 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     ---------
     :func:`sklearn.model_selection.cross_val_score`:
         Run cross-validation for single metric evaluation.
+
+    :func:`sklearn.model_selection.cross_val_predict`:
+        Get predictions from each split of cross-validation for diagnostic
+        purposes.
 
     :func:`sklearn.metrics.make_scorer`:
         Make a scorer from a performance metric or loss function.
@@ -211,7 +233,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         delayed(_fit_and_score)(
             clone(estimator), X, y, scorers, train, test, verbose, None,
             fit_params, return_train_score=return_train_score,
-            return_times=True, return_estimator=return_estimator)
+            return_times=True, return_estimator=return_estimator,
+            error_score=error_score)
         for train, test in cv.split(X, y, groups))
 
     zipped_scores = list(zip(*scores))
@@ -248,9 +271,9 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     return ret
 
 
-def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
+def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
                     n_jobs=1, verbose=0, fit_params=None,
-                    pre_dispatch='2*n_jobs'):
+                    pre_dispatch='2*n_jobs', error_score='raise-deprecating'):
     """Evaluate a score by cross-validation
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -292,6 +315,10 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
@@ -319,6 +346,16 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
+    error_score : 'raise' | 'raise-deprecating' or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised.
+        If set to 'raise-deprecating', a FutureWarning is printed before the
+        error is raised.
+        If a numeric value is given, FitFailedWarning is raised. This parameter
+        does not affect the refit step, which will always raise the error.
+        Default is 'raise-deprecating' but from version 0.22 it will change
+        to np.nan.
+
     Returns
     -------
     scores : array of float, shape=(len(list(cv)),)
@@ -332,7 +369,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
-    >>> print(cross_val_score(lasso, X, y))  # doctest: +ELLIPSIS
+    >>> print(cross_val_score(lasso, X, y, cv=3))  # doctest: +ELLIPSIS
     [0.33150734 0.08022311 0.03531764]
 
     See Also
@@ -340,6 +377,10 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     :func:`sklearn.model_selection.cross_validate`:
         To run cross-validation on multiple metrics and also to return
         train scores, fit times and score times.
+
+    :func:`sklearn.model_selection.cross_val_predict`:
+        Get predictions from each split of cross-validation for diagnostic
+        purposes.
 
     :func:`sklearn.metrics.make_scorer`:
         Make a scorer from a performance metric or loss function.
@@ -353,7 +394,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
                                 return_train_score=False,
                                 n_jobs=n_jobs, verbose=verbose,
                                 fit_params=fit_params,
-                                pre_dispatch=pre_dispatch)
+                                pre_dispatch=pre_dispatch,
+                                error_score=error_score)
     return cv_results['test_score']
 
 
@@ -395,12 +437,15 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     verbose : integer
         The verbosity level.
 
-    error_score : 'raise' or numeric
+    error_score : 'raise' | 'raise-deprecating' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
-        If set to 'raise', the error is raised. If a numeric value is given,
-        FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is 'raise' but from
-        version 0.22 it will change to np.nan.
+        If set to 'raise', the error is raised.
+        If set to 'raise-deprecating', a FutureWarning is printed before the
+        error is raised.
+        If a numeric value is given, FitFailedWarning is raised. This parameter
+        does not affect the refit step, which will always raise the error.
+        Default is 'raise-deprecating' but from version 0.22 it will change
+        to np.nan.
 
     parameters : dict or None
         Parameters to be set on the estimator.
@@ -601,10 +646,13 @@ def _multimetric_score(estimator, X_test, y_test, scorers):
     return scores
 
 
-def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
+def cross_val_predict(estimator, X, y=None, groups=None, cv='warn', n_jobs=1,
                       verbose=0, fit_params=None, pre_dispatch='2*n_jobs',
                       method='predict'):
     """Generate cross-validated estimates for each input data point
+
+    It is not appropriate to pass these predictions into an evaluation
+    metric. Use :func:`cross_validate` to measure generalization error.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -639,6 +687,10 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -677,6 +729,12 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     predictions : ndarray
         This is the result of calling ``method``
 
+    See also
+    --------
+    cross_val_score : calculate score for each CV split
+
+    cross_validate : calculate one or more scores and timings for each CV split
+
     Notes
     -----
     In the case that one or more classes are absent in a training portion, a
@@ -694,7 +752,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
-    >>> y_pred = cross_val_predict(lasso, X, y)
+    >>> y_pred = cross_val_predict(lasso, X, y, cv=3)
     """
     X, y, groups = indexable(X, y, groups)
 
@@ -868,7 +926,7 @@ def _index_param_value(X, v, indices):
     return safe_indexing(v, indices)
 
 
-def permutation_test_score(estimator, X, y, groups=None, cv=None,
+def permutation_test_score(estimator, X, y, groups=None, cv='warn',
                            n_permutations=100, n_jobs=1, random_state=0,
                            verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
@@ -918,6 +976,10 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     n_permutations : integer, optional
         Number of times to permute ``y``.
@@ -1005,10 +1067,10 @@ def _shuffle(y, groups, random_state):
 
 
 def learning_curve(estimator, X, y, groups=None,
-                   train_sizes=np.linspace(0.1, 1.0, 5), cv=None, scoring=None,
-                   exploit_incremental_learning=False, n_jobs=1,
+                   train_sizes=np.linspace(0.1, 1.0, 5), cv='warn',
+                   scoring=None, exploit_incremental_learning=False, n_jobs=1,
                    pre_dispatch="all", verbose=0, shuffle=False,
-                   random_state=None):
+                   random_state=None,  error_score='raise-deprecating'):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training
@@ -1065,6 +1127,10 @@ def learning_curve(estimator, X, y, groups=None,
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
@@ -1095,9 +1161,19 @@ def learning_curve(estimator, X, y, groups=None,
         If None, the random number generator is the RandomState instance used
         by `np.random`. Used when ``shuffle`` is True.
 
+    error_score : 'raise' | 'raise-deprecating' or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised.
+        If set to 'raise-deprecating', a FutureWarning is printed before the
+        error is raised.
+        If a numeric value is given, FitFailedWarning is raised. This parameter
+        does not affect the refit step, which will always raise the error.
+        Default is 'raise-deprecating' but from version 0.22 it will change
+        to np.nan.
+
     Returns
     -------
-    train_sizes_abs : array, shape = (n_unique_ticks,), dtype int
+    train_sizes_abs : array, shape (n_unique_ticks,), dtype int
         Numbers of training examples that has been used to generate the
         learning curve. Note that the number of ticks might be less
         than n_ticks because duplicate entries will be removed.
@@ -1153,8 +1229,9 @@ def learning_curve(estimator, X, y, groups=None,
                 train_test_proportions.append((train[:n_train_samples], test))
 
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, train, test,
-            verbose, parameters=None, fit_params=None, return_train_score=True)
+            clone(estimator), X, y, scorer, train, test, verbose,
+            parameters=None, fit_params=None, return_train_score=True,
+            error_score=error_score)
             for train, test in train_test_proportions)
         out = np.array(out)
         n_cv_folds = out.shape[0] // n_unique_ticks
@@ -1246,8 +1323,8 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
 
 
 def validation_curve(estimator, X, y, param_name, param_range, groups=None,
-                     cv=None, scoring=None, n_jobs=1, pre_dispatch="all",
-                     verbose=0):
+                     cv='warn', scoring=None, n_jobs=1, pre_dispatch="all",
+                     verbose=0, error_score='raise-deprecating'):
     """Validation curve.
 
     Determine training and test scores for varying parameter values.
@@ -1298,6 +1375,10 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
@@ -1313,6 +1394,16 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
 
     verbose : integer, optional
         Controls the verbosity: the higher, the more messages.
+
+    error_score : 'raise' | 'raise-deprecating' or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised.
+        If set to 'raise-deprecating', a FutureWarning is printed before the
+        error is raised.
+        If a numeric value is given, FitFailedWarning is raised. This parameter
+        does not affect the refit step, which will always raise the error.
+        Default is 'raise-deprecating' but from version 0.22 it will change
+        to np.nan.
 
     Returns
     -------
@@ -1336,7 +1427,8 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
         clone(estimator), X, y, scorer, train, test, verbose,
-        parameters={param_name: v}, fit_params=None, return_train_score=True)
+        parameters={param_name: v}, fit_params=None, return_train_score=True,
+        error_score=error_score)
         # NOTE do not change order of iteration to allow one time cv splitters
         for train, test in cv.split(X, y, groups) for v in param_range)
     out = np.asarray(out)

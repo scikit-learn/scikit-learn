@@ -69,10 +69,9 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=1):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
+    X : {array-like, NearestNeighbors}
         Sample data, shape = (n_samples, n_features), in the form of a
-        numpy array, sparse array, precomputed tree, or NearestNeighbors
-        object.
+        numpy array or a NearestNeighbors object.
 
     n_neighbors : int
         Number of neighbors for each sample.
@@ -194,10 +193,9 @@ def locally_linear_embedding(
 
     Parameters
     ----------
-    X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
+    X : {array-like, NearestNeighbors}
         Sample data, shape = (n_samples, n_features), in the form of a
-        numpy array, sparse array, precomputed tree, or NearestNeighbors
-        object.
+        numpy array or a NearestNeighbors object.
 
     n_neighbors : integer
         number of neighbors to consider for each point.
@@ -450,7 +448,7 @@ def locally_linear_embedding(
             # compute Householder matrix which satisfies
             #  Hi*Vi.T*ones(n_neighbors) = alpha_i*ones(s)
             # using prescription from paper
-            h = alpha_i * np.ones(s_i) - np.dot(Vi.T, np.ones(n_neighbors))
+            h = np.full(s_i, alpha_i) - np.dot(Vi.T, np.ones(n_neighbors))
 
             norm_h = np.linalg.norm(h)
             if norm_h < modified_tol:
@@ -657,7 +655,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         X : array-like of shape [n_samples, n_features]
             training set.
 
-        y: Ignored
+        y : Ignored
 
         Returns
         -------
@@ -674,7 +672,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         X : array-like of shape [n_samples, n_features]
             training set.
 
-        y: Ignored
+        y : Ignored
 
         Returns
         -------

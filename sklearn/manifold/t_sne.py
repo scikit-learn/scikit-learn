@@ -9,6 +9,7 @@
 #   http://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 from __future__ import division
 
+import warnings
 from time import time
 import numpy as np
 from scipy import linalg
@@ -394,7 +395,8 @@ def _gradient_descent(objective, p0, it, n_iter,
     return p, error, i
 
 
-def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
+def trustworthiness(X, X_embedded, n_neighbors=5,
+                    precomputed=False, metric='euclidean'):
     r"""Expresses to what extent the local structure is retained.
 
     The trustworthiness is within [0, 1]. It is defined as
@@ -431,15 +433,28 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     precomputed : bool, optional (default: False)
         Set this flag if X is a precomputed square distance matrix.
 
+        ..deprecated:: 0.20
+            ``precomputed`` has been deprecated in version 0.20 and will be
+            removed in version 0.22. Use ``metric`` instead.
+
+    metric : string, or callable, optional, default 'euclidean'
+        Which metric to use for computing pairwise distances between samples
+        from the original input space. If metric is 'precomputed', X must be a
+        matrix of pairwise distances or squared distances. Otherwise, see the
+        documentation of argument metric in sklearn.pairwise.pairwise_distances
+        for a list of available metrics.
+
     Returns
     -------
     trustworthiness : float
         Trustworthiness of the low-dimensional embedding.
     """
     if precomputed:
-        dist_X = X
-    else:
-        dist_X = pairwise_distances(X, squared=True)
+        warnings.warn("The flag 'precomputed' has been deprecated in version "
+                      "0.20 and will be removed in 0.22. See 'metric' "
+                      "parameter instead.", DeprecationWarning)
+        metric = 'precomputed'
+    dist_X = pairwise_distances(X, metric=metric)
     ind_X = np.argsort(dist_X, axis=1)
     ind_X_embedded = NearestNeighbors(n_neighbors).fit(X_embedded).kneighbors(
         return_distance=False)
@@ -851,7 +866,7 @@ class TSNE(BaseEstimator):
         self.n_iter_ = it
 
         if self.verbose:
-            print("[t-SNE] Error after %d iterations: %f"
+            print("[t-SNE] KL divergence after %d iterations: %f"
                   % (it + 1, kl_divergence))
 
         X_embedded = params.reshape(n_samples, self.n_components)

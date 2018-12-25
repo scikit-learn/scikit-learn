@@ -102,7 +102,7 @@ def generate_dataset(n_train, n_test, n_features, noise=0.1, verbose=False):
 
     random_seed = 13
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, train_size=n_train, random_state=random_seed)
+        X, y, train_size=n_train, test_size=n_test, random_state=random_seed)
     X_train, y_train = shuffle(X_train, y_train, random_state=random_seed)
 
     X_scaler = StandardScaler()
@@ -285,7 +285,7 @@ configuration = {
          'complexity_label': 'non-zero coefficients',
          'complexity_computer': lambda clf: np.count_nonzero(clf.coef_)},
         {'name': 'RandomForest',
-         'instance': RandomForestRegressor(),
+         'instance': RandomForestRegressor(n_estimators=100),
          'complexity_label': 'estimators',
          'complexity_computer': lambda clf: clf.n_estimators},
         {'name': 'SVR',

@@ -7,6 +7,7 @@ Several basic tests for hierarchical clustering procedures
 # License: BSD 3 clause
 from tempfile import mkdtemp
 import shutil
+import pytest
 from functools import partial
 
 import numpy as np
@@ -50,6 +51,7 @@ def test_deprecation_of_n_components_in_linkage_tree():
     assert_equal(n_nodes, n_nodes_t)
     assert_equal(n_leaves, n_leaves_t)
     assert_equal(parent, parent_t)
+
 
 def test_linkage_misc():
     # Misc tests on linkage
@@ -141,6 +143,8 @@ def test_agglomerative_clustering_wrong_arg_memory():
     assert_raises(ValueError, clustering.fit, X)
 
 
+@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
+                            "change in version 0.22")
 def test_agglomerative_clustering():
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering.
@@ -249,6 +253,8 @@ def test_ward_agglomeration():
     assert_raises(ValueError, agglo.fit, X[:0])
 
 
+@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
+                            "change in version 0.22")
 def test_single_linkage_clustering():
     # Check that we get the correct result in two emblematic cases
     moons, moon_labels = make_moons(noise=0.05, random_state=42)
@@ -296,7 +302,7 @@ def test_scikit_vs_scipy():
             children_ = out[:, :2].astype(np.int)
             children, _, n_leaves, _ = _TREE_BUILDERS[linkage](X, connectivity)
 
-            # Sort the order of of child nodes per row for consistency
+            # Sort the order of child nodes per row for consistency
             children.sort(axis=1)
             assert_array_equal(children, children_, 'linkage tree differs'
                                                     ' from scipy impl for'
@@ -310,6 +316,8 @@ def test_scikit_vs_scipy():
     assert_raises(ValueError, _hc_cut, n_leaves + 1, children, n_leaves)
 
 
+@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
+                            "change in version 0.22")
 def test_identical_points():
     # Ensure identical points are handled correctly when using mst with
     # a sparse connectivity matrix
@@ -498,7 +506,7 @@ def test_int_float_dict():
         assert d[key] == value
 
     other_keys = np.arange(50).astype(np.intp)[::2]
-    other_values = 0.5 * np.ones(50)[::2]
+    other_values = np.full(50, 0.5)[::2]
     other = IntFloatDict(other_keys, other_values)
     # Complete smoke test
     max_merge(d, other, mask=np.ones(100, dtype=np.intp), n_a=1, n_b=1)
@@ -511,7 +519,8 @@ def test_connectivity_callable():
     connectivity = kneighbors_graph(X, 3, include_self=False)
     aglc1 = AgglomerativeClustering(connectivity=connectivity)
     aglc2 = AgglomerativeClustering(
-        connectivity=partial(kneighbors_graph, n_neighbors=3, include_self=False))
+        connectivity=partial(kneighbors_graph, n_neighbors=3,
+                             include_self=False))
     aglc1.fit(X)
     aglc2.fit(X)
     assert_array_equal(aglc1.labels_, aglc2.labels_)

@@ -1,6 +1,7 @@
 """
 Testing Recursive feature elimination
 """
+import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
@@ -167,6 +168,11 @@ def test_rfecv():
                   scoring=test_scorer)
     rfecv.fit(X, y)
     assert_array_equal(rfecv.grid_scores_, np.ones(len(rfecv.grid_scores_)))
+    # In the event of cross validation score ties, the expected behavior of
+    # RFECV is to return the FEWEST features that maximize the CV score.
+    # Because test_scorer always returns 1.0 in this example, RFECV should
+    # reduce the dimensionality to a single feature (i.e. n_features_ = 1)
+    assert_equal(rfecv.n_features_, 1)
 
     # Same as the first two tests, but with step=2
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=2, cv=5)
@@ -223,6 +229,7 @@ def test_rfecv_verbose_output():
     assert_greater(len(verbose_output.readline()), 0)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel='linear'))
     assert_equal(rfe._estimator_type, "classifier")
@@ -314,6 +321,7 @@ def test_number_of_subsets_of_features():
                      formula2(n_features, n_features_to_select, step))
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_rfe_cv_n_jobs():
     generator = check_random_state(0)
     iris = load_iris()
@@ -331,6 +339,7 @@ def test_rfe_cv_n_jobs():
     assert_array_almost_equal(rfecv.grid_scores_, rfecv_grid_scores)
 
 
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_rfe_cv_groups():
     generator = check_random_state(0)
     iris = load_iris()

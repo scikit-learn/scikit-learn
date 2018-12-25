@@ -8,23 +8,22 @@ from __future__ import division
 import itertools
 import numbers
 import numpy as np
-from warnings import warn
 from abc import ABCMeta, abstractmethod
+from warnings import warn
 
+from .base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_X_y, check_array, column_or_1d
-from ..utils.random import sample_without_replacement
-from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils import indices_to_mask, check_consistent_length
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
-
-from .base import BaseEnsemble, _partition_estimators
+from ..utils.random import sample_without_replacement
+from ..utils.validation import has_fit_parameter, check_is_fitted
 
 
 __all__ = ["BaggingClassifier",
@@ -111,7 +110,6 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
 
             estimator.fit(X[:, features], y, sample_weight=curr_sample_weight)
 
-        # Draw samples, using a mask, and then fit
         else:
             estimator.fit((X[indices])[:, features], y[indices])
 
@@ -277,8 +275,11 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         """
         random_state = check_random_state(self.random_state)
 
-        # Convert data
-        X, y = check_X_y(X, y, ['csr', 'csc'])
+        # Convert data (X is required to be 2d and indexable)
+        X, y = check_X_y(
+            X, y, ['csr', 'csc'], dtype=None, force_all_finite=False,
+            multi_output=True
+        )
         if sample_weight is not None:
             sample_weight = check_array(sample_weight, ensure_2d=False)
             check_consistent_length(y, sample_weight)
@@ -388,8 +389,10 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         """Calculate out of bag predictions and score."""
 
     def _validate_y(self, y):
-        # Default implementation
-        return column_or_1d(y, warn=True)
+        if len(y.shape) == 1 or y.shape[1] == 1:
+            return column_or_1d(y, warn=True)
+        else:
+            return y
 
     def _get_estimators_indices(self):
         # Get drawn indices along both sample and feature axes
@@ -408,7 +411,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
     def estimators_samples_(self):
         """The subset of drawn samples for each base estimator.
 
-        Returns a dynamically generated list of boolean masks identifying
+        Returns a dynamically generated list of indices identifying
         the samples used for fitting each member of the ensemble, i.e.,
         the in-bag samples.
 
@@ -416,12 +419,8 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         to reduce the object memory footprint by not storing the sampling
         data. Thus fetching the property may be slower than expected.
         """
-        sample_masks = []
-        for _, sample_indices in self._get_estimators_indices():
-            mask = indices_to_mask(sample_indices, self._n_samples)
-            sample_masks.append(mask)
-
-        return sample_masks
+        return [sample_indices
+                for _, sample_indices in self._get_estimators_indices()]
 
 
 class BaggingClassifier(BaseBagging, ClassifierMixin):
@@ -496,7 +495,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the building process.
+        Controls the verbosity when fitting and predicting.
 
     Attributes
     ----------
@@ -508,7 +507,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
-        estimator. Each subset is defined by a boolean mask.
+        estimator. Each subset is defined by an array of the indices selected.
 
     estimators_features_ : list of arrays
         The subset of drawn features for each base estimator.
@@ -586,7 +585,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                                                 self.estimators_samples_,
                                                 self.estimators_features_):
             # Create mask for OOB samples
-            mask = ~samples
+            mask = ~indices_to_mask(samples, n_samples)
 
             if hasattr(estimator, "predict_proba"):
                 predictions[mask, :] += estimator.predict_proba(
@@ -667,7 +666,10 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         """
         check_is_fitted(self, "classes_")
         # Check data
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = check_array(
+            X, accept_sparse=['csr', 'csc'], dtype=None,
+            force_all_finite=False
+        )
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
@@ -714,7 +716,10 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         check_is_fitted(self, "classes_")
         if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data
-            X = check_array(X, accept_sparse=['csr', 'csc'])
+            X = check_array(
+                X, accept_sparse=['csr', 'csc'], dtype=None,
+                force_all_finite=False
+            )
 
             if self.n_features_ != X.shape[1]:
                 raise ValueError("Number of features of the model must "
@@ -769,7 +774,10 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         check_is_fitted(self, "classes_")
 
         # Check data
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = check_array(
+            X, accept_sparse=['csr', 'csc'], dtype=None,
+            force_all_finite=False
+        )
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
@@ -863,7 +871,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the building process.
+        Controls the verbosity when fitting and predicting.
 
     Attributes
     ----------
@@ -872,7 +880,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
-        estimator. Each subset is defined by a boolean mask.
+        estimator. Each subset is defined by an array of the indices selected.
 
     estimators_features_ : list of arrays
         The subset of drawn features for each base estimator.
@@ -947,7 +955,10 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         """
         check_is_fitted(self, "estimators_features_")
         # Check data
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = check_array(
+            X, accept_sparse=['csr', 'csc'], dtype=None,
+            force_all_finite=False
+        )
 
         # Parallel loop
         n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
@@ -980,7 +991,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
                                                 self.estimators_samples_,
                                                 self.estimators_features_):
             # Create mask for OOB samples
-            mask = ~samples
+            mask = ~indices_to_mask(samples, n_samples)
 
             predictions[mask] += estimator.predict((X[mask, :])[:, features])
             n_predictions[mask] += 1

@@ -24,7 +24,6 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
-from sklearn.utils import deprecated
 
 from sklearn.base import TransformerMixin
 from sklearn.utils.mocking import MockDataFrame
@@ -132,6 +131,9 @@ def test_clone_buggy():
     varg_est = VargEstimator()
     assert_raises(RuntimeError, clone, varg_est)
 
+    est = ModifyInitParams()
+    assert_raises(RuntimeError, clone, est)
+
 
 def test_clone_empty_array():
     # Regression test for cloning estimators with empty arrays
@@ -150,16 +152,6 @@ def test_clone_nan():
     clf2 = clone(clf)
 
     assert_true(clf.empty is clf2.empty)
-
-
-def test_clone_copy_init_params():
-    # test for deprecation warning when copying or casting an init parameter
-    est = ModifyInitParams()
-    message = ("Estimator ModifyInitParams modifies parameters in __init__. "
-               "This behavior is deprecated as of 0.18 and support "
-               "for this behavior will be removed in 0.20.")
-
-    assert_warns_message(DeprecationWarning, message, clone, est)
 
 
 def test_clone_sparse_matrices():

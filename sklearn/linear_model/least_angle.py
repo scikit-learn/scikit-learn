@@ -23,7 +23,7 @@ from ..base import RegressorMixin
 from ..utils import arrayfuncs, as_float_array, check_X_y, deprecated
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..externals.six.moves import xrange
 from ..externals.six import string_types
 
@@ -544,7 +544,7 @@ class Lars(LinearModel, RegressorMixin):
         remove fit_intercept which is set True by default.
 
         .. deprecated:: 0.20
-        
+
             The option is broken and deprecated. It will be removed in v0.22.
 
     Attributes
@@ -619,10 +619,8 @@ class Lars(LinearModel, RegressorMixin):
         """Auxiliary method to fit the model using X, y as training data"""
         n_features = X.shape[1]
 
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(X, y,
-                                                        self.fit_intercept,
-                                                        self.normalize,
-                                                        self.copy_X)
+        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+            X, y, self.fit_intercept, self.normalize, self.copy_X)
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -1015,6 +1013,10 @@ class LarsCV(Lars):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     max_n_alphas : integer, optional
         The maximum number of points on the path used to compute the
         residuals in the cross-validation
@@ -1073,7 +1075,7 @@ class LarsCV(Lars):
     method = 'lar'
 
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
-                 normalize=True, precompute='auto', cv=None,
+                 normalize=True, precompute='auto', cv='warn',
                  max_n_alphas=1000, n_jobs=1, eps=np.finfo(np.float).eps,
                  copy_X=True, positive=False):
         self.max_iter = max_iter
@@ -1174,12 +1176,6 @@ class LarsCV(Lars):
         # impedance matching for the above Lars.fit (should not be documented)
         return self.alpha_
 
-    @property
-    @deprecated("Attribute ``cv_mse_path_`` is deprecated in 0.18 and "
-                "will be removed in 0.20. Use ``mse_path_`` instead")
-    def cv_mse_path_(self):
-        return self.mse_path_
-
 
 class LassoLarsCV(LarsCV):
     """Cross-validated Lasso, using the LARS algorithm
@@ -1229,6 +1225,10 @@ class LassoLarsCV(LarsCV):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     max_n_alphas : integer, optional
         The maximum number of points on the path used to compute the
@@ -1305,7 +1305,7 @@ class LassoLarsCV(LarsCV):
     method = 'lasso'
 
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
-                 normalize=True, precompute='auto', cv=None,
+                 normalize=True, precompute='auto', cv='warn',
                  max_n_alphas=1000, n_jobs=1, eps=np.finfo(np.float).eps,
                  copy_X=True, positive=False):
         self.fit_intercept = fit_intercept

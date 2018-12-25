@@ -50,8 +50,9 @@ def f_oneway(*args):
 
     Parameters
     ----------
-    sample1, sample2, ... : array_like, sparse matrices
-        The sample measurements should be given as arguments.
+    *args : array_like, sparse matrices
+        sample1, sample2... The sample measurements should be given as
+        arguments.
 
     Returns
     -------

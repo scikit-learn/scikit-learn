@@ -13,9 +13,9 @@ ctypedef np.float64_t DTYPE_t
 cdef DTYPE_t _inner_log_logistic_sigmoid(DTYPE_t x):
     """Log of the logistic sigmoid function log(1 / (1 + e ** -x))"""
     if x > 0:
-        return -log(1 + exp(-x))
+        return -np.log1p(exp(-x))
     else:
-        return x - log(1 + exp(x))
+        return x - np.log1p(exp(x))
 
 
 def _log_logistic_sigmoid(int n_samples, int n_features, 

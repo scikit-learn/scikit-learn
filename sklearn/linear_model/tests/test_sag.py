@@ -4,6 +4,7 @@
 # License: BSD 3 clause
 
 import math
+import pytest
 import numpy as np
 import scipy.sparse as sp
 
@@ -17,9 +18,9 @@ from sklearn.utils.fixes import logsumexp
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import ignore_warnings
 from sklearn.utils import compute_class_weight
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer
@@ -230,7 +231,6 @@ def get_step_size(X, alpha, fit_intercept, classification=True):
         return 1.0 / (np.max(np.sum(X * X, axis=1)) + fit_intercept + alpha)
 
 
-@ignore_warnings
 def test_classifier_matching():
     n_samples = 20
     X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0,
@@ -269,7 +269,6 @@ def test_classifier_matching():
         assert_array_almost_equal(intercept2, clf.intercept_, decimal=9)
 
 
-@ignore_warnings
 def test_regressor_matching():
     n_samples = 10
     n_features = 5
@@ -295,13 +294,13 @@ def test_regressor_matching():
                                dloss=squared_dloss,
                                fit_intercept=fit_intercept)
 
-    assert_array_almost_equal(weights1, clf.coef_, decimal=10)
-    assert_array_almost_equal(intercept1, clf.intercept_, decimal=10)
-    assert_array_almost_equal(weights2, clf.coef_, decimal=10)
-    assert_array_almost_equal(intercept2, clf.intercept_, decimal=10)
+    assert_allclose(weights1, clf.coef_)
+    assert_allclose(intercept1, clf.intercept_)
+    assert_allclose(weights2, clf.coef_)
+    assert_allclose(intercept2, clf.intercept_)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings('ignore:The max_iter was reached')
 def test_sag_pobj_matches_logistic_regression():
     """tests if the sag pobj matches log reg"""
     n_samples = 100
@@ -331,7 +330,7 @@ def test_sag_pobj_matches_logistic_regression():
     assert_array_almost_equal(pobj3, pobj1, decimal=4)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings('ignore:The max_iter was reached')
 def test_sag_pobj_matches_ridge_regression():
     """tests if the sag pobj matches ridge reg"""
     n_samples = 100
@@ -363,7 +362,7 @@ def test_sag_pobj_matches_ridge_regression():
     assert_array_almost_equal(pobj3, pobj2, decimal=4)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings('ignore:The max_iter was reached')
 def test_sag_regressor_computed_correctly():
     """tests if the sag regressor is computed correctly"""
     alpha = .1
@@ -407,7 +406,6 @@ def test_sag_regressor_computed_correctly():
     # assert_almost_equal(clf2.intercept_, spintercept2, decimal=1)'''
 
 
-@ignore_warnings
 def test_get_auto_step_size():
     X = np.array([[1, 2, 3], [2, 3, 4], [2, 3, 2]], dtype=np.float64)
     alpha = 1.2
@@ -452,7 +450,7 @@ def test_get_auto_step_size():
                          max_squared_sum_, alpha, "wrong", fit_intercept)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings('ignore:The max_iter was reached')
 def test_sag_regressor():
     """tests if the sag regressor performs well"""
     xmin, xmax = -5, 5
@@ -491,7 +489,7 @@ def test_sag_regressor():
     assert_greater(score2, 0.5)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings('ignore:The max_iter was reached')
 def test_sag_classifier_computed_correctly():
     """tests if the binary classifier is computed correctly"""
     alpha = .1
@@ -534,7 +532,7 @@ def test_sag_classifier_computed_correctly():
     assert_almost_equal(clf2.intercept_, spintercept2, decimal=1)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings('ignore:The max_iter was reached')
 def test_sag_multiclass_computed_correctly():
     """tests if the multiclass classifier is computed correctly"""
     alpha = .1
@@ -593,7 +591,6 @@ def test_sag_multiclass_computed_correctly():
         assert_almost_equal(clf2.intercept_[i], intercept2[i], decimal=1)
 
 
-@ignore_warnings
 def test_classifier_results():
     """tests if classifier results match target"""
     alpha = .1
@@ -618,7 +615,7 @@ def test_classifier_results():
     assert_almost_equal(pred2, y, decimal=12)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings('ignore:The max_iter was reached')
 def test_binary_classifier_class_weight():
     """tests binary classifier with classweights for each class"""
     alpha = .1
@@ -668,7 +665,7 @@ def test_binary_classifier_class_weight():
     assert_almost_equal(clf2.intercept_, spintercept2, decimal=1)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings('ignore:The max_iter was reached')
 def test_multiclass_classifier_class_weight():
     """tests multiclass with classweights for each class"""
     alpha = .1

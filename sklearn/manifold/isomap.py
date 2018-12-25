@@ -100,7 +100,7 @@ class Isomap(BaseEstimator, TransformerMixin):
         self.n_jobs = n_jobs
 
     def _fit_transform(self, X):
-        X = check_array(X)
+        X = check_array(X, accept_sparse='csr')
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
                                       algorithm=self.neighbors_algorithm,
                                       n_jobs=self.n_jobs)
@@ -157,7 +157,7 @@ class Isomap(BaseEstimator, TransformerMixin):
             numpy array, precomputed tree, or NearestNeighbors
             object.
 
-        y: Ignored
+        y : Ignored
 
         Returns
         -------
@@ -175,7 +175,7 @@ class Isomap(BaseEstimator, TransformerMixin):
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
-        y: Ignored
+        y : Ignored
 
         Returns
         -------

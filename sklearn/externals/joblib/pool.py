@@ -573,7 +573,7 @@ class MemmapingPool(PicklingPool):
 
         if np is not None:
             # Register smart numpy.ndarray reducers that detects memmap backed
-            # arrays and that is alse able to dump to memmap large in-memory
+            # arrays and that is else able to dump to memmap large in-memory
             # arrays over the max_nbytes threshold
             if prewarm == "auto":
                 prewarm = not use_shared_mem

@@ -18,7 +18,7 @@ from sklearn.base import clone
 from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
-from sklearn.externals.joblib import cpu_count
+from sklearn.utils import cpu_count
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
@@ -204,7 +204,7 @@ def test_multi_output_classification_partial_fit():
         assert_array_equal(sgd_linear_clf.predict(X), second_predictions[:, i])
 
 
-def test_mutli_output_classifiation_partial_fit_no_first_classes_exception():
+def test_multi_output_classification_partial_fit_no_first_classes_exception():
     sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     assert_raises_regex(ValueError, "classes must be passed on the first call "

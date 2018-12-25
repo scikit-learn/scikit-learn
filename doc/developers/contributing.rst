@@ -34,15 +34,14 @@ See :ref:`new_contributors` to get started.
 
 |
 
-Submitting a bug report
-=======================
 
 In case you experience issues using this package, do not hesitate to submit a
 ticket to the
-`Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
+`GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
 also welcome to post feature requests or pull requests.
 
 
+==================
 Ways to contribute
 ==================
 
@@ -59,63 +58,99 @@ investigating bugs, and :ref:`reviewing other developers' pull requests
 <code_review>` are very valuable contributions that decrease the burden on the
 project maintainers.
 
-Another way to contribute is to report issues you're facing, and give a "thumbs up"
-on issues that others reported and that are relevant to you.
-It also helps us if you spread the word: reference the project from your blog
-and articles, link to it from your website, or simply say "I use it":
+Another way to contribute is to report issues you're facing, and give a "thumbs
+up" on issues that others reported and that are relevant to you.  It also helps
+us if you spread the word: reference the project from your blog and articles,
+link to it from your website, or simply star to say "I use it":
 
 .. raw:: html
 
-   <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
+   <a class="github-button" href="https://github.com/scikit-learn/scikit-learn"
+   data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star
+   scikit-learn/scikit-learn on GitHub">Star</a>
+   <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+.. topic:: Contributing to related projects
+
+   Scikit-learn thrives in an ecosystem of several related projects, which also
+   may have relevant issues to work on, including smaller projects such as:
+
+   * `scikit-learn-contrib <https://github.com/search?q=org%3Ascikit-learn-contrib+is%3Aissue+is%3Aopen+sort%3Aupdated-desc&type=Issues>`__
+   * `joblib <https://github.com/joblib/joblib/issues>`__
+   * `sphinx-gallery <https://github.com/sphinx-gallery/sphinx-gallery/issues>`__
+   * `numpydoc <https://github.com/numpy/numpydoc/issues>`__
+
+   and larger projects:
+
+   * `numpy <https://github.com/numpy/numpy/issues>`__
+   * `scipy <https://github.com/scipy/scipy/issues>`__
+   * `matplotlib <https://github.com/matplotlib/matplotlib/issues>`__
+   * and so on.
+
+   Look for issues marked "help wanted" or similar.
+   Helping these projects may help Scikit-learn too.
+   See also :ref:`related_projects`.
 
 
-.. _git_repo:
+Submitting a bug report or a feature request
+============================================
 
-Retrieving the latest code
-==========================
+In case you experience issues using this package, do not hesitate to submit a
+ticket to the
+`Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
+also welcome to post feature requests or pull requests.
 
-We use `Git <https://git-scm.com/>`_ for version control and
-`GitHub <https://github.com/>`_ for hosting our main repository.
+It is recommended to check that your issue complies with the
+following rules before submitting:
 
-You can check out the latest sources with the command::
+-  Verify that your issue is not being currently addressed by other
+   `issues <https://github.com/scikit-learn/scikit-learn/issues?q=>`_
+   or `pull requests <https://github.com/scikit-learn/scikit-learn/pulls?q=>`_.
 
-    git clone git://github.com/scikit-learn/scikit-learn.git
+-  If you are submitting an algorithm or feature request, please verify that
+   the algorithm fulfills our
+   `new algorithm requirements
+   <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
 
-or if you have write privileges::
+-  If you are submitting a bug report, we strongly encourage you to follow the guidelines in 
+   :ref:`filing_bugs`.
 
-    git clone git@github.com:scikit-learn/scikit-learn.git
+.. _filing_bugs:
 
-If you run the development version, it is cumbersome to reinstall the
-package each time you update the sources. It is thus preferred that
-you add the scikit-learn directory to your ``PYTHONPATH`` and build the
-extension in place::
+How to make a good bug report
+-----------------------------
 
-    python setup.py build_ext --inplace
+When you submit an issue to `Github
+<https://github.com/scikit-learn/scikit-learn/issues>`__, please do your best to
+follow these guidelines! This will make it a lot easier to provide you with good
+feedback:
 
+- The ideal bug report contains a **short reproducible code snippet**, this way
+  anyone can try to reproduce the bug easily (see `this
+  <http://stackoverflow.com/help/mcve>`_ for more details). If your snippet is
+  longer than around 50 lines, please link to a `gist
+  <https://gist.github.com>`_ or a github repo.
 
-Another option is to install the package in editable mode if you change your
-code a lot and do not want to have to reinstall every time. This basically
-builds the extension in place and creates a link to the development directory
-(see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_)::
+- If not feasible to include a reproducible snippet, please be specific about
+  what **estimators and/or functions are involved and the shape of the data**.
 
-    pip install --editable .
+- If an exception is raised, please **provide the full traceback**.
 
-.. note::
+- Please include your **operating system type and version number**, as well as
+  your **Python, scikit-learn, numpy, and scipy versions**. This information
+  can be found by running the following code snippet::
 
-    This is fundamentally similar to using the command ``python setup.py develop`` (see `the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_). It is however preferred to use pip.
+     import platform; print(platform.platform())
+     import sys; print("Python", sys.version)
+     import numpy; print("NumPy", numpy.__version__)
+     import scipy; print("SciPy", scipy.__version__)
+     import sklearn; print("Scikit-Learn", sklearn.__version__)
 
-.. note::
+- Please ensure all **code snippets and error messages are formatted in
+  appropriate code blocks**.  See `Creating and highlighting code blocks
+  <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_
+  for more details.
 
-    If you decide to do an editable install you have to rerun::
-
-        python setup.py build_ext --inplace
-
-    every time the source code of a compiled extension is
-    changed (for instance when switching branches or pulling changes from upstream).
-
-On Unix-like systems, you can simply type ``make`` in the top-level folder to
-build in-place and launch all the tests. Have a look at the ``Makefile`` for
-additional utilities.
 
 
 Contributing code
@@ -317,7 +352,7 @@ and Cython optimizations.
 
    * Travis is used for testing on Linux platforms
    * Appveyor is used for testing on Windows platforms
-   * CircleCI is used to build the docs for viewing
+   * CircleCI is used to build the docs for viewing and for testing with PyPy on Linux
 
    Please note that if one of the following markers appear in the latest commit
    message, the following actions are taken.
@@ -325,52 +360,12 @@ and Cython optimizations.
      ====================== ===================
      Commit Message Marker  Action Taken by CI
      ---------------------- -------------------
+     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
      [ci skip]              CI is skipped completely
      [doc skip]             Docs are not built
      [doc quick]            Docs built, but excludes example gallery plots
      [doc build]            Docs built including example gallery plots
      ====================== ===================
-
-.. _filing_bugs:
-
-Filing Bugs
------------
-
-We use GitHub issues to track all bugs and feature requests; feel free to
-open an issue if you have found a bug or wish to see a feature implemented.
-
-It is recommended to check that your issue complies with the
-following rules before submitting:
-
--  Verify that your issue is not being currently addressed by other
-   `issues <https://github.com/scikit-learn/scikit-learn/issues?q=>`_
-   or `pull requests <https://github.com/scikit-learn/scikit-learn/pulls?q=>`_.
-
--  If you are submitting an algorithm or feature request, please verify that
-   the algorithm fulfills our
-   `new algorithm requirements
-   <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
-
--  Please ensure all code snippets and error messages are formatted in
-   appropriate code blocks.
-   See `Creating and highlighting code blocks
-   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_.
-
--  Please include your operating system type and version number, as well
-   as your Python, scikit-learn, numpy, and scipy versions. This information
-   can be found by running the following code snippet::
-
-     import platform; print(platform.platform())
-     import sys; print("Python", sys.version)
-     import numpy; print("NumPy", numpy.__version__)
-     import scipy; print("SciPy", scipy.__version__)
-     import sklearn; print("Scikit-Learn", sklearn.__version__)
-
--  Please be specific about what estimators and/or functions are involved
-   and the shape of the data, as appropriate; please include a
-   `reproducible <http://stackoverflow.com/help/mcve>`_ code snippet
-   or link to a `gist <https://gist.github.com>`_. If an exception is raised,
-   please provide the traceback.
 
 .. _new_contributors:
 
@@ -407,7 +402,7 @@ underestimate how easy an issue is to solve!
     we use the help wanted tag to mark Pull Requests which have been abandoned
     by their original contributor and are available for someone to pick up where the original
     contributor left off. The list of issues with the help wanted tag can be found
-    `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_ .
+    `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`__ .
 
     Note that not all issues which need contributors will have this tag.
 
@@ -425,10 +420,9 @@ HTML output by building the documentation website.
 Building the documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Building the documentation requires the ``sphinx``, ``sphinx-gallery``,
-``numpydoc``, ``matplotlib``, and ``Pillow`` packages::
+Building the documentation requires installing some additional packages::
 
-    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow
+    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image
 
 To build the documentation, you need to be in the ``doc`` folder::
 
@@ -445,13 +439,16 @@ To generate the full web site, including the example gallery::
 
 Generating the example gallery will run all our examples which takes a
 while. To save some time, you can use:
-    - ``make html-noplot``: this will generate the documentation without the
-      example gallery. This is useful when changing a docstring for example.
-    - ``EXAMPLES_PATTERN=your_regex_goes_here make html``: only the examples
-      matching ``your_regex_goes_here`` will be run. This is particularly
-      useful if you are modifying a few examples.
 
-That should create all the documentation in the ``_build/html/stable`` directory.
+- ``make html-noplot``: this will generate the documentation without the
+  example gallery. This is useful when changing a docstring for example.
+- ``EXAMPLES_PATTERN=your_regex_goes_here make html``: only the examples
+  matching ``your_regex_goes_here`` will be run. This is particularly
+  useful if you are modifying a few examples.
+
+That should create all the documentation in the ``_build/html/stable``
+directory.  Set the environment variable `NO_MATHJAX=1` if you intend to view
+the documentation in an offline setting.
 
 To build the PDF manual, run::
 
@@ -701,7 +698,7 @@ Here's a simple example of code using some of the above guidelines::
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             array representing the data
         random_state : RandomState or an int seed (0 by default)
             A random number generator instance to define the state of the
@@ -709,7 +706,7 @@ Here's a simple example of code using some of the above guidelines::
 
         Returns
         -------
-        x : numpy array, shape = (n_features,)
+        x : numpy array, shape (n_features,)
             A random point selected from X
         """
         X = check_array(X)
@@ -793,17 +790,35 @@ In the following example, k is deprecated and renamed to n_clusters::
 
     import warnings
 
-    def example_function(n_clusters=8, k=None):
-        if k is not None:
+    def example_function(n_clusters=8, k='not_used'):
+        if k != 'not_used':
             warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
                           "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
+
+When the change is in a class, we validate and raise warning in ``fit``::
+
+  import warnings
+
+  class ExampleEstimator(BaseEstimator):
+      def __init__(self, n_clusters=8, k='not_used'):
+          self.n_clusters = n_clusters
+          self.k = k
+
+      def fit(self, X, y):
+          if k != 'not_used':
+              warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
+                            "will be removed in 0.15.", DeprecationWarning)
+              self._n_clusters = k
+          else:
+              self._n_clusters = self.n_clusters
 
 As in these examples, the warning message should always give both the
 version in which the deprecation happened and the version in which the
 old behavior will be removed. If the deprecation happened in version
 0.x-dev, the message should say deprecation occurred in version 0.x and
-the removal will be in 0.(x+2). For example, if the deprecation happened
+the removal will be in 0.(x+2), so that users will have enough time to
+adapt their code to the new behaviour. For example, if the deprecation happened
 in version 0.18-dev, the message should say it happened in version 0.18
 and the old behavior will be removed in version 0.20.
 
@@ -814,6 +829,51 @@ same information as the deprecation warning as explained above. Use the
   .. deprecated:: 0.13
      ``k`` was renamed to ``n_clusters`` in version 0.13 and will be removed
      in 0.15.
+
+What's more, a deprecation requires a test which ensures that the warning is
+raised in relevant cases but not in other cases. The warning should be caught
+in all other tests (using e.g., ``@pytest.mark.filterwarnings``),
+and there should be no warning in the examples.
+
+
+Change the default value of a parameter
+---------------------------------------
+
+If the default value of a parameter needs to be changed, please replace the
+default value with a specific value (e.g., ``warn``) and raise
+``FutureWarning`` when users are using the default value. In the following
+example, we change the default value of ``n_clusters`` from 5 to 10
+(current version is 0.20)::
+
+    import warnings
+
+    def example_function(n_clusters='warn'):
+        if n_clusters == 'warn':
+            warnings.warn("The default value of n_clusters will change from "
+                          "5 to 10 in 0.22.", FutureWarning)
+            n_clusters = 5
+
+When the change is in a class, we validate and raise warning in ``fit``::
+
+  import warnings
+
+  class ExampleEstimator:
+      def __init__(self, n_clusters='warn'):
+          self.n_clusters = n_clusters
+
+      def fit(self, X, y):
+          if self.n_clusters == 'warn':
+            warnings.warn("The default value of n_clusters will change from "
+                          "5 to 10 in 0.22.", FutureWarning)
+            self._n_clusters = 5
+
+Similar to deprecations, the warning message should always give both the
+version in which the change happened and the version in which the old behavior
+will be removed. The docstring needs to be updated accordingly. We need a test
+which ensures that the warning is raised in relevant cases but not in other
+cases. The warning should be caught in all other tests
+(using e.g., ``@pytest.mark.filterwarnings``), and there should be no warning
+in the examples.
 
 
 .. currentmodule:: sklearn
@@ -868,7 +928,7 @@ from high-level questions to a more detailed check-list.
   the tests validate that the code is correct, i.e. doing what the
   documentation says it does? If the change is a bug-fix, is a
   non-regression test included? Look at `this
-  <https://jeffknupp.com/blog/2013/12/09/improve-your-python-understanding-unit-testing>`_
+  <https://jeffknupp.com/blog/2013/12/09/improve-your-python-understanding-unit-testing>`__
   to get started with testing in Python.
 
 - Do the tests pass in the continuous integration build? If
@@ -919,41 +979,41 @@ multiple interfaces):
 
     The base object, implements a ``fit`` method to learn from data, either::
 
-      estimator = obj.fit(data, targets)
+      estimator = estimator.fit(data, targets)
 
     or::
 
-      estimator = obj.fit(data)
+      estimator = estimator.fit(data)
 
 :Predictor:
 
     For supervised learning, or some unsupervised problems, implements::
 
-      prediction = obj.predict(data)
+      prediction = predictor.predict(data)
 
     Classification algorithms usually also offer a way to quantify certainty
     of a prediction, either using ``decision_function`` or ``predict_proba``::
 
-      probability = obj.predict_proba(data)
+      probability = predictor.predict_proba(data)
 
 :Transformer:
 
     For filtering or modifying the data, in a supervised or unsupervised
     way, implements::
 
-      new_data = obj.transform(data)
+      new_data = transformer.transform(data)
 
     When fitting and transforming can be performed much more efficiently
     together than separately, implements::
 
-      new_data = obj.fit_transform(data)
+      new_data = transformer.fit_transform(data)
 
 :Model:
 
     A model that can give a `goodness of fit <https://en.wikipedia.org/wiki/Goodness_of_fit>`_
     measure or a likelihood of unseen data, implements (higher is better)::
 
-      score = obj.score(data)
+      score = model.score(data)
 
 Estimators
 ----------
@@ -1040,11 +1100,9 @@ the predict method.
 ============= ======================================================
 Parameters
 ============= ======================================================
-X             array-like, with shape = [N, D], where N is the number
-              of samples and D is the number of features.
+X             array-like, shape (n_samples, n_features)
 
-y             array, with shape = [N], where N is the number of
-              samples.
+y             array, shape (n_samples,)
 
 kwargs        optional data-dependent parameters.
 ============= ======================================================
@@ -1142,7 +1200,7 @@ the correct interface more easily.
     and optionally the mixin classes in ``sklearn.base``.
     For example, below is a custom classifier, with more examples included
     in the scikit-learn-contrib
-    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`_.
+    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`__.
 
       >>> import numpy as np
       >>> from sklearn.base import BaseEstimator, ClassifierMixin

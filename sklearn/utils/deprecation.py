@@ -78,6 +78,9 @@ class deprecated(object):
             return fun(*args, **kwargs)
 
         wrapped.__doc__ = self._update_doc(wrapped.__doc__)
+        # Add a reference to the wrapped function so that we can introspect
+        # on function arguments in Python 2 (already works in Python 3)
+        wrapped.__wrapped__ = fun
 
         return wrapped
 
@@ -123,6 +126,15 @@ class DeprecationDict(dict):
         return super(DeprecationDict, self).__getitem__(key)
 
     def get(self, key, default=None):
+        """Return the value corresponding to key, else default.
+
+        Parameters
+        ----------
+        key : any hashable object
+            The key
+        default : object, optional
+            The default returned when key is not in dict
+        """
         # dict does not implement it like this, hence it needs to be overridden
         try:
             return self[key]
@@ -130,5 +142,11 @@ class DeprecationDict(dict):
             return default
 
     def add_warning(self, key, *args, **kwargs):
-        """Add a warning to be triggered when the specified key is read"""
+        """Add a warning to be triggered when the specified key is read
+
+        Parameters
+        ----------
+        key : any hashable object
+            The key
+        """
         self._deprecations[key] = (args, kwargs)

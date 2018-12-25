@@ -409,7 +409,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             # Line 10: Compute log marginal likelihood in loop and use as
             #          convergence criterion
             lml = -0.5 * a.T.dot(f) \
-                - np.log(1 + np.exp(-(self.y_train_ * 2 - 1) * f)).sum() \
+                - np.log1p(np.exp(-(self.y_train_ * 2 - 1) * f)).sum() \
                 - np.log(np.diag(L)).sum()
             # Check if we have converged (log marginal likelihood does
             # not decrease)

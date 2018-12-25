@@ -554,7 +554,7 @@ upon the completion of this tutorial:
   :class:`CountVectorizer`.
 
 * If you don't have labels, try using
-  :ref:`Clustering <sphx_glr_auto_examples_text_document_clustering.py>`
+  :ref:`Clustering <sphx_glr_auto_examples_text_plot_document_clustering.py>`
   on your problem.
 
 * If you have multiple labels per document, e.g categories, have a look

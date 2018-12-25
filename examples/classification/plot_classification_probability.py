@@ -76,7 +76,7 @@ for index, (name, classifier) in enumerate(classifiers.items()):
         plt.yticks(())
         idx = (y_pred == k)
         if idx.any():
-            plt.scatter(X[idx, 0], X[idx, 1], marker='o', c='k')
+            plt.scatter(X[idx, 0], X[idx, 1], marker='o', c='w', edgecolor='k')
 
 ax = plt.axes([0.15, 0.04, 0.7, 0.05])
 plt.title("Probability")

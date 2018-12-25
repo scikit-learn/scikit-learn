@@ -5,6 +5,7 @@ from contextlib import contextmanager as contextmanager
 
 _global_config = {
     'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE', False)),
+    'working_memory': int(os.environ.get('SKLEARN_WORKING_MEMORY', 1024))
 }
 
 
@@ -19,7 +20,7 @@ def get_config():
     return _global_config.copy()
 
 
-def set_config(assume_finite=None):
+def set_config(assume_finite=None, working_memory=None):
     """Set global scikit-learn configuration
 
     Parameters
@@ -29,9 +30,17 @@ def set_config(assume_finite=None):
         saving time, but leading to potential crashes. If
         False, validation for finiteness will be performed,
         avoiding error.  Global default: False.
+
+    working_memory : int, optional
+        If set, scikit-learn will attempt to limit the size of temporary arrays
+        to this number of MiB (per job when parallelised), often saving both
+        computation time and memory on expensive operations that can be
+        performed in chunks. Global default: 1024.
     """
     if assume_finite is not None:
         _global_config['assume_finite'] = assume_finite
+    if working_memory is not None:
+        _global_config['working_memory'] = working_memory
 
 
 @contextmanager
@@ -45,6 +54,12 @@ def config_context(**new_config):
         saving time, but leading to potential crashes. If
         False, validation for finiteness will be performed,
         avoiding error.  Global default: False.
+
+    working_memory : int, optional
+        If set, scikit-learn will attempt to limit the size of temporary arrays
+        to this number of MiB (per job when parallelised), often saving both
+        computation time and memory on expensive operations that can be
+        performed in chunks. Global default: 1024.
 
     Notes
     -----

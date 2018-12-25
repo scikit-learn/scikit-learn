@@ -10,7 +10,7 @@ import numpy as np
 from scipy.stats.mstats import mquantiles
 
 from ..utils.extmath import cartesian
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import map, range, zip
 from ..utils import check_array
@@ -198,11 +198,11 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         Only if gbrt is a multi-class model. Must be in ``gbrt.classes_``.
     n_cols : int
         The number of columns in the grid plot (default: 3).
+    grid_resolution : int, default=100
+        The number of equally spaced points on the axes.
     percentiles : (low, high), default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the PDP axes.
-    grid_resolution : int, default=100
-        The number of equally spaced points on the axes.
     n_jobs : int
         The number of CPUs to use to compute the PDs. -1 means 'all CPUs'.
         Defaults to 1.
@@ -216,7 +216,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     contour_kw : dict
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For two-way partial dependence plots.
-    fig_kw : dict
+    **fig_kw : dict
         Dict with keywords passed to the figure() call.
         Note that all keywords not recognized above will be automatically
         included here.
