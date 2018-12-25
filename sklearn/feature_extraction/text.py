@@ -1440,11 +1440,11 @@ class TfidfVectorizer(CountVectorizer):
     sublinear_tf : boolean, default=False
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
-    CountVectorizer : sparse matrix, [n_samples, n_features]
+    CountVectorizer : sparse matrix, (n_samples, n_features)
         Produces a sparse representation of the counts using
         scipy.sparse.csr_matrix.
 
-    TfidfTransformer
+    TfidfTransformer : sparse matrix, (n_samples, n_features)
         Converts the count matrix from CountVectorizer to a normalized tf-idf
         representation. Tf is term frequency, and idf is inverse document
         frequency. This is a common way to calculate the count of a word
