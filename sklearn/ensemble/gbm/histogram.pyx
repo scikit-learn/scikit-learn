@@ -28,7 +28,7 @@ cdef struct hist_struct:
 
 @cython.boundscheck(False)  # Deactivate bounds checking
 @cython.wraparound(False)   # Deactivate negative indexing.
-cdef _build_histogram_naive(unsigned int n_bins, unsigned int [:]
+def _build_histogram_naive(unsigned int n_bins, unsigned int [:]
                                 sample_indices, unsigned char [:]
                                 binned_feature, float [:] ordered_gradients,
                                 float[:] ordered_hessians):
