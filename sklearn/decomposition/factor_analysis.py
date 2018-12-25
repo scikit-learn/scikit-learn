@@ -364,33 +364,31 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         "Rotate the factor analysis solution."
         implemented = {"varimax", "quartimax"}
         if method in implemented:
-            self.components_ = self._ortho_rotation(
+            self.components_ = _ortho_rotation(
                 self.components_.T, method=method, eps=tol)[:n_components]
         else:
-            raise NotImplementedError("'method' must be in %s, not %s"
-                                      % (implemented, method))
+            raise ValueError("'method' must be in %s, not %s"
+                             % (implemented, method))
 
-    def _ortho_rotation(self, components, method='varimax', eps=1e-6,
-                        itermax=100):
-        """Return rotated components."""
-        if (method == 'varimax'):
-            gamma = 1.0
-        elif (method == 'quartimax'):
-            gamma = 0.0
+def _ortho_rotation(components, method='varimax', eps=1e-6, itermax=100):
+    """Return rotated components."""
+    nrow, ncol = components.shape
+    rotation_matrix = np.eye(ncol)
+    var = 0
 
-        nrow, ncol = components.shape
-        rotation_matrix = np.eye(ncol)
-        var = 0
+    for _ in range(itermax):
+        comp_rot = np.dot(components, rotation_matrix)
+        if method == "varimax":
+            tmp = np.diag((comp_rot ** 2).sum(axis=0)) / nrow
+            tmp = np.dot(comp_rot, tmp)
+        elif method == "quartimax":
+            tmp = 0
+        u, s, v = np.linalg.svd(
+            np.dot(components.T, comp_rot ** 3 - tmp))
+        rotation_matrix = np.dot(u, v)
+        var_new = np.sum(s)
+        if var != 0 and var_new < var * (1 + eps):
+            break
+        var = var_new
 
-        for _ in range(itermax):
-            comp_rot = np.dot(components, rotation_matrix)
-            tmp = np.diag((comp_rot ** 2).sum(axis=0)) / nrow * gamma
-            u, s, v = np.linalg.svd(
-                np.dot(components.T, comp_rot ** 3 - np.dot(comp_rot, tmp)))
-            rotation_matrix = np.dot(u, v)
-            var_new = np.sum(s)
-            if var != 0 and (var_new < var * (1 + eps)):
-                break
-            var = var_new
-
-        return np.dot(components, rotation_matrix).T
+    return np.dot(components, rotation_matrix).T
