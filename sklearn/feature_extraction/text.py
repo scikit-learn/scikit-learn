@@ -1427,7 +1427,10 @@ class TfidfVectorizer(CountVectorizer):
         Type of the matrix returned by fit_transform() or transform().
 
     norm : 'l1', 'l2' or None, optional
-        Norm used to normalize term vectors. None for no normalization.
+        Norm is used to normalize term vectors to have unit norm.
+        ``norm='l2'`` is the default and uses cosine similarity.
+        ``norm='l1'`` uses the Euclidean distance.
+        ``norm=None`` means no normalization is performed.
 
     use_idf : boolean, default=True
         Enable inverse-document-frequency reweighting.
