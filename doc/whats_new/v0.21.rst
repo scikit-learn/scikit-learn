@@ -93,6 +93,10 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`linear_model.MultiTaskLasso` which were breaking when
   ``warm_start = True``. :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
 
+- |API| :func:`linear_model.logistic_regression_path` is deprecated
+  in version 0.21 and will be removed in version 0.23.
+  :issue:`12821` by :user:`Nicolas Hug <NicolasHug>`.
+
 :mod:`sklearn.manifold`
 ............................
 
@@ -196,11 +200,18 @@ Support for Python 3.4 and below has been officially dropped.
   ``max_depth`` by 1 while expanding the tree if ``max_leaf_nodes`` and
   ``max_depth`` were both specified by the user. Please note that this also
   affects all ensemble methods using decision trees.
-  :pr:`12344` by :user:`Adrin Jalali <adrinjalali>`.
+  :issue:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
 
 Multiple modules
 ................
+
+- The `__repr__()` method of all estimators (used when calling
+  `print(estimator)`) has been entirely re-written, building on Python's
+  pretty printing standard library. All parameters are printed by default,
+  but this can be altered with the ``print_changed_only`` option in
+  :func:`sklearn.set_config`. :issue:`11705` by :user:`Nicolas Hug
+  <NicolasHug>`.
 
 Changes to estimator checks
 ---------------------------
