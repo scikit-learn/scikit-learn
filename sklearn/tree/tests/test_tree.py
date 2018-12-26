@@ -177,8 +177,8 @@ def assert_tree_equal(d, s, message):
 
     assert_array_equal(d.feature[internal], s.feature[internal],
                        message + ": inequal features")
-    assert_array_equal(d.threshold[internal], s.threshold[internal],
-                       message + ": inequal threshold")
+    assert_array_almost_equal(d.threshold[internal], s.threshold[internal],
+                              err_msg=message + ": inequal threshold")
     assert_array_equal(d.n_node_samples.sum(), s.n_node_samples.sum(),
                        message + ": inequal sum(n_node_samples)")
     assert_array_equal(d.n_node_samples, s.n_node_samples,
@@ -1851,4 +1851,3 @@ def test_empty_leaf_infinite_threshold():
         infinite_threshold = np.where(~np.isfinite(tree.tree_.threshold))[0]
         assert len(infinite_threshold) == 0
         assert len(empty_leaf) == 0
-
