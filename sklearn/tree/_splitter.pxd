@@ -14,7 +14,7 @@
 import numpy as np
 cimport numpy as np
 
-#from ._utils cimport SplitValue
+from ._utils cimport SplitValue, SplitRecord
 
 from ._criterion cimport Criterion
 
@@ -24,22 +24,6 @@ ctypedef np.npy_intp SIZE_t              # Type for indices and counters
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 ctypedef np.npy_uint64 UINT64_t          # Unsigned 64 bit integer
-
-ctypedef union SplitValue:
-    DOUBLE_t threshold
-    UINT64_t cat_split
-
-ctypedef struct SplitRecord:
-    # Data to track sample split
-    SIZE_t feature         # Which feature to split on.
-    SIZE_t pos             # Split samples array at the given position,
-                           # i.e. count of samples below threshold for feature.
-                           # pos is >= end if the node is a leaf.
-    SplitValue split_value # Generalized threshold for categorical and
-                           # non-categorical features
-    double improvement     # Impurity improvement given parent node.
-    double impurity_left   # Impurity of the left split.
-    double impurity_right  # Impurity of the right split.
 
 cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold

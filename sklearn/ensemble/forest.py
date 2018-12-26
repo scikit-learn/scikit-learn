@@ -1286,7 +1286,7 @@ class RandomForestRegressor(ForestRegressor):
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
-                 categorical='none'
+                 categorical='none',
                  bootstrap=True,
                  oob_score=False,
                  n_jobs=None,

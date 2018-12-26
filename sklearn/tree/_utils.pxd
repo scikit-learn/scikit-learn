@@ -11,7 +11,6 @@
 import numpy as np
 cimport numpy as np
 
-from ._tree cimport Node
 from ..neighbors.quad_tree cimport Cell
 
 ctypedef np.npy_float32 DTYPE_t          # Type of X
@@ -41,7 +40,33 @@ ctypedef union SplitValue:
     DOUBLE_t threshold
     UINT64_t cat_split
 
-cdef struct Node  # Forward declaration
+
+ctypedef struct SplitRecord:
+    # Data to track sample split
+    SIZE_t feature         # Which feature to split on.
+    SIZE_t pos             # Split samples array at the given position,
+                           # i.e. count of samples below threshold for feature.
+                           # pos is >= end if the node is a leaf.
+    SplitValue split_value # Generalized threshold for categorical and
+                           # non-categorical features
+    double improvement     # Impurity improvement given parent node.
+    double impurity_left   # Impurity of the left split.
+    double impurity_right  # Impurity of the right split.
+
+
+cdef struct Node:
+    # Base storage structure for the nodes in a Tree object
+
+    SIZE_t left_child                    # id of the left child of the node
+    SIZE_t right_child                   # id of the right child of the node
+    SIZE_t feature                       # Feature used for splitting the node
+    SplitValue split_value               # Generalized threshold for categorical and
+                                         # non-categorical features
+    DOUBLE_t impurity                    # Impurity of the node (i.e., the value of the criterion)
+    SIZE_t n_node_samples                # Number of samples at the node
+    DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
+
+# cdef struct Node  # Forward declaration
 
 cdef enum:
     # Max value for our rand_r replacement (near the bottom).

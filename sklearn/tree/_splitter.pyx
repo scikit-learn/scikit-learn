@@ -421,6 +421,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t feature_offset
         cdef SIZE_t i
         cdef SIZE_t j
+        cdef UINT64_t ui # unsigned long int i
 
         cdef SIZE_t n_visited_features = 0
         # Number of features discovered to be constant during the split search
@@ -433,8 +434,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
         cdef bint is_categorical
-        cdef UINT64_t cat_idx, cat_split
-        cdef SIZE_t ncat_present
+        cdef UINT64_t cat_split, cat_idx, ncat_present
         cdef INT32_t cat_offs[64]
         cdef bint breiman_shortcut = self.breiman_shortcut
         cdef SIZE_t sorted_cat[64]
@@ -554,8 +554,8 @@ cdef class BestSplitter(BaseDenseSplitter):
                                     break
 
                                 cat_split = 0
-                                for i in range(cat_idx):
-                                    cat_split |= (<UINT64_t> 1) << sorted_cat[i]
+                                for ui in range(cat_idx):
+                                    cat_split |= (<UINT64_t> 1) << sorted_cat[ui]
                                 if cat_split & 1:
                                     cat_split = (~cat_split) & (
                                         (~(<UINT64_t> 0)) >> (64 - self.n_categories[current.feature]))
@@ -567,8 +567,9 @@ cdef class BestSplitter(BaseDenseSplitter):
                                 # We double cat_idx to avoid double-counting equivalent splits
                                 # This also ensures that cat_split & 1 == 0 as required
                                 cat_split = 0
-                                for i in range(ncat_present):
-                                    cat_split |= ((cat_idx << 1) & ((<UINT64_t> 1) << i)) << cat_offs[i]
+                                for ui in range(ncat_present):
+                                    cat_split |= ((cat_idx << 1) &
+                                                  ((<UINT64_t> 1) << ui)) << cat_offs[ui]
 
                             # Partition
                             j = start
