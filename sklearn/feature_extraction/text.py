@@ -1386,7 +1386,7 @@ class TfidfVectorizer(CountVectorizer):
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
-    ngram_range : tuple (min_n, max_n)
+    ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
         will be used.
@@ -1413,7 +1413,7 @@ class TfidfVectorizer(CountVectorizer):
 
         This parameter is ignored if vocabulary is not None.
 
-    vocabulary : Mapping or iterable, optional
+    vocabulary : Mapping or iterable, optional, default=None
         Either a Mapping (e.g., a dict) where keys are terms and values are
         indices in the feature matrix, or an iterable over terms. If not
         given, a vocabulary is determined from the input documents.
@@ -1423,12 +1423,12 @@ class TfidfVectorizer(CountVectorizer):
         outputs will have only 0/1 values, only that the tf term in tf-idf
         is binary. (Set idf and normalization to False to get 0/1 outputs.)
 
-    dtype : type, optional
+    dtype : type, optional, default=float64
         Type of the matrix returned by fit_transform() or transform().
 
-    norm : 'l1', 'l2' or None, optional
+    norm : 'l1', 'l2' or None, optional, default=’l2’
         Norm is used to normalize term vectors to have unit norm.
-        ``norm='l2'`` is the default and uses cosine similarity.
+        ``norm='l2'`` uses cosine similarity.
         ``norm='l1'`` uses the Euclidean distance.
         ``norm=None`` means no normalization is performed.
 
@@ -1489,7 +1489,8 @@ class TfidfVectorizer(CountVectorizer):
 
         The formula that is used to compute the tf-idf of term t is​
         :math:`tf-idf(d, t) = tf(t) * idf(d, t)` and the idf is computed as​:
-        `idf(d, t) = log [ n / df(d, t) ] + 1` (if ``smooth_idf=False``)
+        :math:`idf(d, t) = log \frac{n}{df(d, t)} + 1`
+        (if ``smooth_idf=False``)
         where `n` is the total number of documents and ​`df(d, t)​`​ is the
         document frequency; the document frequency is the number of documents
         `​d​`​ that contain term ​`​t​`​. The effect of adding "1" to the idf
