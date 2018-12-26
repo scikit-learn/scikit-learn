@@ -22,7 +22,6 @@ import warnings
 from abc import ABCMeta
 from abc import abstractmethod
 from math import ceil
-import warnings
 
 import numpy as np
 from scipy.sparse import issparse
