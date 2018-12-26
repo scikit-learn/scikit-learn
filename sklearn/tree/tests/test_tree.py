@@ -1813,7 +1813,8 @@ def test_criterion_copy():
             assert_equal(n_samples, n_samples_)
 
 
-def check_invalid_categorical(name):
+@pytest.mark.parametrize('name', ALL_TREES)
+def test_invalid_categorical(name):
     Tree = ALL_TREES[name]
     raise_on_construction = ['invalid string', [[0]]]
     raise_on_fit = [[False, False, False], [1, 2], [-3], [0, 0, 1]]
@@ -1823,12 +1824,9 @@ def check_invalid_categorical(name):
         assert_raises(ValueError, Tree(categorical=catval).fit, X, y)
 
 
-def test_invalid_categorical():
-    for name in ALL_TREES:
-        yield check_invalid_categorical, name
-
-
-def check_no_sparse_with_categorical(name):
+@pytest.mark.parametrize('name', SPARSE_TREES)
+def test_no_sparse_with_categorical(name):
+    # Currently we do not support sparse categorical features
     X, y, X_sparse = [DATASETS['clf_small'][z]
                       for z in ['X', 'y', 'X_sparse']]
     Tree = ALL_TREES[name]
@@ -1836,12 +1834,6 @@ def check_no_sparse_with_categorical(name):
                   X_sparse, y)
     assert_raises(NotImplementedError,
                   Tree(categorical=[6, 10]).fit(X, y).predict, X_sparse)
-
-
-def test_no_sparse_with_categorical():
-    # Currently we do not support sparse categorical features
-    for name in SPARSE_TREES:
-        yield check_no_sparse_with_categorical, name
 
 
 def test_empty_leaf_infinite_threshold():
