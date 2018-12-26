@@ -703,17 +703,21 @@ def test_regression_thresholded_inf_nan_input(metric):
 
     for y_true, y_score in invalids:
         assert_raise_message(ValueError,
-                             "contains NaN, infinity",
+                             "Input contains NaN, infinity or a value too"
+                             " large for dtype('float64').",
                              metric, y_true, y_score)
+
+
+invalids2 = [(['a', 'b', 'a'], [0.1, 0.2, 0.3])]
 
 
 @pytest.mark.parametrize('metric', CLASSIFICATION_METRICS.values())
 def test_classification_inf_nan_input(metric):
     # Classification metrics all raise a mixed input exception
-    for y_true, y_score in invalids:
+    for y_true, y_score in invalids2:
         assert_raise_message(ValueError,
-                             "Classification metrics can't handle a mix "
-                             "of binary and continuous targets",
+                             "Classification metrics can't handle a mix"
+                             " of binary and continuous targets",
                              metric, y_true, y_score)
 
 
