@@ -78,15 +78,17 @@ cdef SIZE_t INITIAL_STACK_SIZE = 10
 ##    'formats': [np.float64, np.uint64],
 ##    'offsets': [0, 0]
 ##})
+
 NODE_DTYPE = np.dtype({
-    'names': ['left_child', 'right_child', 'feature', 'threshold', 'impurity',
-              'n_node_samples', 'weighted_n_node_samples'],
-    'formats': [np.intp, np.intp, np.intp, np.float64, np.float64, np.intp,
-                np.float64],
+    'names': ['left_child', 'right_child', 'feature', 'threshold', 'cat_split',
+              'impurity', 'n_node_samples', 'weighted_n_node_samples'],
+    'formats': [np.intp, np.intp, np.intp, np.float64, np.uint64, np.float64,
+                np.intp, np.float64],
     'offsets': [
         <Py_ssize_t> &(<Node*> NULL).left_child,
         <Py_ssize_t> &(<Node*> NULL).right_child,
         <Py_ssize_t> &(<Node*> NULL).feature,
+        <Py_ssize_t> &(<Node*> NULL).split_value,
         <Py_ssize_t> &(<Node*> NULL).split_value,
         <Py_ssize_t> &(<Node*> NULL).impurity,
         <Py_ssize_t> &(<Node*> NULL).n_node_samples,
