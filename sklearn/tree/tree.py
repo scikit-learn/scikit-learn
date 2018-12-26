@@ -110,15 +110,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.presort = presort
         self.categorical = categorical
 
-        # Input validation for parameter categorical
-        if isinstance(self.categorical, str):
-            if categorical not in ('all', 'none'):
-                raise ValueError("Invalid value for categorical: {}. Allowed"
-                                 " strings are 'all' or 'none'"
-                                 "".format(categorical))
-        elif len(np.shape(categorical)) != 1:
-            raise ValueError("Invalid shape for categorical")
-
     def get_depth(self):
         """Returns the depth of the decision tree.
 
