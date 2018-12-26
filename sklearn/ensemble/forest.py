@@ -966,17 +966,10 @@ class RandomForestClassifier(ForestClassifier):
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
     >>> clf = RandomForestClassifier(n_estimators=100, max_depth=2,
-    ...                              random_state=0)
-    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
-                max_depth=2, max_features='auto', max_leaf_nodes=None,
-                min_impurity_decrease=0.0, min_impurity_split=None,
-                min_samples_leaf=1, min_samples_split=2,
-                min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=None,
-                oob_score=False, random_state=0, verbose=0, warm_start=False)
-    >>> print(clf.feature_importances_)
+    ...                              random_state=0).fit(X, y)
+    >>> clf.feature_importances_
     [0.14205973 0.76664038 0.0282433  0.06305659]
-    >>> print(clf.predict([[0, 0, 0, 0]]))
+    >>> clf.predict([[0, 0, 0, 0]])
     [1]
 
     Notes
@@ -1231,17 +1224,10 @@ class RandomForestRegressor(ForestRegressor):
     >>> X, y = make_regression(n_features=4, n_informative=2,
     ...                        random_state=0, shuffle=False)
     >>> regr = RandomForestRegressor(max_depth=2, random_state=0,
-    ...                              n_estimators=100)
-    >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=2,
-               max_features='auto', max_leaf_nodes=None,
-               min_impurity_decrease=0.0, min_impurity_split=None,
-               min_samples_leaf=1, min_samples_split=2,
-               min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=None,
-               oob_score=False, random_state=0, verbose=0, warm_start=False)
-    >>> print(regr.feature_importances_)
+    ...                              n_estimators=100).fit(X, y)
+    >>> regr.feature_importances_
     [0.18146984 0.81473937 0.00145312 0.00233767]
-    >>> print(regr.predict([[0, 0, 0, 0]]))
+    >>> regr.predict([[0, 0, 0, 0]])
     [-8.32987858]
 
     Notes

@@ -1160,7 +1160,6 @@ cdef class Tree:
 
         return out
 
-
     cpdef compute_feature_importances(self, normalize=True):
         """Computes the importance of each feature (aka variable)."""
         cdef Node* left

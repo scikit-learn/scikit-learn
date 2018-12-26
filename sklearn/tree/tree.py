@@ -1401,6 +1401,19 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
+    categorical : array-like or str
+        Array of feature indices, boolean array of length n_features,
+        ``'all'`` or ``'none'``. Indicates which features should be
+        considered as categorical rather than ordinal. For decision trees,
+        the maximum number of categories is 64. In practice, the limit will
+        often be lower because the process of searching for the best possible
+        split grows exponentially with the number of categories. However, a
+        shortcut due to Breiman (1984) is used when fitting data with binary
+        labels using the ``Gini`` or ``Entropy`` criteria. In this case,
+        the runtime is linear in the number of categories.
+
+        .. versionadded:: 0.21
+
     See also
     --------
     ExtraTreeRegressor, sklearn.ensemble.ExtraTreesClassifier,
@@ -1571,6 +1584,18 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
+    categorical : array-like or str
+        Array of feature indices, boolean array of length n_features,
+        ``'all'`` or ``'none'``. Indicates which features should be
+        considered as categorical rather than ordinal. For decision trees,
+        the maximum number of categories is 64. In practice, the limit will
+        often be lower because the process of searching for the best possible
+        split grows exponentially with the number of categories. However, a
+        shortcut due to Breiman (1984) is used when fitting data with binary
+        labels using the ``Gini`` or ``Entropy`` criteria. In this case,
+        the runtime is linear in the number of categories.
+
+        .. versionadded:: 0.21
 
     See also
     --------
