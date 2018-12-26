@@ -873,6 +873,8 @@ class RandomForestClassifier(ForestClassifier):
         labels using the ``Gini`` or ``Entropy`` criteria. In this case,
         the runtime is linear in the number of categories.
 
+        .. versionadded:: 0.21
+
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
@@ -968,9 +970,9 @@ class RandomForestClassifier(ForestClassifier):
     >>> clf = RandomForestClassifier(n_estimators=100, max_depth=2,
     ...                              random_state=0).fit(X, y)
     >>> clf.feature_importances_
-    [0.14205973 0.76664038 0.0282433  0.06305659]
+    array([0.14205973, 0.76664038, 0.0282433 , 0.06305659])
     >>> clf.predict([[0, 0, 0, 0]])
-    [1]
+    array([1])
 
     Notes
     -----
@@ -1169,6 +1171,8 @@ class RandomForestRegressor(ForestRegressor):
         labels using the ``Gini`` or ``Entropy`` criteria. In this case,
         the runtime is linear in the number of categories.
 
+        .. versionadded:: 0.21
+
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
@@ -1226,9 +1230,9 @@ class RandomForestRegressor(ForestRegressor):
     >>> regr = RandomForestRegressor(max_depth=2, random_state=0,
     ...                              n_estimators=100).fit(X, y)
     >>> regr.feature_importances_
-    [0.18146984 0.81473937 0.00145312 0.00233767]
+    array([0.18146984, 0.81473937, 0.00145312, 0.00233767])
     >>> regr.predict([[0, 0, 0, 0]])
-    [-8.32987858]
+    array([-8.32987858])
 
     Notes
     -----
