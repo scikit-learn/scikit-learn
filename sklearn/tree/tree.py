@@ -291,7 +291,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             elif self.categorical == 'all':
                 categorical = np.arange(self.n_features_)
             else:
-                # Should have been caught in the constructor, but just in case
                 raise ValueError("Invalid value for categorical: {}. Allowed"
                                  " strings are 'all' or 'none'"
                                  "".format(self.categorical))
@@ -299,23 +298,26 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             categorical = np.atleast_1d(self.categorical).flatten()
         if categorical.dtype == np.bool:
             if categorical.size != self.n_features_:
-                raise ValueError("Shape of boolean parameter categorical must"
-                                 " be (n_features,)")
+                raise ValueError("Invalid value for categorical: Shape of "
+                                 "boolean parameter categorical must "
+                                 "be (n_features,)")
             categorical = np.nonzero(categorical)[0]
         if (np.size(categorical) > self.n_features_ or
             (categorical.size > 0 and
              (categorical.min() < 0 or
               categorical.max() >= self.n_features_))):
-            raise ValueError("Invalid shape or invalid feature index for"
-                             " parameter categorical")
+            raise ValueError("Invalid value for categorical: Invalid shape or "
+                             "feature index for parameter categorical "
+                             "invalid.")
         if issparse(X):
             if categorical.size > 0:
                 raise NotImplementedError("Categorical features not supported"
                                           " with sparse inputs")
         else:
             if np.any(X[:, categorical].astype(np.int) < 0):
-                raise ValueError("Invalid training data: categorical values"
-                                 " must be non-negative.")
+                raise ValueError("Invalid value for categorical: given values "
+                                 "for categorical features must be "
+                                 "non-negative.")
 
         # Calculate n_categories and verify they are all at least 1% populated
         n_categories = np.array([np.int(X[:, i].max()) + 1 if i in categorical

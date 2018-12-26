@@ -1813,15 +1813,14 @@ def test_criterion_copy():
             assert_equal(n_samples, n_samples_)
 
 
-@pytest.mark.parametrize('name', ALL_TREES)
-def test_invalid_categorical(name):
+@pytest.mark.parametrize('name', ALL_TREES.keys())
+@pytest.mark.parametrize('categorical', ['invalid string', [[0]],
+                                         [False, False, False], [1, 2], [-3],
+                                         [0, 0, 1]])
+def test_invalid_categorical(name, categorical):
     Tree = ALL_TREES[name]
-    raise_on_construction = ['invalid string', [[0]]]
-    raise_on_fit = [[False, False, False], [1, 2], [-3], [0, 0, 1]]
-    for catval in raise_on_construction:
-        assert_raises(ValueError, Tree, categorical=catval)
-    for catval in raise_on_fit:
-        assert_raises(ValueError, Tree(categorical=catval).fit, X, y)
+    with pytest.raises(ValueError, match="Invalid value for categorical"):
+        Tree(categorical=categorical).fit(X, y)
 
 
 @pytest.mark.parametrize('name', SPARSE_TREES)
