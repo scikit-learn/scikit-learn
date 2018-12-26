@@ -1497,8 +1497,8 @@ class TfidfVectorizer(CountVectorizer):
         in the equation above is that terms with zero idf, i.e., terms that
         occur in all documents in a training set, will not be entirely ignored.
         (Note that the idf formula above differs from the standard textbook
-        notation that defines the idf as​
-        `idf(d, t) = log [ n / (df(d, t) + 1) ])`
+        notation that defines the idf as​:
+        :math:`idf(d, t) = log \frac{n}{df(d, t) + 1}`
 
     Notes
     -----
