@@ -69,16 +69,6 @@ cdef SIZE_t _TREE_LEAF = TREE_LEAF
 cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
 cdef SIZE_t INITIAL_STACK_SIZE = 10
 
-# Repeat struct definition for numpy
-# NOTE: SPLITVALUE_DTYPE cannot be used with numpy < v1.7
-# Recommend replacing threshold with it when support for v1.6 is dropped
-
-##SPLITVALUE_DTYPE = np.dtype({
-##    'names': ['threshold', 'cat_split'],
-##    'formats': [np.float64, np.uint64],
-##    'offsets': [0, 0]
-##})
-
 NODE_DTYPE = np.dtype({
     'names': ['left_child', 'right_child', 'feature', 'threshold', 'cat_split',
               'impurity', 'n_node_samples', 'weighted_n_node_samples'],
