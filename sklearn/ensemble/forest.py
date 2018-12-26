@@ -1425,6 +1425,8 @@ class ExtraTreesClassifier(ForestClassifier):
         have an upper limit of :math:`2^{31}` categories, and runtimes
         linear in the number of categories.
 
+        .. versionadded:: 0.21
+
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
 
@@ -1694,6 +1696,8 @@ class ExtraTreesRegressor(ForestRegressor):
         considered as categorical rather than ordinal. Extra-random trees
         have an upper limit of :math:`2^{31}` categories, and runtimes
         linear in the number of categories.
+
+        .. versionadded:: 0.21
 
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
