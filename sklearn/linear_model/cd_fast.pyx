@@ -5,6 +5,8 @@
 #         Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #
 # License: BSD 3 clause
+#
+# cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True
 
 from libc.math cimport fabs
 cimport numpy as np
@@ -138,9 +140,6 @@ cdef extern from "cblas.h":
     void sscal "cblas_sscal"(int N, float alpha, float *X, int incX) nogil
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def enet_coordinate_descent(floating[::1] w,
                             floating alpha, floating beta,
                             floating[::1, :] X,
@@ -299,9 +298,6 @@ def enet_coordinate_descent(floating[::1] w,
     return w, gap, tol, n_iter + 1
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def sparse_enet_coordinate_descent(floating [::1] w,
                             floating alpha, floating beta,
                             np.ndarray[floating, ndim=1, mode='c'] X_data,
@@ -514,9 +510,6 @@ def sparse_enet_coordinate_descent(floating [::1] w,
     return w, gap, tol, n_iter + 1
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def enet_coordinate_descent_gram(floating[::1] w,
                                  floating alpha, floating beta,
                                  np.ndarray[floating, ndim=2, mode='c'] Q,
@@ -669,9 +662,6 @@ def enet_coordinate_descent_gram(floating[::1] w,
     return np.asarray(w), gap, tol, n_iter + 1
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                                        floating l2_reg,
                                        np.ndarray[floating, ndim=2, mode='fortran'] X,

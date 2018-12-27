@@ -1,9 +1,11 @@
+# Author: Gael Varoquaux
+# License: BSD
+#
+# cython: language_level=3
 """
 Uses C++ map containers for fast dict-like behavior with keys being
 integers, and values float.
 """
-# Author: Gael Varoquaux
-# License: BSD
 
 from libcpp.map cimport map as cpp_map
 

@@ -1,6 +1,8 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: language_level=3
+#
 # Authors: Robert Layton <robertlayton@gmail.com>
 #           Corey Lynch <coreylynch9@gmail.com>
 # License: BSD 3 clause
@@ -15,8 +17,7 @@ from sklearn.utils.lgamma cimport lgamma
 np.import_array()
 ctypedef np.float64_t DOUBLE
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+
 def expected_mutual_information(contingency, int n_samples):
     """Calculate the expected mutual information for two labelings."""
     cdef int R, C

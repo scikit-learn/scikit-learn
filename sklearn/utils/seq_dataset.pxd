@@ -1,3 +1,4 @@
+# cython: language_level=3
 """Dataset abstractions for sequential data access. """
 
 cimport numpy as np

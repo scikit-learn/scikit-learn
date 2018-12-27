@@ -1,7 +1,9 @@
+# cython: language_level=3
 """
 Small collection of auxiliary functions that operate on arrays
 
 """
+
 cimport numpy as np
 import  numpy as np
 
@@ -57,8 +59,8 @@ def cholesky_delete(np.ndarray L, int go_out):
     cdef int m = <int> L.strides[0]
 
     if L.dtype.name == 'float64':
-        cholesky_delete_dbl(m / sizeof(double), n, <double *> L.data, go_out)
+        cholesky_delete_dbl(m // sizeof(double), n, <double *> L.data, go_out)
     elif L.dtype.name == 'float32':
-        cholesky_delete_flt(m / sizeof(float),  n, <float *> L.data,  go_out)
+        cholesky_delete_flt(m // sizeof(float),  n, <float *> L.data,  go_out)
     else:
         raise TypeError("unsupported dtype %r." % L.dtype)

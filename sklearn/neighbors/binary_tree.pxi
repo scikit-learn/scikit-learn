@@ -1,4 +1,6 @@
 #!python
+# cython: language_level=3
+
 
 # KD Tree and Ball Tree
 # =====================
@@ -152,10 +154,10 @@ import numpy as np
 import warnings
 from ..utils import check_array
 
-from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
-from typedefs import DTYPE, ITYPE
+from .typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
+from .typedefs import DTYPE, ITYPE
 
-from dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
+from .dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
                            euclidean_dist_to_rdist, euclidean_rdist_to_dist)
 
 cdef extern from "numpy/arrayobject.h":

@@ -1,5 +1,7 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
+#
+# cython: language_level=3, boundscheck=False, cdivision=True
 
 import sys
 import array
@@ -15,8 +17,6 @@ from sklearn.utils.fixes import sp_version
 np.import_array()
 
 
-@cython.boundscheck(False)
-@cython.cdivision(True)
 def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
     """Guts of FeatureHasher.transform.
 

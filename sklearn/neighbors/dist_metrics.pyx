@@ -2,6 +2,7 @@
 #cython: boundscheck=False
 #cython: wraparound=False
 #cython: cdivision=True
+# cython: language_level=3
 
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
 # written for the scikit-learn project
@@ -48,8 +49,8 @@ cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 cdef DTYPE_t INF = np.inf
 
-from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
-from typedefs import DTYPE, ITYPE
+from .typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
+from .typedefs import DTYPE, ITYPE
 
 
 ######################################################################

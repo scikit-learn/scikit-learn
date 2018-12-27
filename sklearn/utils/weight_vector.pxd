@@ -1,3 +1,4 @@
+# cython: language_level=3
 """Efficient (dense) parameter vector implementation for linear models. """
 
 cimport numpy as np

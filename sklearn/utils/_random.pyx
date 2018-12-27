@@ -1,5 +1,6 @@
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: language_level=3
 #
 # Author: Arnaud Joly
 #
@@ -13,8 +14,6 @@ The module contains:
     * Several algorithms to sample integers without replacement.
 
 """
-from __future__ import division
-
 cimport cython
 
 import numpy as np

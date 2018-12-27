@@ -4,6 +4,8 @@
 #          Lars Buitinck
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
+#
+# cython: language_level=3str, boundscheck=False, wraparound=False
 
 import array
 from cpython cimport array
@@ -23,8 +25,6 @@ cdef bytes COMMA = u','.encode('ascii')
 cdef bytes COLON = u':'.encode('ascii')
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
                         bint query_id, long long offset, long long length):
     cdef array.array data, indices, indptr
