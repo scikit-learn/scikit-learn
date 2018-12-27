@@ -1813,7 +1813,7 @@ def test_criterion_copy():
             assert_equal(n_samples, n_samples_)
 
 
-@pytest.mark.parametrize('name', ALL_TREES.keys())
+@pytest.mark.parametrize('name', ALL_TREES)
 @pytest.mark.parametrize('categorical', ['invalid string', [[0]],
                                          [False, False, False], [1, 2], [-3],
                                          [0, 0, 1]])
@@ -1823,16 +1823,19 @@ def test_invalid_categorical(name, categorical):
         Tree(categorical=categorical).fit(X, y)
 
 
-@pytest.mark.parametrize('name', SPARSE_TREES)
+@pytest.mark.parametrize('name', ALL_TREES)
 def test_no_sparse_with_categorical(name):
     # Currently we do not support sparse categorical features
     X, y, X_sparse = [DATASETS['clf_small'][z]
                       for z in ['X', 'y', 'X_sparse']]
     Tree = ALL_TREES[name]
-    assert_raises(NotImplementedError, Tree(categorical=[6, 10]).fit,
-                  X_sparse, y)
-    assert_raises(NotImplementedError,
-                  Tree(categorical=[6, 10]).fit(X, y).predict, X_sparse)
+    with pytest.raises(NotImplementedError,
+                       match="Categorical features not supported with sparse"):
+        Tree(categorical=[6, 10]).fit(X_sparse, y)
+
+    with pytest.raises(NotImplementedError,
+                       match="Categorical features not supported with sparse"):
+        Tree(categorical=[6, 10]).fit(X, y).predict(X_sparse)
 
 
 def test_empty_leaf_infinite_threshold():
