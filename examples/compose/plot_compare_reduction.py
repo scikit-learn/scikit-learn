@@ -43,7 +43,8 @@ from sklearn.feature_selection import SelectKBest, chi2
 print(__doc__)
 
 pipe = Pipeline([
-    ('reduce_dim', PCA()),
+    # the reduce_dim stage is populated by the param_grid
+    ('reduce_dim', 'passthrough'),
     ('classify', LinearSVC())
 ])
 
@@ -63,7 +64,7 @@ param_grid = [
 ]
 reducer_labels = ['PCA', 'NMF', 'KBest(chi2)']
 
-grid = GridSearchCV(pipe, cv=3, n_jobs=1, param_grid=param_grid)
+grid = GridSearchCV(pipe, cv=5, n_jobs=1, param_grid=param_grid)
 digits = load_digits()
 grid.fit(digits.data, digits.target)
 
@@ -104,7 +105,7 @@ plt.show()
 
 from tempfile import mkdtemp
 from shutil import rmtree
-from sklearn.externals.joblib import Memory
+from joblib import Memory
 
 # Create a temporary folder to store the transformers of the pipeline
 cachedir = mkdtemp()
@@ -114,7 +115,7 @@ cached_pipe = Pipeline([('reduce_dim', PCA()),
                        memory=memory)
 
 # This time, a cached pipeline will be used within the grid search
-grid = GridSearchCV(cached_pipe, cv=3, n_jobs=1, param_grid=param_grid)
+grid = GridSearchCV(cached_pipe, cv=5, n_jobs=1, param_grid=param_grid)
 digits = load_digits()
 grid.fit(digits.data, digits.target)
 

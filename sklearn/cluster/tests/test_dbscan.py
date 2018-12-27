@@ -81,10 +81,12 @@ def test_dbscan_sparse():
     assert_array_equal(labels_dense, labels_sparse)
 
 
-def test_dbscan_sparse_precomputed():
+@pytest.mark.parametrize('include_self', [False, True])
+def test_dbscan_sparse_precomputed(include_self):
     D = pairwise_distances(X)
     nn = NearestNeighbors(radius=.9).fit(X)
-    D_sparse = nn.radius_neighbors_graph(mode='distance')
+    X_ = X if include_self else None
+    D_sparse = nn.radius_neighbors_graph(X=X_, mode='distance')
     # Ensure it is sparse not merely on diagonals:
     assert D_sparse.nnz < D.shape[0] * (D.shape[0] - 1)
     core_sparse, labels_sparse = dbscan(D_sparse,
@@ -95,6 +97,21 @@ def test_dbscan_sparse_precomputed():
                                       metric='precomputed')
     assert_array_equal(core_dense, core_sparse)
     assert_array_equal(labels_dense, labels_sparse)
+
+
+@pytest.mark.parametrize('use_sparse', [True, False])
+@pytest.mark.parametrize('metric', ['precomputed', 'minkowski'])
+def test_dbscan_input_not_modified(use_sparse, metric):
+    # test that the input is not modified by dbscan
+    X = np.random.RandomState(0).rand(10, 10)
+    X = sparse.csr_matrix(X) if use_sparse else X
+    X_copy = X.copy()
+    dbscan(X, metric=metric)
+
+    if use_sparse:
+        assert_array_equal(X.toarray(), X_copy.toarray())
+    else:
+        assert_array_equal(X, X_copy)
 
 
 def test_dbscan_no_core_samples():
@@ -339,7 +356,7 @@ def test_dbscan_core_samples_toy(algorithm):
     core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
                                   min_samples=4)
     assert_array_equal(core_samples, [])
-    assert_array_equal(labels, -np.ones(n_samples))
+    assert_array_equal(labels, np.full(n_samples, -1.))
 
 
 def test_dbscan_precomputed_metric_with_degenerate_input_arrays():

@@ -13,7 +13,7 @@ from warnings import warn
 
 from .base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
-from ..externals.joblib import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..metrics import r2_score, accuracy_score
@@ -110,7 +110,6 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
 
             estimator.fit(X[:, features], y, sample_weight=curr_sample_weight)
 
-        # Draw samples, using a mask, and then fit
         else:
             estimator.fit((X[indices])[:, features], y[indices])
 
@@ -202,7 +201,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
                  bootstrap_features=False,
                  oob_score=False,
                  warm_start=False,
-                 n_jobs=1,
+                 n_jobs=None,
                  random_state=None,
                  verbose=0):
         super(BaseBagging, self).__init__(
@@ -243,6 +242,9 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         self : object
         """
         return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
+
+    def _parallel_args(self):
+        return {}
 
     def _fit(self, X, y, max_samples=None, max_depth=None, sample_weight=None):
         """Build a Bagging ensemble of estimators from the training
@@ -311,11 +313,15 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         # Validate max_features
         if isinstance(self.max_features, (numbers.Integral, np.integer)):
             max_features = self.max_features
-        else:  # float
-            max_features = int(self.max_features * self.n_features_)
+        elif isinstance(self.max_features, np.float):
+            max_features = self.max_features * self.n_features_
+        else:
+            raise ValueError("max_features must be int or float")
 
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
+
+        max_features = max(1, int(max_features))
 
         # Store validated integer feature sampling value
         self._max_features = max_features
@@ -362,7 +368,8 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         seeds = random_state.randint(MAX_INT, size=n_more_estimators)
         self._seeds = seeds
 
-        all_results = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_results = Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                               **self._parallel_args())(
             delayed(_parallel_build_estimators)(
                 n_estimators[i],
                 self,
@@ -412,7 +419,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
     def estimators_samples_(self):
         """The subset of drawn samples for each base estimator.
 
-        Returns a dynamically generated list of boolean masks identifying
+        Returns a dynamically generated list of indices identifying
         the samples used for fitting each member of the ensemble, i.e.,
         the in-bag samples.
 
@@ -420,12 +427,8 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         to reduce the object memory footprint by not storing the sampling
         data. Thus fetching the property may be slower than expected.
         """
-        sample_masks = []
-        for _, sample_indices in self._get_estimators_indices():
-            mask = indices_to_mask(sample_indices, self._n_samples)
-            sample_masks.append(mask)
-
-        return sample_masks
+        return [sample_indices
+                for _, sample_indices in self._get_estimators_indices()]
 
 
 class BaggingClassifier(BaseBagging, ClassifierMixin):
@@ -477,7 +480,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     bootstrap_features : boolean, optional (default=False)
         Whether features are drawn with replacement.
 
-    oob_score : bool
+    oob_score : bool, optional (default=False)
         Whether to use out-of-bag samples to estimate
         the generalization error.
 
@@ -489,9 +492,11 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         .. versionadded:: 0.17
            *warm_start* constructor parameter.
 
-    n_jobs : int, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        If -1, then the number of jobs is set to the number of cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -512,7 +517,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
-        estimator. Each subset is defined by a boolean mask.
+        estimator. Each subset is defined by an array of the indices selected.
 
     estimators_features_ : list of arrays
         The subset of drawn features for each base estimator.
@@ -557,7 +562,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                  bootstrap_features=False,
                  oob_score=False,
                  warm_start=False,
-                 n_jobs=1,
+                 n_jobs=None,
                  random_state=None,
                  verbose=0):
 
@@ -582,7 +587,6 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
         n_classes_ = self.n_classes_
-        classes_ = self.classes_
 
         predictions = np.zeros((n_samples, n_classes_))
 
@@ -590,7 +594,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                                                 self.estimators_samples_,
                                                 self.estimators_features_):
             # Create mask for OOB samples
-            mask = ~samples
+            mask = ~indices_to_mask(samples, n_samples)
 
             if hasattr(estimator, "predict_proba"):
                 predictions[mask, :] += estimator.predict_proba(
@@ -686,7 +690,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
                                                              self.n_jobs)
 
-        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                             **self._parallel_args())(
             delayed(_parallel_predict_proba)(
                 self.estimators_[starts[i]:starts[i + 1]],
                 self.estimators_features_[starts[i]:starts[i + 1]],
@@ -865,9 +870,11 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         and add more estimators to the ensemble, otherwise, just fit
         a whole new ensemble. See :term:`the Glossary <warm_start>`.
 
-    n_jobs : int, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        If -1, then the number of jobs is set to the number of cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -885,7 +892,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
-        estimator. Each subset is defined by a boolean mask.
+        estimator. Each subset is defined by an array of the indices selected.
 
     estimators_features_ : list of arrays
         The subset of drawn features for each base estimator.
@@ -925,7 +932,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
                  bootstrap_features=False,
                  oob_score=False,
                  warm_start=False,
-                 n_jobs=1,
+                 n_jobs=None,
                  random_state=None,
                  verbose=0):
         super(BaggingRegressor, self).__init__(
@@ -996,7 +1003,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
                                                 self.estimators_samples_,
                                                 self.estimators_features_):
             # Create mask for OOB samples
-            mask = ~samples
+            mask = ~indices_to_mask(samples, n_samples)
 
             predictions[mask] += estimator.predict((X[mask, :])[:, features])
             n_predictions[mask] += 1

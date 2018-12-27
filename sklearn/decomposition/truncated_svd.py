@@ -100,13 +100,12 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     See also
     --------
     PCA
-    RandomizedPCA
 
     References
     ----------
     Finding structure with randomness: Stochastic algorithms for constructing
     approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909) http://arxiv.org/pdf/0909.4061
+    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
 
     Notes
     -----

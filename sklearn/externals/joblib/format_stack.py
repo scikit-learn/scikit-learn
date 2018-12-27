@@ -355,7 +355,7 @@ def format_exc(etype, evalue, etb, context=5, tb_offset=0):
     # Get (safely) a string form of the exception info
     try:
         etype_str, evalue_str = map(str, (etype, evalue))
-    except:
+    except BaseException:
         # User exception is improperly defined.
         etype, evalue = str, sys.exc_info()[:2]
         etype_str, evalue_str = map(str, (etype, evalue))

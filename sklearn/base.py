@@ -6,11 +6,11 @@
 import copy
 import warnings
 from collections import defaultdict
+from inspect import signature
 
 import numpy as np
 from scipy import sparse
 from .externals import six
-from .utils.fixes import signature
 from . import __version__
 
 
@@ -48,7 +48,7 @@ def clone(estimator, safe=True):
     # XXX: not handling dictionaries
     if estimator_type in (list, tuple, set, frozenset):
         return estimator_type([clone(e, safe=safe) for e in estimator])
-    elif not hasattr(estimator, 'get_params'):
+    elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):
         if not safe:
             return copy.deepcopy(estimator)
         else:
@@ -67,57 +67,10 @@ def clone(estimator, safe=True):
     for name in new_object_params:
         param1 = new_object_params[name]
         param2 = params_set[name]
-        if param1 is param2:
-            # this should always happen
-            continue
-        if isinstance(param1, np.ndarray):
-            # For most ndarrays, we do not test for complete equality
-            if not isinstance(param2, type(param1)):
-                equality_test = False
-            elif (param1.ndim > 0
-                    and param1.shape[0] > 0
-                    and isinstance(param2, np.ndarray)
-                    and param2.ndim > 0
-                    and param2.shape[0] > 0):
-                equality_test = (
-                    param1.shape == param2.shape
-                    and param1.dtype == param2.dtype
-                    and (_first_and_last_element(param1) ==
-                         _first_and_last_element(param2))
-                )
-            else:
-                equality_test = np.all(param1 == param2)
-        elif sparse.issparse(param1):
-            # For sparse matrices equality doesn't work
-            if not sparse.issparse(param2):
-                equality_test = False
-            elif param1.size == 0 or param2.size == 0:
-                equality_test = (
-                    param1.__class__ == param2.__class__
-                    and param1.size == 0
-                    and param2.size == 0
-                )
-            else:
-                equality_test = (
-                    param1.__class__ == param2.__class__
-                    and (_first_and_last_element(param1) ==
-                         _first_and_last_element(param2))
-                    and param1.nnz == param2.nnz
-                    and param1.shape == param2.shape
-                )
-        else:
-            # fall back on standard equality
-            equality_test = param1 == param2
-        if equality_test:
-            warnings.warn("Estimator %s modifies parameters in __init__."
-                          " This behavior is deprecated as of 0.18 and "
-                          "support for this behavior will be removed in 0.20."
-                          % type(estimator).__name__, DeprecationWarning)
-        else:
+        if param1 is not param2:
             raise RuntimeError('Cannot clone object %s, as the constructor '
-                               'does not seem to set parameter %s' %
+                               'either does not set or modifies parameter %s' %
                                (estimator, name))
-
     return new_object
 
 
@@ -271,9 +224,23 @@ class BaseEstimator(object):
         return self
 
     def __repr__(self):
-        class_name = self.__class__.__name__
-        return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
-                                               offset=len(class_name),),)
+        from .utils._pprint import _EstimatorPrettyPrinter
+
+        N_CHAR_MAX = 700  # number of non-whitespace or newline chars
+        N_MAX_ELEMENTS_TO_SHOW = 30  # number of elements to show in sequences
+
+        # use ellipsis for sequences with a lot of elements
+        pp = _EstimatorPrettyPrinter(
+            compact=True, indent=1, indent_at_name=True,
+            n_max_elements_to_show=N_MAX_ELEMENTS_TO_SHOW)
+
+        repr_ = pp.pformat(self)
+
+        # Use bruteforce ellipsis if string is very long
+        if len(''.join(repr_.split())) > N_CHAR_MAX:  # check non-blank chars
+            lim = N_CHAR_MAX // 2
+            repr_ = repr_[:lim] + '...' + repr_[-lim:]
+        return repr_
 
     def __getstate__(self):
         try:
@@ -389,9 +356,12 @@ class ClusterMixin(object):
         X : ndarray, shape (n_samples, n_features)
             Input data.
 
+        y : Ignored
+            not used, present for API consistency by convention.
+
         Returns
         -------
-        y : ndarray, shape (n_samples,)
+        labels : ndarray, shape (n_samples,)
             cluster labels
         """
         # non-optimized default implementation; override when a better
@@ -540,6 +510,9 @@ class OutlierMixin(object):
         ----------
         X : ndarray, shape (n_samples, n_features)
             Input data.
+
+        y : Ignored
+            not used, present for API consistency by convention.
 
         Returns
         -------

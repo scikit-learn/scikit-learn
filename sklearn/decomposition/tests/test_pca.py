@@ -6,20 +6,17 @@ import pytest
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_less
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
-from sklearn.decomposition import RandomizedPCA
 from sklearn.decomposition.pca import _assess_dimension_
 from sklearn.decomposition.pca import _infer_dimension_
 
@@ -588,7 +585,7 @@ def test_pca_score2():
         pca = PCA(n_components=2, whiten=True, svd_solver=solver)
         pca.fit(X)
         ll2 = pca.score(X)
-        assert_true(ll1 > ll2)
+        assert ll1 > ll2
 
 
 def test_pca_score3():
@@ -605,7 +602,7 @@ def test_pca_score3():
         pca.fit(Xl)
         ll[k] = pca.score(Xt)
 
-    assert_true(ll.argmax() == 1)
+    assert ll.argmax() == 1
 
 
 def test_pca_score_with_different_solvers():
@@ -686,26 +683,6 @@ def test_svd_solver_auto():
     assert_array_almost_equal(pca.components_, pca_test.components_)
 
 
-def test_deprecation_randomized_pca():
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((5, 4))
-
-    depr_message = ("Class RandomizedPCA is deprecated; RandomizedPCA was "
-                    "deprecated in 0.18 and will be "
-                    "removed in 0.20. Use PCA(svd_solver='randomized') "
-                    "instead. The new implementation DOES NOT store "
-                    "whiten ``components_``. Apply transform to get them.")
-
-    def fit_deprecated(X):
-        global Y
-        rpca = RandomizedPCA(random_state=0)
-        Y = rpca.fit_transform(X)
-
-    assert_warns_message(DeprecationWarning, depr_message, fit_deprecated, X)
-    Y_pca = PCA(svd_solver='randomized', random_state=0).fit_transform(X)
-    assert_array_almost_equal(Y, Y_pca)
-
-
 @pytest.mark.parametrize('svd_solver', solver_list)
 def test_pca_sparse_input(svd_solver):
     X = np.random.RandomState(0).rand(5, 4)
@@ -744,8 +721,9 @@ def check_pca_float_dtype_preservation(svd_solver):
     assert pca_64.transform(X_64).dtype == np.float64
     assert pca_32.transform(X_32).dtype == np.float32
 
+    # decimal=5 fails on mac with scipy = 1.1.0
     assert_array_almost_equal(pca_64.components_, pca_32.components_,
-                              decimal=5)
+                              decimal=4)
 
 
 def check_pca_int_dtype_upcast_to_double(svd_solver):

@@ -48,6 +48,7 @@ Functions
    config_context
    get_config
    set_config
+   show_versions
 
 .. _calibration_ref:
 
@@ -98,6 +99,7 @@ Classes
    cluster.AgglomerativeClustering
    cluster.Birch
    cluster.DBSCAN
+   cluster.OPTICS
    cluster.FeatureAgglomeration
    cluster.KMeans
    cluster.MiniBatchKMeans
@@ -112,6 +114,7 @@ Functions
 
    cluster.affinity_propagation
    cluster.dbscan
+   cluster.optics
    cluster.estimate_bandwidth
    cluster.k_means
    cluster.mean_shift
@@ -254,8 +257,8 @@ Loaders
    datasets.fetch_kddcup99
    datasets.fetch_lfw_pairs
    datasets.fetch_lfw_people
-   datasets.fetch_mldata
    datasets.fetch_olivetti_faces
+   datasets.fetch_openml
    datasets.fetch_rcv1
    datasets.fetch_species_distributions
    datasets.get_data_home
@@ -653,7 +656,7 @@ Kernels:
    :template: class.rst
 
    impute.SimpleImputer
-   impute.MICEImputer
+   impute.MissingIndicator
 
 .. _kernel_approximation_ref:
 
@@ -753,7 +756,6 @@ Kernels:
    linear_model.enet_path
    linear_model.lars_path
    linear_model.lasso_path
-   linear_model.logistic_regression_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
    linear_model.ridge_regression
@@ -843,6 +845,7 @@ details.
    metrics.jaccard_similarity_score
    metrics.log_loss
    metrics.matthews_corrcoef
+   metrics.multilabel_confusion_matrix
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score
@@ -862,6 +865,7 @@ details.
    :template: function.rst
 
    metrics.explained_variance_score
+   metrics.max_error
    metrics.mean_absolute_error
    metrics.mean_squared_error
    metrics.mean_squared_log_error
@@ -900,7 +904,7 @@ details.
 
    metrics.adjusted_mutual_info_score
    metrics.adjusted_rand_score
-   metrics.calinski_harabaz_score
+   metrics.calinski_harabasz_score
    metrics.davies_bouldin_score
    metrics.completeness_score
    metrics.cluster.contingency_matrix
@@ -1240,6 +1244,7 @@ Model validation
 
    preprocessing.Binarizer
    preprocessing.FunctionTransformer
+   preprocessing.KBinsDiscretizer
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
@@ -1248,7 +1253,7 @@ Model validation
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
-   preprocessing.CategoricalEncoder
+   preprocessing.OrdinalEncoder
    preprocessing.PolynomialFeatures
    preprocessing.PowerTransformer
    preprocessing.QuantileTransformer
@@ -1394,6 +1399,7 @@ Low-level methods
    :template: function.rst
 
    tree.export_graphviz
+   tree.plot_tree
 
 
 .. _utils_ref:
@@ -1471,9 +1477,36 @@ Low-level methods
    utils.testing.assert_raise_message
    utils.testing.all_estimators
 
+Utilities from joblib:
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.parallel_backend
+   utils.register_parallel_backend
 
 Recently deprecated
 ===================
+
+To be removed in 0.23
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_class.rst
+
+   utils.Memory
+   utils.Parallel
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_function.rst
+
+   utils.cpu_count
+   utils.delayed
+   metrics.calinski_harabaz_score
+   linear_model.logistic_regression_path
 
 
 To be removed in 0.22
@@ -1492,65 +1525,4 @@ To be removed in 0.22
    :template: deprecated_function.rst
 
    covariance.graph_lasso
-
-
-To be removed in 0.21
----------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   linear_model.RandomizedLasso
-   linear_model.RandomizedLogisticRegression
-   neighbors.LSHForest
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   datasets.load_mlcomp
-   linear_model.lasso_stability_path
-
-
-To be removed in 0.20
----------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   cross_validation.KFold
-   cross_validation.LabelKFold
-   cross_validation.LeaveOneLabelOut
-   cross_validation.LeaveOneOut
-   cross_validation.LeavePOut
-   cross_validation.LeavePLabelOut
-   cross_validation.LabelShuffleSplit
-   cross_validation.ShuffleSplit
-   cross_validation.StratifiedKFold
-   cross_validation.StratifiedShuffleSplit
-   cross_validation.PredefinedSplit
-   decomposition.RandomizedPCA
-   gaussian_process.GaussianProcess
-   grid_search.ParameterGrid
-   grid_search.ParameterSampler
-   grid_search.GridSearchCV
-   grid_search.RandomizedSearchCV
-   mixture.DPGMM
-   mixture.GMM
-   mixture.VBGMM
-
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   cross_validation.check_cv
-   cross_validation.cross_val_predict
-   cross_validation.cross_val_score
-   cross_validation.permutation_test_score
-   cross_validation.train_test_split
-   grid_search.fit_grid_point
-   learning_curve.learning_curve
-   learning_curve.validation_curve
+   datasets.fetch_mldata

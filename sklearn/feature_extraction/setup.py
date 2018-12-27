@@ -1,4 +1,5 @@
 import os
+import platform
 
 
 def configuration(parent_package='', top_path=None):
@@ -10,10 +11,11 @@ def configuration(parent_package='', top_path=None):
     if os.name == 'posix':
         libraries.append('m')
 
-    config.add_extension('_hashing',
-                         sources=['_hashing.pyx'],
-                         include_dirs=[numpy.get_include()],
-                         libraries=libraries)
+    if platform.python_implementation() != 'PyPy':
+        config.add_extension('_hashing',
+                             sources=['_hashing.pyx'],
+                             include_dirs=[numpy.get_include()],
+                             libraries=libraries)
     config.add_subpackage("tests")
 
     return config

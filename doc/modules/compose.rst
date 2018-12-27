@@ -76,13 +76,13 @@ filling in the names automatically::
 
 The estimators of a pipeline are stored as a list in the ``steps`` attribute::
 
-    >>> pipe.steps[0]
+    >>> pipe.steps[0]  # doctest: +NORMALIZE_WHITESPACE
     ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False))
 
 and as a ``dict`` in ``named_steps``::
 
-    >>> pipe.named_steps['reduce_dim']
+    >>> pipe.named_steps['reduce_dim']  # doctest: +NORMALIZE_WHITESPACE
     PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False)
 
@@ -107,10 +107,10 @@ This is particularly important for doing grid searches::
     >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
 
 Individual steps may also be replaced as parameters, and non-final steps may be
-ignored by setting them to ``None``::
+ignored by setting them to ``'passthrough'``::
 
     >>> from sklearn.linear_model import LogisticRegression
-    >>> param_grid = dict(reduce_dim=[None, PCA(5), PCA(10)],
+    >>> param_grid = dict(reduce_dim=['passthrough', PCA(5), PCA(10)],
     ...                   clf=[SVC(), LogisticRegression()],
     ...                   clf__C=[0.1, 10, 100])
     >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
@@ -342,7 +342,7 @@ and ``value`` is an estimator object::
     >>> estimators = [('linear_pca', PCA()), ('kernel_pca', KernelPCA())]
     >>> combined = FeatureUnion(estimators)
     >>> combined # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    FeatureUnion(n_jobs=1,
+    FeatureUnion(n_jobs=None,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
                                    ('kernel_pca', KernelPCA(alpha=1.0,...))],
                  transformer_weights=None)
@@ -353,18 +353,18 @@ Like pipelines, feature unions have a shorthand constructor called
 
 
 Like ``Pipeline``, individual steps may be replaced using ``set_params``,
-and ignored by setting to ``None``::
+and ignored by setting to ``'drop'``::
 
-    >>> combined.set_params(kernel_pca=None)
+    >>> combined.set_params(kernel_pca='drop')
     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    FeatureUnion(n_jobs=1,
+    FeatureUnion(n_jobs=None,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
-                                   ('kernel_pca', None)],
+                                   ('kernel_pca', 'drop')],
                  transformer_weights=None)
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_compose_plot_feature_stacker.py`
+ * :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`
 
 
 .. _column_transformer:
@@ -380,7 +380,7 @@ ColumnTransformer for heterogeneous data
 Many datasets contain features of different types, say text, floats, and dates,
 where each type of feature requires separate preprocessing or feature
 extraction steps.  Often it is easiest to preprocess data before applying
-scikit-learn methods, for example using `pandas <http://pandas.pydata.org/>`__.
+scikit-learn methods, for example using `pandas <https://pandas.pydata.org/>`__.
 Processing your data before passing it to scikit-learn might be problematic for
 one of the following reasons:
 
@@ -395,7 +395,7 @@ transformations for different columns of the data, within a
 :class:`~sklearn.pipeline.Pipeline` that is safe from data leakage and that can
 be parametrized. :class:`~sklearn.compose.ColumnTransformer` works on
 arrays, sparse matrices, and
-`pandas DataFrames <http://pandas.pydata.org/pandas-docs/stable/>`__.
+`pandas DataFrames <https://pandas.pydata.org/pandas-docs/stable/>`__.
 
 To each column, a different transformation can be applied, such as
 preprocessing or a specific feature extraction method::
@@ -404,22 +404,27 @@ preprocessing or a specific feature extraction method::
   >>> X = pd.DataFrame(
   ...     {'city': ['London', 'London', 'Paris', 'Sallisaw'],
   ...      'title': ["His Last Bow", "How Watson Learned the Trick",
-  ...                "A Moveable Feast", "The Grapes of Wrath"]})
+  ...                "A Moveable Feast", "The Grapes of Wrath"],
+  ...      'expert_rating': [5, 3, 4, 5],
+  ...      'user_rating': [4, 5, 4, 3]})
 
 For this data, we might want to encode the ``'city'`` column as a categorical
 variable, but apply a :class:`feature_extraction.text.CountVectorizer
 <sklearn.feature_extraction.text.CountVectorizer>` to the ``'title'`` column.
 As we might use multiple feature extraction methods on the same column, we give
-each transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
+each transformer a unique name, say ``'city_category'`` and ``'title_bow'``.
+By default, the remaining rating columns are ignored (``remainder='drop'``)::
 
   >>> from sklearn.compose import ColumnTransformer
   >>> from sklearn.feature_extraction.text import CountVectorizer
   >>> column_trans = ColumnTransformer(
   ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
-  ...      ('title_bow', CountVectorizer(), 'title')])
+  ...      ('title_bow', CountVectorizer(), 'title')],
+  ...     remainder='drop')
 
   >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=1, remainder='passthrough', transformer_weights=None,
+  ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
+      transformer_weights=None,
       transformers=...)
 
   >>> column_trans.get_feature_names()
@@ -448,20 +453,56 @@ as a list of multiple items, an integer array, a slice, or a boolean mask.
 Strings can reference columns if the input is a DataFrame, integers are always
 interpreted as the positional columns.
 
-The :func:`~sklearn.compose.make_columntransformer` function is available
+We can keep the remaining rating columns by setting
+``remainder='passthrough'``. The values are appended to the end of the
+transformation::
+
+  >>> column_trans = ColumnTransformer(
+  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...      ('title_bow', CountVectorizer(), 'title')],
+  ...     remainder='passthrough')
+
+  >>> column_trans.fit_transform(X)
+  ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  array([[1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 5, 4],
+         [1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 3, 5],
+         [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 4, 4],
+         [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 5, 3]]...)
+
+The ``remainder`` parameter can be set to an estimator to transform the
+remaining rating columns. The transformed values are appended to the end of
+the transformation::
+
+  >>> from sklearn.preprocessing import MinMaxScaler
+  >>> column_trans = ColumnTransformer(
+  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...      ('title_bow', CountVectorizer(), 'title')],
+  ...     remainder=MinMaxScaler())
+
+  >>> column_trans.fit_transform(X)[:, -2:]
+  ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  array([[1. , 0.5],
+         [0. , 1. ],
+         [0.5, 0.5],
+         [1. , 0. ]])
+
+The :func:`~sklearn.compose.make_column_transformer` function is available
 to more easily create a :class:`~sklearn.compose.ColumnTransformer` object.
 Specifically, the names will be given automatically. The equivalent for the
 above example would be::
 
   >>> from sklearn.compose import make_column_transformer
   >>> column_trans = make_column_transformer(
-  ...     ('city', CountVectorizer(analyzer=lambda x: [x])),
-  ...     ('title', CountVectorizer()))
+  ...     (CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...     (CountVectorizer(), 'title'),
+  ...     remainder=MinMaxScaler())
   >>> column_trans # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=1, remainder='passthrough', transformer_weights=None,
+  ColumnTransformer(n_jobs=None, remainder=MinMaxScaler(copy=True, ...),
+           sparse_threshold=0.3,
+           transformer_weights=None,
            transformers=[('countvectorizer-1', ...)
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_compose_column_transformer.py`
- * :ref:`sphx_glr_auto_examples_compose_column_transformer_mixed_types.py`
+ * :ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
+ * :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`

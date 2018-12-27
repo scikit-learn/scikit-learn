@@ -25,12 +25,15 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     The computation during ``fit`` is::
 
         regressor.fit(X, func(y))
+
     or::
 
         regressor.fit(X, transformer.transform(y))
+
     The computation during ``predict`` is::
 
         inverse_func(regressor.predict(X))
+
     or::
 
         transformer.inverse_transform(regressor.predict(X))
