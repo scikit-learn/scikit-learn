@@ -256,3 +256,56 @@ give you clues as to the source of your memory error.
 
 For more information on valgrind and the array of options it has, see the
 tutorials and documentation on the `valgrind web site <http://valgrind.org>`_.
+
+Reading the existing code base
+==============================
+
+Reading and digesting an existing code base is always a difficult exercise that
+takes time and experience to master. Even though we try to write simple code in
+scikit-learn, understanding the code can seem overwhelming at first, given the
+sheer size of the project. Here is a list of tips that may help make this task
+easier and faster (in no particular order).
+
+- Get acquainted with the :ref:`api_overview`: understand what :term:`fit`,
+  :term:`predict`, :term:`transform`, etc. are used for.
+- Before diving into reading the code of a function / class, go through the
+  docstrings first and try to get an idea of what each parameter / attribute
+  is doing. It may also help to stop a minute and think *how would I do this
+  myself if I had to?*.
+- The trickiest thing is often to identify which portions of the code are
+  relevent, and which are not. In scikit-learn **a lot** of input checking
+  is performed, especially at the beginning of the :term:`fit` methods.
+  Sometimes, only a very small portion of the code is doing the actual job. For
+  example looking at the ``fit()`` method of
+  :class:`sklearn.linear_model.LinearRegression`, what you're looking for
+  might just be the call the ``scipy.linalg.lstsq``, but it is burried into
+  multiple lines of input checking and the handling of different kinds of
+  parameters.
+- Sometimes, reading the tests for a given function will give you an idea of
+  what is its intended purpose. You can use ``git grep`` (see below) to find
+  all the tests written for a function.
+- You'll often see code looking like this:
+  ``out = Parallel(...)(delayed(some_function)(param) for param in
+  some_iterable)``. This runs ``some_function`` in parallel using `Joblib
+  <https://joblib.readthedocs.io/>`_. ``out`` is then an iterable containing
+  the values returned by ``some_function`` for each call.
+- We use `Cython <https://cython.org/>`_ to write fast code. Cython code is
+  located in ``.pyx`` and ``.pxd`` files. Cython code has a more C-like
+  flavor: we use pointers, perform manual memory allocation, use OUT
+  variables (variables whose value is changed after a function call, which
+  is frowned upon in pure Python but extremely common in C), etc. Having
+  some minimal experience in C / C++ is pretty much mandatory here.
+- Master your tools.
+
+  - With such a big project, being efficient with your favorite editor or
+    IDE goes a long way towards digesting the code base. Being able to quickly
+    jump (or *peek*) to a function/class/attribute definition helps a lot.
+    So does being able to quickly see where a given name is used in a file.
+  - `git <https://git-scm.com/book/en>`_ also has some built-in killer
+    features. It is often useful to understand how a file changed over time,
+    using e.g. ``git blame`` (`manual
+    <https://git-scm.com/docs/git-blame>`_). This can also be done directly
+    on GitHub. ``git grep`` (`examples
+    <https://git-scm.com/docs/git-grep#_examples>`_) is also extremely
+    useful to see every occurence of a pattern (e.g. a function call or a
+    variable) in the code base.
