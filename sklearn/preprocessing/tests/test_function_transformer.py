@@ -88,6 +88,25 @@ def test_np_log():
 
 @ignore_warnings(category=FutureWarning)
 # ignore warning for validate=False 0.22
+def test_np_log_decorator():
+    X = np.arange(10).reshape((5, 2))
+
+    @FunctionTransformer
+    def np_log1p(T):
+        return np.log1p(T)
+    # Test that the numpy.log example still works.
+    assert_array_equal(
+        np_log1p.transform(X),
+        np.log1p(X),
+    )
+    assert_array_equal(
+        np_log1p(X),
+        np.log1p(X),
+    )
+
+
+@ignore_warnings(category=FutureWarning)
+# ignore warning for validate=False 0.22
 def test_kw_arg():
     X = np.linspace(0, 1, num=10).reshape((5, 2))
 
