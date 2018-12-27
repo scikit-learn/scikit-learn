@@ -51,7 +51,7 @@ get_build_type() {
     fi
     git_range="origin/master...$CIRCLE_SHA1"
     git fetch origin master >&2 || (echo QUICK BUILD: failed to get changed filenames for $git_range; return)
-    filenames=$(git diff --name-only $git_range -- `find . -name plot_*`)
+    filenames=$(git diff --name-only $git_range -- `git ls-files | grep -E "/plot_|.*rst$"`)
     if [ -z "$filenames" ]
     then
         echo QUICK BUILD: no changed filenames for $git_range
