@@ -219,17 +219,17 @@ In case you require the use of parallelisation (using ``n_jobs`` > 1) with a
 custom scoring function, please make sure to define the custom function in a 
 module and import it for usage. 
 
-For example, consider the following use of the custom scoring function ``rmse`` 
-in the below code.
-``cross_val_score(elnet_pipe,
-        X_train,
-        y_train,
-        scoring=make_scorer(rmse, greater_is_better=False),
-        cv=rkfold,
-        n_jobs=-1)``
+For example, to use, ``n_jobs`` greater than 1 below, ``rmse`` function is 
+saved in a separate module (``custom_scorer_module.py``) and imported::
+  >>> from custom_scorer_module import rmse
+  >>> cross_val_score(elnet_pipe,
+  ...  X_train,
+  ...  y_train,
+  ...  scoring=make_scorer(rmse, greater_is_better=False),
+  ...  cv=rkfold,
+  ...  n_jobs=-1)
 
-To use, ``n_jobs`` greater than 1 here, ``rmse`` function was saved in a separate module 
-and imported. 
+
 
 .. _multimetric_scoring:
 
