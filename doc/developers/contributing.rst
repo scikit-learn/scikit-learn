@@ -1412,12 +1412,12 @@ easier and faster (in no particular order).
   is doing. It may also help to stop a minute and think *how would I do this
   myself if I had to?*.
 - The trickiest thing is often to identify which portions of the code are
-  relevent, and which are not. In scikit-learn **a lot** of input checking
+  relevant, and which are not. In scikit-learn **a lot** of input checking
   is performed, especially at the beginning of the :term:`fit` methods.
   Sometimes, only a very small portion of the code is doing the actual job. For
   example looking at the ``fit()`` method of
   :class:`sklearn.linear_model.LinearRegression`, what you're looking for
-  might just be the call the ``scipy.linalg.lstsq``, but it is burried into
+  might just be the call the ``scipy.linalg.lstsq``, but it is buried into
   multiple lines of input checking and the handling of different kinds of
   parameters.
 - Sometimes, reading the tests for a given function will give you an idea of
@@ -1446,5 +1446,5 @@ easier and faster (in no particular order).
     <https://git-scm.com/docs/git-blame>`_). This can also be done directly
     on GitHub. ``git grep`` (`examples
     <https://git-scm.com/docs/git-grep#_examples>`_) is also extremely
-    useful to see every occurence of a pattern (e.g. a function call or a
+    useful to see every occurrence of a pattern (e.g. a function call or a
     variable) in the code base.
