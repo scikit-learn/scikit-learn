@@ -1,9 +1,9 @@
+# cython: language_level=3
 """
 Wrapper for liblinear
 
 Author: fabian.pedregosa@inria.fr
 """
-# cython: language_level=3
 
 import  numpy as np
 cimport numpy as np
