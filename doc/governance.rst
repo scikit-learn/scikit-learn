@@ -1,3 +1,6 @@
+
+.. _governance:
+
 ===========================================
 Scikit-learn governance and decision-making
 ===========================================
