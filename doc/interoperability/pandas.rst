@@ -8,37 +8,112 @@ Pandas Interoperability
 The basics of using pandas and scikit-learn
 ==================================================================
 
-In general, scikit-learn supports the use of pandas DataFrames somewhat implicitly. However, this implicit support has its conditions and potential pitfalls and some (not all) of these will be outlined below.
+In general, scikit-learn supports the use of `pandas DataFrames <http://pandas.pydata.org/pandas-docs/stable/>`__ implicitly. However, this implicit support has its conditions and potential pitfalls and some (not all) of these will be outlined below.
 
-Every scikit-learn estimator supports the use of DataFrames which is achieved by obtaining a numpy array using the `.values` property of the DataFrame class. As mentioned above, there are several conditions on such an input DataFrame one of which is that the data in the DataFrame columns used with the estimator are of type numeric. This can be checked e.g. using something like:
+Every scikit-learn estimator supports the use of DataFrames which is achieved by obtaining a `numpy array <https://docs.scipy.org/doc/numpy/user/>`__ using the :meth:`.values` property of the DataFrame class. There are several conditions on such an input DataFrame one of which is that the data in the DataFrame columns used by the estimator are of numerical type. Other conditions and pitfalls are described in subsequent sections. The numerical condition can be checked e.g. using something like:
 
   >>> import pandas as pd
   >>> from pandas.api.types import is_numeric_dtype
   >>> df = pd.DataFrame({'foo': [1,2,3],
                          'bar': [1.2, 2.3, 3.]})
-  >>> all([is_numeric_dtype(df[x]) for x in df.columns]) # should return True
+  >>> all([is_numeric_dtype(df[x]) for x in df.columns])
+  >>> # True
   >>> df = pd.DataFrame({'foo': [1,2,3],
                          'bar': [1.2, 2.3, 3.],
                          'baz': ['foo', 'bar', 'baz']})
-  >>> all([is_numeric_dtype(df[x]) for x in df.columns]) # should return False
+  >>> all([is_numeric_dtype(df[x]) for x in df.columns])
+  >>> # False
 
-There are also a variety of classes such as pipelines or model selection that will pass a DataFrame along "as is" to the nested estimators. However, this is not guaranteed and some of the issues with this are outlined below and sources (where available) of discussions and work-arounds (the latter is provided without guarantee that it will work and care should be taken) are provided. It should also be mentioned that the `.values` property will create an in memory copy of the DataFrame thus using a numpy array in the first place can be more memory efficient as well as avoiding some of the potential pitfalls when using DataFrames.
+There are also a variety of classes such as pipelines and model selection processes that will pass a DataFrame along "as is" to the nested estimators (see the next section for an example). However, this is not guaranteed and some of the issues with this are outlined below and sources (where available) of discussions and work-arounds (the latter is provided without guarantee that the workaround will still work) are provided. It should also be mentioned that the :meth:`.values` property will create an in-memory copy of the DataFrame, thus using a numpy array in the first place can be more memory efficient as well as avoiding some of the potential pitfalls when using DataFrames.
 
 Pandas in Pandas out
 ====================
 
-It is currently not the case, that all estimators in scikit-learn return a DataFrame as output when provided with a DataFrame as an input. There is an ongoing discussion and drive to improve support on this matter although there are also voices that suggest that in general, scikit-learn should only be expected to work smoothly with numpy arrays and have some basic support for DataFrames.
+It is currently not the case, that all estimators in scikit-learn return a DataFrame as an output when provided with a DataFrame as an input. There is an ongoing discussion and drive to improve support on this matter although there are also voices that suggest that in general, scikit-learn should only be expected to work smoothly with numpy arrays and have some basic support for DataFrames.
 
-Independent of that discussion, at the moment it is not guaranteed that scikit-learn operators with `.fit`, `.transform` (and `.predict`) capability support pandas in pandas out. However, there are ways around this such as an example given here(https://github.com/scikit-learn/scikit-learn/issues/5523#issuecomment-171674105) show, where adding additional functionality to the StandardScaler class adds the pandas in pandas out capability. Care should be taken that this does not take care of the column ordering problem that is discussed in the next section.
+Example for pandas working with scikit-learn estimator/transformer:
+
+>>> import numpy as np
+>>> from sklearn.datasets import load_iris
+>>> import pandas as pd
+>>>
+>>> # make a dataframe
+>>> iris = load_iris()
+>>> X, y = iris.data[:-1,:], iris.target[:-1]
+>>> iris_pd = pd.DataFrame(X)
+>>> iris_pd.columns = iris.feature_names
+>>> iris_pd['target'] = y
+>>>
+>>> from sklearn.model_selection import train_test_split
+>>> train, test = train_test_split(iris_pd.copy(), test_size= 0.3)
+>>>
+>>> type(train)
+>>> # pandas.core.frame.DataFrame
+
+However, removing some random values from the dataset and using the :class:`~sklearn.impute.SimpleImputer` to replace the NaNs returns a numpy array instead of a DataFrame even though we use a DataFrame as input.
+
+>>> rng = np.random.RandomState(42)
+>>> # selecting some random indices to replace
+>>> idx = train.index[rng.binomial(1, 0.2, train.shape[0]).astype(bool)]
+>>> train.loc[idx, 'sepal length (cm)'] = np.nan
+>>>
+>>> from sklearn.impute import SimpleImputer
+>>>
+>>> imputer = SimpleImputer()
+>>> X = imputer.fit_transform(train)
+>>> type(X)
+>>> # numpy.ndarray
+
+Independent of this, at the moment it is not guaranteed that scikit-learn operators with :meth:`.fit`, :meth:`.transform` (and :meth:`.predict`) capability support pandas in pandas out. However, there are ways around this such as an example given `here <https://github.com/scikit-learn/scikit-learn/issues/5523#issuecomment-171674105>`__ show, where adding additional functionality to the StandardScaler class adds the pandas in pandas out capability. Care should be taken that this does not take care of the column ordering problem that is discussed in the next section.
 
 The column ordering problem
 ===========================
 
-Because scikit-learn transforms DataFrames to numpy arrays, it should be assumed, that all information and benefits of column names is lost and that from that point forward, only column order and not column labels stay relevant. This can cause problems when e.g. pickling a trained estimator and later applying it to a new DataFrame that while having the same data columns and labels has those in a different order compared to the original DataFrame. Intuitively it might be assumed that because scikit-learn handles the use of DataFrames so smoothly, the same goes for re-ordering labeled DataFrames but this is **not** the case.
+Because Scikit-learn transforms DataFrames to numpy arrays, it should be assumed, that all information and benefits of column names is lost and that from that point forward, only column order and not column labels stay relevant. This can cause problems when e.g. pickling a trained estimator and later applying it to a new DataFrame that, while having the same data columns and labels, has those in a different order compared to the original DataFrame. Intuitively it might be assumed that because Scikit-learn handles the use of DataFrames so smoothly in most cases, the same goes for re-ordering labeled DataFrames but this is **not** the case.
 
-An example of how this might impact your future prediction can be seen in the example given here(https://github.com/scikit-learn/scikit-learn/issues/7242#issue-173131995).
+An example of how this might impact your future prediction can be seen in the example given below (original with slight modifications adjusting for current API, thanks to `SauceCat <https://github.com/scikit-learn/scikit-learn/issues/7242#issue-173131995>`__).
 
-At this stage, it is the users responsibility, to ensure that the column ordering in the data used for training the estimator is the same as the ordering of the data used for prediction. There is an ongoing discussion whether or not this will change in the future and this issue (https://github.com/scikit-learn/scikit-learn/issues/7242) should be watched and used to update this paragraph in the future. A simple and straight-forward way of ensuring that column ordering and column labels are the same is using something like `df.loc[:, list of column names]` to enforce the correct ordering.
+>>> # for simplification, consider a very simple case
+>>> from sklearn.datasets import load_iris
+>>> import pandas as pd
+>>>
+>>> # make a dataframe
+>>> iris = load_iris()
+>>> X, y = iris.data[:-1,:], iris.target[:-1]
+>>> iris_pd = pd.DataFrame(X)
+>>> iris_pd.columns = iris.feature_names
+>>> iris_pd['target'] = y
+>>>
+>>> from sklearn.model_selection import train_test_split
+>>> train, test = train_test_split(iris_pd, test_size= 0.3)
+>>>
+>>> feature_columns_train = ['sepal length (cm)','sepal width (cm)',
+>>>                          'petal length (cm)','petal width (cm)']  # last two correct order
+>>> feature_columns_test = ['sepal length (cm)','sepal width (cm)',
+>>>                         'petal width (cm)','petal length (cm)']  # last two switched order
+>>>
+>>> from sklearn.linear_model import LogisticRegression
+>>> lg = LogisticRegression(n_jobs=4, random_state=123, verbose=0, penalty='l2', C=1.0,
+>>>                         solver='lbfgs', multi_class='auto')
+>>> lg.fit(train[feature_columns_train], train['target'])
+>>>
+>>> prob1 = lg.predict_proba(test[feature_columns_train])
+>>> # result should be as follows
+>>> # array([[2.08937067e-05, 3.46403326e-02, 9.65338774e-01],
+>>> #        [2.46794954e-06, 3.45770080e-02, 9.65420524e-01],
+>>> #        [1.34953381e-06, 1.76767160e-02, 9.82321934e-01],
+>>> #        [4.47530193e-04, 2.34574280e-01, 7.64978189e-01],
+>>> #        [1.39055286e-05, 5.93024117e-02, 9.40683683e-01]])
+>>> # result is actually
+>>> prob2 = lg.predict_proba(test[feature_columns_test])
+>>> # array([[0.01577369, 0.02064441, 0.9635819 ],
+>>> #        [0.01316273, 0.01780499, 0.96903228],
+>>> #        [0.00223856, 0.00998769, 0.98777375],
+>>> #        [0.17142628, 0.13323104, 0.69534268],
+>>> #        [0.03364521, 0.03210523, 0.93424956]])
+
+
+At the time of writing, it is the users responsibility to ensure that the column ordering in the data used for training the estimator is the same as the ordering of the data used for prediction. There is an ongoing discussion whether or not this will change in the future and this `issue <https://github.com/scikit-learn/scikit-learn/issues/7242>`__ should be watched and used to update this paragraph in the future. A simple and straight-forward way of ensuring that column ordering and column labels are the same is using something like :meth:`df.loc[:, list of column names]` to enforce the correct ordering.
 
 Handling Categorical data
 =========================
@@ -55,7 +130,7 @@ See the following references to get started:
 Dealing with heterogenous data
 ==============================
 
-Many modern datasets used with Scikit-learn contain heterogenous data. For the purpose of adding bespoke preprocessing steps for separate columns, Scikit-learn provides an experimental ColumnTransformer API (https://scikit-learn.org/stable/modules/compose.html#column-transformer). This API (which might change in the future) allows the definition of different transformation steps to be applied to different columns in either arrays, sparse matrices or pandas DataFrames.
+Many modern datasets used with Scikit-learn contain heterogenous data. For the purpose of adding bespoke preprocessing steps for separate columns, Scikit-learn provides an experimental :class:`~sklearn.compose.ColumnTransformer` API. This API (which might change in the future) allows the definition of different transformation steps to be applied to different columns in either arrays, sparse matrices or pandas DataFrames.
 
 Dealing with missing values
 ===========================
@@ -67,7 +142,7 @@ Sparse DataFrames Handling
 =============================
 
 **Issue:**
-Sparse DataFrames are not automatically converted to scipy.sparse matrices.
+``Sparse DataFrames`` are not automatically converted to ``scipy.sparse`` matrices.
 
 This is an issue which has vastly improved from pandas version 0.21.1 onwards. The conversation from dataframes has been largely optimized and are much faster to convert.
 
