@@ -1,0 +1,121 @@
+===========================================
+Scikit-learn governance and decision-making
+===========================================
+
+The purpose of this document is to formalize the governance process used by the
+scikit-learn project, to clarify how decisions are made and how the various
+elements of our community interact.
+This document establishes a decision-making structure that takes into account
+feedback from all members of the community and strives to find consensus, while
+avoiding any deadlocks.
+
+This is a meritocratic, consensus-based community project. Anyone with an
+interest in the project can join the community, contribute to the project
+design and participate in the decision making process. This document describes
+how that participation takes place and how to set about earning merit within
+the project community.
+
+Roles And Responsibilities
+==========================
+
+Contributors
+------------
+Contributors are community members who contribute in concrete ways to the
+project. Anyone can become a contributor, and contributions can take many forms
+– not only code – as detailed in the contributors guide.
+
+Core developers
+---------------
+Core developers are community members who have shown that they are dedicated to
+the continued development of the project through ongoing engagement with the
+community. Being a core developer  allows contributors to more easily carry on
+with their project related activities by giving them direct access to the
+project’s repository and is represented as being an organization member on the
+scikit-learn GitHub organization. Core developers are expected to review code
+contributions,can merge approved pull requests,can cast votes for and against
+merging a pull-request, and can be involved in deciding major changes to the
+API.
+
+New core developers can be nominated by any existing core developers. Once they
+have been nominated, there will be a vote by the current core developers.
+Voting on new core developers is one of the few activities that takes place on
+the project’s private management list. While it is expected that most votes
+will be unanimous, a two-thirds majority of the cast votes is enough. The vote
+needs to be open for at least 1 week.
+
+Core developers that have not contributed to the project (commits or GitHub
+comments) in the past 12 months will be asked if they want to become emeritus
+core developers and recant their commit and voting rights until they become
+active again. The list of core developers, active and emeritus (with dates at
+which they became active) is public on the scikit-learn website.
+
+Technical Committee
+-------------------
+The TC members are core developers who have additional responsibilities to
+ensure the smooth running of the project. TC members are expected to
+participate in strategic planning, and approve changes to the governance model.
+
+Membership of the TC is by nomination by a core developer. A nomination will
+result in discussion which cannot take more than a month ) and then a vote by
+the core developers which will stay open for a week. TC membership votes are
+subject to a two-third majority of all cast votes as well as a simple majority
+approval of all the current TC members. TC members who do not actively engage
+with the TC duties are expected to resign.
+ 
+The initial Technical Committee of scikit-learn consists of Alexandre Gramfort,
+Olivier Grisel, Andreas Müller, Joel Nothman, Hanmin Qin, Gaël Varoquaux, and
+Roman Yurchak.
+ 
+Decision Making Process
+=======================
+Decisions about the future of the project are made through discussion with all
+members of the community. All non-sensitive project management discussion takes
+place on the project contributors’ mailing list and the issue tracker.
+Occasionally, sensitive discussion occurs on a private list.
+
+Scikit-learn uses a "consensus seeking" process for making decisions. The group
+tries to find a resolution that has no open objections among core developers
+within a month. If no consensus can be reached in this time frame, a
+core-developer can ask for a single extension of the discussion period by
+another month. If no consensus is reached after the discussion time-frame ended
+a vote among core developers is called. If no option can gather two thirds of
+the votes cast, the decision is escalated to the TC, which in turn will use
+consensus seeking with the fallback option of a simple majority vote; the same
+time frame rules apply here within the TC. This is what we hereafter may refer
+to as “the decision making process”.
+
+Decisions (in addition to adding core developers and TC membership as above)
+are made according to the following rules:
+
+* Minor Documentation change, such as typo fixes, or addition / correction of a
+  sentence, but no change of the scikit-learn.org landing page or the “about”
+  page: Requires +1 by a core developer, no -1 by a core developer (lazy
+  consensus), happens on the issue or pull request page. Core developers are
+  expected to give “reasonable time” to others to give their opinion on the pull
+  request if they’re not confident others would agree.
+
+* Code changes and major documentation changes:
+  Requires +1 by two core developers, no -1 by a core developer (lazy
+  consensus), happens on the issue of pull-request page.
+
+* Changes to the API principles and changes to dependencies or supported
+  versions happen via a Scikit-learn Enhancement Proposal (SLEP, see below) and
+  follows the decision-making process outlined above. 
+
+* Changes to the governance model use the same decision process outlined above.
+
+ 
+If a veto -1 vote is cast on a lazy consensus, the proposer can appeal to the
+community and core developers and the change can be approved or rejected using
+the decision making procedure outlined above.
+
+Enhancement proposals
+=====================
+For all votes, a proposal must have been made public and discussed before the
+vote. Such proposal must be a consolidated document, in the form of a
+‘Scikit-Learn Enhancement Proposal’ (SLEP), rather than a long discussion on an
+issue. A SLEP must be submitted as a pull-request to
+scikit-learn/enhancement_proposals using the SLEP template.
+ 
+
+
