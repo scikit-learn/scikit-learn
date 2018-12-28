@@ -17,23 +17,33 @@ echo 'List files from cached directories'
 echo 'pip:'
 ls $HOME/.cache/pip
 
-export CC=/usr/lib/ccache/gcc
-export CXX=/usr/lib/ccache/g++
-# Useful for debugging how ccache is used
-# export CCACHE_LOGFILE=/tmp/ccache.log
-# ~60M is used by .ccache when compiling from scratch at the time of writing
-ccache --max-size 100M --show-stats
+if [ $TRAVIS_OS_NAME = "linux" ]
+then
+	export CC=/usr/lib/ccache/gcc
+	export CXX=/usr/lib/ccache/g++
+	# Useful for debugging how ccache is used
+	# export CCACHE_LOGFILE=/tmp/ccache.log
+	# ~60M is used by .ccache when compiling from scratch at the time of writing
+	ccache --max-size 100M --show-stats
+fi
 
 make_conda() {
 	TO_INSTALL="$@"
     # Deactivate the travis-provided virtual environment and setup a
     # conda-based environment instead
-    deactivate
+    # If Travvis has language=generic, deactivate does not exist. `|| :` will pass.
+    deactivate || :
 
     # Install miniconda
-    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+    if [ $TRAVIS_OS_NAME = "osx" ]
+	then
+		fname=Miniconda3-latest-MacOSX-x86_64.sh
+	else
+		fname=Miniconda3-latest-Linux-x86_64.sh
+	fi
+    wget https://repo.continuum.io/miniconda/$fname \
         -O miniconda.sh
-    MINICONDA_PATH=/home/travis/miniconda
+    MINICONDA_PATH=$HOME/miniconda
     chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
     export PATH=$MINICONDA_PATH/bin:$PATH
     conda update --yes conda
@@ -79,7 +89,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # and scipy
     virtualenv --system-site-packages --python=python3 testvenv
     source testvenv/bin/activate
-    pip install pytest pytest-cov cython==$CYTHON_VERSION joblib==$JOBLIB_VERSION
+    pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
 
 elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     make_conda python=3.7
@@ -115,6 +125,9 @@ except ImportError:
     pass
 "
 python setup.py develop
-ccache --show-stats
+if [ $TRAVIS_OS_NAME = "linux" ]
+then
+	ccache --show-stats
+fi
 # Useful for debugging how ccache is used
 # cat $CCACHE_LOGFILE
