@@ -278,13 +278,14 @@ class OneHotEncoder(_BaseEncoder):
 
     def __init__(self, n_values=None, categorical_features=None,
                  categories=None, sparse=True, dtype=np.float64,
-                 handle_unknown='error'):
+                 handle_unknown='error', drop_first=False):
         self.categories = categories
         self.sparse = sparse
         self.dtype = dtype
         self.handle_unknown = handle_unknown
         self.n_values = n_values
         self.categorical_features = categorical_features
+        self.drop_first = drop_first
 
     # Deprecated attributes
 
@@ -585,6 +586,13 @@ class OneHotEncoder(_BaseEncoder):
         out = sparse.csr_matrix((data, indices, indptr),
                                 shape=(n_samples, feature_indices[-1]),
                                 dtype=self.dtype)
+
+        if self.drop_first:
+            firsts = feature_indices
+            to_keep = np.full(indices.shape[0], True)
+            to_keep[firsts] = False
+            out = out[:, to_keep]
+
         if not self.sparse:
             return out.toarray()
         else:
@@ -641,8 +649,9 @@ class OneHotEncoder(_BaseEncoder):
         # validate shape of passed X
         msg = ("Shape of the passed X data is not correct. Expected {0} "
                "columns, got {1}.")
-        if X.shape[1] != n_transformed_features:
-            raise ValueError(msg.format(n_transformed_features, X.shape[1]))
+        # TODO: update this
+        # if X.shape[1] != n_transformed_features:
+        #     raise ValueError(msg.format(n_transformed_features, X.shape[1]))
 
         # create resulting array of appropriate dtype
         dt = np.find_common_type([cat.dtype for cat in self.categories_], [])
@@ -652,11 +661,18 @@ class OneHotEncoder(_BaseEncoder):
         found_unknown = {}
 
         for i in range(n_features):
+            print('i', i)
             n_categories = len(self.categories_[i])
+            if self.drop_first:
+                n_categories -= 1
             sub = X[:, j:j + n_categories]
+            print(sub)
 
             # for sparse X argmax returns 2D matrix, ensure 1D array
             labels = np.asarray(_argmax(sub, axis=1)).flatten()
+            if self.drop_first:
+                labels += 1
+                labels[np.all(sub == 0, axis=1)] = 0
             X_tr[:, i] = self.categories_[i][labels]
 
             if self.handle_unknown == 'ignore':
@@ -666,7 +682,6 @@ class OneHotEncoder(_BaseEncoder):
                     found_unknown[i] = unknown
 
             j += n_categories
-
         # if ignored are found: potentially need to upcast result to
         # insert None values
         if found_unknown:
