@@ -161,6 +161,17 @@ class OneHotEncoder(_BaseEncoder):
 
         The used categories can be found in the ``categories_`` attribute.
 
+    drop : 'first' or a list/array of shape (n_features,), default=None.
+        Specifies a methodology to use to drop one of the categories per
+        feature. This is useful in situations where perfectly collinear
+        features cause problems, such as when feeding the resulting data
+        into a neural network or an unregularized regression.
+
+        - None : retain all features.
+        - 'first' : drop the first feature in each category.
+        - array : ``drop[i]`` is the value of the feature in ``X[:,i]``
+                  that should be dropped.
+
     sparse : boolean, default=True
         Will return sparse matrix if set True else will return an array.
 
@@ -209,6 +220,10 @@ class OneHotEncoder(_BaseEncoder):
         The categories of each feature determined during fitting
         (in order of the features in X and corresponding with the output
         of ``transform``).
+
+    drop_ : array
+        The category for each feature to be dropped. None if all features
+        will be retained.
 
     active_features_ : array
         Indices for active features, meaning values that actually occur
@@ -259,6 +274,13 @@ class OneHotEncoder(_BaseEncoder):
            [None, 2]], dtype=object)
     >>> enc.get_feature_names()
     array(['x0_Female', 'x0_Male', 'x1_1', 'x1_2', 'x1_3'], dtype=object)
+    >>> drop_enc = OneHotEncoder(drop='first')
+    >>> drop_enc.fit(X)
+    >>> drop_enc.categories_
+    [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
+    >>> drop_enc.transform([['Female', 1], ['Male', 2]]).toarray()
+    array([[0., 0., 0.],
+           [1., 1., 0.]])
 
     See also
     --------
