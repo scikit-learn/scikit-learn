@@ -5,8 +5,11 @@ from numpy import linalg
 
 from scipy.sparse import dok_matrix, csr_matrix, issparse
 from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
+from scipy.spatial.distance import cdist, pdist, squareform
 
 import pytest
+
+from sklearn import config_context
 
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
@@ -473,7 +476,7 @@ def check_pairwise_distances_chunked(X, Y, working_memory, metric='euclidean'):
                                      metric=metric)
     assert isinstance(gen, GeneratorType)
     blockwise_distances = list(gen)
-    Y = np.array(X if Y is None else Y)
+    Y = X if Y is None else Y
     min_block_mib = len(Y) * 8 * 2 ** -20
 
     for block in blockwise_distances:
@@ -483,6 +486,18 @@ def check_pairwise_distances_chunked(X, Y, working_memory, metric='euclidean'):
     blockwise_distances = np.vstack(blockwise_distances)
     S = pairwise_distances(X, Y, metric=metric)
     assert_array_almost_equal(blockwise_distances, S)
+
+
+@pytest.mark.parametrize(
+        'metric',
+        ('euclidean', 'l2', 'sqeuclidean'))
+def test_pairwise_distances_chunked_diagonal(metric):
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(1000, 10), scale=1e10)
+    chunks = list(pairwise_distances_chunked(X, working_memory=1,
+                                             metric=metric))
+    assert len(chunks) > 1
+    assert_array_almost_equal(np.diag(np.vstack(chunks)), 0, decimal=10)
 
 
 @ignore_warnings
@@ -881,3 +896,39 @@ def test_check_preserve_type():
                                                    XB.astype(np.float))
     assert_equal(XA_checked.dtype, np.float)
     assert_equal(XB_checked.dtype, np.float)
+
+
+@pytest.mark.parametrize("n_jobs", [1, 2])
+@pytest.mark.parametrize("metric", ["seuclidean", "mahalanobis"])
+@pytest.mark.parametrize("dist_function",
+                         [pairwise_distances, pairwise_distances_chunked])
+@pytest.mark.parametrize("y_is_x", [True, False], ids=["Y is X", "Y is not X"])
+def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
+                                                y_is_x):
+    # check that pairwise_distances give the same result in sequential and
+    # parallel, when metric has data-derived parameters.
+    with config_context(working_memory=0.1):  # to have more than 1 chunk
+        rng = np.random.RandomState(0)
+        X = rng.random_sample((1000, 10))
+
+        if y_is_x:
+            Y = X
+            expected_dist_default_params = squareform(pdist(X, metric=metric))
+            if metric == "seuclidean":
+                params = {'V': np.var(X, axis=0, ddof=1)}
+            else:
+                params = {'VI': np.linalg.inv(np.cov(X.T)).T}
+        else:
+            Y = rng.random_sample((1000, 10))
+            expected_dist_default_params = cdist(X, Y, metric=metric)
+            if metric == "seuclidean":
+                params = {'V': np.var(np.vstack([X, Y]), axis=0, ddof=1)}
+            else:
+                params = {'VI': np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T}
+
+        expected_dist_explicit_params = cdist(X, Y, metric=metric, **params)
+        dist = np.vstack(tuple(dist_function(X, Y,
+                                             metric=metric, n_jobs=n_jobs)))
+
+        assert_allclose(dist, expected_dist_explicit_params)
+        assert_allclose(dist, expected_dist_default_params)

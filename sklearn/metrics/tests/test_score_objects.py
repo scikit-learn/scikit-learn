@@ -13,8 +13,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_not_equal
 
@@ -39,7 +37,7 @@ from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.externals import joblib
+from sklearn.utils import _joblib
 
 
 REGRESSION_SCORERS = ['explained_variance', 'r2',
@@ -98,8 +96,8 @@ def setup_module():
     _, y_ml = make_multilabel_classification(n_samples=X.shape[0],
                                              random_state=0)
     filename = os.path.join(TEMP_FOLDER, 'test_data.pkl')
-    joblib.dump((X, y, y_ml), filename)
-    X_mm, y_mm, y_ml_mm = joblib.load(filename, mmap_mode='r')
+    _joblib.dump((X, y, y_ml), filename)
+    X_mm, y_mm, y_ml_mm = _joblib.load(filename, mmap_mode='r')
     ESTIMATORS = _make_estimators(X_mm, y_mm, y_ml_mm)
 
 
@@ -193,7 +191,7 @@ def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
 
     scorers, is_multi = _check_multimetric_scoring(*args, **kwargs)
     # For all single metric use cases, it should register as not multimetric
-    assert_false(is_multi)
+    assert not is_multi
     if args[0] is not None:
         assert scorers is not None
         names, scorers = zip(*scorers.items())
@@ -498,9 +496,9 @@ def test_scorer_sample_weight():
                                                         ignored))
 
         except TypeError as e:
-            assert_true("sample_weight" in str(e),
-                        "scorer {0} raises unhelpful exception when called "
-                        "with sample weights: {1}".format(name, str(e)))
+            assert "sample_weight" in str(e), (
+                "scorer {0} raises unhelpful exception when called "
+                "with sample weights: {1}".format(name, str(e)))
 
 
 @ignore_warnings  # UndefinedMetricWarning for P / R scores

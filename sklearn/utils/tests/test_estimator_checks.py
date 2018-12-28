@@ -5,10 +5,10 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.externals.six.moves import cStringIO as StringIO
-from sklearn.externals import joblib
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
+from sklearn.utils import _joblib
 from sklearn.utils.testing import (assert_raises_regex, assert_equal,
                                    ignore_warnings, assert_warns)
 from sklearn.utils.estimator_checks import check_estimator
@@ -25,8 +25,7 @@ from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.utils.validation import (check_X_y, check_array,
-                                      LARGE_SPARSE_SUPPORTED)
+from sklearn.utils.validation import check_X_y, check_array
 
 
 class CorrectNotFittedError(ValueError):
@@ -350,10 +349,8 @@ def test_check_estimator():
     # Large indices test on bad estimator
     msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
            r'support \S{3}_64 matrix, and is not failing gracefully.*')
-    # only supported by scipy version more than 0.14.0
-    if LARGE_SPARSE_SUPPORTED:
-        assert_raises_regex(AssertionError, msg, check_estimator,
-                            LargeSparseNotSupportedClassifier)
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        LargeSparseNotSupportedClassifier)
 
     # non-regression test for estimators transforming to sparse data
     check_estimator(SparseTransformer())
@@ -385,9 +382,9 @@ def test_check_estimator_clones():
             set_checking_parameters(est)
             set_random_state(est)
             # without fitting
-            old_hash = joblib.hash(est)
+            old_hash = _joblib.hash(est)
             check_estimator(est)
-        assert_equal(old_hash, joblib.hash(est))
+        assert_equal(old_hash, _joblib.hash(est))
 
         with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
             # when 'est = SGDClassifier()'
@@ -396,9 +393,9 @@ def test_check_estimator_clones():
             set_random_state(est)
             # with fitting
             est.fit(iris.data + 10, iris.target)
-            old_hash = joblib.hash(est)
+            old_hash = _joblib.hash(est)
             check_estimator(est)
-        assert_equal(old_hash, joblib.hash(est))
+        assert_equal(old_hash, _joblib.hash(est))
 
 
 def test_check_estimators_unfitted():

@@ -756,7 +756,6 @@ Kernels:
    linear_model.enet_path
    linear_model.lars_path
    linear_model.lasso_path
-   linear_model.logistic_regression_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
    linear_model.ridge_regression
@@ -1482,18 +1481,10 @@ Utilities from joblib:
 
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
-
-   utils.Memory
-   utils.Parallel
-
-.. autosummary::
-   :toctree: generated/
    :template: function.rst
 
-   utils.cpu_count
-   utils.delayed
    utils.parallel_backend
+   utils.register_parallel_backend
 
 Recently deprecated
 ===================
@@ -1503,9 +1494,19 @@ To be removed in 0.23
 
 .. autosummary::
    :toctree: generated/
+   :template: deprecated_class.rst
+
+   utils.Memory
+   utils.Parallel
+
+.. autosummary::
+   :toctree: generated/
    :template: deprecated_function.rst
 
+   utils.cpu_count
+   utils.delayed
    metrics.calinski_harabaz_score
+   linear_model.logistic_regression_path
 
 
 To be removed in 0.22

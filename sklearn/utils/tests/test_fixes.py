@@ -12,16 +12,11 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
 
-from sklearn.utils.fixes import divide
 from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.fixes import nanmedian
 from sklearn.utils.fixes import nanpercentile
 from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.utils.fixes import _object_dtype_isnan
-
-
-def test_divide():
-    assert_equal(divide(.6, 1), .600000000000)
 
 
 def test_masked_array_obj_dtype_pickleable():
