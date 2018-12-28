@@ -863,7 +863,8 @@ class RandomForestClassifier(ForestClassifier):
 
 
     bootstrap : boolean, optional (default=True)
-        Whether bootstrap samples are used when building trees.
+        Whether bootstrap samples are used when building trees. If False, the
+        whole datset is used to build each tree.
 
     oob_score : bool (default=False)
         Whether to use out-of-bag samples to estimate
@@ -1153,7 +1154,8 @@ class RandomForestRegressor(ForestRegressor):
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     bootstrap : boolean, optional (default=True)
-        Whether bootstrap samples are used when building trees.
+        Whether bootstrap samples are used when building trees. If False, the
+        whole datset is used to build each tree.
 
     oob_score : bool, optional (default=False)
         whether to use out-of-bag samples to estimate
@@ -1403,7 +1405,8 @@ class ExtraTreesClassifier(ForestClassifier):
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     bootstrap : boolean, optional (default=False)
-        Whether bootstrap samples are used when building trees.
+        Whether bootstrap samples are used when building trees. If False, the
+        whole datset is used to build each tree.
 
     oob_score : bool, optional (default=False)
         Whether to use out-of-bag samples to estimate
@@ -1664,7 +1667,8 @@ class ExtraTreesRegressor(ForestRegressor):
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     bootstrap : boolean, optional (default=False)
-        Whether bootstrap samples are used when building trees.
+        Whether bootstrap samples are used when building trees. If False, the
+        whole datset is used to build each tree.
 
     oob_score : bool, optional (default=False)
         Whether to use out-of-bag samples to estimate the R^2 on unseen data.

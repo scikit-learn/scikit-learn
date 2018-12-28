@@ -471,7 +471,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=True)
-        Whether samples are drawn with replacement.
+        Whether samples are drawn with replacement. If False, sampling
+        without replacement is performed.
 
     bootstrap_features : boolean, optional (default=False)
         Whether features are drawn with replacement.
@@ -851,7 +852,8 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=True)
-        Whether samples are drawn with replacement.
+        Whether samples are drawn with replacement. If False, sampling
+        without replacement is performed.
 
     bootstrap_features : boolean, optional (default=False)
         Whether features are drawn with replacement.
