@@ -31,7 +31,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
     cdef char *line_cstr
     cdef int idx, prev_idx
     cdef Py_ssize_t i
-    cdef bytes qid_prefix = b('qid')
+    cdef bytes qid_prefix = b'qid'
     cdef Py_ssize_t n_features
     cdef long long offset_max = offset + length if length > 0 else -1
 
