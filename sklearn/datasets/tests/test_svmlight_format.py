@@ -150,13 +150,13 @@ def test_load_invalid_order_file():
 
 
 def test_load_zero_based():
-    f = BytesIO("-1 4:1.\n1 0:1\n".encode())
+    f = BytesIO(b"-1 4:1.\n1 0:1\n")
     assert_raises(ValueError, load_svmlight_file, f, zero_based=False)
 
 
 def test_load_zero_based_auto():
-    data1 = "-1 1:1 2:2 3:3\n".encode()
-    data2 = "-1 0:0 1:1\n".encode()
+    data1 = b"-1 1:1 2:2 3:3\n"
+    data2 = b"-1 0:0 1:1\n"
 
     f1 = BytesIO(data1)
     X, y = load_svmlight_file(f1, zero_based="auto")
@@ -171,10 +171,10 @@ def test_load_zero_based_auto():
 
 def test_load_with_qid():
     # load svmfile with qid attribute
-    data = """
+    data = b"""
     3 qid:1 1:0.53 2:0.12
     2 qid:1 1:0.13 2:0.1
-    7 qid:2 1:0.87 2:0.12""".encode()
+    7 qid:2 1:0.87 2:0.12"""
     X, y = load_svmlight_file(BytesIO(data), query_id=False)
     assert_array_equal(y, [3, 2, 7])
     assert_array_equal(X.toarray(), [[.53, .12], [.13, .1], [.87, .12]])
@@ -271,9 +271,9 @@ def test_dump_multilabel():
         dump_svmlight_file(X, y, f, multilabel=True)
         f.seek(0)
         # make sure it dumps multilabel correctly
-        assert_equal(f.readline(), "1 0:1 2:3 4:5\n".encode())
-        assert_equal(f.readline(), "0,2 \n".encode())
-        assert_equal(f.readline(), "0,1 1:5 3:1\n".encode())
+        assert_equal(f.readline(), b"1 0:1 2:3 4:5\n")
+        assert_equal(f.readline(), b"0,2 \n")
+        assert_equal(f.readline(), b"0,1 1:5 3:1\n")
 
 
 def test_dump_concise():
@@ -294,11 +294,11 @@ def test_dump_concise():
     f.seek(0)
     # make sure it's using the most concise format possible
     assert_equal(f.readline(),
-                 "1 0:1 1:2.1 2:3.01 3:1.000000000000001 4:1\n".encode())
-    assert_equal(f.readline(), "2.1 0:1000000000 1:2e+18 2:3e+27\n".encode())
-    assert_equal(f.readline(), "3.01 \n".encode())
-    assert_equal(f.readline(), "1.000000000000001 \n".encode())
-    assert_equal(f.readline(), "1 \n".encode())
+                 b"1 0:1 1:2.1 2:3.01 3:1.000000000000001 4:1\n")
+    assert_equal(f.readline(), b"2.1 0:1000000000 1:2e+18 2:3e+27\n")
+    assert_equal(f.readline(), b"3.01 \n")
+    assert_equal(f.readline(), b"1.000000000000001 \n")
+    assert_equal(f.readline(), b"1 \n")
     f.seek(0)
     # make sure it's correct too :)
     X2, y2 = load_svmlight_file(f)
@@ -320,7 +320,7 @@ def test_dump_comment():
     assert_array_almost_equal(y, y2)
 
     # XXX we have to update this to support Python 3.x
-    utf8_comment = "It is true that\n\xc2\xbd\xc2\xb2 = \xc2\xbc".encode()
+    utf8_comment = b"It is true that\n\xc2\xbd\xc2\xb2 = \xc2\xbc"
     f = BytesIO()
     assert_raises(UnicodeDecodeError,
                   dump_svmlight_file, X, y, f, comment=utf8_comment)
@@ -367,11 +367,11 @@ def test_dump_query_id():
 
 def test_load_with_long_qid():
     # load svmfile with longint qid attribute
-    data = """
+    data = b"""
     1 qid:0 0:1 1:2 2:3
     0 qid:72048431380967004 0:1440446648 1:72048431380967004 2:236784985
     0 qid:-9223372036854775807 0:1440446648 1:72048431380967004 2:236784985
-    3 qid:9223372036854775807  0:1440446648 1:72048431380967004 2:236784985""".encode()
+    3 qid:9223372036854775807  0:1440446648 1:72048431380967004 2:236784985"""
     X, y, qid = load_svmlight_file(BytesIO(data), query_id=True)
 
     true_X = [[1,          2,                 3],

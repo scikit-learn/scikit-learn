@@ -86,9 +86,8 @@ def setup_module():
             first_name, second_name = random_state.sample(FAKE_NAMES, 2)
             first_index = random_state.choice(np.arange(counts[first_name]))
             second_index = random_state.choice(np.arange(counts[second_name]))
-            f.write(('%s\t%d\t%s\t%d\n' % (first_name, first_index,
-                                           second_name, second_index)).encode()
-                                           )
+            f.write(b'%s\t%d\t%s\t%d\n' % (first_name, first_index,
+                                           second_name, second_index))
 
     with open(os.path.join(LFW_HOME, 'pairsDevTest.txt'), 'wb') as f:
         f.write("Fake place holder that won't be tested".encode())
