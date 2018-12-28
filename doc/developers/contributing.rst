@@ -1420,6 +1420,12 @@ easier and faster (in no particular order).
   might just be the call the ``scipy.linalg.lstsq``, but it is buried into
   multiple lines of input checking and the handling of different kinds of
   parameters.
+- Due to the use of `Inheritance
+  <https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)>`_,
+  some methods may be implemented in parent classes. All estimators inherit
+  at least from ``BaseEstimator``, and from a ``Mixin`` class that enables
+  default behaviour depending on the nature of the estimator (classifier,
+  regressor, transformer, etc.).
 - Sometimes, reading the tests for a given function will give you an idea of
   what is its intended purpose. You can use ``git grep`` (see below) to find
   all the tests written for a function.
