@@ -1828,3 +1828,63 @@ def test_empty_leaf_infinite_threshold():
         infinite_threshold = np.where(~np.isfinite(tree.tree_.threshold))[0]
         assert len(infinite_threshold) == 0
         assert len(empty_leaf) == 0
+
+
+@pytest.mark.parametrize("criterion", CLF_CRITERIONS)
+@pytest.mark.parametrize(
+    "dataset", set(DATASETS.keys()) - {"reg_small", "boston"})
+def test_prune_tree_clf_are_subtrees(criterion, dataset):
+    dataset = DATASETS[dataset]
+    X, y = dataset["X"], dataset["y"]
+    assert_pruning_creates_subtree(DecisionTreeClassifier, X, y)
+
+
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
+@pytest.mark.parametrize("dataset", DATASETS.keys())
+def test_prune_tree_reg_are_subtrees(criterion, dataset):
+    dataset = DATASETS[dataset]
+    X, y = dataset["X"], dataset["y"]
+    assert_pruning_creates_subtree(DecisionTreeRegressor, X, y)
+
+
+def assert_pruning_creates_subtree(estimator_cls, X, y):
+    estimators = []
+    for alpha in np.linspace(0.0, 0.2, 11):
+        est = estimator_cls(
+            max_leaf_nodes=20, alpha=alpha, random_state=0).fit(X, y)
+        estimators.append(est)
+
+    for prev_est, next_est in zip(estimators[:-1], estimators[1:]):
+        assert_is_subtree(prev_est.tree_, next_est.tree_)
+
+
+def assert_is_subtree(tree, subtree):
+    assert tree.node_count >= subtree.node_count
+
+    tree_c_left = tree.children_left
+    tree_c_right = tree.children_right
+    subtree_c_left = subtree.children_left
+    subtree_c_right = subtree.children_right
+
+    stack = [(0, 0)]
+    while len(stack) > 0:
+        tree_n_idx, subtree_n_idx = stack.pop()
+        assert_array_almost_equal(
+            tree.value[tree_n_idx], subtree.value[subtree_n_idx])
+        assert_almost_equal(
+            tree.impurity[tree_n_idx], subtree.impurity[subtree_n_idx])
+        assert_almost_equal(
+            tree.n_node_samples[tree_n_idx],
+            subtree.n_node_samples[subtree_n_idx])
+
+        if (subtree_c_left[subtree_n_idx] == subtree_c_right[subtree_n_idx]):
+            # is a leaf
+            assert_almost_equal(-2, subtree.threshold[subtree_n_idx])
+        else:
+            # not a leaf
+            assert_almost_equal(
+                tree.threshold[tree_n_idx], subtree.threshold[subtree_n_idx])
+            stack.append(
+                (tree_c_left[tree_n_idx], subtree_c_left[subtree_n_idx]))
+            stack.append(
+                (tree_c_right[tree_n_idx], subtree_c_right[subtree_n_idx]))

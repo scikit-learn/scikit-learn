@@ -1132,3 +1132,75 @@ cdef class Tree:
         Py_INCREF(self)
         arr.base = <PyObject*> self
         return arr
+
+# =============================================================================
+# Generate Pruned Tree
+# =============================================================================
+
+cpdef generate_pruned_tree(
+    Tree new_tree,
+    Tree orig_tree,
+    SIZE_t new_depth,
+    np.ndarray[SIZE_t, ndim=1] subtree_ids,
+    np.ndarray[np.npy_bool, ndim=1, cast=True] is_leaf,
+    np.ndarray[SIZE_t, ndim=1] orig_to_new_id_map):
+    """Generates a pruned tree.
+
+    Generates a pruned tree from the original tree. The pruned tree inner data
+    structures are copied from the original tree.
+
+    Parameters
+    ----------
+    new_tree : Tree
+        Location to place the pruned tree
+    orig_tree : Tree
+        Original tree
+    new_depth : SIZE_t
+        Depth of pruned tree
+    subtree_ids : numpy.ndarray, dtype=SIZE_t
+        Node ids from the original tree to place in pruned tree
+    is_leaf : numpy.ndarray, dtype=numpy.npy_bool
+        Mask for node ids from the original tree that are leaves in the pruned
+        tree
+    orig_to_new_id_map : numpy.ndarray, dtype=SIZE_t
+        Maps original node ids to node ids in the pruned tree
+    """
+
+    cpdef SIZE_t init_capacity = 2 ** (new_depth + 1) - 1
+    new_tree._resize(init_capacity)
+    new_tree.node_count = len(subtree_ids)
+    new_tree.max_depth = new_depth
+
+    cdef SIZE_t new_node_id
+    cdef SIZE_t orig_node_id
+    cdef SIZE_t value_stride = orig_tree.value_stride
+    cdef double* orig_value_ptr
+    cdef double* new_value_ptr
+    cdef Node* orig_node
+    cdef Node* new_node
+
+    for new_node_id in range(new_tree.node_count):
+        orig_node_id = subtree_ids[new_node_id]
+        orig_node = &orig_tree.nodes[orig_node_id]
+        new_node = &new_tree.nodes[new_node_id]
+
+        new_node.impurity = orig_node.impurity
+        new_node.n_node_samples = orig_node.n_node_samples
+        new_node.weighted_n_node_samples = orig_node.weighted_n_node_samples
+
+        if is_leaf[orig_node_id] == 0:
+            new_node.left_child = orig_to_new_id_map[orig_node.left_child]
+            new_node.right_child = orig_to_new_id_map[orig_node.right_child]
+            new_node.feature = orig_node.feature
+            new_node.threshold = orig_node.threshold
+        else:
+            new_node.left_child = _TREE_LEAF
+            new_node.right_child = _TREE_LEAF
+            new_node.feature = _TREE_UNDEFINED
+            new_node.threshold = _TREE_UNDEFINED
+
+        orig_value_ptr = (orig_tree.value +
+                         value_stride * orig_node_id)
+        new_value_ptr = (new_tree.value +
+                         value_stride * new_node_id)
+        memcpy(new_value_ptr, orig_value_ptr, sizeof(double) * value_stride)

@@ -42,6 +42,7 @@ from ._splitter import Splitter
 from ._tree import DepthFirstTreeBuilder
 from ._tree import BestFirstTreeBuilder
 from ._tree import Tree
+from ._tree import generate_pruned_tree
 from . import _tree, _splitter, _criterion
 
 __all__ = ["DecisionTreeClassifier",
@@ -93,7 +94,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                  min_impurity_decrease,
                  min_impurity_split,
                  class_weight=None,
-                 presort=False):
+                 presort=False,
+                 alpha=0.0):
         self.criterion = criterion
         self.splitter = splitter
         self.max_depth = max_depth
@@ -107,6 +109,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
         self.presort = presort
+        self.alpha = alpha
 
     def get_depth(self):
         """Returns the depth of the decision tree.
@@ -380,6 +383,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
 
+        self._prune_true()
+
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
@@ -509,6 +514,114 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         """
         X = self._validate_X_predict(X, check_input)
         return self.tree_.decision_path(X)
+
+    def _prune_true(self):
+        """Prunes tree using Cost-Complexity Pruning.
+
+        .. versionadded:: 0.21
+        """
+        check_is_fitted(self, 'tree_')
+        if self.alpha == 0.0:
+            return
+
+        samples = self.tree_.weighted_n_node_samples
+        prior = samples / samples[0]
+        n_nodes = self.tree_.node_count
+
+        R_node = prior * self.tree_.impurity
+
+        parents = np.zeros(shape=n_nodes, dtype=np.intp)
+        is_leaf = np.zeros(shape=n_nodes, dtype=bool)
+
+        child_l = self.tree_.children_left
+        child_r = self.tree_.children_right
+
+        stack = [(0, -1)]
+        while len(stack) > 0:
+            node_id, parent = stack.pop()
+            parents[node_id] = parent
+            if child_l[node_id] == child_r[node_id]:
+                is_leaf[node_id] = True
+            else:
+                stack.append((child_l[node_id], node_id))
+                stack.append((child_r[node_id], node_id))
+
+        leaf_idicies, = np.where(is_leaf)
+        R_branch = np.zeros(shape=n_nodes, dtype=DTYPE)
+        R_branch[leaf_idicies] = R_node[leaf_idicies]
+        N_leaves = np.zeros(shape=n_nodes, dtype=np.int32)
+
+        for idx in leaf_idicies:
+            cur_idx = idx
+            cur_R = R_node[cur_idx]
+            while cur_idx != 0:
+                par_idx = parents[cur_idx]
+                R_branch[par_idx] += cur_R
+                N_leaves[par_idx] += 1
+                cur_idx = par_idx
+
+        new_leaves = []
+        inner_nodes = np.logical_not(is_leaf)
+        in_subtree = np.ones(shape=n_nodes, dtype=np.bool)
+
+        cur_alpha = 0
+        while cur_alpha < self.alpha:
+            # If root node is a leaf
+            if not inner_nodes[0]:
+                break
+            g_node = (R_node - R_branch) / (N_leaves - 1)
+            g_node[~inner_nodes] = np.inf
+            min_node = np.argmin(g_node)
+            cur_alpha = g_node[min_node]
+            cur_idx = min_node
+
+            cur_leaves = N_leaves[cur_idx]
+            cur_R, cur_R_branch = R_node[cur_idx], R_branch[cur_idx]
+            R_branch[cur_idx] = cur_R
+            R_diff = cur_R - cur_R_branch
+            new_leaves.append(cur_idx)
+
+            stack = [cur_idx]
+            while len(stack) > 0:
+                idx = stack.pop()
+                inner_nodes[idx] = False
+                is_leaf[idx] = False
+                n_left, n_right = child_l[idx], child_r[idx]
+                if n_left != n_right:
+                    in_subtree[n_left] = False
+                    in_subtree[n_right] = False
+                    stack.append(n_left)
+                    stack.append(n_right)
+
+            is_leaf[cur_idx] = True
+            N_leaves[cur_idx] = 0
+            cur_idx = parents[cur_idx]
+            while cur_idx != -1:
+                N_leaves[cur_idx] -= cur_leaves - 1
+                R_branch[cur_idx] += R_diff
+                cur_idx = parents[cur_idx]
+
+        subtree_indicies, = np.where(in_subtree)
+        new_indicies = np.arange(len(subtree_indicies), dtype=np.intp)
+        orig_to_pruned_id_map = np.zeros(shape=n_nodes, dtype=np.intp)
+        orig_to_pruned_id_map[subtree_indicies] = new_indicies
+
+        pruned_depth = 0
+        stack = [(0, 0)]
+        while len(stack) > 0:
+            node_id, depth = stack.pop()
+            if depth > pruned_depth:
+                pruned_depth = depth
+            if not is_leaf[node_id] and child_l[node_id] != child_r[node_id]:
+                stack.append((child_l[node_id], depth + 1))
+                stack.append((child_r[node_id], depth + 1))
+
+        pruned_tree = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
+        generate_pruned_tree(
+            pruned_tree, self.tree_, pruned_depth, subtree_indicies, is_leaf,
+            orig_to_pruned_id_map)
+
+        self.tree_ = pruned_tree
 
     @property
     def feature_importances_(self):
@@ -666,6 +779,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         When using either a smaller dataset or a restricted depth, this may
         speed up the training.
 
+    alpha : float, optional (default=0.0)
+        Complexity parameter used for Cost-Complexity Pruning.
+
     Attributes
     ----------
     classes_ : array of shape = [n_classes] or a list of such arrays
@@ -757,7 +873,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  class_weight=None,
-                 presort=False):
+                 presort=False,
+                 alpha=0.0):
         super(DecisionTreeClassifier, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -771,7 +888,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            presort=presort)
+            presort=presort,
+            alpha=alpha)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
@@ -1018,6 +1136,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         When using either a smaller dataset or a restricted depth, this may
         speed up the training.
 
+    alpha : float, optional (default=0.0)
+        Complexity parameter used for Cost-Complexity Pruning.
+
     Attributes
     ----------
     feature_importances_ : array of shape = [n_features]
@@ -1100,7 +1221,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
-                 presort=False):
+                 presort=False,
+                 alpha=0.0):
         super(DecisionTreeRegressor, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1113,7 +1235,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            presort=presort)
+            presort=presort,
+            alpha=alpha)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
@@ -1295,6 +1418,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
+    alpha : float, optional (default=0.0)
+        Complexity parameter used for Cost-Complexity Pruning.
+
     See also
     --------
     ExtraTreeRegressor, sklearn.ensemble.ExtraTreesClassifier,
@@ -1462,7 +1588,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
-
 
     See also
     --------
