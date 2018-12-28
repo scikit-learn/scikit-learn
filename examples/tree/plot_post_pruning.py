@@ -4,9 +4,9 @@ Post pruning a decision tree with cost complexity pruning
 =========================================================
 
 In this example, decision tree classifiers are trained with a post pruning
-technique called cost complexity pruning. This technique is parameterized by
-the complexity parameter, :math:`\alpha`. Greater values of :math:`\alpha` will
-prune more of the tree, thus creating a smaller trees.
+technique called minimal cost complexity pruning. This technique is
+parameterized by the complexity parameter, :math:`\alpha`. Greater values of
+:math:`\alpha` will prune more of the tree, thus creating a smaller trees.
 """
 
 ###############################################################################

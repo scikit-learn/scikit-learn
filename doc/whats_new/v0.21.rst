@@ -53,7 +53,7 @@ Support for Python 3.4 and below has been officially dropped.
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>`,
   :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
-  
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
@@ -128,7 +128,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
   in version 0.21 and will be removed in version 0.23.
-  :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra 
+  :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra
   Mitrovic <SandraMNE>`.
 
 :mod:`sklearn.model_selection`
@@ -191,6 +191,10 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
   and :class:`tree.ExtraTreeRegressor`.
   :issue:`12300` by :user:`Adrin Jalali <adrinjalali>`.
+
+- |Feature| Adds minimal cost complexity pruning to
+  :class:`tree.BaseDecisionTree`.
+  :issue:`6557` by :user:`Thomas Fan <thomasjpfan>`.
 
 - |Fix| Fixed an issue with :class:`tree.BaseDecisionTree`
   and consequently all estimators based
