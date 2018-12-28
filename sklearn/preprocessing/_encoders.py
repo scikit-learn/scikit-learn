@@ -661,18 +661,20 @@ class OneHotEncoder(_BaseEncoder):
         found_unknown = {}
 
         for i in range(n_features):
-            print('i', i)
             n_categories = len(self.categories_[i])
             if self.drop_first:
                 n_categories -= 1
             sub = X[:, j:j + n_categories]
-            print(sub)
 
             # for sparse X argmax returns 2D matrix, ensure 1D array
             labels = np.asarray(_argmax(sub, axis=1)).flatten()
             if self.drop_first:
-                labels += 1
-                labels[np.all(sub == 0, axis=1)] = 0
+                # first column was dropped => all remaining columns are 0
+                # != is faster than == on sparse matrices
+                not_dropped = sub.max(axis=1) != 0
+                if self.sparse:
+                    not_dropped = not_dropped.toarray().flatten()
+                labels[not_dropped] += 1
             X_tr[:, i] = self.categories_[i][labels]
 
             if self.handle_unknown == 'ignore':
@@ -682,6 +684,7 @@ class OneHotEncoder(_BaseEncoder):
                     found_unknown[i] = unknown
 
             j += n_categories
+
         # if ignored are found: potentially need to upcast result to
         # insert None values
         if found_unknown:
