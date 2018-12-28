@@ -97,6 +97,28 @@ def test_one_hot_encoder_sparse():
         enc.fit([[0], [1]])
     assert_raises(ValueError, enc.transform, [[0], [-1]])
 
+    # test drop_first=True and handle_unkown='ignore'
+    enc = OneHotEncoder(handle_unknown='ignore', drop_first=True)
+    assert_raises_regex(
+        ValueError,
+        "handle_unkown must be 'error' to use drop_first=True",
+        enc.fit, [[0], [-1]])
+
+    # test drop_first=True and legacy_mode=True
+    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
+        enc = OneHotEncoder(drop_first=True, n_values=1)
+        for method in (enc.fit, enc.fit_transform):
+            assert_raises_regex(
+                ValueError,
+                'Using drop_first=True requires you not to use any ',
+                method, [[0], [-1]])
+
+            enc = OneHotEncoder(drop_first=True, categorical_features='all')
+            assert_raises_regex(
+                ValueError,
+                'Using drop_first=True requires you not to use any ',
+                method, [[0], [-1]])
+
 
 def test_one_hot_encoder_dense():
     # check for sparse=False
@@ -362,21 +384,25 @@ def test_one_hot_encoder(X):
     assert_allclose(Xtr.toarray(), [[0, 1, 1, 0,  1], [1, 0, 0, 1, 1]])
 
 
-def test_one_hot_encoder_inverse():
-    for sparse_ in [True, False]:
-        X = [['abc', 2, 55], ['def', 1, 55], ['abc', 3, 55]]
-        enc = OneHotEncoder(sparse=sparse_)
-        X_tr = enc.fit_transform(X)
-        exp = np.array(X, dtype=object)
-        assert_array_equal(enc.inverse_transform(X_tr), exp)
+@pytest.mark.parametrize('sparse_', [False, True])
+@pytest.mark.parametrize('drop_first', [False, True])
+def test_one_hot_encoder_inverse(sparse_, drop_first):
+    X = [['abc', 2, 55], ['def', 1, 55], ['abc', 3, 55]]
+    enc = OneHotEncoder(sparse=sparse_, drop_first=drop_first)
+    X_tr = enc.fit_transform(X)
+    exp = np.array(X, dtype=object)
+    assert_array_equal(enc.inverse_transform(X_tr), exp)
 
-        X = [[2, 55], [1, 55], [3, 55]]
-        enc = OneHotEncoder(sparse=sparse_, categories='auto')
-        X_tr = enc.fit_transform(X)
-        exp = np.array(X)
-        assert_array_equal(enc.inverse_transform(X_tr), exp)
+    X = [[2, 55], [1, 55], [3, 55]]
+    enc = OneHotEncoder(sparse=sparse_, categories='auto',
+                        drop_first=drop_first)
+    X_tr = enc.fit_transform(X)
+    exp = np.array(X)
+    assert_array_equal(enc.inverse_transform(X_tr), exp)
 
+    if not drop_first:
         # with unknown categories
+        # drop_first is incompatible with handle_unknown=ignore
         X = [['abc', 2, 55], ['def', 1, 55], ['abc', 3, 55]]
         enc = OneHotEncoder(sparse=sparse_, handle_unknown='ignore',
                             categories=[['abc', 'def'], [1, 2],
@@ -396,10 +422,10 @@ def test_one_hot_encoder_inverse():
         exp[:, 1] = None
         assert_array_equal(enc.inverse_transform(X_tr), exp)
 
-        # incorrect shape raises
-        X_tr = np.array([[0, 1, 1], [1, 0, 1]])
-        msg = re.escape('Shape of the passed X data is not correct')
-        assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
+    # incorrect shape raises
+    X_tr = np.array([[0, 1, 1], [1, 0, 1]])
+    msg = re.escape('Shape of the passed X data is not correct')
+    assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
 
 
 @pytest.mark.parametrize("X, cat_exp, cat_dtype", [
@@ -485,6 +511,17 @@ def test_one_hot_encoder_specified_categories_mixed_columns():
     assert enc.categories_[1].tolist() == [0, 1, 2]
     # integer categories but from object dtype data
     assert np.issubdtype(enc.categories_[1].dtype, np.object_)
+
+
+@pytest.mark.parametrize('X, exp', [
+   ([[0], [5], [5]], [[0], [1], [1]]),  # 2 cat => 1 columns
+   ([[0], [1], [2]], [[0, 0], [1, 0], [0, 1]]),  # C cat => C - 1 columns
+   ([[0, 1], [1, 1], [0, 1]], [[0], [1], [0]])  # 1 cat => dropped column
+])
+def test_one_hot_encoder_drop_first(X, exp):
+
+    enc = OneHotEncoder(categories='auto', sparse=False, drop_first=True)
+    assert_array_equal(enc.fit_transform(X), exp)
 
 
 def test_one_hot_encoder_pandas():

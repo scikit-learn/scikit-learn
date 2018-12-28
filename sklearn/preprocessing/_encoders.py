@@ -418,16 +418,30 @@ class OneHotEncoder(_BaseEncoder):
                    "got {0}.".format(self.handle_unknown))
             raise ValueError(msg)
 
+        if self.drop_first and self.handle_unknown != 'error':
+            raise ValueError(
+                "handle_unkown must be 'error' to use drop_first=True")
+            # This is because with handle_unkown=ignore, an unkown category
+            # will be represented as all zeros in the corresponding feature
+            # columns. But this is also how we represent the first category
+            # (all zeros) when drop_first=True.
+
         self._handle_deprecations(X)
+
+        if self._legacy_mode and self.drop_first:
+            raise ValueError(
+                'Using drop_first=True requires you not to use any '
+                'deprecated parameter (categorical_featuers and/or n_values).'
+            )
 
         if self._legacy_mode:
             _transform_selected(X, self._legacy_fit_transform, self.dtype,
                                 self._categorical_features,
                                 copy=True)
-            return self
         else:
             self._fit(X, handle_unknown=self.handle_unknown)
-            return self
+
+        return self
 
     def _legacy_fit_transform(self, X):
         """Assumes X contains only categorical features."""
@@ -510,6 +524,12 @@ class OneHotEncoder(_BaseEncoder):
 
         self._handle_deprecations(X)
 
+        if self._legacy_mode and self.drop_first:
+            raise ValueError(
+                'Using drop_first=True requires you not to use any '
+                'deprecated parameter (categorical_featuers and/or n_values).'
+            )
+
         if self._legacy_mode:
             return _transform_selected(
                 X, self._legacy_fit_transform, self.dtype,
@@ -588,6 +608,7 @@ class OneHotEncoder(_BaseEncoder):
                                 dtype=self.dtype)
 
         if self.drop_first:
+            # Remove the columns of the first categories
             firsts = feature_indices[:-1]
             to_keep = np.full(out.shape[1], True)
             to_keep[firsts] = False
@@ -644,14 +665,19 @@ class OneHotEncoder(_BaseEncoder):
 
         n_samples, _ = X.shape
         n_features = len(self.categories_)
-        n_transformed_features = sum([len(cats) for cats in self.categories_])
+        if self.drop_first:
+            n_transformed_features = sum(len(cats) - 1
+                                         for cats in self.categories_)
+        else:
+            n_transformed_features = sum(len(cats)
+                                         for cats in self.categories_)
 
         # validate shape of passed X
         msg = ("Shape of the passed X data is not correct. Expected {0} "
                "columns, got {1}.")
-        # TODO: update this
-        # if X.shape[1] != n_transformed_features:
-        #     raise ValueError(msg.format(n_transformed_features, X.shape[1]))
+
+        if X.shape[1] != n_transformed_features:
+            raise ValueError(msg.format(n_transformed_features, X.shape[1]))
 
         # create resulting array of appropriate dtype
         dt = np.find_common_type([cat.dtype for cat in self.categories_], [])
@@ -663,18 +689,22 @@ class OneHotEncoder(_BaseEncoder):
         for i in range(n_features):
             n_categories = len(self.categories_[i])
             if self.drop_first:
-                n_categories -= 1
+                n_categories -= 1  # we 'removed' the first one
+                if n_categories == 0:
+                    # Only happens if there was a column with a unique
+                    # category. In this case we just fill the column with this
+                    # unique category value.
+                    X_tr[:, i] = self.categories_[i][0]
+                    continue
             sub = X[:, j:j + n_categories]
 
             # for sparse X argmax returns 2D matrix, ensure 1D array
             labels = np.asarray(_argmax(sub, axis=1)).flatten()
             if self.drop_first:
-                # first column was dropped => all remaining columns are 0
-                # != is faster than == on sparse matrices
-                not_dropped = sub.max(axis=1) != 0
-                if self.sparse:
-                    not_dropped = not_dropped.toarray().flatten()
+                # first category (dropped): we have a row of all zero's
+                not_dropped = np.asarray(sub.sum(axis=1) != 0).flatten()
                 labels[not_dropped] += 1
+
             X_tr[:, i] = self.categories_[i][labels]
 
             if self.handle_unknown == 'ignore':
