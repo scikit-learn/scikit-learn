@@ -1199,8 +1199,6 @@ cpdef generate_pruned_tree(
             new_node.feature = _TREE_UNDEFINED
             new_node.threshold = _TREE_UNDEFINED
 
-        orig_value_ptr = (orig_tree.value +
-                         value_stride * orig_node_id)
-        new_value_ptr = (new_tree.value +
-                         value_stride * new_node_id)
+        orig_value_ptr = orig_tree.value + value_stride * orig_node_id
+        new_value_ptr = new_tree.value + value_stride * new_node_id
         memcpy(new_value_ptr, orig_value_ptr, sizeof(double) * value_stride)
