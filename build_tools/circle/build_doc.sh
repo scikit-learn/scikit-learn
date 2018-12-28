@@ -57,6 +57,13 @@ get_build_type() {
         echo QUICK BUILD: no changed filenames for $git_range
         return
     fi
+    # changed code files in sklearn/ which are not a test
+    changed_codes=$(echo "$filenames" | grep -E "^sklearn/.*(\.py$|\.pxd$|\.pyx$)" | grep -v -E "(test_|tests)")
+    if [[ -n "$changed_codes" ]]
+    then
+        echo BUILD: detected sklearn/ filename modified in $git_range: $changed_codes
+        return
+    fi
     changed_examples=$(echo "$filenames" | grep -e ^examples/)
     if [[ -n "$changed_examples" ]]
     then
