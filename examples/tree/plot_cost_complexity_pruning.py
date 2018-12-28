@@ -1,7 +1,7 @@
 r"""
-=========================================================
-Post pruning a decision tree with cost complexity pruning
-=========================================================
+========================================================
+Post pruning decision trees with cost complexity pruning
+========================================================
 
 In this example, decision tree classifiers are trained with a post pruning
 technique called minimal cost complexity pruning. This technique is

@@ -1138,9 +1138,9 @@ cdef class Tree:
 # =============================================================================
 
 cpdef build_pruned_tree(
-    Tree new_tree,
+    Tree tree,
     Tree orig_tree,
-    np.ndarray[np.npy_uint8, ndim=1] leaf_in_subtree):
+    np.ndarray[np.npy_uint8, ndim=1] leaves_in_subtree):
     """Builds a pruned tree.
 
     Builds a pruned tree from the original tree. The pruned tree inner data
@@ -1148,16 +1148,16 @@ cpdef build_pruned_tree(
 
     Parameters
     ----------
-    new_tree : Tree
+    tree : Tree
         Location to place the pruned tree
     orig_tree : Tree
         Original tree
-    leaf_in_subtree : numpy.ndarray, dtype=np.npy_uint8
+    leaves_in_subtree : numpy.ndarray, dtype=np.npy_uint8
         Original node ids that are leaves in pruned tree
     """
 
-    cdef SIZE_t capacity = np.sum(leaf_in_subtree)
-    new_tree._resize(capacity)
+    cdef SIZE_t capacity = np.sum(leaves_in_subtree)
+    tree._resize(capacity)
 
     cdef SIZE_t orig_node_id
     cdef SIZE_t new_node_id
@@ -1193,10 +1193,10 @@ cpdef build_pruned_tree(
             parent = stack_record.parent
             is_left = stack_record.is_left
 
-            is_leaf = leaf_in_subtree[orig_node_id]
+            is_leaf = leaves_in_subtree[orig_node_id]
             node = &orig_tree.nodes[orig_node_id]
 
-            new_node_id = new_tree._add_node(
+            new_node_id = tree._add_node(
                 parent, is_left, is_leaf, node.feature, node.threshold,
                 node.impurity, node.n_node_samples,
                 node.weighted_n_node_samples)
@@ -1207,7 +1207,7 @@ cpdef build_pruned_tree(
 
             # copy value from original tree to new tree
             orig_value_ptr = orig_tree.value + value_stride * orig_node_id
-            new_value_ptr = new_tree.value + value_stride * new_node_id
+            new_value_ptr = tree.value + value_stride * new_node_id
             memcpy(new_value_ptr, orig_value_ptr, sizeof(double) * value_stride)
 
             if not is_leaf:
@@ -1220,20 +1220,13 @@ cpdef build_pruned_tree(
                 # push left child on stack
                 rc = stack.push(
                     node.left_child, 0, depth + 1, new_node_id, 1, 0.0, 0)
-
                 if rc == -1:
                     break
 
             if depth > max_depth_seen:
                 max_depth_seen = depth
+
         if rc >= 0:
-            new_tree.max_depth = max_depth_seen
+            tree.max_depth = max_depth_seen
     if rc == -1:
         raise MemoryError()
-
-
-
-
-
-
-

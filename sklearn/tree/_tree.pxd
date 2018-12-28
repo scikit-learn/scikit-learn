@@ -110,6 +110,6 @@ cdef class TreeBuilder:
 # =============================================================================
 
 cpdef build_pruned_tree(
-    Tree new_tree,
+    Tree tree,
     Tree orig_tree,
-    np.ndarray[np.npy_uint8, ndim=1] leaf_in_subtree)
+    np.ndarray[np.npy_uint8, ndim=1] leaves_in_subtree)

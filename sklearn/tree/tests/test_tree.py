@@ -1877,6 +1877,9 @@ def assert_is_subtree(tree, subtree):
         assert_almost_equal(
             tree.n_node_samples[tree_n_idx],
             subtree.n_node_samples[subtree_n_idx])
+        assert_almost_equal(
+            tree.weighted_n_node_samples[tree_n_idx],
+            subtree.weighted_n_node_samples[subtree_n_idx])
 
         if (subtree_c_left[subtree_n_idx] == subtree_c_right[subtree_n_idx]):
             # is a leaf

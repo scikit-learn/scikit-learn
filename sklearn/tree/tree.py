@@ -540,14 +540,14 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         parents = np.zeros(shape=n_nodes, dtype=np.intp)
 
         # Uses uint8 to avoid casting when passing to generate_pruned_tree
-        is_leaf = np.zeros(shape=n_nodes, dtype=np.uint8)
+        leaves_in_subtree = np.zeros(shape=n_nodes, dtype=np.uint8)
 
         stack = [(0, -1)]
         while len(stack) > 0:
             node_id, parent = stack.pop()
             parents[node_id] = parent
             if child_l[node_id] == child_r[node_id]:
-                is_leaf[node_id] = 1
+                leaves_in_subtree[node_id] = 1
             else:
                 stack.append((child_l[node_id], node_id))
                 stack.append((child_r[node_id], node_id))
@@ -555,22 +555,21 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         # computes number of leaves in all branches and the overall impurity of
         # the branch. The overall impurity is the sum of R_node in its leaves.
         N_leaves = np.zeros(shape=n_nodes, dtype=np.int32)
-        leaf_idicies, = np.where(is_leaf)
+        leaf_idicies, = np.where(leaves_in_subtree)
         R_branch = np.zeros(shape=n_nodes, dtype=DTYPE)
         R_branch[leaf_idicies] = R_node[leaf_idicies]
 
         # bubble up values to ancestor nodes
         for idx in leaf_idicies:
-            cur_idx = idx
-            cur_R = R_node[cur_idx]
-            while cur_idx != 0:
-                par_idx = parents[cur_idx]
+            cur_R = R_node[idx]
+            while idx != 0:
+                par_idx = parents[idx]
                 R_branch[par_idx] += cur_R
                 N_leaves[par_idx] += 1
-                cur_idx = par_idx
+                idx = par_idx
 
         # non-leaves that can be pruned
-        inner_nodes = np.logical_not(is_leaf)
+        inner_nodes = np.logical_not(leaves_in_subtree)
         in_subtree = np.ones(shape=n_nodes, dtype=np.bool)
 
         cur_alpha = 0
@@ -587,37 +586,36 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             cur_idx = np.argmin(g_node)
             cur_alpha = g_node[cur_idx]
 
-            is_leaf[cur_idx] = 1
-
             # descendants of branch are not in subtree
             stack = [cur_idx]
             while len(stack) > 0:
                 idx = stack.pop()
                 inner_nodes[idx] = False
+                leaves_in_subtree[idx] = 0
+                in_subtree[idx] = False
                 n_left, n_right = child_l[idx], child_r[idx]
                 if n_left != n_right:
-                    in_subtree[n_left], in_subtree[n_right] = False, False
-                    is_leaf[n_left], is_leaf[n_right] = 0, 0
                     stack.append(n_left)
                     stack.append(n_right)
+            leaves_in_subtree[cur_idx] = 1
 
             # updates number of leaves
             cur_leaves, N_leaves[cur_idx] = N_leaves[cur_idx], 0
 
-            # computes the increase in R_branch to ubble up
+            # computes the increase in R_branch to bubble up
             R_diff = R_node[cur_idx] - R_branch[cur_idx]
             R_branch[cur_idx] = R_node[cur_idx]
 
             # bubble up values to ancestors
             cur_idx = parents[cur_idx]
-            while cur_idx != -1:
+            while cur_idx != _tree.TREE_LEAF:
                 N_leaves[cur_idx] -= cur_leaves - 1
                 R_branch[cur_idx] += R_diff
                 cur_idx = parents[cur_idx]
 
         # build pruned treee
         pruned_tree = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
-        build_pruned_tree(pruned_tree, self.tree_, is_leaf)
+        build_pruned_tree(pruned_tree, self.tree_, leaves_in_subtree)
 
         self.tree_ = pruned_tree
 
