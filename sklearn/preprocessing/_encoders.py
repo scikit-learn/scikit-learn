@@ -175,6 +175,14 @@ class OneHotEncoder(_BaseEncoder):
         will be all zeros. In the inverse transform, an unknown category
         will be denoted as None.
 
+    drop_first: bool, default=False.
+        If ``True``, the columns of the first categories are dropped and each
+        variable is thus encoded into ``n_categories - 1`` columns. This is
+        useful in unregularized linear regression (:class:`LinearRegression
+        <sklearn.linear_model.LinearRegression>`) where co-linearity between
+        the input features must be avoided. If ``True``, ``handle_unkown``
+        must be set to ``error``.
+
     n_values : 'auto', int or array of ints, default='auto'
         Number of values per feature.
 

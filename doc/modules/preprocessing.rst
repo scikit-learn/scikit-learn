@@ -489,7 +489,7 @@ Continuing the example above::
   >>> enc = preprocessing.OneHotEncoder()
   >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
   >>> enc.fit(X)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-  OneHotEncoder(categorical_features=None, categories=None,
+  OneHotEncoder(categorical_features=None, categories=None, drop_first=False,
          dtype=<... 'numpy.float64'>, handle_unknown='error',
          n_values=None, sparse=True)
   >>> enc.transform([['female', 'from US', 'uses Safari'],
@@ -516,7 +516,7 @@ dataset::
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     OneHotEncoder(categorical_features=None,
-           categories=[...],
+           categories=[...], drop_first=False,
            dtype=<... 'numpy.float64'>, handle_unknown='error',
            n_values=None, sparse=True)
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
@@ -533,12 +533,30 @@ columns for this feature will be all zeros
     >>> enc = preprocessing.OneHotEncoder(handle_unknown='ignore')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X) # doctest: +ELLIPSIS  +NORMALIZE_WHITESPACE
-    OneHotEncoder(categorical_features=None, categories=None,
+    OneHotEncoder(categorical_features=None, categories=None, drop_first=False,
            dtype=<... 'numpy.float64'>, handle_unknown='ignore',
            n_values=None, sparse=True)
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[1., 0., 0., 0., 0., 0.]])
 
+Using ``drop_first=True``, each column is encoded into ``n_categories - 1``
+columns instead of ``n_categories`` columns. This is useful to avoid
+co-linearity in the input matrix in non-regularized logistic regression
+(:class:`LinearRegression <sklearn.linear_model.LinearRegression>`), which
+would cause the covariance matrix to be non-invertible::
+
+  >>> enc = preprocessing.OneHotEncoder(drop_first=True)
+  >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
+  >>> enc.fit(X) # doctest: +ELLIPSIS  +NORMALIZE_WHITESPACE
+  OneHotEncoder(categorical_features=None, categories=None, drop_first=True,
+                dtype=<class 'numpy.float64'>, handle_unknown='error',
+                n_values=None, sparse=True)
+  >>> enc.transform([['female', 'from US', 'uses Safari'],
+  ...                ['male', 'from Europe', 'uses Safari'],
+  ...                ['female', 'from US', 'uses Firefox']]).toarray()
+  array([[0., 1., 1.],
+         [1., 0., 1.],
+         [0., 1., 0.]])
 
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as scalars.
