@@ -2,7 +2,6 @@
 branch = True
 source = sklearn
 include = */sklearn/*
-plugins = Cython.Coverage
 omit =
     */sklearn/externals/*
     */benchmarks/*
