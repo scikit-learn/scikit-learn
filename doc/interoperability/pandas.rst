@@ -23,15 +23,15 @@ be checked e.g. using something like:
 
   >>> import pandas as pd
   >>> from pandas.api.types import is_numeric_dtype
-  >>> df = pd.DataFrame({'foo': [1,2,3],
-                         'bar': [1.2, 2.3, 3.]})
+  >>> df = pd.DataFrame({'foo': [1, 2, 3],
+  ...                    'bar': [1.2, 2.3, 3.]})
   >>> all([is_numeric_dtype(df[x]) for x in df.columns])
-  >>> # True
+  True
   >>> df = pd.DataFrame({'foo': [1,2,3],
-                         'bar': [1.2, 2.3, 3.],
-                         'baz': ['foo', 'bar', 'baz']})
+  ...                    'bar': [1.2, 2.3, 3.],
+  ...                    'baz': ['foo', 'bar', 'baz']})
   >>> all([is_numeric_dtype(df[x]) for x in df.columns])
-  >>> # False
+  False
 
 There are also a variety of classes such as pipelines and model selection
 processes that will pass a DataFrame along "as is" to the nested estimators
@@ -70,7 +70,7 @@ Example for pandas working with scikit-learn estimator/transformer:
 >>> train, test = train_test_split(iris_pd.copy(), test_size= 0.3)
 >>>
 >>> type(train)
->>> # pandas.core.frame.DataFrame
+<class 'pandas.core.frame.DataFrame'>
 
 However, removing some random values from the dataset and using the
 :class:`~sklearn.impute.SimpleImputer` to replace the NaNs returns a numpy
@@ -86,7 +86,7 @@ array instead of a DataFrame even though we use a DataFrame as input.
 >>> imputer = SimpleImputer()
 >>> X = imputer.fit_transform(train)
 >>> type(X)
->>> # numpy.ndarray
+<class 'numpy.ndarray'>
 
 Independent of this, at the moment it is not guaranteed that scikit-learn
 operators with :meth:`.fit`, :meth:`.transform` (and :meth:`.predict`)
@@ -126,32 +126,40 @@ API, thanks to `SauceCat <https://github.com/scikit-learn/scikit-learn/issues/72
 >>> iris_pd['target'] = y
 >>>
 >>> from sklearn.model_selection import train_test_split
->>> train, test = train_test_split(iris_pd, test_size= 0.3)
+>>> train, test = train_test_split(iris_pd, test_size= 0.3, random_state=42)
 >>>
 >>> feature_columns_train = ['sepal length (cm)','sepal width (cm)',
->>>                          'petal length (cm)','petal width (cm)']  # last two correct order
+...                          'petal length (cm)','petal width (cm)']
+>>> # last two correct order
 >>> feature_columns_test = ['sepal length (cm)','sepal width (cm)',
->>>                         'petal width (cm)','petal length (cm)']  # last two switched order
+...                         'petal width (cm)','petal length (cm)']
+>>> # last two switched order
 >>>
 >>> from sklearn.linear_model import LogisticRegression
->>> lg = LogisticRegression(n_jobs=4, random_state=123, verbose=0, penalty='l2', C=1.0,
->>>                         solver='lbfgs', multi_class='auto')
+>>> lg = LogisticRegression(n_jobs=4, random_state=123, verbose=0,
+...                         penalty='l2', C=1.0,
+...                         solver='lbfgs', multi_class='auto')
 >>> lg.fit(train[feature_columns_train], train['target'])
+LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+          intercept_scaling=1, max_iter=100, multi_class='auto', n_jobs=4,
+          penalty='l2', random_state=123, solver='lbfgs', tol=0.0001,
+          verbose=0, warm_start=False)
 >>>
 >>> prob1 = lg.predict_proba(test[feature_columns_train])
->>> # result should be as follows
->>> # array([[2.08937067e-05, 3.46403326e-02, 9.65338774e-01],
->>> #        [2.46794954e-06, 3.45770080e-02, 9.65420524e-01],
->>> #        [1.34953381e-06, 1.76767160e-02, 9.82321934e-01],
->>> #        [4.47530193e-04, 2.34574280e-01, 7.64978189e-01],
->>> #        [1.39055286e-05, 5.93024117e-02, 9.40683683e-01]])
+>>> prob1[:5]
+array([[4.09709461e-03, 8.21100411e-01, 1.74802495e-01],
+       [9.42618164e-01, 5.73813720e-02, 4.64354721e-07],
+       [2.72655051e-07, 5.28875447e-03, 9.94710973e-01],
+       [6.86315850e-03, 7.80379358e-01, 2.12757484e-01],
+       [1.64263139e-03, 7.43621534e-01, 2.54735834e-01]])
 >>> # result is actually
 >>> prob2 = lg.predict_proba(test[feature_columns_test])
->>> # array([[0.01577369, 0.02064441, 0.9635819 ],
->>> #        [0.01316273, 0.01780499, 0.96903228],
->>> #        [0.00223856, 0.00998769, 0.98777375],
->>> #        [0.17142628, 0.13323104, 0.69534268],
->>> #        [0.03364521, 0.03210523, 0.93424956]])
+>>> prob2[:5]
+array([[7.92829716e-01, 1.79085973e-01, 2.80843105e-02],
+       [9.95986933e-01, 4.01303839e-03, 2.87377384e-08],
+       [2.47995509e-03, 7.79557758e-03, 9.89724467e-01],
+       [7.09780229e-01, 2.39891794e-01, 5.03279763e-02],
+       [5.62705633e-01, 3.48565301e-01, 8.87290655e-02]])
 
 
 At the time of writing, it is the users responsibility to ensure that the
@@ -235,7 +243,7 @@ Example Usage
   >>>
   >>> sparse_df = pd.SparseDataFrame(arr, default_fill_value=0)
   >>> print('Density: {:.2%}'.format(sparse_df.density))
-  >>> # Output: Density: 10.00%
+  Density: 10.00%
   >>>
   >>> coo = sparse_df.to_coo()
   >>> #or
@@ -244,10 +252,12 @@ Example Usage
   >>> csr = coo.tocsr()
   >>> csc = coo.tocsc()
   >>>
-  >>> print('Confirm both are sparse:', issparse(coo) == issparse(csr) == issparse(csc) == True)
-  >>> # Output: Confirm both are sparse: True
-  >>> print('Confirm same amount of non-empty values:', coo.nnz == csr.nnz == csc.nnz)
-  >>> # Output: Confirm same amount of non-empty values: True
+  >>> print('Confirm both are sparse:',
+  ...       issparse(coo) == issparse(csr) == issparse(csc) == True)
+  Confirm both are sparse: True
+  >>> print('Confirm same amount of non-empty values:',
+  ...       coo.nnz == csr.nnz == csc.nnz)
+  Confirm same amount of non-empty values: True
 
 
 The code above highlights the following three elements:
