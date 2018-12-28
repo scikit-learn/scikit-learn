@@ -106,13 +106,10 @@ cdef class TreeBuilder:
 
 
 # =============================================================================
-# Generate Pruned Tree
+# Build Pruned Tree
 # =============================================================================
 
-cpdef generate_pruned_tree(
+cpdef build_pruned_tree(
     Tree new_tree,
     Tree orig_tree,
-    SIZE_t new_depth,
-    np.ndarray[SIZE_t, ndim=1] subtree_ids,
-    np.ndarray[np.npy_bool, ndim=1, cast=True] is_leaf,
-    np.ndarray[SIZE_t, ndim=1] orig_to_new_id_map)
+    np.ndarray[np.npy_uint8, ndim=1] leaf_in_subtree)

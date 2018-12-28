@@ -1860,6 +1860,7 @@ def assert_pruning_creates_subtree(estimator_cls, X, y):
 
 def assert_is_subtree(tree, subtree):
     assert tree.node_count >= subtree.node_count
+    assert tree.max_depth >= subtree.max_depth
 
     tree_c_left = tree.children_left
     tree_c_right = tree.children_right

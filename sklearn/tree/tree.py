@@ -42,7 +42,7 @@ from ._splitter import Splitter
 from ._tree import DepthFirstTreeBuilder
 from ._tree import BestFirstTreeBuilder
 from ._tree import Tree
-from ._tree import generate_pruned_tree
+from ._tree import build_pruned_tree
 from . import _tree, _splitter, _criterion
 
 __all__ = ["DecisionTreeClassifier",
@@ -538,14 +538,16 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         child_l = self.tree_.children_left
         child_r = self.tree_.children_right
         parents = np.zeros(shape=n_nodes, dtype=np.intp)
-        is_leaf = np.zeros(shape=n_nodes, dtype=bool)
+
+        # Uses uint8 to avoid casting when passing to generate_pruned_tree
+        is_leaf = np.zeros(shape=n_nodes, dtype=np.uint8)
 
         stack = [(0, -1)]
         while len(stack) > 0:
             node_id, parent = stack.pop()
             parents[node_id] = parent
             if child_l[node_id] == child_r[node_id]:
-                is_leaf[node_id] = True
+                is_leaf[node_id] = 1
             else:
                 stack.append((child_l[node_id], node_id))
                 stack.append((child_r[node_id], node_id))
@@ -567,9 +569,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 N_leaves[par_idx] += 1
                 cur_idx = par_idx
 
-        # keeps track of new leaves in the pruned tree
-        new_leaves = []
-
         # non-leaves that can be pruned
         inner_nodes = np.logical_not(is_leaf)
         in_subtree = np.ones(shape=n_nodes, dtype=np.bool)
@@ -588,8 +587,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             cur_idx = np.argmin(g_node)
             cur_alpha = g_node[cur_idx]
 
-            new_leaves.append(cur_idx)
-            is_leaf[cur_idx] = True
+            is_leaf[cur_idx] = 1
 
             # descendants of branch are not in subtree
             stack = [cur_idx]
@@ -598,10 +596,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 inner_nodes[idx] = False
                 n_left, n_right = child_l[idx], child_r[idx]
                 if n_left != n_right:
-                    in_subtree[n_left] = False
-                    in_subtree[n_right] = False
-                    is_leaf[n_left] = False
-                    is_leaf[n_right] = False
+                    in_subtree[n_left], in_subtree[n_right] = False, False
+                    is_leaf[n_left], is_leaf[n_right] = 0, 0
                     stack.append(n_left)
                     stack.append(n_right)
 
@@ -619,29 +615,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 R_branch[cur_idx] += R_diff
                 cur_idx = parents[cur_idx]
 
-        # computes a map from node ids of the original tree to
-        # the node ids of the pruned tree
-        subtree_indicies, = np.where(in_subtree)
-        new_indicies = np.arange(len(subtree_indicies), dtype=np.intp)
-        orig_to_pruned_id_map = np.zeros(shape=n_nodes, dtype=np.intp)
-        orig_to_pruned_id_map[subtree_indicies] = new_indicies
-
-        # computes depth of pruned tree
-        pruned_depth = 0
-        stack = [(0, 0)]
-        while len(stack) > 0:
-            node_id, depth = stack.pop()
-            if depth > pruned_depth:
-                pruned_depth = depth
-            if not is_leaf[node_id] and child_l[node_id] != child_r[node_id]:
-                stack.append((child_l[node_id], depth + 1))
-                stack.append((child_r[node_id], depth + 1))
-
-        # generates pruned treee
+        # build pruned treee
         pruned_tree = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
-        generate_pruned_tree(
-            pruned_tree, self.tree_, pruned_depth, subtree_indicies, is_leaf,
-            orig_to_pruned_id_map)
+        build_pruned_tree(pruned_tree, self.tree_, is_leaf)
 
         self.tree_ = pruned_tree
 

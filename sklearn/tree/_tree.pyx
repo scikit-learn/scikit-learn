@@ -1134,19 +1134,16 @@ cdef class Tree:
         return arr
 
 # =============================================================================
-# Generate Pruned Tree
+# Build Pruned Tree
 # =============================================================================
 
-cpdef generate_pruned_tree(
+cpdef build_pruned_tree(
     Tree new_tree,
     Tree orig_tree,
-    SIZE_t new_depth,
-    np.ndarray[SIZE_t, ndim=1] subtree_ids,
-    np.ndarray[np.npy_bool, ndim=1, cast=True] is_leaf,
-    np.ndarray[SIZE_t, ndim=1] orig_to_new_id_map):
-    """Generates a pruned tree.
+    np.ndarray[np.npy_uint8, ndim=1] leaf_in_subtree):
+    """Builds a pruned tree.
 
-    Generates a pruned tree from the original tree. The pruned tree inner data
+    Builds a pruned tree from the original tree. The pruned tree inner data
     structures are copied from the original tree.
 
     Parameters
@@ -1155,50 +1152,88 @@ cpdef generate_pruned_tree(
         Location to place the pruned tree
     orig_tree : Tree
         Original tree
-    new_depth : SIZE_t
-        Depth of pruned tree
-    subtree_ids : numpy.ndarray, dtype=SIZE_t
-        Node ids from the original tree to place in pruned tree
-    is_leaf : numpy.ndarray, dtype=numpy.npy_bool
-        Mask for node ids from the original tree that are leaves in the pruned
-        tree
-    orig_to_new_id_map : numpy.ndarray, dtype=SIZE_t
-        Maps original node ids to node ids in the pruned tree
+    leaf_in_subtree : numpy.ndarray, dtype=np.npy_uint8
+        Original node ids that are leaves in pruned tree
     """
 
-    cpdef SIZE_t init_capacity = 2 ** (new_depth + 1) - 1
-    new_tree._resize(init_capacity)
-    new_tree.node_count = len(subtree_ids)
-    new_tree.max_depth = new_depth
+    cdef SIZE_t capacity = np.sum(leaf_in_subtree)
+    new_tree._resize(capacity)
 
-    cdef SIZE_t new_node_id
     cdef SIZE_t orig_node_id
+    cdef SIZE_t new_node_id
+    cdef SIZE_t depth
+    cdef SIZE_t parent
+    cdef bint is_left
+    cdef bint is_leaf
+
+    # value_stride for original tree and new tree are the same
     cdef SIZE_t value_stride = orig_tree.value_stride
+    cdef SIZE_t max_depth_seen = -1
+    cdef int rc = 0
+    cdef Node* node
     cdef double* orig_value_ptr
     cdef double* new_value_ptr
-    cdef Node* orig_node
-    cdef Node* new_node
 
-    for new_node_id in range(new_tree.node_count):
-        orig_node_id = subtree_ids[new_node_id]
-        orig_node = &orig_tree.nodes[orig_node_id]
-        new_node = &new_tree.nodes[new_node_id]
+    # Only uses the start, depth, parent, and is_left variables
+    cdef Stack stack = Stack(INITIAL_STACK_SIZE)
+    cdef StackRecord stack_record
 
-        new_node.impurity = orig_node.impurity
-        new_node.n_node_samples = orig_node.n_node_samples
-        new_node.weighted_n_node_samples = orig_node.weighted_n_node_samples
+    with nogil:
+        # push root node onto stack
+        rc = stack.push(0, 0, 0, _TREE_UNDEFINED, 0, 0.0, 0)
+        if rc == -1:
+            with gil:
+                raise MemoryError()
 
-        if is_leaf[orig_node_id] == 0:
-            new_node.left_child = orig_to_new_id_map[orig_node.left_child]
-            new_node.right_child = orig_to_new_id_map[orig_node.right_child]
-            new_node.feature = orig_node.feature
-            new_node.threshold = orig_node.threshold
-        else:
-            new_node.left_child = _TREE_LEAF
-            new_node.right_child = _TREE_LEAF
-            new_node.feature = _TREE_UNDEFINED
-            new_node.threshold = _TREE_UNDEFINED
+        while not stack.is_empty():
+            stack.pop(&stack_record)
 
-        orig_value_ptr = orig_tree.value + value_stride * orig_node_id
-        new_value_ptr = new_tree.value + value_stride * new_node_id
-        memcpy(new_value_ptr, orig_value_ptr, sizeof(double) * value_stride)
+            orig_node_id = stack_record.start
+            depth = stack_record.depth
+            parent = stack_record.parent
+            is_left = stack_record.is_left
+
+            is_leaf = leaf_in_subtree[orig_node_id]
+            node = &orig_tree.nodes[orig_node_id]
+
+            new_node_id = new_tree._add_node(
+                parent, is_left, is_leaf, node.feature, node.threshold,
+                node.impurity, node.n_node_samples,
+                node.weighted_n_node_samples)
+
+            if new_node_id == <SIZE_t>(-1):
+                rc = -1
+                break
+
+            # copy value from original tree to new tree
+            orig_value_ptr = orig_tree.value + value_stride * orig_node_id
+            new_value_ptr = new_tree.value + value_stride * new_node_id
+            memcpy(new_value_ptr, orig_value_ptr, sizeof(double) * value_stride)
+
+            if not is_leaf:
+                # Push right child on stack
+                rc = stack.push(
+                    node.right_child, 0, depth + 1, new_node_id, 0, 0.0, 0)
+                if rc == -1:
+                    break
+
+                # push left child on stack
+                rc = stack.push(
+                    node.left_child, 0, depth + 1, new_node_id, 1, 0.0, 0)
+
+                if rc == -1:
+                    break
+
+            if depth > max_depth_seen:
+                max_depth_seen = depth
+        if rc >= 0:
+            new_tree.max_depth = max_depth_seen
+    if rc == -1:
+        raise MemoryError()
+
+
+
+
+
+
+
