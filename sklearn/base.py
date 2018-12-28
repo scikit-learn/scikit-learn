@@ -7,7 +7,7 @@ import copy
 import warnings
 from collections import defaultdict
 import struct
-from inspect import signature
+import inspect
 
 import numpy as np
 from scipy import sparse
@@ -170,7 +170,7 @@ class BaseEstimator(object):
 
         # introspect the constructor arguments to find the model parameters
         # to represent
-        init_signature = signature(init)
+        init_signature = inspect.signature(init)
         # Consider the constructor parameters excluding 'self'
         parameters = [p for p in init_signature.parameters.values()
                       if p.name != 'self' and p.kind != p.VAR_KEYWORD]

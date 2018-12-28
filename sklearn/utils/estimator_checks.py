@@ -82,21 +82,6 @@ def _safe_tags(estimator, key=None):
     return _DEFAULT_TAGS
 
 
-def assert_almost_equal_dense_sparse(x, y, decimal=6, err_msg=''):
-    if sparse.issparse(x):
-        assert_array_almost_equal(x.data, y.data,
-                                  decimal=decimal,
-                                  err_msg=err_msg)
-    else:
-        assert_array_almost_equal(x, y, decimal=decimal,
-                                  err_msg=err_msg)
-
-
-ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MissingIndicator',
-             'MaxAbsScaler', 'MinMaxScaler', 'RobustScaler', 'StandardScaler',
-             'PowerTransformer', 'QuantileTransformer']
-
-
 def _yield_checks(name, estimator):
     tags = _safe_tags(estimator)
     yield check_estimators_dtypes
@@ -1248,8 +1233,9 @@ def check_estimators_pickle(name, estimator_orig):
     X -= X.min()
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
 
+    tags = _safe_tags(estimator_orig)
     # include NaN values when the estimator should deal with them
-    if name in ALLOW_NAN:
+    if tags['allow_nan']:
         # set randomly 10 elements to np.nan
         rng = np.random.RandomState(42)
         mask = rng.choice(X.size, 10, replace=False)
