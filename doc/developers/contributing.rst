@@ -533,6 +533,9 @@ Finally, follow the formatting rules below to make it consistently good:
     * For "References" in docstrings, see the Silhouette Coefficient
       (:func:`sklearn.metrics.silhouette_score`).
 
+* When editing reStructuredText (``.rst``) files, try to keep line length under
+  80 characters when possible (exceptions include links and tables).
+
 Generated documentation on CircleCI
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
