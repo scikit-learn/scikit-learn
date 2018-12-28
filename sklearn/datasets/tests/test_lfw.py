@@ -70,11 +70,11 @@ def setup_module():
 
     # add some random file pollution to test robustness
     with open(os.path.join(LFW_HOME, 'lfw_funneled', '.test.swp'), 'wb') as f:
-        f.write('Text file to be ignored by the dataset loader.'.encode())
+        f.write(b'Text file to be ignored by the dataset loader.')
 
     # generate some pairing metadata files using the same format as LFW
     with open(os.path.join(LFW_HOME, 'pairsDevTrain.txt'), 'wb') as f:
-        f.write("10\n".encode())
+        f.write(b"10\n")
         more_than_two = [name for name, count in counts.items()
                          if count >= 2]
         for i in range(5):
@@ -90,10 +90,10 @@ def setup_module():
                                            second_name, second_index))
 
     with open(os.path.join(LFW_HOME, 'pairsDevTest.txt'), 'wb') as f:
-        f.write("Fake place holder that won't be tested".encode())
+        f.write(b"Fake place holder that won't be tested")
 
     with open(os.path.join(LFW_HOME, 'pairs.txt'), 'wb') as f:
-        f.write("Fake place holder that won't be tested".encode())
+        f.write(b"Fake place holder that won't be tested")
 
 
 def teardown_module():
