@@ -51,13 +51,13 @@ get_build_type() {
     fi
     git_range="origin/master...$CIRCLE_SHA1"
     git fetch origin master >&2 || (echo QUICK BUILD: failed to get changed filenames for $git_range; return)
-    filenames=$(git diff --name-only $git_range -- `git ls-files | grep -E "/plot_|.*rst$"`)
+    filenames=$(git diff --name-only $git_range)
     if [ -z "$filenames" ]
     then
         echo QUICK BUILD: no changed filenames for $git_range
         return
     fi
-    changed_examples=$(echo "$filenames" | grep -e ^examples/)
+    changed_examples=$(echo "$filenames" | grep -e grep -e ^examples/.*/plot_)
     if [[ -n "$changed_examples" ]]
     then
         echo BUILD: detected examples/ filename modified in $git_range: $changed_examples
