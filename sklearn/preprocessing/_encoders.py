@@ -181,7 +181,7 @@ class OneHotEncoder(_BaseEncoder):
         useful in unregularized linear regression (:class:`LinearRegression
         <sklearn.linear_model.LinearRegression>`) where co-linearity between
         the input features must be avoided. If ``True``, ``handle_unkown``
-        must be set to ``error``.
+        must be set to ``'error'``.
 
     n_values : 'auto', int or array of ints, default='auto'
         Number of values per feature.
@@ -254,7 +254,7 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.fit(X)
     ... # doctest: +ELLIPSIS
     ... # doctest: +NORMALIZE_WHITESPACE
-    OneHotEncoder(categorical_features=None, categories=None,
+    OneHotEncoder(categorical_features=None, categories=None, drop_first=False,
            dtype=<... 'numpy.float64'>, handle_unknown='ignore',
            n_values=None, sparse=True)
 

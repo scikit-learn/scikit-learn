@@ -540,8 +540,9 @@ columns for this feature will be all zeros
     array([[1., 0., 0., 0., 0., 0.]])
 
 Using ``drop_first=True``, each column is encoded into ``n_categories - 1``
-columns instead of ``n_categories`` columns. This is useful to avoid
-co-linearity in the input matrix in non-regularized logistic regression
+columns instead of ``n_categories`` columns. In this case ``'handle_unknown'``
+must be set to ``'error'``. This is useful to avoid co-linearity in the
+input matrix in non-regularized logistic regression
 (:class:`LinearRegression <sklearn.linear_model.LinearRegression>`), which
 would cause the covariance matrix to be non-invertible::
 
