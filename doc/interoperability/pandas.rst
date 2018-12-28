@@ -8,9 +8,18 @@ Pandas Interoperability
 The basics of using pandas and scikit-learn
 ==================================================================
 
-In general, scikit-learn supports the use of `pandas DataFrames <http://pandas.pydata.org/pandas-docs/stable/>`__ implicitly. However, this implicit support has its conditions and potential pitfalls and some (not all) of these will be outlined below.
+In general, scikit-learn supports the use of
+`pandas DataFrames <http://pandas.pydata.org/pandas-docs/stable/>`__
+implicitly. However, this implicit support has its conditions and potential
+pitfalls and some (not all) of these will be outlined below.
 
-Every scikit-learn estimator supports the use of DataFrames which is achieved by obtaining a `numpy array <https://docs.scipy.org/doc/numpy/user/>`__ using the :meth:`.values` property of the DataFrame class. There are several conditions on such an input DataFrame one of which is that the data in the DataFrame columns used by the estimator are of numerical type. Other conditions and pitfalls are described in subsequent sections. The numerical condition can be checked e.g. using something like:
+Every scikit-learn estimator supports the use of DataFrames which is achieved
+by obtaining a `numpy array <https://docs.scipy.org/doc/numpy/user/>`__ using
+the :meth:`.values` property of the DataFrame class. There are several
+conditions on such an input DataFrame one of which is that the data in the
+DataFrame columns used by the estimator are of numerical type. Other conditions
+and pitfalls are described in subsequent sections. The numerical condition can
+be checked e.g. using something like:
 
   >>> import pandas as pd
   >>> from pandas.api.types import is_numeric_dtype
@@ -24,12 +33,25 @@ Every scikit-learn estimator supports the use of DataFrames which is achieved by
   >>> all([is_numeric_dtype(df[x]) for x in df.columns])
   >>> # False
 
-There are also a variety of classes such as pipelines and model selection processes that will pass a DataFrame along "as is" to the nested estimators (see the next section for an example). However, this is not guaranteed and some of the issues with this are outlined below and sources (where available) of discussions and work-arounds (the latter is provided without guarantee that the workaround will still work) are provided. It should also be mentioned that the :meth:`.values` property will create an in-memory copy of the DataFrame, thus using a numpy array in the first place can be more memory efficient as well as avoiding some of the potential pitfalls when using DataFrames.
+There are also a variety of classes such as pipelines and model selection
+processes that will pass a DataFrame along "as is" to the nested estimators
+(see the next section for an example). However, this is not guaranteed and some
+of the issues with this are outlined below and sources (where available) of
+discussions and work-arounds (the latter is provided without guarantee that the
+workaround will still work) are provided. It should also be mentioned that the
+:meth:`.values` property will create an in-memory copy of the DataFrame, thus
+using a numpy array in the first place can be more memory efficient as well as
+avoiding some of the potential pitfalls when using DataFrames.
 
 Pandas in Pandas out
 ====================
 
-It is currently not the case, that all estimators in scikit-learn return a DataFrame as an output when provided with a DataFrame as an input. There is an ongoing discussion and drive to improve support on this matter although there are also voices that suggest that in general, scikit-learn should only be expected to work smoothly with numpy arrays and have some basic support for DataFrames.
+It is currently not the case, that all estimators in scikit-learn return a
+DataFrame as an output when provided with a DataFrame as an input. There is an
+ongoing discussion and drive to improve support on this matter although there
+are also voices that suggest that in general, scikit-learn should only be
+expected to work smoothly with numpy arrays and have some basic support for
+DataFrames.
 
 Example for pandas working with scikit-learn estimator/transformer:
 
@@ -50,7 +72,9 @@ Example for pandas working with scikit-learn estimator/transformer:
 >>> type(train)
 >>> # pandas.core.frame.DataFrame
 
-However, removing some random values from the dataset and using the :class:`~sklearn.impute.SimpleImputer` to replace the NaNs returns a numpy array instead of a DataFrame even though we use a DataFrame as input.
+However, removing some random values from the dataset and using the
+:class:`~sklearn.impute.SimpleImputer` to replace the NaNs returns a numpy
+array instead of a DataFrame even though we use a DataFrame as input.
 
 >>> rng = np.random.RandomState(42)
 >>> # selecting some random indices to replace
@@ -64,14 +88,31 @@ However, removing some random values from the dataset and using the :class:`~skl
 >>> type(X)
 >>> # numpy.ndarray
 
-Independent of this, at the moment it is not guaranteed that scikit-learn operators with :meth:`.fit`, :meth:`.transform` (and :meth:`.predict`) capability support pandas in pandas out. However, there are ways around this such as an example given `here <https://github.com/scikit-learn/scikit-learn/issues/5523#issuecomment-171674105>`__ show, where adding additional functionality to the StandardScaler class adds the pandas in pandas out capability. Care should be taken that this does not take care of the column ordering problem that is discussed in the next section.
+Independent of this, at the moment it is not guaranteed that scikit-learn
+operators with :meth:`.fit`, :meth:`.transform` (and :meth:`.predict`)
+capability support pandas in pandas out. However, there are ways around this
+such as an example given
+`here <https://github.com/scikit-learn/scikit-learn/issues/5523#issuecomment-171674105>`__
+show, where adding additional functionality to the StandardScaler class adds
+the pandas in pandas out capability. Care should be taken that this does not
+take care of the column ordering problem that is discussed in the next section.
 
 The column ordering problem
 ===========================
 
-Because Scikit-learn transforms DataFrames to numpy arrays, it should be assumed, that all information and benefits of column names is lost and that from that point forward, only column order and not column labels stay relevant. This can cause problems when e.g. pickling a trained estimator and later applying it to a new DataFrame that, while having the same data columns and labels, has those in a different order compared to the original DataFrame. Intuitively it might be assumed that because Scikit-learn handles the use of DataFrames so smoothly in most cases, the same goes for re-ordering labeled DataFrames but this is **not** the case.
+Because Scikit-learn transforms DataFrames to numpy arrays, it should be
+assumed, that all information and benefits of column names is lost and that
+from that point forward, only column order and not column labels stay relevant.
+This can cause problems when e.g. pickling a trained estimator and later
+applying it to a new DataFrame that, while having the same data columns and
+labels, has those in a different order compared to the original DataFrame.
+Intuitively it might be assumed that because Scikit-learn handles the use of
+DataFrames so smoothly in most cases, the same goes for re-ordering labeled
+DataFrames but this is **not** the case.
 
-An example of how this might impact your future prediction can be seen in the example given below (original with slight modifications adjusting for current API, thanks to `SauceCat <https://github.com/scikit-learn/scikit-learn/issues/7242#issue-173131995>`__).
+An example of how this might impact your future prediction can be seen in the
+example given below (original with slight modifications adjusting for current
+API, thanks to `SauceCat <https://github.com/scikit-learn/scikit-learn/issues/7242#issue-173131995>`__).
 
 >>> # for simplification, consider a very simple case
 >>> from sklearn.datasets import load_iris
@@ -113,7 +154,15 @@ An example of how this might impact your future prediction can be seen in the ex
 >>> #        [0.03364521, 0.03210523, 0.93424956]])
 
 
-At the time of writing, it is the users responsibility to ensure that the column ordering in the data used for training the estimator is the same as the ordering of the data used for prediction. There is an ongoing discussion whether or not this will change in the future and this `issue <https://github.com/scikit-learn/scikit-learn/issues/7242>`__ should be watched and used to update this paragraph in the future. A simple and straight-forward way of ensuring that column ordering and column labels are the same is using something like :meth:`df.loc[:, list of column names]` to enforce the correct ordering.
+At the time of writing, it is the users responsibility to ensure that the
+column ordering in the data used for training the estimator is the same as the
+ordering of the data used for prediction. There is an ongoing discussion
+whether or not this will change in the future and this
+`issue <https://github.com/scikit-learn/scikit-learn/issues/7242>`__ should be
+watched and used to update this paragraph in the future. A simple and straight-
+forward way of ensuring that column ordering and column labels are the same is
+using something like :meth:`df.loc[:, list of column names]` to enforce the
+correct ordering.
 
 Handling Categorical data
 =========================
@@ -130,41 +179,49 @@ See the following references to get started:
 Dealing with heterogenous data
 ==============================
 
-Many modern datasets used with Scikit-learn contain heterogenous data. For the purpose of adding bespoke preprocessing steps for separate columns, Scikit-learn provides an experimental :class:`~sklearn.compose.ColumnTransformer` API. This API (which might change in the future) allows the definition of different transformation steps to be applied to different columns in either arrays, sparse matrices or pandas DataFrames.
+Many modern datasets used with Scikit-learn contain heterogenous data. For the
+purpose of adding bespoke preprocessing steps for separate columns, Scikit-
+learn provides an experimental :class:`~sklearn.compose.ColumnTransformer` API.
+This API (which might change in the future) allows the definition of different
+transformation steps to be applied to different columns in either arrays,
+sparse matrices or pandas DataFrames.
 
 Dealing with missing values
 ===========================
 
-As per the glosary, most scikit-learn estimators do not work with missing values. If they do, NaN is the preferred representation of missing values. For more details, see https://scikit-learn.org/stable/glossary.html#term-missing-values.
+As per the glosary, most scikit-learn estimators do not work with missing
+values. If they do, NaN is the preferred representation of missing values. For
+more details, see https://scikit-learn.org/stable/glossary.html#term-missing-values.
 
 
 Sparse DataFrames Handling
 =============================
 
 **Issue:**
-``Sparse DataFrames`` are not automatically converted to ``scipy.sparse`` matrices.
+``Sparse DataFrames`` are not automatically converted to ``scipy.sparse``
+matrices.
 
-This is an issue which has vastly improved from pandas version 0.21.1 onwards. The conversation from dataframes has been largely optimized and are much faster to convert.
+This is an issue which has vastly improved from pandas version 0.21.1 onwards.
+The conversation from dataframes has been largely optimized and are much faster
+to convert.
 
-In general, Sparse datastructures (i.e. DataFrames, Series, Arrays) are memory optimised structures of their standard counterparts. They work on the principle that they contain a lot of NaN, 0, or another repeating value (this can be specified), and as such a lot of memory can be saved, which means one can potentially work with datasets that would otherwise be too large to fit into available memory. However one has to be careful they don't get converted into the dense format by mistake.
+In general, Sparse datastructures (i.e. DataFrames, Series, Arrays) are memory
+optimised structures of their standard counterparts. They work on the principle
+that they contain a lot of NaN, 0, or another repeating value (this can be
+specified), and as such a lot of memory can be saved, which means one can
+potentially work with datasets that would otherwise be too large to fit into
+available memory. However one has to be careful they don't get converted into
+the dense format by mistake.
 
-In Pandas, the sparse datastructrures are: :class:`~pandas.SparseDataFrame`, :class:`~pandas.SparseSeries` and :class:`~pandas.SparseArray`.
-The methods: :meth:`.to_sparse(fill_value=0)` and :meth:`.to_dense()` can be used to convert between normal and sparse data structures.
-The `.density` property can be called on the sparse structures to report sparseness.
+In Pandas, the sparse datastructrures are: :class:`~pandas.SparseDataFrame`,
+:class:`~pandas.SparseSeries` and :class:`~pandas.SparseArray`.
+The methods: :meth:`.to_sparse(fill_value=0)` and :meth:`.to_dense()` can be
+used to convert between normal and sparse data structures.
+The `.density` property can be called on the sparse structures to report
+sparseness.
 
-In scipy.sparse we have a number of various sparse matrix classes:
-
-==========  =====================================
-Class
-==========  =====================================
-bsr_matrix  Block Sparse Row matrix
-coo_matrix  Sparse matrix in COOrdinate format
-csc_matrix  Compresed Sparse Column matrix
-csr_matrix  Compresed Row matrix
-dia_matrix  Sparse matrix with diagonal storage
-dok_matrix  Dictionary of Keys based sparse matrix
-lil_matrix  Row-based linked list sparse matrix
-==========  =====================================
+In scipy.sparse we have a number of various sparse matrix classes, Scikit-learn
+mostly uses CSR and CSC formats.
 
 Example Usage
 -------------
@@ -195,8 +252,18 @@ Example Usage
 
 The code above highlights the following three elements:
 
-1) If your sparse value is not NaN then it is important to specify *default_fill_value* property when creating your pandas DataFrame, otherwise no space saving will occur. Check this using the :meth:`.density` property, which should be less than 100% if successful. When creating the scipy sparse matrix, this *default_fill_value* will be used for use as the sparse value (nnz).
+1) If your sparse value is not NaN then it is important to specify
+*default_fill_value* property when creating your pandas DataFrame, otherwise no
+space saving will occur. Check this using the :meth:`.density` property, which
+should be less than 100% if successful. When creating the scipy sparse matrix,
+this *default_fill_value* will be used for use as the sparse value (nnz).
 
-2) Either the :meth:`.to_coo()` method on the pandas dataframe, or :meth:`coo_matrix()` constructor are alternative ways you can convert to a scipy sparse datastructure.
+2) Either the :meth:`.to_coo()` method on the pandas dataframe, or
+:meth:`coo_matrix()` constructor are alternative ways you can convert to a
+scipy sparse datastructure.
 
-3) It is generally better to convert from your pandas Dataframe first to a :class:`coo_matrix`, as this is far quicker to construct, and from this to then convert to a Compressed Row :class:`csr_matrix`, or Compressed Column :class:`csc_matrix` sparse matrix using the :meth:`.tocsr()` or :meth:`.tocsc()` methods respectively.
+3) It is generally better to convert from your pandas Dataframe first to a
+:class:`coo_matrix`, as this is far quicker to construct, and from this to then
+convert to a Compressed Row :class:`csr_matrix`, or Compressed Column
+:class:`csc_matrix` sparse matrix using the :meth:`.tocsr()` or
+:meth:`.tocsc()` methods respectively.
