@@ -588,8 +588,8 @@ class OneHotEncoder(_BaseEncoder):
                                 dtype=self.dtype)
 
         if self.drop_first:
-            firsts = feature_indices
-            to_keep = np.full(indices.shape[0], True)
+            firsts = feature_indices[:-1]
+            to_keep = np.full(out.shape[1], True)
             to_keep[firsts] = False
             out = out[:, to_keep]
 
