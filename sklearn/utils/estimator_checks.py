@@ -1632,7 +1632,7 @@ def check_estimators_unfitted(name, estimator_orig):
             # like GaussianProcess regressors
             # in this case, we skip this test
             pred = estimator.predict(X)
-            assert_equal(pred.shape[0], X.shape[0])
+            assert pred.shape[0] == X.shape[0]
             can_predict = True
         except ValueError:
             pass
@@ -2105,7 +2105,7 @@ def check_parameters_default_constructible(name, Estimator):
     # get rid of deprecation warnings
     with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
         required_parameters = getattr(Estimator, "_required_parameters", [])
-        if len(required_parameters):
+        if required_parameters:
             if required_parameters in (["base_estimator"], ["estimator"]):
                 if issubclass(Estimator, RegressorMixin):
                     estimator = Estimator(Ridge())
