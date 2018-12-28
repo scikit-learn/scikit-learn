@@ -193,7 +193,7 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`12300` by :user:`Adrin Jalali <adrinjalali>`.
 
 - |Feature| Adds minimal cost complexity pruning to
-  :class:`tree.BaseDecisionTree`.
+  :class:`tree.DecisionTreeClassifier` and :class:`tree.DecisionTreeRegressor`.
   :issue:`6557` by :user:`Thomas Fan <thomasjpfan>`.
 
 - |Fix| Fixed an issue with :class:`tree.BaseDecisionTree`

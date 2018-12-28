@@ -516,25 +516,29 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         return self.tree_.decision_path(X)
 
     def _prune_true(self):
-        """Prunes tree using Cost-Complexity Pruning.
+        """Prunes tree using Minimal Cost-Complexity Pruning.
 
         .. versionadded:: 0.21
         """
         check_is_fitted(self, 'tree_')
+
         if self.alpha == 0.0:
             return
 
-        samples = self.tree_.weighted_n_node_samples
-        prior = samples / samples[0]
         n_nodes = self.tree_.node_count
 
+        # prior probability using weighted samples
+        samples = self.tree_.weighted_n_node_samples
+        prior = samples / samples[0]
+
+        # impurity weighted by prior
         R_node = prior * self.tree_.impurity
 
-        parents = np.zeros(shape=n_nodes, dtype=np.intp)
-        is_leaf = np.zeros(shape=n_nodes, dtype=bool)
-
+        # find parent node ids and leaves
         child_l = self.tree_.children_left
         child_r = self.tree_.children_right
+        parents = np.zeros(shape=n_nodes, dtype=np.intp)
+        is_leaf = np.zeros(shape=n_nodes, dtype=bool)
 
         stack = [(0, -1)]
         while len(stack) > 0:
@@ -546,11 +550,14 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 stack.append((child_l[node_id], node_id))
                 stack.append((child_r[node_id], node_id))
 
+        # computes number of leaves in all branches and the overall impurity of
+        # the branch. The overall impurity is the sum of R_node in its leaves.
+        N_leaves = np.zeros(shape=n_nodes, dtype=np.int32)
         leaf_idicies, = np.where(is_leaf)
         R_branch = np.zeros(shape=n_nodes, dtype=DTYPE)
         R_branch[leaf_idicies] = R_node[leaf_idicies]
-        N_leaves = np.zeros(shape=n_nodes, dtype=np.int32)
 
+        # bubble up values to ancestor nodes
         for idx in leaf_idicies:
             cur_idx = idx
             cur_R = R_node[cur_idx]
@@ -560,7 +567,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 N_leaves[par_idx] += 1
                 cur_idx = par_idx
 
+        # keeps track of new leaves in the pruned tree
         new_leaves = []
+
+        # non-leaves that can be pruned
         inner_nodes = np.logical_not(is_leaf)
         in_subtree = np.ones(shape=n_nodes, dtype=np.bool)
 
@@ -569,43 +579,54 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             # If root node is a leaf
             if not inner_nodes[0]:
                 break
+
+            # computes alpha for subtrees
             g_node = (R_node - R_branch) / (N_leaves - 1)
             g_node[~inner_nodes] = np.inf
-            min_node = np.argmin(g_node)
-            cur_alpha = g_node[min_node]
-            cur_idx = min_node
 
-            cur_leaves = N_leaves[cur_idx]
-            cur_R, cur_R_branch = R_node[cur_idx], R_branch[cur_idx]
-            R_branch[cur_idx] = cur_R
-            R_diff = cur_R - cur_R_branch
+            # smallest value is the weakest link which is pruned
+            cur_idx = np.argmin(g_node)
+            cur_alpha = g_node[cur_idx]
+
             new_leaves.append(cur_idx)
+            is_leaf[cur_idx] = True
 
+            # descendants of branch are not in subtree
             stack = [cur_idx]
             while len(stack) > 0:
                 idx = stack.pop()
                 inner_nodes[idx] = False
-                is_leaf[idx] = False
                 n_left, n_right = child_l[idx], child_r[idx]
                 if n_left != n_right:
                     in_subtree[n_left] = False
                     in_subtree[n_right] = False
+                    is_leaf[n_left] = False
+                    is_leaf[n_right] = False
                     stack.append(n_left)
                     stack.append(n_right)
 
-            is_leaf[cur_idx] = True
-            N_leaves[cur_idx] = 0
+            # updates number of leaves
+            cur_leaves, N_leaves[cur_idx] = N_leaves[cur_idx], 0
+
+            # computes the increase in R_branch to ubble up
+            R_diff = R_node[cur_idx] - R_branch[cur_idx]
+            R_branch[cur_idx] = R_node[cur_idx]
+
+            # bubble up values to ancestors
             cur_idx = parents[cur_idx]
             while cur_idx != -1:
                 N_leaves[cur_idx] -= cur_leaves - 1
                 R_branch[cur_idx] += R_diff
                 cur_idx = parents[cur_idx]
 
+        # computes a map from node ids of the original tree to
+        # the node ids of the pruned tree
         subtree_indicies, = np.where(in_subtree)
         new_indicies = np.arange(len(subtree_indicies), dtype=np.intp)
         orig_to_pruned_id_map = np.zeros(shape=n_nodes, dtype=np.intp)
         orig_to_pruned_id_map[subtree_indicies] = new_indicies
 
+        # computes depth of pruned tree
         pruned_depth = 0
         stack = [(0, 0)]
         while len(stack) > 0:
@@ -616,6 +637,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 stack.append((child_l[node_id], depth + 1))
                 stack.append((child_r[node_id], depth + 1))
 
+        # generates pruned treee
         pruned_tree = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
         generate_pruned_tree(
             pruned_tree, self.tree_, pruned_depth, subtree_indicies, is_leaf,
@@ -780,7 +802,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         speed up the training.
 
     alpha : float, optional (default=0.0)
-        Complexity parameter used for Cost-Complexity Pruning.
+        Complexity parameter used for Minimal Cost-Complexity Pruning.
 
     Attributes
     ----------
@@ -1137,7 +1159,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         speed up the training.
 
     alpha : float, optional (default=0.0)
-        Complexity parameter used for Cost-Complexity Pruning.
+        Complexity parameter used for Minimal Cost-Complexity Pruning.
 
     Attributes
     ----------
