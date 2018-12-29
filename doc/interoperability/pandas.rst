@@ -5,13 +5,24 @@
 Pandas Interoperability
 =======================
 
-The basics of using pandas and scikit-learn
+The basics of using pandas and Scikit-learn
 ==================================================================
 
-In general, scikit-learn supports the use of
+In principle, Scikit-learn supports the use of
 `pandas DataFrames <http://pandas.pydata.org/pandas-docs/stable/>`__
 implicitly. However, this implicit support has its conditions and potential
 pitfalls and some (not all) of these will be outlined below.
+
+Reasons for these conditions and the difficulty of supporting pandas, stems
+from the fact that pandas data structures such as Series and DataFrames can
+hold heterogenous datatypes (different columns can contain different
+datatypes). Therefore, Series and DataFrames can be thought of as containers
+for arrays that hold the actual data in an homogenous format. Some of these
+underlying data structures might not necessarily be representable as NumPy
+arrays (e.g. Categorical data). Pandas supports these alternate data types using
+pandas specific or 3rd party libraries that extend the NumPy type system. The
+difficulty of supporting pandas data structure thus comes from pandas
+capability of supporting heterogenous data in one data structure.
 
 Every Scikit-learn estimator supports the use of DataFrames which is achieved
 by obtaining a `NumPy array <https://docs.scipy.org/doc/numpy/user/>`__ using
