@@ -1143,8 +1143,8 @@ cpdef build_pruned_tree(
     np.ndarray[np.npy_uint8, ndim=1] leaves_in_subtree):
     """Builds a pruned tree.
 
-    Builds a pruned tree from the original tree. The pruned tree inner data
-    structures are copied from the original tree.
+    Builds a pruned tree from the original tree. The values and nodes from the
+    original tree are copied into the pruned tree.
 
     Parameters
     ----------
