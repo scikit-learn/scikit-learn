@@ -383,7 +383,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
 
-        self._prune_true()
+        self.prune_tree()
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
@@ -515,7 +515,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         X = self._validate_X_predict(X, check_input)
         return self.tree_.decision_path(X)
 
-    def _prune_true(self):
+    def prune_tree(self):
         """Prunes tree using Minimal Cost-Complexity Pruning.
 
         .. versionadded:: 0.21
