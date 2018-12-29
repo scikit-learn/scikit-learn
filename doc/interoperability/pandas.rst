@@ -59,10 +59,13 @@ processes that will pass a DataFrame along "as is" to the nested estimators
 (see the next section for an example). However, this is not guaranteed and some
 of the issues with this are outlined below and sources (where available) of
 discussions and work-arounds (the latter is provided without guarantee that the
-workaround will still work) are provided. It should also be mentioned that the
-:meth:`.values` property will create an in-memory copy of the DataFrame, thus
-using a numpy array in the first place can be more memory efficient as well as
-avoiding some of the potential pitfalls when using DataFrames.
+workaround will still work) are provided. It should also be mentioned that if
+the DataFrame contains heterogenous data, the :meth:`.values` property will
+create an in-memory copy of the DataFrame, thus using a NumPy array in the
+first place can be more memory efficient as well as avoiding some of the
+potential pitfalls when using DataFrames. If the DataFrame contains only
+homogenous data in the first place, no in-memory copy will be created using
+:meth:`.values`.
 
 Pandas in Pandas out
 ====================
