@@ -547,33 +547,26 @@ represented as a dict, not as scalars.
 Encoding ordinal features
 =========================
 
-Often categorical features have a clear ordering. For example a person could
-have features
-
-* ``["short", "tall"]``
-* ``["low income", "medium income", "high income"]``
-* ``["elementary school graduate", "high school graduate", "some college",
-  "college graduate"]``
-
-Even though these features can be ordered, we shouldn't necessarily assign
-scores to them, as the difference between categories one and two is not the
-same as the difference between categories two and three.
+Often, categorical features have a clear ordering. But even though some
+categories can be ordered, we shouldn't necessarily assign them to numerical
+values, as the difference between categories one and two may not be the same
+as the difference between categories two and three (for example).
 
 One possibility to convert these ordinal features to features that can be used
 with scikit-learn estimators is to use a unary encoding, which is
-implemented in :class:`UnaryEncoder`.  This estimator transforms each
+implemented in :class:`UnaryEncoder`. This estimator transforms each
 ordinal feature with ``m`` possible values into ``m - 1`` binary features,
-where the ith feature is active if x > i (for i = 0, ... k - 1).
+where the ith feature is active if x > i.
 
 .. note::
 
   This encoding is likely to help when used with linear models and
-  kernel-based models like SVMs with the standard kernels. On the other hand, this
-  transformation is unlikely to help when using with tree-based models,
-  since those already work on the basis of a particular feature value being
-  < or > than a threshold, unlike linear and kernel-based models.
+  kernel-based models like SVMs with the standard kernels. On the other
+  hand, this transformation is unlikely to help when using tree-based
+  models, since those already work on the basis of a particular feature
+  value being less or bigger than a threshold.
 
-Continuing the example above::
+For example::
 
   >>> enc = preprocessing.UnaryEncoder()
   >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]]) # doctest: +ELLIPSIS
@@ -582,9 +575,9 @@ Continuing the example above::
   >>> enc.transform([[0, 1, 1]])
   array([[ 0.,  1.,  0.,  1.,  0.,  0.]])
 
-By default, how many values each feature can take is inferred automatically
-from the dataset. It is possible to specify this explicitly using the parameter
-``n_values``.
+By default, the number of categories in a feature is inferred automatically
+from the dataset by looking for the maximum value. It is possible to specify
+this explicitly using the parameter ``n_values``.
 
 * There are two genders, three possible continents and four web browsers in our
   dataset.
