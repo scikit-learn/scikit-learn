@@ -265,6 +265,8 @@ class OneHotEncoder(_BaseEncoder):
     --------
     sklearn.preprocessing.OrdinalEncoder : performs an ordinal (integer)
       encoding of the categorical features.
+    sklearn.preprocessing.UnaryEncoder: performs a unary encoding of ordinal
+      data.
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
       dictionary items (also handles string-valued features).
     sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
@@ -768,6 +770,8 @@ class OrdinalEncoder(_BaseEncoder):
     --------
     sklearn.preprocessing.OneHotEncoder : performs a one-hot encoding of
       categorical features.
+    sklearn.preprocessing.UnaryEncoder: performs a unary encoding of ordinal
+      data.
     sklearn.preprocessing.LabelEncoder : encodes target labels with values
       between 0 and n_classes-1.
     """
@@ -870,7 +874,7 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_values : 'auto', int or array of ints
+    n_values : 'auto', int or array of ints, optional (default='auto')
         Number of values per feature.
 
         - 'auto' : determine value range from training data.
@@ -880,26 +884,25 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
                   ``X[:, i]``. Each feature value should be
                   in ``range(n_values[i])``
 
-    dtype : number type, default=np.float
+    dtype : number type, optional (default=np.float)
         Desired dtype of output.
 
-    sparse : boolean, default=False
+    sparse : boolean, optional (default=False)
         Will return sparse matrix if set True else will return an array.
 
-    handle_greater : str, 'warn' or 'error' or 'clip'
+    handle_greater : str, 'warn', 'error' or 'clip', optional (default='warn')
         Whether to raise an error or clip or warn if an
         ordinal feature >= n_values is passed in.
 
-        - 'warn' (default): same as clip but with warning.
         - 'error': raise error if feature >= n_values is passed in.
         - 'clip': all the feature values >= n_values are clipped to
-                  (n_values-1) during transform.
+          (n_values-1) during transform.
+        - 'warn': same as clip but with warning.
 
     Attributes
     ----------
-    feature_indices_ : array of shape (n_features,)
-        Indices to feature ranges.
-        Feature ``i`` in the original data is mapped to features
+    feature_indices_ : array of shape (n_features + 1,)
+        Feature ``i`` in the original data is mapped to columns
         from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
 
     n_values_ : array of shape (n_features,)
@@ -930,6 +933,8 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
     --------
     sklearn.preprocessing.OneHotEncoder: encodes categorical integer features
       using a one-hot aka one-of-K scheme.
+    sklearn.preprocessing.OrdinalEncoder : performs an ordinal (integer)
+      encoding of the categorical features.
     """
     def __init__(self, n_values="auto", dtype=np.float64, sparse=False,
                  handle_greater='warn'):
@@ -943,7 +948,7 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_feature]
+        X : array-like of shape (n_samples, n_feature)
             Input array of type int.
             All feature values should be non-negative otherwise will raise a
             ValueError.
@@ -978,9 +983,9 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         indices = np.cumsum(n_values)
         self.feature_indices_ = indices
 
-        mask = (X >= self.n_values_).ravel()
-        if np.any(mask):
-            if self.handle_greater == 'error':
+        if self.n_values != 'auto' and self.handle_greater == 'error':
+            mask = (X >= self.n_values_).ravel()
+            if np.any(mask):
                 raise ValueError("handle_greater='error' but found %d feature"
                                  " values which exceeds n_values."
                                  % np.count_nonzero(mask))
@@ -991,10 +996,10 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like, of shape (n_samples, n_features)
             Input array of type int.
-            All feature values should be non-negative otherwise will raise a
-            ValueError.
+            All feature values should be non-negative otherwise ValueError
+            will be raised.
 
         Returns
         -------
@@ -1035,8 +1040,8 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
                                 X_ceil.sum(axis=1))
         data = np.ones(X_ceil.ravel().sum())
-        out = sparse.coo_matrix((data, (row_indices, column_indices)),
+        out = sparse.csr_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
-                                dtype=self.dtype).tocsr()
+                                dtype=self.dtype)
 
         return out if self.sparse else out.toarray()
