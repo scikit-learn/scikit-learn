@@ -1414,9 +1414,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
-    alpha : float, optional (default=0.0)
-        Complexity parameter used for Cost-Complexity Pruning.
-
     See also
     --------
     ExtraTreeRegressor, sklearn.ensemble.ExtraTreesClassifier,
