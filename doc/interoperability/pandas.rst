@@ -13,9 +13,19 @@ In general, scikit-learn supports the use of
 implicitly. However, this implicit support has its conditions and potential
 pitfalls and some (not all) of these will be outlined below.
 
-Every scikit-learn estimator supports the use of DataFrames which is achieved
-by obtaining a `numpy array <https://docs.scipy.org/doc/numpy/user/>`__ using
-the :meth:`.values` property of the DataFrame class. There are several
+Every Scikit-learn estimator supports the use of DataFrames which is achieved
+by obtaining a `NumPy array <https://docs.scipy.org/doc/numpy/user/>`__ using
+the :meth:`.values` property of the DataFrame class.
+
+.. note::
+  Starting with pandas version 0.24.0, it is encouraged to obtain
+  NumPy arrays from DataFrames or Series via :meth:`.to_numpy()` instead of
+  using :meth:`.values`. More details on this can be found in the
+  `release notes <http://pandas-docs.github.io/pandas-docs-travis/whatsnew/v0.24.0.html#accessing-the-values-in-a-series-or-index>`__
+  and the documentation `here <http://pandas.pydata.org/pandas-docs/stable/basics.html#basics-dtypes>`__
+  and `here <http://pandas.pydata.org/pandas-docs/stable/basics.html#attributes-and-underlying-data>`__.
+
+There are several
 conditions on such an input DataFrame one of which is that the data in the
 DataFrame columns used by the estimator are of numerical type. Other conditions
 and pitfalls are described in subsequent sections. The numerical condition can
