@@ -70,14 +70,10 @@ homogenous data in the first place, no in-memory copy will be created using
 Pandas in Pandas out
 ====================
 
-It is currently not the case, that all estimators in scikit-learn return a
-DataFrame as an output when provided with a DataFrame as an input. There is an
-ongoing discussion and drive to improve support on this matter although there
-are also voices that suggest that in general, scikit-learn should only be
-expected to work smoothly with numpy arrays and have some basic support for
-DataFrames.
+It is currently not the case that all estimators in Scikit-learn return a
+DataFrame as an output when provided with a DataFrame as an input.
 
-Example for pandas working with scikit-learn estimator/transformer:
+Example for pandas working with Scikit-learn estimator/transformer:
 
 >>> import numpy as np
 >>> from sklearn.datasets import load_iris
@@ -97,7 +93,7 @@ Example for pandas working with scikit-learn estimator/transformer:
 <class 'pandas.core.frame.DataFrame'>
 
 However, removing some random values from the dataset and using the
-:class:`~sklearn.impute.SimpleImputer` to replace the NaNs returns a numpy
+:class:`~sklearn.impute.SimpleImputer` to replace the NaNs returns a NumPy
 array instead of a DataFrame even though we use a DataFrame as input.
 
 >>> rng = np.random.RandomState(42)
@@ -112,19 +108,19 @@ array instead of a DataFrame even though we use a DataFrame as input.
 >>> type(X)
 <class 'numpy.ndarray'>
 
-Independent of this, at the moment it is not guaranteed that scikit-learn
+As this example shows, at the moment it is not guaranteed that Scikit-learn
 operators with :meth:`.fit`, :meth:`.transform` (and :meth:`.predict`)
 capability support pandas in pandas out. However, there are ways around this
 such as an example given
 `here <https://github.com/scikit-learn/scikit-learn/issues/5523#issuecomment-171674105>`__
 show, where adding additional functionality to the StandardScaler class adds
-the pandas in pandas out capability. Care should be taken that this does not
+the pandas in pandas out capability. Care should be taken as this does not
 take care of the column ordering problem that is discussed in the next section.
 
 The column ordering problem
 ===========================
 
-Because Scikit-learn transforms DataFrames to numpy arrays, it should be
+Because Scikit-learn transforms DataFrames to NumPy arrays, it should be
 assumed, that all information and benefits of column names is lost and that
 from that point forward, only column order and not column labels stay relevant.
 This can cause problems when e.g. pickling a trained estimator and later
@@ -221,7 +217,7 @@ sparse matrices or pandas DataFrames.
 Dealing with missing values
 ===========================
 
-As per the glosary, most scikit-learn estimators do not work with missing
+As per the glosary, most Scikit-learn estimators do not work with missing
 values. If they do, NaN is the preferred representation of missing values. For
 more details, see https://scikit-learn.org/stable/glossary.html#term-missing-values.
 
@@ -229,15 +225,16 @@ more details, see https://scikit-learn.org/stable/glossary.html#term-missing-val
 Sparse DataFrames Handling
 =============================
 
-**Issue:**
-``Sparse DataFrames`` are not automatically converted to ``scipy.sparse``
-matrices.
+.. note::
+  **Issue:**
+  ``Sparse DataFrames`` are not automatically converted to ``scipy.sparse``
+  matrices.
 
 This is an issue which has vastly improved from pandas version 0.21.1 onwards.
-The conversation from dataframes has been largely optimized and are much faster
+The conversation from DataFrames has been largely optimised and are much faster
 to convert.
 
-In general, Sparse datastructures (i.e. DataFrames, Series, Arrays) are memory
+In general, Sparse data structures (i.e. DataFrames, Series, Arrays) are memory
 optimised structures of their standard counterparts. They work on the principle
 that they contain a lot of NaN, 0, or another repeating value (this can be
 specified), and as such a lot of memory can be saved, which means one can
@@ -268,9 +265,6 @@ Example Usage
   >>> arr[arr < .9] = 0
   >>>
   >>> sparse_df = pd.SparseDataFrame(arr, default_fill_value=0)
-  >>> print('Density: {:.2%}'.format(sparse_df.density))
-  Density: 10.00%
-  >>>
   >>> coo = sparse_df.to_coo()
   >>> #or
   >>> coo = coo_matrix(sparse_df)
