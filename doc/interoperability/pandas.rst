@@ -245,8 +245,10 @@ potentially work with datasets that would otherwise be too large to fit into
 available memory. However one has to be careful they don't get converted into
 the dense format by mistake.
 
-In Pandas, the sparse datastructrures are: :class:`~pandas.SparseDataFrame`,
-:class:`~pandas.SparseSeries` and :class:`~pandas.SparseArray`.
+In Pandas, the main sparse data structures is: :class:`~pandas.SparseArray`.
+Both :class:`~pandas.SparseDataFrame` and :class:`~pandas.SparseSeries` exists
+but don't offer significant advantages over DataFrames where the columns are
+SparseArrays and will be deprecated at some point in the future.
 The methods: :meth:`.to_sparse(fill_value=0)` and :meth:`.to_dense()` can be
 used to convert between normal and sparse data structures.
 The `.density` property can be called on the sparse structures to report
