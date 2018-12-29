@@ -1047,7 +1047,7 @@ class CategoricalNB(BaseDiscreteNB):
     >>> clf = CategoricalNB()
     >>> clf.fit(X, y)
     CategoricalNB(alpha=1.0, class_prior=None, fit_prior=True,
-           on_unseen_cats='warn')
+                  on_unseen_cats='warn')
     >>> print(clf.predict(X[2:3]))
     [3]
     """
@@ -1161,7 +1161,7 @@ class CategoricalNB(BaseDiscreteNB):
             categories = np.unique(X_feature)
             self._update_mapping(self.feature_cat_index_mapping_[i],
                                  categories)
-            # update category_count in case partial_fit is used
+            # update category_count_dimensions in case partial_fit is used
             self.category_count_[i] = self._update_category_count_dimensions(
                 self.category_count_[i], self.feature_cat_index_mapping_[i])
             self._update_category_count(X_feature, Y,
