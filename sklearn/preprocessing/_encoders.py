@@ -618,7 +618,7 @@ class OneHotEncoder(_BaseEncoder):
         if self.drop_first:
             # Remove the columns of the first categories
             firsts = feature_indices[:-1]
-            to_keep = np.full(out.shape[1], True)
+            to_keep = np.full(out.shape[1], True, dtype=np.bool)
             to_keep[firsts] = False
             out = out[:, to_keep]
 
