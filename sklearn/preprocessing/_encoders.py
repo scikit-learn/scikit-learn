@@ -880,15 +880,6 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
                   ``X[:, i]``. Each feature value should be
                   in ``range(n_values[i])``
 
-    ordinal_features : "all" or array of indices or mask
-        Specify what features are treated as ordinal.
-
-        - 'all' (default): All features are treated as ordinal.
-        - array of indices: Array of ordinal feature indices.
-        - mask: Array of length n_features and with dtype=bool.
-
-        Non-ordinal features are always stacked to the right of the matrix.
-
     dtype : number type, default=np.float
         Desired dtype of output.
 
@@ -940,10 +931,9 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.OneHotEncoder: encodes categorical integer features
       using a one-hot aka one-of-K scheme.
     """
-    def __init__(self, n_values="auto", ordinal_features="all",
-                 dtype=np.float64, sparse=False, handle_greater='warn'):
+    def __init__(self, n_values="auto", dtype=np.float64, sparse=False,
+                 handle_greater='warn'):
         self.n_values = n_values
-        self.ordinal_features = ordinal_features
         self.dtype = dtype
         self.sparse = sparse
         self.handle_greater = handle_greater
@@ -958,7 +948,8 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
             All feature values should be non-negative otherwise will raise a
             ValueError.
         """
-        _transform_selected(X, self._fit, self.ordinal_features, copy=True)
+        _transform_selected(X, self._fit, dtype=self.dtype, selected='all',
+                            copy=True)
         return self
 
     def _fit(self, X):
@@ -1059,5 +1050,6 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         X_out : sparse matrix if sparse=True else a 2-d array, dtype=int
             Transformed input.
         """
-        return _transform_selected(X, self._transform,
-                                   self.ordinal_features, copy=True)
+        return _transform_selected(X, self._transform, self.dtype,
+                                   selected='all',
+                                   copy=True)
