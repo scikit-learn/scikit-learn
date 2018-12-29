@@ -3,13 +3,12 @@
 
 import numpy as np
 from scipy import optimize, sparse
+import pytest
 
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_false
 
 from sklearn.datasets import make_regression
 from sklearn.linear_model import (
@@ -40,6 +39,13 @@ def test_huber_equals_lr_for_high_epsilon():
     huber.fit(X, y)
     assert_almost_equal(huber.coef_, lr.coef_, 3)
     assert_almost_equal(huber.intercept_, lr.intercept_, 2)
+
+
+def test_huber_max_iter():
+    X, y = make_regression_with_outliers()
+    huber = HuberRegressor(max_iter=1)
+    huber.fit(X, y)
+    assert huber.n_iter_ == huber.max_iter
 
 
 def test_huber_gradient():
@@ -123,7 +129,7 @@ def test_huber_scaling_invariant():
     huber = HuberRegressor(fit_intercept=False, alpha=0.0, max_iter=100)
     huber.fit(X, y)
     n_outliers_mask_1 = huber.outliers_
-    assert_false(np.all(n_outliers_mask_1))
+    assert not np.all(n_outliers_mask_1)
 
     huber.fit(X, 2. * y)
     n_outliers_mask_2 = huber.outliers_
@@ -134,6 +140,8 @@ def test_huber_scaling_invariant():
     assert_array_equal(n_outliers_mask_3, n_outliers_mask_1)
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_huber_and_sgd_same_results():
     # Test they should converge to same coefficients for same parameters
 
@@ -168,9 +176,7 @@ def test_huber_warm_start():
     # these would be almost same but not equal.
     assert_array_almost_equal(huber_warm.coef_, huber_warm_coef, 1)
 
-    # No n_iter_ in old SciPy (<=0.9)
-    if huber_warm.n_iter_ is not None:
-        assert_equal(0, huber_warm.n_iter_)
+    assert huber_warm.n_iter_ == 0
 
 
 def test_huber_better_r2_score():

@@ -10,7 +10,7 @@ how well calibrated the predicted probabilities are and how to calibrate an
 uncalibrated classifier.
 
 The experiment is performed on an artificial dataset for binary classification
-with 100.000 samples (1.000 of them are used for model fitting) with 20
+with 100,000 samples (1,000 of them are used for model fitting) with 20
 features. Of the 20 features, only 2 are informative and 10 are redundant. The
 first figure shows the estimated probabilities obtained with logistic
 regression, Gaussian naive Bayes, and Gaussian naive Bayes with both isotonic

@@ -6,11 +6,12 @@ Skipped if rcv1 is not already downloaded to data_home.
 import errno
 import scipy.sparse as sp
 import numpy as np
+from functools import partial
 from sklearn.datasets import fetch_rcv1
+from sklearn.datasets.tests.test_common import check_return_X_y
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import SkipTest
 
 
@@ -25,8 +26,8 @@ def test_fetch_rcv1():
     cat_list, s1 = data1.target_names.tolist(), data1.sample_id
 
     # test sparsity
-    assert_true(sp.issparse(X1))
-    assert_true(sp.issparse(Y1))
+    assert sp.issparse(X1)
+    assert sp.issparse(Y1)
     assert_equal(60915113, X1.data.size)
     assert_equal(2606875, Y1.data.size)
 
@@ -52,6 +53,11 @@ def test_fetch_rcv1():
                        download_if_missing=False)
     X2, Y2 = data2.data, data2.target
     s2 = data2.sample_id
+
+    # test return_X_y option
+    fetch_func = partial(fetch_rcv1, shuffle=False, subset='train',
+                         download_if_missing=False)
+    check_return_X_y(data2, fetch_func)
 
     # The first 23149 samples are the training samples
     assert_array_equal(np.sort(s1[:23149]), np.sort(s2))

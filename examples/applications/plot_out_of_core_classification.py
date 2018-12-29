@@ -28,13 +28,13 @@ feeding them to the learner.
 # License: BSD 3 clause
 
 from __future__ import print_function
-
 from glob import glob
 import itertools
 import os.path
 import re
 import tarfile
 import time
+import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -53,7 +53,6 @@ from sklearn.naive_bayes import MultinomialNB
 def _not_in_sphinx():
     # Hack to detect whether we are running by the sphinx builder
     return '__file__' in globals()
-
 
 ###############################################################################
 # Reuters Dataset related routines
@@ -168,14 +167,14 @@ def stream_reuters_documents(data_path=None):
             total_sz_mb = '%.2f MB' % (size / 1e6)
             current_sz_mb = '%.2f MB' % ((blocknum * bs) / 1e6)
             if _not_in_sphinx():
-                print('\rdownloaded %s / %s' % (current_sz_mb, total_sz_mb),
-                      end='')
+                sys.stdout.write(
+                    '\rdownloaded %s / %s' % (current_sz_mb, total_sz_mb))
 
         archive_path = os.path.join(data_path, ARCHIVE_FILENAME)
         urlretrieve(DOWNLOAD_URL, filename=archive_path,
                     reporthook=progress)
         if _not_in_sphinx():
-            print('\r', end='')
+            sys.stdout.write('\r')
         print("untarring Reuters dataset...")
         tarfile.open(archive_path, 'r:gz').extractall(data_path)
         print("done.")
@@ -334,6 +333,7 @@ def plot_accuracy(x, y, x_legend):
     plt.grid(True)
     plt.plot(x, y)
 
+
 rcParams['legend.fontsize'] = 10
 cls_names = list(sorted(cls_stats.keys()))
 
@@ -371,7 +371,7 @@ ax = plt.subplot(111)
 rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
                      color=bar_colors)
 
-ax.set_xticks(np.linspace(0.25, len(cls_names) - 0.75, len(cls_names)))
+ax.set_xticks(np.linspace(0, len(cls_names) - 1, len(cls_names)))
 ax.set_xticklabels(cls_names, fontsize=10)
 ymax = max(cls_runtime) * 1.2
 ax.set_ylim((0, ymax))
@@ -386,8 +386,11 @@ def autolabel(rectangles):
         ax.text(rect.get_x() + rect.get_width() / 2.,
                 1.05 * height, '%.4f' % height,
                 ha='center', va='bottom')
+        plt.setp(plt.xticks()[1], rotation=30)
+
 
 autolabel(rectangles)
+plt.tight_layout()
 plt.show()
 
 # Plot prediction times
@@ -405,7 +408,7 @@ ax = plt.subplot(111)
 rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
                      color=bar_colors)
 
-ax.set_xticks(np.linspace(0.25, len(cls_names) - 0.75, len(cls_names)))
+ax.set_xticks(np.linspace(0, len(cls_names) - 1, len(cls_names)))
 ax.set_xticklabels(cls_names, fontsize=8)
 plt.setp(plt.xticks()[1], rotation=30)
 ymax = max(cls_runtime) * 1.2
@@ -413,4 +416,5 @@ ax.set_ylim((0, ymax))
 ax.set_ylabel('runtime (s)')
 ax.set_title('Prediction Times (%d instances)' % n_test_documents)
 autolabel(rectangles)
+plt.tight_layout()
 plt.show()

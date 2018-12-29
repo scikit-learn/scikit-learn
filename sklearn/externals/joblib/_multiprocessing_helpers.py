@@ -4,6 +4,7 @@ We use a distinct module to simplify import statements and avoid introducing
 circular dependencies (for instance for the assert_spawning name).
 """
 import os
+import sys
 import warnings
 
 
@@ -21,7 +22,16 @@ if mp:
 #            issue a warning if not
 if mp is not None:
     try:
-        _sem = mp.Semaphore()
+        # Use the spawn context
+        if sys.version_info < (3, 3):
+            Semaphore = mp.Semaphore
+        else:
+            # Using mp.Semaphore has a border effect and set the default
+            # backend for multiprocessing. To avoid that, we use the 'spawn'
+            # context which is available on all supported platforms.
+            ctx = mp.get_context('spawn')
+            Semaphore = ctx.Semaphore
+        _sem = Semaphore()
         del _sem  # cleanup
     except (ImportError, OSError) as e:
         mp = None
