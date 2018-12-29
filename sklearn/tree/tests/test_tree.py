@@ -1833,18 +1833,22 @@ def test_empty_leaf_infinite_threshold():
 @pytest.mark.parametrize("criterion", CLF_CRITERIONS)
 @pytest.mark.parametrize(
     "dataset", set(DATASETS.keys()) - {"reg_small", "boston"})
-def test_prune_tree_clf_are_subtrees(criterion, dataset):
+@pytest.mark.parametrize(
+    "tree_cls", [DecisionTreeClassifier, ExtraTreeClassifier])
+def test_prune_tree_clf_are_subtrees(criterion, dataset, tree_cls):
     dataset = DATASETS[dataset]
     X, y = dataset["X"], dataset["y"]
-    assert_pruning_creates_subtree(DecisionTreeClassifier, X, y)
+    assert_pruning_creates_subtree(tree_cls, X, y)
 
 
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
 @pytest.mark.parametrize("dataset", DATASETS.keys())
-def test_prune_tree_reg_are_subtrees(criterion, dataset):
+@pytest.mark.parametrize(
+    "tree_cls", [DecisionTreeRegressor, ExtraTreeRegressor])
+def test_prune_tree_reg_are_subtrees(criterion, dataset, tree_cls):
     dataset = DATASETS[dataset]
     X, y = dataset["X"], dataset["y"]
-    assert_pruning_creates_subtree(DecisionTreeRegressor, X, y)
+    assert_pruning_creates_subtree(tree_cls, X, y)
 
 
 def assert_pruning_creates_subtree(estimator_cls, X, y):

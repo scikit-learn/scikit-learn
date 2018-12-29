@@ -1414,6 +1414,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
+    alpha : float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning.
+
     See also
     --------
     ExtraTreeRegressor, sklearn.ensemble.ExtraTreesClassifier,
@@ -1445,7 +1448,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
-                 class_weight=None):
+                 class_weight=None,
+                 alpha=0.0):
         super(ExtraTreeClassifier, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1458,7 +1462,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             class_weight=class_weight,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            random_state=random_state)
+            random_state=random_state,
+            alpha=alpha)
 
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
@@ -1582,6 +1587,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
+    alpha : float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning.
+
     See also
     --------
     ExtraTreeClassifier, sklearn.ensemble.ExtraTreesClassifier,
@@ -1612,7 +1620,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  random_state=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
-                 max_leaf_nodes=None):
+                 max_leaf_nodes=None,
+                 alpha=0.0):
         super(ExtraTreeRegressor, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1624,4 +1633,5 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             max_leaf_nodes=max_leaf_nodes,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            random_state=random_state)
+            random_state=random_state,
+            alpha=alpha)
