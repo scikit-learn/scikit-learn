@@ -948,12 +948,6 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
             All feature values should be non-negative otherwise will raise a
             ValueError.
         """
-        _transform_selected(X, self._fit, dtype=self.dtype, selected='all',
-                            copy=True)
-        return self
-
-    def _fit(self, X):
-        """Assumes X contains only ordinal features."""
         X = check_array(X, dtype=np.int)
         if self.handle_greater not in ['warn', 'error', 'clip']:
             raise ValueError("handle_greater should be either 'warn', 'error' "
@@ -990,11 +984,23 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
                 raise ValueError("handle_greater='error' but found %d feature"
                                  " values which exceeds n_values."
                                  % np.count_nonzero(mask))
+        return self
 
-        return X
+    def transform(self, X):
+        """Transform X using Ordinal encoding.
 
-    def _transform(self, X):
-        """Assumes X contains only ordinal features."""
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            Input array of type int.
+            All feature values should be non-negative otherwise will raise a
+            ValueError.
+
+        Returns
+        -------
+        X_out : sparse matrix if sparse=True else a 2-d array, dtype=int
+            Transformed input.
+        """
         X = check_array(X, dtype=np.int)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
@@ -1034,22 +1040,3 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
                                 dtype=self.dtype).tocsr()
 
         return out if self.sparse else out.toarray()
-
-    def transform(self, X):
-        """Transform X using Ordinal encoding.
-
-        Parameters
-        ----------
-        X : array-like, shape [n_samples, n_features]
-            Input array of type int.
-            All feature values should be non-negative otherwise will raise a
-            ValueError.
-
-        Returns
-        -------
-        X_out : sparse matrix if sparse=True else a 2-d array, dtype=int
-            Transformed input.
-        """
-        return _transform_selected(X, self._transform, self.dtype,
-                                   selected='all',
-                                   copy=True)
