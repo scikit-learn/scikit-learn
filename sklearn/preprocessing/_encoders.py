@@ -857,20 +857,23 @@ class OrdinalEncoder(_BaseEncoder):
 class UnaryEncoder(BaseEstimator, TransformerMixin):
     """Encode ordinal integer features using a unary scheme.
 
-    The input to this transformer should be a matrix of non-negative integers,
-    denoting the values taken on by ordinal (discrete) features. The output
-    will be a matrix where each column corresponds to one possible value of
-    one feature. It is assumed that input features take on values in the range
-    0 to (n_values - 1).
+    This encoder transforms each ordinal feature with ``m`` possible values
+    into ``m - 1`` binary features, where the ith feature is active if ``x >
+    i``. The input to this transformer should be a matrix of non-negative
+    integers, denoting the values taken on by the ordinal features.
 
-    This encoding is needed for feeding ordinal features to many scikit-learn
-    estimators, notably linear models and kernel-based models like SVMs with
-    the standard kernels.
+    This encoding may be needed for feeding ordinal features to many
+    scikit-learn estimators, notably linear models and kernel-based models
+    like SVMs with the standard kernels.
     This transformation is unlikely to help when using with tree-based models,
     since those already work on the basis of a particular feature value being
-    < or > than a threshold, unlike linear and kernel-based models.
+    less or greater than a threshold, unlike linear and kernel-based models.
 
-    Read more in the :ref:`User Guide <preprocessing_ordinal_features>`.
+    This encoder encodes all of the features. To only encode a subset of the
+    features, use :class:`ColumnTransformer
+    <sklearn.compose.ColumnTransformer>`.
+
+    Read more in the :ref:`User Guide <unary_encoding>`.
 
     Parameters
     ----------
@@ -921,7 +924,7 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
     ...          [0, 2, 1],
     ...          [1, 0, 2]])  # doctest: +ELLIPSIS
     UnaryEncoder(dtype=<... 'numpy.float64'>, handle_greater='warn',
-                 n_values='auto', ordinal_features='all', sparse=False)
+                 n_values='auto', sparse=False)
     >>> enc.n_values_
     array([2, 3, 4])
     >>> enc.feature_indices_
@@ -935,6 +938,8 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
       using a one-hot aka one-of-K scheme.
     sklearn.preprocessing.OrdinalEncoder : performs an ordinal (integer)
       encoding of the categorical features.
+    sklearn.compose.ColumnTransformer: Applies transformers to columns of an
+      array.
     """
     def __init__(self, n_values="auto", dtype=np.float64, sparse=False,
                  handle_greater='warn'):
@@ -949,9 +954,8 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_feature)
-            Input array of type int.
-            All feature values should be non-negative otherwise will raise a
-            ValueError.
+            Input array of type int. All feature values should be
+            non-negative otherwise will raise a ValueError.
         """
         X = check_array(X, dtype=np.int)
         if self.handle_greater not in ['warn', 'error', 'clip']:
@@ -1003,7 +1007,8 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_tr: sparse matrix if sparse=True else a 2-d array
+        X_tr: array-like or sparse matrix, of shape \
+            (n_samples, n_encoded_features)
             Transformed input.
         """
         check_is_fitted(self, 'n_values_')

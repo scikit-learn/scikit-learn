@@ -451,6 +451,10 @@ The normalizer instance can then be used on sample vectors as any transformer::
 
 Encoding categorical features
 =============================
+
+Ordinal encoding
+----------------
+
 Often features are not given as continuous values but categorical.
 For example a person could have features ``["male", "female"]``,
 ``["from Europe", "from US", "from Asia"]``,
@@ -475,6 +479,9 @@ Such integer representation can, however, not be used directly with all
 scikit-learn estimators, as these expect continuous input, and would interpret
 the categories as being ordered, which is often not desired (i.e. the set of
 browsers was ordered arbitrarily).
+
+One-hot encoding
+----------------
 
 Another possibility to convert categorical features to features that can be used
 with scikit-learn estimators is to use a one-of-K, also known as one-hot or
@@ -542,21 +549,46 @@ columns for this feature will be all zeros
 See :ref:`dict_feature_extraction` for categorical features that are
 represented as a dict, not as scalars.
 
-.. _preprocessing_ordinal_features:
+.. _unary_encoding:
 
-Encoding ordinal features
-=========================
+Unary encoding
+--------------
 
-Often, categorical features have a clear ordering. But even though some
-categories can be ordered, we shouldn't necessarily assign them to numerical
-values, as the difference between categories one and two may not be the same
-as the difference between categories two and three (for example).
+For some ordinal features, it does not necessarily make sense to use
+:class:`OrdinalEncoder` if the difference between the ordered categories is
+un-even, for example with a feature that takes values in "very short",
+"short", "big".
 
-One possibility to convert these ordinal features to features that can be used
-with scikit-learn estimators is to use a unary encoding, which is
-implemented in :class:`UnaryEncoder`. This estimator transforms each
-ordinal feature with ``m`` possible values into ``m - 1`` binary features,
-where the ith feature is active if x > i.
+For such features, it is possible to use a unary encoding, which is
+implemented in :class:`UnaryEncoder`. This encoder transforms each ordinal
+feature with ``m`` possible values into ``m - 1`` binary features, where the
+ith feature is active if x > i. For example::
+
+  >>> enc = preprocessing.UnaryEncoder()
+  >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]]) # doctest: +ELLIPSIS
+  UnaryEncoder(dtype=<... 'numpy.float64'>, handle_greater='warn',
+               n_values='auto', sparse=False)
+  >>> enc.transform([[0, 1, 3]])
+  array([[0., 1., 0., 1., 1., 1.]])
+
+Here the first feature with 2 categories is transformed into 1 column, the
+second feature with 3 values is transformed into 2 columns, and the third
+feature is transformed into 3 columns.
+
+By default, the number of categories in a feature is inferred automatically
+from the dataset by looking for the maximum value. It is possible to specify
+this explicitly using the parameter ``n_values``. In particular if the
+training data might have missing categorical features, one has to explicitly
+set ``n_values``. For example,::
+
+  >>> enc = preprocessing.UnaryEncoder(n_values=[2, 3, 4])
+  >>> # Note that there are missing categorical values for the 2nd and 3rd
+  >>> # features
+  >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
+  UnaryEncoder(dtype=<... 'numpy.float64'>, handle_greater='warn',
+               n_values=[2, 3, 4], sparse=False)
+  >>> enc.transform([[1, 1, 2]])
+  array([[1., 1., 0., 1., 1., 0.]])
 
 .. note::
 
@@ -566,36 +598,6 @@ where the ith feature is active if x > i.
   models, since those already work on the basis of a particular feature
   value being less or bigger than a threshold.
 
-For example::
-
-  >>> enc = preprocessing.UnaryEncoder()
-  >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]]) # doctest: +ELLIPSIS
-  UnaryEncoder(dtype=<... 'numpy.float64'>, handle_greater='warn',
-         n_values='auto', ordinal_features='all', sparse=False)
-  >>> enc.transform([[0, 1, 1]])
-  array([[ 0.,  1.,  0.,  1.,  0.,  0.]])
-
-By default, the number of categories in a feature is inferred automatically
-from the dataset by looking for the maximum value. It is possible to specify
-this explicitly using the parameter ``n_values``.
-
-* There are two genders, three possible continents and four web browsers in our
-  dataset.
-* Then we fit the estimator, and transform a data point.
-* In the result, the first number encodes the height, the next two numbers the
-  income level, and the next set of three numbers the education level.
-
-Note that, if there is a possibilty that the training data might have missing
-categorical features, one has to explicitly set ``n_values``. For example,::
-
-  >>> enc = preprocessing.UnaryEncoder(n_values=[2, 3, 4])
-  >>> # Note that there are missing categorical values for the 2nd and 3rd
-  >>> # features
-  >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
-  UnaryEncoder(dtype=<... 'numpy.float64'>, handle_greater='warn',
-         n_values=[2, 3, 4], ordinal_features='all', sparse=False)
-  >>> enc.transform([[1, 1, 2]])
-  array([[ 1.,  1.,  0.,  1.,  1.,  0.]])
 
 .. _preprocessing_discretization:
 
