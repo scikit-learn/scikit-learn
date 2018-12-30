@@ -327,7 +327,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         eclf.set_params(rf=None)
 
         """
-        super(VotingClassifier, self)._set_params('estimators', **params)
+        super()._set_params('estimators', **params)
         return self
 
     def get_params(self, deep=True):

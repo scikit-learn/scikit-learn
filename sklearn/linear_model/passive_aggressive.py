@@ -172,7 +172,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
                  n_iter_no_change=5, shuffle=True, verbose=0, loss="hinge",
                  n_jobs=None, random_state=None, warm_start=False,
                  class_weight=None, average=False, n_iter=None):
-        super(PassiveAggressiveClassifier, self).__init__(
+        super().__init__(
             penalty=None,
             fit_intercept=fit_intercept,
             max_iter=max_iter,
@@ -411,7 +411,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
                  loss="epsilon_insensitive", epsilon=DEFAULT_EPSILON,
                  random_state=None, warm_start=False,
                  average=False, n_iter=None):
-        super(PassiveAggressiveRegressor, self).__init__(
+        super().__init__(
             penalty=None,
             l1_ratio=0,
             epsilon=epsilon,

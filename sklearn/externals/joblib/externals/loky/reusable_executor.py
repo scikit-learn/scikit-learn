@@ -138,7 +138,7 @@ class _ReusablePoolExecutor(ProcessPoolExecutor):
     def __init__(self, submit_resize_lock, max_workers=None, context=None,
                  timeout=None, executor_id=0, job_reducers=None,
                  result_reducers=None, initializer=None, initargs=()):
-        super(_ReusablePoolExecutor, self).__init__(
+        super().__init__(
             max_workers=max_workers, context=context, timeout=timeout,
             job_reducers=job_reducers, result_reducers=result_reducers,
             initializer=initializer, initargs=initargs)
@@ -147,7 +147,7 @@ class _ReusablePoolExecutor(ProcessPoolExecutor):
 
     def submit(self, fn, *args, **kwargs):
         with self._submit_resize_lock:
-            return super(_ReusablePoolExecutor, self).submit(
+            return super().submit(
                 fn, *args, **kwargs)
 
     def _resize(self, max_workers):
@@ -201,5 +201,5 @@ class _ReusablePoolExecutor(ProcessPoolExecutor):
         # As this executor can be resized, use a large queue size to avoid
         # underestimating capacity and introducing overhead
         queue_size = 2 * cpu_count() + EXTRA_QUEUED_CALLS
-        super(_ReusablePoolExecutor, self)._setup_queues(
+        super()._setup_queues(
             job_reducers, result_reducers, queue_size=queue_size)

@@ -1014,7 +1014,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             else:
                 self._label_binarizer.fit(classes)
 
-        super(MLPClassifier, self)._partial_fit(X, y)
+        super()._partial_fit(X, y)
 
         return self
 

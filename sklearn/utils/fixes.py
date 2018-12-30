@@ -178,7 +178,7 @@ if np_version < (1, 12):
 
             """
             cf = 'CF'[self.flags.fnc]
-            data_state = super(np.ma.MaskedArray, self).__reduce__()[2]
+            data_state = super().__reduce__()[2]
             return data_state + (np.ma.getmaskarray(self).tostring(cf),
                                  self._fill_value)
 else:

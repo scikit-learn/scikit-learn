@@ -95,7 +95,7 @@ class RaisesErrorInSetParams(BaseEstimator):
             if p < 0:
                 raise ValueError("p can't be less than 0")
             self.p = p
-        return super(RaisesErrorInSetParams, self).set_params(**kwargs)
+        return super().set_params(**kwargs)
 
     def fit(self, X, y=None):
         X, y = check_X_y(X, y)

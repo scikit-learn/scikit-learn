@@ -221,7 +221,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
     """
 
     def __init__(self, estimator, n_jobs=None):
-        super(MultiOutputRegressor, self).__init__(estimator, n_jobs)
+        super().__init__(estimator, n_jobs)
 
     @if_delegate_has_method('estimator')
     def partial_fit(self, X, y, sample_weight=None):
@@ -245,7 +245,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         -------
         self : object
         """
-        super(MultiOutputRegressor, self).partial_fit(
+        super().partial_fit(
             X, y, sample_weight=sample_weight)
 
     def score(self, X, y, sample_weight=None):
@@ -312,7 +312,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
     """
 
     def __init__(self, estimator, n_jobs=None):
-        super(MultiOutputClassifier, self).__init__(estimator, n_jobs)
+        super().__init__(estimator, n_jobs)
 
     def predict_proba(self, X):
         """Probability estimates.
@@ -562,7 +562,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         -------
         self : object
         """
-        super(ClassifierChain, self).fit(X, Y)
+        super().fit(X, Y)
         self.classes_ = []
         for chain_idx, estimator in enumerate(self.estimators_):
             self.classes_.append(estimator.classes_)
@@ -708,5 +708,5 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         -------
         self : object
         """
-        super(RegressorChain, self).fit(X, Y)
+        super().fit(X, Y)
         return self

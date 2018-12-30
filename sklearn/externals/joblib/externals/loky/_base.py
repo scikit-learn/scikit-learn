@@ -95,37 +95,37 @@ else:
         """Used by as_completed()."""
 
         def __init__(self):
-            super(_AsCompletedWaiter, self).__init__()
+            super().__init__()
             self.lock = threading.Lock()
 
         def add_result(self, future):
             with self.lock:
-                super(_AsCompletedWaiter, self).add_result(future)
+                super().add_result(future)
                 self.event.set()
 
         def add_exception(self, future):
             with self.lock:
-                super(_AsCompletedWaiter, self).add_exception(future)
+                super().add_exception(future)
                 self.event.set()
 
         def add_cancelled(self, future):
             with self.lock:
-                super(_AsCompletedWaiter, self).add_cancelled(future)
+                super().add_cancelled(future)
                 self.event.set()
 
     class _FirstCompletedWaiter(_Waiter):
         """Used by wait(return_when=FIRST_COMPLETED)."""
 
         def add_result(self, future):
-            super(_FirstCompletedWaiter, self).add_result(future)
+            super().add_result(future)
             self.event.set()
 
         def add_exception(self, future):
-            super(_FirstCompletedWaiter, self).add_exception(future)
+            super().add_exception(future)
             self.event.set()
 
         def add_cancelled(self, future):
-            super(_FirstCompletedWaiter, self).add_cancelled(future)
+            super().add_cancelled(future)
             self.event.set()
 
     class _AllCompletedWaiter(_Waiter):
@@ -135,7 +135,7 @@ else:
             self.num_pending_calls = num_pending_calls
             self.stop_on_exception = stop_on_exception
             self.lock = threading.Lock()
-            super(_AllCompletedWaiter, self).__init__()
+            super().__init__()
 
         def _decrement_pending_calls(self):
             with self.lock:
@@ -144,18 +144,18 @@ else:
                     self.event.set()
 
         def add_result(self, future):
-            super(_AllCompletedWaiter, self).add_result(future)
+            super().add_result(future)
             self._decrement_pending_calls()
 
         def add_exception(self, future):
-            super(_AllCompletedWaiter, self).add_exception(future)
+            super().add_exception(future)
             if self.stop_on_exception:
                 self.event.set()
             else:
                 self._decrement_pending_calls()
 
         def add_cancelled(self, future):
-            super(_AllCompletedWaiter, self).add_cancelled(future)
+            super().add_cancelled(future)
             self._decrement_pending_calls()
 
     class _AcquireFutures(object):

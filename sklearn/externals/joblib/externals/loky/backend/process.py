@@ -17,12 +17,12 @@ class LokyProcess(BaseProcess):
     def __init__(self, group=None, target=None, name=None, args=(),
                  kwargs={}, daemon=None, init_main_module=False):
         if sys.version_info < (3, 3):
-            super(LokyProcess, self).__init__(
+            super().__init__(
                 group=group, target=target, name=name, args=args,
                 kwargs=kwargs)
             self.daemon = daemon
         else:
-            super(LokyProcess, self).__init__(
+            super().__init__(
                 group=group, target=target, name=name, args=args,
                 kwargs=kwargs, daemon=daemon)
         self.authkey = self.authkey
@@ -76,7 +76,7 @@ class LokyProcess(BaseProcess):
         def _bootstrap(self):
             from .context import set_start_method
             set_start_method(self._start_method)
-            super(LokyProcess, self)._bootstrap()
+            super()._bootstrap()
 
 
 class LokyInitMainProcess(LokyProcess):
@@ -84,7 +84,7 @@ class LokyInitMainProcess(LokyProcess):
 
     def __init__(self, group=None, target=None, name=None, args=(),
                  kwargs={}, daemon=None):
-        super(LokyInitMainProcess, self).__init__(
+        super().__init__(
             group=group, target=target, name=name, args=args, kwargs=kwargs,
             daemon=daemon, init_main_module=True)
 

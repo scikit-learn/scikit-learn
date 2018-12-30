@@ -185,7 +185,7 @@ class Queue(mp_Queue):
     if sys.version_info[:2] < (3, 4):
         # Compat for python2.7/3.3 that use _send instead of _send_bytes
         def _after_fork(self):
-            super(Queue, self)._after_fork()
+            super()._after_fork()
             self._send_bytes = self._writer.send_bytes
 
 

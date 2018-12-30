@@ -230,7 +230,7 @@ class BaseEstimator(object):
 
     def __getstate__(self):
         try:
-            state = super(BaseEstimator, self).__getstate__()
+            state = super().__getstate__()
         except AttributeError:
             state = self.__dict__.copy()
 
@@ -250,7 +250,7 @@ class BaseEstimator(object):
                         self.__class__.__name__, pickle_version, __version__),
                     UserWarning)
         try:
-            super(BaseEstimator, self).__setstate__(state)
+            super().__setstate__(state)
         except AttributeError:
             self.__dict__.update(state)
 

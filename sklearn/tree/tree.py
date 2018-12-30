@@ -758,7 +758,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  min_impurity_split=None,
                  class_weight=None,
                  presort=False):
-        super(DecisionTreeClassifier, self).__init__(
+        super().__init__(
             criterion=criterion,
             splitter=splitter,
             max_depth=max_depth,
@@ -809,7 +809,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         self : object
         """
 
-        super(DecisionTreeClassifier, self).fit(
+        super().fit(
             X, y,
             sample_weight=sample_weight,
             check_input=check_input,
@@ -1101,7 +1101,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  presort=False):
-        super(DecisionTreeRegressor, self).__init__(
+        super().__init__(
             criterion=criterion,
             splitter=splitter,
             max_depth=max_depth,
@@ -1150,7 +1150,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         self : object
         """
 
-        super(DecisionTreeRegressor, self).fit(
+        super().fit(
             X, y,
             sample_weight=sample_weight,
             check_input=check_input,
@@ -1327,7 +1327,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  class_weight=None):
-        super(ExtraTreeClassifier, self).__init__(
+        super().__init__(
             criterion=criterion,
             splitter=splitter,
             max_depth=max_depth,
@@ -1495,7 +1495,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  max_leaf_nodes=None):
-        super(ExtraTreeRegressor, self).__init__(
+        super().__init__(
             criterion=criterion,
             splitter=splitter,
             max_depth=max_depth,

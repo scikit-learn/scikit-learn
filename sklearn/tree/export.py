@@ -355,7 +355,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
                  node_ids=False, proportion=False, rotate=False, rounded=False,
                  special_characters=False, precision=3):
 
-        super(_DOTTreeExporter, self).__init__(
+        super().__init__(
             max_depth=max_depth, feature_names=feature_names,
             class_names=class_names, label=label, filled=filled,
             impurity=impurity,
@@ -513,7 +513,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
                  proportion=False, rotate=False, rounded=False,
                  precision=3, fontsize=None):
 
-        super(_MPLTreeExporter, self).__init__(
+        super().__init__(
             max_depth=max_depth, feature_names=feature_names,
             class_names=class_names, label=label, filled=filled,
             impurity=impurity, node_ids=node_ids, proportion=proportion,
