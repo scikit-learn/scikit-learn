@@ -259,6 +259,7 @@ Changelog
 Support for Python 3.4 and below has been officially dropped.
 
 ..
+<<<<<<< HEAD
     Entries should be grouped by module (in alphabetic order) and prefixed with
     one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
     |Fix| or |API| (see whats_new.rst for descriptions).
@@ -291,6 +292,15 @@ Support for Python 3.4 and below has been officially dropped.
   `calibration.CalibratedClassifierCV`. :pr:`13485` by
   :user:`William de Vazelhes <wdevazelhes>`.
 
+=======
+    See version doc/whats_new/v0.20.rst for structure. Entries should be
+    prefixed with one of the labels: |MajorFeature|, |Feature|, |Efficiency|,
+    |Enhancement|, |Fix| or |API|. They should be under a heading for the
+    relevant module (or *Multiple Modules* or *Miscellaneous*), and within each
+    section should be ordered according to the label ordering above. Entries
+    should end with: :issue:`123456` by :user:`Joe Bloggs <joeongithub>`.
+  
+>>>>>>> Revert unintended whitespace changes
 :mod:`sklearn.cluster`
 ......................
 
@@ -781,6 +791,7 @@ Support for Python 3.4 and below has been officially dropped.
   :pr:`13447` by :user:`Dan Ellis <dpwe>`.
 
 - |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
+<<<<<<< HEAD
   in version 0.21 and will be removed in version 0.23. :pr:`10580` by
   :user:`Reshama Shaikh <reshamas>` and :user:`Sandra Mitrovic <SandraMNE>`.
 
@@ -803,6 +814,11 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`mixture.BayesianGaussianMixture`, where ``fit_predict`` and
   ``fit.predict`` were not equivalent. :pr:`13142` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
+=======
+  in version 0.21 and will be removed in version 0.23.
+  :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra 
+  Mitrovic <SandraMNE>`.
+>>>>>>> Revert unintended whitespace changes
 
 
 :mod:`sklearn.model_selection`
