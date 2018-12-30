@@ -111,10 +111,19 @@ def test_unsorted_indices():
     # make sure dense and sparse SVM give the same result
     assert_array_almost_equal(coef_dense, coef_sorted.toarray())
 
-    X_sparse_unsorted = X_sparse[np.arange(X.shape[0])]
-    X_test_unsorted = X_test[np.arange(X_test.shape[0])]
+    # scramble the indices
+    def scramble_indices(X):
+        new_data = []
+        new_indices = []
+        for i in range(1, len(X.indptr)):
+            new_data.extend(X.data[X.indptr[i - 1]: X.indptr[i]][::-1])
+            new_indices.extend(X.indices[X.indptr[i - 1]: X.indptr[i]][::-1])
+        return sparse.csr_matrix((new_data, new_indices, X.indptr),
+                                 shape=X.shape)
 
-    # make sure we scramble the indices
+    X_sparse_unsorted = scramble_indices(X_sparse)
+    X_test_unsorted = scramble_indices(X_test)
+
     assert not X_sparse_unsorted.has_sorted_indices
     assert not X_test_unsorted.has_sorted_indices
 
