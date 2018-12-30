@@ -991,7 +991,7 @@ def test_detection_error_tradeoff_curve_sanity_check():
 def test_detection_error_tradeoff_curve_constant_scores(y_score):
     fpr, fnr, threshold = detection_error_tradeoff_curve(
         y_true=[0, 1, 0, 1, 0, 1],
-        y_score=y_score * np.ones(6)
+        y_score=np.full(6, y_score)
     )
 
     assert_array_almost_equal(fpr, [1])
