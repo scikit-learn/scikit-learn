@@ -179,6 +179,11 @@ Support for Python 3.4 and below has been officially dropped.
   in the dense case. Also added a new parameter ``order`` which controls output
   order for further speed performances. :issue:`12251` by `Tom Dupre la Tour`_.
 
+- |Feature| Added a new encoder :class:`preprocessing.UnaryEncoding`, useful
+  for ordinal features with uneven differences between categories.
+  :issue:`8652` and :issue:`12893` by :user:`Arjun Jauhari <arjunjauhari>` and
+  :user:`Nicolas Hug <NicolasHug>`.
+
 :mod:`sklearn.tree`
 ...................
 - |Feature| Decision Trees can now be plotted with matplotlib using

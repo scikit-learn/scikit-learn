@@ -556,7 +556,7 @@ Unary encoding
 
 For some ordinal features, it does not necessarily make sense to use
 :class:`OrdinalEncoder` if the difference between the ordered categories is
-un-even, for example with a feature that takes values in "very short",
+uneven, for example with a feature that takes values in "very short",
 "short", "big".
 
 For such features, it is possible to use a unary encoding, which is
