@@ -54,6 +54,7 @@ __all__ = [
     'Normalizer',
     'OneHotEncoder',
     'OrdinalEncoder',
+    'UnaryEncoder'
     'PowerTransformer',
     'RobustScaler',
     'StandardScaler',
@@ -68,5 +69,4 @@ __all__ = [
     'label_binarize',
     'quantile_transform',
     'power_transform',
-    'UnaryEncoder'
 ]

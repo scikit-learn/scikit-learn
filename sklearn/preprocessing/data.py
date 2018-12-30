@@ -63,7 +63,6 @@ __all__ = [
     'minmax_scale',
     'quantile_transform',
     'power_transform',
-    'UnaryEncoder'
 ]
 
 
