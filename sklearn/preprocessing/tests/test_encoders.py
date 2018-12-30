@@ -925,3 +925,28 @@ def test_unary_encoder_n_values_array():
     enc = UnaryEncoder(n_values=[])
     X = _generate_random_features_matrix(size, n_features, n_values)
     assert_raises(ValueError, enc.fit_transform, X)
+
+
+@pytest.mark.parametrize('sparse_', (True, False))
+@pytest.mark.parametrize('X', (
+    [[0], [0]],  # only one category (transformed into [])
+    [[1], [1]],  # only one category but implicitely 2
+    [[1, 0], [1, 1], [0, 1], [0, 2]]  # multiple categories
+))
+def test_unary_encoder_inverse_transform(sparse_, X):
+    enc = UnaryEncoder(sparse=sparse_)
+    assert_array_equal(X, enc.inverse_transform(enc.fit_transform(X)))
+
+
+def test_unary_encoder_inverse_transform_input():
+    X = [[1, 0],  # will be transformed into 1 + 2 = 3 columns
+         [1, 1],
+         [0, 1],
+         [0, 2]]
+    enc = UnaryEncoder().fit(X)
+    bad_X_tr = [[1, 1, 1, 0]]  # 4 columns
+    assert_raises_regex(
+        ValueError,
+        "Shape of the passed X data is not correct. Expected 3 columns, got 4",
+        enc.inverse_transform, bad_X_tr
+    )

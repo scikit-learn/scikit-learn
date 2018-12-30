@@ -959,7 +959,7 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
                              "or 'clip' got %s" % self.handle_greater)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
-        n_samples, n_features = X.shape
+        _, n_features = X.shape
 
         if (isinstance(self.n_values, six.string_types) and
                 self.n_values == 'auto'):
@@ -1003,9 +1003,10 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_out : sparse matrix if sparse=True else a 2-d array, dtype=int
+        X_tr: sparse matrix if sparse=True else a 2-d array
             Transformed input.
         """
+        check_is_fitted(self, 'n_values_')
         X = check_array(X, dtype=np.int)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
@@ -1045,3 +1046,47 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
                                 dtype=self.dtype)
 
         return out if self.sparse else out.toarray()
+
+    def inverse_transform(self, X):
+        """Convert the data back to the original representation.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape \
+            (n_samples, n_encoded_features)
+            The transformed data.
+
+        Returns
+        -------
+        X_tr : array-like of shape (n_samples, n_features)
+            Inverse transformed array.
+        """
+
+        check_is_fitted(self, 'n_values_')
+        X = check_array(X, accept_sparse='csr', ensure_min_features=0)
+
+        n_samples, _ = X.shape
+        n_features = len(self.n_values_)
+        n_encoded_features = self.feature_indices_[-1]
+
+        # validate shape of passed X
+        msg = ("Shape of the passed X data is not correct. Expected {0} "
+               "columns, got {1}.")
+        if X.shape[1] != n_encoded_features:
+            raise ValueError(msg.format(n_encoded_features, X.shape[1]))
+
+        # return float dtype, even though it will contain int values
+        X_tr = np.zeros((n_samples, n_features), dtype=np.float)
+
+        j = 0
+        for i in range(n_features):
+            n_columns = self.n_values_[i] - 1
+
+            sub = X[:, j:j + n_columns]
+
+            categories = sub.sum(axis=1).ravel()
+            X_tr[:, i] = categories
+
+            j += n_columns
+
+        return X_tr
