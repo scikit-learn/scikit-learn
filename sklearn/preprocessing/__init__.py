@@ -54,7 +54,7 @@ __all__ = [
     'Normalizer',
     'OneHotEncoder',
     'OrdinalEncoder',
-    'UnaryEncoder'
+    'UnaryEncoder',
     'PowerTransformer',
     'RobustScaler',
     'StandardScaler',
