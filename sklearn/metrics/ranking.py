@@ -221,7 +221,7 @@ def detection_error_tradeoff_curve(y_true, y_score, pos_label=None,
                                    sample_weight=None):
     """Compute error rates for different probability thresholds.
 
-    Note: This metrics is used for ranking evaluation of the binary
+    Note: This metrics is used for ranking evaluation of a binary
     classification task.
 
     Read more in the :ref:`User Guide <det_curve>`.

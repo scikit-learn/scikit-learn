@@ -1491,7 +1491,7 @@ same classification task:
 **Applications and limitations:**
 
 DET curves are intuitive to read and hence allow quick visual assessment of a
-classifiers performance.
+classifier's performance.
 Additionally DET curves can be consulted for threshold analysis and operating
 point selection.
 This is particularly helpful if a comparison of error types is required.

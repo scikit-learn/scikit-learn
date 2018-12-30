@@ -61,7 +61,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 # prepare plots
 
-# first plot the ROC curve
+# first prepare the ROC curve
 ax_roc = plt.subplot(1, 2, 1)
 ax_roc.set_title('Receiver Operating Characteristic (ROC) curves')
 ax_roc.set_xlabel('False Positive Rate')
@@ -74,7 +74,7 @@ ax_roc.yaxis.set_major_formatter(
 ax_roc.xaxis.set_major_formatter(
     FuncFormatter(lambda y, _: '{:.0%}'.format(y)))
 
-# second plot the DET curve
+# second prepare the DET curve
 ax_det = plt.subplot(1, 2, 2)
 ax_det.set_title('Detection Error Tradeoff (DET) curves')
 ax_det.set_xlabel('False Positive Rate')
