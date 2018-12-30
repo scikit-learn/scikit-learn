@@ -240,9 +240,9 @@ cdef class Splitter:
 
 
 cdef class BaseDenseSplitter(Splitter):
-    cdef DTYPE_t* X
-    cdef SIZE_t X_sample_stride
-    cdef SIZE_t X_feature_stride
+    cdef DTYPE_t [:, :] X
+    #cdef SIZE_t X_sample_stride
+    #cdef SIZE_t X_feature_stride
 
     cdef np.ndarray X_idx_sorted
     cdef INT32_t* X_idx_sorted_ptr
@@ -254,9 +254,9 @@ cdef class BaseDenseSplitter(Splitter):
                   SIZE_t min_samples_leaf, double min_weight_leaf,
                   object random_state, bint presort):
 
-        self.X = NULL
-        self.X_sample_stride = 0
-        self.X_feature_stride = 0
+        #self.X = NULL
+        #self.X_sample_stride = 0
+        #self.X_feature_stride = 0
         self.X_idx_sorted_ptr = NULL
         self.X_idx_sorted_stride = 0
         self.sample_mask = NULL
@@ -282,11 +282,11 @@ cdef class BaseDenseSplitter(Splitter):
         Splitter.init(self, X, y, sample_weight)
 
         # Initialize X
-        cdef np.ndarray X_ndarray = X
+        #cdef np.ndarray X_ndarray = X
 
-        self.X = <DTYPE_t*> X_ndarray.data
-        self.X_sample_stride = <SIZE_t> X.strides[0] / <SIZE_t> X.itemsize
-        self.X_feature_stride = <SIZE_t> X.strides[1] / <SIZE_t> X.itemsize
+        self.X = X
+        #self.X_sample_stride = <SIZE_t> X.strides[0] / <SIZE_t> X.itemsize
+        #self.X_feature_stride = <SIZE_t> X.strides[1] / <SIZE_t> X.itemsize
 
         if self.presort == 1:
             self.X_idx_sorted = X_idx_sorted
@@ -327,10 +327,10 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t* constant_features = self.constant_features
         cdef SIZE_t n_features = self.n_features
 
-        cdef DTYPE_t* X = self.X
+        cdef DTYPE_t [:, :] X = self.X
         cdef DTYPE_t* Xf = self.feature_values
-        cdef SIZE_t X_sample_stride = self.X_sample_stride
-        cdef SIZE_t X_feature_stride = self.X_feature_stride
+        #cdef SIZE_t X_sample_stride = self.X_sample_stride
+        #cdef SIZE_t X_feature_stride = self.X_feature_stride
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
@@ -414,7 +414,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                 f_j += n_found_constants
                 # f_j in the interval [n_total_constants, f_i[
                 current.feature = features[f_j]
-                feature_offset = self.X_feature_stride * current.feature
+                #feature_offset = self.X_feature_stride * current.feature
 
                 # Sort samples along that feature; either by utilizing
                 # presorting, or by copying the values into an array and
@@ -428,11 +428,11 @@ cdef class BestSplitter(BaseDenseSplitter):
                         j = X_idx_sorted[i + feature_idx_offset]
                         if sample_mask[j] == 1:
                             samples[p] = j
-                            Xf[p] = X[self.X_sample_stride * j + feature_offset]
+                            Xf[p] = X[j, current.feature]
                             p += 1
                 else:
                     for i in range(start, end):
-                        Xf[i] = X[self.X_sample_stride * samples[i] + feature_offset]
+                        Xf[i] = X[samples[i], current.feature]
 
                     sort(Xf + start, samples + start, end - start)
 
@@ -493,12 +493,12 @@ cdef class BestSplitter(BaseDenseSplitter):
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.pos < end:
-            feature_offset = X_feature_stride * best.feature
+            #feature_offset = X_feature_stride * best.feature
             partition_end = end
             p = start
 
             while p < partition_end:
-                if X[X_sample_stride * samples[p] + feature_offset] <= best.threshold:
+                if X[samples[p], best.feature] <= best.threshold:
                     p += 1
 
                 else:
@@ -675,10 +675,10 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef SIZE_t* constant_features = self.constant_features
         cdef SIZE_t n_features = self.n_features
 
-        cdef DTYPE_t* X = self.X
+        cdef DTYPE_t [:, :] X = self.X
         cdef DTYPE_t* Xf = self.feature_values
-        cdef SIZE_t X_sample_stride = self.X_sample_stride
-        cdef SIZE_t X_feature_stride = self.X_feature_stride
+        #cdef SIZE_t X_sample_stride = self.X_sample_stride
+        #cdef SIZE_t X_feature_stride = self.X_feature_stride
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
@@ -753,15 +753,15 @@ cdef class RandomSplitter(BaseDenseSplitter):
                 # f_j in the interval [n_total_constants, f_i[
 
                 current.feature = features[f_j]
-                feature_stride = X_feature_stride * current.feature
+                #feature_stride = X_feature_stride * current.feature
 
                 # Find min, max
-                min_feature_value = X[X_sample_stride * samples[start] + feature_stride]
+                min_feature_value = X[samples[start], current.feature]
                 max_feature_value = min_feature_value
                 Xf[start] = min_feature_value
 
                 for p in range(start + 1, end):
-                    current_feature_value = X[X_sample_stride * samples[p] + feature_stride]
+                    current_feature_value = X[samples[p], current.feature]
                     Xf[p] = current_feature_value
 
                     if current_feature_value < min_feature_value:
@@ -828,14 +828,14 @@ cdef class RandomSplitter(BaseDenseSplitter):
                         best = current  # copy
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
-        feature_stride = X_feature_stride * best.feature
+        #feature_stride = X_feature_stride * best.feature
         if best.pos < end:
             if current.feature != best.feature:
                 partition_end = end
                 p = start
 
                 while p < partition_end:
-                    if X[X_sample_stride * samples[p] + feature_stride] <= best.threshold:
+                    if X[samples[p], best.feature] <= best.threshold:
                         p += 1
 
                     else:

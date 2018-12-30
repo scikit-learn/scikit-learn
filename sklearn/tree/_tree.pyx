@@ -794,7 +794,7 @@ cdef class Tree:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
-        cdef float [:, :] X_ndarray = X
+        cdef DTYPE_t [:, :] X_ndarray = X
         cdef SIZE_t n_samples = X.shape[0]
 
         # Initialize output
@@ -914,10 +914,7 @@ cdef class Tree:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
-        cdef np.ndarray X_ndarray = X
-        cdef DTYPE_t* X_ptr = <DTYPE_t*> X_ndarray.data
-        cdef SIZE_t X_sample_stride = <SIZE_t> X.strides[0] / <SIZE_t> X.itemsize
-        cdef SIZE_t X_fx_stride = <SIZE_t> X.strides[1] / <SIZE_t> X.itemsize
+        cdef float [:, :] X_ndarray = X
         cdef SIZE_t n_samples = X.shape[0]
 
         # Initialize output
@@ -944,8 +941,7 @@ cdef class Tree:
                     indices_ptr[indptr_ptr[i + 1]] = <SIZE_t>(node - self.nodes)
                     indptr_ptr[i + 1] += 1
 
-                    if X_ptr[X_sample_stride * i +
-                             X_fx_stride * node.feature] <= node.threshold:
+                    if X_ndarray[i, node.feature] <= node.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
