@@ -1459,8 +1459,8 @@ DET curves are a variation of receiver operating characteristic (ROC) curves
 where False Negative Rate is plotted on the ordinate instead of True Positive
 Rate.
 DET curves are commonly plotted in normal deviate scale by transformation with
-:math:`\phi^{-1}` (with :math:`\phi` being the cumulative distribution function)
-.
+:math:`\phi^{-1}` (with :math:`\phi` being the cumulative distribution
+function).
 The resulting performance curves explicitly visualize the tradeoff of error
 types for given classification algorithms.
 
