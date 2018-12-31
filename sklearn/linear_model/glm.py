@@ -6,7 +6,7 @@ Generalized Linear Models with Exponential Dispersion Family
 # some parts and tricks stolen from other sklearn files.
 # License: BSD 3 clause
 
-# TODO: Write examples
+# TODO: Write more examples.
 # TODO: Make option self.copy_X more meaningfull than just for start values.
 # TODO: Should the option `normalize` be included (like other linear models)?
 #       So far, it is not included. User must pass a normalized X.
@@ -832,7 +832,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     with inverse link function `h` and s=sum of `sample_weight` (which equals
     n_samples for `sample_weight=None`).
-    For `P1`=`P2`=identity, the penalty is the elastic net::
+    For `P1=P2=identity`, the penalty is the elastic net::
 
             alpha * l1_ratio * ||w||_1
             + 1/2 * alpha * (1 - l1_ratio) * ||w||_2^2
@@ -868,11 +868,11 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     If the target `y` is a ratio, appropriate weights `w` should be provided.
     As an example, consider Poission distributed counts `z` (integers) and
-    weights `w`=exposure (time, money, persons years, ...). Then you fit
-    `y = z/w`, i.e. ``GeneralizedLinearModel(family='Poisson').fit(X, y,
-    sample_weight=w)``. The weights are necessary for the right mean, consider:
-    :math:`\\bar(y) = \\frac{\\sum_i w_i y_i}{\\sum_i w_i}`.
-    In this case one might say that 'y' has a 'scaled' Poisson distributions.
+    weights `w=exposure` (time, money, persons years, ...). Then you fit
+    `y = z/w`, i.e. ``GeneralizedLinearModel(family='poisson').fit(X, y,
+    sample_weight=w)``. The weights are necessary for the right meanself.
+    Consider :math:`\\bar{y} = \\frac{\\sum_i w_i y_i}{\\sum_i w_i}`,
+    in this case one might say that `y` has a 'scaled' Poisson distributions.
     The same holds for other distributions.
 
     Parameters
@@ -1017,10 +1017,10 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     References
     ----------
     For the coordinate descent implementation:
-    .. [1] Guo-Xun Yuan, Chia-Hua Ho, Chih-Jen Lin
-           An Improved GLMNET for L1-regularized Logistic Regression,
-           Journal of Machine Learning Research 13 (2012) 1999-2030
-           https://www.csie.ntu.edu.tw/~cjlin/papers/l1_glmnet/long-glmnet.pdf
+        * Guo-Xun Yuan, Chia-Hua Ho, Chih-Jen Lin
+          An Improved GLMNET for L1-regularized Logistic Regression,
+          Journal of Machine Learning Research 13 (2012) 1999-2030
+          https://www.csie.ntu.edu.tw/~cjlin/papers/l1_glmnet/long-glmnet.pdf
     """
     def __init__(self, alpha=1.0, l1_ratio=0, P1=None, P2=None,
                  fit_intercept=True, family='normal', link='identity',

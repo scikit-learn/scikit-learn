@@ -901,12 +901,15 @@ for a more versatile L2 penalty.
 Use cases, where a loss different from the squared loss might be appropriate,
 are the following:
 
-  * If the target values :math:`y` are counts (integer valued) or frequencies, you might try a Poisson deviance.
+  * If the target values :math:`y` are counts (non-negative integer valued) or
+    frequencies (non-negative), you might use a Poisson deviance with log-link.
 
-  * If the target values are positive valued and skewed, you might try a Gamma deviance.
+  * If the target values are positive valued and skewed, you might try a
+    Gamma deviance with log-link.
 
-  * If the target values seem to be heavier tailed than a Gamma distribution, you might try an Inverse Gaussian deviance (or even higher variance powers of the Tweedie family).
-    Keep in mind that the mean is not a good measure for very heavy tailed distributions, cf. extreme value theory.
+  * If the target values seem to be heavier tailed than a Gamma distribution,
+    you might try an Inverse Gaussian deviance (or even higher variance powers
+    of the Tweedie family).
 
 Since the linear predictor :math:`Xw` can be negative and
 Poisson, Gamma and Inverse Gaussian distributions don't support negative values,
@@ -930,6 +933,11 @@ follows:
     array([0.24630255, 0.43373521])
     >>> reg.intercept_ #doctest: +ELLIPSIS
     -0.76383575...
+
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_poisson_spline_regression.py`
 
 Mathematical formulation
 ------------------------
@@ -956,20 +964,20 @@ e.g. accounting for the dependence structure of :math:`y`.
 The objective function, which is independent of :math:`\phi`, is minimized with
 respect to the coefficients :math:`w`.
 
-The deviance is defined by
+The deviance is defined by the log of the EDM likelihood as
 
 .. math::     D(y, \mu) = -2\phi\cdot
               \left(loglike(y,\mu,\frac{\phi}{s})
               - loglike(y,y,\frac{\phi}{s})\right)
 
-=====================================  =================================
-Distribution                           Variance Function :math:`v(\mu)`
-=====================================  =================================
-Normal ("normal")                      :math:`1`
-Poisson ("poisson")                    :math:`\mu`
-Gamma ("gamma")                        :math:`\mu^2`
-Inverse Gaussian ("inverse.gaussian")  :math:`\mu^3`
-=====================================  =================================
+===================================== ===============================  ================================= ============================================
+Distribution                          Target Domain                    Variance Function :math:`v(\mu)`  Deviance :math:`D(y, \mu)`
+===================================== ===============================  ================================= ============================================
+Normal ("normal")                     :math:`y \in (-\infty, \infty)`  :math:`1`                         :math:`(y-\mu)^2`
+Poisson ("poisson")                   :math:`y \in [0, \infty)`        :math:`\mu`                       :math:`2(y\log\frac{y}{/mu}-y+\mu)`
+Gamma ("gamma")                       :math:`y \in (0, \infty)`        :math:`\mu^2`                     :math:`2(\log\frac{\mu}{y}+\frac{y}{\mu}-1)`
+Inverse Gaussian ("inverse.gaussian") :math:`y \in (0, \infty)`        :math:`\mu^3`                     :math:`\frac{(y-\mu)^2}{y\mu^2}`
+===================================== ===============================  ================================= ============================================
 
 Two remarks:
 
