@@ -157,7 +157,6 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.metrics import accuracy_score
     >>> y_pred = [0, 2, 1, 3]
     >>> y_true = [0, 1, 2, 3]
@@ -168,6 +167,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
 
     In the multilabel case with binary label indicators:
 
+    >>> import numpy as np
     >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
@@ -632,7 +632,6 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.metrics import jaccard_similarity_score
     >>> y_pred = [0, 2, 1, 3]
     >>> y_true = [0, 1, 2, 3]
@@ -643,6 +642,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
 
     In the multilabel case with binary label indicators:
 
+    >>> import numpy as np
     >>> jaccard_similarity_score(np.array([[0, 1], [1, 1]]),\
         np.ones((2, 2)))
     0.75
@@ -803,6 +803,7 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
 
     In the multilabel case with binary label indicators:
 
+    >>> import numpy as np
     >>> zero_one_loss(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
@@ -1208,6 +1209,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.metrics import precision_recall_fscore_support
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
@@ -1395,7 +1397,6 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     Examples
     --------
-
     >>> from sklearn.metrics import precision_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -1804,11 +1805,16 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
-    labels : array, shape = [n_labels], optional (default=None)
+    labels : array, shape = [n_labels], optional (default='deprecated')
         Integer array of labels. If not provided, labels will be inferred
         from y_true and y_pred.
 
         .. versionadded:: 0.18
+        .. deprecated:: 0.21
+           This parameter ``labels`` is deprecated in version 0.21 and will
+           be removed in version 0.23. Hamming loss uses ``y_true.shape[1]``
+           for the number of labels when y_true is binary label indicators,
+           so it is unnecessary for the user to specify.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -1859,6 +1865,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
 
     In the multilabel case with binary label indicators:
 
+    >>> import numpy as np
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
     """
@@ -1866,10 +1873,11 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    if labels is None:
-        labels = unique_labels(y_true, y_pred)
-    else:
-        labels = np.asarray(labels)
+    if labels is not None:
+        warnings.warn("The labels parameter is unused. It was"
+                      " deprecated in version 0.21 and"
+                      " will be removed in version 0.23",
+                      DeprecationWarning)
 
     if sample_weight is None:
         weight_average = 1.
@@ -1880,7 +1888,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
         n_differences = count_nonzero(y_true - y_pred,
                                       sample_weight=sample_weight)
         return (n_differences /
-                (y_true.shape[0] * len(labels) * weight_average))
+                (y_true.shape[0] * y_true.shape[1] * weight_average))
 
     elif y_type in ["binary", "multiclass"]:
         return _weighted_sum(y_true != y_pred, sample_weight, normalize=True)
@@ -1939,6 +1947,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
 
     Examples
     --------
+    >>> from sklearn.metrics import log_loss
     >>> log_loss(["spam", "ham", "ham", "spam"],  # doctest: +ELLIPSIS
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616...
@@ -2069,7 +2078,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     >>> X = [[0], [1]]
     >>> y = [-1, 1]
     >>> est = svm.LinearSVC(random_state=0)
-    >>> est.fit(X, y)
+    >>> est.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
          intercept_scaling=1, loss='squared_hinge', max_iter=1000,
          multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
@@ -2082,11 +2091,12 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
 
     In the multiclass case:
 
+    >>> import numpy as np
     >>> X = np.array([[0], [1], [2], [3]])
     >>> Y = np.array([0, 1, 2, 3])
     >>> labels = np.array([0, 1, 2, 3])
     >>> est = svm.LinearSVC()
-    >>> est.fit(X, Y)
+    >>> est.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
          intercept_scaling=1, loss='squared_hinge', max_iter=1000,
          multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
