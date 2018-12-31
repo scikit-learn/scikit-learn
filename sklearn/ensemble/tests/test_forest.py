@@ -532,14 +532,14 @@ def check_multioutput(name):
     if name in FOREST_CLASSIFIERS:
         with np.errstate(divide="ignore"):
             proba = est.predict_proba(X_test)
-            assert_equal(len(proba), 2)
-            assert_equal(proba[0].shape, (4, 2))
-            assert_equal(proba[1].shape, (4, 4))
+            assert len(proba) == 2
+            assert proba[0].shape == (4, 2)
+            assert proba[1].shape == (4, 4)
 
             log_proba = est.predict_log_proba(X_test)
-            assert_equal(len(log_proba), 2)
-            assert_equal(log_proba[0].shape, (4, 2))
-            assert_equal(log_proba[1].shape, (4, 4))
+            assert len(log_proba) == 2
+            assert log_proba[0].shape == (4, 2)
+            assert log_proba[1].shape == (4, 4)
 
 
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
@@ -569,14 +569,14 @@ def test_multioutput_string(name):
 
     with np.errstate(divide="ignore"):
         proba = est.predict_proba(X_test)
-        assert_equal(len(proba), 2)
-        assert_equal(proba[0].shape, (4, 2))
-        assert_equal(proba[1].shape, (4, 4))
+        assert len(proba) == 2
+        assert proba[0].shape == (4, 2)
+        assert proba[1].shape == (4, 4)
 
         log_proba = est.predict_log_proba(X_test)
-        assert_equal(len(log_proba), 2)
-        assert_equal(log_proba[0].shape, (4, 2))
-        assert_equal(log_proba[1].shape, (4, 4))
+        assert len(log_proba) == 2
+        assert log_proba[0].shape == (4, 2)
+        assert log_proba[1].shape == (4, 4)
 
 
 def check_classes_shape(name):
