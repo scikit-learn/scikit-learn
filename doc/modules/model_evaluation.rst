@@ -227,7 +227,7 @@ saved in a separate module (``custom_scorer_module.py``) and imported::
   ...  y_train,
   ...  scoring=make_scorer(rmse, greater_is_better=False),
   ...  cv=rkfold,
-  ...  n_jobs=-1)
+  ...  n_jobs=-1) # doctest: +SKIP
 
 
 .. _multimetric_scoring:
