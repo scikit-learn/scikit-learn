@@ -1397,3 +1397,64 @@ that implement common linear model patterns.
 
 The :mod:`sklearn.utils.multiclass` module contains useful functions
 for working with multiclass and multilabel problems.
+
+.. _reading-code:
+
+Reading the existing code base
+==============================
+
+Reading and digesting an existing code base is always a difficult exercise
+that takes time and experience to master. Even though we try to write simple
+code in general, understanding the code can seem overwhelming at first,
+given the sheer size of the project. Here is a list of tips that may help
+make this task easier and faster (in no particular order).
+
+- Get acquainted with the :ref:`api_overview`: understand what :term:`fit`,
+  :term:`predict`, :term:`transform`, etc. are used for.
+- Before diving into reading the code of a function / class, go through the
+  docstrings first and try to get an idea of what each parameter / attribute
+  is doing. It may also help to stop a minute and think *how would I do this
+  myself if I had to?*
+- The trickiest thing is often to identify which portions of the code are
+  relevant, and which are not. In scikit-learn **a lot** of input checking
+  is performed, especially at the beginning of the :term:`fit` methods.
+  Sometimes, only a very small portion of the code is doing the actual job.
+  For example looking at the ``fit()`` method of
+  :class:`sklearn.linear_model.LinearRegression`, what you're looking for
+  might just be the call the ``scipy.linalg.lstsq``, but it is buried into
+  multiple lines of input checking and the handling of different kinds of
+  parameters.
+- Due to the use of `Inheritance
+  <https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)>`_,
+  some methods may be implemented in parent classes. All estimators inherit
+  at least from :class:`BaseEstimator <sklearn.base.BaseEstimator>`, and
+  from a ``Mixin`` class (e.g. :class:`ClassifierMixin
+  <sklearn.base.ClassifierMixin>`) that enables default behaviour depending
+  on the nature of the estimator (classifier, regressor, transformer, etc.).
+- Sometimes, reading the tests for a given function will give you an idea of
+  what its intended purpose is. You can use ``git grep`` (see below) to find
+  all the tests written for a function. Most tests for a specific
+  function/class are placed under the ``tests/`` folder of the module
+- You'll often see code looking like this:
+  ``out = Parallel(...)(delayed(some_function)(param) for param in
+  some_iterable)``. This runs ``some_function`` in parallel using `Joblib
+  <https://joblib.readthedocs.io/>`_. ``out`` is then an iterable containing
+  the values returned by ``some_function`` for each call.
+- We use `Cython <https://cython.org/>`_ to write fast code. Cython code is
+  located in ``.pyx`` and ``.pxd`` files. Cython code has a more C-like
+  flavor: we use pointers, perform manual memory allocation, etc. Having
+  some minimal experience in C / C++ is pretty much mandatory here.
+- Master your tools.
+
+  - With such a big project, being efficient with your favorite editor or
+    IDE goes a long way towards digesting the code base. Being able to quickly
+    jump (or *peek*) to a function/class/attribute definition helps a lot.
+    So does being able to quickly see where a given name is used in a file.
+  - `git <https://git-scm.com/book/en>`_ also has some built-in killer
+    features. It is often useful to understand how a file changed over time,
+    using e.g. ``git blame`` (`manual
+    <https://git-scm.com/docs/git-blame>`_). This can also be done directly
+    on GitHub. ``git grep`` (`examples
+    <https://git-scm.com/docs/git-grep#_examples>`_) is also extremely
+    useful to see every occurrence of a pattern (e.g. a function call or a
+    variable) in the code base.
