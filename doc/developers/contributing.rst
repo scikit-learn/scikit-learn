@@ -1425,11 +1425,12 @@ make this task easier and faster (in no particular order).
 - Due to the use of `Inheritance
   <https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)>`_,
   some methods may be implemented in parent classes. All estimators inherit
-  at least from ``BaseEstimator``, and from a ``Mixin`` class that enables
-  default behaviour depending on the nature of the estimator (classifier,
-  regressor, transformer, etc.).
+  at least from :class:`BaseEstimator <sklearn.base.BaseEstimator>`, and
+  from a ``Mixin`` class (e.g. :class:`ClassifierMixin
+  <sklearn.base.ClassifierMixin>`) that enables default behaviour depending
+  on the nature of the estimator (classifier, regressor, transformer, etc.).
 - Sometimes, reading the tests for a given function will give you an idea of
-  what is its intended purpose. You can use ``git grep`` (see below) to find
+  what its intended purpose is. You can use ``git grep`` (see below) to find
   all the tests written for a function. Most tests for a specific
   function/class are placed under the ``tests/`` folder of the module
 - You'll often see code looking like this:
