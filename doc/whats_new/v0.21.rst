@@ -181,8 +181,8 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Feature| Added a new encoder :class:`preprocessing.UnaryEncoding`, useful
   for ordinal features with uneven differences between categories.
-  :issue:`8652` and :issue:`12893` by :user:`Arjun Jauhari <arjunjauhari>` and
-  :user:`Nicolas Hug <NicolasHug>`.
+  :issue:`12893` by :user:`Ruxandra Burtica <ruxandraburtica>`, :user:`Arjun
+  Jauhari <arjunjauhari>` and :user:`Nicolas Hug <NicolasHug>`.
 
 :mod:`sklearn.tree`
 ...................
