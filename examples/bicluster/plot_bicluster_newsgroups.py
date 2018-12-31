@@ -52,7 +52,7 @@ def number_normalizer(tokens):
 
 class NumberNormalizingVectorizer(TfidfVectorizer):
     def build_tokenizer(self):
-        tokenize = super(NumberNormalizingVectorizer, self).build_tokenizer()
+        tokenize = super().build_tokenizer()
         return lambda doc: list(number_normalizer(tokenize(doc)))
 
 
