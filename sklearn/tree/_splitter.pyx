@@ -92,8 +92,6 @@ cdef class Splitter:
         self.n_features = 0
         self.feature_values = NULL
 
-        self.y = NULL
-        self.y_stride = 0
         self.sample_weight = NULL
 
         self.max_features = max_features
@@ -118,7 +116,7 @@ cdef class Splitter:
 
     cdef int init(self,
                    object X,
-                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                   DOUBLE_t[:, :] y,
                    DOUBLE_t* sample_weight,
                    np.ndarray X_idx_sorted=None) except -1:
         """Initialize the splitter.
@@ -179,8 +177,7 @@ cdef class Splitter:
         safe_realloc(&self.feature_values, n_samples)
         safe_realloc(&self.constant_features, n_features)
 
-        self.y = <DOUBLE_t*> y.data
-        self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
+        self.y = y
 
         self.sample_weight = sample_weight
         return 0
@@ -206,7 +203,6 @@ cdef class Splitter:
         self.end = end
 
         self.criterion.init(self.y,
-                            self.y_stride,
                             self.sample_weight,
                             self.weighted_n_samples,
                             self.samples,
@@ -264,7 +260,7 @@ cdef class BaseDenseSplitter(Splitter):
 
     cdef int init(self,
                   object X,
-                  np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                  DOUBLE_t[:, :] y,
                   DOUBLE_t* sample_weight,
                   np.ndarray X_idx_sorted=None) except -1:
         """Initialize the splitter
@@ -882,7 +878,7 @@ cdef class BaseSparseSplitter(Splitter):
 
     cdef int init(self,
                   object X,
-                  np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                  DOUBLE_t[:, :] y,
                   DOUBLE_t* sample_weight,
                   np.ndarray X_idx_sorted=None) except -1:
         """Initialize the splitter
