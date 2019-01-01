@@ -103,7 +103,7 @@ exclude_patterns = ['_build', 'templates', 'includes', 'themes']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
-#default_role = None
+default_role = 'any'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
@@ -237,6 +237,7 @@ intersphinx_mapping = {
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
     'matplotlib': ('https://matplotlib.org/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
+    'joblib': ('https://joblib.readthedocs.io/en/latest/', None),
 }
 
 sphinx_gallery_conf = {
@@ -252,7 +253,7 @@ sphinx_gallery_conf = {
 # key: first image in set
 # values: (number of plot in set, height of thumbnail)
 carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600,
-                   'sphx_glr_plot_outlier_detection_003.png': 372,
+                   'sphx_glr_plot_anomaly_comparison_001.png': 372,
                    'sphx_glr_plot_gpr_co2_001.png': 350,
                    'sphx_glr_plot_adaboost_twoclass_001.png': 372,
                    'sphx_glr_plot_compare_methods_001.png': 349}

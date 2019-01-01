@@ -222,7 +222,7 @@ allows you to set this configuration within a specified context::
 
   >>> import sklearn
   >>> with sklearn.config_context(assume_finite=True):
-  ...    pass  # do learning/prediction here with reduced validation
+  ...     pass  # do learning/prediction here with reduced validation
 
 Note that this will affect all uses of
 :func:`sklearn.utils.assert_all_finite` within the context.
@@ -254,7 +254,7 @@ Influence of the Input Data Representation
 Scipy provides sparse matrix data structures which are optimized for storing
 sparse data. The main feature of sparse formats is that you don't store zeros
 so if your data is sparse then you use much less memory. A non-zero value in
-a sparse (`CSR or CSC <http://docs.scipy.org/doc/scipy/reference/sparse.html>`_)
+a sparse (`CSR or CSC <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_)
 representation will only take on average one 32bit integer position + the 64
 bit floating point value + an additional 32bit per row or column in the matrix.
 Using sparse input on a dense (or sparse) linear model can speedup prediction
@@ -277,7 +277,7 @@ Here is sample code to test the sparsity of your input::
 
 As a rule of thumb you can consider that if the sparsity ratio is greater
 than 90% you can probably benefit from sparse formats. Check Scipy's sparse
-matrix formats `documentation <http://docs.scipy.org/doc/scipy/reference/sparse.html>`_
+matrix formats `documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_
 for more information on how to build (or convert your data to) sparse matrix
 formats. Most of the time the ``CSR`` and ``CSC`` formats work best.
 
@@ -424,7 +424,7 @@ Optimized BLAS / LAPACK implementations include:
  - MKL
  - Apple Accelerate and vecLib frameworks (OSX only)
 
-More information can be found on the `Scipy install page <http://docs.scipy.org/doc/numpy/user/install.html>`_
+More information can be found on the `Scipy install page <https://docs.scipy.org/doc/numpy/user/install.html>`_
 and in this
 `blog post <http://danielnouri.org/notes/2012/12/19/libblas-and-liblapack-issues-and-speed,-with-scipy-and-ubuntu/>`_
 from Daniel Nouri which has some nice step by step install instructions for
@@ -463,7 +463,7 @@ memory to 128 MiB::
 
   >>> import sklearn
   >>> with sklearn.config_context(working_memory=128):
-  ...    pass  # do chunked work here
+  ...     pass  # do chunked work here
 
 An example of a chunked operation adhering to this setting is
 :func:`metric.pairwise_distances_chunked`, which facilitates computing
@@ -519,7 +519,7 @@ Links
 ......
 
   - `scikit-learn developer performance documentation <../developers/performance.html>`_
-  - `Scipy sparse matrix formats documentation <http://docs.scipy.org/doc/scipy/reference/sparse.html>`_
+  - `Scipy sparse matrix formats documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_
 
 Parallelism, resource management, and configuration
 =====================================================
@@ -567,9 +567,9 @@ These environment variables should be set before importing scikit-learn.
     scikit-learn uses the site joblib rather than its vendored version.
     Consequently, joblib must be installed for scikit-learn to run.
     Note that using the site joblib is at your own risks: the versions of
-    scikt-learn and joblib need to be compatible. In addition, dumps from
-    joblib.Memory might be incompatible, and you might loose some caches
-    and have to redownload some datasets.
+    scikit-learn and joblib need to be compatible. Currently, joblib 0.11+
+    is supported. In addition, dumps from joblib.Memory might be incompatible,
+    and you might loose some caches and have to redownload some datasets.
 
 :SKLEARN_ASSUME_FINITE:
 

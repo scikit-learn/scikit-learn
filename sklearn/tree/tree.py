@@ -108,6 +108,21 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.class_weight = class_weight
         self.presort = presort
 
+    def get_depth(self):
+        """Returns the depth of the decision tree.
+
+        The depth of a tree is the maximum distance between the root
+        and any leaf.
+        """
+        check_is_fitted(self, 'tree_')
+        return self.tree_.max_depth
+
+    def get_n_leaves(self):
+        """Returns the number of leaves of the decision tree.
+        """
+        check_is_fitted(self, 'tree_')
+        return self.tree_.n_leaves
+
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
 
@@ -276,8 +291,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                np.sum(sample_weight))
 
         if self.min_impurity_split is not None:
-            warnings.warn("The min_impurity_split parameter is deprecated and"
-                          " will be removed in version 0.21. "
+            warnings.warn("The min_impurity_split parameter is deprecated. "
+                          "Its default value will change from 1e-7 to 0 in "
+                          "version 0.23, and it will be removed in 0.25. "
                           "Use the min_impurity_decrease parameter instead.",
                           DeprecationWarning)
             min_impurity_split = self.min_impurity_split
@@ -548,7 +564,11 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -608,14 +628,15 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     class_weight : dict, list of dicts, "balanced" or None, default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -708,7 +729,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
            Learning", Springer, 2009.
 
     .. [4] L. Breiman, and A. Cutler, "Random Forests",
-           http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
+           https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
 
     Examples
     --------
@@ -916,7 +937,11 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -976,14 +1001,15 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     presort : bool, optional (default=False)
         Whether to presort the data to speed up the finding of best splits in
@@ -1047,7 +1073,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
            Learning", Springer, 2009.
 
     .. [4] L. Breiman, and A. Cutler, "Random Forests",
-           http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
+           https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
 
     Examples
     --------
@@ -1174,7 +1200,11 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -1234,14 +1264,15 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     class_weight : dict, list of dicts, "balanced" or None, default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1358,7 +1389,11 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -1413,14 +1448,15 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.

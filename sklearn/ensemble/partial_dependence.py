@@ -10,7 +10,7 @@ import numpy as np
 from scipy.stats.mstats import mquantiles
 
 from ..utils.extmath import cartesian
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import map, range, zip
 from ..utils import check_array
@@ -203,9 +203,10 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     percentiles : (low, high), default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the PDP axes.
-    n_jobs : int
-        The number of CPUs to use to compute the PDs. -1 means 'all CPUs'.
-        Defaults to 1.
+    n_jobs : int or None, optional (default=None)
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
     verbose : int
         Verbose output during PD computations. Defaults to 0.
     ax : Matplotlib axis object, default None

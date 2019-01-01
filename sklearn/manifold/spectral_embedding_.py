@@ -246,11 +246,11 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # https://github.com/scipy/scipy/blob/v0.11.0/scipy/sparse/linalg/eigen
         # /lobpcg/lobpcg.py#L237
         # or matlab:
-        # http://www.mathworks.com/matlabcentral/fileexchange/48-lobpcg-m
+        # https://www.mathworks.com/matlabcentral/fileexchange/48-lobpcg-m
         laplacian = _set_diag(laplacian, 1, norm_laplacian)
 
         # Here we'll use shift-invert mode for fast eigenvalues
-        # (see http://docs.scipy.org/doc/scipy/reference/tutorial/arpack.html
+        # (see https://docs.scipy.org/doc/scipy/reference/tutorial/arpack.html
         #  for a short explanation of what this means)
         # Because the normalized Laplacian has eigenvalues between 0 and 2,
         # I - L has eigenvalues between -1 and 1.  ARPACK is most efficient
@@ -382,9 +382,11 @@ class SpectralEmbedding(BaseEstimator):
     n_neighbors : int, default : max(n_samples/10 , 1)
         Number of nearest neighbors for nearest_neighbors graph building.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -394,6 +396,18 @@ class SpectralEmbedding(BaseEstimator):
 
     affinity_matrix_ : array, shape = (n_samples, n_samples)
         Affinity_matrix constructed from samples or precomputed.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.manifold import SpectralEmbedding
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> embedding = SpectralEmbedding(n_components=2)
+    >>> X_transformed = embedding.fit_transform(X[:100])
+    >>> X_transformed.shape
+    (100, 2)
 
     References
     ----------

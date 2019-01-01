@@ -5,8 +5,6 @@
 from __future__ import division
 
 import numpy as np
-import scipy as sp
-import warnings
 from warnings import warn
 from sklearn.utils.fixes import euler_gamma
 
@@ -16,6 +14,7 @@ import numbers
 from ..externals import six
 from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
+from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted
 from ..base import OutlierMixin
 
@@ -85,9 +84,11 @@ class IsolationForest(BaseBagging, OutlierMixin):
         data sampled with replacement. If False, sampling without replacement
         is performed.
 
-    n_jobs : integer, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        If -1, then the number of jobs is set to the number of cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     behaviour : str, default='old'
         Behaviour of the ``decision_function`` which can be either 'old' or
@@ -134,7 +135,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
     offset_ : float
         Offset used to define the decision function from the raw scores.
         We have the relation: ``decision_function = score_samples - offset_``.
-        Assuming behaviour == 'new', offset_ is defined as follows.
+        Assuming behaviour == 'new', ``offset_`` is defined as follows.
         When the contamination parameter is set to "auto", the offset is equal
         to -0.5 as the scores of inliers are close to 0 and the scores of
         outliers are close to -1. When a contamination parameter different
@@ -142,7 +143,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
         the expected number of outliers (samples with decision function < 0)
         in training.
         Assuming the behaviour parameter is set to 'old', we always have
-        offset_ = -0.5, making the decision function independent from the
+        ``offset_ = -0.5``, making the decision function independent from the
         contamination parameter.
 
     References
@@ -186,6 +187,13 @@ class IsolationForest(BaseBagging, OutlierMixin):
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by iforest")
 
+    def _parallel_args(self):
+        # ExtraTreeRegressor releases the GIL, so it's more efficient to use
+        # a thread-based backend rather than a process-based backend so as
+        # to avoid suffering from communication overhead and extra memory
+        # copies.
+        return _joblib_parallel_args(prefer='threads')
+
     def fit(self, X, y=None, sample_weight=None):
         """Fit estimator.
 
@@ -199,25 +207,28 @@ class IsolationForest(BaseBagging, OutlierMixin):
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted.
 
+        y : Ignored
+            not used, present for API consistency by convention.
+
         Returns
         -------
         self : object
         """
         if self.contamination == "legacy":
-            warnings.warn('default contamination parameter 0.1 will change '
-                          'in version 0.22 to "auto". This will change the '
-                          'predict method behavior.',
-                          FutureWarning)
+            warn('default contamination parameter 0.1 will change '
+                 'in version 0.22 to "auto". This will change the '
+                 'predict method behavior.',
+                 FutureWarning)
             self._contamination = 0.1
         else:
             self._contamination = self.contamination
 
         if self.behaviour == 'old':
-            warnings.warn('behaviour="old" is deprecated and will be removed '
-                          'in version 0.22. Please use behaviour="new", which '
-                          'makes the decision_function change to match '
-                          'other anomaly detection algorithm API.',
-                          FutureWarning)
+            warn('behaviour="old" is deprecated and will be removed '
+                 'in version 0.22. Please use behaviour="new", which '
+                 'makes the decision_function change to match '
+                 'other anomaly detection algorithm API.',
+                 FutureWarning)
 
         X = check_array(X, accept_sparse=['csc'])
         if issparse(X):
@@ -267,8 +278,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
                                  "'auto' when behaviour == 'old'.")
 
             self.offset_ = -0.5
-            self._threshold_ = sp.stats.scoreatpercentile(
-                self.decision_function(X), 100. * self._contamination)
+            self._threshold_ = np.percentile(self.decision_function(X),
+                                             100. * self._contamination)
 
             return self
 
@@ -281,8 +292,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
         # else, define offset_ wrt contamination parameter, so that the
         # threshold_ attribute is implicitly 0 and is not needed anymore:
-        self.offset_ = sp.stats.scoreatpercentile(
-            self.score_samples(X), 100. * self._contamination)
+        self.offset_ = np.percentile(self.score_samples(X),
+                                     100. * self._contamination)
 
         return self
 
@@ -410,8 +421,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
         if self.behaviour != 'old':
             raise AttributeError("threshold_ attribute does not exist when "
                                  "behaviour != 'old'")
-        warnings.warn("threshold_ attribute is deprecated in 0.20 and will"
-                      " be removed in 0.22.", DeprecationWarning)
+        warn("threshold_ attribute is deprecated in 0.20 and will"
+             " be removed in 0.22.", DeprecationWarning)
         return self._threshold_
 
 
