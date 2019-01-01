@@ -383,11 +383,11 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
 
-        self.prune_tree()
-
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
+
+        self.prune_tree()
 
         return self
 
@@ -614,7 +614,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 cur_idx = parents[cur_idx]
 
         # build pruned treee
-        pruned_tree = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
+        n_classes = np.atleast_1d(self.n_classes_)
+        pruned_tree = Tree(self.n_features_, n_classes, self.n_outputs_)
         build_pruned_tree(pruned_tree, self.tree_, leaves_in_subtree)
 
         self.tree_ = pruned_tree
