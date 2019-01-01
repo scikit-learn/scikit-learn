@@ -383,11 +383,11 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
 
+        self.prune_tree()
+
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
-
-        self.prune_tree()
 
         return self
 
@@ -532,7 +532,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         prior = samples / samples[0]
 
         # impurity weighted by prior
-        R_node = prior * self.tree_.impurity
+        r_node = prior * self.tree_.impurity
 
         # find parent node ids and leaves
         child_l = self.tree_.children_left
@@ -553,19 +553,19 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 stack.append((child_r[node_id], node_id))
 
         # computes number of leaves in all branches and the overall impurity of
-        # the branch. The overall impurity is the sum of R_node in its leaves.
-        N_leaves = np.zeros(shape=n_nodes, dtype=np.int32)
+        # the branch. The overall impurity is the sum of r_node in its leaves.
+        n_leaves = np.zeros(shape=n_nodes, dtype=np.int32)
         leaf_idicies, = np.where(leaves_in_subtree)
-        R_branch = np.zeros(shape=n_nodes, dtype=DTYPE)
-        R_branch[leaf_idicies] = R_node[leaf_idicies]
+        r_branch = np.zeros(shape=n_nodes, dtype=DTYPE)
+        r_branch[leaf_idicies] = r_node[leaf_idicies]
 
         # bubble up values to ancestor nodes
         for idx in leaf_idicies:
-            cur_R = R_node[idx]
+            cur_R = r_node[idx]
             while idx != 0:
                 par_idx = parents[idx]
-                R_branch[par_idx] += cur_R
-                N_leaves[par_idx] += 1
+                r_branch[par_idx] += cur_R
+                n_leaves[par_idx] += 1
                 idx = par_idx
 
         # non-leaves that can be pruned
@@ -579,7 +579,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 break
 
             # computes alpha for subtrees
-            g_node = (R_node - R_branch) / (N_leaves - 1)
+            g_node = (r_node - r_branch) / (n_leaves - 1)
             g_node[~inner_nodes] = np.inf
 
             # smallest value is the weakest link which is pruned
@@ -600,17 +600,17 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             leaves_in_subtree[cur_idx] = 1
 
             # updates number of leaves
-            cur_leaves, N_leaves[cur_idx] = N_leaves[cur_idx], 0
+            cur_leaves, n_leaves[cur_idx] = n_leaves[cur_idx], 0
 
-            # computes the increase in R_branch to bubble up
-            R_diff = R_node[cur_idx] - R_branch[cur_idx]
-            R_branch[cur_idx] = R_node[cur_idx]
+            # computes the increase in r_branch to bubble up
+            R_diff = r_node[cur_idx] - r_branch[cur_idx]
+            r_branch[cur_idx] = r_node[cur_idx]
 
             # bubble up values to ancestors
             cur_idx = parents[cur_idx]
             while cur_idx != _tree.TREE_LEAF:
-                N_leaves[cur_idx] -= cur_leaves - 1
-                R_branch[cur_idx] += R_diff
+                n_leaves[cur_idx] -= cur_leaves - 1
+                r_branch[cur_idx] += R_diff
                 cur_idx = parents[cur_idx]
 
         # build pruned treee
