@@ -140,7 +140,7 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
             assert_all_finite(vt)
             u = u[:, n_discard:]
             vt = vt[n_discard:]
-            
+
         elif self.svd_method == 'arpack':
             u, _, vt = svds(array, k=n_components, ncv=self.n_svd_vecs)
             if np.any(np.isnan(vt)):
