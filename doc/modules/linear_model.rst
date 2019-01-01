@@ -876,18 +876,18 @@ to warm-starting (see :term:`Glossary <warm_start>`).
 
 .. _Generalized_linear_regression:
 
-Generalized linear regression
+Generalized Linear Regression
 =============================
 
 :class:`GeneralizedLinearRegressor` generalizes the :ref:`elastic_net` in two
-ways [8]_. First, the predicted values :math:`\hat{y}` are linked to a linear
+ways [10]_. First, the predicted values :math:`\hat{y}` are linked to a linear
 combination of the input variables :math:`X` via an inverse link function
 :math:`h` as
 
 .. math::    \hat{y}(w, x) = h(xw) = h(w_0 + w_1 x_1 + ... + w_p x_p).
 
 Secondly, the squared loss function is replaced by the deviance :math:`D` of an
-exponential dispersion model (EDM) [9]_. The objective function beeing minimized
+exponential dispersion model (EDM) [11]_. The objective function beeing minimized
 becomes
 
 .. math::    \frac{1}{2s}D(y, \hat{y}) + \alpha \rho ||P_1w||_1
@@ -983,7 +983,7 @@ Two remarks:
 
 * The deviances for at least Normal, Poisson and Gamma distributions are
   strictly consistent scoring functions for the mean :math:`\mu`, see Eq.
-  (19)-(20) in [10]_.
+  (19)-(20) in [12]_.
 
 * If you want to model a frequency, i.e. counts per exposure (time, volume, ...)
   you can do so by a Poisson distribution and passing
@@ -993,12 +993,12 @@ Two remarks:
 
 .. topic:: References:
 
-    .. [8] McCullagh, Peter; Nelder, John (1989). Generalized Linear Models, Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
+    .. [10] McCullagh, Peter; Nelder, John (1989). Generalized Linear Models, Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
 
-    .. [9] Jørgensen, B. (1992). The theory of exponential dispersion models and analysis of deviance. Monografias de matemática, no. 51.
+    .. [11] Jørgensen, B. (1992). The theory of exponential dispersion models and analysis of deviance. Monografias de matemática, no. 51.
            See also `Exponential dispersion model. <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
 
-    .. [10] Gneiting, T. (2010). `Making and Evaluating Point Forecasts. <https://arxiv.org/pdf/0912.0902.pdf>`_
+    .. [12] Gneiting, T. (2010). `Making and Evaluating Point Forecasts. <https://arxiv.org/pdf/0912.0902.pdf>`_
 
 Stochastic Gradient Descent - SGD
 =================================

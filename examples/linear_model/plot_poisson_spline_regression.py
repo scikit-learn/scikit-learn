@@ -24,7 +24,8 @@ print(__doc__)
 # importing necessary libraries
 import numpy as np
 from scipy.linalg import toeplitz
-from scipy.interpolate import BSpline
+# from scipy.interpolate import BSpline
+from scipy.interpolate import splev
 import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import AdaBoostRegressor
@@ -47,8 +48,9 @@ coef = np.zeros(ns)
 splineBasis = np.empty((X.shape[0], ns), dtype=float)
 for i in range(ns):
     coef[i] = 1
-    splineBasis[:, i] = BSpline(knots, coef, degree, extrapolate=False)(X) \
-        .ravel()
+#    splineBasis[:, i] = BSpline(knots, coef, degree, extrapolate=False)(X) \
+#        .ravel()
+    splineBasis[:, i] = splev(X, (knots, coef, degree)).ravel()
     coef[i] = 0
 
 # second order difference matrix
