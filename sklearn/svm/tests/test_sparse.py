@@ -125,7 +125,6 @@ def test_unsorted_indices():
     X_sparse_unsorted = scramble_indices(X_sparse)
     X_test_unsorted = scramble_indices(X_test)
 
-    # make sure we scramble the indices
     assert not X_sparse_unsorted.has_sorted_indices
     assert not X_test_unsorted.has_sorted_indices
 
