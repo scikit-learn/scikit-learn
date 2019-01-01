@@ -1235,8 +1235,11 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 P2 = sparse.block_diag((sparse.dia_matrix((1, 1)), P2),
                                        dtype=P2.dtype).tocsr()
             else:
-                P2 = np.block([[np.zeros((1, 1)), np.zeros((1, X.shape[1]))],
-                               [np.zeros((X.shape[1], 1)), P2]])
+                # as of numpy 1.13 this would work:
+                # P2 = np.block([[np.zeros((1, 1)), np.zeros((1, X.shape[1]))],
+                #                [np.zeros((X.shape[1], 1)), P2]])
+                P2 = np.hstack((np.zeros((X.shape[1], 1)), P2))
+                P2 = np.vstack((np.zeros((1, X.shape[1]+1)), P2))
         else:
             Xnew = X
 
