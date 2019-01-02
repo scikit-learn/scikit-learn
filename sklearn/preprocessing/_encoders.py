@@ -297,7 +297,7 @@ class OneHotEncoder(_BaseEncoder):
       matrix indicating the presence of a class label.
     """
 
-    def __init__(self, n_values=None, categorical_features=None,
+    def __init__(self, n_values=None, drop=None, categorical_features=None,
                  categories=None, sparse=True, dtype=np.float64,
                  handle_unknown='error'):
         self.categories = categories
@@ -306,6 +306,7 @@ class OneHotEncoder(_BaseEncoder):
         self.handle_unknown = handle_unknown
         self.n_values = n_values
         self.categorical_features = categorical_features
+        self.drop = drop
 
     # Deprecated attributes
 
@@ -421,6 +422,22 @@ class OneHotEncoder(_BaseEncoder):
         else:
             self._categorical_features = 'all'
 
+        # Prevents new drop functionality from being used in legacy mode
+        if self._legacy_mode and self.drop is not None:
+            raise ValueError(
+                "The 'categorical_features' and 'n_values' keywords "
+                "are deprecated, and cannot be used together "
+                "with specifying 'drop'.")
+
+        # If we have intentionally dropped columns and ignored unknown
+        # values, there will be ambiguous cells. This creates difficulties
+        # in interpreting the model.
+        if self.drop is not None and self.handle_unknown != 'error':
+            raise ValueError(
+                "handle_unknown cannot be 'ignore' when the drop parameter "
+                "is specified, as this will create ambiguous cells")
+
+
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
 
@@ -447,6 +464,25 @@ class OneHotEncoder(_BaseEncoder):
             return self
         else:
             self._fit(X, handle_unknown=self.handle_unknown)
+            if self.drop is None:
+                self.drop_ = None
+            elif (isinstance(self.drop, six.string_types) and
+                    self.drop == 'first'):
+                self.drop_ = np.array([cats[0] for cats in self.categories_],
+                                      dtype=object)
+            else:
+                try:
+                    self.drop = np.asarray(self.drop, dtype=object)
+                except (ValueError, TypeError):
+                    msg = ("Wrong type for parameter `drop`. Expected "
+                           "'first', None or array of objects, got {}")
+                    raise TypeError(msg.format(type(self.drop)))
+                if len(self.drop) != len(self.categories_):
+                    msg = ("`drop` should have length equal to the number "
+                           "of features ({}), got {}")
+                    raise ValueError(msg.format(len(self.categories_),
+                                                len(self.drop)))
+                self.drop_ = self.drop
             return self
 
     def _legacy_fit_transform(self, X):
@@ -593,11 +629,29 @@ class OneHotEncoder(_BaseEncoder):
 
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
 
+        if not self.drop is None:
+            for i in range(n_features):
+                Xii = X_int[:, i]
+                Xmi = X_mask[:, i]
+                uniques = self.categories_[i]
+                drop_loc = np.where(uniques == self.drop_[i])
+                drop_value = drop_loc[0][0] if len(drop_loc[0]) == 1 else None
+                """
+                Add the cells where the drop value is present to the list
+                of those to be masked-out. Decrement the indices of the values
+                above so as not to leave a blank column.
+                """
+                if drop_value is not None:
+                    keep_cells = ~np.isin(Xii, [drop_value])
+                    np.logical_and(Xmi, keep_cells, out=Xmi)
+                    Xii[Xii > drop_value] -= 1
+            n_values = [cats.shape[0] - 1 for cats in self.categories_]
+        else:
+            n_values = [cats.shape[0] for cats in self.categories_]
+        
         mask = X_mask.ravel()
-        n_values = [cats.shape[0] for cats in self.categories_]
         n_values = np.array([0] + n_values)
         feature_indices = np.cumsum(n_values)
-
         indices = (X_int + feature_indices[:-1]).ravel()[mask]
         indptr = X_mask.sum(axis=1).cumsum()
         indptr = np.insert(indptr, 0, 0)
@@ -657,7 +711,10 @@ class OneHotEncoder(_BaseEncoder):
 
         n_samples, _ = X.shape
         n_features = len(self.categories_)
-        n_transformed_features = sum([len(cats) for cats in self.categories_])
+        if self.drop is None:
+            n_transformed_features = sum([len(cats) for cats in self.categories_])
+        else:
+            n_transformed_features = sum([len(cats) - 1 for cats in self.categories_])
 
         # validate shape of passed X
         msg = ("Shape of the passed X data is not correct. Expected {0} "
@@ -673,14 +730,26 @@ class OneHotEncoder(_BaseEncoder):
         found_unknown = {}
 
         for i in range(n_features):
-            n_categories = len(self.categories_[i])
+            if self.drop is None:
+                cats = self.categories_[i]
+            else:
+                cats = np.array([cat for cat in self.categories_[i] 
+                                    if cat != self.drop_[i]])
+            n_categories = len(cats)
             sub = X[:, j:j + n_categories]
-
             # for sparse X argmax returns 2D matrix, ensure 1D array
             labels = np.asarray(_argmax(sub, axis=1)).flatten()
-            X_tr[:, i] = self.categories_[i][labels]
+            X_tr[:, i] = cats[labels]
 
-            if self.handle_unknown == 'ignore':
+            '''
+            In this case, we can safely assume that all of the nulls in
+            each column are the dropped value
+            '''
+            if self.drop is not None:
+                unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
+                if unknown.any():
+                    X_tr[unknown, i] = self.drop_[i]
+            elif self.handle_unknown == 'ignore':
                 # ignored unknown categories: we have a row of all zero's
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
                 if unknown.any():
