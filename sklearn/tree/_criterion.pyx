@@ -287,7 +287,7 @@ cdef class ClassificationCriterion(Criterion):
 
         Parameters
         ----------
-        y : array-like, dtype=DOUBLE_t[:, :]
+        y : array-like, dtype=const DOUBLE_t[:, ::1]
             The target stored as a buffer for memory efficiency
         sample_weight : array-like, dtype=DTYPE_t
             The weight of each sample
