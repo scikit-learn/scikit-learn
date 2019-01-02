@@ -221,13 +221,14 @@ module and import it for usage.
 
 For example, to use, ``n_jobs`` greater than 1 below, ``rmse`` function is 
 saved in a separate module (``custom_scorer_module.py``) and imported::
-  >>> from custom_scorer_module import rmse # doctest: +SKIP
-  >>> cross_val_score(elnet_pipe,
-  ...  X_train,
-  ...  y_train,
-  ...  scoring=make_scorer(rmse, greater_is_better=False),
-  ...  cv=rkfold,
-  ...  n_jobs=-1) # doctest: +SKIP
+
+    >>> from custom_scorer_module import rmse # doctest: +SKIP
+    >>> cross_val_score(elnet_pipe,
+    ...  X_train,
+    ...  y_train,
+    ...  scoring=make_scorer(rmse, greater_is_better=False),
+    ...  cv=rkfold,
+    ...  n_jobs=-1) # doctest: +SKIP
 
 
 .. _multimetric_scoring:
