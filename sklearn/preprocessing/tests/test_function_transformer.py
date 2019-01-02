@@ -1,4 +1,6 @@
 import pytest
+import joblib
+import os
 import numpy as np
 from scipy import sparse
 
@@ -84,6 +86,29 @@ def test_np_log():
         FunctionTransformer(np.log1p).transform(X),
         np.log1p(X),
     )
+
+
+@ignore_warnings(category=FutureWarning)
+# ignore warning for validate=False 0.22
+def test_joblib():
+    X = np.arange(10).reshape((5, 2))
+
+    def f(X):
+        return X*2
+    # Test that the example still works.
+    assert_array_equal(
+        FunctionTransformer(f).transform(X),
+        X*2,
+    )
+    joblib.dump(f, "test_joblib.joblib")
+    del f
+    # Test that the pickled version works.
+    assert_array_equal(
+        joblib.load("test_joblib.joblib"),
+        X*2,
+    )
+    # Cleanup
+    os.remove("test_joblib.joblib")
 
 
 @ignore_warnings(category=FutureWarning)

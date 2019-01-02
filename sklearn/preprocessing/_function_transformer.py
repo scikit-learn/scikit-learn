@@ -90,7 +90,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         self.check_inverse = check_inverse
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
-        
+
     def __getstate__(self):
         self.func_name = self.func.__name__
         self.func_code = marshal.dumps(self.func.__code__)
@@ -98,7 +98,9 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         return self.__dict__
 
     def __setstate__(self, d):
-        d["func"] = FunctionType(marshal.loads(d["func_code"]), globals(), d["func_name"])
+        d["func"] = FunctionType(marshal.loads(d["func_code"]),
+                                 globals(),
+                                 d["func_name"])
         del d["func_name"]
         del d["func_code"]
         self.__dict__ = d
