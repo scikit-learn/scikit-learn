@@ -45,8 +45,8 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
         dtype = np.float64
         data = array.array("d")
 
-    indices = array.array("l")
-    indptr = array.array("l", [0])
+    indices = array.array("q")
+    indptr = array.array("q", [0])
     query = np.arange(0, dtype=np.int64)
 
     if multilabel:
