@@ -455,11 +455,9 @@ def haversine_distances(X, Y=None):
 
     Parameters
     ----------
-    X : array_like
-        An array with shape (n_samples_1, 2).
+    X : array_like, shape (n_samples_1, 2)
 
-    Y : array_like, optional
-        An array with shape (n_samples_2, 2).
+    Y : array_like, shape (n_samples_2, 2), optional
 
     Returns
     -------

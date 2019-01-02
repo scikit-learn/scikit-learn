@@ -935,7 +935,7 @@ def test_neighbors_badargs():
                   algorithm='blah')
 
     X = rng.random_sample((10, 3))
-    # Xsparse = csr_matrix(X)
+    Xsparse = csr_matrix(X)
     y = np.ones(10)
 
     for cls in (neighbors.KNeighborsClassifier,
@@ -1016,14 +1016,12 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                                                algorithm=algorithm,
                                                metric=metric, p=p,
                                                metric_params=metric_params)
-            if metric == 'haversine':
-                neigh.fit(X[:, :2])
-                results[algorithm] = neigh.kneighbors(test[:, :2],
-                                                      return_distance=True)
-            else:
-                neigh.fit(X)
-                results[algorithm] = neigh.kneighbors(test,
-                                                      return_distance=True)
+            feature_sl = slice(None, 2) if metric == 'haversine'\
+                else slice(None)
+
+            neigh.fit(X[:, feature_sl])
+            results[algorithm] = neigh.kneighbors(test[:, feature_sl],
+                                                   return_distance=True)
 
         assert_array_almost_equal(results['brute'][0], results['ball_tree'][0])
         assert_array_almost_equal(results['brute'][1], results['ball_tree'][1])
@@ -1089,7 +1087,7 @@ def test_valid_brute_metric_for_auto_algorithm():
 
     for metric in VALID_METRICS_SPARSE['brute']:
         if metric != 'precomputed' and metric not in require_params:
-            if metric == 'haversine':
+            if metric in VALID_METRICS_SPARSE['brute']:
                 continue
             nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                             metric=metric).fit(Xcsr)
