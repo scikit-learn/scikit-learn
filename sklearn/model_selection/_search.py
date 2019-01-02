@@ -618,7 +618,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             if self.refit is not False and (
                     not isinstance(self.refit, six.string_types) or
                     # This will work for both dict / list (tuple)
-                    self.refit not in scorers) and (not callable(self.refit)):
+                    self.refit not in scorers) and not callable(self.refit):
                     raise ValueError("For multi-metric scoring, the parameter "
                                      "refit must be set to a scorer key or a "
                                      "callable to refit an estimator with the "
@@ -689,8 +689,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         # best_score_ iff refit is one of the scorer names
         # In single metric evaluation, refit_metric is "score"
         if self.refit or not self.multimetric_:
-            # If self.refit is a callable, it will be passed results and would
-            # be expected to return a value for best_index_.
+            # If callable, refit is expected to return the index of the best 
+            # parameter set.
             if callable(self.refit):
                 self.best_index_ = self.refit(results)
             else:
@@ -939,10 +939,14 @@ class GridSearchCV(BaseSearchCV):
         Also for multiple metric evaluation, the attributes ``best_index_``,
         ``best_score_`` and ``best_params_`` will only be available if
         ``refit`` is set and all of them will be determined w.r.t this specific
-        scorer. When refit is callable, ``best_score_`` is disabled.
+        scorer. ``best_score_`` is not returned if refit is callable.
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
+
+        .. versionadded:: 0.20
+            GridSearchCV supports ``refit`` = callable to add flexibility in
+            identifying the best estimator.
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.

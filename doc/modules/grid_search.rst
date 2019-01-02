@@ -90,7 +90,7 @@ evaluated and the best combination is retained.
 
     - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
       for an example of using ``refit=callable`` interface in
-      :class:`GridSearchCV`. The example shows this interface adds certain
+      :class:`GridSearchCV`. The example shows how this interface adds certain
       amount of flexibility in identifying the "best" estimator. This interface
       can also be used in multiple metrics evaluation.
 

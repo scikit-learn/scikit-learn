@@ -5,12 +5,16 @@ Balance model complexity and cross-validated score
 
 This example balances model complexity and cross-validated score by
 finding a decent accuracy within 1 standard deviation of the best accuracy
-score while minimising the number of PCA components.
+score while minimising the number of PCA components [1].
 
-The figure shows the trade-off between cross-validated score and number of
-PCA components. The balanced case is when n_components=6 and accuracy=0.80,
+The figure shows the trade-off between cross-validated score and the number
+of PCA components. The balanced case is when n_components=6 and accuracy=0.80,
 which falls into the range within 1 standard deviation of the best accuracy
 score.
+
+[1] Hastie, T., Tibshirani, R.,, Friedman, J. (2001). Model Assessment and
+Selection. The Elements of Statistical Learning (pp. 219-260). New York,
+NY, USA: Springer New York Inc..
 """
 # Author: Wenhao Zhang <wenhaoz@ucla.edu>
 
@@ -48,7 +52,7 @@ def lower_bound(cv_results):
             - cv_results['std_test_score'][best_score_idx])
 
 
-def refit_callable(cv_results):
+def best_low_complexity(cv_results):
     """
     Balance model complexity with cross-validated score.
 
@@ -61,7 +65,7 @@ def refit_callable(cv_results):
     ------
     int
         Index of a model that has the fewest PCA components
-        while has test score within 1 standard deviation of the best
+        while has its test score within 1 standard deviation of the best
         `mean_test_score`.
     """
     threshold = lower_bound(cv_results)
@@ -76,13 +80,12 @@ pipe = Pipeline([
         ('classify', LinearSVC(random_state=42)),
 ])
 
-N_FEATURES_OPTIONS = [2, 4, 6, 8]
 param_grid = {
-    'reduce_dim__n_components': N_FEATURES_OPTIONS
+    'reduce_dim__n_components': [2, 4, 6, 8]
 }
 
 grid = GridSearchCV(pipe, cv=10, n_jobs=1, param_grid=param_grid,
-                    scoring='accuracy', refit=refit_callable)
+                    scoring='accuracy', refit=best_low_complexity)
 digits = load_digits()
 grid.fit(digits.data, digits.target)
 
@@ -98,7 +101,7 @@ plt.axhline(np.max(test_scores), linestyle='--', color='y',
 plt.axhline(lower, linestyle='--', color='.5', label='Best score - 1 std')
 
 plt.title("Balance model complexity and cross-validated score")
-plt.xlabel('Reduced number of features')
+plt.xlabel('Number of PCA components used')
 plt.ylabel('Digit classification accuracy')
 plt.xticks(n_components.tolist())
 plt.ylim((0, 1.0))
