@@ -1,5 +1,4 @@
 import pytest
-import joblib
 import os
 import numpy as np
 from scipy import sparse
@@ -9,6 +8,7 @@ from sklearn.utils.testing import (assert_equal, assert_array_equal,
                                    assert_allclose_dense_sparse)
 from sklearn.utils.testing import assert_warns_message, assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
+import joblib
 
 
 def _make_func(args_store, kwargs_store, func=lambda X, *a, **k: X):
