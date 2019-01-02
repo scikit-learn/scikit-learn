@@ -689,6 +689,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     0.625
 
     """
+    print('!', y_true)
     if average != 'samples' and normalize != 'true-if-samples':
         raise ValueError("'normalize' is only meaningful with "
                          "`average='samples'`, got `average='%s'`."
@@ -708,6 +709,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         numerator = np.array([numerator.sum()])
         denominator = np.array([denominator.sum()])
 
+    print(locals())
     jaccard = _prf_divide(numerator, denominator, 'jaccard',
                           'true or predicted', average, ('jaccard',))
     if average is None:
