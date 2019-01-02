@@ -191,7 +191,8 @@ def test_load_with_qid():
         assert_array_equal(X.toarray(), [[.53, .12], [.13, .1], [.87, .12]])
 
 
-@pytest.mark.skip("testing the overflow of 32 bit sparse indexing requires a large amount of memory")
+@pytest.mark.skip("testing the overflow of 32 bit sparse indexing requires a"
+                  " large amount of memory")
 def test_load_large_qid():
     """
     load large libsvm / svmlight file with qid attribute. Tests 64-bit query ID
