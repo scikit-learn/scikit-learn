@@ -1,4 +1,6 @@
 import warnings
+import marshal
+from types import FunctionType
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
@@ -88,6 +90,18 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         self.check_inverse = check_inverse
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
+        
+    def __getstate__(self):
+        self.func_name = self.func.__name__
+        self.func_code = marshal.dumps(self.func.__code__)
+        del self.func
+        return self.__dict__
+
+    def __setstate__(self, d):
+        d["func"] = FunctionType(marshal.loads(d["func_code"]), globals(), d["func_name"])
+        del d["func_name"]
+        del d["func_code"]
+        self.__dict__ = d
 
     def _check_input(self, X):
         # FIXME: Future warning to be removed in 0.22
