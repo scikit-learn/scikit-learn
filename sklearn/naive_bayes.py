@@ -1214,9 +1214,8 @@ class CategoricalNB(BaseDiscreteNB):
         check_is_fitted(self, "classes_")
 
         if not X.shape[1] == self.n_features_:
-            raise ValueError(
-                'X has a different number of features than expected.')
-
+            raise ValueError("Expected input with %d features, got %d instead"
+                             .format(self.n_features_, X.shape[1]))
         samples_prob_zero = []
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
         for i in range(self.n_features_):
@@ -1233,7 +1232,7 @@ class CategoricalNB(BaseDiscreteNB):
                         warnings.warn(
                             "Category {} not expected for feature {} "
                             "of features 0 - {}. Sample {} has probability 0."
-                                .format(category, i, self.n_features_, sample)
+                            .format(category, i, self.n_features_, sample)
                         )
                     else:
                         raise KeyError(
