@@ -613,11 +613,36 @@ def test_catnb():
     # Check the ability to predict the learning set.
     clf = CategoricalNB()
     assert_raises(ValueError, clf.fit, -X, y2)
-    a = clf.fit(X2, y2)
-    print(type(a))
-    y_pred = a.predict(X2)
-
+    y_pred = clf.fit(X2, y2).predict(X2)
     assert_array_equal(y_pred, y2)
+
+    clf = CategoricalNB(alpha=1, fit_prior=False)
+    X3 = np.array([[1, 4], [2, 5]])
+    y3 = np.array([1, 2])
+    clf.fit(X3, y3)
+
+    # Test alpha
+    X3_test = np.array([[2, 5]])
+    # alpha=1 increases the count of all categories by one so the final
+    # probability for each category is not 50/50 but 1/3 to 2/3
+    bayes_nominator = np.array([[1/3*1/3, 2/3*2/3]])
+    bayes_denominator = bayes_nominator.sum()
+    assert_array_almost_equal(clf.predict_proba(X3_test),
+                              bayes_nominator / bayes_denominator)
+
+    # Check that unseen categories in the test set count with probability 1
+    X3_test = np.array([[0, 5]])
+    assert_array_equal(clf.predict(X3_test), np.array([2]))
+    assert_array_almost_equal(clf.predict_proba(X3_test),
+                              np.array([[1/3, 2/3]]))
+
+    # Check that unseen cats throw an error or warn accordingly
+    clf.on_unseen_cats = 'error'
+    assert_raises(KeyError, clf.predict, X3_test)
+    clf.on_unseen_cats = 'asfasdffghashdf'
+    assert_raises(KeyError, clf.predict, X3_test)
+    clf.on_unseen_cats = 'warn'
+    assert_warns(UserWarning, clf.predict, X3_test)
 
 
 def test_alpha():

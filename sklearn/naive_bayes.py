@@ -1204,10 +1204,10 @@ class CategoricalNB(BaseDiscreteNB):
     def _update_feature_log_prob(self, alpha):
         feature_log_prob = {}
         for i in range(self.n_features_):
-            smoothed_fc = self.category_count_[i] + alpha
-            smoothed_cc = smoothed_fc.sum(axis=1)
-            feature_log_prob[i] = (np.log(smoothed_fc) -
-                                   np.log(smoothed_cc.reshape(-1, 1)))
+            smoothed_cat_count = self.category_count_[i] + alpha
+            smoothed_class_count = smoothed_cat_count.sum(axis=1)
+            feature_log_prob[i] = (np.log(smoothed_cat_count) -
+                                   np.log(smoothed_class_count.reshape(-1, 1)))
         self.feature_log_prob_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):
@@ -1216,7 +1216,6 @@ class CategoricalNB(BaseDiscreteNB):
         if not X.shape[1] == self.n_features_:
             raise ValueError("Expected input with %d features, got %d instead"
                              .format(self.n_features_, X.shape[1]))
-        samples_prob_zero = []
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
         for i in range(self.n_features_):
             X_feature = X[:, i]
@@ -1231,20 +1230,18 @@ class CategoricalNB(BaseDiscreteNB):
                     elif self.on_unseen_cats == 'warn':
                         warnings.warn(
                             "Category {} not expected for feature {} "
-                            "of features 0 - {}. Sample {} has probability 0."
-                            .format(category, i, self.n_features_, sample)
+                            "of features 0 - {}."
+                            .format(category, i, self.n_features_)
                         )
                     else:
                         raise KeyError(
                             "Category {} not expected for feature {} "
-                            "of features 0 - {}. Sample {} has probability 0."
-                            .format(category, i, self.n_features_, sample)
+                            "of features 0 - {}."
+                            .format(category, i, self.n_features_)
                         )
-                    samples_prob_zero.append(sample)
             # indices length is 0, if all categories have not been seen in the
             # training set
             if len(indices) > 0:
                 jll += self.feature_log_prob_[i][:, indices].T
         total_ll = jll + self.class_log_prior_
-        total_ll[samples_prob_zero, :] = 0
         return total_ll
