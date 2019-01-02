@@ -197,8 +197,9 @@ def test_load_large_qid():
     """
     load large libsvm / svmlight file with qid attribute. Tests 64-bit query ID
     """
-    data = b"\n".join((f"""3 qid:{i} 1:0.53 2:0.12
-    2 qid:{i} 1:0.13 2:0.1""".encode() for i in range(1, 40*1000*1000)))
+    data = b"\n".join((f"3 qid:{i} 1:0.53 2:0.12\n"
+                       f"2 qid:{i} 1:0.13 2:0.1".encode()
+                       for i in range(1, 40*1000*1000)))
     X, y, qid = load_svmlight_file(BytesIO(data), query_id=True)
     assert_array_equal(y[-4:], [3, 2, 3, 2])
     assert_array_equal(np.unique(qid), np.arange(1, 40*1000*1000))
