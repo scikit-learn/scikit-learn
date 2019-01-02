@@ -302,6 +302,7 @@ cdef class ClassificationCriterion(Criterion):
         """
 
         self.y = y
+        cdef DOUBLE_t[:, :] y_memview = y
         self.sample_weight = sample_weight
         self.samples = samples
         self.start = start
@@ -334,7 +335,7 @@ cdef class ClassificationCriterion(Criterion):
 
             # Count weighted class frequency for each target
             for k in range(self.n_outputs):
-                c = <SIZE_t> y[i, k]
+                c = <SIZE_t> y_memview[i, k]
                 sum_total[k * self.sum_stride + c] += w
 
             self.weighted_n_node_samples += w
@@ -772,7 +773,7 @@ cdef class RegressionCriterion(Criterion):
                 w = sample_weight[i]
 
             for k in range(self.n_outputs):
-                y_ik = y[i, k]
+                y_ik = self.y[i, k]
                 w_y_ik = w * y_ik
                 self.sum_total[k] += w_y_ik
                 self.sq_sum_total += w_y_ik * y_ik
@@ -1067,7 +1068,7 @@ cdef class MAE(RegressionCriterion):
                 w = sample_weight[i]
 
             for k in range(self.n_outputs):
-                y_ik = y[i, k]
+                y_ik = self.y[i, k]
 
                 # push method ends up calling safe_realloc, hence `except -1`
                 # push all values to the right side,

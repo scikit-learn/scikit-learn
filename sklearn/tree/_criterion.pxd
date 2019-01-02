@@ -1,3 +1,4 @@
+# cython: language_level=3
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Brian Holt <bdholt1@gmail.com>
@@ -12,11 +13,11 @@
 import numpy as np
 cimport numpy as np
 
-ctypedef np.npy_float32 DTYPE_t          # Type of X
-ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
-ctypedef np.npy_intp SIZE_t              # Type for indices and counters
-ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
-ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+from ._tree cimport DTYPE_t          # Type of X
+from ._tree cimport DOUBLE_t         # Type of y, sample_weight
+from ._tree cimport SIZE_t           # Type for indices and counters
+from ._tree cimport INT32_t          # Signed 32 bit integer
+from ._tree cimport UINT32_t         # Unsigned 32 bit integer
 
 cdef class Criterion:
     # The criterion computes the impurity of a node and the reduction of
