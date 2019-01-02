@@ -274,7 +274,7 @@ data by projecting on a principal subspace.
 
     >>> from sklearn import decomposition
     >>> pca = decomposition.PCA()
-    >>> pca.fit(X)
+    >>> pca.fit(X)  # doctest: +NORMALIZE_WHITESPACE
     PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False)
     >>> print(pca.explained_variance_)  # doctest: +SKIP
