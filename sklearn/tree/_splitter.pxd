@@ -62,7 +62,7 @@ cdef class Splitter:
     cdef bint presort                    # Whether to use presorting, only
                                          # allowed on dense data
 
-    cdef DOUBLE_t[:, :] y
+    cdef const DOUBLE_t[:, ::1] y
     cdef DOUBLE_t* sample_weight
 
     # The samples vector `samples` is maintained by the Splitter object such
@@ -82,7 +82,7 @@ cdef class Splitter:
     # This allows optimization with depth-based tree building.
 
     # Methods
-    cdef int init(self, object X, DOUBLE_t[:, :] y,
+    cdef int init(self, object X, const DOUBLE_t[:, ::1] y,
                   DOUBLE_t* sample_weight,
                   np.ndarray X_idx_sorted=*) except -1
 

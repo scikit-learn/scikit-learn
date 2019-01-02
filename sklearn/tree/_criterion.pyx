@@ -51,7 +51,7 @@ cdef class Criterion:
     def __setstate__(self, d):
         pass
 
-    cdef int init(self, DOUBLE_t[:, :] y, DOUBLE_t* sample_weight,
+    cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
                   SIZE_t end) nogil except -1:
         """Placeholder for a method which will initialize the criterion.
@@ -276,7 +276,7 @@ cdef class ClassificationCriterion(Criterion):
                  sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)),
                 self.__getstate__())
 
-    cdef int init(self, DOUBLE_t[:, :] y,
+    cdef int init(self, const DOUBLE_t[:, ::1] y,
                   DOUBLE_t* sample_weight, double weighted_n_samples,
                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil except -1:
         """Initialize the criterion at node samples[start:end] and
@@ -302,7 +302,6 @@ cdef class ClassificationCriterion(Criterion):
         """
 
         self.y = y
-        cdef DOUBLE_t[:, :] y_memview = y
         self.sample_weight = sample_weight
         self.samples = samples
         self.start = start
@@ -335,7 +334,7 @@ cdef class ClassificationCriterion(Criterion):
 
             # Count weighted class frequency for each target
             for k in range(self.n_outputs):
-                c = <SIZE_t> y_memview[i, k]
+                c = <SIZE_t> self.y[i, k]
                 sum_total[k * self.sum_stride + c] += w
 
             self.weighted_n_node_samples += w
@@ -410,7 +409,6 @@ cdef class ClassificationCriterion(Criterion):
             The new ending position for which to move samples from the right
             child to the left child.
         """
-        cdef DOUBLE_t[:, :] y = self.y
         cdef SIZE_t pos = self.pos
         cdef SIZE_t end = self.end
 
@@ -446,7 +444,7 @@ cdef class ClassificationCriterion(Criterion):
 
                 for k in range(self.n_outputs):
                     label_index = (k * self.sum_stride +
-                                   <SIZE_t> y[i, k])
+                                   <SIZE_t> self.y[i, k])
                     sum_left[label_index] += w
 
                 self.weighted_n_left += w
@@ -462,7 +460,7 @@ cdef class ClassificationCriterion(Criterion):
 
                 for k in range(self.n_outputs):
                     label_index = (k * self.sum_stride +
-                                   <SIZE_t> y[i, k])
+                                   <SIZE_t> self.y[i, k])
                     sum_left[label_index] -= w
 
                 self.weighted_n_left -= w
@@ -741,7 +739,7 @@ cdef class RegressionCriterion(Criterion):
     def __reduce__(self):
         return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
 
-    cdef int init(self, DOUBLE_t[:, :] y, DOUBLE_t* sample_weight,
+    cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
                   SIZE_t end) nogil except -1:
         """Initialize the criterion at node samples[start:end] and
@@ -816,7 +814,6 @@ cdef class RegressionCriterion(Criterion):
         cdef double* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
 
-        cdef DOUBLE_t[:, :] y = self.y
         cdef SIZE_t pos = self.pos
         cdef SIZE_t end = self.end
         cdef SIZE_t i
@@ -841,7 +838,7 @@ cdef class RegressionCriterion(Criterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    y_ik = y[i, k]
+                    y_ik = self.y[i, k]
                     sum_left[k] += w * y_ik
 
                 self.weighted_n_left += w
@@ -855,7 +852,7 @@ cdef class RegressionCriterion(Criterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    y_ik = y[i, k]
+                    y_ik = self.y[i, k]
                     sum_left[k] -= w * y_ik
 
                 self.weighted_n_left -= w
@@ -936,8 +933,6 @@ cdef class MSE(RegressionCriterion):
            left child (samples[start:pos]) and the impurity the right child
            (samples[pos:end])."""
 
-
-        cdef DOUBLE_t[:, :] y = self.y
         cdef DOUBLE_t* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t pos = self.pos
@@ -962,7 +957,7 @@ cdef class MSE(RegressionCriterion):
                 w = sample_weight[i]
 
             for k in range(self.n_outputs):
-                y_ik = y[i, k]
+                y_ik = self.y[i, k]
                 sq_sum_left += w * y_ik * y_ik
 
         sq_sum_right = self.sq_sum_total - sq_sum_left
@@ -1031,7 +1026,7 @@ cdef class MAE(RegressionCriterion):
             self.left_child[k] = WeightedMedianCalculator(n_samples)
             self.right_child[k] = WeightedMedianCalculator(n_samples)
 
-    cdef int init(self, DOUBLE_t[:, :] y, DOUBLE_t* sample_weight,
+    cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
                   SIZE_t end) nogil except -1:
         """Initialize the criterion at node samples[start:end] and
@@ -1158,7 +1153,6 @@ cdef class MAE(RegressionCriterion):
         cdef void** left_child = <void**> self.left_child.data
         cdef void** right_child = <void**> self.right_child.data
 
-        cdef DOUBLE_t[:, :] y = self.y
         cdef SIZE_t pos = self.pos
         cdef SIZE_t end = self.end
         cdef SIZE_t i, p, k
@@ -1179,7 +1173,7 @@ cdef class MAE(RegressionCriterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    y_ik = y[i, k]
+                    y_ik = self.y[i, k]
                     # remove y_ik and its weight w from right and add to left
                     (<WeightedMedianCalculator> right_child[k]).remove(y_ik, w)
                     # push method ends up calling safe_realloc, hence except -1
@@ -1196,7 +1190,7 @@ cdef class MAE(RegressionCriterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    y_ik = y[i, k]
+                    y_ik = self.y[i, k]
                     # remove y_ik and its weight w from left and add to right
                     (<WeightedMedianCalculator> left_child[k]).remove(y_ik, w)
                     (<WeightedMedianCalculator> right_child[k]).push(y_ik, w)
@@ -1219,7 +1213,6 @@ cdef class MAE(RegressionCriterion):
         """Evaluate the impurity of the current node, i.e. the impurity of
            samples[start:end]"""
 
-        cdef DOUBLE_t[:, :] y = self.y
         cdef DOUBLE_t* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t i, p, k
@@ -1231,7 +1224,7 @@ cdef class MAE(RegressionCriterion):
             for p in range(self.start, self.end):
                 i = samples[p]
 
-                y_ik = y[i, k]
+                y_ik = self.y[i, k]
 
                 if sample_weight != NULL:
                     w = sample_weight[i]
@@ -1247,7 +1240,6 @@ cdef class MAE(RegressionCriterion):
            (samples[pos:end]).
         """
 
-        cdef DOUBLE_t[:, :] y = self.y
         cdef DOUBLE_t* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
 
@@ -1270,7 +1262,7 @@ cdef class MAE(RegressionCriterion):
             for p in range(start, pos):
                 i = samples[p]
 
-                y_ik = y[i, k]
+                y_ik = self.y[i, k]
 
                 if sample_weight != NULL:
                     w = sample_weight[i]
@@ -1284,7 +1276,7 @@ cdef class MAE(RegressionCriterion):
             for p in range(pos, end):
                 i = samples[p]
 
-                y_ik = y[i, k]
+                y_ik = self.y[i, k]
 
                 if sample_weight != NULL:
                     w = sample_weight[i]
