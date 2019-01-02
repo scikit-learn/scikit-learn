@@ -236,7 +236,7 @@ cdef class Splitter:
 
 
 cdef class BaseDenseSplitter(Splitter):
-    cdef DTYPE_t [:, :] X
+    cdef DTYPE_t[:, :] X
 
     cdef np.ndarray X_idx_sorted
     cdef INT32_t* X_idx_sorted_ptr
@@ -313,7 +313,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t* constant_features = self.constant_features
         cdef SIZE_t n_features = self.n_features
 
-        cdef DTYPE_t [:, :] X = self.X
+        cdef DTYPE_t[:, :] X = self.X
         cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
@@ -657,7 +657,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef SIZE_t* constant_features = self.constant_features
         cdef SIZE_t n_features = self.n_features
 
-        cdef DTYPE_t [:, :] X = self.X
+        cdef DTYPE_t[:, :] X = self.X
         cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf

@@ -794,7 +794,7 @@ cdef class Tree:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
-        cdef DTYPE_t [:, :] X_ndarray = X
+        cdef DTYPE_t[:, :] X_ndarray = X
         cdef SIZE_t n_samples = X.shape[0]
 
         # Initialize output
