@@ -217,7 +217,8 @@ the following two rules:
 
 In case you require the use of parallelisation (using ``n_jobs`` > 1) with a 
 custom scoring function, please make sure to define the custom function in a 
-module and import it for usage. 
+module and import it for usage. Doing this, will ensure that the custom
+scoring function is serializable by other ``joblib`` backends prior to Loki backend. 
 
 For example, to use, ``n_jobs`` greater than 1 below, ``rmse`` function is 
 saved in a separate module (``custom_scorer_module.py``) and imported::
