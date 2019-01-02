@@ -248,7 +248,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         if not hasattr(self, 'intercept_visible_'):
             self.intercept_visible_ = np.zeros(X.shape[1], )
         if not hasattr(self, 'h_samples_'):
-            self.h_samples_ = np.zeros((self.batch_size, self.n_components))
+            self.h_samples_ = np.zeros((x.shape[0], self.n_components))
 
         self._fit(X, self.random_state_)
 
