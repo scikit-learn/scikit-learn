@@ -689,7 +689,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         # best_score_ iff refit is one of the scorer names
         # In single metric evaluation, refit_metric is "score"
         if self.refit or not self.multimetric_:
-            # If callable, refit is expected to return the index of the best 
+            # If callable, refit is expected to return the index of the best
             # parameter set.
             if callable(self.refit):
                 self.best_index_ = self.refit(results)
