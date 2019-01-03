@@ -50,7 +50,7 @@ def compute_bench(samples_range, features_range):
             lars_path_gram(Xy=Xy, Gram=G, n_samples=y.size, method='lasso')
             delta = time() - tstart
             print("%0.3fs" % delta)
-            results['lars_path_gram (lars_path with Gram)'].append(delta)
+            results['lars_path (with Gram)'].append(delta)
 
             gc.collect()
             print("benchmarking lars_path (without Gram):", end='')
