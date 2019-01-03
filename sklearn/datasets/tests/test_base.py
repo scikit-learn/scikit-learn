@@ -27,7 +27,6 @@ from sklearn.datasets.tests.test_common import check_return_X_y
 from sklearn.externals.six import b, u
 from sklearn.externals._pilutil import pillow_installed
 
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 
@@ -77,7 +76,7 @@ def test_data_home(data_home):
 
     # clear_data_home will delete both the content and the folder it-self
     clear_data_home(data_home=data_home)
-    assert_false(os.path.exists(data_home))
+    assert not os.path.exists(data_home)
 
     # if the folder is missing it will be created again
     data_home = get_data_home(data_home=data_home)

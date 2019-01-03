@@ -10,7 +10,7 @@ The dataset page is available at
 
 import logging
 
-from os import remove
+from os import remove, makedirs
 from os.path import dirname, exists, join
 from gzip import GzipFile
 
@@ -21,7 +21,6 @@ from .base import get_data_home
 from .base import _pkl_filepath
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
-from ..utils.fixes import makedirs
 from ..utils import _joblib
 from .svmlight_format import load_svmlight_files
 from ..utils import shuffle as shuffle_

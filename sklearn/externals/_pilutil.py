@@ -96,6 +96,7 @@ def bytescale(data, cmin=None, cmax=None, high=255, low=0):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from scipy.misc import bytescale
     >>> img = np.array([[ 91.06794177,   3.39058326,  84.4221549 ],
     ...                 [ 73.88003259,  80.91433048,   4.88878881],
@@ -231,6 +232,7 @@ def imsave(name, arr, format=None):
     --------
     Construct an array of gradient intensity values and save to file:
 
+    >>> import numpy as np
     >>> from scipy.misc import imsave
     >>> x = np.zeros((255, 255))
     >>> x = np.zeros((255, 255), dtype=np.uint8)

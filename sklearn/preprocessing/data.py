@@ -12,7 +12,6 @@ from __future__ import division
 from itertools import chain, combinations
 import warnings
 from itertools import combinations_with_replacement as combinations_w_r
-from distutils.version import LooseVersion
 
 import numpy as np
 from scipy import sparse
@@ -259,7 +258,6 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> from sklearn.preprocessing import MinMaxScaler
-
     >>> data = [[-1, 2], [-0.5, 6], [0, 10], [1, 18]]
     >>> scaler = MinMaxScaler()
     >>> print(scaler.fit(data))
@@ -1089,7 +1087,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     ...      [ -2.,  1.,  3.],
     ...      [ 4.,  1., -2.]]
     >>> transformer = RobustScaler().fit(X)
-    >>> transformer
+    >>> transformer  # doctest: +NORMALIZE_WHITESPACE
     RobustScaler(copy=True, quantile_range=(25.0, 75.0), with_centering=True,
            with_scaling=True)
     >>> transformer.transform(X)
@@ -1331,6 +1329,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import PolynomialFeatures
     >>> X = np.arange(6).reshape(3, 2)
     >>> X
     array([[0, 1],
@@ -1997,7 +1997,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     (marginal) outliers: this is therefore a robust preprocessing scheme.
 
     The transformation is applied on each feature independently.
-    The cumulative density function of a feature is used to project the
+    The cumulative distribution function of a feature is used to project the
     original values. Features values of new/unseen data that fall below
     or above the fitted range will be mapped to the bounds of the output
     distribution. Note that this transform is non-linear. It may distort linear
@@ -2010,7 +2010,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     ----------
     n_quantiles : int, optional (default=1000)
         Number of quantiles to be computed. It corresponds to the number
-        of landmarks used to discretize the cumulative density function.
+        of landmarks used to discretize the cumulative distribution function.
 
     output_distribution : str, optional (default='uniform')
         Marginal distribution for the transformed data. The choices are
@@ -2099,9 +2099,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         n_samples, n_features = X.shape
         references = self.references_ * 100
-        # numpy < 1.9 bug: np.percentile 2nd argument needs to be a list
-        if LooseVersion(np.__version__) < '1.9':
-            references = references.tolist()
 
         self.quantiles_ = []
         for col in X.T:
@@ -2124,9 +2121,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         """
         n_samples, n_features = X.shape
         references = self.references_ * 100
-        # numpy < 1.9 bug: np.percentile 2nd argument needs to be a list
-        if LooseVersion(np.__version__) < '1.9':
-            references = references.tolist()
 
         self.quantiles_ = []
         for feature_idx in range(n_features):
@@ -2387,7 +2381,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     (marginal) outliers: this is therefore a robust preprocessing scheme.
 
     The transformation is applied on each feature independently.
-    The cumulative density function of a feature is used to project the
+    The cumulative distribution function of a feature is used to project the
     original values. Features values of new/unseen data that fall below
     or above the fitted range will be mapped to the bounds of the output
     distribution. Note that this transform is non-linear. It may distort linear
@@ -2407,7 +2401,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
 
     n_quantiles : int, optional (default=1000)
         Number of quantiles to be computed. It corresponds to the number
-        of landmarks used to discretize the cumulative density function.
+        of landmarks used to discretize the cumulative distribution function.
 
     output_distribution : str, optional (default='uniform')
         Marginal distribution for the transformed data. The choices are

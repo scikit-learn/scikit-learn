@@ -25,8 +25,7 @@ from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.utils.validation import (check_X_y, check_array,
-                                      LARGE_SPARSE_SUPPORTED)
+from sklearn.utils.validation import check_X_y, check_array
 
 
 class CorrectNotFittedError(ValueError):
@@ -350,10 +349,8 @@ def test_check_estimator():
     # Large indices test on bad estimator
     msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
            r'support \S{3}_64 matrix, and is not failing gracefully.*')
-    # only supported by scipy version more than 0.14.0
-    if LARGE_SPARSE_SUPPORTED:
-        assert_raises_regex(AssertionError, msg, check_estimator,
-                            LargeSparseNotSupportedClassifier)
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        LargeSparseNotSupportedClassifier)
 
     # non-regression test for estimators transforming to sparse data
     check_estimator(SparseTransformer())
