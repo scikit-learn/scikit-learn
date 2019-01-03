@@ -24,10 +24,6 @@ from ..utils.validation import _num_samples
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 
-from ..externals import six
-
-zip = six.moves.zip
-map = six.moves.map
 
 __all__ = [
     'label_binarize',

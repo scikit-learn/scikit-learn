@@ -6,7 +6,6 @@ import warnings
 import pytest
 from scipy import sparse
 
-from sklearn.externals.six import PY2
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii

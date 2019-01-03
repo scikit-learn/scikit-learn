@@ -64,7 +64,6 @@ from scipy import sparse
 from scipy.sparse import csgraph
 
 from ..base import BaseEstimator, ClassifierMixin
-from ..externals import six
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors.unsupervised import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
@@ -73,8 +72,7 @@ from ..utils.validation import check_X_y, check_is_fitted, check_array
 from ..exceptions import ConvergenceWarning
 
 
-class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
-                                              ClassifierMixin)):
+class BaseLabelPropagation(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
     """Base class for label propagation module.
 
     Parameters

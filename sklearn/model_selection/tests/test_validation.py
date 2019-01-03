@@ -68,7 +68,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import LabelEncoder
 from sklearn.pipeline import Pipeline
 
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
 from sklearn.multiclass import OneVsRestClassifier

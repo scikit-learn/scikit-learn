@@ -797,8 +797,6 @@ def clean_warning_registry():
     """
     reg = "__warningregistry__"
     for mod_name, mod in list(sys.modules.items()):
-        if 'six.moves' in mod_name:
-            continue
         if hasattr(mod, reg):
             getattr(mod, reg).clear()
 
