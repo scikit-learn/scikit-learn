@@ -16,7 +16,6 @@ from scipy.sparse.csgraph import connected_components
 from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 
 from ..base import BaseEstimator
-from ..externals import six
 from ..utils import check_random_state, check_array, check_symmetric
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..metrics.pairwise import rbf_kernel
@@ -510,7 +509,7 @@ class SpectralEmbedding(BaseEstimator):
         X = check_array(X, ensure_min_samples=2, estimator=self)
 
         random_state = check_random_state(self.random_state)
-        if isinstance(self.affinity, six.string_types):
+        if isinstance(self.affinity, str):
             if self.affinity not in set(("nearest_neighbors", "rbf",
                                          "precomputed")):
                 raise ValueError(("%s is not a valid affinity. Expected "

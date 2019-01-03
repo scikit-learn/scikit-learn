@@ -907,9 +907,7 @@ in the examples.
 Python versions supported
 -------------------------
 
-All scikit-learn code should work unchanged in Python 3.5 or
-newer.
-
+Since scikit-learn 0.21, only Python 3.5 and newer is supported.
 
 .. _code_review:
 

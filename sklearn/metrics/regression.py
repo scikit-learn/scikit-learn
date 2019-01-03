@@ -27,7 +27,6 @@ import numpy as np
 
 from ..utils.validation import check_array, check_consistent_length
 from ..utils.validation import column_or_1d
-from ..externals.six import string_types
 
 
 __ALL__ = [
@@ -90,7 +89,7 @@ def _check_reg_targets(y_true, y_pred, multioutput):
     n_outputs = y_true.shape[1]
     allowed_multioutput_str = ('raw_values', 'uniform_average',
                                'variance_weighted')
-    if isinstance(multioutput, string_types):
+    if isinstance(multioutput, str):
         if multioutput not in allowed_multioutput_str:
             raise ValueError("Allowed 'multioutput' string values are {}. "
                              "You provided multioutput={!r}".format(
@@ -172,7 +171,7 @@ def mean_absolute_error(y_true, y_pred,
     check_consistent_length(y_true, y_pred, sample_weight)
     output_errors = np.average(np.abs(y_pred - y_true),
                                weights=sample_weight, axis=0)
-    if isinstance(multioutput, string_types):
+    if isinstance(multioutput, str):
         if multioutput == 'raw_values':
             return output_errors
         elif multioutput == 'uniform_average':
@@ -241,7 +240,7 @@ def mean_squared_error(y_true, y_pred,
     check_consistent_length(y_true, y_pred, sample_weight)
     output_errors = np.average((y_true - y_pred) ** 2, axis=0,
                                weights=sample_weight)
-    if isinstance(multioutput, string_types):
+    if isinstance(multioutput, str):
         if multioutput == 'raw_values':
             return output_errors
         elif multioutput == 'uniform_average':
@@ -431,7 +430,7 @@ def explained_variance_score(y_true, y_pred,
     output_scores[valid_score] = 1 - (numerator[valid_score] /
                                       denominator[valid_score])
     output_scores[nonzero_numerator & ~nonzero_denominator] = 0.
-    if isinstance(multioutput, string_types):
+    if isinstance(multioutput, str):
         if multioutput == 'raw_values':
             # return scores individually
             return output_scores
@@ -555,7 +554,7 @@ def r2_score(y_true, y_pred, sample_weight=None,
     # arbitrary set to zero to avoid -inf scores, having a constant
     # y_true is not interesting for scoring a regression anyway
     output_scores[nonzero_numerator & ~nonzero_denominator] = 0.
-    if isinstance(multioutput, string_types):
+    if isinstance(multioutput, str):
         if multioutput == 'raw_values':
             # return scores individually
             return output_scores
