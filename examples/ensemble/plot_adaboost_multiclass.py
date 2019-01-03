@@ -29,8 +29,6 @@ print(__doc__)
 #
 # License: BSD 3 clause
 
-from sklearn.externals.six.moves import zip
-
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_gaussian_quantiles

@@ -15,6 +15,7 @@ from math import log
 import numpy as np
 
 from scipy.special import expit
+from scipy.special import xlogy
 from scipy.optimize import fmin_bfgs
 from sklearn.preprocessing import LabelEncoder
 
@@ -431,7 +432,6 @@ def _sigmoid_calibration(df, y, sample_weight=None):
     y = column_or_1d(y)
 
     F = df  # F follows Platt's notations
-    tiny = np.finfo(np.float).tiny  # to avoid division by 0 warning
 
     # Bayesian priors (see Platt end of section 2.2)
     prior0 = float(np.sum(y <= 0))
@@ -444,11 +444,11 @@ def _sigmoid_calibration(df, y, sample_weight=None):
     def objective(AB):
         # From Platt (beginning of Section 2.2)
         P = expit(-(AB[0] * F + AB[1]))
-        l = -(T * np.log(P + tiny) + T1 * np.log(1. - P + tiny))
+        loss = -(xlogy(T, P) + xlogy(T1, 1. - P))
         if sample_weight is not None:
-            return (sample_weight * l).sum()
+            return (sample_weight * loss).sum()
         else:
-            return l.sum()
+            return loss.sum()
 
     def grad(AB):
         # gradient of the objective function

@@ -6,7 +6,6 @@ from functools import partial
 import numpy as np
 import pytest
 import scipy.sparse as sp
-from sklearn.externals.six.moves import zip
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
