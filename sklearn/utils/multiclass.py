@@ -6,7 +6,7 @@ Multi-class / multi-label utility function
 ==========================================
 
 """
-from __future__ import division
+from collections.abc import Sequence
 from itertools import chain
 
 from scipy.sparse import issparse
@@ -16,7 +16,6 @@ from scipy.sparse import lil_matrix
 
 import numpy as np
 
-from ..utils.fixes import _Sequence as Sequence
 from .validation import check_array
 
 

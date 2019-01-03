@@ -12,11 +12,6 @@ at which the fixe is no longer needed.
 
 from distutils.version import LooseVersion
 
-from collections.abc import Sequence as _Sequence  # noqa
-from collections.abc import Iterable as _Iterable  # noqa
-from collections.abc import Mapping as _Mapping  # noqa
-from collections.abc import Sized as _Sized  # noqa
-
 import numpy as np
 import scipy.sparse as sp
 import scipy

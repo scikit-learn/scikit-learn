@@ -8,6 +8,8 @@ Generate samples of synthetic data sets.
 
 import numbers
 import array
+from collections.abc import Iterable
+
 import numpy as np
 from scipy import linalg
 import scipy.sparse as sp
@@ -15,7 +17,6 @@ import scipy.sparse as sp
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
-from ..utils.fixes import _Iterable as Iterable
 from ..utils.random import sample_without_replacement
 
 

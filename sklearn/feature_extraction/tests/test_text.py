@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from collections.abc import Mapping
 import re
 import warnings
 
@@ -36,7 +37,6 @@ from sklearn.utils.testing import (assert_equal, assert_not_equal,
                                    clean_warning_registry, ignore_warnings,
                                    SkipTest, assert_raises, assert_no_warnings,
                                    fails_if_pypy, assert_allclose_dense_sparse)
-from sklearn.utils.fixes import _Mapping as Mapping
 from collections import defaultdict
 from functools import partial
 import pickle

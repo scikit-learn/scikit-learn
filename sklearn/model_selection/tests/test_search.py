@@ -1,5 +1,6 @@
 """Test the search module"""
 
+from collections.abc import Iterable, Sized
 from io import StringIO
 from itertools import chain, product
 import pickle
@@ -12,7 +13,6 @@ import scipy.sparse as sp
 import pytest
 
 from sklearn.utils.fixes import sp_version
-from sklearn.utils.fixes import _Iterable as Iterable, _Sized as Sized
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
