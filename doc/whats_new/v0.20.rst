@@ -2,6 +2,72 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_20_2:
+
+Version 0.20.2
+==============
+
+**December 20, 2018**
+
+This is a bug-fix release with some minor documentation improvements and
+enhancements to features released in 0.20.0.
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- :mod:`sklearn.neighbors` when ``metric=='jaccard'`` (bug fix)
+- use of ``'seuclidean'`` or ``'mahalanobis'`` metrics in some cases (bug fix)
+
+Changelog
+---------
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixed an issue in :func:`compose.make_column_transformer` which raises
+  unexpected error when columns is pandas Index or pandas Series.
+  :issue:`12704` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :func:`metrics.pairwise_distances` and
+  :func:`metrics.pairwise_distances_chunked` where parameters ``V`` of
+  ``"seuclidean"`` and ``VI`` of ``"mahalanobis"`` metrics were computed after
+  the data was split into chunks instead of being pre-computed on whole data.
+  :issue:`12701` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| Fixed :class:`sklearn.neighbors.DistanceMetric` jaccard distance
+  function to return 0 when two all-zero vectors are compared.
+  :issue:`12685` by :user:`Thomas Fan <thomasjpfan>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Calling :func:`utils.check_array` on `pandas.Series` with categorical
+  data, which raised an error in 0.20.0, now returns the expected output again.
+  :issue:`12699` by `Joris Van den Bossche`_.
+
+Code and Documentation Contributors
+-----------------------------------
+
+With thanks to:
+
+adanhawth, Adrin Jalali, Albert Thomas, Andreas Mueller, Dan Stine, Feda Curic,
+Hanmin Qin, Jan S, jeremiedbb, Joel Nothman, Joris Van den Bossche,
+josephsalmon, Katrin Leinweber, Loic Esteve, Muhammad Hassaan Rafique, Nicolas
+Hug, Olivier Grisel, Paul Paczuski, Reshama Shaikh, Sam Waterbury, Shivam
+Kotwalia, Thomas Fan
+
+
 .. _changes_0_20_1:
 
 Version 0.20.1
@@ -10,7 +76,9 @@ Version 0.20.1
 **November 21, 2018**
 
 This is a bug-fix release with some minor documentation improvements and
-enhancements to features released in 0.20.0.
+enhancements to features released in 0.20.0. Note that we also include some
+API changes in this release, so you might get some extra warnings after
+updating from 0.20.0 to 0.20.1.
 
 Changed models
 --------------
@@ -94,7 +162,7 @@ Changelog
   :issue:`12388` by :user:`Connor Tann <Connossor>`.
 
 :mod:`sklearn.feature_extraction`
-...........................
+..................................
 
 - |Fix| Fixed a regression in v0.20.0 where
   :func:`feature_extraction.text.CountVectorizer` and other text vectorizers
@@ -152,7 +220,7 @@ Changelog
   :issue:`12171` by :user:`Thomas Moreau <tomMoral>`.
 
 :mod:`sklearn.preprocessing`
-........................
+.............................
 
 - |Fix| Fixed bug in :class:`preprocessing.OrdinalEncoder` when passing
   manually specified categories. :issue:`12365` by `Joris Van den Bossche`_.
@@ -210,12 +278,37 @@ Miscellaneous
   unvendoring joblib in future version of scikit-learn.
   :issue:`12345` by :user:`Thomas Moreau <tomMoral>`
 
+Code and Documentation Contributors
+-----------------------------------
+
+With thanks to:
+
+^__^, Adrin Jalali, Andrea Navarrete, Andreas Mueller,
+bauks, BenjaStudio, Cheuk Ting Ho, Connossor,
+Corey Levinson, Dan Stine, daten-kieker, Denis Kataev,
+Dillon Gardner, Dmitry Vukolov, Dougal J. Sutherland, Edward J Brown,
+Eric Chang, Federico Caselli, Gabriel Marzinotto, Gael Varoquaux,
+GauravAhlawat, Gustavo De Mari Pereira, Hanmin Qin, haroldfox,
+JackLangerman, Jacopo Notarstefano, janvanrijn, jdethurens,
+jeremiedbb, Joel Nothman, Joris Van den Bossche, Koen,
+Kushal Chauhan, Lee Yi Jie Joel, Lily Xiong, mail-liam,
+Mark Hannel, melsyt, Ming Li, Nicholas Smith,
+Nicolas Hug, Nikolay Shebanov, Oleksandr Pavlyk, Olivier Grisel,
+Peter Hausamann, Pierre Glaser, Pulkit Maloo, Quentin Batista,
+Radostin Stoyanov, Ramil Nugmanov, Rebekah Kim, Reshama Shaikh,
+Rohan Singh, Roman Feldbauer, Roman Yurchak, Roopam Sharma,
+Sam Waterbury, Scott Lowe, Sebastian Raschka, Stephen Tierney,
+SylvainLan, TakingItCasual, Thomas Fan, Thomas Moreau,
+Tom Dupré la Tour, Tulio Casagrande, Utkarsh Upadhyay, Xing Han Lu,
+Yaroslav Halchenko, Zach Miller
+
+
 .. _changes_0_20:
 
 Version 0.20.0
 ==============
 
-**September, 2018**
+**September 25, 2018**
 
 This release packs in a mountain of bug fixes, features and enhancements for
 the Scikit-learn library, and improvements to the documentation and examples.

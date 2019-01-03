@@ -10,7 +10,6 @@ import pytest
 from sklearn.model_selection import train_test_split
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
@@ -31,7 +30,7 @@ def test_simple():
     # Principle of Lars is to keep covariances tied and decreasing
 
     # also test verbose output
-    from sklearn.externals.six.moves import cStringIO as StringIO
+    from io import StringIO
     import sys
     old_stdout = sys.stdout
     try:
@@ -430,7 +429,7 @@ def test_lars_cv():
         lars_cv.fit(X, y)
         np.testing.assert_array_less(old_alpha, lars_cv.alpha_)
         old_alpha = lars_cv.alpha_
-    assert_false(hasattr(lars_cv, 'n_nonzero_coefs'))
+    assert not hasattr(lars_cv, 'n_nonzero_coefs')
 
 
 @pytest.mark.filterwarnings('ignore::FutureWarning')
