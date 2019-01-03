@@ -507,6 +507,15 @@ class OneHotEncoder(_BaseEncoder):
                            "of features ({}), got {}")
                     raise ValueError(msg.format(len(self.categories_),
                                                 len(self.drop)))
+                missing_drops = [(val, i) for i, val in enumerate(self.drop)
+                                 if val not in self.categories_[i]]
+                if any(missing_drops):
+                    msg = ("The following features were supposed to be "
+                           "dropped, but were not found in the training "
+                           "data.\n{}".format(
+                               "\n".join(["Val: {}, Col: {}".format(v, c)
+                                         for v, c in missing_drops])))
+                    raise ValueError(msg)
                 self.drop_ = np.array([cat for i, cat in enumerate(self.drop)
                                        if len(self.categories_[i]) > 1],
                                       dtype=object)

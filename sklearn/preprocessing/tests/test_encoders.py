@@ -731,6 +731,12 @@ def test_one_hot_encoder_invalid_params():
         "Wrong input for parameter `drop`.",
         enc.fit, [['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]])
 
+    enc = OneHotEncoder(drop=['ghi', 3, 59])
+    assert_raises_regex(
+        ValueError,
+        "The following features were supposed to be",
+        enc.fit, [['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]])
+
 
 @pytest.mark.parametrize('drop', [['abc', 3], ['abc', 3, 41, 'a']])
 def test_invalid_drop_length(drop):
