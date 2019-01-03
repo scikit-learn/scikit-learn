@@ -2370,7 +2370,8 @@ def check_fit_idempotent(name, estimator_orig):
     estimator.fit(X_train, y_train)
 
     result = {method: getattr(estimator, method)(X_test)
-              for method in check_methods if hasattr(estimator, method)}
+              for method in check_methods
+              if hasattr(estimator, method)}
 
     # Fit again
     estimator.fit(X_train, y_train)
