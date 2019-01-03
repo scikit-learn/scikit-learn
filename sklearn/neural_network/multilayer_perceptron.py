@@ -1058,19 +1058,23 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         check_is_fitted(self, "coefs_")
         # split and collate depending on the working_memory
         x_axis0_size = X.shape[0]
-        if not maxr:
-            chunk_size = get_chunk_n_rows(row_bytes=sys.getsizeof(X[0:1]), max_n_rows=x_axis0_size)
+        if not max_row_chunk:
+            chunk_size = get_chunk_n_rows(row_bytes=sys.getsizeof(X[0:1]),
+                                          max_n_rows=x_axis0_size)
         else:
             chunk_size = max_row_chunk
-        # Pre-allocate the entire result set to avoid array copying for efficiency.
-        # As we do not know the shape of the output, we simply test the output
-        # size for a single sample and use the shape of the output
+        # Pre-allocate the entire result set to avoid array copying for
+        # efficiency. As we do not know the shape of the output,
+        # we simply test the output size for a single sample
+        # and use the shape of the output
         y_pred = np.empty((x_axis0_size,) + self._predict(X[0:1]).shape[1:])
 
         # Call the classifier in chunks.
         y_chunk_pos = 0
-        for x_chunk in np.array_split(X, np.arange(chunk_size, x_axis0_size, chunk_size), axis=0):
-            y_pred[y_chunk_pos:y_chunk_pos + x_chunk.shape[0]] = self._predict(x_chunk)
+        for x_chunk in np.array_split(X, np.arange(chunk_size, x_axis0_size,
+                                                   chunk_size), axis=0):
+            y_pred[y_chunk_pos:y_chunk_pos + x_chunk.shape[0]] = self._predict(
+                x_chunk)
             y_chunk_pos += x_chunk.shape[0]
 
         if self.n_outputs_ == 1:
