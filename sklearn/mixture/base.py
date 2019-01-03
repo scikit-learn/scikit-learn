@@ -109,7 +109,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                              "Estimation requires at least one run"
                              % self.n_init)
 
-        if self.max_iter < 1:
+        if self.max_iter < 0:
             raise ValueError("Invalid value for 'max_iter': %d "
                              "Estimation requires at least one iteration"
                              % self.max_iter)
@@ -252,6 +252,10 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                 self._initialize_parameters(X, random_state)
 
             lower_bound = (-np.infty if do_init else self.lower_bound_)
+
+            if self.max_iter == 0:
+                best_params = self._get_parameters()
+                best_n_iter = 1
 
             for n_iter in range(1, self.max_iter + 1):
                 prev_lower_bound = lower_bound

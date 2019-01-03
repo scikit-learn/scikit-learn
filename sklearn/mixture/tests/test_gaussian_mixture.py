@@ -136,7 +136,7 @@ def test_gaussian_mixture_attributes():
                          "regularization on covariance must be "
                          "non-negative" % reg_covar_bad, gmm.fit, X)
 
-    max_iter_bad = 0
+    max_iter_bad = -1
     gmm = GaussianMixture(max_iter=max_iter_bad)
     assert_raise_message(ValueError,
                          "Invalid value for 'max_iter': %d "
