@@ -35,7 +35,8 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.linear_model.logistic import (
     LogisticRegression,
-    logistic_regression_path, LogisticRegressionCV,
+    logistic_regression_path,
+    _logistic_regression_path, LogisticRegressionCV,
     _logistic_loss_and_grad, _logistic_grad_hess,
     _multinomial_grad_hess, _logistic_loss,
     _log_reg_scoring_path)
@@ -395,7 +396,7 @@ def test_consistency_path():
     # can't test with fit_intercept=True since LIBLINEAR
     # penalizes the intercept
     for solver in ['sag', 'saga']:
-        coefs, Cs, _ = f(logistic_regression_path)(
+        coefs, Cs, _ = f(_logistic_regression_path)(
             X, y, Cs=Cs, fit_intercept=False, tol=1e-5, solver=solver,
             max_iter=1000, multi_class='ovr', random_state=0)
         for i, C in enumerate(Cs):
@@ -410,7 +411,7 @@ def test_consistency_path():
     # test for fit_intercept=True
     for solver in ('lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'):
         Cs = [1e3]
-        coefs, Cs, _ = f(logistic_regression_path)(
+        coefs, Cs, _ = f(_logistic_regression_path)(
             X, y, Cs=Cs, fit_intercept=True, tol=1e-6, solver=solver,
             intercept_scaling=10000., random_state=0, multi_class='ovr')
         lr = LogisticRegression(C=Cs[0], fit_intercept=True, tol=1e-4,
@@ -427,7 +428,7 @@ def test_logistic_regression_path_convergence_fail():
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = [1] * 100 + [-1] * 100
     Cs = [1e3]
-    assert_warns(ConvergenceWarning, logistic_regression_path,
+    assert_warns(ConvergenceWarning, _logistic_regression_path,
                  X, y, Cs=Cs, tol=0., max_iter=1, random_state=0, verbose=1)
 
 
@@ -1165,14 +1166,31 @@ def test_logreg_l1_sparse_data():
 
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
-def test_logreg_cv_penalty():
-    # Test that the correct penalty is passed to the final fit.
-    X, y = make_classification(n_samples=50, n_features=20, random_state=0)
-    lr_cv = LogisticRegressionCV(penalty="l1", Cs=[1.0], solver='saga')
+@pytest.mark.parametrize("random_seed", [42])
+@pytest.mark.parametrize("penalty", ["l1", "l2"])
+def test_logistic_regression_cv_refit(random_seed, penalty):
+    # Test that when refit=True, logistic regression cv with the saga solver
+    # converges to the same solution as logistic regression with a fixed
+    # regularization parameter.
+    # Internally the LogisticRegressionCV model uses a warm start to refit on
+    # the full data model with the optimal C found by CV. As the penalized
+    # logistic regression loss is convex, we should still recover exactly
+    # the same solution as long as the stopping criterion is strict enough (and
+    # that there are no exactly duplicated features when penalty='l1').
+    X, y = make_classification(n_samples=50, n_features=20,
+                               random_state=random_seed)
+    common_params = dict(
+        solver='saga',
+        penalty=penalty,
+        random_state=random_seed,
+        max_iter=10000,
+        tol=1e-12,
+    )
+    lr_cv = LogisticRegressionCV(Cs=[1.0], refit=True, **common_params)
     lr_cv.fit(X, y)
-    lr = LogisticRegression(penalty="l1", C=1.0, solver='saga')
+    lr = LogisticRegression(C=1.0, **common_params)
     lr.fit(X, y)
-    assert_equal(np.count_nonzero(lr_cv.coef_), np.count_nonzero(lr.coef_))
+    assert_array_almost_equal(lr_cv.coef_, lr.coef_)
 
 
 def test_logreg_predict_proba_multinomial():
@@ -1672,9 +1690,9 @@ def test_logistic_regression_path_coefs_multinomial():
                                n_redundant=0, n_clusters_per_class=1,
                                random_state=0, n_features=2)
     Cs = [.00001, 1, 10000]
-    coefs, _, _ = logistic_regression_path(X, y, penalty='l1', Cs=Cs,
-                                           solver='saga', random_state=0,
-                                           multi_class='multinomial')
+    coefs, _, _ = _logistic_regression_path(X, y, penalty='l1', Cs=Cs,
+                                            solver='saga', random_state=0,
+                                            multi_class='multinomial')
 
     with pytest.raises(AssertionError):
         assert_array_almost_equal(coefs[0], coefs[1], decimal=1)
@@ -1729,3 +1747,10 @@ def test_logistic_regression_multi_class_auto(est, solver):
         assert not np.allclose(est_auto_bin.coef_,
                                fit(X, y_multi, multi_class='multinomial',
                                    solver=solver).coef_)
+
+
+def test_logistic_regression_path_deprecation():
+
+    assert_warns_message(DeprecationWarning,
+                         "logistic_regression_path was deprecated",
+                         logistic_regression_path, X, Y1)

@@ -168,8 +168,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
             elif self.strategy == 'quantile':
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
-                if np_version < (1, 9):
-                    quantiles = list(quantiles)
                 bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
 
             elif self.strategy == 'kmeans':
