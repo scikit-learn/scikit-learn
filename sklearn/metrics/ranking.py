@@ -241,7 +241,8 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
                                  average, sample_weight=sample_weight)
 
 
-def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
+def roc_auc_score(y_true, y_score, labels=None,
+                  multiclass="ovr", average="macro",
                   sample_weight=None, max_fpr=None):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     from prediction scores.
@@ -266,7 +267,11 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
         label. The multiclass case expects shape = [n_samples, n_classes]
         where the scores correspond to probability estimates.
 
-    multiclass : string, 'ovr' or 'ovo', default 'ovr'
+    labels : array, shape = [n_classes] or None, optional (default=None)
+        List of labels to index ``y_score`` used for multiclass. If ``None``,
+        the lexicon order of ``y_true`` is used to index ``y_score``.
+
+    multiclass : string, 'ovr' or 'ovo', (default='ovr')
         Note: multiclass ROC AUC currently only handles the 'macro' and
         'weighted' averages.
 
@@ -393,6 +398,17 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
                              " for multiclass ROC AUC. 'multiclass' must be"
                              " one of {1}.".format(
                                  multiclass, multiclass_options))
+        if labels is not None:
+            classes = np.unique(labels)
+            if len(classes) != len(labels):
+                raise ValueError("Parameter 'labels' must be unique")
+            if len(classes) != y_score.shape[1]:
+                raise ValueError(
+                    "Parameter 'labels' not equal to the number of columns in "
+                    "'y_score'")
+            if set(classes) < set(np.unique(y_true)):
+                raise ValueError(
+                    "'y_true' contains labels not in parameter 'labels'")
         if multiclass == "ovo":
             if sample_weight is not None:
                 raise ValueError("Parameter 'sample_weight' is not supported"
@@ -400,10 +416,15 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
                                  " 'sample_weight' must be None in this case.")
             # Hand & Till (2001) implementation
             return _average_multiclass_ovo_score(
-                _binary_roc_auc_score, y_true, y_score, average)
+                _binary_roc_auc_score, y_true, y_score,
+                labels=labels, average=average)
         else:
             # ovr is same as multi-label
             y_true = y_true.reshape((-1, 1))
+            # Order y_true by labels
+            if labels is not None:
+                for i, label in enumerate(labels):
+                    y_true[y_true == label] = i
             y_true_multilabel = LabelBinarizer().fit_transform(y_true)
             return _average_binary_score(
                  _binary_roc_auc_score, y_true_multilabel, y_score, average,
