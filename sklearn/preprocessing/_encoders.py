@@ -279,9 +279,10 @@ class OneHotEncoder(_BaseEncoder):
     array(['x0_Female', 'x0_Male', 'x1_1', 'x1_2', 'x1_3'], dtype=object)
     >>> drop_enc = OneHotEncoder(drop='first')
     >>> drop_enc.fit(X)
+    ... # doctest: +NORMALIZE_WHITESPACE
     OneHotEncoder(categorical_features=None, categories=None, drop='first',
-       dtype=<class 'numpy.float64'>, handle_unknown='error',
-       n_values=None, sparse=True)
+        dtype=<class 'numpy.float64'>, handle_unknown='error',
+        n_values=None, sparse=True)
     >>> drop_enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> drop_enc.transform([['Female', 1], ['Male', 2]]).toarray()
