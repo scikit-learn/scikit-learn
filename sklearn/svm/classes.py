@@ -1174,7 +1174,8 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
             warnings.warn("The random_state parameter is deprecated and will"
                           " be removed in version 0.22.", DeprecationWarning)
 
-        super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight, **params)
+        super().fit(X, np.ones(_num_samples(X)),
+                    sample_weight=sample_weight, **params)
         self.offset_ = -self._intercept_
         return self
 
