@@ -18,7 +18,6 @@ import warnings
 import numpy as np
 
 from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
-from ..externals.six.moves import xrange
 from ..utils import check_array
 
 
@@ -227,8 +226,8 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     beta_ = 0.  # sum of the coefficients of <X2.T, X2>
     delta_ = 0.  # sum of the *squared* coefficients of <X.T, X>
     # starting block computation
-    for i in xrange(n_splits):
-        for j in xrange(n_splits):
+    for i in range(n_splits):
+        for j in range(n_splits):
             rows = slice(block_size * i, block_size * (i + 1))
             cols = slice(block_size * j, block_size * (j + 1))
             beta_ += np.sum(np.dot(X2.T[rows], X2[:, cols]))
@@ -237,7 +236,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
         beta_ += np.sum(np.dot(X2.T[rows], X2[:, block_size * n_splits:]))
         delta_ += np.sum(
             np.dot(X.T[rows], X[:, block_size * n_splits:]) ** 2)
-    for j in xrange(n_splits):
+    for j in range(n_splits):
         cols = slice(block_size * j, block_size * (j + 1))
         beta_ += np.sum(np.dot(X2.T[block_size * n_splits:], X2[:, cols]))
         delta_ += np.sum(

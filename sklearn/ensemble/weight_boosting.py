@@ -29,9 +29,7 @@ import numpy as np
 
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin, is_regressor, is_classifier
-from ..externals import six
-from ..externals.six.moves import zip
-from ..externals.six.moves import xrange as range
+
 from .forest import BaseForest
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree.tree import BaseDecisionTree
@@ -47,7 +45,7 @@ __all__ = [
 ]
 
 
-class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
     """Base class for AdaBoost estimators.
 
     Warning: This class should not be used directly. Use derived classes

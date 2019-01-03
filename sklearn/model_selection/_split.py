@@ -26,8 +26,6 @@ from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
-from ..externals.six import with_metaclass
-from ..externals.six.moves import zip
 from ..utils.fixes import comb
 from ..utils.fixes import _Iterable as Iterable
 from ..base import _pprint
@@ -61,16 +59,11 @@ CV_WARNING = (
     "in version 0.22.")
 
 
-class BaseCrossValidator(with_metaclass(ABCMeta)):
+class BaseCrossValidator(metaclass=ABCMeta):
     """Base class for all cross-validators
 
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
     """
-
-    def __init__(self):
-        # We need this for the build_repr to work properly in py2.7
-        # see #6304
-        pass
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -146,6 +139,7 @@ class LeaveOneOut(BaseCrossValidator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import LeaveOneOut
     >>> X = np.array([[1, 2], [3, 4]])
     >>> y = np.array([1, 2])
@@ -225,6 +219,7 @@ class LeavePOut(BaseCrossValidator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import LeavePOut
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 3, 4])
@@ -272,7 +267,7 @@ class LeavePOut(BaseCrossValidator):
         return int(comb(_num_samples(X), self.p, exact=True))
 
 
-class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
+class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
     """Base class for KFold, GroupKFold, and StratifiedKFold"""
 
     @abstractmethod
@@ -384,6 +379,7 @@ class KFold(_BaseKFold):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import KFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4])
@@ -463,6 +459,7 @@ class GroupKFold(_BaseKFold):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import GroupKFold
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 3, 4])
@@ -594,6 +591,7 @@ class StratifiedKFold(_BaseKFold):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import StratifiedKFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
@@ -750,6 +748,7 @@ class TimeSeriesSplit(_BaseKFold):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import TimeSeriesSplit
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4, 5, 6])
@@ -839,6 +838,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import LeaveOneGroupOut
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 1, 2])
@@ -957,6 +957,7 @@ class LeavePGroupsOut(BaseCrossValidator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import LeavePGroupsOut
     >>> X = np.array([[1, 2], [3, 4], [5, 6]])
     >>> y = np.array([1, 2, 1])
@@ -1063,7 +1064,7 @@ class LeavePGroupsOut(BaseCrossValidator):
         return super().split(X, y, groups)
 
 
-class _RepeatedSplits(with_metaclass(ABCMeta)):
+class _RepeatedSplits(metaclass=ABCMeta):
     """Repeated splits for an arbitrary randomized CV splitter.
 
     Repeats splits for cross-validators n times with different randomization
@@ -1187,6 +1188,7 @@ class RepeatedKFold(_RepeatedSplits):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import RepeatedKFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
@@ -1238,6 +1240,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import RepeatedStratifiedKFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
@@ -1268,7 +1271,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
             StratifiedKFold, n_repeats, random_state, n_splits=n_splits)
 
 
-class BaseShuffleSplit(with_metaclass(ABCMeta)):
+class BaseShuffleSplit(metaclass=ABCMeta):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
     def __init__(self, n_splits=10, test_size="default", train_size=None,
@@ -1382,6 +1385,7 @@ class ShuffleSplit(BaseShuffleSplit):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import ShuffleSplit
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [3, 4], [5, 6]])
     >>> y = np.array([1, 2, 1, 2, 1, 2])
@@ -1566,6 +1570,7 @@ def _approximate_mode(class_counts, n_draws, rng):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection._split import _approximate_mode
     >>> _approximate_mode(class_counts=np.array([4, 2]), n_draws=3, rng=0)
     array([2, 1])
@@ -1650,6 +1655,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import StratifiedShuffleSplit
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 0, 1, 1, 1])
@@ -1791,23 +1797,25 @@ def _validate_shuffle_split_init(test_size, train_size):
 
     if test_size is not None:
         if np.asarray(test_size).dtype.kind == 'f':
-            if test_size >= 1.:
+            if test_size >= 1. or test_size <= 0:
                 raise ValueError(
-                    'test_size=%f should be smaller '
-                    'than 1.0 or be an integer' % test_size)
+                    'test_size=%f should be in the (0, 1) range '
+                    'or be an integer' % test_size)
         elif np.asarray(test_size).dtype.kind != 'i':
             # int values are checked during split based on the input
             raise ValueError("Invalid value for test_size: %r" % test_size)
 
     if train_size is not None:
         if np.asarray(train_size).dtype.kind == 'f':
-            if train_size >= 1.:
-                raise ValueError("train_size=%f should be smaller "
-                                 "than 1.0 or be an integer" % train_size)
+            if train_size >= 1. or train_size <= 0:
+                raise ValueError('train_size=%f should be in the (0, 1) range '
+                                 'or be an integer' % train_size)
             elif (np.asarray(test_size).dtype.kind == 'f' and
-                    (train_size + test_size) > 1.):
+                    (
+                        (train_size + test_size) > 1. or
+                        (train_size + test_size) < 0)):
                 raise ValueError('The sum of test_size and train_size = %f, '
-                                 'should be smaller than 1.0. Reduce '
+                                 'should be in the (0, 1) range. Reduce '
                                  'test_size and/or train_size.' %
                                  (train_size + test_size))
         elif np.asarray(train_size).dtype.kind != 'i':
@@ -1821,16 +1829,22 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
     size of the data (n_samples)
     """
     if (test_size is not None and
-            np.asarray(test_size).dtype.kind == 'i' and
-            test_size >= n_samples):
-        raise ValueError('test_size=%d should be smaller than the number of '
-                         'samples %d' % (test_size, n_samples))
+            (np.asarray(test_size).dtype.kind == 'i' and
+                (test_size >= n_samples or test_size <= 0)) or
+            (np.asarray(test_size).dtype.kind == 'f' and
+                (test_size <= 0 or test_size >= 1))):
+        raise ValueError('test_size=%d should be either positive and smaller '
+                         'than the number of samples %d or a float in the '
+                         '(0,1) range' % (test_size, n_samples))
 
     if (train_size is not None and
-            np.asarray(train_size).dtype.kind == 'i' and
-            train_size >= n_samples):
-        raise ValueError("train_size=%d should be smaller than the number of"
-                         " samples %d" % (train_size, n_samples))
+            (np.asarray(train_size).dtype.kind == 'i' and
+                (train_size >= n_samples or train_size <= 0)) or
+            (np.asarray(train_size).dtype.kind == 'f' and
+                (train_size <= 0 or train_size >= 1))):
+        raise ValueError('train_size=%d should be either positive and smaller '
+                         'than the number of samples %d or a float in the '
+                         '(0,1) range' % (train_size, n_samples))
 
     if test_size == "default":
         test_size = 0.1
@@ -1877,6 +1891,7 @@ class PredefinedSplit(BaseCrossValidator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import PredefinedSplit
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])

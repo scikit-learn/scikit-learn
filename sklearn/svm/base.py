@@ -16,7 +16,6 @@ from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
 from ..utils.multiclass import check_classification_targets
-from ..externals import six
 from ..exceptions import ConvergenceWarning
 from ..exceptions import NotFittedError
 
@@ -57,7 +56,7 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
     return coef
 
 
-class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
+class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     """Base class for estimators that use libsvm as backing library
 
     This implements support vector machine classification and regression.
@@ -499,7 +498,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return safe_sparse_dot(self._dual_coef_, self.support_vectors_)
 
 
-class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
+class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""
     @abstractmethod
     def __init__(self, kernel, degree, gamma, coef0, tol, C, nu,

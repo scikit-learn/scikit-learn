@@ -29,7 +29,6 @@ from scipy.special import kv, gamma
 from scipy.spatial.distance import pdist, cdist, squareform
 
 from ..metrics.pairwise import pairwise_kernels
-from ..externals import six
 from ..base import clone
 
 
@@ -91,7 +90,7 @@ class Hyperparameter(namedtuple('Hyperparameter',
     __slots__ = ()
 
     def __new__(cls, name, value_type, bounds, n_elements=1, fixed=None):
-        if not isinstance(bounds, six.string_types) or bounds != "fixed":
+        if not isinstance(bounds, str) or bounds != "fixed":
             bounds = np.atleast_2d(bounds)
             if n_elements > 1:  # vector-valued parameter
                 if bounds.shape[0] == 1:
@@ -102,7 +101,7 @@ class Hyperparameter(namedtuple('Hyperparameter',
                                      % (name, n_elements, bounds.shape[0]))
 
         if fixed is None:
-            fixed = isinstance(bounds, six.string_types) and bounds == "fixed"
+            fixed = isinstance(bounds, str) and bounds == "fixed"
         return super(Hyperparameter, cls).__new__(
             cls, name, value_type, bounds, n_elements, fixed)
 
@@ -116,7 +115,7 @@ class Hyperparameter(namedtuple('Hyperparameter',
                 self.fixed == other.fixed)
 
 
-class Kernel(six.with_metaclass(ABCMeta)):
+class Kernel(metaclass=ABCMeta):
     """Base class for all kernels.
 
     .. versionadded:: 0.18
@@ -176,7 +175,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
             # Simple optimisation to gain speed (inspect is slow)
             return self
         valid_params = self.get_params(deep=True)
-        for key, value in six.iteritems(params):
+        for key, value in params.items():
             split = key.split('__', 1)
             if len(split) > 1:
                 # nested objects case

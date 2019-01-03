@@ -10,7 +10,6 @@ import pytest
 from pytest import importorskip
 import numpy as np
 import scipy.sparse as sp
-from scipy import __version__ as scipy_version
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises

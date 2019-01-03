@@ -13,7 +13,8 @@ from distutils.version import LooseVersion
 from numpy.distutils.system_info import get_info
 
 DEFAULT_ROOT = 'sklearn'
-CYTHON_MIN_VERSION = '0.23'
+# on conda, this is the latest for python 3.5
+CYTHON_MIN_VERSION = '0.28.5'
 
 
 def get_blas_info():
