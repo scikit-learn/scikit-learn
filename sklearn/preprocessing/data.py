@@ -12,7 +12,6 @@ from __future__ import division
 from itertools import chain, combinations
 import warnings
 from itertools import combinations_with_replacement as combinations_w_r
-from distutils.version import LooseVersion
 
 import numpy as np
 from scipy import sparse
@@ -259,7 +258,6 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> from sklearn.preprocessing import MinMaxScaler
-
     >>> data = [[-1, 2], [-0.5, 6], [0, 10], [1, 18]]
     >>> scaler = MinMaxScaler()
     >>> print(scaler.fit(data))
@@ -1089,7 +1087,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     ...      [ -2.,  1.,  3.],
     ...      [ 4.,  1., -2.]]
     >>> transformer = RobustScaler().fit(X)
-    >>> transformer
+    >>> transformer  # doctest: +NORMALIZE_WHITESPACE
     RobustScaler(copy=True, quantile_range=(25.0, 75.0), with_centering=True,
            with_scaling=True)
     >>> transformer.transform(X)
@@ -1331,6 +1329,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import PolynomialFeatures
     >>> X = np.arange(6).reshape(3, 2)
     >>> X
     array([[0, 1],
@@ -2099,9 +2099,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         n_samples, n_features = X.shape
         references = self.references_ * 100
-        # numpy < 1.9 bug: np.percentile 2nd argument needs to be a list
-        if LooseVersion(np.__version__) < '1.9':
-            references = references.tolist()
 
         self.quantiles_ = []
         for col in X.T:
@@ -2124,9 +2121,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         """
         n_samples, n_features = X.shape
         references = self.references_ * 100
-        # numpy < 1.9 bug: np.percentile 2nd argument needs to be a list
-        if LooseVersion(np.__version__) < '1.9':
-            references = references.tolist()
 
         self.quantiles_ = []
         for feature_idx in range(n_features):

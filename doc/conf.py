@@ -253,7 +253,7 @@ sphinx_gallery_conf = {
 # key: first image in set
 # values: (number of plot in set, height of thumbnail)
 carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600,
-                   'sphx_glr_plot_outlier_detection_003.png': 372,
+                   'sphx_glr_plot_anomaly_comparison_001.png': 372,
                    'sphx_glr_plot_gpr_co2_001.png': 350,
                    'sphx_glr_plot_adaboost_twoclass_001.png': 372,
                    'sphx_glr_plot_compare_methods_001.png': 349}

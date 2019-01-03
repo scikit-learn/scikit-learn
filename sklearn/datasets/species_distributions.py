@@ -53,7 +53,6 @@ from ..utils import Bunch
 from sklearn.datasets.base import _pkl_filepath
 from sklearn.utils import _joblib
 
-PY3_OR_LATER = sys.version_info[0] >= 3
 
 # The original data can be found at:
 # https://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
@@ -106,12 +105,7 @@ def _load_csv(F):
     rec : np.ndarray
         record array representing the data
     """
-    if PY3_OR_LATER:
-        # Numpy recarray wants Python 3 str but not bytes...
-        names = F.readline().decode('ascii').strip().split(',')
-    else:
-        # Numpy recarray wants Python 2 str but not unicode
-        names = F.readline().strip().split(',')
+    names = F.readline().decode('ascii').strip().split(',')
 
     rec = np.loadtxt(F, skiprows=0, delimiter=',', dtype='a22,f4,f4')
     rec.dtype.names = names
