@@ -611,24 +611,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         scorers, self.multimetric_ = _check_multimetric_scoring(
             self.estimator, scoring=self.scoring)
 
-        if self.multimetric_:
-            if self.refit is not False and (
-                    not isinstance(self.refit, str) or
-                    # This will work for both dict / list (tuple)
-                    self.refit not in scorers):
-                raise ValueError("For multi-metric scoring, the parameter "
-                                 "refit must be set to a scorer key "
-                                 "to refit an estimator with the best "
-                                 "parameter setting on the whole data and "
-                                 "make the best_* attributes "
-                                 "available for that metric. If this is not "
-                                 "needed, refit should be set to False "
-                                 "explicitly. %r was passed." % self.refit)
-            else:
-                refit_metric = self.refit
-        else:
-            refit_metric = 'score'
-
+        refit_metric = self._get_refit_metric(scorers)
         X, y, groups = indexable(X, y, groups)
         n_splits = cv.get_n_splits(X, y, groups)
 
@@ -807,6 +790,25 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                        splits=True)
 
         return results
+
+    def _get_refit_metric(self, scorers):
+        if not self.multimetric_:
+            return 'score'
+
+        if self.refit is not False and (
+                not isinstance(self.refit, str) or
+                # This will work for both dict / list (tuple)
+                self.refit not in scorers):
+            raise ValueError("For multi-metric scoring, the parameter "
+                             "refit must be set to a scorer key "
+                             "to refit an estimator with the best "
+                             "parameter setting on the whole data and "
+                             "make the best_* attributes "
+                             "available for that metric. If this is not "
+                             "needed, refit should be set to False "
+                             "explicitly. %r was passed." % self.refit)
+
+        return self.refit
 
 
 class GridSearchCV(BaseSearchCV):
