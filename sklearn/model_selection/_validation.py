@@ -22,12 +22,10 @@ import scipy.sparse as sp
 
 from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, safe_indexing
-from ..utils.deprecation import DeprecationDict
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 from ..utils._joblib import logger
-from ..externals.six.moves import zip
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
@@ -40,7 +38,7 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
                    n_jobs=None, verbose=0, fit_params=None,
-                   pre_dispatch='2*n_jobs', return_train_score="warn",
+                   pre_dispatch='2*n_jobs', return_train_score=False,
                    return_estimator=False, error_score='raise-deprecating'):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
@@ -83,8 +81,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
 
         - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train, test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -97,9 +95,11 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    n_jobs : integer, optional
-        The number of CPUs to use to do the computation. -1 means
-        'all CPUs'.
+    n_jobs : int or None, optional (default=None)
+        The number of CPUs to use to do the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : integer, optional
         The verbosity level.
@@ -124,12 +124,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    return_train_score : boolean, optional
+    return_train_score : boolean, default=False
         Whether to include train scores.
-
-        Current default is ``'warn'``, which behaves as ``True`` in addition
-        to raising a warning when a training score is looked up.
-        That default will be changed to ``False`` in 0.21.
         Computing training scores is used to get insights on how different
         parameter settings impact the overfitting/underfitting trade-off.
         However computing the scores on the training set can be computationally
@@ -189,8 +185,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
 
     Single metric evaluation using ``cross_validate``
 
-    >>> cv_results = cross_validate(lasso, X, y, cv=3,
-    ...                             return_train_score=False)
+    >>> cv_results = cross_validate(lasso, X, y, cv=3)
     >>> sorted(cv_results.keys())                         # doctest: +ELLIPSIS
     ['fit_time', 'score_time', 'test_score']
     >>> cv_results['test_score']    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -246,8 +241,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
     test_scores, fit_times, score_times = zipped_scores
     test_scores = _aggregate_score_dicts(test_scores)
 
-    # TODO: replace by a dict in 0.21
-    ret = DeprecationDict() if return_train_score == 'warn' else {}
+    ret = {}
     ret['fit_time'] = np.array(fit_times)
     ret['score_time'] = np.array(score_times)
 
@@ -259,14 +253,6 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
         if return_train_score:
             key = 'train_%s' % name
             ret[key] = np.array(train_scores[name])
-            if return_train_score == 'warn':
-                message = (
-                    'You are accessing a training score ({!r}), '
-                    'which will not be available by default '
-                    'any more in 0.21. If you need training scores, '
-                    'please set return_train_score=True').format(key)
-                # warn on key access
-                ret.add_warning(key, message, FutureWarning)
 
     return ret
 
@@ -305,8 +291,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
 
         - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train, test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -319,9 +305,11 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    n_jobs : integer, optional
-        The number of CPUs to use to do the computation. -1 means
-        'all CPUs'.
+    n_jobs : int or None, optional (default=None)
+        The number of CPUs to use to do the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : integer, optional
         The verbosity level.
@@ -391,7 +379,6 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
 
     cv_results = cross_validate(estimator=estimator, X=X, y=y, groups=groups,
                                 scoring={'score': scorer}, cv=cv,
-                                return_train_score=False,
                                 n_jobs=n_jobs, verbose=verbose,
                                 fit_params=fit_params,
                                 pre_dispatch=pre_dispatch,
@@ -516,7 +503,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     is_multimetric = not callable(scorer)
     n_scorers = len(scorer.keys()) if is_multimetric else 1
-
     try:
         if y_train is None:
             estimator.fit(X_train, **fit_params)
@@ -566,13 +552,20 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         if return_train_score:
             train_scores = _score(estimator, X_train, y_train, scorer,
                                   is_multimetric)
-
     if verbose > 2:
         if is_multimetric:
-            for scorer_name, score in test_scores.items():
-                msg += ", %s=%s" % (scorer_name, score)
+            for scorer_name in sorted(test_scores):
+                msg += ", %s=" % scorer_name
+                if return_train_score:
+                    msg += "(train=%.3f," % train_scores[scorer_name]
+                    msg += " test=%.3f)" % test_scores[scorer_name]
+                else:
+                    msg += "%.3f" % test_scores[scorer_name]
         else:
-            msg += ", score=%s" % test_scores
+            msg += ", score="
+            msg += ("%.3f" % test_scores if not return_train_score else
+                    "(train=%.3f, test=%.3f)" % (train_scores, test_scores))
+
     if verbose > 1:
         total_time = score_time + fit_time
         end_msg = "%s, total=%s" % (msg, logger.short_format_time(total_time))
@@ -678,8 +671,8 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv='warn',
 
         - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train, test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -692,9 +685,11 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv='warn',
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    n_jobs : integer, optional
-        The number of CPUs to use to do the computation. -1 means
-        'all CPUs'.
+    n_jobs : int or None, optional (default=None)
+        The number of CPUs to use to do the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : integer, optional
         The verbosity level.
@@ -967,8 +962,8 @@ def permutation_test_score(estimator, X, y, groups=None, cv='warn',
 
         - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train, test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -984,9 +979,11 @@ def permutation_test_score(estimator, X, y, groups=None, cv='warn',
     n_permutations : integer, optional
         Number of times to permute ``y``.
 
-    n_jobs : integer, optional
-        The number of CPUs to use to do the computation. -1 means
-        'all CPUs'.
+    n_jobs : int or None, optional (default=None)
+        The number of CPUs to use to do the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional (default=0)
         If int, random_state is the seed used by the random number generator;
@@ -1117,8 +1114,8 @@ def learning_curve(estimator, X, y, groups=None,
 
         - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train, test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -1140,8 +1137,11 @@ def learning_curve(estimator, X, y, groups=None,
         If the estimator supports incremental learning, this will be
         used to speed up fitting for different training set sizes.
 
-    n_jobs : integer, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     pre_dispatch : integer or string, optional
         Number of predispatched jobs for parallel execution (default is
@@ -1365,8 +1365,8 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
 
         - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train, test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -1384,8 +1384,11 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    n_jobs : integer, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     pre_dispatch : integer or string, optional
         Number of predispatched jobs for parallel execution (default is

@@ -29,10 +29,9 @@ from ..utils import gen_batches
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils import Parallel
-from ..utils import delayed
-from ..utils import effective_n_jobs
-from ..externals.six import string_types
+from ..utils._joblib import Parallel
+from ..utils._joblib import delayed
+from ..utils._joblib import effective_n_jobs
 from ..exceptions import ConvergenceWarning
 from . import _k_means
 from ._k_means_elkan import k_means_elkan
@@ -261,14 +260,13 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         the data mean, in this case it will also not ensure that data is
         C-contiguous which may cause a significant slowdown.
 
-    n_jobs : int
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     algorithm : "auto", "full" or "elkan", default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
@@ -744,10 +742,10 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         raise ValueError(
             "n_samples=%d should be larger than k=%d" % (n_samples, k))
 
-    if isinstance(init, string_types) and init == 'k-means++':
+    if isinstance(init, str) and init == 'k-means++':
         centers = _k_init(X, k, random_state=random_state,
                           x_squared_norms=x_squared_norms)
-    elif isinstance(init, string_types) and init == 'random':
+    elif isinstance(init, str) and init == 'random':
         seeds = random_state.permutation(n_samples)[:k]
         centers = X[seeds]
     elif hasattr(init, '__array__'):
@@ -834,14 +832,13 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         the data mean, in this case it will also not ensure that data is
         C-contiguous which may cause a significant slowdown.
 
-    n_jobs : int
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     algorithm : "auto", "full" or "elkan", default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
@@ -852,7 +849,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     Attributes
     ----------
     cluster_centers_ : array, [n_clusters, n_features]
-        Coordinates of cluster centers
+        Coordinates of cluster centers. If the algorithm stops before fully
+        converging (see ``tol`` and ``max_iter``), these will not be
+        consistent with ``labels_``.
 
     labels_ :
         Labels of each point
@@ -903,11 +902,12 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     clustering algorithms available), but it falls in local minima. That's why
     it can be useful to restart it several times.
 
-    If the algorithm stops before fully converging (because of ``tol`` of
-    ``max_iter``), ``labels_`` and ``means_`` will not be consistent, i.e. the
-    ``means_`` will not be the means of the points in each cluster.
-    Also, the estimator will reassign ``labels_`` after the last iteration to
-    make ``labels_`` consistent with ``predict`` on the training set.
+    If the algorithm stops before fully converging (because of ``tol`` or
+    ``max_iter``), ``labels_`` and ``cluster_centers_`` will not be consistent,
+    i.e. the ``cluster_centers_`` will not be the means of the points in each
+    cluster. Also, the estimator will reassign ``labels_`` after the last
+    iteration to make ``labels_`` consistent with ``predict`` on the training
+    set.
 
     """
 
@@ -950,6 +950,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             copy if the given data is not C-contiguous.
 
         y : Ignored
+            not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
@@ -981,6 +982,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             New data to transform.
 
         y : Ignored
+            not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
@@ -1004,6 +1006,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             New data to transform.
 
         y : Ignored
+            not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
@@ -1083,6 +1086,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             New data.
 
         y : Ignored
+            not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
@@ -1445,7 +1449,7 @@ class MiniBatchKMeans(KMeans):
 
     Notes
     -----
-    See http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
+    See https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
 
     """
 
@@ -1475,6 +1479,7 @@ class MiniBatchKMeans(KMeans):
             if the given data is not C-contiguous.
 
         y : Ignored
+            not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
@@ -1553,7 +1558,7 @@ class MiniBatchKMeans(KMeans):
                 init_size=init_size)
 
             # Compute the label assignment on the init dataset
-            batch_inertia, centers_squared_diff = _mini_batch_step(
+            _mini_batch_step(
                 X_valid, sample_weight_valid,
                 x_squared_norms[validation_indices], cluster_centers,
                 weight_sums, old_center_buffer, False, distances=None,
@@ -1656,6 +1661,7 @@ class MiniBatchKMeans(KMeans):
             X will be copied if it is not C-contiguous.
 
         y : Ignored
+            not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations

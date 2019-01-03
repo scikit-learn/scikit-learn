@@ -10,28 +10,19 @@
 from libc.string cimport memset
 import numpy as np
 cimport numpy as np
+from cython cimport floating
+
 
 cdef extern from "cblas.h":
     double cblas_dasum(int, const double *, int) nogil
-
-ctypedef float [:, :] float_array_2d_t
-ctypedef double [:, :] double_array_2d_t
-
-cdef fused floating1d:
-    float[::1]
-    double[::1]
-
-cdef fused floating_array_2d_t:
-    float_array_2d_t
-    double_array_2d_t
 
 
 np.import_array()
 
 
-def _chi2_kernel_fast(floating_array_2d_t X,
-                      floating_array_2d_t Y,
-                      floating_array_2d_t result):
+def _chi2_kernel_fast(floating[:, :] X,
+                      floating[:, :] Y,
+                      floating[:, :] result):
     cdef np.npy_intp i, j, k
     cdef np.npy_intp n_samples_X = X.shape[0]
     cdef np.npy_intp n_samples_Y = Y.shape[0]
@@ -50,8 +41,8 @@ def _chi2_kernel_fast(floating_array_2d_t X,
                 result[i, j] = -res
 
 
-def _sparse_manhattan(floating1d X_data, int[:] X_indices, int[:] X_indptr,
-                      floating1d Y_data, int[:] Y_indices, int[:] Y_indptr,
+def _sparse_manhattan(floating[::1] X_data, int[:] X_indices, int[:] X_indptr,
+                      floating[::1] Y_data, int[:] Y_indices, int[:] Y_indptr,
                       np.npy_intp n_features, double[:, ::1] D):
     """Pairwise L1 distances for CSR matrices.
 

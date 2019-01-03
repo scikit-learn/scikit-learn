@@ -15,15 +15,15 @@ from numpy.testing import assert_almost_equal, assert_array_equal
 from sklearn.datasets import load_digits, load_boston, load_iris
 from sklearn.datasets import make_regression, make_multilabel_classification
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 from sklearn.metrics import roc_auc_score
 from sklearn.neural_network import MLPClassifier
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
-from sklearn.utils.testing import (assert_raises, assert_greater, assert_equal,
-                                   assert_false, ignore_warnings)
+from sklearn.utils.testing import (assert_raises, assert_greater,
+                                   assert_equal, ignore_warnings)
 from sklearn.utils.testing import assert_raise_message
 
 
@@ -297,7 +297,7 @@ def test_multilabel_classification():
                         max_iter=150, random_state=0, activation='logistic',
                         learning_rate_init=0.2)
     mlp.fit(X, y)
-    assert_equal(mlp.score(X, y), 1)
+    assert_greater(mlp.score(X, y), 0.97)
 
     # test partial fit method
     mlp = MLPClassifier(solver='sgd', hidden_layer_sizes=50, max_iter=150,
@@ -395,7 +395,7 @@ def test_partial_fit_errors():
                   MLPClassifier(solver='sgd').partial_fit, X, y, classes=[2])
 
     # lbfgs doesn't support partial_fit
-    assert_false(hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit'))
+    assert not hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit')
 
 
 def test_params_errors():

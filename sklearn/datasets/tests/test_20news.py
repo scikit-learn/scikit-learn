@@ -3,7 +3,6 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import SkipTest
 from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
@@ -67,14 +66,14 @@ def test_20news_vectorized():
 
     # test subset = train
     bunch = datasets.fetch_20newsgroups_vectorized(subset="train")
-    assert_true(sp.isspmatrix_csr(bunch.data))
+    assert sp.isspmatrix_csr(bunch.data)
     assert_equal(bunch.data.shape, (11314, 130107))
     assert_equal(bunch.target.shape[0], 11314)
     assert_equal(bunch.data.dtype, np.float64)
 
     # test subset = test
     bunch = datasets.fetch_20newsgroups_vectorized(subset="test")
-    assert_true(sp.isspmatrix_csr(bunch.data))
+    assert sp.isspmatrix_csr(bunch.data)
     assert_equal(bunch.data.shape, (7532, 130107))
     assert_equal(bunch.target.shape[0], 7532)
     assert_equal(bunch.data.dtype, np.float64)
@@ -85,7 +84,7 @@ def test_20news_vectorized():
 
     # test subset = all
     bunch = datasets.fetch_20newsgroups_vectorized(subset='all')
-    assert_true(sp.isspmatrix_csr(bunch.data))
+    assert sp.isspmatrix_csr(bunch.data)
     assert_equal(bunch.data.shape, (11314 + 7532, 130107))
     assert_equal(bunch.target.shape[0], 11314 + 7532)
     assert_equal(bunch.data.dtype, np.float64)

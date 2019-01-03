@@ -14,7 +14,6 @@ from scipy.sparse.linalg import eigsh, svds
 
 from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
-from ..externals import six
 from ..utils import check_random_state
 
 from ..utils.extmath import (make_nonnegative, randomized_svd,
@@ -59,7 +58,6 @@ def _bistochastic_normalize(X, max_iter=1000, tol=1e-5):
     # deviation reduction and balancing algorithms.
     X = make_nonnegative(X)
     X_scaled = X
-    dist = None
     for _ in range(max_iter):
         X_new, _, _ = _scale_normalize(X_scaled)
         if issparse(X):
@@ -86,8 +84,7 @@ def _log_normalize(X):
     return L - row_avg - col_avg + avg
 
 
-class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
-                                      BiclusterMixin)):
+class BaseSpectral(BaseEstimator, BiclusterMixin, metaclass=ABCMeta):
     """Base class for spectral biclustering."""
 
     @abstractmethod
@@ -228,15 +225,14 @@ class SpectralCoclustering(BaseSpectral):
         chosen and the algorithm runs once. Otherwise, the algorithm
         is run for each initialization and the best solution chosen.
 
-    n_jobs : int, optional, default: 1
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None (default)
         Used for randomizing the singular value decomposition and the k-means
@@ -307,10 +303,10 @@ class SpectralCoclustering(BaseSpectral):
         self.row_labels_ = labels[:n_rows]
         self.column_labels_ = labels[n_rows:]
 
-        self.rows_ = np.vstack(self.row_labels_ == c
-                               for c in range(self.n_clusters))
-        self.columns_ = np.vstack(self.column_labels_ == c
-                                  for c in range(self.n_clusters))
+        self.rows_ = np.vstack([self.row_labels_ == c
+                                for c in range(self.n_clusters)])
+        self.columns_ = np.vstack([self.column_labels_ == c
+                                   for c in range(self.n_clusters)])
 
 
 class SpectralBiclustering(BaseSpectral):
@@ -375,15 +371,14 @@ class SpectralBiclustering(BaseSpectral):
         chosen and the algorithm runs once. Otherwise, the algorithm
         is run for each initialization and the best solution chosen.
 
-    n_jobs : int, optional, default: 1
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None (default)
         Used for randomizing the singular value decomposition and the k-means
@@ -507,12 +502,12 @@ class SpectralBiclustering(BaseSpectral):
         self.column_labels_ = self._project_and_cluster(X.T, best_ut.T,
                                                         n_col_clusters)
 
-        self.rows_ = np.vstack(self.row_labels_ == label
-                               for label in range(n_row_clusters)
-                               for _ in range(n_col_clusters))
-        self.columns_ = np.vstack(self.column_labels_ == label
-                                  for _ in range(n_row_clusters)
-                                  for label in range(n_col_clusters))
+        self.rows_ = np.vstack([self.row_labels_ == label
+                                for label in range(n_row_clusters)
+                                for _ in range(n_col_clusters)])
+        self.columns_ = np.vstack([self.column_labels_ == label
+                                   for _ in range(n_row_clusters)
+                                   for label in range(n_col_clusters)])
 
     def _fit_best_piecewise(self, vectors, n_best, n_clusters):
         """Find the ``n_best`` vectors that are best approximated by piecewise

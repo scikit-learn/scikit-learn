@@ -65,7 +65,6 @@ from __future__ import print_function
 # License: BSD 3 clause
 
 import sys
-from datetime import datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -85,8 +84,6 @@ print(__doc__)
 # that we get high-tech firms, and before the 2008 crash). This kind of
 # historical data can be obtained for from APIs like the quandl.com and
 # alphavantage.co ones.
-start_date = datetime(2003, 1, 1).date()
-end_date = datetime(2008, 1, 1).date()
 
 symbol_dict = {
     'TOT': 'Total',
@@ -166,7 +163,7 @@ variation = close_prices - open_prices
 
 # #############################################################################
 # Learn a graphical structure from the correlations
-edge_model = covariance.GraphicalLassoCV()
+edge_model = covariance.GraphicalLassoCV(cv=5)
 
 # standardize the time series: using correlations rather than covariance
 # is more efficient for structure recovery

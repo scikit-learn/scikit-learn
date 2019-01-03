@@ -43,7 +43,7 @@ scoring = {'AUC': 'roc_auc', 'Accuracy': make_scorer(accuracy_score)}
 # Setting refit='AUC', refits an estimator on the whole dataset with the
 # parameter setting that has the best cross-validated AUC score.
 # That estimator is made available at ``gs.best_estimator_`` along with
-# parameters like ``gs.best_score_``, ``gs.best_parameters_`` and
+# parameters like ``gs.best_score_``, ``gs.best_params_`` and
 # ``gs.best_index_``
 gs = GridSearchCV(DecisionTreeClassifier(random_state=42),
                   param_grid={'min_samples_split': range(2, 403, 10)},

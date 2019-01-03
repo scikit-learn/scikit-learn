@@ -26,7 +26,6 @@ from scipy import linalg
 
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals.six.moves import xrange
 from ..utils import check_array, check_random_state
 from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
 from ..utils.validation import check_is_fitted
@@ -107,6 +106,16 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
     n_iter_ : int
         Number of iterations run.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import FactorAnalysis
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = FactorAnalysis(n_components=7, random_state=0)
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> X_transformed.shape
+    (1797, 7)
 
     References
     ----------
@@ -201,7 +210,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             raise ValueError('SVD method %s is not supported. Please consider'
                              ' the documentation' % self.svd_method)
 
-        for i in xrange(self.max_iter):
+        for i in range(self.max_iter):
             # SMALL helps numerics
             sqrt_psi = np.sqrt(psi) + SMALL
             s, V, unexp_var = my_svd(X / (sqrt_psi * nsqrt))

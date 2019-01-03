@@ -17,7 +17,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.fixes import np_version
 
 
 class KBinsDiscretizer(BaseEstimator, TransformerMixin):
@@ -168,8 +167,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
             elif self.strategy == 'quantile':
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
-                if np_version < (1, 9):
-                    quantiles = list(quantiles)
                 bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
 
             elif self.strategy == 'kmeans':
@@ -192,6 +189,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             self._encoder = OneHotEncoder(
                 categories=[np.arange(i) for i in self.n_bins_],
                 sparse=self.encode == 'onehot')
+            # Fit the OneHotEncoder with toy datasets
+            # so that it's ready for use after the KBinsDiscretizer is fitted
+            self._encoder.fit(np.zeros((1, len(self.n_bins_)), dtype=int))
 
         return self
 
@@ -267,7 +267,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         if self.encode == 'ordinal':
             return Xt
 
-        return self._encoder.fit_transform(Xt)
+        return self._encoder.transform(Xt)
 
     def inverse_transform(self, Xt):
         """Transforms discretized data back to original feature space.

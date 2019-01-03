@@ -13,7 +13,6 @@ negative examples click the right button.
 If all examples are from the same class, it uses a one-class SVM.
 
 """
-from __future__ import division, print_function
 
 print(__doc__)
 
@@ -40,7 +39,6 @@ import numpy as np
 
 from sklearn import svm
 from sklearn.datasets import dump_svmlight_file
-from sklearn.externals.six.moves import xrange
 
 y_min, y_max = -50, 50
 x_min, x_max = -50, 50
@@ -188,7 +186,7 @@ class View(object):
 
     def update(self, event, model):
         if event == "examples_loaded":
-            for i in xrange(len(model.data)):
+            for i in range(len(model.data)):
                 self.update_example(model, i)
 
         if event == "example_added":
