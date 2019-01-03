@@ -25,8 +25,6 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals import six
-from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
@@ -35,7 +33,8 @@ from ..utils.fixes import sp_version
 from ..utils.fixes import _Mapping as Mapping  # noqa
 
 
-__all__ = ['CountVectorizer',
+__all__ = ['HashingVectorizer',
+           'CountVectorizer',
            'ENGLISH_STOP_WORDS',
            'TfidfTransformer',
            'TfidfVectorizer',
@@ -106,7 +105,7 @@ def strip_tags(s):
 def _check_stop_list(stop):
     if stop == "english":
         return ENGLISH_STOP_WORDS
-    elif isinstance(stop, six.string_types):
+    elif isinstance(stop, str):
         raise ValueError("not a built-in stop list: %s" % stop)
     elif stop is None:
         return None
@@ -169,9 +168,9 @@ class VectorizerMixin(object):
             tokens_append = tokens.append
             space_join = " ".join
 
-            for n in xrange(min_n,
+            for n in range(min_n,
                             min(max_n + 1, n_original_tokens + 1)):
-                for i in xrange(n_original_tokens - n + 1):
+                for i in range(n_original_tokens - n + 1):
                     tokens_append(space_join(original_tokens[i: i + n]))
 
         return tokens
@@ -194,8 +193,8 @@ class VectorizerMixin(object):
         # bind method outside of loop to reduce overhead
         ngrams_append = ngrams.append
 
-        for n in xrange(min_n, min(max_n + 1, text_len + 1)):
-            for i in xrange(text_len - n + 1):
+        for n in range(min_n, min(max_n + 1, text_len + 1)):
+            for i in range(text_len - n + 1):
                 ngrams_append(text_document[i: i + n])
         return ngrams
 
@@ -217,7 +216,7 @@ class VectorizerMixin(object):
         for w in text_document.split():
             w = ' ' + w + ' '
             w_len = len(w)
-            for n in xrange(min_n, max_n + 1):
+            for n in range(min_n, max_n + 1):
                 offset = 0
                 ngrams_append(w[offset:offset + n])
                 while offset + n < w_len:
@@ -269,8 +268,22 @@ class VectorizerMixin(object):
         return _check_stop_list(self.stop_words)
 
     def _check_stop_words_consistency(self, stop_words, preprocess, tokenize):
+        """Check if stop words are consistent
+
+        Returns
+        -------
+        is_consistent : True if stop words are consistent with the preprocessor
+                        and tokenizer, False if they are not, None if the check
+                        was previously performed, "error" if it could not be
+                        performed (e.g. because of the use of a custom
+                        preprocessor / tokenizer)
+        """
+        if id(self.stop_words) == getattr(self, '_stop_words_id', None):
+            # Stop words are were previously validated
+            return None
+
         # NB: stop_words is validated, unlike self.stop_words
-        if id(self.stop_words) != getattr(self, '_stop_words_id', None):
+        try:
             inconsistent = set()
             for w in stop_words or ():
                 tokens = list(tokenize(preprocess(w)))
@@ -280,10 +293,16 @@ class VectorizerMixin(object):
             self._stop_words_id = id(self.stop_words)
 
             if inconsistent:
-                warnings.warn('Your stop_words may be inconsistent with your '
-                              'preprocessing. Tokenizing the stop words '
-                              'generated tokens %r not in stop_words.' %
-                              sorted(inconsistent))
+                warnings.warn('Your stop_words may be inconsistent with '
+                              'your preprocessing. Tokenizing the stop '
+                              'words generated tokens %r not in '
+                              'stop_words.' % sorted(inconsistent))
+            return not inconsistent
+        except Exception:
+            # Failed to check stop words consistency (e.g. because a custom
+            # preprocessor or tokenizer was used)
+            self._stop_words_id = id(self.stop_words)
+            return 'error'
 
     def build_analyzer(self):
         """Return a callable that handles preprocessing and tokenization"""
@@ -324,10 +343,10 @@ class VectorizerMixin(object):
                         raise ValueError(msg)
                 vocabulary = vocab
             else:
-                indices = set(six.itervalues(vocabulary))
+                indices = set(vocabulary.values())
                 if len(indices) != len(vocabulary):
                     raise ValueError("Vocabulary contains repeated indices.")
-                for i in xrange(len(vocabulary)):
+                for i in range(len(vocabulary)):
                     if i not in indices:
                         msg = ("Vocabulary of size %d doesn't contain index "
                                "%d." % (len(vocabulary), i))
@@ -567,7 +586,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
             Training data.
         """
         # triggers a parameter validation
-        if isinstance(X, six.string_types):
+        if isinstance(X, str):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
@@ -592,7 +611,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         X : scipy.sparse matrix, shape = (n_samples, self.n_features)
             Document-term matrix.
         """
-        if isinstance(X, six.string_types):
+        if isinstance(X, str):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
@@ -851,7 +870,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         Returns a reordered matrix and modifies the vocabulary in place
         """
-        sorted_features = sorted(six.iteritems(vocabulary))
+        sorted_features = sorted(vocabulary.items())
         map_index = np.empty(len(sorted_features), dtype=np.int32)
         for new_val, (term, old_val) in enumerate(sorted_features):
             vocabulary[term] = new_val
@@ -889,7 +908,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         new_indices = np.cumsum(mask) - 1  # maps old indices to new
         removed_terms = set()
-        for term, old_index in list(six.iteritems(vocabulary)):
+        for term, old_index in list(vocabulary.items()):
             if mask[old_index]:
                 vocabulary[term] = new_indices[old_index]
             else:
@@ -997,7 +1016,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         # We intentionally don't call the transform method to make
         # fit_transform overridable without unwanted side effects in
         # TfidfVectorizer.
-        if isinstance(raw_documents, six.string_types):
+        if isinstance(raw_documents, str):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
@@ -1052,7 +1071,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         X : sparse matrix, [n_samples, n_features]
             Document-term matrix.
         """
-        if isinstance(raw_documents, six.string_types):
+        if isinstance(raw_documents, str):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
@@ -1105,7 +1124,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         self._check_vocabulary()
 
-        return [t for t, i in sorted(six.iteritems(self.vocabulary_),
+        return [t for t, i in sorted(self.vocabulary_.items(),
                                      key=itemgetter(1))]
 
 
@@ -1336,8 +1355,10 @@ class TfidfVectorizer(CountVectorizer):
         preprocessing and n-grams generation steps.
         Only applies if ``analyzer == 'word'``.
 
-    analyzer : string, {'word', 'char'} or callable
+    analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
+        Option 'char_wb' creates character n-grams only from text inside
+        word boundaries; n-grams at the edges of words are padded with space.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.

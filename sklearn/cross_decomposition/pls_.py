@@ -17,7 +17,6 @@ from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..exceptions import ConvergenceWarning
-from ..externals import six
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
@@ -117,8 +116,8 @@ def _center_scale_xy(X, Y, scale=True):
     return X, Y, x_mean, y_mean, x_std, y_std
 
 
-class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
-           RegressorMixin):
+class _PLS(BaseEstimator, TransformerMixin, RegressorMixin,
+           metaclass=ABCMeta):
     """Partial Least Squares (PLS)
 
     This class implements the generic PLS algorithm, constructors' parameters

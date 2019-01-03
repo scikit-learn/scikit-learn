@@ -12,7 +12,6 @@ from scipy import sparse
 
 from .. import get_config as _get_config
 from ..base import BaseEstimator, TransformerMixin
-from ..externals import six
 from ..utils import check_array
 from ..utils import deprecated
 from ..utils.fixes import _argmax, _object_dtype_isnan
@@ -20,9 +19,6 @@ from ..utils.validation import check_is_fitted
 
 from .base import _transform_selected
 from .label import _encode, _encode_check_unknown
-
-
-range = six.moves.range
 
 
 __all__ = [
@@ -112,7 +108,14 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                     # continue `The rows are marked `X_mask` and will be
                     # removed later.
                     X_mask[:, i] = valid_mask
-                    Xi = Xi.copy()
+                    # cast Xi into the largest string type necessary
+                    # to handle different lengths of numpy strings
+                    if (self.categories_[i].dtype.kind in ('U', 'S')
+                            and self.categories_[i].itemsize > Xi.itemsize):
+                        Xi = Xi.astype(self.categories_[i].dtype)
+                    else:
+                        Xi = Xi.copy()
+
                     Xi[~valid_mask] = self.categories_[i][0]
             _, encoded = _encode(Xi, self.categories_[i], encode=True)
             X_int[:, i] = encoded
@@ -240,6 +243,7 @@ class OneHotEncoder(_BaseEncoder):
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
     ... # doctest: +ELLIPSIS
+    ... # doctest: +NORMALIZE_WHITESPACE
     OneHotEncoder(categorical_features=None, categories=None,
            dtype=<... 'numpy.float64'>, handle_unknown='ignore',
            n_values=None, sparse=True)
@@ -304,8 +308,8 @@ class OneHotEncoder(_BaseEncoder):
         return self._n_values_
 
     def _handle_deprecations(self, X):
-
         # internal version of the attributes to handle deprecations
+        self._n_values = self.n_values
         self._categories = getattr(self, '_categories', None)
         self._categorical_features = getattr(self, '_categorical_features',
                                              None)
@@ -343,7 +347,7 @@ class OneHotEncoder(_BaseEncoder):
 
                 # check if we have integer or categorical input
                 try:
-                    X = check_array(X, dtype=np.int)
+                    check_array(X, dtype=np.int)
                 except ValueError:
                     self._legacy_mode = False
                     self._categories = 'auto'
@@ -362,11 +366,11 @@ class OneHotEncoder(_BaseEncoder):
                     )
                     warnings.warn(msg, FutureWarning)
                     self._legacy_mode = True
-                    self.n_values = 'auto'
+                    self._n_values = 'auto'
 
         # if user specified categorical_features -> always use legacy mode
         if self.categorical_features is not None:
-            if (isinstance(self.categorical_features, six.string_types)
+            if (isinstance(self.categorical_features, str)
                     and self.categorical_features == 'all'):
                 warnings.warn(
                     "The 'categorical_features' keyword is deprecated in "
@@ -383,6 +387,12 @@ class OneHotEncoder(_BaseEncoder):
                     "The 'categorical_features' keyword is deprecated in "
                     "version 0.20 and will be removed in 0.22. You can "
                     "use the ColumnTransformer instead.", DeprecationWarning)
+                # Set categories_ to empty list if no categorical columns exist
+                n_features = X.shape[1]
+                sel = np.zeros(n_features, dtype=bool)
+                sel[np.asarray(self.categorical_features)] = True
+                if sum(sel) == 0:
+                    self.categories_ = []
                 self._legacy_mode = True
             self._categorical_features = self.categorical_features
         else:
@@ -427,18 +437,18 @@ class OneHotEncoder(_BaseEncoder):
                              "be able to use arbitrary integer values as "
                              "category identifiers.")
         n_samples, n_features = X.shape
-        if (isinstance(self.n_values, six.string_types) and
-                self.n_values == 'auto'):
+        if (isinstance(self._n_values, str) and
+                self._n_values == 'auto'):
             n_values = np.max(X, axis=0) + 1
-        elif isinstance(self.n_values, numbers.Integral):
-            if (np.max(X, axis=0) >= self.n_values).any():
+        elif isinstance(self._n_values, numbers.Integral):
+            if (np.max(X, axis=0) >= self._n_values).any():
                 raise ValueError("Feature out of bounds for n_values=%d"
-                                 % self.n_values)
+                                 % self._n_values)
             n_values = np.empty(n_features, dtype=np.int)
-            n_values.fill(self.n_values)
+            n_values.fill(self._n_values)
         else:
             try:
-                n_values = np.asarray(self.n_values, dtype=int)
+                n_values = np.asarray(self._n_values, dtype=int)
             except (ValueError, TypeError):
                 raise TypeError("Wrong type for parameter `n_values`. Expected"
                                 " 'auto', int or array of ints, got %r"
@@ -462,8 +472,8 @@ class OneHotEncoder(_BaseEncoder):
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
 
-        if (isinstance(self.n_values, six.string_types) and
-                self.n_values == 'auto'):
+        if (isinstance(self._n_values, str) and
+                self._n_values == 'auto'):
             mask = np.array(out.sum(axis=0)).ravel() != 0
             active_features = np.where(mask)[0]
             out = out[:, active_features]
@@ -542,8 +552,8 @@ class OneHotEncoder(_BaseEncoder):
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
-        if (isinstance(self.n_values, six.string_types) and
-                self.n_values == 'auto'):
+        if (isinstance(self._n_values, str) and
+                self._n_values == 'auto'):
             out = out[:, self._active_features_]
 
         return out if self.sparse else out.toarray()
@@ -591,6 +601,7 @@ class OneHotEncoder(_BaseEncoder):
         X_out : sparse matrix if sparse=True else a 2-d array
             Transformed input.
         """
+        check_is_fitted(self, 'categories_')
         if self._legacy_mode:
             return _transform_selected(X, self._legacy_transform, self.dtype,
                                        self._categorical_features,
@@ -683,7 +694,7 @@ class OneHotEncoder(_BaseEncoder):
         cats = self.categories_
         if input_features is None:
             input_features = ['x%d' % i for i in range(len(cats))]
-        elif(len(input_features) != len(self.categories_)):
+        elif len(input_features) != len(self.categories_):
             raise ValueError(
                 "input_features should have length equal to number of "
                 "features ({}), got {}".format(len(self.categories_),
@@ -692,7 +703,7 @@ class OneHotEncoder(_BaseEncoder):
         feature_names = []
         for i in range(len(cats)):
             names = [
-                input_features[i] + '_' + six.text_type(t) for t in cats[i]]
+                input_features[i] + '_' + str(t) for t in cats[i]]
             feature_names.extend(names)
 
         return np.array(feature_names, dtype=object)

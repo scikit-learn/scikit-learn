@@ -12,7 +12,6 @@ from __future__ import division
 from itertools import chain, combinations
 import warnings
 from itertools import combinations_with_replacement as combinations_w_r
-from distutils.version import LooseVersion
 
 import numpy as np
 from scipy import sparse
@@ -20,7 +19,6 @@ from scipy import stats
 from scipy import optimize
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals import six
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
@@ -33,15 +31,11 @@ from ..utils.sparsefuncs import (inplace_column_scale,
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
 
+from ._csr_polynomial_expansion import _csr_polynomial_expansion
+
 from ._encoders import OneHotEncoder
 
-
 BOUNDS_THRESHOLD = 1e-7
-
-
-zip = six.moves.zip
-map = six.moves.map
-range = six.moves.range
 
 __all__ = [
     'Binarizer',
@@ -202,7 +196,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     """Transforms features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
-    that it is in the given range on the training set, i.e. between
+    that it is in the given range on the training set, e.g. between
     zero and one.
 
     The transformation is given by::
@@ -258,7 +252,6 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> from sklearn.preprocessing import MinMaxScaler
-
     >>> data = [[-1, 2], [-0.5, 6], [0, 10], [1, 18]]
     >>> scaler = MinMaxScaler()
     >>> print(scaler.fit(data))
@@ -479,6 +472,14 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
 class StandardScaler(BaseEstimator, TransformerMixin):
     """Standardize features by removing the mean and scaling to unit variance
 
+    The standard score of a sample `x` is calculated as:
+
+        z = (x - u) / s
+
+    where `u` is the mean of the training samples or zero if `with_mean=False`,
+    and `s` is the standard deviation of the training samples or one if
+    `with_std=False`.
+
     Centering and scaling happen independently on each feature by computing
     the relevant statistics on the samples in the training set. Mean and
     standard deviation are then stored to be used on later data using the
@@ -524,8 +525,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     scale_ : ndarray or None, shape (n_features,)
-        Per feature relative scaling of the data. Equal to ``None`` when
-        ``with_std=False``.
+        Per feature relative scaling of the data. This is calculated using
+        `np.sqrt(var_)`. Equal to ``None`` when ``with_std=False``.
 
         .. versionadded:: 0.17
            *scale_*
@@ -1080,7 +1081,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     ...      [ -2.,  1.,  3.],
     ...      [ 4.,  1., -2.]]
     >>> transformer = RobustScaler().fit(X)
-    >>> transformer
+    >>> transformer  # doctest: +NORMALIZE_WHITESPACE
     RobustScaler(copy=True, quantile_range=(25.0, 75.0), with_centering=True,
            with_scaling=True)
     >>> transformer.transform(X)
@@ -1322,6 +1323,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import PolynomialFeatures
     >>> X = np.arange(6).reshape(3, 2)
     >>> X
     array([[0, 1],
@@ -1381,8 +1384,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         combinations = self._combinations(self.n_input_features_, self.degree,
                                           self.interaction_only,
                                           self.include_bias)
-        return np.vstack(np.bincount(c, minlength=self.n_input_features_)
-                         for c in combinations)
+        return np.vstack([np.bincount(c, minlength=self.n_input_features_)
+                          for c in combinations])
 
     def get_feature_names(self, input_features=None):
         """
@@ -1443,41 +1446,71 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         ----------
         X : array-like or sparse matrix, shape [n_samples, n_features]
             The data to transform, row by row.
-            Sparse input should preferably be in CSC format.
+            Sparse input should preferably be in CSR format (for speed),
+            but must be in CSC format if the degree is 4 or higher.
+
+            If the input matrix is in CSR format and the expansion is of
+            degree 2 or 3, the method described in the work "Leveraging
+            Sparsity to Speed Up Polynomial Feature Expansions of CSR
+            Matrices Using K-Simplex Numbers" by Andrew Nystrom and
+            John Hughes is used, which is much faster than the method
+            used on CSC input.
 
         Returns
         -------
-        XP : np.ndarray or CSC sparse matrix, shape [n_samples, NP]
+        XP : np.ndarray or CSR/CSC sparse matrix, shape [n_samples, NP]
             The matrix of features, where NP is the number of polynomial
             features generated from the combination of inputs.
         """
         check_is_fitted(self, ['n_input_features_', 'n_output_features_'])
 
-        X = check_array(X, order='F', dtype=FLOAT_DTYPES, accept_sparse='csc')
+        X = check_array(X, order='F', dtype=FLOAT_DTYPES,
+                        accept_sparse=('csr', 'csc'))
+
         n_samples, n_features = X.shape
 
         if n_features != self.n_input_features_:
             raise ValueError("X shape does not match training shape")
 
-        combinations = self._combinations(n_features, self.degree,
-                                          self.interaction_only,
-                                          self.include_bias)
-        if sparse.isspmatrix(X):
-            columns = []
-            for comb in combinations:
-                if comb:
-                    out_col = 1
-                    for col_idx in comb:
-                        out_col = X[:, col_idx].multiply(out_col)
-                    columns.append(out_col)
-                else:
-                    columns.append(sparse.csc_matrix(np.ones((X.shape[0], 1))))
-            XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
+        if sparse.isspmatrix_csr(X):
+            if self.degree > 3:
+                return self.transform(X.tocsc()).tocsr()
+            to_stack = []
+            if self.include_bias:
+                to_stack.append(np.ones(shape=(n_samples, 1), dtype=X.dtype))
+            to_stack.append(X)
+            for deg in range(2, self.degree+1):
+                Xp_next = _csr_polynomial_expansion(X.data, X.indices,
+                                                    X.indptr, X.shape[1],
+                                                    self.interaction_only,
+                                                    deg)
+                if Xp_next is None:
+                    break
+                to_stack.append(Xp_next)
+            XP = sparse.hstack(to_stack, format='csr')
+        elif sparse.isspmatrix_csc(X) and self.degree < 4:
+            return self.transform(X.tocsr()).tocsc()
         else:
-            XP = np.empty((n_samples, self.n_output_features_), dtype=X.dtype,
-                          order=self.order)
-            for i, comb in enumerate(combinations):
-                XP[:, i] = X[:, comb].prod(1)
+            combinations = self._combinations(n_features, self.degree,
+                                              self.interaction_only,
+                                              self.include_bias)
+            if sparse.isspmatrix(X):
+                columns = []
+                for comb in combinations:
+                    if comb:
+                        out_col = 1
+                        for col_idx in comb:
+                            out_col = X[:, col_idx].multiply(out_col)
+                        columns.append(out_col)
+                    else:
+                        bias = sparse.csc_matrix(np.ones((X.shape[0], 1)))
+                        columns.append(bias)
+                XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
+            else:
+                XP = np.empty((n_samples, self.n_output_features_),
+                              dtype=X.dtype, order=self.order)
+                for i, comb in enumerate(combinations):
+                    XP[:, i] = X[:, comb].prod(1)
 
         return XP
 
@@ -1652,7 +1685,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
         ----------
         X : array-like
         """
-        X = check_array(X, accept_sparse='csr')
+        check_array(X, accept_sparse='csr')
         return self
 
     def transform(self, X, copy=None):
@@ -1958,7 +1991,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     (marginal) outliers: this is therefore a robust preprocessing scheme.
 
     The transformation is applied on each feature independently.
-    The cumulative density function of a feature is used to project the
+    The cumulative distribution function of a feature is used to project the
     original values. Features values of new/unseen data that fall below
     or above the fitted range will be mapped to the bounds of the output
     distribution. Note that this transform is non-linear. It may distort linear
@@ -1971,7 +2004,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     ----------
     n_quantiles : int, optional (default=1000)
         Number of quantiles to be computed. It corresponds to the number
-        of landmarks used to discretize the cumulative density function.
+        of landmarks used to discretize the cumulative distribution function.
 
     output_distribution : str, optional (default='uniform')
         Marginal distribution for the transformed data. The choices are
@@ -2060,9 +2093,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         n_samples, n_features = X.shape
         references = self.references_ * 100
-        # numpy < 1.9 bug: np.percentile 2nd argument needs to be a list
-        if LooseVersion(np.__version__) < '1.9':
-            references = references.tolist()
 
         self.quantiles_ = []
         for col in X.T:
@@ -2085,9 +2115,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         """
         n_samples, n_features = X.shape
         references = self.references_ * 100
-        # numpy < 1.9 bug: np.percentile 2nd argument needs to be a list
-        if LooseVersion(np.__version__) < '1.9':
-            references = references.tolist()
 
         self.quantiles_ = []
         for feature_idx in range(n_features):
@@ -2348,7 +2375,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     (marginal) outliers: this is therefore a robust preprocessing scheme.
 
     The transformation is applied on each feature independently.
-    The cumulative density function of a feature is used to project the
+    The cumulative distribution function of a feature is used to project the
     original values. Features values of new/unseen data that fall below
     or above the fitted range will be mapped to the bounds of the output
     distribution. Note that this transform is non-linear. It may distort linear
@@ -2368,7 +2395,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
 
     n_quantiles : int, optional (default=1000)
         Number of quantiles to be computed. It corresponds to the number
-        of landmarks used to discretize the cumulative density function.
+        of landmarks used to discretize the cumulative distribution function.
 
     output_distribution : str, optional (default='uniform')
         Marginal distribution for the transformed data. The choices are
@@ -2498,11 +2525,11 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     >>> print(pt.fit(data))
     PowerTransformer(copy=True, method='yeo-johnson', standardize=True)
     >>> print(pt.lambdas_)
-    [1.38668178e+00 5.93926346e-09]
+    [ 1.386... -3.100...]
     >>> print(pt.transform(data))
-    [[-1.31616039 -0.70710678]
-     [ 0.20998268 -0.70710678]
-     [ 1.1061777   1.41421356]]
+    [[-1.316... -0.707...]
+     [ 0.209... -0.707...]
+     [ 1.106...  1.414...]]
 
     See also
     --------
@@ -2679,23 +2706,18 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     def _yeo_johnson_inverse_transform(self, x, lmbda):
         """Return inverse-transformed input x following Yeo-Johnson inverse
         transform with parameter lambda.
-
-        Notes
-        -----
-        We're comparing lmbda to 1e-19 instead of strict equality to 0. See
-        scipy/special/_boxcox.pxd for a rationale behind this
         """
-        x_inv = np.zeros(x.shape, dtype=x.dtype)
+        x_inv = np.zeros_like(x)
         pos = x >= 0
 
         # when x >= 0
-        if lmbda < 1e-19:
+        if abs(lmbda) < np.spacing(1.):
             x_inv[pos] = np.exp(x[pos]) - 1
         else:  # lmbda != 0
             x_inv[pos] = np.power(x[pos] * lmbda + 1, 1 / lmbda) - 1
 
         # when x < 0
-        if lmbda < 2 - 1e-19:
+        if abs(lmbda - 2) > np.spacing(1.):
             x_inv[~pos] = 1 - np.power(-(2 - lmbda) * x[~pos] + 1,
                                        1 / (2 - lmbda))
         else:  # lmbda == 2
@@ -2706,27 +2728,22 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     def _yeo_johnson_transform(self, x, lmbda):
         """Return transformed input x following Yeo-Johnson transform with
         parameter lambda.
-
-        Notes
-        -----
-        We're comparing lmbda to 1e-19 instead of strict equality to 0. See
-        scipy/special/_boxcox.pxd for a rationale behind this
         """
 
-        out = np.zeros(shape=x.shape, dtype=x.dtype)
+        out = np.zeros_like(x)
         pos = x >= 0  # binary mask
 
         # when x >= 0
-        if lmbda < 1e-19:
-            out[pos] = np.log(x[pos] + 1)
+        if abs(lmbda) < np.spacing(1.):
+            out[pos] = np.log1p(x[pos])
         else:  # lmbda != 0
             out[pos] = (np.power(x[pos] + 1, lmbda) - 1) / lmbda
 
         # when x < 0
-        if lmbda < 2 - 1e-19:
+        if abs(lmbda - 2) > np.spacing(1.):
             out[~pos] = -(np.power(-x[~pos] + 1, 2 - lmbda) - 1) / (2 - lmbda)
         else:  # lmbda == 2
-            out[~pos] = -np.log(-x[~pos] + 1)
+            out[~pos] = -np.log1p(-x[~pos])
 
         return out
 
@@ -2755,12 +2772,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
             x_trans = self._yeo_johnson_transform(x, lmbda)
             n_samples = x.shape[0]
 
-            # Estimated mean and variance of the normal distribution
-            est_mean = x_trans.sum() / n_samples
-            est_var = np.power(x_trans - est_mean, 2).sum() / n_samples
-
-            loglike = -n_samples / 2 * np.log(est_var)
-            loglike += (lmbda - 1) * (np.sign(x) * np.log(np.abs(x) + 1)).sum()
+            loglike = -n_samples / 2 * np.log(x_trans.var())
+            loglike += (lmbda - 1) * (np.sign(x) * np.log1p(np.abs(x))).sum()
 
             return -loglike
 

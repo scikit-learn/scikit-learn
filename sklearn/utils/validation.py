@@ -13,28 +13,23 @@ import numbers
 
 import numpy as np
 import scipy.sparse as sp
-from scipy import __version__ as scipy_version
 from distutils.version import LooseVersion
+from inspect import signature
 
 from numpy.core.numeric import ComplexWarning
 
-from ..externals import six
-from ..utils.fixes import signature
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
-from ..utils._joblib import Memory
-from ..utils._joblib import __version__ as joblib_version
+from ._joblib import Memory
+from ._joblib import __version__ as joblib_version
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 # Silenced by default to reduce verbosity. Turn on at runtime for
 # performance profiling.
 warnings.simplefilter('ignore', NonBLASDotWarning)
-
-# checking whether large sparse are supported by scipy or not
-LARGE_SPARSE_SUPPORTED = LooseVersion(scipy_version) >= '0.14.0'
 
 
 def _assert_all_finite(X, allow_nan=False):
@@ -140,7 +135,12 @@ def _num_samples(x):
         if len(x.shape) == 0:
             raise TypeError("Singleton array %r cannot be considered"
                             " a valid collection." % x)
-        return x.shape[0]
+        # Check that shape is returning an integer or default to len
+        # Dask dataframes may not return numeric shape[0] value
+        if isinstance(x.shape[0], numbers.Integral):
+            return x.shape[0]
+        else:
+            return len(x)
     else:
         return len(x)
 
@@ -183,8 +183,8 @@ def check_memory(memory):
     """Check that ``memory`` is joblib.Memory-like.
 
     joblib.Memory-like means that ``memory`` can be converted into a
-    sklearn.utils.Memory instance (typically a str denoting the
-    ``cachedir``) or has the same interface (has a ``cache`` method).
+    joblib.Memory instance (typically a str denoting the ``location``)
+    or has the same interface (has a ``cache`` method).
 
     Parameters
     ----------
@@ -200,14 +200,14 @@ def check_memory(memory):
         If ``memory`` is not joblib.Memory-like.
     """
 
-    if memory is None or isinstance(memory, six.string_types):
+    if memory is None or isinstance(memory, str):
         if LooseVersion(joblib_version) < '0.12':
             memory = Memory(cachedir=memory, verbose=0)
         else:
             memory = Memory(location=memory, verbose=0)
     elif not hasattr(memory, 'cache'):
         raise ValueError("'memory' should be None, a string or have the same"
-                         " interface as sklearn.utils.Memory."
+                         " interface as joblib.Memory."
                          " Got memory='{}' instead.".format(memory))
     return memory
 
@@ -303,7 +303,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
 
     changed_format = False
 
-    if isinstance(accept_sparse, six.string_types):
+    if isinstance(accept_sparse, str):
         accept_sparse = [accept_sparse]
 
     # Indices dtype validation
@@ -462,7 +462,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     array_orig = array
 
     # store whether originally we wanted numeric dtype
-    dtype_numeric = isinstance(dtype, six.string_types) and dtype == "numeric"
+    dtype_numeric = isinstance(dtype, str) and dtype == "numeric"
 
     dtype_orig = getattr(array, "dtype", None)
     if not hasattr(dtype_orig, 'kind'):
@@ -472,7 +472,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # check if the object contains several dtypes (typically a pandas
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
-    if hasattr(array, "dtypes") and hasattr(array, "__array__"):
+    if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
         dtypes_orig = np.array(array.dtypes)
 
     if dtype_numeric:
@@ -496,7 +496,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                          '. Got {!r} instead'.format(force_all_finite))
 
     if estimator is not None:
-        if isinstance(estimator, six.string_types):
+        if isinstance(estimator, str):
             estimator_name = estimator
         else:
             estimator_name = estimator.__class__.__name__
@@ -608,7 +608,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
 def _check_large_sparse(X, accept_large_sparse=False):
     """Raise a ValueError if X has 64bit indices and accept_large_sparse=False
     """
-    if not (accept_large_sparse and LARGE_SPARSE_SUPPORTED):
+    if not accept_large_sparse:
         supported_indices = ["int32"]
         if X.getformat() == "coo":
             index_keys = ['col', 'row']
@@ -619,10 +619,6 @@ def _check_large_sparse(X, accept_large_sparse=False):
         for key in index_keys:
             indices_datatype = getattr(X, key).dtype
             if (indices_datatype not in supported_indices):
-                if not LARGE_SPARSE_SUPPORTED:
-                    raise ValueError("Scipy version %s does not support large"
-                                     " indices, please upgrade your scipy"
-                                     " to 0.14.0 or above" % scipy_version)
                 raise ValueError("Only sparse matrices with 32-bit integer"
                                  " indices are accepted. Got %s indices."
                                  % indices_datatype)
