@@ -258,8 +258,8 @@ def test_ovr_binary():
     def conduct_test(base_clf, test_predict_proba=False):
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         assert_equal(set(clf.classes_), classes)
-        y_pred = clf.predict(np.array([[0, 0, 4]]))
-        assert_equal(set(y_pred), {"eggs"})
+        y_pred = clf.predict(np.array([[0, 0, 4]]))[0]
+        assert_array_equal(y_pred, ["eggs"])
         if hasattr(base_clf, 'decision_function'):
             dec = clf.decision_function(X)
             assert_equal(dec.shape, (5,))
