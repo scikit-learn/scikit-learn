@@ -1051,7 +1051,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
         Returns
         -------
-        y_prob : ssdsdsarray-like, shape (n_samples, n_classes)
+        y_prob : array-like, shape (n_samples, n_classes)
             The predicted probability of the sample for each class in the
             model, where classes are ordered as they are in `self.classes_`.
         """
