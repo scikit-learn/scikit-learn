@@ -170,12 +170,7 @@ def _average_multiclass_ovo_score(
     """
     check_consistent_length(y_true, y_score)
 
-    if labels is None:
-        classes = np.unique(y_true)
-    else:
-        classes = np.array(labels)
-
-    n_classes = len(classes)
+    n_classes = len(np.unique(y_true))
     n_pairs = n_classes * (n_classes - 1) // 2
     pair_scores = np.empty(n_pairs)
 
@@ -183,8 +178,7 @@ def _average_multiclass_ovo_score(
     if is_weighted:
         prevalence = np.empty(n_pairs)
 
-    all_combinations = enumerate(combinations(enumerate(classes), 2))
-    for ix, ((a_ix, a), (b_ix, b)) in all_combinations:
+    for ix, (a, b) in enumerate(combinations(range(n_classes), 2)):
         a_mask = y_true == a
         ab_mask = np.logical_or(a_mask, y_true == b)
 
@@ -194,8 +188,8 @@ def _average_multiclass_ovo_score(
         a_true = a_mask[ab_mask]
         b_true = np.logical_not(a_true)
 
-        a_true_score = binary_metric(a_true, y_score[ab_mask, a_ix])
-        b_true_score = binary_metric(b_true, y_score[ab_mask, b_ix])
+        a_true_score = binary_metric(a_true, y_score[ab_mask, a])
+        b_true_score = binary_metric(b_true, y_score[ab_mask, b])
         pair_scores[ix] = (a_true_score + b_true_score) / 2
 
     return (np.average(pair_scores, weights=prevalence)

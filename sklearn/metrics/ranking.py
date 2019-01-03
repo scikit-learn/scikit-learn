@@ -406,7 +406,7 @@ def roc_auc_score(y_true, y_score, labels=None,
                 raise ValueError(
                     "Parameter 'labels' not equal to the number of columns in "
                     "'y_score'")
-            if set(classes) < set(np.unique(y_true)):
+            if set(np.unique(y_true)) > set(classes):
                 raise ValueError(
                     "'y_true' contains labels not in parameter 'labels'")
         if multiclass == "ovo":
@@ -415,12 +415,17 @@ def roc_auc_score(y_true, y_score, labels=None,
                                  " for multiclass one-vs-one ROC AUC."
                                  " 'sample_weight' must be None in this case.")
             # Hand & Till (2001) implementation
+            if labels is not None:
+                y_true_multiclass = np.empty_like(y_true, dtype=np.int32)
+                for i, label in enumerate(labels):
+                    y_true_multiclass[y_true == label] = i
+                y_true = y_true_multiclass
+            else:
+                _, y_true = np.unique(y_true, return_inverse=True)
             return _average_multiclass_ovo_score(
-                _binary_roc_auc_score, y_true, y_score,
-                labels=labels, average=average)
+                _binary_roc_auc_score, y_true, y_score, average=average)
         else:
             # ovr is same as multi-label
-            y_true = y_true.reshape((-1, 1))
             # Order y_true by labels
             if labels is not None:
                 for i, label in enumerate(labels):
