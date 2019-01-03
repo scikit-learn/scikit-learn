@@ -169,10 +169,10 @@ Contributing code
 
 .. note::
 
-  To avoid duplicating work, it is highly advised that you contact the
-  developers on the mailing list before starting work on a non-trivial feature.
-
-  https://mail.python.org/mailman/listinfo/scikit-learn
+  To avoid duplicating work, it is highly advised that you search through the
+  issue tracker and the PR list. If you want to work on a non-trivial feature,
+  it's recommended to first open an issue in the issue tracker to get some
+  feedbacks from core developers.
 
 How to contribute
 -----------------
