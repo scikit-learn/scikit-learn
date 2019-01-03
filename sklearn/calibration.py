@@ -444,11 +444,11 @@ def _sigmoid_calibration(df, y, sample_weight=None):
         # From Platt (beginning of Section 2.2)
         E = np.exp(AB[0] * F + AB[1])
         P = 1. / (1. + E)
-        l = -(xlogy(T, P) + xlogy(T1, 1. - P))
+        loss = -(xlogy(T, P) + xlogy(T1, 1. - P))
         if sample_weight is not None:
-            return (sample_weight * l).sum()
+            return (sample_weight * loss).sum()
         else:
-            return l.sum()
+            return loss.sum()
 
     def grad(AB):
         # gradient of the objective function
