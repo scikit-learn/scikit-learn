@@ -185,6 +185,18 @@ else:
         return X != X
 
 
+# TODO: replace by copy=False, when only scipy > 1.1 is supported.
+def _astype_copy_false(X):
+    """Returns the copy=False parameter for
+    {ndarray, csr_matrix, csc_matrix}.astype when possible,
+    otherwise don't specify
+    """
+    if sp_version >= (1, 1) or not sp.issparse(X):
+        return {'copy': False}
+    else:
+        return {}
+
+
 def _joblib_parallel_args(**kwargs):
     """Set joblib.Parallel arguments in a compatible way for 0.11 and 0.12+
 
@@ -231,6 +243,7 @@ def _joblib_parallel_args(**kwargs):
         if require == 'sharedmem':
             args['backend'] = 'threading'
     return args
+<<<<<<< HEAD
 
 
 # To be removed once this fix is included in six
@@ -256,3 +269,5 @@ def _astype_copy_false(X):
         return {'copy': False}
     else:
         return {}
+=======
+>>>>>>> Lint
