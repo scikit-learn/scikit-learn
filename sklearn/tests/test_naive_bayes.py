@@ -616,9 +616,9 @@ def test_catnb():
     y_pred = clf.fit(X2, y2).predict(X2)
     assert_array_equal(y_pred, y2)
 
-    clf = CategoricalNB(alpha=1, fit_prior=False)
     X3 = np.array([[1, 4], [2, 5]])
     y3 = np.array([1, 2])
+    clf = CategoricalNB(alpha=1, fit_prior=False)
     clf.fit(X3, y3)
 
     # Test alpha
@@ -636,12 +636,13 @@ def test_catnb():
     assert_array_almost_equal(clf.predict_proba(X3_test),
                               np.array([[1/3, 2/3]]))
 
+    # Check that unexpected parameters throw an error
+    assert_raises(ValueError, CategoricalNB, handle_unknown='asdf')
+
     # Check that unseen cats throw an error or warn accordingly
-    clf.on_unseen_cats = 'error'
+    clf.handle_unknown = 'error'
     assert_raises(KeyError, clf.predict, X3_test)
-    clf.on_unseen_cats = 'asfasdffghashdf'
-    assert_raises(KeyError, clf.predict, X3_test)
-    clf.on_unseen_cats = 'warn'
+    clf.handle_unknown = 'warn'
     assert_warns(UserWarning, clf.predict, X3_test)
 
 
@@ -659,6 +660,12 @@ def test_alpha():
     assert_warns(UserWarning, nb.partial_fit, X, y, classes=[0, 1])
     assert_warns(UserWarning, nb.fit, X, y)
     prob = np.array([[2. / 3, 1. / 3], [0, 1]])
+    assert_array_almost_equal(nb.predict_proba(X), prob)
+
+    nb = CategoricalNB(alpha=0.)
+    assert_warns(UserWarning, nb.partial_fit, X, y, classes=[0, 1])
+    assert_warns(UserWarning, nb.fit, X, y)
+    prob = np.array([[1., 0.], [0., 1.]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
     # Test sparse X
@@ -680,14 +687,19 @@ def test_alpha():
                     'alpha should be > 0.')
     b_nb = BernoulliNB(alpha=-0.1)
     m_nb = MultinomialNB(alpha=-0.1)
+    c_nb = CategoricalNB(alpha=-0.1)
     assert_raise_message(ValueError, expected_msg, b_nb.fit, X, y)
     assert_raise_message(ValueError, expected_msg, m_nb.fit, X, y)
+    assert_raise_message(ValueError, expected_msg, c_nb.fit, X, y)
 
     b_nb = BernoulliNB(alpha=-0.1)
     m_nb = MultinomialNB(alpha=-0.1)
+    c_nb = CategoricalNB(alpha=-0.1)
     assert_raise_message(ValueError, expected_msg, b_nb.partial_fit,
                          X, y, classes=[0, 1])
     assert_raise_message(ValueError, expected_msg, m_nb.partial_fit,
+                         X, y, classes=[0, 1])
+    assert_raise_message(ValueError, expected_msg, c_nb.partial_fit,
                          X, y, classes=[0, 1])
 
 

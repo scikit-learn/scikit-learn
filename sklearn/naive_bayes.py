@@ -1013,7 +1013,7 @@ class CategoricalNB(BaseDiscreteNB):
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
-    on_unseen_cats : String, (default='warn')
+    handle_unknown : String, (default='warn')
         Can be 'ignore', 'warn' or 'error'. Determines the behaviour of the
         classifier, if it encounters unseen categories in the prediction step.
 
@@ -1047,7 +1047,7 @@ class CategoricalNB(BaseDiscreteNB):
     >>> clf = CategoricalNB()
     >>> clf.fit(X, y)
     CategoricalNB(alpha=1.0, class_prior=None, fit_prior=True,
-                  on_unseen_cats='warn')
+                  handle_unknown='warn')
     >>> print(clf.predict(X[2:3]))
     [3]
     """
@@ -1055,7 +1055,7 @@ class CategoricalNB(BaseDiscreteNB):
     old_numpy_ = parse_version(np.__version__) < parse_version('1.9.0')
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,
-                 on_unseen_cats='warn'):
+                 handle_unknown='warn'):
         if CategoricalNB.old_numpy_:
             warnings.warn(
                 ('numpy is older than 1.9.0. Therefore assure that X is'
@@ -1064,11 +1064,11 @@ class CategoricalNB(BaseDiscreteNB):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
-        if on_unseen_cats not in ('ignore', 'warn', 'raise'):
-            raise ValueError("The attribute 'on_unseen_cats' is '{}' and "
+        if handle_unknown not in ('ignore', 'warn', 'raise'):
+            raise ValueError("The attribute 'handle_unknown' is '{}' and "
                              "should either be 'ignore', 'warn' or 'raise'"
-                             .format(on_unseen_cats))
-        self.on_unseen_cats = on_unseen_cats
+                             .format(handle_unknown))
+        self.handle_unknown = handle_unknown
 
     def fit(self, X, y):
         """Fit Naive Bayes classifier according to X, y
@@ -1225,15 +1225,13 @@ class CategoricalNB(BaseDiscreteNB):
                     indices.append(
                         self.feature_cat_index_mapping_[i][float(category)])
                 except KeyError:
-                    if self.on_unseen_cats == 'ignore':
-                        pass
-                    elif self.on_unseen_cats == 'warn':
+                    if self.handle_unknown == 'warn':
                         warnings.warn(
                             "Category {} not expected for feature {} "
                             "of features 0 - {}."
                             .format(category, i, self.n_features_)
                         )
-                    else:
+                    elif self.handle_unknown == 'error':
                         raise KeyError(
                             "Category {} not expected for feature {} "
                             "of features 0 - {}."
