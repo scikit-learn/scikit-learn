@@ -1,3 +1,7 @@
+# cython: profile=True
+# cython: cdivision=True
+# cython: boundscheck=False
+# cython: wraparound=False
 """This module contains njitted routines and data structures to:
 
 - Find the best possible split of a node. For a given node, a split is
@@ -199,8 +203,6 @@ cdef class SplittingContext:
         self.right_indices_buffer = np.empty_like(self.partition)
 
 
-@cython.boundscheck(False)  # Deactivate bounds checking
-@cython.wraparound(False)   # Deactivate negative indexing.
 def split_indices(SplittingContext context, SplitInfo split_info, unsigned int [:] sample_indices):
     cdef:
         unsigned int n_samples = sample_indices.shape[0]
@@ -463,8 +465,6 @@ cdef _find_histogram_split_subtraction(SplittingContext context, unsigned int fe
                                           n_samples)
 
 
-@cython.boundscheck(False)  # Deactivate bounds checking
-@cython.wraparound(False)   # Deactivate negative indexing.
 cdef _find_best_bin_to_split_helper(SplittingContext context, unsigned int feature_idx,
                                     hist_struct [:] histogram, unsigned int
                                     n_samples):
@@ -569,7 +569,6 @@ cdef inline float _split_gain(float gradient_left, float hessian_left, float gra
     gain -= negative_loss(sum_gradients, sum_hessians, l2_regularization)
     return gain
 
-@cython.cdivision(True)
 cdef inline float negative_loss(float gradient, float hessian, float
 l2_regularization) nogil:
     return (gradient * gradient) / (hessian + l2_regularization)

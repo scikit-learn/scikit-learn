@@ -13,6 +13,7 @@ from sklearn.metrics import check_scoring
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions__
+from .types import Y_DTYPE, X_DTYPE
 
 from .binning import BinMapper
 from .grower import TreeGrower
@@ -94,7 +95,7 @@ class BaseGradientBoostingMachine(BaseEstimator, ABC):
         # TODO: add support for mixed-typed (numerical + categorical) data
         # TODO: add support for missing data
         # TODO: add support for pre-binned data (pass-through)?
-        X, y = check_X_y(X, y, dtype=[np.float32, np.float64])
+        X, y = check_X_y(X, y, dtype=[X_DTYPE])
         y = self._encode_y(y)
         if X.shape[0] == 1 or X.shape[1] == 1:
             raise ValueError(
@@ -168,7 +169,6 @@ class BaseGradientBoostingMachine(BaseEstimator, ABC):
             shape=(n_samples, self.n_trees_per_iteration_),
             dtype=self.baseline_prediction_.dtype
         )
-        print(raw_predictions.dtype)
         raw_predictions += self.baseline_prediction_
 
         # gradients and hessians are 1D arrays of size
@@ -527,7 +527,7 @@ class GradientBoostingRegressor(BaseGradientBoostingMachine, RegressorMixin):
     def _encode_y(self, y):
         # Just convert y to float32
         self.n_trees_per_iteration_ = 1
-        y = y.astype(np.float32, copy=False)
+        y = y.astype(Y_DTYPE, copy=False)
         return y
 
     def _get_loss(self):
@@ -672,7 +672,7 @@ class GradientBoostingClassifier(BaseGradientBoostingMachine, ClassifierMixin):
         # only 1 tree for binary classification. For multiclass classification,
         # we build 1 tree per class.
         self.n_trees_per_iteration_ = 1 if n_classes <= 2 else n_classes
-        encoded_y = encoded_y.astype(np.float32, copy=False)
+        encoded_y = encoded_y.astype(Y_DTYPE, copy=False)
         return encoded_y
 
     def _get_loss(self):

@@ -1,3 +1,7 @@
+# cython: profile=True
+# cython: cdivision=True
+# cython: boundscheck=False
+# cython: wraparound=False
 """This module contains njitted routines for building histograms.
 
 A histogram is an array with n_bins entry of type HISTOGRAM_DTYPE. Each
@@ -26,8 +30,6 @@ cdef struct hist_struct:
 
 
 
-@cython.boundscheck(False)  # Deactivate bounds checking
-@cython.wraparound(False)   # Deactivate negative indexing.
 def _build_histogram_naive(unsigned int n_bins, unsigned int [:]
                                 sample_indices, unsigned char [:]
                                 binned_feature, float [:] ordered_gradients,
@@ -48,8 +50,6 @@ def _build_histogram_naive(unsigned int n_bins, unsigned int [:]
     return histogram
 
 
-@cython.boundscheck(False)  # Deactivate bounds checking
-@cython.wraparound(False)   # Deactivate negative indexing.
 def _subtract_histograms(unsigned int n_bins, np.ndarray hist_a, np.ndarray hist_b):
     """Return hist_a - hist_b"""
     # print('subtract_hist')
@@ -68,8 +68,6 @@ def _subtract_histograms(unsigned int n_bins, np.ndarray hist_a, np.ndarray hist
     return histogram
 
 
-@cython.boundscheck(False)  # Deactivate bounds checking
-@cython.wraparound(False)   # Deactivate negative indexing.
 def _build_histogram(unsigned int n_bins, unsigned int [:]
                                 sample_indices, unsigned char [:]
                                 binned_feature, float [:] ordered_gradients,
@@ -121,8 +119,6 @@ def _build_histogram(unsigned int n_bins, unsigned int [:]
     return histogram
 
 
-@cython.boundscheck(False)  # Deactivate bounds checking
-@cython.wraparound(False)   # Deactivate negative indexing.
 def _build_histogram_no_hessian(unsigned int n_bins, unsigned int [:]
                                 sample_indices, unsigned char [:]
                                 binned_feature, float [:] ordered_gradients):
@@ -173,8 +169,6 @@ def _build_histogram_no_hessian(unsigned int n_bins, unsigned int [:]
 
 
 
-@cython.boundscheck(False)  # Deactivate bounds checking
-@cython.wraparound(False)   # Deactivate negative indexing.
 def _build_histogram_root_no_hessian(unsigned int n_bins, unsigned char [:]
                                      binned_feature, float [:]all_gradients):
     """Special case for the root node
@@ -227,8 +221,6 @@ def _build_histogram_root_no_hessian(unsigned int n_bins, unsigned char [:]
     return histogram
 
 
-@cython.boundscheck(False)  # Deactivate bounds checking
-@cython.wraparound(False)   # Deactivate negative indexing.
 def _build_histogram_root(unsigned int n_bins, unsigned char [:]
                           binned_feature, float [:] all_gradients,
                           float[:] all_hessians):

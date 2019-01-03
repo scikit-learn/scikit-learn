@@ -9,7 +9,7 @@ from sklearn.ensemble import GBMClassifier
 import pstats
 import cProfile
 
-classif = True
+classif = False 
 n_classes = 3
 n_samples = 100000
 max_iter = 5

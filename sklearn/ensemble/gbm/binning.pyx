@@ -1,3 +1,9 @@
+# cython: profile=True
+# cython: cdivision=True
+# cython: boundscheck=False
+# cython: wraparound=False
+# cython: nonecheck=False
+# cython: language_level=3
 """
 This module contains the BinMapper class.
 
@@ -12,6 +18,12 @@ from cython.parallel import prange
 
 from sklearn.utils import check_random_state, check_array
 from sklearn.base import BaseEstimator, TransformerMixin
+
+from .types import X_DTYPE, X_BINNED_DTYPE
+
+
+ctypedef np.npy_float64 NPY_X_DTYPE
+ctypedef np.npy_uint8 NPY_X_BINNED_DTYPE
 
 
 def _find_binning_thresholds(data, max_bins=256, subsample=int(2e5),
@@ -32,14 +44,12 @@ def _find_binning_thresholds(data, max_bins=256, subsample=int(2e5),
     if subsample is not None and data.shape[0] > subsample:
         subset = rng.choice(np.arange(data.shape[0]), subsample)
         data = data[subset]
-    dtype = data.dtype
-    if dtype.kind != 'f':
-        dtype = np.float32
 
+    # TODO: DONT USE NEGATIVE INDEXING (see warning when compiling with cython)
     percentiles = np.linspace(0, 100, num=max_bins + 1)[1:-1]
     binning_thresholds = []
     for f_idx in range(data.shape[1]):
-        col_data = np.ascontiguousarray(data[:, f_idx], dtype=dtype)
+        col_data = np.ascontiguousarray(data[:, f_idx], dtype=X_DTYPE)
         distinct_values = np.unique(col_data)
         if len(distinct_values) <= max_bins:
             midpoints = (distinct_values[:-1] + distinct_values[1:])
@@ -51,12 +61,12 @@ def _find_binning_thresholds(data, max_bins=256, subsample=int(2e5),
             # work and the performance benefit will be limited because we
             # work on a fixed-size subsample of the full data.
             midpoints = np.percentile(col_data, percentiles,
-                                      interpolation='midpoint').astype(dtype)
+                                      interpolation='midpoint').astype(X_DTYPE)
         binning_thresholds.append(midpoints)
-    return tuple(binning_thresholds)
+    return binning_thresholds
 
 
-cdef _map_to_bins(np.ndarray[np.float_t, ndim=2] data, binning_thresholds):
+cdef _map_to_bins(NPY_X_DTYPE [:, :] data, list binning_thresholds, NPY_X_BINNED_DTYPE [:, :] binned):
     """Bin numerical values to discrete integer-coded levels.
 
     Parameters
@@ -77,26 +87,15 @@ cdef _map_to_bins(np.ndarray[np.float_t, ndim=2] data, binning_thresholds):
     # TODO: add support for categorical data encoded as integers
     # TODO: add support for sparse data (numerical or categorical)
     cdef:
-        np.ndarray[np.uint8_t, ndim=2] binned
-        np.ndarray[np.float32_t, ndim=2] binning_thresholds_
         int feature_idx
-
-    binned = np.zeros_like(data, dtype=np.uint8, order='F')
-
-    # binning_thresholds = tuple(np.ascontiguousarray(bt, dtype=np.float32)
-    #                            for bt in binning_thresholds)
-    binning_thresholds_ = np.array(binning_thresholds, dtype=np.float32)
 
     for feature_idx in range(data.shape[1]):
         _map_num_col_to_bins(data[:, feature_idx],
-                             binning_thresholds_[feature_idx],
+                             binning_thresholds[feature_idx],
                              binned[:, feature_idx])
-    return binned
 
 
-@cython.boundscheck(False)  # Deactivate bounds checking
-@cython.wraparound(False)   # Deactivate negative indexing.
-cdef void _map_num_col_to_bins(double [:] data, float [:] binning_thresholds, unsigned char [:] binned)nogil:
+cdef void _map_num_col_to_bins(NPY_X_DTYPE [:] data, NPY_X_DTYPE [:] binning_thresholds, NPY_X_BINNED_DTYPE [:] binned) nogil:
     """Binary search to the find the bin index for each value in data."""
     cdef:
         int i
@@ -104,8 +103,8 @@ cdef void _map_num_col_to_bins(double [:] data, float [:] binning_thresholds, un
         int right
         int middle
 
+    # for i in range(data.shape[0]):
     for i in prange(data.shape[0], schedule='static'):
-        # TODO: add support for missing values (NaN or custom marker)
         left, right = 0, binning_thresholds.shape[0]
         while left < right:
             middle = (right + left - 1) // 2
@@ -162,7 +161,7 @@ class BinMapper(BaseEstimator, TransformerMixin):
         -------
         self : object
         """
-        X = check_array(X)
+        X = check_array(X, dtype=[X_DTYPE])
         self.bin_thresholds_ = _find_binning_thresholds(
             X, self.max_bins, subsample=self.subsample,
             random_state=self.random_state)
@@ -186,4 +185,7 @@ class BinMapper(BaseEstimator, TransformerMixin):
         X_binned : array-like
             The binned data
         """
-        return _map_to_bins(X, binning_thresholds=self.bin_thresholds_)
+        X = check_array(X, dtype=[X_DTYPE])
+        binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order='F')
+        _map_to_bins(X, self.bin_thresholds_, binned)
+        return binned

@@ -1,4 +1,7 @@
 # cython: profile=True
+# cython: cdivision=True
+# cython: boundscheck=False
+# cython: wraparound=False
 """
 This module contains the loss classes.
 
@@ -14,10 +17,9 @@ cimport numpy as np
 
 from scipy.special import expit, logsumexp
 
+from .types import Y_DTYPE
 
-ctypedef fused float_or_double:
-    float
-    double
+ctypedef np.npy_float32 NPY_Y_DTYPE
 
 
 cdef get_threads_chunks(unsigned int total_size):
@@ -70,11 +72,11 @@ class BaseLoss(ABC):
             is (1,) and the array is initialized to ``1``.
         """
         shape = n_samples * prediction_dim
-        gradients = np.empty(shape=shape, dtype=np.float32)
+        gradients = np.empty(shape=shape, dtype=Y_DTYPE)
         if self.hessian_is_constant:
-            hessians = np.ones(shape=1, dtype=np.float32)
+            hessians = np.ones(shape=1, dtype=Y_DTYPE)
         else:
-            hessians = np.empty(shape=shape, dtype=np.float32)
+            hessians = np.empty(shape=shape, dtype=Y_DTYPE)
 
         return gradients, hessians
 
@@ -152,168 +154,160 @@ class LeastSquares(BaseLoss):
                                                raw_predictions)
 
 
-def _update_gradients_least_squares(float [:] gradients, float [:] y_true, float [:] raw_predictions):
+def _update_gradients_least_squares(NPY_Y_DTYPE[:] gradients, NPY_Y_DTYPE[:] y_true, NPY_Y_DTYPE[:] raw_predictions):
     cdef:
         unsigned int n_samples
         unsigned int i
-        unsigned int thread_idx
-        unsigned int n_threads
-        unsigned int [:] starts
-        unsigned int [:] ends
 
     n_samples = raw_predictions.shape[0]
-    starts, ends, n_threads = get_threads_chunks(total_size=n_samples)
-    for thread_idx in range(n_threads):
-        for i in range(starts[thread_idx], ends[thread_idx]):
-            # Note: a more correct exp is 2 * (raw_predictions - y_true) but
-            # since we use 1 for the constant hessian value (and not 2) this
-            # is strictly equivalent for the leaves values.
-            gradients[i] = raw_predictions[i] - y_true[i]
+    for i in range(n_samples):
+        # Note: a more correct exp is 2 * (raw_predictions - y_true) but
+        # since we use 1 for the constant hessian value (and not 2) this
+        # is strictly equivalent for the leaves values.
+        gradients[i] = raw_predictions[i] - y_true[i]
 
 
-class BinaryCrossEntropy(BaseLoss):
-    """Binary cross-entropy loss, for binary classification.
+## class BinaryCrossEntropy(BaseLoss):
+##     """Binary cross-entropy loss, for binary classification.
+## 
+##     For a given sample x_i, the binary cross-entropy loss is defined as the
+##     negative log-likelihood of the model which can be expressed as::
+## 
+##         loss(x_i) = log(1 + exp(raw_pred_i)) - y_true_i * raw_pred_i
+## 
+##     See The Elements of Statistical Learning, by Hastie, Tibshirani, Friedman.
+##     """
+## 
+##     hessian_is_constant = False
+##     inverse_link_function = staticmethod(expit)
+## 
+##     def __call__(self, y_true, raw_predictions, average=True):
+##         # shape (n_samples, 1) --> (n_samples,). reshape(-1) is more likely to
+##         # return a view.
+##         raw_predictions = raw_predictions.reshape(-1)
+##         # logaddexp(0, x) = log(1 + exp(x))
+##         loss = np.logaddexp(0, raw_predictions) - y_true * raw_predictions
+##         return loss.mean() if average else loss
+## 
+##     def get_baseline_prediction(self, y_train, prediction_dim):
+##         proba_positive_class = np.mean(y_train)
+##         eps = np.finfo(y_train.dtype).eps
+##         proba_positive_class = np.clip(proba_positive_class, eps, 1 - eps)
+##         # log(x / 1 - x) is the anti function of sigmoid, or the link function
+##         # of the Binomial model.
+##         return np.log(proba_positive_class / (1 - proba_positive_class))
+## 
+##     def update_gradients_and_hessians(self, gradients, hessians, y_true,
+##                                       raw_predictions):
+##         raw_predictions = raw_predictions.reshape(-1)
+##         return _update_gradients_hessians_binary_crossentropy(
+##             gradients, hessians, y_true, raw_predictions)
+## 
+##     def predict_proba(self, raw_predictions):
+##         # shape (n_samples, 1) --> (n_samples,). reshape(-1) is more likely to
+##         # return a view.
+##         raw_predictions = raw_predictions.reshape(-1)
+##         proba = np.empty((raw_predictions.shape[0], 2), dtype=np.float32)
+##         proba[:, 1] = expit(raw_predictions)
+##         proba[:, 0] = 1 - proba[:, 1]
+##         return proba
+## 
+## 
+## def _update_gradients_hessians_binary_crossentropy(float [:] gradients,
+## float [:] hessians, float_or_double [:] y_true, double [:] raw_predictions):
+##     cdef:
+##         unsigned int n_samples
+##         unsigned int i
+##         unsigned int thread_idx
+##         unsigned int n_threads
+##         unsigned int [:] starts
+##         unsigned int [:] ends
+##     n_samples = raw_predictions.shape[0]
+##     starts, ends, n_threads = get_threads_chunks(total_size=n_samples)
+##     for thread_idx in range(n_threads):
+##         for i in range(starts[thread_idx], ends[thread_idx]):
+##             gradients[i] = <float>expit(raw_predictions[i]) - y_true[i]
+##             gradient_abs = np.abs(gradients[i])
+##             hessians[i] = gradient_abs * (1. - gradient_abs)
+## 
+## 
+## class CategoricalCrossEntropy(BaseLoss):
+##     """Categorical cross-entropy loss, for multiclass classification.
+## 
+##     For a given sample x_i, the categorical cross-entropy loss is defined as
+##     the negative log-likelihood of the model and generalizes the binary
+##     cross-entropy to more than 2 classes.
+##     """
+## 
+##     hessian_is_constant = False
+## 
+##     def __call__(self, y_true, raw_predictions, average=True):
+##         one_hot_true = np.zeros_like(raw_predictions)
+##         prediction_dim = raw_predictions.shape[1]
+##         for k in range(prediction_dim):
+##             one_hot_true[:, k] = (y_true == k)
+## 
+##         loss = (logsumexp(raw_predictions, axis=1) -
+##                 (one_hot_true * raw_predictions).sum(axis=1))
+##         return loss.mean() if average else loss
+## 
+##     def get_baseline_prediction(self, y_train, prediction_dim):
+##         init_value = np.zeros(
+##             shape=(1, prediction_dim),
+##             dtype=np.float32
+##         )
+##         eps = np.finfo(y_train.dtype).eps
+##         for k in range(prediction_dim):
+##             proba_kth_class = np.mean(y_train == k)
+##             proba_kth_class = np.clip(proba_kth_class, eps, 1 - eps)
+##             init_value[:, k] += np.log(proba_kth_class)
+## 
+##         return init_value
+## 
+##     def update_gradients_and_hessians(self, gradients, hessians, y_true,
+##                                       raw_predictions):
+##         return _update_gradients_hessians_categorical_crossentropy(
+##             gradients, hessians, y_true, raw_predictions)
+## 
+##     def predict_proba(self, raw_predictions):
+##         # TODO: This could be done in parallel
+##         # compute softmax (using exp(log(softmax)))
+##         return np.exp(raw_predictions -
+##                       logsumexp(raw_predictions, axis=1)[:, np.newaxis])
+## 
+## 
+## def _update_gradients_hessians_categorical_crossentropy(
+##         float [:] gradients, float [:] hessians, float_or_double [:] y_true,
+##         float_or_double [:, :] raw_predictions):
+##     # Here gradients and hessians are of shape
+##     # (n_samples * prediction_dim,).
+##     # y_true is of shape (n_samples,).
+##     # raw_predictions is of shape (n_samples, raw_predictions)
+##     cdef:
+##         unsigned int n_samples
+##         unsigned int prediction_dim
+##         unsigned int i
+##         unsigned int k
+##         unsigned int thread_idx
+##         unsigned int n_threads
+##         unsigned int [:] starts
+##         unsigned int [:] ends
+##         float p_k
+## 
+##     n_samples = raw_predictions.shape[0]
+##     prediction_dim = raw_predictions.shape[1]
+##     starts, ends, n_threads = get_threads_chunks(total_size=n_samples)
+##     for k in range(prediction_dim):
+##         gradients_at_k = gradients[n_samples * k:n_samples * (k + 1)]
+##         hessians_at_k = hessians[n_samples * k:n_samples * (k + 1)]
+##         for thread_idx in range(n_threads):
+##             for i in range(starts[thread_idx], ends[thread_idx]):
+##                 # p_k is the probability that class(ith sample) == k.
+##                 # This is a regular softmax.
+##                 p_k = np.exp(raw_predictions[i, k] -
+##                              logsumexp(raw_predictions[i, :]))
+##                 gradients_at_k[i] = p_k - (y_true[i] == k)
+##                 hessians_at_k[i] = p_k * (1. - p_k)
 
-    For a given sample x_i, the binary cross-entropy loss is defined as the
-    negative log-likelihood of the model which can be expressed as::
 
-        loss(x_i) = log(1 + exp(raw_pred_i)) - y_true_i * raw_pred_i
-
-    See The Elements of Statistical Learning, by Hastie, Tibshirani, Friedman.
-    """
-
-    hessian_is_constant = False
-    inverse_link_function = staticmethod(expit)
-
-    def __call__(self, y_true, raw_predictions, average=True):
-        # shape (n_samples, 1) --> (n_samples,). reshape(-1) is more likely to
-        # return a view.
-        raw_predictions = raw_predictions.reshape(-1)
-        # logaddexp(0, x) = log(1 + exp(x))
-        loss = np.logaddexp(0, raw_predictions) - y_true * raw_predictions
-        return loss.mean() if average else loss
-
-    def get_baseline_prediction(self, y_train, prediction_dim):
-        proba_positive_class = np.mean(y_train)
-        eps = np.finfo(y_train.dtype).eps
-        proba_positive_class = np.clip(proba_positive_class, eps, 1 - eps)
-        # log(x / 1 - x) is the anti function of sigmoid, or the link function
-        # of the Binomial model.
-        return np.log(proba_positive_class / (1 - proba_positive_class))
-
-    def update_gradients_and_hessians(self, gradients, hessians, y_true,
-                                      raw_predictions):
-        raw_predictions = raw_predictions.reshape(-1)
-        return _update_gradients_hessians_binary_crossentropy(
-            gradients, hessians, y_true, raw_predictions)
-
-    def predict_proba(self, raw_predictions):
-        # shape (n_samples, 1) --> (n_samples,). reshape(-1) is more likely to
-        # return a view.
-        raw_predictions = raw_predictions.reshape(-1)
-        proba = np.empty((raw_predictions.shape[0], 2), dtype=np.float32)
-        proba[:, 1] = expit(raw_predictions)
-        proba[:, 0] = 1 - proba[:, 1]
-        return proba
-
-
-def _update_gradients_hessians_binary_crossentropy(float [:] gradients,
-float [:] hessians, float_or_double [:] y_true, double [:] raw_predictions):
-    cdef:
-        unsigned int n_samples
-        unsigned int i
-        unsigned int thread_idx
-        unsigned int n_threads
-        unsigned int [:] starts
-        unsigned int [:] ends
-    n_samples = raw_predictions.shape[0]
-    starts, ends, n_threads = get_threads_chunks(total_size=n_samples)
-    for thread_idx in range(n_threads):
-        for i in range(starts[thread_idx], ends[thread_idx]):
-            gradients[i] = <float>expit(raw_predictions[i]) - y_true[i]
-            gradient_abs = np.abs(gradients[i])
-            hessians[i] = gradient_abs * (1. - gradient_abs)
-
-
-class CategoricalCrossEntropy(BaseLoss):
-    """Categorical cross-entropy loss, for multiclass classification.
-
-    For a given sample x_i, the categorical cross-entropy loss is defined as
-    the negative log-likelihood of the model and generalizes the binary
-    cross-entropy to more than 2 classes.
-    """
-
-    hessian_is_constant = False
-
-    def __call__(self, y_true, raw_predictions, average=True):
-        one_hot_true = np.zeros_like(raw_predictions)
-        prediction_dim = raw_predictions.shape[1]
-        for k in range(prediction_dim):
-            one_hot_true[:, k] = (y_true == k)
-
-        loss = (logsumexp(raw_predictions, axis=1) -
-                (one_hot_true * raw_predictions).sum(axis=1))
-        return loss.mean() if average else loss
-
-    def get_baseline_prediction(self, y_train, prediction_dim):
-        init_value = np.zeros(
-            shape=(1, prediction_dim),
-            dtype=np.float32
-        )
-        eps = np.finfo(y_train.dtype).eps
-        for k in range(prediction_dim):
-            proba_kth_class = np.mean(y_train == k)
-            proba_kth_class = np.clip(proba_kth_class, eps, 1 - eps)
-            init_value[:, k] += np.log(proba_kth_class)
-
-        return init_value
-
-    def update_gradients_and_hessians(self, gradients, hessians, y_true,
-                                      raw_predictions):
-        return _update_gradients_hessians_categorical_crossentropy(
-            gradients, hessians, y_true, raw_predictions)
-
-    def predict_proba(self, raw_predictions):
-        # TODO: This could be done in parallel
-        # compute softmax (using exp(log(softmax)))
-        return np.exp(raw_predictions -
-                      logsumexp(raw_predictions, axis=1)[:, np.newaxis])
-
-
-def _update_gradients_hessians_categorical_crossentropy(
-        float [:] gradients, float [:] hessians, float_or_double [:] y_true,
-        float_or_double [:, :] raw_predictions):
-    # Here gradients and hessians are of shape
-    # (n_samples * prediction_dim,).
-    # y_true is of shape (n_samples,).
-    # raw_predictions is of shape (n_samples, raw_predictions)
-    cdef:
-        unsigned int n_samples
-        unsigned int prediction_dim
-        unsigned int i
-        unsigned int k
-        unsigned int thread_idx
-        unsigned int n_threads
-        unsigned int [:] starts
-        unsigned int [:] ends
-        float p_k
-
-    n_samples = raw_predictions.shape[0]
-    prediction_dim = raw_predictions.shape[1]
-    starts, ends, n_threads = get_threads_chunks(total_size=n_samples)
-    for k in range(prediction_dim):
-        gradients_at_k = gradients[n_samples * k:n_samples * (k + 1)]
-        hessians_at_k = hessians[n_samples * k:n_samples * (k + 1)]
-        for thread_idx in range(n_threads):
-            for i in range(starts[thread_idx], ends[thread_idx]):
-                # p_k is the probability that class(ith sample) == k.
-                # This is a regular softmax.
-                p_k = np.exp(raw_predictions[i, k] -
-                             logsumexp(raw_predictions[i, :]))
-                gradients_at_k[i] = p_k - (y_true[i] == k)
-                hessians_at_k[i] = p_k * (1. - p_k)
-
-
-_LOSSES = {'least_squares': LeastSquares,
-           'binary_crossentropy': BinaryCrossEntropy,
-           'categorical_crossentropy': CategoricalCrossEntropy}
+_LOSSES = {'least_squares': LeastSquares}
