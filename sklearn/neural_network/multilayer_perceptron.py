@@ -7,6 +7,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+import sys
 
 from abc import ABCMeta, abstractmethod
 from scipy.optimize import fmin_l_bfgs_b
@@ -19,7 +20,7 @@ from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
 from ..model_selection import train_test_split
 from ..externals import six
 from ..preprocessing import LabelBinarizer
-from ..utils import gen_batches, check_random_state
+from ..utils import gen_batches, check_random_state, get_chunk_n_rows
 from ..utils import shuffle
 from ..utils import check_array, check_X_y, column_or_1d
 from ..exceptions import ConvergenceWarning
@@ -1036,7 +1037,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         y_prob = self.predict_proba(X)
         return np.log(y_prob, out=y_prob)
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, max_row_chunk=None):
         """Probability estimates.
 
         Parameters
@@ -1044,14 +1045,33 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data.
 
+        max_row_chunk: integer
+            The number of rows to use at a single predict call. If None optimal 
+            row number fit that fits the working_memory is used.
+
         Returns
         -------
-        y_prob : array-like, shape (n_samples, n_classes)
+        y_prob : ssdsdsarray-like, shape (n_samples, n_classes)
             The predicted probability of the sample for each class in the
             model, where classes are ordered as they are in `self.classes_`.
         """
         check_is_fitted(self, "coefs_")
-        y_pred = self._predict(X)
+        # split and collate depending on the working_memory
+        x_axis0_size = X.shape[0]
+        if not maxr:
+            chunk_size = get_chunk_n_rows(row_bytes=sys.getsizeof(X[0:1]), max_n_rows=x_axis0_size)
+        else:
+            chunk_size = max_row_chunk
+        # Pre-allocate the entire result set to avoid array copying for efficiency.
+        # As we do not know the shape of the output, we simply test the output
+        # size for a single sample and use the shape of the output
+        y_pred = np.empty((x_axis0_size,) + self._predict(X[0:1]).shape[1:])
+
+        # Call the classifier in chunks.
+        y_chunk_pos = 0
+        for x_chunk in np.array_split(X, np.arange(chunk_size, x_axis0_size, chunk_size), axis=0):
+            y_pred[y_chunk_pos:y_chunk_pos + x_chunk.shape[0]] = self._predict(x_chunk)
+            y_chunk_pos += x_chunk.shape[0]
 
         if self.n_outputs_ == 1:
             y_pred = y_pred.ravel()
