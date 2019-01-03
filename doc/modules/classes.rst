@@ -757,7 +757,6 @@ Kernels:
    linear_model.lars_path
    linear_model.lars_path_gram
    linear_model.lasso_path
-   linear_model.logistic_regression_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
    linear_model.ridge_regression
@@ -1508,6 +1507,7 @@ To be removed in 0.23
    utils.cpu_count
    utils.delayed
    metrics.calinski_harabaz_score
+   linear_model.logistic_regression_path
 
 
 To be removed in 0.22

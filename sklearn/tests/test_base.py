@@ -185,7 +185,7 @@ def test_repr():
     )
 
     some_est = T(a=["long_params"] * 1000)
-    assert_equal(len(repr(some_est)), 415)
+    assert_equal(len(repr(some_est)), 495)
 
 
 def test_str():

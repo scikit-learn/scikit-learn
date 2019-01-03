@@ -383,12 +383,12 @@ TODO: give a simple teaser example here.
 
 Checkout the official joblib documentation:
 
-- https://pythonhosted.org/joblib
+- https://joblib.readthedocs.io
 
 
 .. _warm-restarts:
 
-A sample algorithmic trick: warm restarts
-==============================================================
+A simple algorithmic trick: warm restarts
+=========================================
 
 See the glossary entry for `warm_start <http://scikit-learn.org/dev/glossary.html#term-warm-start>`_
