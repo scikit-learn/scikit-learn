@@ -295,6 +295,7 @@ Others also work in the multiclass case:
    confusion_matrix
    hinge_loss
    matthews_corrcoef
+   roc_auc_score
 
 
 Some also work in the multilabel case:
