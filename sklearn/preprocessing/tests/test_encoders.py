@@ -97,6 +97,20 @@ def test_one_hot_encoder_sparse():
         enc.fit([[0], [1]])
     assert_raises(ValueError, enc.transform, [[0], [-1]])
 
+    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
+        enc = OneHotEncoder(drop='first', n_values=1)
+        for method in (enc.fit, enc.fit_transform):
+            assert_raises_regex(
+                ValueError,
+                'The `categorical_features` and `n_values` keywords ',
+                method, [[0], [-1]])
+
+            enc = OneHotEncoder(drop='first', categorical_features='all')
+            assert_raises_regex(
+                ValueError,
+                'The `categorical_features` and `n_values` keywords ',
+                method, [[0], [-1]])
+
 
 def test_one_hot_encoder_dense():
     # check for sparse=False
@@ -362,21 +376,25 @@ def test_one_hot_encoder(X):
     assert_allclose(Xtr.toarray(), [[0, 1, 1, 0,  1], [1, 0, 0, 1, 1]])
 
 
-def test_one_hot_encoder_inverse():
-    for sparse_ in [True, False]:
-        X = [['abc', 2, 55], ['def', 1, 55], ['abc', 3, 55]]
-        enc = OneHotEncoder(sparse=sparse_)
-        X_tr = enc.fit_transform(X)
-        exp = np.array(X, dtype=object)
-        assert_array_equal(enc.inverse_transform(X_tr), exp)
+@pytest.mark.parametrize('sparse_', [False, True])
+@pytest.mark.parametrize('drop', [None, 'first'])
+def test_one_hot_encoder_inverse(sparse_, drop):
+    X = [['abc', 2, 55], ['def', 1, 55], ['abc', 3, 55]]
+    enc = OneHotEncoder(sparse=sparse_, drop=drop)
+    X_tr = enc.fit_transform(X)
+    exp = np.array(X, dtype=object)
+    assert_array_equal(enc.inverse_transform(X_tr), exp)
 
-        X = [[2, 55], [1, 55], [3, 55]]
-        enc = OneHotEncoder(sparse=sparse_, categories='auto')
-        X_tr = enc.fit_transform(X)
-        exp = np.array(X)
-        assert_array_equal(enc.inverse_transform(X_tr), exp)
+    X = [[2, 55], [1, 55], [3, 55]]
+    enc = OneHotEncoder(sparse=sparse_, categories='auto',
+                        drop=drop)
+    X_tr = enc.fit_transform(X)
+    exp = np.array(X)
+    assert_array_equal(enc.inverse_transform(X_tr), exp)
 
+    if drop is not None:
         # with unknown categories
+        # drop_first is incompatible with handle_unknown=ignore
         X = [['abc', 2, 55], ['def', 1, 55], ['abc', 3, 55]]
         enc = OneHotEncoder(sparse=sparse_, handle_unknown='ignore',
                             categories=[['abc', 'def'], [1, 2],
@@ -396,10 +414,10 @@ def test_one_hot_encoder_inverse():
         exp[:, 1] = None
         assert_array_equal(enc.inverse_transform(X_tr), exp)
 
-        # incorrect shape raises
-        X_tr = np.array([[0, 1, 1], [1, 0, 1]])
-        msg = re.escape('Shape of the passed X data is not correct')
-        assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
+    # incorrect shape raises
+    X_tr = np.array([[0, 1, 1], [1, 0, 1]])
+    msg = re.escape('Shape of the passed X data is not correct')
+    assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
 
 
 @pytest.mark.parametrize("X, cat_exp, cat_dtype", [
@@ -676,3 +694,46 @@ def test_one_hot_encoder_warning():
     enc = OneHotEncoder()
     X = [['Male', 1], ['Female', 3]]
     np.testing.assert_no_warnings(enc.fit_transform, X)
+
+    enc = OneHotEncoder(drop=['def',3,56])
+    X = [['abc', 2, 55], ['def', 1, 55],['def', 3, 56]]
+    exp = np.array([[1., 0., 1., 1.],
+                    [0., 1., 0., 1.],
+                    [0., 0., 0., 0.]], dtype='float64')
+    assert_array_equal(enc.fit_transform(X).toarray(), exp)
+
+def test_one_hot_encoder_invalid_params():
+    enc = OneHotEncoder(drop='second')
+    assert_raises_regex(
+        ValueError,
+        "Wrong input for parameter `drop`.",
+        enc.fit, [["Male"], ["Female"]])
+
+    enc = OneHotEncoder(handle_unknown='ignore', drop='first')
+    assert_raises_regex(
+        ValueError,
+        "`handle_unknown` cannot be 'ignore'",
+        enc.fit, [["Male"], ["Female"]])
+
+    enc = OneHotEncoder(drop='first')
+    assert_raises_regex(
+        ValueError,
+        "The handling of integer data will change in version",
+        enc.fit, [[1], [2]])
+
+    enc = OneHotEncoder(drop='first', categories='auto')
+    assert_no_warnings(enc.fit_transform, [[1], [2]])
+
+    enc = OneHotEncoder(drop=np.asarray('b', dtype=object))
+    assert_raises_regex(
+        ValueError,
+        "Wrong input for parameter `drop`.",
+        enc.fit, [['abc', 2, 55], ['def', 1, 55],['def', 3, 59]])
+
+@pytest.mark.parametrize('drop', [['abc',3], ['abc',3,41,'a']])
+def test_invalid_drop_length(drop):
+    enc = OneHotEncoder(drop=drop)
+    assert_raises_regex(
+        ValueError,
+        "`drop` should have length equal to the number",
+        enc.fit, [['abc', 2, 55], ['def', 1, 55],['def', 3, 59]])

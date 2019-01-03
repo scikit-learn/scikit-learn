@@ -165,7 +165,9 @@ class OneHotEncoder(_BaseEncoder):
         Specifies a methodology to use to drop one of the categories per
         feature. This is useful in situations where perfectly collinear
         features cause problems, such as when feeding the resulting data
-        into a neural network or an unregularized regression.
+        into a neural network or an unregularized regression. If only one
+        feature appears in a column, that column will be retained as a 
+        column of ones.
 
         - None : retain all features.
         - 'first' : drop the first feature in each category.
@@ -260,7 +262,7 @@ class OneHotEncoder(_BaseEncoder):
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
     ... # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features=None, categories=None,
+    OneHotEncoder(categorical_features=None, categories=None, drop=None,
            dtype=<... 'numpy.float64'>, handle_unknown='ignore',
            n_values=None, sparse=True)
 
@@ -276,6 +278,9 @@ class OneHotEncoder(_BaseEncoder):
     array(['x0_Female', 'x0_Male', 'x1_1', 'x1_2', 'x1_3'], dtype=object)
     >>> drop_enc = OneHotEncoder(drop='first')
     >>> drop_enc.fit(X)
+    OneHotEncoder(categorical_features=None, categories=None, drop='first',
+           dtype=<class 'numpy.float64'>, handle_unknown='error',
+           n_values=None, sparse=True)
     >>> drop_enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> drop_enc.transform([['Female', 1], ['Male', 2]]).toarray()
@@ -376,21 +381,35 @@ class OneHotEncoder(_BaseEncoder):
                     self._legacy_mode = False
                     self._categories = 'auto'
                 else:
-                    msg = (
-                        "The handling of integer data will change in version "
-                        "0.22. Currently, the categories are determined "
-                        "based on the range [0, max(values)], while in the "
-                        "future they will be determined based on the unique "
-                        "values.\nIf you want the future behaviour and "
-                        "silence this warning, you can specify "
-                        "\"categories='auto'\".\n"
-                        "In case you used a LabelEncoder before this "
-                        "OneHotEncoder to convert the categories to integers, "
-                        "then you can now use the OneHotEncoder directly."
-                    )
-                    warnings.warn(msg, FutureWarning)
-                    self._legacy_mode = True
-                    self._n_values = 'auto'
+                    if self.drop is None:
+                        msg = (
+                            "The handling of integer data will change in version "
+                            "0.22. Currently, the categories are determined "
+                            "based on the range [0, max(values)], while in the "
+                            "future they will be determined based on the unique "
+                            "values.\nIf you want the future behaviour and "
+                            "silence this warning, you can specify "
+                            "\"categories='auto'\".\n"
+                            "In case you used a LabelEncoder before this "
+                            "OneHotEncoder to convert the categories to integers, "
+                            "then you can now use the OneHotEncoder directly."
+                        )
+                        warnings.warn(msg, FutureWarning)
+                        self._legacy_mode = True
+                        self._n_values = 'auto'
+                    else:
+                        msg = (
+                            "The handling of integer data will change in version "
+                            "0.22. Currently, the categories are determined "
+                            "based on the range [0, max(values)], while in the "
+                            "future they will be determined based on the unique "
+                            "values.\n The old behavior is not compatible with the "
+                            "`drop` paramenter. Instead, you must manually specify "
+                            "\"categories='auto'\" if you wish to use the `drop` "
+                            "parameter on an array of entirely integer data. This"
+                            "will enable the future behavior."
+                        )
+                        raise ValueError(msg)
 
         # if user specified categorical_features -> always use legacy mode
         if self.categorical_features is not None:
@@ -425,16 +444,16 @@ class OneHotEncoder(_BaseEncoder):
         # Prevents new drop functionality from being used in legacy mode
         if self._legacy_mode and self.drop is not None:
             raise ValueError(
-                "The 'categorical_features' and 'n_values' keywords "
+                "The `categorical_features` and `n_values` keywords "
                 "are deprecated, and cannot be used together "
-                "with specifying 'drop'.")
+                "with 'drop'.")
 
-        # If we have intentionally dropped columns and ignored unknown
+        # If we have both dropped columns and ignored unknown
         # values, there will be ambiguous cells. This creates difficulties
         # in interpreting the model.
         if self.drop is not None and self.handle_unknown != 'error':
             raise ValueError(
-                "handle_unknown cannot be 'ignore' when the drop parameter "
+                "`handle_unknown` cannot be 'ignore' when the drop parameter "
                 "is specified, as this will create ambiguous cells")
 
 
@@ -468,21 +487,29 @@ class OneHotEncoder(_BaseEncoder):
                 self.drop_ = None
             elif (isinstance(self.drop, six.string_types) and
                     self.drop == 'first'):
-                self.drop_ = np.array([cats[0] for cats in self.categories_],
-                                      dtype=object)
-            else:
+                self.drop_ = np.array([cats[0] if len(cats) > 1 else None
+                                       for cats in self.categories_],
+                                       dtype=object)
+            elif not isinstance(self.drop, six.string_types):
                 try:
                     self.drop = np.asarray(self.drop, dtype=object)
+                    droplen = len(self.drop)
                 except (ValueError, TypeError):
-                    msg = ("Wrong type for parameter `drop`. Expected "
+                    msg = ("Wrong input for parameter `drop`. Expected "
                            "'first', None or array of objects, got {}")
-                    raise TypeError(msg.format(type(self.drop)))
-                if len(self.drop) != len(self.categories_):
+                    raise ValueError(msg.format(type(self.drop)))
+                if droplen != len(self.categories_):
                     msg = ("`drop` should have length equal to the number "
                            "of features ({}), got {}")
                     raise ValueError(msg.format(len(self.categories_),
                                                 len(self.drop)))
-                self.drop_ = self.drop
+                self.drop_ = np.array([cat for i, cat in enumerate(self.drop) 
+                                       if len(self.categories_[i]) > 1], 
+                                       dtype=object)
+            else:
+                msg = ("Wrong input for parameter `drop`. Expected "
+                       "'first', None or array of objects, got {}")
+                raise ValueError(msg.format(type(self.drop)))
             return self
 
     def _legacy_fit_transform(self, X):
@@ -645,7 +672,10 @@ class OneHotEncoder(_BaseEncoder):
                     keep_cells = ~np.isin(Xii, [drop_value])
                     np.logical_and(Xmi, keep_cells, out=Xmi)
                     Xii[Xii > drop_value] -= 1
-            n_values = [cats.shape[0] - 1 for cats in self.categories_]
+            n_values = [len(cats) - 1 
+                        if self.drop_[i] is not None 
+                        else len(cats)
+                        for i, cats in enumerate(self.categories_)]
         else:
             n_values = [cats.shape[0] for cats in self.categories_]
         
@@ -714,7 +744,11 @@ class OneHotEncoder(_BaseEncoder):
         if self.drop is None:
             n_transformed_features = sum([len(cats) for cats in self.categories_])
         else:
-            n_transformed_features = sum([len(cats) - 1 for cats in self.categories_])
+            n_transformed_features = sum([len(cats) - 1 
+                                          if self.drop_[i] is not None 
+                                          else len(cats)
+                                          for i, cats in enumerate(self.categories_)
+                                         ])
 
         # validate shape of passed X
         msg = ("Shape of the passed X data is not correct. Expected {0} "
