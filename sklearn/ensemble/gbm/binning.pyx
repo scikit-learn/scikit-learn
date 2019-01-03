@@ -66,7 +66,8 @@ def _find_binning_thresholds(data, max_bins=256, subsample=int(2e5),
     return binning_thresholds
 
 
-cdef _map_to_bins(NPY_X_DTYPE [:, :] data, list binning_thresholds, NPY_X_BINNED_DTYPE [:, :] binned):
+cdef _map_to_bins(NPY_X_DTYPE [:, :] data, list binning_thresholds,
+                  NPY_X_BINNED_DTYPE [::1, :] binned):
     """Bin numerical values to discrete integer-coded levels.
 
     Parameters
@@ -95,7 +96,9 @@ cdef _map_to_bins(NPY_X_DTYPE [:, :] data, list binning_thresholds, NPY_X_BINNED
                              binned[:, feature_idx])
 
 
-cdef void _map_num_col_to_bins(NPY_X_DTYPE [:] data, NPY_X_DTYPE [:] binning_thresholds, NPY_X_BINNED_DTYPE [:] binned) nogil:
+cdef void _map_num_col_to_bins(NPY_X_DTYPE [:] data,
+                               NPY_X_DTYPE [:] binning_thresholds,
+                               NPY_X_BINNED_DTYPE [:] binned) nogil:
     """Binary search to the find the bin index for each value in data."""
     cdef:
         int i

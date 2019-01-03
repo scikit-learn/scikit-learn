@@ -411,7 +411,7 @@ cdef SplitInfo _find_best_feature_to_split_helper(list split_infos):
 
 
 cdef _find_histogram_split(SplittingContext context, unsigned int feature_idx,
-                          unsigned int [:] sample_indices):
+                           unsigned int [:] sample_indices):
     """Compute the histogram for a given feature
 
     Returns the best SplitInfo among all the possible bins of the feature.
@@ -425,23 +425,23 @@ cdef _find_histogram_split(SplittingContext context, unsigned int feature_idx,
         float [:] ordered_hessians = context.ordered_hessians[:n_samples]
         np.ndarray histogram
 
+    histogram = np.zeros(context.max_bins, dtype=HISTOGRAM_DTYPE)
+
     if root_node:
         if context.constant_hessian:
-            histogram = _build_histogram_root_no_hessian(
-                context.max_bins, X_binned, ordered_gradients)
+            _build_histogram_root_no_hessian(context.max_bins, X_binned,
+                                             ordered_gradients, histogram)
         else:
-            histogram = _build_histogram_root(
-                context.max_bins, X_binned, ordered_gradients,
-                context.ordered_hessians)
+            _build_histogram_root(context.max_bins, X_binned,
+                                  ordered_gradients,
+                                  context.ordered_hessians, histogram)
     else:
         if context.constant_hessian:
-            histogram = _build_histogram_no_hessian(
-                context.max_bins, sample_indices, X_binned,
-                ordered_gradients)
+            _build_histogram_no_hessian(context.max_bins, sample_indices,
+                                        X_binned, ordered_gradients, histogram)
         else:
-            histogram = _build_histogram(
-                context.max_bins, sample_indices, X_binned,
-                ordered_gradients, ordered_hessians)
+            _build_histogram(context.max_bins, sample_indices, X_binned,
+                             ordered_gradients, ordered_hessians, histogram)
 
     return _find_best_bin_to_split_helper(context, feature_idx, histogram,
                                           n_samples)
@@ -457,9 +457,9 @@ cdef _find_histogram_split_subtraction(SplittingContext context, unsigned int fe
     cdef:
         np.ndarray histogram
 
-    histogram = _subtract_histograms(
-        context.max_bins,
-        parent_histograms[feature_idx], sibling_histograms[feature_idx])
+    histogram = np.zeros(context.max_bins, dtype=HISTOGRAM_DTYPE)
+    _subtract_histograms(context.max_bins, parent_histograms[feature_idx],
+                         sibling_histograms[feature_idx], histogram)
 
     return _find_best_bin_to_split_helper(context, feature_idx, histogram,
                                           n_samples)

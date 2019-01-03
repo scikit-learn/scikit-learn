@@ -1,7 +1,7 @@
-# cython: profile=True
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: language_level=3
 """This module contains njitted routines for building histograms.
 
 A histogram is an array with n_bins entry of type HISTOGRAM_DTYPE. Each
@@ -13,81 +13,70 @@ cimport cython
 import numpy as np
 cimport numpy as np
 
-
-HISTOGRAM_DTYPE = np.dtype([
-    ('sum_gradients', np.float32),
-    ('sum_hessians', np.float32),
-    ('count', np.uint32),
-])
+from .types import HISTOGRAM_DTYPE
 
 
-from libc.stdlib cimport malloc, free
+ctypedef np.npy_uint8 NPY_X_BINNED_DTYPE
+ctypedef np.npy_float32 NPY_Y_DTYPE
 
-cdef struct hist_struct:
+cdef packed struct hist_struct:
     float sum_gradients
     float sum_hessians
     unsigned int count
 
 
-
-def _build_histogram_naive(unsigned int n_bins, unsigned int [:]
-                                sample_indices, unsigned char [:]
-                                binned_feature, float [:] ordered_gradients,
-                                float[:] ordered_hessians):
+cpdef void _build_histogram_naive(unsigned int n_bins,
+                                  unsigned int [:] sample_indices,
+                                  NPY_X_BINNED_DTYPE [:] binned_feature,
+                                  NPY_Y_DTYPE [:] ordered_gradients,
+                                  NPY_Y_DTYPE [:] ordered_hessians,
+                                  hist_struct [:] out) nogil:
     """Build histogram in a naive way, without optimizing for cache hit."""
-    histogram = np.zeros(n_bins, dtype=HISTOGRAM_DTYPE)
     cdef:
-        hist_struct [:] view = histogram
         unsigned int i
+        unsigned int n_samples = sample_indices.shape[0]
         unsigned int sample_idx
-        unsigned char bin_idx
+        unsigned int bin_idx
 
-    for i, sample_idx in enumerate(sample_indices):
+    for i in range(n_samples):
+        sample_idx = sample_indices[i]
         bin_idx = binned_feature[sample_idx]
-        view[bin_idx].sum_gradients += ordered_gradients[i]
-        view[bin_idx].sum_hessians += ordered_hessians[i]
-        view[bin_idx].count += 1
-    return histogram
+        out[bin_idx].sum_gradients += ordered_gradients[i]
+        out[bin_idx].sum_hessians += ordered_hessians[i]
+        out[bin_idx].count += 1
 
 
-def _subtract_histograms(unsigned int n_bins, np.ndarray hist_a, np.ndarray hist_b):
+cpdef void _subtract_histograms(unsigned int n_bins,
+                                hist_struct [:] hist_a,
+                                hist_struct [:] hist_b,
+                                hist_struct [:] out) nogil:
     """Return hist_a - hist_b"""
-    # print('subtract_hist')
 
-    cdef unsigned int i = 0
-    cdef np.ndarray histogram = np.zeros(n_bins, dtype=HISTOGRAM_DTYPE)
-    cdef hist_struct [:] view = histogram
-    cdef hist_struct [:] view_a = hist_a
-    cdef hist_struct [:] view_b = hist_b
-
+    cdef:
+        unsigned int i = 0
     for i in range(n_bins):
-        view[i].sum_gradients = view_a[i].sum_gradients - view_b[i].sum_gradients
-        view[i].sum_hessians = view_a[i].sum_hessians - view_b[i].sum_hessians
-        view[i].count = view_a[i].count - view_b[i].count
-
-    return histogram
+        out[i].sum_gradients = hist_a[i].sum_gradients - hist_b[i].sum_gradients
+        out[i].sum_hessians = hist_a[i].sum_hessians - hist_b[i].sum_hessians
+        out[i].count = hist_a[i].count - hist_b[i].count
 
 
-def _build_histogram(unsigned int n_bins, unsigned int [:]
-                                sample_indices, unsigned char [:]
-                                binned_feature, float [:] ordered_gradients,
-                                float[:] ordered_hessians):
+cpdef void _build_histogram(unsigned int n_bins,
+                            unsigned int [:] sample_indices,
+                            NPY_X_BINNED_DTYPE [:] binned_feature,
+                            NPY_Y_DTYPE [:] ordered_gradients,
+                            NPY_Y_DTYPE [:] ordered_hessians,
+                            hist_struct [:] out) nogil:
     """Return histogram for a given feature."""
-    cdef np.ndarray histogram = np.zeros(n_bins, dtype=HISTOGRAM_DTYPE)
-    cdef hist_struct [:] view = histogram
-    cdef int i = 0
+    cdef:
+        unsigned int i = 0
+        unsigned int n_node_samples = sample_indices.shape[0]
+        unsigned int unrolled_upper = (n_node_samples // 4) * 4
 
-    cdef float [:] ordered_gradients_view = ordered_gradients
-    cdef float [:] ordered_hessians_view = ordered_hessians
-
-    cdef int n_node_samples = sample_indices.shape[0]
-    cdef int unrolled_upper = (n_node_samples // 4) * 4
-
-    cdef unsigned int bin_0
-    cdef unsigned int bin_1
-    cdef unsigned int bin_2
-    cdef unsigned int bin_3
-    cdef unsigned int bin_idx
+        unsigned int bin_0
+        unsigned int bin_1
+        unsigned int bin_2
+        unsigned int bin_3
+        unsigned int bin_idx
 
     for i in range(0, unrolled_upper, 4):
         bin_0 = binned_feature[sample_indices[i]]
@@ -95,82 +84,73 @@ def _build_histogram(unsigned int n_bins, unsigned int [:]
         bin_2 = binned_feature[sample_indices[i + 2]]
         bin_3 = binned_feature[sample_indices[i + 3]]
 
-        view[bin_0].sum_gradients += ordered_gradients_view[i]
-        view[bin_1].sum_gradients += ordered_gradients_view[i + 1]
-        view[bin_2].sum_gradients += ordered_gradients_view[i + 2]
-        view[bin_3].sum_gradients += ordered_gradients_view[i + 3]
+        out[bin_0].sum_gradients += ordered_gradients[i]
+        out[bin_1].sum_gradients += ordered_gradients[i + 1]
+        out[bin_2].sum_gradients += ordered_gradients[i + 2]
+        out[bin_3].sum_gradients += ordered_gradients[i + 3]
 
-        view[bin_0].sum_hessians += ordered_hessians_view[i]
-        view[bin_1].sum_hessians += ordered_hessians_view[i + 1]
-        view[bin_2].sum_hessians += ordered_hessians_view[i + 2]
-        view[bin_3].sum_hessians += ordered_hessians_view[i + 3]
+        out[bin_0].sum_hessians += ordered_hessians[i]
+        out[bin_1].sum_hessians += ordered_hessians[i + 1]
+        out[bin_2].sum_hessians += ordered_hessians[i + 2]
+        out[bin_3].sum_hessians += ordered_hessians[i + 3]
 
-        view[bin_0].count += 1
-        view[bin_1].count += 1
-        view[bin_2].count += 1
-        view[bin_3].count += 1
+        out[bin_0].count += 1
+        out[bin_1].count += 1
+        out[bin_2].count += 1
+        out[bin_3].count += 1
 
     for i in range(unrolled_upper, n_node_samples):
         bin_idx = binned_feature[sample_indices[i]]
-        view[bin_idx].sum_gradients += ordered_gradients_view[i]
-        view[bin_idx].sum_hessians += ordered_hessians_view[i]
-        view[bin_idx].count += 1
-
-    return histogram
+        out[bin_idx].sum_gradients += ordered_gradients[i]
+        out[bin_idx].sum_hessians += ordered_hessians[i]
+        out[bin_idx].count += 1
 
 
-def _build_histogram_no_hessian(unsigned int n_bins, unsigned int [:]
-                                sample_indices, unsigned char [:]
-                                binned_feature, float [:] ordered_gradients):
-    """Return histogram for a given feature.
+cpdef void _build_histogram_no_hessian(
+    unsigned int n_bins,
+    unsigned int [:] sample_indices,
+    NPY_X_BINNED_DTYPE [:] binned_feature,
+    NPY_Y_DTYPE [:] ordered_gradients,
+    hist_struct [:] out) nogil:
+    """Return histogram for a given feature."""
+    cdef:
+        unsigned int i = 0
+        unsigned int n_node_samples = sample_indices.shape[0]
+        unsigned int unrolled_upper = (n_node_samples // 4) * 4
 
-    Hessians are not updated (used when hessians are constant).
-    """
-    # print('build_hist_no_hessian')
-    cdef np.ndarray histogram = np.zeros(n_bins, dtype=HISTOGRAM_DTYPE)
-    cdef hist_struct [:] view = histogram
-    cdef unsigned int i = 0
-
-    cdef float [:] ordered_gradients_view = ordered_gradients
-    cdef unsigned char [:] binned_feature_view = binned_feature
-    cdef unsigned int [:] sample_indices_view = sample_indices
-
-    cdef unsigned int n_node_samples = sample_indices.shape[0]
-    cdef unsigned int unrolled_upper = (n_node_samples // 4) * 4
-
-    cdef unsigned int bin_0
-    cdef unsigned int bin_1
-    cdef unsigned int bin_2
-    cdef unsigned int bin_3
-    cdef unsigned int bin_idx
+        unsigned int bin_0
+        unsigned int bin_1
+        unsigned int bin_2
+        unsigned int bin_3
+        unsigned int bin_idx
 
     for i in range(0, unrolled_upper, 4):
-        bin_0 = binned_feature_view[sample_indices_view[i]]
-        bin_1 = binned_feature_view[sample_indices_view[i + 1]]
-        bin_2 = binned_feature_view[sample_indices_view[i + 2]]
-        bin_3 = binned_feature_view[sample_indices_view[i + 3]]
+        bin_0 = binned_feature[sample_indices[i]]
+        bin_1 = binned_feature[sample_indices[i + 1]]
+        bin_2 = binned_feature[sample_indices[i + 2]]
+        bin_3 = binned_feature[sample_indices[i + 3]]
 
-        view[bin_0].sum_gradients += ordered_gradients_view[i]
-        view[bin_1].sum_gradients += ordered_gradients_view[i + 1]
-        view[bin_2].sum_gradients += ordered_gradients_view[i + 2]
-        view[bin_3].sum_gradients += ordered_gradients_view[i + 3]
+        out[bin_0].sum_gradients += ordered_gradients[i]
+        out[bin_1].sum_gradients += ordered_gradients[i + 1]
+        out[bin_2].sum_gradients += ordered_gradients[i + 2]
+        out[bin_3].sum_gradients += ordered_gradients[i + 3]
 
-        view[bin_0].count += 1
-        view[bin_1].count += 1
-        view[bin_2].count += 1
-        view[bin_3].count += 1
+        out[bin_0].count += 1
+        out[bin_1].count += 1
+        out[bin_2].count += 1
+        out[bin_3].count += 1
 
     for i in range(unrolled_upper, n_node_samples):
-        bin_idx = binned_feature_view[sample_indices_view[i]]
-        view[bin_idx].sum_gradients += ordered_gradients_view[i]
-        view[bin_idx].count += 1
-
-    return histogram
+        bin_idx = binned_feature[sample_indices[i]]
+        out[bin_idx].sum_gradients += ordered_gradients[i]
+        out[bin_idx].count += 1
 
 
-
-def _build_histogram_root_no_hessian(unsigned int n_bins, unsigned char [:]
-                                     binned_feature, float [:]all_gradients):
+cpdef void _build_histogram_root_no_hessian(
+    unsigned int n_bins,
+    NPY_X_BINNED_DTYPE [:] binned_feature,
+    NPY_Y_DTYPE [:] all_gradients,
+    hist_struct [:] out) nogil:
     """Special case for the root node
 
     The root node has to find the split among all the samples from the
@@ -179,69 +159,16 @@ def _build_histogram_root_no_hessian(unsigned int n_bins, unsigned char [:]
 
     Hessians are not updated (used when hessians are constant)
     """
-    # print('build_hist_root_no_hessian')
+    cdef:
+        unsigned int i = 0
+        unsigned int n_samples = binned_feature.shape[0]
+        unsigned int unrolled_upper = (n_samples // 4) * 4
 
-    cdef np.ndarray histogram = np.zeros(n_bins, dtype=HISTOGRAM_DTYPE)
-    cdef hist_struct [:] view = histogram
-    cdef unsigned int i = 0
-
-    cdef float [:] all_gradients_view = all_gradients
-    cdef unsigned char [:] binned_feature_view = binned_feature
-
-    cdef unsigned int n_node_samples = binned_feature.shape[0]
-    cdef unsigned int unrolled_upper = (n_node_samples // 4) * 4
-
-    cdef unsigned int bin_0
-    cdef unsigned int bin_1
-    cdef unsigned int bin_2
-    cdef unsigned int bin_3
-    cdef unsigned int bin_idx
-
-    for i in range(0, unrolled_upper, 4):
-        bin_0 = binned_feature_view[i]
-        bin_1 = binned_feature_view[i + 1]
-        bin_2 = binned_feature_view[i + 2]
-        bin_3 = binned_feature_view[i + 3]
-
-        view[bin_0].sum_gradients += all_gradients_view[i]
-        view[bin_1].sum_gradients += all_gradients_view[i + 1]
-        view[bin_2].sum_gradients += all_gradients_view[i + 2]
-        view[bin_3].sum_gradients += all_gradients_view[i + 3]
-
-        view[bin_0].count += 1
-        view[bin_1].count += 1
-        view[bin_2].count += 1
-        view[bin_3].count += 1
-
-    for i in range(unrolled_upper, n_node_samples):
-        bin_idx = binned_feature_view[i]
-        view[bin_idx].sum_gradients += all_gradients_view[i]
-        view[bin_idx].count += 1
-
-    return histogram
-
-
-def _build_histogram_root(unsigned int n_bins, unsigned char [:]
-                          binned_feature, float [:] all_gradients,
-                          float[:] all_hessians):
-    """Special case for the root node
-
-    The root node has to find the split among all the samples from the
-    training set. binned_feature and all_gradients and all_hessians already
-    have a consistent ordering.
-    """
-    cdef np.ndarray histogram = np.zeros(n_bins, dtype=HISTOGRAM_DTYPE)
-    cdef hist_struct [:] view = histogram
-    cdef int i = 0
-
-    cdef unsigned int n_node_samples = binned_feature.shape[0]
-    cdef unsigned int unrolled_upper = (n_node_samples // 4) * 4
-
-    cdef unsigned int bin_0
-    cdef unsigned int bin_1
-    cdef unsigned int bin_2
-    cdef unsigned int bin_3
-    cdef unsigned int bin_idx
+        unsigned int bin_0
+        unsigned int bin_1
+        unsigned int bin_2
+        unsigned int bin_3
+        unsigned int bin_idx
 
     for i in range(0, unrolled_upper, 4):
         bin_0 = binned_feature[i]
@@ -249,25 +176,69 @@ def _build_histogram_root(unsigned int n_bins, unsigned char [:]
         bin_2 = binned_feature[i + 2]
         bin_3 = binned_feature[i + 3]
 
-        view[bin_0].sum_gradients += all_gradients[i]
-        view[bin_1].sum_gradients += all_gradients[i + 1]
-        view[bin_2].sum_gradients += all_gradients[i + 2]
-        view[bin_3].sum_gradients += all_gradients[i + 3]
+        out[bin_0].sum_gradients += all_gradients[i]
+        out[bin_1].sum_gradients += all_gradients[i + 1]
+        out[bin_2].sum_gradients += all_gradients[i + 2]
+        out[bin_3].sum_gradients += all_gradients[i + 3]
 
-        view[bin_0].sum_hessians += all_hessians[i]
-        view[bin_1].sum_hessians += all_hessians[i + 1]
-        view[bin_2].sum_hessians += all_hessians[i + 2]
-        view[bin_3].sum_hessians += all_hessians[i + 3]
+        out[bin_0].count += 1
+        out[bin_1].count += 1
+        out[bin_2].count += 1
+        out[bin_3].count += 1
 
-        view[bin_0].count += 1
-        view[bin_1].count += 1
-        view[bin_2].count += 1
-        view[bin_3].count += 1
-
-    for i in range(unrolled_upper, n_node_samples):
+    for i in range(unrolled_upper, n_samples):
         bin_idx = binned_feature[i]
-        view[bin_idx].sum_gradients += all_gradients[i]
-        view[bin_idx].sum_hessians += all_hessians[i]
-        view[bin_idx].count += 1
+        out[bin_idx].sum_gradients += all_gradients[i]
+        out[bin_idx].count += 1
 
-    return histogram
+
+cpdef void _build_histogram_root(
+    unsigned int n_bins,
+    NPY_X_BINNED_DTYPE [:] binned_feature,
+    NPY_Y_DTYPE [:] all_gradients,
+    NPY_Y_DTYPE [:] all_hessians,
+    hist_struct [:] out) nogil:
+    """Special case for the root node
+
+    The root node has to find the split among all the samples from the
+    training set. binned_feature and all_gradients and all_hessians already
+    have a consistent ordering.
+    """
+    cdef:
+        unsigned int i = 0
+        unsigned int n_samples = binned_feature.shape[0]
+        unsigned int unrolled_upper = (n_samples // 4) * 4
+
+        unsigned int bin_0
+        unsigned int bin_1
+        unsigned int bin_2
+        unsigned int bin_3
+        unsigned int bin_idx
+
+    for i in range(0, unrolled_upper, 4):
+
+        bin_0 = binned_feature[i]
+        bin_1 = binned_feature[i + 1]
+        bin_2 = binned_feature[i + 2]
+        bin_3 = binned_feature[i + 3]
+
+        out[bin_0].sum_gradients += all_gradients[i]
+        out[bin_1].sum_gradients += all_gradients[i + 1]
+        out[bin_2].sum_gradients += all_gradients[i + 2]
+        out[bin_3].sum_gradients += all_gradients[i + 3]
+
+        out[bin_0].sum_hessians += all_hessians[i]
+        out[bin_1].sum_hessians += all_hessians[i + 1]
+        out[bin_2].sum_hessians += all_hessians[i + 2]
+        out[bin_3].sum_hessians += all_hessians[i + 3]
+
+        out[bin_0].count += 1
+        out[bin_1].count += 1
+        out[bin_2].count += 1
+        out[bin_3].count += 1
+
+    for i in range(unrolled_upper, n_samples):
+        bin_idx = binned_feature[i]
+        out[bin_idx].sum_gradients += all_gradients[i]
+        out[bin_idx].sum_hessians += all_hessians[i]
+        out[bin_idx].count += 1
