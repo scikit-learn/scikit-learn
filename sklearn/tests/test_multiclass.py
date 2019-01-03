@@ -236,8 +236,8 @@ def test_ovr_multiclass():
                      ElasticNet()):
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         assert_equal(set(clf.classes_), classes)
-        y_pred = clf.predict(np.array([[0, 0, 4]]))
-        assert_equal(set(y_pred), {"eggs"})
+        y_pred = clf.predict(np.array([[0, 0, 4]]))[0]
+        assert_array_equal(y_pred, ["eggs"])
 
         # test input as label indicator matrix
         clf = OneVsRestClassifier(base_clf).fit(X, Y)
