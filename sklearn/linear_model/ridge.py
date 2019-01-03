@@ -29,7 +29,6 @@ from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
-from ..externals import six
 from ..metrics.scorer import check_scoring
 from ..exceptions import ConvergenceWarning
 
@@ -464,7 +463,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         return coef
 
 
-class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
+class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,

@@ -19,7 +19,6 @@ from scipy import stats
 from scipy import optimize
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals import six
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
@@ -37,11 +36,6 @@ from ._csr_polynomial_expansion import _csr_polynomial_expansion
 from ._encoders import OneHotEncoder
 
 BOUNDS_THRESHOLD = 1e-7
-
-
-zip = six.moves.zip
-map = six.moves.map
-range = six.moves.range
 
 __all__ = [
     'Binarizer',
@@ -258,7 +252,6 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> from sklearn.preprocessing import MinMaxScaler
-
     >>> data = [[-1, 2], [-0.5, 6], [0, 10], [1, 18]]
     >>> scaler = MinMaxScaler()
     >>> print(scaler.fit(data))
@@ -1330,6 +1323,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import PolynomialFeatures
     >>> X = np.arange(6).reshape(3, 2)
     >>> X
     array([[0, 1],

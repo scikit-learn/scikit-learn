@@ -26,8 +26,6 @@ from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
-from ..externals.six import with_metaclass
-from ..externals.six.moves import zip
 from ..utils.fixes import comb
 from ..utils.fixes import _Iterable as Iterable
 from ..base import _pprint
@@ -61,16 +59,11 @@ CV_WARNING = (
     "in version 0.22.")
 
 
-class BaseCrossValidator(with_metaclass(ABCMeta)):
+class BaseCrossValidator(metaclass=ABCMeta):
     """Base class for all cross-validators
 
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
     """
-
-    def __init__(self):
-        # We need this for the build_repr to work properly in py2.7
-        # see #6304
-        pass
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -146,6 +139,7 @@ class LeaveOneOut(BaseCrossValidator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import LeaveOneOut
     >>> X = np.array([[1, 2], [3, 4]])
     >>> y = np.array([1, 2])
@@ -225,6 +219,7 @@ class LeavePOut(BaseCrossValidator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import LeavePOut
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 3, 4])
@@ -272,7 +267,7 @@ class LeavePOut(BaseCrossValidator):
         return int(comb(_num_samples(X), self.p, exact=True))
 
 
-class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
+class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
     """Base class for KFold, GroupKFold, and StratifiedKFold"""
 
     @abstractmethod
@@ -384,6 +379,7 @@ class KFold(_BaseKFold):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import KFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4])
@@ -463,6 +459,7 @@ class GroupKFold(_BaseKFold):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import GroupKFold
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 3, 4])
@@ -595,6 +592,7 @@ class StratifiedKFold(_BaseKFold):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import StratifiedKFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
@@ -751,6 +749,7 @@ class TimeSeriesSplit(_BaseKFold):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import TimeSeriesSplit
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4, 5, 6])
@@ -842,6 +841,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import LeaveOneGroupOut
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 1, 2])
@@ -960,6 +960,7 @@ class LeavePGroupsOut(BaseCrossValidator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import LeavePGroupsOut
     >>> X = np.array([[1, 2], [3, 4], [5, 6]])
     >>> y = np.array([1, 2, 1])
@@ -1066,7 +1067,7 @@ class LeavePGroupsOut(BaseCrossValidator):
         return super(LeavePGroupsOut, self).split(X, y, groups)
 
 
-class _RepeatedSplits(with_metaclass(ABCMeta)):
+class _RepeatedSplits(metaclass=ABCMeta):
     """Repeated splits for an arbitrary randomized CV splitter.
 
     Repeats splits for cross-validators n times with different randomization
@@ -1190,6 +1191,7 @@ class RepeatedKFold(_RepeatedSplits):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import RepeatedKFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
@@ -1241,6 +1243,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import RepeatedStratifiedKFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
@@ -1271,7 +1274,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
             StratifiedKFold, n_repeats, random_state, n_splits=n_splits)
 
 
-class BaseShuffleSplit(with_metaclass(ABCMeta)):
+class BaseShuffleSplit(metaclass=ABCMeta):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
     def __init__(self, n_splits=10, test_size="default", train_size=None,
@@ -1385,6 +1388,7 @@ class ShuffleSplit(BaseShuffleSplit):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import ShuffleSplit
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [3, 4], [5, 6]])
     >>> y = np.array([1, 2, 1, 2, 1, 2])
@@ -1569,6 +1573,7 @@ def _approximate_mode(class_counts, n_draws, rng):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection._split import _approximate_mode
     >>> _approximate_mode(class_counts=np.array([4, 2]), n_draws=3, rng=0)
     array([2, 1])
@@ -1653,6 +1658,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import StratifiedShuffleSplit
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 0, 1, 1, 1])
@@ -1888,6 +1894,7 @@ class PredefinedSplit(BaseCrossValidator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import PredefinedSplit
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
