@@ -15,7 +15,6 @@ from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin
-from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
 from ..utils.validation import check_memory
@@ -23,8 +22,6 @@ from ..utils.validation import check_memory
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 from ..utils.fast_dict import IntFloatDict
-
-from ..externals.six.moves import xrange
 
 ###############################################################################
 # For non fully-connected graphs
@@ -64,10 +61,10 @@ def _fix_connectivity(X, connectivity, affinity):
                       "stopping the tree early." % n_components,
                       stacklevel=2)
         # XXX: Can we do without completing the matrix?
-        for i in xrange(n_components):
+        for i in range(n_components):
             idx_i = np.where(labels == i)[0]
             Xi = X[idx_i]
-            for j in xrange(i):
+            for j in range(i):
                 idx_j = np.where(labels == j)[0]
                 Xj = X[idx_j]
                 D = pairwise_distances(Xi, Xj, metric=affinity)
@@ -274,7 +271,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
     inertia = np.empty(len(coord_row), dtype=np.float64, order='C')
     _hierarchical.compute_ward_dist(moments_1, moments_2, coord_row, coord_col,
                                     inertia)
-    inertia = list(six.moves.zip(inertia, coord_row, coord_col))
+    inertia = list(zip(inertia, coord_row, coord_col))
     heapify(inertia)
 
     # prepare the main fields
@@ -527,7 +524,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
     children = []
 
     # recursive merge loop
-    for k in xrange(n_samples, n_nodes):
+    for k in range(n_samples, n_nodes):
         # identify the merge
         while True:
             edge = heappop(inertia)
@@ -632,7 +629,7 @@ def _hc_cut(n_clusters, children, n_leaves):
     # are interested in largest elements
     # children[-1] is the root of the tree
     nodes = [-(max(children[-1]) + 1)]
-    for _ in xrange(n_clusters - 1):
+    for _ in range(n_clusters - 1):
         # As we have a heap, nodes[0] is the smallest element
         these_children = children[-nodes[0] - n_leaves]
         # Insert the 2 children and remove the largest node

@@ -11,7 +11,7 @@ from sklearn.base import is_classifier
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz, plot_tree
-from sklearn.externals.six import StringIO
+from io import StringIO
 from sklearn.utils.testing import (assert_in, assert_equal, assert_raises,
                                    assert_less_equal, assert_raises_regex,
                                    assert_raise_message)

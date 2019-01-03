@@ -9,8 +9,6 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals import six
-from ..externals.six.moves import xrange
 from ..utils import check_array, tosequence
 from ..utils.fixes import _Mapping as Mapping
 
@@ -118,8 +116,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         vocab = {}
 
         for x in X:
-            for f, v in six.iteritems(x):
-                if isinstance(v, six.string_types):
+            for f, v in x.items():
+                if isinstance(v, str):
                     f = "%s%s%s" % (f, self.separator, v)
                 if f not in vocab:
                     feature_names.append(f)
@@ -164,8 +162,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         # collect all the possible feature names and build sparse matrix at
         # same time
         for x in X:
-            for f, v in six.iteritems(x):
-                if isinstance(v, six.string_types):
+            for f, v in x.items():
+                if isinstance(v, str):
                     f = "%s%s%s" % (f, self.separator, v)
                     v = 1
                 if f in vocab:
@@ -258,7 +256,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         n_samples = X.shape[0]
 
         names = self.feature_names_
-        dicts = [dict_type() for _ in xrange(n_samples)]
+        dicts = [dict_type() for _ in range(n_samples)]
 
         if sp.issparse(X):
             for i, j in zip(*X.nonzero()):
@@ -298,8 +296,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             Xa = np.zeros((len(X), len(vocab)), dtype=dtype)
 
             for i, x in enumerate(X):
-                for f, v in six.iteritems(x):
-                    if isinstance(v, six.string_types):
+                for f, v in x.items():
+                    if isinstance(v, str):
                         f = "%s%s%s" % (f, self.separator, v)
                         v = 1
                     try:
@@ -360,7 +358,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             new_vocab[names[i]] = len(new_vocab)
 
         self.vocabulary_ = new_vocab
-        self.feature_names_ = [f for f, i in sorted(six.iteritems(new_vocab),
+        self.feature_names_ = [f for f, i in sorted(new_vocab.items(),
                                                     key=itemgetter(1))]
 
         return self
