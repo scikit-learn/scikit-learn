@@ -166,7 +166,7 @@ class OneHotEncoder(_BaseEncoder):
         feature. This is useful in situations where perfectly collinear
         features cause problems, such as when feeding the resulting data
         into a neural network or an unregularized regression. If only one
-        feature appears in a column, that column will be retained as a 
+        feature appears in a column, that column will be retained as a
         column of ones.
 
         - None : retain all features.
@@ -383,31 +383,35 @@ class OneHotEncoder(_BaseEncoder):
                 else:
                     if self.drop is None:
                         msg = (
-                            "The handling of integer data will change in version "
-                            "0.22. Currently, the categories are determined "
-                            "based on the range [0, max(values)], while in the "
-                            "future they will be determined based on the unique "
-                            "values.\nIf you want the future behaviour and "
-                            "silence this warning, you can specify "
+                            "The handling of integer data will change in "
+                            "version 0.22. Currently, the categories are "
+                            "determined based on the range "
+                            "[0, max(values)], while in the future they "
+                            "will be determined based on the unique "
+                            "values.\nIf you want the future behaviour "
+                            "and silence this warning, you can specify "
                             "\"categories='auto'\".\n"
                             "In case you used a LabelEncoder before this "
-                            "OneHotEncoder to convert the categories to integers, "
-                            "then you can now use the OneHotEncoder directly."
+                            "OneHotEncoder to convert the categories to "
+                            "integers, then you can now use the "
+                            "OneHotEncoder directly."
                         )
                         warnings.warn(msg, FutureWarning)
                         self._legacy_mode = True
                         self._n_values = 'auto'
                     else:
                         msg = (
-                            "The handling of integer data will change in version "
-                            "0.22. Currently, the categories are determined "
-                            "based on the range [0, max(values)], while in the "
-                            "future they will be determined based on the unique "
-                            "values.\n The old behavior is not compatible with the "
-                            "`drop` paramenter. Instead, you must manually specify "
-                            "\"categories='auto'\" if you wish to use the `drop` "
-                            "parameter on an array of entirely integer data. This"
-                            "will enable the future behavior."
+                            "The handling of integer data will change in "
+                            "version 0.22. Currently, the categories are "
+                            "determined based on the range "
+                            "[0, max(values)], while in the future they "
+                            "will be determined based on the unique "
+                            "values.\n The old behavior is not compatible "
+                            "with the `drop` paramenter. Instead, you "
+                            "must manually specify \"categories='auto'\" "
+                            "if you wish to use the `drop` parameter on "
+                            "an array of entirely integer data. This will "
+                            "enable the future behavior."
                         )
                         raise ValueError(msg)
 
@@ -456,7 +460,6 @@ class OneHotEncoder(_BaseEncoder):
                 "`handle_unknown` cannot be 'ignore' when the drop parameter "
                 "is specified, as this will create ambiguous cells")
 
-
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
 
@@ -488,8 +491,8 @@ class OneHotEncoder(_BaseEncoder):
             elif (isinstance(self.drop, six.string_types) and
                     self.drop == 'first'):
                 self.drop_ = np.array([cats[0] if len(cats) > 1 else None
-                                       for cats in self.categories_],
-                                       dtype=object)
+                                      for cats in self.categories_],
+                                      dtype=object)
             elif not isinstance(self.drop, six.string_types):
                 try:
                     self.drop = np.asarray(self.drop, dtype=object)
@@ -503,9 +506,9 @@ class OneHotEncoder(_BaseEncoder):
                            "of features ({}), got {}")
                     raise ValueError(msg.format(len(self.categories_),
                                                 len(self.drop)))
-                self.drop_ = np.array([cat for i, cat in enumerate(self.drop) 
-                                       if len(self.categories_[i]) > 1], 
-                                       dtype=object)
+                self.drop_ = np.array([cat for i, cat in enumerate(self.drop)
+                                       if len(self.categories_[i]) > 1],
+                                      dtype=object)
             else:
                 msg = ("Wrong input for parameter `drop`. Expected "
                        "'first', None or array of objects, got {}")
@@ -656,7 +659,7 @@ class OneHotEncoder(_BaseEncoder):
 
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
 
-        if not self.drop is None:
+        if self.drop is not None:
             for i in range(n_features):
                 Xii = X_int[:, i]
                 Xmi = X_mask[:, i]
@@ -672,13 +675,13 @@ class OneHotEncoder(_BaseEncoder):
                     keep_cells = ~np.isin(Xii, [drop_value])
                     np.logical_and(Xmi, keep_cells, out=Xmi)
                     Xii[Xii > drop_value] -= 1
-            n_values = [len(cats) - 1 
-                        if self.drop_[i] is not None 
+            n_values = [len(cats) - 1
+                        if self.drop_[i] is not None
                         else len(cats)
                         for i, cats in enumerate(self.categories_)]
         else:
             n_values = [cats.shape[0] for cats in self.categories_]
-        
+
         mask = X_mask.ravel()
         n_values = np.array([0] + n_values)
         feature_indices = np.cumsum(n_values)
@@ -742,13 +745,15 @@ class OneHotEncoder(_BaseEncoder):
         n_samples, _ = X.shape
         n_features = len(self.categories_)
         if self.drop is None:
-            n_transformed_features = sum([len(cats) for cats in self.categories_])
+            n_transformed_features = sum(len(cats)
+                                         for cats in self.categories_)
         else:
-            n_transformed_features = sum([len(cats) - 1 
-                                          if self.drop_[i] is not None 
-                                          else len(cats)
-                                          for i, cats in enumerate(self.categories_)
-                                         ])
+            n_transformed_features = sum(len(cats) - 1
+                                         if self.drop_[i] is not None
+                                         else len(cats)
+                                         for i, cats in
+                                         enumerate(self.categories_)
+                                         )
 
         # validate shape of passed X
         msg = ("Shape of the passed X data is not correct. Expected {0} "
@@ -767,8 +772,8 @@ class OneHotEncoder(_BaseEncoder):
             if self.drop is None:
                 cats = self.categories_[i]
             else:
-                cats = np.array([cat for cat in self.categories_[i] 
-                                    if cat != self.drop_[i]])
+                cats = np.array([cat for cat in self.categories_[i]
+                                 if cat != self.drop_[i]])
             n_categories = len(cats)
             sub = X[:, j:j + n_categories]
             # for sparse X argmax returns 2D matrix, ensure 1D array

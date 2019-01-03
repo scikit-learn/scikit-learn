@@ -695,12 +695,13 @@ def test_one_hot_encoder_warning():
     X = [['Male', 1], ['Female', 3]]
     np.testing.assert_no_warnings(enc.fit_transform, X)
 
-    enc = OneHotEncoder(drop=['def',3,56])
-    X = [['abc', 2, 55], ['def', 1, 55],['def', 3, 56]]
+    enc = OneHotEncoder(drop=['def', 3, 56])
+    X = [['abc', 2, 55], ['def', 1, 55], ['def', 3, 56]]
     exp = np.array([[1., 0., 1., 1.],
                     [0., 1., 0., 1.],
                     [0., 0., 0., 0.]], dtype='float64')
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
+
 
 def test_one_hot_encoder_invalid_params():
     enc = OneHotEncoder(drop='second')
@@ -728,12 +729,13 @@ def test_one_hot_encoder_invalid_params():
     assert_raises_regex(
         ValueError,
         "Wrong input for parameter `drop`.",
-        enc.fit, [['abc', 2, 55], ['def', 1, 55],['def', 3, 59]])
+        enc.fit, [['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]])
 
-@pytest.mark.parametrize('drop', [['abc',3], ['abc',3,41,'a']])
+
+@pytest.mark.parametrize('drop', [['abc', 3], ['abc', 3, 41, 'a']])
 def test_invalid_drop_length(drop):
     enc = OneHotEncoder(drop=drop)
     assert_raises_regex(
         ValueError,
         "`drop` should have length equal to the number",
-        enc.fit, [['abc', 2, 55], ['def', 1, 55],['def', 3, 59]])
+        enc.fit, [['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]])
