@@ -683,7 +683,7 @@ class OneHotEncoder(_BaseEncoder):
                 above so as not to leave a blank column.
                 """
                 if drop_value is not None:
-                    keep_cells = ~np.isin(Xii, [drop_value])
+                    keep_cells = ~np.in1d(Xii, [drop_value])
                     np.logical_and(Xmi, keep_cells, out=Xmi)
                     Xii[Xii > drop_value] -= 1
             n_values = [len(cats) - 1
