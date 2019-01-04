@@ -196,6 +196,7 @@ then submit a "pull request" (PR):
         $ git clone git@github.com:YourLogin/scikit-learn.git
         $ cd scikit-learn
 
+<<<<<<< HEAD
  4. Install library in editable mode::
 
         $ pip install --editable .
@@ -203,6 +204,9 @@ then submit a "pull request" (PR):
     for more details about advanced installation, see the :ref:`install_bleeding_edge` section.
 
  5. Create a branch to hold your development changes::
+=======
+ 4. Create a branch to hold your development changes::
+>>>>>>> master
 
         $ git checkout -b my-feature
 
@@ -210,7 +214,11 @@ then submit a "pull request" (PR):
     never work on the ``master`` branch!
 
 <<<<<<< HEAD
+<<<<<<< HEAD
  6. Develop the feature on your feature branch on your computer, using Git to do the
+=======
+ 5. Develop the feature on your feature branch on your computer, using Git to do the 
+>>>>>>> master
     version control. When you're done editing, add changed files using ``git add`` 
     and then ``git commit`` files::
 
