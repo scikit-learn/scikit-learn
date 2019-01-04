@@ -14,8 +14,6 @@ from warnings import warn
 from .base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
 from ..utils._joblib import Parallel, delayed
-from ..externals.six import with_metaclass
-from ..externals.six.moves import zip
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_X_y, check_array, column_or_1d
@@ -184,7 +182,7 @@ def _parallel_predict_regression(estimators, estimators_features, X):
                                               estimators_features))
 
 
-class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     """Base class for Bagging meta-estimator.
 
     Warning: This class should not be used directly. Use derived classes
@@ -475,7 +473,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=True)
-        Whether samples are drawn with replacement.
+        Whether samples are drawn with replacement. If False, sampling
+        without replacement is performed.
 
     bootstrap_features : boolean, optional (default=False)
         Whether features are drawn with replacement.
@@ -856,7 +855,8 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=True)
-        Whether samples are drawn with replacement.
+        Whether samples are drawn with replacement. If False, sampling
+        without replacement is performed.
 
     bootstrap_features : boolean, optional (default=False)
         Whether features are drawn with replacement.
