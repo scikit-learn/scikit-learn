@@ -1556,12 +1556,12 @@ def three_params_scorer(i, j, k):
 
 @pytest.mark.parametrize("return_train_score, scorer, expected", [
     (False, three_params_scorer,
-     "[CV] .................................. , score=3.421, elapsed=   0.0s"),
+     "[CV] .................................... , score=3.421, total=   0.0s"),
     (True, three_params_scorer,
-     "[CV] .............. , score=(train=3.421, test=3.421), elapsed=   0.0s"),
+     "[CV] ................ , score=(train=3.421, test=3.421), total=   0.0s"),
     (True, {'sc1': three_params_scorer, 'sc2': three_params_scorer},
      "[CV]  , sc1=(train=3.421, test=3.421)"
-     ", sc2=(train=3.421, test=3.421), elapsed=   0.0s")
+     ", sc2=(train=3.421, test=3.421), total=   0.0s")
 ])
 def test_fit_and_score_verbosity(capsys, return_train_score, scorer, expected):
     X, y = make_classification(n_samples=30, random_state=0)

@@ -994,44 +994,44 @@ def test_column_transformer_no_estimators():
         [('trans1', Trans(), [0]),
          ('trans2', Trans(), [1])],
         remainder=DoubleTrans()),
-     (r'\[ColumnTransformer\].*\(1 of 3\) Fitting trans1.* elapsed=.*\n'
-      r'\[ColumnTransformer\].*\(2 of 3\) Fitting trans2.* elapsed=.*\n'
-      r'\[ColumnTransformer\].*\(3 of 3\) Fitting remainder.* elapsed=.*\n$')),
+     (r'\[ColumnTransformer\].*\(1 of 3\) Fitting trans1.* total=.*\n'
+      r'\[ColumnTransformer\].*\(2 of 3\) Fitting trans2.* total=.*\n'
+      r'\[ColumnTransformer\].*\(3 of 3\) Fitting remainder.* total=.*\n$')),
     (ColumnTransformer(
         [('trans1', Trans(), [0]),
          ('trans2', Trans(), [1])],
         remainder='passthrough'),
-     (r'\[ColumnTransformer\].*\(1 of 3\) Fitting trans1.* elapsed=.*\n'
-      r'\[ColumnTransformer\].*\(2 of 3\) Fitting trans2.* elapsed=.*\n'
-      r'\[ColumnTransformer\].*\(3 of 3\) Fitting remainder.* elapsed=.*\n$')),
+     (r'\[ColumnTransformer\].*\(1 of 3\) Fitting trans1.* total=.*\n'
+      r'\[ColumnTransformer\].*\(2 of 3\) Fitting trans2.* total=.*\n'
+      r'\[ColumnTransformer\].*\(3 of 3\) Fitting remainder.* total=.*\n$')),
     (ColumnTransformer(
         [('trans1', Trans(), [0]),
          ('trans2', 'drop', [1])],
         remainder='passthrough'),
-     (r'\[ColumnTransformer\].*\(1 of 2\) Fitting trans1.* elapsed=.*\n'
-      r'\[ColumnTransformer\].*\(2 of 2\) Fitting remainder.* elapsed=.*\n$')),
+     (r'\[ColumnTransformer\].*\(1 of 2\) Fitting trans1.* total=.*\n'
+      r'\[ColumnTransformer\].*\(2 of 2\) Fitting remainder.* total=.*\n$')),
     (ColumnTransformer(
         [('trans1', Trans(), [0]),
          ('trans2', 'passthrough', [1])],
         remainder='passthrough'),
-     (r'\[ColumnTransformer\].*\(1 of 3\) Fitting trans1.* elapsed=.*\n'
-      r'\[ColumnTransformer\].*\(2 of 3\) Fitting trans2.* elapsed=.*\n'
-      r'\[ColumnTransformer\].*\(3 of 3\) Fitting remainder.* elapsed=.*\n$')),
+     (r'\[ColumnTransformer\].*\(1 of 3\) Fitting trans1.* total=.*\n'
+      r'\[ColumnTransformer\].*\(2 of 3\) Fitting trans2.* total=.*\n'
+      r'\[ColumnTransformer\].*\(3 of 3\) Fitting remainder.* total=.*\n$')),
     (ColumnTransformer(
         [('trans1', Trans(), [0])],
         remainder='passthrough'),
-     (r'\[ColumnTransformer\].*\(1 of 2\) Fitting trans1.* elapsed=.*\n'
-      r'\[ColumnTransformer\].*\(2 of 2\) Fitting remainder.* elapsed=.*\n$')),
+     (r'\[ColumnTransformer\].*\(1 of 2\) Fitting trans1.* total=.*\n'
+      r'\[ColumnTransformer\].*\(2 of 2\) Fitting remainder.* total=.*\n$')),
     (ColumnTransformer(
         [('trans1', Trans(), [0]),
          ('trans2', Trans(), [1])],
         remainder='drop'),
-     (r'\[ColumnTransformer\].*\(1 of 2\) Fitting trans1.* elapsed=.*\n'
-      r'\[ColumnTransformer\].*\(2 of 2\) Fitting trans2.* elapsed=.*\n$')),
+     (r'\[ColumnTransformer\].*\(1 of 2\) Fitting trans1.* total=.*\n'
+      r'\[ColumnTransformer\].*\(2 of 2\) Fitting trans2.* total=.*\n$')),
     (ColumnTransformer(
         [('trans1', Trans(), [0])],
         remainder='drop'),
-     (r'\[ColumnTransformer\].*\(1 of 1\) Fitting trans1.* elapsed=.*\n$'))
+     (r'\[ColumnTransformer\].*\(1 of 1\) Fitting trans1.* total=.*\n$'))
 ])
 @pytest.mark.parametrize('method', ['fit', 'fit_transform'])
 def test_column_transformer_verbose(est, pattern, method, capsys):
