@@ -566,8 +566,8 @@ ith feature is active if x > i. For example::
 
   >>> enc = preprocessing.UnaryEncoder()
   >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]]) # doctest: +ELLIPSIS
-  UnaryEncoder(dtype=<... 'numpy.float64'>, handle_greater='warn',
-               n_values='auto', sparse=False)
+  UnaryEncoder(categories='auto', dtype=<... 'numpy.float64'>,
+               handle_greater='warn', sparse=False)
   >>> enc.transform([[0, 1, 3]])
   array([[0., 1., 0., 1., 1., 1.]])
 
@@ -577,16 +577,16 @@ feature is transformed into 3 columns.
 
 By default, the number of categories in a feature is inferred automatically
 from the dataset by looking for the maximum value. It is possible to specify
-this explicitly using the parameter ``n_values``. In particular if the
+this explicitly using the parameter ``categories``. In particular if the
 training data might have missing categorical features, one has to explicitly
-set ``n_values``. For example,::
+set ``categories``. For example,::
 
-  >>> enc = preprocessing.UnaryEncoder(n_values=[2, 3, 4])
+  >>> enc = preprocessing.UnaryEncoder(categories=[2, 3, 4])
   >>> # Note that there are missing categorical values for the 2nd and 3rd
   >>> # features
   >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
-  UnaryEncoder(dtype=<... 'numpy.float64'>, handle_greater='warn',
-               n_values=[2, 3, 4], sparse=False)
+  UnaryEncoder(categories=[2, 3, 4], dtype=<... 'numpy.float64'>,
+               handle_greater='warn', sparse=False)
   >>> enc.transform([[1, 1, 2]])
   array([[1., 1., 0., 1., 1., 0.]])
 
