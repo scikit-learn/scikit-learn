@@ -75,7 +75,8 @@ Pipeline(memory=None,
                                     multi_class='warn', n_jobs=None,
                                     penalty='l2', random_state=None,
                                     solver='warn', tol=0.0001, verbose=0,
-                                    warm_start=False))])"""
+                                    warm_start=False))],
+         verbose=False)"""
 
     expected = expected[1:]  # remove first \n
     assert pipeline.__repr__() == expected
@@ -184,7 +185,8 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
                                                   multi_class='ovr',
                                                   penalty='l2',
                                                   random_state=None, tol=0.0001,
-                                                  verbose=0))]),
+                                                  verbose=0))],
+                                verbose=False),
              iid='warn', n_jobs=1,
              param_grid=[{'classify__C': [1, 10, 100, 1000],
                           'reduce_dim': [PCA(copy=True, iterated_power=7,
