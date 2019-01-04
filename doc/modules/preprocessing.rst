@@ -598,6 +598,19 @@ set ``categories``. For example,::
   models, since those already work on the basis of a particular feature
   value being less or bigger than a threshold.
 
+It is possible to combine :class:`UnaryEncoder` and :class:`OrdinalEncoder`
+into a :class:`Pipeline <sklearn.pipeline.Pipeline>` like so::
+
+  >>> from sklearn.pipeline import make_pipeline
+  >>> from sklearn.preprocessing import OrdinalEncoder, UnaryEncoder
+  >>> categories = [['small', 'medium', 'huge']]
+  >>> pipeline = make_pipeline(OrdinalEncoder(categories), UnaryEncoder())
+  >>> X = [['small'], ['medium'], ['huge']]
+  >>> pipeline.fit_transform(X)
+  array([[0., 0.],
+         [1., 0.],
+         [1., 1.]])
+
 
 .. _preprocessing_discretization:
 
