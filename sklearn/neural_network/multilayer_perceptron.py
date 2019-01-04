@@ -7,7 +7,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-import sys
 
 from abc import ABCMeta, abstractmethod
 from scipy.optimize import fmin_l_bfgs_b
@@ -1037,17 +1036,13 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         y_prob = self.predict_proba(X)
         return np.log(y_prob, out=y_prob)
 
-    def predict_proba(self, X, max_row_chunk=None):
+    def predict_proba(self, X):
         """Probability estimates.
 
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data.
-
-        max_row_chunk: integer
-            The number of rows to use at a single predict call. If None optimal 
-            row number fit that fits the working_memory is used.
 
         Returns
         -------
@@ -1058,11 +1053,9 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         check_is_fitted(self, "coefs_")
         # split and collate depending on the working_memory
         x_axis0_size = X.shape[0]
-        if not max_row_chunk:
-            chunk_size = get_chunk_n_rows(row_bytes=sys.getsizeof(X[0:1]),
-                                          max_n_rows=x_axis0_size)
-        else:
-            chunk_size = max_row_chunk
+        chunk_size = 10000
+        # Fixme: Another way to estimate the memory usage from the parameters
+        # of classifier, like num_hidden_layers
         # Pre-allocate the entire result set to avoid array copying for
         # efficiency. As we do not know the shape of the output,
         # we simply test the output size for a single sample
@@ -1070,12 +1063,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         y_pred = np.empty((x_axis0_size,) + self._predict(X[0:1]).shape[1:])
 
         # Call the classifier in chunks.
-        y_chunk_pos = 0
-        for x_chunk in np.array_split(X, np.arange(chunk_size, x_axis0_size,
-                                                   chunk_size), axis=0):
-            y_pred[y_chunk_pos:y_chunk_pos + x_chunk.shape[0]] = self._predict(
-                x_chunk)
-            y_chunk_pos += x_chunk.shape[0]
+        for x_chunk in gen_batches(X.shape[0], chunk_size):
+            y_pred[x_chunk] = self._predict(X[x_chunk])
 
         if self.n_outputs_ == 1:
             y_pred = y_pred.ravel()
