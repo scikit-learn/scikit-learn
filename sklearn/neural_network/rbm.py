@@ -15,7 +15,6 @@ from scipy.special import expit  # logistic function
 
 from ..base import BaseEstimator
 from ..base import TransformerMixin
-from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import gen_even_slices
@@ -81,7 +80,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     >>> from sklearn.neural_network import BernoulliRBM
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = BernoulliRBM(n_components=2)
-    >>> model.fit(X)
+    >>> model.fit(X)  # doctest: +NORMALIZE_WHITESPACE
     BernoulliRBM(batch_size=10, learning_rate=0.1, n_components=2, n_iter=10,
            random_state=None, verbose=0)
 
@@ -349,7 +348,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
                                             n_batches, n_samples))
         verbose = self.verbose
         begin = time.time()
-        for iteration in xrange(1, self.n_iter + 1):
+        for iteration in range(1, self.n_iter + 1):
             for batch_slice in batch_slices:
                 self._fit(X[batch_slice], rng)
 

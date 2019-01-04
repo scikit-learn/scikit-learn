@@ -14,8 +14,6 @@ import warnings
 import numpy as np
 from .exceptions import ChangedBehaviorWarning
 from scipy import linalg
-from .externals.six import string_types
-from .externals.six.moves import xrange
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .linear_model.base import LinearClassifierMixin
@@ -50,7 +48,7 @@ def _cov(X, shrinkage=None):
         Estimated covariance matrix.
     """
     shrinkage = "empirical" if shrinkage is None else shrinkage
-    if isinstance(shrinkage, string_types):
+    if isinstance(shrinkage, str):
         if shrinkage == 'auto':
             sc = StandardScaler()  # standardize features
             X = sc.fit_transform(X)
@@ -242,7 +240,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = LinearDiscriminantAnalysis()
-    >>> clf.fit(X, y)
+    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     LinearDiscriminantAnalysis(n_components=None, priors=None, shrinkage=None,
                   solver='svd', store_covariance=False, tol=0.0001)
     >>> print(clf.predict([[-0.8, -1]]))
@@ -681,7 +679,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         means = []
         scalings = []
         rotations = []
-        for ind in xrange(n_classes):
+        for ind in range(n_classes):
             Xg = X[y == ind, :]
             meang = Xg.mean(0)
             means.append(meang)

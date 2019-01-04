@@ -10,7 +10,7 @@ from inspect import signature
 
 import numpy as np
 from scipy import sparse
-from .externals import six
+
 from . import __version__
 
 
@@ -58,7 +58,7 @@ def clone(estimator, safe=True):
                             % (repr(estimator), type(estimator)))
     klass = estimator.__class__
     new_object_params = estimator.get_params(deep=False)
-    for name, param in six.iteritems(new_object_params):
+    for name, param in new_object_params.items():
         new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
     params_set = new_object.get_params(deep=False)
@@ -97,7 +97,7 @@ def _pprint(params, offset=0, printer=repr):
     params_list = list()
     this_line_length = offset
     line_sep = ',\n' + (1 + offset // 2) * ' '
-    for i, (k, v) in enumerate(sorted(six.iteritems(params))):
+    for i, (k, v) in enumerate(sorted(params.items())):
         if type(v) is float:
             # use str for representing floating point numbers
             # this way we get consistent representation across
@@ -224,9 +224,23 @@ class BaseEstimator(object):
         return self
 
     def __repr__(self):
-        class_name = self.__class__.__name__
-        return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
-                                               offset=len(class_name),),)
+        from .utils._pprint import _EstimatorPrettyPrinter
+
+        N_CHAR_MAX = 700  # number of non-whitespace or newline chars
+        N_MAX_ELEMENTS_TO_SHOW = 30  # number of elements to show in sequences
+
+        # use ellipsis for sequences with a lot of elements
+        pp = _EstimatorPrettyPrinter(
+            compact=True, indent=1, indent_at_name=True,
+            n_max_elements_to_show=N_MAX_ELEMENTS_TO_SHOW)
+
+        repr_ = pp.pformat(self)
+
+        # Use bruteforce ellipsis if string is very long
+        if len(''.join(repr_.split())) > N_CHAR_MAX:  # check non-blank chars
+            lim = N_CHAR_MAX // 2
+            repr_ = repr_[:lim] + '...' + repr_[-lim:]
+        return repr_
 
     def __getstate__(self):
         try:

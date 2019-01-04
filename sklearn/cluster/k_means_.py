@@ -32,7 +32,6 @@ from ..utils.validation import FLOAT_DTYPES
 from ..utils._joblib import Parallel
 from ..utils._joblib import delayed
 from ..utils._joblib import effective_n_jobs
-from ..externals.six import string_types
 from ..exceptions import ConvergenceWarning
 from . import _k_means
 from ._k_means_elkan import k_means_elkan
@@ -743,10 +742,10 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         raise ValueError(
             "n_samples=%d should be larger than k=%d" % (n_samples, k))
 
-    if isinstance(init, string_types) and init == 'k-means++':
+    if isinstance(init, str) and init == 'k-means++':
         centers = _k_init(X, k, random_state=random_state,
                           x_squared_norms=x_squared_norms)
-    elif isinstance(init, string_types) and init == 'random':
+    elif isinstance(init, str) and init == 'random':
         seeds = random_state.permutation(n_samples)[:k]
         centers = X[seeds]
     elif hasattr(init, '__array__'):
