@@ -313,7 +313,6 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t* constant_features = self.constant_features
         cdef SIZE_t n_features = self.n_features
 
-        cdef DTYPE_t[:, :] X = self.X
         cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
@@ -411,11 +410,11 @@ cdef class BestSplitter(BaseDenseSplitter):
                         j = X_idx_sorted[i + feature_idx_offset]
                         if sample_mask[j] == 1:
                             samples[p] = j
-                            Xf[p] = X[j, current.feature]
+                            Xf[p] = self.X[j, current.feature]
                             p += 1
                 else:
                     for i in range(start, end):
-                        Xf[i] = X[samples[i], current.feature]
+                        Xf[i] = self.X[samples[i], current.feature]
 
                     sort(Xf + start, samples + start, end - start)
 
@@ -480,7 +479,7 @@ cdef class BestSplitter(BaseDenseSplitter):
             p = start
 
             while p < partition_end:
-                if X[samples[p], best.feature] <= best.threshold:
+                if self.X[samples[p], best.feature] <= best.threshold:
                     p += 1
 
                 else:
@@ -657,7 +656,6 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef SIZE_t* constant_features = self.constant_features
         cdef SIZE_t n_features = self.n_features
 
-        cdef DTYPE_t[:, :] X = self.X
         cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
@@ -735,12 +733,12 @@ cdef class RandomSplitter(BaseDenseSplitter):
                 current.feature = features[f_j]
 
                 # Find min, max
-                min_feature_value = X[samples[start], current.feature]
+                min_feature_value = self.X[samples[start], current.feature]
                 max_feature_value = min_feature_value
                 Xf[start] = min_feature_value
 
                 for p in range(start + 1, end):
-                    current_feature_value = X[samples[p], current.feature]
+                    current_feature_value = self.X[samples[p], current.feature]
                     Xf[p] = current_feature_value
 
                     if current_feature_value < min_feature_value:
@@ -813,7 +811,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
                 p = start
 
                 while p < partition_end:
-                    if X[samples[p], best.feature] <= best.threshold:
+                    if self.X[samples[p], best.feature] <= best.threshold:
                         p += 1
 
                     else:
