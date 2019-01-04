@@ -196,7 +196,6 @@ then submit a "pull request" (PR):
         $ git clone git@github.com:YourLogin/scikit-learn.git
         $ cd scikit-learn
 
-<<<<<<< HEAD
  4. Install library in editable mode::
 
         $ pip install --editable .
@@ -204,22 +203,14 @@ then submit a "pull request" (PR):
     for more details about advanced installation, see the :ref:`install_bleeding_edge` section.
 
  5. Create a branch to hold your development changes::
-=======
- 4. Create a branch to hold your development changes::
->>>>>>> master
 
         $ git checkout -b my-feature
 
     and start making changes. Always use a ``feature`` branch. It's good practice to
     never work on the ``master`` branch!
 
-<<<<<<< HEAD
-<<<<<<< HEAD
  6. Develop the feature on your feature branch on your computer, using Git to do the
-=======
- 5. Develop the feature on your feature branch on your computer, using Git to do the 
->>>>>>> master
-    version control. When you're done editing, add changed files using ``git add`` 
+    version control. When you're done editing, add changed files using ``git add``
     and then ``git commit`` files::
 
         $ git add modified_files
@@ -234,6 +225,11 @@ then submit a "pull request" (PR):
     instructions to create a pull request from your fork. This will send an
     email to the committers. You may want to consider sending an email to the
     mailing list for more visibility.
+
+.. note::
+
+  If you are modifying a Cython module, you have to re-run step 4 after modifications
+  and before testing them.
 
 .. note::
 
