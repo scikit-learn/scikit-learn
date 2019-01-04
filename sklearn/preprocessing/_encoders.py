@@ -964,8 +964,7 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
             raise ValueError("X needs to contain only non-negative integers.")
         _, n_features = X.shape
 
-        if (isinstance(self.categories, six.string_types) and
-                self.categories == 'auto'):
+        if isinstance(self.categories, str) and self.categories == 'auto':
             categories = np.max(X, axis=0) + 1
         elif isinstance(self.categories, numbers.Integral):
             categories = np.empty(n_features, dtype=np.int)
