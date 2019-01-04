@@ -1057,17 +1057,17 @@ parameter_grid_test_verbose = ((est, pattern, method) for (
     est, pattern
 ), method in itertools.product(
     [(Pipeline([('transf', Transf()), ('clf', FitParamT())]),
-      r'''\[Pipeline\].*\(step 1 of 2\) Fitting transf.* elapsed=.*\n'''
-      r'''\[Pipeline\].*\(step 2 of 2\) Fitting clf.* elapsed=.*\n$'''),
+      r'''\[Pipeline\].*\(step 1 of 2\) Fitting transf.* total=.*\n'''
+      r'''\[Pipeline\].*\(step 2 of 2\) Fitting clf.* total=.*\n$'''),
      (Pipeline([('transf', Transf()), ('clf', None)]),
-      r'''\[Pipeline\].*\(step 1 of 1\) Fitting transf.* elapsed=.*\n$'''),
+      r'''\[Pipeline\].*\(step 1 of 1\) Fitting transf.* total=.*\n$'''),
      (Pipeline([('transf', None), ('mult', Mult())]),
-      r'''\[Pipeline\].*\(step 1 of 1\) Fitting mult.* elapsed=.*\n$'''),
+      r'''\[Pipeline\].*\(step 1 of 1\) Fitting mult.* total=.*\n$'''),
      (FeatureUnion([('mult1', Mult()), ('mult2', Mult())]),
-      r'''\[FeatureUnion\].*\(step 1 of 2\) Fitting mult1.* elapsed=.*\n'''
-      r'''\[FeatureUnion\].*\(step 2 of 2\) Fitting mult2.* elapsed=.*\n$'''),
+      r'''\[FeatureUnion\].*\(step 1 of 2\) Fitting mult1.* total=.*\n'''
+      r'''\[FeatureUnion\].*\(step 2 of 2\) Fitting mult2.* total=.*\n$'''),
      (FeatureUnion([('mult1', None), ('mult2', Mult()), ('mult3', None)]),
-      r'''\[FeatureUnion\].*\(step 1 of 1\) Fitting mult2.* elapsed=.*\n$'''
+      r'''\[FeatureUnion\].*\(step 1 of 1\) Fitting mult2.* total=.*\n$'''
       )], ['fit', 'fit_transform', 'fit_predict'])
     if hasattr(est, method) and not (
         method == 'fit_transform' and hasattr(est, 'steps') and

@@ -294,8 +294,8 @@ def test_message_with_time(source, message, is_long, time, time_str):
 
     assert out.endswith(time_str)
     out = out[:-len(time_str)]
-    assert out.endswith(', elapsed=')
-    out = out[:-len(', elapsed=')]
+    assert out.endswith(', total=')
+    out = out[:-len(', total=')]
     assert out.endswith(message)
     out = out[:-len(message)]
     assert out.endswith(' ')
