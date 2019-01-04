@@ -23,7 +23,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
 
 from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.metrics.pairwise import masked_euclidean_distances
+from sklearn.metrics.pairwise import nan_euclidean_distances
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
@@ -70,8 +70,8 @@ def test_pairwise_distances():
     X_masked[0, 0] = np.nan
     Y_masked[0, 0] = np.nan
     S_masked = pairwise_distances(X_masked, Y_masked,
-                                  metric="masked_euclidean")
-    S2_masked = masked_euclidean_distances(X_masked, Y_masked)
+                                  metric="nan_euclidean")
+    S2_masked = nan_euclidean_distances(X_masked, Y_masked)
     assert_array_almost_equal(S_masked, S2_masked)
     # Test with tuples as X and Y
     X_tuples = tuple([tuple([v for v in row]) for row in X])
@@ -591,9 +591,9 @@ def test_euclidean_distances():
     "X", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]])])
 @pytest.mark.parametrize(
     "Y", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]]), None])
-def test_masked_euclidean_distances_infinite_values(X, Y):
+def test_nan_euclidean_distances_infinite_values(X, Y):
     with pytest.raises(ValueError) as excinfo:
-        masked_euclidean_distances(X, Y=Y)
+        nan_euclidean_distances(X, Y=Y)
 
     exp_msg = ("Input contains infinity or a value too large for "
                "dtype('float64').")
@@ -612,39 +612,39 @@ def test_masked_euclidean_distances_infinite_values(X, Y):
     (np.array([[-1, 1], [-1, 0]]), np.sqrt(2), -1),
     (np.array([[0, -1], [1, -1]]), np.sqrt(2), -1)
 ])
-def test_masked_euclidean_distances_2x2(X, X_diag, missing_value):
+def test_nan_euclidean_distances_2x2(X, X_diag, missing_value):
     exp_dist = np.array([[0., X_diag], [X_diag, 0]])
 
-    dist = masked_euclidean_distances(X, missing_values=missing_value)
+    dist = nan_euclidean_distances(X, missing_values=missing_value)
     assert_array_almost_equal(exp_dist, dist)
 
-    dist_sq = masked_euclidean_distances(
+    dist_sq = nan_euclidean_distances(
         X, squared=True, missing_values=missing_value)
     assert_array_almost_equal(exp_dist**2, dist_sq)
 
-    dist_two = masked_euclidean_distances(X, X, missing_values=missing_value)
+    dist_two = nan_euclidean_distances(X, X, missing_values=missing_value)
     assert_array_almost_equal(exp_dist, dist_two)
 
-    dist_two_copy = masked_euclidean_distances(
+    dist_two_copy = nan_euclidean_distances(
         X, X.copy(), missing_values=missing_value)
     assert_array_almost_equal(exp_dist, dist_two_copy)
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, -1])
-def test_masked_euclidean_distances_complete_nan(missing_value):
+def test_nan_euclidean_distances_complete_nan(missing_value):
     X = np.array([[missing_value, missing_value], [0, 1]])
     exp_dist = np.array([[np.nan, np.nan], [np.nan, 0]])
 
-    dist = masked_euclidean_distances(X, missing_values=missing_value)
+    dist = nan_euclidean_distances(X, missing_values=missing_value)
     assert_almost_equal(exp_dist, dist)
 
-    dist = masked_euclidean_distances(
+    dist = nan_euclidean_distances(
             X, X.copy(), missing_values=missing_value)
     assert_almost_equal(exp_dist, dist)
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, -1])
-def test_masked_euclidean_distances(missing_value):
+def test_nan_euclidean_distances(missing_value):
     X = np.array([[1., missing_value, 3., 4., 2.],
                   [missing_value, 4., 6., 1., missing_value],
                   [3., missing_value, missing_value, missing_value, 1.]])
@@ -654,33 +654,33 @@ def test_masked_euclidean_distances(missing_value):
                   [missing_value, missing_value, missing_value, 4., 5.]])
 
     # Check for symmetry
-    D1 = masked_euclidean_distances(X, Y,  missing_values=missing_value)
-    D2 = masked_euclidean_distances(Y, X, missing_values=missing_value)
+    D1 = nan_euclidean_distances(X, Y,  missing_values=missing_value)
+    D2 = nan_euclidean_distances(Y, X, missing_values=missing_value)
 
     assert_almost_equal(D1, D2.T)
 
     # Check with explicit formula and squared=True
     assert_array_almost_equal(
-        masked_euclidean_distances(
+        nan_euclidean_distances(
             X[:1], Y[:1], squared=True, missing_values=missing_value),
         [[5.0 / 2.0 * ((7 - 3)**2 + (2 - 2)**2)]])
 
     # Check with explicit formula and squared=False
     assert_array_almost_equal(
-        masked_euclidean_distances(
+        nan_euclidean_distances(
             X[1:2], Y[1:2], squared=False, missing_values=missing_value),
         [[np.sqrt(5.0 / 2.0 * ((6 - 5)**2 + (1 - 4)**2))]])
 
     # Check when Y = X is explicitly passed
-    D3 = masked_euclidean_distances(X, missing_values=missing_value)
-    D4 = masked_euclidean_distances(X, X, missing_values=missing_value)
-    D5 = masked_euclidean_distances(X, X.copy(), missing_values=missing_value)
+    D3 = nan_euclidean_distances(X, missing_values=missing_value)
+    D4 = nan_euclidean_distances(X, X, missing_values=missing_value)
+    D5 = nan_euclidean_distances(X, X.copy(), missing_values=missing_value)
     assert_array_almost_equal(D3, D4)
     assert_array_almost_equal(D4, D5)
 
     # Check copy = True against copy = False
-    D6 = masked_euclidean_distances(X, Y, copy=True)
-    D7 = masked_euclidean_distances(X, Y, copy=False)
+    D6 = nan_euclidean_distances(X, Y, copy=True)
+    D7 = nan_euclidean_distances(X, Y, copy=False)
     assert_array_almost_equal(D6, D7)
 
 

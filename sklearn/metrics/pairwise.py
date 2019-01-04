@@ -297,7 +297,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     return distances if squared else np.sqrt(distances, out=distances)
 
 
-def masked_euclidean_distances(X, Y=None, squared=False,
+def nan_euclidean_distances(X, Y=None, squared=False,
                                missing_values=np.nan, copy=True):
     """Calculates euclidean distances in the presence of missing values
 
@@ -337,16 +337,16 @@ def masked_euclidean_distances(X, Y=None, squared=False,
 
     Examples
     --------
-    >>> from sklearn.metrics.pairwise import masked_euclidean_distances
+    >>> from sklearn.metrics.pairwise import nan_euclidean_distances
     >>> nan = float("NaN")
     >>> X = [[0, 1], [1, nan]]
     >>> # distance between rows of X
-    >>> masked_euclidean_distances(X, X)
+    >>> nan_euclidean_distances(X, X)
     array([[0.        , 1.41421356],
            [1.41421356, 0.        ]])
 
     >>> # get distance to origin
-    >>> masked_euclidean_distances(X, [[0, 0]])
+    >>> nan_euclidean_distances(X, [[0, 0]])
     array([[1.        ],
            [1.41421356]])
 
@@ -1162,7 +1162,7 @@ PAIRWISE_DISTANCE_FUNCTIONS = {
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
     'precomputed': None,  # HACK: precomputed is always allowed, never called
-    'masked_euclidean': masked_euclidean_distances,
+    'nan_euclidean': nan_euclidean_distances,
 }
 
 
@@ -1184,7 +1184,7 @@ def distance_metrics():
     'l1'                    metrics.pairwise.manhattan_distances
     'l2'                    metrics.pairwise.euclidean_distances
     'manhattan'             metrics.pairwise.manhattan_distances
-    'masked_euclidean'      metrics.pairwise.masked_euclidean_distances
+    'nan_euclidean'      metrics.pairwise.nan_euclidean_distances
     ===================     ============================================
 
     Read more in the :ref:`User Guide <metrics>`.
@@ -1251,9 +1251,9 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
                   'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
                   'russellrao', 'seuclidean', 'sokalmichener',
                   'sokalsneath', 'sqeuclidean', 'yule', "wminkowski",
-                  'masked_euclidean']
+                  'nan_euclidean']
 
-_NAN_METRICS = ['masked_euclidean']
+_NAN_METRICS = ['nan_euclidean']
 
 
 def _check_chunk_size(reduced, chunk_size):
@@ -1475,7 +1475,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
     - From scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
       'manhattan']. These metrics support sparse matrix
       inputs.
-      ['masked_euclidean'] but it does not yet support sparse matrices.
+      ['nan_euclidean'] but it does not yet support sparse matrices.
 
     - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',

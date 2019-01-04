@@ -22,10 +22,8 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, gen_even_slices
-from ..metrics.pairwise import _NAN_METRICS
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _num_samples
 from ..exceptions import DataConversionWarning
 from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..utils._joblib import __version__ as joblib_version
@@ -46,8 +44,7 @@ VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
 
 VALID_METRICS_SPARSE = dict(ball_tree=[],
                             kd_tree=[],
-                            brute=(set(PAIRWISE_DISTANCE_FUNCTIONS.keys()) -
-                                   {'masked_euclidean'}))
+                            brute=PAIRWISE_DISTANCE_FUNCTIONS.keys())
 
 
 def _check_weights(weights):
@@ -209,9 +206,7 @@ class NeighborsBase(BaseEstimator, metaclass=ABCMeta):
             self._fit_method = 'kd_tree'
             return self
 
-        allow_nan = self.metric in _NAN_METRICS or callable(self.metric)
-        X = check_array(X, accept_sparse='csr',
-                        force_all_finite='allow-nan' if allow_nan else True)
+        X = check_array(X, accept_sparse='csr')
 
         n_samples = X.shape[0]
         if n_samples == 0:
@@ -327,7 +322,7 @@ class KNeighborsMixin(object):
         neigh_ind = neigh_ind[
             sample_range, np.argsort(dist[sample_range, neigh_ind])]
         if return_distance:
-            if self.effective_metric_ in ('euclidean', 'masked_euclidean'):
+            if self.effective_metric_ == 'euclidean':
                 result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
             else:
                 result = dist[sample_range, neigh_ind], neigh_ind
@@ -405,11 +400,7 @@ class KNeighborsMixin(object):
 
         if X is not None:
             query_is_train = False
-            allow_nan = (callable(self.effective_metric_)
-                         or self.effective_metric_ in _NAN_METRICS)
-            X = check_array(X, accept_sparse='csr',
-                            force_all_finite=('allow-nan' if allow_nan
-                                              else True))
+            X = check_array(X, accept_sparse='csr')
         else:
             query_is_train = True
             X = self._fit_X
@@ -435,9 +426,7 @@ class KNeighborsMixin(object):
                                   return_distance=return_distance)
 
             # for efficiency, use squared euclidean distances
-            kwds = ({'squared': True}
-                    if self.effective_metric_ in ('euclidean',
-                                                  'masked_euclidean')
+            kwds = ({'squared': True} if self.effective_metric_ == 'euclidean'
                     else self.effective_metric_params_)
 
             result = list(pairwise_distances_chunked(
@@ -553,7 +542,8 @@ class KNeighborsMixin(object):
 
         # kneighbors does the None handling.
         if X is not None:
-            n_samples1 = _num_samples(X)
+            X = check_array(X, accept_sparse='csr')
+            n_samples1 = X.shape[0]
         else:
             n_samples1 = self._fit_X.shape[0]
 
@@ -617,7 +607,7 @@ class RadiusNeighborsMixin(object):
         neigh_ind = [np.where(d <= radius)[0] for d in dist]
 
         if return_distance:
-            if self.effective_metric_ in ('masked_euclidean', 'euclidean'):
+            if self.effective_metric_ == 'euclidean':
                 dist = [np.sqrt(d[neigh_ind[i]])
                         for i, d in enumerate(dist)]
             else:
@@ -698,11 +688,7 @@ class RadiusNeighborsMixin(object):
 
         if X is not None:
             query_is_train = False
-            allow_nan = (callable(self.effective_metric_)
-                         or self.effective_metric_ in _NAN_METRICS)
-            X = check_array(X, accept_sparse='csr',
-                            force_all_finite=('allow-nan' if allow_nan
-                                              else True))
+            X = check_array(X, accept_sparse='csr')
         else:
             query_is_train = True
             X = self._fit_X
@@ -712,7 +698,7 @@ class RadiusNeighborsMixin(object):
 
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
-            if self.effective_metric_ in ('euclidean', 'masked_euclidean'):
+            if self.effective_metric_ == 'euclidean':
                 radius *= radius
                 kwds = {'squared': True}
             else:
@@ -837,12 +823,7 @@ class RadiusNeighborsMixin(object):
         """
         check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
         if X is not None:
-            allow_nan = (callable(self.effective_metric_)
-                         or self.effective_metric_ in _NAN_METRICS)
-            X = check_array(
-                X,
-                accept_sparse=['csr', 'csc', 'coo'],
-                force_all_finite='allow-nan' if allow_nan else True)
+            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         n_samples2 = self._fit_X.shape[0]
         if radius is None:

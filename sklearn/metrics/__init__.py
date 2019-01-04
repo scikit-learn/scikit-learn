@@ -50,7 +50,7 @@ from .cluster import v_measure_score
 from .cluster import davies_bouldin_score
 
 from .pairwise import euclidean_distances
-from .pairwise import masked_euclidean_distances
+from .pairwise import nan_euclidean_distances
 from .pairwise import pairwise_distances
 from .pairwise import pairwise_distances_argmin
 from .pairwise import pairwise_distances_argmin_min
@@ -104,7 +104,7 @@ __all__ = [
     'label_ranking_loss',
     'log_loss',
     'make_scorer',
-    'masked_euclidean_distances',
+    'nan_euclidean_distances',
     'matthews_corrcoef',
     'max_error',
     'mean_absolute_error',

@@ -95,118 +95,6 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
             assert_array_almost_equal(results[i][1], results[i + 1][1])
 
 
-def test_masked_unsupervised_kneighbors():
-    # Test 1
-    X = np.array([[np.nan, 3., 7., np.nan],
-                  [6., 3., 7., 2.],
-                  [7., 3., 4., 4.],
-                  [2., 7., 7., 1.],
-                  [np.nan, 2., np.nan, 4.]], dtype=np.float32)
-
-    Y = np.array([[3., 1., 7., np.nan],
-                  [1., 3., 1., 6.],
-                  [np.nan, 1., np.nan, 5.],
-                  [3., 1., 3., 3.],
-                  [2., 3., 1., 9.]], dtype=np.float32)
-
-    neigh = neighbors.NearestNeighbors(n_neighbors=2,
-                                       metric="masked_euclidean")
-    neigh.fit(X)
-    X_dist, X_neigh = neigh.kneighbors(return_distance=True)
-    XY_dist, XY_neigh = neigh.kneighbors(Y, return_distance=True)
-    # Expected outcome
-    N1 = np.array(
-        [[1, 4],
-            [0, 4],
-            [4, 1],
-            [0, 1],
-            [2, 0]])
-
-    N2 = np.array(
-        [[4, 0],
-            [4, 2],
-            [4, 2],
-            [4, 2],
-            [4, 2]])
-
-    assert_array_equal(X_neigh, N1)
-    assert_array_equal(XY_neigh, N2)
-    for i in range(X.shape[0]):
-        assert_array_equal(X_dist[i:i+1],
-                           pairwise_distances(X[i:i+1], X[N1[i]],
-                                              metric='masked_euclidean'))
-    for i in range(Y.shape[0]):
-        assert_array_equal(XY_dist[i:i+1],
-                           pairwise_distances(Y[i:i+1], X[N2[i]],
-                                              metric='masked_euclidean'))
-
-    # smoke test of graph
-    neigh.kneighbors_graph(X)
-
-    # Test 2
-    nan = float("nan")
-    samples = [[0, 5, 5], [1, 0, nan], [4, 1, 1], [nan, 2, 3]]
-    neigh = neighbors.NearestNeighbors(n_neighbors=2,
-                                       metric="masked_euclidean")
-    neigh.fit(samples)
-
-    X2_neigh = neigh.kneighbors(return_distance=False)
-    XY2_neigh = neigh.kneighbors([[0, nan, 1]], return_distance=False)
-
-    # Expected outcome
-    N3 = np.array(
-        [[3, 1],
-         [3, 2],
-         [3, 1],
-         [2, 1]])
-    N4 = np.array([[1, 3]])
-
-    assert_array_equal(X2_neigh, N3)
-    assert_array_equal(XY2_neigh, N4)
-
-    # Test 3
-    nan = float("nan")
-    samples = csc_matrix([[0, 5, 5], [1, 0, nan], [4, 1, 1], [nan, 2, 3]])
-    neigh = neighbors.NearestNeighbors(n_neighbors=2,
-                                       metric="masked_euclidean")
-    msg = "Metric 'masked_euclidean' not valid for sparse input.*"
-    assert_raises_regex(ValueError, msg, neigh.fit, samples)
-
-
-def test_masked_unsupervised_radius_neighbors():
-    X = np.array([[np.nan, 3., 7., np.nan],
-                  [6., 3., 7., 2.],
-                  [7., 3., 4., 4.],
-                  [2., 7., 7., 1.],
-                  [np.nan, 2., np.nan, 4.]], dtype=np.float32)
-
-    Y = np.array([[3., 1., 7., np.nan],
-                  [1., 3., 1., 6.],
-                  [np.nan, 1., np.nan, 5.],
-                  [3., 1., 3., 3.],
-                  [2., 3., 1., 9.]], dtype=np.float32)
-
-    neigh = neighbors.NearestNeighbors(radius=4, metric="masked_euclidean")
-    neigh.fit(X)
-    X_dist, X_neigh = neigh.radius_neighbors(return_distance=True)
-    XY_dist, XY_neigh = neigh.radius_neighbors(Y, return_distance=True)
-    for i in range(X.shape[0]):
-        if len(X_neigh[i]) == 0:
-            continue
-        assert_array_equal(X_dist[i],
-                           pairwise_distances(X[i:i+1], X[X_neigh[i]],
-                                              metric='masked_euclidean')[0])
-    for i in range(Y.shape[0]):
-        if len(XY_neigh[i]) == 0:
-            continue
-        assert_array_equal(XY_dist[i],
-                           pairwise_distances(Y[i:i+1], X[XY_neigh[i]],
-                                              metric='masked_euclidean')[0])
-
-    # smoke test of graph
-    neigh.radius_neighbors_graph(X)
-
-
 def test_unsupervised_inputs():
     # test the types of valid input into NearestNeighbors
     X = rng.random_sample((10, 3))
@@ -1184,8 +1072,8 @@ def test_valid_brute_metric_for_auto_algorithm():
             nb_p.kneighbors(DYX)
 
     for metric in VALID_METRICS_SPARSE['brute']:
-        # TODO: Remove after adding sparse support for masked_euclidean
-        if metric == "masked_euclidean":
+        # TODO: Remove after adding sparse support for nan_euclidean
+        if metric == "nan_euclidean":
             continue
         if metric != 'precomputed' and metric not in require_params:
             nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
