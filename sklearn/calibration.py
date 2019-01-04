@@ -543,15 +543,17 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
         onto 0 and the largest one onto 1.
 
     n_bins : int
-        Number of bins. A bigger number requires more data.
+        Number of bins. A bigger number requires more data. Bins with no data
+        points (i.e. without corresponding values in y_prob) will not be
+        returned, thus there may be fewer than n_bins in the return value.
 
     Returns
     -------
-    prob_true : array, shape (n_bins,)
-        The true probability in each bin (fraction of positives).
+    prob_true : array, shape (n_non_empty_bins,)
+        The true probability in each non-empty bin (fraction of positives).
 
-    prob_pred : array, shape (n_bins,)
-        The mean predicted probability in each bin.
+    prob_pred : array, shape (n_non_empty_bins,)
+        The mean predicted probability in each non-empty bin.
 
     References
     ----------
