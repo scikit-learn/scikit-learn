@@ -170,9 +170,12 @@ Contributing code
 .. note::
 
   To avoid duplicating work, it is highly advised that you search through the
-  issue tracker and the PR list. If you want to work on a non-trivial feature,
-  it's recommended to first open an issue in the issue tracker to get some
-  feedbacks from core developers.
+  `issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_ and
+  the `PR list <https://github.com/scikit-learn/scikit-learn/pulls>`_.
+  If in doubt about duplicated work, or if you want to work on a non-trivial
+  feature, it's recommended to first open an issue in
+  the `issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
+  to get some feedbacks from core developers.
 
 How to contribute
 -----------------
