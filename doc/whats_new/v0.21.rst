@@ -77,6 +77,10 @@ Support for Python 3.4 and below has been officially dropped.
   the gradients would be incorrectly computed in multiclass classification
   problems. :issue:`12715` by :user:`Nicolas Hug<NicolasHug>`.
 
+- |Fix| Fixed a bug in :mod:`ensemble` where the ``predict`` method would
+   error for multiclass multioutput forests models if any targets were strings.
+   :issue:`12834` by :user:`Elizabeth Sander <elsander>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 

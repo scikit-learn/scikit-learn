@@ -17,7 +17,6 @@ from ..base import is_classifier
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
 from ..model_selection import train_test_split
-from ..externals import six
 from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches, check_random_state
 from ..utils import shuffle
@@ -37,7 +36,7 @@ def _pack(coefs_, intercepts_):
     return np.hstack([l.ravel() for l in coefs_ + intercepts_])
 
 
-class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
+class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
     """Base class for MLP classification and regression.
 
     Warning: This class should not be used directly.

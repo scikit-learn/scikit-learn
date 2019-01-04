@@ -23,7 +23,6 @@ import scipy.sparse as sp
 from scipy import linalg
 from scipy import sparse
 
-from ..externals import six
 from ..utils._joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import check_array, check_X_y
@@ -183,7 +182,7 @@ def _rescale_data(X, y, sample_weight):
     return X, y
 
 
-class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
+class LinearModel(BaseEstimator, metaclass=ABCMeta):
     """Base class for Linear Models"""
 
     @abstractmethod
@@ -519,7 +518,7 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
         Xy = None
 
     # precompute if n_samples > n_features
-    if isinstance(precompute, six.string_types) and precompute == 'auto':
+    if isinstance(precompute, str) and precompute == 'auto':
         precompute = (n_samples > n_features)
 
     if precompute is True:
