@@ -169,7 +169,7 @@ class VectorizerMixin(object):
             space_join = " ".join
 
             for n in range(min_n,
-                            min(max_n + 1, n_original_tokens + 1)):
+                           min(max_n + 1, n_original_tokens + 1)):
                 for i in range(n_original_tokens - n + 1):
                     tokens_append(space_join(original_tokens[i: i + n]))
 
@@ -1487,7 +1487,8 @@ class TfidfVectorizer(CountVectorizer):
 
         The formula that is used to compute the tf-idf of term t is​
         :math:`tf-idf(d, t) = tf(t) * idf(d, t)` and the idf is computed as​:
-        :math:`idf(d, t) = \log \frac{n}{df(d, t)} + 1`
+        :math::
+            `idf(d, t) = \log(\frac{n}{df(d, t)} + 1)`
         (if ``smooth_idf=False``)
         where `n` is the total number of documents and ​`df(d, t)​`​ is the
         document frequency; the document frequency is the number of documents
@@ -1496,7 +1497,8 @@ class TfidfVectorizer(CountVectorizer):
         occur in all documents in a training set, will not be entirely ignored.
         (Note that the idf formula above differs from the standard textbook
         notation that defines the idf as​:
-        :math:`idf(d, t) = \log \frac{n}{df(d, t) + 1}`
+        :math::
+            `idf(d, t) = \log(\frac{n}{df(d, t) + 1})`
 
     Notes
     -----
