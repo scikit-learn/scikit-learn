@@ -712,7 +712,7 @@ invalids2 = [(['a', 'b', 'a'], [0.1, 0.2, 0.3])]
 
 
 @pytest.mark.parametrize('metric', CLASSIFICATION_METRICS.values())
-def test_classification_inf_nan_input(metric):
+def test_classification_bin_cont_input(metric):
     # Classification metrics all raise a mixed input exception
     for y_true, y_score in invalids2:
         assert_raise_message(ValueError,
