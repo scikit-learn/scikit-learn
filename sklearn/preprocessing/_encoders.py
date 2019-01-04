@@ -12,7 +12,6 @@ from scipy import sparse
 
 from .. import get_config as _get_config
 from ..base import BaseEstimator, TransformerMixin
-from ..externals import six
 from ..utils import check_array
 from ..utils import deprecated
 from ..utils.fixes import _argmax, _object_dtype_isnan
@@ -21,7 +20,6 @@ from ..utils.validation import check_is_fitted
 from .base import _transform_selected
 from .label import _encode, _encode_check_unknown
 
-range = six.moves.range
 
 __all__ = [
     'OneHotEncoder',
@@ -372,7 +370,7 @@ class OneHotEncoder(_BaseEncoder):
 
         # if user specified categorical_features -> always use legacy mode
         if self.categorical_features is not None:
-            if (isinstance(self.categorical_features, six.string_types)
+            if (isinstance(self.categorical_features, str)
                     and self.categorical_features == 'all'):
                 warnings.warn(
                     "The 'categorical_features' keyword is deprecated in "
@@ -439,7 +437,7 @@ class OneHotEncoder(_BaseEncoder):
                              "be able to use arbitrary integer values as "
                              "category identifiers.")
         n_samples, n_features = X.shape
-        if (isinstance(self._n_values, six.string_types) and
+        if (isinstance(self._n_values, str) and
                 self._n_values == 'auto'):
             n_values = np.max(X, axis=0) + 1
         elif isinstance(self._n_values, numbers.Integral):
@@ -474,7 +472,7 @@ class OneHotEncoder(_BaseEncoder):
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
 
-        if (isinstance(self._n_values, six.string_types) and
+        if (isinstance(self._n_values, str) and
                 self._n_values == 'auto'):
             mask = np.array(out.sum(axis=0)).ravel() != 0
             active_features = np.where(mask)[0]
@@ -554,7 +552,7 @@ class OneHotEncoder(_BaseEncoder):
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
-        if (isinstance(self._n_values, six.string_types) and
+        if (isinstance(self._n_values, str) and
                 self._n_values == 'auto'):
             out = out[:, self._active_features_]
 
@@ -705,7 +703,7 @@ class OneHotEncoder(_BaseEncoder):
         feature_names = []
         for i in range(len(cats)):
             names = [
-                input_features[i] + '_' + six.text_type(t) for t in cats[i]]
+                input_features[i] + '_' + str(t) for t in cats[i]]
             feature_names.extend(names)
 
         return np.array(feature_names, dtype=object)

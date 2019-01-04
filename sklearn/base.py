@@ -10,7 +10,7 @@ from inspect import signature
 
 import numpy as np
 from scipy import sparse
-from .externals import six
+
 from . import __version__
 
 
@@ -58,7 +58,7 @@ def clone(estimator, safe=True):
                             % (repr(estimator), type(estimator)))
     klass = estimator.__class__
     new_object_params = estimator.get_params(deep=False)
-    for name, param in six.iteritems(new_object_params):
+    for name, param in new_object_params.items():
         new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
     params_set = new_object.get_params(deep=False)
@@ -97,7 +97,7 @@ def _pprint(params, offset=0, printer=repr):
     params_list = list()
     this_line_length = offset
     line_sep = ',\n' + (1 + offset // 2) * ' '
-    for i, (k, v) in enumerate(sorted(six.iteritems(params))):
+    for i, (k, v) in enumerate(sorted(params.items())):
         if type(v) is float:
             # use str for representing floating point numbers
             # this way we get consistent representation across
