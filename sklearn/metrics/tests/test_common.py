@@ -691,9 +691,9 @@ def test_thresholded_invariance_string_vs_numbers_labels(name):
             assert_raises(ValueError, metric, y1_str.astype('O'), y2)
 
 
-invalids = [([0, 1], [np.inf, np.inf]),
-            ([0, 1], [np.nan, np.nan]),
-            ([0, 1], [np.nan, np.inf])]
+invalid_nan_inf = [([0, 1], [np.inf, np.inf]),
+                   ([0, 1], [np.nan, np.nan]),
+                   ([0, 1], [np.nan, np.inf])]
 
 
 @pytest.mark.parametrize(
@@ -701,20 +701,20 @@ invalids = [([0, 1], [np.inf, np.inf]),
         chain(THRESHOLDED_METRICS.values(), REGRESSION_METRICS.values()))
 def test_regression_thresholded_inf_nan_input(metric):
 
-    for y_true, y_score in invalids:
+    for y_true, y_score in invalid_nan_inf:
         assert_raise_message(ValueError,
                              "Input contains NaN, infinity or a value too"
                              " large for dtype('float64').",
                              metric, y_true, y_score)
 
 
-invalids2 = [(['a', 'b', 'a'], [0.1, 0.2, 0.3])]
+invalid_bin_cont = [(['a', 'b', 'a'], [0.1, 0.2, 0.3])]
 
 
 @pytest.mark.parametrize('metric', CLASSIFICATION_METRICS.values())
-def test_classification_bin_cont_input(metric):
+def test_classification_binary_continuous_input(metric):
     # Classification metrics all raise a mixed input exception
-    for y_true, y_score in invalids2:
+    for y_true, y_score in invalid_bin_cont:
         assert_raise_message(ValueError,
                              "Classification metrics can't handle a mix"
                              " of binary and continuous targets",
