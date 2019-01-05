@@ -393,24 +393,36 @@ Continuous Integration (CI)
 Stalled pull requests
 ......................
 
-As contributing a new feature can be a lengthy process, some
+As contributing a feature can be a lengthy process, some
 pull requests appear inactive but unfinished. In such a case, taking
 them over is a great service for the project.
 
-A good etiquette for this is:
+A good etiquette to take over is:
 
-* To decide whether a PR is stalled, asking the contributor if she/he
-  plans to continue working on the PR in the near future. Failure to
-  respond within a week implies that the PR is stalled.
+* **Determine if a PR is stalled**
 
-  Note that if the PR has received earlier comments on the
-  contribution that have had no reply in a month, if it safe to assume
-  that the PR is stalled and to shorten the wait time about to one
-  day.
+  * A pull request may have the label "stalled" or "help wanted" if we
+    have already identified it as a candidate for other contributors.
 
-* To take over a PR, it is important to comment on the stalled PR that
-  you are taking over and to link from the new PR to the old one. The
-  new PR should be created by pulling from the old one.
+  * To decide whether an inactive PR is stalled, ask the contributor if
+    she/he plans to continue working on the PR in the near future.
+    Failure to respond within 2 weeks with an activity that moves the PR
+    forward suggests that the PR is stalled and will result in tagging
+    that PR with "help wanted".
+
+    Note that if a PR has received earlier comments on the contribution
+    that have had no reply in a month, it is safe to assume that the PR
+    is stalled and to shorten the wait time to one day.
+
+    After a sprint, follow-up for un-merged PRs opened during sprint will
+    be communicated to participants at the sprint, and those PRs will be
+    tagged "sprint". PRs tagged with "sprint" can be reassigned or
+    declared stalled by sprint leaders.
+
+* **Taking over a stalled PR**: To take over a PR, it is important to
+  comment on the stalled PR that you are taking over and to link from the
+  new PR to the old one. The new PR should be created by pulling from the
+  old one.
 
 .. _new_contributors:
 
