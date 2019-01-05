@@ -14,7 +14,6 @@ from scipy.sparse.linalg import eigsh, svds
 
 from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
-from ..externals import six
 from ..utils import check_random_state
 
 from ..utils.extmath import (make_nonnegative, randomized_svd,
@@ -85,8 +84,7 @@ def _log_normalize(X):
     return L - row_avg - col_avg + avg
 
 
-class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
-                                      BiclusterMixin)):
+class BaseSpectral(BaseEstimator, BiclusterMixin, metaclass=ABCMeta):
     """Base class for spectral biclustering."""
 
     @abstractmethod

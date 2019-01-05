@@ -50,7 +50,6 @@ from scipy.sparse import hstack as sparse_hstack
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..utils._joblib import Parallel, delayed
-from ..externals import six
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
@@ -122,7 +121,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     return tree
 
 
-class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseForest(BaseEnsemble, metaclass=ABCMeta):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes
@@ -242,7 +241,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         if self.n_estimators == 'warn':
             warn("The default value of n_estimators will change from "
-                          "10 in version 0.20 to 100 in 0.22.", FutureWarning)
+                 "10 in version 0.20 to 100 in 0.22.", FutureWarning)
             self.n_estimators = 10
 
         # Validate or convert input data
@@ -394,8 +393,7 @@ def _accumulate_prediction(predict, X, out, lock):
                 out[i] += prediction[i]
 
 
-class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
-                                          ClassifierMixin)):
+class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
     """Base class for forest of trees-based classifiers.
 
     Warning: This class should not be used directly. Use derived classes
@@ -492,7 +490,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         if self.class_weight is not None:
             valid_presets = ('balanced', 'balanced_subsample')
-            if isinstance(self.class_weight, six.string_types):
+            if isinstance(self.class_weight, str):
                 if self.class_weight not in valid_presets:
                     raise ValueError('Valid presets for class_weight include '
                                      '"balanced" and "balanced_subsample". Given "%s".'
@@ -546,7 +544,10 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         else:
             n_samples = proba[0].shape[0]
-            predictions = np.zeros((n_samples, self.n_outputs_))
+            # all dtypes should be the same, so just take the first
+            class_type = self.classes_[0].dtype
+            predictions = np.empty((n_samples, self.n_outputs_),
+                                   dtype=class_type)
 
             for k in range(self.n_outputs_):
                 predictions[:, k] = self.classes_[k].take(np.argmax(proba[k],
@@ -635,7 +636,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             return proba
 
 
-class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
+class ForestRegressor(BaseForest, RegressorMixin, metaclass=ABCMeta):
     """Base class for forest of trees-based regressors.
 
     Warning: This class should not be used directly. Use derived classes
