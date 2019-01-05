@@ -20,7 +20,6 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
-from ..externals import six
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
 from .sgd_fast import plain_sgd, average_sgd
@@ -65,7 +64,7 @@ class _ValidationScoreCallback(object):
         return est.score(self.X_val, self.y_val, self.sample_weight_val)
 
 
-class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
+class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
 
     def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
@@ -469,8 +468,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     return result
 
 
-class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
-                                           LinearClassifierMixin)):
+class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
 
     loss_functions = {
         "hinge": (Hinge, 1.0),

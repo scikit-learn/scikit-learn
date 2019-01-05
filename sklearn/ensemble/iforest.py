@@ -11,7 +11,6 @@ from sklearn.utils.fixes import euler_gamma
 from scipy.sparse import issparse
 
 import numbers
-from ..externals import six
 from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
 from ..utils.fixes import _joblib_parallel_args
@@ -242,7 +241,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
         # ensure that max_sample is in [1, n_samples]:
         n_samples = X.shape[0]
 
-        if isinstance(self.max_samples, six.string_types):
+        if isinstance(self.max_samples, str):
             if self.max_samples == 'auto':
                 max_samples = min(256, n_samples)
             else:
