@@ -33,7 +33,7 @@ test_scores_mean = np.mean(test_scores, axis=1)
 test_scores_std = np.std(test_scores, axis=1)
 
 plt.title("Validation Curve with SVM")
-plt.xlabel("$\gamma$")
+plt.xlabel(r"$\gamma$")
 plt.ylabel("Score")
 plt.ylim(0.0, 1.1)
 lw = 2
