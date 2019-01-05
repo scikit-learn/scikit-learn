@@ -1367,6 +1367,8 @@ Methods
         If the estimator was not already :term:`fitted`, calling this method
         should raise a :class:`exceptions.NotFittedError`.
 
+        :term:`transform` does not preserve the order (memory layout) of the input array.
+
 .. _glossary_parameters:
 
 Parameters
