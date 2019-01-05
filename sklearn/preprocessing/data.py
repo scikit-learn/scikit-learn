@@ -7,6 +7,8 @@
 #          Eric Chang <ericchang2017@u.northwestern.edu>
 # License: BSD 3 clause
 
+from __future__ import division
+
 from itertools import chain, combinations
 import warnings
 from itertools import combinations_with_replacement as combinations_w_r

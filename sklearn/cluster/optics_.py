@@ -10,6 +10,7 @@ Authors: Shane Grigsby <refuge@rocktalus.com>
 License: BSD 3 clause
 """
 
+from __future__ import division
 import warnings
 import numpy as np
 

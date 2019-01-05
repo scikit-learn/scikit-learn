@@ -7,6 +7,8 @@
 # modifications of the algorithm:
 # * Fast Optimization for t-SNE:
 #   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
+from __future__ import division
+
 import warnings
 from time import time
 import numpy as np

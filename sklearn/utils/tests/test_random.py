@@ -1,3 +1,5 @@
+from __future__ import division
+
 import numpy as np
 import scipy.sparse as sp
 from numpy.testing import assert_array_almost_equal

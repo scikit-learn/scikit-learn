@@ -4,6 +4,9 @@
 #          Arnaud Fouchet <foucheta@gmail.com>
 #          Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
+
+from __future__ import division
+
 import functools
 
 import numpy as np

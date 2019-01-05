@@ -4,6 +4,7 @@
 #         Giorgio Patrini
 # License: BSD 3 clause
 
+from __future__ import division
 import numpy as np
 from scipy import linalg
 

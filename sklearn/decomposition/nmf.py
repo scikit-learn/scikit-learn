@@ -7,6 +7,8 @@
 # License: BSD 3 clause
 
 
+from __future__ import division, print_function
+
 from math import sqrt
 import warnings
 import numbers

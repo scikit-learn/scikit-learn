@@ -1,6 +1,8 @@
 # Authors: Shane Grigsby <refuge@rocktalus.com>
 #          Amy X. Zhang <axz@mit.edu>
 # License: BSD 3 clause
+
+from __future__ import print_function, division
 import numpy as np
 import pytest
 

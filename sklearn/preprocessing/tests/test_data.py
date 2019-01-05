@@ -3,6 +3,8 @@
 #          Giorgio Patrini
 #
 # License: BSD 3 clause
+from __future__ import division
+
 import warnings
 import itertools
 

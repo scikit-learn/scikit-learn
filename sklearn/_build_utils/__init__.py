@@ -4,6 +4,8 @@ Utilities useful during the build.
 # author: Andy Mueller, Gael Varoquaux
 # license: BSD
 
+from __future__ import division, print_function, absolute_import
+
 import os
 
 from distutils.version import LooseVersion

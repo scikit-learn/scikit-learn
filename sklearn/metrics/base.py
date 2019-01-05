@@ -12,6 +12,8 @@ Common code for all metrics
 #          Noel Dawe <noel@dawe.me>
 # License: BSD 3 clause
 
+from __future__ import division
+
 import numpy as np
 
 from ..utils import check_array, check_consistent_length

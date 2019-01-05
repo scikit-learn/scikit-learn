@@ -14,6 +14,8 @@ better.
 #          Arya McCarthy <arya@jhu.edu>
 # License: BSD 3 clause
 
+from __future__ import division
+
 from math import log
 import warnings
 

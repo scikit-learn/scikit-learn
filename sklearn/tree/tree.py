@@ -14,6 +14,9 @@ randomized trees. Single and multi-output problems are both handled.
 #
 # License: BSD 3 clause
 
+from __future__ import division
+
+
 import numbers
 import warnings
 from abc import ABCMeta

@@ -1,6 +1,7 @@
 # Author: Hamzeh Alsalhi <ha258@cornell.edu>
 #
 # License: BSD 3 clause
+from __future__ import division
 import numpy as np
 import scipy.sparse as sp
 import array

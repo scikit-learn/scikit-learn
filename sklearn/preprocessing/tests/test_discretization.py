@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import pytest
 import numpy as np
 import scipy.sparse as sp

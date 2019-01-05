@@ -2,6 +2,8 @@
 #         Arnaud Joly <a.joly@ulg.ac.be>
 #         Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>
 # License: BSD 3 clause
+from __future__ import division
+
 import warnings
 import numpy as np
 import scipy.sparse as sp

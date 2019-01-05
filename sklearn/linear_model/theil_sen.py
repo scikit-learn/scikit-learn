@@ -7,6 +7,8 @@ A Theil-Sen Estimator for Multiple Linear Regression Model
 #
 # License: BSD 3 clause
 
+from __future__ import division, print_function, absolute_import
+
 import warnings
 from itertools import combinations
 

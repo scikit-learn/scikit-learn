@@ -1,3 +1,4 @@
+from __future__ import division
 from bz2 import BZ2File
 import gzip
 from io import BytesIO
