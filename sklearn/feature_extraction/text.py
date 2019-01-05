@@ -1486,11 +1486,8 @@ class TfidfVectorizer(CountVectorizer):
         count of a word relative to the appearance of a document.
 
         The formula that is used to compute the tf-idf of term t is​
-        :math::
-            `\text{tf-idf}(d, t) = tf(t) * idf(d, t)`
-        and the idf is computed as​:
-        :math::
-            `\text{idf}(d, t) = log{\frac{n}{df(d, t)} + 1}`
+        :math:`tf-idf(d, t) = tf(t) * idf(d, t)` and the idf is computed
+        as​ :math:`\text{idf}(d, t) = log{\frac{n}{df(d, t)} + 1}`
         (if ``smooth_idf=False``)
         where `n` is the total number of documents and ​`df(d, t)​`​ is the
         document frequency; the document frequency is the number of documents
@@ -1499,8 +1496,7 @@ class TfidfVectorizer(CountVectorizer):
         occur in all documents in a training set, will not be entirely ignored.
         (Note that the idf formula above differs from the standard textbook
         notation that defines the idf as​:
-        :math::
-            `\text{idf}(d, t) = log{\frac{n}{df(d, t) + 1}}`
+        :math:`\text{idf}(d, t) = log{\frac{n}{df(d, t) + 1}}`
 
     Notes
     -----
