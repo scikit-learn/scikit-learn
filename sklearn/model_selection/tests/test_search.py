@@ -629,6 +629,7 @@ def test_refit_callable():
     # Ensure `best_score_` is disabled when using `refit=callable`
     assert not hasattr(clf, 'best_score_')
 
+
 def test_refit_callable_check():
     """
     Test implementation catches the errors when 'best_index_' returns an
@@ -661,6 +662,7 @@ def test_refit_callable_check():
 
     assert_raise_message(IndexError, "best_index_ index out of range",
                          clf.fit, X, y)
+
 
 def test_refit_callable_multi_metric():
     """
