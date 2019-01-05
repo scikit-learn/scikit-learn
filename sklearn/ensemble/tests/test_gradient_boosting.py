@@ -738,7 +738,8 @@ def test_oob_multilcass_iris():
 
 def test_verbose_output():
     # Check verbose=1 does not cause error.
-    from sklearn.externals.six.moves import cStringIO as StringIO
+    from io import StringIO
+
     import sys
     old_stdout = sys.stdout
     sys.stdout = StringIO()
@@ -763,7 +764,7 @@ def test_verbose_output():
 
 def test_more_verbose_output():
     # Check verbose=2 does not cause error.
-    from sklearn.externals.six.moves import cStringIO as StringIO
+    from io import StringIO
     import sys
     old_stdout = sys.stdout
     sys.stdout = StringIO()

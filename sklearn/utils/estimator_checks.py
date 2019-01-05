@@ -13,7 +13,6 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 
-from sklearn.externals.six.moves import zip
 from sklearn.utils import IS_PYPY, _IS_32BIT
 from sklearn.utils import _joblib
 from sklearn.utils._joblib import Memory

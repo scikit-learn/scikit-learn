@@ -11,8 +11,6 @@ from scipy.stats.mstats import mquantiles
 
 from ..utils.extmath import cartesian
 from ..utils._joblib import Parallel, delayed
-from ..externals import six
-from ..externals.six.moves import map, range, zip
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
@@ -275,7 +273,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         feature_names = feature_names.tolist()
 
     def convert_feature(fx):
-        if isinstance(fx, six.string_types):
+        if isinstance(fx, str):
             try:
                 fx = feature_names.index(fx)
             except ValueError:
@@ -285,7 +283,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     # convert features into a seq of int tuples
     tmp_features = []
     for fxs in features:
-        if isinstance(fxs, (numbers.Integral,) + six.string_types):
+        if isinstance(fxs, (numbers.Integral, str)):
             fxs = (fxs,)
         try:
             fxs = np.array([convert_feature(fx) for fx in fxs], dtype=np.int32)

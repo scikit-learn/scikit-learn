@@ -14,8 +14,6 @@ cimport numpy as np
 import numpy as np
 import scipy.sparse as sp
 
-from ..externals.six import b
-
 np.import_array()
 
 
@@ -33,7 +31,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
     cdef char *line_cstr
     cdef int idx, prev_idx
     cdef Py_ssize_t i
-    cdef bytes qid_prefix = b('qid')
+    cdef bytes qid_prefix = b'qid'
     cdef Py_ssize_t n_features
     cdef long long offset_max = offset + length if length > 0 else -1
 
@@ -92,7 +90,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
             features.pop(0)
             n_features -= 1
 
-        for i in xrange(0, n_features):
+        for i in range(0, n_features):
             idx_s, value = features[i].split(COLON, 1)
             idx = int(idx_s)
             if idx < 0 or not zero_based and idx == 0:
