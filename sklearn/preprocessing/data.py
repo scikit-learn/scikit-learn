@@ -19,7 +19,6 @@ from scipy import stats
 from scipy import optimize
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals import six
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
@@ -37,11 +36,6 @@ from ._csr_polynomial_expansion import _csr_polynomial_expansion
 from ._encoders import OneHotEncoder
 
 BOUNDS_THRESHOLD = 1e-7
-
-
-zip = six.moves.zip
-map = six.moves.map
-range = six.moves.range
 
 __all__ = [
     'Binarizer',
