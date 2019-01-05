@@ -134,6 +134,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
 
     See also
     --------
+    lars_path_gram
     lasso_path
     lasso_path_gram
     LassoLars
@@ -252,6 +253,7 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
 
     See also
     --------
+    lars_path
     lasso_path
     lasso_path_gram
     LassoLars
