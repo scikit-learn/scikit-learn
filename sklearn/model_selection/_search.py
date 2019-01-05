@@ -693,8 +693,11 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             # parameter set.
             if callable(self.refit):
                 self.best_index_ = self.refit(results)
+                if not isinstance(self.best_index_, (int, np.integer)):
+                    raise TypeError('best_index_ returned is not an integer')
+                if self.best_index_ < 0 or self.best_index_ >= len(results):
+                    raise IndexError('best_index_ index out of range')
             else:
-
                 self.best_index_ = results["rank_test_%s"
                                            % refit_metric].argmin()
                 self.best_score_ = results["mean_test_%s" % refit_metric][

@@ -629,6 +629,38 @@ def test_refit_callable():
     # Ensure `best_score_` is disabled when using `refit=callable`
     assert not hasattr(clf, 'best_score_')
 
+def test_refit_callable_check():
+    """
+    Test implementation catches the errors when 'best_index_' returns an
+    invalid or out of bound result.
+    """
+    def refit_callable_invalid_type(cv_results):
+        """
+        A dummy function tests when returned 'best_index_' is not integer
+        """
+        return None
+
+    def refit_callable_out_bound(cv_results):
+        """
+        A dummy function tests when returned 'best_index_' is out of bounds
+        """
+        return -1
+
+    X, y = make_classification(n_samples=100, n_features=4,
+                               random_state=42)
+    clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
+                       scoring='precision', refit=refit_callable_invalid_type,
+                       cv=5)
+
+    assert_raise_message(TypeError, "best_index_ returned is not an integer",
+                         clf.fit, X, y)
+
+    clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
+                       scoring='precision', refit=refit_callable_out_bound,
+                       cv=5)
+
+    assert_raise_message(IndexError, "best_index_ index out of range",
+                         clf.fit, X, y)
 
 def test_refit_callable_multi_metric():
     """
