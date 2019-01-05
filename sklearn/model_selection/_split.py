@@ -9,10 +9,6 @@ functions to split the data based on a preset strategy.
 #         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
-
-from __future__ import print_function
-from __future__ import division
-
 from collections.abc import Iterable
 import warnings
 from itertools import chain, combinations

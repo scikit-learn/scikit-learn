@@ -1,7 +1,6 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
-from __future__ import division
 import pytest
 import numpy as np
 from scipy import sparse

@@ -1,5 +1,3 @@
-from __future__ import division
-
 import pickle
 from io import BytesIO
 import numpy as np

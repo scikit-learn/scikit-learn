@@ -13,7 +13,6 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 # License: BSD 3 clause
 
 # avoid division truncation
-from __future__ import division
 import warnings
 import numpy as np
 

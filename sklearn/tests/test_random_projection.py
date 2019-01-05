@@ -1,5 +1,3 @@
-from __future__ import division
-
 import functools
 
 import numpy as np
