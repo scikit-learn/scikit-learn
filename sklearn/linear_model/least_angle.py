@@ -53,8 +53,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
 
         .. deprecated:: 0.21
 
-           The use of ``X`` is ``None`` in combination with ``Gram`` is not None
-           will be removed in v0.23. Use :func:`lars_path_gram` instead.
+           The use of ``X`` is ``None`` in combination with ``Gram`` is not
+           None will be removed in v0.23. Use :func:`lars_path_gram` instead.
 
     y : None or array, shape (n_samples,)
         Input targets.
@@ -70,8 +70,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
 
         .. deprecated:: 0.21
 
-           The use of ``X`` is ``None`` in combination with ``Gram`` is not None
-           will be removed in v0.23. Use :func:`lars_path_gram` instead.
+           The use of ``X`` is ``None`` in combination with ``Gram`` is not
+           None will be removed in v0.23. Use :func:`lars_path_gram` instead.
 
     max_iter : integer, optional (default=500)
         Maximum number of iterations to perform, set to infinity for no limit.
