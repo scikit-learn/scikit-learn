@@ -338,36 +338,36 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
 
     Examples
     --------
-        >>> from sklearn.datasets import load_sample_images
-        >>> from sklearn.feature_extraction import image
+    >>> from sklearn.datasets import load_sample_images
+    >>> from sklearn.feature_extraction import image
 
-        >>> # Use the array data from the first image in this dataset:
-        >>> one_image = load_sample_images().images[0]
+    >>> # Use the array data from the first image in this dataset:
+    >>> one_image = load_sample_images().images[0]
 
-        >>> print('Image shape: {}'.format(one_image.shape))
-        Image shape: (427, 640, 3)
+    >>> print('Image shape: {}'.format(one_image.shape))
+    Image shape: (427, 640, 3)
 
-        >>> patches = image.extract_patches_2d(one_image, (2, 2))
+    >>> patches = image.extract_patches_2d(one_image, (2, 2))
 
-        >>> print('Patches shape: {}'.format(patches.shape))
-        Patches shape: (272214, 2, 2, 3)
+    >>> print('Patches shape: {}'.format(patches.shape))
+    Patches shape: (272214, 2, 2, 3)
 
-        >>> # Here are just two of these patches:
-        >>> print('\nPatches 1:\n{}'.format(patches[1]))
-            Patches 1:
-            [[[174 201 231]
-            [174 201 231]]
+    >>> # Here are just two of these patches:
+    >>> print('\nPatches 1:\n{}'.format(patches[1]))
+        Patches 1:
+        [[[174 201 231]
+        [174 201 231]]
 
-            [[173 200 230]
-            [173 200 230]]]
+        [[173 200 230]
+        [173 200 230]]]
 
-        >>> print('\nPatches 800:\n{}'.format(patches[800]))
-            Patches 800:
-            [[[187 214 243]
-            [188 215 244]]
+    >>> print('\nPatches 800:\n{}'.format(patches[800]))
+        Patches 800:
+        [[[187 214 243]
+        [188 215 244]]
 
-            [[187 214 243]
-            [188 215 244]]]
+        [[187 214 243]
+        [188 215 244]]]
     """
 
     i_h, i_w = image.shape[:2]
