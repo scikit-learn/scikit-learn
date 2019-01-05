@@ -42,7 +42,7 @@ def compute_bench(samples_range, features_range):
             X, y = make_regression(**dataset_kwargs)
 
             gc.collect()
-            print("benchmarking lars_path_gram (lars_path with Gram):", end='')
+            print("benchmarking lars_path (with Gram):", end='')
             sys.stdout.flush()
             tstart = time()
             G = np.dot(X.T, X)  # precomputed Gram matrix
