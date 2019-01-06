@@ -246,17 +246,17 @@ def get_test_data(doc_iter_test, pos_class=positive_class):
     if not len(data_test):
         return np.asarray([], dtype=int), np.asarray([], dtype=int)
 
-    X_TextTest, y_test = zip(*data_test)
+    X_text_test, y_test = zip(*data_test)
 
-    return X_TextTest, np.asarray(y_test, dtype=int)
+    return X_text_test, np.asarray(y_test, dtype=int)
 
 tick = time.time()
-X_TextTest, y_test = get_test_data(data_stream_test, positive_class)
+X_text_test, y_test = get_test_data(data_stream_test, positive_class)
 parsing_time = time.time() - tick
 
 # Vectorized Test Data
 tick = time.time()
-X_test = vectorizer.transform(X_TextTest)
+X_test = vectorizer.transform(X_text_test)
 vectorizing_time = time.time() - tick
 
 test_stats['n_test'] = len(y_test)
@@ -278,16 +278,16 @@ def get_minibatch(doc_iter_train, size, pos_class=positive_class):
     if not len(data_train):
         return np.asarray([], dtype=int), np.asarray([], dtype=int)
 
-    X_TextTest, y_train = zip(*data_train)
-    return X_TextTest, np.asarray(y_train, dtype=int)
+    X_text_test, y_train = zip(*data_train)
+    return X_text_test, np.asarray(y_train, dtype=int)
 
 
 def iter_minibatches(doc_iter_train, minibatch_size):
     """Generator of minibatches."""
-    X_TextTest, y_train = get_minibatch(doc_iter_train, minibatch_size)
-    while len(X_TextTest):
-        yield X_TextTest, y_train
-        X_TextTest, y_train = get_minibatch(doc_iter_train, minibatch_size)
+    X_text_test, y_train = get_minibatch(doc_iter_train, minibatch_size)
+    while len(X_text_test):
+        yield X_text_test, y_train
+        X_text_test, y_train = get_minibatch(doc_iter_train, minibatch_size)
 
 
 def progress(cls_name, stats):
