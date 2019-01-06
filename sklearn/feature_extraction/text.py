@@ -1487,7 +1487,7 @@ class TfidfVectorizer(CountVectorizer):
 
         The formula that is used to compute the tf-idf of term t is​
         :math:`tf-idf(d, t) = tf(t) * idf(d, t)` and the idf is computed
-        as​ `idf(d, t) = log{\frac{n}{df(d, t)} + 1}`
+        as​ `idf(d, t) = log(\frac{n}{df(d, t)} + 1)`
         (if ``smooth_idf=False``)
         where `n` is the total number of documents and ​`df(d, t)​`​ is the
         document frequency; the document frequency is the number of documents
