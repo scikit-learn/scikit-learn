@@ -20,7 +20,7 @@ __all__ = ['lobpcg']
 
 def _save(ar, fileName):
     # Used only when verbosity level > 10.
-    np.savetxt(fileName, ar, precision=8)
+    np.savetxt(fileName, ar)
 
 
 def _report_nonhermitian(M, a, b, name):
