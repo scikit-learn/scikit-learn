@@ -653,7 +653,8 @@ def test_refit_callable_check():
                        scoring='precision', refit=refit_callable_invalid_type,
                        cv=5)
 
-    with pytest.raises(TypeError, match="best_index_ returned is not an integer"):
+    with pytest.raises(TypeError, 
+                       match="best_index_ returned is not an integer"):
         clf.fit(X, y)
 
     clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.1, 1]},
