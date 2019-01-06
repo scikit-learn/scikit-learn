@@ -653,7 +653,7 @@ def test_refit_callable_check():
                        scoring='precision', refit=refit_callable_invalid_type,
                        cv=5)
 
-    with pytest.raises(TypeError, 
+    with pytest.raises(TypeError,
                        match="best_index_ returned is not an integer"):
         clf.fit(X, y)
 
