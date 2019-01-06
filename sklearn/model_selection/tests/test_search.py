@@ -654,7 +654,7 @@ def test_refit_callable_invalid_type():
 
 def test_refit_callable_out_bound():
     """
-    Test implementation catches the errors when 'best_index_' returns an 
+    Test implementation catches the errors when 'best_index_' returns an
     out of bound result.
     """
     def refit_callable_out_bound(cv_results):
