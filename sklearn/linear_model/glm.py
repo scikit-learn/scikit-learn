@@ -2,12 +2,13 @@
 Generalized Linear Models with Exponential Dispersion Family
 """
 
-# Author: Christian Lorentzen <lorentzen.ch@googlemail.ch>
+# Author: Christian Lorentzen <lorentzen.ch@gmail.com>
 # some parts and tricks stolen from other sklearn files.
 # License: BSD 3 clause
 
 # TODO: Write more examples.
-# TODO: Make option self.copy_X more meaningfull than just for start values.
+# TODO: Make option self.copy_X more meaningful.
+# So far, fit uses Xnew instead of X.
 # TODO: Should the option `normalize` be included (like other linear models)?
 #       So far, it is not included. User must pass a normalized X.
 # TODO: Add cross validation support?
@@ -51,7 +52,6 @@ from .coordinate_descent import ElasticNet
 from .ridge import Ridge
 from ..base import BaseEstimator, RegressorMixin
 from ..exceptions import ConvergenceWarning
-from ..externals import six
 from ..utils import check_array, check_X_y
 from ..utils.extmath import safe_sparse_dot
 from ..utils.optimize import newton_cg
@@ -84,7 +84,7 @@ def _check_weights(sample_weight, n_samples):
     return weights
 
 
-class Link(six.with_metaclass(ABCMeta)):
+class Link(metaclass=ABCMeta):
     """Abstract base class for Link funtions
     """
 
@@ -186,7 +186,7 @@ class LogLink(Link):
         return np.exp(lin_pred)
 
 
-class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
+class ExponentialDispersionModel(metaclass=ABCMeta):
     r"""Base class for reproductive Exponential Dispersion Models (EDM).
 
     The pdf of :math:`Y\sim \mathrm{EDM}(\mu, \phi)` is given by
@@ -1142,7 +1142,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                                  "with L1 penalties, which are included with "
                                  "(alpha={1}) and (l1_ratio={2})."
                                  .format(solver, self.alpha, self.l1_ratio))
-        if (not isinstance(self.max_iter, six.integer_types)
+        if (not isinstance(self.max_iter, int)
                 or self.max_iter <= 0):
             raise ValueError("Maximum number of iteration must be a positive "
                              "integer;"
@@ -1156,7 +1156,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         start_params = self.start_params
         if start_params is None:
             pass
-        elif isinstance(start_params, six.string_types):
+        elif isinstance(start_params, str):
             if start_params not in ['least_squares', 'zero']:
                 raise ValueError("The argument start_params must be None, "
                                  "'least-squares', 'zero' or an array of right"
@@ -1329,7 +1329,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 # with L1 penalty, start with coef = 0
                 # TODO: Are there better options?
                 coef = np.zeros(n_features)
-        elif isinstance(self.start_params, six.string_types):
+        elif isinstance(self.start_params, str):
             if self.start_params == 'zero':
                 coef = np.zeros(n_features)
             elif self.start_params == 'least_squares':
