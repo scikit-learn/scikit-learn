@@ -619,15 +619,15 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                     not isinstance(self.refit, six.string_types) or
                     # This will work for both dict / list (tuple)
                     self.refit not in scorers) and not callable(self.refit):
-                    raise ValueError("For multi-metric scoring, the parameter "
-                                     "refit must be set to a scorer key or a "
-                                     "callable to refit an estimator with the "
-                                     "best parameter setting on the whole "
-                                     "data and make the best_* attributes "
-                                     "available for that metric. If this is "
-                                     "not needed, refit should be set to "
-                                     "False explicitly. %r was passed."
-                                     % self.refit)
+                raise ValueError("For multi-metric scoring, the parameter "
+                                 "refit must be set to a scorer key or a "
+                                 "callable to refit an estimator with the "
+                                 "best parameter setting on the whole "
+                                 "data and make the best_* attributes "
+                                 "available for that metric. If this is "
+                                 "not needed, refit should be set to "
+                                 "False explicitly. %r was passed."
+                                 % self.refit)
             else:
                 refit_metric = self.refit
         else:
