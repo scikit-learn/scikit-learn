@@ -630,22 +630,16 @@ def test_refit_callable():
     assert not hasattr(clf, 'best_score_')
 
 
-def test_refit_callable_check():
+def test_refit_callable_invalid_type():
     """
     Test implementation catches the errors when 'best_index_' returns an
-    invalid or out of bound result.
+    invalid result.
     """
     def refit_callable_invalid_type(cv_results):
         """
-        A dummy function tests when returned 'best_index_' is not integer
+        A dummy function tests when returned 'best_index_' is not integer.
         """
         return None
-
-    def refit_callable_out_bound(cv_results):
-        """
-        A dummy function tests when returned 'best_index_' is out of bounds
-        """
-        return -1
 
     X, y = make_classification(n_samples=100, n_features=4,
                                random_state=42)
@@ -656,6 +650,21 @@ def test_refit_callable_check():
     with pytest.raises(TypeError,
                        match='best_index_ returned is not an integer'):
         clf.fit(X, y)
+
+
+def test_refit_callable_out_bound():
+    """
+    Test implementation catches the errors when 'best_index_' returns an 
+    out of bound result.
+    """
+    def refit_callable_out_bound(cv_results):
+        """
+        A dummy function tests when returned 'best_index_' is out of bounds.
+        """
+        return -1
+
+    X, y = make_classification(n_samples=100, n_features=4,
+                               random_state=42)
 
     clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.1, 1]},
                        scoring='precision', refit=refit_callable_out_bound,
