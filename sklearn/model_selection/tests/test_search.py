@@ -1,7 +1,6 @@
 """Test the search module"""
 
-from sklearn.externals.six.moves import cStringIO as StringIO
-from sklearn.externals.six.moves import xrange
+from io import StringIO
 from itertools import chain, product
 import pickle
 import sys
@@ -13,7 +12,6 @@ import scipy.sparse as sp
 import pytest
 
 from sklearn.utils.fixes import sp_version
-from sklearn.utils.fixes import PY3_OR_LATER
 from sklearn.utils.fixes import _Iterable as Iterable, _Sized as Sized
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
@@ -156,7 +154,7 @@ def test_parameter_grid():
     assert_equal(len(grid2), 6)
 
     # loop to assert we can iterate over the grid multiple times
-    for i in xrange(2):
+    for i in range(2):
         # tuple + chain transforms {"a": 1, "b": 2} to ("a", 1, "b", 2)
         points = set(tuple(chain(*(sorted(p.items())))) for p in grid2)
         assert_equal(points,
@@ -428,10 +426,7 @@ def test_grid_search_when_param_grid_includes_range():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
     grid_search = None
-    if PY3_OR_LATER:
-        grid_search = GridSearchCV(clf, {'foo_param': range(1, 4)})
-    else:
-        grid_search = GridSearchCV(clf, {'foo_param': xrange(1, 4)})
+    grid_search = GridSearchCV(clf, {'foo_param': range(1, 4)})
     grid_search.fit(X, y)
     assert_equal(grid_search.best_estimator_.foo_param, 2)
 

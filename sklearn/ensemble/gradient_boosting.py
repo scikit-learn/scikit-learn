@@ -29,7 +29,6 @@ from abc import abstractmethod
 from .base import BaseEnsemble
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
-from ..externals import six
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -300,7 +299,7 @@ class ZeroEstimator(object):
         return y
 
 
-class LossFunction(six.with_metaclass(ABCMeta, object)):
+class LossFunction(object, metaclass=ABCMeta):
     """Abstract base class for various loss functions.
 
     Parameters
@@ -356,7 +355,7 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
                                 sample_weight, sample_mask,
-                                learning_rate=1.0, k=0):
+                                learning_rate=0.1, k=0):
         """Update the terminal regions (=leaves) of the given tree and
         updates the current predictions of the model. Traverses tree
         and invokes template method `_update_terminal_region`.
@@ -407,7 +406,7 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
         """Template method for updating terminal regions (=leaves). """
 
 
-class RegressionLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
+class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
     """Base class for regression loss functions.
 
     Parameters
@@ -470,7 +469,7 @@ class LeastSquaresError(RegressionLossFunction):
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
                                 sample_weight, sample_mask,
-                                learning_rate=1.0, k=0):
+                                learning_rate=0.1, k=0):
         """Least squares does not need to update terminal regions.
 
         But it has to update the predictions.
@@ -741,7 +740,7 @@ class QuantileLossFunction(RegressionLossFunction):
         tree.value[leaf, 0] = val
 
 
-class ClassificationLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
+class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
     """Base class for classification loss functions. """
 
     def _score_to_proba(self, score):
@@ -1119,7 +1118,7 @@ class VerboseReporter(object):
                 self.verbose_mod *= 10
 
 
-class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     """Abstract base class for Gradient Boosting. """
 
     @abstractmethod
@@ -1163,11 +1162,17 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         loss = self.loss_
         original_y = y
 
+        # Need to pass a copy of y_pred to negative_gradient() because y_pred
+        # is partially updated at the end of the loop in
+        # update_terminal_regions(), and gradients need to be evaluated at
+        # iteration i - 1.
+        y_pred_copy = y_pred.copy()
+
         for k in range(loss.K):
             if loss.is_multi_class:
                 y = np.array(original_y == k, dtype=np.float64)
 
-            residual = loss.negative_gradient(y, y_pred, k=k,
+            residual = loss.negative_gradient(y, y_pred_copy, k=k,
                                               sample_weight=sample_weight)
 
             # induce regression tree on residuals
@@ -1196,7 +1201,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             # update tree leaves
             loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
                                          sample_weight, sample_mask,
-                                         self.learning_rate, k=k)
+                                         learning_rate=self.learning_rate, k=k)
 
             # add tree to ensemble
             self.estimators_[i, k] = tree
@@ -1234,7 +1239,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                              "was %r" % self.subsample)
 
         if self.init is not None:
-            if isinstance(self.init, six.string_types):
+            if isinstance(self.init, str):
                 if self.init not in INIT_ESTIMATORS:
                     raise ValueError('init="%s" is not supported' % self.init)
             else:
@@ -1248,7 +1253,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             raise ValueError("alpha must be in (0.0, 1.0) but "
                              "was %r" % self.alpha)
 
-        if isinstance(self.max_features, six.string_types):
+        if isinstance(self.max_features, str):
             if self.max_features == "auto":
                 # if is_classification
                 if self.n_classes_ > 1:
@@ -1293,7 +1298,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         if self.init is None:
             self.init_ = self.loss_.init_estimator()
-        elif isinstance(self.init, six.string_types):
+        elif isinstance(self.init, str):
             self.init_ = INIT_ESTIMATORS[self.init]()
         else:
             self.init_ = self.init

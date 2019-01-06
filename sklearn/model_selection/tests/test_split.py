@@ -54,9 +54,6 @@ from sklearn.model_selection._split import NSPLIT_WARNING
 from sklearn.datasets import load_digits
 from sklearn.datasets import make_classification
 
-from sklearn.externals import six
-from sklearn.externals.six.moves import zip
-
 from sklearn.utils.fixes import comb
 
 from sklearn.svm import SVC
@@ -550,8 +547,7 @@ def test_shuffle_split():
     ss1 = ShuffleSplit(test_size=0.2, random_state=0).split(X)
     ss2 = ShuffleSplit(test_size=2, random_state=0).split(X)
     ss3 = ShuffleSplit(test_size=np.int32(2), random_state=0).split(X)
-    for typ in six.integer_types:
-        ss4 = ShuffleSplit(test_size=typ(2), random_state=0).split(X)
+    ss4 = ShuffleSplit(test_size=int(2), random_state=0).split(X)
     for t1, t2, t3, t4 in zip(ss1, ss2, ss3, ss4):
         assert_array_equal(t1[0], t2[0])
         assert_array_equal(t2[0], t3[0])
@@ -1006,26 +1002,59 @@ def test_repeated_stratified_kfold_determinstic_split():
 
 
 def test_train_test_split_errors():
-    assert_raises(ValueError, train_test_split)
+    pytest.raises(ValueError, train_test_split)
     with warnings.catch_warnings():
         # JvR: Currently, a future warning is raised if test_size is not
         # given. As that is the point of this test, ignore the future warning
         warnings.filterwarnings("ignore", category=FutureWarning)
-        assert_raises(ValueError, train_test_split, range(3), train_size=1.1)
+        pytest.raises(ValueError, train_test_split, range(3), train_size=1.1)
 
-    assert_raises(ValueError, train_test_split, range(3), test_size=0.6,
+    pytest.raises(ValueError, train_test_split, range(3), test_size=0.6,
                   train_size=0.6)
-    assert_raises(ValueError, train_test_split, range(3),
+    pytest.raises(ValueError, train_test_split, range(3),
                   test_size=np.float32(0.6), train_size=np.float32(0.6))
-    assert_raises(ValueError, train_test_split, range(3),
+    pytest.raises(ValueError, train_test_split, range(3),
                   test_size="wrong_type")
-    assert_raises(ValueError, train_test_split, range(3), test_size=2,
+    pytest.raises(ValueError, train_test_split, range(3), test_size=2,
                   train_size=4)
-    assert_raises(TypeError, train_test_split, range(3),
+    pytest.raises(TypeError, train_test_split, range(3),
                   some_argument=1.1)
-    assert_raises(ValueError, train_test_split, range(3), range(42))
-    assert_raises(ValueError, train_test_split, range(10),
+    pytest.raises(ValueError, train_test_split, range(3), range(42))
+    pytest.raises(ValueError, train_test_split, range(10),
                   shuffle=False, stratify=True)
+
+    with pytest.raises(ValueError,
+                       match=r'train_size=11 should be either positive and '
+                             r'smaller than the number of samples 10 or a '
+                             r'float in the \(0,1\) range'):
+        train_test_split(range(10), train_size=11, test_size=1)
+
+
+@pytest.mark.parametrize("train_size,test_size", [
+    (1.2, 0.8),
+    (1., 0.8),
+    (0.0, 0.8),
+    (-.2, 0.8),
+    (0.8, 1.2),
+    (0.8, 1.),
+    (0.8, 0.),
+    (0.8, -.2)])
+def test_train_test_split_invalid_sizes1(train_size, test_size):
+    with pytest.raises(ValueError, match=r'should be in the \(0, 1\) range'):
+        train_test_split(range(10), train_size=train_size, test_size=test_size)
+
+
+@pytest.mark.parametrize("train_size,test_size", [
+    (-10, 0.8),
+    (0, 0.8),
+    (11, 0.8),
+    (0.8, -10),
+    (0.8, 0),
+    (0.8, 11)])
+def test_train_test_split_invalid_sizes2(train_size, test_size):
+    with pytest.raises(ValueError,
+                       match=r'should be either positive and smaller'):
+        train_test_split(range(10), train_size=train_size, test_size=test_size)
 
 
 def test_train_test_split():

@@ -20,8 +20,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.fixes import np_version
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import randomized_svd
@@ -634,8 +632,6 @@ def test_softmax():
 
 
 def test_stable_cumsum():
-    if np_version < (1, 9):
-        raise SkipTest("Sum is as unstable as cumsum for numpy < 1.9")
     assert_array_equal(stable_cumsum([1, 2, 3]), np.cumsum([1, 2, 3]))
     r = np.random.RandomState(0).rand(100000)
     assert_warns(RuntimeWarning, stable_cumsum, r, rtol=0, atol=0)

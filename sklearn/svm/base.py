@@ -16,7 +16,6 @@ from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
 from ..utils.multiclass import check_classification_targets
-from ..externals import six
 from ..exceptions import ConvergenceWarning
 from ..exceptions import NotFittedError
 
@@ -57,7 +56,7 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
     return coef
 
 
-class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
+class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     """Base class for estimators that use libsvm as backing library
 
     This implements support vector machine classification and regression.
@@ -383,7 +382,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return X
 
     def _decision_function(self, X):
-        """Distance of the samples X to the separating hyperplane.
+        """Evaluates the decision function for the samples in X.
 
         Parameters
         ----------
@@ -499,7 +498,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return safe_sparse_dot(self._dual_coef_, self.support_vectors_)
 
 
-class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
+class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""
     @abstractmethod
     def __init__(self, kernel, degree, gamma, coef0, tol, C, nu,
@@ -528,7 +527,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         return np.asarray(y, dtype=np.float64, order='C')
 
     def decision_function(self, X):
-        """Distance of the samples X to the separating hyperplane.
+        """Evaluates the decision function for the samples in X.
 
         Parameters
         ----------
@@ -540,7 +539,16 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
             Returns the decision function of the sample for each class
             in the model.
             If decision_function_shape='ovr', the shape is (n_samples,
-            n_classes)
+            n_classes).
+
+        Notes
+        ------
+        If decision_function_shape='ovo', the function values are proportional
+        to the distance of the samples X to the separating hyperplane. If the
+        exact distances are required, divide the function values by the norm of
+        the weight vector (``coef_``). See also `this question
+        <https://stats.stackexchange.com/questions/14876/
+        interpreting-distance-from-hyperplane-in-svm>`_ for further details.
         """
         dec = self._decision_function(X)
         if self.decision_function_shape == 'ovr' and len(self.classes_) > 2:

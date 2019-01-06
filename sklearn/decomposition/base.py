@@ -14,11 +14,10 @@ from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
-from ..externals import six
 from abc import ABCMeta, abstractmethod
 
 
-class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
+class _BasePCA(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
     """Base class for PCA methods.
 
     Warning: This class should not be used directly.
