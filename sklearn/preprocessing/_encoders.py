@@ -263,7 +263,7 @@ class OneHotEncoder(_BaseEncoder):
     --------
     sklearn.preprocessing.OrdinalEncoder : performs an ordinal (integer)
       encoding of the categorical features.
-    sklearn.preprocessing.UnaryEncoder: performs a unary encoding of ordinal
+    sklearn.preprocessing.UnaryEncoder : performs a unary encoding of ordinal
       data.
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
       dictionary items (also handles string-valued features).
@@ -768,7 +768,7 @@ class OrdinalEncoder(_BaseEncoder):
     --------
     sklearn.preprocessing.OneHotEncoder : performs a one-hot encoding of
       categorical features.
-    sklearn.preprocessing.UnaryEncoder: performs a unary encoding of ordinal
+    sklearn.preprocessing.UnaryEncoder : performs a unary encoding of ordinal
       data.
     sklearn.preprocessing.LabelEncoder : encodes target labels with values
       between 0 and n_classes-1.
@@ -913,8 +913,8 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
     Examples
     --------
     Given a dataset with three features and four samples, we let the encoder
-    find the maximum value per feature and transform the data to a binary
-    unary encoding.
+    find the maximum value per feature and transform the data to a unary
+    encoding.
 
     >>> from sklearn.preprocessing import UnaryEncoder
     >>> enc = UnaryEncoder()
@@ -933,12 +933,10 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    sklearn.preprocessing.OneHotEncoder: encodes categorical integer features
+    sklearn.preprocessing.OneHotEncoder : encodes categorical integer features
       using a one-hot aka one-of-K scheme.
     sklearn.preprocessing.OrdinalEncoder : performs an ordinal (integer)
       encoding of the categorical features.
-    sklearn.compose.ColumnTransformer: Applies transformers to columns of an
-      array.
     """
     def __init__(self, categories="auto", dtype=np.float64, sparse=False,
                  handle_greater='warn'):
@@ -959,7 +957,7 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         X = check_array(X, dtype=np.int)
         if self.handle_greater not in ['warn', 'error', 'clip']:
             raise ValueError("handle_greater should be either 'warn', 'error' "
-                             "or 'clip' got %s" % self.handle_greater)
+                             "or 'clip'. got %s" % self.handle_greater)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
         _, n_features = X.shape
@@ -1082,15 +1080,17 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         # return float dtype, even though it will contain int values
         X_tr = np.zeros((n_samples, n_features), dtype=np.float)
 
-        j = 0
-        for i in range(n_features):
-            n_columns = self.categories_[i] - 1
+        for feature_idx, (start, stop) in enumerate(zip(
+                self.feature_indices_,
+                self.feature_indices_[1:])):
 
-            sub = X[:, j:j + n_columns]
+            # sub = portion of the tranformed matrix that correspond to the
+            # current feature
+            sub = X[:, start:stop]
 
+            # the original category is the sum of the (binary) columns, or
+            # equivalently the position of the first 0.
             categories = sub.sum(axis=1).ravel()
-            X_tr[:, i] = categories
-
-            j += n_columns
+            X_tr[:, feature_idx] = categories
 
         return X_tr
