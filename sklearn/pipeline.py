@@ -17,7 +17,6 @@ from scipy import sparse
 
 from .base import clone, TransformerMixin
 from .utils._joblib import Parallel, delayed
-from .externals import six
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch
 from .utils.validation import check_memory
@@ -215,7 +214,7 @@ class Pipeline(_BaseComposition):
 
         fit_params_steps = dict((name, {}) for name, step in self.steps
                                 if step is not None)
-        for pname, pval in six.iteritems(fit_params):
+        for pname, pval in fit_params.items():
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
         Xt = X
@@ -543,7 +542,7 @@ def _name_estimators(estimators):
     for est, name in zip(estimators, names):
         namecount[name] += 1
 
-    for k, v in list(six.iteritems(namecount)):
+    for k, v in list(namecount.items()):
         if v == 1:
             del namecount[k]
 

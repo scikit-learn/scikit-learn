@@ -26,8 +26,6 @@ from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
-from ..externals.six import with_metaclass
-from ..externals.six.moves import zip
 from ..utils.fixes import comb
 from ..utils.fixes import _Iterable as Iterable
 from ..base import _pprint
@@ -61,16 +59,11 @@ CV_WARNING = (
     "in version 0.22.")
 
 
-class BaseCrossValidator(with_metaclass(ABCMeta)):
+class BaseCrossValidator(metaclass=ABCMeta):
     """Base class for all cross-validators
 
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
     """
-
-    def __init__(self):
-        # We need this for the build_repr to work properly in py2.7
-        # see #6304
-        pass
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -274,7 +267,7 @@ class LeavePOut(BaseCrossValidator):
         return int(comb(_num_samples(X), self.p, exact=True))
 
 
-class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
+class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
     """Base class for KFold, GroupKFold, and StratifiedKFold"""
 
     @abstractmethod
@@ -1074,7 +1067,7 @@ class LeavePGroupsOut(BaseCrossValidator):
         return super(LeavePGroupsOut, self).split(X, y, groups)
 
 
-class _RepeatedSplits(with_metaclass(ABCMeta)):
+class _RepeatedSplits(metaclass=ABCMeta):
     """Repeated splits for an arbitrary randomized CV splitter.
 
     Repeats splits for cross-validators n times with different randomization
@@ -1281,7 +1274,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
             StratifiedKFold, n_repeats, random_state, n_splits=n_splits)
 
 
-class BaseShuffleSplit(with_metaclass(ABCMeta)):
+class BaseShuffleSplit(metaclass=ABCMeta):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
     def __init__(self, n_splits=10, test_size="default", train_size=None,
