@@ -18,7 +18,6 @@ from inspect import signature
 
 from numpy.core.numeric import ComplexWarning
 
-from ..externals import six
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
@@ -201,7 +200,7 @@ def check_memory(memory):
         If ``memory`` is not joblib.Memory-like.
     """
 
-    if memory is None or isinstance(memory, six.string_types):
+    if memory is None or isinstance(memory, str):
         if LooseVersion(joblib_version) < '0.12':
             memory = Memory(cachedir=memory, verbose=0)
         else:
@@ -304,7 +303,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
 
     changed_format = False
 
-    if isinstance(accept_sparse, six.string_types):
+    if isinstance(accept_sparse, str):
         accept_sparse = [accept_sparse]
 
     # Indices dtype validation
@@ -463,7 +462,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     array_orig = array
 
     # store whether originally we wanted numeric dtype
-    dtype_numeric = isinstance(dtype, six.string_types) and dtype == "numeric"
+    dtype_numeric = isinstance(dtype, str) and dtype == "numeric"
 
     dtype_orig = getattr(array, "dtype", None)
     if not hasattr(dtype_orig, 'kind'):
@@ -497,7 +496,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                          '. Got {!r} instead'.format(force_all_finite))
 
     if estimator is not None:
-        if isinstance(estimator, six.string_types):
+        if isinstance(estimator, str):
             estimator_name = estimator
         else:
             estimator_name = estimator.__class__.__name__

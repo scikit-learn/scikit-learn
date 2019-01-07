@@ -73,9 +73,9 @@ def _check_targets(y_true, y_pred):
     type_true = type_of_target(y_true)
     type_pred = type_of_target(y_pred)
 
-    y_type = set([type_true, type_pred])
-    if y_type == set(["binary", "multiclass"]):
-        y_type = set(["multiclass"])
+    y_type = {type_true, type_pred}
+    if y_type == {"binary", "multiclass"}:
+        y_type = {"multiclass"}
 
     if len(y_type) > 1:
         raise ValueError("Classification metrics can't handle a mix of {0} "

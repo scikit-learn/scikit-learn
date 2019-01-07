@@ -41,7 +41,6 @@ ticket to the
 also welcome to post feature requests or pull requests.
 
 
-==================
 Ways to contribute
 ==================
 
@@ -370,7 +369,8 @@ and Cython optimizations.
    <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
 
-.. topic:: Continuous Integration (CI)
+Continuous Integration (CI)
+............................
 
    * Travis is used for testing on Linux platforms
    * Appveyor is used for testing on Windows platforms
@@ -389,6 +389,40 @@ and Cython optimizations.
      [doc quick]            Docs built, but excludes example gallery plots
      [doc build]            Docs built including example gallery plots
      ====================== ===================
+
+Stalled pull requests
+......................
+
+As contributing a feature can be a lengthy process, some
+pull requests appear inactive but unfinished. In such a case, taking
+them over is a great service for the project.
+
+A good etiquette to take over is:
+
+* **Determine if a PR is stalled**
+
+  * A pull request may have the label "stalled" or "help wanted" if we
+    have already identified it as a candidate for other contributors.
+
+  * To decide whether an inactive PR is stalled, ask the contributor if
+    she/he plans to continue working on the PR in the near future.
+    Failure to respond within 2 weeks with an activity that moves the PR
+    forward suggests that the PR is stalled and will result in tagging
+    that PR with "help wanted".
+
+    Note that if a PR has received earlier comments on the contribution
+    that have had no reply in a month, it is safe to assume that the PR
+    is stalled and to shorten the wait time to one day.
+
+    After a sprint, follow-up for un-merged PRs opened during sprint will
+    be communicated to participants at the sprint, and those PRs will be
+    tagged "sprint". PRs tagged with "sprint" can be reassigned or
+    declared stalled by sprint leaders.
+
+* **Taking over a stalled PR**: To take over a PR, it is important to
+  comment on the stalled PR that you are taking over and to link from the
+  new PR to the old one. The new PR should be created by pulling from the
+  old one.
 
 .. _new_contributors:
 
@@ -532,6 +566,9 @@ Finally, follow the formatting rules below to make it consistently good:
 
     * For "References" in docstrings, see the Silhouette Coefficient
       (:func:`sklearn.metrics.silhouette_score`).
+
+* When editing reStructuredText (``.rst``) files, try to keep line length under
+  80 characters when possible (exceptions include links and tables).
 
 Generated documentation on CircleCI
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -905,9 +942,7 @@ in the examples.
 Python versions supported
 -------------------------
 
-All scikit-learn code should work unchanged in Python 3.5 or
-newer.
-
+Since scikit-learn 0.21, only Python 3.5 and newer is supported.
 
 .. _code_review:
 
@@ -1395,3 +1430,64 @@ that implement common linear model patterns.
 
 The :mod:`sklearn.utils.multiclass` module contains useful functions
 for working with multiclass and multilabel problems.
+
+.. _reading-code:
+
+Reading the existing code base
+==============================
+
+Reading and digesting an existing code base is always a difficult exercise
+that takes time and experience to master. Even though we try to write simple
+code in general, understanding the code can seem overwhelming at first,
+given the sheer size of the project. Here is a list of tips that may help
+make this task easier and faster (in no particular order).
+
+- Get acquainted with the :ref:`api_overview`: understand what :term:`fit`,
+  :term:`predict`, :term:`transform`, etc. are used for.
+- Before diving into reading the code of a function / class, go through the
+  docstrings first and try to get an idea of what each parameter / attribute
+  is doing. It may also help to stop a minute and think *how would I do this
+  myself if I had to?*
+- The trickiest thing is often to identify which portions of the code are
+  relevant, and which are not. In scikit-learn **a lot** of input checking
+  is performed, especially at the beginning of the :term:`fit` methods.
+  Sometimes, only a very small portion of the code is doing the actual job.
+  For example looking at the ``fit()`` method of
+  :class:`sklearn.linear_model.LinearRegression`, what you're looking for
+  might just be the call the ``scipy.linalg.lstsq``, but it is buried into
+  multiple lines of input checking and the handling of different kinds of
+  parameters.
+- Due to the use of `Inheritance
+  <https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)>`_,
+  some methods may be implemented in parent classes. All estimators inherit
+  at least from :class:`BaseEstimator <sklearn.base.BaseEstimator>`, and
+  from a ``Mixin`` class (e.g. :class:`ClassifierMixin
+  <sklearn.base.ClassifierMixin>`) that enables default behaviour depending
+  on the nature of the estimator (classifier, regressor, transformer, etc.).
+- Sometimes, reading the tests for a given function will give you an idea of
+  what its intended purpose is. You can use ``git grep`` (see below) to find
+  all the tests written for a function. Most tests for a specific
+  function/class are placed under the ``tests/`` folder of the module
+- You'll often see code looking like this:
+  ``out = Parallel(...)(delayed(some_function)(param) for param in
+  some_iterable)``. This runs ``some_function`` in parallel using `Joblib
+  <https://joblib.readthedocs.io/>`_. ``out`` is then an iterable containing
+  the values returned by ``some_function`` for each call.
+- We use `Cython <https://cython.org/>`_ to write fast code. Cython code is
+  located in ``.pyx`` and ``.pxd`` files. Cython code has a more C-like
+  flavor: we use pointers, perform manual memory allocation, etc. Having
+  some minimal experience in C / C++ is pretty much mandatory here.
+- Master your tools.
+
+  - With such a big project, being efficient with your favorite editor or
+    IDE goes a long way towards digesting the code base. Being able to quickly
+    jump (or *peek*) to a function/class/attribute definition helps a lot.
+    So does being able to quickly see where a given name is used in a file.
+  - `git <https://git-scm.com/book/en>`_ also has some built-in killer
+    features. It is often useful to understand how a file changed over time,
+    using e.g. ``git blame`` (`manual
+    <https://git-scm.com/docs/git-blame>`_). This can also be done directly
+    on GitHub. ``git grep`` (`examples
+    <https://git-scm.com/docs/git-grep#_examples>`_) is also extremely
+    useful to see every occurrence of a pattern (e.g. a function call or a
+    variable) in the code base.

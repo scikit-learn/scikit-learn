@@ -19,8 +19,6 @@ from scipy.special import gammaln
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
 
-from ..externals import six
-
 from .base import _BasePCA
 from ..utils import check_random_state
 from ..utils import check_array
@@ -479,7 +477,7 @@ class PCA(_BasePCA):
         """
         n_samples, n_features = X.shape
 
-        if isinstance(n_components, six.string_types):
+        if isinstance(n_components, str):
             raise ValueError("n_components=%r cannot be a string "
                              "with svd_solver='%s'"
                              % (n_components, svd_solver))
