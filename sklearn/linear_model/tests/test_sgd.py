@@ -586,10 +586,10 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                 assert not hasattr(clf, 'predict_proba')
                 assert not hasattr(clf, 'predict_log_proba')
                 with pytest.raises(AttributeError,
-                                   message=message):
+                                   match=message):
                     clf.predict_proba
                 with pytest.raises(AttributeError,
-                                   message=message):
+                                   match=message):
                     clf.predict_log_proba
 
     def test_sgd_proba(self):
