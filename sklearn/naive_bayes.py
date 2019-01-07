@@ -26,6 +26,7 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
+from .linear_model import LinearRegression
 from .utils import check_X_y, check_array, check_consistent_length
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
@@ -440,6 +441,7 @@ class GaussianNB(BaseNB):
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
 
+
 _ALPHA_MIN = 1e-10
 
 
@@ -698,10 +700,15 @@ class MultinomialNB(BaseDiscreteNB):
     C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234-265.
     https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
+
+    Gale, William A., and Geoffrey Sampson. 1996. Good-Turing Frequency
+    Estimation without Tears. Brighton: University of Sussex.
+    https://www.grsampson.net/AGtf1.html
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+    def __init__(self, alpha=1.0, smoothing='additive', fit_prior=True, class_prior=None):
         self.alpha = alpha
+        self.smoothing = smoothing
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
@@ -714,11 +721,8 @@ class MultinomialNB(BaseDiscreteNB):
 
     def _update_feature_log_prob(self, alpha):
         """Apply smoothing to raw counts and recompute log probabilities"""
-        smoothed_fc = self.feature_count_ + alpha
-        smoothed_cc = smoothed_fc.sum(axis=1)
-
-        self.feature_log_prob_ = (np.log(smoothed_fc) -
-                                  np.log(smoothed_cc.reshape(-1, 1)))
+        if self.smoothing == 'additive':
+            self.feature_log_prob_ = self._additive_smoothing(alpha)
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
@@ -727,6 +731,77 @@ class MultinomialNB(BaseDiscreteNB):
         X = check_array(X, accept_sparse='csr')
         return (safe_sparse_dot(X, self.feature_log_prob_.T) +
                 self.class_log_prior_)
+
+    def _additive_smoothing(self, alpha):
+        smoothed_fc = self.feature_count_ + alpha
+        smoothed_cc = smoothed_fc.sum(axis=1)
+        return np.log(smoothed_fc) - np.log(smoothed_cc.reshape(-1, 1))
+
+    def _simple_goog_turing(self, fc):
+        N = fc.sum()
+        # Get the frequencies of frequencies
+        n = dict()
+        for r in fc:
+            if r == 0:
+                continue
+            n[r] = n.get(r, 0) + 1
+
+        # The probability of unseen samples
+        P_0 = n.get(1, 0)/N
+
+        # Compute the Z values
+        r = np.array(sorted(n.items(), key=lambda keyval: keyval[0]))[:, 0].astype(int)
+        n = np.array(sorted(n.items(), key=lambda keyval: keyval[0]))[:, 1].astype(int)
+        Z = dict()
+        Z[r[0]] = 2*n[0] / r[1]
+        Z[r[-1]] = n[-1] / (r[-1] - r[-2])
+        for (idx, j) in enumerate(r):
+            if idx == 0 or idx >= len(r) - 1:
+                continue
+            i = r[idx-1]
+            k = r[idx+1]
+            Z[j] = 2*n[idx]/(k-i)
+        Z = np.array(sorted(Z.items()))[:, 1]
+
+        # Compute S using linear regression interpolation
+        log_r = np.log10(r).reshape(-1, 1)
+        log_Z = np.log10(Z).reshape(-1, 1)
+        reg = LinearRegression().fit(log_r, log_Z)
+        a, b = reg.intercept_, reg.coef_[0]
+        S = np.power(10, a+b*np.log(np.arange(1, np.max(r)+2)))
+
+        # Compute r*
+        cease_x = False
+        r_star = np.zeros(len(r))
+        for i in range(len(r)):
+            y = (r[i]+1)*(S[r[i]]/S[r[i]-1])
+            if i >= len(r) - 1 or r[i+1] != r[i] + 1:
+                cease_x = True
+            if cease_x:
+                r_star[i] = y
+                continue
+            x = (r[i]+1)*(n[i+1]/n[i])
+            threshold = 1.96*np.sqrt(((r[i]+1)**2)*(n[i+1]/n[i]**2)*(1+(n[i+1]/n[i])))
+            if np.abs(x-y) <= threshold:
+                r_star[i] = y
+                cease_x = True
+                continue
+            r_star[i] = x
+
+        # Compute the probabilities of each frequency
+        N_prime = np.inner(n, r_star)
+        p_r = (1-P_0)*(r_star/N_prime)
+
+        # Calculate probabilities for each feature
+        total_unseen = np.count_nonzero(fc == 0)
+        unseen_prob = P_0/total_unseen
+        prob = np.zeros(fc.size)
+        for i in range(len(p_r)):
+            idx = np.where(fc == r[i])
+            prob[idx] = p_r[i]
+        prob[np.where(fc == 0)] = unseen_prob
+
+        return np.log(prob)
 
 
 class ComplementNB(BaseDiscreteNB):
