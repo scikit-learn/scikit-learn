@@ -1084,7 +1084,7 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
                 self.feature_indices_,
                 self.feature_indices_[1:])):
 
-            # sub = portion of the tranformed matrix that correspond to the
+            # sub = portion of the transformed matrix that corresponds to the
             # current feature
             sub = X[:, start:stop]
 
