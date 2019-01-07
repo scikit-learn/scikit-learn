@@ -19,7 +19,7 @@ from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
 from ..model_selection import train_test_split
 from ..externals import six
 from ..preprocessing import LabelBinarizer
-from ..utils import gen_batches, check_random_state, get_chunk_n_rows
+from ..utils import gen_batches, check_random_state
 from ..utils import shuffle
 from ..utils import check_array, check_X_y, column_or_1d
 from ..exceptions import ConvergenceWarning
