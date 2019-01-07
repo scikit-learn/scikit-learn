@@ -531,7 +531,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             Estimated probabilities.
         """
         prob = self.decision_function(X)
-        expit(prob, prob)
+        expit(prob, out=prob)
         if len(self.classes_) == 2:  # binary case
             return np.column_stack([1 - prob, prob])
         else:

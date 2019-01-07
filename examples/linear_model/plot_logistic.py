@@ -45,12 +45,7 @@ plt.clf()
 plt.scatter(X.ravel(), y, color='black', zorder=20)
 X_test = np.linspace(-5, 10, 300)
 
-
-def model(x):
-    return expit(x)
-
-
-loss = model(X_test * clf.coef_ + clf.intercept_).ravel()
+loss = expit(X_test * clf.coef_ + clf.intercept_).ravel()
 plt.plot(X_test, loss, color='red', linewidth=3)
 
 ols = linear_model.LinearRegression()

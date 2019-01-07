@@ -293,7 +293,7 @@ class LinearClassifierMixin(ClassifierMixin):
         multiclass is handled by normalizing that over all classes.
         """
         prob = self.decision_function(X)
-        expit(prob, prob)
+        expit(prob, out=prob)
         if prob.ndim == 1:
             return np.vstack([1 - prob, prob]).T
         else:

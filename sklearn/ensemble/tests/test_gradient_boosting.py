@@ -1162,8 +1162,7 @@ def test_probability_exponential():
     assert np.all(y_proba >= 0.0)
     assert np.all(y_proba <= 1.0)
     score = clf.decision_function(T).ravel()
-    assert_array_almost_equal(y_proba[:, 1],
-                              expit(2 * score))
+    assert_array_almost_equal(y_proba[:, 1], expit(2 * score))
 
     # derive predictions from probabilities
     y_pred = clf.classes_.take(y_proba.argmax(axis=1), axis=0)
