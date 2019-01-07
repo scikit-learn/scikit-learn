@@ -1060,7 +1060,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         # efficiency. As we do not know the shape of the output,
         # we simply test the output size for a single sample
         # and use the shape of the output
-        y_pred = np.empty((x_axis0_size,) + 1)
+        y_pred = np.empty((x_axis0_size,1))
 
         # Call the classifier in chunks.
         for x_chunk in gen_batches(X.shape[0], chunk_size):
