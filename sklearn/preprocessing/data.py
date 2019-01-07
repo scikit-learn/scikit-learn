@@ -2594,12 +2594,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         optim_function = {'box-cox': self._box_cox_optimize,
                           'yeo-johnson': self._yeo_johnson_optimize
                           }[self.method]
-        self.lambdas_ = []
-        for col in X.T:
-            with np.errstate(invalid='ignore'):  # hide NaN warnings
-                lmbda = optim_function(col)
-                self.lambdas_.append(lmbda)
-        self.lambdas_ = np.array(self.lambdas_)
+        with np.errstate(invalid='ignore'):  # hide NaN warnings
+            self.lambdas_ = np.array([optim_function(col) for col in X.T])
 
         if self.standardize or force_transform:
             transform_function = {'box-cox': boxcox,

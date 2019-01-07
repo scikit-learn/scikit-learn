@@ -1465,7 +1465,5 @@ def _aggregate_score_dicts(scores):
     {'a': array([1, 2, 3, 10]),
      'b': array([10, 2, 3, 10])}
     """
-    out = {}
-    for key in scores[0]:
-        out[key] = np.asarray([score[key] for score in scores])
-    return out
+    return {key: np.asarray([score[key] for score in scores])
+            for key in scores[0]}

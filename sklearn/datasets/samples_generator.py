@@ -176,10 +176,10 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         weights[-1] = 1.0 - sum(weights[:-1])
 
     # Distribute samples among clusters by weight
-    n_samples_per_cluster = []
-    for k in range(n_clusters):
-        n_samples_per_cluster.append(int(n_samples * weights[k % n_classes]
-                                     / n_clusters_per_class))
+    n_samples_per_cluster = [
+        int(n_samples * weights[k % n_classes] / n_clusters_per_class)
+        for k in range(n_clusters)]
+
     for i in range(n_samples - sum(n_samples_per_cluster)):
         n_samples_per_cluster[i % n_clusters] += 1
 

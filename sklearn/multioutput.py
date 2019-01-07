@@ -562,9 +562,9 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         self : object
         """
         super(ClassifierChain, self).fit(X, Y)
-        self.classes_ = []
-        for chain_idx, estimator in enumerate(self.estimators_):
-            self.classes_.append(estimator.classes_)
+        self.classes_ = [estimator.classes_
+                         for chain_idx, estimator
+                         in enumerate(self.estimators_)]
         return self
 
     @if_delegate_has_method('base_estimator')

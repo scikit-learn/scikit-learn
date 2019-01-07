@@ -217,10 +217,8 @@ class Kernel(metaclass=ABCMeta):
     @property
     def hyperparameters(self):
         """Returns a list of all hyperparameter specifications."""
-        r = []
-        for attr in dir(self):
-            if attr.startswith("hyperparameter_"):
-                r.append(getattr(self, attr))
+        r = [getattr(self, attr) for attr in dir(self)
+             if attr.startswith("hyperparameter_")]
         return r
 
     @property
@@ -285,10 +283,9 @@ class Kernel(metaclass=ABCMeta):
         bounds : array, shape (n_dims, 2)
             The log-transformed bounds on the kernel's hyperparameters theta
         """
-        bounds = []
-        for hyperparameter in self.hyperparameters:
-            if not hyperparameter.fixed:
-                bounds.append(hyperparameter.bounds)
+        bounds = [hyperparameter.bounds
+                  for hyperparameter in self.hyperparameters
+                  if not hyperparameter.fixed]
         if len(bounds) > 0:
             return np.log(np.vstack(bounds))
         else:
@@ -573,12 +570,11 @@ class KernelOperator(Kernel):
     @property
     def hyperparameters(self):
         """Returns a list of all hyperparameter."""
-        r = []
-        for hyperparameter in self.k1.hyperparameters:
-            r.append(Hyperparameter("k1__" + hyperparameter.name,
-                                    hyperparameter.value_type,
-                                    hyperparameter.bounds,
-                                    hyperparameter.n_elements))
+        r = [Hyperparameter("k1__" + hyperparameter.name,
+                            hyperparameter.value_type,
+                            hyperparameter.bounds, hyperparameter.n_elements)
+             for hyperparameter in self.k1.hyperparameters]
+
         for hyperparameter in self.k2.hyperparameters:
             r.append(Hyperparameter("k2__" + hyperparameter.name,
                                     hyperparameter.value_type,
