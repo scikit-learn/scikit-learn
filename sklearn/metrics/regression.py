@@ -30,7 +30,7 @@ from ..utils.validation import (check_array, check_consistent_length,
                                 _num_samples)
 from ..utils.validation import column_or_1d
 from ..externals.six import string_types
-from ..exceptions import DataDimensionalityWarning
+from ..exceptions import UndefinedMetricWarning
 
 
 __ALL__ = [
@@ -543,7 +543,7 @@ def r2_score(y_true, y_pred, sample_weight=None,
 
     if _num_samples(y_pred) < 2:
         msg = "R^2 score is not well-defined with less than two samples."
-        warnings.warn(msg, DataDimensionalityWarning)
+        warnings.warn(msg, UndefinedMetricWarning)
         return float('nan')
 
     if sample_weight is not None:

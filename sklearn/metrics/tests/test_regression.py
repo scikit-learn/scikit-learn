@@ -20,7 +20,7 @@ from sklearn.metrics import r2_score
 
 from sklearn.metrics.regression import _check_reg_targets
 
-from ...exceptions import DataDimensionalityWarning
+from ...exceptions import UndefinedMetricWarning
 
 
 def test_regression_metrics(n_samples=50):
@@ -201,6 +201,6 @@ def test_regression_single_sample(metric):
     warning_msg = 'not well-defined with less than two samples.'
 
     # Trigger the warning
-    with pytest.warns(DataDimensionalityWarning, match=warning_msg):
+    with pytest.warns(UndefinedMetricWarning, match=warning_msg):
         score = metric(y_true, y_pred)
         assert np.isnan(score)
