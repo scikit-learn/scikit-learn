@@ -723,6 +723,9 @@ class MultinomialNB(BaseDiscreteNB):
         """Apply smoothing to raw counts and recompute log probabilities"""
         if self.smoothing == 'additive':
             self.feature_log_prob_ = self._additive_smoothing(alpha)
+        elif self.smoothing == 'good-turing':
+            self.feature_log_prob_ = np.apply_along_axis(
+                    self.simple_good_turing, 1, self.feature_count_)
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
