@@ -671,10 +671,8 @@ def test_refit_callable_out_bound():
     clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.1, 1]},
                        scoring='precision', refit=refit_callable_out_bound,
                        cv=5)
-#    with pytest.raises(IndexError, match='best_index_ index out of range'):
-#        clf.fit(X, y)
-    assert_raise_message(IndexError, "best_index_ index out of range",
-                         clf.fit, X, y)
+    with pytest.raises(IndexError, match='best_index_ index out of range'):
+        clf.fit(X, y)
 
 
 def test_refit_callable_multi_metric():
