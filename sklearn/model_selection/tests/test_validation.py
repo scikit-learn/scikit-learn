@@ -453,10 +453,10 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
                    {'r2': make_scorer(r2_score),
                     'neg_mean_squared_error': 'neg_mean_squared_error'})
 
-    keys_sans_train = set(('test_r2', 'test_neg_mean_squared_error',
-                           'fit_time', 'score_time'))
+    keys_sans_train = {'test_r2', 'test_neg_mean_squared_error',
+                       'fit_time', 'score_time'}
     keys_with_train = keys_sans_train.union(
-        set(('train_r2', 'train_neg_mean_squared_error')))
+            {'train_r2', 'train_neg_mean_squared_error'})
 
     for return_train_score in (True, False):
         for scoring in all_scoring:

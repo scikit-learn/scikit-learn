@@ -13,6 +13,7 @@ functions to split the data based on a preset strategy.
 from __future__ import print_function
 from __future__ import division
 
+from collections.abc import Iterable
 import warnings
 from itertools import chain, combinations
 from math import ceil, floor
@@ -27,7 +28,6 @@ from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
 from ..utils.fixes import comb
-from ..utils.fixes import _Iterable as Iterable
 from ..base import _pprint
 
 __all__ = ['BaseCrossValidator',

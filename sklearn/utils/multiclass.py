@@ -6,7 +6,7 @@ Multi-class / multi-label utility function
 ==========================================
 
 """
-from __future__ import division
+from collections.abc import Sequence
 from itertools import chain
 
 from scipy.sparse import issparse
@@ -16,7 +16,6 @@ from scipy.sparse import lil_matrix
 
 import numpy as np
 
-from ..utils.fixes import _Sequence as Sequence
 from .validation import check_array
 
 
@@ -74,8 +73,8 @@ def unique_labels(*ys):
     # Check that we don't mix label format
 
     ys_types = set(type_of_target(x) for x in ys)
-    if ys_types == set(["binary", "multiclass"]):
-        ys_types = set(["multiclass"])
+    if ys_types == {"binary", "multiclass"}:
+        ys_types = {"multiclass"}
 
     if len(ys_types) > 1:
         raise ValueError("Mix type of y not allowed, got types %s" % ys_types)

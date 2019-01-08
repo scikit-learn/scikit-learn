@@ -5,6 +5,7 @@ estimator.
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 # Copyright: INRIA
+from collections.abc import Sequence
 import warnings
 import operator
 import sys
@@ -20,8 +21,9 @@ from ..exceptions import ConvergenceWarning
 from ..utils.validation import check_random_state, check_array
 from ..utils import deprecated
 from ..utils.fixes import _Sequence as Sequence
-from ..linear_model import lars_path_gram
 from ..linear_model import cd_fast
+from ..linear_model import lars_path_gram
+
 from ..model_selection import check_cv, cross_val_score
 from ..utils._joblib import Parallel, delayed
 

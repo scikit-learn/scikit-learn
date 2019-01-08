@@ -191,11 +191,9 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
                                              'bsr', 'lil', 'dia'])
         weight_matrices = self._get_kernel(self.X_, X_2d)
         if self.kernel == 'knn':
-            probabilities = []
-            for weight_matrix in weight_matrices:
-                ine = np.sum(self.label_distributions_[weight_matrix], axis=0)
-                probabilities.append(ine)
-            probabilities = np.array(probabilities)
+            probabilities = np.array([
+                np.sum(self.label_distributions_[weight_matrix], axis=0)
+                for weight_matrix in weight_matrices])
         else:
             weight_matrices = weight_matrices.T
             probabilities = np.dot(weight_matrices, self.label_distributions_)
