@@ -950,3 +950,12 @@ def test_unary_encoder_inverse_transform_input():
         "Shape of the passed X data is not correct. Expected 3 columns, got 4",
         enc.inverse_transform, bad_X_tr
     )
+
+    # Also check that inverse_transform still works on non-binary matrices.
+    # Non-zero values are treated as ones.
+    X_inv = enc.inverse_transform([[4, 100, 0]])  # Treated as [1, 1, 0])
+    assert_array_equal(X_inv, [[1, 1]])
+    X_inv = enc.inverse_transform([[4, 100, 123]])  # Treated as [1, 1, 1])
+    assert_array_equal(X_inv, [[1, 2]])
+    X_inv = enc.inverse_transform([[0, 1, 123]])  # Treated as [0, 1, 1])
+    assert_array_equal(X_inv, [[0, 2]])

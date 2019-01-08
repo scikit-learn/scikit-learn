@@ -1088,9 +1088,8 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
             # current feature
             sub = X[:, start:stop]
 
-            # the original category is the sum of the (binary) columns, or
-            # equivalently the position of the first 0.
-            categories = sub.sum(axis=1).ravel()
+            # the original category is the number or non-zero columns
+            categories = (sub != 0).sum(axis=1).ravel()
             X_tr[:, feature_idx] = categories
 
         return X_tr
