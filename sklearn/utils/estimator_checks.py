@@ -48,6 +48,7 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection.base import SelectorMixin
 from sklearn.svm.base import BaseLibSVM
 from sklearn.linear_model.stochastic_gradient import BaseSGD
 from sklearn.pipeline import make_pipeline
@@ -103,7 +104,7 @@ def _yield_non_meta_checks(name, estimator):
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
 
-    if name not in ALLOW_NAN:
+    if name not in ALLOW_NAN and not isinstance(estimator, SelectorMixin):
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 
