@@ -14,6 +14,7 @@ from __future__ import division
 
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
+from collections.abc import Mapping, Sequence, Iterable
 from functools import partial, reduce
 from itertools import product
 import operator
@@ -32,8 +33,6 @@ from ..exceptions import NotFittedError
 from ..utils._joblib import Parallel, delayed
 from ..utils import check_random_state
 from ..utils.fixes import MaskedArray
-from ..utils.fixes import _Mapping as Mapping, _Sequence as Sequence
-from ..utils.fixes import _Iterable as Iterable
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
