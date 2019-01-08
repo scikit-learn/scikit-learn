@@ -669,3 +669,27 @@ def test_mutual_info_regression():
     gtruth = np.zeros(10)
     gtruth[:2] = 1
     assert_array_equal(support, gtruth)
+
+
+def test_univariate_nan_inf_allowed_in_transform():
+    X, y = make_regression(n_samples=100, n_features=10, n_informative=2,
+                           shuffle=False, random_state=0, noise=10)
+
+    univariate_filter = GenericUnivariateSelect(f_regression, mode='percentile')
+    univariate_filter.fit(X, y)
+    X[0] = np.NaN
+    X[1] = np.Inf
+    univariate_filter.transform(X)
+
+
+def test_univariate_nan_inf_allowed_in_fit():
+    X, y = make_regression(n_samples=100, n_features=10, n_informative=2,
+                           shuffle=False, random_state=0, noise=10)
+
+    # fake scorer to ensure GenericUnivariateSelect.fit allows nan if the scorer does
+    fake_scorer = lambda x, y: x
+
+    univariate_filter = GenericUnivariateSelect(fake_scorer, mode='percentile')
+    X[0] = np.NaN
+    X[1] = np.Inf
+    univariate_filter.fit(X, y)
