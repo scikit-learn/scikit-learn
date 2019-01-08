@@ -15,7 +15,6 @@
 from __future__ import print_function
 import sys
 import os
-from sklearn.externals.six import u
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -74,8 +73,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u('scikit-learn')
-copyright = u('2007 - 2018, scikit-learn developers (BSD License)')
+project = 'scikit-learn'
+copyright = '2007 - 2018, scikit-learn developers (BSD License)'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -214,8 +213,8 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass
 # [howto/manual]).
-latex_documents = [('index', 'user_guide.tex', u('scikit-learn user guide'),
-                    u('scikit-learn developers'), 'manual'), ]
+latex_documents = [('index', 'user_guide.tex', 'scikit-learn user guide',
+                    'scikit-learn developers', 'manual'), ]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
@@ -253,7 +252,7 @@ sphinx_gallery_conf = {
 # key: first image in set
 # values: (number of plot in set, height of thumbnail)
 carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600,
-                   'sphx_glr_plot_outlier_detection_003.png': 372,
+                   'sphx_glr_plot_anomaly_comparison_001.png': 372,
                    'sphx_glr_plot_gpr_co2_001.png': 350,
                    'sphx_glr_plot_adaboost_twoclass_001.png': 372,
                    'sphx_glr_plot_compare_methods_001.png': 349}
