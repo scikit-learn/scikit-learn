@@ -11,27 +11,8 @@ import itertools
 import numpy as np
 import numpy.linalg as la
 from scipy import sparse, stats
+from scipy.sparse import random as sparse_random
 
-try:
-    from scipy.sparse import random as sparse_random
-except ImportError:
-    from sklearn.utils.validation import check_random_state
-
-    def sparse_random(num_rows, num_cols, density, random_state=None):
-        # Helper function to create sparse random matrices.
-        # TODO: remove once scipy < 0.17 is no longer supported and just use
-        # scipy.sparse.random
-        # Note that this is not strictly equivalent to what scipy.sparse.random
-        # does as in our case the density is only correct in expectation but
-        # this is enough for our tests.
-        rng = check_random_state(random_state)
-        X = rng.uniform(size=(num_rows, num_cols))
-        zero_mask = rng.uniform(size=(num_rows, num_cols)) > density
-        X[zero_mask] = 0
-        return sparse.csr_matrix(X)
-
-
-from distutils.version import LooseVersion
 import pytest
 
 from sklearn.utils import gen_batches
@@ -389,15 +370,10 @@ def test_standard_scaler_numerical_stability():
     # was empirically found to cause numerical problems with np.mean & np.std.
 
     x = np.full(8, np.log(1e-5), dtype=np.float64)
-    if LooseVersion(np.__version__) >= LooseVersion('1.9'):
-        # This does not raise a warning as the number of samples is too low
-        # to trigger the problem in recent numpy
-        x_scaled = assert_no_warnings(scale, x)
-        assert_array_almost_equal(scale(x), np.zeros(8))
-    else:
-        w = "standard deviation of the data is probably very close to 0"
-        x_scaled = assert_warns_message(UserWarning, w, scale, x)
-        assert_array_almost_equal(x_scaled, np.zeros(8))
+    # This does not raise a warning as the number of samples is too low
+    # to trigger the problem in recent numpy
+    x_scaled = assert_no_warnings(scale, x)
+    assert_array_almost_equal(scale(x), np.zeros(8))
 
     # with 2 more samples, the std computation run into numerical issues:
     x = np.full(10, np.log(1e-5), dtype=np.float64)

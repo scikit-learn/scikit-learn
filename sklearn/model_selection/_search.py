@@ -14,6 +14,7 @@ from __future__ import division
 
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
+from collections.abc import Mapping, Sequence, Iterable
 from functools import partial, reduce
 from itertools import product
 import operator
@@ -30,12 +31,8 @@ from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
 from ..exceptions import NotFittedError
 from ..utils._joblib import Parallel, delayed
-from ..externals import six
 from ..utils import check_random_state
-from ..utils.fixes import sp_version
 from ..utils.fixes import MaskedArray
-from ..utils.fixes import _Mapping as Mapping, _Sequence as Sequence
-from ..utils.fixes import _Iterable as Iterable
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
@@ -53,7 +50,7 @@ class ParameterGrid(object):
     Can be used to iterate over parameter value combinations with the
     Python built-in function iter.
 
-    Read more in the :ref:`User Guide <search>`.
+    Read more in the :ref:`User Guide <grid_search>`.
 
     Parameters
     ----------
@@ -276,14 +273,11 @@ class ParameterSampler(object):
         else:
             # Always sort the keys of a dictionary, for reproducibility
             items = sorted(self.param_distributions.items())
-            for _ in six.moves.range(self.n_iter):
+            for _ in range(self.n_iter):
                 params = dict()
                 for k, v in items:
                     if hasattr(v, "rvs"):
-                        if sp_version < (0, 16):
-                            params[k] = v.rvs()
-                        else:
-                            params[k] = v.rvs(random_state=rnd)
+                        params[k] = v.rvs(random_state=rnd)
                     else:
                         params[k] = v[rnd.randint(len(v))]
                 yield params
@@ -371,7 +365,7 @@ def _check_param_grid(param_grid):
             if isinstance(v, np.ndarray) and v.ndim > 1:
                 raise ValueError("Parameter array should be one-dimensional.")
 
-            if (isinstance(v, six.string_types) or
+            if (isinstance(v, str) or
                     not isinstance(v, (np.ndarray, Sequence))):
                 raise ValueError("Parameter values for parameter ({0}) need "
                                  "to be a sequence(but not a string) or"
@@ -382,8 +376,7 @@ def _check_param_grid(param_grid):
                                  "to be a non-empty sequence.".format(name))
 
 
-class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
-                                      MetaEstimatorMixin)):
+class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     """Abstract base class for hyper parameter search with cross-validation.
     """
 
@@ -619,7 +612,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         if self.multimetric_:
             if self.refit is not False and (
-                    not isinstance(self.refit, six.string_types) or
+                    not isinstance(self.refit, str) or
                     # This will work for both dict / list (tuple)
                     self.refit not in scorers):
                 raise ValueError("For multi-metric scoring, the parameter "
