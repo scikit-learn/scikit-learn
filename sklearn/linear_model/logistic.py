@@ -1231,8 +1231,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Used to specify the norm used in the penalization. The 'newton-cg',
         'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
         only supported by the 'saga' solver. If 'none' (not supported by the
-        liblinear solver), no regularization is applied: this is equivalent
-        to setting C to ``np.inf`` with 'l2'.
+        liblinear solver), no regularization is applied.
 
         .. versionadded:: 0.19
            l1 penalty with SAGA solver (allowing 'multinomial' + L1)
@@ -1303,7 +1302,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         - 'liblinear' and 'saga' also handle L1 penalty
         - 'saga' also supports 'elasticnet' penalty
         - 'liblinear' does not handle no penalty
-
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can
@@ -1689,10 +1687,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     This class implements logistic regression using liblinear, newton-cg, sag
     of lbfgs optimizer. The newton-cg, sag and lbfgs solvers support only L2
-    regularization with primal formulation, or no regularization. The
-    liblinear solver supports both L1 and L2 regularization, with a dual
-    formulation only for the L2 penalty. Elastic-Net penalty is only
-    supported by the saga solver.
+    regularization with primal formulation. The liblinear solver supports both
+    L1 and L2 regularization, with a dual formulation only for the L2 penalty.
+    Elastic-Net penalty is only supported by the saga solver.
 
     For the grid of `Cs` values and `l1_ratios` values, the best
     hyperparameter is selected by the cross-validator `StratifiedKFold`, but
@@ -1730,12 +1727,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
-    penalty : str, 'l1', 'l2', 'elasticnet' or 'none', optional (default='l2')
+    penalty : str, 'l1', 'l2', or 'elasticnet', optional (default='l2')
         Used to specify the norm used in the penalization. The 'newton-cg',
         'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
-        only supported by the 'saga' solver. If 'none' (not supported by the
-        liblinear solver), no regularization is applied: this is equivalent
-        to setting C to ``np.inf`` with 'l2'.
+        only supported by the 'saga' solver.
 
     scoring : string, callable, or None, optional (default=None)
         A string (see model evaluation documentation) or
@@ -1754,11 +1749,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         - For multiclass problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
           handle multinomial loss; 'liblinear' is limited to one-versus-rest
           schemes.
-        - 'newton-cg', 'lbfgs', 'sag' and 'saga' handle L2 or no penalty
-        - 'liblinear' and 'saga' also handle L1 penalty
-        - 'saga' also supports 'elasticnet' penalty
-        - 'liblinear' does not handle no penalty, and might be slower in
-          LogisticRegressionCV because it does not handle warm-starting.
+        - 'newton-cg', 'lbfgs' and 'sag' only handle L2 penalty, whereas
+          'liblinear' and 'saga' handle L1 penalty.
+        - 'liblinear' might be slower in LogisticRegressionCV because it does
+          not handle warm-starting.
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can preprocess the data
@@ -1996,18 +1990,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                                   self.penalty))
 
             l1_ratios_ = [None]
-        if self.penalty == 'none':
-            if self.Cs != 10:  # default value
-                warnings.warn(
-                    "Setting penalty='none' will ignore the Cs and l1_ratios "
-                    "parameters"
-                )
-                # Note that check for l1_ratio is done right above
-            Cs_ = [np.inf]
-            penalty = 'l2'
-        else:
-            Cs_ = self.Cs
-            penalty = self.penalty
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
                          order="C",
@@ -2080,8 +2062,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                                **_joblib_parallel_args(prefer=prefer))(
-            path_func(X, y, train, test, pos_class=label, Cs=Cs_,
-                      fit_intercept=self.fit_intercept, penalty=penalty,
+            path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
+                      fit_intercept=self.fit_intercept, penalty=self.penalty,
                       dual=self.dual, solver=solver, tol=self.tol,
                       max_iter=self.max_iter, verbose=self.verbose,
                       class_weight=class_weight, scoring=self.scoring,
@@ -2182,7 +2164,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                     X, y, pos_class=encoded_label, Cs=[C_], solver=solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
                     max_iter=self.max_iter, tol=self.tol,
-                    penalty=penalty,
+                    penalty=self.penalty,
                     class_weight=class_weight,
                     multi_class=multi_class,
                     verbose=max(0, self.verbose - 1),

@@ -1774,18 +1774,9 @@ def test_penalty_none(solver):
     msg = "Setting penalty='none' will ignore the C"
     lr = LogisticRegression(penalty='none', solver=solver, C=4)
     assert_warns_message(UserWarning, msg, lr.fit, X, y)
-    lr = LogisticRegressionCV(penalty='none', solver=solver, Cs=4, cv=cv)
-    assert_warns_message(UserWarning, msg, lr.fit, X, y)
 
     lr_none = LogisticRegression(penalty='none', solver=solver)
     lr_l2_C_inf = LogisticRegression(penalty='l2', C=np.inf, solver=solver)
-    pred_none = lr_none.fit(X, y).predict(X)
-    pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
-    assert_array_almost_equal(pred_none, pred_l2_C_inf)
-
-    lr_none = LogisticRegressionCV(penalty='none', solver=solver, cv=cv)
-    lr_l2_C_inf = LogisticRegressionCV(penalty='l2', Cs=[np.inf],
-                                       solver=solver, cv=cv)
     pred_none = lr_none.fit(X, y).predict(X)
     pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
     assert_array_almost_equal(pred_none, pred_l2_C_inf)
