@@ -136,8 +136,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     add_indicator : boolean, optional (default=False)
         If True, a `MissingIndicator` transform will stack into output
-        of the imputer's transform. That allowing a predictive estimator
-        to account for missingness.
+        of the imputer's transform. This allows a predictive estimator
+        to account for missingness despite imputation.
 
     Attributes
     ----------
@@ -558,7 +558,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         return imputer_mask, features_with_missing
 
-    def _drop_constant_columns(self, X):
+    def _drop_all_missing_columns(self, X):
         """
         In case we have a column with totally missing values, drop it,
         because constant column is not informative.
@@ -579,11 +579,11 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             sparse_format = X.format
             X = X.toarray()
 
-        if not self.fully_missing_indexes_:
+        if not self.fully_missing_indices_:
             ix = _get_mask(X, self.missing_values)
-            self.fully_missing_indexes_ = np.where(ix.all(axis=0))[0]
+            self.fully_missing_indices_ = np.where(ix.all(axis=0))[0]
 
-        X = np.delete(X, self.fully_missing_indexes_, axis=1)
+        X = np.delete(X, self.fully_missing_indices_, axis=1)
 
         if is_sparse:
             X = sparse.csr_matrix(X) if sparse_format is 'csr' else sparse.csc_matrix(X)
@@ -604,7 +604,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         self : object
             Returns self.
         """
-        self.fully_missing_indexes_ = None
+        self.fully_missing_indices_ = None
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
         else:
@@ -612,7 +612,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse=('csc', 'csr'),
                         force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)
-        X = self._drop_constant_columns(X)
+        X = self._drop_all_missing_columns(X)
 
         self._n_features = X.shape[1]
 
@@ -655,7 +655,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse=('csc', 'csr'),
                         force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)
-        X = self._drop_constant_columns(X)
+        X = self._drop_all_missing_columns(X)
 
         if X.shape[1] != self._n_features:
             raise ValueError("X has a different number of features "
