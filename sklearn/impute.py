@@ -502,7 +502,6 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         self.features = features
         self.sparse = sparse
         self.error_on_new = error_on_new
-        self.fully_missing_indexes = None
 
     def _get_missing_features_info(self, X):
         """Compute the imputer mask and the indices of the features
@@ -580,11 +579,11 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             sparse_format = X.format
             X = X.toarray()
 
-        if not self.fully_missing_indexes:
+        if not self.fully_missing_indexes_:
             ix = _get_mask(X, self.missing_values)
-            self.fully_missing_indexes = np.where(ix.all(axis=0))[0]
+            self.fully_missing_indexes_ = np.where(ix.all(axis=0))[0]
 
-        X = np.delete(X, self.fully_missing_indexes, axis=1)
+        X = np.delete(X, self.fully_missing_indexes_, axis=1)
 
         if is_sparse:
             X = sparse.csr_matrix(X) if sparse_format is 'csr' else sparse.csc_matrix(X)
@@ -605,6 +604,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         self : object
             Returns self.
         """
+        self.fully_missing_indexes_ = None
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
         else:
