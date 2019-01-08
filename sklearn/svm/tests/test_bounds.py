@@ -7,7 +7,7 @@ from sklearn.svm.bounds import l1_min_c
 from sklearn.svm import LinearSVC
 from sklearn.linear_model.logistic import LogisticRegression
 
-from sklearn.utils.testing import assert_true, assert_raises
+from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 
 
@@ -45,7 +45,8 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
     min_c = l1_min_c(X, y, loss, fit_intercept, intercept_scaling)
 
     clf = {
-        'log': LogisticRegression(penalty='l1'),
+        'log': LogisticRegression(penalty='l1', solver='liblinear',
+                                  multi_class='ovr'),
         'squared_hinge': LinearSVC(loss='squared_hinge',
                                    penalty='l1', dual=False),
     }[loss]
@@ -55,13 +56,13 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
 
     clf.C = min_c
     clf.fit(X, y)
-    assert_true((np.asarray(clf.coef_) == 0).all())
-    assert_true((np.asarray(clf.intercept_) == 0).all())
+    assert (np.asarray(clf.coef_) == 0).all()
+    assert (np.asarray(clf.intercept_) == 0).all()
 
     clf.C = min_c * 1.01
     clf.fit(X, y)
-    assert_true((np.asarray(clf.coef_) != 0).any() or
-                (np.asarray(clf.intercept_) != 0).any())
+    assert ((np.asarray(clf.coef_) != 0).any() or
+            (np.asarray(clf.intercept_) != 0).any())
 
 
 def test_ill_posed_min_c():

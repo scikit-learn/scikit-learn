@@ -5,7 +5,6 @@ from itertools import product
 
 import pytest
 
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -464,7 +463,7 @@ def _test_ridge_classifiers(filter_):
     reg = RidgeClassifierCV(cv=cv)
     reg.fit(filter_(X_iris), y_iris)
     y_pred = reg.predict(filter_(X_iris))
-    assert_true(np.mean(y_iris == y_pred) >= 0.8)
+    assert np.mean(y_iris == y_pred) >= 0.8
 
 
 def _test_tolerance(filter_):
@@ -476,7 +475,7 @@ def _test_tolerance(filter_):
     ridge2.fit(filter_(X_diabetes), y_diabetes)
     score2 = ridge2.score(filter_(X_diabetes), y_diabetes)
 
-    assert_true(score >= score2)
+    assert score >= score2
 
 
 def check_dense_sparse(test_func):
@@ -490,6 +489,7 @@ def check_dense_sparse(test_func):
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 @pytest.mark.parametrize(
         'test_func',
         (_test_ridge_loo, _test_ridge_cv, _test_ridge_cv_normalize,
@@ -548,6 +548,7 @@ def test_class_weights():
     assert_array_almost_equal(reg.intercept_, rega.intercept_)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 @pytest.mark.parametrize('reg', (RidgeClassifier, RidgeClassifierCV))
 def test_class_weight_vs_sample_weight(reg):
     """Check class_weights resemble sample_weights behavior."""
@@ -577,6 +578,7 @@ def test_class_weight_vs_sample_weight(reg):
     assert_almost_equal(reg1.coef_, reg2.coef_)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_class_weights_cv():
     # Test class weights for cross validated ridge classifier.
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
@@ -593,6 +595,7 @@ def test_class_weights_cv():
     assert_array_equal(reg.predict([[-.2, 2]]), np.array([-1]))
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_ridgecv_store_cv_values():
     rng = np.random.RandomState(42)
 
@@ -602,7 +605,7 @@ def test_ridgecv_store_cv_values():
     alphas = [1e-1, 1e0, 1e1]
     n_alphas = len(alphas)
 
-    r = RidgeCV(alphas=alphas, store_cv_values=True)
+    r = RidgeCV(alphas=alphas, cv=None, store_cv_values=True)
 
     # with len(y.shape) == 1
     y = rng.randn(n_samples)
@@ -616,6 +619,7 @@ def test_ridgecv_store_cv_values():
     assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_ridge_classifier_cv_store_cv_values():
     x = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
@@ -625,7 +629,7 @@ def test_ridge_classifier_cv_store_cv_values():
     alphas = [1e-1, 1e0, 1e1]
     n_alphas = len(alphas)
 
-    r = RidgeClassifierCV(alphas=alphas, store_cv_values=True)
+    r = RidgeClassifierCV(alphas=alphas, cv=None, store_cv_values=True)
 
     # with len(y.shape) == 1
     n_targets = 1
@@ -736,6 +740,7 @@ def test_sparse_design_with_sample_weights():
                                       decimal=6)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_ridgecv_int_alphas():
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
@@ -746,6 +751,7 @@ def test_ridgecv_int_alphas():
     ridge.fit(X, y)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_ridgecv_negative_alphas():
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])

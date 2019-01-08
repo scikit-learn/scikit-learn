@@ -14,10 +14,10 @@
 ::
 :: More details at:
 :: https://github.com/cython/cython/wiki/64BitCythonExtensionsOnWindows
-:: http://stackoverflow.com/a/13751649/163740
+:: https://stackoverflow.com/a/13751649/163740
 ::
 :: Author: Olivier Grisel
-:: License: CC0 1.0 Universal: http://creativecommons.org/publicdomain/zero/1.0/
+:: License: CC0 1.0 Universal: https://creativecommons.org/publicdomain/zero/1.0/
 ::
 :: Notes about batch files for Python people:
 ::

@@ -5,7 +5,6 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_true
 
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
@@ -19,7 +18,7 @@ def test_sparse_coef():
     clf = ElasticNet()
     clf.coef_ = [1, 2, 3]
 
-    assert_true(sp.isspmatrix(clf.sparse_coef_))
+    assert sp.isspmatrix(clf.sparse_coef_)
     assert_equal(clf.sparse_coef_.toarray().tolist()[0], clf.coef_)
 
 

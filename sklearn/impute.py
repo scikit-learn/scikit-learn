@@ -4,7 +4,6 @@
 # License: BSD 3 clause
 
 import warnings
-from time import time
 import numbers
 
 import numpy as np
@@ -20,10 +19,6 @@ from .utils.validation import FLOAT_DTYPES
 from .utils.fixes import _object_dtype_isnan
 from .utils import is_scalar_nan
 
-from .externals import six
-
-zip = six.moves.zip
-map = six.moves.map
 
 __all__ = [
     'MissingIndicator',
@@ -138,6 +133,22 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     ----------
     statistics_ : array of shape (n_features,)
         The imputation fill value for each feature.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.impute import SimpleImputer
+    >>> imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
+    >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
+    ... # doctest: +NORMALIZE_WHITESPACE
+    SimpleImputer(copy=True, fill_value=None, missing_values=nan,
+           strategy='mean', verbose=0)
+    >>> X = [[np.nan, 2, 3], [4, np.nan, 6], [10, np.nan, 9]]
+    >>> print(imp_mean.transform(X))
+    ... # doctest: +NORMALIZE_WHITESPACE
+    [[ 7.   2.   3. ]
+     [ 4.   3.5  6. ]
+     [10.   3.5  9. ]]
 
     Notes
     -----
@@ -259,8 +270,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         else:
             for i in range(X.shape[1]):
-                column = X.data[X.indptr[i]:X.indptr[i+1]]
-                mask_column = mask_data[X.indptr[i]:X.indptr[i+1]]
+                column = X.data[X.indptr[i]:X.indptr[i + 1]]
+                mask_column = mask_data[X.indptr[i]:X.indptr[i + 1]]
                 column = column[~mask_column]
 
                 # combine explicit and implicit zeros
@@ -340,7 +351,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data to complete.
         """
         check_is_fitted(self, 'statistics_')
@@ -397,11 +408,18 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 class MissingIndicator(BaseEstimator, TransformerMixin):
     """Binary indicators for missing values.
 
+    Note that this component typically should not not be used in a vanilla
+    :class:`Pipeline` consisting of transformers and a classifier, but rather
+    could be added using a :class:`FeatureUnion` or :class:`ColumnTransformer`.
+
+    Read more in the :ref:`User Guide <impute>`.
+
     Parameters
     ----------
     missing_values : number, string, np.nan (default) or None
         The placeholder for the missing values. All occurrences of
-        `missing_values` will be imputed.
+        `missing_values` will be indicated (True in the output array), the
+        other values will be marked as False.
 
     features : str, optional
         Whether the imputer mask should represent all or a subset of
@@ -422,7 +440,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     error_on_new : boolean, optional
         If True (default), transform will raise an error when there are
         features with missing values in transform that have no missing values
-        in fit This is applicable only when ``features="missing-only"``.
+        in fit. This is applicable only when ``features="missing-only"``.
 
     Attributes
     ----------
@@ -442,7 +460,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     ...                [np.nan, 2, 3],
     ...                [2, 4, 0]])
     >>> indicator = MissingIndicator()
-    >>> indicator.fit(X1)
+    >>> indicator.fit(X1)  # doctest: +NORMALIZE_WHITESPACE
     MissingIndicator(error_on_new=True, features='missing-only',
              missing_values=nan, sparse='auto')
     >>> X2_tr = indicator.transform(X2)
@@ -543,7 +561,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             raise ValueError("'features' has to be either 'missing-only' or "
                              "'all'. Got {} instead.".format(self.features))
 
-        if not ((isinstance(self.sparse, six.string_types) and
+        if not ((isinstance(self.sparse, str) and
                 self.sparse == "auto") or isinstance(self.sparse, bool)):
             raise ValueError("'sparse' has to be a boolean or 'auto'. "
                              "Got {!r} instead.".format(self.sparse))

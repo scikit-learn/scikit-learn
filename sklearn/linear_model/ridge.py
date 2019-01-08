@@ -29,7 +29,6 @@ from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
-from ..externals import six
 from ..metrics.scorer import check_scoring
 from ..exceptions import ConvergenceWarning
 
@@ -464,7 +463,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         return coef
 
 
-class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
+class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
@@ -779,6 +778,15 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.linear_model import RidgeClassifier
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> clf = RidgeClassifier().fit(X, y)
+    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    0.9595...
+
     See also
     --------
     Ridge : Ridge regression
@@ -885,7 +893,7 @@ class _RidgeGCV(LinearModel):
     References
     ----------
     http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
-    http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
+    https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
     def __init__(self, alphas=(0.1, 1.0, 10.0),
@@ -1161,6 +1169,8 @@ class _BaseRidgeCV(LinearModel):
 class RidgeCV(_BaseRidgeCV, RegressorMixin):
     """Ridge regression with built-in cross-validation.
 
+    See glossary entry for :term:`cross-validation estimator`.
+
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation.
 
@@ -1200,8 +1210,8 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
         - None, to use the efficient Leave-One-Out cross-validation
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`sklearn.model_selection.StratifiedKFold` is used, else,
@@ -1249,6 +1259,15 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     alpha_ : float
         Estimated regularization parameter.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_diabetes
+    >>> from sklearn.linear_model import RidgeCV
+    >>> X, y = load_diabetes(return_X_y=True)
+    >>> clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
+    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    0.5166...
+
     See also
     --------
     Ridge : Ridge regression
@@ -1260,6 +1279,8 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
 class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation. Currently, only the n_features >
@@ -1301,8 +1322,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
         - None, to use the efficient Leave-One-Out cross-validation
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1338,6 +1359,15 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     alpha_ : float
         Estimated regularization parameter
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.linear_model import RidgeClassifierCV
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> clf = RidgeClassifierCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
+    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    0.9630...
 
     See also
     --------
