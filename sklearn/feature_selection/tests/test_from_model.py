@@ -320,6 +320,7 @@ def test_threshold_without_refitting():
     model.threshold = "1.0 * mean"
     assert_greater(X_transform.shape[1], model.transform(data).shape[1])
 
+
 def test_transform_accepts_nan_inf():
     # Test that transform doesn't check for np.inf and np.nan values.
     clf = RandomForestClassifier(n_estimators=100, random_state=0)
