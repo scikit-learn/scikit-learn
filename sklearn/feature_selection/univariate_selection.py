@@ -337,7 +337,8 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
+        X, y = check_X_y(X, y, ['csr', 'csc'], force_all_finite=False,
+                         multi_output=True)
 
         if not callable(self.score_func):
             raise TypeError("The score function should be a callable, %s (%s) "
