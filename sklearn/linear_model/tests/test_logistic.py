@@ -11,7 +11,6 @@ from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
 from sklearn.metrics.scorer import get_scorer
 from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import KFold
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
@@ -1769,7 +1768,6 @@ def test_penalty_none(solver):
     # - Make sure setting penalty='none' is equivalent to setting C=np.inf with
     #   l2 penalty.
     X, y = make_classification(n_samples=1000)
-    cv = KFold(n_splits=2, random_state=0)
 
     msg = "Setting penalty='none' will ignore the C"
     lr = LogisticRegression(penalty='none', solver=solver, C=4)
