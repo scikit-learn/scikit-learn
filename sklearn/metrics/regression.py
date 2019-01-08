@@ -24,9 +24,12 @@ the lower the better
 from __future__ import division
 
 import numpy as np
+import warnings
 
-from ..utils.validation import check_array, check_consistent_length
+from ..utils.validation import (check_array, check_consistent_length,
+                                _num_samples)
 from ..utils.validation import column_or_1d
+from ..exceptions import UndefinedMetricWarning
 
 
 __ALL__ = [
@@ -500,6 +503,9 @@ def r2_score(y_true, y_pred, sample_weight=None,
     Unlike most other scores, R^2 score may be negative (it need not actually
     be the square of a quantity R).
 
+    This metric is not well-defined for single samples and will return a NaN
+    value if n_samples is less than two.
+
     References
     ----------
     .. [1] `Wikipedia entry on the Coefficient of determination
@@ -533,6 +539,11 @@ def r2_score(y_true, y_pred, sample_weight=None,
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
     check_consistent_length(y_true, y_pred, sample_weight)
+
+    if _num_samples(y_pred) < 2:
+        msg = "R^2 score is not well-defined with less than two samples."
+        warnings.warn(msg, UndefinedMetricWarning)
+        return float('nan')
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
