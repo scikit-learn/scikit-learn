@@ -355,8 +355,12 @@ def test_rfe_cv_groups():
     est_groups.fit(X, y, groups=groups)
     assert est_groups.n_features_ > 0
 
-def test_rfe_allow_nan_inf_in_x():
-    generator = check_random_state(0)
+
+@pytest.mark.parametrize("rfe_cls", [
+    RFE,
+    RFECV
+])
+def test_rfe_allow_nan_inf_in_x(rfe_cls):
     iris = load_iris()
     X = iris.data
     y = iris.target
@@ -366,22 +370,6 @@ def test_rfe_allow_nan_inf_in_x():
     X[0][1] = np.Inf
 
     clf = MockClassifier()
-    rfe = RFE(estimator=clf)
+    rfe = rfe_cls(estimator=clf)
     rfe.fit(X, y)
     rfe.transform(X)
-
-def test_rfecv_allow_nan_inf_in_x():
-    generator = check_random_state(0)
-    iris = load_iris()
-    X = iris.data
-    y = iris.target
-
-    # add nan and inf value to X
-    X[0][0] = np.NaN
-    X[0][1] = np.Inf
-
-    clf = MockClassifier()
-    rfecv = RFECV(estimator=clf)
-    rfecv.fit(X, y)
-    rfecv.transform(X)
-
