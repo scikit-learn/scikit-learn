@@ -7,9 +7,9 @@ import pytest
 from scipy import linalg
 
 from sklearn.model_selection import train_test_split
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
@@ -80,7 +80,7 @@ def test_simple_precomputed():
 def _assert_same_lars_path_result(output1, output2):
     assert_equal(len(output1), len(output2))
     for o1, o2 in zip(output1, output2):
-        assert_array_equal(o1, o2)
+        assert_allclose(o1, o2)
 
 
 @pytest.mark.parametrize('method', ['lar', 'lasso'])
