@@ -356,11 +356,11 @@ def test_rfe_cv_groups():
     assert est_groups.n_features_ > 0
 
 
-@pytest.mark.parametrize("rfe_cls", [
-    RFE,
-    RFECV
+@pytest.mark.parametrize("cv", [
+    None,
+    5
 ])
-def test_rfe_allow_nan_inf_in_x(rfe_cls):
+def test_rfe_allow_nan_inf_in_x(cv):
     iris = load_iris()
     X = iris.data
     y = iris.target
@@ -370,6 +370,9 @@ def test_rfe_allow_nan_inf_in_x(rfe_cls):
     X[0][1] = np.Inf
 
     clf = MockClassifier()
-    rfe = rfe_cls(estimator=clf)
+    if cv is not None:
+        rfe = RFECV(estimator=clf, cv=cv)
+    else:
+        rfe = RFE(estimator=clf)
     rfe.fit(X, y)
     rfe.transform(X)
