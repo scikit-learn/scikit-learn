@@ -77,14 +77,13 @@ def plot_data(lda, X, y, y_pred, fig_index):
     # class 0: dots
     plt.scatter(
         X0_tp[:, 0], X0_tp[:, 1], marker='.', color='red')
-    plt.scatter(
-        X0_fp[:, 0], X0_fp[:, 1], marker='.', color='#990000')  # dark red
+    plt.scatter(X0_fp[:, 0], X0_fp[:, 1], marker='x',
+                s=20, color='#990000')  # dark red
 
     # class 1: dots
-    plt.scatter(
-        X1_tp[:, 0], X1_tp[:, 1], marker='.', color='blue')
-    plt.scatter(
-        X1_fp[:, 0], X1_fp[:, 1], marker='.', color='#000099')  # dark blue
+    plt.scatter(X1_tp[:, 0], X1_tp[:, 1], marker='.', color='blue')
+    plt.scatter(X1_fp[:, 0], X1_fp[:, 1], marker='x',
+                s=20, color='#000099')  # dark blue
 
     # class 0 and 1 : areas
     nx, ny = 200, 100
