@@ -1425,10 +1425,12 @@ class TfidfVectorizer(CountVectorizer):
         Type of the matrix returned by fit_transform() or transform().
 
     norm : 'l1', 'l2' or None, optional (default=’l2’)
-        Norm is used to normalize term vectors to have unit norm.
-        ``norm='l2'`` uses cosine similarity.
-        ``norm='l1'`` uses the Euclidean distance.
-        ``norm=None`` means no normalization is performed.
+        Each output row will have unit norm, either:
+        * 'l2': Sum of squares of vector elements is 1. The cosine
+          similarity between two vectors is their dot product when
+          l2 norm has been applied.
+        * 'l1': Sum of absolute values of vector elements is 1.
+        See :func:`preprocessing.normalize`
 
     use_idf : boolean (default=True)
         Enable inverse-document-frequency reweighting.
@@ -1486,9 +1488,8 @@ class TfidfVectorizer(CountVectorizer):
         count of a word relative to the appearance of a document.
 
         The formula that is used to compute the tf-idf of term t is​
-        :math:`tf-idf(d, t) = tf(t) * idf(d, t)` and the idf is computed
-        as​ `idf(d, t) = log(\frac{n}{df(d, t)} + 1)`
-        (if ``smooth_idf=False``)
+        `tf-idf(d, t) = tf(t) * idf(d, t)` and the idf is computed
+        as​ `idf(d, t) = log [ n / df(d, t) ] + 1` (if ``smooth_idf=False``)
         where `n` is the total number of documents and ​`df(d, t)​`​ is the
         document frequency; the document frequency is the number of documents
         `​d​`​ that contain term ​`​t​`​. The effect of adding "1" to the idf
@@ -1496,7 +1497,7 @@ class TfidfVectorizer(CountVectorizer):
         occur in all documents in a training set, will not be entirely ignored.
         (Note that the idf formula above differs from the standard textbook
         notation that defines the idf as​
-        `idf(d, t) = log{\frac{n}{df(d, t) + 1}}`
+        `idf(d, t) = log [ n / df(d, t) + 1 ]`
 
     Notes
     -----
