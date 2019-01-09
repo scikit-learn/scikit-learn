@@ -112,10 +112,10 @@ def plot_ellipse(splot, mean, cov, color):
     angle = 180 * angle / np.pi  # convert to degrees
     # filled Gaussian at 2 standard deviation
     ell = mpl.patches.Ellipse(mean, 2 * v[0] ** 0.5, 2 * v[1] ** 0.5,
-                              180 + angle, facecolor='none',
-                              edgecolor='k', linewidth=2)
+                              180 + angle, facecolor=color,
+                              edgecolor='black', linewidth=2)
     ell.set_clip_box(splot.bbox)
-    ell.set_alpha(0.5)
+    ell.set_alpha(0.2)
     splot.add_artist(ell)
     splot.set_xticks(())
     splot.set_yticks(())
