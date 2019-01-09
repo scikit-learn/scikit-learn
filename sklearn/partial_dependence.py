@@ -16,7 +16,6 @@ from .base import is_classifier, is_regressor
 from .utils.extmath import cartesian
 from .externals.joblib import Parallel, delayed
 from .externals import six
-from .externals.six.moves import map, range, zip
 from .utils import check_array
 from .utils.validation import check_is_fitted
 from .tree._tree import DTYPE
@@ -29,33 +28,34 @@ __all__ = ['partial_dependence', 'plot_partial_dependence']
 
 
 def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
-    """Generate a grid of points based on the ``percentiles of ``X``.
+    """Generate a grid of points based on the percentiles of X.
 
-    The grid is a cartesian product between the columns of Z. The ith column of
-    Z consists in ``grid_resolution`` equally-spaced points between the
-    percentiles of the ith column of X.
+    The grid is a cartesian product between the columns of ``values``. The
+    ith column of ``values`` consists in ``grid_resolution`` equally-spaced
+    points between the percentiles of the jth column of X.
     If ``grid_resolution`` is bigger than the number of unique values in the
-    ith column of X, then those unique values will be used instead.
+    jth column of X, then those unique values will be used instead.
 
     Parameters
     ----------
-    X : ndarray
+    X : ndarray, shape=(n_samples, n_target_features)
         The data
     percentiles : tuple of floats
         The percentiles which are used to construct the extreme values of
-        the grid.
+        the grid. Must be in [0, 1].
     grid_resolution : int
-        The number of equally spaced points to be placed on the grid for a
-        given column.
+        The number of equally spaced points to be placed on the grid for each
+        feature.
 
     Returns
     -------
     grid : ndarray, shape=(n_points, X.shape[1])
-        All data points on the grid. n_points is always ``<= grid_resolution **
-        X.shape[1]``.
-    Z: list of ndarray
-        The values with which the grid has been created. The ndarrays may be of
-        different shape: either (grid_resolution,) or (n_unique_values,).
+        A value for each feature at each point in the grid. ``n_points`` is
+        always ``<= grid_resolution ** X.shape[1]``.
+    values : list of 1d ndarrays
+        The values with which the grid has been created. The size of each
+        array ``values[j]`` is either ``grid_resolution``, or the number of
+        unique values in ``X[:, j]``, whichever is smaller.
     """
     try:
         assert len(percentiles) == 2
@@ -91,8 +91,7 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     return cartesian(values), values
 
 
-def _partial_dependence_recursion(est, grid, target_variables):
-
+def _partial_dependence_recursion(est, grid, features):
     if est.init is not None:
         warnings.warn(
             'Using recursion method with a non-constant init predictor will '
@@ -111,18 +110,17 @@ def _partial_dependence_recursion(est, grid, target_variables):
     for stage in range(n_estimators):
         for k in range(n_trees_per_stage):
             tree = est.estimators_[stage, k].tree_
-            _partial_dependence_tree(tree, grid, target_variables,
+            _partial_dependence_tree(tree, grid, features,
                                      learning_rate, averaged_predictions[k])
 
     return averaged_predictions
 
 
-def _partial_dependence_brute(est, grid, target_variables, X):
-
+def _partial_dependence_brute(est, grid, features, X):
     averaged_predictions = []
     for new_values in grid:
         X_eval = X.copy()
-        for i, variable in enumerate(target_variables):
+        for i, variable in enumerate(features):
             X_eval[:, variable] = new_values[i]
 
         try:
@@ -159,20 +157,13 @@ def _partial_dependence_brute(est, grid, target_variables, X):
     return averaged_predictions
 
 
-def partial_dependence(est, target_variables, X, percentiles=(0.05, 0.95),
+def partial_dependence(est, features, X, percentiles=(0.05, 0.95),
                        grid_resolution=100, method='auto'):
-    """Partial dependence of ``target_variables``.
+    """Partial dependence of ``features``.
 
-    .. _warning_recursion_init:
-
-    .. warning::
-        The 'recursion' method only works for gradient boosting estimators,
-        and unlike the 'brute' method, it does not account for the ``init``
-        predictor of the boosting process. In practice this will produce the
-        same values as 'brute' up to a constant offset in the target
-        response, provided that ``init`` is a consant estimator (which is
-        the default). However, as soon as ``init`` is not a constant
-        estimator, the partial dependence values are incorrect.
+    Partial dependence of a feature (or a set of features) corresponds to
+    the average response of an estimator for each possible value of the
+    feature.
 
     Read more in the :ref:`User Guide <partial_dependence>`.
 
@@ -181,16 +172,16 @@ def partial_dependence(est, target_variables, X, percentiles=(0.05, 0.95),
     est : BaseEstimator
         A fitted classification or regression model. Multioutput-multiclass
         classifiers are not supported.
-    target_variables : list or array-like of int
+    features : list or array-like of int
         The target features for which the partial dependency should be
         computed.
     X : array-like, shape=(n_samples, n_features)
         ``X`` is used both to generate a grid of values for the
-        ``target_variables``, and to compute the averaged predictions when
+        ``features``, and to compute the averaged predictions when
         method is 'brute'.
     percentiles : tuple of float, optional (default=(0.05, 0.95))
         The lower and upper percentile used to create the extreme values
-        for the ``grid``.
+        for the grid. Must be in [0, 1].
     grid_resolution : int, optional (default=100)
         The number of equally spaced points on the grid, for each target
         feature.
@@ -213,27 +204,44 @@ def partial_dependence(est, target_variables, X, percentiles=(0.05, 0.95),
 
     Returns
     -------
-    averaged_predictions : array, shape=(n_targets, n_points)
-        The predictions for all the points in the ``grid``, averaged over
-        all samples in X (or over the training data if ``method`` is
-        `recursion`). ``n_targets`` corresponds to the number of classes in
+    averaged_predictions : array, \
+        shape=(n_outputs, n_values_feature_0, n_values_feature_1, ...)
+        The predictions for all the points in the grid, averaged over all
+        samples in X (or over the training data if ``method`` is
+        'recursion'). ``n_outputs`` corresponds to the number of classes in
         a multi-class setting, or to the number of tasks for multi-output
         regression. For classical regression and binary classification
-        ``n_targets==1``.
-    values : seq of ndarray
+        ``n_outputs==1``. ``n_values_feature_j`` corresponds to the size
+        ``values[j]``.
+    values : seq of 1d ndarrays
         The values with which the grid has been created. The generated grid
         is a cartesian product of the arrays in ``values``. ``len(values) ==
-        len(target_variables)``.
+        len(features)``. The size of each array ``values[j]`` is either
+        ``grid_resolution``, or the number of unique values in ``X[:, j]``,
+        whichever is smaller.
 
     Examples
     --------
-    >>> samples = [[0, 0, 2], [1, 0, 0]]
-    >>> labels = [0, 1]
+    >>> X = [[0, 0, 2], [1, 0, 0]]
+    >>> y = [0, 1]
     >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> gb = GradientBoostingClassifier(random_state=0).fit(samples, labels)
-    >>> kwargs = dict(X=samples, percentiles=(0, 1), grid_resolution=2)
-    >>> partial_dependence(gb, [0], **kwargs) # doctest: +SKIP
+    >>> gb = GradientBoostingClassifier(random_state=0).fit(X, y)
+    >>> partial_dependence(gb, features=[0], X=X, percentiles=(0, 1),
+    ...                    grid_resolution=2) # doctest: +SKIP
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
+
+    .. _warning_recursion_init:
+
+    Warnings
+    --------
+    The 'recursion' method only works for gradient boosting estimators, and
+    unlike the 'brute' method, it does not account for the ``init``
+    predictor of the boosting process. In practice this will produce the
+    same values as 'brute' up to a constant offset in the target response,
+    provided that ``init`` is a consant estimator (which is the default).
+    However, as soon as ``init`` is not a constant estimator, the partial
+    dependence values are incorrect.
+
     """
 
     if not (is_classifier(est) or is_regressor(est)):
@@ -243,8 +251,7 @@ def partial_dependence(est, target_variables, X, percentiles=(0.05, 0.95),
             isinstance(est.classes_[0], np.ndarray)):
         raise ValueError('Multiclass-multioutput estimators are not supported')
 
-    if X is not None:
-        X = check_array(X)
+    X = check_array(X)
 
     accepted_methods = ('brute', 'recursion', 'auto')
     if method not in accepted_methods:
@@ -267,28 +274,30 @@ def partial_dependence(est, target_variables, X, percentiles=(0.05, 0.95),
                         msg='est parameter must be a fitted estimator')
         # Note: if method is brute, this check is done at prediction time
         n_features = est.n_features_
-    elif X is None:
-        raise ValueError('X is required for brute method')
     else:
         if is_classifier(est) and not hasattr(est, 'predict_proba'):
             raise ValueError('est requires a predict_proba() method for '
                              'method="brute" for classification.')
         n_features = X.shape[1]
 
-    target_variables = np.asarray(target_variables, dtype=np.int32,
-                                  order='C').ravel()
-    if any(not (0 <= fx < n_features) for fx in target_variables):
-        raise ValueError('all target_variables must be in [0, %d]'
+    features = np.asarray(features, dtype=np.int32, order='C').ravel()
+    if any(not (0 <= f < n_features) for f in features):
+        raise ValueError('all features must be in [0, %d]'
                          % (n_features - 1))
 
-    grid, values = _grid_from_X(X[:, target_variables], percentiles,
+    grid, values = _grid_from_X(X[:, features], percentiles,
                                 grid_resolution)
     if method == 'brute':
         averaged_predictions = _partial_dependence_brute(est, grid,
-                                                         target_variables, X)
+                                                         features, X)
     else:
         averaged_predictions = _partial_dependence_recursion(est, grid,
-                                                             target_variables)
+                                                             features)
+
+    # reshape averaged_predictions to
+    # (n_outputs, n_values_feature_0, # n_values_feature_1, ...)
+    averaged_predictions = averaged_predictions.reshape(
+        -1, *[val.shape[0] for val in values])
 
     return averaged_predictions, values
 
@@ -302,17 +311,6 @@ def plot_partial_dependence(est, X, features, feature_names=None,
 
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
     columns. Two-way partial dependence plots are plotted as contour plots.
-
-    .. _warning_recursion_init_plot:
-
-    .. warning::
-        The 'recursion' method only works for gradient boosting estimators,
-        and unlike the 'brute' method, it does not account for the ``init``
-        predictor of the boosting process. In practice this will produce the
-        same values as 'brute' up to a constant offset in the target
-        response, provided that ``init`` is a consant estimator (which is
-        the default). However, as soon as ``init`` is not a constant
-        estimator, the partial dependence values are incorrect.
 
     Read more in the :ref:`User Guide <partial_dependence>`.
 
@@ -348,7 +346,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         target feature.
     percentiles : tuple of float, optional (default=(0.05, 0.95))
         The lower and upper percentile used to create the extreme values
-        for the PDP axes.
+        for the PDP axes. Must be in [0, 1].
     method : str, optional (default='auto')
         The method to use to calculate the partial dependence predictions:
 
@@ -404,6 +402,18 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
     >>> fig, axs = plot_partial_dependence(clf, X, [0, (0, 1)]) #doctest: +SKIP
     ...
+
+    .. _warning_recursion_init_plot:
+
+    Warnings
+    --------
+    The 'recursion' method only works for gradient boosting estimators, and
+    unlike the 'brute' method, it does not account for the ``init``
+    predictor of the boosting process. In practice this will produce the
+    same values as 'brute' up to a constant offset in the target response,
+    provided that ``init`` is a consant estimator (which is the default).
+    However, as soon as ``init`` is not a constant estimator, the partial
+    dependence values are incorrect.
     """
     import matplotlib.pyplot as plt
     from matplotlib import transforms
@@ -533,7 +543,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
             # make contour plot
             assert len(values) == 2
             XX, YY = np.meshgrid(values[0], values[1])
-            Z = pd[target_idx].reshape(list(map(np.size, values))).T
+            Z = pd[target_idx].T
             CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5,
                             colors='k')
             ax.contourf(XX, YY, Z, levels=Z_level, vmax=Z_level[-1],

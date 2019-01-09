@@ -71,9 +71,9 @@ def multioutput_regression():
     (MultiTaskLasso, 'brute', multioutput_regression()),
     ])
 @pytest.mark.parametrize('grid_resolution', (5, 10))
-@pytest.mark.parametrize('target_variables', ([1], [1, 2]))
+@pytest.mark.parametrize('features', ([1], [1, 2]))
 def test_output_shape(Estimator, method, data, grid_resolution,
-                      target_variables):
+                      features):
     # Check that partial_dependence has consistent output shape for different
     # kinds of estimators:
     # - classifiers with binary and multiclass settings
@@ -88,12 +88,13 @@ def test_output_shape(Estimator, method, data, grid_resolution,
     (X, y), n_targets = data
 
     est.fit(X, y)
-    pdp, axes = partial_dependence(est, target_variables=target_variables,
+    pdp, axes = partial_dependence(est, features=features,
                                    X=X, method=method,
                                    grid_resolution=grid_resolution)
 
-    expected_pdp_shape = (n_targets, grid_resolution ** len(target_variables))
-    expected_axes_shape = (len(target_variables), grid_resolution)
+    expected_pdp_shape = (n_targets, *[grid_resolution
+                                       for _ in range(len(features))])
+    expected_axes_shape = (len(features), grid_resolution)
 
     assert pdp.shape == expected_pdp_shape
     assert axes is not None
@@ -177,14 +178,14 @@ def test_partial_dependence_helpers(est, method, target_feature):
     est.fit(X, y)
 
     # target feature will be set to .5 and then to 123
-    target_variables = np.array([target_feature], dtype=np.int32)
+    features = np.array([target_feature], dtype=np.int32)
     grid = np.array([[.5],
                      [123]])
 
     if method == 'brute':
-        pdp = _partial_dependence_brute(est, grid, target_variables, X)
+        pdp = _partial_dependence_brute(est, grid, features, X)
     else:
-        pdp = _partial_dependence_recursion(est, grid, target_variables)
+        pdp = _partial_dependence_recursion(est, grid, features)
 
     mean_predictions = []
     for val in (.5, 123):
@@ -216,7 +217,7 @@ def test_partial_dependence_easy_target(est, power):
     est.fit(X, y)
 
     averaged_predictions, values = partial_dependence(
-        est, target_variables=[target_variable], X=X, grid_resolution=1000)
+        est, features=[target_variable], X=X, grid_resolution=1000)
 
     new_X = values[0].reshape(-1, 1)
     new_y = averaged_predictions[0]
@@ -283,7 +284,7 @@ def test_partial_dependence_input():
     for feature in (-1, 1000000):
         for est in (lr, gbc):
             assert_raises_regex(ValueError,
-                                "all target_variables must be in",
+                                "all features must be in",
                                 partial_dependence, est, [feature], X=X)
 
     for unfitted_est in (LinearRegression(), GradientBoostingRegressor()):
