@@ -41,7 +41,10 @@ def _encode_numpy(values, uniques=None, encode=False):
     # only used in _encode below, see docstring there for details
     if uniques is None:
         if encode:
-            uniques, encoded = np.unique(values, return_inverse=True)
+            try:
+                uniques, encoded = np.unique(values, return_inverse=True)
+            except TypeError:
+                print("Your data contains two different types of values,strings and integers, which are not able to be compared by sorting utils for Pandas.")
             return uniques, encoded
         else:
             # unique sorts
