@@ -8,6 +8,8 @@ Generate samples of synthetic data sets.
 
 import numbers
 import array
+from collections.abc import Iterable
+
 import numpy as np
 from scipy import linalg
 import scipy.sparse as sp
@@ -15,7 +17,6 @@ import scipy.sparse as sp
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
-from ..utils.fixes import _Iterable as Iterable
 from ..utils.random import sample_without_replacement
 
 
@@ -176,10 +177,10 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         weights[-1] = 1.0 - sum(weights[:-1])
 
     # Distribute samples among clusters by weight
-    n_samples_per_cluster = []
-    for k in range(n_clusters):
-        n_samples_per_cluster.append(int(n_samples * weights[k % n_classes]
-                                     / n_clusters_per_class))
+    n_samples_per_cluster = [
+        int(n_samples * weights[k % n_classes] / n_clusters_per_class)
+        for k in range(n_clusters)]
+
     for i in range(n_samples - sum(n_samples_per_cluster)):
         n_samples_per_cluster[i % n_clusters] += 1
 
