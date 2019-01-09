@@ -90,8 +90,8 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                         raise ValueError(msg)
             self.categories_.append(cats)
 
-    def _transform(self, X, handle_unknown='error'):
-        X = self._check_X(X)
+    def _transform(self, X, handle_unknown='error', force_all_finite=True):
+        X = self._check_X(X, force_all_finite=force_all_finite)
 
         _, n_features = X.shape
         X_int = np.zeros_like(X, dtype=np.int)
@@ -808,6 +808,13 @@ class OrdinalEncoder(_BaseEncoder):
         self._categories = self.categories
         self._fit(X, force_all_finite=self.force_all_finite)
 
+        # new_cats = []
+        # for cats in self.categories_:
+        #     missing_mask = _object_dtype_isnan(cats)
+        #     new_cats.append(cats[~missing_mask])
+
+        # self.categories_ = new_cats
+
         return self
 
     def transform(self, X):
@@ -824,7 +831,7 @@ class OrdinalEncoder(_BaseEncoder):
             Transformed input.
 
         """
-        X_int, _ = self._transform(X)
+        X_int, _ = self._transform(X, force_all_finite=self.force_all_finite)
         return X_int.astype(self.dtype, copy=False)
 
     def inverse_transform(self, X):
