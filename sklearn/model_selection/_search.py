@@ -614,15 +614,16 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
             if self.refit is not False and (
                     not isinstance(self.refit, str) or
                     # This will work for both dict / list (tuple)
-                    self.refit not in scorers):
+                    self.refit not in scorers) and not callable(self.refit):
                 raise ValueError("For multi-metric scoring, the parameter "
-                                 "refit must be set to a scorer key "
-                                 "to refit an estimator with the best "
-                                 "parameter setting on the whole data and "
-                                 "make the best_* attributes "
-                                 "available for that metric. If this is not "
-                                 "needed, refit should be set to False "
-                                 "explicitly. %r was passed." % self.refit)
+                                 "refit must be set to a scorer key or a "
+                                 "callable to refit an estimator with the "
+                                 "best parameter setting on the whole "
+                                 "data and make the best_* attributes "
+                                 "available for that metric. If this is "
+                                 "not needed, refit should be set to "
+                                 "False explicitly. %r was passed."
+                                 % self.refit)
             else:
                 refit_metric = self.refit
         else:
@@ -684,10 +685,20 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         # best_score_ iff refit is one of the scorer names
         # In single metric evaluation, refit_metric is "score"
         if self.refit or not self.multimetric_:
-            self.best_index_ = results["rank_test_%s" % refit_metric].argmin()
+            # If callable, refit is expected to return the index of the best
+            # parameter set.
+            if callable(self.refit):
+                self.best_index_ = self.refit(results)
+                if not isinstance(self.best_index_, (int, np.integer)):
+                    raise TypeError('best_index_ returned is not an integer')
+                if self.best_index_ < 0 or self.best_index_ >= len(results):
+                    raise IndexError('best_index_ index out of range')
+            else:
+                self.best_index_ = results["rank_test_%s"
+                                           % refit_metric].argmin()
+                self.best_score_ = results["mean_test_%s" % refit_metric][
+                                           self.best_index_]
             self.best_params_ = results["params"][self.best_index_]
-            self.best_score_ = results["mean_test_%s" % refit_metric][
-                self.best_index_]
 
         if self.refit:
             self.best_estimator_ = clone(base_estimator).set_params(
@@ -908,13 +919,17 @@ class GridSearchCV(BaseSearchCV):
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    refit : boolean, or string, default=True
+    refit : boolean, string, or callable, default=True
         Refit an estimator using the best found parameters on the whole
         dataset.
 
         For multiple metric evaluation, this needs to be a string denoting the
         scorer is used to find the best parameters for refitting the estimator
         at the end.
+
+        Where there are considerations other than maximum score in
+        choosing a best estimator, ``refit`` can be set to a function which
+        returns the selected ``best_index_`` given ``cv_results_``.
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
@@ -923,10 +938,13 @@ class GridSearchCV(BaseSearchCV):
         Also for multiple metric evaluation, the attributes ``best_index_``,
         ``best_score_`` and ``best_params_`` will only be available if
         ``refit`` is set and all of them will be determined w.r.t this specific
-        scorer.
+        scorer. ``best_score_`` is not returned if refit is callable.
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
+
+        .. versionchanged:: 0.20
+            Support for callable added.
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
@@ -1242,13 +1260,17 @@ class RandomizedSearchCV(BaseSearchCV):
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    refit : boolean, or string default=True
+    refit : boolean, string, or callable, default=True
         Refit an estimator using the best found parameters on the whole
         dataset.
 
         For multiple metric evaluation, this needs to be a string denoting the
         scorer that would be used to find the best parameters for refitting
         the estimator at the end.
+
+        Where there are considerations other than maximum score in
+        choosing a best estimator, ``refit`` can be set to a function which
+        returns the selected ``best_index_`` given the ``cv_results``.
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
@@ -1257,10 +1279,13 @@ class RandomizedSearchCV(BaseSearchCV):
         Also for multiple metric evaluation, the attributes ``best_index_``,
         ``best_score_`` and ``best_params_`` will only be available if
         ``refit`` is set and all of them will be determined w.r.t this specific
-        scorer.
+        scorer. When refit is callable, ``best_score_`` is disabled.
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
+
+        .. versionchanged:: 0.20
+            Support for callable added.
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.

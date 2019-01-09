@@ -591,6 +591,112 @@ def test_refit():
     clf.fit(X, y)
 
 
+def test_refit_callable():
+    """
+    Test refit=callable, which adds flexibility in identifying the
+    "best" estimator.
+    """
+    def refit_callable(cv_results):
+        """
+        A dummy function tests `refit=callable` interface.
+        Return the index of a model that has the least
+        `mean_test_score`.
+        """
+        # Fit a dummy clf with `refit=True` to get a list of keys in
+        # clf.cv_results_.
+        X, y = make_classification(n_samples=100, n_features=4,
+                                   random_state=42)
+        clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
+                           scoring='precision', refit=True, cv=5)
+        clf.fit(X, y)
+        # Ensure that `best_index_ != 0` for this dummy clf
+        assert clf.best_index_ != 0
+
+        # Assert every key matches those in `cv_results`
+        for key in clf.cv_results_.keys():
+            assert key in cv_results
+
+        return cv_results['mean_test_score'].argmin()
+
+    X, y = make_classification(n_samples=100, n_features=4,
+                               random_state=42)
+    clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
+                       scoring='precision', refit=refit_callable, cv=5)
+    clf.fit(X, y)
+
+    assert clf.best_index_ == 0
+    # Ensure `best_score_` is disabled when using `refit=callable`
+    assert not hasattr(clf, 'best_score_')
+
+
+def test_refit_callable_invalid_type():
+    """
+    Test implementation catches the errors when 'best_index_' returns an
+    invalid result.
+    """
+    def refit_callable_invalid_type(cv_results):
+        """
+        A dummy function tests when returned 'best_index_' is not integer.
+        """
+        return None
+
+    X, y = make_classification(n_samples=100, n_features=4,
+                               random_state=42)
+
+    clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.1, 1]},
+                       scoring='precision', refit=refit_callable_invalid_type,
+                       cv=5)
+    with pytest.raises(TypeError,
+                       match='best_index_ returned is not an integer'):
+        clf.fit(X, y)
+
+
+def test_refit_callable_out_bound():
+    """
+    Test implementation catches the errors when 'best_index_' returns an
+    out of bound result.
+    """
+    def refit_callable_out_bound(cv_results):
+        """
+        A dummy function tests when returned 'best_index_' is out of bounds.
+        """
+        return -1
+
+    X, y = make_classification(n_samples=100, n_features=4,
+                               random_state=42)
+
+    clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.1, 1]},
+                       scoring='precision', refit=refit_callable_out_bound,
+                       cv=5)
+    with pytest.raises(IndexError, match='best_index_ index out of range'):
+        clf.fit(X, y)
+
+
+def test_refit_callable_multi_metric():
+    """
+    Test refit=callable in multiple metric evaluation setting
+    """
+    def refit_callable(cv_results):
+        """
+        A dummy function tests `refit=callable` interface.
+        Return the index of a model that has the least
+        `mean_test_prec`.
+        """
+        assert 'mean_test_prec' in cv_results
+        return cv_results['mean_test_prec'].argmin()
+
+    X, y = make_classification(n_samples=100, n_features=4,
+                               random_state=42)
+    scoring = {'Accuracy': make_scorer(accuracy_score), 'prec': 'precision'}
+    clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
+                       scoring=scoring, refit=refit_callable, cv=5)
+    clf.fit(X, y)
+
+    assert clf.best_index_ == 0
+    # Ensure `best_score_` is disabled when using `refit=callable`
+    assert not hasattr(clf, 'best_score_')
+
+
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_gridsearch_nd():
