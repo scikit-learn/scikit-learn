@@ -134,6 +134,13 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.model_selection`
 ..............................
 
+- |Feature| Classes :class:`~model_selection.GridSearchCV` and
+  :class:`~model_selection.RandomSearchCV` now allow for refit=callable
+  to add flexibility in identifying the best
+  estimator. An example for this interface has been added.
+  :issue:`11354` by :user:`Wenhao Zhang <wenhaoz@ucla.edu>`,
+  `Joel Nothman`_ and `Adrin Jalali`_
+
 - |Enhancement| Classes :class:`~model_selection.GridSearchCV`,
   :class:`~model_selection.RandomSearchCV`, and methods
   :func:`~model_selection.cross_val_score`,
@@ -143,13 +150,6 @@ Support for Python 3.4 and below has been officially dropped.
   :func:`~model_selection.learning_curve`, and
   :func:`~model_selection.validation_curve` only the latter is required.
   :issue:`12613` and :issue:`12669` by :user:`Marc Torrellas <marctorrellas>`.
-
-- |Enhancement| Classes :class:`~model_selection.GridSearchCV` and
-  :class:`~model_selection.RandomSearchCV` now allow for refit=callable
-  in \*SearchCV to add flexibility in identifying the best
-  estimator. An example for this interface has been added.
-  :issue:`11354` by :user:`Wenhao Zhang <wenhaoz@ucla.edu>`,
-  `Joel Nothman`_ and `Adrin Jalali`_
 
 :mod:`sklearn.neighbors`
 ........................
