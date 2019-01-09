@@ -1177,18 +1177,23 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    norm : 'l1', 'l2' or None, optional
-        Norm used to normalize term vectors. None for no normalization.
+    norm : 'l1', 'l2' or None, optional (default='l2')
+        Each output row will have unit norm, either:
+        * 'l2': Sum of squares of vector elements is 1. The cosine
+        similarity between two vectors is their dot product when l2 norm has
+        been applied.
+        * 'l1': Sum of absolute values of vector elements is 1.
+        See :func:`preprocessing.normalize`
 
-    use_idf : boolean, default=True
+    use_idf : boolean (default=True)
         Enable inverse-document-frequency reweighting.
 
-    smooth_idf : boolean, default=True
+    smooth_idf : boolean (default=True)
         Smooth idf weights by adding one to document frequencies, as if an
         extra document was seen containing every term in the collection
         exactly once. Prevents zero divisions.
 
-    sublinear_tf : boolean, default=False
+    sublinear_tf : boolean (default=False)
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
     Attributes
@@ -1307,6 +1312,12 @@ class TfidfVectorizer(CountVectorizer):
 
     Equivalent to CountVectorizer followed by TfidfTransformer.
 
+    CountVectorizer : Transforms text into a sparse matrix of n-gram counts
+        using scipy.sparse.csr_matrix.
+
+    TfidfTransformer : Performs the TF-IDF transformation from a provided
+        matrix of counts.
+
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
     Parameters
@@ -1424,11 +1435,11 @@ class TfidfVectorizer(CountVectorizer):
     dtype : type, optional (default=float64)
         Type of the matrix returned by fit_transform() or transform().
 
-    norm : 'l1', 'l2' or None, optional (default=’l2’)
+    norm : 'l1', 'l2' or None, optional (default='l2')
         Each output row will have unit norm, either:
         * 'l2': Sum of squares of vector elements is 1. The cosine
-          similarity between two vectors is their dot product when
-          l2 norm has been applied.
+        similarity between two vectors is their dot product when l2 norm has
+        been applied.
         * 'l1': Sum of absolute values of vector elements is 1.
         See :func:`preprocessing.normalize`
 
@@ -1479,25 +1490,11 @@ class TfidfVectorizer(CountVectorizer):
 
     See also
     --------
-    CountVectorizer : Produces a sparse representation of the counts using
-        scipy.sparse.csr_matrix.
+    CountVectorizer : Transforms text into a sparse matrix of n-gram counts
+        using scipy.sparse.csr_matrix.
 
-    TfidfTransformer : Converts the count matrix from CountVectorizer to a
-        normalized tf-idf representation. Tf is term frequency, and idf is
-        inverse document frequency. This is a common way to calculate the
-        count of a word relative to the appearance of a document.
-
-        The formula that is used to compute the tf-idf of term t is​
-        `tf-idf(d, t) = tf(t) * idf(d, t)` and the idf is computed
-        as​ `idf(d, t) = log [ n / df(d, t) ] + 1` (if ``smooth_idf=False``)
-        where `n` is the total number of documents and ​`df(d, t)​`​ is the
-        document frequency; the document frequency is the number of documents
-        `​d​`​ that contain term ​`​t​`​. The effect of adding "1" to the idf
-        in the equation above is that terms with zero idf, i.e., terms that
-        occur in all documents in a training set, will not be entirely ignored.
-        (Note that the idf formula above differs from the standard textbook
-        notation that defines the idf as​
-        `idf(d, t) = log [ n / df(d, t) + 1 ]`
+    TfidfTransformer : Performs the TF-IDF transformation from a provided
+        matrix of counts.
 
     Notes
     -----
