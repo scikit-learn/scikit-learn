@@ -72,8 +72,6 @@ def plot_data(lda, X, y, y_pred, fig_index):
     X0_tp, X0_fp = X0[tp0], X0[~tp0]
     X1_tp, X1_fp = X1[tp1], X1[~tp1]
 
-    alpha = 0.5
-
     # class 0: dots
     plt.scatter(X0_tp[:, 0], X0_tp[:, 1], marker='.', color='red')
     plt.scatter(X0_fp[:, 0], X0_fp[:, 1], marker='x',
