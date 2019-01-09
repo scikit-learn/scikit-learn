@@ -200,7 +200,8 @@ then submit a "pull request" (PR):
 
         $ pip install --editable .
 
-    for more details about advanced installation, see the :ref:`install_bleeding_edge` section.
+    for more details about advanced installation, see the 
+    :ref:`install_bleeding_edge` section.
 
  5. Create a branch to hold your development changes::
 
