@@ -46,7 +46,6 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
-from sklearn.feature_selection.base import SelectorMixin
 from sklearn.svm.base import BaseLibSVM
 from sklearn.linear_model.stochastic_gradient import BaseSGD
 from sklearn.pipeline import make_pipeline
@@ -78,7 +77,10 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
 
 ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MissingIndicator',
              'MaxAbsScaler', 'MinMaxScaler', 'RobustScaler', 'StandardScaler',
-             'PowerTransformer', 'QuantileTransformer']
+             'PowerTransformer', 'QuantileTransformer',
+             'GenericUnivariateSelect', 'RFE', 'RFECV', 'SelectFdr',
+             'SelectFpr', 'SelectFwe', 'SelectKBest', 'SelectFromModel',
+             'SelectPercentile', 'VarianceThreshold']
 
 
 def _yield_non_meta_checks(name, estimator):
@@ -102,7 +104,7 @@ def _yield_non_meta_checks(name, estimator):
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
 
-    if name not in ALLOW_NAN and not isinstance(estimator, SelectorMixin):
+    if name not in ALLOW_NAN:
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 
@@ -1219,7 +1221,18 @@ def check_estimators_pickle(name, estimator_orig):
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
     set_random_state(estimator)
-    estimator.fit(X, y)
+
+    try:
+        estimator.fit(X, y)
+    except ValueError as e:
+        if 'inf' not in repr(e) and 'NaN' not in repr(e):
+            raise e
+        else:
+            # Some feature selection estimators don't allow nan/inf with
+            # their default parameters, even though they are allowed in
+            # general. Remove the nan in these cases.
+            X = np.nan_to_num(X)
+            estimator.fit(X, y)
 
     result = dict()
     for method in check_methods:
