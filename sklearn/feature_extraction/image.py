@@ -432,6 +432,7 @@ def reconstruct_from_patches_2d(patches, image_size):
     image : array, shape = image_size
         the reconstructed image
     """
+    
     i_h, i_w = image_size[:2]
     p_h, p_w = patches.shape[1:3]
     img = np.zeros(image_size)
@@ -473,43 +474,43 @@ class PatchExtractor(BaseEstimator):
 
     Examples
     --------
-        >>> from sklearn.datasets import load_sample_images
-        >>> from sklearn.feature_extraction import image
+    >>> from sklearn.datasets import load_sample_images
+    >>> from sklearn.feature_extraction import image
 
-        >>> # Use the array data from the second image in this dataset:
-        >>> X = load_sample_images().images[1]
+    >>> # Use the array data from the second image in this dataset:
+    >>> X = load_sample_images().images[1]
 
-        >>> print(f'Image shape: {X.shape}')
-        Image shape: (427, 640, 3)
+    >>> print('Image shape: {}'.format(X.shape))
+    Image shape: (427, 640, 3)
 
-        >>> pe = image.PatchExtractor(patch_size=(2, 2))
-        >>> pe_fit = pe.fit(X)
-        >>> pe_trans = pe.transform(X)
+    >>> pe = image.PatchExtractor(patch_size=(2, 2))
+    >>> pe_fit = pe.fit(X)
+    >>> pe_trans = pe.transform(X)
 
-        >>> print('Patches shape: {}'.format(pe_trans.shape))
-        Patches shape: (545706, 2, 2)
+    >>> print('Patches shape: {}'.format(pe_trans.shape))
+    Patches shape: (545706, 2, 2)
 
-        >>> print('Shapes arrays:\n{}'.format(pe_trans))
-        Shapes arrays:
-        [[[ 2. 19.]
-        [ 3. 18.]]
+    >>> print('Shapes arrays:\n{}'.format(pe_trans))
+    Shapes arrays:
+    [[[ 2. 19.]
+    [ 3. 18.]]
 
-        [[19. 13.]
-        [18. 13.]]
+    [[19. 13.]
+    [18. 13.]]
 
-        [[ 3. 18.]
-        [ 7. 20.]]
+    [[ 3. 18.]
+    [ 7. 20.]]
 
-        ...
+    ...
 
-        [[46. 28.]
-        [45. 28.]]
+    [[46. 28.]
+    [45. 28.]]
 
-        [[ 8. 45.]
-        [ 9. 43.]]
+    [[ 8. 45.]
+    [ 9. 43.]]
 
-        [[45. 28.]
-        [43. 27.]]]
+    [[45. 28.]
+    [43. 27.]]]
     """
 
     def __init__(self, patch_size=None, max_patches=None, random_state=None):
