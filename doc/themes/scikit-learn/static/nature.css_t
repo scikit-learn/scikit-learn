@@ -559,6 +559,10 @@ div.body p, div.body dd, div.body li {
     line-height: 1.5em;
 }
 
+div.section p {
+    hyphens: none;
+}
+
 div.admonition p.admonition-title + p, div.deprecated p {
     display: inline;
 }
