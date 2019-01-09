@@ -1991,6 +1991,12 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
             l1_ratios_ = [None]
 
+        if self.penalty == 'none':
+            raise ValueError(
+                "penalty='none' is not useful and not supported by "
+                "LogisticRegressionCV."
+            )
+
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
                          order="C",
                          accept_large_sparse=solver != 'liblinear')

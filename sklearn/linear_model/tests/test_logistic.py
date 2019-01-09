@@ -1767,14 +1767,24 @@ def test_penalty_none(solver):
     #   non-default value.
     # - Make sure setting penalty='none' is equivalent to setting C=np.inf with
     #   l2 penalty.
-    X, y = make_classification(n_samples=1000)
+    X, y = make_classification(n_samples=1000, random_state=0)
 
     msg = "Setting penalty='none' will ignore the C"
     lr = LogisticRegression(penalty='none', solver=solver, C=4)
     assert_warns_message(UserWarning, msg, lr.fit, X, y)
 
-    lr_none = LogisticRegression(penalty='none', solver=solver)
-    lr_l2_C_inf = LogisticRegression(penalty='l2', C=np.inf, solver=solver)
+    lr_none = LogisticRegression(penalty='none', solver=solver,
+                                 random_state=0)
+    lr_l2_C_inf = LogisticRegression(penalty='l2', C=np.inf, solver=solver,
+                                     random_state=0)
     pred_none = lr_none.fit(X, y).predict(X)
     pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
-    assert_array_almost_equal(pred_none, pred_l2_C_inf)
+    assert_array_equal(pred_none, pred_l2_C_inf)
+
+    lr = LogisticRegressionCV(penalty='none')
+    assert_raise_message(
+        ValueError,
+        "penalty='none' is not useful and not supported by "
+        "LogisticRegressionCV",
+        lr.fit, X, y
+    )
