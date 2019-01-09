@@ -75,8 +75,7 @@ def plot_data(lda, X, y, y_pred, fig_index):
     alpha = 0.5
 
     # class 0: dots
-    plt.scatter(
-        X0_tp[:, 0], X0_tp[:, 1], marker='.', color='red')
+    plt.scatter(X0_tp[:, 0], X0_tp[:, 1], marker='.', color='red')
     plt.scatter(X0_fp[:, 0], X0_fp[:, 1], marker='x',
                 s=20, color='#990000')  # dark red
 
@@ -113,8 +112,8 @@ def plot_ellipse(splot, mean, cov, color):
     angle = 180 * angle / np.pi  # convert to degrees
     # filled Gaussian at 2 standard deviation
     ell = mpl.patches.Ellipse(mean, 2 * v[0] ** 0.5, 2 * v[1] ** 0.5,
-                              180 + angle, facecolor=color, alpha=1,
-                              edgecolor='grey', linewidth=2)
+                              180 + angle, facecolor='none',
+                              edgecolor='k', linewidth=2)
     ell.set_clip_box(splot.bbox)
     ell.set_alpha(0.5)
     splot.add_artist(ell)
@@ -147,5 +146,6 @@ for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
     splot = plot_data(qda, X, y, y_pred, fig_index=2 * i + 2)
     plot_qda_cov(qda, splot)
     plt.axis('tight')
+plt.suptitle('Linear Discriminant Analysis vs Quadratic Discriminant', y=1.02, fontsize=15)
 plt.tight_layout()
 plt.show()
