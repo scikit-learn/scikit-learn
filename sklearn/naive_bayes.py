@@ -22,16 +22,16 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy.sparse import issparse
 
-from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.preprocessing import binarize
-from sklearn.preprocessing import LabelBinarizer
-from sklearn.preprocessing import label_binarize
-from sklearn.linear_model import LinearRegression
-from sklearn.utils import check_X_y, check_array, check_consistent_length
-from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils.fixes import logsumexp
-from sklearn.utils.multiclass import _check_partial_fit_first_call
-from sklearn.utils.validation import check_is_fitted
+from .base import BaseEstimator, ClassifierMixin
+from .preprocessing import binarize
+from .preprocessing import LabelBinarizer
+from .preprocessing import label_binarize
+from .linear_model import LinearRegression
+from .utils import check_X_y, check_array, check_consistent_length
+from .utils.extmath import safe_sparse_dot
+from .utils.fixes import logsumexp
+from .utils.multiclass import _check_partial_fit_first_call
+from .utils.validation import check_is_fitted
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB']
 
@@ -640,8 +640,11 @@ class MultinomialNB(BaseDiscreteNB):
     Parameters
     ----------
     alpha : float, optional (default=1.0)
-        Additive (Laplace/Lidstone) smoothing parameter
-        (0 for no smoothing).
+        Smoothing parameter (0 for no smoothing).
+
+    smoothing : string, optional (default='additive')
+        Smoothing method to perform before
+        updating the log probabilities
 
     fit_prior : boolean, optional (default=True)
         Whether to learn class prior probabilities or not.
@@ -685,7 +688,8 @@ class MultinomialNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, y)
-    MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
+    MultinomialNB(alpha=1.0, class_prior=None,
+            fit_prior=True, smoothing='additive')
     >>> print(clf.predict(X[2:3]))
     [3]
 
@@ -706,7 +710,8 @@ class MultinomialNB(BaseDiscreteNB):
     https://www.grsampson.net/AGtf1.html
     """
 
-    def __init__(self, alpha=1.0, smoothing='additive', fit_prior=True, class_prior=None):
+    def __init__(self, alpha=1.0, smoothing='additive',
+                 fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.smoothing = smoothing
         self.fit_prior = fit_prior
@@ -757,15 +762,17 @@ class MultinomialNB(BaseDiscreteNB):
                 n[r] = n.get(r, 0) + 1
 
             # Compute the Z values
-            r = np.array(sorted(n.items(), key=lambda keyval: keyval[0]), dtype='int')[:, 0]
-            n = np.array(sorted(n.items(), key=lambda keyval: keyval[0]), dtype='int')[:, 1]
+            r = np.array(sorted(n.items(), key=lambda keyval: keyval[0]),
+                         dtype='int')[:, 0]
+            n = np.array(sorted(n.items(), key=lambda keyval: keyval[0]),
+                         dtype='int')[:, 1]
             Z = dict()
             Z[r[0]] = 2*n[0] / r[1]
             Z[r[-1]] = n[-1] / (r[-1] - r[-2])
             for (idx, j) in enumerate(r):
                 if idx == 0 or idx >= len(r) - 1:
                     continue
-                i = r[idx-1];
+                i = r[idx-1]
                 k = r[idx+1]
                 Z[j] = 2*n[idx]/(k-i)
             Z = np.array(sorted(Z.items()))[:, 1]
@@ -781,11 +788,12 @@ class MultinomialNB(BaseDiscreteNB):
             r_star = np.zeros(len(r))
             y = (r+1)*(S[r]/S[r-1])
             x = (r+1)*(np.roll(n, -1)/n)
-            threshold = 1.96*np.sqrt(((r+1)**2)*(np.roll(n, -1)/n**2)*(1+(np.roll(n, -1)/n)))
+            threshold = 1.96*np.sqrt(((r+1)**2)*(np.roll(n, -1)/n**2) *
+                                     (1+(np.roll(n, -1)/n)))
             ineq_does_not_hold = np.where(np.abs(x-y) <= threshold)
             if ineq_does_not_hold[0].size > 0:
                 cease_x_idx = np.min(ineq_does_not_hold)
-            else: # this is unlikely to happen in practice
+            else:  # this is unlikely to happen in practice
                 cease_x_idx = len(r_star) - 1
             r_star[:cease_x_idx] = x[:cease_x_idx]
             r_star[cease_x_idx:] = y[cease_x_idx:]
@@ -803,24 +811,24 @@ class MultinomialNB(BaseDiscreteNB):
                 idx = np.where(fc == r[i])
                 prob[idx] = p_r[i]
             prob[np.where(fc == 0)] = unseen_prob
-            
+
             return np.log(prob)
-        
+
         return np.apply_along_axis(sgt, 1, self.feature_count_)
 
     def _jelinek_mercer(self, lam):
         """Compute log probabilities using Jelinek-Mercer smoothing"""
         fc = self.feature_count_
         mle = fc.sum(axis=0)/fc.sum()
-        return np.log((1-lam)*(fc/fc.sum(axis=1).reshape(-1,1)) + lam*mle) 
+        return np.log((1-lam)*(fc/fc.sum(axis=1).reshape(-1, 1)) + lam*mle)
 
     def _absolute_discounting(self, delta):
         """Compute log probabilities using Absolute Discounting smoothing"""
         fc = self.feature_count_
         mle = fc.sum(axis=0)/fc.sum()
-        count_unique = np.count_nonzero(fc, axis=1).reshape(-1,1)
-        cc = fc.sum(axis=1).reshape(-1,1)
-        return (np.log(np.maximum(fc - delta, 0) + delta*count_unique*mle) - 
+        count_unique = np.count_nonzero(fc, axis=1).reshape(-1, 1)
+        cc = fc.sum(axis=1).reshape(-1, 1)
+        return (np.log(np.maximum(fc - delta, 0) + delta*count_unique*mle) -
                 np.log(cc))
 
 
