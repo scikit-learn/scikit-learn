@@ -947,9 +947,8 @@ class GridSearchCV(BaseSearchCV):
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
 
-        .. versionadded:: 0.20
-            GridSearchCV supports ``refit`` = callable to add flexibility in
-            identifying the best estimator.
+        .. versionchanged:: 0.20
+            Support for callable added.
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
@@ -1288,6 +1287,9 @@ class RandomizedSearchCV(BaseSearchCV):
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
+
+        .. versionchanged:: 0.20
+            Support for callable added.
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.

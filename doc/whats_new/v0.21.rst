@@ -144,11 +144,10 @@ Support for Python 3.4 and below has been officially dropped.
   :func:`~model_selection.validation_curve` only the latter is required.
   :issue:`12613` and :issue:`12669` by :user:`Marc Torrellas <marctorrellas>`.
 
-- |Enhancement| :class:`~model_selection.BaseSearchCV` now allows for
-  refit=callable in \*SearchCV to add flexibility in identifying the best
-  estimator. An example for this interface has been added. See
-  :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_
-  callable.py` for more details.
+- |Enhancement| Classes :class:`~model_selection.GridSearchCV` and
+  :class:`~model_selection.RandomSearchCV` now allow for refit=callable
+  in \*SearchCV to add flexibility in identifying the best
+  estimator. An example for this interface has been added.
   :issue:`11354` by :user:`Wenhao Zhang <wenhaoz@ucla.edu>`,
   `Joel Nothman`_ and `Adrin Jalali`_
 
