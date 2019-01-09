@@ -563,11 +563,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         if return_train_score:
             if train_score_size is not None:
                 X_train_split, _, y_train_split, _ = train_test_split(
-                    X_train, y_train, train_size=train_score_size, stratify=y_train)
+                    X_train, y_train, train_size=train_score_size,
+                    stratify=y_train)
             else:
                 X_train_split, y_train_split = X_train, y_train
-            train_scores = _score(estimator, X_train_split, y_train_split, scorer,
-                                  is_multimetric)
+            train_scores = _score(estimator, X_train_split, y_train_split,
+                                  scorer, is_multimetric)
     if verbose > 2:
         if is_multimetric:
             for scorer_name in sorted(test_scores):
