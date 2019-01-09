@@ -312,11 +312,9 @@ class BaseForest(BaseEnsemble, metaclass=ABCMeta):
                 # would have got if we hadn't used a warm_start.
                 random_state.randint(MAX_INT, size=len(self.estimators_))
 
-            trees = []
-            for i in range(n_more_estimators):
-                tree = self._make_estimator(append=False,
-                                            random_state=random_state)
-                trees.append(tree)
+            trees = [self._make_estimator(append=False,
+                                          random_state=random_state)
+                     for i in range(n_more_estimators)]
 
             # Parallel loop: we prefer the threading backend as the Cython code
             # for fitting the trees is internally releasing the Python GIL
@@ -434,10 +432,8 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
 
         oob_decision_function = []
         oob_score = 0.0
-        predictions = []
-
-        for k in range(self.n_outputs_):
-            predictions.append(np.zeros((n_samples, n_classes_[k])))
+        predictions = [np.zeros((n_samples, n_classes_[k]))
+                       for k in range(self.n_outputs_)]
 
         for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(

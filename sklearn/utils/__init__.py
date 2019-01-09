@@ -1,6 +1,7 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
+from collections.abc import Sequence
 import numbers
 import platform
 import struct
@@ -13,7 +14,6 @@ from .murmurhash import murmurhash3_32
 from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
-from .fixes import _Sequence as Sequence
 from .deprecation import deprecated
 from .validation import (as_float_array,
                          assert_all_finite,

@@ -402,9 +402,7 @@ def test_kfold_balance():
     # Check that KFold returns folds with balanced sizes
     for i in range(11, 17):
         kf = KFold(5).split(X=np.ones(i))
-        sizes = []
-        for _, test in kf:
-            sizes.append(len(test))
+        sizes = [len(test) for _, test in kf]
 
         assert (np.max(sizes) - np.min(sizes)) <= 1
         assert_equal(np.sum(sizes), i)
@@ -421,9 +419,7 @@ def test_stratifiedkfold_balance():
         cv = StratifiedKFold(3, shuffle=shuffle)
         for i in range(11, 17):
             skf = cv.split(X[:i], y[:i])
-            sizes = []
-            for _, test in skf:
-                sizes.append(len(test))
+            sizes = [len(test) for _, test in skf]
 
             assert (np.max(sizes) - np.min(sizes)) <= 1
             assert_equal(np.sum(sizes), i)
@@ -757,14 +753,10 @@ def test_predefinedsplit_with_kfold_split():
         kf_train.append(train_ind)
         kf_test.append(test_ind)
         folds[test_ind] = i
-    ps_train = []
-    ps_test = []
     ps = PredefinedSplit(folds)
     # n_splits is simply the no of unique folds
     assert_equal(len(np.unique(folds)), ps.get_n_splits())
-    for train_ind, test_ind in ps.split():
-        ps_train.append(train_ind)
-        ps_test.append(test_ind)
+    ps_train, ps_test = zip(*ps.split())
     assert_array_equal(ps_train, kf_train)
     assert_array_equal(ps_test, kf_test)
 

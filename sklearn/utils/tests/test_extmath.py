@@ -8,6 +8,7 @@ import numpy as np
 from scipy import sparse
 from scipy import linalg
 from scipy import stats
+from scipy.special import expit
 
 import pytest
 
@@ -442,7 +443,7 @@ def test_cartesian():
 def test_logistic_sigmoid():
     # Check correctness and robustness of logistic sigmoid implementation
     def naive_log_logistic(x):
-        return np.log(1 / (1 + np.exp(-x)))
+        return np.log(expit(x))
 
     x = np.linspace(-2, 2, 50)
     assert_array_almost_equal(log_logistic(x), naive_log_logistic(x))

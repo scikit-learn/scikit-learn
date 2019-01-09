@@ -52,9 +52,8 @@ class AgglomerationTransform(TransformerMixin):
             nX = np.array([np.bincount(self.labels_, X[i, :]) / size
                           for i in range(n_samples)])
         else:
-            nX = []
-            for l in np.unique(self.labels_):
-                nX.append(pooling_func(X[:, self.labels_ == l], axis=1))
+            nX = [pooling_func(X[:, self.labels_ == l], axis=1)
+                  for l in np.unique(self.labels_)]
             nX = np.array(nX).T
         return nX
 
