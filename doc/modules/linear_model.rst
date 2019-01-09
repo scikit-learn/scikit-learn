@@ -731,7 +731,7 @@ or the log-linear classifier. In this model, the probabilities describing the po
 The implementation of logistic regression in scikit-learn can be accessed from
 class :class:`LogisticRegression`. This implementation can fit binary, One-vs-
 Rest, or multinomial logistic regression with optional L2, L1 or Elastic-Net
-regularization.
+regularization. Note that regularization is applied by default.
 
 As an optimization problem, binary class L2 penalized logistic regression
 minimizes the following cost function:
@@ -771,11 +771,11 @@ classifiers. For L1 penalization :func:`sklearn.svm.l1_min_c` allows to
 calculate the lower bound for C in order to get a non "null" (all feature
 weights to zero) model.
 
-The "lbfgs", "sag" and "newton-cg" solvers only support L2 penalization and
-are found to converge faster for some high dimensional data. Setting
-`multi_class` to "multinomial" with these solvers learns a true multinomial
-logistic regression model [5]_, which means that its probability estimates
-should be better calibrated than the default "one-vs-rest" setting.
+The "lbfgs", "sag" and "newton-cg" solvers only support L2 penalization or no
+regularization, and are found to converge faster for some high dimensional
+data. Setting `multi_class` to "multinomial" with these solvers learns a true
+multinomial logistic regression model [5]_, which means that its probability
+estimates should be better calibrated than the default "one-vs-rest" setting.
 
 The "sag" solver uses a Stochastic Average Gradient descent [6]_. It is faster
 than other solvers for large datasets, when both the number of samples and the
@@ -807,6 +807,8 @@ The following table summarizes the penalties supported by each solver:
 | OVR + L1 penalty             |       yes       |     no      |       no        |    no     |    yes     |
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 | Elastic-Net                  |       no        |     no      |       no        |    no     |    yes     |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| No penalty ('none')          |       no        |     yes     |       yes       |    yes    |    yes     |
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 | **Behaviors**                |                                                                          |
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
