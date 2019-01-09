@@ -14,6 +14,8 @@ from inspect import signature
 from math import log
 import numpy as np
 
+from scipy.special import expit
+from scipy.special import xlogy
 from scipy.optimize import fmin_bfgs
 from sklearn.preprocessing import LabelEncoder
 
@@ -430,7 +432,6 @@ def _sigmoid_calibration(df, y, sample_weight=None):
     y = column_or_1d(y)
 
     F = df  # F follows Platt's notations
-    tiny = np.finfo(np.float).tiny  # to avoid division by 0 warning
 
     # Bayesian priors (see Platt end of section 2.2)
     prior0 = float(np.sum(y <= 0))
@@ -442,13 +443,12 @@ def _sigmoid_calibration(df, y, sample_weight=None):
 
     def objective(AB):
         # From Platt (beginning of Section 2.2)
-        E = np.exp(AB[0] * F + AB[1])
-        P = 1. / (1. + E)
-        l = -(T * np.log(P + tiny) + T1 * np.log(1. - P + tiny))
+        P = expit(-(AB[0] * F + AB[1]))
+        loss = -(xlogy(T, P) + xlogy(T1, 1. - P))
         if sample_weight is not None:
-            return (sample_weight * l).sum()
+            return (sample_weight * loss).sum()
         else:
-            return l.sum()
+            return loss.sum()
 
     def grad(AB):
         # gradient of the objective function
@@ -517,7 +517,7 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
             The predicted data.
         """
         T = column_or_1d(T)
-        return 1. / (1. + np.exp(self.a_ * T + self.b_))
+        return expit(-(self.a_ * T + self.b_))
 
 
 def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):

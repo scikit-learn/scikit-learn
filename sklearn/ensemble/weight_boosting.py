@@ -27,6 +27,8 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
+from scipy.special import xlogy
+
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin, is_regressor, is_classifier
 
@@ -520,7 +522,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # Boost weight using multi-class AdaBoost SAMME.R alg
         estimator_weight = (-1. * self.learning_rate
                             * ((n_classes - 1.) / n_classes)
-                            * (y_coding * np.log(y_predict_proba)).sum(axis=1))
+                            * xlogy(y_coding, y_predict_proba).sum(axis=1))
 
         # Only boost the weights if it will fit again
         if not iboost == self.n_estimators - 1:

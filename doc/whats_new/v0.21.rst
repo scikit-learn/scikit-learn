@@ -53,7 +53,14 @@ Support for Python 3.4 and below has been officially dropped.
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>`,
   :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
-  
+
+:mod:`sklearn.datasets`
+  ......................
+
+  - |Fix| Added support for 64-bit group IDs and pointers in SVMLight files
+    :class:`datasets.svmlight_format` :issue:`10727` by
+    :user:`Bryan K Woods <bryan-woods>`,
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
@@ -78,8 +85,14 @@ Support for Python 3.4 and below has been officially dropped.
   problems. :issue:`12715` by :user:`Nicolas Hug<NicolasHug>`.
 
 - |Fix| Fixed a bug in :mod:`ensemble` where the ``predict`` method would
-   error for multiclass multioutput forests models if any targets were strings.
-   :issue:`12834` by :user:`Elizabeth Sander <elsander>`.
+  error for multiclass multioutput forests models if any targets were strings.
+  :issue:`12834` by :user:`Elizabeth Sander <elsander>`.
+
+- |Fix| Fixed a bug in :class:`ensemble.gradient_boosting.LossFunction` and
+  :class:`ensemble.gradient_boosting.LeastSquaresError` where the default
+  value of ``learning_rate`` in ``update_terminal_regions`` is not consistent
+  with the document and the caller functions.
+  :issue:`6463` by :user:`movelikeriver <movelikeriver>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -132,14 +145,25 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
   in version 0.21 and will be removed in version 0.23.
-  :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra 
+  :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra
   Mitrovic <SandraMNE>`.
+
+- |Fix| The metric :func:`metrics.r2_score` is degenerate with a single sample
+  and now it returns NaN and raises :class:`exceptions.UndefinedMetricWarning`.
+  :issue:`12855` by :user:`Pawel Sendyk <psendyk>.`
 
 :mod:`sklearn.model_selection`
 ..............................
 
+- |Feature| Classes :class:`~model_selection.GridSearchCV` and
+  :class:`~model_selection.RandomSearchCV` now allow for refit=callable
+  to add flexibility in identifying the best
+  estimator. An example for this interface has been added.
+  :issue:`11354` by :user:`Wenhao Zhang <wenhaoz@ucla.edu>`,
+  `Joel Nothman`_ and `Adrin Jalali`_
+
 - |Enhancement| Classes :class:`~model_selection.GridSearchCV`,
-  :class:`~model_selection.RandomSearchCV`, and methods
+  :class:`~model_selection.RandomizedSearchCV`, and methods
   :func:`~model_selection.cross_val_score`,
   :func:`~model_selection.cross_val_predict`,
   :func:`~model_selection.cross_validate`, now print train scores when

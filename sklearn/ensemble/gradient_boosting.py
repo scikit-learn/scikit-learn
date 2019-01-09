@@ -355,7 +355,7 @@ class LossFunction(object, metaclass=ABCMeta):
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
                                 sample_weight, sample_mask,
-                                learning_rate=1.0, k=0):
+                                learning_rate=0.1, k=0):
         """Update the terminal regions (=leaves) of the given tree and
         updates the current predictions of the model. Traverses tree
         and invokes template method `_update_terminal_region`.
@@ -469,7 +469,7 @@ class LeastSquaresError(RegressionLossFunction):
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
                                 sample_weight, sample_mask,
-                                learning_rate=1.0, k=0):
+                                learning_rate=0.1, k=0):
         """Least squares does not need to update terminal regions.
 
         But it has to update the predictions.
@@ -1201,7 +1201,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # update tree leaves
             loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
                                          sample_weight, sample_mask,
-                                         self.learning_rate, k=k)
+                                         learning_rate=self.learning_rate, k=k)
 
             # add tree to ensemble
             self.estimators_[i, k] = tree

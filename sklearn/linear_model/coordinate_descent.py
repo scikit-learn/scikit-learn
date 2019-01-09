@@ -1166,14 +1166,11 @@ class LinearModelCV(LinearModel, metaclass=ABCMeta):
         alphas = self.alphas
         n_l1_ratio = len(l1_ratios)
         if alphas is None:
-            alphas = []
-            for l1_ratio in l1_ratios:
-                alphas.append(_alpha_grid(
-                    X, y, l1_ratio=l1_ratio,
-                    fit_intercept=self.fit_intercept,
-                    eps=self.eps, n_alphas=self.n_alphas,
-                    normalize=self.normalize,
-                    copy_X=self.copy_X))
+            alphas = [_alpha_grid(X, y, l1_ratio=l1_ratio,
+                                  fit_intercept=self.fit_intercept,
+                                  eps=self.eps, n_alphas=self.n_alphas,
+                                  normalize=self.normalize, copy_X=self.copy_X)
+                      for l1_ratio in l1_ratios]
         else:
             # Making sure alphas is properly ordered.
             alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
