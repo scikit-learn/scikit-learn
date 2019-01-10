@@ -205,7 +205,7 @@ def partial_dependence(est, features, X, percentiles=(0.05, 0.95),
     Returns
     -------
     averaged_predictions : array, \
-        shape=(n_outputs, n_values_feature_0, n_values_feature_1, ...)
+            shape=(n_outputs, len(values[0]), len(values[1]), ...)
         The predictions for all the points in the grid, averaged over all
         samples in X (or over the training data if ``method`` is
         'recursion'). ``n_outputs`` corresponds to the number of classes in
