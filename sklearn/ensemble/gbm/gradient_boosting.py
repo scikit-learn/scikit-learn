@@ -382,7 +382,7 @@ class BaseGradientBoostingMachine(BaseEstimator, ABC):
         raw_predictions : array, shape (n_samples * n_trees_per_iteration,)
             The raw predicted values.
         """
-        X = check_array(X)
+        X = check_array(X, dtype=X_DTYPE)
         check_is_fitted(self, 'predictors_')
         if X.shape[1] != self.n_features_:
             raise ValueError(
@@ -395,13 +395,9 @@ class BaseGradientBoostingMachine(BaseEstimator, ABC):
             dtype=self.baseline_prediction_.dtype
         )
         raw_predictions += self.baseline_prediction_
-        # Should we parallelize this?
-        is_binned = X.dtype == np.uint8
         for predictors_of_ith_iteration in self.predictors_:
             for k, predictor in enumerate(predictors_of_ith_iteration):
-                predict = (predictor.predict_binned if is_binned
-                           else predictor.predict)
-                raw_predictions[:, k] += predict(X)
+                raw_predictions[:, k] += predictor.predict(X)
 
         return raw_predictions
 
