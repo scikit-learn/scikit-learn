@@ -85,7 +85,7 @@ def test_sparse_classification():
         """SVC variant that records the nature of the training set"""
 
         def fit(self, X, y):
-            super(CustomSVC, self).fit(X, y)
+            super().fit(X, y)
             self.data_type_ = type(X)
             return self
 
@@ -173,7 +173,7 @@ def test_sparse_regression():
         """SVC variant that records the nature of the training set"""
 
         def fit(self, X, y):
-            super(CustomSVR, self).fit(X, y)
+            super().fit(X, y)
             self.data_type_ = type(X)
             return self
 
@@ -477,8 +477,8 @@ def test_parallel_classification():
 
     X_err = np.hstack((X_test, np.zeros((X_test.shape[0], 1))))
     assert_raise_message(ValueError, "Number of features of the model "
-                         "must match the input. Model n_features is {0} "
-                         "and input n_features is {1} "
+                         "must match the input. Model n_features is {} "
+                         "and input n_features is {} "
                          "".format(X_test.shape[1], X_err.shape[1]),
                          ensemble.decision_function, X_err)
 
@@ -631,8 +631,8 @@ def test_warm_start(random_state=42):
                                   warm_start=False)
     clf_no_ws.fit(X, y)
 
-    assert_equal(set([tree.random_state for tree in clf_ws]),
-                 set([tree.random_state for tree in clf_no_ws]))
+    assert_equal({tree.random_state for tree in clf_ws},
+                 {tree.random_state for tree in clf_no_ws})
 
 
 def test_warm_start_smaller_n_estimators():

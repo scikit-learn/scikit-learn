@@ -226,7 +226,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         # Handle the out_of_bounds argument by setting bounds_error
         if self.out_of_bounds not in ["raise", "nan", "clip"]:
             raise ValueError("The argument ``out_of_bounds`` must be in "
-                             "'nan', 'clip', 'raise'; got {0}"
+                             "'nan', 'clip', 'raise'; got {}"
                              .format(self.out_of_bounds))
 
         bounds_error = self.out_of_bounds == "raise"
@@ -352,7 +352,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         # Handle the out_of_bounds argument by clipping if needed
         if self.out_of_bounds not in ["raise", "nan", "clip"]:
             raise ValueError("The argument ``out_of_bounds`` must be in "
-                             "'nan', 'clip', 'raise'; got {0}"
+                             "'nan', 'clip', 'raise'; got {}"
                              .format(self.out_of_bounds))
 
         if self.out_of_bounds == "clip":
@@ -376,7 +376,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     def __getstate__(self):
         """Pickle-protocol - return state of the estimator. """
-        state = super(IsotonicRegression, self).__getstate__()
+        state = super().__getstate__()
         # remove interpolation method
         state.pop('f_', None)
         return state
@@ -386,6 +386,6 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         We need to rebuild the interpolation function.
         """
-        super(IsotonicRegression, self).__setstate__(state)
+        super().__setstate__(state)
         if hasattr(self, '_necessary_X_') and hasattr(self, '_necessary_y_'):
             self._build_f(self._necessary_X_, self._necessary_y_)

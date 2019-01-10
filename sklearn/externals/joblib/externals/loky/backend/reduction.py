@@ -37,7 +37,7 @@ if sys.platform == "win32":
 # permits to use instance base custom reducers. Only CustomizablePickler
 # should be used.
 
-class _ReducerRegistry(object):
+class _ReducerRegistry:
     """Registry for custom reducers.
 
     HIGHEST_PROTOCOL is selected by default as this pickler is used

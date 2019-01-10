@@ -136,7 +136,7 @@ class StoreBackendBase(with_metaclass(ABCMeta)):
         """
 
 
-class StoreBackendMixin(object):
+class StoreBackendMixin:
     """Class providing all logic for managing the store in a generic way.
 
     The StoreBackend subclass has to implement 3 methods: create_location,
@@ -153,9 +153,9 @@ class StoreBackendMixin(object):
 
         if verbose > 1:
             if verbose < 10:
-                print('{0}...'.format(msg))
+                print('{}...'.format(msg))
             else:
-                print('{0} from {1}'.format(msg, full_path))
+                print('{} from {}'.format(msg, full_path))
 
         mmap_mode = (None if not hasattr(self, 'mmap_mode')
                      else self.mmap_mode)
@@ -283,7 +283,7 @@ class StoreBackendMixin(object):
 
         for item in items_to_delete:
             if self.verbose > 10:
-                print('Deleting item {0}'.format(item))
+                print('Deleting item {}'.format(item))
             try:
                 self.clear_location(item.path)
             except OSError:

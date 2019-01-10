@@ -20,9 +20,9 @@ from sklearn.utils.deprecation import _is_deprecated
 
 import pytest
 
-PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
-                                                        path=sklearn.__path__)
-                      if not ("._" in pckg[1] or ".tests." in pckg[1])])
+PUBLIC_MODULES = {pckg[1] for pckg in walk_packages(prefix='sklearn.',
+                                                    path=sklearn.__path__)
+                  if not ("._" in pckg[1] or ".tests." in pckg[1])}
 
 
 # functions to ignore args / docstring of

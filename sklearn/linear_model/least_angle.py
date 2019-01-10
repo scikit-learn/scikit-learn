@@ -1097,7 +1097,7 @@ class LarsCV(Lars):
         self.cv = cv
         self.max_n_alphas = max_n_alphas
         self.n_jobs = n_jobs
-        super(LarsCV, self).__init__(fit_intercept=fit_intercept,
+        super().__init__(fit_intercept=fit_intercept,
                                      verbose=verbose, normalize=normalize,
                                      precompute=precompute,
                                      n_nonzero_coefs=500,

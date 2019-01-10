@@ -785,7 +785,7 @@ def column_or_1d(y, warn=False):
                           DataConversionWarning, stacklevel=2)
         return np.ravel(y)
 
-    raise ValueError("bad input shape {0}".format(shape))
+    raise ValueError("bad input shape {}".format(shape))
 
 
 def check_random_state(seed):
@@ -865,7 +865,7 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     """
     if (array.ndim != 2) or (array.shape[0] != array.shape[1]):
         raise ValueError("array must be 2-dimensional and square. "
-                         "shape = {0}".format(array.shape))
+                         "shape = {}".format(array.shape))
 
     if sp.issparse(array):
         diff = array - array.T

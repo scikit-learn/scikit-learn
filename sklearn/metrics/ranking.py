@@ -394,7 +394,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     y_type = type_of_target(y_true)
     if not (y_type == "binary" or
             (y_type == "multiclass" and pos_label is not None)):
-        raise ValueError("{0} format is not supported".format(y_type))
+        raise ValueError("{} format is not supported".format(y_type))
 
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = column_or_1d(y_true)
@@ -715,7 +715,7 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
     y_type = type_of_target(y_true)
     if (y_type != "multilabel-indicator" and
             not (y_type == "binary" and y_true.ndim == 2)):
-        raise ValueError("{0} format is not supported".format(y_type))
+        raise ValueError("{} format is not supported".format(y_type))
 
     y_true = csr_matrix(y_true)
     y_score = -y_score
@@ -794,7 +794,7 @@ def coverage_error(y_true, y_score, sample_weight=None):
 
     y_type = type_of_target(y_true)
     if y_type != "multilabel-indicator":
-        raise ValueError("{0} format is not supported".format(y_type))
+        raise ValueError("{} format is not supported".format(y_type))
 
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")
@@ -853,7 +853,7 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
 
     y_type = type_of_target(y_true)
     if y_type not in ("multilabel-indicator",):
-        raise ValueError("{0} format is not supported".format(y_type))
+        raise ValueError("{} format is not supported".format(y_type))
 
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")

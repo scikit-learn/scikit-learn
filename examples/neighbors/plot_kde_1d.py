@@ -139,9 +139,9 @@ for kernel in ['gaussian', 'tophat', 'epanechnikov']:
     kde = KernelDensity(kernel=kernel, bandwidth=0.5).fit(X)
     log_dens = kde.score_samples(X_plot)
     ax.plot(X_plot[:, 0], np.exp(log_dens), '-',
-            label="kernel = '{0}'".format(kernel))
+            label="kernel = '{}'".format(kernel))
 
-ax.text(6, 0.38, "N={0} points".format(N))
+ax.text(6, 0.38, "N={} points".format(N))
 
 ax.legend(loc='upper left')
 ax.plot(X[:, 0], -0.005 - 0.01 * np.random.random(X.shape[0]), '+k')

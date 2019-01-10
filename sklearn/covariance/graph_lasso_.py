@@ -337,7 +337,7 @@ class GraphicalLasso(EmpiricalCovariance):
 
     def __init__(self, alpha=.01, mode='cd', tol=1e-4, enet_tol=1e-4,
                  max_iter=100, verbose=False, assume_centered=False):
-        super(GraphicalLasso, self).__init__(assume_centered=assume_centered)
+        super().__init__(assume_centered=assume_centered)
         self.alpha = alpha
         self.mode = mode
         self.tol = tol
@@ -581,7 +581,7 @@ class GraphicalLassoCV(GraphicalLasso):
     def __init__(self, alphas=4, n_refinements=4, cv='warn', tol=1e-4,
                  enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=None,
                  verbose=False, assume_centered=False):
-        super(GraphicalLassoCV, self).__init__(
+        super().__init__(
             mode=mode, tol=tol, verbose=verbose, enet_tol=enet_tol,
             max_iter=max_iter, assume_centered=assume_centered)
         self.alphas = alphas

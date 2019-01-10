@@ -44,7 +44,7 @@ __all__ = ['ensure_running', 'register', 'unregister']
 VERBOSE = False
 
 
-class SemaphoreTracker(object):
+class SemaphoreTracker:
 
     def __init__(self):
         self._lock = threading.Lock()
@@ -126,7 +126,7 @@ class SemaphoreTracker(object):
         self._send('UNREGISTER', name)
 
     def _send(self, cmd, name):
-        msg = '{0}:{1}\n'.format(cmd, name).encode('ascii')
+        msg = '{}:{}\n'.format(cmd, name).encode('ascii')
         if len(name) > 512:
             # posix guarantees that writes to a pipe of less than PIPE_BUF
             # bytes are atomic, and that PIPE_BUF >= 512

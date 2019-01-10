@@ -123,19 +123,19 @@ roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
 # Plot all ROC curves
 plt.figure()
 plt.plot(fpr["micro"], tpr["micro"],
-         label='micro-average ROC curve (area = {0:0.2f})'
+         label='micro-average ROC curve (area = {:0.2f})'
                ''.format(roc_auc["micro"]),
          color='deeppink', linestyle=':', linewidth=4)
 
 plt.plot(fpr["macro"], tpr["macro"],
-         label='macro-average ROC curve (area = {0:0.2f})'
+         label='macro-average ROC curve (area = {:0.2f})'
                ''.format(roc_auc["macro"]),
          color='navy', linestyle=':', linewidth=4)
 
 colors = cycle(['aqua', 'darkorange', 'cornflowerblue'])
 for i, color in zip(range(n_classes), colors):
     plt.plot(fpr[i], tpr[i], color=color, lw=lw,
-             label='ROC curve of class {0} (area = {1:0.2f})'
+             label='ROC curve of class {} (area = {:0.2f})'
              ''.format(i, roc_auc[i]))
 
 plt.plot([0, 1], [0, 1], 'k--', lw=lw)

@@ -50,11 +50,11 @@ def user_role(name, rawtext, text, lineno,
     if config.issues_user_uri:
         ref = config.issues_user_uri.format(user=target)
     else:
-        ref = 'https://github.com/{0}'.format(target)
+        ref = 'https://github.com/{}'.format(target)
     if has_explicit_title:
         text = title
     else:
-        text = '@{0}'.format(target)
+        text = '@{}'.format(target)
 
     link = nodes.reference(text=text, refuri=ref, **options)
     return [link], []
@@ -66,10 +66,10 @@ def _make_issue_node(issue_no, config, options=None):
         if config.issues_uri:
             ref = config.issues_uri.format(issue=issue_no)
         elif config.issues_github_path:
-            ref = 'https://github.com/{0}/issues/{1}'.format(
+            ref = 'https://github.com/{}/issues/{}'.format(
                 config.issues_github_path, issue_no
             )
-        issue_text = '#{0}'.format(issue_no)
+        issue_text = '#{}'.format(issue_no)
         link = nodes.reference(text=issue_text, refuri=ref, **options)
     else:
         link = None

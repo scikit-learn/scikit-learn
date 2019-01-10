@@ -894,7 +894,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
                  epsilon=1e-8, n_iter_no_change=10):
 
-        sup = super(MLPClassifier, self)
+        sup = super()
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
                      activation=activation, solver=solver, alpha=alpha,
                      batch_size=batch_size, learning_rate=learning_rate,
@@ -1013,7 +1013,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             else:
                 self._label_binarizer.fit(classes)
 
-        super(MLPClassifier, self)._partial_fit(X, y)
+        super()._partial_fit(X, y)
 
         return self
 
@@ -1275,7 +1275,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
                  epsilon=1e-8, n_iter_no_change=10):
 
-        sup = super(MLPRegressor, self)
+        sup = super()
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
                      activation=activation, solver=solver, alpha=alpha,
                      batch_size=batch_size, learning_rate=learning_rate,

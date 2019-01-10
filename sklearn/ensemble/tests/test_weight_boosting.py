@@ -59,7 +59,7 @@ def test_samme_proba():
 
     # _samme_proba calls estimator.predict_proba.
     # Make a mock object so I can control what gets returned.
-    class MockEstimator(object):
+    class MockEstimator:
         def predict_proba(self, X):
             assert_array_equal(X.shape, probs.shape)
             return probs
@@ -127,7 +127,7 @@ def test_iris():
         # Check we used multiple estimators
         assert_greater(len(clf.estimators_), 1)
         # Check for distinct random states (see issue #7408)
-        assert_equal(len(set(est.random_state for est in clf.estimators_)),
+        assert_equal(len({est.random_state for est in clf.estimators_}),
                      len(clf.estimators_))
 
     # Somewhat hacky regression test: prior to
@@ -148,7 +148,7 @@ def test_boston():
     # Check we used multiple estimators
     assert len(reg.estimators_) > 1
     # Check for distinct random states (see issue #7408)
-    assert_equal(len(set(est.random_state for est in reg.estimators_)),
+    assert_equal(len({est.random_state for est in reg.estimators_}),
                  len(reg.estimators_))
 
 
@@ -328,7 +328,7 @@ def test_sparse_classification():
 
         def fit(self, X, y, sample_weight=None):
             """Modification on fit caries data type for later verification."""
-            super(CustomSVC, self).fit(X, y, sample_weight=sample_weight)
+            super().fit(X, y, sample_weight=sample_weight)
             self.data_type_ = type(X)
             return self
 
@@ -425,7 +425,7 @@ def test_sparse_regression():
 
         def fit(self, X, y, sample_weight=None):
             """Modification on fit caries data type for later verification."""
-            super(CustomSVR, self).fit(X, y, sample_weight=sample_weight)
+            super().fit(X, y, sample_weight=sample_weight)
             self.data_type_ = type(X)
             return self
 

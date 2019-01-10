@@ -302,7 +302,7 @@ class LinearClassifierMixin(ClassifierMixin):
             return prob
 
 
-class SparseCoefMixin(object):
+class SparseCoefMixin:
     """Mixin for converting coef_ to and from CSR format.
 
     L1-regularizing estimators should inherit this.

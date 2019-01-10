@@ -252,7 +252,7 @@ def reduce_memmap(a):
         return (loads, (dumps(np.asarray(a), protocol=HIGHEST_PROTOCOL),))
 
 
-class ArrayMemmapReducer(object):
+class ArrayMemmapReducer:
     """Reducer callable to dump large arrays to memmap files.
 
     Parameters

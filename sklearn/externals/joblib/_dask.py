@@ -83,7 +83,7 @@ def _funcname(x):
     return funcname(x)
 
 
-class Batch(object):
+class Batch:
     def __init__(self, tasks):
         self.tasks = tasks
 

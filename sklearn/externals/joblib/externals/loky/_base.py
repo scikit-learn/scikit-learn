@@ -76,7 +76,7 @@ else:
         """The operation exceeded the given deadline."""
         pass
 
-    class _Waiter(object):
+    class _Waiter:
         """Provides the event that wait() and as_completed() block on."""
         def __init__(self):
             self.event = threading.Event()
@@ -95,37 +95,37 @@ else:
         """Used by as_completed()."""
 
         def __init__(self):
-            super(_AsCompletedWaiter, self).__init__()
+            super().__init__()
             self.lock = threading.Lock()
 
         def add_result(self, future):
             with self.lock:
-                super(_AsCompletedWaiter, self).add_result(future)
+                super().add_result(future)
                 self.event.set()
 
         def add_exception(self, future):
             with self.lock:
-                super(_AsCompletedWaiter, self).add_exception(future)
+                super().add_exception(future)
                 self.event.set()
 
         def add_cancelled(self, future):
             with self.lock:
-                super(_AsCompletedWaiter, self).add_cancelled(future)
+                super().add_cancelled(future)
                 self.event.set()
 
     class _FirstCompletedWaiter(_Waiter):
         """Used by wait(return_when=FIRST_COMPLETED)."""
 
         def add_result(self, future):
-            super(_FirstCompletedWaiter, self).add_result(future)
+            super().add_result(future)
             self.event.set()
 
         def add_exception(self, future):
-            super(_FirstCompletedWaiter, self).add_exception(future)
+            super().add_exception(future)
             self.event.set()
 
         def add_cancelled(self, future):
-            super(_FirstCompletedWaiter, self).add_cancelled(future)
+            super().add_cancelled(future)
             self.event.set()
 
     class _AllCompletedWaiter(_Waiter):
@@ -135,7 +135,7 @@ else:
             self.num_pending_calls = num_pending_calls
             self.stop_on_exception = stop_on_exception
             self.lock = threading.Lock()
-            super(_AllCompletedWaiter, self).__init__()
+            super().__init__()
 
         def _decrement_pending_calls(self):
             with self.lock:
@@ -144,21 +144,21 @@ else:
                     self.event.set()
 
         def add_result(self, future):
-            super(_AllCompletedWaiter, self).add_result(future)
+            super().add_result(future)
             self._decrement_pending_calls()
 
         def add_exception(self, future):
-            super(_AllCompletedWaiter, self).add_exception(future)
+            super().add_exception(future)
             if self.stop_on_exception:
                 self.event.set()
             else:
                 self._decrement_pending_calls()
 
         def add_cancelled(self, future):
-            super(_AllCompletedWaiter, self).add_cancelled(future)
+            super().add_cancelled(future)
             self._decrement_pending_calls()
 
-    class _AcquireFutures(object):
+    class _AcquireFutures:
         """A context manager that does an ordered acquire of Future conditions.
         """
 
@@ -220,9 +220,9 @@ else:
 
         fs = set(fs)
         with _AcquireFutures(fs):
-            finished = set(
+            finished = {
                     f for f in fs
-                    if f._state in [CANCELLED_AND_NOTIFIED, FINISHED])
+                    if f._state in [CANCELLED_AND_NOTIFIED, FINISHED]}
             pending = fs - finished
             waiter = _create_and_install_waiters(fs, _AS_COMPLETED)
 
@@ -284,8 +284,8 @@ else:
             futures.
         """
         with _AcquireFutures(fs):
-            done = set(f for f in fs
-                       if f._state in [CANCELLED_AND_NOTIFIED, FINISHED])
+            done = {f for f in fs
+                       if f._state in [CANCELLED_AND_NOTIFIED, FINISHED]}
             not_done = set(fs) - done
 
             if (return_when == FIRST_COMPLETED) and done:
@@ -308,7 +308,7 @@ else:
         done.update(waiter.finished_futures)
         return DoneAndNotDoneFutures(done, set(fs) - done)
 
-    class _BaseFuture(object):
+    class _BaseFuture:
         """Represents the result of an asynchronous computation."""
 
         def __init__(self):
@@ -536,7 +536,7 @@ else:
                 self._condition.notify_all()
             self._invoke_callbacks()
 
-    class Executor(object):
+    class Executor:
         """This is an abstract base class for concrete asynchronous executors.
         """
 

@@ -545,8 +545,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                       (self.n_classes_ - 1) // 2)]
 
         if len(np.setdiff1d(y, self.classes_)):
-            raise ValueError("Mini-batch contains {0} while it "
-                             "must be subset of {1}".format(np.unique(y),
+            raise ValueError("Mini-batch contains {} while it "
+                             "must be subset of {}".format(np.unique(y),
                                                             self.classes_))
 
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
@@ -721,7 +721,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """
         X, y = check_X_y(X, y)
         if self.code_size <= 0:
-            raise ValueError("code_size should be greater than 0, got {0}"
+            raise ValueError("code_size should be greater than 0, got {}"
                              "".format(self.code_size))
 
         _check_estimator(self.estimator)
@@ -742,7 +742,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         else:
             self.code_book_[self.code_book_ != 1] = 0
 
-        classes_index = dict((c, i) for i, c in enumerate(self.classes_))
+        classes_index = {c: i for i, c in enumerate(self.classes_)}
 
         Y = np.array([self.code_book_[classes_index[y[i]]]
                       for i in range(X.shape[0])], dtype=np.int)

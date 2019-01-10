@@ -998,11 +998,11 @@ weighted avg       0.51      0.53      0.47        75
 def test_classification_report_multiclass_with_unicode_label():
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    labels = np.array([u"blue\xa2", u"green\xa2", u"red\xa2"])
+    labels = np.array(["blue\xa2", "green\xa2", "red\xa2"])
     y_true = labels[y_true]
     y_pred = labels[y_pred]
 
-    expected_report = u"""\
+    expected_report = """\
               precision    recall  f1-score   support
 
        blue\xa2       0.83      0.79      0.81        24
@@ -1584,14 +1584,14 @@ def test__check_targets():
             if type1 != type2:
                 assert_raise_message(
                     ValueError,
-                    "Classification metrics can't handle a mix of {0} and {1} "
+                    "Classification metrics can't handle a mix of {} and {} "
                     "targets".format(type1, type2),
                     _check_targets, y1, y2)
 
             else:
                 if type1 not in (BIN, MC, IND):
                     assert_raise_message(ValueError,
-                                         "{0} is not supported".format(type1),
+                                         "{} is not supported".format(type1),
                                          _check_targets, y1, y2)
 
         else:

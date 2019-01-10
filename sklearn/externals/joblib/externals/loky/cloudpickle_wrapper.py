@@ -11,7 +11,7 @@ except ImportError:
 WRAP_CACHE = dict()
 
 
-class CloudpickledObjectWrapper(object):
+class CloudpickledObjectWrapper:
     def __init__(self, obj, keep_wrapper=False):
         self._obj = obj
         self._keep_wrapper = keep_wrapper

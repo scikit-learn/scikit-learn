@@ -56,7 +56,7 @@ SEM_VALUE_MAX = _multiprocessing.SemLock.SEM_VALUE_MAX
 # Base class for semaphores and mutexes; wraps `_multiprocessing.SemLock`
 #
 
-class SemLock(object):
+class SemLock:
 
     _rand = tempfile._RandomNameSequence()
 
@@ -171,7 +171,7 @@ class BoundedSemaphore(Semaphore):
 class Lock(SemLock):
 
     def __init__(self):
-        super(Lock, self).__init__(SEMAPHORE, 1, 1)
+        super().__init__(SEMAPHORE, 1, 1)
 
     def __repr__(self):
         try:
@@ -197,7 +197,7 @@ class Lock(SemLock):
 class RLock(SemLock):
 
     def __init__(self):
-        super(RLock, self).__init__(RECURSIVE_MUTEX, 1, 1)
+        super().__init__(RECURSIVE_MUTEX, 1, 1)
 
     def __repr__(self):
         try:
@@ -221,7 +221,7 @@ class RLock(SemLock):
 # Condition variable
 #
 
-class Condition(object):
+class Condition:
 
     def __init__(self, lock=None):
         self._lock = lock or RLock()
@@ -345,7 +345,7 @@ class Condition(object):
 # Event
 #
 
-class Event(object):
+class Event:
 
     def __init__(self):
         self._cond = Condition(Lock())

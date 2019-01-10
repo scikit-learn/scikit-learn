@@ -220,7 +220,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
     """
 
     def __init__(self, estimator, n_jobs=None):
-        super(MultiOutputRegressor, self).__init__(estimator, n_jobs)
+        super().__init__(estimator, n_jobs)
 
     @if_delegate_has_method('estimator')
     def partial_fit(self, X, y, sample_weight=None):
@@ -244,7 +244,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         -------
         self : object
         """
-        super(MultiOutputRegressor, self).partial_fit(
+        super().partial_fit(
             X, y, sample_weight=sample_weight)
 
     def score(self, X, y, sample_weight=None):
@@ -311,7 +311,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
     """
 
     def __init__(self, estimator, n_jobs=None):
-        super(MultiOutputClassifier, self).__init__(estimator, n_jobs)
+        super().__init__(estimator, n_jobs)
 
     def predict_proba(self, X):
         """Probability estimates.
@@ -360,8 +360,8 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
             raise ValueError("y must have at least two dimensions for "
                              "multi target classification but has only one")
         if y.shape[1] != n_outputs_:
-            raise ValueError("The number of outputs of Y for fit {0} and"
-                             " score {1} should be same".
+            raise ValueError("The number of outputs of Y for fit {} and"
+                             " score {} should be same".
                              format(n_outputs_, y.shape[1]))
         y_pred = self.predict(X)
         return np.mean(np.all(y == y_pred, axis=1))
@@ -561,7 +561,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         -------
         self : object
         """
-        super(ClassifierChain, self).fit(X, Y)
+        super().fit(X, Y)
         self.classes_ = [estimator.classes_
                          for chain_idx, estimator
                          in enumerate(self.estimators_)]
@@ -707,5 +707,5 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         -------
         self : object
         """
-        super(RegressorChain, self).fit(X, Y)
+        super().fit(X, Y)
         return self

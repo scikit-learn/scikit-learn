@@ -102,7 +102,7 @@ class Hyperparameter(namedtuple('Hyperparameter',
 
         if fixed is None:
             fixed = isinstance(bounds, str) and bounds == "fixed"
-        return super(Hyperparameter, cls).__new__(
+        return super().__new__(
             cls, name, value_type, bounds, n_elements, fixed)
 
     # This is mainly a testing utility to check that two hyperparameters
@@ -325,8 +325,8 @@ class Kernel(metaclass=ABCMeta):
         return True
 
     def __repr__(self):
-        return "{0}({1})".format(self.__class__.__name__,
-                                 ", ".join(map("{0:.3g}".format, self.theta)))
+        return "{}({})".format(self.__class__.__name__,
+                               ", ".join(map("{:.3g}".format, self.theta)))
 
     @abstractmethod
     def __call__(self, X, Y=None, eval_gradient=False):
@@ -356,7 +356,7 @@ class Kernel(metaclass=ABCMeta):
         """Returns whether the kernel is stationary. """
 
 
-class NormalizedKernelMixin(object):
+class NormalizedKernelMixin:
     """Mixin for kernels which are normalized: k(X, X)=1.
 
     .. versionadded:: 0.18
@@ -382,7 +382,7 @@ class NormalizedKernelMixin(object):
         return np.ones(X.shape[0])
 
 
-class StationaryKernelMixin(object):
+class StationaryKernelMixin:
     """Mixin for kernels which are stationary: k(X, Y)= f(X-Y).
 
     .. versionadded:: 0.18
@@ -708,7 +708,7 @@ class Sum(KernelOperator):
         return self.k1.diag(X) + self.k2.diag(X)
 
     def __repr__(self):
-        return "{0} + {1}".format(self.k1, self.k2)
+        return "{} + {}".format(self.k1, self.k2)
 
 
 class Product(KernelOperator):
@@ -783,7 +783,7 @@ class Product(KernelOperator):
         return self.k1.diag(X) * self.k2.diag(X)
 
     def __repr__(self):
-        return "{0} * {1}".format(self.k1, self.k2)
+        return "{} * {}".format(self.k1, self.k2)
 
 
 class Exponentiation(Kernel):
@@ -936,7 +936,7 @@ class Exponentiation(Kernel):
         return self.kernel.diag(X) ** self.exponent
 
     def __repr__(self):
-        return "{0} ** {1}".format(self.kernel, self.exponent)
+        return "{} ** {}".format(self.kernel, self.exponent)
 
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
@@ -1038,7 +1038,7 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
                        dtype=np.array(self.constant_value).dtype)
 
     def __repr__(self):
-        return "{0:.3g}**2".format(np.sqrt(self.constant_value))
+        return "{:.3g}**2".format(np.sqrt(self.constant_value))
 
 
 class WhiteKernel(StationaryKernelMixin, Kernel):
@@ -1134,7 +1134,7 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
                        dtype=np.array(self.noise_level).dtype)
 
     def __repr__(self):
-        return "{0}(noise_level={1:.3g})".format(self.__class__.__name__,
+        return "{}(noise_level={:.3g})".format(self.__class__.__name__,
                                                  self.noise_level)
 
 
@@ -1244,11 +1244,11 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     def __repr__(self):
         if self.anisotropic:
-            return "{0}(length_scale=[{1}])".format(
-                self.__class__.__name__, ", ".join(map("{0:.3g}".format,
+            return "{}(length_scale=[{}])".format(
+                self.__class__.__name__, ", ".join(map("{:.3g}".format,
                                                    self.length_scale)))
         else:  # isotropic
-            return "{0}(length_scale={1:.3g})".format(
+            return "{}(length_scale={:.3g})".format(
                 self.__class__.__name__, np.ravel(self.length_scale)[0])
 
 
@@ -1293,7 +1293,7 @@ class Matern(RBF):
     """
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5),
                  nu=1.5):
-        super(Matern, self).__init__(length_scale, length_scale_bounds)
+        super().__init__(length_scale, length_scale_bounds)
         self.nu = nu
 
     def __call__(self, X, Y=None, eval_gradient=False):
@@ -1392,12 +1392,12 @@ class Matern(RBF):
 
     def __repr__(self):
         if self.anisotropic:
-            return "{0}(length_scale=[{1}], nu={2:.3g})".format(
+            return "{}(length_scale=[{}], nu={:.3g})".format(
                 self.__class__.__name__,
-                ", ".join(map("{0:.3g}".format, self.length_scale)),
+                ", ".join(map("{:.3g}".format, self.length_scale)),
                 self.nu)
         else:
-            return "{0}(length_scale={1:.3g}, nu={2:.3g})".format(
+            return "{}(length_scale={:.3g}, nu={:.3g})".format(
                 self.__class__.__name__, np.ravel(self.length_scale)[0],
                 self.nu)
 
@@ -1510,7 +1510,7 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             return K
 
     def __repr__(self):
-        return "{0}(alpha={1:.3g}, length_scale={2:.3g})".format(
+        return "{}(alpha={:.3g}, length_scale={:.3g})".format(
             self.__class__.__name__, self.alpha, self.length_scale)
 
 
@@ -1623,7 +1623,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             return K
 
     def __repr__(self):
-        return "{0}(length_scale={1:.3g}, periodicity={2:.3g})".format(
+        return "{}(length_scale={:.3g}, periodicity={:.3g})".format(
             self.__class__.__name__, self.length_scale, self.periodicity)
 
 
@@ -1732,7 +1732,7 @@ class DotProduct(Kernel):
         return False
 
     def __repr__(self):
-        return "{0}(sigma_0={1:.3g})".format(
+        return "{}(sigma_0={:.3g})".format(
             self.__class__.__name__, self.sigma_0)
 
 
@@ -1870,5 +1870,5 @@ class PairwiseKernel(Kernel):
         return self.metric in ["rbf"]
 
     def __repr__(self):
-        return "{0}(gamma={1}, metric={2})".format(
+        return "{}(gamma={}, metric={})".format(
             self.__class__.__name__, self.gamma, self.metric)

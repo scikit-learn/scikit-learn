@@ -147,8 +147,8 @@ for n, (name, estimator) in enumerate(estimators):
     y_bias = (f(X_test) - np.mean(y_predict, axis=1)) ** 2
     y_var = np.var(y_predict, axis=1)
 
-    print("{0}: {1:.4f} (error) = {2:.4f} (bias^2) "
-          " + {3:.4f} (var) + {4:.4f} (noise)".format(name,
+    print("{}: {:.4f} (error) = {:.4f} (bias^2) "
+          " + {:.4f} (var) + {:.4f} (noise)".format(name,
                                                       np.mean(y_error),
                                                       np.mean(y_bias),
                                                       np.mean(y_var),

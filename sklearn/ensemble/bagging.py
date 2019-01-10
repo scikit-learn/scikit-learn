@@ -202,7 +202,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                  n_jobs=None,
                  random_state=None,
                  verbose=0):
-        super(BaseBagging, self).__init__(
+        super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators)
 
@@ -565,7 +565,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                  random_state=None,
                  verbose=0):
 
-        super(BaggingClassifier, self).__init__(
+        super().__init__(
             base_estimator,
             n_estimators=n_estimators,
             max_samples=max_samples,
@@ -580,7 +580,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super(BaggingClassifier, self)._validate_estimator(
+        super()._validate_estimator(
             default=DecisionTreeClassifier())
 
     def _set_oob_score(self, X, y):
@@ -681,8 +681,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is {0} and "
-                             "input n_features is {1}."
+                             "match the input. Model n_features is {} and "
+                             "input n_features is {}."
                              "".format(self.n_features_, X.shape[1]))
 
         # Parallel loop
@@ -732,8 +732,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
             if self.n_features_ != X.shape[1]:
                 raise ValueError("Number of features of the model must "
-                                 "match the input. Model n_features is {0} "
-                                 "and input n_features is {1} "
+                                 "match the input. Model n_features is {} "
+                                 "and input n_features is {} "
                                  "".format(self.n_features_, X.shape[1]))
 
             # Parallel loop
@@ -790,8 +790,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is {0} and "
-                             "input n_features is {1} "
+                             "match the input. Model n_features is {} and "
+                             "input n_features is {} "
                              "".format(self.n_features_, X.shape[1]))
 
         # Parallel loop
@@ -935,7 +935,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
                  n_jobs=None,
                  random_state=None,
                  verbose=0):
-        super(BaggingRegressor, self).__init__(
+        super().__init__(
             base_estimator,
             n_estimators=n_estimators,
             max_samples=max_samples,
@@ -990,7 +990,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super(BaggingRegressor, self)._validate_estimator(
+        super()._validate_estimator(
             default=DecisionTreeRegressor())
 
     def _set_oob_score(self, X, y):

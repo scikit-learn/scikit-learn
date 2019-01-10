@@ -73,7 +73,7 @@ from sklearn.model_selection.tests.common import OneTimeSplitter
 
 # Neither of the following two estimators inherit from BaseEstimator,
 # to test hyperparameter search on user-defined classifiers.
-class MockClassifier(object):
+class MockClassifier:
     """Dummy classifier to test the parameter search algorithms"""
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
@@ -156,10 +156,10 @@ def test_parameter_grid():
     # loop to assert we can iterate over the grid multiple times
     for i in range(2):
         # tuple + chain transforms {"a": 1, "b": 2} to ("a", 1, "b", 2)
-        points = set(tuple(chain(*(sorted(p.items())))) for p in grid2)
+        points = {tuple(chain(*(sorted(p.items())))) for p in grid2}
         assert_equal(points,
-                     set(("bar", x, "foo", y)
-                         for x, y in product(params2["bar"], params2["foo"])))
+                     {("bar", x, "foo", y)
+                         for x, y in product(params2["bar"], params2["foo"])})
     assert_grid_iter_equals_getitem(grid2)
 
     # Special case: empty grid (useful to get default estimator settings)
@@ -1657,7 +1657,7 @@ def test_custom_run_search():
 
     class CustomSearchCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
-            super(CustomSearchCV, self).__init__(estimator, **kwargs)
+            super().__init__(estimator, **kwargs)
 
         def _run_search(self, evaluate):
             results = evaluate([{'max_depth': 1}, {'max_depth': 2}])
@@ -1688,7 +1688,7 @@ def test_custom_run_search():
 def test__custom_fit_no_run_search():
     class NoRunSearchSearchCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
-            super(NoRunSearchSearchCV, self).__init__(estimator, **kwargs)
+            super().__init__(estimator, **kwargs)
 
         def fit(self, X, y=None, groups=None, **fit_params):
             return self
@@ -1698,7 +1698,7 @@ def test__custom_fit_no_run_search():
 
     class BadSearchCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
-            super(BadSearchCV, self).__init__(estimator, **kwargs)
+            super().__init__(estimator, **kwargs)
 
     with pytest.raises(NotImplementedError,
                        match="_run_search not implemented."):

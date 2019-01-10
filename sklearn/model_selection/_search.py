@@ -44,7 +44,7 @@ __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
            'ParameterSampler', 'RandomizedSearchCV']
 
 
-class ParameterGrid(object):
+class ParameterGrid:
     """Grid of parameters with a discrete number of values for each.
 
     Can be used to iterate over parameter value combinations with the
@@ -180,7 +180,7 @@ class ParameterGrid(object):
         raise IndexError('ParameterGrid index out of range')
 
 
-class ParameterSampler(object):
+class ParameterSampler:
     """Generator on parameters sampled from given distributions.
 
     Non-deterministic iterable over random candidate combinations for hyper-
@@ -367,12 +367,12 @@ def _check_param_grid(param_grid):
 
             if (isinstance(v, str) or
                     not isinstance(v, (np.ndarray, Sequence))):
-                raise ValueError("Parameter values for parameter ({0}) need "
+                raise ValueError("Parameter values for parameter ({}) need "
                                  "to be a sequence(but not a string) or"
                                  " np.ndarray.".format(name))
 
             if len(v) == 0:
-                raise ValueError("Parameter values for parameter ({0}) need "
+                raise ValueError("Parameter values for parameter ({}) need "
                                  "to be a non-empty sequence.".format(name))
 
 
@@ -655,8 +655,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                 n_candidates = len(candidate_params)
 
                 if self.verbose > 0:
-                    print("Fitting {0} folds for each of {1} candidates,"
-                          " totalling {2} fits".format(
+                    print("Fitting {} folds for each of {} candidates,"
+                          " totalling {} fits".format(
                               n_splits, n_candidates, n_candidates * n_splits))
 
                 out = parallel(delayed(_fit_and_score)(clone(base_estimator),
@@ -1128,7 +1128,7 @@ class GridSearchCV(BaseSearchCV):
                  n_jobs=None, iid='warn', refit=True, cv='warn', verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise-deprecating',
                  return_train_score=False):
-        super(GridSearchCV, self).__init__(
+        super().__init__(
             estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
@@ -1447,7 +1447,7 @@ class RandomizedSearchCV(BaseSearchCV):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
-        super(RandomizedSearchCV, self).__init__(
+        super().__init__(
             estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,

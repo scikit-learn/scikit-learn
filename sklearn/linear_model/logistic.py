@@ -1649,7 +1649,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                (self.multi_class == 'auto' and (self.classes_.size <= 2 or
                                                 self.solver == 'liblinear')))
         if ovr:
-            return super(LogisticRegression, self)._predict_proba_lr(X)
+            return super()._predict_proba_lr(X)
         else:
             decision = self.decision_function(X)
             if decision.ndim == 1:
@@ -2008,8 +2008,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         label_encoder = LabelEncoder().fit(y)
         y = label_encoder.transform(y)
         if isinstance(class_weight, dict):
-            class_weight = dict((label_encoder.transform([cls])[0], v)
-                                for cls, v in class_weight.items())
+            class_weight = {label_encoder.transform([cls])[0]: v
+                            for cls, v in class_weight.items()}
 
         # The original class labels
         classes = self.classes_ = label_encoder.classes_

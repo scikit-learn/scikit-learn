@@ -327,7 +327,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         eclf.set_params(rf=None)
 
         """
-        super(VotingClassifier, self)._set_params('estimators', **params)
+        super()._set_params('estimators', **params)
         return self
 
     def get_params(self, deep=True):
@@ -339,8 +339,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             Setting it to True gets the various classifiers and the parameters
             of the classifiers as well
         """
-        return super(VotingClassifier,
-                     self)._get_params('estimators', deep=deep)
+        return super()._get_params('estimators', deep=deep)
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """

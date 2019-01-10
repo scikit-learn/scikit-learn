@@ -87,11 +87,11 @@ def register_store_backend(backend_name, backend):
     """
     if not isinstance(backend_name, _basestring):
         raise ValueError("Store backend name should be a string, "
-                         "'{0}' given.".format(backend_name))
+                         "'{}' given.".format(backend_name))
     if backend is None or not issubclass(backend, StoreBackendBase):
         raise ValueError("Store backend should inherit "
                          "StoreBackendBase, "
-                         "'{0}' given.".format(backend))
+                         "'{}' given.".format(backend))
 
     _STORE_BACKENDS[backend_name] = backend
 
@@ -116,7 +116,7 @@ def _store_backend_factory(backend, location, verbose=0, backend_options=None):
         # By default, we assume the FileSystemStoreBackend can be used if no
         # matching backend could be found.
         if obj is None:
-            raise TypeError('Unknown location {0} or backend {1}'.format(
+            raise TypeError('Unknown location {} or backend {}'.format(
                             location, backend))
 
         # The store backend is configured with the extra named parameters,
@@ -163,10 +163,10 @@ def _format_load_msg(func_id, args_id, timestamp=None, metadata=None):
         pass
 
     if timestamp is not None:
-        ts_string = "{0: <16}".format(format_time(time.time() - timestamp))
+        ts_string = "{: <16}".format(format_time(time.time() - timestamp))
     else:
         ts_string = ""
-    return '[Memory]{0}: Loading {1}'.format(ts_string, str(signature))
+    return '[Memory]{}: Loading {}'.format(ts_string, str(signature))
 
 
 # An in-memory store to avoid looking at the disk-based function
@@ -282,7 +282,7 @@ class MemorizedResult(Logger):
         return state
 
 
-class NotMemorizedResult(object):
+class NotMemorizedResult:
     """Class representing an arbitrary value.
 
     This class is a replacement for MemorizedResult when there is no cache.
@@ -323,7 +323,7 @@ class NotMemorizedResult(object):
 ###############################################################################
 # class `NotMemorizedFunc`
 ###############################################################################
-class NotMemorizedFunc(object):
+class NotMemorizedFunc:
     """No-op object decorating a function.
 
     This class replaces MemorizedFunc when there is no cache. It provides an
@@ -345,7 +345,7 @@ class NotMemorizedFunc(object):
         return NotMemorizedResult(self.func(*args, **kwargs))
 
     def __repr__(self):
-        return '{0}(func={1})'.format(self.__class__.__name__, self.func)
+        return '{}(func={})'.format(self.__class__.__name__, self.func)
 
     def clear(self, warn=True):
         # Argument "warn" is for compatibility with MemorizedFunc.clear
@@ -481,8 +481,8 @@ class MemorizedFunc(Logger):
                 self.store_backend.contains_item([func_id, args_id])):
             if self._verbose > 10:
                 _, name = get_func_name(self.func)
-                self.warn('Computing func {0}, argument hash {1} '
-                          'in location {2}'
+                self.warn('Computing func {}, argument hash {} '
+                          'in location {}'
                           .format(name, args_id,
                                   self.store_backend.
                                   get_cached_func_info([func_id])['location']))
@@ -590,7 +590,7 @@ class MemorizedFunc(Logger):
         # file. This is bad practice, but joblib should be robust to bad
         # practice.
         func_id = _build_func_identifier(self.func)
-        func_code = u'%s %i\n%s' % (FIRST_LINE_TEXT, first_line, func_code)
+        func_code = '%s %i\n%s' % (FIRST_LINE_TEXT, first_line, func_code)
         self.store_backend.store_cached_func_code([func_id], func_code)
 
         # Also store in the in-memory store of function hashes
@@ -656,13 +656,13 @@ class MemorizedFunc(Logger):
                                      win_characters=False)
         if old_first_line == first_line == -1 or func_name == '<lambda>':
             if not first_line == -1:
-                func_description = ("{0} ({1}:{2})"
+                func_description = ("{} ({}:{})"
                                     .format(func_name, source_file,
                                             first_line))
             else:
                 func_description = func_name
             warnings.warn(JobLibCollisionWarning(
-                "Cannot detect name collisions for function '{0}'"
+                "Cannot detect name collisions for function '{}'"
                 .format(func_description)), stacklevel=stacklevel)
 
         # Fetch the code at the old location and compare it. If it is the
@@ -694,7 +694,7 @@ class MemorizedFunc(Logger):
         # XXX: Should be using warnings, and giving stacklevel
         if self._verbose > 10:
             _, func_name = get_func_name(self.func, resolv_alias=False)
-            self.warn("Function {0} (identified by {1}) has changed"
+            self.warn("Function {} (identified by {}) has changed"
                       ".".format(func_name, func_id))
         self.clear(warn=True)
         return False
@@ -752,7 +752,7 @@ class MemorizedFunc(Logger):
         argument_dict = filter_args(self.func, self.ignore,
                                     args, kwargs)
 
-        input_repr = dict((k, repr(v)) for k, v in argument_dict.items())
+        input_repr = {k: repr(v) for k, v in argument_dict.items()}
         # This can fail due to race-conditions with multiple
         # concurrent joblibs removing the file or the directory
         metadata = {"duration": duration, "input_args": input_repr}

@@ -303,7 +303,7 @@ class BadAttributeFormat(ArffException):
 class BadDataFormat(ArffException):
     '''Error raised when some data instance is in an invalid format.'''
     def __init__(self, value):
-        super(BadDataFormat, self).__init__()
+        super().__init__()
         self.message = (
             'Bad @DATA instance format in line %d: ' +
             ('%s' % value)
@@ -319,7 +319,7 @@ class BadAttributeName(ArffException):
     declaration.'''
 
     def __init__(self, value, value2):
-        super(BadAttributeName, self).__init__()
+        super().__init__()
         self.message = (
             ('Bad @ATTRIBUTE name %s at line' % value) +
             ' %d, this name is already in use in line' +
@@ -331,7 +331,7 @@ class BadNominalValue(ArffException):
     declared into it respective attribute declaration.'''
 
     def __init__(self, value):
-        super(BadNominalValue, self).__init__()
+        super().__init__()
         self.message = (
             ('Data value %s not found in nominal declaration, ' % value)
             + 'at line %d.'
@@ -340,7 +340,7 @@ class BadNominalValue(ArffException):
 class BadNominalFormatting(ArffException):
     '''Error raised when a nominal value with space is not properly quoted.'''
     def __init__(self, value):
-        super(BadNominalFormatting, self).__init__()
+        super().__init__()
         self.message = (
             ('Nominal data value "%s" not properly quoted in line ' % value) +
             '%d.'
@@ -360,7 +360,7 @@ class BadLayout(ArffException):
     message = 'Invalid layout of the ARFF file, at line %d.'
 
     def __init__(self, msg=''):
-        super(BadLayout, self).__init__()
+        super().__init__()
         if msg:
             self.message = BadLayout.message + ' ' + msg.replace('%', '%%')
 
@@ -384,11 +384,11 @@ class BadObject(ArffException):
 # INTERNAL ====================================================================
 def encode_string(s):
     if _RE_QUOTE_CHARS.search(s):
-        return u"'%s'" % _RE_ESCAPE_CHARS.sub(r'\\', s)
+        return "'%s'" % _RE_ESCAPE_CHARS.sub(r'\\', s)
     return s
 
 
-class EncodedNominalConversor(object):
+class EncodedNominalConversor:
     def __init__(self, values):
         self.values = {v: i for i, v in enumerate(values)}
         self.values[0] = 0
@@ -400,7 +400,7 @@ class EncodedNominalConversor(object):
             raise BadNominalValue(value)
 
 
-class NominalConversor(object):
+class NominalConversor:
     def __init__(self, values):
         self.values = set(values)
         self.zero_value = values[0]
@@ -417,7 +417,7 @@ class NominalConversor(object):
         return unicode(value)
 
 
-class Data(object):
+class Data:
     '''Internal helper class to allow for different matrix types without
     making the code a huge collection of if statements.'''
     def __init__(self):
@@ -475,14 +475,14 @@ class Data(object):
 
             new_data = []
             for value in inst:
-                if value is None or value == u'' or value != value:
+                if value is None or value == '' or value != value:
                     s = '?'
                 else:
                     s = encode_string(unicode(value))
                 new_data.append(s)
 
             current_row += 1
-            yield u','.join(new_data)
+            yield ','.join(new_data)
 
 class COOData(Data):
     def __init__(self):
@@ -532,7 +532,7 @@ class COOData(Data):
             if row > current_row:
                 # Add empty rows if necessary
                 while current_row < row:
-                    yield " ".join([u"{", u','.join(new_data), u"}"])
+                    yield " ".join(["{", ','.join(new_data), "}"])
                     new_data = []
                     current_row += 1
 
@@ -542,13 +542,13 @@ class COOData(Data):
                     (current_row, col + 1, num_attributes)
                 )
 
-            if v is None or v == u'' or v != v:
+            if v is None or v == '' or v != v:
                 s = '?'
             else:
                 s = encode_string(unicode(v))
             new_data.append("%d %s" % (col, s))
 
-        yield " ".join([u"{", u','.join(new_data), u"}"])
+        yield " ".join(["{", ','.join(new_data), "}"])
 
 class LODData(Data):
     def __init__(self):
@@ -586,14 +586,14 @@ class LODData(Data):
 
             for col in sorted(row):
                 v = row[col]
-                if v is None or v == u'' or v != v:
+                if v is None or v == '' or v != v:
                     s = '?'
                 else:
                     s = encode_string(unicode(v))
                 new_data.append("%d %s" % (col, s))
 
             current_row += 1
-            yield " ".join([u"{", u','.join(new_data), u"}"])
+            yield " ".join(["{", ','.join(new_data), "}"])
 
 def _get_data_object_for_decoding(matrix_type):
     if matrix_type == DENSE:
@@ -620,7 +620,7 @@ def _get_data_object_for_encoding(matrix):
 # =============================================================================
 
 # ADVANCED INTERFACE ==========================================================
-class ArffDecoder(object):
+class ArffDecoder:
     '''An ARFF decoder.'''
 
     def __init__(self):
@@ -737,10 +737,10 @@ class ArffDecoder(object):
 
         # Create the return object
         obj = {
-            u'description': u'',
-            u'relation': u'',
-            u'attributes': [],
-            u'data': []
+            'description': '',
+            'relation': '',
+            'attributes': [],
+            'data': []
         }
         attribute_names = {}
 
@@ -851,7 +851,7 @@ class ArffDecoder(object):
             raise e
 
 
-class ArffEncoder(object):
+class ArffEncoder:
     '''An ARFF encoder.'''
 
     def _encode_comment(self, s=''):
@@ -867,9 +867,9 @@ class ArffEncoder(object):
         :return: a string with the encoded comment line.
         '''
         if s:
-            return u'%s %s'%(_TK_COMMENT, s)
+            return '%s %s'%(_TK_COMMENT, s)
         else:
-            return u'%s' % _TK_COMMENT
+            return '%s' % _TK_COMMENT
 
     def _encode_relation(self, name):
         '''(INTERNAL) Decodes a relation line.
@@ -885,7 +885,7 @@ class ArffEncoder(object):
                 name = '"%s"'%name
                 break
 
-        return u'%s %s'%(_TK_RELATION, name)
+        return '%s %s'%(_TK_RELATION, name)
 
     def _encode_attribute(self, name, type_):
         '''(INTERNAL) Encodes an attribute line.
@@ -918,10 +918,10 @@ class ArffEncoder(object):
         if isinstance(type_, (tuple, list)):
             type_tmp = []
             for i in range(len(type_)):
-                type_tmp.append(u'%s' % encode_string(type_[i]))
-            type_ = u'{%s}'%(u', '.join(type_tmp))
+                type_tmp.append('%s' % encode_string(type_[i]))
+            type_ = '{%s}'%(', '.join(type_tmp))
 
-        return u'%s %s %s'%(_TK_ATTRIBUTE, name, type_)
+        return '%s %s %s'%(_TK_ATTRIBUTE, name, type_)
 
     def encode(self, obj):
         '''Encodes a given object to an ARFF file.
@@ -931,7 +931,7 @@ class ArffEncoder(object):
         '''
         data = [row for row in self.iter_encode(obj)]
 
-        return u'\n'.join(data)
+        return '\n'.join(data)
 
     def iter_encode(self, obj):
         '''The iterative version of `arff.ArffEncoder.encode`.
@@ -952,7 +952,7 @@ class ArffEncoder(object):
             raise BadObject('Relation name not found or with invalid value.')
 
         yield self._encode_relation(obj['relation'])
-        yield u''
+        yield ''
 
         # ATTRIBUTES
         if not obj.get('attributes'):
@@ -983,7 +983,7 @@ class ArffEncoder(object):
                 attribute_names.add(attr[0])
 
             yield self._encode_attribute(attr[0], attr[1])
-        yield u''
+        yield ''
         attributes = obj['attributes']
 
         # DATA
@@ -993,7 +993,7 @@ class ArffEncoder(object):
             for line in data.encode_data(obj.get('data'), attributes):
                 yield line
 
-        yield u''
+        yield ''
 
 # =============================================================================
 
@@ -1042,7 +1042,7 @@ def dump(obj, fp):
 
     last_row = next(generator)
     for row in generator:
-        fp.write(last_row + u'\n')
+        fp.write(last_row + '\n')
         last_row = row
     fp.write(last_row)
 

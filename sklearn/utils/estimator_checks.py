@@ -161,11 +161,11 @@ def check_supervised_y_no_nan(name, estimator_orig):
         estimator.fit(X, y)
     except ValueError as e:
         if str(e) != errmsg:
-            raise ValueError("Estimator {0} raised error as expected, but "
+            raise ValueError("Estimator {} raised error as expected, but "
                              "does not match expected error message"
                              .format(name))
     else:
-        raise ValueError("Estimator {0} should have raised error on fitting "
+        raise ValueError("Estimator {} should have raised error on fitting "
                          "array y with NaN value.".format(name))
 
 
@@ -386,7 +386,7 @@ def set_checking_parameters(estimator):
         estimator.set_params(k=1)
 
 
-class NotAnArray(object):
+class NotAnArray:
     """An object that is convertible to an array
 
     Parameters
@@ -544,7 +544,7 @@ def check_sample_weights_pandas_series(name, estimator_orig):
             try:
                 estimator.fit(X, y, sample_weight=weights)
             except ValueError:
-                raise ValueError("Estimator {0} raises error if "
+                raise ValueError("Estimator {} raises error if "
                                  "'sample_weight' parameter is of "
                                  "type pandas.Series".format(name))
         except ImportError:
@@ -1987,7 +1987,7 @@ def check_no_attributes_set_in_init(name, estimator):
             % (name, sorted(invalid_attr)))
     # Ensure that each parameter is set in init
     invalid_attr = (set(init_params) - set(vars(estimator))
-                    - set(["self"]))
+                    - {"self"})
     assert not invalid_attr, (
             "Estimator %s should store all parameters"
             " as an attribute during init. Did not find "

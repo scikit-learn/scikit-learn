@@ -165,7 +165,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
                  behaviour='old',
                  random_state=None,
                  verbose=0):
-        super(IsolationForest, self).__init__(
+        super().__init__(
             base_estimator=ExtraTreeRegressor(
                 max_features=1,
                 splitter='random',
@@ -266,7 +266,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
         self.max_samples_ = max_samples
         max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
-        super(IsolationForest, self)._fit(X, y, max_samples,
+        super()._fit(X, y, max_samples,
                                           max_depth=max_depth,
                                           sample_weight=sample_weight)
 
@@ -381,8 +381,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
         X = check_array(X, accept_sparse='csr')
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is {0} and "
-                             "input n_features is {1}."
+                             "match the input. Model n_features is {} and "
+                             "input n_features is {}."
                              "".format(self.n_features_, X.shape[1]))
         n_samples = X.shape[0]
 

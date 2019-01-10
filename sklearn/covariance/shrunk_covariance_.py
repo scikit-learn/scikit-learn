@@ -126,7 +126,7 @@ class ShrunkCovariance(EmpiricalCovariance):
     """
     def __init__(self, store_precision=True, assume_centered=False,
                  shrinkage=0.1):
-        super(ShrunkCovariance, self).__init__(store_precision=store_precision,
+        super().__init__(store_precision=store_precision,
                                                assume_centered=assume_centered)
         self.shrinkage = shrinkage
 
@@ -401,7 +401,7 @@ class LedoitWolf(EmpiricalCovariance):
     """
     def __init__(self, store_precision=True, assume_centered=False,
                  block_size=1000):
-        super(LedoitWolf, self).__init__(store_precision=store_precision,
+        super().__init__(store_precision=store_precision,
                                          assume_centered=assume_centered)
         self.block_size = block_size
 

@@ -71,7 +71,7 @@ test_groups = (
 digits = load_digits()
 
 
-class MockClassifier(object):
+class MockClassifier:
     """Dummy classifier to test the cross-validation"""
 
     def __init__(self, a=0, allow_nd=False):
@@ -101,12 +101,12 @@ class MockClassifier(object):
         if sample_weight is not None:
             assert sample_weight.shape[0] == X.shape[0], (
                 'MockClassifier extra fit_param sample_weight.shape[0]'
-                ' is {0}, should be {1}'.format(sample_weight.shape[0],
+                ' is {}, should be {}'.format(sample_weight.shape[0],
                                                 X.shape[0]))
         if class_prior is not None:
             assert class_prior.shape[0] == len(np.unique(y)), (
                         'MockClassifier extra fit_param class_prior.shape[0]'
-                        ' is {0}, should be {1}'.format(class_prior.shape[0],
+                        ' is {}, should be {}'.format(class_prior.shape[0],
                                                         len(np.unique(y))))
         if sparse_sample_weight is not None:
             fmt = ('MockClassifier extra fit_param sparse_sample_weight'

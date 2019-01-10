@@ -505,7 +505,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
                  shrinking, probability, cache_size, class_weight, verbose,
                  max_iter, decision_function_shape, random_state):
         self.decision_function_shape = decision_function_shape
-        super(BaseSVC, self).__init__(
+        super().__init__(
             kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
             probability=probability, cache_size=cache_size,
@@ -571,7 +571,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
         y_pred : array, shape (n_samples,)
             Class labels for samples in X.
         """
-        y = super(BaseSVC, self).predict(X)
+        y = super().predict(X)
         return self.classes_.take(np.asarray(y, dtype=np.intp))
 
     # Hacky way of getting predict_proba to raise an AttributeError when

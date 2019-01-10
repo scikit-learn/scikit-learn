@@ -76,7 +76,7 @@ def write_zfile(file_handle, data, compress=1):
 # Utility objects for persistence.
 
 
-class NDArrayWrapper(object):
+class NDArrayWrapper:
     """An object to be persisted instead of numpy arrays.
 
     The only thing this object does, is to carry the filename in which

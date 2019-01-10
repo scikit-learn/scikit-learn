@@ -298,7 +298,7 @@ def test_imputation_most_frequent_pandas(dtype):
     # Test imputation using the most frequent strategy on pandas df
     pd = pytest.importorskip("pandas")
 
-    f = io.StringIO(u"Cat1,Cat2,Cat3,Cat4\n"
+    f = io.StringIO("Cat1,Cat2,Cat3,Cat4\n"
                     ",i,x,\n"
                     "a,,y,\n"
                     "a,j,,\n"
@@ -411,7 +411,7 @@ def test_imputation_constant_pandas(dtype):
     # Test imputation using the constant strategy on pandas df
     pd = pytest.importorskip("pandas")
 
-    f = io.StringIO(u"Cat1,Cat2,Cat3,Cat4\n"
+    f = io.StringIO("Cat1,Cat2,Cat3,Cat4\n"
                     ",i,x,\n"
                     "a,,y,\n"
                     "a,j,,\n"

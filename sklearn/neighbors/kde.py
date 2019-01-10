@@ -91,7 +91,7 @@ class KernelDensity(BaseEstimator):
         if bandwidth <= 0:
             raise ValueError("bandwidth must be positive")
         if kernel not in VALID_KERNELS:
-            raise ValueError("invalid kernel: '{0}'".format(kernel))
+            raise ValueError("invalid kernel: '{}'".format(kernel))
 
     def _choose_algorithm(self, algorithm, metric):
         # given the algorithm string + metric string, choose the optimal
@@ -103,15 +103,15 @@ class KernelDensity(BaseEstimator):
             elif metric in BallTree.valid_metrics:
                 return 'ball_tree'
             else:
-                raise ValueError("invalid metric: '{0}'".format(metric))
+                raise ValueError("invalid metric: '{}'".format(metric))
         elif algorithm in TREE_DICT:
             if metric not in TREE_DICT[algorithm].valid_metrics:
-                raise ValueError("invalid metric for {0}: "
-                                 "'{1}'".format(TREE_DICT[algorithm],
+                raise ValueError("invalid metric for {}: "
+                                 "'{}'".format(TREE_DICT[algorithm],
                                                 metric))
             return algorithm
         else:
-            raise ValueError("invalid algorithm: '{0}'".format(algorithm))
+            raise ValueError("invalid algorithm: '{}'".format(algorithm))
 
     def fit(self, X, y=None, sample_weight=None):
         """Fit the Kernel Density model on the data.
@@ -131,8 +131,8 @@ class KernelDensity(BaseEstimator):
             sample_weight = check_array(sample_weight, order='C', dtype=DTYPE,
                                         ensure_2d=False)
             if sample_weight.ndim != 1:
-                raise ValueError("the shape of sample_weight must be ({0},),"
-                                 " but was {1}".format(X.shape[0],
+                raise ValueError("the shape of sample_weight must be ({},),"
+                                 " but was {}".format(X.shape[0],
                                                        sample_weight.shape))
             check_consistent_length(X, sample_weight)
             if sample_weight.min() <= 0:

@@ -191,7 +191,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
                              "y contains classes %s"
                              % (self.__class__.__name__, self.classes_))
         elif self.classes_.size == 1:
-            raise ValueError("{0:s} requires 2 classes; got {1:d} class"
+            raise ValueError("{:s} requires 2 classes; got {:d} class"
                              .format(self.__class__.__name__,
                                      self.classes_.size))
 

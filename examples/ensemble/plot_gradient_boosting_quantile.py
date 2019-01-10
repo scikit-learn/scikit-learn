@@ -65,8 +65,8 @@ y_pred = clf.predict(xx)
 # the MSE
 fig = plt.figure()
 plt.plot(xx, f(xx), 'g:', label=r'$f(x) = x\,\sin(x)$')
-plt.plot(X, y, 'b.', markersize=10, label=u'Observations')
-plt.plot(xx, y_pred, 'r-', label=u'Prediction')
+plt.plot(X, y, 'b.', markersize=10, label='Observations')
+plt.plot(xx, y_pred, 'r-', label='Prediction')
 plt.plot(xx, y_upper, 'k-')
 plt.plot(xx, y_lower, 'k-')
 plt.fill(np.concatenate([xx, xx[::-1]]),

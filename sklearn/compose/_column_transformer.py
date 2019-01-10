@@ -313,8 +313,8 @@ boolean mask array or callable
 
         """
         # Use Bunch object to improve autocomplete
-        return Bunch(**dict([(name, trans) for name, trans, _
-                             in self.transformers_]))
+        return Bunch(**{name: trans for name, trans, _
+                        in self.transformers_})
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -374,7 +374,7 @@ boolean mask array or callable
         for Xs, name in zip(result, names):
             if not getattr(Xs, 'ndim', 0) == 2:
                 raise ValueError(
-                    "The output of the '{0}' transformer should be 2D (scipy "
+                    "The output of the '{}' transformer should be 2D (scipy "
                     "matrix, array, or pandas DataFrame).".format(name))
 
     def _fit_transform(self, X, y, func, fitted=False):

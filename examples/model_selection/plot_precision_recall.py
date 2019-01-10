@@ -129,7 +129,7 @@ y_score = classifier.decision_function(X_test)
 from sklearn.metrics import average_precision_score
 average_precision = average_precision_score(y_test, y_score)
 
-print('Average precision-recall score: {0:0.2f}'.format(
+print('Average precision-recall score: {:0.2f}'.format(
       average_precision))
 
 ###############################################################################
@@ -153,7 +153,7 @@ plt.xlabel('Recall')
 plt.ylabel('Precision')
 plt.ylim([0.0, 1.05])
 plt.xlim([0.0, 1.0])
-plt.title('2-class Precision-Recall curve: AP={0:0.2f}'.format(
+plt.title('2-class Precision-Recall curve: AP={:0.2f}'.format(
           average_precision))
 
 ###############################################################################
@@ -205,7 +205,7 @@ precision["micro"], recall["micro"], _ = precision_recall_curve(Y_test.ravel(),
     y_score.ravel())
 average_precision["micro"] = average_precision_score(Y_test, y_score,
                                                      average="micro")
-print('Average precision score, micro-averaged over all classes: {0:0.2f}'
+print('Average precision score, micro-averaged over all classes: {:0.2f}'
       .format(average_precision["micro"]))
 
 ###############################################################################
@@ -224,7 +224,7 @@ plt.ylabel('Precision')
 plt.ylim([0.0, 1.05])
 plt.xlim([0.0, 1.0])
 plt.title(
-    'Average precision score, micro-averaged over all classes: AP={0:0.2f}'
+    'Average precision score, micro-averaged over all classes: AP={:0.2f}'
     .format(average_precision["micro"]))
 
 ###############################################################################
@@ -243,19 +243,19 @@ for f_score in f_scores:
     x = np.linspace(0.01, 1)
     y = f_score * x / (2 * x - f_score)
     l, = plt.plot(x[y >= 0], y[y >= 0], color='gray', alpha=0.2)
-    plt.annotate('f1={0:0.1f}'.format(f_score), xy=(0.9, y[45] + 0.02))
+    plt.annotate('f1={:0.1f}'.format(f_score), xy=(0.9, y[45] + 0.02))
 
 lines.append(l)
 labels.append('iso-f1 curves')
 l, = plt.plot(recall["micro"], precision["micro"], color='gold', lw=2)
 lines.append(l)
-labels.append('micro-average Precision-recall (area = {0:0.2f})'
+labels.append('micro-average Precision-recall (area = {:0.2f})'
               ''.format(average_precision["micro"]))
 
 for i, color in zip(range(n_classes), colors):
     l, = plt.plot(recall[i], precision[i], color=color, lw=2)
     lines.append(l)
-    labels.append('Precision-recall for class {0} (area = {1:0.2f})'
+    labels.append('Precision-recall for class {} (area = {:0.2f})'
                   ''.format(i, average_precision[i]))
 
 fig = plt.gcf()
