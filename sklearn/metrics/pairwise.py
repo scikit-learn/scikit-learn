@@ -16,7 +16,10 @@ import warnings
 import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
+from scipy.sparse import csc_matrix
 from scipy.sparse import issparse
+from scipy.sparse import isspmatrix_csc
+from scipy.sparse import isspmatrix_csr
 
 from ..utils.validation import _num_samples
 from ..utils.validation import check_non_negative
@@ -37,9 +40,16 @@ from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
     if np.isnan(value_to_mask) or value_to_mask == "NaN":
+        if isspmatrix_csr(X):
+            return csr_matrix(
+                (np.isnan(X.data), X.indices, X.indptr),
+                shape=X.shape, dtype=np.bool)
+        if isspmatrix_csc(X):
+            return csc_matrix(
+                (np.isnan(X.data), X.indices, X.indptr),
+                shape=X.shape, dtype=np.bool)
         return np.isnan(X)
-    else:
-        return X == value_to_mask
+    return X == value_to_mask
 
 
 # Utility Functions
@@ -298,7 +308,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
 
 
 def nan_euclidean_distances(X, Y=None, squared=False,
-                               missing_values=np.nan, copy=True):
+                            missing_values=np.nan, copy=True):
     """Calculates euclidean distances in the presence of missing values
 
     Computes the euclidean distance between each pair of samples (rows) in X
@@ -363,7 +373,7 @@ def nan_euclidean_distances(X, Y=None, squared=False,
     """
 
     force_all_finite = 'allow-nan' if is_scalar_nan(missing_values) else True
-    X, Y = check_pairwise_arrays(X, Y, accept_sparse=False,
+    X, Y = check_pairwise_arrays(X, Y, accept_sparse='csr',
                                  force_all_finite=force_all_finite, copy=copy)
 
     # Get missing mask for X and Y.T
@@ -371,32 +381,41 @@ def nan_euclidean_distances(X, Y=None, squared=False,
     YT = Y.T
     mask_YT = mask_X.T if Y is X else _get_mask(YT, missing_values)
 
-    # Get mask of non-missing values set Y.T's missing to zero.
-    # Further, casting the mask to int to be used in formula later.
-    not_YT = (~mask_YT).astype(np.int32)
-    YT[mask_YT] = 0
+    if issparse(mask_X):
+        mask_X = mask_X.toarray()
+    if issparse(mask_YT):
+        mask_YT = mask_YT.toarray()
 
-    # Get X's mask of non-missing values and set X's missing to zero
-    not_X = (~mask_X).astype(np.int32)
+    # Get mask of non-missing values set Y.T's missing to zero.
+    # Get X's mask of non-missing values and set X's missing to kzero
+    not_YT = (~mask_YT).astype(np.uint8)
+    not_X = (~mask_X).astype(np.uint8)
+
+    # set missing values to zero
+    YT[mask_YT] = 0
     X[mask_X] = 0
 
+    YTYT = YT.multiply(YT) if issparse(YT) else YT * YT
+    XX = X.multiply(X) if issparse(X) else X * X
+
     # Calculate distances
-    distances = (np.dot(X * X, not_YT) - 2 * (np.dot(X, YT)) +
-                 np.dot(not_X, YT * YT))
+    distances = safe_sparse_dot(X, YT, dense_output=True)
+    distances *= -2
+    distances += safe_sparse_dot(XX, not_YT, dense_output=False)
+    distances += safe_sparse_dot(not_X, YTYT, dense_output=False)
 
-    non_missing_coords = np.dot(not_X, not_YT)
-    non_missing_coords_mask = non_missing_coords != 0
+    present_coords = safe_sparse_dot(not_X, not_YT, dense_output=True)
+    present_coords_mask = (present_coords != 0)
 
-    distances[non_missing_coords_mask] = (
-        distances[non_missing_coords_mask] * X.shape[1] /
-        non_missing_coords[non_missing_coords_mask])
+    distances[present_coords_mask] *= (
+        X.shape[1] / present_coords[present_coords_mask])
 
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
         np.fill_diagonal(distances, 0.0)
 
-    distances[~non_missing_coords_mask] = np.nan
+    distances[~present_coords_mask] = np.nan
 
     return distances if squared else np.sqrt(distances, out=distances)
 
