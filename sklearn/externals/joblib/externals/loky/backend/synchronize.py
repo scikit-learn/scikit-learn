@@ -171,7 +171,7 @@ class BoundedSemaphore(Semaphore):
 class Lock(SemLock):
 
     def __init__(self):
-        super().__init__(SEMAPHORE, 1, 1)
+        super(Lock, self).__init__(SEMAPHORE, 1, 1)
 
     def __repr__(self):
         try:
@@ -197,7 +197,7 @@ class Lock(SemLock):
 class RLock(SemLock):
 
     def __init__(self):
-        super().__init__(RECURSIVE_MUTEX, 1, 1)
+        super(RLock, self).__init__(RECURSIVE_MUTEX, 1, 1)
 
     def __repr__(self):
         try:

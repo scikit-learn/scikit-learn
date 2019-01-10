@@ -418,7 +418,7 @@ class MultiprocessingBackend(PoolManagerMixin, AutoBatchingMixin,
                     stacklevel=3)
             return 1
 
-        return super().effective_n_jobs(n_jobs)
+        return super(MultiprocessingBackend, self).effective_n_jobs(n_jobs)
 
     def configure(self, n_jobs=1, parallel=None, prefer=None, require=None,
                   **memmappingpool_args):
@@ -450,7 +450,7 @@ class MultiprocessingBackend(PoolManagerMixin, AutoBatchingMixin,
 
     def terminate(self):
         """Shutdown the process or thread pool"""
-        super().terminate()
+        super(MultiprocessingBackend, self).terminate()
         if self.JOBLIB_SPAWNED_PROCESS in os.environ:
             del os.environ[self.JOBLIB_SPAWNED_PROCESS]
 

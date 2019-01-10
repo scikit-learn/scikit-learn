@@ -303,7 +303,7 @@ class BadAttributeFormat(ArffException):
 class BadDataFormat(ArffException):
     '''Error raised when some data instance is in an invalid format.'''
     def __init__(self, value):
-        super().__init__()
+        super(BadDataFormat, self).__init__()
         self.message = (
             'Bad @DATA instance format in line %d: ' +
             ('%s' % value)
@@ -319,7 +319,7 @@ class BadAttributeName(ArffException):
     declaration.'''
 
     def __init__(self, value, value2):
-        super().__init__()
+        super(BadAttributeName, self).__init__()
         self.message = (
             ('Bad @ATTRIBUTE name %s at line' % value) +
             ' %d, this name is already in use in line' +
@@ -331,7 +331,7 @@ class BadNominalValue(ArffException):
     declared into it respective attribute declaration.'''
 
     def __init__(self, value):
-        super().__init__()
+        super(BadNominalValue, self).__init__()
         self.message = (
             ('Data value %s not found in nominal declaration, ' % value)
             + 'at line %d.'
@@ -340,7 +340,7 @@ class BadNominalValue(ArffException):
 class BadNominalFormatting(ArffException):
     '''Error raised when a nominal value with space is not properly quoted.'''
     def __init__(self, value):
-        super().__init__()
+        super(BadNominalFormatting, self).__init__()
         self.message = (
             ('Nominal data value "%s" not properly quoted in line ' % value) +
             '%d.'
@@ -360,7 +360,7 @@ class BadLayout(ArffException):
     message = 'Invalid layout of the ARFF file, at line %d.'
 
     def __init__(self, msg=''):
-        super().__init__()
+        super(BadLayout, self).__init__()
         if msg:
             self.message = BadLayout.message + ' ' + msg.replace('%', '%%')
 

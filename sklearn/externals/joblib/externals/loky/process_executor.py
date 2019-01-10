@@ -283,7 +283,7 @@ class _SafeQueue(Queue):
         self.thread_wakeup = thread_wakeup
         self.pending_work_items = pending_work_items
         self.running_work_items = running_work_items
-        super().__init__(max_size, reducers=reducers, ctx=ctx)
+        super(_SafeQueue, self).__init__(max_size, reducers=reducers, ctx=ctx)
 
     def _on_queue_feeder_error(self, e, obj):
         if isinstance(obj, _CallItem):
@@ -309,7 +309,7 @@ class _SafeQueue(Queue):
                 del work_item
             self.thread_wakeup.wakeup()
         else:
-            super()._on_queue_feeder_error(e, obj)
+            super(_SafeQueue, self)._on_queue_feeder_error(e, obj)
 
 
 def _get_chunks(chunksize, *iterables):
@@ -1070,7 +1070,7 @@ class ProcessPoolExecutor(_base.Executor):
         if chunksize < 1:
             raise ValueError("chunksize must be >= 1.")
 
-        results = super().map(
+        results = super(ProcessPoolExecutor, self).map(
             partial(_process_chunk, fn), _get_chunks(chunksize, *iterables),
             timeout=timeout)
         return _chain_from_iterable_of_lists(results)
