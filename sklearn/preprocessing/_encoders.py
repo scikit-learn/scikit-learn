@@ -808,12 +808,16 @@ class OrdinalEncoder(_BaseEncoder):
         self._categories = self.categories
         self._fit(X, force_all_finite=self.force_all_finite)
 
-        # new_cats = []
-        # for cats in self.categories_:
-        #     missing_mask = _object_dtype_isnan(cats)
-        #     new_cats.append(cats[~missing_mask])
+        new_cats = []
+        for i, cats in enumerate(self.categories_):
 
-        # self.categories_ = new_cats
+            if np.all(_object_dtype_isnan(X[:, i])):
+                raise ValueError("All NaN's in column {}".format(i))
+
+            missing_mask = _object_dtype_isnan(cats)
+            new_cats.append(cats[~missing_mask])
+
+        self.categories_ = new_cats
 
         return self
 
@@ -831,8 +835,27 @@ class OrdinalEncoder(_BaseEncoder):
             Transformed input.
 
         """
-        X_int, _ = self._transform(X, force_all_finite=self.force_all_finite)
-        return X_int.astype(self.dtype, copy=False)
+        # TODO:
+        # -- Does it make sense to have force_all_finite functionality if NaN's are being masked before _transform?
+        # -- Need to have functionality to encode missing values
+        X_new = X.copy()
+
+        # Make missing mask
+        missing_mask = _object_dtype_isnan(X)
+
+        # Mask nan's with dummy vars from known categories
+        for i in range(X.shape[1]):
+            missing_column = missing_mask[:, i]
+
+            if np.any(missing_column):
+                X_new[:, i][missing_column] = self.categories_[i][0]
+
+        # Replace masked NaN's
+        X_int, _ = self._transform(X_new, force_all_finite=self.force_all_finite)
+        X_with_missing = X_int.astype(self.dtype, copy=True)
+        X_with_missing[missing_mask] = np.nan
+
+        return X_with_missing
 
     def inverse_transform(self, X):
         """Convert the data back to the original representation.

@@ -685,6 +685,8 @@ def test_one_hot_encoder_warning():
 #    user specifies, "encode_missing"(?)
 #    missing val is added to categories,
 #    and encoded as largest nominal category
+# -- _encode_python can't handle NaN
+#    "TypeError: '<' not supported between instances of 'str' and 'float'""
 
 # Parameters:
 #   * handle_missing=["passthrough", "encode"]
@@ -692,41 +694,44 @@ def test_one_hot_encoder_warning():
 
 
 @pytest.mark.parametrize("X", [
-    np.array([[1, 2, np.nan]]),
-    np.array([['a', 'b', np.nan]], dtype=np.object_),
+    np.array([[1, 2, np.nan]]).T,
+    np.array([['a', 'b', np.nan]], dtype=np.object_).T,
     ], ids=['numeric', 'object'])
 def test_ordinal_encoder_allow_nan(X):
     enc = OrdinalEncoder()
-    enc.fit(X)
+    assert_no_warnings(enc.fit, X)
 
 
 def test_ordinal_all_nan_raises_error():
     X = np.array([[np.nan, np.nan]])
     enc = OrdinalEncoder()
-    assert_raises(ValueError, enc.fit(X))
+    assert_raises(ValueError, enc.fit, X)
 
 
 @pytest.mark.parametrize("X, exp_cats", [
-    (np.array([[1, 2, np.nan]]),
-    np.array([[1, 2]]).T),
-    (np.array([['a', 'b', np.nan]], dtype=np.object_),
-    np.array([['a', 'b']]).T),
+    (np.array([[1, 2, np.nan]]).T,
+    [np.array([1, 2])]),
+    (np.array([['a', 'b', np.nan], ['d', 'e', 'f']], dtype=object),
+    [np.array(['a', 'b'])]),
     ], ids=['numeric', 'object'])
 def test_ordinal_encoder_nan_not_in_categories(X, exp_cats):
+    # TODO:
+    # _encode_python() fails sorting object dtype with NaN 
     enc = OrdinalEncoder()
     enc.fit(X)
     X_cats = enc.categories_
     assert_array_equal(X_cats, exp_cats)
 
 
-@pytest.mark.parametrize("X", [np.array([[1, np.nan]]),
-                               np.array([['a', np.nan]], dtype=object)],
+@pytest.mark.parametrize("X", [np.array([[1, 2, np.nan]]).T,
+                               np.array([['a', 'b', np.nan]], dtype=object).T],
                          ids=['numeric', 'object'])
 def test_ordinal_encoder_passthru_missing(X):
+    # TODO:
+    # _encode_python() fails sorting object dtype with NaN 
     enc = OrdinalEncoder()
-    enc.fit(X)
     # TEST NaN not encoded with handle_missing="passthrough"
-    X_exp = np.array([[0, np.nan]])
+    X_exp = np.array([[0, 1, np.nan]]).T
     assert_array_equal(X_exp, enc.fit_transform(X))
 
 
