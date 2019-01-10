@@ -1657,7 +1657,7 @@ def test_custom_run_search():
 
     class CustomSearchCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
-            super(CustomSearchCV, self).__init__(estimator, **kwargs)
+            super().__init__(estimator, **kwargs)
 
         def _run_search(self, evaluate):
             results = evaluate([{'max_depth': 1}, {'max_depth': 2}])
@@ -1688,7 +1688,7 @@ def test_custom_run_search():
 def test__custom_fit_no_run_search():
     class NoRunSearchSearchCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
-            super(NoRunSearchSearchCV, self).__init__(estimator, **kwargs)
+            super().__init__(estimator, **kwargs)
 
         def fit(self, X, y=None, groups=None, **fit_params):
             return self
@@ -1698,7 +1698,7 @@ def test__custom_fit_no_run_search():
 
     class BadSearchCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
-            super(BadSearchCV, self).__init__(estimator, **kwargs)
+            super().__init__(estimator, **kwargs)
 
     with pytest.raises(NotImplementedError,
                        match="_run_search not implemented."):

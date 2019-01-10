@@ -22,7 +22,7 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         pass
 
     def _get_params(self, attr, deep=True):
-        out = super(_BaseComposition, self).get_params(deep=deep)
+        out = super().get_params(deep=deep)
         if not deep:
             return out
         estimators = getattr(self, attr)
@@ -47,7 +47,7 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
             if '__' not in name and name in names:
                 self._replace_estimator(attr, name, params.pop(name))
         # 3. Step parameters and other initialisation arguments
-        super(_BaseComposition, self).set_params(**params)
+        super().set_params(**params)
         return self
 
     def _replace_estimator(self, attr, name, new_val):

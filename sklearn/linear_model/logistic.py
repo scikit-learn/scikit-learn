@@ -1649,7 +1649,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                (self.multi_class == 'auto' and (self.classes_.size <= 2 or
                                                 self.solver == 'liblinear')))
         if ovr:
-            return super(LogisticRegression, self)._predict_proba_lr(X)
+            return super()._predict_proba_lr(X)
         else:
             decision = self.decision_function(X)
             if decision.ndim == 1:
