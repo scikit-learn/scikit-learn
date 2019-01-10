@@ -475,6 +475,14 @@ new feature of integers (0 to n_categories - 1)::
     >>> enc.transform([['female', 'from US', 'uses Safari']])
     array([[0., 1., 1.]])
 
+You can specify the order of the categories by passing the ``categories``
+attribute::
+    >>> enc = preprocessing.OrdinalEncoder(categories=[['big', 'small'],
+    ...                                                ['short', 'tall']])
+    >>> X = [['big', 'tall']]
+    >>> enc.fit_transform(X)  # doctest: +ELLIPSIS
+    array([[0., 1.]])
+
 Such integer representation can, however, not be used directly with all
 scikit-learn estimators, as these expect continuous input, and would interpret
 the categories as being ordered, which is often not desired (i.e. the set of
