@@ -17,16 +17,13 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-..
-    please add class and reason here (see version 0.20 what's new)
-
+- :class:`linear_model.BayesianRidge` |Fix|
 - Decision trees and derived ensembles when both `max_depth` and
   `max_leaf_nodes` are set. |Fix|
 - :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver. |Fix|
 - :class:`ensemble.GradientBoostingClassifier` for multiclass
   classification. |Fix|
-
 
 Details are listed in the changelog below.
 
@@ -100,6 +97,12 @@ Support for Python 3.4 and below has been officially dropped.
 - |Feature| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
   with the 'saga' solver. :issue:`11646` by :user:`Nicolas Hug <NicolasHug>`.
+
+- |Enhancement| :class:`linear_model.LogisticRegression` now supports an
+  unregularized objective by setting ``penalty`` to ``'none'``. This is
+  equivalent to setting ``C=np.inf`` with l2 regularization. Not supported
+  by the liblinear solver. :issue:`12860` by :user:`Nicolas Hug
+  <NicolasHug>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver, where the
@@ -230,6 +233,18 @@ Support for Python 3.4 and below has been officially dropped.
   affects all ensemble methods using decision trees.
   :issue:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Fixed the posterior mean, posterior covariance and returned
+  regularization parameters in :class:`linear_model.BayesianRidge`. The
+  posterior mean and the posterior covariance were not the ones computed
+  with the last update of the regularization parameters and the returned
+  regularization parameters were not the final ones. Also fixed the formula of
+  the log marginal likelihood used to compute the score when
+  `compute_score=True`. :issue:`12174` by
+  :user:`Albert Thomas <albertcthomas>`.
 
 Multiple modules
 ................
