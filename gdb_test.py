@@ -12,7 +12,7 @@ import pygbm
 
 classif = False
 n_classes = 3
-n_samples = 100000
+n_samples = int(1e6)
 max_iter = 5
 
 if classif:

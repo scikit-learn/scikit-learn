@@ -3,7 +3,6 @@ Compare prediction time with pygbm.
 
 run with
 export NUMBA_NUM_THREADS=1 && make in && python bench_predict.py
-
 """
 
 from time import time
