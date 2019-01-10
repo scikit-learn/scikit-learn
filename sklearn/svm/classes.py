@@ -563,9 +563,9 @@ class SVC(BaseSVC):
         probability=False, an empty array. Platt scaling uses the logistic
         function
         ``1 / (1 + exp(decision_value * probA_ + probB_))``
-        where ``probA_`` and ``probB_`` are learned from the dataset. For more
-        information on the multiclass case and training procedure see section
-        8 of LIBSVM: A Library for Support Vector Machines [1]_.
+        where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
+        more information on the multiclass case and training procedure see
+        section 8 of LIBSVM: A Library for Support Vector Machines [1]_.
 
     Examples
     --------
