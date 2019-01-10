@@ -14,7 +14,6 @@ from scipy.sparse.linalg import eigsh, svds
 
 from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
-from ..externals import six
 from ..utils import check_random_state
 
 from ..utils.extmath import (make_nonnegative, randomized_svd,
@@ -59,7 +58,6 @@ def _bistochastic_normalize(X, max_iter=1000, tol=1e-5):
     # deviation reduction and balancing algorithms.
     X = make_nonnegative(X)
     X_scaled = X
-    dist = None
     for _ in range(max_iter):
         X_new, _, _ = _scale_normalize(X_scaled)
         if issparse(X):
@@ -86,8 +84,7 @@ def _log_normalize(X):
     return L - row_avg - col_avg + avg
 
 
-class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
-                                      BiclusterMixin)):
+class BaseSpectral(BaseEstimator, BiclusterMixin, metaclass=ABCMeta):
     """Base class for spectral biclustering."""
 
     @abstractmethod
@@ -306,10 +303,10 @@ class SpectralCoclustering(BaseSpectral):
         self.row_labels_ = labels[:n_rows]
         self.column_labels_ = labels[n_rows:]
 
-        self.rows_ = np.vstack(self.row_labels_ == c
-                               for c in range(self.n_clusters))
-        self.columns_ = np.vstack(self.column_labels_ == c
-                                  for c in range(self.n_clusters))
+        self.rows_ = np.vstack([self.row_labels_ == c
+                                for c in range(self.n_clusters)])
+        self.columns_ = np.vstack([self.column_labels_ == c
+                                   for c in range(self.n_clusters)])
 
 
 class SpectralBiclustering(BaseSpectral):
@@ -505,12 +502,12 @@ class SpectralBiclustering(BaseSpectral):
         self.column_labels_ = self._project_and_cluster(X.T, best_ut.T,
                                                         n_col_clusters)
 
-        self.rows_ = np.vstack(self.row_labels_ == label
-                               for label in range(n_row_clusters)
-                               for _ in range(n_col_clusters))
-        self.columns_ = np.vstack(self.column_labels_ == label
-                                  for _ in range(n_row_clusters)
-                                  for label in range(n_col_clusters))
+        self.rows_ = np.vstack([self.row_labels_ == label
+                                for label in range(n_row_clusters)
+                                for _ in range(n_col_clusters)])
+        self.columns_ = np.vstack([self.column_labels_ == label
+                                   for _ in range(n_row_clusters)
+                                   for label in range(n_col_clusters)])
 
     def _fit_best_piecewise(self, vectors, n_best, n_clusters):
         """Find the ``n_best`` vectors that are best approximated by piecewise

@@ -9,8 +9,6 @@ from scipy.sparse import csc_matrix
 
 import pytest
 
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raise_message, assert_no_warnings
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -29,7 +27,7 @@ def test_initialize_nn_output():
     data = np.abs(rng.randn(10, 10))
     for init in ('random', 'nndsvd', 'nndsvda', 'nndsvdar'):
         W, H = nmf._initialize_nmf(data, 10, init=init, random_state=0)
-        assert_false((W < 0).any() or (H < 0).any())
+        assert not ((W < 0).any() or (H < 0).any())
 
 
 def test_parameter_checking():
@@ -64,7 +62,7 @@ def test_initialize_close():
     W, H = nmf._initialize_nmf(A, 10, init='nndsvd')
     error = linalg.norm(np.dot(W, H) - A)
     sdev = linalg.norm(A - A.mean())
-    assert_true(error <= sdev)
+    assert error <= sdev
 
 
 def test_initialize_variants():
@@ -93,8 +91,8 @@ def test_nmf_fit_nn_output():
             model = NMF(n_components=2, solver=solver, init=init,
                         random_state=0)
             transf = model.fit_transform(A)
-            assert_false((model.components_ < 0).any() or
-                         (transf < 0).any())
+            assert not((model.components_ < 0).any() or
+                       (transf < 0).any())
 
 
 @pytest.mark.parametrize('solver', ('cd', 'mu'))
@@ -384,8 +382,8 @@ def test_nmf_negative_beta_loss():
         W, H, _ = non_negative_factorization(
             X, n_components=n_components, solver='mu', beta_loss=beta_loss,
             random_state=0, max_iter=1000)
-        assert_false(np.any(np.isnan(W)))
-        assert_false(np.any(np.isnan(H)))
+        assert not np.any(np.isnan(W))
+        assert not np.any(np.isnan(H))
 
     msg = "When beta_loss <= 0 and X contains zeros, the solver may diverge."
     for beta_loss in (-0.6, 0.):
