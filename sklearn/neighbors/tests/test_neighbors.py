@@ -1072,9 +1072,6 @@ def test_valid_brute_metric_for_auto_algorithm():
             nb_p.kneighbors(DYX)
 
     for metric in VALID_METRICS_SPARSE['brute']:
-        # TODO: Remove after adding sparse support for nan_euclidean
-        if metric == "nan_euclidean":
-            continue
         if metric != 'precomputed' and metric not in require_params:
             nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                             metric=metric).fit(Xcsr)
