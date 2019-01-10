@@ -1,3 +1,4 @@
+# cython: profile=True
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
@@ -72,6 +73,8 @@ class TreePredictor:
         y : array, shape (n_samples,)
             The raw predicted values.
         """
+        # TODO: change dtype of out (should be same as Y_DTYPE I think since
+        # the value is grad/hess which are Y_DTYPE)
         out = np.empty(X.shape[0], dtype=np.float32)
         _predict_from_numeric_data(self.nodes, X, out)
         return out

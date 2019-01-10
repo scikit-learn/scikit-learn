@@ -2,7 +2,7 @@
 Compare histogram building function with pygbm.
 
 run with
-export OMP_NUM_THREADS=1 && make in && python bench_hist.py
+export NUMBA_NUM_THREADS=1 && make in && python bench_hist.py
 
 might be a bit unfair to cython code since we're calling the python versions of
 the cpdef functions, which causes unnecessary conversions.
