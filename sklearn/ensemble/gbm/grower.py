@@ -77,6 +77,16 @@ class TreeNode:
     apply_split_time = 0.
     hist_subtraction = False
 
+    # start and stop indices of the node in the splitting_context.partition
+    # array. Concretely,
+    # self.sample_indices = view(self.splitting_context.partition[start:stop])
+    # Only used in _update_raw_prediction, because we need to iterate over the
+    # leaves and I don't know how to efficiently store the sample_indices views
+    # because they're all of different sizes. TODO: ask Olivier what he thinks
+    # about # this
+    start = 0
+    stop = 0
+
     def __init__(self, depth, sample_indices, sum_gradients,
                  sum_hessians, parent=None):
         self.depth = depth
@@ -249,6 +259,10 @@ class TreeGrower:
             sum_gradients=np.sum(self.splitting_context.gradients),
             sum_hessians=hessian
         )
+
+        self.root.start = 0
+        self.root.stop = n_samples
+
         if (self.max_leaf_nodes is not None and self.max_leaf_nodes == 1):
             self._finalize_leaf(self.root)
             return
@@ -338,7 +352,7 @@ class TreeGrower:
         node = heappop(self.splittable_nodes)
 
         tic = time()
-        (sample_indices_left, sample_indices_right) = split_indices(
+        (sample_indices_left, sample_indices_right, i) = split_indices(
             self.splitting_context, node.split_info, node.sample_indices)
         toc = time()
         node.apply_split_time = toc - tic
@@ -362,6 +376,13 @@ class TreeGrower:
         right_child_node.sibling = left_child_node
         node.right_child = right_child_node
         node.left_child = left_child_node
+
+        # set start and stop indices
+        left_child_node.start = node.start
+        left_child_node.stop = node.start + i
+        right_child_node.start = left_child_node.stop
+        right_child_node.stop = node.stop
+
         self.n_nodes += 2
 
         if self.max_depth is not None and depth == self.max_depth:

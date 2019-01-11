@@ -238,10 +238,7 @@ class BaseGradientBoostingMachine(BaseEstimator, ABC):
 
                 tic_pred = time()
 
-                leaves_values = [l.value for l in grower.finalized_leaves]
-                samples_indices_in_leaves = [l.sample_indices for l in grower.finalized_leaves]
-                leaves_values = np.array(leaves_values, dtype=np.float32)
-                _update_raw_predictions(leaves_values, samples_indices_in_leaves, raw_predictions[:, k])
+                _update_raw_predictions(raw_predictions[:, k], grower)
 
                 toc_pred = time()
                 acc_prediction_time += toc_pred - tic_pred

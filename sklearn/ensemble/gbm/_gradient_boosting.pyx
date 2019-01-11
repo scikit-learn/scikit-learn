@@ -8,39 +8,39 @@ cimport cython
 import numpy as np
 cimport numpy as np
 
+from .types import Y_DTYPE
+
 ctypedef np.npy_float32 NPY_Y_DTYPE
-ctypedef np.npy_uint8 NPY_X_BINNED_DTYPE
 
-def _update_raw_predictions(float [:] leaves_values,
-                            list samples_indices_at_leaf,
-                            NPY_Y_DTYPE [:] raw_predictions):
-    """Update raw_predictions by reading the predictions of the ith tree
-    directly form the leaves.
-
-    Can only be used for predicting the training data. raw_predictions
-    contains the sum of the tree values from iteration 0 to i - 1. This adds
-    the predictions of the ith tree to raw_predictions.
-
-    Parameters
-    ----------
-    leaves_data: list of tuples (leaf.value, leaf.sample_indices)
-        The leaves data used to update raw_predictions.
-    raw_predictions : array-like, shape=(n_samples,)
-        The raw predictions for the training data.
-    """
+def _update_raw_predictions(NPY_Y_DTYPE [:] raw_predictions, grower):
     cdef:
-        int leaf_idx
-        float val
-        unsigned int [:] sample_indices
+        unsigned int [:] starts
+        unsigned int [:] stops
+        unsigned int [:] partition
+        NPY_Y_DTYPE [:] values
+        list leaves
 
-    for leaf_idx in range(leaves_values.shape[0]):
-        samples_indices = samples_indices_at_leaf[leaf_idx]
-        val = leaves_values[leaf_idx]
-        blop(samples_indices, raw_predictions, val)
+    leaves = grower.finalized_leaves
+    starts = np.array([leaf.start for leaf in leaves], dtype=np.uint32)
+    stops = np.array([leaf.stop for leaf in leaves], dtype=np.uint32)
+    values = np.array([leaf.value for leaf in leaves], dtype=Y_DTYPE)
+    partition = grower.splitting_context.partition
 
-cdef void blop(unsigned int [:] samples_indices, NPY_Y_DTYPE [:] raw_predictions, float
-                val):
+    _update_raw_predictions_helper(raw_predictions, starts, stops, partition,
+                                   values)
+
+cdef void _update_raw_predictions_helper(
+    NPY_Y_DTYPE [:] raw_predictions,
+    unsigned int [:] starts,
+    unsigned int [:] stops,
+    unsigned int [:] partition,
+    NPY_Y_DTYPE [:] values) nogil:
+
     cdef:
         unsigned int sample_idx
-    for sample_idx in samples_indices:
-        raw_predictions[sample_idx] += val
+        unsigned int n_leaves
+
+    n_leaves = starts.shape[0]
+    for leaf_idx in range(n_leaves):
+        for sample_idx in range(starts[leaf_idx], stops[leaf_idx]):
+            raw_predictions[sample_idx] += values[leaf_idx]

@@ -227,7 +227,7 @@ def split_indices(SplittingContext context, SplitInfo split_info, unsigned int [
             i += 1
             j -= 1
 
-    return sample_indices[:i], sample_indices[i:]
+    return sample_indices[:i], sample_indices[i:], i
 
 
 def find_node_split(SplittingContext context, unsigned int [:] sample_indices):
