@@ -5,7 +5,7 @@ from scipy.special import logsumexp
 from sklearn.utils import assert_all_finite
 import pytest
 
-from sklearn.ensemble.gbm.loss import _LOSSES
+from sklearn.gbm.loss import _LOSSES
 
 
 def get_derivatives_helper(loss):

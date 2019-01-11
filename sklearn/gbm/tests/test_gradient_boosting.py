@@ -7,9 +7,9 @@ import pytest
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.datasets import make_classification, make_regression
 
-from sklearn.ensemble import GBMClassifier
-from sklearn.ensemble import GBMRegressor
-from sklearn.ensemble.gbm.binning import BinMapper
+from sklearn import GBMClassifier
+from sklearn import GBMRegressor
+from sklearn.gbm.binning import BinMapper
 
 
 X_classification, y_classification = make_classification(random_state=0)

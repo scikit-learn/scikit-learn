@@ -4,13 +4,13 @@ import pytest
 from numpy.testing import assert_allclose
 from numpy.testing import assert_array_equal
 
-from sklearn.ensemble.gbm.histogram import _build_histogram_naive
-from sklearn.ensemble.gbm.histogram import _build_histogram
-from sklearn.ensemble.gbm.histogram import _build_histogram_no_hessian
-from sklearn.ensemble.gbm.histogram import _build_histogram_root_no_hessian
-from sklearn.ensemble.gbm.histogram import _build_histogram_root
-from sklearn.ensemble.gbm.histogram import _subtract_histograms
-from sklearn.ensemble.gbm.types import HISTOGRAM_DTYPE
+from sklearn.gbm.histogram import _build_histogram_naive
+from sklearn.nsemble.gbm.histogram import _build_histogram
+from sklearn.gbm.histogram import _build_histogram_no_hessian
+from sklearn.gbm.histogram import _build_histogram_root_no_hessian
+from sklearn.gbm.histogram import _build_histogram_root
+from sklearn.gbm.histogram import _subtract_histograms
+from sklearn.gbm.types import HISTOGRAM_DTYPE
 
 
 @pytest.mark.parametrize(

@@ -3,8 +3,8 @@ from time import time
 from sklearn.datasets import make_regression, make_classification
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.ensemble import GBMRegressor
-from sklearn.ensemble import GBMClassifier
+from sklearn.gbm import GBMRegressor
+from sklearn.gbm import GBMClassifier
 
 import pstats
 import cProfile
@@ -12,7 +12,7 @@ import pygbm
 
 classif = False
 n_classes = 3
-n_samples = int(1e6)
+n_samples = int(1e4)
 max_iter = 5
 
 if classif:

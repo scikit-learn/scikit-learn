@@ -5,8 +5,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
 import pytest
 
-from sklearn.ensemble.gbm.binning import BinMapper
-from sklearn.ensemble.gbm.grower import TreeGrower
+from sklearn.gbm.binning import BinMapper
+from sklearn.gbm.grower import TreeGrower
 
 
 @pytest.mark.parametrize('max_bins', [200, 256])

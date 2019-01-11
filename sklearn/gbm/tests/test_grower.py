@@ -4,8 +4,8 @@ import pytest
 from pytest import approx
 from sklearn.utils.testing import assert_raises_regex
 
-from sklearn.ensemble.gbm.grower import TreeGrower
-from sklearn.ensemble.gbm.binning import BinMapper
+from sklearn.gbm.grower import TreeGrower
+from sklearn.gbm.binning import BinMapper
 
 
 def _make_training_data(n_bins=256, constant_hessian=True):

@@ -4,9 +4,9 @@ from sklearn.datasets import make_classification, make_regression
 import numpy as np
 import pytest
 
-from sklearn.ensemble import GBMRegressor, GBMClassifier
-from sklearn.ensemble.gbm.binning import BinMapper
-from sklearn.ensemble.gbm.utils import get_lightgbm_estimator
+from sklearn import GBMRegressor, GBMClassifier
+from sklearn.gbm.binning import BinMapper
+from sklearn.gbm.utils import get_lightgbm_estimator
 
 
 pytest.importorskip("lightgbm")
