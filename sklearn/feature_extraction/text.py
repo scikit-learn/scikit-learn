@@ -1333,7 +1333,7 @@ class TfidfVectorizer(CountVectorizer):
         Otherwise the input is expected to be the sequence strings or
         bytes items are expected to be analyzed directly.
 
-    encoding : string, 'utf-8' (default='utf-8')
+    encoding : string, 'utf-8' by default.
         If bytes or files are given to analyze, this encoding is used to
         decode.
 
