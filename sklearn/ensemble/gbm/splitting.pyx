@@ -2,6 +2,7 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: language_level=3
 """This module contains njitted routines and data structures to:
 
 - Find the best possible split of a node. For a given node, a split is

@@ -306,13 +306,15 @@ class TreeGrower:
                     node.hist_subtraction = True
 
             tic = time()
-            if node.hist_subtraction:
-                split_info, histograms = find_node_split_subtraction(
-                    self.splitting_context, node.sample_indices,
-                    node.parent.histograms, node.sibling.histograms)
-            else:
-                split_info, histograms = find_node_split(
-                    self.splitting_context, node.sample_indices)
+            # if node.hist_subtraction:
+            #     split_info, histograms = find_node_split_subtraction(
+            #         self.splitting_context, node.sample_indices,
+            #         node.parent.histograms, node.sibling.histograms)
+            # else:
+            #     split_info, histograms = find_node_split(
+            #         self.splitting_context, node.sample_indices)
+            split_info, histograms = find_node_split(self.splitting_context,
+                                                     node.sample_indices)
             toc = time()
             node.find_split_time = toc - tic
             self.total_find_split_time += node.find_split_time
