@@ -9,8 +9,10 @@ import numpy as np
 from time import time
 
 from .splitting import (SplittingContext, split_indices, find_node_split,
-                        find_node_split_subtraction)
+                        find_node_split_subtraction, SplitInfo)
 from .predictor import TreePredictor, PREDICTOR_RECORD_DTYPE
+
+from .types import HISTOGRAM_DTYPE
 
 
 class TreeNode:
@@ -192,6 +194,8 @@ class TreeGrower:
             hessians, l2_regularization, min_hessian_to_split,
             min_samples_leaf, min_gain_to_split)
         self.max_leaf_nodes = max_leaf_nodes
+        self.max_bins = max_bins
+        self.n_features = X_binned.shape[1]
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
         self.X_binned = X_binned
@@ -306,15 +310,15 @@ class TreeGrower:
                     node.hist_subtraction = True
 
             tic = time()
-            # if node.hist_subtraction:
-            #     split_info, histograms = find_node_split_subtraction(
-            #         self.splitting_context, node.sample_indices,
-            #         node.parent.histograms, node.sibling.histograms)
-            # else:
-            #     split_info, histograms = find_node_split(
-            #         self.splitting_context, node.sample_indices)
-            split_info, histograms = find_node_split(self.splitting_context,
-                                                     node.sample_indices)
+            histograms = np.zeros(shape=(self.n_features, self.max_bins),
+                                  dtype=HISTOGRAM_DTYPE)
+            if node.hist_subtraction:
+                split_info = find_node_split_subtraction(
+                    self.splitting_context, node.sample_indices,
+                    node.parent.histograms, node.sibling.histograms, histograms)
+            else:
+                split_info = find_node_split(
+                    self.splitting_context, node.sample_indices, histograms)
             toc = time()
             node.find_split_time = toc - tic
             self.total_find_split_time += node.find_split_time
