@@ -929,7 +929,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func=np.mean):
-        super(FeatureAgglomeration, self).__init__(
+        super().__init__(
             n_clusters=n_clusters, memory=memory, connectivity=connectivity,
             compute_full_tree=compute_full_tree, linkage=linkage,
             affinity=affinity)

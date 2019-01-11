@@ -166,8 +166,8 @@ class View(object):
 
     def plot_kernels(self):
         self.ax.text(-50, -60, "Linear: $u^T v$")
-        self.ax.text(-20, -60, "RBF: $\exp (-\gamma \| u-v \|^2)$")
-        self.ax.text(10, -60, "Poly: $(\gamma \, u^T v + r)^d$")
+        self.ax.text(-20, -60, r"RBF: $\exp (-\gamma \| u-v \|^2)$")
+        self.ax.text(10, -60, r"Poly: $(\gamma \, u^T v + r)^d$")
 
     def onclick(self, event):
         if event.xdata and event.ydata:

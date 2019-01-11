@@ -161,12 +161,12 @@ for n, (name, estimator) in enumerate(estimators):
 
     for i in range(n_repeat):
         if i == 0:
-            plt.plot(X_test, y_predict[:, i], "r", label="$\^y(x)$")
+            plt.plot(X_test, y_predict[:, i], "r", label=r"$\^y(x)$")
         else:
             plt.plot(X_test, y_predict[:, i], "r", alpha=0.05)
 
     plt.plot(X_test, np.mean(y_predict, axis=1), "c",
-             label="$\mathbb{E}_{LS} \^y(x)$")
+             label=r"$\mathbb{E}_{LS} \^y(x)$")
 
     plt.xlim([-5, 5])
     plt.title(name)
