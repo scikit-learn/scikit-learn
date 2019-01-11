@@ -478,10 +478,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     where `u` is the mean of the training samples or zero if `with_mean=False`,
     and `s` is the standard deviation of the training samples or one if
-    `with_std=False`. Note that `s` is a biased estimator of the standard
-    deviation, equivalent to numpy.sqrt(numpy.var(x, ddof=0)), and that it is
-    unlikely that using this estimator as opposed its unbiased counterpart
-    will affect model performance.
+    `with_std=False`.
 
     Centering and scaling happen independently on each feature by computing
     the relevant statistics on the samples in the training set. Mean and
@@ -577,6 +574,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     -----
     NaNs are treated as missing values: disregarded in fit, and maintained in
     transform.
+    
+    We use a biased estimator for the standard deviation, equivalent to
+    `numpy.std(x, ddof=0)`. Note, however, that the choice of `ddof` is
+    unlikely to affect model performance.
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
