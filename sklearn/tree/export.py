@@ -870,7 +870,6 @@ def export_text(decision_tree, feature_names=None,
     def print_tree_recurse(node, depth):
         indent = ("|" + (" " * spacing)) * depth
         indent = indent[:-spacing] + "-" * spacing
-        info_indent = indent.replace("-" * spacing, " " * spacing)
 
         if depth <= max_depth:
             value = None
