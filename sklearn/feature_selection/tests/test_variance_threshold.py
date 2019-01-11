@@ -2,6 +2,7 @@ from sklearn.utils.testing import (assert_array_equal, assert_equal,
                                    assert_raises)
 
 from scipy.sparse import bsr_matrix, csc_matrix, csr_matrix
+import numpy as np
 
 from sklearn.feature_selection import VarianceThreshold
 
@@ -26,3 +27,13 @@ def test_variance_threshold():
     for X in [data, csr_matrix(data)]:
         X = VarianceThreshold(threshold=.4).fit_transform(X)
         assert_equal((len(data), 1), X.shape)
+
+
+def test_variance_nan_inf():
+    arr = np.array(data, dtype=np.float64)
+    arr[0, 0] = np.NaN
+    arr[0, 1] = np.Inf
+
+    for X in [arr, csr_matrix(arr), csc_matrix(arr), bsr_matrix(arr)]:
+        sel = VarianceThreshold().fit(X)
+        assert_array_equal([0, 3, 4], sel.get_support(indices=True))
