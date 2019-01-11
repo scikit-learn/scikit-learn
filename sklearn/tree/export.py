@@ -23,7 +23,7 @@ from ..utils.validation import check_is_fitted
 from . import _criterion
 from . import _tree
 from ._reingold_tilford import buchheim, Tree
-from . import DecisionTreeClassifier, DecisionTreeRegressor
+from . import DecisionTreeClassifier
 
 
 def _color_brew(n):
@@ -782,9 +782,8 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
             out_file.close()
 
 
-def export_ascii(decision_tree, feature_names=None,
-                 max_depth=10, show_value='only_leaves',
-                 show_class=True, spacing=3):
+def export_text(decision_tree, feature_names=None,
+                max_depth=10, spacing=3, decimals=2):
     """Build a text report showing the rules of a decision tree.
 
     Parameters
@@ -801,18 +800,6 @@ def export_ascii(decision_tree, feature_names=None,
     max_depth : int, optional (default=10)
         Only the first max_depth levels of the tree are exported.
 
-    show_value : string or None, optional (default='only_leaves')
-        Wheter to report the predicted value (for regression) or
-        the class weights (for classification).
-        If 'only_leaves' the value will be exported only for the leaves;
-        If 'all' the value will be exported for all the nodes;
-        If None, no value will be exported.
-
-    show_class : bool, optional (default=True)
-        If False the class label is not exported for each node.
-        The class is exported by default for classification trees.
-        Only relevant for classification problems.
-
     spacing : int, optional (default=3)
         Number of spaces between edges. The higher it is, the wider the result.
 
@@ -826,41 +813,33 @@ def export_ascii(decision_tree, feature_names=None,
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.tree import DecisionTreeClassifier
-    >>> from sklearn.tree.export import export_ascii
+    >>> from sklearn.tree.export import export_text
     >>> iris = load_iris()
     >>> X = iris['data']
     >>> y = iris['target']
     >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
     >>> decision_tree = decision_tree.fit(X, y)
-    >>> r = export_ascii(decision_tree, feature_names=iris['feature_names'])
+    >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
     >>> print(r)
     |---petal width (cm) <= 0.80
-    |   | (class: 0)
-    |   |---* (weights: [50.0, 0.0, 0.0])
+    |   |--- weights: [50.00, 0.00, 0.00] -> 0
     |---petal width (cm) >  0.80
-    |   | (class: 1)
     |   |---petal width (cm) <= 1.75
-    |   |   | (class: 1)
-    |   |   |---* (weights: [0.0, 49.0, 5.0])
+    |   |   |--- weights: [0.00, 49.00, 5.00] -> 1
     |   |---petal width (cm) >  1.75
-    |   |   | (class: 2)
-    |   |   |---* (weights: [0.0, 1.0, 45.0])
+    |   |   |--- weights: [0.00, 1.00, 45.00] -> 2
     ...
     """
     check_is_fitted(decision_tree, 'tree_')
     tree_ = decision_tree.tree_
     class_names = decision_tree.classes_
-    right_child_string = "{}{} <= {:.2f}\n"
-    left_child_string = "{}{} >  {:.2f}\n"
-    class_string = "{}{} (class: {})\n"
-    value_string = "{}{} (value: {})\n"
+    right_child_fmt = "{}{} <= {}\n"
+    left_child_fmt = "{}{} >  {}\n"
+    value_fmt = "{}{} value: {}\n"
+
 
     if max_depth <= 0:
         raise ValueError("max_depth bust be > 0, given %d" % max_depth)
-
-    if (show_value is not None and
-            show_value not in ['only_leaves', 'all']):
-        raise ValueError("show_value must be 'all', 'only_leaves' or None")
 
     if (feature_names is not None and
             len(feature_names) != tree_.n_features):
@@ -871,10 +850,11 @@ def export_ascii(decision_tree, feature_names=None,
     if spacing <= 0:
         raise ValueError("spacing must be > 0, given %d" % spacing)
 
+    if decimals < 0:
+        raise ValueError("decimals must be >= 0, given %d" % decimals)
+
     if isinstance(decision_tree, DecisionTreeClassifier):
-        value_string = "{}{} (weights: {})\n"
-    if isinstance(decision_tree, DecisionTreeRegressor):
-        show_class = False
+        value_fmt = "{}{} weights: {}\n"    
 
     if feature_names:
         feature_names_ = [feature_names[i] for i in tree_.feature]
@@ -883,7 +863,7 @@ def export_ascii(decision_tree, feature_names=None,
         for i in tree_.feature:
             feature_names_.append("feature_"+str(i))
 
-    export_ascii.report = ""
+    export_text.report = ""
 
     def print_tree_recurse(node, depth):
         indent = ("|" + (" " * spacing)) * depth
@@ -907,44 +887,31 @@ def export_ascii(decision_tree, feature_names=None,
                 class_name_right = class_names[class_name_right]
                 class_name_left = class_names[class_name_left]
 
-            info_string = ""
-
-            if show_value == 'all':
-                info_string += value_string.format(info_indent, '|',
-                                                   str(value.tolist()))
-
-            info_string_left = info_string
-            info_string_right = info_string
-
-            if show_class:
-                info_string_left += class_string.format(info_indent, '|',
-                                                        class_name_left)
-                info_string_right += class_string.format(info_indent, '|',
-                                                         class_name_right)
+            info_fmt = ""
+            info_fmt_left = info_fmt
+            info_fmt_right = info_fmt
 
             if tree_.feature[node] != _tree.TREE_UNDEFINED:
                 name = feature_names_[node]
                 threshold = tree_.threshold[node]
-                export_ascii.report += right_child_string.format(indent,
-                                                                 name,
-                                                                 threshold)
-                export_ascii.report += info_string_left
-                print_tree_recurse(tree_.children_left[node],
-                                   depth+1)
+                threshold = "{1:.{0}f}".format(decimals, threshold)
+                export_text.report += right_child_fmt.format(indent,
+                                                             name,
+                                                             threshold)
+                export_text.report += info_fmt_left
+                print_tree_recurse(tree_.children_left[node], depth+1)
 
-                export_ascii.report += left_child_string.format(indent,
-                                                                name,
-                                                                threshold)
-                export_ascii.report += info_string_right
-                print_tree_recurse(tree_.children_right[node],
-                                   depth+1)
+                export_text.report += left_child_fmt.format(indent,
+                                                            name,
+                                                            threshold)
+                export_text.report += info_fmt_right
+                print_tree_recurse(tree_.children_right[node], depth+1)
             else:  # leaf
-                # meaningful for classification and regression
-                if show_value in ['all', 'only_leaves']:
-                    val = str(value.tolist())
-                    export_ascii.report += value_string.format(indent, '*',
-                                                               val)
+                val = ["{1:.{0}f}, ".format(decimals, v) for v in value]
+                val = '['+''.join(val)[:-2]+']'
+                if isinstance(decision_tree, DecisionTreeClassifier):
+                    val += ' -> ' + str(class_name)
+                export_text.report += value_fmt.format(indent, '', val)
 
     print_tree_recurse(0, 1)
-
-    return export_ascii.report
+    return export_text.report
