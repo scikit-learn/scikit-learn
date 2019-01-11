@@ -324,7 +324,7 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
                  " than the number of samples: n_samples={1}.")
                 .format(self.n_splits, n_samples))
 
-        for train, test in super(_BaseKFold, self).split(X, y, groups):
+        for train, test in super().split(X, y, groups):
             yield train, test
 
     def get_n_splits(self, X=None, y=None, groups=None):
@@ -422,7 +422,7 @@ class KFold(_BaseKFold):
         if n_splits == 'warn':
             warnings.warn(NSPLIT_WARNING, FutureWarning)
             n_splits = 3
-        super(KFold, self).__init__(n_splits, shuffle, random_state)
+        super().__init__(n_splits, shuffle, random_state)
 
     def _iter_test_indices(self, X, y=None, groups=None):
         n_samples = _num_samples(X)
@@ -494,8 +494,7 @@ class GroupKFold(_BaseKFold):
         if n_splits == 'warn':
             warnings.warn(NSPLIT_WARNING, FutureWarning)
             n_splits = 3
-        super(GroupKFold, self).__init__(n_splits, shuffle=False,
-                                         random_state=None)
+        super().__init__(n_splits, shuffle=False, random_state=None)
 
     def _iter_test_indices(self, X, y, groups):
         if groups is None:
@@ -558,7 +557,7 @@ class GroupKFold(_BaseKFold):
         test : ndarray
             The testing set indices for that split.
         """
-        return super(GroupKFold, self).split(X, y, groups)
+        return super().split(X, y, groups)
 
 
 class StratifiedKFold(_BaseKFold):
@@ -622,7 +621,7 @@ class StratifiedKFold(_BaseKFold):
         if n_splits == 'warn':
             warnings.warn(NSPLIT_WARNING, FutureWarning)
             n_splits = 3
-        super(StratifiedKFold, self).__init__(n_splits, shuffle, random_state)
+        super().__init__(n_splits, shuffle, random_state)
 
     def _make_test_folds(self, X, y=None):
         rng = self.random_state
@@ -716,7 +715,7 @@ class StratifiedKFold(_BaseKFold):
         to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
-        return super(StratifiedKFold, self).split(X, y, groups)
+        return super().split(X, y, groups)
 
 
 class TimeSeriesSplit(_BaseKFold):
@@ -777,9 +776,7 @@ class TimeSeriesSplit(_BaseKFold):
         if n_splits == 'warn':
             warnings.warn(NSPLIT_WARNING, FutureWarning)
             n_splits = 3
-        super(TimeSeriesSplit, self).__init__(n_splits,
-                                              shuffle=False,
-                                              random_state=None)
+        super().__init__(n_splits, shuffle=False, random_state=None)
         self.max_train_size = max_train_size
 
     def split(self, X, y=None, groups=None):
@@ -933,7 +930,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
         test : ndarray
             The testing set indices for that split.
         """
-        return super(LeaveOneGroupOut, self).split(X, y, groups)
+        return super().split(X, y, groups)
 
 
 class LeavePGroupsOut(BaseCrossValidator):
@@ -1064,7 +1061,7 @@ class LeavePGroupsOut(BaseCrossValidator):
         test : ndarray
             The testing set indices for that split.
         """
-        return super(LeavePGroupsOut, self).split(X, y, groups)
+        return super().split(X, y, groups)
 
 
 class _RepeatedSplits(metaclass=ABCMeta):
@@ -1217,7 +1214,7 @@ class RepeatedKFold(_RepeatedSplits):
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
     def __init__(self, n_splits=5, n_repeats=10, random_state=None):
-        super(RepeatedKFold, self).__init__(
+        super().__init__(
             KFold, n_repeats, random_state, n_splits=n_splits)
 
 
@@ -1270,7 +1267,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     RepeatedKFold: Repeats K-Fold n times.
     """
     def __init__(self, n_splits=5, n_repeats=10, random_state=None):
-        super(RepeatedStratifiedKFold, self).__init__(
+        super().__init__(
             StratifiedKFold, n_repeats, random_state, n_splits=n_splits)
 
 
@@ -1492,7 +1489,7 @@ class GroupShuffleSplit(ShuffleSplit):
                               FutureWarning)
             test_size = 0.2
 
-        super(GroupShuffleSplit, self).__init__(
+        super().__init__(
             n_splits=n_splits,
             test_size=test_size,
             train_size=train_size,
@@ -1543,7 +1540,7 @@ class GroupShuffleSplit(ShuffleSplit):
         split. You can make the results identical by setting ``random_state``
         to an integer.
         """
-        return super(GroupShuffleSplit, self).split(X, y, groups)
+        return super().split(X, y, groups)
 
 
 def _approximate_mode(class_counts, n_draws, rng):
@@ -1680,7 +1677,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     def __init__(self, n_splits=10, test_size="default", train_size=None,
                  random_state=None):
-        super(StratifiedShuffleSplit, self).__init__(
+        super().__init__(
             n_splits, test_size, train_size, random_state)
 
     def _iter_indices(self, X, y, groups=None):
@@ -1778,7 +1775,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
-        return super(StratifiedShuffleSplit, self).split(X, y, groups)
+        return super().split(X, y, groups)
 
 
 def _validate_shuffle_split_init(test_size, train_size):

@@ -165,7 +165,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
                  behaviour='old',
                  random_state=None,
                  verbose=0):
-        super(IsolationForest, self).__init__(
+        super().__init__(
             base_estimator=ExtraTreeRegressor(
                 max_features=1,
                 splitter='random',
@@ -266,9 +266,9 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
         self.max_samples_ = max_samples
         max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
-        super(IsolationForest, self)._fit(X, y, max_samples,
-                                          max_depth=max_depth,
-                                          sample_weight=sample_weight)
+        super()._fit(X, y, max_samples,
+                     max_depth=max_depth,
+                     sample_weight=sample_weight)
 
         if self.behaviour == 'old':
             # in this case, decision_function = 0.5 + self.score_samples(X):

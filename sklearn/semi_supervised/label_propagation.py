@@ -378,9 +378,9 @@ class LabelPropagation(BaseLabelPropagation):
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
                  max_iter=1000, tol=1e-3, n_jobs=None):
-        super(LabelPropagation, self).__init__(
-            kernel=kernel, gamma=gamma, n_neighbors=n_neighbors,
-            max_iter=max_iter, tol=tol, n_jobs=n_jobs, alpha=None)
+        super().__init__(kernel=kernel, gamma=gamma,
+                         n_neighbors=n_neighbors, max_iter=max_iter,
+                         tol=tol, n_jobs=n_jobs, alpha=None)
 
     def _build_graph(self):
         """Matrix representing a fully connected graph between each sample
@@ -399,7 +399,7 @@ class LabelPropagation(BaseLabelPropagation):
         return affinity_matrix
 
     def fit(self, X, y):
-        return super(LabelPropagation, self).fit(X, y)
+        return super().fit(X, y)
 
 
 class LabelSpreading(BaseLabelPropagation):
@@ -494,11 +494,9 @@ class LabelSpreading(BaseLabelPropagation):
                  max_iter=30, tol=1e-3, n_jobs=None):
 
         # this one has different base parameters
-        super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,
-                                             n_neighbors=n_neighbors,
-                                             alpha=alpha, max_iter=max_iter,
-                                             tol=tol,
-                                             n_jobs=n_jobs)
+        super().__init__(kernel=kernel, gamma=gamma,
+                         n_neighbors=n_neighbors, alpha=alpha,
+                         max_iter=max_iter, tol=tol, n_jobs=n_jobs)
 
     def _build_graph(self):
         """Graph matrix for Label Spreading computes the graph laplacian"""

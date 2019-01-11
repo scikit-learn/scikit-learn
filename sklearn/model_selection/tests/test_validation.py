@@ -155,7 +155,7 @@ class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
         assert not hasattr(self, 'fit_called_'), \
                    'fit is called the second time'
         self.fit_called_ = True
-        return super(type(self), self).fit(X_subset, y_subset)
+        return super().fit(X_subset, y_subset)
 
     def predict(self, X):
         raise NotImplementedError

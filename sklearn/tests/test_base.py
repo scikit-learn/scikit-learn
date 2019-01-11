@@ -233,7 +233,7 @@ def test_set_params_passes_all_parameters():
 
     class TestDecisionTree(DecisionTreeClassifier):
         def set_params(self, **kwargs):
-            super(TestDecisionTree, self).set_params(**kwargs)
+            super().set_params(**kwargs)
             # expected_kwargs is in test scope
             assert kwargs == expected_kwargs
             return self

@@ -281,14 +281,14 @@ class SpectralCoclustering(BaseSpectral):
     def __init__(self, n_clusters=3, svd_method='randomized',
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
                  n_init=10, n_jobs=None, random_state=None):
-        super(SpectralCoclustering, self).__init__(n_clusters,
-                                                   svd_method,
-                                                   n_svd_vecs,
-                                                   mini_batch,
-                                                   init,
-                                                   n_init,
-                                                   n_jobs,
-                                                   random_state)
+        super().__init__(n_clusters,
+                         svd_method,
+                         n_svd_vecs,
+                         mini_batch,
+                         init,
+                         n_init,
+                         n_jobs,
+                         random_state)
 
     def _fit(self, X):
         normalized_data, row_diag, col_diag = _scale_normalize(X)
@@ -429,20 +429,20 @@ class SpectralBiclustering(BaseSpectral):
                  n_components=6, n_best=3, svd_method='randomized',
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
                  n_init=10, n_jobs=None, random_state=None):
-        super(SpectralBiclustering, self).__init__(n_clusters,
-                                                   svd_method,
-                                                   n_svd_vecs,
-                                                   mini_batch,
-                                                   init,
-                                                   n_init,
-                                                   n_jobs,
-                                                   random_state)
+        super().__init__(n_clusters,
+                         svd_method,
+                         n_svd_vecs,
+                         mini_batch,
+                         init,
+                         n_init,
+                         n_jobs,
+                         random_state)
         self.method = method
         self.n_components = n_components
         self.n_best = n_best
 
     def _check_parameters(self):
-        super(SpectralBiclustering, self)._check_parameters()
+        super()._check_parameters()
         legal_methods = ('bistochastic', 'scale', 'log')
         if self.method not in legal_methods:
             raise ValueError("Unknown method: '{0}'. method must be"
