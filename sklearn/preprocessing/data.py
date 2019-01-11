@@ -576,8 +576,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     transform.
     
     We use a biased estimator for the standard deviation, equivalent to
-    `numpy.std(x, ddof=0)`. Note, however, that the choice of `ddof` is
-    unlikely to affect model performance.
+    `numpy.std(x, ddof=0)`. Note that the choice of `ddof` is unlikely to
+    affect model performance.
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
