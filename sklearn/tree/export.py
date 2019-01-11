@@ -803,6 +803,9 @@ def export_text(decision_tree, feature_names=None,
     spacing : int, optional (default=3)
         Number of spaces between edges. The higher it is, the wider the result.
 
+    decimals : int (default=2)
+        Number of decimal digits to display.
+
     Returns
     -------
     report : string
@@ -837,7 +840,6 @@ def export_text(decision_tree, feature_names=None,
     left_child_fmt = "{}{} >  {}\n"
     value_fmt = "{}{} value: {}\n"
 
-
     if max_depth <= 0:
         raise ValueError("max_depth bust be > 0, given %d" % max_depth)
 
@@ -854,7 +856,7 @@ def export_text(decision_tree, feature_names=None,
         raise ValueError("decimals must be >= 0, given %d" % decimals)
 
     if isinstance(decision_tree, DecisionTreeClassifier):
-        value_fmt = "{}{} weights: {}\n"    
+        value_fmt = "{}{} weights: {}\n"
 
     if feature_names:
         feature_names_ = [feature_names[i] for i in tree_.feature]
