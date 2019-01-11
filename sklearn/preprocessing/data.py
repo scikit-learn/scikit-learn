@@ -479,7 +479,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     where `u` is the mean of the training samples or zero if `with_mean=False`,
     and `s` is the standard deviation of the training samples or one if
     `with_std=False`. Note that `s` is a biased estimator of the standard
-    deviation, equivalent to numpy.sqrt(numpy.var(x, ddof=0)).
+    deviation, equivalent to numpy.sqrt(numpy.var(x, ddof=0)), and that it is
+    unlikely that using this estimator as opposed its unbiased counterpart
+    will affect model performance.
 
     Centering and scaling happen independently on each feature by computing
     the relevant statistics on the samples in the training set. Mean and
