@@ -12,7 +12,7 @@ from sklearn.utils.multiclass import check_classification_targets
 from sklearn.metrics import check_scoring
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-from ._gradient_boosting import _update_raw_predictions__
+from ._gradient_boosting import _update_raw_predictions
 from .types import Y_DTYPE, X_DTYPE
 
 from .binning import BinMapper
@@ -241,11 +241,7 @@ class BaseGradientBoostingMachine(BaseEstimator, ABC):
                 leaves_values = [l.value for l in grower.finalized_leaves]
                 samples_indices_in_leaves = [l.sample_indices for l in grower.finalized_leaves]
                 leaves_values = np.array(leaves_values, dtype=np.float32)
-                _update_raw_predictions__(leaves_values, samples_indices_in_leaves, raw_predictions[:, k])
-                # leaves_data = [(l.value, l.sample_indices)
-                #                for l in grower.finalized_leaves]
-                # _update_raw_predictions(leaves_data, raw_predictions[:, k])
-
+                _update_raw_predictions(leaves_values, samples_indices_in_leaves, raw_predictions[:, k])
 
                 toc_pred = time()
                 acc_prediction_time += toc_pred - tic_pred
@@ -679,9 +675,3 @@ class GradientBoostingClassifier(BaseGradientBoostingMachine, ClassifierMixin):
                 return _LOSSES['categorical_crossentropy']()
 
         return _LOSSES[self.loss]()
-
-def _update_raw_predictions(leaves_data, raw_predictions):
-    for leaf_idx in range(len(leaves_data)):
-        leaf_value, sample_indices = leaves_data[leaf_idx]
-        for sample_idx in sample_indices:
-            raw_predictions[sample_idx] += leaf_value

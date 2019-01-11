@@ -22,7 +22,10 @@ def configuration(parent_package="", top_path=None):
 
     config.add_extension("gbm.binning",
                          sources=["gbm/binning.pyx"],
-                         include_dirs=[numpy.get_include()])
+                         include_dirs=[numpy.get_include()],
+                         extra_compile_args=['-fopenmp'],
+                         extra_link_args=['-fopenmp'],
+                         )
 
     config.add_extension("gbm.predictor",
                          sources=["gbm/predictor.pyx"],

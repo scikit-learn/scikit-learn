@@ -1,15 +1,19 @@
+# cython: profile=True
+# cython: cdivision=True
+# cython: boundscheck=False
+# cython: wraparound=False
+# cython: language_level=3
 cimport cython
 
 import numpy as np
 cimport numpy as np
 
-ctypedef fused float_or_double:
-    float
-    double
+ctypedef np.npy_float32 NPY_Y_DTYPE
+ctypedef np.npy_uint8 NPY_X_BINNED_DTYPE
 
-@cython.boundscheck(False)  # Deactivate bounds checking
-@cython.wraparound(False)   # Deactivate negative indexing.
-def _update_raw_predictions__(float [:] leaves_values, list samples_indices_at_leaf, float_or_double [:] raw_predictions):
+def _update_raw_predictions(float [:] leaves_values,
+                            list samples_indices_at_leaf,
+                            NPY_Y_DTYPE [:] raw_predictions):
     """Update raw_predictions by reading the predictions of the ith tree
     directly form the leaves.
 
@@ -26,10 +30,17 @@ def _update_raw_predictions__(float [:] leaves_values, list samples_indices_at_l
     """
     cdef:
         int leaf_idx
-        unsigned int sample_idx
+        float val
         unsigned int [:] sample_indices
 
     for leaf_idx in range(leaves_values.shape[0]):
         samples_indices = samples_indices_at_leaf[leaf_idx]
-        for sample_idx in samples_indices:
-            raw_predictions[sample_idx] += leaves_values[leaf_idx]
+        val = leaves_values[leaf_idx]
+        blop(samples_indices, raw_predictions, val)
+
+cdef void blop(unsigned int [:] samples_indices, NPY_Y_DTYPE [:] raw_predictions, float
+                val):
+    cdef:
+        unsigned int sample_idx
+    for sample_idx in samples_indices:
+        raw_predictions[sample_idx] += val

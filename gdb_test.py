@@ -27,15 +27,15 @@ else:
     PYGBM_GBM = pygbm.GradientBoostingRegressor
 
 
-pygbm_est = PYGBM_GBM(
-    max_iter=max_iter,
-    scoring=None,  # no early stopping
-    validation_split=None,
-    random_state=0,
-    verbose=False)
-print("compiling pygbm code")
-pygbm_est.fit(X[:1000], y[:1000])
-print("done")
+# pygbm_est = PYGBM_GBM(
+#     max_iter=max_iter,
+#     scoring=None,  # no early stopping
+#     validation_split=None,
+#     random_state=0,
+#     verbose=False)
+# print("compiling pygbm code")
+# pygbm_est.fit(X[:1000], y[:1000])
+# print("done")
 
 gbm = GBM(
     max_iter=max_iter,
@@ -44,21 +44,21 @@ gbm = GBM(
     n_iter_no_change=None,
     random_state=0,
     verbose=True)
-tic = time()
-gbm.fit(X, y)
-fit_duration = time() - tic
-print(f'sklearn gbm fit_duration: {fit_duration:.3f}s\n')
+# tic = time()
+# gbm.fit(X, y)
+# fit_duration = time() - tic
+# print(f'sklearn gbm fit_duration: {fit_duration:.3f}s\n')
 
 
-pygbm_est.set_params(verbose=True)
-tic = time()
-pygbm_est.fit(X, y)
-fit_duration = time() - tic
-print(f'pygbm fit_duration: {fit_duration:.3f}s\n')
+# pygbm_est.set_params(verbose=True)
+# tic = time()
+# pygbm_est.fit(X, y)
+# fit_duration = time() - tic
+# print(f'pygbm fit_duration: {fit_duration:.3f}s\n')
 
-# cProfile.runctx("gbm.fit(X, y).predict(X)", globals(), locals(), "Profile.prof")
-# s = pstats.Stats("Profile.prof")
-# s.strip_dirs().sort_stats("time").print_stats(.2)
+cProfile.runctx("gbm.fit(X, y)", globals(), locals(), "Profile.prof")
+s = pstats.Stats("Profile.prof")
+s.strip_dirs().sort_stats("time").print_stats(.2)
 
 # tic = time()
 # gbdt = GBDT(n_estimators=max_iter,
