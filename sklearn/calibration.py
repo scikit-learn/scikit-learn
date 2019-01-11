@@ -549,11 +549,11 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
 
     Returns
     -------
-    prob_true : array, shape (n_non_empty_bins,)
-        The true probability in each non-empty bin (fraction of positives).
+    prob_true : array, shape (n_bins,) or smaller
+        The true probability in each bin (fraction of positives).
 
-    prob_pred : array, shape (n_non_empty_bins,)
-        The mean predicted probability in each non-empty bin.
+    prob_pred : array, shape (n_bins,) or smaller
+        The mean predicted probability in each bin.
 
     References
     ----------
