@@ -2,6 +2,7 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: language_level=3
 """
 This module contains the loss classes.
 
@@ -11,6 +12,7 @@ classification.
 from abc import ABC, abstractmethod
 
 cimport cython
+from cython.parallel import prange
 
 import numpy as np
 cimport numpy as np
@@ -154,13 +156,16 @@ class LeastSquares(BaseLoss):
                                                raw_predictions)
 
 
-def _update_gradients_least_squares(NPY_Y_DTYPE[:] gradients, NPY_Y_DTYPE[:] y_true, NPY_Y_DTYPE[:] raw_predictions):
+cdef void _update_gradients_least_squares(
+    NPY_Y_DTYPE[:] gradients,
+    NPY_Y_DTYPE[:] y_true,
+    NPY_Y_DTYPE[:] raw_predictions) nogil:
     cdef:
         unsigned int n_samples
-        unsigned int i
+        int i
 
     n_samples = raw_predictions.shape[0]
-    for i in range(n_samples):
+    for i in prange(n_samples, schedule='static'):
         # Note: a more correct exp is 2 * (raw_predictions - y_true) but
         # since we use 1 for the constant hessian value (and not 2) this
         # is strictly equivalent for the leaves values.

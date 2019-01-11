@@ -4,6 +4,7 @@
 # cython: wraparound=False
 # cython: language_level=3
 cimport cython
+from cython.parallel import prange
 
 import numpy as np
 cimport numpy as np
@@ -37,10 +38,11 @@ cdef void _update_raw_predictions_helper(
     NPY_Y_DTYPE [:] values) nogil:
 
     cdef:
-        unsigned int sample_idx
-        unsigned int n_leaves
+        int sample_idx
+        int leaf_idx
+        int n_leaves
 
     n_leaves = starts.shape[0]
-    for leaf_idx in range(n_leaves):
+    for leaf_idx in prange(n_leaves):
         for sample_idx in range(starts[leaf_idx], stops[leaf_idx]):
             raw_predictions[sample_idx] += values[leaf_idx]

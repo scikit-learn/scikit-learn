@@ -10,7 +10,9 @@ def configuration(parent_package="", top_path=None):
 
     config.add_extension("gbm._gradient_boosting",
                          sources=["gbm/_gradient_boosting.pyx"],
-                         include_dirs=[numpy.get_include()])
+                         include_dirs=[numpy.get_include()],
+                         extra_compile_args=['-fopenmp'],
+                         extra_link_args=['-fopenmp'])
 
     config.add_extension("gbm.histogram",
                          sources=["gbm/histogram.pyx"],
@@ -24,8 +26,7 @@ def configuration(parent_package="", top_path=None):
                          sources=["gbm/binning.pyx"],
                          include_dirs=[numpy.get_include()],
                          extra_compile_args=['-fopenmp'],
-                         extra_link_args=['-fopenmp'],
-                         )
+                         extra_link_args=['-fopenmp'])
 
     config.add_extension("gbm.predictor",
                          sources=["gbm/predictor.pyx"],
@@ -33,7 +34,9 @@ def configuration(parent_package="", top_path=None):
 
     config.add_extension("gbm.loss",
                          sources=["gbm/loss.pyx"],
-                         include_dirs=[numpy.get_include()])
+                         include_dirs=[numpy.get_include()],
+                         extra_compile_args=['-fopenmp'],
+                         extra_link_args=['-fopenmp'])
 
     config.add_extension("gbm.playground",
                          sources=["gbm/playground.pyx"],
