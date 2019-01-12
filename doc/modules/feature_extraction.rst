@@ -961,7 +961,7 @@ Some tips and tricks:
         ...
         >>> class CustomVectorizer(CountVectorizer):
         ...     def build_tokenizer(self):
-        ...         tokenize = super(CustomVectorizer, self).build_tokenizer()
+        ...         tokenize = super().build_tokenizer()
         ...         return lambda doc: list(to_british(tokenize(doc)))
         ...
         >>> print(CustomVectorizer().build_analyzer()(u"color colour")) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS

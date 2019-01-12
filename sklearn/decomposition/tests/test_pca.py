@@ -502,10 +502,7 @@ def test_infer_dim_1():
     pca = PCA(n_components=p, svd_solver='full')
     pca.fit(X)
     spect = pca.explained_variance_
-    ll = []
-    for k in range(p):
-        ll.append(_assess_dimension_(spect, k, n, p))
-    ll = np.array(ll)
+    ll = np.array([_assess_dimension_(spect, k, n, p) for k in range(p)])
     assert_greater(ll[1], ll.max() - .01 * n)
 
 

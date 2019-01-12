@@ -17,13 +17,12 @@ import numpy as np
 from scipy import sparse
 from scipy import stats
 from scipy import optimize
+from scipy.special import boxcox
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals import six
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import boxcox, nanpercentile, nanmedian
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -37,11 +36,6 @@ from ._csr_polynomial_expansion import _csr_polynomial_expansion
 from ._encoders import OneHotEncoder
 
 BOUNDS_THRESHOLD = 1e-7
-
-
-zip = six.moves.zip
-map = six.moves.map
-range = six.moves.range
 
 __all__ = [
     'Binarizer',
@@ -1144,7 +1138,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                 raise ValueError(
                     "Cannot center sparse matrices: use `with_centering=False`"
                     " instead. See docstring for motivation and alternatives.")
-            self.center_ = nanmedian(X, axis=0)
+            self.center_ = np.nanmedian(X, axis=0)
         else:
             self.center_ = None
 
@@ -1159,8 +1153,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                 else:
                     column_data = X[:, feature_idx]
 
-                quantiles.append(nanpercentile(column_data,
-                                               self.quantile_range))
+                quantiles.append(np.nanpercentile(column_data,
+                                                  self.quantile_range))
 
             quantiles = np.transpose(quantiles)
 
@@ -2107,7 +2101,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                                     size=self.subsample,
                                                     replace=False)
                 col = col.take(subsample_idx, mode='clip')
-            self.quantiles_.append(nanpercentile(col, references))
+            self.quantiles_.append(np.nanpercentile(col, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def _sparse_fit(self, X, random_state):
@@ -2149,7 +2143,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 # quantiles. Force the quantiles to be zeros.
                 self.quantiles_.append([0] * len(references))
             else:
-                self.quantiles_.append(nanpercentile(column_data, references))
+                self.quantiles_.append(
+                        np.nanpercentile(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def fit(self, X, y=None):
@@ -2600,12 +2595,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         optim_function = {'box-cox': self._box_cox_optimize,
                           'yeo-johnson': self._yeo_johnson_optimize
                           }[self.method]
-        self.lambdas_ = []
-        for col in X.T:
-            with np.errstate(invalid='ignore'):  # hide NaN warnings
-                lmbda = optim_function(col)
-                self.lambdas_.append(lmbda)
-        self.lambdas_ = np.array(self.lambdas_)
+        with np.errstate(invalid='ignore'):  # hide NaN warnings
+            self.lambdas_ = np.array([optim_function(col) for col in X.T])
 
         if self.standardize or force_transform:
             transform_function = {'box-cox': boxcox,
