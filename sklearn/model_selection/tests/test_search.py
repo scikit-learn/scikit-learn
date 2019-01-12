@@ -1725,3 +1725,25 @@ def test_deprecated_grid_search_iid():
     grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=KFold(2))
     # no warning because no stratification and 54 % 2 == 0
     assert_no_warnings(grid.fit, X, y)
+
+
+def test_empty_cv_iterator_error():
+    # Generate sample data
+    rng = np.random.RandomState(0)
+    X = 5 * rng.rand(10000, 1)
+    y = np.sin(X).ravel()
+
+    # create cv
+    cv = KFold(n_splits=5).split(X)
+
+    # pop all of it, this should cause the expected ValueError
+    [u for u in cv]
+    # cv is empty now
+
+    train_size = 100
+    ridge = RandomizedSearchCV(Ridge(), {'alpha': [1e-3, 1e-2, 1e-1]},
+                               cv=cv, n_jobs=-1)
+
+    # assert that this raises an error
+    with pytest.raises(ValueError):
+        ridge.fit(X[:train_size], y[:train_size])
