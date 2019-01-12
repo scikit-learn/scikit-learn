@@ -17,7 +17,9 @@ def configuration(parent_package="", top_path=None):
 
     config.add_extension("splitting",
                          sources=["splitting.pyx"],
-                         include_dirs=[numpy.get_include()])
+                         include_dirs=[numpy.get_include()],
+                         extra_compile_args=['-fopenmp'],
+                         extra_link_args=['-fopenmp'])
 
     config.add_extension("binning",
                          sources=["binning.pyx"],
