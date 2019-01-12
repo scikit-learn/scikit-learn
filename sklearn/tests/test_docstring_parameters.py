@@ -8,10 +8,9 @@ import warnings
 import importlib
 
 from pkgutil import walk_packages
-from inspect import getsource, isabstract
+from inspect import getsource, isabstract, signature
 
 import sklearn
-from sklearn.base import signature
 from sklearn.utils import IS_PYPY
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_docstring_parameters

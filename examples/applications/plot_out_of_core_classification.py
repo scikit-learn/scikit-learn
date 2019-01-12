@@ -40,8 +40,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
-from sklearn.externals.six.moves import html_parser
-from sklearn.externals.six.moves.urllib.request import urlretrieve
+from html.parser import HTMLParser
+from urllib.request import urlretrieve
 from sklearn.datasets import get_data_home
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.linear_model import SGDClassifier
@@ -60,11 +60,11 @@ def _not_in_sphinx():
 #
 
 
-class ReutersParser(html_parser.HTMLParser):
+class ReutersParser(HTMLParser):
     """Utility class to parse a SGML file and yield documents one at a time."""
 
     def __init__(self, encoding='latin-1'):
-        html_parser.HTMLParser.__init__(self)
+        HTMLParser.__init__(self)
         self._reset()
         self.encoding = encoding
 
@@ -359,9 +359,8 @@ plt.legend(cls_names, loc='best')
 # Plot fitting times
 plt.figure()
 fig = plt.gcf()
-cls_runtime = []
-for cls_name, stats in sorted(cls_stats.items()):
-    cls_runtime.append(stats['total_fit_time'])
+cls_runtime = [stats['total_fit_time']
+               for cls_name, stats in sorted(cls_stats.items())]
 
 cls_runtime.append(total_vect_time)
 cls_names.append('Vectorization')

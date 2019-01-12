@@ -267,7 +267,7 @@ parameter automatically by cross-validation::
     >>> diabetes = datasets.load_diabetes()
     >>> X_diabetes = diabetes.data
     >>> y_diabetes = diabetes.target
-    >>> lasso.fit(X_diabetes, y_diabetes)
+    >>> lasso.fit(X_diabetes, y_diabetes)  # doctest: +NORMALIZE_WHITESPACE
     LassoCV(alphas=None, copy_X=True, cv=3, eps=0.001, fit_intercept=True,
         max_iter=1000, n_alphas=100, n_jobs=None, normalize=False,
         positive=False, precompute='auto', random_state=None,
