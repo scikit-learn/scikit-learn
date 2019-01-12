@@ -6,20 +6,21 @@
 # License: BSD 3 clause
 
 import sys
+import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy import sparse
 
-from .base import LinearModel, _pre_fit
+from .base import LinearModel, _pre_fit, _preprocess_data
+from .sag import sag_solver
 from ..base import RegressorMixin
-from .base import _preprocess_data
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..utils._joblib import Parallel, delayed, effective_n_jobs
-from ..utils.extmath import safe_sparse_dot
+from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
@@ -559,16 +560,11 @@ class ElasticNet(LinearModel, RegressorMixin):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : True | False | array-like
-        Whether to use a precomputed Gram matrix to speed up
-        calculations. The Gram matrix can also be passed as argument.
-        For sparse input this option is always ``True`` to preserve sparsity.
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
 
     max_iter : int, optional
         The maximum number of iterations
-
-    copy_X : boolean, optional, default True
-        If ``True``, X will be copied; else, it may be overwritten.
 
     tol : float, optional
         The tolerance for the optimization: if the updates are
@@ -576,13 +572,28 @@ class ElasticNet(LinearModel, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
+    solver : str, {'auto', 'cd', 'saga'}, \
+             optional (default='cd').
+
+        Algorithm to use in the optimization problem.
+
+        - 'auto' chooses the solver automatically based on the type of data.
+          If the data is F-contiguous or a sparse 'csc' matrix, it chooses
+          'cd'. Otherwise it chooses 'saga'.
+
+        - 'cd' is a coordinate descent solver.
+
+        - 'saga' is an improved, unbiased version of stochastic average
+          gradient descent. Note that fast convergence is only guaranteed on
+          features with approximately the same scale. You can preprocess the
+          data with a scaler from sklearn.preprocessing.
+
+          .. versionadded:: TODO
+
     warm_start : bool, optional
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
-
-    positive : bool, optional
-        When set to ``True``, forces the coefficients to be positive.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
@@ -592,7 +603,18 @@ class ElasticNet(LinearModel, RegressorMixin):
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
 
+    precompute : True | False | array-like
+        Only if ``solver='cd'``.
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. The Gram matrix can also be passed as argument.
+        For sparse input this option is always ``True`` to preserve sparsity.
+
+    positive : bool, optional
+        Only if ``solver='cd'``.
+        When set to ``True``, forces the coefficients to be positive.
+
     selection : str, default 'cyclic'
+        Only if ``solver='cd'``.
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
@@ -611,8 +633,9 @@ class ElasticNet(LinearModel, RegressorMixin):
         independent term in decision function.
 
     n_iter_ : array-like, shape (n_targets,)
-        number of iterations run by the coordinate descent solver to reach
-        the specified tolerance.
+        For ``solver='cd'``, the number of iterations run by the solver to
+        reach the specified tolerance.
+        For ``solver='saga'``, the number of full pass on all samples.
 
     Examples
     --------
@@ -635,8 +658,11 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     Notes
     -----
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
+    To avoid unnecessary memory duplication with the coordinate decent solver,
+    the X argument of the fit method should be directly passed as a
+    Fortran-contiguous numpy array or sparse csc matrix.
+    For the SAGA solver, it should be directly passed as a C-contiguous numpy
+    array or csr matrix.
 
     See also
     --------
@@ -645,24 +671,33 @@ class ElasticNet(LinearModel, RegressorMixin):
     SGDRegressor: implements elastic net regression with incremental training.
     SGDClassifier: implements logistic regression with elastic net penalty
         (``SGDClassifier(loss="log", penalty="elasticnet")``).
+
+    References
+    ----------
+
+    SAGA -- Defazio, A., Bach F. & Lacoste-Julien S. (2014).
+        SAGA: A Fast Incremental Gradient Method With Support
+        for Non-Strongly Convex Composite Objectives
+        https://arxiv.org/abs/1407.0202
     """
     path = staticmethod(enet_path)
 
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
-                 normalize=False, precompute=False, max_iter=1000,
-                 copy_X=True, tol=1e-4, warm_start=False, positive=False,
-                 random_state=None, selection='cyclic'):
+                 normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
+                 solver='cd', warm_start=False, random_state=None,
+                 precompute=False, positive=False, selection='cyclic'):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.fit_intercept = fit_intercept
         self.normalize = normalize
-        self.precompute = precompute
-        self.max_iter = max_iter
         self.copy_X = copy_X
+        self.max_iter = max_iter
         self.tol = tol
+        self.solver = solver
         self.warm_start = warm_start
-        self.positive = positive
         self.random_state = random_state
+        self.precompute = precompute
+        self.positive = positive
         self.selection = selection
 
     def fit(self, X, y, check_input=True):
@@ -696,28 +731,70 @@ class ElasticNet(LinearModel, RegressorMixin):
                           "well. You are advised to use the LinearRegression "
                           "estimator", stacklevel=2)
 
+        if (not isinstance(self.l1_ratio, numbers.Number) or
+                self.l1_ratio < 0 or self.l1_ratio > 1):
+                    raise ValueError("l1_ratio must be between 0 and 1;"
+                                     " got (l1_ratio=%r)" % self.l1_ratio)
+
         if isinstance(self.precompute, str):
             raise ValueError('precompute should be one of True, False or'
                              ' array-like. Got %r' % self.precompute)
 
+        all_solvers = ['auto', 'cd', 'saga']
+        if self.solver not in all_solvers:
+            raise ValueError("ElasticNet Regression supports only solvers in"
+                             " {}, got {}.".format(all_solvers, self.solver))
+
+        if self.solver == 'auto':
+            if (isinstance(X, np.ndarray) and X.flags['F_CONTIGUOUS']) or \
+             (sparse.issparse(X) and sparse.isspmatrix_csc(X)):
+                solver = 'cd'
+            else:
+                solver = 'saga'
+        else:
+            solver = self.solver
+
+        if self.positive and solver == 'saga':
+            raise ValueError("ElasticNet supports positive contraints for "
+                             "coefficients only for solver 'cd', "
+                             "got solver={}, positive={}"
+                             .format(solver, self.positive))
+
         # Remember if X is copied
         X_copied = False
-        # We expect X and y to be float64 or float32 Fortran ordered arrays
-        # when bypassing checks
+        # For 'cd', we expect X and y to be float64 or float32 Fortran ordered
+        # arrays when bypassing checks
+        # For 'saga' we expect float64 C ordered arrays
         if check_input:
             X_copied = self.copy_X and self.fit_intercept
-            X, y = check_X_y(X, y, accept_sparse='csc',
-                             order='F', dtype=[np.float64, np.float32],
-                             copy=X_copied, multi_output=True, y_numeric=True)
-            y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
-                            ensure_2d=False)
+            if solver == 'cd':
+                X, y = check_X_y(X, y, accept_sparse='csc',
+                                 order='F', dtype=[np.float64, np.float32],
+                                 copy=X_copied, multi_output=True,
+                                 y_numeric=True)
+                y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
+                                ensure_2d=False)
+            else:
+                X, y = check_X_y(X, y, accept_sparse='csr',
+                                 order='C', dtype=np.float64,
+                                 copy=X_copied, multi_output=True,
+                                 y_numeric=True)
+                # For 2D target, we need contiguous columns as they are
+                # to be regressed independently on X
+                y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
+                                ensure_2d=False)
 
         # Ensure copying happens only once, don't do it again if done above
         should_copy = self.copy_X and not X_copied
+        if solver == 'cd':
+            precompute_ = self.precompute
+        else:
+            precompute_ = False
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
-            _pre_fit(X, y, None, self.precompute, self.normalize,
+            _pre_fit(X, y, None, precompute_, self.normalize,
                      self.fit_intercept, copy=should_copy,
                      check_input=check_input)
+
         if y.ndim == 1:
             y = y[:, np.newaxis]
         if Xy is not None and Xy.ndim == 1:
@@ -729,46 +806,74 @@ class ElasticNet(LinearModel, RegressorMixin):
         if self.selection not in ['cyclic', 'random']:
             raise ValueError("selection should be either random or cyclic.")
 
+        if solver == 'saga':
+            max_squared_sum = row_norms(X, squared=True).max()
+        else:
+            max_squared_sum = None
+
         if not self.warm_start or not hasattr(self, "coef_"):
             coef_ = np.zeros((n_targets, n_features), dtype=X.dtype,
-                             order='F')
+                             order='C')
         else:
             coef_ = self.coef_
             if coef_.ndim == 1:
                 coef_ = coef_[np.newaxis, :]
 
-        dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
+        if solver == 'cd':
+            dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
+        else:
+            dual_gaps_ = None
         self.n_iter_ = []
 
         for k in range(n_targets):
-            if Xy is not None:
-                this_Xy = Xy[:, k]
+            if solver == 'cd':
+                if Xy is not None:
+                    this_Xy = Xy[:, k]
+                else:
+                    this_Xy = None
+                _, this_coef, this_dual_gap, this_iter = \
+                    self.path(X, y[:, k],
+                              l1_ratio=self.l1_ratio, eps=None,
+                              n_alphas=None, alphas=[self.alpha],
+                              precompute=precompute, Xy=this_Xy,
+                              fit_intercept=False, normalize=False,
+                              copy_X=True, verbose=False, tol=self.tol,
+                              positive=self.positive,
+                              X_offset=X_offset, X_scale=X_scale,
+                              return_n_iter=True, coef_init=coef_[k],
+                              max_iter=self.max_iter,
+                              random_state=self.random_state,
+                              selection=self.selection,
+                              check_input=False)
+                dual_gaps_[k] = this_dual_gap[0]
+                coef_[k] = this_coef[:, 0]
+                self.n_iter_.append(this_iter[0])
             else:
-                this_Xy = None
-            _, this_coef, this_dual_gap, this_iter = \
-                self.path(X, y[:, k],
-                          l1_ratio=self.l1_ratio, eps=None,
-                          n_alphas=None, alphas=[self.alpha],
-                          precompute=precompute, Xy=this_Xy,
-                          fit_intercept=False, normalize=False, copy_X=True,
-                          verbose=False, tol=self.tol, positive=self.positive,
-                          X_offset=X_offset, X_scale=X_scale,
-                          return_n_iter=True, coef_init=coef_[k],
-                          max_iter=self.max_iter,
-                          random_state=self.random_state,
-                          selection=self.selection,
-                          check_input=False)
-            coef_[k] = this_coef[:, 0]
-            dual_gaps_[k] = this_dual_gap[0]
-            self.n_iter_.append(this_iter[0])
+                this_coef, this_iter, warm_start_sag = sag_solver(
+                    X, y[:, k], sample_weight=None, loss='squared',
+                    alpha=n_samples*self.alpha*(1 - self.l1_ratio),
+                    beta=n_samples*self.alpha*self.l1_ratio,
+                    max_iter=self.max_iter, tol=self.tol, verbose=0,
+                    random_state=self.random_state, check_input=False,
+                    max_squared_sum=max_squared_sum,
+                    warm_start_mem={'coef': np.expand_dims(coef_[k], axis=1)},
+                    is_saga=True)
+                coef_[k] = this_coef
+                self.n_iter_.append(this_iter)
 
         if n_targets == 1:
             self.n_iter_ = self.n_iter_[0]
             self.coef_ = coef_[0]
-            self.dual_gap_ = dual_gaps_[0]
+            if solver == 'cd':
+                self.dual_gap_ = dual_gaps_[0]
+            else:
+                self.dual_gap_ = None
         else:
             self.coef_ = coef_
-            self.dual_gap_ = dual_gaps_
+            if solver == 'cd':
+                self.dual_gap_ = dual_gaps_
+            else:
+                self.dual_gap_ = None
 
         self._set_intercept(X_offset, y_offset, X_scale)
 
