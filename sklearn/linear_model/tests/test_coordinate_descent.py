@@ -90,7 +90,7 @@ def test_enet_toy():
 
     for solver in ['cd', 'saga']:
         # this should be the same as lasso
-        clf = ElasticNet(alpha=1e-8, l1_ratio=1.0, solver=solver, tol=1e-7)
+        clf = ElasticNet(alpha=1e-8, l1_ratio=1.0, solver=solver, tol=1e-8)
         clf.fit(X, Y)
         pred = clf.predict(T)
         assert_array_almost_equal(clf.coef_, [1])
@@ -99,7 +99,7 @@ def test_enet_toy():
             assert_almost_equal(clf.dual_gap_, 0)
 
         clf = ElasticNet(alpha=0.5, l1_ratio=0.3, max_iter=100,
-                         precompute=False, solver=solver, tol=1e-5)
+                         precompute=False, solver=solver, tol=1e-6)
         clf.fit(X, Y)
         pred = clf.predict(T)
         assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
@@ -455,7 +455,7 @@ def test_enet_multitarget():
                                      estimator.dual_gap_)
 
         for k in range(n_targets):
-            estimator.fit(X, y[ :, k])
+            estimator.fit(X, y[:, k])
             assert_array_almost_equal(coef[k, :], estimator.coef_)
             assert_array_almost_equal(intercept[k], estimator.intercept_)
             if solver == 'cd':
