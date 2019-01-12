@@ -14,9 +14,8 @@ from sklearn.datasets import fetch_openml
 
 def get_data(trunc_ncat):
     # the data is located here: https://www.openml.org/d/4135
-    data = fetch_openml(data_id=4135)
-    X = pd.DataFrame(data.data)
-    y = data.target
+    X, y = fetch_openml(data_id=4135, return_X_y=True)
+    X = pd.DataFrame(X)
 
     Xdicts = []
     for trunc in trunc_ncat:
@@ -37,7 +36,8 @@ def get_data(trunc_ncat):
 
 
 # Training dataset
-trunc_factor = [4, 6, 8, 10, 12, 14, 16, 0]
+# trunc_factor = [4, 6, 8, 10, 12, 14, 16, 0]
+trunc_factor = [4, 16, 0]
 data = get_data(trunc_factor)
 
 for bleh in range(1):
@@ -52,8 +52,7 @@ for bleh in range(1):
                 not Xydict['ohe'] and not Xydict['trunc']):
             continue
 
-        X = Xydict['X']
-        y = Xydict['y']
+        X, y = Xydict['X'], Xydict['y']
         tech = 'One-hot' if Xydict['ohe'] else 'NOCATS'
         trunc = ('truncated({})'.format(Xydict['trunc']) if Xydict['trunc'] > 0
                  else 'full')
@@ -74,11 +73,13 @@ for bleh in range(1):
                 "clf.fit(X[train], y[train])".format(cat),
                 'from __main__ import clf, X, y, train', number=1))
 
+            """
             # Check that all leaf nodes are pure
             for est in clf.estimators_:
                 leaves = est.tree_.children_left < 0
                 print(np.max(est.tree_.impurity[leaves]))
                 #assert(np.all(est.tree_.impurity[leaves] == 0))
+            """
 
             # Test
             probs = []
