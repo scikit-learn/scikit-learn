@@ -4,8 +4,6 @@ import numpy as np
 import scipy.sparse as sp
 from itertools import product
 
-from sklearn.externals.six.moves import xrange
-from sklearn.externals.six import iteritems
 
 from scipy.sparse import issparse
 from scipy.sparse import csc_matrix
@@ -128,7 +126,7 @@ EXAMPLES = {
         # sequence of sequences that weren't supported even before deprecation
         np.array([np.array([]), np.array([1, 2, 3])], dtype=object),
         [np.array([]), np.array([1, 2, 3])],
-        [set([1, 2, 3]), set([1, 2])],
+        [{1, 2, 3}, {1, 2}],
         [frozenset([1, 2, 3]), frozenset([1, 2])],
 
         # and also confusable as sequences of sequences
@@ -143,7 +141,7 @@ EXAMPLES = {
 }
 
 NON_ARRAY_LIKE_EXAMPLES = [
-    set([1, 2, 3]),
+    {1, 2, 3},
     {0: 'a', 1: 'b'},
     {0: [5], 1: [5]},
     'abc',
@@ -164,7 +162,7 @@ def test_unique_labels():
     assert_raises(ValueError, unique_labels)
 
     # Multiclass problem
-    assert_array_equal(unique_labels(xrange(10)), np.arange(10))
+    assert_array_equal(unique_labels(range(10)), np.arange(10))
     assert_array_equal(unique_labels(np.arange(10)), np.arange(10))
     assert_array_equal(unique_labels([4, 0, 2]), np.array([0, 2, 4]))
 
@@ -179,7 +177,7 @@ def test_unique_labels():
                        np.arange(3))
 
     # Several arrays passed
-    assert_array_equal(unique_labels([4, 0, 2], xrange(5)),
+    assert_array_equal(unique_labels([4, 0, 2], range(5)),
                        np.arange(5))
     assert_array_equal(unique_labels((0, 1, 2), (0,), (2, 1)),
                        np.arange(3))
@@ -226,7 +224,7 @@ def test_unique_labels_mixed_types():
 
 
 def test_is_multilabel():
-    for group, group_examples in iteritems(EXAMPLES):
+    for group, group_examples in EXAMPLES.items():
         if group in ['multilabel-indicator']:
             dense_exp = True
         else:
@@ -279,7 +277,7 @@ def test_check_classification_targets():
 
 # @ignore_warnings
 def test_type_of_target():
-    for group, group_examples in iteritems(EXAMPLES):
+    for group, group_examples in EXAMPLES.items():
         for example in group_examples:
             assert_equal(type_of_target(example), group,
                          msg=('type_of_target(%r) should be %r, got %r'

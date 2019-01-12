@@ -11,12 +11,12 @@ This module defines export functions for decision trees.
 #          Li Li <aiki.nogard@gmail.com>
 # License: BSD 3 clause
 import warnings
+from io import StringIO
 
 from numbers import Integral
 
 import numpy as np
 
-from ..externals import six
 from ..utils.validation import check_is_fitted
 
 from . import _criterion
@@ -281,7 +281,7 @@ class _BaseTreeExporter(object):
         if self.impurity:
             if isinstance(criterion, _criterion.FriedmanMSE):
                 criterion = "friedman_mse"
-            elif not isinstance(criterion, six.string_types):
+            elif not isinstance(criterion, str):
                 criterion = "impurity"
             if labels:
                 node_string += '%s = ' % criterion
@@ -355,7 +355,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
                  node_ids=False, proportion=False, rotate=False, rounded=False,
                  special_characters=False, precision=3):
 
-        super(_DOTTreeExporter, self).__init__(
+        super().__init__(
             max_depth=max_depth, feature_names=feature_names,
             class_names=class_names, label=label, filled=filled,
             impurity=impurity,
@@ -513,7 +513,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
                  proportion=False, rotate=False, rounded=False,
                  precision=3, fontsize=None):
 
-        super(_MPLTreeExporter, self).__init__(
+        super().__init__(
             max_depth=max_depth, feature_names=feature_names,
             class_names=class_names, label=label, filled=filled,
             impurity=impurity, node_ids=node_ids, proportion=proportion,
@@ -755,16 +755,13 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
     own_file = False
     return_string = False
     try:
-        if isinstance(out_file, six.string_types):
-            if six.PY3:
-                out_file = open(out_file, "w", encoding="utf-8")
-            else:
-                out_file = open(out_file, "wb")
+        if isinstance(out_file, str):
+            out_file = open(out_file, "w", encoding="utf-8")
             own_file = True
 
         if out_file is None:
             return_string = True
-            out_file = six.StringIO()
+            out_file = StringIO()
 
         exporter = _DOTTreeExporter(
             out_file=out_file, max_depth=max_depth,
