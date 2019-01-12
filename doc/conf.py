@@ -30,7 +30,7 @@ import sphinx_gallery
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
+    'sphinx.ext.autodoc', 'custom_autosummary',
     'numpydoc',
     'sphinx.ext.linkcode', 'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
@@ -291,3 +291,12 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
                                          u'https://github.com/scikit-learn/'
                                          'scikit-learn/blob/{revision}/'
                                          '{package}/{path}#L{lineno}')
+
+
+# Configure custom autosummary to add a suffix to modules that overlap with
+# a upper case module, i.e. `sklearn.cluster.DBSCAN` and
+# `sklearn.cluster.dbscan`
+custom_autosummary_file_map = {
+    "sklearn.cluster.dbscan": "sklearn.cluster.dbscan_lowercase",
+    "sklearn.cluster.optics": "sklearn.cluster.optics_lowercase"
+}
