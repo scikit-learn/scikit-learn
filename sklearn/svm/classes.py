@@ -608,7 +608,7 @@ class SVC(BaseSVC):
                  verbose=False, max_iter=-1, decision_function_shape='ovr',
                  random_state=None):
 
-        super(SVC, self).__init__(
+        super().__init__(
             kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=C, nu=0., shrinking=shrinking,
             probability=probability, cache_size=cache_size,
@@ -775,7 +775,7 @@ class NuSVC(BaseSVC):
                  cache_size=200, class_weight=None, verbose=False, max_iter=-1,
                  decision_function_shape='ovr', random_state=None):
 
-        super(NuSVC, self).__init__(
+        super().__init__(
             kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=0., nu=nu, shrinking=shrinking,
             probability=probability, cache_size=cache_size,
@@ -903,7 +903,7 @@ class SVR(BaseLibSVM, RegressorMixin):
                  coef0=0.0, tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1):
 
-        super(SVR, self).__init__(
+        super().__init__(
             kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=C, nu=0., epsilon=epsilon, verbose=verbose,
             shrinking=shrinking, probability=False, cache_size=cache_size,
@@ -1030,7 +1030,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
                  gamma='auto_deprecated', coef0=0.0, shrinking=True,
                  tol=1e-3, cache_size=200, verbose=False, max_iter=-1):
 
-        super(NuSVR, self).__init__(
+        super().__init__(
             kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
             tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
             probability=False, cache_size=cache_size, class_weight=None,
@@ -1138,7 +1138,7 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
                  coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1, random_state=None):
 
-        super(OneClassSVM, self).__init__(
+        super().__init__(
             kernel, degree, gamma, coef0, tol, 0., nu, 0.,
             shrinking, False, cache_size, None, verbose, max_iter,
             random_state)
@@ -1174,8 +1174,8 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
             warnings.warn("The random_state parameter is deprecated and will"
                           " be removed in version 0.22.", DeprecationWarning)
 
-        super(OneClassSVM, self).fit(X, np.ones(_num_samples(X)),
-                                     sample_weight=sample_weight, **params)
+        super().fit(X, np.ones(_num_samples(X)),
+                    sample_weight=sample_weight, **params)
         self.offset_ = -self._intercept_
         return self
 
@@ -1227,5 +1227,5 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         y_pred : array, shape (n_samples,)
             Class labels for samples in X.
         """
-        y = super(OneClassSVM, self).predict(X)
+        y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
