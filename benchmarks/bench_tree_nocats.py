@@ -36,68 +36,68 @@ def get_data(trunc_ncat):
 
 
 # Training dataset
-# trunc_factor = [4, 6, 8, 10, 12, 14, 16, 0]
-trunc_factor = [4, 16, 0]
+trunc_factor = [4, 6, 8, 10, 12, 14, 16, 64, 0]
 data = get_data(trunc_factor)
+results = []
+# Loop over classifiers and datasets
+for Xydict, clf_type in product(
+        data, [RandomForestClassifier, ExtraTreesClassifier]):
 
-for bleh in range(1):
-    outfile = sys.stdout
+    # Can't use non-truncated categorical data with RandomForest
+    if (clf_type is RandomForestClassifier and
+            not Xydict['ohe'] and not Xydict['trunc']):
+        continue
 
-    # Loop over classifiers and datasets
-    for Xydict, clf_type in product(
-            data, [RandomForestClassifier, ExtraTreesClassifier]):
+    X, y = Xydict['X'], Xydict['y']
+    tech = 'One-hot' if Xydict['ohe'] else 'NOCATS'
+    trunc = ('truncated({})'.format(Xydict['trunc']) if Xydict['trunc'] > 0
+             else 'full')
+    cat = 'none' if Xydict['ohe'] else 'all'
+    cv = StratifiedKFold(n_splits=5, shuffle=True,
+                         random_state=17).split(X, y)
 
-        # Can't use non-truncated categorical data with RandomForest
-        if (clf_type is RandomForestClassifier and
-                not Xydict['ohe'] and not Xydict['trunc']):
-            continue
+    traintimes = []
+    testtimes = []
+    aucs = []
+    name = '({}, {}, {})'.format(clf_type.__name__, trunc, tech)
 
-        X, y = Xydict['X'], Xydict['y']
-        tech = 'One-hot' if Xydict['ohe'] else 'NOCATS'
-        trunc = ('truncated({})'.format(Xydict['trunc']) if Xydict['trunc'] > 0
-                 else 'full')
-        cat = 'none' if Xydict['ohe'] else 'all'
-        cv = StratifiedKFold(n_splits=5, shuffle=True,
-                             random_state=17).split(X, y)
+    for train, test in cv:
+        # Train
+        clf = clf_type(n_estimators=10, max_features=None,
+                       min_samples_leaf=1, random_state=23,
+                       bootstrap=False, max_depth=None,
+                       categorical=cat)
 
-        traintimes = []
-        testtimes = []
-        for train, test in cv:
-            # Train
-            clf = clf_type(n_estimators=10, max_features=None,
-                           min_samples_leaf=1, random_state=23,
-                           bootstrap=False, max_depth=None,
-                           categorical=cat)
+        traintimes.append(timeit(
+            "clf.fit(X[train], y[train])".format(cat),
+            'from __main__ import clf, X, y, train', number=1))
 
-            traintimes.append(timeit(
-                "clf.fit(X[train], y[train])".format(cat),
-                'from __main__ import clf, X, y, train', number=1))
+        """
+        # Check that all leaf nodes are pure
+        for est in clf.estimators_:
+            leaves = est.tree_.children_left < 0
+            print(np.max(est.tree_.impurity[leaves]))
+            #assert(np.all(est.tree_.impurity[leaves] == 0))
+        """
 
-            """
-            # Check that all leaf nodes are pure
-            for est in clf.estimators_:
-                leaves = est.tree_.children_left < 0
-                print(np.max(est.tree_.impurity[leaves]))
-                #assert(np.all(est.tree_.impurity[leaves] == 0))
-            """
+        # Test
+        probs = []
+        testtimes.append(timeit(
+            'probs.append(clf.predict_proba(X[test]))',
+            'from __main__ import probs, clf, X, test', number=1))
 
-            # Test
-            probs = []
-            testtimes.append(timeit(
-                'probs.append(clf.predict_proba(X[test]))',
-                'from __main__ import probs, clf, X, test', number=1))
+        aucs.append(roc_auc_score(y[test], probs[0][:, 1]))
 
-            print('({}, {}, {}) AUC: {}'.format(
-                clf_type.__name__, trunc, tech,
-                roc_auc_score(y[test], probs[0][:, 1])), file=outfile)
+    traintimes = np.array(traintimes)
+    testtimes = np.array(testtimes)
+    aucs = np.array(aucs)
+    results.append([name, traintimes.mean(), traintimes.std(),
+                    testtimes.mean(), testtimes.std(),
+                    aucs.mean(), aucs.std()])
 
-        traintimes = np.array(traintimes)
-        testtimes = np.array(testtimes)
-        print('({}, {}, {}) min/mean/max train times: {} {} {}'.format(
-            clf_type.__name__, trunc, tech,
-            traintimes.min(), traintimes.mean(), traintimes.max()),
-            file=outfile)
-        print('({}, {}, {}) min/mean/max  test times: {} {} {}'.format(
-            clf_type.__name__, trunc, tech,
-            testtimes.min(), testtimes.mean(), testtimes.max()), file=outfile)
-        print(file=outfile)
+results = pd.DataFrame(results)
+results.columns = ['name', 'train time mean', 'train time std',
+                   'test time mean', 'test time std',
+                   'auc mean', 'auc std']
+results = results.set_index('name')
+print(results)
