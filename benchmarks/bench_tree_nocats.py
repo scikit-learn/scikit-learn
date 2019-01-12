@@ -1,5 +1,3 @@
-import sys
-
 from timeit import timeit
 from itertools import product
 import numpy as np
