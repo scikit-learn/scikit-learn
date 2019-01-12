@@ -7,8 +7,8 @@ import pytest
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.datasets import make_classification, make_regression
 
-from sklearn import GBMClassifier
-from sklearn import GBMRegressor
+from sklearn.gbm import GBMClassifier
+from sklearn.gbm import GBMRegressor
 from sklearn.gbm.binning import BinMapper
 
 
@@ -17,7 +17,7 @@ X_regression, y_regression = make_regression(random_state=0)
 
 
 @pytest.mark.parametrize('GradientBoosting, X, y', [
-    (GBMClassifier, X_classification, y_classification),
+    # (GBMClassifier, X_classification, y_classification),  TODO: unskip
     (GBMRegressor, X_regression, y_regression)
 ])
 def test_init_parameters_validation(GradientBoosting, X, y):
@@ -71,12 +71,6 @@ def test_init_parameters_validation(GradientBoosting, X, y):
             f"max_bins={max_bins} should be no smaller than 2 and no larger",
             GradientBoosting(max_bins=max_bins).fit, X, y
         )
-
-    assert_raises_regex(
-        ValueError,
-        f"max_bins is set to 4 but the data is pre-binned with 256 bins",
-        GradientBoosting(max_bins=4).fit, X.astype(np.uint8), y
-    )
 
     assert_raises_regex(
         ValueError,
@@ -143,9 +137,6 @@ def test_early_stopping_regression(scoring, validation_split,
         assert gb.n_iter_ == max_iter
 
 
-@pytest.mark.skipif(
-    int(os.environ.get("NUMBA_DISABLE_JIT", 0)) == 1,
-    reason="Travis times out without numba")
 @pytest.mark.parametrize('data', (
     make_classification(random_state=0),
     make_classification(n_classes=3, n_clusters_per_class=1, random_state=0)
@@ -157,6 +148,7 @@ def test_early_stopping_regression(scoring, validation_split,
     (None, None, 5, 1e-1),  # use loss on training data
     (None, None, None, None),  # no early stopping
 ])
+@pytest.mark.skip('classification not supported yet')
 def test_early_stopping_classification(data, scoring, validation_split,
                                        n_iter_no_change, tol):
 
@@ -179,6 +171,7 @@ def test_early_stopping_classification(data, scoring, validation_split,
         assert gb.n_iter_ == max_iter
 
 
+@pytest.mark.skip('classification not supported yet')
 def test_early_stopping_loss():
     # Make sure that when scoring is None, the early stopping is done w.r.t to
     # the loss. Using scoring='neg_log_loss' and scoring=None should be
@@ -275,7 +268,9 @@ def custom_check_estimator(Estimator):
     reason="Potentially long")
 @pytest.mark.parametrize('Estimator', (
     GBMRegressor(),
-    GBMClassifier(n_iter_no_change=None, min_samples_leaf=5),))
+    # TODO: unskip
+    # GBMClassifier(n_iter_no_change=None, min_samples_leaf=5),
+    ))
 def test_estimator_checks(Estimator):
     # Run the check_estimator() test suite on GBRegressor and GBClassifier.
 
@@ -288,31 +283,3 @@ def test_estimator_checks(Estimator):
     #   dataset, the root is never split with min_samples_leaf=20 and only the
     #   majority class is predicted.
     custom_check_estimator(Estimator)
-
-
-def test_pre_binned_data():
-    # Make sure that:
-    # - training on numerical data and predicting on numerical data is the
-    #   same as training on binned data and predicting on binned data
-    # - training on numerical data and predicting on numerical data is the
-    #   same as training on numerical data and predicting on binned data
-    # - training on binned data and predicting on numerical data is not
-    #   possible.
-
-    X, y = make_regression(random_state=0)
-    gbdt = GBMRegressor(scoring=None, random_state=0)
-    mapper = BinMapper(random_state=0)
-    X_binned = mapper.fit_transform(X)
-
-    fit_num_pred_num = gbdt.fit(X, y).predict(X)
-    fit_binned_pred_binned = gbdt.fit(X_binned, y).predict(X_binned)
-    fit_num_pred_binned = gbdt.fit(X, y).predict(X_binned)
-
-    assert_allclose(fit_num_pred_num, fit_binned_pred_binned)
-    assert_allclose(fit_num_pred_num, fit_num_pred_binned)
-
-    assert_raises_regex(
-        ValueError,
-        'This estimator was fitted with pre-binned data ',
-        gbdt.fit(X_binned, y).predict, X
-    )

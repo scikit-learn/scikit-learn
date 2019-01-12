@@ -12,6 +12,8 @@
 """
 cimport cython
 
+from libc.stdlib cimport malloc, free
+
 import numpy as np
 cimport numpy as np
 
@@ -281,7 +283,7 @@ def find_node_split(SplittingContext context, unsigned int [:]
         unsigned int [:] ends
         unsigned int n_threads
         split_info_struct split_info
-        list split_infos
+        split_info_struct * split_infos
 
     ctx = context  # shorter name to avoid various line breaks
     n_samples = sample_indices.shape[0]
@@ -311,13 +313,14 @@ def find_node_split(SplittingContext context, unsigned int [:]
         # ctx.sum_hessians = ctx.ordered_hessians[:n_samples].sum()
         ctx.sum_hessians = np.sum(ctx.ordered_hessians[:n_samples])
 
-    split_infos = []
+    # TODO: this needs to be freed at some point
+    split_infos = <split_info_struct *> malloc(context.n_features * sizeof(split_info_struct))
     for feature_idx in range(context.n_features):
         split_info = _find_histogram_split(
             context, feature_idx, sample_indices, histograms[feature_idx])
-        split_infos.append(split_info)
+        split_infos[feature_idx] = split_info
 
-    split_info = _find_best_feature_to_split_helper(split_infos)
+    split_info = _find_best_feature_to_split_helper(context, split_infos)
 
     return SplitInfo(
         split_info.gain,
@@ -378,7 +381,7 @@ def find_node_split_subtraction(
         unsigned int feature_idx
         unsigned int n_samples
         split_info_struct split_info
-        list split_infos
+        split_info_struct * split_infos
         unsigned int i
 
     n_samples = sample_indices.shape[0]
@@ -402,15 +405,17 @@ def find_node_split_subtraction(
         for i in range(context.max_bins):
             context.sum_hessians += parent_histograms[0, i].sum_hessians - sibling_histograms[0, i].sum_hessians
 
-    split_infos = []
+    # TODO: this needs to be freed at some point
+    split_infos = <split_info_struct *> malloc(context.n_features * sizeof(split_info_struct))
     for feature_idx in range(context.n_features):
         split_info = _find_histogram_split_subtraction(
             context, feature_idx, parent_histograms[feature_idx],
             sibling_histograms[feature_idx], histograms[feature_idx],
             n_samples)
-        split_infos.append(split_info)
+        split_infos[feature_idx] = split_info
 
-    split_info = _find_best_feature_to_split_helper(split_infos)
+    split_info = _find_best_feature_to_split_helper(context, split_infos)
+
     return SplitInfo(
         split_info.gain,
         split_info.feature_idx,
@@ -424,16 +429,19 @@ def find_node_split_subtraction(
     )
 
 
-cdef split_info_struct _find_best_feature_to_split_helper(list split_infos):
+cdef split_info_struct _find_best_feature_to_split_helper(SplittingContext
+context, split_info_struct * split_infos) nogil:
     cdef:
         float gain
         float best_gain
         split_info_struct split_info
         split_info_struct best_split_info
-        unsigned int i
+        unsigned int feature_idx
 
     best_gain = -1.
-    for i, split_info in enumerate(split_infos):
+    # for i, split_info in enumerate(split_infos):
+    for feature_idx in range(context.n_features):
+        split_info = split_infos[feature_idx]
         gain = split_info.gain
         if best_gain == -1 or gain > best_gain:
             best_gain = gain

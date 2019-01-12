@@ -4,7 +4,7 @@ from sklearn.datasets import make_classification, make_regression
 import numpy as np
 import pytest
 
-from sklearn import GBMRegressor, GBMClassifier
+from sklearn.gbm import GBMRegressor, GBMClassifier
 from sklearn.gbm.binning import BinMapper
 from sklearn.gbm.utils import get_lightgbm_estimator
 
@@ -83,6 +83,7 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
     (255, 4096),
     (1000, 8),
 ])
+@pytest.mark.skip('classification not supported yet')
 def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
                                          max_leaf_nodes):
     # Same as test_same_predictions_regression but for classification
@@ -142,6 +143,7 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
     (255, 4096),
     (10000, 8),
 ])
+@pytest.mark.skip('classification not supported yet')
 def test_same_predictions_multiclass_classification(
         seed, min_samples_leaf, n_samples, max_leaf_nodes):
     # Same as test_same_predictions_regression but for classification

@@ -5,7 +5,7 @@ from numpy.testing import assert_allclose
 from numpy.testing import assert_array_equal
 
 from sklearn.gbm.histogram import _build_histogram_naive
-from sklearn.nsemble.gbm.histogram import _build_histogram
+from sklearn.gbm.histogram import _build_histogram
 from sklearn.gbm.histogram import _build_histogram_no_hessian
 from sklearn.gbm.histogram import _build_histogram_root_no_hessian
 from sklearn.gbm.histogram import _build_histogram_root

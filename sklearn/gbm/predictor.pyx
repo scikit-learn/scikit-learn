@@ -82,7 +82,7 @@ class TreePredictor:
 
 cdef float _predict_one_from_numeric_data(
     node_struct [:] nodes,
-    NPY_X_DTYPE [:] numeric_data) nogil:
+    const NPY_X_DTYPE [:] numeric_data) nogil:
 
     cdef:
         node_struct node = nodes[0]
@@ -98,7 +98,7 @@ cdef float _predict_one_from_numeric_data(
 
 cdef void _predict_from_numeric_data(
     node_struct [:] nodes,
-    NPY_X_DTYPE [:, :] numeric_data,
+    const NPY_X_DTYPE [:, :] numeric_data,
     float [:] out) nogil:
 
     cdef:
