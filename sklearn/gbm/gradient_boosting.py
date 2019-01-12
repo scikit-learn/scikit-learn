@@ -237,9 +237,7 @@ class BaseGradientBoostingMachine(BaseEstimator, ABC):
                 predictors[-1].append(predictor)
 
                 tic_pred = time()
-
                 _update_raw_predictions(raw_predictions[:, k], grower)
-
                 toc_pred = time()
                 acc_prediction_time += toc_pred - tic_pred
 

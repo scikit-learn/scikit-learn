@@ -1,8 +1,5 @@
 """
 Compare binning fitting and transform time with pygbm.
-
-run with
-export NUMBA_NUM_THREADS=1 && make in && python bench_binning.py
 """
 from time import time
 from collections import defaultdict
