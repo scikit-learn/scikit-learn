@@ -15,6 +15,7 @@
 from __future__ import print_function
 import sys
 import os
+import logging
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -291,3 +292,14 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
                                          u'https://github.com/scikit-learn/'
                                          'scikit-learn/blob/{revision}/'
                                          '{package}/{path}#L{lineno}')
+
+
+# Removes 'any' reference target not found from logging
+def filter_any_references(record):
+    msg = record.getMessage()
+    return ("'any' reference target not found:" not in msg and
+            "more than one target found for 'any' cross-reference" not in msg)
+
+
+post_transform_logger = logging.getLogger("sphinx.transforms.post_transforms")
+post_transform_logger.addFilter(filter_any_references)
