@@ -215,10 +215,10 @@ the following two rules:
   Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
 
-In case you require the use of parallelisation (using ``n_jobs`` > 1) with a 
-custom scoring function, please make sure to define the custom function in a 
-module and import it for usage. Doing this, will ensure that the custom
-scoring function is serializable by other ``joblib`` backends prior to Loki backend. 
+While defining the custom scoring function alongside the calling function 
+should work out of the box with the default joblib backend (loky), while
+importing it from another module will be a more robust approach and work
+independently of the joblib backend.
 
 For example, to use, ``n_jobs`` greater than 1 below, ``rmse`` function is 
 saved in a separate module (``custom_scorer_module.py``) and imported::
