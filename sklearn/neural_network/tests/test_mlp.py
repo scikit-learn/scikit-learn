@@ -433,8 +433,7 @@ def test_predict_proba_binary():
     y = y_digits_binary[:50]
 
     clf = MLPClassifier(hidden_layer_sizes=5, activation='logistic')
-    with ignore_warnings(category=ConvergenceWarning):
-        clf.fit(X, y)
+    clf.fit(X, y)
     y_proba = clf.predict_proba(X)
     y_log_proba = clf.predict_log_proba(X)
 
