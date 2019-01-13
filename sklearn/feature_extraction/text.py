@@ -1310,13 +1310,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 class TfidfVectorizer(CountVectorizer):
     """Convert a collection of raw documents to a matrix of TF-IDF features.
 
-    Equivalent to CountVectorizer followed by TfidfTransformer.
-
-    CountVectorizer : Transforms text into a sparse matrix of n-gram counts
-        using scipy.sparse.csr_matrix.
-
-    TfidfTransformer : Performs the TF-IDF transformation from a provided
-        matrix of counts.
+    Equivalent to ``CountVectorizer`` followed by ``TfidfTransformer``.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
@@ -1490,8 +1484,7 @@ class TfidfVectorizer(CountVectorizer):
 
     See also
     --------
-    CountVectorizer : Transforms text into a sparse matrix of n-gram counts
-        using scipy.sparse.csr_matrix.
+    CountVectorizer : Transforms text into a sparse matrix of n-gram counts.
 
     TfidfTransformer : Performs the TF-IDF transformation from a provided
         matrix of counts.
