@@ -97,7 +97,7 @@ for Xydict, clf_type in product(
 
     results_df = pd.DataFrame(results)
     results_df.columns = ['name', 'train time mean', 'train time std',
-                       'test time mean', 'test time std',
-                       'auc mean', 'auc std']
+                          'test time mean', 'test time std',
+                          'auc mean', 'auc std']
     results_df = results_df.set_index('name')
     print(results_df)
