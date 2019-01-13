@@ -51,30 +51,30 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
-    est_pygbm = GBMRegressor(max_iter=max_iter,
-                                          max_bins=max_bins,
-                                          learning_rate=1,
-                                          n_iter_no_change=None,
-                                          min_samples_leaf=min_samples_leaf,
-                                          max_leaf_nodes=max_leaf_nodes)
-    est_lightgbm = get_lightgbm_estimator(est_pygbm)
+    est_sklearn = GBMRegressor(max_iter=max_iter,
+                               max_bins=max_bins,
+                               learning_rate=1,
+                               n_iter_no_change=None,
+                               min_samples_leaf=min_samples_leaf,
+                               max_leaf_nodes=max_leaf_nodes)
+    est_lightgbm = get_lightgbm_estimator(est_sklearn)
 
     est_lightgbm.fit(X_train, y_train)
-    est_pygbm.fit(X_train, y_train)
+    est_sklearn.fit(X_train, y_train)
 
     # We need X to be treated an numerical data, not pre-binned data.
     X_train, X_test = X_train.astype(np.float32), X_test.astype(np.float32)
 
     pred_lgbm = est_lightgbm.predict(X_train)
-    pred_pygbm = est_pygbm.predict(X_train)
+    pred_sklearn = est_sklearn.predict(X_train)
     # less than 1% of the predictions are different up to the 3rd decimal
-    assert np.mean(abs(pred_lgbm - pred_pygbm) > 1e-3) < .011
+    assert np.mean(abs(pred_lgbm - pred_sklearn) > 1e-3) < .011
 
     if max_leaf_nodes < 10 and n_samples >= 1000:
         pred_lgbm = est_lightgbm.predict(X_test)
-        pred_pygbm = est_pygbm.predict(X_test)
+        pred_sklearn = est_sklearn.predict(X_test)
         # less than 1% of the predictions are different up to the 4th decimal
-        assert np.mean(abs(pred_lgbm - pred_pygbm) > 1e-4) < .01
+        assert np.mean(abs(pred_lgbm - pred_sklearn) > 1e-4) < .01
 
 
 @pytest.mark.parametrize('seed', range(5))

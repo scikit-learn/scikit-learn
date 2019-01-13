@@ -2,10 +2,12 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 import pytest
 from pytest import approx
-from sklearn.utils.testing import assert_raises_regex
 
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.gbm.grower import TreeGrower
 from sklearn.gbm.binning import BinMapper
+from sklearn.gbm.types import X_BINNED_DTYPE
+from sklearn.gbm.types import Y_DTYPE
 
 
 def _make_training_data(n_bins=256, constant_hessian=True):
@@ -14,7 +16,8 @@ def _make_training_data(n_bins=256, constant_hessian=True):
 
     # Generate some test data directly binned so as to test the grower code
     # independently of the binning logic.
-    X_binned = rng.randint(0, n_bins - 1, size=(n_samples, 2), dtype=np.uint8)
+    X_binned = rng.randint(0, n_bins - 1, size=(n_samples, 2),
+                           dtype=X_BINNED_DTYPE)
     X_binned = np.asfortranarray(X_binned)
 
     def true_decision_function(input_features):
@@ -33,13 +36,13 @@ def _make_training_data(n_bins=256, constant_hessian=True):
                 return 1
 
     target = np.array([true_decision_function(x) for x in X_binned],
-                      dtype=np.float32)
+                      dtype=Y_DTYPE)
 
     # Assume a square loss applied to an initial model that always predicts 0
     # (hardcoded for this test):
     all_gradients = target
     if constant_hessian:
-        all_hessians = np.ones(shape=1, dtype=np.float32)
+        all_hessians = np.ones(shape=1, dtype=Y_DTYPE)
     else:
         all_hessians = np.ones_like(all_gradients)
     return X_binned, all_gradients, all_hessians
@@ -206,9 +209,9 @@ def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins,
     mapper = BinMapper(max_bins=n_bins)
     X = mapper.fit_transform(X)
 
-    all_gradients = y.astype(np.float32)
+    all_gradients = y.astype(Y_DTYPE)
     if constant_hessian:
-        all_hessians = np.ones(shape=1, dtype=np.float32)
+        all_hessians = np.ones(shape=1, dtype=Y_DTYPE)
     else:
         all_hessians = np.ones_like(all_gradients)
     grower = TreeGrower(X, all_gradients, all_hessians,
@@ -245,8 +248,8 @@ def test_min_samples_leaf_root(n_samples, min_samples_leaf):
     mapper = BinMapper(max_bins=max_bins)
     X = mapper.fit_transform(X)
 
-    all_gradients = y.astype(np.float32)
-    all_hessians = np.ones(shape=1, dtype=np.float32)
+    all_gradients = y.astype(Y_DTYPE)
+    all_hessians = np.ones(shape=1, dtype=Y_DTYPE)
     grower = TreeGrower(X, all_gradients, all_hessians,
                         max_bins=max_bins, shrinkage=1.,
                         min_samples_leaf=min_samples_leaf,

@@ -22,8 +22,8 @@ from .histogram cimport _build_histogram_no_hessian
 from .histogram cimport _build_histogram_root
 from .histogram cimport _build_histogram_root_no_hessian
 from .histogram cimport _subtract_histograms
-from .types cimport NPY_X_BINNED_DTYPE
-from .types cimport NPY_Y_DTYPE
+from .types cimport X_BINNED_DTYPE_C
+from .types cimport Y_DTYPE_C
 from .types cimport hist_struct
 from .types import HISTOGRAM_DTYPE
 
@@ -132,14 +132,14 @@ cdef class SplittingContext:
         be ignored.
     """
     cdef public:
-        NPY_X_BINNED_DTYPE [:, :] X_binned
+        X_BINNED_DTYPE_C [:, :] X_binned
         unsigned int n_features
         unsigned int max_bins
         unsigned int [:] n_bins_per_feature
-        NPY_Y_DTYPE [:] gradients
-        NPY_Y_DTYPE [:] hessians
-        NPY_Y_DTYPE [:] ordered_gradients
-        NPY_Y_DTYPE [:] ordered_hessians
+        Y_DTYPE_C [:] gradients
+        Y_DTYPE_C [:] hessians
+        Y_DTYPE_C [:] ordered_gradients
+        Y_DTYPE_C [:] ordered_hessians
         float sum_gradients
         float sum_hessians
         unsigned char constant_hessian
@@ -153,9 +153,9 @@ cdef class SplittingContext:
         unsigned int [:] left_indices_buffer
         unsigned int [:] right_indices_buffer
 
-    def __init__(self, NPY_X_BINNED_DTYPE [:, :] X_binned, unsigned int
+    def __init__(self, X_BINNED_DTYPE_C [:, :] X_binned, unsigned int
                  max_bins, np.ndarray[np.uint32_t] n_bins_per_feature,
-                 NPY_Y_DTYPE [:] gradients, NPY_Y_DTYPE [:] hessians, float
+                 Y_DTYPE_C [:] gradients, Y_DTYPE_C [:] hessians, float
                  l2_regularization, float min_hessian_to_split=1e-3,
                  unsigned int min_samples_leaf=20, float
                  min_gain_to_split=0.):
@@ -275,7 +275,7 @@ def split_indices(
 
     cdef:
         int n_samples = sample_indices.shape[0]
-        NPY_X_BINNED_DTYPE [:] X_binned = context.X_binned.T[split_info.feature_idx]
+        X_BINNED_DTYPE_C [:] X_binned = context.X_binned.T[split_info.feature_idx]
         unsigned int [:] left_indices_buffer = context.left_indices_buffer
         unsigned int [:] right_indices_buffer = context.right_indices_buffer
         int n_threads = omp_get_max_threads()
@@ -573,11 +573,11 @@ cdef split_info_struct _find_histogram_split(
 
     cdef:
         unsigned int n_samples = sample_indices.shape[0]
-        NPY_X_BINNED_DTYPE [:] X_binned = context.X_binned.T[feature_idx]
+        X_BINNED_DTYPE_C [:] X_binned = context.X_binned.T[feature_idx]
         unsigned int root_node = X_binned.shape[0] == n_samples
-        NPY_Y_DTYPE [:] ordered_gradients = \
+        Y_DTYPE_C [:] ordered_gradients = \
             context.ordered_gradients[:n_samples]
-        NPY_Y_DTYPE [:] ordered_hessians = context.ordered_hessians[:n_samples]
+        Y_DTYPE_C [:] ordered_hessians = context.ordered_hessians[:n_samples]
 
     if root_node:
         if context.constant_hessian:

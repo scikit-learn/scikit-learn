@@ -19,7 +19,7 @@ from cython.parallel import prange
 from ..utils import check_random_state, check_array
 from ..base import BaseEstimator, TransformerMixin
 from .types import X_DTYPE, X_BINNED_DTYPE
-from .types cimport NPY_X_DTYPE, NPY_X_BINNED_DTYPE
+from .types cimport X_DTYPE_C, X_BINNED_DTYPE_C
 
 
 def _find_binning_thresholds(data, max_bins=256, subsample=int(2e5),
@@ -62,8 +62,8 @@ def _find_binning_thresholds(data, max_bins=256, subsample=int(2e5),
     return binning_thresholds
 
 
-cpdef _map_to_bins(const NPY_X_DTYPE [:, :] data, list binning_thresholds,
-                   NPY_X_BINNED_DTYPE [::1, :] binned):
+cpdef _map_to_bins(const X_DTYPE_C [:, :] data, list binning_thresholds,
+                   X_BINNED_DTYPE_C [::1, :] binned):
     """Bin numerical values to discrete integer-coded levels.
 
     Parameters
@@ -90,9 +90,9 @@ cpdef _map_to_bins(const NPY_X_DTYPE [:, :] data, list binning_thresholds,
                              binned[:, feature_idx])
 
 
-cpdef void _map_num_col_to_bins(const NPY_X_DTYPE [:] data,
-                                const NPY_X_DTYPE [:] binning_thresholds,
-                                NPY_X_BINNED_DTYPE [:] binned) nogil:
+cpdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
+                                const X_DTYPE_C [:] binning_thresholds,
+                                X_BINNED_DTYPE_C [:] binned) nogil:
     """Binary search to the find the bin index for each value in data."""
     cdef:
         int i

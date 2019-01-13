@@ -20,9 +20,9 @@ from .types import HISTOGRAM_DTYPE
 cpdef void _build_histogram_naive(
     unsigned int n_bins,
     unsigned int [:] sample_indices,  # IN
-    NPY_X_BINNED_DTYPE [:] binned_feature,  # IN
-    NPY_Y_DTYPE [:] ordered_gradients,  # IN
-    NPY_Y_DTYPE [:] ordered_hessians,  # IN
+    X_BINNED_DTYPE_C [:] binned_feature,  # IN
+    Y_DTYPE_C [:] ordered_gradients,  # IN
+    Y_DTYPE_C [:] ordered_hessians,  # IN
     hist_struct [:] out  # OUT
     ) nogil:
     """Build histogram in a naive way, without optimizing for cache hit."""
@@ -59,9 +59,9 @@ cpdef void _subtract_histograms(
 cpdef void _build_histogram(
     unsigned int n_bins,
     unsigned int [:] sample_indices,  # IN
-    NPY_X_BINNED_DTYPE [:] binned_feature,  # IN
-    NPY_Y_DTYPE [:] ordered_gradients,  # IN
-    NPY_Y_DTYPE [:] ordered_hessians,  # IN
+    X_BINNED_DTYPE_C [:] binned_feature,  # IN
+    Y_DTYPE_C [:] ordered_gradients,  # IN
+    Y_DTYPE_C [:] ordered_hessians,  # IN
     hist_struct [:] out  # OUT
     ) nogil:
     """Return histogram for a given feature."""
@@ -107,8 +107,8 @@ cpdef void _build_histogram(
 cpdef void _build_histogram_no_hessian(
     unsigned int n_bins,
     unsigned int [:] sample_indices,  # IN
-    NPY_X_BINNED_DTYPE [:] binned_feature,  # IN
-    NPY_Y_DTYPE [:] ordered_gradients,  # OUT
+    X_BINNED_DTYPE_C [:] binned_feature,  # IN
+    Y_DTYPE_C [:] ordered_gradients,  # OUT
     hist_struct [:] out  # OUT
     ) nogil:
     """Return histogram for a given feature."""
@@ -147,8 +147,8 @@ cpdef void _build_histogram_no_hessian(
 
 cpdef void _build_histogram_root_no_hessian(
     unsigned int n_bins,
-    NPY_X_BINNED_DTYPE [:] binned_feature,  # IN
-    NPY_Y_DTYPE [:] all_gradients,  # IN
+    X_BINNED_DTYPE_C [:] binned_feature,  # IN
+    Y_DTYPE_C [:] all_gradients,  # IN
     hist_struct [:] out  # OUT
     ) nogil:
     """Special case for the root node
@@ -194,9 +194,9 @@ cpdef void _build_histogram_root_no_hessian(
 
 cpdef void _build_histogram_root(
     unsigned int n_bins,
-    NPY_X_BINNED_DTYPE [:] binned_feature,  # IN
-    NPY_Y_DTYPE [:] all_gradients,  # IN
-    NPY_Y_DTYPE [:] all_hessians,  # IN
+    X_BINNED_DTYPE_C [:] binned_feature,  # IN
+    Y_DTYPE_C [:] all_gradients,  # IN
+    Y_DTYPE_C [:] all_hessians,  # IN
     hist_struct [:] out  # OUT
     ) nogil:
     """Special case for the root node

@@ -2,8 +2,8 @@ import numpy as np
 cimport numpy as np
 
 from .types import HISTOGRAM_DTYPE
-from .types cimport NPY_X_BINNED_DTYPE
-from .types cimport NPY_Y_DTYPE
+from .types cimport X_BINNED_DTYPE_C
+from .types cimport Y_DTYPE_C
 from .types cimport hist_struct
 
 # See histogram.pyx for docstrings and details
@@ -17,27 +17,27 @@ cpdef void _subtract_histograms(
 cpdef void _build_histogram(
     unsigned int n_bins,
     unsigned int [:] sample_indices,
-    NPY_X_BINNED_DTYPE [:] binned_feature,
-    NPY_Y_DTYPE [:] ordered_gradients,
-    NPY_Y_DTYPE [:] ordered_hessians,
+    X_BINNED_DTYPE_C [:] binned_feature,
+    Y_DTYPE_C [:] ordered_gradients,
+    Y_DTYPE_C [:] ordered_hessians,
     hist_struct [:] out) nogil
 
 cpdef void _build_histogram_no_hessian(
     unsigned int n_bins,
     unsigned int [:] sample_indices,
-    NPY_X_BINNED_DTYPE [:] binned_feature,
-    NPY_Y_DTYPE [:] ordered_gradients,
+    X_BINNED_DTYPE_C [:] binned_feature,
+    Y_DTYPE_C [:] ordered_gradients,
     hist_struct [:] out) nogil
 
 cpdef void _build_histogram_root_no_hessian(
     unsigned int n_bins,
-    NPY_X_BINNED_DTYPE [:] binned_feature,
-    NPY_Y_DTYPE [:] all_gradients,
+    X_BINNED_DTYPE_C [:] binned_feature,
+    Y_DTYPE_C [:] all_gradients,
     hist_struct [:] out) nogil
 
 cpdef void _build_histogram_root(
     unsigned int n_bins,
-    NPY_X_BINNED_DTYPE [:] binned_feature,
-    NPY_Y_DTYPE [:] all_gradients,
-    NPY_Y_DTYPE [:] all_hessians,
+    X_BINNED_DTYPE_C [:] binned_feature,
+    Y_DTYPE_C [:] all_gradients,
+    Y_DTYPE_C [:] all_hessians,
     hist_struct [:] out) nogil

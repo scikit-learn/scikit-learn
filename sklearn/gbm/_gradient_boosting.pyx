@@ -10,15 +10,15 @@ import numpy as np
 cimport numpy as np
 
 from .types import Y_DTYPE
-from .types cimport NPY_Y_DTYPE
+from .types cimport Y_DTYPE_C
 
 
-def _update_raw_predictions(NPY_Y_DTYPE [:] raw_predictions, grower):
+def _update_raw_predictions(Y_DTYPE_C [:] raw_predictions, grower):
     cdef:
         unsigned int [:] starts
         unsigned int [:] stops
         unsigned int [:] partition
-        NPY_Y_DTYPE [:] values
+        Y_DTYPE_C [:] values
         list leaves
 
     leaves = grower.finalized_leaves
@@ -31,11 +31,11 @@ def _update_raw_predictions(NPY_Y_DTYPE [:] raw_predictions, grower):
                                    values)
 
 cdef void _update_raw_predictions_helper(
-    NPY_Y_DTYPE [:] raw_predictions,
+    Y_DTYPE_C [:] raw_predictions,
     unsigned int [:] starts,
     unsigned int [:] stops,
     unsigned int [:] partition,
-    NPY_Y_DTYPE [:] values) nogil:
+    Y_DTYPE_C [:] values) nogil:
 
     cdef:
         int sample_idx

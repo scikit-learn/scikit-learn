@@ -7,6 +7,7 @@ import pytest
 
 from sklearn.gbm.binning import BinMapper
 from sklearn.gbm.grower import TreeGrower
+from sklearn.gbm.types import Y_DTYPE
 
 
 @pytest.mark.parametrize('max_bins', [200, 256])
@@ -17,11 +18,10 @@ def test_boston_dataset(max_bins):
 
     mapper = BinMapper(max_bins=max_bins, random_state=42)
     X_train_binned = mapper.fit_transform(X_train)
-    X_test_binned = mapper.transform(X_test)
 
     # Init gradients and hessians to that of least squares loss
-    gradients = -y_train.astype(np.float32)
-    hessians = np.ones(1, dtype=np.float32)
+    gradients = -y_train.astype(Y_DTYPE)
+    hessians = np.ones(1, dtype=Y_DTYPE)
 
     min_samples_leaf = 8
     max_leaf_nodes = 31

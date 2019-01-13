@@ -12,7 +12,7 @@ import numpy as np
 cimport numpy as np
 
 from .types import X_DTYPE
-from .types cimport NPY_X_DTYPE
+from .types cimport X_DTYPE_C
 
 
 PREDICTOR_RECORD_DTYPE = np.dtype([
@@ -32,7 +32,7 @@ cdef packed struct node_struct:
     float value
     unsigned int count
     unsigned int feature_idx
-    NPY_X_DTYPE threshold
+    X_DTYPE_C threshold
     unsigned int left
     unsigned int right
     float gain
@@ -82,7 +82,7 @@ class TreePredictor:
 
 cdef float _predict_one_from_numeric_data(
     node_struct [:] nodes,
-    const NPY_X_DTYPE [:] numeric_data) nogil:
+    const X_DTYPE_C [:] numeric_data) nogil:
 
     cdef:
         node_struct node = nodes[0]
@@ -98,7 +98,7 @@ cdef float _predict_one_from_numeric_data(
 
 cdef void _predict_from_numeric_data(
     node_struct [:] nodes,
-    const NPY_X_DTYPE [:, :] numeric_data,
+    const X_DTYPE_C [:, :] numeric_data,
     float [:] out) nogil:
 
     cdef:
