@@ -29,7 +29,9 @@ def configuration(parent_package="", top_path=None):
 
     config.add_extension("predictor",
                          sources=["predictor.pyx"],
-                         include_dirs=[numpy.get_include()])
+                         include_dirs=[numpy.get_include()],
+                         extra_compile_args=['-fopenmp'],
+                         extra_link_args=['-fopenmp'])
 
     config.add_extension("loss",
                          sources=["loss.pyx"],
@@ -53,4 +55,3 @@ def configuration(parent_package="", top_path=None):
 if __name__ == "__main__":
     from numpy.distutils.core import setup
     setup(**configuration().todict())
-

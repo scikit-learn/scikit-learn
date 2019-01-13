@@ -6,6 +6,8 @@
 """
 This module contains the TreePredictor class which is used for prediction.
 """
+cimport cython
+from cython.parallel import prange
 import numpy as np
 cimport numpy as np
 
@@ -100,7 +102,9 @@ cdef void _predict_from_numeric_data(
     float [:] out) nogil:
 
     cdef:
-        unsigned int i
+        int i
 
+    # TODO: Why does prange fail??
+    # for i in prange(numeric_data.shape[0], schedule='static'):
     for i in range(numeric_data.shape[0]):
         out[i] = _predict_one_from_numeric_data(nodes, numeric_data[i])
