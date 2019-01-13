@@ -34,7 +34,7 @@ def get_data(trunc_ncat):
 
 
 # Training dataset
-trunc_factor = [4, 6, 8, 10, 12, 14, 16, 64, 0]
+trunc_factor = [2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 64, 0]
 data = get_data(trunc_factor)
 results = []
 # Loop over classifiers and datasets
@@ -42,8 +42,10 @@ for Xydict, clf_type in product(
         data, [RandomForestClassifier, ExtraTreesClassifier]):
 
     # Can't use non-truncated categorical data with RandomForest
+    # and it becomes intractable with too many categories
     if (clf_type is RandomForestClassifier and
-            not Xydict['ohe'] and not Xydict['trunc']):
+            not Xydict['ohe'] and 
+            (not Xydict['trunc'] or Xydict['trunc'] > 16)):
         continue
 
     X, y = Xydict['X'], Xydict['y']
@@ -93,9 +95,9 @@ for Xydict, clf_type in product(
                     testtimes.mean(), testtimes.std(),
                     aucs.mean(), aucs.std()])
 
-results = pd.DataFrame(results)
-results.columns = ['name', 'train time mean', 'train time std',
-                   'test time mean', 'test time std',
-                   'auc mean', 'auc std']
-results = results.set_index('name')
-print(results)
+    results_df = pd.DataFrame(results)
+    results_df.columns = ['name', 'train time mean', 'train time std',
+                       'test time mean', 'test time std',
+                       'auc mean', 'auc std']
+    results_df = results_df.set_index('name')
+    print(results_df)
