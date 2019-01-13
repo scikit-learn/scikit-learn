@@ -13,32 +13,36 @@ cimport numpy as np
 
 from .types import X_DTYPE
 from .types cimport X_DTYPE_C
+from .types import Y_DTYPE
+from .types cimport Y_DTYPE_C
+from .types import X_BINNED_DTYPE
+from .types cimport X_BINNED_DTYPE_C
 
 
 PREDICTOR_RECORD_DTYPE = np.dtype([
-    ('value', np.float32),
+    ('value', Y_DTYPE),
     ('count', np.uint32),
     ('feature_idx', np.uint32),
     ('threshold', X_DTYPE),
     ('left', np.uint32),
     ('right', np.uint32),
-    ('gain', np.float32),
+    ('gain', Y_DTYPE),
     ('depth', np.uint32),
     ('is_leaf', np.uint8),
-    ('bin_threshold', np.uint8),
+    ('bin_threshold', X_BINNED_DTYPE),
 ])
 
 cdef packed struct node_struct:
-    float value
+    Y_DTYPE_C value
     unsigned int count
     unsigned int feature_idx
     X_DTYPE_C threshold
     unsigned int left
     unsigned int right
-    float gain
+    Y_DTYPE_C gain
     unsigned int depth
     unsigned char is_leaf
-    unsigned char bin_threshold
+    X_BINNED_DTYPE_C bin_threshold
 
 
 class TreePredictor:
@@ -73,14 +77,12 @@ class TreePredictor:
         y : array, shape (n_samples,)
             The raw predicted values.
         """
-        # TODO: change dtype of out (should be same as Y_DTYPE I think since
-        # the value is grad/hess which are Y_DTYPE)
-        out = np.empty(X.shape[0], dtype=np.float32)
+        out = np.empty(X.shape[0], dtype=Y_DTYPE)
         _predict_from_numeric_data(self.nodes, X, out)
         return out
 
 
-cdef float _predict_one_from_numeric_data(
+cdef Y_DTYPE_C _predict_one_from_numeric_data(
     node_struct [:] nodes,
     const X_DTYPE_C [:] numeric_data) nogil:
 
@@ -99,7 +101,7 @@ cdef float _predict_one_from_numeric_data(
 cdef void _predict_from_numeric_data(
     node_struct [:] nodes,
     const X_DTYPE_C [:, :] numeric_data,
-    float [:] out) nogil:
+    Y_DTYPE_C [:] out) nogil:
 
     cdef:
         int i

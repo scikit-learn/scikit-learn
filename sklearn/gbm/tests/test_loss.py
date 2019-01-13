@@ -1,11 +1,13 @@
 import numpy as np
 from numpy.testing import assert_almost_equal
+import scipy
 from scipy.optimize import newton
 from scipy.special import logsumexp
 from sklearn.utils import assert_all_finite
 import pytest
 
 from sklearn.gbm.loss import _LOSSES
+from sklearn.gbm.types import Y_DTYPE
 
 
 def get_derivatives_helper(loss):
@@ -46,19 +48,22 @@ def get_derivatives_helper(loss):
     ('least_squares', -2., 42),
     ('least_squares', 117., 1.05),
     ('least_squares', 0., 0.),
-    ('binary_crossentropy', 0.3, 0),
-    ('binary_crossentropy', -12, 1),
-    ('binary_crossentropy', 30, 1),
+    # ('binary_crossentropy', 0.3, 0),  # TODO: unskip this
+    # ('binary_crossentropy', -12, 1),
+    # ('binary_crossentropy', 30, 1),
 ])
-@pytest.mark.skip('newton uses doubles but floats are expected')
+@pytest.mark.skipif(scipy.__version__.split('.')[:2] == ['1', '2'],
+                    reason='bug in scipy 1.2.0, see scipy issue #9608')
+@pytest.mark.skipif(Y_DTYPE != np.float64,
+                    reason='Newton internally uses float64 != Y_DTYPE')
 def test_derivatives(loss, x0, y_true):
     # Check that gradients are zero when the loss is minimized on 1D array
     # using the Newton-Raphson and the first and second order derivatives
     # computed by the Loss instance.
 
     loss = _LOSSES[loss]()
-    y_true = np.array([y_true], dtype=np.float32)
-    x0 = np.array([x0], dtype=np.float32).reshape(1, 1)
+    y_true = np.array([y_true], dtype=Y_DTYPE)
+    x0 = np.array([x0], dtype=Y_DTYPE).reshape(1, 1)
     get_gradients, get_hessians = get_derivatives_helper(loss)
 
     def func(x):
@@ -78,10 +83,11 @@ def test_derivatives(loss, x0, y_true):
 
 @pytest.mark.parametrize('loss, n_classes, prediction_dim', [
     ('least_squares', 0, 1),
-    ('binary_crossentropy', 2, 1),
-    ('categorical_crossentropy', 3, 3),
+    # ('binary_crossentropy', 2, 1),
+    # ('categorical_crossentropy', 3, 3),
 ])
-@pytest.mark.skip('Fails because float32 precision is not enough for numeric checks')
+@pytest.mark.skipif(Y_DTYPE != np.float64,
+                    reason='Need 64 bits float precision for numerical checks')
 def test_numerical_gradients(loss, n_classes, prediction_dim):
     # Make sure gradients and hessians computed in the loss are correct, by
     # comparing with their approximations computed with finite central
@@ -91,12 +97,12 @@ def test_numerical_gradients(loss, n_classes, prediction_dim):
     rng = np.random.RandomState(0)
     n_samples = 100
     if loss == 'least_squares':
-        y_true = rng.normal(size=n_samples).astype(np.float32)
+        y_true = rng.normal(size=n_samples).astype(Y_DTYPE)
     else:
-        y_true = rng.randint(0, n_classes, size=n_samples).astype(np.float32)
+        y_true = rng.randint(0, n_classes, size=n_samples).astype(Y_DTYPE)
     raw_predictions = rng.normal(
         size=(n_samples, prediction_dim)
-    ).astype(np.float32)
+    ).astype(Y_DTYPE)
     loss = _LOSSES[loss]()
     get_gradients, get_hessians = get_derivatives_helper(loss)
 

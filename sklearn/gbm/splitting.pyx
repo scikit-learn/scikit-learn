@@ -31,13 +31,13 @@ from .types import HISTOGRAM_DTYPE
 cdef struct split_info_struct:
     # Same as the SplitInfo class, but we need a C struct to use it in nogil
     # mode.
-    float gain
+    Y_DTYPE_C gain
     unsigned int feature_idx
     unsigned int bin_idx
-    float gradient_left
-    float gradient_right
-    float hessian_left
-    float hessian_right
+    Y_DTYPE_C gradient_left
+    Y_DTYPE_C gradient_right
+    Y_DTYPE_C hessian_left
+    Y_DTYPE_C hessian_right
     unsigned int n_samples_left
     unsigned int n_samples_right
 
@@ -48,19 +48,19 @@ cdef class SplitInfo:
 
     Parameters
     ----------
-    gain : float32
+    gain : float
         The gain of the split
     feature_idx : int
         The index of the feature to be split
     bin_idx : int
         The index of the bin on which the split is made
-    gradient_left : float32
+    gradient_left : float
         The sum of the gradients of all the samples in the left child
-    hessian_left : float32
+    hessian_left : float
         The sum of the hessians of all the samples in the left child
-    gradient_right : float32
+    gradient_right : float
         The sum of the gradients of all the samples in the right child
-    hessian_right : float32
+    hessian_right : float
         The sum of the hessians of all the samples in the right child
     n_samples_left : int
         The number of samples in the left child
@@ -68,21 +68,21 @@ cdef class SplitInfo:
         The number of samples in the right child
     """
     cdef public:
-        float gain
+        Y_DTYPE_C gain
         unsigned int feature_idx
         unsigned int bin_idx
-        float gradient_left
-        float gradient_right
-        float hessian_left
-        float hessian_right
+        Y_DTYPE_C gradient_left
+        Y_DTYPE_C gradient_right
+        Y_DTYPE_C hessian_left
+        Y_DTYPE_C hessian_right
         unsigned int n_samples_left
         unsigned int n_samples_right
 
-    def __init__(self, float gain=-1., unsigned int feature_idx=0, unsigned
-                 int bin_idx=0, float gradient_left=0., float hessian_left=0.,
-                 float gradient_right=0., float hessian_right=0.,
-                 unsigned int n_samples_left=0, unsigned int
-                 n_samples_right=0):
+    def __init__(self, Y_DTYPE_C gain=-1., unsigned int feature_idx=0, unsigned
+                 int bin_idx=0, Y_DTYPE_C gradient_left=0., Y_DTYPE_C
+                 hessian_left=0., Y_DTYPE_C gradient_right=0., Y_DTYPE_C
+                 hessian_right=0., unsigned int n_samples_left=0, unsigned
+                 int n_samples_right=0):
         self.gain = gain
         self.feature_idx = feature_idx
         self.bin_idx = bin_idx
@@ -140,14 +140,14 @@ cdef class SplittingContext:
         Y_DTYPE_C [:] hessians
         Y_DTYPE_C [:] ordered_gradients
         Y_DTYPE_C [:] ordered_hessians
-        float sum_gradients
-        float sum_hessians
+        Y_DTYPE_C sum_gradients
+        Y_DTYPE_C sum_hessians
         unsigned char constant_hessian
-        float constant_hessian_value
-        float l2_regularization
-        float min_hessian_to_split
+        Y_DTYPE_C constant_hessian_value
+        Y_DTYPE_C l2_regularization
+        Y_DTYPE_C min_hessian_to_split
         unsigned int min_samples_leaf
-        float min_gain_to_split
+        Y_DTYPE_C min_gain_to_split
 
         unsigned int [:] partition
         unsigned int [:] left_indices_buffer
@@ -155,9 +155,9 @@ cdef class SplittingContext:
 
     def __init__(self, X_BINNED_DTYPE_C [:, :] X_binned, unsigned int
                  max_bins, np.ndarray[np.uint32_t] n_bins_per_feature,
-                 Y_DTYPE_C [:] gradients, Y_DTYPE_C [:] hessians, float
-                 l2_regularization, float min_hessian_to_split=1e-3,
-                 unsigned int min_samples_leaf=20, float
+                 Y_DTYPE_C [:] gradients, Y_DTYPE_C [:] hessians, Y_DTYPE_C
+                 l2_regularization, Y_DTYPE_C min_hessian_to_split=1e-3,
+                 unsigned int min_samples_leaf=20, Y_DTYPE_C
                  min_gain_to_split=0.):
 
         self.X_binned = X_binned
@@ -508,7 +508,7 @@ def find_node_split_subtraction(
 
         if context.constant_hessian:
             context.sum_hessians = \
-                context.constant_hessian_value * float(n_samples)
+                context.constant_hessian_value * n_samples
         else:
             context.sum_hessians = 0.
             for i in range(context.max_bins):
@@ -545,8 +545,8 @@ cdef split_info_struct _find_best_feature_to_split_helper(
     split_info_struct * split_infos  # IN
     ) nogil:
     cdef:
-        float gain
-        float best_gain
+        Y_DTYPE_C gain
+        Y_DTYPE_C best_gain
         split_info_struct split_info
         split_info_struct best_split_info
         unsigned int feature_idx
@@ -636,11 +636,11 @@ cdef split_info_struct _find_best_bin_to_split_helper(
         unsigned int n_samples_left
         unsigned int n_samples_right
         unsigned int n_samples_ = n_samples
-        float hessian_left
-        float hessian_right
-        float gradient_left
-        float gradient_right
-        float gain
+        Y_DTYPE_C hessian_left
+        Y_DTYPE_C hessian_right
+        Y_DTYPE_C gradient_left
+        Y_DTYPE_C gradient_right
+        Y_DTYPE_C gain
         split_info_struct best_split
 
     best_split.gain = -1.
@@ -652,7 +652,7 @@ cdef split_info_struct _find_best_bin_to_split_helper(
         n_samples_right = n_samples_ - n_samples_left
 
         if context.constant_hessian:
-            hessian_left += (<float> histogram[bin_idx].count
+            hessian_left += (histogram[bin_idx].count
                              * context.constant_hessian_value)
         else:
             hessian_left += histogram[bin_idx].sum_hessians
@@ -692,14 +692,14 @@ cdef split_info_struct _find_best_bin_to_split_helper(
     return best_split
 
 
-cdef inline float _split_gain(
-    float gradient_left,
-    float hessian_left,
-    float gradient_right,
-    float hessian_right,
-    float sum_gradients,
-    float sum_hessians,
-    float l2_regularization) nogil:
+cdef inline Y_DTYPE_C _split_gain(
+    Y_DTYPE_C gradient_left,
+    Y_DTYPE_C hessian_left,
+    Y_DTYPE_C gradient_right,
+    Y_DTYPE_C hessian_right,
+    Y_DTYPE_C sum_gradients,
+    Y_DTYPE_C sum_hessians,
+    Y_DTYPE_C l2_regularization) nogil:
     """Loss reduction
 
     Compute the reduction in loss after taking a split, compared to keeping
@@ -710,16 +710,16 @@ cdef inline float _split_gain(
     https://arxiv.org/abs/1603.02754
     """
     cdef:
-        float gain
+        Y_DTYPE_C gain
     gain = negative_loss(gradient_left, hessian_left, l2_regularization)
     gain += negative_loss(gradient_right, hessian_right, l2_regularization)
     gain -= negative_loss(sum_gradients, sum_hessians, l2_regularization)
     return gain
 
-cdef inline float negative_loss(
-    float gradient,
-    float hessian,
-    float l2_regularization) nogil:
+cdef inline Y_DTYPE_C negative_loss(
+    Y_DTYPE_C gradient,
+    Y_DTYPE_C hessian,
+    Y_DTYPE_C l2_regularization) nogil:
     return (gradient * gradient) / (hessian + l2_regularization)
 
 # Only used for tests... not great
