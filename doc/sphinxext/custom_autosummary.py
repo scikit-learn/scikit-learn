@@ -11,6 +11,7 @@ custom_autosummary_file_map = {
 
 import os
 import logging
+import inspect
 from contextlib import suppress
 
 import sphinx
@@ -20,18 +21,12 @@ from jinja2 import FileSystemLoader, TemplateNotFound
 from jinja2.sandbox import SandboxedEnvironment
 
 from sphinx.ext.autosummary import Autosummary
-from sphinx.ext.autosummary import autosummary_toc
-from sphinx.ext.autosummary import autosummary_toc_visit_html
-from sphinx.ext.autosummary import autosummary_noop
-from sphinx.ext.autosummary import autosummary_table
-from sphinx.ext.autosummary import autosummary_table_visit_html
-from sphinx.ext.autosummary import autolink_role
-from sphinx.ext.autosummary import process_autosummary_toc
 from sphinx.ext.autosummary import get_rst_suffix
 from sphinx.ext.autosummary import import_by_name
 from sphinx.ext.autosummary import get_documenter
 from sphinx.ext.autosummary.generate import _underline
 from sphinx.ext.autosummary.generate import find_autosummary_in_files
+from sphinx.locale import __
 from sphinx.util.inspect import safe_getattr
 from sphinx.util.rst import escape as rst_escape
 from sphinx.util.osutil import ensuredir
@@ -40,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 class CustomAutosummary(Autosummary):
-    def get_items(self, names):
+    def custom_get_items(self, names):
         items = super().get_items(names)
         custom_autosummary_file_map = self.config.custom_autosummary_file_map
 
@@ -240,8 +235,8 @@ def process_generate_options_custom(app):
     suffix = get_rst_suffix(app)
     if suffix is None:
         logger.warning(
-            ('autosummary generats .rst files internally. '
-             'But your source_suffix does not contain .rst. Skipped.'))
+            __('autosummary generats .rst files internally. '
+               'But your source_suffix does not contain .rst. Skipped.'))
         return
 
     generate_autosummary_docs_custom(
@@ -255,26 +250,19 @@ def process_generate_options_custom(app):
 
 
 def setup(app):
-    app.setup_extension('sphinx.ext.autodoc')
+    app.setup_extension('sphinx.ext.autosummary')
     app.add_config_value("custom_autosummary_file_map", {}, None)
 
-    app.add_node(
-        autosummary_toc,
-        html=(autosummary_toc_visit_html, autosummary_noop),
-        latex=(autosummary_noop, autosummary_noop),
-        text=(autosummary_noop, autosummary_noop),
-        man=(autosummary_noop, autosummary_noop),
-        texinfo=(autosummary_noop, autosummary_noop))
-    app.add_node(
-        autosummary_table,
-        html=(autosummary_table_visit_html, autosummary_noop),
-        latex=(autosummary_noop, autosummary_noop),
-        text=(autosummary_noop, autosummary_noop),
-        man=(autosummary_noop, autosummary_noop),
-        texinfo=(autosummary_noop, autosummary_noop))
-    app.add_directive("autosummary", CustomAutosummary)
-    app.add_role('autolink', autolink_role)
-    app.connect('doctree-read', process_autosummary_toc)
-    app.connect('builder-inited', process_generate_options_custom)
-    app.add_config_value('autosummary_generate', [], True, [bool])
+    # Override process_generate_options added by numpydoc
+    builder_inited_listeners = app.events.listeners["builder-inited"]
+
+    for listener_id, obj in builder_inited_listeners.items():
+        if (inspect.isfunction(obj) and
+           obj.__name__ == "process_generate_options"):
+            builder_inited_listeners[listener_id] = \
+                process_generate_options_custom
+            break
+
+    # Overwrite the autosummary directive
+    app.add_directive("autosummary", CustomAutosummary, override=True)
     return {'version': sphinx.__display_version__, 'parallel_read_safe': True}
