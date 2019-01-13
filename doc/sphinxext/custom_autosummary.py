@@ -12,7 +12,6 @@ custom_autosummary_file_map = {
 import os
 import logging
 import inspect
-from contextlib import suppress
 
 import sphinx
 from sphinx import package_dir
@@ -20,7 +19,6 @@ from sphinx.jinja2glue import BuiltinTemplateLoader
 from jinja2 import FileSystemLoader, TemplateNotFound
 from jinja2.sandbox import SandboxedEnvironment
 
-from sphinx.ext.autosummary import Autosummary
 from sphinx.ext.autosummary import get_rst_suffix
 from sphinx.ext.autosummary import import_by_name
 from sphinx.ext.autosummary import get_documenter
@@ -32,20 +30,6 @@ from sphinx.util.rst import escape as rst_escape
 from sphinx.util.osutil import ensuredir
 
 logger = logging.getLogger(__name__)
-
-
-class CustomAutosummary(Autosummary):
-    def custom_get_items(self, names):
-        items = super().get_items(names)
-        custom_autosummary_file_map = self.config.custom_autosummary_file_map
-
-        output = []
-        for name, sig, summary, real_name in items:
-            with suppress(KeyError):
-                real_name = custom_autosummary_file_map[real_name]
-            output.append((name, sig, summary, real_name))
-
-        return output
 
 
 def generate_autosummary_docs_custom(sources,
@@ -263,6 +247,4 @@ def setup(app):
                 process_generate_options_custom
             break
 
-    # Overwrite the autosummary directive
-    app.add_directive("autosummary", CustomAutosummary, override=True)
     return {'version': sphinx.__display_version__, 'parallel_read_safe': True}
