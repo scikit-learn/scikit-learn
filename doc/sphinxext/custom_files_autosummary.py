@@ -24,7 +24,6 @@ from sphinx.ext.autosummary import import_by_name
 from sphinx.ext.autosummary import get_documenter
 from sphinx.ext.autosummary.generate import _underline
 from sphinx.ext.autosummary.generate import find_autosummary_in_files
-from sphinx.locale import __
 from sphinx.util.inspect import safe_getattr
 from sphinx.util.rst import escape as rst_escape
 from sphinx.util.osutil import ensuredir
@@ -218,9 +217,9 @@ def process_generate_options_custom_files(app):
 
     suffix = get_rst_suffix(app)
     if suffix is None:
-        logger.warning(
-            __('autosummary generats .rst files internally. '
-               'But your source_suffix does not contain .rst. Skipped.'))
+        logger.warning('autosummary generats .rst files internally. '
+                       'But your source_suffix does not contain .rst. '
+                       'Skipped.')
         return
 
     generate_autosummary_docs_custom_files(
