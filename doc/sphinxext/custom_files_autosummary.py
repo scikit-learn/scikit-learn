@@ -41,6 +41,7 @@ def generate_autosummary_docs_custom_files(sources,
                                            template_dir=None,
                                            imported_members=False,
                                            app=None):
+
     showed_sources = list(sorted(sources))
     if len(showed_sources) > 20:
         showed_sources = showed_sources[:10] + ['...'] + showed_sources[-10:]
@@ -54,12 +55,11 @@ def generate_autosummary_docs_custom_files(sources,
         sources = [os.path.join(base_path, filename) for filename in sources]
 
     # create our own templating environment
-    template_dirs = None  # type: List[str]
-    template_dirs = [
-        os.path.join(package_dir, 'ext', 'autosummary', 'templates')
-    ]
+    template_dirs = None  # type: List[unicode]
+    template_dirs = [os.path.join(package_dir, 'ext',
+                                  'autosummary', 'templates')]
 
-    template_loader = None
+    template_loader = None  # type: BaseLoader
     if builder is not None:
         # allow the user to override the templates
         template_loader = BuiltinTemplateLoader()
@@ -67,7 +67,7 @@ def generate_autosummary_docs_custom_files(sources,
     else:
         if template_dir:
             template_dirs.insert(0, template_dir)
-        template_loader = FileSystemLoader(template_dirs)
+        template_loader = FileSystemLoader(template_dirs)  # type: ignore
     template_env = SandboxedEnvironment(loader=template_loader)
     template_env.filters['underline'] = _underline
 
@@ -111,38 +111,35 @@ def generate_autosummary_docs_custom_files(sources,
         new_files.append(fn)
 
         with open(fn, 'w') as f:
-            doc = get_documenter(app, obj, parent)
+            doc = get_documenter(obj, parent)
 
             if template_name is not None:
                 template = template_env.get_template(template_name)
             else:
                 try:
-                    template = template_env.get_template(
-                        'autosummary/%s.rst' % doc.objtype)
+                    template = template_env.get_template('autosummary/%s.rst'
+                                                         % doc.objtype)
                 except TemplateNotFound:
                     template = template_env.get_template(
                         'autosummary/base.rst')
 
-            def get_members(obj, typ, include_public=[], imported=True):
-                items = []  # type: List[str]
+            def get_members(obj, typ, include_public=[], imported=False):
+                items = []  # type: List[unicode]
                 for name in dir(obj):
                     try:
                         value = safe_getattr(obj, name)
                     except AttributeError:
                         continue
-                    documenter = get_documenter(app, value, obj)
+                    documenter = get_documenter(value, obj)
                     if documenter.objtype == typ:
-                        if imported or getattr(value, '__module__',
-                                               None) == obj.__name__:
-                            # skip imported members if expected
+                        if (imported or getattr(value, '__module__',
+                                                None) == obj.__name__):
                             items.append(name)
-                public = [
-                    x for x in items
-                    if x in include_public or not x.startswith('_')
-                ]
+                public = [x for x in items
+                          if x in include_public or not x.startswith('_')]
                 return public, items
 
-            ns = {}  # type: Dict[str, Any]
+            ns = {}  # type: Dict[unicode, Any]
 
             if doc.objtype == 'module':
                 ns['members'] = dir(obj)
@@ -154,12 +151,11 @@ def generate_autosummary_docs_custom_files(sources,
                     get_members(obj, 'exception', imported=imported_members)
             elif doc.objtype == 'class':
                 ns['members'] = dir(obj)
-                ns['inherited_members'] = \
-                    set(dir(obj)) - set(obj.__dict__.keys())
                 ns['methods'], ns['all_methods'] = \
-                    get_members(obj, 'method', ['__init__'])
+                    get_members(obj, 'method', ['__init__'],
+                                imported=imported_members)
                 ns['attributes'], ns['all_attributes'] = \
-                    get_members(obj, 'attribute')
+                    get_members(obj, 'attribute', imported=imported_members)
 
             parts = name.split('.')
             if doc.objtype in ('method', 'attribute'):
@@ -179,7 +175,7 @@ def generate_autosummary_docs_custom_files(sources,
             ns['underline'] = len(name) * '='
 
             rendered = template.render(**ns)
-            f.write(rendered)
+            f.write(rendered)  # type: ignore
 
     # descend recursively to new files
     if new_files:
