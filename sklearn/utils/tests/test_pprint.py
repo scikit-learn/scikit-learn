@@ -127,7 +127,8 @@ def test_gridsearch():
 
     expected = """
 GridSearchCV(cv=5, error_score='raise-deprecating',
-             estimator=SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+             estimator=SVC(C=1.0, break_ties=False, cache_size=200,
+                           class_weight=None, coef0=0.0,
                            decision_function_shape='ovr', degree=3,
                            gamma='auto_deprecated', kernel='rbf', max_iter=-1,
                            probability=False, random_state=None, shrinking=True,
@@ -266,7 +267,8 @@ CountVectorizer(analyzer='word', binary=False, decode_error='strict',
     gs = GridSearchCV(SVC(), param_grid)
     expected = """
 GridSearchCV(cv='warn', error_score='raise-deprecating',
-             estimator=SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+             estimator=SVC(C=1.0, break_ties=False, cache_size=200,
+                           class_weight=None, coef0=0.0,
                            decision_function_shape='ovr', degree=3,
                            gamma='auto_deprecated', kernel='rbf', max_iter=-1,
                            probability=False, random_state=None, shrinking=True,
@@ -286,7 +288,8 @@ GridSearchCV(cv='warn', error_score='raise-deprecating',
     gs = GridSearchCV(SVC(), param_grid)
     expected = """
 GridSearchCV(cv='warn', error_score='raise-deprecating',
-             estimator=SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+             estimator=SVC(C=1.0, break_ties=False, cache_size=200,
+                           class_weight=None, coef0=0.0,
                            decision_function_shape='ovr', degree=3,
                            gamma='auto_deprecated', kernel='rbf', max_iter=-1,
                            probability=False, random_state=None, shrinking=True,
