@@ -1,14 +1,14 @@
 """
-Use custom_autosummary_file_map sphinx configuration option to map filenames
-to a custom filename:
+Adapted from the sphinx.ext.autosummary
+
+The custom_autosummary_file_map sphinx configuration option is used to map
+filenames to custom filenames:
 
 custom_autosummary_file_map = {
     "sklearn.cluster.dbscan": "sklearn.cluster.dbscan_lowercase",
     "sklearn.cluster.optics": "sklearn.cluster.optics_lowercase"
 }
 """
-
-
 import os
 import logging
 import inspect
