@@ -44,7 +44,7 @@ for Xydict, clf_type in product(
     # Can't use non-truncated categorical data with RandomForest
     # and it becomes intractable with too many categories
     if (clf_type is RandomForestClassifier and
-            not Xydict['ohe'] and 
+            not Xydict['ohe'] and
             (not Xydict['trunc'] or Xydict['trunc'] > 16)):
         continue
 
