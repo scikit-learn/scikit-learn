@@ -10,8 +10,8 @@ import pstats
 import cProfile
 import pygbm
 
-classif = False
-n_classes = 3
+classif = True
+n_classes = 2
 n_samples = int(1e6)
 max_iter = 5
 

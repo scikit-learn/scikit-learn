@@ -17,8 +17,8 @@ def get_derivatives_helper(loss):
     def get_gradients(y_true, raw_predictions):
         # create gradients and hessians array, update inplace, and return
         shape = raw_predictions.shape[0] * raw_predictions.shape[1]
-        gradients = np.empty(shape=shape, dtype=raw_predictions.dtype)
-        hessians = np.empty(shape=shape, dtype=raw_predictions.dtype)
+        gradients = np.empty(shape=shape, dtype=Y_DTYPE)
+        hessians = np.empty(shape=shape, dtype=Y_DTYPE)
         loss.update_gradients_and_hessians(gradients, hessians, y_true,
                                            raw_predictions)
 
@@ -30,8 +30,8 @@ def get_derivatives_helper(loss):
     def get_hessians(y_true, raw_predictions):
         # create gradients and hessians array, update inplace, and return
         shape = raw_predictions.shape[0] * raw_predictions.shape[1]
-        gradients = np.empty(shape=shape, dtype=raw_predictions.dtype)
-        hessians = np.empty(shape=shape, dtype=raw_predictions.dtype)
+        gradients = np.empty(shape=shape, dtype=Y_DTYPE)
+        hessians = np.empty(shape=shape, dtype=Y_DTYPE)
         loss.update_gradients_and_hessians(gradients, hessians, y_true,
                                            raw_predictions)
 
@@ -48,9 +48,10 @@ def get_derivatives_helper(loss):
     ('least_squares', -2., 42),
     ('least_squares', 117., 1.05),
     ('least_squares', 0., 0.),
-    # ('binary_crossentropy', 0.3, 0),  # TODO: unskip this
-    # ('binary_crossentropy', -12, 1),
-    # ('binary_crossentropy', 30, 1),
+    # I don't understand why but y_true == 0 fails :/
+    # ('binary_crossentropy', 0.3, 0),
+    ('binary_crossentropy', -12, 1),
+    ('binary_crossentropy', 30, 1),
 ])
 @pytest.mark.skipif(scipy.__version__.split('.')[:2] == ['1', '2'],
                     reason='bug in scipy 1.2.0, see scipy issue #9608')
@@ -83,7 +84,7 @@ def test_derivatives(loss, x0, y_true):
 
 @pytest.mark.parametrize('loss, n_classes, prediction_dim', [
     ('least_squares', 0, 1),
-    # ('binary_crossentropy', 2, 1),
+    ('binary_crossentropy', 2, 1),
     # ('categorical_crossentropy', 3, 3),
 ])
 @pytest.mark.skipif(Y_DTYPE != np.float64,
@@ -148,7 +149,6 @@ def test_baseline_least_squares():
     assert_almost_equal(baseline_prediction, y_train.mean())
 
 
-@pytest.mark.skip('binary crossentropy not supported yet')
 def test_baseline_binary_crossentropy():
     rng = np.random.RandomState(0)
 

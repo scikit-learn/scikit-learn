@@ -139,7 +139,8 @@ def test_early_stopping_regression(scoring, validation_split,
 
 @pytest.mark.parametrize('data', (
     make_classification(random_state=0),
-    make_classification(n_classes=3, n_clusters_per_class=1, random_state=0)
+    # TODO: unskip this
+    # make_classification(n_classes=3, n_clusters_per_class=1, random_state=0)
 ))
 @pytest.mark.parametrize('scoring, validation_split, n_iter_no_change, tol', [
     ('accuracy', .1, 5, 1e-7),  # use scorer
@@ -148,7 +149,6 @@ def test_early_stopping_regression(scoring, validation_split,
     (None, None, 5, 1e-1),  # use loss on training data
     (None, None, None, None),  # no early stopping
 ])
-@pytest.mark.skip('classification not supported yet')
 def test_early_stopping_classification(data, scoring, validation_split,
                                        n_iter_no_change, tol):
 
@@ -263,9 +263,6 @@ def custom_check_estimator(Estimator):
             warnings.warn(str(exception), SkipTestWarning)
 
 
-@pytest.mark.skipif(
-    int(os.environ.get("NUMBA_DISABLE_JIT", 0)) == 1,
-    reason="Potentially long")
 @pytest.mark.parametrize('Estimator', (
     GBMRegressor(),
     # TODO: unskip

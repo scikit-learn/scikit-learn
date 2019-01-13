@@ -16,6 +16,9 @@ from cython.parallel import prange
 import numpy as np
 cimport numpy as np
 from scipy.special import expit, logsumexp
+from scipy.special.cython_special cimport expit as cexpit
+
+from libc.math cimport fabs, exp
 
 from .types import Y_DTYPE
 from .types cimport Y_DTYPE_C
@@ -169,70 +172,70 @@ cdef void _update_gradients_least_squares(
         gradients[i] = raw_predictions[i] - y_true[i]
 
 
-## class BinaryCrossEntropy(BaseLoss):
-##     """Binary cross-entropy loss, for binary classification.
-## 
-##     For a given sample x_i, the binary cross-entropy loss is defined as the
-##     negative log-likelihood of the model which can be expressed as::
-## 
-##         loss(x_i) = log(1 + exp(raw_pred_i)) - y_true_i * raw_pred_i
-## 
-##     See The Elements of Statistical Learning, by Hastie, Tibshirani, Friedman.
-##     """
-## 
-##     hessian_is_constant = False
-##     inverse_link_function = staticmethod(expit)
-## 
-##     def __call__(self, y_true, raw_predictions, average=True):
-##         # shape (n_samples, 1) --> (n_samples,). reshape(-1) is more likely to
-##         # return a view.
-##         raw_predictions = raw_predictions.reshape(-1)
-##         # logaddexp(0, x) = log(1 + exp(x))
-##         loss = np.logaddexp(0, raw_predictions) - y_true * raw_predictions
-##         return loss.mean() if average else loss
-## 
-##     def get_baseline_prediction(self, y_train, prediction_dim):
-##         proba_positive_class = np.mean(y_train)
-##         eps = np.finfo(y_train.dtype).eps
-##         proba_positive_class = np.clip(proba_positive_class, eps, 1 - eps)
-##         # log(x / 1 - x) is the anti function of sigmoid, or the link function
-##         # of the Binomial model.
-##         return np.log(proba_positive_class / (1 - proba_positive_class))
-## 
-##     def update_gradients_and_hessians(self, gradients, hessians, y_true,
-##                                       raw_predictions):
-##         raw_predictions = raw_predictions.reshape(-1)
-##         return _update_gradients_hessians_binary_crossentropy(
-##             gradients, hessians, y_true, raw_predictions)
-## 
-##     def predict_proba(self, raw_predictions):
-##         # shape (n_samples, 1) --> (n_samples,). reshape(-1) is more likely to
-##         # return a view.
-##         raw_predictions = raw_predictions.reshape(-1)
-##         proba = np.empty((raw_predictions.shape[0], 2), dtype=np.float32)
-##         proba[:, 1] = expit(raw_predictions)
-##         proba[:, 0] = 1 - proba[:, 1]
-##         return proba
-## 
-## 
-## def _update_gradients_hessians_binary_crossentropy(float [:] gradients,
-## float [:] hessians, float_or_double [:] y_true, double [:] raw_predictions):
-##     cdef:
-##         unsigned int n_samples
-##         unsigned int i
-##         unsigned int thread_idx
-##         unsigned int n_threads
-##         unsigned int [:] starts
-##         unsigned int [:] ends
-##     n_samples = raw_predictions.shape[0]
-##     starts, ends, n_threads = get_threads_chunks(total_size=n_samples)
-##     for thread_idx in range(n_threads):
-##         for i in range(starts[thread_idx], ends[thread_idx]):
-##             gradients[i] = <float>expit(raw_predictions[i]) - y_true[i]
-##             gradient_abs = np.abs(gradients[i])
-##             hessians[i] = gradient_abs * (1. - gradient_abs)
-## 
-## 
+class BinaryCrossEntropy(BaseLoss):
+    """Binary cross-entropy loss, for binary classification.
+
+    For a given sample x_i, the binary cross-entropy loss is defined as the
+    negative log-likelihood of the model which can be expressed as::
+
+        loss(x_i) = log(1 + exp(raw_pred_i)) - y_true_i * raw_pred_i
+
+    See The Elements of Statistical Learning, by Hastie, Tibshirani, Friedman.
+    """
+
+    hessian_is_constant = False
+    inverse_link_function = staticmethod(expit)
+
+    def __call__(self, y_true, raw_predictions, average=True):
+        # shape (n_samples, 1) --> (n_samples,). reshape(-1) is more likely to
+        # return a view.
+        raw_predictions = raw_predictions.reshape(-1)
+        # logaddexp(0, x) = log(1 + exp(x))
+        loss = np.logaddexp(0, raw_predictions) - y_true * raw_predictions
+        return loss.mean() if average else loss
+
+    def get_baseline_prediction(self, y_train, prediction_dim):
+        proba_positive_class = np.mean(y_train)
+        eps = np.finfo(y_train.dtype).eps
+        proba_positive_class = np.clip(proba_positive_class, eps, 1 - eps)
+        # log(x / 1 - x) is the anti function of sigmoid, or the link function
+        # of the Binomial model.
+        return np.log(proba_positive_class / (1 - proba_positive_class))
+
+    def update_gradients_and_hessians(self, gradients, hessians, y_true,
+                                      raw_predictions):
+        # shape (n_samples, 1) --> (n_samples,). reshape(-1) is more likely to
+        # return a view.
+        raw_predictions = raw_predictions.reshape(-1)
+        return _update_gradients_hessians_binary_crossentropy(
+            gradients, hessians, y_true, raw_predictions)
+
+    def predict_proba(self, raw_predictions):
+        # shape (n_samples, 1) --> (n_samples,). reshape(-1) is more likely to
+        # return a view.
+        raw_predictions = raw_predictions.reshape(-1)
+        proba = np.empty((raw_predictions.shape[0], 2), dtype=Y_DTYPE)
+        proba[:, 1] = expit(raw_predictions)
+        proba[:, 0] = 1 - proba[:, 1]
+        return proba
+
+cdef void _update_gradients_hessians_binary_crossentropy(
+    Y_DTYPE_C [:] gradients,
+    Y_DTYPE_C [:] hessians,
+    Y_DTYPE_C [:] y_true,
+    Y_DTYPE_C [:] raw_predictions) nogil:
+    cdef:
+        unsigned int n_samples
+        Y_DTYPE_C gradient_abs
+        int i
+
+    n_samples = raw_predictions.shape[0]
+    for i in prange(n_samples, schedule='static'):
+        gradients[i] = cexpit(raw_predictions[i]) - y_true[i]
+        gradient_abs = fabs(gradients[i])
+        hessians[i] = gradient_abs * (1. - gradient_abs)
+
+
 ## class CategoricalCrossEntropy(BaseLoss):
 ##     """Categorical cross-entropy loss, for multiclass classification.
 ## 
@@ -312,4 +315,8 @@ cdef void _update_gradients_least_squares(
 ##                 hessians_at_k[i] = p_k * (1. - p_k)
 
 
-_LOSSES = {'least_squares': LeastSquares}
+_LOSSES = {
+    'least_squares': LeastSquares,
+    'binary_crossentropy': BinaryCrossEntropy
+}
+
