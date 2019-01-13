@@ -12,6 +12,7 @@
 """
 cimport cython
 from cython.parallel import prange
+from openmp cimport omp_get_max_threads
 
 from libc.stdlib cimport malloc, free
 
@@ -199,36 +200,155 @@ cdef class SplittingContext:
         self.left_indices_buffer = np.empty_like(self.partition)
         self.right_indices_buffer = np.empty_like(self.partition)
 
-
 def split_indices(
     SplittingContext context,
     SplitInfo split_info,
     unsigned int [:] sample_indices):
+    """Split samples into left and right arrays.
+
+    The split is performed according to the best possible split (split_info).
+
+    Ultimately, this is nothing but a partition of the sample_indices array
+    with a given pivot, exactly like a quicksort subroutine.
+
+    Parameters
+    ----------
+    context : SplittingContext
+        The splitting context
+    split_info : SplitInfo
+        The SplitInfo of the node to split
+    sample_indices : array of unsigned int
+        The indices of the samples at the node to split. This is a view on
+        context.partition, and it is modified inplace by placing the indices
+        of the left child at the beginning, and the indices of the right child
+        at the end.
+
+    Returns
+    -------
+    left_indices : array of int
+        The indices of the samples in the left child. This is a view on
+        context.partition.
+    right_indices : array of int
+        The indices of the samples in the right child. This is a view on
+        context.partition.
+    right_child_position : int
+        The position of the right child in ``sample_indices``
+    """
+    # This is a multi-threaded implementation inspired by lightgbm.
+    # Here is a quick break down. Let's suppose we want to split a node with
+    # 24 samples named from a to x. context.partition looks like this (the *
+    # are indices in other leaves that we don't care about):
+    # partition = [*************abcdefghijklmnopqrstuvwx****************]
+    #                           ^                       ^
+    #                     node_position     node_position + node.n_samples
+
+    # Ultimately, we want to reorder the samples inside the boundaries of the
+    # leaf (which becomes a node) to now represent the samples in its left and
+    # right child. For example:
+    # partition = [*************abefilmnopqrtuxcdghjksvw*****************]
+    #                           ^              ^
+    #                   left_child_pos     right_child_pos
+    # Note that left_child_pos always takes the value of node_position, and
+    # right_child_pos = left_child_pos + left_child.n_samples. The order of
+    # the samples inside a leaf is irrelevant.
+
+    # 1. samples_indices is a view on this region a..x. We conceptually
+    #    divide it into n_threads regions. Each thread will be responsible for
+    #    its own region. Here is an example with 4 threads:
+    #    samples_indices = [abcdef|ghijkl|mnopqr|stuvwx]
+    # 2. Each thread processes 6 = 24 // 4 entries and maps them into
+    #    left_indices_buffer or right_indices_buffer. For example, we could
+    #    have the following mapping ('.' denotes an undefined entry):
+    #    - left_indices_buffer =  [abef..|il....|mnopqr|tux...]
+    #    - right_indices_buffer = [cd....|ghjk..|......|svw...]
+    # 3. We keep track of the start positions of the regions (the '|') in
+    #    ``offset_in_buffers`` as well as the size of each region. We also keep
+    #    track of the number of samples put into the left/right child by each
+    #    thread. Concretely:
+    #    - left_counts =  [4, 2, 6, 3]
+    #    - right_counts = [2, 4, 0, 3]
+    # 4. Finally, we put left/right_indices_buffer back into the
+    #    samples_indices, without any undefined entries and the partition looks
+    #    as expected
+    #    partition = [*************abefilmnopqrtuxcdghjksvw*****************]
+
+    # Note: We here show left/right_indices_buffer as being the same size as
+    # sample_indices for simplicity, but in reality they are of the same size
+    # as partition.
+
     cdef:
-        unsigned int n_samples = sample_indices.shape[0]
-        unsigned int i = 0
-        unsigned int j = n_samples - 1
-        unsigned char pivot = split_info.bin_idx
-        unsigned int [:] view = sample_indices
-        NPY_X_BINNED_DTYPE [:] binned_feature = context.X_binned.T[split_info.feature_idx]
+        int n_samples = sample_indices.shape[0]
+        NPY_X_BINNED_DTYPE [:] X_binned = context.X_binned.T[split_info.feature_idx]
+        unsigned int [:] left_indices_buffer = context.left_indices_buffer
+        unsigned int [:] right_indices_buffer = context.right_indices_buffer
+        int n_threads = omp_get_max_threads()
+        int [:] sizes = np.full(n_threads, n_samples // n_threads, dtype=np.int32)
+        int [:] offset_in_buffers = np.zeros(n_threads, dtype=np.int32)
+        int [:] left_counts = np.empty(n_threads, dtype=np.int32)
+        int [:] right_counts = np.empty(n_threads, dtype=np.int32)
+        int left_count
+        int right_count
+        int start
+        int stop
+        int i
+        int thread_idx
+        int sample_idx
+        int right_child_position
+        int [:] left_offset = np.zeros(n_threads, dtype=np.int32)
+        int [:] right_offset = np.zeros(n_threads, dtype=np.int32)
 
     with nogil:
-        while i != j:
-            # continue until we find an element that should be on right
-            while binned_feature[view[i]] <= pivot and i < n_samples:
-                i += 1
-            # same, but now an element that should be on the left
-            while binned_feature[view[j]] > pivot and j >= 0:
-                j -= 1
-            if i >= j:  # j can become smaller than j!
-                break
-            else:
-                # swap
-                view[i], view[j] = view[j], view[i]
-                i += 1
-                j -= 1
+        for thread_idx in range(n_samples % n_threads):
+            sizes[thread_idx] += 1
 
-    return sample_indices[:i], sample_indices[i:], i
+        for thread_idx in range(1, n_threads):
+            offset_in_buffers[thread_idx] = offset_in_buffers[thread_idx - 1] + sizes[thread_idx - 1]
+
+        # map indices from samples_indices to left/right_indices_buffer
+        for thread_idx in prange(n_threads):
+            left_count = 0
+            right_count = 0
+
+            start = offset_in_buffers[thread_idx]
+            stop = start + sizes[thread_idx]
+            for i in range(start, stop):
+                sample_idx = sample_indices[i]
+                if X_binned[sample_idx] <= split_info.bin_idx:
+                    left_indices_buffer[start + left_count] = sample_idx
+                    left_count = left_count + 1
+                else:
+                    right_indices_buffer[start + right_count] = sample_idx
+                    right_count = right_count + 1
+
+            left_counts[thread_idx] = left_count
+            right_counts[thread_idx] = right_count
+
+        # position of right child = just after the left child
+        right_child_position = 0
+        for thread_idx in range(n_threads):
+            right_child_position += left_counts[thread_idx]
+
+        # offset of each thread in samples_indices for left and right child, i.e.
+        # where each thread will start to write.
+        right_offset[0] = right_child_position
+        for thread_idx in range(1, n_threads):
+            left_offset[thread_idx] = left_offset[thread_idx - 1] + left_counts[thread_idx - 1]
+            right_offset[thread_idx] = right_offset[thread_idx - 1] + right_counts[thread_idx - 1]
+
+        # map indices in left/right_indices_buffer back into samples_indices. This
+        # also updates context.partition since samples_indice is a view.
+        for thread_idx in prange(n_threads):
+
+            for i in range(left_counts[thread_idx]):
+                sample_indices[left_offset[thread_idx] + i] = \
+                    left_indices_buffer[offset_in_buffers[thread_idx] + i]
+            for i in range(right_counts[thread_idx]):
+                sample_indices[right_offset[thread_idx] + i] = \
+                    right_indices_buffer[offset_in_buffers[thread_idx] + i]
+
+    return (sample_indices[:right_child_position],
+            sample_indices[right_child_position:],
+            right_child_position)
 
 
 def find_node_split(

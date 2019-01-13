@@ -14,7 +14,7 @@ from pygbm.splitting import split_indices as split_indices_pygbm
 rng = np.random.RandomState(42)
 
 n_bins = 255
-n_features = 2  # Number of features has huge impact, it's weird
+n_features = 20  # Number of features has huge impact, it's weird
 l2_regularization = 0.
 min_hessian_to_split = 1e-3
 min_samples_leaf = 1

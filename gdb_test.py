@@ -50,7 +50,7 @@ fit_duration = time() - tic
 tic = time()
 print(f'score: {gbm.score(X, y)}')
 score_duration = time() - tic
-print(f'sklearn gbm fit_duration: {fit_duration:.3f}s\n')
+print(f'sklearn gbm fit_duration: {fit_duration:.3f}s')
 print(f'sklearn gbm score_duration {score_duration:.3f}s')
 
 
@@ -61,7 +61,7 @@ fit_duration = time() - tic
 tic = time()
 print(f'score: {pygbm_est.score(X, y)}')
 score_duration = time() - tic
-print(f'pygbm fit_duration: {fit_duration:.3f}s\n')
+print(f'pygbm fit_duration: {fit_duration:.3f}s')
 print(f'pygbm score_duration {score_duration:.3f}s')
 
 # cProfile.runctx("gbm.fit(X, y)", globals(), locals(), "Profile.prof")
