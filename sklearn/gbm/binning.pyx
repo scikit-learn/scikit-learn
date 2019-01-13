@@ -16,14 +16,10 @@ import numpy as np
 cimport numpy as np
 from cython.parallel import prange
 
-from sklearn.utils import check_random_state, check_array
-from sklearn.base import BaseEstimator, TransformerMixin
-
+from ..utils import check_random_state, check_array
+from ..base import BaseEstimator, TransformerMixin
 from .types import X_DTYPE, X_BINNED_DTYPE
-
-
-ctypedef np.npy_float64 NPY_X_DTYPE
-ctypedef np.npy_uint8 NPY_X_BINNED_DTYPE
+from .types cimport NPY_X_DTYPE, NPY_X_BINNED_DTYPE
 
 
 def _find_binning_thresholds(data, max_bins=256, subsample=int(2e5),
@@ -85,8 +81,6 @@ cpdef _map_to_bins(const NPY_X_DTYPE [:, :] data, list binning_thresholds,
     binned_data : array of int, shape=data.shape
         The binned data.
     """
-    # TODO: add support for categorical data encoded as integers
-    # TODO: add support for sparse data (numerical or categorical)
     cdef:
         int feature_idx
 
@@ -106,7 +100,6 @@ cpdef void _map_num_col_to_bins(const NPY_X_DTYPE [:] data,
         int right
         int middle
 
-    # for i in range(data.shape[0]):
     for i in prange(data.shape[0], schedule='static'):
         left, right = 0, binning_thresholds.shape[0]
         while left < right:

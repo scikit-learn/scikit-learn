@@ -3,15 +3,15 @@
 # cython: boundscheck=False
 # cython: wraparound=False
 # cython: language_level=3
+
 cimport cython
 from cython.parallel import prange
-
 import numpy as np
 cimport numpy as np
 
 from .types import Y_DTYPE
+from .types cimport NPY_Y_DTYPE
 
-ctypedef np.npy_float32 NPY_Y_DTYPE
 
 def _update_raw_predictions(NPY_Y_DTYPE [:] raw_predictions, grower):
     cdef:

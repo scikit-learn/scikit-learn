@@ -13,15 +13,12 @@ from abc import ABC, abstractmethod
 
 cimport cython
 from cython.parallel import prange
-
 import numpy as np
 cimport numpy as np
-
 from scipy.special import expit, logsumexp
 
 from .types import Y_DTYPE
-
-ctypedef np.npy_float32 NPY_Y_DTYPE
+from .types cimport NPY_Y_DTYPE
 
 
 cdef get_threads_chunks(unsigned int total_size):
@@ -157,9 +154,9 @@ class LeastSquares(BaseLoss):
 
 
 cdef void _update_gradients_least_squares(
-    NPY_Y_DTYPE[:] gradients,
-    NPY_Y_DTYPE[:] y_true,
-    NPY_Y_DTYPE[:] raw_predictions) nogil:
+    NPY_Y_DTYPE [:] gradients,
+    NPY_Y_DTYPE [:] y_true,
+    NPY_Y_DTYPE [:] raw_predictions) nogil:
     cdef:
         unsigned int n_samples
         int i

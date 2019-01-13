@@ -15,12 +15,16 @@ cimport numpy as np
 
 from .types import HISTOGRAM_DTYPE
 
-cpdef void _build_histogram_naive(unsigned int n_bins,
-                                  unsigned int [:] sample_indices,
-                                  NPY_X_BINNED_DTYPE [:] binned_feature,
-                                  NPY_Y_DTYPE [:] ordered_gradients,
-                                  NPY_Y_DTYPE [:] ordered_hessians,
-                                  hist_struct [:] out) nogil:
+# Note: IN views are read-only, OUT views are write-only
+
+cpdef void _build_histogram_naive(
+    unsigned int n_bins,
+    unsigned int [:] sample_indices,  # IN
+    NPY_X_BINNED_DTYPE [:] binned_feature,  # IN
+    NPY_Y_DTYPE [:] ordered_gradients,  # IN
+    NPY_Y_DTYPE [:] ordered_hessians,  # IN
+    hist_struct [:] out  # OUT
+    ) nogil:
     """Build histogram in a naive way, without optimizing for cache hit."""
     cdef:
         unsigned int i
@@ -36,11 +40,13 @@ cpdef void _build_histogram_naive(unsigned int n_bins,
         out[bin_idx].count += 1
 
 
-cpdef void _subtract_histograms(unsigned int n_bins,
-                                hist_struct [:] hist_a,
-                                hist_struct [:] hist_b,
-                                hist_struct [:] out) nogil:
-    """Return hist_a - hist_b"""
+cpdef void _subtract_histograms(
+    unsigned int n_bins,
+    hist_struct [:] hist_a,  # IN
+    hist_struct [:] hist_b,  # IN
+    hist_struct [:] out  # OUT
+    ) nogil:
+    """compute (hist_a - hist_b) in out"""
 
     cdef:
         unsigned int i = 0
@@ -50,12 +56,14 @@ cpdef void _subtract_histograms(unsigned int n_bins,
         out[i].count = hist_a[i].count - hist_b[i].count
 
 
-cpdef void _build_histogram(unsigned int n_bins,
-                            unsigned int [:] sample_indices,
-                            NPY_X_BINNED_DTYPE [:] binned_feature,
-                            NPY_Y_DTYPE [:] ordered_gradients,
-                            NPY_Y_DTYPE [:] ordered_hessians,
-                            hist_struct [:] out) nogil:
+cpdef void _build_histogram(
+    unsigned int n_bins,
+    unsigned int [:] sample_indices,  # IN
+    NPY_X_BINNED_DTYPE [:] binned_feature,  # IN
+    NPY_Y_DTYPE [:] ordered_gradients,  # IN
+    NPY_Y_DTYPE [:] ordered_hessians,  # IN
+    hist_struct [:] out  # OUT
+    ) nogil:
     """Return histogram for a given feature."""
     cdef:
         unsigned int i = 0
@@ -98,10 +106,11 @@ cpdef void _build_histogram(unsigned int n_bins,
 
 cpdef void _build_histogram_no_hessian(
     unsigned int n_bins,
-    unsigned int [:] sample_indices,
-    NPY_X_BINNED_DTYPE [:] binned_feature,
-    NPY_Y_DTYPE [:] ordered_gradients,
-    hist_struct [:] out) nogil:
+    unsigned int [:] sample_indices,  # IN
+    NPY_X_BINNED_DTYPE [:] binned_feature,  # IN
+    NPY_Y_DTYPE [:] ordered_gradients,  # OUT
+    hist_struct [:] out  # OUT
+    ) nogil:
     """Return histogram for a given feature."""
     cdef:
         unsigned int i = 0
@@ -138,9 +147,10 @@ cpdef void _build_histogram_no_hessian(
 
 cpdef void _build_histogram_root_no_hessian(
     unsigned int n_bins,
-    NPY_X_BINNED_DTYPE [:] binned_feature,
-    NPY_Y_DTYPE [:] all_gradients,
-    hist_struct [:] out) nogil:
+    NPY_X_BINNED_DTYPE [:] binned_feature,  # IN
+    NPY_Y_DTYPE [:] all_gradients,  # IN
+    hist_struct [:] out  # OUT
+    ) nogil:
     """Special case for the root node
 
     The root node has to find the split among all the samples from the
@@ -184,10 +194,11 @@ cpdef void _build_histogram_root_no_hessian(
 
 cpdef void _build_histogram_root(
     unsigned int n_bins,
-    NPY_X_BINNED_DTYPE [:] binned_feature,
-    NPY_Y_DTYPE [:] all_gradients,
-    NPY_Y_DTYPE [:] all_hessians,
-    hist_struct [:] out) nogil:
+    NPY_X_BINNED_DTYPE [:] binned_feature,  # IN
+    NPY_Y_DTYPE [:] all_gradients,  # IN
+    NPY_Y_DTYPE [:] all_hessians,  # IN
+    hist_struct [:] out  # OUT
+    ) nogil:
     """Special case for the root node
 
     The root node has to find the split among all the samples from the

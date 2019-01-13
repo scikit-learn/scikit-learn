@@ -10,6 +10,7 @@ import numpy as np
 cimport numpy as np
 
 from .types import X_DTYPE
+from .types cimport NPY_X_DTYPE
 
 
 PREDICTOR_RECORD_DTYPE = np.dtype([
@@ -23,10 +24,7 @@ PREDICTOR_RECORD_DTYPE = np.dtype([
     ('depth', np.uint32),
     ('is_leaf', np.uint8),
     ('bin_threshold', np.uint8),
-    # TODO: shrinkage in leaf for feature importance error bar?
 ])
-
-ctypedef np.npy_float64 NPY_X_DTYPE
 
 cdef packed struct node_struct:
     float value
