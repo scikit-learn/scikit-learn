@@ -32,16 +32,16 @@ from sphinx.util.osutil import ensuredir
 logger = logging.getLogger(__name__)
 
 
-def generate_autosummary_docs_custom(sources,
-                                     output_dir=None,
-                                     suffix='.rst',
-                                     warn=print,
-                                     info=print,
-                                     base_path=None,
-                                     builder=None,
-                                     template_dir=None,
-                                     imported_members=False,
-                                     app=None):
+def generate_autosummary_docs_custom_files(sources,
+                                           output_dir=None,
+                                           suffix='.rst',
+                                           warn=print,
+                                           info=print,
+                                           base_path=None,
+                                           builder=None,
+                                           template_dir=None,
+                                           imported_members=False,
+                                           app=None):
     showed_sources = list(sorted(sources))
     if len(showed_sources) > 20:
         showed_sources = showed_sources[:10] + ['...'] + showed_sources[-10:]
@@ -184,7 +184,7 @@ def generate_autosummary_docs_custom(sources,
 
     # descend recursively to new files
     if new_files:
-        generate_autosummary_docs_custom(
+        generate_autosummary_docs_custom_files(
             new_files,
             output_dir=output_dir,
             suffix=suffix,
@@ -196,7 +196,7 @@ def generate_autosummary_docs_custom(sources,
             app=app)
 
 
-def process_generate_options_custom(app):
+def process_generate_options_custom_files(app):
     # type: (Sphinx) -> None
     genfiles = app.config.autosummary_generate
 
@@ -223,7 +223,7 @@ def process_generate_options_custom(app):
                'But your source_suffix does not contain .rst. Skipped.'))
         return
 
-    generate_autosummary_docs_custom(
+    generate_autosummary_docs_custom_files(
         genfiles,
         builder=app.builder,
         warn=logger.warning,
@@ -244,7 +244,7 @@ def setup(app):
         if (inspect.isfunction(obj) and
            obj.__name__ == "process_generate_options"):
             builder_inited_listeners[listener_id] = \
-                process_generate_options_custom
+                process_generate_options_custom_files
             break
 
     return {'version': sphinx.__display_version__, 'parallel_read_safe': True}
