@@ -9,13 +9,13 @@ from numpy.testing import assert_equal
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_raises
-from sklearn.ensemble.gradient_boosting import BinomialDeviance
-from sklearn.ensemble.gradient_boosting import LogOddsEstimator
-from sklearn.ensemble.gradient_boosting import LeastSquaresError
-from sklearn.ensemble.gradient_boosting import RegressionLossFunction
-from sklearn.ensemble.gradient_boosting import LOSS_FUNCTIONS
-from sklearn.ensemble.gradient_boosting import _weighted_percentile
-from sklearn.ensemble.gradient_boosting import QuantileLossFunction
+from sklearn.utils.stats import _weighted_percentile
+from sklearn.ensemble.losses import BinomialDeviance
+from sklearn.ensemble.losses import LogOddsEstimator
+from sklearn.ensemble.losses import LeastSquaresError
+from sklearn.ensemble.losses import RegressionLossFunction
+from sklearn.ensemble.losses import QuantileLossFunction
+from sklearn.ensemble.losses import LOSS_FUNCTIONS
 
 
 def test_binomial_deviance():

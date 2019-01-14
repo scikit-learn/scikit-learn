@@ -29,6 +29,7 @@ from abc import abstractmethod
 from .base import BaseEnsemble
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
+from ..base import BaseEstimator
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -47,6 +48,7 @@ from ..model_selection import train_test_split
 from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE
 from ..tree._tree import TREE_LEAF
+from . import losses
 
 from ..utils import check_random_state
 from ..utils import check_array
@@ -61,7 +63,15 @@ from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
 
 
-class QuantileEstimator(object):
+# 0.23
+# All the losses and corresponding init estimators have been moved to the
+# _losses module in 0.21. We deprecate them and keep them here for now in case
+# someone has imported them. None of these losses can be used as a parameter
+# to a GBDT estimator anyway (loss param only accepts strings).
+
+@deprecated("QuantileEstimator is deprecated in version "
+            "0.21 and will be removed in version 0.23.")
+class QuantileEstimator(BaseEstimator):
     """An estimator predicting the alpha-quantile of the training targets.
 
     Parameters
@@ -114,7 +124,9 @@ class QuantileEstimator(object):
         return y
 
 
-class MeanEstimator(object):
+@deprecated("MeanEstimator is deprecated in version "
+            "0.21 and will be removed in version 0.23.")
+class MeanEstimator(BaseEstimator):
     """An estimator predicting the mean of the training targets."""
     def fit(self, X, y, sample_weight=None):
         """Fit the estimator.
@@ -155,7 +167,9 @@ class MeanEstimator(object):
         return y
 
 
-class LogOddsEstimator(object):
+@deprecated("LogOddsEstimator is deprecated in version "
+            "0.21 and will be removed in version 0.23.")
+class LogOddsEstimator(BaseEstimator):
     """An estimator predicting the log odds ratio."""
     scale = 1.0
 
@@ -205,12 +219,16 @@ class LogOddsEstimator(object):
         return y
 
 
+@deprecated("ScaledLogOddsEstimator is deprecated in version "
+            "0.21 and will be removed in version 0.23.")
 class ScaledLogOddsEstimator(LogOddsEstimator):
     """Log odds ratio scaled by 0.5 -- for exponential loss. """
     scale = 0.5
 
 
-class PriorProbabilityEstimator(object):
+@deprecated("PriorProbablityEstimator is deprecated in version "
+            "0.21 and will be removed in version 0.23.")
+class PriorProbabilityEstimator(BaseEstimator):
     """An estimator predicting the probability of each
     class in the training data.
     """
@@ -253,8 +271,16 @@ class PriorProbabilityEstimator(object):
         return y
 
 
-class ZeroEstimator(object):
-    """An estimator that simply predicts zero. """
+@deprecated("Using ZeroEstimator or init='zero' is deprecated in version "
+            "0.21 and will be removed in version 0.23.")
+class ZeroEstimator(BaseEstimator):
+    """An estimator that simply predicts zero.
+
+    .. deprecated:: 0.21
+        Using ``ZeroEstimator`` or ``init='zero'`` is deprecated in version
+        0.21 and will be removed in version 0.23.
+
+    """
 
     def fit(self, X, y, sample_weight=None):
         """Fit the estimator.
@@ -299,6 +325,9 @@ class ZeroEstimator(object):
         return y
 
 
+@deprecated("All Losses in sklearn.ensemble.gradient_boosting are "
+            "deprecated in version "
+            "0.21 and will be removed in version 0.23.")
 class LossFunction(object, metaclass=ABCMeta):
     """Abstract base class for various loss functions.
 
@@ -406,6 +435,9 @@ class LossFunction(object, metaclass=ABCMeta):
         """Template method for updating terminal regions (=leaves). """
 
 
+@deprecated("All Losses in sklearn.ensemble.gradient_boosting are "
+            "deprecated in version "
+            "0.21 and will be removed in version 0.23.")
 class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
     """Base class for regression loss functions.
 
@@ -421,6 +453,9 @@ class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
         super().__init__(n_classes)
 
 
+@deprecated("All Losses in sklearn.ensemble.gradient_boosting are "
+            "deprecated in version "
+            "0.21 and will be removed in version 0.23.")
 class LeastSquaresError(RegressionLossFunction):
     """Loss function for least squares (LS) estimation.
     Terminal regions need not to be updated for least squares.
@@ -504,6 +539,9 @@ class LeastSquaresError(RegressionLossFunction):
         pass
 
 
+@deprecated("All Losses in sklearn.ensemble.gradient_boosting are "
+            "deprecated in version "
+            "0.21 and will be removed in version 0.23.")
 class LeastAbsoluteError(RegressionLossFunction):
     """Loss function for least absolute deviation (LAD) regression.
 
@@ -560,6 +598,9 @@ class LeastAbsoluteError(RegressionLossFunction):
         tree.value[leaf, 0, 0] = _weighted_percentile(diff, sample_weight, percentile=50)
 
 
+@deprecated("All Losses in sklearn.ensemble.gradient_boosting are "
+            "deprecated in version "
+            "0.21 and will be removed in version 0.23.")
 class HuberLossFunction(RegressionLossFunction):
     """Huber loss function for robust regression.
 
@@ -663,6 +704,9 @@ class HuberLossFunction(RegressionLossFunction):
             np.minimum(np.abs(diff_minus_median), gamma))
 
 
+@deprecated("All Losses in sklearn.ensemble.gradient_boosting are "
+            "deprecated in version "
+            "0.21 and will be removed in version 0.23.")
 class QuantileLossFunction(RegressionLossFunction):
     """Loss function for quantile regression.
 
@@ -740,6 +784,9 @@ class QuantileLossFunction(RegressionLossFunction):
         tree.value[leaf, 0] = val
 
 
+@deprecated("All Losses in sklearn.ensemble.gradient_boosting are "
+            "deprecated in version "
+            "0.21 and will be removed in version 0.23.")
 class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
     """Base class for classification loss functions. """
 
@@ -758,6 +805,9 @@ class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
         """
 
 
+@deprecated("All Losses in sklearn.ensemble.gradient_boosting are "
+            "deprecated in version "
+            "0.21 and will be removed in version 0.23.")
 class BinomialDeviance(ClassificationLossFunction):
     """Binomial deviance loss function for binary classification.
 
@@ -849,6 +899,9 @@ class BinomialDeviance(ClassificationLossFunction):
         return np.argmax(proba, axis=1)
 
 
+@deprecated("All Losses in sklearn.ensemble.gradient_boosting are "
+            "deprecated in version "
+            "0.21 and will be removed in version 0.23.")
 class MultinomialDeviance(ClassificationLossFunction):
     """Multinomial deviance loss function for multi-class classification.
 
@@ -944,6 +997,9 @@ class MultinomialDeviance(ClassificationLossFunction):
         return np.argmax(proba, axis=1)
 
 
+@deprecated("All Losses in sklearn.ensemble.gradient_boosting are "
+            "deprecated in version "
+            "0.21 and will be removed in version 0.23.")
 class ExponentialLoss(ClassificationLossFunction):
     """Exponential loss function for binary classification.
 
@@ -1029,18 +1085,6 @@ class ExponentialLoss(ClassificationLossFunction):
 
     def _score_to_decision(self, score):
         return (score.ravel() >= 0.0).astype(np.int)
-
-
-LOSS_FUNCTIONS = {'ls': LeastSquaresError,
-                  'lad': LeastAbsoluteError,
-                  'huber': HuberLossFunction,
-                  'quantile': QuantileLossFunction,
-                  'deviance': None,    # for both, multinomial and binomial
-                  'exponential': ExponentialLoss,
-                  }
-
-
-INIT_ESTIMATORS = {'zero': ZeroEstimator}
 
 
 class VerboseReporter(object):
@@ -1219,15 +1263,15 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                              "was %r" % self.learning_rate)
 
         if (self.loss not in self._SUPPORTED_LOSS
-                or self.loss not in LOSS_FUNCTIONS):
+                or self.loss not in losses.LOSS_FUNCTIONS):
             raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
 
         if self.loss == 'deviance':
-            loss_class = (MultinomialDeviance
+            loss_class = (losses.MultinomialDeviance
                           if len(self.classes_) > 2
-                          else BinomialDeviance)
+                          else losses.BinomialDeviance)
         else:
-            loss_class = LOSS_FUNCTIONS[self.loss]
+            loss_class = losses.LOSS_FUNCTIONS[self.loss]
 
         if self.loss in ('huber', 'quantile'):
             self.loss_ = loss_class(self.n_classes_, self.alpha)
@@ -1239,15 +1283,20 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                              "was %r" % self.subsample)
 
         if self.init is not None:
-            if isinstance(self.init, str):
-                if self.init not in INIT_ESTIMATORS:
-                    raise ValueError('init="%s" is not supported' % self.init)
-            else:
+            # init must be an estimator or 'zero' (undocumented and
+            # deprecated)
+            if isinstance(self.init, BaseEstimator):
                 if (not hasattr(self.init, 'fit')
                         or not hasattr(self.init, 'predict')):
                     raise ValueError("init=%r must be valid BaseEstimator "
                                      "and support both fit and "
                                      "predict" % self.init)
+            elif not (isinstance(self.init, str) and self.init == 'zero'):
+                raise ValueError(
+                    "The init parameter must be an estimator. "
+                    "Got init={}".format(self.init)
+                )
+                # The deprecation warning will be raised in ZeroEstimator
 
         if not (0.0 < self.alpha < 1.0):
             raise ValueError("alpha must be in (0.0, 1.0) but "
@@ -1298,9 +1347,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         if self.init is None:
             self.init_ = self.loss_.init_estimator()
-        elif isinstance(self.init, str):
-            self.init_ = INIT_ESTIMATORS[self.init]()
-        else:
+        elif isinstance(self.init, str) and self.init == 'zero':
+            # Deprecated in version 0.21, warning raised in ZeroEstimator
+            self.init_ = ZeroEstimator()
+        else:  # we know it's an estimator
             self.init_ = self.init
 
         self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
@@ -1437,6 +1487,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                         "weights.".format(self.init_.__class__.__name__))
 
             # init predictions
+            # y_pred = self.loss_.get_init_predictions(X, self.init_).astype(
+            #     np.float64, copy=False)
             y_pred = self.init_.predict(X).astype(np.float64, copy=False)
             if y_pred.ndim == 1:
                 y_pred = y_pred[:, np.newaxis]

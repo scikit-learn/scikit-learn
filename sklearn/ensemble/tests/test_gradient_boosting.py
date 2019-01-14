@@ -13,6 +13,7 @@ import pytest
 
 from sklearn import datasets
 from sklearn.base import clone
+from sklearn.base import BaseEstimator
 from sklearn.datasets import (make_classification, fetch_california_housing,
                               make_regression)
 from sklearn.ensemble import GradientBoostingClassifier
@@ -1048,6 +1049,8 @@ def test_complete_regression():
                  k + 1)
 
 
+# 0.23
+@pytest.mark.filterwarnings("ignore: Class ZeroEstimator is deprecated")
 def test_zero_estimator_reg():
     # Test if ZeroEstimator works for regression.
     est = GradientBoostingRegressor(n_estimators=20, max_depth=1,
@@ -1069,6 +1072,8 @@ def test_zero_estimator_reg():
     assert_raises(ValueError, est.fit, boston.data, boston.target)
 
 
+# 0.23
+@pytest.mark.filterwarnings("ignore: Class ZeroEstimator is deprecated")
 def test_zero_estimator_clf():
     # Test if ZeroEstimator works for classification.
     X = iris.data
@@ -1329,7 +1334,7 @@ def test_gradient_boosting_validation_fraction():
     assert gbc.n_estimators_ < gbc3.n_estimators_
 
 
-class _NoSampleWeightWrapper:
+class _NoSampleWeightWrapper(BaseEstimator):
     def __init__(self, est):
         self.est = est
 
