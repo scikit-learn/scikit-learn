@@ -526,7 +526,7 @@ class SelectKBest(_BaseFilter):
 
             # Request a stable sort. Mergesort takes more memory (~40MB per
             # megafeature on x86-64).
-            mask[np.argsort(scores, kind="mergesort")[-self.k:]] = 1
+            mask[np.argpartition(scores, -self.k, kind="mergesort")[-self.k:]] = 1
             return mask
 
 
