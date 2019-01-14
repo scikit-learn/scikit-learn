@@ -216,14 +216,14 @@ the following two rules:
   returns loss, that value should be negated.
 
 While defining the custom scoring function alongside the calling function 
-should work out of the box with the default joblib backend (loky), while
+should work out of the box with the default joblib backend (loky), 
 importing it from another module will be a more robust approach and work
 independently of the joblib backend.
 
-For example, to use, ``n_jobs`` greater than 1 below, ``rmse`` function is 
-saved in a separate module (``custom_scorer_module.py``) and imported::
+For example, to use, ``n_jobs`` greater than 1 below, ``custom_scoring_function``
+function is saved in a user-created module (``custom_scorer_module.py``) and imported::
 
-    >>> from custom_scorer_module import rmse # doctest: +SKIP
+    >>> from custom_scorer_module import custom_scoring_function # doctest: +SKIP
     >>> cross_val_score(elnet_pipe,
     ...  X_train,
     ...  y_train,
