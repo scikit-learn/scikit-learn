@@ -2,6 +2,9 @@ numpy
 scipy
 cython
 pytest
+pytest-cov
+coverage
+codecov
 wheel
 wheelhouse_uploader
 pillow
