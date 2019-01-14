@@ -742,7 +742,7 @@ class MultinomialDeviance(ClassificationLossFunction):
         super().__init__(n_classes)
 
     def init_estimator(self):
-        return PriorProbabilityEstimator()
+        return DummyClassifier(strategy='prior')
 
     def __call__(self, y, pred, sample_weight=None):
         """Compute the Multinomial deviance.
@@ -814,6 +814,25 @@ class MultinomialDeviance(ClassificationLossFunction):
     def _score_to_decision(self, score):
         proba = self._score_to_proba(score)
         return np.argmax(proba, axis=1)
+
+    def get_init_raw_predictions(self, X, estimator):
+        # TODO: write test
+        if not hasattr(estimator, 'predict_proba'):
+            raise ValueError(
+                'The init estimator must have a predict_proba method '
+                'to use the binamial deviance loss.'
+            )
+
+        probas = estimator.predict_proba(X)
+        eps = np.finfo(np.float32).eps
+        probas = np.clip(probas, eps, 1 - eps)
+
+        raw_predictions = np.zeros_like(probas, dtype=np.float64)
+
+        for k in range(probas.shape[1]):
+            raw_predictions [:, k] += np.log(probas[:, k])
+
+        return raw_predictions
 
 
 class ExponentialLoss(ClassificationLossFunction):
