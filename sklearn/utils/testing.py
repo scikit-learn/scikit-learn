@@ -600,6 +600,8 @@ DONT_TEST = ['SparseCoder', 'DictVectorizer',
              'CheckingClassifier', 'PatchExtractor', 'CountVectorizer',
              # GradientBoosting base estimators, maybe should
              # exclude them in another way
+             # 0.23: remove all of those that aren't in ensemble.losses
+             # anymore
              'ZeroEstimator', 'ScaledLogOddsEstimator',
              'QuantileEstimator', 'MeanEstimator',
              'LogOddsEstimator', 'PriorProbabilityEstimator',

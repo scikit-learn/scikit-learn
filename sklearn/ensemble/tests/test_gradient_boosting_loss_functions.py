@@ -5,6 +5,7 @@ Testing for the gradient boosting loss functions and initial estimators.
 import numpy as np
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_almost_equal
+from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
 
 from sklearn.utils import check_random_state
@@ -100,16 +101,24 @@ def test_sample_weight_init_estimators():
         loss = Loss(k)
         init_est = loss.init_estimator()
         init_est.fit(X, y)
-        out = init_est.predict(X)
+        # TODO: update this once all losses are OK
+        if isinstance(loss, LeastSquaresError):
+            out = loss.get_init_raw_predictions(X, init_est)
+        else:
+            out = init_est.predict(X)
         assert_equal(out.shape, (y.shape[0], 1))
 
         sw_init_est = loss.init_estimator()
         sw_init_est.fit(X, y, sample_weight=sample_weight)
-        sw_out = init_est.predict(X)
+        # TODO: update this once all losses are OK
+        if isinstance(loss, LeastSquaresError):
+            sw_out = loss.get_init_raw_predictions(X, sw_init_est)
+        else:
+            sw_out = init_est.predict(X)
         assert_equal(sw_out.shape, (y.shape[0], 1))
 
         # check if predictions match
-        assert_array_equal(out, sw_out)
+        assert_array_almost_equal(out, sw_out)
 
 
 def test_weighted_percentile():

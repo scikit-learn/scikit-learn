@@ -38,6 +38,7 @@ from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..dummy import DummyClassifier
+from ..dummy import DummyRegressor
 from ..exceptions import NotFittedError
 
 
@@ -91,47 +92,6 @@ class QuantileEstimator(BaseEstimator):
 
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.quantile)
-        return y
-
-
-class MeanEstimator(BaseEstimator):
-    """An estimator predicting the mean of the training targets."""
-    def fit(self, X, y, sample_weight=None):
-        """Fit the estimator.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data
-
-        y : array, shape (n_samples, n_targets)
-            Target values. Will be cast to X's dtype if necessary
-
-        sample_weight : numpy array of shape (n_samples,)
-            Individual weights for each sample
-        """
-        if sample_weight is None:
-            self.mean = np.mean(y)
-        else:
-            self.mean = np.average(y, weights=sample_weight)
-
-    def predict(self, X):
-        """Predict labels
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Samples.
-
-        Returns
-        -------
-        y : array, shape (n_samples,)
-            Returns predicted values.
-        """
-        check_is_fitted(self, 'mean')
-
-        y = np.empty((X.shape[0], 1), dtype=np.float64)
-        y.fill(self.mean)
         return y
 
 
@@ -366,7 +326,7 @@ class LeastSquaresError(RegressionLossFunction):
     """
 
     def init_estimator(self):
-        return MeanEstimator()
+        return DummyRegressor(strategy='mean')
 
     def __call__(self, y, pred, sample_weight=None):
         """Compute the least squares loss.
@@ -436,6 +396,9 @@ class LeastSquaresError(RegressionLossFunction):
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred, sample_weight):
         pass
+
+    def get_init_raw_predictions(self, X, estimator):
+        return estimator.predict(X).reshape(-1, 1)
 
 
 class LeastAbsoluteError(RegressionLossFunction):
@@ -711,7 +674,7 @@ class BinomialDeviance(ClassificationLossFunction):
         super().__init__(1)
 
     def init_estimator(self):
-        # returns the most common class, taking into account the samples
+        # return the most common class, taking into account the samples
         # weights
         return DummyClassifier(strategy='prior')
 
@@ -785,7 +748,12 @@ class BinomialDeviance(ClassificationLossFunction):
         return np.argmax(proba, axis=1)
 
     def get_init_raw_predictions(self, X, estimator):
-        # TODO: check has predict_proba
+        # TODO: write test
+        if not hasattr(estimator, 'predict_proba'):
+            raise ValueError(
+                'The init estimator must have a predict_proba method '
+                'to use the binamial deviance loss.'
+            )
         probas = estimator.predict_proba(X)
         # log(x / (1 - x)) is the inverse of the sigmoid (expit) function
         raw_predictions = np.log(probas[:, 1] / probas[:, 0])
