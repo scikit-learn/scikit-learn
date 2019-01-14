@@ -5,141 +5,14 @@ decision trees.
 from abc import ABCMeta
 from abc import abstractmethod
 
-from .base import BaseEnsemble
-from ..base import ClassifierMixin
-from ..base import RegressorMixin
-from ..base import BaseEstimator
-
-from ._gradient_boosting import predict_stages
-from ._gradient_boosting import predict_stage
-from ._gradient_boosting import _random_sample_mask
-
-import numbers
 import numpy as np
-
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import issparse
 from scipy.special import expit
 
-from time import time
-from ..model_selection import train_test_split
-from ..tree.tree import DecisionTreeRegressor
-from ..tree._tree import DTYPE
 from ..tree._tree import TREE_LEAF
-
-from ..utils import check_random_state
-from ..utils import check_array
-from ..utils import check_X_y
-from ..utils import column_or_1d
-from ..utils import check_consistent_length
 from ..utils.fixes import logsumexp
 from ..utils.stats import _weighted_percentile
-from ..utils.validation import check_is_fitted
-from ..utils.multiclass import check_classification_targets
 from ..dummy import DummyClassifier
 from ..dummy import DummyRegressor
-from ..exceptions import NotFittedError
-
-
-
-
-class LogOddsEstimator(BaseEstimator):
-    """An estimator predicting the log odds ratio."""
-    scale = 1.0
-
-    def fit(self, X, y, sample_weight=None):
-        """Fit the estimator.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data
-
-        y : array, shape (n_samples, n_targets)
-            Target values. Will be cast to X's dtype if necessary
-
-        sample_weight : numpy array of shape (n_samples,)
-            Individual weights for each sample
-        """
-        # pre-cond: pos, neg are encoded as 1, 0
-        if sample_weight is None:
-            pos = np.sum(y)
-            neg = y.shape[0] - pos
-        else:
-            pos = np.sum(sample_weight * y)
-            neg = np.sum(sample_weight * (1 - y))
-
-        if neg == 0 or pos == 0:
-            raise ValueError('y contains non binary labels.')
-        self.prior = self.scale * np.log(pos / neg)
-
-    def predict(self, X):
-        """Predict labels
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Samples.
-
-        Returns
-        -------
-        y : array, shape (n_samples,)
-            Returns predicted values.
-        """
-        check_is_fitted(self, 'prior')
-
-        y = np.empty((X.shape[0], 1), dtype=np.float64)
-        y.fill(self.prior)
-        return y
-
-
-class ScaledLogOddsEstimator(LogOddsEstimator):
-    """Log odds ratio scaled by 0.5 -- for exponential loss. """
-    scale = 0.5
-
-
-class PriorProbabilityEstimator(BaseEstimator):
-    """An estimator predicting the probability of each
-    class in the training data.
-    """
-    def fit(self, X, y, sample_weight=None):
-        """Fit the estimator.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data
-
-        y : array, shape (n_samples, n_targets)
-            Target values. Will be cast to X's dtype if necessary
-
-        sample_weight : array, shape (n_samples,)
-            Individual weights for each sample
-        """
-        if sample_weight is None:
-            sample_weight = np.ones_like(y, dtype=np.float64)
-        class_counts = np.bincount(y, weights=sample_weight)
-        self.priors = class_counts / class_counts.sum()
-
-    def predict(self, X):
-        """Predict labels
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Samples.
-
-        Returns
-        -------
-        y : array, shape (n_samples,)
-            Returns predicted values.
-        """
-        check_is_fitted(self, 'priors')
-
-        y = np.empty((X.shape[0], self.priors.shape[0]), dtype=np.float64)
-        y[:] = self.priors
-        return y
 
 
 class LossFunction(object, metaclass=ABCMeta):
@@ -247,6 +120,27 @@ class LossFunction(object, metaclass=ABCMeta):
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred, sample_weight):
         """Template method for updating terminal regions (=leaves). """
+
+    @abstractmethod
+    def get_init_raw_predictions(self, X, estimator):
+        """
+        Return the initial raw predictions
+
+        Parameters
+        ----------
+        X : array, shape = (n_samples, n_features)
+            The data array.
+        estimator : Estimator
+            The estimator to use to compute the predictions
+
+        Returns
+        -------
+        raw_predictions : 2d array of shape (n_samples, K)
+            The initial raw predictions. K is equal to 1 for binary
+            classification and regression, and equal to the number of classes
+            for multiclass classification.
+        """
+        pass
 
 
 class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
@@ -403,8 +297,10 @@ class LeastAbsoluteError(RegressionLossFunction):
         """LAD updates terminal regions to median estimates. """
         terminal_region = np.where(terminal_regions == leaf)[0]
         sample_weight = sample_weight.take(terminal_region, axis=0)
-        diff = y.take(terminal_region, axis=0) - pred.take(terminal_region, axis=0)
-        tree.value[leaf, 0, 0] = _weighted_percentile(diff, sample_weight, percentile=50)
+        diff = y.take(terminal_region, axis=0) - pred.take(terminal_region,
+                                                           axis=0)
+        tree.value[leaf, 0, 0] = _weighted_percentile(diff, sample_weight,
+                                                      percentile=50)
 
     def get_init_raw_predictions(self, X, estimator):
         return estimator.predict(X).reshape(-1, 1)
@@ -458,15 +354,18 @@ class HuberLossFunction(RegressionLossFunction):
             if sample_weight is None:
                 gamma = np.percentile(np.abs(diff), self.alpha * 100)
             else:
-                gamma = _weighted_percentile(np.abs(diff), sample_weight, self.alpha * 100)
+                gamma = _weighted_percentile(np.abs(diff), sample_weight,
+                                             self.alpha * 100)
 
         gamma_mask = np.abs(diff) <= gamma
         if sample_weight is None:
             sq_loss = np.sum(0.5 * diff[gamma_mask] ** 2.0)
-            lin_loss = np.sum(gamma * (np.abs(diff[~gamma_mask]) - gamma / 2.0))
+            lin_loss = np.sum(gamma * (np.abs(diff[~gamma_mask]) -
+                                       gamma / 2.0))
             loss = (sq_loss + lin_loss) / y.shape[0]
         else:
-            sq_loss = np.sum(0.5 * sample_weight[gamma_mask] * diff[gamma_mask] ** 2.0)
+            sq_loss = np.sum(0.5 * sample_weight[gamma_mask] *
+                             diff[gamma_mask] ** 2.0)
             lin_loss = np.sum(gamma * sample_weight[~gamma_mask] *
                               (np.abs(diff[~gamma_mask]) - gamma / 2.0))
             loss = (sq_loss + lin_loss) / sample_weight.sum()
@@ -491,7 +390,8 @@ class HuberLossFunction(RegressionLossFunction):
         if sample_weight is None:
             gamma = np.percentile(np.abs(diff), self.alpha * 100)
         else:
-            gamma = _weighted_percentile(np.abs(diff), sample_weight, self.alpha * 100)
+            gamma = _weighted_percentile(np.abs(diff), sample_weight,
+                                         self.alpha * 100)
         gamma_mask = np.abs(diff) <= gamma
         residual = np.zeros((y.shape[0],), dtype=np.float64)
         residual[gamma_mask] = diff[gamma_mask]
@@ -562,8 +462,8 @@ class QuantileLossFunction(RegressionLossFunction):
                     (1.0 - alpha) * diff[~mask].sum()) / y.shape[0]
         else:
             loss = ((alpha * np.sum(sample_weight[mask] * diff[mask]) -
-                    (1.0 - alpha) * np.sum(sample_weight[~mask] * diff[~mask])) /
-                    sample_weight.sum())
+                    (1.0 - alpha) * np.sum(sample_weight[~mask] *
+                                           diff[~mask])) / sample_weight.sum())
         return loss
 
     def negative_gradient(self, y, pred, **kargs):
@@ -604,7 +504,8 @@ class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
 
          the does not support probabilities raises AttributeError.
         """
-        raise TypeError('%s does not support predict_proba' % type(self).__name__)
+        raise TypeError(
+            '%s does not support predict_proba' % type(self).__name__)
 
     @abstractmethod
     def _score_to_decision(self, score):
@@ -657,7 +558,8 @@ class BinomialDeviance(ClassificationLossFunction):
             return -2.0 * np.mean((y * pred) - np.logaddexp(0.0, pred))
         else:
             return (-2.0 / sample_weight.sum() *
-                    np.sum(sample_weight * ((y * pred) - np.logaddexp(0.0, pred))))
+                    np.sum(sample_weight *
+                           ((y * pred) - np.logaddexp(0.0, pred))))
 
     def negative_gradient(self, y, pred, **kargs):
         """Compute the residual (= negative gradient).
@@ -688,7 +590,8 @@ class BinomialDeviance(ClassificationLossFunction):
         sample_weight = sample_weight.take(terminal_region, axis=0)
 
         numerator = np.sum(sample_weight * residual)
-        denominator = np.sum(sample_weight * (y - residual) * (1 - y + residual))
+        denominator = np.sum(sample_weight *
+                             (y - residual) * (1 - y + residual))
 
         # prevents overflow and division by zero
         if abs(denominator) < 1e-150:
@@ -827,11 +730,7 @@ class MultinomialDeviance(ClassificationLossFunction):
         eps = np.finfo(np.float32).eps
         probas = np.clip(probas, eps, 1 - eps)
 
-        raw_predictions = np.zeros_like(probas, dtype=np.float64)
-
-        for k in range(probas.shape[1]):
-            raw_predictions [:, k] += np.log(probas[:, k])
-
+        raw_predictions = np.log(probas).astype(np.float64)
         return raw_predictions
 
 
@@ -857,7 +756,7 @@ class ExponentialLoss(ClassificationLossFunction):
         super().__init__(1)
 
     def init_estimator(self):
-        return ScaledLogOddsEstimator()
+        return DummyClassifier(strategy='prior')
 
     def __call__(self, y, pred, sample_weight=None):
         """Compute the exponential loss
@@ -920,6 +819,20 @@ class ExponentialLoss(ClassificationLossFunction):
 
     def _score_to_decision(self, score):
         return (score.ravel() >= 0.0).astype(np.int)
+
+    def get_init_raw_predictions(self, X, estimator):
+        # TODO: write test
+        if not hasattr(estimator, 'predict_proba'):
+            raise ValueError(
+                'The init estimator must have a predict_proba method '
+                'to use the binamial deviance loss.'
+            )
+        proba_pos_class = estimator.predict_proba(X)[:, 1]
+        eps = np.finfo(np.float32).eps
+        proba_pos_class = np.clip(proba_pos_class, eps, 1 - eps)
+        # log(x / (1 - x)) is the inverse of the sigmoid (expit) function
+        raw_predictions = .5 * np.log(proba_pos_class / (1 - proba_pos_class))
+        return raw_predictions.reshape(-1, 1)
 
 
 LOSS_FUNCTIONS = {

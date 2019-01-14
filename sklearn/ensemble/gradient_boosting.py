@@ -1491,30 +1491,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
             # init predictions
             if self.init == 'zero':
-                y_pred = np.zeros(shape=(X.shape[0], self.loss_.K), dtype=np.float64)
-            elif isinstance(self.loss_,
-                            (losses.BinomialDeviance,
-                            losses.LeastSquaresError,
-                            losses.LeastAbsoluteError,
-                            losses.HuberLossFunction,
-                            losses.QuantileLossFunction,
-                            )):
-                y_pred = self.loss_.get_init_raw_predictions(X, self.init_).astype(
-                    np.float64, copy=False)
+                y_pred = np.zeros(
+                    shape=(X.shape[0], self.loss_.K), dtype=np.float64)
             else:
-                y_pred = self.init_.predict(X).astype(np.float64, copy=False)
-                if y_pred.ndim == 1:
-                    y_pred = y_pred[:, np.newaxis]
-
-                if (self.loss_.is_multi_class
-                        and y_pred.shape[1] != self.n_classes_):
-                    # multiclass classification needs y_pred to be of shape
-                    # (n_samples, n_classes).
-                    y_tmp = np.zeros((y_pred.shape[0], self.n_classes_),
-                                     dtype=np.float64)
-                    for k, class_ in enumerate(self.classes_):
-                        y_tmp[:, k] = np.ravel(y_pred) == class_
-                    y_pred = y_tmp
+                y_pred = self.loss_.get_init_raw_predictions(
+                    X, self.init_).astype(np.float64, copy=False)
 
             begin_at_stage = 0
 
@@ -1673,16 +1654,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 self.n_features_, X.shape[1]))
         if self.init == 'zero':
             score = np.zeros(shape=(X.shape[0], self.loss_.K), dtype=np.float64)
-        elif isinstance(self.loss_,
-                        (losses.BinomialDeviance,
-                        losses.LeastSquaresError,
-                        losses.LeastAbsoluteError,
-                        losses.HuberLossFunction,
-                        losses.QuantileLossFunction,
-                        )):
-            score = self.loss_.get_init_raw_predictions(X, self.init_).astype( np.float64)
         else:
-            score = self.init_.predict(X).astype(np.float64)
+            score = self.loss_.get_init_raw_predictions(X, self.init_).astype( np.float64)
         return score
 
     def _decision_function(self, X):

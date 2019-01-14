@@ -3,20 +3,15 @@ Testing for the gradient boosting loss functions and initial estimators.
 """
 
 import numpy as np
-from numpy.testing import assert_array_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.ensemble.losses import BinomialDeviance
-from sklearn.ensemble.losses import LogOddsEstimator
-from sklearn.ensemble.losses import LeastSquaresError
-from sklearn.ensemble.losses import LeastAbsoluteError
-from sklearn.ensemble.losses import HuberLossFunction
 from sklearn.ensemble.losses import RegressionLossFunction
+from sklearn.ensemble.losses import LeastSquaresError
 from sklearn.ensemble.losses import QuantileLossFunction
 from sklearn.ensemble.losses import LOSS_FUNCTIONS
 
@@ -53,17 +48,6 @@ def test_binomial_deviance():
     alt_ng = lambda y, pred: (2 * y - 1) / (1 + np.exp(2 * (2 * y - 1) * pred))
     for datum in test_data:
         assert_almost_equal(bd.negative_gradient(*datum), alt_ng(*datum))
-
-
-def test_log_odds_estimator():
-    # Check log odds estimator.
-    est = LogOddsEstimator()
-    assert_raises(ValueError, est.fit, None, np.array([1]))
-
-    est.fit(None, np.array([1.0, 0.0]))
-    assert_equal(est.prior, 0.0)
-    assert_array_equal(est.predict(np.array([[1.0], [1.0]])),
-                       np.array([[0.0], [0.0]]))
 
 
 def test_sample_weight_smoke():
@@ -103,26 +87,12 @@ def test_sample_weight_init_estimators():
         loss = Loss(k)
         init_est = loss.init_estimator()
         init_est.fit(X, y)
-        # TODO: update this once all losses are OK
-        if isinstance(loss, (LeastSquaresError,
-                             LeastAbsoluteError,
-                             QuantileLossFunction,
-                             HuberLossFunction)):
-            out = loss.get_init_raw_predictions(X, init_est)
-        else:
-            out = init_est.predict(X)
+        out = loss.get_init_raw_predictions(X, init_est)
         assert_equal(out.shape, (y.shape[0], 1))
 
         sw_init_est = loss.init_estimator()
         sw_init_est.fit(X, y, sample_weight=sample_weight)
-        # TODO: update this once all losses are OK
-        if isinstance(loss, (LeastSquaresError,
-                             LeastAbsoluteError,
-                             QuantileLossFunction,
-                             HuberLossFunction)):
-            sw_out = loss.get_init_raw_predictions(X, sw_init_est)
-        else:
-            sw_out = init_est.predict(X)
+        sw_out = loss.get_init_raw_predictions(X, sw_init_est)
         assert_equal(sw_out.shape, (y.shape[0], 1))
 
         # check if predictions match
@@ -172,7 +142,6 @@ def test_quantile_loss_function():
 def test_sample_weight_deviance():
     # Test if deviance supports sample weights.
     rng = check_random_state(13)
-    X = rng.rand(100, 2)
     sample_weight = np.ones(100)
     reg_y = rng.rand(100)
     clf_y = rng.randint(0, 2, size=100)
