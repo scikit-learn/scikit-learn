@@ -1,8 +1,5 @@
 """
 Compare prediction time with pygbm.
-
-run with
-export NUMBA_NUM_THREADS=1 && make in && python bench_predict.py
 """
 
 from time import time
@@ -13,10 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_regression, make_classification
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.ensemble import GBMRegressor
-from sklearn.ensemble import GBMClassifier
+from sklearn.gbm import GBMRegressor
+from sklearn.gbm import GBMClassifier
 
 classif = False
 n_classes = 3
@@ -30,13 +25,11 @@ if classif:
                                random_state=0, n_classes=n_classes,
                                n_clusters_per_class=1)
     GBM = GBMClassifier
-    GBDT = GradientBoostingClassifier
     PYGBM_GBM = pygbm.GradientBoostingClassifier
 else:
     X, y = make_regression(n_samples=n_samples, n_features=n_features,
                            random_state=0)
     GBM = GBMRegressor
-    GBDT = GradientBoostingRegressor
     PYGBM_GBM = pygbm.GradientBoostingRegressor
 
 

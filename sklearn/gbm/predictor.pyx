@@ -82,9 +82,13 @@ class TreePredictor:
         return out
 
 
-cdef Y_DTYPE_C _predict_one_from_numeric_data(
+cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
     node_struct [:] nodes,
-    const X_DTYPE_C [:] numeric_data) nogil:
+    const X_DTYPE_C [:, :] numeric_data,
+    const int row
+    ) nogil:
+    # Need to pass the whole array, else prange won't work. See issue Cython
+    # #2798
 
     cdef:
         node_struct node = nodes[0]
@@ -92,7 +96,7 @@ cdef Y_DTYPE_C _predict_one_from_numeric_data(
     while True:
         if node.is_leaf:
             return node.value
-        if numeric_data[node.feature_idx] <= node.threshold:
+        if numeric_data[row, node.feature_idx] <= node.threshold:
             node = nodes[node.left]
         else:
             node = nodes[node.right]
@@ -107,6 +111,6 @@ cdef void _predict_from_numeric_data(
         int i
 
     # TODO: Why does prange fail??
-    # for i in prange(numeric_data.shape[0], schedule='static'):
-    for i in range(numeric_data.shape[0]):
-        out[i] = _predict_one_from_numeric_data(nodes, numeric_data[i])
+    # for i in range(numeric_data.shape[0]):
+    for i in prange(numeric_data.shape[0], schedule='static'):
+        out[i] = _predict_one_from_numeric_data(nodes, numeric_data, i)

@@ -278,8 +278,9 @@ class CategoricalCrossEntropy(BaseLoss):
                       logsumexp(raw_predictions, axis=1)[:, np.newaxis])
 
 
-cdef inline Y_DTYPE_C _logsumexp(Y_DTYPE_C [:, :] a, int i) nogil:
-    # Need to pass the whole array, else prange won't work
+cdef inline Y_DTYPE_C _logsumexp(Y_DTYPE_C [:, :] a, const int row) nogil:
+    # Need to pass the whole array, else prange won't work. See issue Cython
+    # #2798
     cdef:
         int k
         Y_DTYPE_C out = 0.
@@ -292,7 +293,7 @@ cdef inline Y_DTYPE_C _logsumexp(Y_DTYPE_C [:, :] a, int i) nogil:
     # return log(out) + amax
 
     for k in range(a.shape[1]):
-        out += exp(a[i, k])
+        out += exp(a[row, k])
     return log(out)
 
 
