@@ -1344,6 +1344,9 @@ class _NoSampleWeightWrapper(BaseEstimator):
     def predict(self, X):
         return self.est.predict(X)
 
+    def predict_proba(self, X):
+        return self.est.predict_proba(X)
+
 
 def _make_multiclass():
     return make_classification(n_classes=3, n_clusters_per_class=1)

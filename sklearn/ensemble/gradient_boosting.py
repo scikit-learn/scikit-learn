@@ -324,6 +324,9 @@ class ZeroEstimator(BaseEstimator):
         y.fill(0.0)
         return y
 
+    def predict_proba(self, X):
+        return self.predict(X)
+
 
 @deprecated("All Losses in sklearn.ensemble.gradient_boosting are "
             "deprecated in version "
@@ -1487,21 +1490,25 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                         "weights.".format(self.init_.__class__.__name__))
 
             # init predictions
-            # y_pred = self.loss_.get_init_predictions(X, self.init_).astype(
-            #     np.float64, copy=False)
-            y_pred = self.init_.predict(X).astype(np.float64, copy=False)
-            if y_pred.ndim == 1:
-                y_pred = y_pred[:, np.newaxis]
+            if self.init == 'zero':
+                y_pred = np.zeros(shape=(X.shape[0], self.loss_.K), dtype=np.float64)
+            elif self.loss == 'deviance' and not self.loss_.is_multi_class:
+                y_pred = self.loss_.get_init_raw_predictions(X, self.init_).astype(
+                    np.float64, copy=False)
+            else:
+                y_pred = self.init_.predict(X).astype(np.float64, copy=False)
+                if y_pred.ndim == 1:
+                    y_pred = y_pred[:, np.newaxis]
 
-            if (self.loss_.is_multi_class
-                    and y_pred.shape[1] != self.n_classes_):
-                # multiclass classification needs y_pred to be of shape
-                # (n_samples, n_classes).
-                y_tmp = np.zeros((y_pred.shape[0], self.n_classes_),
-                                 dtype=np.float64)
-                for k, class_ in enumerate(self.classes_):
-                    y_tmp[:, k] = np.ravel(y_pred) == class_
-                y_pred = y_tmp
+                if (self.loss_.is_multi_class
+                        and y_pred.shape[1] != self.n_classes_):
+                    # multiclass classification needs y_pred to be of shape
+                    # (n_samples, n_classes).
+                    y_tmp = np.zeros((y_pred.shape[0], self.n_classes_),
+                                     dtype=np.float64)
+                    for k, class_ in enumerate(self.classes_):
+                        y_tmp[:, k] = np.ravel(y_pred) == class_
+                    y_pred = y_tmp
 
             begin_at_stage = 0
 
@@ -1658,7 +1665,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if X.shape[1] != self.n_features_:
             raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
                 self.n_features_, X.shape[1]))
-        score = self.init_.predict(X).astype(np.float64)
+        if self.init == 'zero':
+            score = np.zeros(shape=(X.shape[0], self.loss_.K), dtype=np.float64)
+        elif self.loss == 'deviance' and not self.loss_.is_multi_class:
+            score = self.loss_.get_init_raw_predictions(X, self.init_).astype( np.float64)
+        else:
+            score = self.init_.predict(X).astype(np.float64)
         return score
 
     def _decision_function(self, X):

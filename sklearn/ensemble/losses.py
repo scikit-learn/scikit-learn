@@ -37,6 +37,7 @@ from ..utils.fixes import logsumexp
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
+from ..dummy import DummyClassifier
 from ..exceptions import NotFittedError
 
 
@@ -230,7 +231,6 @@ class PriorProbabilityEstimator(BaseEstimator):
         y = np.empty((X.shape[0], self.priors.shape[0]), dtype=np.float64)
         y[:] = self.priors
         return y
-
 
 
 class LossFunction(object, metaclass=ABCMeta):
@@ -711,7 +711,9 @@ class BinomialDeviance(ClassificationLossFunction):
         super().__init__(1)
 
     def init_estimator(self):
-        return LogOddsEstimator()
+        # returns the most common class, taking into account the samples
+        # weights
+        return DummyClassifier(strategy='prior')
 
     def __call__(self, y, pred, sample_weight=None):
         """Compute the deviance (= 2 * negative log-likelihood).
@@ -781,6 +783,13 @@ class BinomialDeviance(ClassificationLossFunction):
     def _score_to_decision(self, score):
         proba = self._score_to_proba(score)
         return np.argmax(proba, axis=1)
+
+    def get_init_raw_predictions(self, X, estimator):
+        # TODO: check has predict_proba
+        probas = estimator.predict_proba(X)
+        # log(x / (1 - x)) is the inverse of the sigmoid (expit) function
+        raw_predictions = np.log(probas[:, 1] / probas[:, 0])
+        return raw_predictions.reshape(-1, 1)
 
 
 class MultinomialDeviance(ClassificationLossFunction):
