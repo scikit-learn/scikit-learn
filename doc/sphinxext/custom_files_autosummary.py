@@ -12,6 +12,7 @@ custom_autosummary_file_map = {
 import os
 import logging
 import inspect
+from contextlib import suppress
 
 import sphinx
 from sphinx import package_dir
@@ -29,6 +30,18 @@ from sphinx.util.rst import escape as rst_escape
 from sphinx.util.osutil import ensuredir
 
 logger = logging.getLogger(__name__)
+
+
+def custom_import_by_name(name):
+    custom_autosummary_file_map = {
+        "sklearn.cluster.dbscan": "sklearn.cluster.dbscan_lowercase",
+        "sklearn.cluster.optics": "sklearn.cluster.optics_lowercase"
+    }
+    name, obj, parent, mod_name = import_by_name(name)
+    with suppress(KeyError):
+        name = custom_autosummary_file_map[name]
+        print(name)
+    return name, obj, parent, mod_name
 
 
 def generate_autosummary_docs_custom_files(sources,
@@ -56,8 +69,9 @@ def generate_autosummary_docs_custom_files(sources,
 
     # create our own templating environment
     template_dirs = None  # type: List[unicode]
-    template_dirs = [os.path.join(package_dir, 'ext',
-                                  'autosummary', 'templates')]
+    template_dirs = [
+        os.path.join(package_dir, 'ext', 'autosummary', 'templates')
+    ]
 
     template_loader = None  # type: BaseLoader
     if builder is not None:
@@ -92,17 +106,12 @@ def generate_autosummary_docs_custom_files(sources,
         ensuredir(path)
 
         try:
-            name, obj, parent, mod_name = import_by_name(name)
+            name, obj, parent, mod_name = custom_import_by_name(name)
         except ImportError as e:
             warn('[autosummary] failed to import %r: %s' % (name, e))
             continue
 
-        try:
-            filename = app.config.custom_autosummary_file_map[name] + suffix
-        except KeyError:
-            filename = name + suffix
-
-        fn = os.path.join(path, filename)
+        fn = os.path.join(path, name + suffix)
 
         # skip it if it exists
         if os.path.isfile(fn):
@@ -117,8 +126,8 @@ def generate_autosummary_docs_custom_files(sources,
                 template = template_env.get_template(template_name)
             else:
                 try:
-                    template = template_env.get_template('autosummary/%s.rst'
-                                                         % doc.objtype)
+                    template = template_env.get_template(
+                        'autosummary/%s.rst' % doc.objtype)
                 except TemplateNotFound:
                     template = template_env.get_template(
                         'autosummary/base.rst')
@@ -135,8 +144,10 @@ def generate_autosummary_docs_custom_files(sources,
                         if (imported or getattr(value, '__module__',
                                                 None) == obj.__name__):
                             items.append(name)
-                public = [x for x in items
-                          if x in include_public or not x.startswith('_')]
+                public = [
+                    x for x in items
+                    if x in include_public or not x.startswith('_')
+                ]
                 return public, items
 
             ns = {}  # type: Dict[unicode, Any]
@@ -236,8 +247,8 @@ def setup(app):
     builder_inited_listeners = app.events.listeners["builder-inited"]
 
     for listener_id, obj in builder_inited_listeners.items():
-        if (inspect.isfunction(obj) and
-           obj.__name__ == "process_generate_options"):
+        if (inspect.isfunction(obj)
+                and obj.__name__ == "process_generate_options"):
             builder_inited_listeners[listener_id] = \
                 process_generate_options_custom_files
             break
