@@ -44,7 +44,7 @@ def _encode_numpy(values, uniques=None, encode=False):
             try:
                 uniques, encoded = np.unique(values, return_inverse=True)
             except TypeError:
-                print("Your data contains two different types of values,strings and integers, which are not able to be compared by sorting utils for Pandas.")
+                print("Two different types, str and int ,cannot be compared in sorting for Pandas.")
             return uniques, encoded
         else:
             # unique sorts
