@@ -97,11 +97,6 @@ class BaseGradientBoostingMachine(BaseEstimator, ABC):
         # TODO: add support for pre-binned data (pass-through)?
         X, y = check_X_y(X, y, dtype=[X_DTYPE])
         y = self._encode_y(y)
-        if X.shape[0] == 1 or X.shape[1] == 1:
-            raise ValueError(
-                'Passing only one sample or one feature is not supported yet. '
-                'See numba issue #3569.'
-            )
         rng = check_random_state(self.random_state)
 
         self._validate_parameters()

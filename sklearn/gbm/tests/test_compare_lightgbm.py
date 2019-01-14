@@ -142,7 +142,6 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
     (255, 4096),
     (10000, 8),
 ])
-@pytest.mark.skip('classification not supported yet')
 def test_same_predictions_multiclass_classification(
         seed, min_samples_leaf, n_samples, max_leaf_nodes):
     # Same as test_same_predictions_regression but for classification

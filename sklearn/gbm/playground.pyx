@@ -1,15 +1,19 @@
-cimport cython
+import numpy as np
+from cython.parallel import prange
 
-cdef class MyClass:
-    cdef int width, height
 
-    def __init__(self, int w, int h):
-        self.width = w
-        self.height = h
+def wrapper():
+    print('in')
+    a = np.random.uniform(0, 100, size=(100, 100)).astype(np.int32)
+    g(a)
 
-def hello():
-    o = MyClass(9, 5)
-    return zob(o)
+cdef int f(int [:] a) nogil:
+    return 3
 
-cdef int zob (MyClass o) nogil:
-    return o.width
+cdef int g(int [:, :] a) nogil:
+
+    cdef:
+        int i
+
+    for i in range(a.shape[0]):
+        f(a[i])

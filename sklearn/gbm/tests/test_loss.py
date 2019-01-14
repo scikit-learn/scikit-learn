@@ -85,7 +85,7 @@ def test_derivatives(loss, x0, y_true):
 @pytest.mark.parametrize('loss, n_classes, prediction_dim', [
     ('least_squares', 0, 1),
     ('binary_crossentropy', 2, 1),
-    # ('categorical_crossentropy', 3, 3),
+    ('categorical_crossentropy', 3, 3),
 ])
 @pytest.mark.skipif(Y_DTYPE != np.float64,
                     reason='Need 64 bits float precision for numerical checks')
@@ -172,7 +172,6 @@ def test_baseline_binary_crossentropy():
     assert_almost_equal(baseline_prediction, np.log(p / (1 - p)))
 
 
-@pytest.mark.skip('categorical crossentropy not supported yet')
 def test_baseline_categorical_crossentropy():
     rng = np.random.RandomState(0)
 

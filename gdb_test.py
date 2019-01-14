@@ -11,7 +11,7 @@ import cProfile
 import pygbm
 
 classif = True
-n_classes = 2
+n_classes = 3
 n_samples = int(1e6)
 max_iter = 5
 

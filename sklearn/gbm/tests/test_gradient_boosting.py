@@ -6,6 +6,7 @@ from numpy.testing import assert_allclose
 import pytest
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.datasets import make_classification, make_regression
+from sklearn.utils.estimator_checks import check_estimator
 
 from sklearn.gbm import GBMClassifier
 from sklearn.gbm import GBMRegressor
@@ -92,22 +93,6 @@ def test_init_parameters_validation(GradientBoosting, X, y):
     )
 
 
-def test_one_sample_one_feature():
-    # Until numba issue #3569 is fixed, we raise an informative error message
-    # when X is only one sample or one feature in fit (it's OK in predict).
-    # The array is both F and C contiguous, and numba can't compile.
-    gb = GBMClassifier()
-    for X, y in (([[1, 2]], [0]), ([[1], [2]], [0, 1])):
-        assert_raises_regex(
-            ValueError,
-            'Passing only one sample or one feature is not supported yet.',
-            gb.fit, X, y
-        )
-
-
-@pytest.mark.skipif(
-    int(os.environ.get("NUMBA_DISABLE_JIT", 0)) == 1,
-    reason="Travis times out without numba")
 @pytest.mark.parametrize('scoring, validation_split, n_iter_no_change, tol', [
     ('neg_mean_squared_error', .1, 5, 1e-7),  # use scorer
     ('neg_mean_squared_error', None, 5, 1e-1),  # use scorer on training data
@@ -139,8 +124,7 @@ def test_early_stopping_regression(scoring, validation_split,
 
 @pytest.mark.parametrize('data', (
     make_classification(random_state=0),
-    # TODO: unskip this
-    # make_classification(n_classes=3, n_clusters_per_class=1, random_state=0)
+    make_classification(n_classes=3, n_clusters_per_class=1, random_state=0)
 ))
 @pytest.mark.parametrize('scoring, validation_split, n_iter_no_change, tol', [
     ('accuracy', .1, 5, 1e-7),  # use scorer
@@ -171,39 +155,6 @@ def test_early_stopping_classification(data, scoring, validation_split,
         assert gb.n_iter_ == max_iter
 
 
-@pytest.mark.skip('classification not supported yet')
-def test_early_stopping_loss():
-    # Make sure that when scoring is None, the early stopping is done w.r.t to
-    # the loss. Using scoring='neg_log_loss' and scoring=None should be
-    # equivalent since the loss is precisely the negative log likelihood
-    n_samples = int(1e3)
-    max_iter = 100
-    n_iter_no_change = 5
-
-    X, y = make_classification(n_samples, random_state=0)
-
-    clf_scoring = GBMClassifier(max_iter=max_iter,
-                                             scoring='neg_log_loss',
-                                             validation_split=.1,
-                                             n_iter_no_change=n_iter_no_change,
-                                             tol=1e-4,
-                                             verbose=1,
-                                             random_state=0)
-    clf_scoring.fit(X, y)
-
-    clf_loss = GBMClassifier(max_iter=max_iter,
-                                          scoring=None,
-                                          validation_split=.1,
-                                          n_iter_no_change=n_iter_no_change,
-                                          tol=1e-4,
-                                          verbose=1,
-                                          random_state=0)
-    clf_loss.fit(X, y)
-
-    assert n_iter_no_change < clf_loss.n_iter_ < max_iter
-    assert clf_loss.n_iter_ == clf_scoring.n_iter_
-
-
 def test_should_stop():
 
     def should_stop(scores, n_iter_no_change, tol):
@@ -230,43 +181,9 @@ def test_should_stop():
     assert should_stop([1, 2, 3, 4, 5, 6], n_iter_no_change=5, tol=5)
 
 
-# TODO: Remove if / when numba issue 3569 is fixed and check_classifiers_train
-# is less strict
-def custom_check_estimator(Estimator):
-    # Same as sklearn.check_estimator, skipping tests that can't succeed.
-
-    from sklearn.utils.estimator_checks import _yield_all_checks
-    from sklearn.utils.testing import SkipTest
-    from sklearn.exceptions import SkipTestWarning
-    from sklearn.utils import estimator_checks
-
-    estimator = Estimator
-    name = type(estimator).__name__
-
-    for check in _yield_all_checks(name, estimator):
-        if (check is estimator_checks.check_fit2d_1feature or
-                check is estimator_checks.check_fit2d_1sample):
-            # X is both Fortran and C aligned and numba can't compile.
-            # Opened numba issue 3569
-            continue
-        if check is estimator_checks.check_classifiers_train:
-            continue  # probas don't exactly sum to 1 (very close though)
-        if (hasattr(check, 'func') and
-                check.func is estimator_checks.check_classifiers_train):
-            continue  # same, wrapped in a functools.partial object.
-
-        try:
-            check(name, estimator)
-        except SkipTest as exception:
-            # the only SkipTest thrown currently results from not
-            # being able to import pandas.
-            warnings.warn(str(exception), SkipTestWarning)
-
-
 @pytest.mark.parametrize('Estimator', (
     GBMRegressor(),
-    # TODO: unskip
-    # GBMClassifier(n_iter_no_change=None, min_samples_leaf=5),
+    GBMClassifier(scoring=None, validation_split=None, min_samples_leaf=5),
     ))
 def test_estimator_checks(Estimator):
     # Run the check_estimator() test suite on GBRegressor and GBClassifier.
@@ -279,4 +196,4 @@ def test_estimator_checks(Estimator):
     #   check_classifiers_classes() to pass: with only 30 samples on the
     #   dataset, the root is never split with min_samples_leaf=20 and only the
     #   majority class is predicted.
-    custom_check_estimator(Estimator)
+    check_estimator(Estimator)

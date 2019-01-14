@@ -18,7 +18,7 @@ cimport numpy as np
 from scipy.special import expit, logsumexp
 from scipy.special.cython_special cimport expit as cexpit
 
-from libc.math cimport fabs, exp
+from libc.math cimport fabs, exp, log
 
 from .types import Y_DTYPE
 from .types cimport Y_DTYPE_C
@@ -236,87 +236,96 @@ cdef void _update_gradients_hessians_binary_crossentropy(
         hessians[i] = gradient_abs * (1. - gradient_abs)
 
 
-## class CategoricalCrossEntropy(BaseLoss):
-##     """Categorical cross-entropy loss, for multiclass classification.
-## 
-##     For a given sample x_i, the categorical cross-entropy loss is defined as
-##     the negative log-likelihood of the model and generalizes the binary
-##     cross-entropy to more than 2 classes.
-##     """
-## 
-##     hessian_is_constant = False
-## 
-##     def __call__(self, y_true, raw_predictions, average=True):
-##         one_hot_true = np.zeros_like(raw_predictions)
-##         prediction_dim = raw_predictions.shape[1]
-##         for k in range(prediction_dim):
-##             one_hot_true[:, k] = (y_true == k)
-## 
-##         loss = (logsumexp(raw_predictions, axis=1) -
-##                 (one_hot_true * raw_predictions).sum(axis=1))
-##         return loss.mean() if average else loss
-## 
-##     def get_baseline_prediction(self, y_train, prediction_dim):
-##         init_value = np.zeros(
-##             shape=(1, prediction_dim),
-##             dtype=np.float32
-##         )
-##         eps = np.finfo(y_train.dtype).eps
-##         for k in range(prediction_dim):
-##             proba_kth_class = np.mean(y_train == k)
-##             proba_kth_class = np.clip(proba_kth_class, eps, 1 - eps)
-##             init_value[:, k] += np.log(proba_kth_class)
-## 
-##         return init_value
-## 
-##     def update_gradients_and_hessians(self, gradients, hessians, y_true,
-##                                       raw_predictions):
-##         return _update_gradients_hessians_categorical_crossentropy(
-##             gradients, hessians, y_true, raw_predictions)
-## 
-##     def predict_proba(self, raw_predictions):
-##         # TODO: This could be done in parallel
-##         # compute softmax (using exp(log(softmax)))
-##         return np.exp(raw_predictions -
-##                       logsumexp(raw_predictions, axis=1)[:, np.newaxis])
-## 
-## 
-## def _update_gradients_hessians_categorical_crossentropy(
-##         float [:] gradients, float [:] hessians, float_or_double [:] y_true,
-##         float_or_double [:, :] raw_predictions):
-##     # Here gradients and hessians are of shape
-##     # (n_samples * prediction_dim,).
-##     # y_true is of shape (n_samples,).
-##     # raw_predictions is of shape (n_samples, raw_predictions)
-##     cdef:
-##         unsigned int n_samples
-##         unsigned int prediction_dim
-##         unsigned int i
-##         unsigned int k
-##         unsigned int thread_idx
-##         unsigned int n_threads
-##         unsigned int [:] starts
-##         unsigned int [:] ends
-##         float p_k
-## 
-##     n_samples = raw_predictions.shape[0]
-##     prediction_dim = raw_predictions.shape[1]
-##     starts, ends, n_threads = get_threads_chunks(total_size=n_samples)
-##     for k in range(prediction_dim):
-##         gradients_at_k = gradients[n_samples * k:n_samples * (k + 1)]
-##         hessians_at_k = hessians[n_samples * k:n_samples * (k + 1)]
-##         for thread_idx in range(n_threads):
-##             for i in range(starts[thread_idx], ends[thread_idx]):
-##                 # p_k is the probability that class(ith sample) == k.
-##                 # This is a regular softmax.
-##                 p_k = np.exp(raw_predictions[i, k] -
-##                              logsumexp(raw_predictions[i, :]))
-##                 gradients_at_k[i] = p_k - (y_true[i] == k)
-##                 hessians_at_k[i] = p_k * (1. - p_k)
+class CategoricalCrossEntropy(BaseLoss):
+    """Categorical cross-entropy loss, for multiclass classification.
+
+    For a given sample x_i, the categorical cross-entropy loss is defined as
+    the negative log-likelihood of the model and generalizes the binary
+    cross-entropy to more than 2 classes.
+    """
+
+    hessian_is_constant = False
+
+    def __call__(self, y_true, raw_predictions, average=True):
+        one_hot_true = np.zeros_like(raw_predictions)
+        prediction_dim = raw_predictions.shape[1]
+        for k in range(prediction_dim):
+            one_hot_true[:, k] = (y_true == k)
+
+        loss = (logsumexp(raw_predictions, axis=1) -
+                (one_hot_true * raw_predictions).sum(axis=1))
+        return loss.mean() if average else loss
+
+    def get_baseline_prediction(self, y_train, prediction_dim):
+        init_value = np.zeros(shape=(1, prediction_dim), dtype=Y_DTYPE)
+        eps = np.finfo(y_train.dtype).eps
+        for k in range(prediction_dim):
+            proba_kth_class = np.mean(y_train == k)
+            proba_kth_class = np.clip(proba_kth_class, eps, 1 - eps)
+            init_value[:, k] += np.log(proba_kth_class)
+
+        return init_value
+
+    def update_gradients_and_hessians(self, gradients, hessians, y_true,
+                                      raw_predictions):
+        return _update_gradients_hessians_categorical_crossentropy(
+            gradients, hessians, y_true, raw_predictions)
+
+    def predict_proba(self, raw_predictions):
+        # TODO: This could be done in parallel
+        # compute softmax (using exp(log(softmax)))
+        return np.exp(raw_predictions -
+                      logsumexp(raw_predictions, axis=1)[:, np.newaxis])
+
+
+cdef inline Y_DTYPE_C _logsumexp(Y_DTYPE_C [:, :] a, int i) nogil:
+    # Need to pass the whole array, else prange won't work
+    cdef:
+        int k
+        Y_DTYPE_C out = 0.
+        # Y_DTYPE_C amax
+
+    # TODO: use the numerically safer option:
+    # amax = max(a[i])
+    # for k in range(a.shape[1]):
+    #     out += exp(a[i, k] - amax)
+    # return log(out) + amax
+
+    for k in range(a.shape[1]):
+        out += exp(a[i, k])
+    return log(out)
+
+
+cdef void _update_gradients_hessians_categorical_crossentropy(
+    Y_DTYPE_C [:] gradients,  # shape (n_samples * prediction_dim,), OUT
+    Y_DTYPE_C [:] hessians,  # shape (n_samples * prediction_dim,), OUT
+    Y_DTYPE_C [:] y_true,  # shape (n_samples,), IN
+    Y_DTYPE_C [:, :] raw_predictions  # shape (n_samples, n_tree_per_iter), IN
+    ) nogil:
+    cdef:
+        unsigned int n_samples
+        unsigned int prediction_dim
+        unsigned int k
+        int i
+        Y_DTYPE_C p_k
+        Y_DTYPE_C [:] gradients_at_k,
+        Y_DTYPE_C [:] hessians_at_k,
+
+    n_samples = raw_predictions.shape[0]
+    prediction_dim = raw_predictions.shape[1]
+    for k in range(prediction_dim):
+        gradients_at_k = gradients[n_samples * k:n_samples * (k + 1)]
+        hessians_at_k = hessians[n_samples * k:n_samples * (k + 1)]
+        for i in prange(n_samples, schedule='static'):
+            # p_k is the probability that class(ith sample) == k.
+            # This is a regular softmax.
+            p_k = exp(raw_predictions[i, k] - _logsumexp(raw_predictions, i))
+            gradients_at_k[i] = p_k - (y_true[i] == k)
+            hessians_at_k[i] = p_k * (1. - p_k)
 
 
 _LOSSES = {
     'least_squares': LeastSquares,
-    'binary_crossentropy': BinaryCrossEntropy
+    'binary_crossentropy': BinaryCrossEntropy,
+    'categorical_crossentropy': CategoricalCrossEntropy
 }
-
