@@ -410,7 +410,8 @@ class LeastAbsoluteError(RegressionLossFunction):
         Number of classes
     """
     def init_estimator(self):
-        return QuantileEstimator(alpha=0.5)
+        # Predicts the median
+        return DummyRegressor(strategy='quantile', quantile=.5)
 
     def __call__(self, y, pred, sample_weight=None):
         """Compute the least absolute error.
@@ -455,6 +456,9 @@ class LeastAbsoluteError(RegressionLossFunction):
         sample_weight = sample_weight.take(terminal_region, axis=0)
         diff = y.take(terminal_region, axis=0) - pred.take(terminal_region, axis=0)
         tree.value[leaf, 0, 0] = _weighted_percentile(diff, sample_weight, percentile=50)
+
+    def get_init_raw_predictions(self, X, estimator):
+        return estimator.predict(X).reshape(-1, 1)
 
 
 class HuberLossFunction(RegressionLossFunction):

@@ -14,6 +14,7 @@ from sklearn.utils.stats import _weighted_percentile
 from sklearn.ensemble.losses import BinomialDeviance
 from sklearn.ensemble.losses import LogOddsEstimator
 from sklearn.ensemble.losses import LeastSquaresError
+from sklearn.ensemble.losses import LeastAbsoluteError
 from sklearn.ensemble.losses import RegressionLossFunction
 from sklearn.ensemble.losses import QuantileLossFunction
 from sklearn.ensemble.losses import LOSS_FUNCTIONS
@@ -102,7 +103,7 @@ def test_sample_weight_init_estimators():
         init_est = loss.init_estimator()
         init_est.fit(X, y)
         # TODO: update this once all losses are OK
-        if isinstance(loss, LeastSquaresError):
+        if isinstance(loss, (LeastSquaresError, LeastAbsoluteError)):
             out = loss.get_init_raw_predictions(X, init_est)
         else:
             out = init_est.predict(X)
@@ -111,14 +112,14 @@ def test_sample_weight_init_estimators():
         sw_init_est = loss.init_estimator()
         sw_init_est.fit(X, y, sample_weight=sample_weight)
         # TODO: update this once all losses are OK
-        if isinstance(loss, LeastSquaresError):
+        if isinstance(loss, (LeastSquaresError, LeastAbsoluteError)):
             sw_out = loss.get_init_raw_predictions(X, sw_init_est)
         else:
             sw_out = init_est.predict(X)
         assert_equal(sw_out.shape, (y.shape[0], 1))
 
         # check if predictions match
-        assert_array_almost_equal(out, sw_out)
+        assert_array_almost_equal(out, sw_out, decimal=2)
 
 
 def test_weighted_percentile():

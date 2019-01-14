@@ -1492,7 +1492,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # init predictions
             if self.init == 'zero':
                 y_pred = np.zeros(shape=(X.shape[0], self.loss_.K), dtype=np.float64)
-            elif isinstance(self.loss_, (losses.BinomialDeviance, losses.LeastSquaresError)):
+            elif isinstance(self.loss_,
+                            (losses.BinomialDeviance,
+                            losses.LeastSquaresError,
+                            losses.LeastAbsoluteError,
+                            )):
                 y_pred = self.loss_.get_init_raw_predictions(X, self.init_).astype(
                     np.float64, copy=False)
             else:
@@ -1667,7 +1671,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 self.n_features_, X.shape[1]))
         if self.init == 'zero':
             score = np.zeros(shape=(X.shape[0], self.loss_.K), dtype=np.float64)
-        elif isinstance(self.loss_, (losses.BinomialDeviance, losses.LeastSquaresError)):
+        elif isinstance(self.loss_,
+                        (losses.BinomialDeviance,
+                        losses.LeastSquaresError,
+                        losses.LeastAbsoluteError,
+                        )):
             score = self.loss_.get_init_raw_predictions(X, self.init_).astype( np.float64)
         else:
             score = self.init_.predict(X).astype(np.float64)
