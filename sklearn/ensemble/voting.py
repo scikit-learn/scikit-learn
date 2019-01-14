@@ -274,8 +274,7 @@ class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
         self.classes_ = self.le_.classes_
         transformed_y = self.le_.transform(y)
 
-        return super(VotingClassifier, self).fit(X, transformed_y,
-                                                 sample_weight)
+        return super().fit(X, transformed_y, sample_weight)
 
     def predict(self, X):
         """ Predict class labels for X.
@@ -455,7 +454,7 @@ class AveragingRegressor(BaseVoting, RegressorMixin, TransformerMixin):
         -------
         self : object
         """
-        return super(AveragingRegressor, self).fit(X, y, sample_weight)
+        return super().fit(X, y, sample_weight)
 
     def predict(self, X):
         """Predict regression target for X.

@@ -36,8 +36,7 @@ from numpy.testing import assert_equal
 import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
-from .externals import six
-from .externals.six.moves import xrange
+
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
@@ -271,7 +270,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         indices = []
         offset = 0
         indptr = [offset]
-        for _ in xrange(n_components):
+        for _ in range(n_components):
             # find the indices of the non-zero components for row i
             n_nonzero_i = rng.binomial(n_features, density)
             indices_i = sample_without_replacement(n_features, n_nonzero_i,
@@ -292,8 +291,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         return np.sqrt(1 / density) / np.sqrt(n_components) * components
 
 
-class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
-                                              TransformerMixin)):
+class BaseRandomProjection(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
     """Base class for random projections.
 
     Warning: This class should not be used directly.
@@ -481,7 +479,7 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     """
     def __init__(self, n_components='auto', eps=0.1, random_state=None):
-        super(GaussianRandomProjection, self).__init__(
+        super().__init__(
             n_components=n_components,
             eps=eps,
             dense_output=True,
@@ -618,7 +616,7 @@ class SparseRandomProjection(BaseRandomProjection):
     """
     def __init__(self, n_components='auto', density='auto', eps=0.1,
                  dense_output=False, random_state=None):
-        super(SparseRandomProjection, self).__init__(
+        super().__init__(
             n_components=n_components,
             eps=eps,
             dense_output=dense_output,

@@ -757,7 +757,6 @@ Kernels:
    linear_model.enet_path
    linear_model.lars_path
    linear_model.lasso_path
-   linear_model.logistic_regression_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
    linear_model.ridge_regression
@@ -1431,7 +1430,6 @@ Low-level methods
    utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
-   utils.bench.total_seconds
    utils.check_X_y
    utils.check_array
    utils.check_consistent_length
@@ -1508,6 +1506,7 @@ To be removed in 0.23
    utils.cpu_count
    utils.delayed
    metrics.calinski_harabaz_score
+   linear_model.logistic_regression_path
 
 
 To be removed in 0.22

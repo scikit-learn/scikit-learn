@@ -68,3 +68,6 @@ benchmarks/bench_covertype_data/
 .cache
 .pytest_cache/
 _configtest.o.d
+
+# Used by mypy
+.mypy_cache/
