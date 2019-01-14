@@ -74,9 +74,9 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     return cartesian(axes), axes
 
 
-@deprecated("The function ensemble.partial_dependence has been moved to "
-            "partial_dependence.partial_dependence in 0.21 and will "
-            "be removed in 0.23.")
+@deprecated("The function ensemble.partial_dependence has been deprecated "
+            "in favour of partial_dependence.partial_dependence in 0.21 "
+            "and will be removed in 0.23.")
 def partial_dependence(gbrt, target_variables, grid=None, X=None,
                        percentiles=(0.05, 0.95), grid_resolution=100):
     """Partial dependence of ``target_variables``.
@@ -177,7 +177,8 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
 
 
 @deprecated("The function ensemble.plot_partial_dependence has been "
-            "moved to partial_dependence.plot_partial_dependence in "
+            "deprecated in favour of "
+            "partial_dependence.plot_partial_dependence in "
             " 0.21 and will be removed in 0.23.")
 def plot_partial_dependence(gbrt, X, features, feature_names=None,
                             label=None, n_cols=3, grid_resolution=100,

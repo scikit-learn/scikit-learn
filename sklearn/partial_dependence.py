@@ -199,8 +199,8 @@ def partial_dependence(est, features, X, percentiles=(0.05, 0.95),
           computationally intensive.
 
         - If 'auto', then 'recursion' will be used for
-          ``BaseGradientBoosting`` estimators, and 'brute' used for other
-          estimators.
+          ``BaseGradientBoosting`` estimators with ``init=None``, and 'brute'
+          used for other estimators.
 
     Returns
     -------
@@ -240,7 +240,7 @@ def partial_dependence(est, features, X, percentiles=(0.05, 0.95),
     same values as 'brute' up to a constant offset in the target response,
     provided that ``init`` is a consant estimator (which is the default).
     However, as soon as ``init`` is not a constant estimator, the partial
-    dependence values are incorrect.
+    dependence values are incorrect for 'recursion'.
 
     """
 
@@ -260,7 +260,7 @@ def partial_dependence(est, features, X, percentiles=(0.05, 0.95),
                 method, ', '.join(accepted_methods)))
 
     if method == 'auto':
-        if isinstance(est, BaseGradientBoosting):
+        if isinstance(est, BaseGradientBoosting) and est.init is None:
             method = 'recursion'
         else:
             method = 'brute'
@@ -361,8 +361,8 @@ def plot_partial_dependence(est, X, features, feature_names=None,
           computationally intensive.
 
         - If 'auto', then 'recursion' will be used for
-          ``BaseGradientBoosting`` estimators, and 'brute' used for other
-          estimators.
+          ``BaseGradientBoosting`` estimators with ``init=None``, and
+          'brute' used for other estimators.
 
         Unlike the 'brute' method, 'recursion' does not account for the
         ``init`` predictor of the boosting process. In practice this still
@@ -413,7 +413,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     same values as 'brute' up to a constant offset in the target response,
     provided that ``init`` is a consant estimator (which is the default).
     However, as soon as ``init`` is not a constant estimator, the partial
-    dependence values are incorrect.
+    dependence values are incorrect for 'recursion'.
     """
     import matplotlib.pyplot as plt
     from matplotlib import transforms
@@ -442,6 +442,8 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         feature_names = [str(i) for i in range(n_features)]
     elif isinstance(feature_names, np.ndarray):
         feature_names = feature_names.tolist()
+    if len(set(feature_names)) != len(feature_names):
+        raise ValueError('feature_names should not contain duplicates.')
 
     def convert_feature(fx):
         if isinstance(fx, six.string_types):

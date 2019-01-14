@@ -34,41 +34,29 @@ X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
 
 
-def binary_classification():
-    # returns (X, y), n_targets  <-- as expected in the output of partial_dep()
-    return make_classification(random_state=0), 1
-
-
-def multiclass_classification():
-    # returns (X, y), n_targets  <-- as expected in the output of partial_dep()
-    return (make_classification(n_classes=3, n_clusters_per_class=1,
-                                random_state=0), 3)
-
-
-def regression():
-    # returns (X, y), n_targets  <-- as expected in the output of partial_dep()
-    return make_regression(random_state=0), 1
-
-
-def multioutput_regression():
-    # returns (X, y), n_targets  <-- as expected in the output of partial_dep()
-    return make_regression(n_targets=2, random_state=0), 2
+# (X, y), n_targets  <-- as expected in the output of partial_dep()
+binary_classification_data = (make_classification(random_state=0), 1)
+multiclass_classification_data = (make_classification(n_classes=3,
+                                                      n_clusters_per_class=1,
+                                                      random_state=0), 3)
+regression_data = (make_regression(random_state=0), 1)
+multioutput_regression_data = (make_regression(n_targets=2, random_state=0), 2)
 
 
 @pytest.mark.filterwarnings('ignore:Default solver will be changed ')  # 0.22
 @pytest.mark.filterwarnings('ignore:Default multi_class will be')  # 0.22
 @pytest.mark.parametrize('Estimator, method, data', [
-    (GradientBoostingClassifier, 'recursion', binary_classification()),
-    (GradientBoostingClassifier, 'recursion', multiclass_classification()),
-    (GradientBoostingClassifier, 'brute', binary_classification()),
-    (GradientBoostingClassifier, 'brute', multiclass_classification()),
-    (GradientBoostingRegressor, 'recursion', regression()),
-    (GradientBoostingRegressor, 'brute', regression()),
-    (LinearRegression, 'brute', regression()),
-    (LinearRegression, 'brute', multioutput_regression()),
-    (LogisticRegression, 'brute', binary_classification()),
-    (LogisticRegression, 'brute', multiclass_classification()),
-    (MultiTaskLasso, 'brute', multioutput_regression()),
+    (GradientBoostingClassifier, 'recursion', binary_classification_data),
+    (GradientBoostingClassifier, 'recursion', multiclass_classification_data),
+    (GradientBoostingClassifier, 'brute', binary_classification_data),
+    (GradientBoostingClassifier, 'brute', multiclass_classification_data),
+    (GradientBoostingRegressor, 'recursion', regression_data),
+    (GradientBoostingRegressor, 'brute', regression_data),
+    (LinearRegression, 'brute', regression_data),
+    (LinearRegression, 'brute', multioutput_regression_data),
+    (LogisticRegression, 'brute', binary_classification_data),
+    (LogisticRegression, 'brute', multiclass_classification_data),
+    (MultiTaskLasso, 'brute', multioutput_regression_data),
     ])
 @pytest.mark.parametrize('grid_resolution', (5, 10))
 @pytest.mark.parametrize('features', ([1], [1, 2]))
@@ -84,7 +72,7 @@ def test_output_shape(Estimator, method, data, grid_resolution,
 
     # n_target corresponds to the number of classes (1 for binary classif) or
     # the number of tasks / outputs in multi task settings. It's equal to 1 for
-    # classical regression.
+    # classical regression_data.
     (X, y), n_targets = data
 
     est.fit(X, y)
@@ -204,7 +192,7 @@ def test_partial_dependence_easy_target(est, power):
     # If the target y only depends on one feature in an obvious way (linear or
     # quadratic) then the partial dependence for that feature should reflect
     # it.
-    # We here fit a linear regression model (with polynomial features if
+    # We here fit a linear regression_data model (with polynomial features if
     # needed) and compute r_squared to check that the partial dependence
     # correctly reflects the target.
 
@@ -360,7 +348,7 @@ def test_plot_partial_dependence_multiclass():
 @if_matplotlib
 def test_plot_partial_dependence_multioutput():
     # Test partial dependence plot function on multi-output input.
-    (X, y), _ = multioutput_regression()
+    (X, y), _ = multioutput_regression_data
     clf = LinearRegression()
     clf.fit(X, y)
 
@@ -390,7 +378,7 @@ def test_plot_partial_dependence_input():
     gbc.fit(X, y)
 
     # check target param for multiclass
-    (X_m, y_m), _ = multiclass_classification()
+    (X_m, y_m), _ = multiclass_classification_data
     lr_m = LogisticRegression()
     lr_m.fit(X_m, y_m)
     assert_raises_regex(ValueError,
@@ -404,7 +392,7 @@ def test_plot_partial_dependence_input():
                             target=target)
 
     # check target param for multioutput
-    (X_m, y_m), _ = multioutput_regression()
+    (X_m, y_m), _ = multioutput_regression_data
     lr_m = LinearRegression()
     lr_m.fit(X_m, y_m)
     assert_raises_regex(ValueError,
@@ -435,6 +423,12 @@ def test_plot_partial_dependence_input():
                         plot_partial_dependence, lr, X,
                         features=[123],
                         feature_names=['blah'])
+
+    assert_raises_regex(ValueError,
+                        'feature_names should not contain duplicates',
+                        plot_partial_dependence, lr, X,
+                        features=[0, 1, 2],
+                        feature_names=['a', 'b', 'a'])
 
 
 @pytest.mark.skip('Passing non-constant init fails. Wait for PR #12436 '
@@ -467,7 +461,7 @@ def test_plot_partial_dependence_fig():
 
     import matplotlib.pyplot as plt
 
-    (X, y), _ = regression()
+    (X, y), _ = regression_data
     clf = LinearRegression()
     clf.fit(X, y)
 

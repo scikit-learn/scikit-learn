@@ -227,7 +227,7 @@ def test_warning_raised_partial_dependence():
     grid_resolution = 25
 
     assert_warns_message(DeprecationWarning, "The function "
-                         "ensemble.partial_dependence has been moved to ",
+                         "ensemble.partial_dependence has been deprecated ",
                          partial_dependence, clf, [0], X=boston.data,
                          grid_resolution=grid_resolution)
 
@@ -241,7 +241,8 @@ def test_warning_raised_partial_dependence_plot():
     grid_resolution = 25
 
     assert_warns_message(DeprecationWarning, "The function "
-                         "ensemble.plot_partial_dependence has been moved to ",
+                         "ensemble.plot_partial_dependence has been "
+                         "deprecated",
                          plot_partial_dependence, clf, boston.data,
                          [0, 1, (0, 1)], grid_resolution=grid_resolution,
                          feature_names=boston.feature_names)
